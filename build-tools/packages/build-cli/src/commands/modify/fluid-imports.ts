@@ -10,13 +10,7 @@ import { readFile } from "node:fs/promises";
 import { Flags } from "@oclif/core";
 import * as JSON5 from "json5";
 import { type ImportDeclaration, ModuleKind, Project, type SourceFile } from "ts-morph";
-import {
-	ApiLevel,
-	BaseCommand,
-	getApiExports,
-	isKnownApiLevel,
-	knownApiLevels,
-} from "../../library/index.js";
+import { ApiLevel, BaseCommand, getApiExports, isKnownApiLevel } from "../../library/index.js";
 import type { CommandLogger } from "../../logging.js";
 
 const maxConcurrency = 4;
@@ -49,6 +43,13 @@ enum ExportPath {
 	Alpha = "alpha",
 	LegacyAlpha = "legacy/alpha",
 	Internal = "internal",
+}
+
+/**
+ * Determines whether or not the provided path is a known {@link ExportPath}.
+ */
+function isKnownExportPath(path: string): path is ExportPath {
+	return Object.values(ExportPath).includes(path as ExportPath);
 }
 
 /**
@@ -193,7 +194,9 @@ class FluidImportManager {
 			return false;
 		}
 
-		let modificationsRequired = false;
+		this.log.info(`Reviewing imports...`);
+
+		let anyModificationsRequired = false;
 
 		// Collect the existing declarations
 		for (const {
@@ -206,14 +209,14 @@ class FluidImportManager {
 
 			// Skip modules with no mapping
 			if (data === undefined) {
-				this.log.verbose(`Skipping: ${moduleSpecifier}`);
+				this.log.verbose(`\tSkipping: ${moduleSpecifier}`);
 				continue;
 			}
 
 			const namedImports = importDeclaration.getNamedImports();
 			const isTypeOnly = importDeclaration.isTypeOnly();
 
-			this.log.verbose(`Reviewing: ${moduleSpecifier}...`);
+			this.log.verbose(`\tReviewing import from "${moduleSpecifier}"...`);
 			for (const importSpecifier of namedImports) {
 				const name = importSpecifier.getName();
 
@@ -227,8 +230,10 @@ class FluidImportManager {
 				const fullImportSpecifierText = importSpecifier.getFullText().trim();
 				const expectedPath = getPathForImportName(name, data, ExportPath.Public, this.log);
 
+				const modificationRequired = path !== expectedPath;
+
 				this.log.verbose(
-					`\t\tFound import named: '${fullImportSpecifierText}' ("${expectedPath}"${expectedPath === "" ? " (public)" : ""})`,
+					`\t- Import "${fullImportSpecifierText}": ${modificationRequired ? `modification required ("${path}" -> "${expectedPath}")` : "no modification required"}`,
 				);
 
 				const properImport = this.ensureFluidImport({
@@ -237,20 +242,29 @@ class FluidImportManager {
 					isTypeOnly,
 				});
 
-				if (path !== expectedPath) {
-					modificationsRequired = true;
+				if (modificationRequired) {
+					anyModificationsRequired = true;
 					importSpecifier.remove();
 					properImport.declaration.namedImports.push(fullImportSpecifierText);
 				}
 			}
 		} /* Collection */
 
-		if (!modificationsRequired) return false;
+		if (!anyModificationsRequired) {
+			this.log.verbose("\tNo modifications required.");
+			return false;
+		}
 
 		// Make modifications to existing imports
+		this.log.info("Modifying imports...");
 		for (const fluidImport of this.fluidImports) {
 			// 1. add new import
 			if (fluidImport.declaration.namedImports.length > 0) {
+				this.log.verbose(`\tAdding ${fluidImport.declaration.moduleSpecifier}`);
+				for (const namedImport of fluidImport.declaration.namedImports) {
+					this.log.verbose(`\t- ${namedImport}`);
+				}
+
 				fluidImport.importDeclaration.addNamedImports(fluidImport.declaration.namedImports);
 			}
 			//  2. or if not see if there are new imports that would like to take over
@@ -264,9 +278,14 @@ class FluidImportManager {
 					.sort((a, b) => b.order - a.order);
 				if (takeOverProspects.length > 0) {
 					const replacement = takeOverProspects[0];
+
 					this.log.verbose(
 						`\tReplacing ${fluidImport.declaration.moduleSpecifier} with ${replacement.declaration.moduleSpecifier}`,
 					);
+					for (const namedImport of fluidImport.declaration.namedImports) {
+						this.log.verbose(`\t- ${namedImport}`);
+					}
+
 					fluidImport.importDeclaration.setModuleSpecifier(
 						replacement.declaration.moduleSpecifier,
 					);
@@ -308,6 +327,10 @@ class FluidImportManager {
 					.getImportDeclarations()
 					[addition.index].getModuleSpecifierValue()}`,
 			);
+			for (const namedImport of addition.declaration.namedImports) {
+				this.log.verbose(`\t- ${namedImport}`);
+			}
+
 			this.sourceFile.insertImportDeclaration(
 				addition.index + (addition.insertAfterIndex ? 1 : 0),
 				addition.declaration,
@@ -506,25 +529,33 @@ function parseImport(
 	const modulePieces = moduleSpecifier.split("/");
 	const levelIndex = moduleSpecifier.startsWith("@") ? 2 : 1;
 	const packageName = modulePieces.slice(0, levelIndex).join("/");
-	const path = modulePieces.length > levelIndex ? modulePieces[levelIndex] : ExportPath.Public;
-	if (!isKnownApiLevel(path)) {
-		return undefined;
-	}
-	// Check for complicated path - beyond basic leveled import
-	if (modulePieces.length > levelIndex + 1) {
-		return undefined;
-	}
+
 	// Check for Fluid import
 	if (!isFluidImport(packageName)) {
+		log.verbose(`\tSkipping non-Fluid import of ${moduleSpecifier}`);
 		return undefined;
 	}
+
+	const path =
+		modulePieces.length > levelIndex
+			? modulePieces.slice(levelIndex).join("/")
+			: ExportPath.Public;
+
+	// Check for known export paths
+	if (!isKnownExportPath(path)) {
+		log.verbose(
+			`\tSkipping unrecognized export subpath "${path}" in import "${moduleSpecifier}".`,
+		);
+		return undefined;
+	}
+
 	// Check namespace imports which are checked trivially for API level use.
 	if (importDeclaration.getNamespaceImport() !== undefined) {
 		log.verbose(`\tSkipping namespace import of ${moduleSpecifier}`);
 		return undefined;
 	}
 
-	const order = knownApiLevels.indexOf(path) * 2 + (importDeclaration.isTypeOnly() ? 0 : 1);
+	const order = exportPathOrder[path] * 2 + (importDeclaration.isTypeOnly() ? 0 : 1);
 	return {
 		importDeclaration,
 		declaration: {
@@ -635,7 +666,7 @@ class ApiLevelReader {
 			this.log.warning(`no /internal export from ${packageName}`);
 			return undefined;
 		}
-		this.log.verbose(`\tLoading ${packageName} API data from ${internalSource.getFilePath()}`);
+		this.log.verbose(`Loading ${packageName} API data from ${internalSource.getFilePath()}`);
 
 		const exports = getApiExports(internalSource);
 		for (const name of exports.unknown.keys()) {
@@ -656,52 +687,62 @@ class ApiLevelReader {
 			addUniqueNamedExportsToMap(exports.legacyBeta, memberData, ExportPath.Internal);
 			addUniqueNamedExportsToMap(exports.legacyPublic, memberData, ExportPath.Internal);
 		} else {
-			if (exports.alpha.length > 0) {
-				// @alpha APIs have been mapped to both /alpha and /legacy paths.
-				// Later @legacy tag was added explicitly.
-				// Check for a /alpha export to map @alpha as alpha.
-				const useAlphaExport =
-					this.tempSource
-						.addImportDeclaration({
-							moduleSpecifier: `${packageName}/${ExportPath.Alpha}`,
-						})
-						.getModuleSpecifierSourceFile() !== undefined;
+			// #region Handle imports for API levels that have had different historical path mappings (with backwards compatibility)
 
-				if (useAlphaExport) {
-					addUniqueNamedExportsToMap(exports.alpha, memberData, ExportPath.Alpha);
-				} else {
-					this.log.verbose(
-						`BACKWARD COMPATIBILITY: Mapping @alpha APIs to /${ExportPath.Legacy}.`,
+			const exportSetsWithFallbacks = [
+				// @alpha APIs have been mapped to both "/alpha" and "/legacy" paths.
+				// Later @legacy tag was added explicitly.
+				// Check for a "/alpha" export to map @alpha as "/alpha".
+				// Otherwise, map all @alpha APIs to "/legacy".
+				{
+					apiLevel: ApiLevel.alpha,
+					preferredPath: ExportPath.Alpha,
+					fallbackPath: ExportPath.Legacy,
+				},
+
+				// Historically, all @legacy APIs were mapped to "/legacy".
+				// Now, we support separate paths for all release levels with @legacy APIs.
+				// Check for a "/legacy/alpha" export to map @legacy + @alpha as "legacy/alpha" and map @legacy + @beta to "/legacy".
+				// Otherwise, map all @legacy APIs to /legacy.
+				{
+					apiLevel: ApiLevel.legacyAlpha,
+					preferredPath: ExportPath.LegacyAlpha,
+					fallbackPath: ExportPath.Legacy,
+				},
+				{
+					apiLevel: ApiLevel.legacyBeta,
+					preferredPath: ExportPath.LegacyBeta,
+					fallbackPath: ExportPath.Legacy,
+				},
+			];
+
+			for (const { apiLevel: level, preferredPath, fallbackPath } of exportSetsWithFallbacks) {
+				const levelExports = exports[level];
+				if (levelExports.length > 0) {
+					const usePreferredExportPath =
+						this.tempSource
+							.addImportDeclaration({
+								moduleSpecifier: `${packageName}/${preferredPath}`,
+							})
+							.getModuleSpecifierSourceFile() !== undefined;
+
+					if (!usePreferredExportPath) {
+						this.log.verbose(
+							`Preferred export path "${preferredPath}" for level "${level}" was not found. Will use "${fallbackPath}" instead.`,
+						);
+					}
+
+					addUniqueNamedExportsToMap(
+						levelExports,
+						memberData,
+						usePreferredExportPath ? preferredPath : fallbackPath,
 					);
-					addUniqueNamedExportsToMap(exports.alpha, memberData, ExportPath.Legacy);
 				}
 			}
+
+			// #endregion
 
 			addUniqueNamedExportsToMap(exports.beta, memberData, ExportPath.Beta);
-
-			if (exports.legacyAlpha.length > 0) {
-				// Historically, all @legacy APIs were mapped to /legacy.
-				// Now, we support separate paths for all release levels with @legacy APIs.
-				// Check for a /legacy/alpha export to map @legacy + @alpha as "legacy/alpha" and map @legacy + @beta to "/legacy".
-				// Otherwise, map all @legacy APIs to /legacy.
-				const useLegacyAlphaExport =
-					this.tempSource
-						.addImportDeclaration({
-							moduleSpecifier: `${packageName}/${ExportPath.LegacyAlpha}`,
-						})
-						.getModuleSpecifierSourceFile() !== undefined;
-
-				if (useLegacyAlphaExport) {
-					addUniqueNamedExportsToMap(exports.legacyAlpha, memberData, ExportPath.LegacyAlpha);
-				} else {
-					this.log.verbose(
-						`BACKWARD COMPATIBILITY: Mapping all @legacy APIs to /${ExportPath.Legacy}.`,
-					);
-					addUniqueNamedExportsToMap(exports.legacyAlpha, memberData, ExportPath.Legacy);
-				}
-			}
-
-			addUniqueNamedExportsToMap(exports.legacyBeta, memberData, ExportPath.Legacy);
 			addUniqueNamedExportsToMap(exports.legacyPublic, memberData, ExportPath.Legacy);
 		}
 		addUniqueNamedExportsToMap(exports.internal, memberData, ExportPath.Internal);
