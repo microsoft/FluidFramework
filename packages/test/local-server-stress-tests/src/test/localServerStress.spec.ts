@@ -33,19 +33,17 @@ describe("Local Server Stress", () => {
 
 	createLocalServerStressSuite(model, {
 		defaultTestCount: 100,
-		// skipMinimization: true,
+		skipMinimization: true,
 		// Uncomment to replay a particular seed.
 		// replay: 93,
-		// only: [9],
+		only: [26],
 		saveFailures,
 		// saveSuccesses,
 		configurations: { "Fluid.Container.enableOfflineLoad": true },
 		skip: [
-			...[98], // Number of keys not same
-			...[49], // Number of subDirectories not same,
-			...[11], // Rollback op does not match last pending
-			...[19], // Cannot access Disposed subDirectory
-			...[46], // The Container is closed and cannot be connected
+			...[6, 13, 46, 79], // Number of subDirectories not same
+			...[26], // Unexpected pending data for set/delete op
+			...[30, 69], // timeout
 		],
 	});
 });

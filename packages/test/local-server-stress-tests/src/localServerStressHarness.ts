@@ -591,17 +591,6 @@ function mixinSynchronization<TOperation extends BaseOperation>(
 		if (isSynchronizeOp(operation)) {
 			const { clients, validationClient } = state;
 
-			// const anyClientInStaging = state.clients.some(
-			// 	(c) =>
-			// 		(!c.container.closed || !(c.container.disposed ?? false)) &&
-			// 		c.entryPoint.inStagingMode(),
-			// );
-
-			// if (anyClientInStaging) {
-			// 	console.log("Skipping sync because a client is in staging mode");
-			// 	return state;
-			// }
-
 			const connectedClients = clients.filter((client) => {
 				if (client.container.closed || client.container.disposed === true) {
 					throw new Error(`Client ${client.tag} is closed`);
@@ -1288,6 +1277,7 @@ const getFullModel = <TOperation extends BaseOperation>(
 	options: LocalServerStressOptions,
 ): LocalServerStressModel<
 	| TOperation
+	// AB#45905: Refactor nested mixin structure for better readability
 	| AddClient
 	| RemoveClient
 	| Attach
@@ -1297,7 +1287,7 @@ const getFullModel = <TOperation extends BaseOperation>(
 > =>
 	mixinAttach(
 		mixinSynchronization(
-			mixinGetClientPending(
+			mixinRestartClientFromPendingState(
 				mixinAddRemoveClient(
 					mixinClientSelection(mixinReconnect(ddsModel, options), options),
 					options,
@@ -1386,7 +1376,7 @@ interface RestartClientFromPendingState {
  * - Must have at least one client already in the system.
  * - Must be in an attached container state.
  */
-function mixinGetClientPending<TOperation extends BaseOperation>(
+function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 	model: LocalServerStressModel<TOperation>,
 	options: LocalServerStressOptions,
 ): LocalServerStressModel<TOperation | RestartClientFromPendingState> {
@@ -1406,6 +1396,7 @@ function mixinGetClientPending<TOperation extends BaseOperation>(
 				validationClient.container.attachState !== AttachState.Detached &&
 				clients.length > 0 &&
 				random.bool(options.clientJoinOptions.clientAddProbability) &&
+				// AB#45904: Clarify restart-from-pending behavior in staging mode
 				!anyClientInStaging
 			) {
 				return {
