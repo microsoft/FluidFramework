@@ -103,9 +103,10 @@ describe("Local Server Stress with rollback", () => {
 			"Fluid.Container.enableOfflineLoad": true,
 		},
 		skip: [
-			...[39, 91], // Key not found or value not matching key
-			...[31, 40], // Number of keys not same (directory)
-			...[53, 83], // Number of subDirectories not same
+			...[], // Values differ at key
+			...[28], // Key not found or value not matching key
+			...[31], // Number of keys not same (directory)
+			...[25, 53], // Number of subDirectories not same
 			...[], // SubDirectory with name ... not present in second directory
 			...[], // 0x2fa (Unexpected pending message received)
 			...[13, 62], // 0xb85

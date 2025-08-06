@@ -5,7 +5,8 @@
 
 import type { Root as MdastRoot, RootContent as MdastRootContent } from "mdast";
 
-import type { DocumentNode, SectionContent } from "../documentation-domain/index.js";
+import type { ApiDocument } from "../ApiDocument.js";
+import type { SectionContent } from "../documentation-domain/index.js";
 
 import {
 	createTransformationContext,
@@ -14,7 +15,7 @@ import {
 import type { Transformation, TransformationConfiguration } from "./configuration/index.js";
 
 /**
- * Generates a Markdown AST from the provided {@link DocumentNode}.
+ * Generates a Markdown AST from the provided {@link ApiDocument}.
  *
  * @param document - The document to transform.
  * @param config - Markdown transformation configuration.
@@ -22,13 +23,13 @@ import type { Transformation, TransformationConfiguration } from "./configuratio
  * @public
  */
 export function documentToMarkdown(
-	document: DocumentNode,
+	document: ApiDocument,
 	config: TransformationConfiguration,
 ): MdastRoot {
 	const transformationContext = createTransformationContext(config);
 
 	const transformedSections: MdastRootContent[] = [];
-	for (const section of document.children) {
+	for (const section of document.contents) {
 		transformedSections.push(...sectionContentToMarkdown(section, transformationContext));
 	}
 

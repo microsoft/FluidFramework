@@ -87,9 +87,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.76
-      '@types/unist':
-        specifier: ^2.0.6
-        version: 2.0.6
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -1784,10 +1781,6 @@ packages:
   has@1.0.3:
     resolution: {integrity: sha512-f2dvO0VU6Oej7RkWJGrehjbzMAjFp5/VKPp5tTpWIV4JHHZK1/BxbFRtf/siA2SWTe09caDmVtYYzWEIbBS4zw==}
     engines: {node: '>= 0.4.0'}
-
-  hasown@2.0.0:
-    resolution: {integrity: sha512-vUptKVTpIJhcczKBbgnS+RtcuYMB8+oNzPK2/Hp3hanz8JmpATdmmgLgSaadVREkDm+e2giHwY3ZRkyjSIDDFA==}
-    engines: {node: '>= 0.4'}
 
   hasown@2.0.2:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
@@ -4825,7 +4818,7 @@ snapshots:
       has-property-descriptors: 1.0.0
       has-proto: 1.0.1
       has-symbols: 1.0.3
-      hasown: 2.0.0
+      hasown: 2.0.2
       internal-slot: 1.0.5
       is-array-buffer: 3.0.2
       is-callable: 1.2.7
@@ -5270,7 +5263,7 @@ snapshots:
       function-bind: 1.1.2
       has-proto: 1.0.1
       has-symbols: 1.0.3
-      hasown: 2.0.0
+      hasown: 2.0.2
 
   get-intrinsic@1.3.0:
     dependencies:
@@ -5418,10 +5411,6 @@ snapshots:
       has-symbols: 1.0.3
 
   has@1.0.3:
-    dependencies:
-      function-bind: 1.1.2
-
-  hasown@2.0.0:
     dependencies:
       function-bind: 1.1.2
 
@@ -5678,7 +5667,7 @@ snapshots:
 
   is-core-module@2.13.1:
     dependencies:
-      hasown: 2.0.0
+      hasown: 2.0.2
 
   is-date-object@1.0.5:
     dependencies:
