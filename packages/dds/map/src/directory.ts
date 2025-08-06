@@ -1316,7 +1316,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			);
 		} else {
 			if (subDir.disposed) {
-				this.undeleteSubDirectoryTree(subDir);
+				this.undisposeSubdirectoryTree(subDir);
 			}
 			subDir.clientIds.add(clientId);
 		}
@@ -1422,6 +1422,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		};
 		this.submitDeleteSubDirectoryMessage(op, previousOptimisticSubDirectory);
 		this.emit("subDirectoryDeleted", subdirName, true, this);
+		// We don't want to fully dispose the subdir tree since this is only a pending
+		// local delete. Instead we will only emit the dispose event to reflect the
+		// local state.
+		this.emitDisposeForSubdirTree(previousOptimisticSubDirectory);
 		return true;
 	}
 
@@ -2096,7 +2100,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			}
 
 			if (subDir.disposed) {
-				this.undeleteSubDirectoryTree(subDir);
+				this.undisposeSubdirectoryTree(subDir);
 			}
 
 			this.sequencedSubdirectories.set(op.subdirName, subDir);
@@ -2119,7 +2123,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				// If the subdirectory already optimistically exists, we don't need to create it again.
 				// This can happen if remote clients also create the same subdir
 				if (subDir.disposed) {
-					this.undeleteSubDirectoryTree(subDir);
+					this.undisposeSubdirectoryTree(subDir);
 				}
 				subDir.clientIds.add(msg.clientId);
 			}
@@ -2347,7 +2351,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				// We should add the client id, since when reconnecting it can be different
 				pendingEntry.subdir.clientIds.add(this.runtime.clientId ?? "detached");
 				// We also need to undelete the subdirectory tree if it was previously deleted
-				this.undeleteSubDirectoryTree(pendingEntry.subdir);
+				this.undisposeSubdirectoryTree(pendingEntry.subdir);
 				this.submitCreateSubDirectoryMessage(op);
 			}
 		} else if (localOpMetadata.type === "deleteSubDir") {
@@ -2540,7 +2544,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			if (subDirectoryToRestore !== undefined) {
 				// Recursively undispose all nested subdirectories before adding to the map
 				// This ensures the subdirectory is properly restored before being exposed
-				this.undeleteSubDirectoryTree(subDirectoryToRestore);
+				this.undisposeSubdirectoryTree(subDirectoryToRestore);
 
 				if (isAcknowledgedOrDetached(subDirectoryToRestore.seqData)) {
 					// Since this was an ack'd subdirectory, we need to re-add it to the sequenced subdirectories
@@ -2611,12 +2615,27 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 	}
 
-	private undeleteSubDirectoryTree(directory: SubDirectory): void {
+	private emitDisposeForSubdirTree(directory: SubDirectory): void {
+		if (directory === undefined) {
+			return;
+		}
+		// Dispose the subdirectory tree. This will dispose the subdirectories from bottom to top.
+		const subDirectories = directory.subdirectories();
+		for (const [_, subDirectory] of subDirectories) {
+			this.emitDisposeForSubdirTree(subDirectory as SubDirectory);
+		}
+
+		if (typeof directory.dispose === "function") {
+			directory.emit("disposed", directory);
+		}
+	}
+
+	private undisposeSubdirectoryTree(directory: SubDirectory): void {
 		// Restore deleted subdirectory tree. Need to undispose the current directory first, then get access to the iterator.
 		// This will unmark "deleted" from the subdirectories from top to bottom.
 		directory.undispose();
 		for (const [_, subDirectory] of directory.subdirectories()) {
-			this.undeleteSubDirectoryTree(subDirectory as SubDirectory);
+			this.undisposeSubdirectoryTree(subDirectory as SubDirectory);
 		}
 	}
 
