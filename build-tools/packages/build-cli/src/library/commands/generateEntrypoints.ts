@@ -154,7 +154,6 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 			description:
 				"File name suffix including extension for emitting entrypoint declaration files.",
 			default: optionDefaults.outFileSuffix,
-			parse: parseStringOrFalse,
 		}),
 		node10TypeCompat: Flags.boolean({
 			description: `Optional generation of Node10 resolution compatible type entrypoints matching others.`,
