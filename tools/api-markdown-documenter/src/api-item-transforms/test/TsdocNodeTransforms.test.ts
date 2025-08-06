@@ -18,8 +18,14 @@ const transformOptions: TsdocNodeTransformOptions = {
 	logger: defaultConsoleLogger,
 	contextApiItem: mockApiItem,
 	resolveApiReference: (codeDestination) => ({
-		text: codeDestination.emitAsTsdoc(),
-		target: "<URL>",
+		type: "link",
+		url: "<URL>",
+		children: [
+			{
+				type: "text",
+				value: codeDestination.emitAsTsdoc(),
+			},
+		],
 	}),
 };
 
