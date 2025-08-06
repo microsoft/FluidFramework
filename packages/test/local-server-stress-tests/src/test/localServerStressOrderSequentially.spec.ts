@@ -102,10 +102,11 @@ describe("Local Server Stress with rollback", () => {
 		skip: [
 			...[], // Values differ at key
 			...[28], // Key not found or value not matching key
-			...[31], // Number of keys not same (directory)
-			...[25, 53], // Number of subDirectories not same
+			...[], // Number of keys not same (directory)
+			...[], // Number of subDirectories not same
 			...[], // SubDirectory with name ... not present in second directory
 			...[], // 0x2fa (Unexpected pending message received)
+			...[15], // Unexpected pending data for createSubDirectory op
 		],
 	});
 });

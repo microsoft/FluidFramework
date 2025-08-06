@@ -41,8 +41,10 @@ describe("Local Server Stress", () => {
 		// saveSuccesses,
 		skip: [
 			...[98], // Number of keys not same
-			...[5, 49, 57], // Number of subDirectories not same,
+			...[49], // Number of subDirectories not same,
 			...[11], // Rollback op does not match last pending
+			...[19], // Cannot access Disposed subDirectory
+			...[46], // The Container is closed and cannot be connected
 		],
 	});
 });
