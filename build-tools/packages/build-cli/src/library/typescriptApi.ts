@@ -7,8 +7,8 @@ import type { ExportDeclaration, ExportedDeclarations, JSDoc, SourceFile } from 
 import { Node, SyntaxKind } from "ts-morph";
 
 import type { ApiLevel } from "./apiLevel.js";
-import type { ReleaseTag } from "./releaseTag.js";
-import { isReleaseTag } from "./releaseTag.js";
+import type { ReleaseLevel } from "./releaseLevel.js";
+import { isReleaseLevel } from "./releaseLevel.js";
 
 interface ExportRecord {
 	name: string;
@@ -45,8 +45,19 @@ function isTypeExport(_decl: ExportedDeclarations): boolean {
 	return false;
 }
 
+/**
+ * TSDoc tag details that inform our API support level.
+ */
 interface ApiSupportTagInfo {
-	releaseTag: ReleaseTag;
+	/**
+	 * The release level, derived from a corresponding TSDoc release tag.
+	 */
+	releaseLevel: ReleaseLevel;
+
+	/**
+	 * Whether or not the API is "legacy".
+	 * @see {@link https://fluidframework.com/docs/build/releases-and-apitags#api-support-levels}
+	 */
 	isLegacy: boolean;
 }
 
@@ -56,25 +67,25 @@ interface ApiSupportTagInfo {
  * @returns The tag information, if a release tag is found. Otherwise, `undefined`.
  */
 function getApiTagsFromDocs(jsdocs: JSDoc[]): ApiSupportTagInfo | undefined {
-	let releaseTag: ReleaseTag | undefined;
+	let releaseLevel: ReleaseLevel | undefined;
 	let isLegacy = false;
 	for (const jsdoc of jsdocs) {
 		const tags = jsdoc.getTags();
 		for (const tag of tags) {
 			const tagName = tag.getTagName();
-			if (isReleaseTag(tagName)) {
-				if (releaseTag !== undefined) {
+			if (isReleaseLevel(tagName)) {
+				if (releaseLevel !== undefined) {
 					throw new Error(
-						`Multiple release tags found in JSDoc: ${releaseTag} and ${tagName}. An API must have at most 1 release tag.`,
+						`Multiple release tags found in JSDoc: ${releaseLevel} and ${tagName}. An API must have at most 1 release tag.`,
 					);
 				}
-				releaseTag = tagName;
+				releaseLevel = tagName;
 			} else if (tagName === "legacy") {
 				isLegacy = true;
 			}
 		}
 	}
-	return releaseTag === undefined ? undefined : { releaseTag, isLegacy };
+	return releaseLevel === undefined ? undefined : { releaseLevel: releaseLevel, isLegacy };
 }
 
 /**
@@ -105,7 +116,7 @@ function getNodeApiTags(node: Node): ApiSupportTagInfo | undefined {
 }
 
 function getApiLevelFromTags(tags: ApiSupportTagInfo): ApiLevel {
-	const { releaseTag, isLegacy } = tags;
+	const { releaseLevel: releaseTag, isLegacy } = tags;
 	switch (releaseTag) {
 		case "public": {
 			return isLegacy ? "legacyPublic" : "public";

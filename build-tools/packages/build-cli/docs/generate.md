@@ -243,8 +243,8 @@ FLAGS
                                  generating this entrypoint, set to `false`.
   --outFileBeta=<value>          [default: beta] Base file name for beta entrypoint declaration files. To opt out of
                                  generating this entrypoint, set to `false`.
-  --outFileLegacyAlpha=<value>   [default: legacy] Base file name for legacyAlpha entrypoint declaration files. To opt
-                                 out of generating this entrypoint, set to `false`.
+  --outFileLegacyAlpha=<value>   Base file name for legacyAlpha entrypoint declaration files. To opt out of generating
+                                 this entrypoint, set to `false`.
   --outFileLegacyBeta=<value>    Base file name for legacyBeta entrypoint declaration files. To opt out of generating
                                  this entrypoint, set to `false`.
   --outFileLegacyPublic=<value>  Base file name for legacyPublic entrypoint declaration files. To opt out of generating
