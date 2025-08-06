@@ -45,8 +45,19 @@ function isTypeExport(_decl: ExportedDeclarations): boolean {
 	return false;
 }
 
+/**
+ * TSDoc tag details that inform our API support level.
+ */
 interface ApiSupportTagInfo {
+	/**
+	 * Core release tag.
+	 */
 	releaseTag: ReleaseTag;
+
+	/**
+	 * Whether or not the API is "legacy".
+	 * @see {@link https://fluidframework.com/docs/build/releases-and-apitags#api-support-levels}
+	 */
 	isLegacy: boolean;
 }
 
