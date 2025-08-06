@@ -14,6 +14,7 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
  * @internal
  */
 export interface IBlobManagerLoadInfo {
+	ids?: string[];
 	redirectTable?: [string, string][];
 }
 
@@ -45,8 +46,11 @@ const loadV1 = async (
 	if (tableId) {
 		redirectTableEntries = await readAndParse(context.storage, tableId);
 	}
+	const ids = Object.entries(blobsTree.blobs)
+		.filter(([k, _]) => k !== redirectTableBlobName)
+		.map(([_, v]) => v);
 
-	return { redirectTable: redirectTableEntries };
+	return { ids, redirectTable: redirectTableEntries };
 };
 
 export const toRedirectTable = (
@@ -55,7 +59,7 @@ export const toRedirectTable = (
 ): Map<string, string> => {
 	logger.sendTelemetryEvent({
 		eventName: "AttachmentBlobsLoaded",
-		count: 0,
+		count: blobManagerLoadInfo.ids?.length ?? 0,
 		redirectTable: blobManagerLoadInfo.redirectTable?.length,
 	});
 	return new Map<string, string>(blobManagerLoadInfo.redirectTable);
@@ -67,15 +71,14 @@ export const summarizeBlobManagerState = (
 
 const summarizeV1 = (redirectTable: Map<string, string>): ISummaryTreeWithStats => {
 	const builder = new SummaryTreeBuilder();
+	const storageIds = getStorageIds(redirectTable);
+	for (const storageId of storageIds) {
+		// The attachment is inspectable by storage, which lets it detect that the blob is referenced
+		// and therefore should not be GC'd.
+		builder.addAttachment(storageId);
+	}
 	if (redirectTable.size > 0) {
-		builder.addBlob(
-			redirectTableBlobName,
-			// filter out identity entries
-			// TODO: Filter probably won't be necessary - consider whether it is needed for cleaning some old snapshot format?
-			JSON.stringify(
-				[...redirectTable.entries()].filter(([localId, storageId]) => localId !== storageId),
-			),
-		);
+		builder.addBlob(redirectTableBlobName, JSON.stringify([...redirectTable.entries()]));
 	}
 
 	return builder.getSummaryTree();

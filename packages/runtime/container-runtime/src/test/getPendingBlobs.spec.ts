@@ -41,6 +41,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		assert.strictEqual(Object.values(pendingBlobs)[0].uploadTime, undefined);
 
 		const summaryData = validateSummary(runtime);
+		assert.strictEqual(summaryData.ids.length, 0);
 		assert.strictEqual(summaryData.redirectTable, undefined);
 
 		const runtime2 = new MockRuntime(
@@ -55,6 +56,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		await runtime2.processAll();
 
 		const summaryData2 = validateSummary(runtime2);
+		assert.strictEqual(summaryData2.ids.length, 1);
 		assert.strictEqual(summaryData2.redirectTable?.length, 1);
 	});
 
@@ -74,6 +76,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		assert.ok(Object.values(pendingBlobs)[0].uploadTime);
 
 		const summaryData = validateSummary(runtime);
+		assert.strictEqual(summaryData.ids.length, 0);
 		assert.strictEqual(summaryData.redirectTable, undefined);
 
 		const runtime2 = new MockRuntime(
@@ -88,6 +91,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		await runtime2.processAll();
 
 		const summaryData2 = validateSummary(runtime2);
+		assert.strictEqual(summaryData2.ids.length, 1);
 		assert.strictEqual(summaryData2.redirectTable?.length, 1);
 	});
 
@@ -108,6 +112,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		assert.strictEqual(Object.keys(pendingBlobs).length, 2);
 
 		const summaryData = validateSummary(runtime);
+		assert.strictEqual(summaryData.ids.length, 0);
 		assert.strictEqual(summaryData.redirectTable, undefined);
 
 		const runtime2 = new MockRuntime(
@@ -122,6 +127,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		await runtime2.processAll();
 
 		const summaryData2 = validateSummary(runtime2);
+		assert.strictEqual(summaryData2.ids.length, 2);
 		assert.strictEqual(summaryData2.redirectTable?.length, 2);
 	});
 
@@ -146,6 +152,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		assert.strictEqual(Object.keys(pendingBlobs).length, 3);
 
 		const summaryData = validateSummary(runtime);
+		assert.strictEqual(summaryData.ids.length, 0);
 		assert.strictEqual(summaryData.redirectTable, undefined);
 
 		const runtime2 = new MockRuntime(
@@ -160,6 +167,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		await runtime2.processAll();
 
 		const summaryData2 = validateSummary(runtime2);
+		assert.strictEqual(summaryData2.ids.length, 3);
 		assert.strictEqual(summaryData2.redirectTable?.length, 3);
 	});
 
@@ -178,6 +186,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		assert.strictEqual(Object.values(pendingBlobs)[0].uploadTime, undefined);
 
 		const summaryData = validateSummary(runtime);
+		assert.strictEqual(summaryData.ids.length, 0);
 		assert.strictEqual(summaryData.redirectTable, undefined);
 
 		const runtime2 = new MockRuntime(
@@ -191,6 +200,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		await runtime2.connect(0, true);
 		await runtime2.processAll();
 		const summaryData2 = validateSummary(runtime2);
+		assert.strictEqual(summaryData2.ids.length, 1);
 		assert.strictEqual(summaryData2.redirectTable?.length, 1);
 	});
 
@@ -222,6 +232,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		await runtime2.processAll();
 
 		const summaryData2 = validateSummary(runtime2);
+		assert.strictEqual(summaryData2.ids.length, 1);
 		assert.strictEqual(summaryData2.redirectTable?.length, 1);
 	});
 
@@ -253,6 +264,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		await runtime2.processAll();
 
 		const summaryData2 = validateSummary(runtime2);
+		assert.strictEqual(summaryData2.ids.length, 1);
 		assert.strictEqual(summaryData2.redirectTable?.length, 1);
 	});
 });
