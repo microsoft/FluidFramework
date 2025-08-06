@@ -39,7 +39,7 @@ import type { ApiItemTransformationConfiguration } from "./configuration/index.j
 
 /**
  * Library of transformations from {@link https://github.com/microsoft/tsdoc/blob/main/tsdoc/src/nodes/DocNode.ts| DocNode}s
- * to {@link DocumentationNode}s.
+ * to Markdown.
  */
 
 /**
@@ -97,7 +97,7 @@ export function transformTsdoc(
 }
 
 /**
- * Converts a {@link @microsoft/tsdoc#DocSection} to a {@link SectionNode}.
+ * Converts a {@link @microsoft/tsdoc#DocSection} to a {@link HierarchicalSection}.
  * @remarks Exported only for testing purposes.
  */
 export function transformTsdocSection(

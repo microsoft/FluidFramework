@@ -19,11 +19,8 @@ import {
 import { expect } from "chai";
 
 import type { ApiDocument } from "../../ApiDocument.js";
-import {
-	type DocumentationNode,
-	HeadingNode,
-	SectionNode,
-} from "../../documentation-domain/index.js";
+import type { Section } from "../../mdast/index.js";
+import { createSection } from "../../mdast/index.js";
 import { getHeadingForApiItem } from "../ApiItemTransformUtilities.js";
 import { apiItemToSections } from "../TransformApiItem.js";
 import { transformApiModel } from "../TransformApiModel.js";
@@ -32,7 +29,7 @@ import {
 	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "../configuration/index.js";
-import { betaWarningSpan, wrapInSection } from "../helpers/index.js";
+import { betaWarningSpan } from "../helpers/index.js";
 
 /**
  * Sample "default" configuration.
@@ -127,30 +124,33 @@ describe("ApiItem to Documentation transformation tests", () => {
 		const result = config.transformations[ApiItemKind.Variable](apiVariable, config);
 
 		const expected = [
-			wrapInSection(
-				[
-					wrapInSection([
-						{
-							type: "paragraph",
-							children: [{ type: "text", value: "Test Constant" }],
-						},
-					]),
-					wrapInSection(
-						[
+			createSection({
+				children: [
+					createSection({
+						children: [
+							{
+								type: "paragraph",
+								children: [{ type: "text", value: "Test Constant" }],
+							},
+						],
+					}),
+					createSection({
+						children: [
 							{
 								type: "code",
 								lang: "typescript",
 								value: 'TestConst = "Hello world!"',
 							},
 						],
-						{
+						heading: {
+							type: "sectionHeading",
 							title: "Signature",
 							id: `testconst-signature`,
 						},
-					),
+					}),
 				],
-				getHeadingForApiItem(apiVariable, config),
-			),
+				heading: getHeadingForApiItem(apiVariable, config),
+			}),
 		];
 
 		expect(result).deep.equals(expected);
@@ -170,27 +170,29 @@ describe("ApiItem to Documentation transformation tests", () => {
 		const result = config.transformations[ApiItemKind.Function](apiFunction, config);
 
 		const expected = [
-			wrapInSection(
-				[
+			createSection({
+				children: [
 					// Summary section
-					wrapInSection([
-						{
-							type: "paragraph",
-							children: [{ type: "text", value: "Test function" }],
-						},
-					]),
+					createSection({
+						children: [
+							{
+								type: "paragraph",
+								children: [{ type: "text", value: "Test function" }],
+							},
+						],
+					}),
 
 					// Signature section
-					wrapInSection(
-						[
+					createSection({
+						children: [
 							{
 								type: "code",
 								lang: "typescript",
 								value:
 									"export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;",
 							},
-							new SectionNode(
-								[
+							createSection({
+								children: [
 									{
 										type: "table",
 										children: [
@@ -223,18 +225,22 @@ describe("ApiItem to Documentation transformation tests", () => {
 										],
 									},
 								],
-								new HeadingNode("Type Parameters"),
-							),
+								heading: {
+									type: "sectionHeading",
+									title: "Type Parameters",
+								},
+							}),
 						],
-						{
+						heading: {
+							type: "sectionHeading",
 							title: "Signature",
 							id: `testfunction-signature`,
 						},
-					),
+					}),
 
 					// Parameters table section
-					wrapInSection(
-						[
+					createSection({
+						children: [
 							{
 								type: "table",
 								children: [
@@ -289,15 +295,16 @@ describe("ApiItem to Documentation transformation tests", () => {
 								],
 							},
 						],
-						{
+						heading: {
+							type: "sectionHeading",
 							title: "Parameters",
 							id: "testfunction-parameters",
 						},
-					),
+					}),
 
 					// Returns section
-					wrapInSection(
-						[
+					createSection({
+						children: [
 							{
 								type: "paragraph",
 								children: [{ type: "text", value: "The provided parameter" }],
@@ -311,28 +318,34 @@ describe("ApiItem to Documentation transformation tests", () => {
 								],
 							},
 						],
-						{
+						heading: {
+							type: "sectionHeading",
 							title: "Returns",
 							id: "testfunction-returns",
 						},
-					),
+					}),
 
 					// Throws section
-					wrapInSection(
-						[
+					createSection({
+						children: [
 							{
 								type: "paragraph",
 								children: [{ type: "text", value: "An Error when something bad happens." }],
 							},
 						],
-						{
+						heading: {
+							type: "sectionHeading",
 							title: "Throws",
 							id: `testfunction-throws`,
 						},
-					),
+					}),
 				],
-				{ title: "testFunction", id: "testfunction-function" },
-			),
+				heading: {
+					type: "sectionHeading",
+					title: "testFunction",
+					id: "testfunction-function",
+				},
+			}),
 		];
 
 		expect(result).deep.equals(expected);
@@ -355,41 +368,51 @@ describe("ApiItem to Documentation transformation tests", () => {
 			(childItem) => apiItemToSections(childItem, config),
 		);
 
-		const expected: DocumentationNode[] = [
+		const expected: Section[] = [
 			// Summary section
-			wrapInSection([
-				{
-					type: "paragraph",
-					children: [{ type: "text", value: "Test interface" }],
-				},
-			]),
+			createSection({
+				children: [
+					{
+						type: "paragraph",
+						children: [{ type: "text", value: "Test interface" }],
+					},
+				],
+			}),
 
 			// Signature section
-			wrapInSection(
-				[
+			createSection({
+				children: [
 					{
 						type: "code",
 						lang: "typescript",
 						value: "export interface TestInterface",
 					},
 				],
-				{ title: "Signature", id: "testinterface-signature" },
-			),
+				heading: {
+					type: "sectionHeading",
+					title: "Signature",
+					id: "testinterface-signature",
+				},
+			}),
 
 			// Remarks section
-			wrapInSection(
-				[
+			createSection({
+				children: [
 					{
 						type: "paragraph",
 						children: [{ type: "text", value: "Here are some remarks about the interface" }],
 					},
 				],
-				{ title: "Remarks", id: "testinterface-remarks" },
-			),
+				heading: {
+					type: "sectionHeading",
+					title: "Remarks",
+					id: "testinterface-remarks",
+				},
+			}),
 
 			// Properties section
-			wrapInSection(
-				[
+			createSection({
+				children: [
 					{
 						type: "table",
 
@@ -438,24 +461,29 @@ describe("ApiItem to Documentation transformation tests", () => {
 						],
 					},
 				],
-				{ title: "Properties" },
-			),
+				heading: {
+					type: "sectionHeading",
+					title: "Properties",
+				},
+			}),
 
 			// Property details section
-			wrapInSection(
-				[
-					wrapInSection(
-						[
+			createSection({
+				children: [
+					createSection({
+						children: [
 							// Summary section
-							wrapInSection([
-								{
-									type: "paragraph",
-									children: [{ type: "text", value: "Test optional property" }],
-								},
-							]),
+							createSection({
+								children: [
+									{
+										type: "paragraph",
+										children: [{ type: "text", value: "Test optional property" }],
+									},
+								],
+							}),
 							// Signature section
-							wrapInSection(
-								[
+							createSection({
+								children: [
 									{
 										type: "code",
 										lang: "typescript",
@@ -473,20 +501,25 @@ describe("ApiItem to Documentation transformation tests", () => {
 										],
 									},
 								],
-								{
+								heading: {
+									type: "sectionHeading",
 									title: "Signature",
 									id: "testoptionalinterfaceproperty-signature",
 								},
-							),
+							}),
 						],
-						{
+						heading: {
+							type: "sectionHeading",
 							title: "testOptionalInterfaceProperty",
 							id: "testoptionalinterfaceproperty-propertysignature",
 						},
-					),
+					}),
 				],
-				{ title: "Property Details" },
-			),
+				heading: {
+					type: "sectionHeading",
+					title: "Property Details",
+				},
+			}),
 		];
 
 		expect(result).deep.equals(expected);
@@ -521,30 +554,36 @@ describe("ApiItem to Documentation transformation tests", () => {
 		// - baz (@alpha)
 		// We expect docs to be generated for `foo` and `bar`, but not `baz`, since it's @alpha, and we are filtering those out per our config above.
 		// Also note that child items are listed alphabetically, so we expect `bar` before `foo`.
-		const expected: DocumentationNode[] = [
+		const expected: Section[] = [
 			// Summary section
-			wrapInSection([
-				{
-					type: "paragraph",
-					children: [{ type: "text", value: "Test namespace" }],
-				},
-			]),
+			createSection({
+				children: [
+					{
+						type: "paragraph",
+						children: [{ type: "text", value: "Test namespace" }],
+					},
+				],
+			}),
 
 			// Signature section
-			wrapInSection(
-				[
+			createSection({
+				children: [
 					{
 						type: "code",
 						lang: "typescript",
 						value: "export declare namespace TestNamespace",
 					},
 				],
-				{ title: "Signature", id: "testnamespace-signature" },
-			),
+				heading: {
+					title: "Signature",
+					id: "testnamespace-signature",
+					type: "sectionHeading",
+				},
+			}),
 
 			// Variables section
-			wrapInSection(
-				[
+			createSection({
+				children: [
 					{
 						type: "table",
 
@@ -628,74 +667,80 @@ describe("ApiItem to Documentation transformation tests", () => {
 						],
 					},
 				],
-				{ title: "Variables" },
-			),
+				heading: { title: "Variables", type: "sectionHeading" },
+			}),
 
 			// Variables details section
-			wrapInSection(
-				[
+			createSection({
+				children: [
 					// Details for `bar`
-					wrapInSection(
-						[
+					createSection({
+						children: [
 							// No summary docs on `bar`
 
 							// Beta warning
-							wrapInSection([
-								{
-									type: "paragraph",
-									children: [betaWarningSpan],
-								},
-							]),
+							createSection({
+								children: [
+									{
+										type: "paragraph",
+										children: [betaWarningSpan],
+									},
+								],
+							}),
 							// Signature
-							wrapInSection(
-								[
+							createSection({
+								children: [
 									{
 										type: "code",
 										lang: "typescript",
 										value: 'bar = "bar"',
 									},
 								],
-								{
+								heading: {
 									title: "Signature",
 									id: "bar-signature",
+									type: "sectionHeading",
 								},
-							),
+							}),
 						],
-						{
+						heading: {
 							title: "bar",
 							id: "bar-variable",
+							type: "sectionHeading",
 						},
-					),
+					}),
 					// Details for `foo`
-					wrapInSection(
-						[
+					createSection({
+						children: [
 							// No summary docs on `foo`
 
 							// Signature
-							wrapInSection(
-								[
+							createSection({
+								children: [
 									{
 										type: "code",
 										lang: "typescript",
 										value: 'foo = "foo"',
 									},
 								],
-								{
+								heading: {
 									title: "Signature",
 									id: "foo-signature",
+									type: "sectionHeading",
 								},
-							),
+							}),
 						],
-						{
+						heading: {
 							title: "foo",
 							id: "foo-variable",
+							type: "sectionHeading",
 						},
-					),
+					}),
 
 					// No entry should be included for `baz` because it is `@alpha`
 				],
-				{ title: "Variable Details" },
-			),
+				heading: { title: "Variable Details", type: "sectionHeading" },
+			}),
 		];
 
 		expect(result).deep.equals(expected);
@@ -714,34 +759,36 @@ describe("ApiItem to Documentation transformation tests", () => {
 			apiItem: model.packages[0],
 			documentPath: "test-package/index",
 			contents: [
-				new SectionNode(
-					[
+				createSection({
+					children: [
 						// Breadcrumb
-						new SectionNode([
-							{
-								type: "paragraph",
-								children: [
-									{
-										type: "link",
-										url: "/",
-										children: [{ type: "text", value: "Packages" }],
-									},
-									{
-										type: "text",
-										value: " > ",
-									},
-									{
-										type: "link",
-										url: "/test-package/",
-										children: [{ type: "text", value: "test-package" }],
-									},
-								],
-							},
-						]),
+						createSection({
+							children: [
+								{
+									type: "paragraph",
+									children: [
+										{
+											type: "link",
+											url: "/",
+											children: [{ type: "text", value: "Packages" }],
+										},
+										{
+											type: "text",
+											value: " > ",
+										},
+										{
+											type: "link",
+											url: "/test-package/",
+											children: [{ type: "text", value: "test-package" }],
+										},
+									],
+								},
+							],
+						}),
 
 						// Body
-						new SectionNode(
-							[
+						createSection({
+							children: [
 								{
 									type: "list",
 									ordered: false,
@@ -779,11 +826,17 @@ describe("ApiItem to Documentation transformation tests", () => {
 									],
 								},
 							],
-							new HeadingNode("Entry Points"),
-						),
+							heading: {
+								type: "sectionHeading",
+								title: "Entry Points",
+							},
+						}),
 					],
-					new HeadingNode("test-package"),
-				),
+					heading: {
+						type: "sectionHeading",
+						title: "test-package",
+					},
+				}),
 			],
 		};
 		expect(documents[1]).to.deep.equal(expectedPackageDocument);
@@ -792,43 +845,45 @@ describe("ApiItem to Documentation transformation tests", () => {
 			apiItem: model.packages[0].entryPoints[0],
 			documentPath: "test-package/entry-point-a-entrypoint",
 			contents: [
-				new SectionNode(
-					[
+				createSection({
+					children: [
 						// Breadcrumb
-						new SectionNode([
-							{
-								type: "paragraph",
-								children: [
-									{
-										type: "link",
-										url: "/",
-										children: [{ type: "text", value: "Packages" }],
-									},
-									{
-										type: "text",
-										value: " > ",
-									},
-									{
-										type: "link",
-										url: "/test-package/",
-										children: [{ type: "text", value: "test-package" }],
-									},
-									{
-										type: "text",
-										value: " > ",
-									},
-									{
-										type: "link",
-										url: "/test-package/entry-point-a-entrypoint",
-										children: [{ type: "text", value: "entry-point-a" }],
-									},
-								],
-							},
-						]),
+						createSection({
+							children: [
+								{
+									type: "paragraph",
+									children: [
+										{
+											type: "link",
+											url: "/",
+											children: [{ type: "text", value: "Packages" }],
+										},
+										{
+											type: "text",
+											value: " > ",
+										},
+										{
+											type: "link",
+											url: "/test-package/",
+											children: [{ type: "text", value: "test-package" }],
+										},
+										{
+											type: "text",
+											value: " > ",
+										},
+										{
+											type: "link",
+											url: "/test-package/entry-point-a-entrypoint",
+											children: [{ type: "text", value: "entry-point-a" }],
+										},
+									],
+								},
+							],
+						}),
 
 						// Variables table
-						new SectionNode(
-							[
+						createSection({
+							children: [
 								{
 									type: "table",
 
@@ -888,42 +943,52 @@ describe("ApiItem to Documentation transformation tests", () => {
 									],
 								},
 							],
-							new HeadingNode("Variables"),
-						),
+							heading: { title: "Variables", type: "sectionHeading" },
+						}),
 
 						// Variables details
-						new SectionNode(
-							[
-								new SectionNode(
-									[
+						createSection({
+							children: [
+								createSection({
+									children: [
 										// Summary
-										new SectionNode([
-											{
-												type: "paragraph",
-												children: [{ type: "text", value: "Test Constant" }],
-											},
-										]),
+										createSection({
+											children: [
+												{
+													type: "paragraph",
+													children: [{ type: "text", value: "Test Constant" }],
+												},
+											],
+										}),
 
 										// Signature
-										new SectionNode(
-											[
+										createSection({
+											children: [
 												{
 													type: "code",
 													lang: "typescript",
 													value: 'hello = "Hello"',
 												},
 											],
-											new HeadingNode("Signature", "hello-signature"),
-										),
+											heading: {
+												title: "Signature",
+												id: "hello-signature",
+												type: "sectionHeading",
+											},
+										}),
 									],
-									new HeadingNode("hello", "hello-variable"),
-								),
+									heading: {
+										title: "hello",
+										id: "hello-variable",
+										type: "sectionHeading",
+									},
+								}),
 							],
-							new HeadingNode("Variable Details"),
-						),
+							heading: { title: "Variable Details", type: "sectionHeading" },
+						}),
 					],
-					new HeadingNode("entry-point-a"),
-				),
+					heading: { title: "entry-point-a", type: "sectionHeading" },
+				}),
 			],
 		};
 		expect(documents[2]).to.deep.equal(expectedEntryPointADocument);
@@ -932,46 +997,47 @@ describe("ApiItem to Documentation transformation tests", () => {
 			apiItem: model.packages[0].entryPoints[1],
 			documentPath: "test-package/entry-point-b-entrypoint",
 			contents: [
-				new SectionNode(
-					[
+				createSection({
+					children: [
 						// Breadcrumb
-						new SectionNode([
-							{
-								type: "paragraph",
-								children: [
-									{
-										type: "link",
-										url: "/",
-										children: [{ type: "text", value: "Packages" }],
-									},
-									{
-										type: "text",
-										value: " > ",
-									},
-									{
-										type: "link",
-										url: "/test-package/",
-										children: [{ type: "text", value: "test-package" }],
-									},
-									{
-										type: "text",
-										value: " > ",
-									},
-									{
-										type: "link",
-										url: "/test-package/entry-point-b-entrypoint",
-										children: [{ type: "text", value: "entry-point-b" }],
-									},
-								],
-							},
-						]),
+						createSection({
+							children: [
+								{
+									type: "paragraph",
+									children: [
+										{
+											type: "link",
+											url: "/",
+											children: [{ type: "text", value: "Packages" }],
+										},
+										{
+											type: "text",
+											value: " > ",
+										},
+										{
+											type: "link",
+											url: "/test-package/",
+											children: [{ type: "text", value: "test-package" }],
+										},
+										{
+											type: "text",
+											value: " > ",
+										},
+										{
+											type: "link",
+											url: "/test-package/entry-point-b-entrypoint",
+											children: [{ type: "text", value: "entry-point-b" }],
+										},
+									],
+								},
+							],
+						}),
 
 						// Variables table
-						new SectionNode(
-							[
+						createSection({
+							children: [
 								{
 									type: "table",
-
 									children: [
 										{
 											type: "tableRow",
@@ -1015,42 +1081,55 @@ describe("ApiItem to Documentation transformation tests", () => {
 									],
 								},
 							],
-							new HeadingNode("Variables"),
-						),
+							heading: { title: "Variables", type: "sectionHeading" },
+						}),
 
 						// Variables details
-						new SectionNode(
-							[
-								new SectionNode(
-									[
+						createSection({
+							children: [
+								createSection({
+									children: [
 										// Summary
-										new SectionNode([
-											{
-												type: "paragraph",
-												children: [{ type: "text", value: "Test Constant" }],
-											},
-										]),
+										createSection({
+											children: [
+												{
+													type: "paragraph",
+													children: [{ type: "text", value: "Test Constant" }],
+												},
+											],
+										}),
 
 										// Signature
-										new SectionNode(
-											[
+										createSection({
+											children: [
 												{
 													type: "code",
 													lang: "typescript",
 													value: 'world = "world"',
 												},
 											],
-											new HeadingNode("Signature", "world-signature"),
-										),
+											heading: {
+												title: "Signature",
+												id: "world-signature",
+												type: "sectionHeading",
+											},
+										}),
 									],
-									new HeadingNode("world", "world-variable"),
-								),
+									heading: {
+										title: "world",
+										id: "world-variable",
+										type: "sectionHeading",
+									},
+								}),
 							],
-							new HeadingNode("Variable Details"),
-						),
+							heading: {
+								title: "Variable Details",
+								type: "sectionHeading",
+							},
+						}),
 					],
-					new HeadingNode("entry-point-b"),
-				),
+					heading: { title: "entry-point-b", type: "sectionHeading" },
+				}),
 			],
 		};
 		expect(documents[3]).to.deep.equal(expectedEntryPointBDocument);

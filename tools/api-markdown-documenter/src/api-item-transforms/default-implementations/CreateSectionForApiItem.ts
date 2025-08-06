@@ -5,7 +5,7 @@
 
 import { type ApiItem, ReleaseTag } from "@microsoft/api-extractor-model";
 
-import type { SectionNode } from "../../documentation-domain/index.js";
+import type { Section } from "../../mdast/index.js";
 import { getEffectiveReleaseLevel } from "../../utilities/index.js";
 import {
 	doesItemRequireOwnDocument,
@@ -22,7 +22,6 @@ import {
 	createSignatureSection,
 	createSummarySection,
 	createThrowsSection,
-	wrapInSection,
 } from "../helpers/index.js";
 
 /**
@@ -56,10 +55,10 @@ import {
  */
 export function createSectionForApiItem(
 	apiItem: ApiItem,
-	itemSpecificContent: SectionNode[] | undefined,
+	itemSpecificContent: Section[] | undefined,
 	config: ApiItemTransformationConfiguration,
-): SectionNode[] {
-	const sections: SectionNode[] = [];
+): Section[] {
+	const sections: Section[] = [];
 
 	// Render summary comment (if any)
 	const summary = createSummarySection(apiItem, config);
@@ -76,23 +75,25 @@ export function createSectionForApiItem(
 	// Render alpha/beta notice if applicable
 	const releaseLevel = getEffectiveReleaseLevel(apiItem);
 	if (releaseLevel === ReleaseTag.Alpha) {
-		sections.push(
-			wrapInSection([
+		sections.push({
+			type: "section",
+			children: [
 				{
 					type: "paragraph",
 					children: [alphaWarningSpan],
 				},
-			]),
-		);
+			],
+		});
 	} else if (releaseLevel === ReleaseTag.Beta) {
-		sections.push(
-			wrapInSection([
+		sections.push({
+			type: "section",
+			children: [
 				{
 					type: "paragraph",
 					children: [betaWarningSpan],
 				},
-			]),
-		);
+			],
+		});
 	}
 
 	// Render signature (if any)
@@ -135,5 +136,11 @@ export function createSectionForApiItem(
 	// Document items have their headings handled specially.
 	return doesItemRequireOwnDocument(apiItem, config.hierarchy)
 		? sections
-		: [wrapInSection(sections, getHeadingForApiItem(apiItem, config))];
+		: [
+				{
+					type: "section",
+					children: sections,
+					heading: getHeadingForApiItem(apiItem, config),
+				},
+			];
 }
