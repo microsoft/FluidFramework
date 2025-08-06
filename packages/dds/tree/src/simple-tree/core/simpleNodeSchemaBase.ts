@@ -12,7 +12,6 @@ import type { NodeKind, NodeSchemaMetadata } from "./treeNodeSchema.js";
  * @public
  * @sealed
  */
-
 export interface SimpleNodeSchemaBase<
 	out TNodeKind extends NodeKind,
 	out TCustomMetadata = unknown,
