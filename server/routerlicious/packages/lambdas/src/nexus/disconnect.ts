@@ -165,6 +165,9 @@ export async function disconnectDocument(
 ): Promise<void> {
 	// Clear token expiration timer on disconnection
 	nexusLambdaConnectionStateTrackers.expirationTimer.clear();
+	// Clear preconnect TTL timer on disconnection
+	nexusLambdaConnectionStateTrackers.preconnectTTLTimer.clear();
+
 	// Iterate over connection and room maps to disconnect and store connectivity time.
 	const removeAndStoreP: Promise<void>[] = [
 		// Disconnect any orderer connections

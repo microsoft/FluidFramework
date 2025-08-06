@@ -4,7 +4,7 @@
  */
 
 /**
- * This module bundles utilities for laying out {@link DocumentationNode} content for API items as a single
+ * This module bundles utilities for laying out Markdown content for API items as a single
  * library export.
  */
 

@@ -116,6 +116,7 @@ import {
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
+import { FluidClientVersion } from "../../codec/index.js";
 
 const enableSchemaValidation = true;
 
@@ -2359,6 +2360,27 @@ describe("SharedTree", () => {
 			},
 			validateUsageError(/^Cannot attach while a transaction is in progress/),
 		);
+	});
+
+	it("summarize with pre-attach removed nodes", () => {
+		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+		const sharedObject = configuredSharedTree({
+			jsonValidator: typeboxValidator,
+			forest: ForestTypeExpensiveDebug,
+			oldestCompatibleClient: FluidClientVersion.v2_52,
+		}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
+		const tree = sharedObject.getFactory().create(runtime, "tree");
+		const runtimeFactory = new MockContainerRuntimeFactory();
+		runtimeFactory.createContainerRuntime(runtime);
+		const view = asTreeViewAlpha(
+			tree.viewWith(new TreeViewConfiguration({ schema: StringArray })),
+		);
+		view.initialize(["A"]);
+		view.root.removeAt(0);
+		// The fork prevents the trimming of the commit that removes "A"
+		const f = view.fork();
+		tree.getAttachSummary();
+		f.dispose();
 	});
 
 	it("breaks on exceptions", () => {

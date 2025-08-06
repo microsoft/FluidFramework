@@ -23,7 +23,7 @@ import { withEditor } from "./fieldKindWithEditor.js";
 import { isNeverTree } from "./isNeverTree.js";
 
 /**
- * @returns true iff `superset` is a superset of `original`.
+ * Returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  *
@@ -65,12 +65,7 @@ export function allowsTreeSuperset(
 
 	if (original instanceof MapNodeStoredSchema) {
 		if (superset instanceof MapNodeStoredSchema) {
-			return allowsFieldSuperset(
-				policy,
-				originalData,
-				normalizeField(original.mapFields),
-				normalizeField(superset.mapFields),
-			);
+			return allowsFieldSuperset(policy, originalData, original.mapFields, superset.mapFields);
 		}
 		return false;
 	}
@@ -78,14 +73,7 @@ export function allowsTreeSuperset(
 	assert(original instanceof ObjectNodeStoredSchema, 0x895 /* unsupported node kind */);
 	if (superset instanceof MapNodeStoredSchema) {
 		for (const [_key, field] of original.objectNodeFields) {
-			if (
-				!allowsFieldSuperset(
-					policy,
-					originalData,
-					normalizeField(field),
-					normalizeField(superset.mapFields),
-				)
-			) {
+			if (!allowsFieldSuperset(policy, originalData, field, superset.mapFields)) {
 				return false;
 			}
 		}
@@ -102,13 +90,13 @@ export function allowsTreeSuperset(
 				originalData,
 				original.objectNodeFields.get(originalField) ??
 					fail(0xb17 /* missing expected field */),
-				normalizeField(undefined),
+				storedEmptyFieldSchema,
 			),
 		bExtra: (supersetField) =>
 			allowsFieldSuperset(
 				policy,
 				originalData,
-				normalizeField(undefined),
+				storedEmptyFieldSchema,
 				superset.objectNodeFields.get(supersetField) ??
 					fail(0xb18 /* missing expected field */),
 			),
@@ -123,7 +111,7 @@ export function allowsTreeSuperset(
 }
 
 /**
- * @returns true iff `superset` is a superset of `original`.
+ * Returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  */
@@ -135,7 +123,7 @@ export function allowsValueSuperset(
 }
 
 /**
- * @returns true iff `superset` is a superset of `original`.
+ * Returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  */
@@ -151,7 +139,7 @@ export function allowsFieldSuperset(
 }
 
 /**
- * @returns true iff `superset` is a superset of `original`.
+ * Returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  */
@@ -168,7 +156,7 @@ export function allowsTreeSchemaIdentifierSuperset(
 }
 
 /**
- * @returns true iff `superset` is a superset of `original`.
+ * Returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  *
@@ -182,7 +170,6 @@ export function allowsRepoSuperset(
 	superset: TreeStoredSchema,
 ): boolean {
 	{
-		// TODO: I think its ok to use the field from superset here, but I should confirm it is, and document why.
 		if (
 			!allowsFieldSuperset(
 				policy,
@@ -194,17 +181,15 @@ export function allowsRepoSuperset(
 			return false;
 		}
 	}
+	// Check if all schema in original are included in superset, and permit a superset of the node content.
+	// Note that any schema from `original.nodeSchema` can be used as the schema for a node at the root of a detached field,
+	// so we must check all of them, even if they are not reachable from the root field schema.
 	for (const [key, schema] of original.nodeSchema) {
-		// TODO: I think its ok to use the tree from superset here, but I should confirm it is, and document why.
 		if (!allowsTreeSuperset(policy, original, schema, superset.nodeSchema.get(key))) {
 			return false;
 		}
 	}
+	// Any schema in superset not in original are already known to be superset of original since they are "never" due to being missing.
+	// Therefore, we do not need to check them.
 	return true;
-}
-
-export function normalizeField(
-	schema: TreeFieldStoredSchema | undefined,
-): TreeFieldStoredSchema {
-	return schema ?? storedEmptyFieldSchema;
 }

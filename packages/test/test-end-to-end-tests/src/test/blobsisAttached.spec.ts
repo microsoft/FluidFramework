@@ -127,7 +127,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 						assert.fail("Should succeed");
 					}
 					const pendingState = (await runtimeOf(dataStore1).getPendingLocalState({
-						notifyImminentClosure: true,
+						notifyImminentClosure: false,
 					})) as IPendingRuntimeState | undefined;
 					assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 				});
@@ -168,7 +168,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 						stringToBuffer(testString, "utf-8"),
 					);
 					const pendingStateP: any = runtimeOf(dataStore1).getPendingLocalState({
-						notifyImminentClosure: true,
+						notifyImminentClosure: false,
 					});
 					map.set("key", blobHandle);
 					const pendingState = await pendingStateP;

@@ -6,8 +6,9 @@
 import type { ApiItem } from "@microsoft/api-extractor-model";
 import type { DocDeclarationReference } from "@microsoft/tsdoc";
 
+import type { ApiDocument } from "../ApiDocument.js";
 import type { Link } from "../Link.js";
-import { DocumentNode, type SectionNode } from "../documentation-domain/index.js";
+import type { Section } from "../mdast/index.js";
 import { resolveSymbolicReference } from "../utilities/index.js";
 
 import {
@@ -16,34 +17,42 @@ import {
 	shouldItemBeIncluded,
 } from "./ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "./configuration/index.js";
-import { wrapInSection } from "./helpers/index.js";
 
 /**
- * Creates a {@link DocumentNode} representing the provided API item.
+ * Creates a {@link ApiDocument} representing the provided API item.
  *
  * @param documentItem - The API item to be documented.
  * @param sections - An array of sections to be included in the document.
  * @param config - The transformation configuration for the API item.
  *
- * @returns A {@link DocumentNode} representing the constructed document.
+ * @returns A {@link ApiDocument} representing the constructed document.
  */
 export function createDocument(
 	documentItem: ApiItem,
-	sections: SectionNode[],
+	sections: Section[],
 	config: ApiItemTransformationConfiguration,
-): DocumentNode {
+): ApiDocument {
 	const title = config.getHeadingTextForItem(documentItem);
 
 	// Wrap sections in a root section if top-level heading is requested.
-	const contents = config.includeTopLevelDocumentHeading
-		? [wrapInSection(sections, { title })]
+	const contents: Section[] = config.includeTopLevelDocumentHeading
+		? [
+				{
+					type: "section",
+					children: sections,
+					heading: {
+						type: "sectionHeading",
+						title,
+					},
+				},
+			]
 		: sections;
 
-	return new DocumentNode({
+	return {
 		apiItem: documentItem,
-		children: contents,
+		contents,
 		documentPath: getDocumentPathForApiItem(documentItem, config.hierarchy),
-	});
+	};
 }
 
 /**
@@ -78,11 +87,11 @@ export function resolveSymbolicLink(
 }
 
 /**
- * Checks for duplicate {@link DocumentNode.documentPath}s among the provided set of documents.
+ * Checks for duplicate {@link ApiDocument.documentPath}s among the provided set of documents.
  * @throws If any duplicates are found.
  */
-export function checkForDuplicateDocumentPaths(documents: readonly DocumentNode[]): void {
-	const documentPathMap = new Map<string, DocumentNode[]>();
+export function checkForDuplicateDocumentPaths(documents: readonly ApiDocument[]): void {
+	const documentPathMap = new Map<string, ApiDocument[]>();
 	for (const document of documents) {
 		let entries = documentPathMap.get(document.documentPath);
 		if (entries === undefined) {
@@ -105,9 +114,7 @@ export function checkForDuplicateDocumentPaths(documents: readonly DocumentNode[
 	for (const [documentPath, documentsUnderPath] of duplicates) {
 		errorMessageLines.push(`- ${documentPath}`);
 		for (const document of documentsUnderPath) {
-			const errorEntry = document.apiItem
-				? `${document.apiItem.displayName} (${document.apiItem.kind})`
-				: "(No corresponding API item)";
+			const errorEntry = `${document.apiItem.displayName} (${document.apiItem.kind})`;
 			errorMessageLines.push(`  - ${errorEntry}`);
 		}
 	}
