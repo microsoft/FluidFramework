@@ -16152,9 +16152,6 @@ importers:
       debug:
         specifier: ^4.3.4
         version: 4.4.0(supports-color@8.1.1)
-      jwt-decode:
-        specifier: ^4.0.0
-        version: 4.0.0
       proper-lockfile:
         specifier: ^4.1.2
         version: 4.1.2
