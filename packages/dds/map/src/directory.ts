@@ -1386,21 +1386,23 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			return subDir;
 		}
 
-		const pendingSubDirectoryCreate: PendingSubDirectoryCreate = {
-			type: "createSubDirectory",
-			path: this.absolutePath,
-			subdirName,
-			subdir: subDir,
-		};
-		this.pendingSubDirectoryData.push(pendingSubDirectoryCreate);
+		if (isNewSubDirectory) {
+			const pendingSubDirectoryCreate: PendingSubDirectoryCreate = {
+				type: "createSubDirectory",
+				path: this.absolutePath,
+				subdirName,
+				subdir: subDir,
+			};
+			this.pendingSubDirectoryData.push(pendingSubDirectoryCreate);
+			const op: IDirectoryCreateSubDirectoryOperation = {
+				subdirName,
+				path: this.absolutePath,
+				type: "createSubDirectory",
+			};
+			this.submitCreateSubDirectoryMessage(op);
+			this.emit("subDirectoryCreated", subdirName, true, this);
+		}
 
-		const op: IDirectoryCreateSubDirectoryOperation = {
-			subdirName,
-			path: this.absolutePath,
-			type: "createSubDirectory",
-		};
-		this.submitCreateSubDirectoryMessage(op);
-		this.emit("subDirectoryCreated", subdirName, true, this);
 		return subDir;
 	}
 
@@ -1427,12 +1429,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	public getSubDirectory(subdirName: string): IDirectory | undefined {
 		this.throwIfDisposed();
 		const subDir = this.getOptimisticSubDirectory(subdirName);
-		// When a client gets access to a subdirectory, add its client ID to enable
-		// the subdirectory to process messages from this client
-		// if (subDir && this.directory.isAttached()) {
-		// 	const clientId = this.runtime.clientId ?? "detached";
-		// 	subDir.clientIds.add(clientId);
-		// }
 		return subDir;
 	}
 
@@ -2176,11 +2172,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					this.logger,
 				);
 			} else {
+				// If the subdirectory already optimistically exists, we don't need to create it again.
+				// This can happen if remote clients also create the same subdir
 				if (subDir.disposed) {
 					this.undeleteSubDirectoryTree(subDir);
 				}
-				// If the subdirectory already optimistically exists, we don't need to create it again.
-				// This can happen if remote clients also create the same subdir
 				subDir.clientIds.add(msg.clientId);
 			}
 			this.registerEventsOnSubDirectory(subDir, op.subdirName);
@@ -2230,7 +2226,23 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		const previousValue = this.sequencedSubdirectories.get(op.subdirName);
 		if (previousValue === undefined) {
-			// Subdirectory does not exist
+			// We are trying to delete a subdirectory that does not exist.
+			// If this is a local delete, we should remove the pending delete entry.
+			// This could happen if we already processed a remote delete message for
+			// the same subdirectory.
+			if (local) {
+				const pendingEntryIndex = this.pendingSubDirectoryData.findIndex(
+					(entry) => entry.subdirName === op.subdirName,
+				);
+				const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
+				assert(
+					pendingEntry !== undefined &&
+						pendingEntry.type === "deleteSubDirectory" &&
+						pendingEntry.subdirName === op.subdirName,
+					"Got a local deleteSubDirectory message we weren't expecting",
+				);
+				this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
+			}
 			return;
 		}
 
@@ -2399,6 +2411,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			);
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
 			if (pendingEntry !== undefined) {
+				assert(
+					pendingEntry.type === "createSubDirectory",
+					"pending entry should be createSubDirectory",
+				);
+				// We should add the client id, since when reconnecting it can be different
+				pendingEntry.subdir.clientIds.add(this.runtime.clientId ?? "detached");
+				// We also need to undelete the subdirectory tree if it was previously deleted
+				this.undeleteSubDirectoryTree(pendingEntry.subdir);
 				this.submitCreateSubDirectoryMessage(op);
 			}
 		} else if (localOpMetadata.type === "deleteSubDir") {
@@ -2631,8 +2651,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		return (
 			(msg.clientId !== null && this.clientIds.has(msg.clientId)) ||
 			this.clientIds.has("detached") ||
-			(isAcknowledgedOrDetached(this.seqData) &&
-				this.seqData.seq <= msg.referenceSequenceNumber)
+			(this.seqData.seq !== -1 && this.seqData.seq <= msg.referenceSequenceNumber)
 		);
 	}
 
@@ -2651,22 +2670,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 		// Dispose the subdirectory tree. This will dispose the subdirectories from bottom to top.
 		const subDirectories = directory.subdirectories();
-		for (const [subdirName, subDirectory] of subDirectories) {
-			if (
-				this.pendingSubDirectoryData.some(
-					(entry) => entry.subdirName === subdirName && entry.type === "createSubDirectory",
-				)
-			) {
-				// If the directory is pending, we do not dispose it, as it will be restored later.
-				return;
-			}
-
+		for (const [_, subDirectory] of subDirectories) {
 			this.disposeSubDirectoryTree(subDirectory as SubDirectory);
 		}
 
-		// We need to reset the creation seqNum, clientSeqNum and client ids of
-		// creators as the previous directory is getting deleted and we will initialize again when
-		// we will receive op for the create again.
+		// We need to reset the seqData as the previous directory is getting deleted and we will
+		// initialize again when we will receive op for the create again.
 		directory.seqData.seq = -1;
 		directory.seqData.clientSeq = -1;
 		directory.clearSubDirectorySequencedData();
@@ -2685,9 +2694,17 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 	}
 
+	/**
+	 * Clears the sequenced data of a subdirectory.
+	 * We do this when a subdirectory is deleted.
+	 * Notably we keep the pendingStorageData in case the delete
+	 * operation is rolled back.
+	 */
 	public clearSubDirectorySequencedData(): void {
 		this.sequencedStorageData.clear();
 		this.sequencedSubdirectories.clear();
+		// Also clear the pending subdirectory data
+		// this.pendingSubDirectoryData.length = 0;
 		this.clientIds.clear();
 		this.clientIds.add(this.runtime.clientId ?? "detached");
 	}
