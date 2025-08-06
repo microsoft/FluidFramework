@@ -27,25 +27,46 @@ import type {
 // 	G_Internal,
 // } from "@fluidframework/test-package/internal";
 
-// OUTPUT FOR NEW SETUP (with both legacy-beta and legacy-alpha outputs):
+// OUTPUT FOR NEW SETUP (with both legacy-beta ["/legacy"] and legacy-alpha ["/legacy/alpha"] outputs):
 //
-// TODO
+// import type { A_Public } from "@fluidframework/test-package";
+// import type { D_LegacyPublic, E_LegacyBeta } from "@fluidframework/test-package/legacy";
+// import type { B_Beta } from "@fluidframework/test-package/beta";
+// import type { C_Alpha } from "@fluidframework/test-package/alpha";
+// import type { F_LegacyAlpha } from "@fluidframework/test-package/legacy/alpha";
+// import type {
+// 	G_Internal,
+// } from "@fluidframework/test-package/internal";
 
-// OUTPUT FOR NEW SETUP (with only legacy-beta output):
-//
-// TODO
 
-// OUTPUT FOR NEW SETUP (with only legacy-alpha output):
+// OUTPUT FOR NEW SETUP (with only legacy-alpha ["/legacy"] output):
 //
-// TODO
+// import type { A_Public } from "@fluidframework/test-package";
+// import type { D_LegacyPublic, E_LegacyBeta, F_LegacyAlpha } from "@fluidframework/test-package/legacy";
+// import type { B_Beta } from "@fluidframework/test-package/beta";
+// import type { C_Alpha } from "@fluidframework/test-package/alpha";
+// import type {
+// 	G_Internal,
+// } from "@fluidframework/test-package/internal";
 
 // OUTPUT FOR CURRENT SETUP:
 //
-// TODO
+// import type { A_Public } from "@fluidframework/test-package";
+// import type { D_LegacyPublic, E_LegacyBeta, F_LegacyAlpha } from "@fluidframework/test-package/legacy";
+// import type { B_Beta } from "@fluidframework/test-package/beta";
+// import type { C_Alpha } from "@fluidframework/test-package/alpha";
+// import type {
+// 	G_Internal,
+// } from "@fluidframework/test-package/internal";
 
-// OUTPUT FOR PRE-@legacy SETUP:
+// OUTPUT FOR PRE-@legacy SETUP ("@alpha" -> "/legacy"):
 //
-// TODO
+// import type { A_Public } from "@fluidframework/test-package";
+// import type { C_Alpha, D_LegacyPublic, E_LegacyBeta, F_LegacyAlpha } from "@fluidframework/test-package/legacy";
+// import type { B_Beta } from "@fluidframework/test-package/beta";
+// import type {
+// 	G_Internal,
+// } from "@fluidframework/test-package/internal";
 
 /**
  * @internal

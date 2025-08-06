@@ -25,25 +25,45 @@ import type {
 // 	G_Internal,
 // } from "@fluidframework/test-package/internal";
 
-// OUTPUT FOR NEW SETUP (with both legacy-beta and legacy-alpha outputs):
+// OUTPUT FOR NEW SETUP (with both legacy-beta ["/legacy"] and legacy-alpha ["/legacy/alpha"] outputs):
 //
-// TODO
+// import { C_Alpha } from "@fluidframework/test-package/alpha";
+// import { D_LegacyPublic, E_LegacyBeta } from "@fluidframework/test-package/legacy";
+// import type { B_Beta } from "@fluidframework/test-package/beta";
+// import { F_LegacyAlpha } from "@fluidframework/test-package/legacy/alpha";
+// import type { A_Public } from "@fluidframework/test-package";
+// import type {
+// 	G_Internal,
+// } from "@fluidframework/test-package/internal";
 
-// OUTPUT FOR NEW SETUP (with only legacy-beta output):
+// OUTPUT FOR NEW SETUP (with only legacy-alpha ["/legacy"] output):
 //
-// TODO
-
-// OUTPUT FOR NEW SETUP (with only legacy-alpha output):
-//
-// TODO
+// import { C_Alpha } from "@fluidframework/test-package/alpha";
+// import { D_LegacyPublic, E_LegacyBeta, F_LegacyAlpha } from "@fluidframework/test-package/legacy";
+// import type { B_Beta } from "@fluidframework/test-package/beta";
+// import type { A_Public } from "@fluidframework/test-package";
+// import type {
+// 	G_Internal,
+// } from "@fluidframework/test-package/internal";
 
 // OUTPUT FOR CURRENT SETUP:
 //
-// TODO
+// import { C_Alpha } from "@fluidframework/test-package/alpha";
+// import { D_LegacyPublic, E_LegacyBeta, F_LegacyAlpha } from "@fluidframework/test-package/legacy";
+// import type { B_Beta } from "@fluidframework/test-package/beta";
+// import type { A_Public } from "@fluidframework/test-package";
+// import type {
+// 	G_Internal,
+// } from "@fluidframework/test-package/internal";
 
 // OUTPUT FOR PRE-@legacy SETUP:
 //
-// TODO
+// import { D_LegacyPublic, E_LegacyBeta, C_Alpha, F_LegacyAlpha } from "@fluidframework/test-package/legacy";
+// import type { B_Beta } from "@fluidframework/test-package/beta";
+// import type { A_Public } from "@fluidframework/test-package";
+// import type {
+// 	G_Internal,
+// } from "@fluidframework/test-package/internal";
 
 /**
  * @internal
