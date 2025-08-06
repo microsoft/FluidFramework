@@ -29,13 +29,15 @@
         <ul>
           <li>Good link (no alias): <a href="/test-suite-a/testclass-class">TestClass</a></li>
           <li>Good link (with alias): <a href="/test-suite-a/#testfunction-function">function alias text</a></li>
-          <li>Bad link (no alias): <i>InvalidItem</i></li>
-          <li>Bad link (with alias): <i>even though I link to an invalid item, I would still like this text to be rendered</i></li>
+          <li>Bad link (no alias): <em>InvalidItem</em></li>
+          <li>Bad link (with alias): <em>even though I link to an invalid item, I would still like this text to be rendered</em></li>
         </ul>
       </section>
       <section>
         <h2 id="test-suite-a-example">Example</h2>
-        <p>A test example</p><code>const foo = bar;</code>
+        <p>A test example</p>
+        <pre><code class="language-typescript">const foo = bar;
+</code></pre>
       </section>
       <section>
         <h2>Interfaces</h2>
@@ -235,10 +237,12 @@
             <p>Test function</p>
           </section>
           <section>
-            <p><b>WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.</b></p>
+            <p><strong>WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.</strong></p>
           </section>
           <section>
-            <h4 id="testfunction-signature">Signature</h4><code>export declare function testFunction&#x3C;TTypeParameter extends TestInterface = TestInterface>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;</code>
+            <h4 id="testfunction-signature">Signature</h4>
+            <pre><code class="language-typescript">export declare function testFunction&#x3C;TTypeParameter extends TestInterface = TestInterface>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
+</code></pre>
             <section>
               <h5>Type Parameters</h5>
               <table>
@@ -295,7 +299,7 @@
           <section>
             <h4 id="testfunction-returns">Returns</h4>
             <p>The provided parameter</p>
-            <p><b>Return type</b>: TTypeParameter</p>
+            <p><strong>Return type</strong>: TTypeParameter</p>
           </section>
           <section>
             <h4 id="testfunction-throws">Throws</h4>
@@ -308,12 +312,17 @@
             <p>Test function that returns an inline type</p>
           </section>
           <section>
-            <h4 id="testfunctionreturninginlinetype-signature">Signature</h4><code>export declare function testFunctionReturningInlineType(): {<br>foo: number;<br>bar: TestEnum;<br>};</code>
+            <h4 id="testfunctionreturninginlinetype-signature">Signature</h4>
+            <pre><code class="language-typescript">export declare function testFunctionReturningInlineType(): {
+    foo: number;
+    bar: TestEnum;
+};
+</code></pre>
           </section>
           <section>
             <h4 id="testfunctionreturninginlinetype-returns">Returns</h4>
             <p>An inline type</p>
-            <p><b>Return type</b>: { foo: number; bar: <a href="/test-suite-a/testenum-enum">TestEnum</a>; }</p>
+            <p><strong>Return type</strong>: { foo: number; bar: <a href="/test-suite-a/testenum-enum">TestEnum</a>; }</p>
           </section>
         </section>
         <section>
@@ -322,16 +331,18 @@
             <p>Test function that returns an inline type</p>
           </section>
           <section>
-            <p><b>WARNING: This API is deprecated and will be removed in a future release.</b></p>
+            <p><strong>WARNING: This API is deprecated and will be removed in a future release.</strong></p>
             <p>This is a test deprecation notice. Here is a <a href="/test-suite-a/#testfunctionreturninguniontype-function">link</a> to something else!</p>
           </section>
           <section>
-            <h4 id="testfunctionreturningintersectiontype-signature">Signature</h4><code>export declare function testFunctionReturningIntersectionType(): TestEmptyInterface &#x26; TestInterfaceWithTypeParameter&#x3C;number>;</code>
+            <h4 id="testfunctionreturningintersectiontype-signature">Signature</h4>
+            <pre><code class="language-typescript">export declare function testFunctionReturningIntersectionType(): TestEmptyInterface &#x26; TestInterfaceWithTypeParameter&#x3C;number>;
+</code></pre>
           </section>
           <section>
             <h4 id="testfunctionreturningintersectiontype-returns">Returns</h4>
             <p>an intersection type</p>
-            <p><b>Return type</b>: <a href="/test-suite-a/testemptyinterface-interface">TestEmptyInterface</a> &#x26; <a href="/test-suite-a/testinterfacewithtypeparameter-interface">TestInterfaceWithTypeParameter</a>&#x3C;number></p>
+            <p><strong>Return type</strong>: <a href="/test-suite-a/testemptyinterface-interface">TestEmptyInterface</a> &#x26; <a href="/test-suite-a/testinterfacewithtypeparameter-interface">TestInterfaceWithTypeParameter</a>&#x3C;number></p>
           </section>
         </section>
         <section>
@@ -340,12 +351,14 @@
             <p>Test function that returns an inline type</p>
           </section>
           <section>
-            <h4 id="testfunctionreturninguniontype-signature">Signature</h4><code>export declare function testFunctionReturningUnionType(): string | TestInterface;</code>
+            <h4 id="testfunctionreturninguniontype-signature">Signature</h4>
+            <pre><code class="language-typescript">export declare function testFunctionReturningUnionType(): string | TestInterface;
+</code></pre>
           </section>
           <section>
             <h4 id="testfunctionreturninguniontype-returns">Returns</h4>
             <p>A union type</p>
-            <p><b>Return type</b>: string | <a href="/test-suite-a/testinterface-interface">TestInterface</a></p>
+            <p><strong>Return type</strong>: string | <a href="/test-suite-a/testinterface-interface">TestInterface</a></p>
           </section>
         </section>
       </section>
@@ -357,10 +370,12 @@
             <p>Test Constant</p>
           </section>
           <section>
-            <p><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></p>
+            <p><strong>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</strong></p>
           </section>
           <section>
-            <h4 id="testconst-signature">Signature</h4><code>testConst = 42</code>
+            <h4 id="testconst-signature">Signature</h4>
+            <pre><code class="language-typescript">testConst = 42
+</code></pre>
           </section>
           <section>
             <h4 id="testconst-remarks">Remarks</h4>
@@ -373,11 +388,13 @@
             <p>I have a <code>@deprecated</code> tag with an empty comment block.</p>
           </section>
           <section>
-            <p><b>WARNING: This API is deprecated and will be removed in a future release.</b></p>
+            <p><strong>WARNING: This API is deprecated and will be removed in a future release.</strong></p>
           </section>
           <section>
-            <h4 id="testconstwithemptydeprecatedblock-signature">Signature</h4><code>testConstWithEmptyDeprecatedBlock: string</code>
-            <p><b>Type</b>: string</p>
+            <h4 id="testconstwithemptydeprecatedblock-signature">Signature</h4>
+            <pre><code class="language-typescript">testConstWithEmptyDeprecatedBlock: string
+</code></pre>
+            <p><strong>Type</strong>: string</p>
           </section>
         </section>
       </section>

@@ -13,8 +13,10 @@
         <p>Test class</p>
       </section>
       <section>
-        <h2 id="testclass-signature">Signature</h2><code>export declare class TestClass&#x3C;TTypeParameterA, TTypeParameterB> extends TestAbstractClass</code>
-        <p><b>Extends</b>: <a href="/test-suite-a/testabstractclass-class">TestAbstractClass</a></p>
+        <h2 id="testclass-signature">Signature</h2>
+        <pre><code class="language-typescript">export declare class TestClass&#x3C;TTypeParameterA, TTypeParameterB> extends TestAbstractClass
+</code></pre>
+        <p><strong>Extends</strong>: <a href="/test-suite-a/testabstractclass-class">TestAbstractClass</a></p>
         <section>
           <h3>Type Parameters</h3>
           <table>
@@ -191,7 +193,9 @@
             <p>Test class constructor</p>
           </section>
           <section>
-            <h4 id="_constructor_-signature">Signature</h4><code>constructor(privateProperty: number, protectedProperty: TestEnum, testClassProperty: TTypeParameterB, testClassEventProperty: () => void);</code>
+            <h4 id="_constructor_-signature">Signature</h4>
+            <pre><code class="language-typescript">constructor(privateProperty: number, protectedProperty: TestEnum, testClassProperty: TTypeParameterB, testClassEventProperty: () => void);
+</code></pre>
           </section>
           <section>
             <h4 id="_constructor_-remarks">Remarks</h4>
@@ -216,10 +220,7 @@
                 <tr>
                   <td>protectedProperty</td>
                   <td><a href="/test-suite-a/testenum-enum">TestEnum</a></td>
-                  <td>
-                    <p>Some notes about the parameter.</p>
-                    <p>See <a href="/test-suite-a/testabstractclass-class#protectedproperty-property">protectedProperty</a>.</p>
-                  </td>
+                  <td><p>Some notes about the parameter.</p><p>See <a href="/test-suite-a/testabstractclass-class#protectedproperty-property">protectedProperty</a>.</p></td>
                 </tr>
                 <tr>
                   <td>testClassProperty</td>
@@ -244,8 +245,10 @@
             <p>Test class event property</p>
           </section>
           <section>
-            <h4 id="testclasseventproperty-signature">Signature</h4><code>readonly testClassEventProperty: () => void;</code>
-            <p><b>Type</b>: () => void</p>
+            <h4 id="testclasseventproperty-signature">Signature</h4>
+            <pre><code class="language-typescript">readonly testClassEventProperty: () => void;
+</code></pre>
+            <p><strong>Type</strong>: () => void</p>
           </section>
           <section>
             <h4 id="testclasseventproperty-remarks">Remarks</h4>
@@ -261,8 +264,10 @@
             <p>A test abstract getter property.</p>
           </section>
           <section>
-            <h4 id="abstractpropertygetter-signature">Signature</h4><code>get abstractPropertyGetter(): TestMappedType;</code>
-            <p><b>Type</b>: <a href="/test-suite-a/testmappedtype-typealias">TestMappedType</a></p>
+            <h4 id="abstractpropertygetter-signature">Signature</h4>
+            <pre><code class="language-typescript">get abstractPropertyGetter(): TestMappedType;
+</code></pre>
+            <p><strong>Type</strong>: <a href="/test-suite-a/testmappedtype-typealias">TestMappedType</a></p>
           </section>
         </section>
         <section>
@@ -271,8 +276,13 @@
             <p>Test class property with both a getter and a setter.</p>
           </section>
           <section>
-            <h4 id="testclassgetterproperty-signature">Signature</h4><code>/** @virtual */<br>get testClassGetterProperty(): number;<br><br>set testClassGetterProperty(newValue: number);</code>
-            <p><b>Type</b>: number</p>
+            <h4 id="testclassgetterproperty-signature">Signature</h4>
+            <pre><code class="language-typescript">/** @virtual */
+get testClassGetterProperty(): number;
+
+set testClassGetterProperty(newValue: number);
+</code></pre>
+            <p><strong>Type</strong>: number</p>
           </section>
           <section>
             <h4 id="testclassgetterproperty-remarks">Remarks</h4>
@@ -285,8 +295,10 @@
             <p>Test class property</p>
           </section>
           <section>
-            <h4 id="testclassproperty-signature">Signature</h4><code>readonly testClassProperty: TTypeParameterB;</code>
-            <p><b>Type</b>: TTypeParameterB</p>
+            <h4 id="testclassproperty-signature">Signature</h4>
+            <pre><code class="language-typescript">readonly testClassProperty: TTypeParameterB;
+</code></pre>
+            <p><strong>Type</strong>: TTypeParameterB</p>
           </section>
           <section>
             <h4 id="testclassproperty-remarks">Remarks</h4>
@@ -299,8 +311,10 @@
             <p>Test static class property</p>
           </section>
           <section>
-            <h4 id="testclassstaticproperty-signature">Signature</h4><code>static testClassStaticProperty: (foo: number) => string;</code>
-            <p><b>Type</b>: (foo: number) => string</p>
+            <h4 id="testclassstaticproperty-signature">Signature</h4>
+            <pre><code class="language-typescript">static testClassStaticProperty: (foo: number) => string;
+</code></pre>
+            <p><strong>Type</strong>: (foo: number) => string</p>
           </section>
         </section>
       </section>
@@ -312,7 +326,9 @@
             <p>A test public abstract method.</p>
           </section>
           <section>
-            <h4 id="publicabstractmethod-signature">Signature</h4><code>publicAbstractMethod(): void;</code>
+            <h4 id="publicabstractmethod-signature">Signature</h4>
+            <pre><code class="language-typescript">publicAbstractMethod(): void;
+</code></pre>
           </section>
         </section>
         <section>
@@ -321,7 +337,10 @@
             <p>Test class method</p>
           </section>
           <section>
-            <h4 id="testclassmethod-signature">Signature</h4><code>/** @sealed */<br>testClassMethod(input: TTypeParameterA): TTypeParameterA;</code>
+            <h4 id="testclassmethod-signature">Signature</h4>
+            <pre><code class="language-typescript">/** @sealed */
+testClassMethod(input: TTypeParameterA): TTypeParameterA;
+</code></pre>
           </section>
           <section>
             <h4 id="testclassmethod-remarks">Remarks</h4>
@@ -348,7 +367,7 @@
           </section>
           <section>
             <h4 id="testclassmethod-returns">Returns</h4>
-            <p><b>Return type</b>: TTypeParameterA</p>
+            <p><strong>Return type</strong>: TTypeParameterA</p>
           </section>
           <section>
             <h4 id="testclassmethod-throws">Throws</h4>
@@ -362,7 +381,9 @@
             <p>Test class static method</p>
           </section>
           <section>
-            <h4 id="testclassstaticmethod-signature">Signature</h4><code>static testClassStaticMethod(foo: number): string;</code>
+            <h4 id="testclassstaticmethod-signature">Signature</h4>
+            <pre><code class="language-typescript">static testClassStaticMethod(foo: number): string;
+</code></pre>
           </section>
           <section>
             <h4 id="testclassstaticmethod-parameters">Parameters</h4>
@@ -388,7 +409,7 @@
             <ul>
               <li>Some string</li>
             </ul>
-            <p><b>Return type</b>: string</p>
+            <p><strong>Return type</strong>: string</p>
           </section>
         </section>
         <section>
@@ -397,11 +418,14 @@
             <p>Overrides <a href="/test-suite-a/testabstractclass-class#virtualmethod-method">virtualMethod()</a>.</p>
           </section>
           <section>
-            <h4 id="virtualmethod-signature">Signature</h4><code>/** @override */<br>protected virtualMethod(): number;</code>
+            <h4 id="virtualmethod-signature">Signature</h4>
+            <pre><code class="language-typescript">/** @override */
+protected virtualMethod(): number;
+</code></pre>
           </section>
           <section>
             <h4 id="virtualmethod-returns">Returns</h4>
-            <p><b>Return type</b>: number</p>
+            <p><strong>Return type</strong>: number</p>
           </section>
         </section>
       </section>

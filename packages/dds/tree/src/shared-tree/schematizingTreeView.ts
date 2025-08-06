@@ -53,6 +53,7 @@ import {
 	type FieldSchema,
 	toStoredSchema,
 	tryDisposeTreeNode,
+	FieldSchemaAlpha,
 	TreeViewConfigurationAlpha,
 } from "../simple-tree/index.js";
 import {
@@ -317,12 +318,16 @@ export class SchematizingSimpleTreeView<
 				this.nodeKeyManager,
 			);
 			assert(!slots.has(SimpleContextSlot), 0xa47 /* extra simple tree context */);
+			assert(
+				this.rootFieldSchema instanceof FieldSchemaAlpha,
+				0xbfa /* all field schema should be FieldSchemaAlpha */,
+			);
 			slots.set(
 				SimpleContextSlot,
 				new HydratedContext(
 					this.flexTreeContext,
 					HydratedContext.schemaMapFromRootSchema(
-						normalizeFieldSchema(this.rootFieldSchema).annotatedAllowedTypesNormalized,
+						this.rootFieldSchema.annotatedAllowedTypesNormalized,
 					),
 				),
 			);

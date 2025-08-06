@@ -27,25 +27,25 @@ import {
 	type DocPlainText,
 	type DocSection,
 } from "@microsoft/tsdoc";
+import type {
+	BlockContent,
+	List,
+	Link as MdastLink,
+	Nodes,
+	Paragraph,
+	Parent,
+	PhrasingContent,
+	Strong,
+	Text,
+} from "mdast";
 
 import type { Heading } from "../../Heading.js";
 import type { Link } from "../../Link.js";
 import type { Logger } from "../../Logging.js";
 import {
-	type BlockContent,
-	type DocumentationNode,
-	type DocumentationParentNode,
-	FencedCodeBlockNode,
 	HeadingNode,
-	LinkNode,
-	ListItemNode,
-	ListNode,
-	ParagraphNode,
-	type PhrasingContent,
-	PlainTextNode,
 	type SectionContent,
 	SectionNode,
-	SpanNode,
 } from "../../documentation-domain/index.js";
 import {
 	type ApiFunctionLike,
@@ -96,7 +96,11 @@ export function createSignatureSection(
 		if (signatureExcerpt !== "") {
 			const contents: SectionContent[] = [];
 
-			contents.push(new FencedCodeBlockNode(signatureExcerpt.trim(), "typescript"));
+			contents.push({
+				type: "code",
+				lang: "typescript",
+				value: signatureExcerpt.trim(),
+			});
 
 			const renderedHeritageTypes = createHeritageTypesContent(apiItem, config);
 			if (renderedHeritageTypes !== undefined) {
@@ -146,7 +150,10 @@ function createHeritageTypesContent(
 					'No content was rendered for non-empty "extends" type list. This is not expected.',
 				);
 			} else {
-				contents.push(new ParagraphNode(extendsTypesSpan));
+				contents.push({
+					type: "paragraph",
+					children: extendsTypesSpan,
+				});
 			}
 		}
 
@@ -157,7 +164,10 @@ function createHeritageTypesContent(
 			config,
 		);
 		if (renderedImplementsTypes.length > 0) {
-			contents.push(new ParagraphNode(renderedImplementsTypes));
+			contents.push({
+				type: "paragraph",
+				children: renderedImplementsTypes,
+			});
 		}
 	}
 
@@ -170,7 +180,10 @@ function createHeritageTypesContent(
 		);
 
 		if (renderedExtendsTypes.length > 0) {
-			contents.push(new ParagraphNode(renderedExtendsTypes));
+			contents.push({
+				type: "paragraph",
+				children: renderedExtendsTypes,
+			});
 		}
 	}
 
@@ -182,7 +195,10 @@ function createHeritageTypesContent(
 		renderedTypeSpan = createTypeSpan(apiItem.variableTypeExcerpt, config);
 	}
 	if (renderedTypeSpan.length > 0) {
-		contents.push(new ParagraphNode(renderedTypeSpan));
+		contents.push({
+			type: "paragraph",
+			children: renderedTypeSpan,
+		});
 	}
 
 	// Render type parameters if there are any.
@@ -226,8 +242,14 @@ function createTypeSpan(
 	}
 
 	return [
-		SpanNode.createFromPlainText("Type", { bold: true }),
-		new PlainTextNode(": "),
+		{
+			type: "strong",
+			children: [{ type: "text", value: "Type" }],
+		},
+		{
+			type: "text",
+			value: ": ",
+		},
 		...renderedExcerpt,
 	];
 }
@@ -266,15 +288,24 @@ function createHeritageTypeListSpan(
 	let needsComma = false;
 	for (const renderedExcerpt of renderedHeritageTypes) {
 		if (needsComma) {
-			renderedList.push(new PlainTextNode(", "));
+			renderedList.push({
+				type: "text",
+				value: ", ",
+			});
 		}
 		renderedList.push(...renderedExcerpt);
 		needsComma = true;
 	}
 
 	return [
-		SpanNode.createFromPlainText(label, { bold: true }),
-		new PlainTextNode(": "),
+		{
+			type: "strong",
+			children: [{ type: "text", value: label }],
+		},
+		{
+			type: "text",
+			value: ": ",
+		},
 		...renderedList,
 	];
 }
@@ -301,7 +332,7 @@ export function createSeeAlsoSection(
 		return undefined;
 	}
 
-	const contents: BlockContent[] = [];
+	const contents: SectionContent[] = [];
 	for (const seeBlock of seeBlocks) {
 		contents.push(...transformTsdoc(seeBlock, apiItem, config));
 	}
@@ -379,14 +410,21 @@ export function createExcerptSpanWithHyperlinks(
 					config,
 					unwrappedTokenText,
 				);
-				content.push(LinkNode.createFromPlainTextLink(link));
+				content.push({
+					type: "link",
+					url: link.target,
+					children: [{ type: "text", value: link.text }],
+				});
 				wroteHyperlink = true;
 			}
 		}
 
 		// If the token was not one from which we generated hyperlink text, write as plain text instead
 		if (!wroteHyperlink) {
-			content.push(new PlainTextNode(unwrappedTokenText));
+			content.push({
+				type: "text",
+				value: unwrappedTokenText,
+			});
 		}
 	}
 
@@ -408,7 +446,7 @@ export function createExcerptSpanWithHyperlinks(
 export function createBreadcrumbParagraph(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): ParagraphNode {
+): Paragraph {
 	// #region Get hierarchy of document items
 
 	const breadcrumbLinks: Link[] = [getLinkForApiItem(apiItem, config)];
@@ -428,9 +466,16 @@ export function createBreadcrumbParagraph(
 
 	// #endregion
 
-	const renderedLinks = breadcrumbLinks.map((link) => LinkNode.createFromPlainTextLink(link));
+	const renderedLinks: MdastLink[] = breadcrumbLinks.map((link) => ({
+		type: "link",
+		url: link.target,
+		children: [{ type: "text", value: link.text }],
+	}));
 
-	const breadcrumbSeparator = new PlainTextNode(" > ");
+	const breadcrumbSeparator: Text = {
+		type: "text",
+		value: " > ",
+	};
 
 	// Inject breadcrumb separator between each link
 	const contents: PhrasingContent[] = injectSeparator<PhrasingContent>(
@@ -438,7 +483,10 @@ export function createBreadcrumbParagraph(
 		breadcrumbSeparator,
 	);
 
-	return new ParagraphNode(contents);
+	return {
+		type: "paragraph",
+		children: contents,
+	};
 }
 
 /**
@@ -450,7 +498,10 @@ export const alphaWarningText: string =
 /**
  * A simple italic span containing a warning about using `@alpha` APIs.
  */
-export const alphaWarningSpan = SpanNode.createFromPlainText(alphaWarningText, { bold: true });
+export const alphaWarningSpan: Strong = {
+	type: "strong",
+	children: [{ type: "text", value: alphaWarningText }],
+};
 
 /**
  * Alert text used in {@link betaWarningSpan}.
@@ -461,7 +512,10 @@ export const betaWarningText: string =
 /**
  * A simple italic span containing a warning about using `@beta` APIs.
  */
-export const betaWarningSpan = SpanNode.createFromPlainText(betaWarningText, { bold: true });
+export const betaWarningSpan: Strong = {
+	type: "strong",
+	children: [{ type: "text", value: betaWarningText }],
+};
 
 /**
  * Renders a section containing the API item's summary comment if it has one.
@@ -574,12 +628,21 @@ export function createDeprecationNoticeSection(
 	}
 
 	return wrapInSection([
-		new ParagraphNode([
-			SpanNode.createFromPlainText(
-				"WARNING: This API is deprecated and will be removed in a future release.",
-				{ bold: true },
-			),
-		]),
+		{
+			type: "paragraph",
+			children: [
+				{
+					type: "strong",
+					children: [
+						{
+							type: "text",
+							value:
+								"WARNING: This API is deprecated and will be removed in a future release.",
+						},
+					],
+				},
+			],
+		},
 		...transformTsdoc(deprecatedBlock, apiItem, config),
 	]);
 }
@@ -714,9 +777,7 @@ function createExampleSection(
 ): SectionNode {
 	const { logger } = config;
 
-	let exampleSection: SectionNode | undefined = new SectionNode(
-		transformTsdoc(example.content, example.apiItem, config),
-	);
+	let transformedExampleContent = transformTsdoc(example.content, example.apiItem, config);
 
 	// Per TSDoc spec, if the `@example` comment has content on the same line as the tag,
 	// that line is expected to be treated as the title.
@@ -741,7 +802,11 @@ function createExampleSection(
 		logger?.verbose(
 			`Found example comment with title "${exampleTitle}". Adjusting output to adhere to TSDoc spec...`,
 		);
-		exampleSection = stripTitleFromExampleComment(exampleSection, exampleTitle, logger);
+		transformedExampleContent = stripTitleFromExampleComment(
+			transformedExampleContent,
+			exampleTitle,
+			logger,
+		);
 	}
 
 	const headingId = `${getFileSafeNameForApiItem(example.apiItem)}-example${
@@ -749,7 +814,7 @@ function createExampleSection(
 	}`;
 
 	// Always emit the section, even if the body is empty after stripping out the title.
-	return wrapInSection(exampleSection?.children ?? [], {
+	return wrapInSection(transformedExampleContent, {
 		title: headingTitle,
 		id: headingId,
 	});
@@ -810,83 +875,60 @@ function extractTitleFromExampleSection(sectionNode: DocSection): string | undef
  *
  * @returns The updated node, if any content remains. Otherwise, `undefined`.
  */
-function stripTitleFromExampleComment<TNode extends DocumentationParentNode>(
-	node: TNode,
+function stripTitleFromExampleComment<TNode extends Nodes>(
+	nodes: readonly TNode[],
 	title: string,
 	logger: Logger | undefined,
-): TNode | undefined {
+): TNode[] {
 	// Verify title matches text of first plain text in output.
 	// This is an expected invariant. If this is not the case, then something has gone wrong.
 	// Note: if we ever allow consumers to provide custom DocNode transformations, this invariant will likely
 	// disappear, and this code will need to be updated to function differently.
 	// Reference: <https://tsdoc.org/pages/tags/example/>
-	const children = node.children;
-	if (children.length === 0) {
+	if (nodes.length === 0) {
 		logger?.error(
 			"Transformed example paragraph begins with empty parent node. This is unexpected and indicates a bug.",
 		);
-		return node;
+		return [];
 	}
 
-	const firstChild = children[0];
-	if (firstChild.isParent) {
-		const newFirstChild = stripTitleFromExampleComment(
-			firstChild as DocumentationParentNode,
-			title,
-			logger,
-		);
+	const firstChild = nodes[0];
+	if ((firstChild as Partial<Parent>).children !== undefined) {
+		const newFirst = {
+			...firstChild,
+			children: stripTitleFromExampleComment((firstChild as Parent).children, title, logger),
+		};
 
-		const remainingChildren = children.slice(1);
-		const newChildren: DocumentationNode[] =
-			newFirstChild === undefined ? remainingChildren : [newFirstChild, ...remainingChildren];
+		const remaining = nodes.slice(1);
 
-		// If there are no remaining children under this parent after stripping out the title, omit this parent node.
-		return newChildren.length === 0
-			? undefined
-			: {
-					...node,
-					children: newChildren,
-					hasChildren: newChildren.length > 0,
-				};
+		// If there are no remaining children under the first item after stripping out the title, omit that item altogether.
+		return newFirst.children.length === 0 ? remaining : [newFirst, ...remaining];
 	}
 
-	if (firstChild.isLiteral) {
-		if (firstChild.type === "text") {
-			const text = (firstChild as PlainTextNode).value;
-			if (text === title) {
-				// Remove from children, and remove any trailing line breaks
-				const newChildren = children.slice(1);
-				while (newChildren.length > 0 && newChildren[0].type === "lineBreak") {
-					newChildren.shift();
-				}
-				// If there are no remaining children under this parent after stripping out the title, omit this parent node.
-				return newChildren.length === 0
-					? undefined
-					: {
-							...node,
-							children: newChildren,
-							hasChildren: newChildren.length > 0,
-						};
-			} else {
-				logger?.error(
-					"Transformed example paragraph does not begin with expected title. This is unexpected and indicates a bug.",
-					`Expected: "${title}".`,
-					`Found: "${text}".`,
-				);
-				return node;
+	if (firstChild.type === "text") {
+		const text = firstChild.value;
+		if (text === title) {
+			// Remove the title element from the input list, and remove any intervening line breaks
+			const remaining = nodes.slice(1);
+			while (remaining.length > 0 && remaining[0].type === "break") {
+				remaining.shift();
 			}
+			// If there are no remaining children under this parent after stripping out the title, omit this parent node.
+			return remaining;
 		} else {
 			logger?.error(
-				"Transformed example paragraph does not begin with plain text. This is unexpected and indicates a bug.",
+				"Transformed example paragraph does not begin with expected title. This is unexpected and indicates a bug.",
+				`Expected: "${title}".`,
+				`Found: "${text}".`,
 			);
-			return node;
+			return [...nodes];
 		}
+	} else {
+		logger?.error(
+			"Transformed example paragraph does not begin with plain text. This is unexpected and indicates a bug.",
+		);
+		return [...nodes];
 	}
-
-	logger?.error(
-		"Transformed example paragraph begins with a non-literal, non-parent node. This is unexpected and indicates a bug.",
-	);
-	return node;
 }
 
 /**
@@ -959,13 +1001,20 @@ export function createReturnsSection(
 				config,
 			);
 			if (typeExcerptSpan.length > 0) {
-				children.push(
-					new ParagraphNode([
-						SpanNode.createFromPlainText("Return type", { bold: true }),
-						new PlainTextNode(": "),
+				children.push({
+					type: "paragraph",
+					children: [
+						{
+							type: "strong",
+							children: [{ type: "text", value: "Return type" }],
+						},
+						{
+							type: "text",
+							value: ": ",
+						},
 						...typeExcerptSpan,
-					]),
-				);
+					],
+				});
 			}
 		}
 	}
@@ -1063,18 +1112,36 @@ export function wrapInSection(nodes: SectionContent[], heading?: Heading): Secti
 export function createEntryPointList(
 	apiEntryPoints: readonly ApiEntryPoint[],
 	config: ApiItemTransformationConfiguration,
-): ListNode | undefined {
+): List | undefined {
 	if (apiEntryPoints.length === 0) {
 		return undefined;
 	}
 
-	return new ListNode(
-		apiEntryPoints.map(
-			(entryPoint) =>
-				new ListItemNode([
-					LinkNode.createFromPlainTextLink(getLinkForApiItem(entryPoint, config)),
-				]),
-		),
-		/* ordered */ false,
-	);
+	return {
+		type: "list",
+		ordered: false,
+		children: apiEntryPoints.map((entryPoint) => {
+			const link = getLinkForApiItem(entryPoint, config);
+			return {
+				type: "listItem",
+				children: [
+					{
+						type: "paragraph",
+						children: [
+							{
+								type: "link",
+								url: link.target,
+								children: [
+									{
+										type: "text",
+										value: link.text,
+									},
+								],
+							},
+						],
+					},
+				],
+			};
+		}),
+	};
 }

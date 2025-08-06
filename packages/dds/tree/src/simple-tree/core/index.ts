@@ -53,6 +53,7 @@ export {
 	isAnnotatedAllowedType,
 	normalizeAllowedTypes,
 	normalizeAnnotatedAllowedTypes,
+	normalizeToAnnotatedAllowedType,
 	unannotateImplicitAllowedTypes,
 	markSchemaMostDerived,
 	evaluateLazySchema,

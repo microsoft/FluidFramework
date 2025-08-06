@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { compare, gt, gte, lte, valid } from "semver-ts";
 
@@ -52,17 +53,7 @@ export type MinimumMinorSemanticVersion = `${bigint}.${bigint}.0` | `${bigint}.0
 
 /**
  * String in a valid semver format of a specific version at least specifying minor.
- *
- * @legacy
- * @alpha
- */
-export type MinimumVersionForCollab =
-	| `${1 | 2}.${bigint}.${bigint}`
-	| `${1 | 2}.${bigint}.${bigint}-${string}`;
-
-/**
- * String in a valid semver format of a specific version at least specifying minor.
- * Unlike {@link MinimumVersionForCollab}, this type allows any bigint for the major version.
+ * Unlike {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}, this type allows any bigint for the major version.
  * Used as a more generic type that allows major versions other than 1 or 2.
  *
  * @internal
