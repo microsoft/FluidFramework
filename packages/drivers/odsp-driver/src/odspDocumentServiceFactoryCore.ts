@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { PromiseCache } from "@fluidframework/core-utils/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { PromiseCache } from "@fluidframework/core-utils/internal";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
@@ -16,34 +16,35 @@ import {
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils/internal";
 import {
-	HostStoragePolicy,
-	IFileEntry,
-	IOdspUrlParts,
-	IPersistedCache,
-	IRelaySessionAwareDriverFactory,
-	ISharingLinkKind,
-	ISocketStorageDiscovery,
-	OdspResourceTokenFetchOptions,
+	type HostStoragePolicy,
+	type IFileEntry,
+	type IOdspUrlParts,
+	type IPersistedCache,
+	type IRelaySessionAwareDriverFactory,
+	type ISharingLinkKind,
+	type ISocketStorageDiscovery,
+	type OdspResourceTokenFetchOptions,
 	SharingLinkRole,
 	SharingLinkScope,
-	TokenFetchOptions,
-	TokenFetcher,
+	type TokenFetchOptions,
+	type TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { useCreateNewModule } from "./createFile/index.js";
-import { ICacheAndTracker, createOdspCacheAndTracker } from "./epochTracker.js";
+import { type ICacheAndTracker, createOdspCacheAndTracker } from "./epochTracker.js";
 import {
-	INonPersistentCache,
-	IPrefetchSnapshotContents,
+	type INonPersistentCache,
+	type IPrefetchSnapshotContents,
 	LocalPersistentCache,
 	NonPersistentCache,
 } from "./odspCache.js";
 import { OdspDocumentService } from "./odspDocumentService.js";
+import { odspDriverCompatDetailsForLoader } from "./odspLayerCompatState.js";
 import {
-	IExistingFileInfo,
-	INewFileInfo,
+	type IExistingFileInfo,
+	type INewFileInfo,
 	createOdspLogger,
 	getJoinSessionCacheKey,
 	getOdspResolvedUrl,
@@ -199,6 +200,7 @@ export class OdspDocumentServiceFactoryCore
 								this.hostPolicy.cacheCreateNewSummary ?? true,
 								!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 								odspResolvedUrl.isClpCompliantApp,
+								odspResolvedUrl.fileMetadata?.eTag,
 							);
 				});
 				const docService = this.createDocumentServiceCore(
@@ -243,6 +245,15 @@ export class OdspDocumentServiceFactoryCore
 			...this.hostPolicy.sessionOptions,
 		};
 	}
+
+	/**
+	 * The compatibility details of the ODSP Driver layer that is exposed to the Loader layer
+	 * for validating Loader-Driver compatibility.
+	 * @remarks This is for internal use only.
+	 * The type of this should be ILayerCompatDetails. However, ILayerCompatDetails is internal and this class
+	 * is currently marked as legacy alpha. So, using unknown here.
+	 */
+	public readonly ILayerCompatDetails?: unknown = odspDriverCompatDetailsForLoader;
 
 	public async createDocumentService(
 		resolvedUrl: IResolvedUrl,

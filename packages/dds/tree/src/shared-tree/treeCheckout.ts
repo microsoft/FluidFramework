@@ -4,7 +4,7 @@
  */
 
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
-import type { Listenable } from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
@@ -42,12 +42,19 @@ import {
 	type RevertibleAlpha,
 	type GraphCommit,
 	isAncestor,
+	moveToDetachedField,
+	type ITreeCursor,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+	LeafNodeStoredSchema,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
 	type TreeCompressionStrategy,
+	allowsRepoSuperset,
 	buildForest,
 	createNodeIdentifierManager,
+	defaultSchemaPolicy,
 	intoDelta,
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
@@ -66,15 +73,19 @@ import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamil
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import type { IDisposable } from "@fluidframework/core-interfaces";
-import type {
-	ImplicitFieldSchema,
-	ReadSchema,
-	TreeView,
-	TreeViewConfiguration,
-	UnsafeUnknownSchema,
-	ViewableTree,
-	TreeBranch,
-	TreeChangeEvents,
+import {
+	type ImplicitFieldSchema,
+	type ReadSchema,
+	type TreeView,
+	type TreeViewConfiguration,
+	type UnsafeUnknownSchema,
+	type ViewableTree,
+	type TreeBranch,
+	type TreeChangeEvents,
+	type VerboseTree,
+	customFromCursorStored,
+	type CustomTreeValue,
+	type CustomTreeNode,
 } from "../simple-tree/index.js";
 import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 
@@ -229,8 +240,13 @@ export interface ITreeCheckout extends AnchorLocator, ViewableTree, WithBreakabl
 	/**
 	 * Replaces all schema with the provided schema.
 	 * Can over-write preexisting schema, and removes unmentioned schema.
+	 *
+	 * @param newSchema - The new schema to replace the existing schema.
+	 * @param allowNonSupersetSchema - Whether to allow non-superset schemas.
+	 * Defaults to false.
+	 * If false, an assert will be thrown if the new schema does not permit all possible documents which were permitted under the old schema.
 	 */
-	updateSchema(newSchema: TreeStoredSchema): void;
+	updateSchema(newSchema: TreeStoredSchema, allowNonSupersetSchema?: true): void;
 
 	/**
 	 * Events about this view.
@@ -486,6 +502,24 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 		this.#transaction.activeBranchEvents.on("afterChange", this.onAfterChange);
 		this.#transaction.activeBranchEvents.on("ancestryTrimmed", this.onAncestryTrimmed);
+	}
+
+	public exportVerbose(): VerboseTree | undefined {
+		const cursor = this.forest.allocateCursor("contentSnapshot");
+		try {
+			moveToDetachedField(this.forest, cursor);
+			const length = cursor.getFieldLength();
+			if (length === 0) {
+				return undefined;
+			} else if (length === 1) {
+				cursor.enterNode(0);
+				return verboseFromCursor(cursor, this.storedSchema.nodeSchema);
+			} else {
+				fail(0xac8 /* Invalid document root length */);
+			}
+		} finally {
+			cursor.free();
+		}
 	}
 
 	private readonly onAfterChange = (event: SharedTreeBranchChange<SharedTreeChange>): void => {
@@ -776,8 +810,14 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		}
 	}
 
-	public updateSchema(newSchema: TreeStoredSchema): void {
+	public updateSchema(newSchema: TreeStoredSchema, allowNonSupersetSchema?: true): void {
 		this.checkNotDisposed();
+		if (allowNonSupersetSchema !== true) {
+			assert(
+				allowsRepoSuperset(defaultSchemaPolicy, this.storedSchema.clone(), newSchema),
+				0xbe6 /* New schema must allow all documents allowed by old schema */,
+			);
+		}
 		this.editor.schema.setStoredSchema(this.storedSchema.clone(), newSchema);
 	}
 
@@ -1095,5 +1135,22 @@ function trackForksForDisposal(checkout: TreeCheckout): () => void {
 		onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
 		onForkUnSubscribe();
 		disposed = true;
+	};
+}
+
+function verboseFromCursor(
+	reader: ITreeCursor,
+	schema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
+): VerboseTree {
+	const fields = customFromCursorStored(reader, schema, verboseFromCursor);
+	const nodeSchema =
+		schema.get(reader.type) ?? fail(0xac9 /* missing schema for type in cursor */);
+	if (nodeSchema instanceof LeafNodeStoredSchema) {
+		return fields as CustomTreeValue;
+	}
+
+	return {
+		type: reader.type,
+		fields: fields as CustomTreeNode<IFluidHandle>,
 	};
 }

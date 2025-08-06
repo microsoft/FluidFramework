@@ -16,9 +16,7 @@ import {
 	type TreeValue,
 	type UpPath,
 } from "../../core/index.js";
-// TODO: decide how to deal with dependencies on flex-tree implementation.
-// eslint-disable-next-line import/no-internal-modules
-import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
+import { getOrCreateHydratedFlexTreeNode } from "../../feature-libraries/index.js";
 import {
 	assertFlexTreeEntityNotFreed,
 	ContextSlot,
@@ -30,7 +28,7 @@ import {
 	type HydratedFlexTreeNode,
 } from "../../feature-libraries/index.js";
 
-import { SimpleContextSlot, type Context, type HydratedContext } from "./context.js";
+import type { Context, HydratedContext } from "./context.js";
 import type { TreeNode } from "./treeNode.js";
 import type { TreeNodeSchema } from "./treeNodeSchema.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
@@ -133,7 +131,7 @@ export class TreeNodeKernel {
 	/**
 	 * Create a TreeNodeKernel which can be looked up with {@link getKernel}.
 	 *
-	 * @param initialContext - context from when this node was originally crated.
+	 * @param initialContext - context from when this node was originally created. Only used when unhydrated.
 	 * @param innerNode - When unhydrated/raw or marinated the MapTreeNode. FlexTreeNode when cooked.
 	 * @remarks
 	 * Exactly one kernel per TreeNode should be created.
@@ -332,7 +330,7 @@ export class TreeNodeKernel {
 					anchorNode.anchorSet.slots.get(ContextSlot) ?? fail(0xb41 /* missing context */);
 				const cursor = context.checkout.forest.allocateCursor("getFlexNode");
 				context.checkout.forest.moveCursorToPath(anchorNode, cursor);
-				this.#hydrationState.innerNode = makeTree(context, cursor);
+				this.#hydrationState.innerNode = getOrCreateHydratedFlexTreeNode(context, cursor);
 				cursor.free();
 				assertFlexTreeEntityNotFreed(this.#hydrationState.innerNode);
 			}
@@ -372,7 +370,7 @@ export function splitInnerNodeType(
 ): asserts innerNode is UnhydratedFlexTreeNode | HydratedFlexTreeNode {
 	assert(
 		innerNode instanceof UnhydratedFlexTreeNode || innerNode.isHydrated(),
-		"Invalid inner node type",
+		0xbc8 /* Invalid inner node type */,
 	);
 }
 
@@ -446,7 +444,7 @@ function flexNodeFromAnchor(anchorNode: AnchorNode): HydratedFlexTreeNode {
 		anchorNode.anchorSet.slots.get(ContextSlot) ?? fail(0xb45 /* missing context */);
 	const cursor = context.checkout.forest.allocateCursor("getFlexNode");
 	context.checkout.forest.moveCursorToPath(anchorNode, cursor);
-	const newFlexNode = makeTree(context, cursor);
+	const newFlexNode = getOrCreateHydratedFlexTreeNode(context, cursor);
 	cursor.free();
 	return newFlexNode;
 }
@@ -478,3 +476,11 @@ export function createTreeNodeFromInner(innerNode: InnerNode): TreeNode | TreeVa
 				internal,
 			);
 }
+
+/**
+ * Creating multiple simple tree contexts for the same branch, and thus with the same underlying AnchorSet does not work due to how TreeNode caching works.
+ * This slot is used to detect if one already exists and error if creating a second.
+ * @remarks
+ * See also {@link ContextSlot} in which the flex-tree context is stored.
+ */
+export const SimpleContextSlot = anchorSlot<HydratedContext>();

@@ -7,13 +7,30 @@ import { Lazy, oob, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey } from "../../../core/index.js";
-import {
-	type FlexibleFieldContent,
-	type FlexTreeNode,
-	type FlexTreeSequenceField,
-	isFlexTreeNode,
+import type {
+	FlexibleFieldContent,
+	FlexTreeNode,
+	FlexTreeSequenceField,
 } from "../../../feature-libraries/index.js";
+import { FieldKinds, isTreeValue } from "../../../feature-libraries/index.js";
 import {
+	CompatibilityLevel,
+	type WithType,
+	// eslint-disable-next-line import/no-deprecated
+	typeNameSymbol,
+	NodeKind,
+	type TreeNode,
+	type InternalTreeNode,
+	type TreeNodeSchema,
+	typeSchemaSymbol,
+	getOrCreateNodeFromInnerNode,
+	getSimpleNodeSchemaFromInnerNode,
+	getOrCreateInnerNode,
+	type TreeNodeSchemaClass,
+	getKernel,
+	type UnhydratedFlexTreeNode,
+	UnhydratedSequenceField,
+	getOrCreateNodeFromInnerUnboxedNode,
 	normalizeAllowedTypes,
 	unannotateImplicitAllowedTypes,
 	type ImplicitAllowedTypes,
@@ -23,38 +40,34 @@ import {
 	type TreeLeafValue,
 	type TreeNodeFromImplicitAllowedTypes,
 	type UnannotateImplicitAllowedTypes,
-} from "../../schemaTypes.js";
-import {
-	type WithType,
-	// eslint-disable-next-line import/no-deprecated
-	typeNameSymbol,
-	NodeKind,
-	type TreeNode,
-	type InternalTreeNode,
-	type TreeNodeSchema,
-	typeSchemaSymbol,
-	type Context,
-	getOrCreateNodeFromInnerNode,
-	getSimpleNodeSchemaFromInnerNode,
-	getOrCreateInnerNode,
-	type TreeNodeSchemaClass,
-	getKernel,
-	type UnhydratedFlexTreeNode,
-	UnhydratedSequenceField,
+	TreeNodeValid,
+	type MostDerivedData,
+	type TreeNodeSchemaInitializedData,
+	type TreeNodeSchemaCorePrivate,
+	privateDataSymbol,
+	createTreeNodeSchemaPrivateData,
+	type FlexContent,
+	type TreeNodeSchemaPrivateData,
 } from "../../core/index.js";
 import {
+	type FactoryContent,
 	type InsertableContent,
 	unhydratedFlexTreeFromInsertable,
+	unhydratedFlexTreeFromInsertableNode,
 } from "../../unhydratedFlexTreeFromInsertable.js";
 import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
-import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
-import { getUnhydratedContext } from "../../createContext.js";
+import {
+	getTreeNodeSchemaInitializedData,
+	getUnhydratedContext,
+} from "../../createContext.js";
 import type { System_Unsafe } from "../../api/index.js";
 import type {
 	ArrayNodeCustomizableSchema,
 	ArrayNodePojoEmulationSchema,
+	ArrayNodeSchema,
 } from "./arrayNodeTypes.js";
-import type { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
+import { brand, type JsonCompatibleReadOnlyObject } from "../../../util/index.js";
+import { nullSchema } from "../../leafNodeSchema.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -718,7 +731,7 @@ function createArrayNodeProxy(
 ): TreeArrayNode {
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an array literal in order
 	// to pass 'Object.getPrototypeOf'.  It also satisfies 'Array.isArray' and 'Object.prototype.toString'
-	// requirements without use of Array[Symbol.species], which is potentially on a path ot deprecation.
+	// requirements without use of Array[Symbol.species], which is potentially on a path to deprecation.
 	const proxy: TreeArrayNode = new Proxy<TreeArrayNode>(proxyTarget as TreeArrayNode, {
 		get: (target, key, receiver) => {
 			const field = getSequenceField(receiver);
@@ -729,15 +742,21 @@ function createArrayNodeProxy(
 					return field.length;
 				}
 
+				// In NodeJS 22, assert.strict.deepEqual started special casing well known constructors like Array.
+				// That made this necessary, ensuring that in POJO mode, TreeArrayNode are still deepEqual to arrays.
+				if (key === "constructor") {
+					return proxyTarget.constructor;
+				}
+
 				// Pass the proxy as the receiver here, so that any methods on
 				// the prototype receive `proxy` as `this`.
 				return Reflect.get(dispatchTarget, key, receiver) as unknown;
 			}
 
 			const maybeContent = field.at(maybeIndex);
-			return isFlexTreeNode(maybeContent)
-				? getOrCreateNodeFromInnerNode(maybeContent)
-				: maybeContent;
+			return maybeContent === undefined
+				? undefined
+				: getOrCreateNodeFromInnerUnboxedNode(maybeContent);
 		},
 		set: (target, key, newValue, receiver) => {
 			if (key === "length") {
@@ -796,7 +815,7 @@ function createArrayNodeProxy(
 				// To satisfy 'deepEquals' level scrutiny, the property descriptor for indexed properties must
 				// be a simple value property (as opposed to using getter) and declared writable/enumerable/configurable.
 				return {
-					value: isFlexTreeNode(val) ? getOrCreateNodeFromInnerNode(val) : val,
+					value: val === undefined ? undefined : getOrCreateNodeFromInnerUnboxedNode(val),
 					writable: true, // For MVP, setting indexed properties is reported as allowed here (for deep equals compatibility noted above), but not actually supported.
 					enumerable: true,
 					configurable: true,
@@ -829,15 +848,15 @@ type Insertable<T extends ImplicitAllowedTypes> = readonly (
 	| IterableTreeArrayContent<InsertableTreeNodeFromImplicitAllowedTypes<T>>
 )[];
 
-abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
+abstract class CustomArrayNodeBase<const T extends ImplicitAnnotatedAllowedTypes>
 	extends TreeNodeWithArrayFeatures<
-		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		TreeNodeFromImplicitAllowedTypes<T>
+		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>>,
+		TreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>
 	>
-	implements TreeArrayNode<T>
+	implements TreeArrayNode<UnannotateImplicitAllowedTypes<T>>
 {
 	// Indexing must be provided by subclass.
-	[k: number]: TreeNodeFromImplicitAllowedTypes<T>;
+	[k: number]: TreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>;
 
 	public static readonly kind = NodeKind.Array;
 
@@ -850,12 +869,16 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	>;
 
 	public constructor(
-		input?: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>> | InternalTreeNode,
+		input?:
+			| Iterable<InsertableTreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>>
+			| InternalTreeNode,
 	) {
 		super(input ?? []);
 	}
 
-	#mapTreesFromFieldData(value: Insertable<T>): FlexibleFieldContent {
+	#mapTreesFromFieldData(
+		value: Insertable<UnannotateImplicitAllowedTypes<T>>,
+	): FlexibleFieldContent {
 		const sequenceField = getSequenceField(this);
 		const content = value as readonly (
 			| InsertableContent
@@ -887,7 +910,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		return fail(0xadb /* Proxy should intercept length */);
 	}
 
-	public [Symbol.iterator](): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
+	public [Symbol.iterator](): IterableIterator<
+		TreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>
+	> {
 		return this.values();
 	}
 
@@ -899,9 +924,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	}
 
 	public at(
-		this: TreeArrayNode<T>,
+		this: TreeArrayNode<UnannotateImplicitAllowedTypes<T>>,
 		index: number,
-	): TreeNodeFromImplicitAllowedTypes<T> | undefined {
+	): TreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>> | undefined {
 		const field = getSequenceField(this);
 		const val = field.boxedAt(index);
 
@@ -909,18 +934,23 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			return val;
 		}
 
-		return getOrCreateNodeFromInnerNode(val) as TreeNodeFromImplicitAllowedTypes<T>;
+		return getOrCreateNodeFromInnerNode(val) as TreeNodeFromImplicitAllowedTypes<
+			UnannotateImplicitAllowedTypes<T>
+		>;
 	}
-	public insertAt(index: number, ...value: Insertable<T>): void {
+	public insertAt(
+		index: number,
+		...value: Insertable<UnannotateImplicitAllowedTypes<T>>
+	): void {
 		const field = getSequenceField(this);
 		validateIndex(index, field, "insertAt", true);
 		const content = this.#mapTreesFromFieldData(value);
 		field.editor.insert(index, content);
 	}
-	public insertAtStart(...value: Insertable<T>): void {
+	public insertAtStart(...value: Insertable<UnannotateImplicitAllowedTypes<T>>): void {
 		this.insertAt(0, ...value);
 	}
-	public insertAtEnd(...value: Insertable<T>): void {
+	public insertAtEnd(...value: Insertable<UnannotateImplicitAllowedTypes<T>>): void {
 		this.insertAt(this.length, ...value);
 	}
 	public removeAt(index: number): void {
@@ -1060,12 +1090,14 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		}
 	}
 
-	public values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
+	public values(): IterableIterator<
+		TreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>
+	> {
 		return this.generateValues(getKernel(this).generationNumber);
 	}
 	private *generateValues(
 		initialLastUpdatedStamp: number,
-	): Generator<TreeNodeFromImplicitAllowedTypes<T>> {
+	): Generator<TreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>> {
 		const kernel = getKernel(this);
 		if (initialLastUpdatedStamp !== kernel.generationNumber) {
 			throw new UsageError(`Concurrent editing and iteration is not allowed.`);
@@ -1105,7 +1137,8 @@ export function arraySchema<
 		ImplicitlyConstructable,
 		TCustomMetadata
 	> &
-		ArrayNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata>;
+		ArrayNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
+		TreeNodeSchemaCorePrivate;
 
 	const unannotatedTypes = unannotateImplicitAllowedTypes(info);
 
@@ -1114,11 +1147,11 @@ export function arraySchema<
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
 
-	let unhydratedContext: Context;
+	let privateData: TreeNodeSchemaPrivateData | undefined;
 
 	// This class returns a proxy from its constructor to handle numeric indexing.
 	// Alternatively it could extend a normal class which gets tons of numeric properties added.
-	class Schema extends CustomArrayNodeBase<UnannotateImplicitAllowedTypes<T>> {
+	class Schema extends CustomArrayNodeBase<T> {
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,
@@ -1153,10 +1186,7 @@ export function arraySchema<
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
-		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
-			const schema = this as unknown as TreeNodeSchema;
-			unhydratedContext = getUnhydratedContext(schema);
-
+		protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 			// First run, do extra validation.
 			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
 			// Scan for shadowing inherited members which won't work, but stop scan early to allow shadowing built in (which seems to work ok).
@@ -1181,8 +1211,16 @@ export function arraySchema<
 					prototype = Reflect.getPrototypeOf(prototype) as object;
 				}
 			}
+			const schema = this as ArrayNodeSchema;
 
-			return unhydratedContext;
+			return getTreeNodeSchemaInitializedData(this, {
+				shallowCompatibilityTest: (data: FactoryContent): CompatibilityLevel =>
+					shallowCompatibilityTest(data, schema),
+				toFlexContent: (
+					data: FactoryContent,
+					allowedTypes: ReadonlySet<TreeNodeSchema>,
+				): FlexContent => arrayToFlexContent(data, schema),
+			});
 		}
 
 		public static readonly identifier = identifier;
@@ -1204,11 +1242,15 @@ export function arraySchema<
 			return Schema.constructorCached?.constructor as unknown as Output;
 		}
 
-		protected get simpleSchema(): UnannotateImplicitAllowedTypes<T> {
-			return unannotatedTypes;
+		protected get simpleSchema(): T {
+			return info;
 		}
 		protected get allowedTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
+		}
+
+		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
+			return (privateData ??= createTreeNodeSchemaPrivateData(this, [info]));
 		}
 	}
 
@@ -1264,4 +1306,92 @@ function validateIndexRange(
 			`Index value passed to TreeArrayNode.${methodName} is out of bounds.`,
 		);
 	}
+}
+
+/**
+ * Transforms data for a child of an array.
+ * @param child - The tree data to be transformed.
+ * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
+ */
+function arrayChildToFlexTree(
+	child: InsertableContent,
+	allowedTypes: ReadonlySet<TreeNodeSchema>,
+): UnhydratedFlexTreeNode {
+	// We do not support undefined sequence entries.
+	// If we encounter an undefined entry, use null instead if supported by the schema, otherwise throw.
+	let childWithFallback = child;
+	if (child === undefined) {
+		if (allowedTypes.has(nullSchema)) {
+			childWithFallback = null;
+		} else {
+			throw new TypeError(`Received unsupported array entry value: ${child}.`);
+		}
+	}
+	return unhydratedFlexTreeFromInsertableNode(childWithFallback, allowedTypes);
+}
+
+/**
+ * {@link TreeNodeSchemaInitializedData.toFlexContent} for Array nodes.
+ *
+ * @param data - The tree data to be transformed. Must be an iterable.
+ * @param schema - The schema to comply with.
+ */
+function arrayToFlexContent(data: FactoryContent, schema: ArrayNodeSchema): FlexContent {
+	if (!(typeof data === "object" && data !== null && Symbol.iterator in data)) {
+		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
+	}
+
+	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
+
+	const mappedData = Array.from(data, (child) =>
+		arrayChildToFlexTree(child, allowedChildTypes),
+	);
+
+	const context = getUnhydratedContext(schema).flexContext;
+
+	// Array nodes have a single `EmptyKey` field:
+	const fieldsEntries =
+		mappedData.length === 0
+			? []
+			: ([
+					[
+						EmptyKey,
+						new UnhydratedSequenceField(
+							context,
+							FieldKinds.sequence.identifier,
+							EmptyKey,
+							mappedData,
+						),
+					],
+				] as const);
+
+	return [
+		{
+			type: brand(schema.identifier),
+		},
+		new Map(fieldsEntries),
+	];
+}
+
+/**
+ * {@link TreeNodeSchemaInitializedData.shallowCompatibilityTest} for Array nodes.
+ */
+function shallowCompatibilityTest(
+	data: FactoryContent,
+	schema: ArrayNodeSchema,
+): CompatibilityLevel {
+	if (isTreeValue(data)) {
+		return CompatibilityLevel.None;
+	}
+
+	if (data instanceof Map) {
+		// Maps are iterable, so type checking does allow constructing an ArrayNode from a map if the ArrayNode's type is an array that includes the key and value types of the map.
+		return CompatibilityLevel.Low;
+	}
+
+	if (Symbol.iterator in data) {
+		return CompatibilityLevel.Normal;
+	}
+
+	return CompatibilityLevel.None;
 }

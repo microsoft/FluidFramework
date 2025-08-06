@@ -41,7 +41,6 @@ declare type current_as_old_for_Class_LocalDeltaConnectionServer = requireAssign
  * typeValidation.broken:
  * "Class_LocalOrdererManager": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_LocalOrdererManager = requireAssignableTo<TypeOnly<old.LocalOrdererManager>, TypeOnly<current.LocalOrdererManager>>
 
 /*

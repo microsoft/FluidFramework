@@ -12,7 +12,7 @@ import {
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import express from "express";
+import type express from "express";
 import morgan from "morgan";
 
 import { getTelemetryContextPropertiesWithHttpInfo } from "./telemetryContext";
@@ -163,6 +163,7 @@ export function jsonMorganLoggerMiddleware(
 					statusCode = "STATUS_UNAVAILABLE";
 				}
 			}
+
 			const properties = {
 				[HttpProperties.method]: tokens.method(req, res) ?? "METHOD_UNAVAILABLE",
 				[HttpProperties.pathCategory]: `${req.baseUrl}${
@@ -180,6 +181,8 @@ export function jsonMorganLoggerMiddleware(
 					req,
 					res,
 				).correlationId,
+				[BaseTelemetryProperties.tenantId]: res.locals.tenantId,
+				[BaseTelemetryProperties.documentId]: res.locals.documentId,
 				[CommonProperties.serviceName]: serviceName,
 				[CommonProperties.telemetryGroupName]: "http_requests",
 				[HttpProperties.retryCount]: Number.parseInt(

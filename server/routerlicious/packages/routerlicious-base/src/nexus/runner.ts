@@ -5,13 +5,13 @@
 
 import cluster from "cluster";
 
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { Deferred, type TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	configureWebSocketServices,
-	ICollaborationSessionEvents,
+	type ICollaborationSessionEvents,
 } from "@fluidframework/server-lambdas";
 import { createMetricClient } from "@fluidframework/server-services";
-import {
+import type {
 	ICache,
 	IClientManager,
 	IClusterDrainingChecker,
@@ -28,11 +28,11 @@ import {
 	IRevokedTokenChecker,
 	ICollaborationSessionTracker,
 	IReadinessCheck,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import { LumberEventName, Lumberjack, LogLevel } from "@fluidframework/server-services-telemetry";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import * as winston from "winston";
 
 import * as app from "./app";
@@ -90,6 +90,7 @@ export class NexusRunner implements IRunner {
 			);
 			const numberOfMessagesPerTrace = this.config.get("nexus:numberOfMessagesPerTrace");
 			const enableNetworkCheck = this.config.get("nexus:enableNetworkCheck");
+			const preconnectTTLMs = this.config.get("nexus:preconnectTTLMs");
 			const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
 			const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
 			const isClientConnectivityCountingEnabled = this.config.get(
@@ -133,6 +134,7 @@ export class NexusRunner implements IRunner {
 				this.clusterDrainingChecker,
 				this.collaborationSessionTracker,
 				this.denyList,
+				preconnectTTLMs,
 			);
 
 			if (this.tokenRevocationManager) {

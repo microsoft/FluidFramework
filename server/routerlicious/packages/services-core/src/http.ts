@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as http from "http";
+import type * as http from "http";
 
 /**
  * @internal

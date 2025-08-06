@@ -7,14 +7,14 @@ import * as Path from "node:path";
 
 import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 
+import type { ApiDocument } from "./ApiDocument.js";
 import type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
 import {
 	type ApiItemTransformationOptions,
 	transformApiModel,
 } from "./api-item-transforms/index.js";
-import type { DocumentNode } from "./documentation-domain/index.js";
 import {
-	type MarkdownRenderConfiguration,
+	type RenderDocumentAsMarkdownConfiguration,
 	renderDocumentAsMarkdown,
 } from "./renderers/index.js";
 
@@ -25,7 +25,7 @@ import {
  */
 export interface RenderApiModelAsMarkdownOptions
 	extends ApiItemTransformationOptions,
-		MarkdownRenderConfiguration,
+		RenderDocumentAsMarkdownConfiguration,
 		FileSystemConfiguration {}
 
 /**
@@ -42,24 +42,24 @@ export async function renderApiModelAsMarkdown(
 }
 
 /**
- * Options for rendering {@link DocumentNode}s as Markdown.
+ * Options for rendering {@link ApiDocument}s as Markdown.
  *
  * @public
  */
 export interface RenderDocumentsAsMarkdownOptions
-	extends MarkdownRenderConfiguration,
+	extends RenderDocumentAsMarkdownConfiguration,
 		FileSystemConfiguration {}
 
 /**
  * Renders the provided documents using Markdown syntax, and writes each document to a file on disk.
  *
  * @param documents - The documents to render. Each will be rendered to its own file on disk per
- * {@link DocumentNode.documentPath} (relative to the provided output directory).
+ * {@link ApiDocument.documentPath} (relative to the provided output directory).
  *
  * @public
  */
 export async function renderDocumentsAsMarkdown(
-	documents: readonly DocumentNode[],
+	documents: readonly ApiDocument[],
 	options: RenderDocumentsAsMarkdownOptions,
 ): Promise<void> {
 	const { logger, newlineKind, outputDirectoryPath } = options;

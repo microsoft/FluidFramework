@@ -14,14 +14,14 @@ import {
 import { InMemoryApiCounters } from "@fluidframework/server-services-utils";
 import { cloneDeep } from "lodash";
 import {
-	AggregationCursor,
-	Collection,
-	Document,
-	FindOneAndUpdateOptions,
-	FindOptions,
+	type AggregationCursor,
+	type Collection,
+	type Document,
+	type FindOneAndUpdateOptions,
+	type FindOptions,
 	MongoClient,
-	MongoClientOptions,
-	OptionalUnlessRequiredId,
+	type MongoClientOptions,
+	type OptionalUnlessRequiredId,
 } from "mongodb";
 
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
@@ -642,8 +642,11 @@ const DefaultServerSelectionTimeoutMS = 30000;
 
 interface IMongoDBConfig {
 	operationsDbEndpoint: string;
+	operationsDbEndpointAmi?: string;
 	globalDbEndpoint?: string;
 	globalDbEnabled?: boolean;
+	globalDbEndpointAmi?: string;
+	mongoAmiEnabled?: boolean;
 	connectionPoolMinSize?: number;
 	connectionPoolMaxSize?: number;
 	directConnection?: boolean;
@@ -692,8 +695,11 @@ export class MongoDbFactory implements core.IDbFactory {
 	constructor(config: IMongoDBConfig) {
 		const {
 			operationsDbEndpoint,
+			operationsDbEndpointAmi,
 			globalDbEnabled,
 			globalDbEndpoint,
+			globalDbEndpointAmi,
+			mongoAmiEnabled,
 			connectionPoolMinSize,
 			connectionPoolMaxSize,
 			directConnection,
@@ -711,10 +717,16 @@ export class MongoDbFactory implements core.IDbFactory {
 			consecutiveFailedThresholdForLowerTotalRequests,
 		} = config;
 		if (globalDbEnabled) {
-			this.globalDbEndpoint = globalDbEndpoint;
+			this.globalDbEndpoint = mongoAmiEnabled ? globalDbEndpointAmi : globalDbEndpoint;
 		}
-		assert(!!operationsDbEndpoint, `No endpoint provided`);
-		this.operationsDbEndpoint = operationsDbEndpoint;
+		assert(
+			mongoAmiEnabled ? !!operationsDbEndpointAmi : !!operationsDbEndpoint,
+			`No endpoint provided`,
+		);
+		this.operationsDbEndpoint =
+			mongoAmiEnabled && operationsDbEndpointAmi
+				? operationsDbEndpointAmi
+				: operationsDbEndpoint;
 		this.connectionPoolMinSize = connectionPoolMinSize;
 		this.connectionPoolMaxSize = connectionPoolMaxSize;
 		this.connectionNotAvailableMode = connectionNotAvailableMode ?? "ruleBehavior";

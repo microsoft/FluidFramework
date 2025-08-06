@@ -4,15 +4,20 @@
  */
 
 import { type TreeNodeSchema, walkAllowedTypes, type SchemaVisitor } from "./core/index.js";
-import { type ImplicitFieldSchema, normalizeFieldSchema } from "./schemaTypes.js";
+import { type ImplicitFieldSchema, normalizeFieldSchema } from "./fieldSchema.js";
 
 /**
  * Traverses all {@link TreeNodeSchema} schema reachable from `schema`, applying the visitor pattern.
+ * @internal
  */
 export function walkFieldSchema(
 	schema: ImplicitFieldSchema,
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
-	walkAllowedTypes(normalizeFieldSchema(schema).allowedTypeSet, visitor, visitedSet);
+	walkAllowedTypes(
+		normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
+		visitor,
+		visitedSet,
+	);
 }

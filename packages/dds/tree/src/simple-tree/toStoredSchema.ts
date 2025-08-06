@@ -23,8 +23,7 @@ import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
 import { brand, getOrCreate } from "../util/index.js";
 
 import { NodeKind } from "./core/index.js";
-import { LeafNodeSchema } from "./leafNodeSchema.js";
-import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./schemaTypes.js";
+import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
 import type {
 	SimpleFieldSchema,
 	SimpleNodeSchema,
@@ -37,6 +36,8 @@ const viewToStoredCache = new WeakMap<ImplicitFieldSchema, TreeStoredSchema>();
 
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
+ * @throws
+ * Throws a `UsageError` if multiple schemas are encountered with the same identifier.
  */
 export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 	return getOrCreate(viewToStoredCache, root, () => {
@@ -109,21 +110,29 @@ export const convertFieldKind: ReadonlyMap<FieldKind, FlexFieldKind> = new Map<
  * Converts a {@link TreeNodeSchema} into a {@link TreeNodeStoredSchema}.
  * @privateRemarks
  * TODO: Persist node metadata once schema FormatV2 is supported.
+ *
+ * TODO: AB#43548: Using a stored schema for unhydrated flex trees does not handle schema evolution features like "allowUnknownOptionalFields".
+ * Usage of this and the conversion which wrap it should be audited and reduced.
  */
 export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema {
 	const kind = schema.kind;
 	switch (kind) {
 		case NodeKind.Leaf: {
-			assert(schema instanceof LeafNodeSchema, 0xa4a /* invalid kind */);
+			assert(schema.kind === NodeKind.Leaf, 0xa4a /* invalid kind */);
 			return new LeafNodeStoredSchema(schema.leafKind);
 		}
-		case NodeKind.Map: {
+		case NodeKind.Map:
+		case NodeKind.Record: {
 			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
-			return new MapNodeStoredSchema({
-				kind: FieldKinds.optional.identifier,
-				types,
-				persistedMetadata: schema.persistedMetadata,
-			});
+			return new MapNodeStoredSchema(
+				{
+					kind: FieldKinds.optional.identifier,
+					types,
+					persistedMetadata: schema.persistedMetadata,
+				},
+				// TODO: Find a way to avoid injecting persistedMetadata twice in these constructor calls.
+				schema.persistedMetadata,
+			);
 		}
 		case NodeKind.Array: {
 			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
@@ -133,16 +142,17 @@ export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema 
 				persistedMetadata: schema.persistedMetadata,
 			};
 			const fields = new Map([[EmptyKey, field]]);
-			return new ObjectNodeStoredSchema(fields);
+			return new ObjectNodeStoredSchema(fields, schema.persistedMetadata);
 		}
 		case NodeKind.Object: {
 			const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
 			for (const fieldSchema of schema.fields.values()) {
 				fields.set(brand(fieldSchema.storedKey), convertField(fieldSchema));
 			}
-			return new ObjectNodeStoredSchema(fields);
+			return new ObjectNodeStoredSchema(fields, schema.persistedMetadata);
 		}
-		default:
+		default: {
 			unreachableCase(kind);
+		}
 	}
 }

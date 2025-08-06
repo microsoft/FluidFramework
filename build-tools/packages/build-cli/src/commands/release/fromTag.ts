@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ReleaseVersion, VersionBumpType, detectBumpType } from "@fluid-tools/version-tools";
-import { MonoRepo, Package } from "@fluidframework/build-tools";
+import {
+	type ReleaseVersion,
+	type VersionBumpType,
+	detectBumpType,
+} from "@fluid-tools/version-tools";
+import { type MonoRepo, Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
 import semver from "semver";
 import { sortPackageJson as sortJson } from "sort-package-json";
@@ -12,8 +16,8 @@ import { sortPackageJson as sortJson } from "sort-package-json";
 import { findPackageOrReleaseGroup } from "../../args.js";
 // eslint-disable-next-line import/no-deprecated
 import { MonoRepoKind, sortVersions } from "../../library/index.js";
-import { ReleaseGroup, ReleasePackage } from "../../releaseGroups.js";
-import { ReleaseReportBaseCommand, ReleaseSelectionMode } from "./report.js";
+import type { ReleaseGroup, ReleasePackage } from "../../releaseGroups.js";
+import { ReleaseReportBaseCommand, type ReleaseSelectionMode } from "./report.js";
 
 const tagRefPrefix = "refs/tags/";
 

@@ -477,7 +477,7 @@ describe("Staging Mode", () => {
 		const seq = await waitForSave([clients.loaded]);
 		await catchUp(clients, seq);
 
-		// Make another change in before exiting staging mode
+		// Make another change before exiting staging mode
 		clients.original.dataObject.makeEdit("branch-second-batch");
 
 		stagingControls.commitChanges();
@@ -504,7 +504,7 @@ describe("Staging Mode", () => {
 		const seq = await waitForSave([clients.loaded]);
 		await catchUp(clients, seq);
 
-		// Make another change in before exiting staging mode
+		// Make another change before exiting staging mode
 		clients.original.dataObject.makeEdit("branch-second-batch");
 
 		stagingControls.discardChanges();

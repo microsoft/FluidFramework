@@ -97,6 +97,11 @@ export const required = new FieldKindWithEditor(
 	Multiplicity.Single,
 	valueChangeHandler,
 	(types, other) =>
+		// By omitting Identifier here,
+		// this is making a policy choice that a schema upgrade cannot be done from required to identifier.
+		// Since an identifier can be upgraded into a required field,
+		// preventing the inverse helps ensure that schema upgrades are monotonic.
+		// Which direction is allowed is a subjective policy choice.
 		(other.kind === sequence.identifier ||
 			other.kind === requiredIdentifier ||
 			other.kind === optional.identifier ||
@@ -125,6 +130,10 @@ const nodeKeyIdentifier = "NodeKey";
 
 /**
  * Exactly one identifier.
+ *
+ * TODO: this is almost the same as identifier, but apparently unused.
+ * Confirm if this is truly unused since before the document format was stabilized, and remove if possible.
+ * @deprecated Superseded by {@link identifier}.
  */
 export const nodeKey = new FieldKindWithEditor(
 	nodeKeyIdentifier,
@@ -149,6 +158,7 @@ export const identifier = new FieldKindWithEditor(
 	Multiplicity.Single,
 	noChangeHandler,
 	(types, other) =>
+		// Allows upgrading from identifier to required: which way this upgrade is allowed to go is a subjective policy choice.
 		(other.kind === sequence.identifier ||
 			other.kind === requiredIdentifier ||
 			other.kind === optional.identifier ||
@@ -257,20 +267,10 @@ export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> =
 // TODO: Find a way to make docs like {@inheritDoc required} work in vscode.
 // TODO: ensure thy work in generated docs.
 // TODO: add these comments to the rest of the cases below.
-/**
- */
 export interface Required extends FlexFieldKind<"Value", Multiplicity.Single> {}
-/**
- */
 export interface Optional extends FlexFieldKind<"Optional", Multiplicity.Optional> {}
-/**
- */
 export interface Sequence extends FlexFieldKind<"Sequence", Multiplicity.Sequence> {}
-/**
- */
 export interface Identifier extends FlexFieldKind<"Identifier", Multiplicity.Single> {}
-/**
- */
 export interface Forbidden
 	extends FlexFieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {}
 

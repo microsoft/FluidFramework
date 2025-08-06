@@ -37,11 +37,11 @@ export {
 	transformApiModel,
 	transformTsdoc,
 } from "./api-item-transforms/index.js";
-
-// We want to make sure the entirety of this domain is accessible.
-// eslint-disable-next-line no-restricted-syntax
-export * from "./documentation-domain/index.js";
-
+export type { ApiDocument } from "./ApiDocument.js";
+export type {
+	Section,
+	SectionHeading,
+} from "./mdast/index.js";
 export {
 	documentToHtml,
 	documentationNodeToHtml,
@@ -52,16 +52,22 @@ export {
 	type TransformationContext as ToHtmlContext,
 } from "./documentation-domain-to-html/index.js";
 export {
+	documentToMarkdown,
+	sectionContentToMarkdown,
+	type Transformation as ToMarkdownTransformation,
+	type TransformationConfiguration as ToMarkdownConfiguration,
+	type TransformationContext as ToMarkdownContext,
+	type Transformations as ToMarkdownTransformations,
+} from "./documentation-domain-to-markdown/index.js";
+export {
 	DocumentWriter,
 	type RenderDocumentAsHtmlConfiguration,
 	type RenderHtmlConfiguration,
-	type MarkdownRenderContext,
-	type MarkdownRenderers,
-	type MarkdownRenderConfiguration,
+	type RenderDocumentAsMarkdownConfiguration,
+	type RenderMarkdownConfiguration,
 } from "./renderers/index.js";
 export type { LoggingConfiguration } from "./LoggingConfiguration.js";
 export type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
-export type { Heading } from "./Heading.js";
 export type { Link, UrlTarget } from "./Link.js";
 export {
 	lintApiModel,
@@ -113,7 +119,7 @@ export {
 	 */
 	ApiItemUtilities,
 	/**
-	 * Utilities related to generating {@link DocumentationNode} content for {@link @microsoft/api-extractor-model#ApiItem}s.
+	 * Utilities related to generating Markdown content for {@link @microsoft/api-extractor-model#ApiItem}s.
 	 *
 	 * @remarks
 	 *
@@ -123,13 +129,13 @@ export {
 	 */
 	LayoutUtilities,
 	/**
-	 * Functionality for rendering {@link DocumentationNode}s as HTML.
+	 * Functionality for rendering documentation as HTML.
 	 *
 	 * @alpha
 	 */
 	HtmlRenderer,
 	/**
-	 * Functionality for rendering {@link DocumentationNode}s as Markdown.
+	 * Functionality for rendering documentation as Markdown.
 	 *
 	 * @public
 	 */

@@ -4,20 +4,20 @@
  */
 
 import {
-	IWholeFlatSummary,
-	IWholeSummaryPayload,
+	type IWholeFlatSummary,
+	type IWholeSummaryPayload,
 	NetworkError,
 	isNetworkError,
 } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
-import { IRepositoryManager, type IFileSystemManager } from "./definitions";
+import type { IRepositoryManager, IFileSystemManager } from "./definitions";
 import { GitRestLumberEventName } from "./gitrestTelemetryDefinitions";
 import { getSoftDeletedMarkerPath } from "./helpers";
 import {
 	Constants,
-	ISummaryWriteFeatureFlags,
-	IWriteSummaryInfo,
+	type ISummaryWriteFeatureFlags,
+	type IWriteSummaryInfo,
 	isChannelSummary,
 	isContainerSummary,
 	readSummary,

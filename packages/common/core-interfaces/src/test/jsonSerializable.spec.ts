@@ -14,6 +14,7 @@ import {
 	reviveBigInt,
 } from "./testUtils.js";
 import type {
+	BrandedString,
 	ObjectWithOptionalRecursion,
 	ObjectWithSymbolOrRecursion,
 } from "./testValues.js";
@@ -114,6 +115,8 @@ import {
 	objectWithNever,
 	stringRecordOfNumbers,
 	stringRecordOfUndefined,
+	stringRecordOfNumberOrUndefined,
+	stringRecordOfSymbolOrBoolean,
 	stringRecordOfUnknown,
 	stringOrNumberRecordOfStrings,
 	stringOrNumberRecordOfObjects,
@@ -154,6 +157,7 @@ import {
 	classInstanceWithPrivateSetter,
 	classInstanceWithPublicData,
 	classInstanceWithPublicMethod,
+	objectWithClassWithPrivateDataInOptionalRecursion,
 	functionObjectWithPrivateData,
 	functionObjectWithPublicData,
 	classInstanceWithPrivateDataAndIsFunction,
@@ -168,6 +172,16 @@ import {
 	brandedObjectWithString,
 	objectWithBrandedNumber,
 	objectWithBrandedString,
+	brandedStringIndexOfBooleans,
+	brandedStringAliasIndexOfBooleans,
+	brandedStringRecordOfBooleans,
+	brandedStringAliasRecordOfBooleans,
+	brandedStringIndexOfNumbers,
+	brandedStringAliasIndexOfNumbers,
+	brandedStringRecordOfNumbers,
+	brandedStringAliasRecordOfNumbers,
+	brandedStringAliasIndexOfTrueOrUndefined,
+	datastore,
 	fluidHandleToNumber,
 	objectWithFluidHandle,
 	objectWithFluidHandleOrRecursion,
@@ -177,6 +191,11 @@ import {
 	opaqueSerializableUnknown,
 	opaqueDeserializedUnknown,
 	opaqueSerializableAndDeserializedUnknown,
+	objectWithOpaqueSerializableUnknown,
+	objectWithOpaqueDeserializedUnknown,
+	opaqueSerializableInRecursiveStructure,
+	opaqueDeserializedInRecursiveStructure,
+	opaqueSerializableAndDeserializedInRecursiveStructure,
 	opaqueSerializableObjectRequiringBigintSupport,
 	opaqueDeserializedObjectRequiringBigintSupport,
 	opaqueSerializableAndDeserializedObjectRequiringBigintSupport,
@@ -598,6 +617,47 @@ describe("JsonSerializable", () => {
 				assertIdenticalTypes(filteredIn, out);
 			});
 
+			it("branded-`string` indexed of `boolean`s", () => {
+				const { filteredIn, out } = passThru(brandedStringIndexOfBooleans);
+				assertIdenticalTypes(filteredIn, brandedStringIndexOfBooleans);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("branded-`string` alias indexed of `boolean`s", () => {
+				const { filteredIn, out } = passThru(brandedStringAliasIndexOfBooleans);
+				assertIdenticalTypes(filteredIn, brandedStringAliasIndexOfBooleans);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("branded-`string` record of `boolean`s", () => {
+				const { filteredIn, out } = passThru(brandedStringRecordOfBooleans);
+				assertIdenticalTypes(filteredIn, brandedStringRecordOfBooleans);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("branded-`string` alias record of `boolean`s", () => {
+				const { filteredIn, out } = passThru(brandedStringAliasRecordOfBooleans);
+				assertIdenticalTypes(filteredIn, brandedStringAliasRecordOfBooleans);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("branded-`string` indexed of `number`s", () => {
+				const { filteredIn, out } = passThru(brandedStringIndexOfNumbers);
+				assertIdenticalTypes(filteredIn, brandedStringIndexOfNumbers);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("branded-`string` alias indexed of `number`s", () => {
+				const { filteredIn, out } = passThru(brandedStringAliasIndexOfNumbers);
+				assertIdenticalTypes(filteredIn, brandedStringAliasIndexOfNumbers);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("branded-`string` record of `number`s", () => {
+				const { filteredIn, out } = passThru(brandedStringRecordOfNumbers);
+				assertIdenticalTypes(filteredIn, brandedStringRecordOfNumbers);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("branded-`string` alias record of `number`s", () => {
+				const { filteredIn, out } = passThru(brandedStringAliasRecordOfNumbers);
+				assertIdenticalTypes(filteredIn, brandedStringAliasRecordOfNumbers);
+				assertIdenticalTypes(filteredIn, out);
+			});
+
 			it("object with possible type recursion through union", () => {
 				const { filteredIn, out } = passThru(objectWithPossibleRecursion);
 				assertIdenticalTypes(filteredIn, objectWithPossibleRecursion);
@@ -785,6 +845,44 @@ describe("JsonSerializable", () => {
 					const { filteredIn, out } = passThru(opaqueSerializableAndDeserializedUnknown);
 					assertIdenticalTypes(filteredIn, opaqueSerializableAndDeserializedUnknown);
 					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
+					assertIdenticalTypes(filteredIn, out);
+				});
+				it("object with opaque serializable unknown", () => {
+					const { filteredIn, out } = passThru(objectWithOpaqueSerializableUnknown);
+					assertIdenticalTypes(filteredIn, objectWithOpaqueSerializableUnknown);
+					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
+					assertIdenticalTypes(filteredIn, out);
+				});
+				it("object with opaque deserialized unknown", () => {
+					const { filteredIn, out } = passThru(objectWithOpaqueDeserializedUnknown);
+					assertIdenticalTypes(filteredIn, objectWithOpaqueDeserializedUnknown);
+					assertIdenticalTypes(filteredIn, out);
+				});
+				it("recursive type with opaque serializable unknown", () => {
+					const { filteredIn, out } = passThru(opaqueSerializableInRecursiveStructure);
+					assertIdenticalTypes(filteredIn, opaqueSerializableInRecursiveStructure);
+					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
+					assertIdenticalTypes(filteredIn, out);
+				});
+				it("recursive type with opaque deserialized unknown", () => {
+					const { filteredIn, out } = passThru(opaqueDeserializedInRecursiveStructure);
+					assertIdenticalTypes(filteredIn, opaqueDeserializedInRecursiveStructure);
+					assertIdenticalTypes(filteredIn, out);
+				});
+				it("recursive type with opaque serializable and deserialized unknown", () => {
+					const { filteredIn, out } = passThru(
+						opaqueSerializableAndDeserializedInRecursiveStructure,
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						opaqueSerializableAndDeserializedInRecursiveStructure,
+					);
+					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
+					assertIdenticalTypes(filteredIn, out);
+				});
+				it("recursive branded indexed object with OpaqueJsonDeserialized<unknown>", () => {
+					const { filteredIn, out } = passThru(datastore);
+					assertIdenticalTypes(filteredIn, datastore);
 					assertIdenticalTypes(filteredIn, out);
 				});
 			});
@@ -1328,6 +1426,14 @@ describe("JsonSerializable", () => {
 						createInstanceOf<{ numberOrBigintOrSymbol: number }>(),
 					);
 				});
+				it("`string` indexed record of `symbol | boolean`", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error Type 'symbol | boolean' is not assignable to type 'boolean'
+						stringRecordOfSymbolOrBoolean,
+						{ boolean },
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<Record<string, boolean>>());
+				});
 
 				it("object with array of `bigint`s", () => {
 					const { filteredIn } = passThruThrows(
@@ -1679,6 +1785,41 @@ describe("JsonSerializable", () => {
 						);
 					});
 
+					it("`| number` in string indexed record", () => {
+						const { filteredIn } = passThru(
+							// @ts-expect-error Type 'undefined' is not assignable to type '{ "error required property may not allow `undefined` value": never; }'
+							stringRecordOfNumberOrUndefined,
+							{ number },
+						);
+						assertIdenticalTypes(
+							filteredIn,
+							createInstanceOf<
+								Record<
+									string,
+									{
+										"error required property may not allow `undefined` value": never;
+									}
+								>
+							>(),
+						);
+					});
+
+					it("`| true` in branded-`string` alias index", () => {
+						const { filteredIn } = passThru(
+							// @ts-expect-error Type 'undefined' is not assignable to type '{ "error required property may not allow `undefined` value": never; }'
+							brandedStringAliasIndexOfTrueOrUndefined,
+							{},
+						);
+						assertIdenticalTypes(
+							filteredIn,
+							createInstanceOf<{
+								[x: BrandedString]: {
+									"error required property may not allow `undefined` value": never;
+								};
+							}>(),
+						);
+					});
+
 					it("as optional exact property type > varies by exactOptionalPropertyTypes setting", () => {
 						// See sibling test files
 					});
@@ -1825,6 +1966,30 @@ describe("JsonSerializable", () => {
 								public: string;
 								getSecret: never;
 							}>(),
+						);
+					});
+					it("with private data in optional recursion", () => {
+						const { filteredIn } = passThru(
+							// @ts-expect-error SerializationErrorPerNonPublicProperties
+							objectWithClassWithPrivateDataInOptionalRecursion,
+							{
+								class: {
+									public: "public",
+									// secret is also not allowed but is present
+									secret: 0,
+								},
+								recurse: {
+									class: {
+										public: "public",
+										// secret is also not allowed but is present
+										secret: 0,
+									},
+								},
+							},
+						);
+						assertIdenticalTypes(
+							filteredIn,
+							createInstanceOf<SerializationErrorPerNonPublicProperties>(),
 						);
 					});
 				});

@@ -9,8 +9,8 @@ import {
 	Lumberjack,
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
-import { default as Axios, RawAxiosRequestHeaders } from "axios";
-import nconf from "nconf";
+import { default as Axios, type RawAxiosRequestHeaders } from "axios";
+import type nconf from "nconf";
 import * as uuid from "uuid";
 
 import { BaseGitRestTelemetryProperties } from "./utils";

@@ -4,9 +4,9 @@
  */
 
 import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
-import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	ISnapshotTree,
+	ISummaryTree,
 	ITree,
 	SummaryTree,
 	ISequencedDocumentMessage,

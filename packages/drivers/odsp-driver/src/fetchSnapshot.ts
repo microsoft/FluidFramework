@@ -6,9 +6,9 @@
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData } from "@fluidframework/driver-base/internal";
-import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
-	DriverErrorTelemetryProps,
+	type DriverErrorTelemetryProps,
 	NonRetryableError,
 	isRuntimeMessage,
 } from "@fluidframework/driver-utils/internal";
@@ -18,13 +18,13 @@ import {
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	type IOdspError,
-	IOdspResolvedUrl,
-	ISnapshotOptions,
-	InstrumentedStorageTokenFetcher,
+	type IOdspResolvedUrl,
+	type ISnapshotOptions,
+	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 	isFluidError,
 	wrapError,
@@ -32,24 +32,25 @@ import {
 import { v4 as uuid } from "uuid";
 
 import {
-	ISnapshotContentsWithProps,
+	type ISnapshotContentsWithProps,
 	currentReadVersion,
 	parseCompactSnapshotResponse,
 } from "./compactSnapshotParser.js";
 import {
-	IOdspSnapshot,
-	ISnapshotCachedEntry2,
-	IVersionedValueWithEpoch,
+	type IOdspSnapshot,
+	type ISnapshotCachedEntry2,
+	type IVersionedValueWithEpoch,
 	persistedCacheValueVersion,
 } from "./contracts.js";
-import { EpochTracker } from "./epochTracker.js";
+import { ClpCompliantAppHeader } from "./contractsPublic.js";
+import type { EpochTracker } from "./epochTracker.js";
 import { getQueryString } from "./getQueryString.js";
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import { mockify } from "./mockify.js";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser.js";
 import { checkForKnownServerFarmType } from "./odspUrlHelper.js";
 import {
-	IOdspResponse,
+	type IOdspResponse,
 	fetchAndParseAsJSONHelper,
 	fetchHelper,
 	getWithRetryForTokenRefresh,
@@ -224,6 +225,9 @@ async function redeemSharingLink(
 				odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
 			);
 
+			const isRedemptionNonDurable: boolean =
+				odspResolvedUrl.shareLinkInfo?.isRedemptionNonDurable === true;
+
 			let redeemUrl: string | undefined;
 			async function callSharesAPI(baseUrl: string): Promise<void> {
 				await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
@@ -240,7 +244,7 @@ async function redeemSharingLink(
 						"RedeemShareLink",
 					);
 					const headers = getHeadersWithAuth(authHeader);
-					headers.prefer = "redeemSharingLink";
+					headers.prefer = isRedemptionNonDurable ? "nonDurableRedeem" : "redeemSharingLink";
 					await fetchAndParseAsJSONHelper(url, { headers, method });
 				});
 			}
@@ -251,6 +255,7 @@ async function redeemSharingLink(
 				queryParamsLength: new URL(odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem).search
 					.length,
 				useHeaders: true,
+				isRedemptionNonDurable,
 			});
 			// There is an issue where if we use the siteUrl in /shares, then the allowed length of url is just a few hundred characters(300-400)
 			// and we fail to do the redeem. But if we use the tenant domain in the url, then the allowed length becomes 2048. So,
@@ -287,6 +292,8 @@ async function fetchLatestSnapshotCore(
 		const fetchSnapshotForLoadingGroup = isSnapshotFetchForLoadingGroup(loadingGroupIds);
 		const eventName = fetchSnapshotForLoadingGroup ? "TreesLatestForGroup" : "TreesLatest";
 		const internalFarmType = checkForKnownServerFarmType(odspResolvedUrl.siteUrl);
+		const isRedemptionNonDurable: boolean =
+			odspResolvedUrl.shareLinkInfo?.isRedemptionNonDurable === true;
 
 		const perfEvent = {
 			eventName,
@@ -296,6 +303,8 @@ async function fetchLatestSnapshotCore(
 			redeemFallbackEnabled: enableRedeemFallback,
 			details: {
 				internalFarmType,
+				// Whether the redemption used is non-durable or not.
+				isRedemptionNonDurable,
 			},
 		};
 		if (snapshotOptions !== undefined) {
@@ -724,11 +733,22 @@ export const downloadSnapshot = mockify(
 		const queryString = getQueryString(queryParams);
 		const url = `${snapshotUrl}/trees/latest${queryString}`;
 		const method = "POST";
+		const isRedemptionNonDurable: boolean =
+			odspResolvedUrl.shareLinkInfo?.isRedemptionNonDurable === true;
 		// The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
 		// Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
 		// This error thrown by server will contain the new redirect location. Look at the 404 error parsing
 		// for further reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
-		const header = { prefer: "manualredirect" };
+		// If the share link is non-durable, we will add the nonDurableRedeem header to the header.prefer.
+		const header: { [key: string]: string } = isRedemptionNonDurable
+			? { prefer: "manualredirect, nonDurableRedeem" }
+			: { prefer: "manualredirect" };
+		// Epoch tracker is handling adding the CLP Compliant App header, so only when a flow does not
+		// use epoch tracker, we add the header.
+		if (epochTracker === undefined && odspResolvedUrl.isClpCompliantApp !== undefined) {
+			header[ClpCompliantAppHeader.isClpCompliantApp] =
+				odspResolvedUrl.isClpCompliantApp.toString();
+		}
 		const authHeader = await getAuthHeader(
 			{ ...tokenFetchOptions, request: { url, method } },
 			"downloadSnapshot",

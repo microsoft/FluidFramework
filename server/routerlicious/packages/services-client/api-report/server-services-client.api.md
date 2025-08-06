@@ -8,21 +8,21 @@ import * as api from '@fluidframework/protocol-definitions';
 import { AxiosError } from 'axios';
 import { AxiosInstance } from 'axios';
 import { AxiosRequestConfig } from 'axios';
-import { ICreateTreeEntry } from '@fluidframework/gitresources';
-import { IQuorumSnapshot } from '@fluidframework/protocol-base';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import type { ICreateTreeEntry } from '@fluidframework/gitresources';
+import type { IQuorumSnapshot } from '@fluidframework/protocol-base';
+import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISnapshotTreeEx } from '@fluidframework/protocol-definitions';
-import { ISummaryHandle } from '@fluidframework/protocol-definitions';
+import type { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree as ISummaryTree_2 } from '@fluidframework/protocol-definitions';
-import { ITokenClaims } from '@fluidframework/protocol-definitions';
-import { ITree } from '@fluidframework/gitresources';
+import type { ITokenClaims } from '@fluidframework/protocol-definitions';
+import type { ITree } from '@fluidframework/gitresources';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';
-import { IUser } from '@fluidframework/protocol-definitions';
+import type { IUser } from '@fluidframework/protocol-definitions';
 import { RawAxiosRequestHeaders } from 'axios';
-import * as resources from '@fluidframework/gitresources';
-import { ScopeType } from '@fluidframework/protocol-definitions';
-import { SummaryObject } from '@fluidframework/protocol-definitions';
+import type * as resources from '@fluidframework/gitresources';
+import type { ScopeType } from '@fluidframework/protocol-definitions';
+import type { SummaryObject } from '@fluidframework/protocol-definitions';
 
 // @internal (undocumented)
 export class BasicRestWrapper extends RestWrapper {
@@ -553,6 +553,8 @@ export interface IWholeSummaryPayload {
     message: string;
     // (undocumented)
     sequenceNumber: number;
+    // (undocumented)
+    summaryTime?: string;
     // (undocumented)
     type: IWholeSummaryPayloadType;
 }

@@ -1,5 +1,32 @@
 # @fluidframework/container-definitions
 
+## 2.52.0
+
+### Minor Changes
+
+- Introduced new interface "IContainerStorageService" to replace "IDocumentStorageService" between Loader and Runtime layers ([#25057](https://github.com/microsoft/FluidFramework/pull/25057)) [92012de557](https://github.com/microsoft/FluidFramework/commit/92012de5571d4d87cc14bae2f391431764558735)
+
+  Added an interface `IContainerStorageService` which will replace `IDocumentStorageService` in the `Runtime` layer. This is exposed by the `Loader` layer to the `Runtime` layer via `ContainerContext`. This will help remove `Runtime` layer's dependency on the `Driver` layer and replace it with the `Loader` layer that it already maintains. This new interface will only contain properties that are needed and used by the `Runtime` layer.
+
+  The following properties from `IContainerStorageService` are deprecated as they are not needed by the `DataStore` layer. These be removed in a future release:
+
+  - `policies` - The Runtime only needs `maximumCacheDurationMs` property from it which is added directly on `IContainerStorageService`.
+  - `downloadSummary`
+  - `disposed`
+  - `dispose`
+
+## 2.51.0
+
+Dependency updates only.
+
+## 2.50.0
+
+Dependency updates only.
+
+## 2.43.0
+
+Dependency updates only.
+
 ## 2.42.0
 
 Dependency updates only.

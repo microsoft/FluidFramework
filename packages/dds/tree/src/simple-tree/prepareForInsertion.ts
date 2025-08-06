@@ -19,22 +19,32 @@ import {
 	FieldKinds,
 	type FlexibleFieldContent,
 	type FlexibleNodeContent,
+	throwOutOfSchema,
 } from "../feature-libraries/index.js";
-import {
-	normalizeFieldSchema,
-	type ImplicitAllowedTypes,
-	type ImplicitFieldSchema,
-} from "./schemaTypes.js";
+import { normalizeFieldSchema, type ImplicitAnnotatedFieldSchema } from "./fieldSchema.js";
 import {
 	type InsertableContent,
 	unhydratedFlexTreeFromInsertable,
 } from "./unhydratedFlexTreeFromInsertable.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { brand } from "../util/index.js";
-import { getKernel, type TreeNode, type UnhydratedFlexTreeNode } from "./core/index.js";
+import {
+	getKernel,
+	type ImplicitAnnotatedAllowedTypes,
+	type TreeNode,
+	type UnhydratedFlexTreeNode,
+} from "./core/index.js";
 import { debugAssert, oob } from "@fluidframework/core-utils/internal";
-import { inSchemaOrThrow, isFieldInSchema } from "../feature-libraries/index.js";
+import { isFieldInSchema } from "../feature-libraries/index.js";
 import { convertField } from "./toStoredSchema.js";
+
+/**
+ * For now, schema validation for inserted content is always enabled.
+ * @remarks
+ * If this ends up being too much of a performance overhead, AND nothing depends on it (like staged allowed types likely will),
+ * this could be changed.
+ */
+const validateSchema = true;
 
 /**
  * Prepare content from a user for insertion into a tree.
@@ -46,7 +56,7 @@ import { convertField } from "./toStoredSchema.js";
  */
 export function prepareForInsertion<TIn extends InsertableContent | undefined>(
 	data: TIn,
-	schema: ImplicitFieldSchema,
+	schema: ImplicitAnnotatedFieldSchema,
 	destinationContext: FlexTreeContext,
 ): TIn extends undefined ? undefined : FlexibleNodeContent {
 	return prepareForInsertionContextless(
@@ -72,7 +82,7 @@ export function prepareForInsertion<TIn extends InsertableContent | undefined>(
  */
 export function prepareArrayContentForInsertion(
 	data: readonly InsertableContent[],
-	schema: ImplicitAllowedTypes,
+	schema: ImplicitAnnotatedAllowedTypes,
 	destinationContext: FlexTreeContext,
 ): FlexibleFieldContent {
 	const mapTrees: UnhydratedFlexTreeNode[] = data.map((item) =>
@@ -106,7 +116,7 @@ export function prepareArrayContentForInsertion(
  */
 export function prepareForInsertionContextless<TIn extends InsertableContent | undefined>(
 	data: TIn,
-	schema: ImplicitFieldSchema,
+	schema: ImplicitAnnotatedFieldSchema,
 	schemaAndPolicy: SchemaAndPolicy,
 	hydratedData: FlexTreeHydratedContextMinimal | undefined,
 ): TIn extends undefined ? undefined : FlexibleNodeContent {
@@ -136,9 +146,8 @@ function validateAndPrepare(
 		// This ensures that when `isFieldInSchema` requests identifiers (or any other contextual defaults),
 		// they were already creating used the more specific context we have access to from `hydratedData`.
 		prepareContentForHydration(mapTrees, hydratedData.checkout.forest, hydratedData);
-		if (schemaAndPolicy.policy.validateSchema === true) {
-			const maybeError = isFieldInSchema(mapTrees, fieldSchema, schemaAndPolicy);
-			inSchemaOrThrow(maybeError);
+		if (validateSchema === true) {
+			isFieldInSchema(mapTrees, fieldSchema, schemaAndPolicy, throwOutOfSchema);
 		}
 	}
 }

@@ -15,7 +15,7 @@ import {
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 // eslint-disable-next-line import/no-internal-modules
-import semverGte from "semver/functions/gte.js";
+import semverGt from "semver/functions/gt.js";
 
 import { pkgVersion } from "../packageVersion.js";
 
@@ -128,6 +128,9 @@ describeCompat(
 					enableGroupedBatching: compression, // Compression w/o grouping is not supported
 					chunkSizeInBytes: chunking ? 200 : Infinity,
 				},
+				// We set minVersionForCollab to 2.0.0 so we can test schema control with older clients
+				// in cross-client compat tests.
+				minVersionForCollab: "2.0.0",
 			};
 			const container = await provider.makeTestContainer(options);
 			entry = await getEntryPoint(container);
@@ -301,18 +304,12 @@ describeCompat(
 		 * This test is to validate that we properly send a telemetry event when
 		 * we detect that a client tries to connect to a document that has a
 		 * minVersionForCollab that is greater than that clients's runtime version.
-		 *
-		 *
-		 * TODO: This test should be unskipped after the next release. We need to wait
-		 * because we need two different runtime versions that both have the
-		 * minVersionForCollab warning logic.
-		 * See ADO:41353
 		 */
-		it.skip("sends a warning telemetry event for clients less than minVersionForCollab", async function () {
+		it("sends a warning telemetry event for clients less than minVersionForCollab", async function () {
 			const releaseMinVersionForCollabWarningAdded = "2.43.0";
 			if (
 				apis.containerRuntimeForLoading === undefined ||
-				semverGte(
+				semverGt(
 					releaseMinVersionForCollabWarningAdded,
 					apis.containerRuntimeForLoading.version,
 				) ||
@@ -356,9 +353,9 @@ describeCompat(
 			logger.assertMatchAny(
 				[
 					{
-						eventName: "fluid:telemetry:ContainerRuntime:MinVersionForCollabWarning",
+						eventName: "fluid:telemetry:MinVersionForCollabWarning",
 						category: "generic",
-						msg: `WARNING: The version of Fluid Framework used by this client (${pkgVersion}) is not supported by this document! Please upgrade to version ${apis.containerRuntimeForLoading.version} or later to ensure compatibility.`,
+						message: `WARNING: The version of Fluid Framework used by this client (${apis.containerRuntimeForLoading.version}) is not supported by this document! Please upgrade to version ${pkgVersion} or later to ensure compatibility.`,
 					},
 				],
 				"MinVersionForCollabWarning should be logged",

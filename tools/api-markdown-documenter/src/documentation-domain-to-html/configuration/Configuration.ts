@@ -5,12 +5,11 @@
 
 import { defaultConsoleLogger } from "../../Logging.js";
 import type { LoggingConfiguration } from "../../LoggingConfiguration.js";
-import type { TextFormatting } from "../../documentation-domain/index.js";
 
 import type { Transformations } from "./Transformation.js";
 
 /**
- * Configuration for transforming {@link DocumentationNode}s to HTML.
+ * Configuration for transforming docs to HTML.
  *
  * @public
  */
@@ -18,7 +17,7 @@ export interface TransformationConfiguration extends LoggingConfiguration {
 	/**
 	 * User-specified transformations.
 	 *
-	 * @remarks May override default behaviors or add transformation capabilities for custom {@link DocumentationNode}s.
+	 * @remarks May override default behaviors or add transformation capabilities for custom node kinds.
 	 */
 	readonly customTransformations?: Transformations;
 
@@ -30,11 +29,6 @@ export interface TransformationConfiguration extends LoggingConfiguration {
 	 * @defaultValue 1
 	 */
 	readonly startingHeadingLevel?: number;
-
-	/**
-	 * Optional formatting to apply to the root of the document.
-	 */
-	readonly rootFormatting?: TextFormatting;
 
 	/**
 	 * HTML language attribute.

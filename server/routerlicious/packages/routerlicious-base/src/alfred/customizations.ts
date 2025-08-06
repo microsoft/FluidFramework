@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IClusterDrainingChecker,
 	IDocumentRepository,
 	IStorageNameAllocator,
@@ -14,11 +14,11 @@ import {
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
 } from "@fluidframework/server-services-core";
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 
 import { ITenantRepository } from "../riddler";
 
-import { IDocumentDeleteService } from "./services";
+import type { IDocumentDeleteService } from "./services";
 
 /**
  * @internal

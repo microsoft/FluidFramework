@@ -6,26 +6,26 @@
 import type { IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import {
-	EncryptionKeyVersion,
-	IEncryptedTenantKeys,
-	IPlainTextAndEncryptedTenantKeys,
-	ITenantConfig,
-	ITenantCustomData,
-	ITenantKeys,
-	ITenantOrderer,
-	ITenantStorage,
-	ITenantPrivateKeys,
+	type EncryptionKeyVersion,
+	type IEncryptedTenantKeys,
+	type IPlainTextAndEncryptedTenantKeys,
+	type ITenantConfig,
+	type ITenantCustomData,
+	type ITenantKeys,
+	type ITenantOrderer,
+	type ITenantStorage,
+	type ITenantPrivateKeys,
 	KeyName,
-	ISecretManager,
-	ICache,
+	type ISecretManager,
+	type ICache,
 	type IEncryptedPrivateTenantKeys,
 	type IFluidAccessToken,
 } from "@fluidframework/server-services-core";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
-	IApiCounters,
+	type IApiCounters,
 	InMemoryApiCounters,
-	ITenantKeyGenerator,
+	type ITenantKeyGenerator,
 	isKeylessFluidAccessClaimEnabled,
 	generateToken,
 	getJtiClaimFromAccessToken,
@@ -35,7 +35,7 @@ import * as _ from "lodash";
 import { v4 as uuid } from "uuid";
 import * as winston from "winston";
 
-import { ITenantRepository } from "./mongoTenantRepository";
+import type { ITenantRepository } from "./mongoTenantRepository";
 
 /**
  * Tenant details stored to the document database
@@ -162,7 +162,7 @@ export class TenantManager {
 		includeDisabledTenant = false,
 		forceGenerateTokenWithPrivateKey = false,
 	): Promise<IFluidAccessToken> {
-		const lumberProperties = {
+		const lumberProperties: Record<string, any> = {
 			[BaseTelemetryProperties.tenantId]: tenantId,
 			includeDisabledTenant,
 			documentId,
@@ -183,6 +183,7 @@ export class TenantManager {
 		// If the tenant is a keyless tenant, always use the private keys to sign the token
 		const isTenantPrivateKeyAccessEnabled =
 			this.isTenantPrivateKeyAccessEnabled(tenantDocument);
+		lumberProperties.usePrivateKeys = isTenantPrivateKeyAccessEnabled;
 
 		// If private keys access is not enabled, and the requester is trying to generate a token with private keys, throw an error.
 		// The forceGenerateTokenWithPrivateKey flag is not used anywhere ahead as private keys are given preference to sign tokens over shared keys if both are enabled.
@@ -277,6 +278,7 @@ export class TenantManager {
 			[BaseTelemetryProperties.tenantId]: tenantId,
 			includeDisabledTenant,
 			isKeylessAccessValidation,
+			bypassCache,
 		};
 
 		// Try validating with Key 1

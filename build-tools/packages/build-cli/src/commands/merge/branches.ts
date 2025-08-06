@@ -4,13 +4,13 @@
  */
 
 import { strict as assert } from "node:assert";
-import { Logger } from "@fluidframework/build-tools";
+import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import chalk from "picocolors";
 
 import {
 	BaseCommand,
-	Repository,
+	type Repository,
 	createPullRequest,
 	getCommitInfo,
 	pullRequestExists,

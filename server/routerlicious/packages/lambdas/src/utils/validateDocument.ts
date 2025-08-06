@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocument, IServiceConfiguration } from "@fluidframework/server-services-core";
+import type { IDocument, IServiceConfiguration } from "@fluidframework/server-services-core";
 
 /**
  * Whether a document exists and is not functionally deleted.

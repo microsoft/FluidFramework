@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import * as semver from "semver";
 
-import { VersionBumpTypeExtended } from "./bumpTypes";
+import type { VersionBumpTypeExtended } from "./bumpTypes";
 import { detectVersionScheme } from "./schemes";
 
 /**

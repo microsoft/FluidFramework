@@ -4,11 +4,11 @@
  */
 
 // Eventually this will become a library to craft various rest ops.
-import * as git from "@fluidframework/gitresources";
+import type * as git from "@fluidframework/gitresources";
 import {
-	IClientJoin,
-	IDocumentMessage,
-	IDocumentSystemMessage,
+	type IClientJoin,
+	type IDocumentMessage,
+	type IDocumentSystemMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import * as core from "@fluidframework/server-services-core";
