@@ -76,11 +76,11 @@ interface IDirectoryMessageHandler {
 	): void;
 
 	/**
-	 * Communicate the operation to remote clients.
-	 * @param op - The directory operation to submit
-	 * @param localOpMetadata - The metadata to be submitted with the message.
+	 * Resubmit a previously submitted operation that was not delivered.
+	 * @param op - The directory operation to resubmit
+	 * @param localOpMetadata - The metadata that was originally submitted with the message.
 	 */
-	submit(op: IDirectoryOperation, localOpMetadata: DirectoryLocalOpMetadata | undefined): void;
+	resubmit(op: IDirectoryOperation, localOpMetadata: DirectoryLocalOpMetadata): void;
 }
 
 /**
@@ -692,7 +692,7 @@ export class SharedDirectory
 	 */
 	public submitDirectoryMessage(
 		op: IDirectoryOperation,
-		localOpMetadata: DirectoryLocalOpMetadata | undefined,
+		localOpMetadata: DirectoryLocalOpMetadata,
 	): void {
 		this.submitLocalMessage(op, localOpMetadata);
 	}
@@ -712,7 +712,7 @@ export class SharedDirectory
 		const message = content as IDirectoryOperation;
 		const handler = this.messageHandlers.get(message.type);
 		assert(handler !== undefined, 0x00d /* Missing message handler for message type */);
-		handler.submit(message, localOpMetadata);
+		handler.resubmit(message, localOpMetadata);
 	}
 
 	/**
@@ -903,7 +903,7 @@ export class SharedDirectory
 					subdir.processClearMessage(msg, op, local, localOpMetadata);
 				}
 			},
-			submit: (op: IDirectoryClearOperation, localOpMetadata: ClearLocalOpMetadata) => {
+			resubmit: (op: IDirectoryClearOperation, localOpMetadata: ClearLocalOpMetadata) => {
 				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir) {
 					subdir.resubmitClearMessage(op, localOpMetadata);
@@ -929,7 +929,7 @@ export class SharedDirectory
 					subdir.processDeleteMessage(msg, op, local, localOpMetadata);
 				}
 			},
-			submit: (op: IDirectoryDeleteOperation, localOpMetadata: EditLocalOpMetadata) => {
+			resubmit: (op: IDirectoryDeleteOperation, localOpMetadata: EditLocalOpMetadata) => {
 				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir) {
 					subdir.resubmitKeyMessage(op, localOpMetadata);
@@ -957,10 +957,7 @@ export class SharedDirectory
 					subdir.processSetMessage(msg, op, localValue, local, localOpMetadata);
 				}
 			},
-			submit: (
-				op: IDirectorySetOperation,
-				localOpMetadata: EditLocalOpMetadata | undefined,
-			) => {
+			resubmit: (op: IDirectorySetOperation, localOpMetadata: EditLocalOpMetadata) => {
 				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir) {
 					subdir.resubmitKeyMessage(op, localOpMetadata);
@@ -987,7 +984,7 @@ export class SharedDirectory
 					parentSubdir.processCreateSubDirectoryMessage(msg, op, local, localOpMetadata);
 				}
 			},
-			submit: (
+			resubmit: (
 				op: IDirectoryCreateSubDirectoryOperation,
 				localOpMetadata: SubDirLocalOpMetadata,
 			) => {
@@ -1018,9 +1015,9 @@ export class SharedDirectory
 					parentSubdir.processDeleteSubDirectoryMessage(msg, op, local, localOpMetadata);
 				}
 			},
-			submit: (
+			resubmit: (
 				op: IDirectoryDeleteSubDirectoryOperation,
-				localOpMetadata: SubDirLocalOpMetadata | undefined,
+				localOpMetadata: SubDirLocalOpMetadata,
 			) => {
 				const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (parentSubdir) {
@@ -2084,7 +2081,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	private submitClearMessage(
 		op: IDirectoryClearOperation,
-		localOpMetadata: ClearLocalOpMetadata | undefined,
+		localOpMetadata: ClearLocalOpMetadata,
 	): void {
 		this.throwIfDisposed();
 		this.directory.submitDirectoryMessage(op, localOpMetadata);
@@ -2096,7 +2093,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public resubmitClearMessage(
 		op: IDirectoryClearOperation,
-		localOpMetadata: ClearLocalOpMetadata | undefined,
+		localOpMetadata: ClearLocalOpMetadata,
 	): void {
 		// Only submit the op, if we have record for it, otherwise it is possible that the older instance
 		// is already deleted, in which case we don't need to submit the op.
@@ -2129,7 +2126,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public resubmitKeyMessage(
 		op: IDirectoryKeyOperation,
-		localOpMetadata: EditLocalOpMetadata | undefined,
+		localOpMetadata: EditLocalOpMetadata,
 	): void {
 		// Only submit the op, if we have record for it, otherwise it is possible that the older instance
 		// is already deleted, in which case we don't need to submit the op.
@@ -2188,7 +2185,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	private submitDeleteSubDirectoryMessage(
 		op: IDirectorySubDirectoryOperation,
-		subDir: SubDirectory | undefined,
+		subDir: SubDirectory,
 	): void {
 		this.throwIfDisposed();
 		this.updatePendingSubDirMessageCount(op);
@@ -2207,9 +2204,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public resubmitSubDirectoryMessage(
 		op: IDirectorySubDirectoryOperation,
-		localOpMetadata: SubDirLocalOpMetadata | undefined,
+		localOpMetadata: SubDirLocalOpMetadata,
 	): void {
-		assert(localOpMetadata !== undefined, "localOpMetadata should be defined");
 		// Only submit the op, if we have record for it, otherwise it is possible that the older instance
 		// is already deleted, in which case we don't need to submit the op.
 		if (
@@ -2227,8 +2223,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (localOpMetadata.type === "createSubDir") {
 			this.decrementPendingSubDirCount(this.pendingCreateSubDirectoriesTracker, op.subdirName);
 			this.submitCreateSubDirectoryMessage(op);
-		} else {
+		} else if (localOpMetadata.type === "deleteSubDir") {
 			this.decrementPendingSubDirCount(this.pendingDeleteSubDirectoriesTracker, op.subdirName);
+			assert(
+				localOpMetadata.subDirectory !== undefined,
+				"localOpMetadata.subDirectory should be defined",
+			);
 			this.submitDeleteSubDirectoryMessage(op, localOpMetadata.subDirectory);
 		}
 	}
