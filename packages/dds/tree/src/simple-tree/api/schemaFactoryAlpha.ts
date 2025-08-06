@@ -83,7 +83,7 @@ export interface SchemaStaticsAlpha {
 	 * Once all users have the above changes, the schema can be updated again to `[A, B]`, and the app can be updated to allow creating of `B` content.
 	 * This updated version of the app will need to call {@link TreeView.upgradeSchema} when opening documents created by earlier versions.
 	 *
-	 * The schema the for an actual app, doing a migration to add `B` as an option in the root could look like this:
+	 * Adding a `B` schema as an option in the root could look like this:
 	 * ```typescript
 	 * const factory = new SchemaFactoryAlpha("test");
 	 * class A extends factory.objectAlpha("A", {}) {}
