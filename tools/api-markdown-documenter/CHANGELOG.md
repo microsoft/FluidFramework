@@ -14,6 +14,11 @@ The transformation to Markdown and HTML still exist, but will be removed soon.
 It is no longer a `unist` node, and is now an interface rather than a class.
 Its "children" property has also been renamed to "contents`.
 
+### `DocumentNode` renamed to `ApiDocument`
+
+It is no longer a `unist` node, and is now an interface rather than a class.
+Its "children" property has also been renamed to "contents`.
+
 ## 0.21.0
 
 ### Add DocumentationNode -> mdast transformation layer
