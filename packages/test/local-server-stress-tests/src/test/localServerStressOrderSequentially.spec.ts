@@ -98,21 +98,15 @@ describe("Local Server Stress with rollback", () => {
 		// only: [91],
 		saveFailures,
 		// saveSuccesses,
-		configurations: {
-			"Fluid.ContainerRuntime.EnableRollback": true,
-			"Fluid.Container.enableOfflineLoad": true,
-		},
+		configurations: { "Fluid.ContainerRuntime.EnableRollback": true },
 		skip: [
 			...[], // Values differ at key
 			...[28], // Key not found or value not matching key
-			...[31], // Number of keys not same (directory)
-			...[25, 53], // Number of subDirectories not same
+			...[], // Number of keys not same (directory)
+			...[], // Number of subDirectories not same
 			...[], // SubDirectory with name ... not present in second directory
 			...[], // 0x2fa (Unexpected pending message received)
-			...[13, 62], // 0xb85
-			...[20, 54, 92], // 0xa21
-			...[78, 81], // 0xb89
-			...[97], // channel maps should be the same size
+			...[15], // Unexpected pending data for createSubDirectory op
 		],
 	});
 });

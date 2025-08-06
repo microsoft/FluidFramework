@@ -23,6 +23,11 @@ interface RollbackTestSetup {
 	containerRuntime: MockContainerRuntime;
 }
 
+interface SubDirectoryEvent {
+	path: string;
+	local: boolean;
+}
+
 const directoryFactory = new DirectoryFactory();
 
 function setupRollbackTest(): RollbackTestSetup {
@@ -520,6 +525,344 @@ describe("SharedDirectory rollback", () => {
 			);
 			assert.strictEqual(clearEvents, 1);
 			assert.strictEqual(allValueChanges.length, 11);
+		});
+	});
+
+	describe("SubDirectory operations", () => {
+		it("should rollback create subdirectory", () => {
+			const { sharedDirectory, containerRuntime } = setupRollbackTest();
+
+			const createEvents: SubDirectoryEvent[] = [];
+			sharedDirectory.on("subDirectoryCreated", (event: SubDirectoryEvent) => {
+				createEvents.push(event);
+			});
+
+			sharedDirectory.createSubDirectory("subdir1");
+			assert(sharedDirectory.getSubDirectory("subdir1") !== undefined);
+			assert.strictEqual(createEvents.length, 1);
+
+			containerRuntime.rollback?.();
+			assert(sharedDirectory.getSubDirectory("subdir1") === undefined);
+			assert.strictEqual(createEvents.length, 1);
+		});
+
+		it("should rollback delete subdirectory", () => {
+			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
+				setupRollbackTest();
+
+			sharedDirectory.createSubDirectory("subdir1");
+			const subdir1 = sharedDirectory.getSubDirectory("subdir1");
+			assert(subdir1 !== undefined);
+			subdir1.set("key", "value");
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			const deleteEvents: SubDirectoryEvent[] = [];
+			sharedDirectory.on("subDirectoryDeleted", (event: SubDirectoryEvent) => {
+				deleteEvents.push(event);
+			});
+
+			sharedDirectory.deleteSubDirectory("subdir1");
+			assert(sharedDirectory.getSubDirectory("subdir1") === undefined);
+			assert.strictEqual(deleteEvents.length, 1);
+
+			containerRuntime.rollback?.();
+			assert(
+				sharedDirectory.getSubDirectory("subdir1") !== undefined,
+				"Subdirectory should be restored post-rollback",
+			);
+			assert.strictEqual(
+				subdir1.get("key"),
+				"value",
+				"key/value should be restored post-rollback",
+			);
+		});
+
+		it("should rollback create subdirectory, delete subdirectory, and storage operations", () => {
+			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
+				setupRollbackTest();
+
+			sharedDirectory.createSubDirectory("subdir1");
+			const subdir1 = sharedDirectory.getSubDirectory("subdir1");
+			assert(subdir1 !== undefined);
+			subdir1.set("key1", "value1");
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			const deleteEvents: SubDirectoryEvent[] = [];
+			sharedDirectory.on("subDirectoryDeleted", (event: SubDirectoryEvent) => {
+				deleteEvents.push(event);
+			});
+
+			subdir1.set("key1", "foo");
+			subdir1.set("key2", "value2");
+			sharedDirectory.deleteSubDirectory("subdir1");
+			assert(sharedDirectory.getSubDirectory("subdir1") === undefined);
+			assert.strictEqual(deleteEvents.length, 1);
+			assert.strictEqual(subdir1.get("key1"), "foo");
+			assert.strictEqual(subdir1.get("key2"), "value2");
+
+			sharedDirectory.createSubDirectory("subdir2");
+			const subdir2 = sharedDirectory.getSubDirectory("subdir2");
+			assert(subdir2 !== undefined);
+			subdir2.set("key3", "value3");
+			assert.strictEqual(subdir2.get("key3"), "value3");
+
+			containerRuntime.rollback?.();
+
+			assert(
+				sharedDirectory.getSubDirectory("subdir1") !== undefined,
+				"subdir1 should be restored post-rollback",
+			);
+			assert(
+				sharedDirectory.getSubDirectory("subdir2") === undefined,
+				"subdir2 should not exist post-rollback",
+			);
+			assert.strictEqual(
+				subdir1.get("key1"),
+				"value1",
+				"subdir1 key1/value1 should be restored post-rollback",
+			);
+			assert.strictEqual(subdir1.has("key2"), false, "key2 should not exist post-rollback");
+		});
+
+		it("should rollback nested subdirectory create operations", () => {
+			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
+				setupRollbackTest();
+
+			sharedDirectory.createSubDirectory("child");
+			const child = sharedDirectory.getSubDirectory("child");
+			assert(child !== undefined);
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			child.createSubDirectory("grandchild1");
+			child.createSubDirectory("grandchild2");
+			const grandchild1 = child.getSubDirectory("grandchild1");
+			const grandchild2 = child.getSubDirectory("grandchild2");
+			assert(
+				grandchild1 !== undefined && grandchild2 !== undefined,
+				"grandchild directories should exist pre-rollback",
+			);
+
+			containerRuntime.rollback?.();
+
+			assert(
+				child.getSubDirectory("grandchild1") === undefined &&
+					child.getSubDirectory("grandchild2") === undefined,
+				"grandchild directories should not exist post-rollback",
+			);
+		});
+
+		it("should rollback nested subdirectory delete operations", () => {
+			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
+				setupRollbackTest();
+
+			sharedDirectory.createSubDirectory("child");
+			const child = sharedDirectory.getSubDirectory("child");
+			assert(child !== undefined);
+
+			child.createSubDirectory("grandchild1");
+			child.createSubDirectory("grandchild2");
+			const grandchild1 = child.getSubDirectory("grandchild1");
+			const grandchild2 = child.getSubDirectory("grandchild2");
+			assert(grandchild1 !== undefined && grandchild2 !== undefined);
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			child.deleteSubDirectory("grandchild1");
+			child.deleteSubDirectory("grandchild2");
+			assert(
+				child.getSubDirectory("grandchild1") === undefined &&
+					child.getSubDirectory("grandchild2") === undefined,
+				"grandchild directories should not exist pre-rollback",
+			);
+
+			containerRuntime.rollback?.();
+
+			assert(
+				child.getSubDirectory("grandchild1") !== undefined &&
+					child.getSubDirectory("grandchild2") !== undefined,
+				"grandchild directories should exist post-rollback",
+			);
+		});
+
+		it("should rollback local subdirectory changes with remote changes", () => {
+			const {
+				sharedDirectory: localClient,
+				containerRuntimeFactory,
+				containerRuntime: localRuntime,
+			} = setupRollbackTest();
+			const { sharedDirectory: remoteClient, containerRuntime: remoteRuntime } =
+				createAdditionalClient(containerRuntimeFactory);
+
+			localClient.createSubDirectory("existing");
+			const existingSubdir = localClient.getSubDirectory("existing");
+			assert(existingSubdir !== undefined);
+			existingSubdir.set("key", "value");
+			localRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			// Local operations (will be rolled back)
+			localClient.createSubDirectory("localCreated");
+			localClient.deleteSubDirectory("existing");
+
+			// Remote operations (should persist)
+			remoteClient.createSubDirectory("remoteCreated");
+			const remoteCreatedSubdir = remoteClient.getSubDirectory("remoteCreated");
+			assert(remoteCreatedSubdir !== undefined);
+			remoteCreatedSubdir.set("remoteKey", "remoteValue");
+			remoteRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			// Verify pre-rollback
+			assert.deepStrictEqual(
+				[
+					localClient.getSubDirectory("localCreated") === undefined,
+					localClient.getSubDirectory("remoteCreated") === undefined,
+					localClient.getSubDirectory("existing") === undefined,
+					remoteClient.getSubDirectory("localCreated") === undefined,
+					remoteClient.getSubDirectory("remoteCreated") === undefined,
+					remoteClient.getSubDirectory("existing") === undefined,
+				],
+				[false, false, true, true, false, false],
+				"verify subdirectory state pre-rollback",
+			);
+
+			localRuntime.rollback?.();
+
+			// Verify post-rollback (only remote changes persist)
+			const existingOnLocal = localClient.getSubDirectory("existing");
+			const existingOnRemote = remoteClient.getSubDirectory("existing");
+			const remoteCreatedOnLocal = localClient.getSubDirectory("remoteCreated");
+			const remoteCreatedOnRemote = remoteClient.getSubDirectory("remoteCreated");
+			const localCreatedOnLocal = localClient.getSubDirectory("localCreated");
+			const localCreatedOnRemote = remoteClient.getSubDirectory("localCreated");
+
+			// Subdirectory existence checks
+			assert.deepStrictEqual(
+				[
+					existingOnLocal === undefined,
+					existingOnRemote === undefined,
+					remoteCreatedOnLocal === undefined,
+					remoteCreatedOnRemote === undefined,
+					localCreatedOnLocal === undefined,
+					localCreatedOnRemote === undefined,
+				],
+				[false, false, false, false, true, true],
+				"Subdirectory existence checks failed post-rollback",
+			);
+
+			// Key checks
+			assert.deepStrictEqual(
+				[
+					existingOnLocal?.get("key"),
+					existingOnRemote?.get("key"),
+					remoteCreatedOnLocal?.get("remoteKey"),
+					remoteCreatedOnRemote?.get("remoteKey"),
+				],
+				["value", "value", "remoteValue", "remoteValue"],
+				"Subdirectory key values should match expected values post-rollback",
+			);
+		});
+
+		it("should rollback local subdirectory changes with remote changes and storage operations", () => {
+			const {
+				sharedDirectory: localClient,
+				containerRuntimeFactory,
+				containerRuntime: localRuntime,
+			} = setupRollbackTest();
+			const { sharedDirectory: remoteClient, containerRuntime: remoteRuntime } =
+				createAdditionalClient(containerRuntimeFactory);
+
+			localClient.createSubDirectory("existing");
+			const existingSubdir = localClient.getSubDirectory("existing");
+			assert(existingSubdir !== undefined);
+			existingSubdir.set("key", "value");
+			localRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			// Local operations (will be rolled back)
+			localClient.createSubDirectory("localCreated");
+			localClient.deleteSubDirectory("existing");
+
+			// Remote operations (should persist)
+			remoteClient.createSubDirectory("remoteCreated");
+			const remoteCreatedSubdir = remoteClient.getSubDirectory("remoteCreated");
+			assert(remoteCreatedSubdir !== undefined);
+			remoteCreatedSubdir.set("remoteKey", "remoteValue");
+			const existingFromRemote = remoteClient.getSubDirectory("existing");
+			assert(existingFromRemote !== undefined);
+			existingFromRemote.set("key", "foo");
+			existingFromRemote.set("key2", "value2");
+			remoteRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			// Verify pre-rollback
+			assert.deepStrictEqual(
+				[
+					localClient.getSubDirectory("localCreated") === undefined,
+					localClient.getSubDirectory("remoteCreated") === undefined,
+					localClient.getSubDirectory("existing") === undefined,
+					remoteClient.getSubDirectory("localCreated") === undefined,
+					remoteClient.getSubDirectory("remoteCreated") === undefined,
+					remoteClient.getSubDirectory("existing") === undefined,
+				],
+				[false, false, true, true, false, false],
+				"verify subdirectory state pre-rollback",
+			);
+
+			localRuntime.rollback?.();
+
+			// Verify post-rollback (only remote changes persist)
+			const existingOnLocal = localClient.getSubDirectory("existing");
+			const existingOnRemote = remoteClient.getSubDirectory("existing");
+			const remoteCreatedOnLocal = localClient.getSubDirectory("remoteCreated");
+			const remoteCreatedOnRemote = remoteClient.getSubDirectory("remoteCreated");
+			const localCreatedOnLocal = localClient.getSubDirectory("localCreated");
+			const localCreatedOnRemote = remoteClient.getSubDirectory("localCreated");
+
+			// Subdirectory existence checks
+			assert.deepStrictEqual(
+				[
+					existingOnLocal === undefined,
+					existingOnRemote === undefined,
+					remoteCreatedOnLocal === undefined,
+					remoteCreatedOnRemote === undefined,
+					localCreatedOnLocal === undefined,
+					localCreatedOnRemote === undefined,
+				],
+				[false, false, false, false, true, true],
+				"Subdirectory existence checks failed post-rollback",
+			);
+
+			// Extra asserts to make compiler happy (doesn't recognize above asserts)
+			assert(
+				existingOnRemote && remoteCreatedOnRemote && existingOnLocal && remoteCreatedOnLocal,
+			);
+
+			assert.deepStrictEqual(
+				[[...existingOnLocal.entries()], [...remoteCreatedOnLocal.entries()]],
+				[
+					[
+						["key", "foo"],
+						["key2", "value2"],
+					],
+					[["remoteKey", "remoteValue"]],
+				],
+				"Subdirectory entries on local client should match expected values post-rollback",
+			);
+			assert.deepStrictEqual(
+				[[...existingOnRemote.entries()], [...remoteCreatedOnRemote.entries()]],
+				[
+					[
+						["key", "foo"],
+						["key2", "value2"],
+					],
+					[["remoteKey", "remoteValue"]],
+				],
+				"Subdirectory entries on remote client should match expected values post-rollback",
+			);
 		});
 	});
 });
