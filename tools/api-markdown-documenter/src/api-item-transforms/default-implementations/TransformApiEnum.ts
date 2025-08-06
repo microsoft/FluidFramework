@@ -9,12 +9,13 @@ import {
 	type ApiItem,
 	ApiItemKind,
 } from "@microsoft/api-extractor-model";
+import type { BlockContent } from "mdast";
 
-import type { SectionContent, SectionNode } from "../../documentation-domain/index.js";
+import type { Section } from "../../mdast/index.js";
 import { getApiItemKind, getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
 import { getFilteredMembers } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
-import { createMemberTables, wrapInSection } from "../helpers/index.js";
+import { createMemberTables } from "../helpers/index.js";
 
 /**
  * Default documentation transform for `Enum` items.
@@ -22,9 +23,9 @@ import { createMemberTables, wrapInSection } from "../helpers/index.js";
 export function transformApiEnum(
 	apiEnum: ApiEnum,
 	config: ApiItemTransformationConfiguration,
-	generateChildContent: (apiItem: ApiItem) => SectionNode[],
-): SectionNode[] {
-	const sections: SectionNode[] = [];
+	generateChildContent: (apiItem: ApiItem) => Section[],
+): Section[] {
+	const sections: Section[] = [];
 
 	const filteredChildren = getFilteredMembers(apiEnum, config);
 	if (filteredChildren.length > 0) {
@@ -65,11 +66,14 @@ export function transformApiEnum(
 
 		// Render individual flag details
 		if (flags.length > 0) {
-			const detailsSubSections: SectionContent[] = [];
+			const detailsSubSections: BlockContent[] = [];
 			for (const flag of flags) {
 				detailsSubSections.push(...generateChildContent(flag));
 			}
-			const detailsSection = wrapInSection(detailsSubSections);
+			const detailsSection: Section = {
+				type: "section",
+				children: detailsSubSections,
+			};
 			sections.push(detailsSection);
 		}
 	}

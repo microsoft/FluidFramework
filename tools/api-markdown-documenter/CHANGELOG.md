@@ -2,37 +2,22 @@
 
 ## 0.22.0
 
-### Documentation Domain is being removed
+### Documentation Domain has been removed
 
-This is a work in progress.
+`DocumentationNode` and its implementations have been removed.
+Their usage has been replaced with [mdast](https://github.com/syntax-tree/mdast) directly.
 
-The goal is for transformations to target [mdast](https://github.com/syntax-tree/mdast) directly, rather than going through an intermediate domain.
-Transformations to HTML will use `mdast-util-to-hast`.
+The transformation to Markdown and HTML still exist, but will be removed soon.
 
-#### Markdown Nodes
+### `DocumentNode` renamed to `ApiDocument`
 
-`MarkdownBlockContentNode` has been added to the Documentation Domain temporarily.
-They allow `mdast` "block content" trees to be used directly within the `DocumentationNode` hierarchy.
+It is no longer a `unist` node, and is now an interface rather than a class.
+Its "children" property has also been renamed to "contents`.
 
-This functionality will be used to iteratively replace and remove `DocumentationNode` implementations, until the entire domain can be removed.
+### `DocumentNode` renamed to `ApiDocument`
 
-Contexts that use conceptual "phrasing content" in the Documentation Domain now take `mdast` "phrasing content" directly as children.
-
-#### Removed Node kinds
-
-The following kinds of nodes have been removed from the library.
-Usages should be converted to `MarkdownBlockContentNode` or `mdast` directly as appropriate.
-
-- `CodeSpanNode`
-- `FencedCodeBlockNode`
-- `HorizontalRuleNode`
-- `LineBreakNode`
-- `LinkNode`
-- `ListItemNode`
-- `ListNode`
-- `ParagraphNode`
-- `PlainTextNode`
-- `SpanNode`
+It is no longer a `unist` node, and is now an interface rather than a class.
+Its "children" property has also been renamed to "contents`.
 
 ## 0.21.0
 

@@ -49,10 +49,14 @@ export enum ConnectionState {
 
 // @public
 export namespace ConnectionStateType {
-    export type CatchingUp = 1;
-    export type Connected = 2;
-    export type Disconnected = 0;
-    export type EstablishingConnection = 3;
+    const Disconnected = 0;
+    export type CatchingUp = typeof CatchingUp;
+    const EstablishingConnection = 3;
+    export type Connected = typeof Connected;
+    const CatchingUp = 1;
+    export type Disconnected = typeof Disconnected;
+    const Connected = 2;
+    export type EstablishingConnection = typeof EstablishingConnection;
 }
 
 // @public

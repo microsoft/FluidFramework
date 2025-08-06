@@ -4,7 +4,7 @@
  */
 
 /**
- * Library containing functionality to transform `ApiItem`s to {@link DocumentationNode}s.
+ * Library containing functionality to transform `ApiItem`s to Markdown.
  */
 
 export {
@@ -50,7 +50,7 @@ export {
 	createThrowsSection,
 	createTypeParametersSection,
 } from "./helpers/index.js";
-export { transformAndWrapTsdoc as transformTsdoc } from "./TsdocNodeTransforms.js";
+export { transformTsdoc } from "./TsdocNodeTransforms.js";
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
 export { transformApiModel } from "./TransformApiModel.js";
 export { checkForDuplicateDocumentPaths } from "./Utilities.js";

@@ -5,7 +5,7 @@
 
 import { ApiItemKind, type ApiModel } from "@microsoft/api-extractor-model";
 
-import { MarkdownBlockContentNode, SectionNode } from "../../documentation-domain/index.js";
+import type { Section } from "../../mdast/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createTableWithHeading } from "../helpers/index.js";
 
@@ -15,26 +15,29 @@ import { createTableWithHeading } from "../helpers/index.js";
 export function transformApiModel(
 	apiModel: ApiModel,
 	config: ApiItemTransformationConfiguration,
-): SectionNode[] {
+): Section[] {
 	if (apiModel.packages.length === 0) {
 		// If no packages under model, print simple note.
 		return [
-			new SectionNode([
-				new MarkdownBlockContentNode({
-					type: "paragraph",
-					children: [
-						{
-							type: "emphasis",
-							children: [
-								{
-									type: "text",
-									value: "No packages discovered while parsing model.",
-								},
-							],
-						},
-					],
-				}),
-			]),
+			{
+				type: "section",
+				children: [
+					{
+						type: "paragraph",
+						children: [
+							{
+								type: "emphasis",
+								children: [
+									{
+										type: "text",
+										value: "No packages discovered while parsing model.",
+									},
+								],
+							},
+						],
+					},
+				],
+			},
 		];
 	}
 
