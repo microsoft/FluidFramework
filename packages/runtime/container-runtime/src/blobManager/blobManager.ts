@@ -732,15 +732,10 @@ export class BlobManager {
 	 */
 	public getGCData(fullGC: boolean = false): IGarbageCollectionData {
 		const gcData: IGarbageCollectionData = { gcNodes: {} };
-		for (const [localId, storageId] of this.redirectTable) {
-			assert(!!storageId, 0x390 /* Must be attached to get GC data */);
-			// Only return local ids as GC nodes because a blob can only be referenced via its local id. The storage
-			// id entries have the same key and value, ignore them.
+		for (const localId of this.redirectTable.keys()) {
 			// The outbound routes are empty because a blob node cannot reference other nodes. It can only be referenced
 			// by adding its handle to a referenced DDS.
-			if (localId !== storageId) {
-				gcData.gcNodes[getGCNodePathFromBlobId(localId)] = [];
-			}
+			gcData.gcNodes[getGCNodePathFromBlobId(localId)] = [];
 		}
 		return gcData;
 	}
@@ -761,24 +756,11 @@ export class BlobManager {
 	 *
 	 * @remarks
 	 * The routes are GC nodes paths of format -`/<blobManagerBasePath>/<blobId>`. The blob ids are all local ids.
-	 * Deleting the blobs involves 2 steps:
-	 *
-	 * 1. The redirect table entry for the local ids are deleted.
-	 *
-	 * 2. If the storage ids corresponding to the deleted local ids are not in-use anymore, the redirect table entries
-	 * for the storage ids are deleted as well.
 	 *
 	 * Note that this does not delete the blobs from storage service immediately. Deleting the blobs from redirect table
 	 * will remove them the next summary. The service would them delete them some time in the future.
 	 */
 	private deleteBlobsFromRedirectTable(blobRoutes: readonly string[]): void {
-		if (blobRoutes.length === 0) {
-			return;
-		}
-
-		// This tracks the storage ids of local ids that are deleted. After the local ids have been deleted, if any of
-		// these storage ids are unused, they will be deleted as well.
-		const maybeUnusedStorageIds: Set<string> = new Set();
 		for (const route of blobRoutes) {
 			const blobId = getBlobIdFromGCNodePath(route);
 			// If the blob hasn't already been deleted, log an error because this should never happen.
@@ -794,26 +776,7 @@ export class BlobManager {
 				});
 				continue;
 			}
-			const storageId = this.redirectTable.get(blobId);
-			assert(!!storageId, 0x5bb /* Must be attached to run GC */);
-			maybeUnusedStorageIds.add(storageId);
 			this.redirectTable.delete(blobId);
-		}
-
-		// Find out storage ids that are in-use and remove them from maybeUnusedStorageIds. A storage id is in-use if
-		// the redirect table has a local id -> storage id entry for it.
-		for (const [localId, storageId] of this.redirectTable.entries()) {
-			assert(!!storageId, 0x5bc /* Must be attached to run GC */);
-			// For every storage id, the redirect table has a id -> id entry. These do not make the storage id in-use.
-			if (maybeUnusedStorageIds.has(storageId) && localId !== storageId) {
-				maybeUnusedStorageIds.delete(storageId);
-			}
-		}
-
-		// For unused storage ids, delete their id -> id entries from the redirect table.
-		// This way they'll be absent from the next summary, and the service is free to delete them from storage.
-		for (const storageId of maybeUnusedStorageIds) {
-			this.redirectTable.delete(storageId);
 		}
 	}
 
