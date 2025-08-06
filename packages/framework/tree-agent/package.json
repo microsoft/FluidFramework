@@ -1,12 +1,12 @@
 {
-	"name": "@fluidframework/ai-collab",
+	"name": "@fluidframework/tree-agent",
 	"version": "2.53.0",
 	"description": "Experimental package to simplify integrating AI into Fluid-based applications",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "packages/framework/ai-collab"
+		"directory": "packages/framework/tree-agent"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -110,13 +110,13 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@anthropic-ai/sdk": "^0.39.0",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
-		"fastest-levenshtein": "^1.0.16",
-		"openai": "^4.67.3",
-		"typechat": "^0.1.1",
+		"@langchain/core": "^0.3.66",
+		"langchain": "^0.3.30",
 		"uuid": "^11.1.0",
 		"zod": "^3.25.32"
 	},
@@ -131,9 +131,13 @@
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@langchain/anthropic": "^0.3.24",
+		"@langchain/google-genai": "^0.2.16",
+		"@langchain/openai": "^0.6.3",
 		"@microsoft/api-extractor": "7.52.8",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
+		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
@@ -142,6 +146,7 @@
 		"eslint-config-prettier": "~9.0.0",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
+		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},
