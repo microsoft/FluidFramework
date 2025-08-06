@@ -31,7 +31,7 @@ view.upgradeSchema()
 The `@alpha` API [extractPersistedSchema](https://fluidframework.com/docs/api/fluid-framework#extractpersistedschema-function) now takes the schema as an `ImplicitAnnotatedFieldSchema` and an additional parameter to filter which staged upgrades it includes.
 
 Below is a full example of how the schema migration process works.
-This can also be found in the [tests](https://github.com/jenn-le/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts).
+This can also be found in the [tests](https://github.com/CraigMacomber/FluidFramework/blob/readonly-allowedtypes/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts).
 
 ```typescript
 // Schema A: only number allowed
