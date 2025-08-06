@@ -235,10 +235,7 @@ export class MockRuntime
 		}
 	}
 
-	public async attach(): Promise<{
-		ids: string[];
-		redirectTable: [string, string][] | undefined;
-	}> {
+	public async attach(): Promise<IBlobManagerLoadInfo> {
 		if (this.detachedStorage.blobs.size > 0) {
 			const table = new Map<string, string>();
 			for (const [detachedId, blob] of this.detachedStorage.blobs) {
@@ -248,10 +245,10 @@ export class MockRuntime
 			this.detachedStorage.blobs.clear();
 			this.blobManager.setRedirectTable(table);
 		}
-		const summary = validateSummary(this);
+		const loadInfo = validateSummary(this);
 		this.attachState = AttachState.Attached;
 		this.emit("attached");
-		return summary;
+		return loadInfo;
 	}
 
 	public async connect(delay = 0, processStashedWithRetry?: boolean): Promise<void> {
@@ -309,30 +306,22 @@ export class MockRuntime
 	}
 }
 
-export const validateSummary = (
-	runtime: MockRuntime,
-): {
-	ids: string[];
-	redirectTable: [string, string][] | undefined;
-} => {
+export const validateSummary = (runtime: MockRuntime): IBlobManagerLoadInfo => {
 	const summary = runtime.blobManager.summarize();
-	const ids: string[] = [];
-	let redirectTable: [string, string][] | undefined;
-	for (const [key, attachment] of Object.entries(summary.summary.tree)) {
-		if (attachment.type === SummaryType.Attachment) {
-			ids.push(attachment.id);
-		} else {
-			assert.strictEqual(key, redirectTableBlobName);
-			assert(attachment.type === SummaryType.Blob);
-			assert(typeof attachment.content === "string");
-			redirectTable = [
-				...new Map<string, string>(
-					JSON.parse(attachment.content) as [string, string][],
-				).entries(),
-			];
-		}
+	const treeEntries = Object.entries(summary.summary.tree);
+	if (treeEntries.length === 0) {
+		return { redirectTable: undefined };
 	}
-	return { ids, redirectTable };
+	assert.strictEqual(treeEntries.length, 1, "Only expect one entry in the tree");
+	const [key, attachment] = treeEntries[0];
+	assert.strictEqual(key, redirectTableBlobName);
+	assert.strictEqual(attachment.type, SummaryType.Blob);
+	// Not using strictEqual here just because TS doesn't know how to type-narrow then.
+	assert(typeof attachment.content === "string");
+	const redirectTable = [
+		...new Map<string, string>(JSON.parse(attachment.content) as [string, string][]).entries(),
+	];
+	return { redirectTable };
 };
 
 for (const createBlobPayloadPending of [false, true]) {
@@ -398,9 +387,8 @@ for (const createBlobPayloadPending of [false, true]) {
 		});
 
 		it("empty snapshot", () => {
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 0);
-			assert.strictEqual(summaryData.redirectTable, undefined);
+			const { redirectTable } = validateSummary(runtime);
+			assert.strictEqual(redirectTable, undefined);
 		});
 
 		it("non empty snapshot", async () => {
@@ -410,9 +398,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			await createBlob(IsoBuffer.from("blob", "utf8"));
 			await runtime.processAll();
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable?.length, 1);
+			const { redirectTable } = validateSummary(runtime);
+			assert.strictEqual(redirectTable?.length, 1);
 		});
 
 		it("hasPendingBlobs", async () => {
@@ -425,9 +412,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, true);
 			await runtime.processAll();
 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 2);
-			assert.strictEqual(summaryData.redirectTable?.length, 2);
+			const { redirectTable } = validateSummary(runtime);
+			assert.strictEqual(redirectTable?.length, 2);
 		});
 
 		it("NoPendingBlobs count", async () => {
@@ -443,9 +429,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			await createBlob(IsoBuffer.from("blob3", "utf8"));
 			await runtime.processAll();
 			assert.strictEqual(count, 2);
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 3);
-			assert.strictEqual(summaryData.redirectTable?.length, 3);
+			const { redirectTable } = validateSummary(runtime);
+			assert.strictEqual(redirectTable?.length, 3);
 		});
 
 		it("detached snapshot", async () => {
@@ -454,9 +439,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.processAll();
 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, true);
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable, undefined);
+			const { redirectTable } = validateSummary(runtime);
+			assert.strictEqual(redirectTable?.length, 1);
 		});
 
 		it("detached->attached snapshot", async () => {
@@ -465,9 +449,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, true);
 			await runtime.attach();
 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable?.length, 1);
+			const { redirectTable } = validateSummary(runtime);
+			assert.strictEqual(redirectTable?.length, 1);
 		});
 
 		it("uploads while disconnected", async () => {
@@ -477,9 +460,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.processAll();
 			await assert.doesNotReject(handleP);
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable?.length, 1);
+			const { redirectTable } = validateSummary(runtime);
+			assert.strictEqual(redirectTable?.length, 1);
 		});
 
 		it("reupload blob if expired", async () => {
@@ -504,9 +486,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.processAll();
 			await assert.doesNotReject(handleP);
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable?.length, 1);
+			const { redirectTable } = validateSummary(runtime);
+			assert.strictEqual(redirectTable?.length, 1);
 		});
 
 		it("upload fails gracefully", async () => {
@@ -566,9 +547,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				}
 				await assert.rejects(handleP);
 			}
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 0);
-			assert.strictEqual(summaryData.redirectTable, undefined);
+			const { redirectTable } = validateSummary(runtime);
+			assert.strictEqual(redirectTable, undefined);
 		});
 
 		it("updates handle state after success", async () => {
@@ -603,9 +583,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert.strict(isFluidHandlePayloadPending(handle));
 				assert.strictEqual(handle.payloadState, "shared", "Handle should be in shared state");
 			}
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable?.length, 1);
+			const { redirectTable } = validateSummary(runtime);
+			assert.strictEqual(redirectTable?.length, 1);
 		});
 
 		it.skip("upload fails and retries for retriable errors", async () => {
@@ -622,9 +601,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			runtime.processOps();
 			await runtime.processHandles();
 			assert(handleP);
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable?.length, 1);
+			const { redirectTable } = validateSummary(runtime);
+			assert.strictEqual(redirectTable?.length, 1);
 		});
 
 		it("completes after disconnection while op in flight", async () => {
@@ -639,9 +617,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.connect();
 			await runtime.processAll();
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable?.length, 2);
+			const { redirectTable } = validateSummary(runtime);
+			assert.strictEqual(redirectTable?.length, 2);
 		});
 
 		it("multiple disconnect/connects", async () => {
@@ -661,9 +638,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.processAll();
 			await assert.doesNotReject(handleP);
 			await assert.doesNotReject(handleP2);
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 2);
-			assert.strictEqual(summaryData.redirectTable?.length, 2);
+			const { redirectTable } = validateSummary(runtime);
+			assert.strictEqual(redirectTable?.length, 2);
 		});
 
 		it("handles deduped IDs", async () => {
@@ -686,9 +662,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			await createBlob(IsoBuffer.from("blob", "utf8"));
 			await runtime.processAll();
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable?.length, 6);
+			const { redirectTable } = validateSummary(runtime);
+			assert.strictEqual(redirectTable?.length, 6);
 		});
 
 		it("handles deduped IDs in detached", async () => {
@@ -698,9 +673,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			await createBlob(IsoBuffer.from("blob", "utf8"));
 			await runtime.processAll();
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable, undefined);
+			const { redirectTable } = validateSummary(runtime);
+			assert.strictEqual(redirectTable?.length, 2);
 		});
 
 		it("handles deduped IDs in detached->attached", async () => {
@@ -723,9 +697,8 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			await runtime.processAll();
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable?.length, 4);
+			const { redirectTable } = validateSummary(runtime);
+			assert.strictEqual(redirectTable?.length, 6);
 		});
 
 		it("can load from summary", async () => {
@@ -742,13 +715,11 @@ for (const createBlobPayloadPending of [false, true]) {
 			await createBlob(IsoBuffer.from("blob", "utf8"));
 			await runtime.processAll();
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable?.length, 3);
+			const loadInfo = validateSummary(runtime);
+			assert.strictEqual(loadInfo.redirectTable?.length, 3);
 
-			const runtime2 = new MockRuntime(mc, createBlobPayloadPending, summaryData, true);
+			const runtime2 = new MockRuntime(mc, createBlobPayloadPending, loadInfo, true);
 			const summaryData2 = validateSummary(runtime2);
-			assert.strictEqual(summaryData2.ids.length, 1);
 			assert.strictEqual(summaryData2.redirectTable?.length, 3);
 		});
 
@@ -760,9 +731,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.remoteUpload(IsoBuffer.from("blob", "utf8"));
 			await runtime.processAll();
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable?.length, 2);
+			const { redirectTable } = validateSummary(runtime);
+			assert.strictEqual(redirectTable?.length, 2);
 		});
 
 		it("handles duplicate remote upload between upload and op", async () => {
@@ -774,9 +744,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.remoteUpload(IsoBuffer.from("blob", "utf8"));
 			await runtime.processAll();
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable?.length, 2);
+			const { redirectTable } = validateSummary(runtime);
+			assert.strictEqual(redirectTable?.length, 2);
 		});
 
 		it("handles duplicate remote upload with local ID", async () => {
@@ -788,9 +757,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.remoteUpload(IsoBuffer.from("blob", "utf8"));
 			await runtime.processAll();
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable?.length, 2);
+			const { redirectTable } = validateSummary(runtime);
+			assert.strictEqual(redirectTable?.length, 2);
 		});
 
 		it("includes blob IDs in summary while attaching", async () => {
@@ -803,7 +771,6 @@ for (const createBlobPayloadPending of [false, true]) {
 			// state. BlobManager should know to include the list of attached blob
 			// IDs since this summary will be used to create the document
 			const summaryData = await runtime.attach();
-			assert.strictEqual(summaryData?.ids.length, 3);
 			assert.strictEqual(summaryData?.redirectTable?.length, 3);
 		});
 
@@ -827,9 +794,10 @@ for (const createBlobPayloadPending of [false, true]) {
 		});
 
 		it("runtime disposed during readBlob - log no error", async () => {
-			const someId = "someId";
+			const someLocalId = "someLocalId";
+			const someStorageId = "someStorageId";
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call -- Accessing private property
-			(runtime.blobManager as any).setRedirection(someId, undefined); // To appease an assert
+			(runtime.blobManager as any).setRedirection(someLocalId, someStorageId); // To appease an assert
 
 			// Mock storage.readBlob to dispose the runtime and throw an error
 			Sinon.stub(runtime.storage, "readBlob").callsFake(async (_id: string) => {
@@ -838,7 +806,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			});
 
 			await assert.rejects(
-				async () => runtime.blobManager.getBlob(someId, false),
+				async () => runtime.blobManager.getBlob(someLocalId, false),
 				(e: Error) => e.message === "BOOM!",
 				"Expected getBlob to throw with test error message",
 			);
@@ -905,9 +873,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					assert.strictEqual(error.message, "uploadBlob aborted");
 				}
-				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 0);
-				assert.strictEqual(summaryData.redirectTable, undefined);
+				const { redirectTable } = validateSummary(runtime);
+				assert.strictEqual(redirectTable, undefined);
 			});
 
 			it("abort while upload", async function () {
@@ -938,9 +905,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				}
 				assert(handleP);
 				await assert.rejects(handleP);
-				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 0);
-				assert.strictEqual(summaryData.redirectTable, undefined);
+				const { redirectTable } = validateSummary(runtime);
+				assert.strictEqual(redirectTable, undefined);
 			});
 
 			it("abort while failed upload", async function () {
@@ -971,9 +937,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				}
 				await assert.rejects(handleP);
 				await assert.rejects(handleP2);
-				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 0);
-				assert.strictEqual(summaryData.redirectTable, undefined);
+				const { redirectTable } = validateSummary(runtime);
+				assert.strictEqual(redirectTable, undefined);
 			});
 
 			it("abort while disconnected", async function () {
@@ -996,9 +961,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert.strictEqual((error as Error).message, "uploadBlob aborted");
 				}
 				await assert.rejects(handleP);
-				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 0);
-				assert.strictEqual(summaryData.redirectTable, undefined);
+				const { redirectTable } = validateSummary(runtime);
+				assert.strictEqual(redirectTable, undefined);
 			});
 
 			it("abort after blob succeeds", async function () {
@@ -1020,9 +984,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				}
 				assert(handleP);
 				await assert.doesNotReject(handleP);
-				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 1);
-				assert.strictEqual(summaryData.redirectTable?.length, 1);
+				const { redirectTable } = validateSummary(runtime);
+				assert.strictEqual(redirectTable?.length, 1);
 			});
 
 			it("abort while waiting for op", async function () {
@@ -1057,9 +1020,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert.strictEqual(error.acked, false);
 				}
 				await assert.rejects(handleP);
-				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 0);
-				assert.strictEqual(summaryData.redirectTable, undefined);
+				const { redirectTable } = validateSummary(runtime);
+				assert.strictEqual(redirectTable, undefined);
 			});
 
 			it("resubmit on aborted pending op", async function () {
@@ -1096,9 +1058,8 @@ for (const createBlobPayloadPending of [false, true]) {
 
 				// TODO: `handleP` can be `undefined`; this should be made safer.
 				await assert.rejects(handleP as Promise<IFluidHandleInternal<ArrayBufferLike>>);
-				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 0);
-				assert.strictEqual(summaryData.redirectTable, undefined);
+				const { redirectTable } = validateSummary(runtime);
+				assert.strictEqual(redirectTable, undefined);
 			});
 		});
 
@@ -1233,10 +1194,6 @@ for (const createBlobPayloadPending of [false, true]) {
 				// should not because the blob has another referenced from the de-duped blob.
 				runtime.blobManager.deleteSweepReadyNodes([blob1.localGCNodeId]);
 				assert(!redirectTable.has(blob1.localId), "blob1 localId should have been deleted");
-				assert(
-					redirectTable.has(blob1.storageId),
-					"blob1 storageId should not have been deleted",
-				);
 				// Delete blob1's de-duped local id. The local id and the storage id should both be deleted from the redirect table
 				// since all the references for the blob are now deleted.
 				runtime.blobManager.deleteSweepReadyNodes([blob1Duplicate.localGCNodeId]);
@@ -1253,10 +1210,6 @@ for (const createBlobPayloadPending of [false, true]) {
 				// should not because the blob has another referenced from the de-duped blob.
 				runtime.blobManager.deleteSweepReadyNodes([blob2.localGCNodeId]);
 				assert(!redirectTable.has(blob2.localId), "blob2 localId should have been deleted");
-				assert(
-					redirectTable.has(blob2.storageId),
-					"blob2 storageId should not have been deleted",
-				);
 				// Delete blob2's de-duped local id. The local id and the storage id should both be deleted from the redirect table
 				// since all the references for the blob are now deleted.
 				runtime.blobManager.deleteSweepReadyNodes([blob2Duplicate.localGCNodeId]);
