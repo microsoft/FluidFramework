@@ -46,9 +46,9 @@ function isTypeExport(_decl: ExportedDeclarations): boolean {
 }
 
 /**
- * TSDoc tag details that inform our API support level.
+ * API support level details.
  */
-interface ApiSupportTagInfo {
+interface ApiSupportLevelInfo {
 	/**
 	 * The release level, derived from a corresponding TSDoc release tag.
 	 */
@@ -62,11 +62,9 @@ interface ApiSupportTagInfo {
 }
 
 /**
- * Searches given JSDocs for known {@link ApiTag} tags.
- *
- * @returns Recognized {@link ApiTag}s from JSDocs or undefined.
+ * Searches the given JSDocs for known release tags and returns the appropriate {@link ApiSupportLevelInfo | support details} (if any).
  */
-function getApiTagsFromDocs(jsdocs: JSDoc[]): ApiSupportTagInfo | undefined {
+function getApiTagsFromDocs(jsdocs: JSDoc[]): ApiSupportLevelInfo | undefined {
 	let releaseLevel: ReleaseLevel | undefined;
 	let isLegacy = false;
 	for (const jsdoc of jsdocs) {
@@ -89,11 +87,9 @@ function getApiTagsFromDocs(jsdocs: JSDoc[]): ApiSupportTagInfo | undefined {
 }
 
 /**
- * Searches given Node's JSDocs for known {@link ApiTag} tags.
- *
- * @returns Recognized {@link ApiTag}s from JSDocs or undefined.
+ * Searches the given node's JSDocs for known release tags and returns the appropriate {@link ApiSupportLevelInfo | support details} (if any).
  */
-function getNodeApiTags(node: Node): ApiSupportTagInfo | undefined {
+function getNodeApiTags(node: Node): ApiSupportLevelInfo | undefined {
 	if (Node.isJSDocable(node)) {
 		return getApiTagsFromDocs(node.getJsDocs());
 	}
@@ -115,7 +111,7 @@ function getNodeApiTags(node: Node): ApiSupportTagInfo | undefined {
 	return undefined;
 }
 
-function getApiLevelFromTags(tags: ApiSupportTagInfo): ApiLevel {
+function getApiLevelFromTags(tags: ApiSupportLevelInfo): ApiLevel {
 	const { releaseLevel: releaseTag, isLegacy } = tags;
 	switch (releaseTag) {
 		case "public": {
@@ -140,13 +136,7 @@ function getApiLevelFromTags(tags: ApiSupportTagInfo): ApiLevel {
 }
 
 /**
- * Searches given Node's JSDocs for known {@link ApiTag} tags and derive export level.
- *
- * @remarks One of api-extractor standard tags will always be present as required by
- * api-extractor. So, "legacy" is treated as priority over other tags for determining
- * level. Otherwise, exactly one tag is required and will be exact level.
- *
- * @returns Computed {@link ApiLevel} from JSDocs or undefined.
+ * Searches the given node's JSDocs for known release tags and returns the appropriate {@link ApiSupportLevelInfo | support details} (if any).
  */
 function getNodeApiLevel(node: Node): ApiLevel | undefined {
 	const apiTags = getNodeApiTags(node);
@@ -158,7 +148,7 @@ function getNodeApiLevel(node: Node): ApiLevel | undefined {
 }
 
 /**
- * Given a source file extracts all of the named exports and associated API tag.
+ * Given a source file, extracts all of the named exports and associated support levels.
  * Named exports without a recognized tag are placed in unknown array.
  */
 export function getApiExports(sourceFile: SourceFile): ExportRecords {
