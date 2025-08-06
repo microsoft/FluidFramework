@@ -261,16 +261,10 @@ That function will be called on-demand at runtime to verify data from other clie
 When you provide a validator function, the data in a State object must be accessed via `.value()` function call instead of a directly accessing `.value` as a property.
 This is reflected in the types.
 
-:::important
-
-If no validator function is provided, then the data shared in Presence is assumed to be compatible.
-This may result in runtime errors if the data does not match the expected type.
-It is recommended to always provide a validator function to ensure that the data is valid and to prevent runtime errors.
-
-Note that here are important considerations around data compatibility that should be considered regardless of whether you provide a validator function or not.
-See [Compatibility and Versioning](#compatibility-and-versioning) for more details.
-
-:::
+> [!IMPORTANT]
+> If no validator function is provided, then the data shared in Presence is assumed to be compatible.
+> This may result in runtime errors if the data does not match the expected type.
+> It is recommended to always provide a validator function to ensure that the data is valid and to prevent runtime errors.
 
 #### Validator Requirements
 
