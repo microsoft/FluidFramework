@@ -30,19 +30,20 @@ import { FluidClientVersion } from "../../../codec/index.js";
 // Some documentation links to this file on GitHub: renaming it may break those links.
 
 describe("staged schema upgrade", () => {
-	const factory = new SchemaFactoryAlpha("upgrade");
+	// Schema A: only number allowed
+	const schemaA = SchemaFactoryAlpha.optional([SchemaFactoryAlpha.number]);
 
-	// schema A: only number allowed
-	const schemaA = factory.optional([SchemaFactoryAlpha.number]);
-
-	// schema B: number or string (string is staged)
-	const schemaB = factory.optional([
+	// Schema B: number or string (string is staged)
+	const schemaB = SchemaFactoryAlpha.optional([
 		SchemaFactoryAlpha.number,
 		SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
 	]);
 
-	// schema C: number or string, both fully allowed
-	const schemaC = factory.optional([SchemaFactoryAlpha.number, SchemaFactoryAlpha.string]);
+	// Schema C: number or string, both fully allowed
+	const schemaC = SchemaFactoryAlpha.optional([
+		SchemaFactoryAlpha.number,
+		SchemaFactoryAlpha.string,
+	]);
 
 	it("using user apis", () => {
 		const provider = new TestTreeProviderLite(3);
@@ -113,11 +114,13 @@ describe("staged schema upgrade", () => {
 		const viewA = treeA.viewWith(configA);
 		viewA.initialize(5);
 
+		// Since we are running all the different versions of the app in the same process making changes synchronously,
+		// an explicit flush is needed to make them available to each other.
 		synchronizeTrees();
 
 		assert.deepEqual(viewA.root, 5);
 
-		// View same document in a second tree using schema B.
+		// View the same document with a second tree using schema B.
 		const configB = new TreeViewConfiguration({
 			schema: schemaB,
 		});
@@ -125,7 +128,7 @@ describe("staged schema upgrade", () => {
 		// B cannot write strings to the root.
 		assert.throws(() => (viewB.root = "test"));
 
-		// View same document with third tree using schema C.
+		// View the same document with a third tree using schema C.
 		const configC = new TreeViewConfiguration({
 			schema: schemaC,
 		});

@@ -109,8 +109,23 @@ export interface SchemaStaticsAlpha {
 	 * ```
 	 * @example
 	 * Below is a full example of how the schema migration process works.
-	 * This can also be found in our {@link https://github.com/jenn-le/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts | tests}.
+	 * This can also be found in our {@link https://github.com/CraigMacomber/FluidFramework/blob/readonly-allowedtypes/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts | tests}.
 	 * ```typescript
+	 * // Schema A: only number allowed
+	 * const schemaA = SchemaFactoryAlpha.optional([SchemaFactoryAlpha.number]);
+	 *
+	 * // Schema B: number or string (string is staged)
+	 * const schemaB = SchemaFactoryAlpha.optional([
+	 * 	SchemaFactoryAlpha.number,
+	 * 	SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+	 * ]);
+	 *
+	 * // Schema C: number or string, both fully allowed
+	 * const schemaC = SchemaFactoryAlpha.optional([
+	 * 	SchemaFactoryAlpha.number,
+	 * 	SchemaFactoryAlpha.string,
+	 * ]);
+	 *
 	 * // Initialize with schema A.
 	 * const configA = new TreeViewConfiguration({
 	 * 	schema: schemaA,
@@ -118,11 +133,13 @@ export interface SchemaStaticsAlpha {
 	 * const viewA = treeA.viewWith(configA);
 	 * viewA.initialize(5);
 	 *
+	 * // Since we are running all the different versions of the app in the same process making changes synchronously,
+	 * // an explicit flush is needed to make them available to each other.
 	 * synchronizeTrees();
 	 *
 	 * assert.deepEqual(viewA.root, 5);
 	 *
-	 * // View same document in a second tree using schema B.
+	 * // View the same document with a second tree using schema B.
 	 * const configB = new TreeViewConfiguration({
 	 * 	schema: schemaB,
 	 * });
@@ -130,7 +147,7 @@ export interface SchemaStaticsAlpha {
 	 * // B cannot write strings to the root.
 	 * assert.throws(() => (viewB.root = "test"));
 	 *
-	 * // View same document with third tree using schema C.
+	 * // View the same document with a third tree using schema C.
 	 * const configC = new TreeViewConfiguration({
 	 * 	schema: schemaC,
 	 * });
@@ -155,6 +172,8 @@ export interface SchemaStaticsAlpha {
 	 * TODO: the example above does not work tell in intellisense: its formatted to work onm the website. We should find a solution that works well for both.
 	 *
 	 * TODO: AB#45711: Update the docs above when recursive type support is added.
+	 *
+	 * TODO: Once merged, a follow-up change should be made to update the URL above to point to the upstream file (here and in the changeset).
 	 */
 	staged: <const T extends LazyItem<TreeNodeSchema>>(
 		t: T | AnnotatedAllowedType<T>,

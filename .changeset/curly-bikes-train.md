@@ -34,6 +34,21 @@ Below is a full example of how the schema migration process works.
 This can also be found in the [tests](https://github.com/jenn-le/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts).
 
 ```typescript
+// Schema A: only number allowed
+const schemaA = SchemaFactoryAlpha.optional([SchemaFactoryAlpha.number]);
+
+// Schema B: number or string (string is staged)
+const schemaB = SchemaFactoryAlpha.optional([
+	SchemaFactoryAlpha.number,
+	SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+]);
+
+// Schema C: number or string, both fully allowed
+const schemaC = SchemaFactoryAlpha.optional([
+	SchemaFactoryAlpha.number,
+	SchemaFactoryAlpha.string,
+]);
+
 // Initialize with schema A.
 const configA = new TreeViewConfiguration({
 	schema: schemaA,
@@ -41,11 +56,13 @@ const configA = new TreeViewConfiguration({
 const viewA = treeA.viewWith(configA);
 viewA.initialize(5);
 
+// Since we are running all the different versions of the app in the same process making changes synchronously,
+// an explicit flush is needed to make them available to each other.
 synchronizeTrees();
 
 assert.deepEqual(viewA.root, 5);
 
-// View same document in a second tree using schema B.
+// View the same document with a second tree using schema B.
 const configB = new TreeViewConfiguration({
 	schema: schemaB,
 });
@@ -53,7 +70,7 @@ const viewB = treeB.viewWith(configB);
 // B cannot write strings to the root.
 assert.throws(() => (viewB.root = "test"));
 
-// View same document with third tree using schema C.
+// View the same document with a third tree using schema C.
 const configC = new TreeViewConfiguration({
 	schema: schemaC,
 });
