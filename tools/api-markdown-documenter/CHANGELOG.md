@@ -7,6 +7,8 @@
 `DocumentationNode` and its implementations have been removed.
 Their usage has been replaced with [mdast](https://github.com/syntax-tree/mdast) directly.
 
+The transformation to Markdown and HTML still exist, but will be removed soon.
+
 ### `DocumentNode` renamed to `ApiDocument`
 
 It is no longer a `unist` node, and is now an interface rather than a class.
