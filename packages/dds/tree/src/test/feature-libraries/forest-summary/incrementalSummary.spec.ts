@@ -34,6 +34,9 @@ import { forestSummaryKey } from "../../../feature-libraries/forest-summary/inde
 import { configuredSharedTree, type ISharedTree } from "../../../treeFactory.js";
 import { expectTreesEqual } from "../../index.js";
 import { TreeCompressionStrategyExtended } from "../../../feature-libraries/index.js";
+import type { FieldKey, TreeNodeSchemaIdentifier } from "../../../core/index.js";
+import { setInNestedMap, tryGetFromNestedMap, type NestedMap } from "../../../util/index.js";
+import { brand } from "../../../util/index.js";
 
 const schemaFactory = new SchemaFactory("com.example");
 
@@ -263,10 +266,43 @@ describe("Forest incremental summary", () => {
 	let view1: TreeView<typeof Board>;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
 
+	// Stores the information about fields that should be incrementally encoded.
+	const incrementalFieldsMap: NestedMap<TreeNodeSchemaIdentifier, FieldKey, boolean> =
+		new Map();
+	const shouldEncodeFieldIncrementally = (
+		nodeIdentifier: TreeNodeSchemaIdentifier,
+		fieldKey: FieldKey,
+	): boolean => {
+		return tryGetFromNestedMap(incrementalFieldsMap, nodeIdentifier, fieldKey) ?? false;
+	};
+
+	before(() => {
+		// These are the fields that should be incrementally encoded.
+		setInNestedMap(
+			incrementalFieldsMap,
+			brand<TreeNodeSchemaIdentifier>(NoteList.identifier),
+			brand<FieldKey>("notes"),
+			true,
+		);
+		setInNestedMap(
+			incrementalFieldsMap,
+			brand<TreeNodeSchemaIdentifier>(Note.identifier),
+			brand<FieldKey>("label"),
+			true,
+		);
+		setInNestedMap(
+			incrementalFieldsMap,
+			brand<TreeNodeSchemaIdentifier>(NoteLabel.identifier),
+			brand<FieldKey>("labelText"),
+			true,
+		);
+	});
+
 	beforeEach(() => {
 		const options: SharedTreeOptionsInternal = {
 			jsonValidator: typeboxValidator,
 			forest: ForestTypeOptimized,
+			shouldEncodeFieldIncrementally,
 			treeEncodeType: TreeCompressionStrategyExtended.CompressedIncremental,
 		};
 		factory = configuredSharedTree(options as SharedTreeOptions).getFactory();

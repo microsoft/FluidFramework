@@ -35,6 +35,7 @@ import {
 	SchemaVersion,
 	type TaggedChange,
 	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
@@ -272,6 +273,7 @@ export class SharedTreeKernel
 			encoderContext,
 			options,
 			idCompressor,
+			options.shouldEncodeFieldIncrementally,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
 		const innerChangeFamily = new SharedTreeChangeFamily(
@@ -587,6 +589,15 @@ export interface SharedTreeOptionsInternal
 	extends Omit<SharedTreeOptions, "treeEncodeType">,
 		Partial<SharedTreeFormatOptionsInternal> {
 	disposeForksAfterTransaction?: boolean;
+	/**
+	 * Returns whether a field should be incrementally encoded.
+	 * @param nodeIdentifier - The identifier of the node containing the field.
+	 * @param fieldKey - The key of the field to check.
+	 */
+	shouldEncodeFieldIncrementally?(
+		nodeIdentifier: TreeNodeSchemaIdentifier,
+		fieldKey: FieldKey,
+	): boolean;
 }
 /**
  * Configuration options for SharedTree's internal tree storage.
@@ -706,6 +717,12 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	formatVersion: SharedTreeFormatVersion.v3,
 	disposeForksAfterTransaction: true,
+	shouldEncodeFieldIncrementally: (
+		nodeIdentifier: TreeNodeSchemaIdentifier,
+		fieldKey: FieldKey,
+	): boolean => {
+		return false;
+	},
 };
 
 function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFieldSchema {

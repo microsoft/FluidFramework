@@ -16,6 +16,7 @@ import {
 	ValueSchema,
 	Multiplicity,
 	identifierFieldKindIdentifier,
+	type FieldKey,
 } from "../../../core/index.js";
 import type { FullSchemaPolicy } from "../../modular-schema/index.js";
 
@@ -64,7 +65,7 @@ export function buildContext(
 ): EncoderContext {
 	const context: EncoderContext = new EncoderContext(
 		(fieldBuilder: FieldEncodeBuilder, schemaName: TreeNodeSchemaIdentifier) =>
-			getNodeEncoder(fieldBuilder, storedSchema, schemaName, incrementalEncoder !== undefined),
+			getNodeEncoder(fieldBuilder, storedSchema, schemaName, incrementalEncoder),
 		(nodeBuilder: NodeEncodeBuilder, fieldSchema: TreeFieldStoredSchema) =>
 			getFieldEncoder(nodeBuilder, fieldSchema, context, storedSchema),
 		policy.fieldKinds,
@@ -121,7 +122,7 @@ export function getNodeEncoder(
 	fieldBuilder: FieldEncodeBuilder,
 	storedSchema: StoredSchemaCollection,
 	schemaName: TreeNodeSchemaIdentifier,
-	shouldEncodeIncrementally: boolean = false,
+	incrementalEncoder?: IncrementalEncoder,
 ): NodeShapeBasedEncoder {
 	const schema =
 		storedSchema.nodeSchema.get(schemaName) ?? fail(0xb53 /* missing node schema */);
@@ -131,14 +132,16 @@ export function getNodeEncoder(
 		// consider moving some optional and sequence fields to extra fields if they are commonly empty
 		// to reduce encoded size.
 
+		const shouldEncodeFieldIncrementallyLocal = (
+			nodeIdentifier: TreeNodeSchemaIdentifier,
+			fieldKey: FieldKey,
+		): boolean =>
+			incrementalEncoder?.shouldEncodeFieldIncrementally(nodeIdentifier, fieldKey) ?? false;
 		const objectNodeFields: KeyedFieldEncoder[] = [];
 		for (const [key, field] of schema.objectNodeFields ?? []) {
-			// TODO: Remove this hardcoded check and do this based on either heuristic or schema.
-			const fieldEncoder =
-				shouldEncodeIncrementally &&
-				(key === "notes" || key === "label" || key === "labelText")
-					? incrementalFieldEncoder
-					: fieldBuilder.fieldEncoderFromSchema(field);
+			const fieldEncoder = shouldEncodeFieldIncrementallyLocal(schemaName, key)
+				? incrementalFieldEncoder
+				: fieldBuilder.fieldEncoderFromSchema(field);
 			objectNodeFields.push({
 				key,
 				encoder: fieldEncoder,

@@ -27,6 +27,7 @@ import {
 	type ITreeSubscriptionCursor,
 	type RevisionTagCodec,
 	TreeNavigationResult,
+	type TreeNodeSchemaIdentifier,
 	applyDelta,
 	forEachField,
 	makeDetachedFieldIndex,
@@ -77,14 +78,24 @@ export class ForestSummarizer implements Summarizable {
 		private readonly encoderContext: FieldBatchEncodingContext,
 		options: CodecWriteOptions,
 		private readonly idCompressor: IIdCompressor,
+		shouldEncodeFieldIncrementally?: (
+			nodeIdentifier: TreeNodeSchemaIdentifier,
+			fieldKey: FieldKey,
+		) => boolean,
 	) {
 		// TODO: this should take in CodecWriteOptions, and use it to pick the write version.
 		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);
-		this.incrementalSummaryBuilder = new ForestIncrementalSummaryBuilder({
-			enableIncrementalSummary:
-				encoderContext.encodeType === TreeCompressionStrategyExtended.CompressedIncremental,
-			getChunkAtCursor: (cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
-		});
+
+		const shouldEncodeFieldIncrementallyLocal = (
+			nodeIdentifier: TreeNodeSchemaIdentifier,
+			fieldKey: FieldKey,
+		): boolean => shouldEncodeFieldIncrementally?.(nodeIdentifier, fieldKey) ?? false;
+		this.incrementalSummaryBuilder = new ForestIncrementalSummaryBuilder(
+			encoderContext.encodeType ===
+				TreeCompressionStrategyExtended.CompressedIncremental /* enableIncrementalSummary */,
+			(cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
+			shouldEncodeFieldIncrementallyLocal,
+		);
 	}
 
 	/**

@@ -27,7 +27,11 @@ import type {
 	TreeChunk,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/index.js";
-import type { ITreeCursorSynchronous } from "../../../core/index.js";
+import type {
+	FieldKey,
+	ITreeCursorSynchronous,
+	TreeNodeSchemaIdentifier,
+} from "../../../core/index.js";
 
 /**
  * Creates a mock incremental summary context for testing.
@@ -83,12 +87,13 @@ describe("ForestIncrementalSummaryBuilder", () => {
 	beforeEach(() => {
 		testCursor = { getFieldLength: () => 1 } as unknown as ITreeCursorSynchronous; // Mock cursor for testing
 		const testChunk = {} as unknown as TreeChunk; // Mock chunk for testing
-		builder = new ForestIncrementalSummaryBuilder({
-			enableIncrementalSummary: true,
-			getChunkAtCursor: (cursor: ITreeCursorSynchronous) => {
+		builder = new ForestIncrementalSummaryBuilder(
+			true /* enableIncrementalSummary */,
+			(cursor: ITreeCursorSynchronous) => {
 				return testChunk;
 			},
-		});
+			(nodeIdentifier: TreeNodeSchemaIdentifier, fieldKey: FieldKey) => false,
+		);
 	});
 
 	describe("startingSummary", () => {

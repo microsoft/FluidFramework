@@ -16,7 +16,11 @@ import type {
 	IncrementalEncoderDecoder,
 	TreeChunk,
 } from "../chunked-forest/index.js";
-import type { ITreeCursorSynchronous } from "../../core/index.js";
+import type {
+	FieldKey,
+	ITreeCursorSynchronous,
+	TreeNodeSchemaIdentifier,
+} from "../../core/index.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
@@ -198,23 +202,23 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 */
 	private trackedSummaryProperties: TrackedSummaryProperties | undefined;
 
-	private readonly getChunkAtCursor: (cursor: ITreeCursorSynchronous) => TreeChunk;
-
 	/**
 	 * A map of chunk reference IDs to their encoded contents. This is typically used during the loading of the
 	 * forest to retrieve the contents of the chunks that were summarized incrementally.
 	 */
 	private readonly encodedChunkContentsMap: Map<string, EncodedFieldBatch> = new Map();
 
-	private readonly enableIncrementalSummary: boolean;
-
-	public constructor(props: {
-		readonly enableIncrementalSummary: boolean;
-		readonly getChunkAtCursor: (cursor: ITreeCursorSynchronous) => TreeChunk;
-	}) {
-		this.getChunkAtCursor = props.getChunkAtCursor;
-		this.enableIncrementalSummary = props.enableIncrementalSummary;
-	}
+	public constructor(
+		private readonly enableIncrementalSummary: boolean,
+		private readonly getChunkAtCursor: (cursor: ITreeCursorSynchronous) => TreeChunk,
+		/**
+		 * {@link IncrementalEncoder.shouldEncodeFieldIncrementally}
+		 */
+		public readonly shouldEncodeFieldIncrementally: (
+			nodeIdentifier: TreeNodeSchemaIdentifier,
+			fieldKey: FieldKey,
+		) => boolean,
+	) {}
 
 	/**
 	 * Must be called when the forest is loaded to download the encoded contents of incremental chunks.

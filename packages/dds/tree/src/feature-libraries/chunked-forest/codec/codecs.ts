@@ -14,9 +14,11 @@ import {
 } from "../../../codec/index.js";
 import {
 	CursorLocationType,
+	type FieldKey,
 	type ITreeCursorSynchronous,
 	type SchemaAndPolicy,
 	type TreeChunk,
+	type TreeNodeSchemaIdentifier,
 } from "../../../core/index.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 import {
@@ -45,8 +47,18 @@ export type ChunkReferenceId = Static<typeof ChunkReferenceId>;
  * unchanged between summaries.
  * Note that each of these chunks that are incrementally encoded is fully self-describing (contain its own shapes
  * list and identifier table) and does not rely on context from its parent.
+ * @internal
  */
 export interface IncrementalEncoder {
+	/**
+	 * Returns whether a field should be incrementally encoded.
+	 * @param nodeIdentifier - The identifier of the node containing the field.
+	 * @param fieldKey - The key of the field to check.
+	 */
+	shouldEncodeFieldIncrementally(
+		nodeIdentifier: TreeNodeSchemaIdentifier,
+		fieldKey: FieldKey,
+	): boolean;
 	/**
 	 * Called to encode an incremental field at the cursor. The chunks for this field are encoded separately
 	 * from the main buffer.
@@ -65,6 +77,7 @@ export interface IncrementalEncoder {
  * Properties for incremental decoding.
  * Fields that had their chunks incrementally encoded will retrieve these chunks by calling
  * `getEncodedIncrementalChunk`. See {@link IncrementalEncoder} for more details.
+ * @internal
  */
 export interface IncrementalDecoder {
 	/**
@@ -74,6 +87,10 @@ export interface IncrementalDecoder {
 	 */
 	getEncodedIncrementalChunk: (referenceId: ChunkReferenceId) => EncodedFieldBatch;
 }
+/**
+ * Combines the properties of {@link IncrementalEncoder} and {@link IncrementalDecoder}.
+ * @internal
+ */
 export interface IncrementalEncoderDecoder extends IncrementalEncoder, IncrementalDecoder {}
 
 export interface FieldBatchEncodingContext {

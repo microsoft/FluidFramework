@@ -29,12 +29,15 @@ export enum TreeCompressionStrategy {
  */
 export enum TreeCompressionStrategyExtended {
 	/**
-	 * Optimized for encoded size as TreeCompressionStrategy.Compressed and allows incremental encoding
+	 * Optimized for encoded size, same as TreeCompressionStrategy.Compressed. It also enables incremental encoding
 	 * of the data.
 	 */
 	CompressedIncremental = 2,
 }
 
+/**
+ * @internal
+ */
 export type TreeCompressionStrategyInternal =
 	| TreeCompressionStrategy
 	| TreeCompressionStrategyExtended;
