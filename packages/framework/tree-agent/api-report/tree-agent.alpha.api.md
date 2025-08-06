@@ -4,6 +4,85 @@
 
 ```ts
 
-// (No @packageDocumentation comment for this package)
+// @alpha
+export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = readonly [name: string, type: T];
+
+// @alpha
+export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Single extends Arg] ? [Single[1]] : T extends readonly [infer Head extends Arg, ...infer Tail extends readonly Arg[]] ? [Head[1], ...ArgsTuple<Tail>] : never;
+
+// @alpha
+export function buildFunc<const Return extends z.ZodTypeAny, const Args extends readonly Arg[], const Rest extends z.ZodTypeAny | null = null>(def: {
+    description?: string;
+    returns: Return;
+    rest?: Rest;
+}, ...args: Args): FunctionDef<Args, Return, Rest>;
+
+// @alpha
+export function createSemanticAgent<TRoot extends ImplicitFieldSchema>(client: BaseChatModel, treeView: TreeView<TRoot>, options?: {
+    readonly domainHints?: string;
+    readonly treeToString?: (root: ReadableField<TRoot>) => string;
+    readonly validator?: (js: string) => boolean;
+    readonly log?: Log;
+}): SharedTreeSemanticAgent;
+
+// @alpha
+export type Ctor<T = any> = new (...args: any[]) => T;
+
+// @alpha
+export interface ExposedMethods {
+    // (undocumented)
+    expose<const K extends string & keyof MethodKeys<InstanceType<S>>, S extends NodeSchema & Ctor<{
+        [P in K]: Infer<Z>;
+    }> & IExposedMethods, Z extends FunctionDef<any, any, any>>(schema: S, methodName: K, zodFunction: Z): void;
+}
+
+// @alpha
+export const exposeMethodsSymbol: unique symbol;
+
+// @alpha
+export interface FunctionDef<Args extends readonly Arg[], Return extends z.ZodTypeAny, Rest extends z.ZodTypeAny | null = null> {
+    // (undocumented)
+    args: Args;
+    // (undocumented)
+    description?: string;
+    // (undocumented)
+    rest?: Rest;
+    // (undocumented)
+    returns: Return;
+}
+
+// @alpha
+export interface IExposedMethods {
+    // (undocumented)
+    [exposeMethodsSymbol](methods: ExposedMethods): void;
+}
+
+// @alpha
+export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Rest> ? z.infer<z.ZodFunction<z.ZodTuple<ArgsTuple<Args>, Rest>, Return>> : never;
+
+// @alpha
+export function instanceOf<T extends TreeNodeSchemaClass>(schema: T): z.ZodType<InstanceType<T>, z.ZodTypeDef, InstanceType<T>>;
+
+// @alpha
+export const llmDefault: unique symbol;
+
+// @alpha (undocumented)
+export type Log = (message: string) => void;
+
+// @alpha
+export type MethodKeys<T> = {
+    [K in keyof T]: T[K] extends (...args: any[]) => any ? K : never;
+};
+
+// @alpha
+export type NodeSchema = TreeNodeSchema<string, NodeKind.Object>;
+
+// @alpha (undocumented)
+export interface SharedTreeSemanticAgent {
+    query(userPrompt: string): Promise<string | undefined>;
+}
+
+// @alpha
+export type TreeView<TRoot extends ImplicitFieldSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "schema" | "events">;
 
 ```

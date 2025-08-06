@@ -3,14 +3,24 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable unicorn/no-empty-file */
-
 /**
  * A library for creating AI agents to interact with a {@link SharedTree | https://fluidframework.com/docs/data-structures/tree/}.
  *
  * @packageDocumentation
  */
 
-// This is a placeholder file.
-// Source code for the tree-agent package will be added in the future.
-
+export type { Log, SharedTreeSemanticAgent, createSemanticAgent } from "./agent.js";
+export type { TreeView, llmDefault, instanceOf } from "./utils.js";
+export {
+	buildFunc,
+	exposeMethodsSymbol,
+	type ArgsTuple,
+	type ExposedMethods,
+	type Arg,
+	type FunctionDef,
+	type MethodKeys,
+	type NodeSchema,
+	type Ctor,
+	type Infer,
+	type IExposedMethods,
+} from "./methodBinding.js";
