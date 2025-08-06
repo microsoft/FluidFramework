@@ -14,10 +14,10 @@ describe("headingToMarkdown", () => {
 
 		it("Without ID", () => {
 			const input: IdentifiableHeading = {
-				type: "identifiableHeading",
+				type: "sectionHeading",
 				title: "Hello world!",
 			};
-			const result = transformationContext.transformations.identifiableHeading(
+			const result = transformationContext.transformations.sectionHeading(
 				input,
 				transformationContext,
 			);
@@ -32,11 +32,11 @@ describe("headingToMarkdown", () => {
 
 		it("With ID", () => {
 			const input: IdentifiableHeading = {
-				type: "identifiableHeading",
+				type: "sectionHeading",
 				title: "Hello world!",
 				id: "my-heading-id",
 			};
-			const result = transformationContext.transformations.identifiableHeading(
+			const result = transformationContext.transformations.sectionHeading(
 				input,
 				transformationContext,
 			);
@@ -56,10 +56,10 @@ describe("headingToMarkdown", () => {
 
 		it("Without ID", () => {
 			const input: IdentifiableHeading = {
-				type: "identifiableHeading",
+				type: "sectionHeading",
 				title: "Hello world!",
 			};
-			const result = transformationContext.transformations.identifiableHeading(
+			const result = transformationContext.transformations.sectionHeading(
 				input,
 				transformationContext,
 			);
@@ -78,11 +78,11 @@ describe("headingToMarkdown", () => {
 
 		it("With ID", () => {
 			const input: IdentifiableHeading = {
-				type: "identifiableHeading",
+				type: "sectionHeading",
 				title: "Hello world!",
 				id: "my-heading-id",
 			};
-			const result = transformationContext.transformations.identifiableHeading(
+			const result = transformationContext.transformations.sectionHeading(
 				input,
 				transformationContext,
 			);

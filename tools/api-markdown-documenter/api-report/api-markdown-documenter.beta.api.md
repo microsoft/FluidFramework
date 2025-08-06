@@ -411,7 +411,7 @@ export { HtmlRenderer }
 export interface IdentifiableHeading extends Node_2 {
     id?: string;
     title: string;
-    type: "identifiableHeading";
+    type: "sectionHeading";
 }
 
 // @public
@@ -614,7 +614,7 @@ export interface ToMarkdownTransformations {
     // (undocumented)
     readonly hierarchicalSection: ToMarkdownTransformation<HierarchicalSection, RootContent[]>;
     // (undocumented)
-    readonly identifiableHeading: ToMarkdownTransformation<IdentifiableHeading, BlockContent[]>;
+    readonly sectionHeading: ToMarkdownTransformation<IdentifiableHeading, BlockContent[]>;
 }
 
 // @public

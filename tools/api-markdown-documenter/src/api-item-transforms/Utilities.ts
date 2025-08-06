@@ -41,7 +41,7 @@ export function createDocument(
 					type: "hierarchicalSection",
 					children: sections,
 					heading: {
-						type: "identifiableHeading",
+						type: "sectionHeading",
 						title,
 					},
 				},

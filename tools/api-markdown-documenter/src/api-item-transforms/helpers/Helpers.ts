@@ -106,7 +106,7 @@ export function createSignatureSection(
 				type: "hierarchicalSection",
 				children: contents,
 				heading: {
-					type: "identifiableHeading",
+					type: "sectionHeading",
 					title: "Signature",
 					id: `${getFileSafeNameForApiItem(apiItem)}-signature`,
 				},
@@ -341,7 +341,7 @@ export function createSeeAlsoSection(
 		type: "hierarchicalSection",
 		children: contents,
 		heading: {
-			type: "identifiableHeading",
+			type: "sectionHeading",
 			title: "See Also",
 			id: `${getFileSafeNameForApiItem(apiItem)}-see-also`,
 		},
@@ -376,7 +376,7 @@ export function createTypeParametersSection(
 		type: "hierarchicalSection",
 		children: [typeParametersTable],
 		heading: {
-			type: "identifiableHeading",
+			type: "sectionHeading",
 			title: "Type Parameters",
 		},
 	};
@@ -585,7 +585,7 @@ export function createRemarksSection(
 		type: "hierarchicalSection",
 		children: transformTsdoc(apiItem.tsdocComment.remarksBlock.content, apiItem, config),
 		heading: {
-			type: "identifiableHeading",
+			type: "sectionHeading",
 			title: "Remarks",
 			id: `${getFileSafeNameForApiItem(apiItem)}-remarks`,
 		},
@@ -625,7 +625,7 @@ export function createThrowsSection(
 		type: "hierarchicalSection",
 		children: contents,
 		heading: {
-			type: "identifiableHeading",
+			type: "sectionHeading",
 			title: headingText,
 			id: `${getFileSafeNameForApiItem(apiItem)}-throws`,
 		},
@@ -723,7 +723,7 @@ export function createExamplesSection(
 		type: "hierarchicalSection",
 		children: exampleSections,
 		heading: {
-			type: "identifiableHeading",
+			type: "sectionHeading",
 			title: headingText,
 			id: `${getFileSafeNameForApiItem(apiItem)}-examples`,
 		},
@@ -853,7 +853,7 @@ function createExampleSection(
 		type: "hierarchicalSection",
 		children: transformedExampleContent,
 		heading: {
-			type: "identifiableHeading",
+			type: "sectionHeading",
 			title: headingTitle,
 			id: headingId,
 		},
@@ -997,7 +997,7 @@ export function createParametersSection(
 			createParametersSummaryTable(apiFunctionLike.parameters, apiFunctionLike, config),
 		],
 		heading: {
-			type: "identifiableHeading",
+			type: "sectionHeading",
 			title: "Parameters",
 			id: `${getFileSafeNameForApiItem(apiFunctionLike)}-parameters`,
 		},
@@ -1069,7 +1069,7 @@ export function createReturnsSection(
 				type: "hierarchicalSection",
 				children,
 				heading: {
-					type: "identifiableHeading",
+					type: "sectionHeading",
 					title: "Returns",
 					id: `${getFileSafeNameForApiItem(apiItem)}-returns`,
 				},

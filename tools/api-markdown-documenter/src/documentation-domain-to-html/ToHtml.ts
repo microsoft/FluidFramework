@@ -96,7 +96,7 @@ export function documentationNodeToHtml(
 	const context = getContext(configOrContext);
 
 	// If the node is a section or a heading, then transform it using the configured transformation.
-	if (node.type === "hierarchicalSection" || node.type === "identifiableHeading") {
+	if (node.type === "hierarchicalSection" || node.type === "sectionHeading") {
 		if (context.transformations[node.type] === undefined) {
 			throw new Error(`Missing HTML transformation for type: "${node.type}".`);
 		}

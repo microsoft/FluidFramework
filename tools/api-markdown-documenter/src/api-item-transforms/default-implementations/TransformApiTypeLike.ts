@@ -220,32 +220,32 @@ export function transformApiTypeLike(
 		const detailsSections = createChildDetailsSection(
 			[
 				{
-					heading: { type: "identifiableHeading", title: "Constructor Details" },
+					heading: { type: "sectionHeading", title: "Constructor Details" },
 					itemKind: ApiItemKind.Constructor,
 					items: constructors,
 				},
 				{
-					heading: { type: "identifiableHeading", title: "Event Details" },
+					heading: { type: "sectionHeading", title: "Event Details" },
 					itemKind: ApiItemKind.Property,
 					items: eventProperties,
 				},
 				{
-					heading: { type: "identifiableHeading", title: "Property Details" },
+					heading: { type: "sectionHeading", title: "Property Details" },
 					itemKind: ApiItemKind.Property,
 					items: standardProperties,
 				},
 				{
-					heading: { type: "identifiableHeading", title: "Method Details" },
+					heading: { type: "sectionHeading", title: "Method Details" },
 					itemKind: ApiItemKind.MethodSignature,
 					items: allMethods,
 				},
 				{
-					heading: { type: "identifiableHeading", title: "Call Signature Details" },
+					heading: { type: "sectionHeading", title: "Call Signature Details" },
 					itemKind: ApiItemKind.CallSignature,
 					items: callSignatures,
 				},
 				{
-					heading: { type: "identifiableHeading", title: "Index Signature Details" },
+					heading: { type: "sectionHeading", title: "Index Signature Details" },
 					itemKind: ApiItemKind.IndexSignature,
 					items: indexSignatures,
 				},

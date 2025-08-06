@@ -6,16 +6,18 @@
 import type { Node } from "mdast";
 
 /**
- * Represents a hierarchically nested section.
- * @remarks Influences things like automatic heading level generation.
+ * The heading of a {@link HierarchicalSection} with a dynamic level.
+ *
+ * @remarks The level is determined by the nesting of the containing section.
+ *
  * @sealed
  * @public
  */
-export interface IdentifiableHeading extends Node {
+export interface SectionHeading extends Node {
 	/**
 	 * `mdast` node type.
 	 */
-	type: "identifiableHeading";
+	type: "sectionHeading";
 
 	// TODO: there is no reason not to just take `PhrasingContent` here, but the library doesn't currently utilize that degree of freedom.
 	/**

@@ -57,13 +57,13 @@ describe("Document HTML rendering tests", () => {
 								},
 							],
 							heading: {
-								type: "identifiableHeading",
+								type: "sectionHeading",
 								title: "Section Heading",
 							},
 						},
 					],
 					heading: {
-						type: "identifiableHeading",
+						type: "sectionHeading",
 						title: "Sample Document",
 					},
 				},

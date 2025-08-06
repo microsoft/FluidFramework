@@ -117,7 +117,7 @@ export function createTableWithHeading(
 				type: "hierarchicalSection",
 				children: [table],
 				heading: {
-					type: "identifiableHeading",
+					type: "sectionHeading",
 					title: memberTableProperties.headingTitle,
 				},
 			};

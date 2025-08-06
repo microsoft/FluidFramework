@@ -4,4 +4,4 @@
  */
 
 export { createHierarchicalSection, type HierarchicalSection } from "./HierarchicalSection.js";
-export type { IdentifiableHeading } from "./IdentifiableHeading.js";
+export type { SectionHeading as IdentifiableHeading } from "./SectionHeading.js";

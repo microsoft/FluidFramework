@@ -27,7 +27,7 @@ describe("HierarchicalSection HTML rendering tests", () => {
 				},
 			],
 			heading: {
-				type: "identifiableHeading",
+				type: "sectionHeading",
 				title: "Hello World",
 				id: "heading-id",
 			},
@@ -56,7 +56,7 @@ describe("HierarchicalSection HTML rendering tests", () => {
 						},
 					],
 					heading: {
-						type: "identifiableHeading",
+						type: "sectionHeading",
 						title: "Sub-Heading 1",
 						id: "sub-heading-1",
 					},
@@ -74,7 +74,7 @@ describe("HierarchicalSection HTML rendering tests", () => {
 								},
 							],
 							heading: {
-								type: "identifiableHeading",
+								type: "sectionHeading",
 								title: "Sub-Heading 2b",
 							},
 						},
@@ -82,7 +82,7 @@ describe("HierarchicalSection HTML rendering tests", () => {
 				},
 			],
 			heading: {
-				type: "identifiableHeading",
+				type: "sectionHeading",
 				title: "Root Heading",
 				id: "root-heading",
 			},

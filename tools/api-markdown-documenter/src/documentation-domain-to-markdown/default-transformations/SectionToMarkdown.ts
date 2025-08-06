@@ -29,7 +29,7 @@ export function sectionToMarkdown(
 	const transformedSectionContent: MdastRootContent[] = [];
 
 	if (node.heading !== undefined) {
-		const transformedHeading = transformations.identifiableHeading(node.heading, context);
+		const transformedHeading = transformations.sectionHeading(node.heading, context);
 		transformedSectionContent.push(...transformedHeading);
 	}
 

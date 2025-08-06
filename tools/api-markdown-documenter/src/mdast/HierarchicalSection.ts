@@ -5,7 +5,7 @@
 
 import type { BlockContent, Node } from "mdast";
 
-import type { IdentifiableHeading } from "./IdentifiableHeading.js";
+import type { SectionHeading } from "./SectionHeading.js";
 
 // TODO: Hierarchical sections should really be either or in terms of what kinds of children they can have.
 // Either they have `HierarchicalSection` children, or they have `BlockContent` children, but they shouldn't mix and match.
@@ -34,7 +34,7 @@ export interface HierarchicalSection extends Node {
 	 * @remarks If not specified, no heading will be displayed in the section contents.
 	 * Note that this section will still influence heading hierarchy of child contents regardless.
 	 */
-	heading?: IdentifiableHeading;
+	heading?: SectionHeading;
 }
 
 /**
@@ -45,7 +45,7 @@ export interface HierarchicalSection extends Node {
 export function createHierarchicalSection({
 	children,
 	heading,
-}: { children: BlockContent[]; heading?: IdentifiableHeading }): HierarchicalSection {
+}: { children: BlockContent[]; heading?: SectionHeading }): HierarchicalSection {
 	const section: HierarchicalSection = {
 		type: "hierarchicalSection",
 		children,

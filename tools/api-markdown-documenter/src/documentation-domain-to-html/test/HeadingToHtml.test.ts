@@ -16,7 +16,7 @@ import { assertTransformation } from "./Utilities.js";
 describe("HeadingNode -> Html", () => {
 	it("With ID", () => {
 		const input: IdentifiableHeading = {
-			type: "identifiableHeading",
+			type: "sectionHeading",
 			title: "Foo",
 			id: "foo-id",
 		};
@@ -26,7 +26,7 @@ describe("HeadingNode -> Html", () => {
 
 	it("Without ID", () => {
 		const input: IdentifiableHeading = {
-			type: "identifiableHeading",
+			type: "sectionHeading",
 			title: "Foo",
 		};
 		const expected = h("h1", "Foo");
@@ -37,7 +37,7 @@ describe("HeadingNode -> Html", () => {
 		// Heading levels are dynamic depending on context (depth in the document tree).
 		// Verify that the specified starting heading level in the config is respected when transforming the heading.
 		const input: IdentifiableHeading = {
-			type: "identifiableHeading",
+			type: "sectionHeading",
 			title: "Foo",
 			id: "foo-id",
 		};
@@ -50,7 +50,7 @@ describe("HeadingNode -> Html", () => {
 		// As a policy, if we have a heading nested deeper than that, we transform the content to bold text with an
 		// anchor tag above it.
 		const input: IdentifiableHeading = {
-			type: "identifiableHeading",
+			type: "sectionHeading",
 			title: "Foo",
 			id: "foo-id",
 		};

@@ -58,13 +58,13 @@ describe("documentToMarkdown", () => {
 								},
 							],
 							heading: {
-								type: "identifiableHeading",
+								type: "sectionHeading",
 								title: "Section Heading",
 							},
 						},
 					],
 					heading: {
-						type: "identifiableHeading",
+						type: "sectionHeading",
 						title: "Sample Document",
 					},
 				},

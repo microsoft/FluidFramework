@@ -273,7 +273,7 @@ export function getHeadingForApiItem(
 	const title = config.getHeadingTextForItem(apiItem);
 
 	return {
-		type: "identifiableHeading",
+		type: "sectionHeading",
 		title,
 		id,
 	};

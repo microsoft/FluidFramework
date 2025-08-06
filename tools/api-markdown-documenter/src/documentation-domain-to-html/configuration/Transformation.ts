@@ -49,6 +49,6 @@ export type Transformation = (
  * Default documentation node to {@link https://github.com/syntax-tree/hast | hast} transformations.
  */
 export const defaultTransformations: Transformations = {
-	identifiableHeading: (node, context) => headingToHtml(node as IdentifiableHeading, context),
+	sectionHeading: (node, context) => headingToHtml(node as IdentifiableHeading, context),
 	hierarchicalSection: (node, context) => sectionToHtml(node as HierarchicalSection, context),
 };

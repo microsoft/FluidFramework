@@ -143,7 +143,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 							},
 						],
 						heading: {
-							type: "identifiableHeading",
+							type: "sectionHeading",
 							title: "Signature",
 							id: `testconst-signature`,
 						},
@@ -226,13 +226,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 									},
 								],
 								heading: {
-									type: "identifiableHeading",
+									type: "sectionHeading",
 									title: "Type Parameters",
 								},
 							}),
 						],
 						heading: {
-							type: "identifiableHeading",
+							type: "sectionHeading",
 							title: "Signature",
 							id: `testfunction-signature`,
 						},
@@ -296,7 +296,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 							},
 						],
 						heading: {
-							type: "identifiableHeading",
+							type: "sectionHeading",
 							title: "Parameters",
 							id: "testfunction-parameters",
 						},
@@ -319,7 +319,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 							},
 						],
 						heading: {
-							type: "identifiableHeading",
+							type: "sectionHeading",
 							title: "Returns",
 							id: "testfunction-returns",
 						},
@@ -334,14 +334,14 @@ describe("ApiItem to Documentation transformation tests", () => {
 							},
 						],
 						heading: {
-							type: "identifiableHeading",
+							type: "sectionHeading",
 							title: "Throws",
 							id: `testfunction-throws`,
 						},
 					}),
 				],
 				heading: {
-					type: "identifiableHeading",
+					type: "sectionHeading",
 					title: "testFunction",
 					id: "testfunction-function",
 				},
@@ -389,7 +389,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 					},
 				],
 				heading: {
-					type: "identifiableHeading",
+					type: "sectionHeading",
 					title: "Signature",
 					id: "testinterface-signature",
 				},
@@ -404,7 +404,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 					},
 				],
 				heading: {
-					type: "identifiableHeading",
+					type: "sectionHeading",
 					title: "Remarks",
 					id: "testinterface-remarks",
 				},
@@ -462,7 +462,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 					},
 				],
 				heading: {
-					type: "identifiableHeading",
+					type: "sectionHeading",
 					title: "Properties",
 				},
 			}),
@@ -502,21 +502,21 @@ describe("ApiItem to Documentation transformation tests", () => {
 									},
 								],
 								heading: {
-									type: "identifiableHeading",
+									type: "sectionHeading",
 									title: "Signature",
 									id: "testoptionalinterfaceproperty-signature",
 								},
 							}),
 						],
 						heading: {
-							type: "identifiableHeading",
+							type: "sectionHeading",
 							title: "testOptionalInterfaceProperty",
 							id: "testoptionalinterfaceproperty-propertysignature",
 						},
 					}),
 				],
 				heading: {
-					type: "identifiableHeading",
+					type: "sectionHeading",
 					title: "Property Details",
 				},
 			}),
@@ -577,7 +577,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 				heading: {
 					title: "Signature",
 					id: "testnamespace-signature",
-					type: "identifiableHeading",
+					type: "sectionHeading",
 				},
 			}),
 
@@ -667,7 +667,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 						],
 					},
 				],
-				heading: { title: "Variables", type: "identifiableHeading" },
+				heading: { title: "Variables", type: "sectionHeading" },
 			}),
 
 			// Variables details section
@@ -699,14 +699,14 @@ describe("ApiItem to Documentation transformation tests", () => {
 								heading: {
 									title: "Signature",
 									id: "bar-signature",
-									type: "identifiableHeading",
+									type: "sectionHeading",
 								},
 							}),
 						],
 						heading: {
 							title: "bar",
 							id: "bar-variable",
-							type: "identifiableHeading",
+							type: "sectionHeading",
 						},
 					}),
 					// Details for `foo`
@@ -726,20 +726,20 @@ describe("ApiItem to Documentation transformation tests", () => {
 								heading: {
 									title: "Signature",
 									id: "foo-signature",
-									type: "identifiableHeading",
+									type: "sectionHeading",
 								},
 							}),
 						],
 						heading: {
 							title: "foo",
 							id: "foo-variable",
-							type: "identifiableHeading",
+							type: "sectionHeading",
 						},
 					}),
 
 					// No entry should be included for `baz` because it is `@alpha`
 				],
-				heading: { title: "Variable Details", type: "identifiableHeading" },
+				heading: { title: "Variable Details", type: "sectionHeading" },
 			}),
 		];
 
@@ -827,13 +827,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 								},
 							],
 							heading: {
-								type: "identifiableHeading",
+								type: "sectionHeading",
 								title: "Entry Points",
 							},
 						}),
 					],
 					heading: {
-						type: "identifiableHeading",
+						type: "sectionHeading",
 						title: "test-package",
 					},
 				}),
@@ -943,7 +943,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 									],
 								},
 							],
-							heading: { title: "Variables", type: "identifiableHeading" },
+							heading: { title: "Variables", type: "sectionHeading" },
 						}),
 
 						// Variables details
@@ -973,21 +973,21 @@ describe("ApiItem to Documentation transformation tests", () => {
 											heading: {
 												title: "Signature",
 												id: "hello-signature",
-												type: "identifiableHeading",
+												type: "sectionHeading",
 											},
 										}),
 									],
 									heading: {
 										title: "hello",
 										id: "hello-variable",
-										type: "identifiableHeading",
+										type: "sectionHeading",
 									},
 								}),
 							],
-							heading: { title: "Variable Details", type: "identifiableHeading" },
+							heading: { title: "Variable Details", type: "sectionHeading" },
 						}),
 					],
-					heading: { title: "entry-point-a", type: "identifiableHeading" },
+					heading: { title: "entry-point-a", type: "sectionHeading" },
 				}),
 			],
 		};
@@ -1081,7 +1081,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 									],
 								},
 							],
-							heading: { title: "Variables", type: "identifiableHeading" },
+							heading: { title: "Variables", type: "sectionHeading" },
 						}),
 
 						// Variables details
@@ -1111,24 +1111,24 @@ describe("ApiItem to Documentation transformation tests", () => {
 											heading: {
 												title: "Signature",
 												id: "world-signature",
-												type: "identifiableHeading",
+												type: "sectionHeading",
 											},
 										}),
 									],
 									heading: {
 										title: "world",
 										id: "world-variable",
-										type: "identifiableHeading",
+										type: "sectionHeading",
 									},
 								}),
 							],
 							heading: {
 								title: "Variable Details",
-								type: "identifiableHeading",
+								type: "sectionHeading",
 							},
 						}),
 					],
-					heading: { title: "entry-point-b", type: "identifiableHeading" },
+					heading: { title: "entry-point-b", type: "sectionHeading" },
 				}),
 			],
 		};

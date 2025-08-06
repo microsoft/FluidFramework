@@ -20,7 +20,7 @@ import { headingToMarkdown, sectionToMarkdown } from "../default-transformations
  * @public
  */
 export interface Transformations {
-	readonly identifiableHeading: Transformation<IdentifiableHeading, MdastBlockContent[]>;
+	readonly sectionHeading: Transformation<IdentifiableHeading, MdastBlockContent[]>;
 	readonly hierarchicalSection: Transformation<HierarchicalSection, MdastRootContent[]>;
 }
 
@@ -41,6 +41,6 @@ export type Transformation<
  * Default documentation node to {@link https://github.com/syntax-tree/mdast | mdast} transformations.
  */
 export const defaultTransformations: Transformations = {
-	identifiableHeading: headingToMarkdown,
+	sectionHeading: headingToMarkdown,
 	hierarchicalSection: sectionToMarkdown,
 };

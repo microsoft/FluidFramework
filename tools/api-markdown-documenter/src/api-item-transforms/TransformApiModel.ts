@@ -259,7 +259,7 @@ function createDocumentForMultiEntryPointPackage(
 			type: "hierarchicalSection",
 			children: [renderedEntryPointList],
 			heading: {
-				type: "identifiableHeading",
+				type: "sectionHeading",
 				title: "Entry Points",
 			},
 		});
