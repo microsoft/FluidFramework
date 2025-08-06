@@ -888,8 +888,8 @@ export class SharedDirectory
 			process: (
 				msg: ISequencedDocumentMessage,
 				op: IDirectoryClearOperation,
-				local,
-				localOpMetadata,
+				local: boolean,
+				localOpMetadata: ClearLocalOpMetadata | undefined,
 			) => {
 				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 				assert(
@@ -914,8 +914,8 @@ export class SharedDirectory
 			process: (
 				msg: ISequencedDocumentMessage,
 				op: IDirectoryDeleteOperation,
-				local,
-				localOpMetadata,
+				local: boolean,
+				localOpMetadata: EditLocalOpMetadata | undefined,
 			) => {
 				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
@@ -940,8 +940,8 @@ export class SharedDirectory
 			process: (
 				msg: ISequencedDocumentMessage,
 				op: IDirectorySetOperation,
-				local,
-				localOpMetadata,
+				local: boolean,
+				localOpMetadata: EditLocalOpMetadata | undefined,
 			) => {
 				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
@@ -969,8 +969,8 @@ export class SharedDirectory
 			process: (
 				msg: ISequencedDocumentMessage,
 				op: IDirectoryCreateSubDirectoryOperation,
-				local,
-				localOpMetadata,
+				local: boolean,
+				localOpMetadata: SubDirLocalOpMetadata | undefined,
 			) => {
 				const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
@@ -1000,8 +1000,8 @@ export class SharedDirectory
 			process: (
 				msg: ISequencedDocumentMessage,
 				op: IDirectoryDeleteSubDirectoryOperation,
-				local,
-				localOpMetadata,
+				local: boolean,
+				localOpMetadata: SubDirLocalOpMetadata | undefined,
 			) => {
 				const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
