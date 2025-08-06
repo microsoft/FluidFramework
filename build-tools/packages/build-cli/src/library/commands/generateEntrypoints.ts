@@ -81,16 +81,6 @@ const optionDefaults = {
 } as const satisfies Options;
 
 /**
- * Parses an input string and returns undefined if the input is "false" (case insensitive).
- */
-async function parseStringOrFalse(input: string): Promise<string | undefined> {
-	if (input.toLocaleLowerCase() === "false") {
-		return undefined;
-	}
-	return input;
-}
-
-/**
  * Generates type declarations files for Fluid Framework APIs to support API levels (/alpha, /beta. etc.).
  */
 export class GenerateEntrypointsCommand extends BaseCommand<
@@ -116,45 +106,38 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 		}),
 		outFileAlpha: Flags.string({
 			description:
-				"Base file name for alpha entrypoint declaration files. To opt out of generating this entrypoint, set to `false`.",
+				"Base file name for alpha entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
 			default: optionDefaults.outFileAlpha,
-			parse: parseStringOrFalse,
 		}),
 		outFileBeta: Flags.string({
 			description:
-				"Base file name for beta entrypoint declaration files. To opt out of generating this entrypoint, set to `false`.",
+				"Base file name for beta entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
 			default: optionDefaults.outFileBeta,
-			parse: parseStringOrFalse,
 		}),
 		outFilePublic: Flags.string({
 			description:
-				"Base file name for public entrypoint declaration files. To opt out of generating this entrypoint, set to `false`.",
+				"Base file name for public entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
 			default: optionDefaults.outFilePublic,
-			parse: parseStringOrFalse,
 		}),
 		outFileLegacyAlpha: Flags.string({
 			description:
-				"Base file name for legacyAlpha entrypoint declaration files. To opt out of generating this entrypoint, set to `false`.",
+				"Base file name for legacyAlpha entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
 			default: optionDefaults.outFileLegacyAlpha,
-			parse: parseStringOrFalse,
 		}),
 		outFileLegacyBeta: Flags.string({
 			description:
-				"Base file name for legacyBeta entrypoint declaration files. To opt out of generating this entrypoint, set to `false`.",
+				"Base file name for legacyBeta entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
 			default: optionDefaults.outFileLegacyBeta,
-			parse: parseStringOrFalse,
 		}),
 		outFileLegacyPublic: Flags.string({
 			description:
-				"Base file name for legacyPublic entrypoint declaration files. To opt out of generating this entrypoint, set to `false`.",
+				"Base file name for legacyPublic entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
 			default: optionDefaults.outFileLegacyPublic,
-			parse: parseStringOrFalse,
 		}),
 		outFileSuffix: Flags.string({
 			description:
 				"File name suffix including extension for emitting entrypoint declaration files.",
 			default: optionDefaults.outFileSuffix,
-			parse: parseStringOrFalse,
 		}),
 		node10TypeCompat: Flags.boolean({
 			description: `Optional generation of Node10 resolution compatible type entrypoints matching others.`,
@@ -295,23 +278,23 @@ function getOutputConfiguration(
 	const pathPrefix = getOutPathPrefix(flags, packageJson).replace(/\\/g, "/");
 
 	const outFileToApiLevelEntries: [string, ApiLevel][] = [];
-	if (outFileAlpha !== undefined) {
-		outFileToApiLevelEntries.push([outFileAlpha, ApiLevel.alpha]);
-	}
-	if (outFileBeta !== undefined) {
-		outFileToApiLevelEntries.push([outFileBeta, ApiLevel.beta]);
-	}
-	if (outFilePublic !== undefined) {
+	if (outFilePublic !== undefined && outFilePublic !== "none") {
 		outFileToApiLevelEntries.push([outFilePublic, ApiLevel.public]);
 	}
-	if (outFileLegacyAlpha !== undefined) {
-		outFileToApiLevelEntries.push([outFileLegacyAlpha, ApiLevel.legacyAlpha]);
+	if (outFileLegacyPublic !== undefined && outFileLegacyPublic !== "none") {
+		outFileToApiLevelEntries.push([outFileLegacyPublic, ApiLevel.legacyPublic]);
 	}
-	if (outFileLegacyBeta !== undefined) {
+	if (outFileBeta !== undefined && outFileBeta !== "none") {
+		outFileToApiLevelEntries.push([outFileBeta, ApiLevel.beta]);
+	}
+	if (outFileLegacyBeta !== undefined && outFileLegacyBeta !== "none") {
 		outFileToApiLevelEntries.push([outFileLegacyBeta, ApiLevel.legacyBeta]);
 	}
-	if (outFileLegacyPublic !== undefined) {
-		outFileToApiLevelEntries.push([outFileLegacyPublic, ApiLevel.legacyPublic]);
+	if (outFileAlpha !== undefined && outFileAlpha !== "none") {
+		outFileToApiLevelEntries.push([outFileAlpha, ApiLevel.alpha]);
+	}
+	if (outFileLegacyAlpha !== undefined && outFileLegacyAlpha !== "none") {
+		outFileToApiLevelEntries.push([outFileLegacyAlpha, ApiLevel.legacyAlpha]);
 	}
 
 	const mapQueryPathToApiTagLevel: Map<string | RegExp, ApiLevel | undefined> = new Map();

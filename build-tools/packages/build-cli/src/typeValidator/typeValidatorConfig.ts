@@ -21,25 +21,30 @@ export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
 
 /**
  * Configuration for type validation in Fluid packages.
+ *
  * @remarks Configured via the `typeValidation` property in the package.json.
+ *
+ * @defaultValue {@link defaultTypeValidationConfig}
  */
 export interface ITypeValidationConfig {
 	/**
 	 * The entrypoint (API level) for which type tests should be generated.
 	 *
-	 * @defaultValue {@link ApiLevel.legacyAlpha}
+	 * @defaultValue {@link defaultTypeValidationConfig.entryPoint}
 	 */
 	entrypoint?: ApiLevel;
 
 	/**
 	 * An optional record of types that are known to be broken.
+	 *
+	 * @defaultValue {@link defaultTypeValidationConfig.broken}.
 	 */
 	broken?: BrokenCompatTypes;
 
 	/**
 	 * If true, disables type test preparation and generation for the package.
 	 *
-	 * @defaultValue `false`
+	 * @defaultValue {@link defaultTypeValidationConfig.disabled}.
 	 */
 	disabled?: boolean;
 }
@@ -47,11 +52,11 @@ export interface ITypeValidationConfig {
 /**
  * {@link ITypeValidationConfig} defaults.
  */
-export const defaultTypeValidationConfig: Required<ITypeValidationConfig> = {
+export const defaultTypeValidationConfig = {
 	entrypoint: ApiLevel.legacyAlpha,
 	broken: {},
 	disabled: false,
-};
+} as const satisfies Required<ITypeValidationConfig>;
 
 /**
  * A type representing package.json files with the Fluid-specific `typeValidation` settings.
