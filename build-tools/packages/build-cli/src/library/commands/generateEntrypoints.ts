@@ -81,16 +81,6 @@ const optionDefaults = {
 } as const satisfies Options;
 
 /**
- * Parses an input string representing an out file and returns undefined if the input is "none" (case insensitive).
- */
-async function parseOutFileArgument(input: string): Promise<string | undefined> {
-	if (input.toLocaleLowerCase() === "none") {
-		return undefined;
-	}
-	return input;
-}
-
-/**
  * Generates type declarations files for Fluid Framework APIs to support API levels (/alpha, /beta. etc.).
  */
 export class GenerateEntrypointsCommand extends BaseCommand<
@@ -118,37 +108,31 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 			description:
 				"Base file name for alpha entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
 			default: optionDefaults.outFileAlpha,
-			parse: parseOutFileArgument,
 		}),
 		outFileBeta: Flags.string({
 			description:
 				"Base file name for beta entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
 			default: optionDefaults.outFileBeta,
-			parse: parseOutFileArgument,
 		}),
 		outFilePublic: Flags.string({
 			description:
 				"Base file name for public entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
 			default: optionDefaults.outFilePublic,
-			parse: parseOutFileArgument,
 		}),
 		outFileLegacyAlpha: Flags.string({
 			description:
 				"Base file name for legacyAlpha entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
 			default: optionDefaults.outFileLegacyAlpha,
-			parse: parseOutFileArgument,
 		}),
 		outFileLegacyBeta: Flags.string({
 			description:
 				"Base file name for legacyBeta entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
 			default: optionDefaults.outFileLegacyBeta,
-			parse: parseOutFileArgument,
 		}),
 		outFileLegacyPublic: Flags.string({
 			description:
 				"Base file name for legacyPublic entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
 			default: optionDefaults.outFileLegacyPublic,
-			parse: parseOutFileArgument,
 		}),
 		outFileSuffix: Flags.string({
 			description:
@@ -294,22 +278,22 @@ function getOutputConfiguration(
 	const pathPrefix = getOutPathPrefix(flags, packageJson).replace(/\\/g, "/");
 
 	const outFileToApiLevelEntries: [string, ApiLevel][] = [];
-	if (outFilePublic !== undefined) {
+	if (outFilePublic !== undefined && outFilePublic !== "none") {
 		outFileToApiLevelEntries.push([outFilePublic, ApiLevel.public]);
 	}
-	if (outFileLegacyPublic !== undefined) {
+	if (outFileLegacyPublic !== undefined && outFileLegacyPublic !== "none") {
 		outFileToApiLevelEntries.push([outFileLegacyPublic, ApiLevel.legacyPublic]);
 	}
-	if (outFileBeta !== undefined) {
+	if (outFileBeta !== undefined && outFileBeta !== "none") {
 		outFileToApiLevelEntries.push([outFileBeta, ApiLevel.beta]);
 	}
-	if (outFileLegacyBeta !== undefined) {
+	if (outFileLegacyBeta !== undefined && outFileLegacyBeta !== "none") {
 		outFileToApiLevelEntries.push([outFileLegacyBeta, ApiLevel.legacyBeta]);
 	}
-	if (outFileAlpha !== undefined) {
+	if (outFileAlpha !== undefined && outFileAlpha !== "none") {
 		outFileToApiLevelEntries.push([outFileAlpha, ApiLevel.alpha]);
 	}
-	if (outFileLegacyAlpha !== undefined) {
+	if (outFileLegacyAlpha !== undefined && outFileLegacyAlpha !== "none") {
 		outFileToApiLevelEntries.push([outFileLegacyAlpha, ApiLevel.legacyAlpha]);
 	}
 
