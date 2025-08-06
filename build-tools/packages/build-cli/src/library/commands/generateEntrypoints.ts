@@ -294,23 +294,23 @@ function getOutputConfiguration(
 	const pathPrefix = getOutPathPrefix(flags, packageJson).replace(/\\/g, "/");
 
 	const outFileToApiLevelEntries: [string, ApiLevel][] = [];
-	if (outFileAlpha !== undefined) {
-		outFileToApiLevelEntries.push([outFileAlpha, ApiLevel.alpha]);
+	if (outFilePublic !== undefined) {
+		outFileToApiLevelEntries.push([outFilePublic, ApiLevel.public]);
+	}
+	if (outFileLegacyPublic !== undefined) {
+		outFileToApiLevelEntries.push([outFileLegacyPublic, ApiLevel.legacyPublic]);
 	}
 	if (outFileBeta !== undefined) {
 		outFileToApiLevelEntries.push([outFileBeta, ApiLevel.beta]);
 	}
-	if (outFilePublic !== undefined) {
-		outFileToApiLevelEntries.push([outFilePublic, ApiLevel.public]);
-	}
-	if (outFileLegacyAlpha !== undefined) {
-		outFileToApiLevelEntries.push([outFileLegacyAlpha, ApiLevel.legacyAlpha]);
-	}
 	if (outFileLegacyBeta !== undefined) {
 		outFileToApiLevelEntries.push([outFileLegacyBeta, ApiLevel.legacyBeta]);
 	}
-	if (outFileLegacyPublic !== undefined) {
-		outFileToApiLevelEntries.push([outFileLegacyPublic, ApiLevel.legacyPublic]);
+	if (outFileAlpha !== undefined) {
+		outFileToApiLevelEntries.push([outFileAlpha, ApiLevel.alpha]);
+	}
+	if (outFileLegacyAlpha !== undefined) {
+		outFileToApiLevelEntries.push([outFileLegacyAlpha, ApiLevel.legacyAlpha]);
 	}
 
 	const mapQueryPathToApiTagLevel: Map<string | RegExp, ApiLevel | undefined> = new Map();
