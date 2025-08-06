@@ -61,7 +61,7 @@ export interface SchemaStaticsAlpha {
 	 * Staged allowed types add support for loading documents which may or may not permit an allowed type in a location in a schema.
 	 * This allows for an incremental rollout of a schema change to add a {@link TreeNodeSchema} to an {@link AllowedTypes} without breaking cross version collaboration.
 	 *
-	 * Once enough clients have the type staged and thus can read documents which allow it documents can start being created and upgraded to allow the staged type.
+	 * Once enough clients have the type staged (and thus can read documents which allow it), documents can start being created and upgraded to allow the staged type.
 	 * This is done by deploying a new version of the app which removes the `staged` wrapper around the allowed type in the the schema definition.
 	 * This will also require {@link TreeView.upgradeSchema|upgrading the schema} for existing documents.
 	 *
@@ -72,12 +72,12 @@ export interface SchemaStaticsAlpha {
 	 * 3. When evaluating {@link TreeView.compatibility}, it will be viewable even if the staged allowed type is not present in the stored schema's corresponding allowed types.
 	 * 4. Because of the above, it is possible to get errors when inserting content which uses the staged allowed type when inserting the content into a tree who's stored schema does not permit it.
 	 *
-	 * Currently `staged` is not supported in the recursive type APIs: this is a known limitation which future versions of the API will address.
+	 * Currently, `staged` is not supported in the recursive type APIs: this is a known limitation which future versions of the API will address.
 	 *
 	 * @example
-	 * Suppose you have a schema which has a a field which allows some type `A`, but you want to add support for type `B`.
+	 * Suppose you have a schema which has a field that allows some type `A`, but you want to add support for type `B`.
 	 *
-	 * The first change is to use to mark the new type as staged, replacing `A` in the schema with `[A, SchemaStaticsAlpha.staged(B)]`.
+	 * The first change is to used to mark the new type as staged, replacing `A` in the schema with `[A, SchemaStaticsAlpha.staged(B)]`.
 	 * Once this is done, and any code which reads contents from documents is updated to handle any `B` content that may be present, this version of the code can be deployed.
 	 *
 	 * Once all users have the above changes, the schema can be updated again to `[A, B]`, and the app can be updated to allow creating of `B` content.
