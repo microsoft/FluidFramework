@@ -240,20 +240,20 @@ FLAGS
   --node10TypeCompat             Optional generation of Node10 resolution compatible type entrypoints matching others.
   --outDir=<value>               [default: ./lib] Directory to emit entrypoint declaration files.
   --outFileAlpha=<value>         [default: alpha] Base file name for alpha entrypoint declaration files. To opt out of
-                                 generating this entrypoint, set to `false`.
+                                 generating this entrypoint, set to `none`.
   --outFileBeta=<value>          [default: beta] Base file name for beta entrypoint declaration files. To opt out of
-                                 generating this entrypoint, set to `false`.
+                                 generating this entrypoint, set to `none`.
   --outFileLegacyAlpha=<value>   Base file name for legacyAlpha entrypoint declaration files. To opt out of generating
-                                 this entrypoint, set to `false`.
+                                 this entrypoint, set to `none`.
   --outFileLegacyBeta=<value>    Base file name for legacyBeta entrypoint declaration files. To opt out of generating
-                                 this entrypoint, set to `false`.
+                                 this entrypoint, set to `none`.
   --outFileLegacyPublic=<value>  Base file name for legacyPublic entrypoint declaration files. To opt out of generating
-                                 this entrypoint, set to `false`.
+                                 this entrypoint, set to `none`.
   --outFilePrefix=<value>        File name prefix for emitting entrypoint declaration files. Pattern of
                                  '{@unscopedPackageName}' within value will be replaced with the unscoped name of this
                                  package.
   --outFilePublic=<value>        [default: public] Base file name for public entrypoint declaration files. To opt out of
-                                 generating this entrypoint, set to `false`.
+                                 generating this entrypoint, set to `none`.
   --outFileSuffix=<value>        [default: .d.ts] File name suffix including extension for emitting entrypoint
                                  declaration files.
 

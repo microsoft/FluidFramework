@@ -81,10 +81,10 @@ const optionDefaults = {
 } as const satisfies Options;
 
 /**
- * Parses an input string and returns undefined if the input is "false" (case insensitive).
+ * Parses an input string representing an out file and returns undefined if the input is "none" (case insensitive).
  */
-async function parseStringOrFalse(input: string): Promise<string | undefined> {
-	if (input.toLocaleLowerCase() === "false") {
+async function parseOutFileArgument(input: string): Promise<string | undefined> {
+	if (input.toLocaleLowerCase() === "none") {
 		return undefined;
 	}
 	return input;
@@ -116,39 +116,39 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 		}),
 		outFileAlpha: Flags.string({
 			description:
-				"Base file name for alpha entrypoint declaration files. To opt out of generating this entrypoint, set to `false`.",
+				"Base file name for alpha entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
 			default: optionDefaults.outFileAlpha,
-			parse: parseStringOrFalse,
+			parse: parseOutFileArgument,
 		}),
 		outFileBeta: Flags.string({
 			description:
-				"Base file name for beta entrypoint declaration files. To opt out of generating this entrypoint, set to `false`.",
+				"Base file name for beta entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
 			default: optionDefaults.outFileBeta,
-			parse: parseStringOrFalse,
+			parse: parseOutFileArgument,
 		}),
 		outFilePublic: Flags.string({
 			description:
-				"Base file name for public entrypoint declaration files. To opt out of generating this entrypoint, set to `false`.",
+				"Base file name for public entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
 			default: optionDefaults.outFilePublic,
-			parse: parseStringOrFalse,
+			parse: parseOutFileArgument,
 		}),
 		outFileLegacyAlpha: Flags.string({
 			description:
-				"Base file name for legacyAlpha entrypoint declaration files. To opt out of generating this entrypoint, set to `false`.",
+				"Base file name for legacyAlpha entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
 			default: optionDefaults.outFileLegacyAlpha,
-			parse: parseStringOrFalse,
+			parse: parseOutFileArgument,
 		}),
 		outFileLegacyBeta: Flags.string({
 			description:
-				"Base file name for legacyBeta entrypoint declaration files. To opt out of generating this entrypoint, set to `false`.",
+				"Base file name for legacyBeta entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
 			default: optionDefaults.outFileLegacyBeta,
-			parse: parseStringOrFalse,
+			parse: parseOutFileArgument,
 		}),
 		outFileLegacyPublic: Flags.string({
 			description:
-				"Base file name for legacyPublic entrypoint declaration files. To opt out of generating this entrypoint, set to `false`.",
+				"Base file name for legacyPublic entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
 			default: optionDefaults.outFileLegacyPublic,
-			parse: parseStringOrFalse,
+			parse: parseOutFileArgument,
 		}),
 		outFileSuffix: Flags.string({
 			description:
