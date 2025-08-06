@@ -5,7 +5,7 @@
 
 import type { ApiEntryPoint, ApiItem } from "@microsoft/api-extractor-model";
 
-import type { SectionNode } from "../../documentation-domain/index.js";
+import type { HierarchicalSection } from "../../mdast/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 
 import { transformApiModuleLike } from "./TransformApiModuleLike.js";
@@ -16,7 +16,7 @@ import { transformApiModuleLike } from "./TransformApiModuleLike.js";
 export function transformApiEntryPoint(
 	apiEntryPoint: ApiEntryPoint,
 	config: ApiItemTransformationConfiguration,
-	generateChildContent: (apiItem: ApiItem) => SectionNode[],
-): SectionNode[] {
+	generateChildContent: (apiItem: ApiItem) => HierarchicalSection[],
+): HierarchicalSection[] {
 	return transformApiModuleLike(apiEntryPoint, config, generateChildContent);
 }

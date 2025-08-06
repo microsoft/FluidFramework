@@ -20,7 +20,7 @@ import { toHtml } from "hast-util-to-html";
 import type { Html, PhrasingContent, Table, TableCell, TableRow } from "mdast";
 import { toHast } from "mdast-util-to-hast";
 
-import { HeadingNode, SectionNode } from "../../documentation-domain/index.js";
+import type { HierarchicalSection } from "../../mdast/index.js";
 import {
 	type ApiFunctionLike,
 	type ApiModifier,
@@ -81,8 +81,8 @@ export interface TableCreationOptions {
 export function createMemberTables(
 	memberTableProperties: readonly MemberTableProperties[],
 	config: ApiItemTransformationConfiguration,
-): SectionNode[] | undefined {
-	const sections: SectionNode[] = [];
+): HierarchicalSection[] | undefined {
+	const sections: HierarchicalSection[] = [];
 
 	for (const member of memberTableProperties) {
 		const table = createTableWithHeading(member, config);
@@ -103,7 +103,7 @@ export function createMemberTables(
 export function createTableWithHeading(
 	memberTableProperties: MemberTableProperties,
 	config: ApiItemTransformationConfiguration,
-): SectionNode | undefined {
+): HierarchicalSection | undefined {
 	const table = createSummaryTable(
 		memberTableProperties.items,
 		memberTableProperties.itemKind,
@@ -113,7 +113,14 @@ export function createTableWithHeading(
 
 	return table === undefined
 		? undefined
-		: new SectionNode([table], new HeadingNode(memberTableProperties.headingTitle));
+		: {
+				type: "hierarchicalSection",
+				children: [table],
+				heading: {
+					type: "identifiableHeading",
+					title: memberTableProperties.headingTitle,
+				},
+			};
 }
 
 /**

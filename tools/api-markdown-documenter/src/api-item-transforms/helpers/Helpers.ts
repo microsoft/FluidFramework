@@ -42,11 +42,7 @@ import type {
 import type { Heading } from "../../Heading.js";
 import type { Link } from "../../Link.js";
 import type { Logger } from "../../Logging.js";
-import {
-	HeadingNode,
-	type SectionContent,
-	SectionNode,
-} from "../../documentation-domain/index.js";
+import type { HierarchicalSection, IdentifiableHeading } from "../../mdast/index.js";
 import {
 	type ApiFunctionLike,
 	injectSeparator,
@@ -90,11 +86,11 @@ import {
 export function createSignatureSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): SectionNode | undefined {
+): HierarchicalSection | undefined {
 	if (apiItem instanceof ApiDeclaredItem) {
 		const signatureExcerpt = apiItem.getExcerptWithModifiers();
 		if (signatureExcerpt !== "") {
-			const contents: SectionContent[] = [];
+			const contents: BlockContent[] = [];
 
 			contents.push({
 				type: "code",
@@ -131,10 +127,10 @@ export function createSignatureSection(
 function createHeritageTypesContent(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): SectionContent[] | undefined {
+): BlockContent[] | undefined {
 	const { logger } = config;
 
-	const contents: SectionContent[] = [];
+	const contents: BlockContent[] = [];
 
 	if (apiItem instanceof ApiClass) {
 		// Render `extends` type if there is one.
@@ -326,13 +322,13 @@ function createHeritageTypeListSpan(
 export function createSeeAlsoSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): SectionNode | undefined {
+): HierarchicalSection | undefined {
 	const seeBlocks = getSeeBlocks(apiItem);
 	if (seeBlocks === undefined || seeBlocks.length === 0) {
 		return undefined;
 	}
 
-	const contents: SectionContent[] = [];
+	const contents: BlockContent[] = [];
 	for (const seeBlock of seeBlocks) {
 		contents.push(...transformTsdoc(seeBlock, apiItem, config));
 	}
@@ -360,14 +356,21 @@ export function createTypeParametersSection(
 	typeParameters: readonly TypeParameter[],
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): SectionNode {
+): HierarchicalSection {
 	const typeParametersTable = createTypeParametersSummaryTable(
 		typeParameters,
 		contextApiItem,
 		config,
 	);
 
-	return new SectionNode([typeParametersTable], new HeadingNode("Type Parameters"));
+	return {
+		type: "hierarchicalSection",
+		children: [typeParametersTable],
+		heading: {
+			type: "identifiableHeading",
+			title: "Type Parameters",
+		},
+	};
 }
 
 /**
@@ -528,14 +531,19 @@ export const betaWarningSpan: Strong = {
 export function createSummarySection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): SectionNode | undefined {
+): HierarchicalSection | undefined {
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
 		const sectionContents = transformTsdoc(
 			apiItem.tsdocComment.summarySection,
 			apiItem,
 			config,
 		);
-		return sectionContents.length === 0 ? undefined : new SectionNode(sectionContents);
+		return sectionContents.length === 0
+			? undefined
+			: {
+					type: "hierarchicalSection",
+					children: sectionContents,
+				};
 	}
 	return undefined;
 }
@@ -556,7 +564,7 @@ export function createSummarySection(
 export function createRemarksSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): SectionNode | undefined {
+): HierarchicalSection | undefined {
 	if (
 		!(apiItem instanceof ApiDocumentedItem) ||
 		apiItem.tsdocComment?.remarksBlock === undefined
@@ -588,7 +596,7 @@ export function createThrowsSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 	headingText: string = "Throws",
-): SectionNode | undefined {
+): HierarchicalSection | undefined {
 	const throwsBlocks = getThrowsBlocks(apiItem);
 	if (throwsBlocks === undefined || throwsBlocks.length === 0) {
 		return undefined;
@@ -621,7 +629,7 @@ export function createThrowsSection(
 export function createDeprecationNoticeSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): SectionNode | undefined {
+): HierarchicalSection | undefined {
 	const deprecatedBlock = getDeprecatedBlock(apiItem);
 	if (deprecatedBlock === undefined) {
 		return undefined;
@@ -669,7 +677,7 @@ export function createExamplesSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 	headingText: string = "Examples",
-): SectionNode | undefined {
+): HierarchicalSection | undefined {
 	const exampleBlocks = getExampleBlocks(apiItem);
 
 	if (exampleBlocks === undefined || exampleBlocks.length === 0) {
@@ -681,7 +689,7 @@ export function createExamplesSection(
 		return createExampleSection({ apiItem, content: exampleBlocks[0] }, config);
 	}
 
-	const exampleSections: SectionNode[] = [];
+	const exampleSections: HierarchicalSection[] = [];
 	for (const [i, exampleBlock] of exampleBlocks.entries()) {
 		const exampleNumber = i + 1; // i is 0-based, but we want our example numbers to be 1-based.
 		exampleSections.push(
@@ -769,12 +777,12 @@ interface ExampleProperties {
  * @param contextApiItem - The API item with which the example is associated.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
- * @returns The rendered {@link SectionNode}.
+ * @returns The rendered {@link HierarchicalSection}.
  */
 function createExampleSection(
 	example: ExampleProperties,
 	config: ApiItemTransformationConfiguration,
-): SectionNode {
+): HierarchicalSection {
 	const { logger } = config;
 
 	let transformedExampleContent = transformTsdoc(example.content, example.apiItem, config);
@@ -946,7 +954,7 @@ function stripTitleFromExampleComment<TNode extends Nodes>(
 export function createParametersSection(
 	apiFunctionLike: ApiFunctionLike,
 	config: ApiItemTransformationConfiguration,
-): SectionNode | undefined {
+): HierarchicalSection | undefined {
 	if (apiFunctionLike.parameters.length === 0) {
 		return undefined;
 	}
@@ -976,8 +984,8 @@ export function createParametersSection(
 export function createReturnsSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): SectionNode | undefined {
-	const children: SectionContent[] = [];
+): HierarchicalSection | undefined {
+	const children: BlockContent[] = [];
 
 	// Generate span from `@returns` comment
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
@@ -1067,9 +1075,9 @@ export interface ChildSectionProperties {
 export function createChildDetailsSection(
 	childItems: readonly ChildSectionProperties[],
 	config: ApiItemTransformationConfiguration,
-	createChildContent: (apiItem) => SectionContent[],
-): SectionNode[] | undefined {
-	const sections: SectionNode[] = [];
+	createChildContent: (apiItem) => BlockContent[],
+): HierarchicalSection[] | undefined {
+	const sections: HierarchicalSection[] = [];
 
 	for (const childItem of childItems) {
 		// Only render contents for a section if the item kind is one that gets rendered to its parent's document
@@ -1079,7 +1087,7 @@ export function createChildDetailsSection(
 			!doesItemKindRequireOwnDocument(childItem.itemKind, config.hierarchy) &&
 			childItem.items.length > 0
 		) {
-			const childContents: SectionContent[] = [];
+			const childContents: BlockContent[] = [];
 			for (const item of childItem.items) {
 				childContents.push(...createChildContent(item));
 			}
@@ -1091,16 +1099,34 @@ export function createChildDetailsSection(
 	return sections.length === 0 ? undefined : sections;
 }
 
+// TODO: remove this helper
 /**
- * Wraps the provided contents in a {@link SectionNode}.
+ * Wraps the provided contents in a {@link HierarchicalSection}.
  * @param nodes - The section's child contents.
  * @param heading - Optional heading to associate with the section.
  */
-export function wrapInSection(nodes: SectionContent[], heading?: Heading): SectionNode {
-	return new SectionNode(
-		nodes,
-		heading ? HeadingNode.createFromPlainTextHeading(heading) : undefined,
-	);
+export function wrapInSection(nodes: BlockContent[], heading?: Heading): HierarchicalSection {
+	const section: HierarchicalSection = {
+		type: "hierarchicalSection",
+		children: nodes,
+	};
+
+	// Only append `heading` property if specified to avoid clutter in the generated nodes.
+	if (heading !== undefined) {
+		const headingNode: IdentifiableHeading = {
+			type: "identifiableHeading",
+			title: heading.title,
+		};
+
+		// Only append `id` property if specified to avoid clutter in the generated nodes.
+		if (heading.id !== undefined) {
+			headingNode.id = heading.id;
+		}
+
+		section.heading = headingNode;
+	}
+
+	return section;
 }
 
 /**

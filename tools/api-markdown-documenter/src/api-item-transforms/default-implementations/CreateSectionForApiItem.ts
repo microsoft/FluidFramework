@@ -5,7 +5,7 @@
 
 import { type ApiItem, ReleaseTag } from "@microsoft/api-extractor-model";
 
-import type { SectionNode } from "../../documentation-domain/index.js";
+import type { HierarchicalSection } from "../../mdast/index.js";
 import { getEffectiveReleaseLevel } from "../../utilities/index.js";
 import {
 	doesItemRequireOwnDocument,
@@ -56,10 +56,10 @@ import {
  */
 export function createSectionForApiItem(
 	apiItem: ApiItem,
-	itemSpecificContent: SectionNode[] | undefined,
+	itemSpecificContent: HierarchicalSection[] | undefined,
 	config: ApiItemTransformationConfiguration,
-): SectionNode[] {
-	const sections: SectionNode[] = [];
+): HierarchicalSection[] {
+	const sections: HierarchicalSection[] = [];
 
 	// Render summary comment (if any)
 	const summary = createSummarySection(apiItem, config);

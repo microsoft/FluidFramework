@@ -12,7 +12,7 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import type { ApiDocument } from "../ApiDocument.js";
-import type { SectionNode } from "../documentation-domain/index.js";
+import type { HierarchicalSection } from "../mdast/index.js";
 
 import {
 	doesItemRequireOwnDocument,
@@ -200,7 +200,7 @@ function createDocumentForSingleEntryPointPackage(
 
 	logger.verbose(`Generating ${apiPackage.name} package document...`);
 
-	const sections: SectionNode[] = [];
+	const sections: HierarchicalSection[] = [];
 
 	// Render breadcrumb
 	if (includeBreadcrumb) {
@@ -243,7 +243,7 @@ function createDocumentForMultiEntryPointPackage(
 
 	logger.verbose(`Generating ${apiPackage.name} package document...`);
 
-	const sections: SectionNode[] = [];
+	const sections: HierarchicalSection[] = [];
 
 	// Render breadcrumb
 	if (includeBreadcrumb) {
@@ -273,7 +273,7 @@ function createDocumentForApiEntryPoint(
 
 	logger.verbose(`Generating ${apiEntryPoint.displayName} API entry-point document...`);
 
-	const sections: SectionNode[] = [];
+	const sections: HierarchicalSection[] = [];
 
 	// Render breadcrumb
 	if (includeBreadcrumb) {

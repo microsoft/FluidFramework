@@ -5,7 +5,7 @@
 
 import { expect } from "chai";
 
-import { HeadingNode } from "../../documentation-domain/index.js";
+import type { IdentifiableHeading } from "../../mdast/index.js";
 import { createTransformationContext } from "../TransformationContext.js";
 
 describe("headingToMarkdown", () => {
@@ -13,8 +13,11 @@ describe("headingToMarkdown", () => {
 		const transformationContext = createTransformationContext({ startingHeadingLevel: 2 });
 
 		it("Without ID", () => {
-			const input = new HeadingNode("Hello world!");
-			const result = transformationContext.transformations.heading(
+			const input: IdentifiableHeading = {
+				type: "identifiableHeading",
+				title: "Hello world!",
+			};
+			const result = transformationContext.transformations.identifiableHeading(
 				input,
 				transformationContext,
 			);
@@ -28,8 +31,12 @@ describe("headingToMarkdown", () => {
 		});
 
 		it("With ID", () => {
-			const input = new HeadingNode("Hello world!", "my-heading-id");
-			const result = transformationContext.transformations.heading(
+			const input: IdentifiableHeading = {
+				type: "identifiableHeading",
+				title: "Hello world!",
+				id: "my-heading-id",
+			};
+			const result = transformationContext.transformations.identifiableHeading(
 				input,
 				transformationContext,
 			);
@@ -48,8 +55,11 @@ describe("headingToMarkdown", () => {
 		const transformationContext = createTransformationContext({ startingHeadingLevel: 7 });
 
 		it("Without ID", () => {
-			const input = new HeadingNode("Hello world!");
-			const result = transformationContext.transformations.heading(
+			const input: IdentifiableHeading = {
+				type: "identifiableHeading",
+				title: "Hello world!",
+			};
+			const result = transformationContext.transformations.identifiableHeading(
 				input,
 				transformationContext,
 			);
@@ -67,8 +77,12 @@ describe("headingToMarkdown", () => {
 		});
 
 		it("With ID", () => {
-			const input = new HeadingNode("Hello world!", "my-heading-id");
-			const result = transformationContext.transformations.heading(
+			const input: IdentifiableHeading = {
+				type: "identifiableHeading",
+				title: "Hello world!",
+				id: "my-heading-id",
+			};
+			const result = transformationContext.transformations.identifiableHeading(
 				input,
 				transformationContext,
 			);

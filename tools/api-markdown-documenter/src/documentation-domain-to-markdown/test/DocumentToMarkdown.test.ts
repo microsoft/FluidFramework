@@ -8,7 +8,6 @@ import { expect } from "chai";
 import type { Root } from "mdast";
 
 import type { ApiDocument } from "../../ApiDocument.js";
-import { HeadingNode, SectionNode } from "../../documentation-domain/index.js";
 import { documentToMarkdown } from "../ToMarkdown.js";
 
 describe("documentToMarkdown", () => {
@@ -16,8 +15,9 @@ describe("documentToMarkdown", () => {
 		const document: ApiDocument = {
 			apiItem: {} as unknown as ApiItem, // Mock ApiItem for testing
 			contents: [
-				new SectionNode(
-					[
+				{
+					type: "hierarchicalSection",
+					children: [
 						{
 							type: "paragraph",
 							children: [
@@ -31,8 +31,9 @@ describe("documentToMarkdown", () => {
 								},
 							],
 						},
-						new SectionNode(
-							[
+						{
+							type: "hierarchicalSection",
+							children: [
 								{
 									type: "paragraph",
 									children: [
@@ -56,11 +57,17 @@ describe("documentToMarkdown", () => {
 									],
 								},
 							],
-							new HeadingNode("Section Heading"),
-						),
+							heading: {
+								type: "identifiableHeading",
+								title: "Section Heading",
+							},
+						},
 					],
-					new HeadingNode("Sample Document"),
-				),
+					heading: {
+						type: "identifiableHeading",
+						title: "Sample Document",
+					},
+				},
 			],
 			documentPath: "./test",
 		};

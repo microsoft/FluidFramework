@@ -38,12 +38,10 @@ export {
 	transformTsdoc,
 } from "./api-item-transforms/index.js";
 export type { ApiDocument } from "./ApiDocument.js";
-export {
-	type DocumentationNode,
-	HeadingNode,
-	SectionNode,
-	type SectionContent,
-} from "./documentation-domain/index.js";
+export type {
+	HierarchicalSection,
+	IdentifiableHeading,
+} from "./mdast/index.js";
 export {
 	documentToHtml,
 	documentationNodeToHtml,
@@ -122,7 +120,7 @@ export {
 	 */
 	ApiItemUtilities,
 	/**
-	 * Utilities related to generating {@link DocumentationNode} content for {@link @microsoft/api-extractor-model#ApiItem}s.
+	 * Utilities related to generating Markdown content for {@link @microsoft/api-extractor-model#ApiItem}s.
 	 *
 	 * @remarks
 	 *
@@ -132,13 +130,13 @@ export {
 	 */
 	LayoutUtilities,
 	/**
-	 * Functionality for rendering {@link DocumentationNode}s as HTML.
+	 * Functionality for rendering documentation as HTML.
 	 *
 	 * @alpha
 	 */
 	HtmlRenderer,
 	/**
-	 * Functionality for rendering {@link DocumentationNode}s as Markdown.
+	 * Functionality for rendering documentation as Markdown.
 	 *
 	 * @public
 	 */

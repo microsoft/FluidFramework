@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { SectionNode } from "../../documentation-domain/index.js";
+import type { HierarchicalSection } from "../../mdast/index.js";
 import type { ApiFunctionLike } from "../../utilities/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createParametersSection, createReturnsSection } from "../helpers/index.js";
@@ -14,8 +14,8 @@ import { createParametersSection, createReturnsSection } from "../helpers/index.
 export function transformApiFunctionLike(
 	apiFunctionLike: ApiFunctionLike,
 	config: ApiItemTransformationConfiguration,
-): SectionNode[] {
-	const childSections: SectionNode[] = [];
+): HierarchicalSection[] {
+	const childSections: HierarchicalSection[] = [];
 
 	// Render parameter table (if any parameters)
 	const renderedParameterTable = createParametersSection(apiFunctionLike, config);

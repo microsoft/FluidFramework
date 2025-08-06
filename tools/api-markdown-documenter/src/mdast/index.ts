@@ -3,4 +3,5 @@
  * Licensed under the MIT License.
  */
 
-// TODO
+export type { HierarchicalSection } from "./HierarchicalSection.js";
+export type { IdentifiableHeading } from "./IdentifiableHeading.js";

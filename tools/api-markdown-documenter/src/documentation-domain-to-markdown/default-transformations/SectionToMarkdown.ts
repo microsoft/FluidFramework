@@ -5,12 +5,12 @@
 
 import type { RootContent as MdastRootContent } from "mdast";
 
-import type { SectionNode } from "../../documentation-domain/index.js";
+import type { HierarchicalSection } from "../../mdast/index.js";
 import { sectionContentToMarkdown } from "../ToMarkdown.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
- * Transform a {@link SectionNode} to Markdown.
+ * Transform a {@link HierarchicalSection} to Markdown.
  *
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
@@ -21,7 +21,7 @@ import type { TransformationContext } from "../TransformationContext.js";
  * such that heading levels increase appropriately through nested sections.
  */
 export function sectionToMarkdown(
-	node: SectionNode,
+	node: HierarchicalSection,
 	context: TransformationContext,
 ): MdastRootContent[] {
 	const { headingLevel, transformations } = context;
@@ -29,7 +29,7 @@ export function sectionToMarkdown(
 	const transformedSectionContent: MdastRootContent[] = [];
 
 	if (node.heading !== undefined) {
-		const transformedHeading = transformations.heading(node.heading, context);
+		const transformedHeading = transformations.identifiableHeading(node.heading, context);
 		transformedSectionContent.push(...transformedHeading);
 	}
 

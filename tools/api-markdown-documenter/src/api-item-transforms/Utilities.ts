@@ -8,7 +8,7 @@ import type { DocDeclarationReference } from "@microsoft/tsdoc";
 
 import type { ApiDocument } from "../ApiDocument.js";
 import type { Link } from "../Link.js";
-import type { SectionNode } from "../documentation-domain/index.js";
+import type { HierarchicalSection } from "../mdast/index.js";
 import { resolveSymbolicReference } from "../utilities/index.js";
 
 import {
@@ -30,7 +30,7 @@ import { wrapInSection } from "./helpers/index.js";
  */
 export function createDocument(
 	documentItem: ApiItem,
-	sections: SectionNode[],
+	sections: HierarchicalSection[],
 	config: ApiItemTransformationConfiguration,
 ): ApiDocument {
 	const title = config.getHeadingTextForItem(documentItem);

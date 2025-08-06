@@ -8,8 +8,13 @@ import type { Node } from "mdast";
 /**
  * Represents a hierarchically nested section.
  * @remarks Influences things like automatic heading level generation.
+ * @sealed
+ * @public
  */
 export interface IdentifiableHeading extends Node {
+	/**
+	 * `mdast` node type.
+	 */
 	type: "identifiableHeading";
 
 	// TODO: there is no reason not to just take `PhrasingContent` here, but the library doesn't currently utilize that degree of freedom.

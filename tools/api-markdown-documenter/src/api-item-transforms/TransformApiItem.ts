@@ -25,7 +25,7 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import type { ApiDocument } from "../ApiDocument.js";
-import type { SectionNode } from "../documentation-domain/index.js";
+import type { HierarchicalSection } from "../mdast/index.js";
 import { getApiItemKind } from "../utilities/index.js";
 
 import {
@@ -86,7 +86,7 @@ export function apiItemToDocument(
 
 	logger.verbose(`Generating document for ${apiItem.displayName} (${itemKind})...`);
 
-	const sections: SectionNode[] = [];
+	const sections: HierarchicalSection[] = [];
 
 	// Render breadcrumb
 	if (config.includeBreadcrumb) {
@@ -115,7 +115,7 @@ export function apiItemToDocument(
 export function apiItemToSections(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): SectionNode[] {
+): HierarchicalSection[] {
 	const itemKind = getApiItemKind(apiItem);
 
 	if (
@@ -134,12 +134,12 @@ export function apiItemToSections(
 
 	const { logger, transformations } = config;
 
-	const transformChildren = (childItem: ApiItem): SectionNode[] =>
+	const transformChildren = (childItem: ApiItem): HierarchicalSection[] =>
 		apiItemToSections(childItem, config);
 
 	logger.verbose(`Generating documentation section for ${apiItem.displayName}...`);
 
-	let sections: SectionNode[];
+	let sections: HierarchicalSection[];
 	switch (itemKind) {
 		case ApiItemKind.CallSignature: {
 			sections = transformations[ApiItemKind.CallSignature](

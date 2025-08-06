@@ -19,11 +19,7 @@ import {
 import { expect } from "chai";
 
 import type { ApiDocument } from "../../ApiDocument.js";
-import {
-	type DocumentationNode,
-	HeadingNode,
-	SectionNode,
-} from "../../documentation-domain/index.js";
+import type { HierarchicalSection } from "../../mdast/index.js";
 import { getHeadingForApiItem } from "../ApiItemTransformUtilities.js";
 import { apiItemToSections } from "../TransformApiItem.js";
 import { transformApiModel } from "../TransformApiModel.js";
@@ -189,7 +185,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 								value:
 									"export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;",
 							},
-							new SectionNode(
+							wrapInSection(
 								[
 									{
 										type: "table",
@@ -223,7 +219,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 										],
 									},
 								],
-								new HeadingNode("Type Parameters"),
+								{ title: "Type Parameters" },
 							),
 						],
 						{
@@ -355,7 +351,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 			(childItem) => apiItemToSections(childItem, config),
 		);
 
-		const expected: DocumentationNode[] = [
+		const expected: HierarchicalSection[] = [
 			// Summary section
 			wrapInSection([
 				{
@@ -521,7 +517,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 		// - baz (@alpha)
 		// We expect docs to be generated for `foo` and `bar`, but not `baz`, since it's @alpha, and we are filtering those out per our config above.
 		// Also note that child items are listed alphabetically, so we expect `bar` before `foo`.
-		const expected: DocumentationNode[] = [
+		const expected: HierarchicalSection[] = [
 			// Summary section
 			wrapInSection([
 				{
@@ -714,10 +710,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 			apiItem: model.packages[0],
 			documentPath: "test-package/index",
 			contents: [
-				new SectionNode(
+				wrapInSection(
 					[
 						// Breadcrumb
-						new SectionNode([
+						wrapInSection([
 							{
 								type: "paragraph",
 								children: [
@@ -740,7 +736,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 						]),
 
 						// Body
-						new SectionNode(
+						wrapInSection(
 							[
 								{
 									type: "list",
@@ -779,10 +775,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 									],
 								},
 							],
-							new HeadingNode("Entry Points"),
+							{ title: "Entry Points" },
 						),
 					],
-					new HeadingNode("test-package"),
+					{ title: "test-package" },
 				),
 			],
 		};
@@ -792,10 +788,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 			apiItem: model.packages[0].entryPoints[0],
 			documentPath: "test-package/entry-point-a-entrypoint",
 			contents: [
-				new SectionNode(
+				wrapInSection(
 					[
 						// Breadcrumb
-						new SectionNode([
+						wrapInSection([
 							{
 								type: "paragraph",
 								children: [
@@ -827,7 +823,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 						]),
 
 						// Variables table
-						new SectionNode(
+						wrapInSection(
 							[
 								{
 									type: "table",
@@ -888,16 +884,16 @@ describe("ApiItem to Documentation transformation tests", () => {
 									],
 								},
 							],
-							new HeadingNode("Variables"),
+							{ title: "Variables" },
 						),
 
 						// Variables details
-						new SectionNode(
+						wrapInSection(
 							[
-								new SectionNode(
+								wrapInSection(
 									[
 										// Summary
-										new SectionNode([
+										wrapInSection([
 											{
 												type: "paragraph",
 												children: [{ type: "text", value: "Test Constant" }],
@@ -905,7 +901,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 										]),
 
 										// Signature
-										new SectionNode(
+										wrapInSection(
 											[
 												{
 													type: "code",
@@ -913,16 +909,19 @@ describe("ApiItem to Documentation transformation tests", () => {
 													value: 'hello = "Hello"',
 												},
 											],
-											new HeadingNode("Signature", "hello-signature"),
+											{ title: "Signature", id: "hello-signature" },
 										),
 									],
-									new HeadingNode("hello", "hello-variable"),
+									{
+										title: "hello",
+										id: "hello-variable",
+									},
 								),
 							],
-							new HeadingNode("Variable Details"),
+							{ title: "Variable Details" },
 						),
 					],
-					new HeadingNode("entry-point-a"),
+					{ title: "entry-point-a" },
 				),
 			],
 		};
@@ -932,10 +931,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 			apiItem: model.packages[0].entryPoints[1],
 			documentPath: "test-package/entry-point-b-entrypoint",
 			contents: [
-				new SectionNode(
+				wrapInSection(
 					[
 						// Breadcrumb
-						new SectionNode([
+						wrapInSection([
 							{
 								type: "paragraph",
 								children: [
@@ -967,7 +966,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 						]),
 
 						// Variables table
-						new SectionNode(
+						wrapInSection(
 							[
 								{
 									type: "table",
@@ -1015,16 +1014,16 @@ describe("ApiItem to Documentation transformation tests", () => {
 									],
 								},
 							],
-							new HeadingNode("Variables"),
+							{ title: "Variables" },
 						),
 
 						// Variables details
-						new SectionNode(
+						wrapInSection(
 							[
-								new SectionNode(
+								wrapInSection(
 									[
 										// Summary
-										new SectionNode([
+										wrapInSection([
 											{
 												type: "paragraph",
 												children: [{ type: "text", value: "Test Constant" }],
@@ -1032,7 +1031,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 										]),
 
 										// Signature
-										new SectionNode(
+										wrapInSection(
 											[
 												{
 													type: "code",
@@ -1040,16 +1039,24 @@ describe("ApiItem to Documentation transformation tests", () => {
 													value: 'world = "world"',
 												},
 											],
-											new HeadingNode("Signature", "world-signature"),
+											{
+												title: "Signature",
+												id: "world-signature",
+											},
 										),
 									],
-									new HeadingNode("world", "world-variable"),
+									{
+										title: "world",
+										id: "world-variable",
+									},
 								),
 							],
-							new HeadingNode("Variable Details"),
+							{
+								title: "Variable Details",
+							},
 						),
 					],
-					new HeadingNode("entry-point-b"),
+					{ title: "entry-point-b" },
 				),
 			],
 		};
