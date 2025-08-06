@@ -8,16 +8,10 @@
  *
  * @remarks
  *
- * Implemented using {@link https://github.com/syntax-tree/unist | unist}.
- *
  * Can be rendered to the documentation language of your choice by using one of this library's render
  * transformations, or by writing your own!
  */
 
-export {
-	DocumentNode,
-	type DocumentNodeProperties as DocumentNodeProps,
-} from "./DocumentNode.js";
 export { type DocumentationNode } from "./DocumentationNode.js";
 export { HeadingNode } from "./HeadingNode.js";
 export { type SectionContent, SectionNode } from "./SectionNode.js";

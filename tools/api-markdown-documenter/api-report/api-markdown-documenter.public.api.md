@@ -34,7 +34,6 @@ import type { Nodes } from 'hast';
 import type { Nodes as Nodes_2 } from 'mdast';
 import { Options } from 'mdast-util-to-markdown';
 import type { Paragraph } from 'mdast';
-import type { Parent } from 'unist';
 import type { PhrasingContent } from 'mdast';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
 import type { Root } from 'hast';
@@ -44,6 +43,13 @@ import { TypeParameter } from '@microsoft/api-extractor-model';
 
 // @public
 function ancestryHasModifierTag(apiItem: ApiItem, tagName: string): boolean;
+
+// @public @sealed
+export interface ApiDocument {
+    readonly apiItem: ApiItem;
+    readonly contents: readonly SectionNode[];
+    readonly documentPath: string;
+}
 
 // @public
 export type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFunction | ApiMethod | ApiMethodSignature;
@@ -255,28 +261,11 @@ export interface DocumentHierarchyConfiguration extends DocumentationHierarchyCo
     readonly kind: HierarchyKind.Document;
 }
 
-// @public @sealed
-export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
-    constructor(properties: DocumentNodeProps);
-    readonly apiItem?: ApiItem;
-    readonly children: SectionNode[];
-    readonly documentPath: string;
-    // (undocumented)
-    readonly type = "document";
-}
+// @public
+export function documentToHtml(document: ApiDocument, config: ToHtmlConfiguration): Root;
 
 // @public
-export interface DocumentNodeProps {
-    readonly apiItem?: ApiItem;
-    readonly children: SectionNode[];
-    readonly documentPath: string;
-}
-
-// @public
-export function documentToHtml(document: DocumentNode, config: ToHtmlConfiguration): Root;
-
-// @public
-export function documentToMarkdown(document: DocumentNode, config: ToMarkdownConfiguration): Root_2;
+export function documentToMarkdown(document: ApiDocument, config: ToMarkdownConfiguration): Root_2;
 
 // @public
 export interface DocumentWriter {
@@ -522,10 +511,10 @@ interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationOptions, 
 }
 
 // @public
-function renderDocument(document: DocumentNode, config: RenderDocumentAsHtmlConfiguration): string;
+function renderDocument(document: ApiDocument, config: RenderDocumentAsHtmlConfiguration): string;
 
 // @public
-function renderDocument_2(document: DocumentNode, config: RenderDocumentAsMarkdownConfiguration): string;
+function renderDocument_2(document: ApiDocument, config: RenderDocumentAsMarkdownConfiguration): string;
 
 // @public @sealed
 export interface RenderDocumentAsHtmlConfiguration extends ToHtmlConfiguration, RenderHtmlConfiguration {
@@ -536,7 +525,7 @@ export interface RenderDocumentAsMarkdownConfiguration extends ToMarkdownConfigu
 }
 
 // @public
-function renderDocumentsAsMarkdown(documents: readonly DocumentNode[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
+function renderDocumentsAsMarkdown(documents: readonly ApiDocument[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
 
 // @public
 interface RenderDocumentsAsMarkdownOptions extends RenderDocumentAsMarkdownConfiguration, FileSystemConfiguration {
@@ -636,7 +625,7 @@ export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: T
 export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: ApiItemTransformationConfiguration) => SectionNode[];
 
 // @public
-export function transformApiModel(options: ApiItemTransformationOptions): DocumentNode[];
+export function transformApiModel(options: ApiItemTransformationOptions): ApiDocument[];
 
 // @public
 export function transformTsdoc(node: DocSection, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): BlockContent[];

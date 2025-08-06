@@ -20,6 +20,11 @@ Markdown trees via `mdast` are now used directly in API item and TSDoc transform
 The Documentation Domain is no longer extensible.
 Since it is now a thin wrapper around `mdast`, `mdast`'s own extensibility model can be leveraged for custom content types.
 
+### `DocumentNode` renamed to `ApiDocument`
+
+It is no longer a `unist` node, and is now an interface rather than a class.
+Its "children" property has also been renamed to "contents`.
+
 ## 0.21.0
 
 ### Add DocumentationNode -> mdast transformation layer
