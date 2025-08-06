@@ -2280,17 +2280,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	}
 
 	/**
-	 * Retrieve the local value at the given key.  This is used to get value type information stashed on the local
-	 * value so op handlers can be retrieved
-	 * @param key - The key to retrieve from
-	 * @returns The local value
-	 */
-	public getLocalValue<T>(key: string): T {
-		this.throwIfDisposed();
-		return this.getOptimisticValue(key) as T;
-	}
-
-	/**
 	 * Rollback a local op
 	 * @param op - The operation to rollback
 	 * @param localOpMetadata - The local metadata associated with the op.
