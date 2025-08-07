@@ -97,7 +97,7 @@ export function validatePrivateLink(
 						Promise.reject(
 							new NetworkError(
 								400,
-								`This is the public network ${clientIPAddress} called from the private link tenant ${tenantId}`,
+								`This is the public network called from the private link tenant ${tenantId}`,
 							),
 						),
 						res,
