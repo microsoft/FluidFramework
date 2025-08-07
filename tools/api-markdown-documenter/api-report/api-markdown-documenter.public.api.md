@@ -30,8 +30,8 @@ import { DocSection } from '@microsoft/tsdoc';
 import { Excerpt } from '@microsoft/api-extractor-model';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'mdast';
-import type { Nodes } from 'mdast';
-import type { Nodes as Nodes_2 } from 'hast';
+import type { Nodes } from 'hast';
+import type { Nodes as Nodes_2 } from 'mdast';
 import { Options } from 'mdast-util-to-markdown';
 import type { Paragraph } from 'mdast';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
@@ -219,18 +219,6 @@ export type DocumentationHierarchyConfiguration = SectionHierarchyConfiguration 
 export interface DocumentationHierarchyConfigurationBase {
     readonly kind: HierarchyKind;
 }
-
-// @public
-export function documentationNodesToHtml(nodes: readonly (Nodes | SectionHeading)[], config: ToHtmlConfiguration): Nodes_2[];
-
-// @public
-export function documentationNodesToHtml(nodes: readonly (Nodes | SectionHeading)[], transformationContext: ToHtmlContext): Nodes_2[];
-
-// @public
-export function documentationNodeToHtml(node: Nodes | SectionHeading, config: ToHtmlConfiguration): Nodes_2;
-
-// @public
-export function documentationNodeToHtml(node: Nodes | SectionHeading, context: ToHtmlContext): Nodes_2;
 
 // @public
 export interface DocumentationSuiteConfiguration {
@@ -505,7 +493,7 @@ interface RenderDocumentsAsMarkdownOptions extends RenderDocumentAsMarkdownConfi
 }
 
 // @public
-function renderHtml(html: Nodes_2, config: RenderHtmlConfiguration): string;
+function renderHtml(html: Nodes, config: RenderHtmlConfiguration): string;
 
 // @public @sealed
 export interface RenderHtmlConfiguration {
@@ -513,7 +501,7 @@ export interface RenderHtmlConfiguration {
 }
 
 // @public
-function renderMarkdown(tree: Nodes, config: RenderMarkdownConfiguration): string;
+function renderMarkdown(tree: Nodes_2, config: RenderMarkdownConfiguration): string;
 
 // @public @sealed
 export interface RenderMarkdownConfiguration extends LoggingConfiguration {
@@ -526,6 +514,9 @@ export interface Section extends Node_2 {
     heading?: SectionHeading;
     type: "section";
 }
+
+// @public
+export type SectionContent = BlockContent | Section;
 
 // @public @sealed
 export interface SectionHeading extends Node_2 {
@@ -544,24 +535,8 @@ function shouldItemBeIncluded(apiItem: ApiItem, config: ApiItemTransformationCon
 
 // @public
 export interface ToHtmlConfiguration extends LoggingConfiguration {
-    readonly customTransformations?: ToHtmlTransformations;
     readonly language?: string;
     readonly startingHeadingLevel?: number;
-}
-
-// @public
-export interface ToHtmlContext {
-    readonly headingLevel: number;
-    readonly logger: Logger;
-    readonly transformations: ToHtmlTransformations;
-}
-
-// @public
-export type ToHtmlTransformation = (node: Nodes | SectionHeading, context: ToHtmlContext) => Nodes_2;
-
-// @public
-export interface ToHtmlTransformations {
-    readonly [documentationNodeKind: string]: ToHtmlTransformation;
 }
 
 // @public

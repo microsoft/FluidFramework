@@ -40,6 +40,7 @@ export {
 export type { ApiDocument } from "./ApiDocument.js";
 export type {
 	Section,
+	SectionContent,
 	SectionHeading,
 } from "./mdast/index.js";
 export {
