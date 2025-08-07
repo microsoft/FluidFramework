@@ -64,7 +64,7 @@ interface ApiSupportLevelInfo {
 /**
  * Searches the given JSDocs for known release tags and returns the appropriate {@link ApiSupportLevelInfo | support details} (if any).
  */
-function getApiTagsFromDocs(jsdocs: JSDoc[]): ApiSupportLevelInfo | undefined {
+function getSupportInfoFromDocs(jsdocs: JSDoc[]): ApiSupportLevelInfo | undefined {
 	let releaseLevel: ReleaseLevel | undefined;
 	let isLegacy = false;
 	for (const jsdoc of jsdocs) {
@@ -89,23 +89,23 @@ function getApiTagsFromDocs(jsdocs: JSDoc[]): ApiSupportLevelInfo | undefined {
 /**
  * Searches the given node's JSDocs for known release tags and returns the appropriate {@link ApiSupportLevelInfo | support details} (if any).
  */
-function getNodeApiTags(node: Node): ApiSupportLevelInfo | undefined {
+function getNodeSupportLevel(node: Node): ApiSupportLevelInfo | undefined {
 	if (Node.isJSDocable(node)) {
-		return getApiTagsFromDocs(node.getJsDocs());
+		return getSupportInfoFromDocs(node.getJsDocs());
 	}
 
 	// Some nodes like `ExportSpecifier` are not JSDocable per ts-morph, but
 	// a JSDoc is present.
 	const jsdocChildren = node.getChildrenOfKind(SyntaxKind.JSDoc);
 	if (jsdocChildren.length > 0) {
-		return getApiTagsFromDocs(jsdocChildren);
+		return getSupportInfoFromDocs(jsdocChildren);
 	}
 
 	// Some nodes like `VariableDeclaration`s are not JSDocable, but an ancestor
 	// like `VariableStatement` is and may contain tag.
 	const parent = node.getParent();
 	if (parent !== undefined) {
-		return getNodeApiTags(parent);
+		return getNodeSupportLevel(parent);
 	}
 
 	return undefined;
@@ -139,13 +139,13 @@ function getApiLevelFromTags(tags: ApiSupportLevelInfo): ApiLevel {
  * Searches the given node's JSDocs for known release tags and returns the appropriate {@link ApiLevel | API support level} (if any).
  */
 function getNodeApiLevel(node: Node): ApiLevel | undefined {
-	const apiTags = getNodeApiTags(node);
-	if (apiTags === undefined) {
+	const supportLevel = getNodeSupportLevel(node);
+	if (supportLevel === undefined) {
 		return undefined;
 	}
 
 	try {
-		return getApiLevelFromTags(apiTags);
+		return getApiLevelFromTags(supportLevel);
 	} catch (error) {
 		throw new Error(
 			`Error getting API level for ${node.getSymbol()} at ${node
