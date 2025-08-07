@@ -149,6 +149,7 @@ function transformAsHeading(
 ): BlockContent[] {
 	let headingText: string = headingNode.title;
 	if (headingNode.id !== undefined) {
+		// TODO: this won't convert to HTML correctly. Need to find a proper way to embed the ID in the heading.
 		headingText = `${headingText} {#${headingNode.id}}`;
 	}
 
