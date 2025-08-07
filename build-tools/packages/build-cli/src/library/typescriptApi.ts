@@ -146,16 +146,16 @@ function getApiLevelFromTags(tags: ApiSupportLevelInfo): ApiLevel {
  * Searches the given node's JSDocs for known release tags and returns the appropriate {@link ApiLevel | API support level} (if any).
  */
 function getNodeApiLevel(node: Node): ApiLevel | undefined {
-	const supportLevel = getNodeSupportLevel(node);
-	if (supportLevel === undefined) {
+	const supportInfo = getNodeSupportLevel(node);
+	if (supportInfo === undefined) {
 		return undefined;
 	}
 
 	try {
-		return getApiLevelFromTags(supportLevel);
+		return getApiLevelFromTags(supportInfo);
 	} catch (error) {
 		throw new Error(
-			`Error getting API level for ${node.getSymbol()} with support-level tags ${supportLevelToString(supportLevel)} at ${node
+			`Error getting API level for ${node.getSymbol()} with support-level tags ${supportLevelToString(supportInfo)} at ${node
 				.getSourceFile()
 				.getFilePath()}:${node.getStartLineNumber()}${(error as Error).message ? `: ${(error as Error).message}` : ""}`,
 		);
