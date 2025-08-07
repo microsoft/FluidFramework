@@ -30,7 +30,7 @@ export enum TreeCompressionStrategyExtended {
 	 * Optimized for encoded size, same as TreeCompressionStrategy.Compressed. It also enables incremental encoding
 	 * of the data.
 	 * @remarks
-	 * TODO:
+	 * TODO: AB#41865
 	 * This needs to be stabilized to allow opting into it.
 	 * It could possibly be made the default instead of {@link TreeCompressionStrategy.Compressed}.
 	 */
