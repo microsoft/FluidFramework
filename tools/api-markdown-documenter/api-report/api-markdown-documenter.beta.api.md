@@ -43,7 +43,7 @@ import { TypeParameter } from '@microsoft/api-extractor-model';
 function ancestryHasModifierTag(apiItem: ApiItem, tagName: string): boolean;
 
 // @public @sealed
-export interface ApiDocument<TContents> {
+export interface ApiDocument<TContents = unknown> {
     readonly apiItem: ApiItem;
     readonly contents: TContents;
     readonly documentPath: string;
@@ -59,6 +59,7 @@ export { ApiItemKind }
 // @public
 export interface ApiItemTransformationConfiguration extends ApiItemTransformationConfigurationBase, DocumentationSuiteConfiguration, Required<LoggingConfiguration> {
     readonly defaultSectionLayout: (apiItem: ApiItem, childSections: Section[] | undefined, config: ApiItemTransformationConfiguration) => Section[];
+    readonly startingHeadingLevel: number;
     readonly transformations: ApiItemTransformations;
     readonly uriRoot: string;
 }
@@ -71,6 +72,7 @@ export interface ApiItemTransformationConfigurationBase {
 // @public
 export interface ApiItemTransformationOptions extends ApiItemTransformationConfigurationBase, DocumentationSuiteOptions, LoggingConfiguration {
     readonly defaultSectionLayout?: (apiItem: ApiItem, childSections: Section[] | undefined, config: ApiItemTransformationConfiguration) => Section[];
+    readonly startingHeadingLevel?: number | undefined;
     readonly transformations?: Partial<ApiItemTransformations>;
     readonly uriRoot?: string | undefined;
 }
@@ -257,7 +259,7 @@ export interface DocumentHierarchyConfiguration extends DocumentationHierarchyCo
 }
 
 // @public
-export function documentToHtml(document: MarkdownDocument, config: ToHtmlConfiguration): Root;
+export function documentToHtml(document: NormalizedMarkdownDocument, config: ToHtmlConfiguration): Root;
 
 // @public
 export interface DocumentWriter {
@@ -500,7 +502,7 @@ export { MarkdownRenderer }
 export { NewlineKind }
 
 // @public @sealed
-export type NormalizedMarkdownDocument = ApiDocument<readonly NormalizedRootContent[]>;
+export type NormalizedMarkdownDocument = ApiDocument<NormalizedTree>;
 
 // @public
 export type NormalizedRootContent = Exclude<RootContent, Section>;
@@ -518,22 +520,20 @@ interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationOptions, 
 }
 
 // @public
-function renderDocument(document: MarkdownDocument, config: RenderDocumentAsHtmlConfiguration): string;
+function renderDocument(document: NormalizedMarkdownDocument, config: RenderDocumentAsHtmlConfiguration): string;
 
 // @public
-function renderDocument_2(document: MarkdownDocument, config: RenderDocumentAsMarkdownConfiguration): string;
+function renderDocument_2(document: NormalizedMarkdownDocument, config: RenderDocumentAsMarkdownConfiguration): string;
 
 // @public @sealed
 export interface RenderDocumentAsHtmlConfiguration extends ToHtmlConfiguration, RenderHtmlConfiguration {
 }
 
 // @public @sealed
-export interface RenderDocumentAsMarkdownConfiguration extends RenderMarkdownConfiguration {
-    readonly startingHeadingLevel?: number;
-}
+export type RenderDocumentAsMarkdownConfiguration = RenderMarkdownConfiguration;
 
 // @public
-function renderDocumentsAsMarkdown(documents: readonly MarkdownDocument[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
+function renderDocumentsAsMarkdown(documents: readonly NormalizedMarkdownDocument[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
 
 // @public
 interface RenderDocumentsAsMarkdownOptions extends RenderDocumentAsMarkdownConfiguration, FileSystemConfiguration {
@@ -609,7 +609,7 @@ export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: T
 export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: ApiItemTransformationConfiguration) => Section[];
 
 // @public
-export function transformApiModel(options: ApiItemTransformationOptions): MarkdownDocument[];
+export function transformApiModel(options: ApiItemTransformationOptions): NormalizedMarkdownDocument[];
 
 // @public
 export function transformTsdoc(node: DocSection, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): BlockContent[];

@@ -6,7 +6,7 @@
 import type { ApiItem } from "@microsoft/api-extractor-model";
 import type { Root as HtmlRoot } from "hast";
 
-import type { NormalizedRootContent, Section } from "./mdast/index.js";
+import type { NormalizedTree, Section } from "./mdast/index.js";
 
 /**
  * A document for an API item.
@@ -14,7 +14,7 @@ import type { NormalizedRootContent, Section } from "./mdast/index.js";
  * @public
  * @sealed
  */
-export interface ApiDocument<TContents> {
+export interface ApiDocument<TContents = unknown> {
 	/**
 	 * The API item this document was created for.
 	 */
@@ -51,7 +51,7 @@ export type MarkdownDocument = ApiDocument<readonly Section[]>;
  * @public
  * @sealed
  */
-export type NormalizedMarkdownDocument = ApiDocument<readonly NormalizedRootContent[]>;
+export type NormalizedMarkdownDocument = ApiDocument<NormalizedTree>;
 
 /**
  * An {@link ApiDocument} with HTML content.
@@ -60,3 +60,11 @@ export type NormalizedMarkdownDocument = ApiDocument<readonly NormalizedRootCont
  * @sealed
  */
 export type HtmlDocument = ApiDocument<HtmlRoot>;
+
+/**
+ * An {@link ApiDocument} with HTML content.
+ *
+ * @public
+ * @sealed
+ */
+export type RenderedDocument = ApiDocument<string>;

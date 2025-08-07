@@ -8,7 +8,7 @@ import { h } from "hastscript";
 import type { Nodes } from "mdast";
 import { toHast } from "mdast-util-to-hast";
 
-import type { MarkdownDocument } from "../ApiDocument.js";
+import type { NormalizedMarkdownDocument } from "../ApiDocument.js";
 import type { SectionHeading } from "../mdast/index.js";
 
 import {
@@ -18,7 +18,7 @@ import {
 import type { TransformationConfiguration } from "./configuration/index.js";
 
 /**
- * Generates an HTML AST from the provided {@link ApiDocument}.
+ * Generates an HTML AST from the provided {@link NormalizedMarkdownDocument}.
  *
  * @param document - The document to transform.
  * @param config - HTML transformation configuration.
@@ -26,12 +26,12 @@ import type { TransformationConfiguration } from "./configuration/index.js";
  * @public
  */
 export function documentToHtml(
-	document: MarkdownDocument,
+	document: NormalizedMarkdownDocument,
 	config: TransformationConfiguration,
 ): HastRoot {
 	const transformationContext = createTransformationContext(config);
 
-	const transformedChildren = documentationNodesToHtml(
+	const transformedChildren = documentationNodeToHtml(
 		document.contents,
 		transformationContext,
 	);
@@ -43,7 +43,7 @@ export function documentToHtml(
  *
  * @privateRemarks Exported for testing purposes. Not intended for external use.
  */
-export function treeFromBody(body: HastTree[], config: TransformationConfiguration): HastRoot {
+export function treeFromBody(body: HastTree, config: TransformationConfiguration): HastRoot {
 	const rootBodyContents: HastTree[] = [];
 	rootBodyContents.push({
 		type: "doctype",

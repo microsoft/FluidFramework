@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export { type NormalizedRootContent, normalizeDocumentContents } from "./Normalize.js";
+export {
+	type NormalizedRootContent,
+	type NormalizedTree,
+	normalizeDocument,
+} from "./Normalize.js";
 export { createSection, type Section, type SectionContent } from "./Section.js";
 export type { SectionHeading } from "./SectionHeading.js";

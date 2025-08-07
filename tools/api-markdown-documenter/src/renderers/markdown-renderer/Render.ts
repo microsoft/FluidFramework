@@ -10,9 +10,8 @@ import {
 	type Options as MdastToMarkdownOptions,
 } from "mdast-util-to-markdown";
 
-import type { MarkdownDocument } from "../../ApiDocument.js";
+import type { NormalizedMarkdownDocument } from "../../ApiDocument.js";
 import type { LoggingConfiguration } from "../../LoggingConfiguration.js";
-import { normalizeDocumentContents } from "../../mdast/index.js";
 
 /**
  * Configuration for rendering a document as Markdown.
@@ -20,16 +19,7 @@ import { normalizeDocumentContents } from "../../mdast/index.js";
  * @sealed
  * @public
  */
-export interface RenderDocumentConfiguration extends RenderMarkdownConfiguration {
-	/**
-	 * Optional override for the starting heading level of a document.
-	 *
-	 * @remarks Must be an integer on [1, ∞).
-	 *
-	 * @defaultValue 1
-	 */
-	readonly startingHeadingLevel?: number;
-}
+export type RenderDocumentConfiguration = RenderMarkdownConfiguration;
 
 /**
  * Renders a {@link ApiDocument} as Markdown and returns the resulting file contents as a string.
@@ -40,13 +30,10 @@ export interface RenderDocumentConfiguration extends RenderMarkdownConfiguration
  * @public
  */
 export function renderDocument(
-	document: MarkdownDocument,
+	document: NormalizedMarkdownDocument,
 	config: RenderDocumentConfiguration,
 ): string {
-	const normalizedMarkdown = normalizeDocumentContents(document.contents, {
-		startingHeadingLevel: config.startingHeadingLevel,
-	});
-	return renderMarkdown(normalizedMarkdown, config);
+	return renderMarkdown(document.contents, config);
 }
 
 /**

@@ -6,69 +6,64 @@
 import type { ApiItem } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 
-import type { MarkdownDocument } from "../../../ApiDocument.js";
+import type { NormalizedMarkdownDocument } from "../../../ApiDocument.js";
 import { renderDocument } from "../Render.js";
 
 describe("Document Markdown rendering tests", () => {
 	it("Renders a simple document", () => {
-		const document: MarkdownDocument = {
+		const document: NormalizedMarkdownDocument = {
 			apiItem: {} as unknown as ApiItem, // Mock ApiItem for testing
-			contents: [
-				{
-					type: "section",
-					children: [
-						{
-							type: "paragraph",
-							children: [
-								{
-									type: "text",
-									value: "This is a sample document. ",
-								},
-								{
-									type: "text",
-									value: "It has very basic content.\t",
-								},
-							],
-						},
-						{
-							type: "section",
-							children: [
-								{
-									type: "paragraph",
-									children: [
-										{
-											type: "text",
-											value: "This is test inside of a paragraph. ",
-										},
-										{
-											type: "text",
-											value: "It is also inside of a hierarchical section node. ",
-										},
-										{
-											type: "emphasis",
-											children: [
-												{
-													type: "text",
-													value: "That's real neat-o.",
-												},
-											],
-										},
-									],
-								},
-							],
-							heading: {
-								type: "sectionHeading",
-								title: "Section Heading",
-							},
-						},
-					],
-					heading: {
-						type: "sectionHeading",
-						title: "Sample Document",
+			contents: {
+				type: "root",
+				children: [
+					{
+						type: "heading",
+						depth: 1,
+						children: [{ type: "text", value: "Sample Document" }],
 					},
-				},
-			],
-			documentPath: "./test.md",
+					{
+						type: "paragraph",
+						children: [
+							{
+								type: "text",
+								value: "This is a sample document. ",
+							},
+							{
+								type: "text",
+								value: "It has very basic content.\t",
+							},
+						],
+					},
+					{
+						type: "heading",
+						depth: 2,
+						children: [{ type: "text", value: "Section Heading" }],
+					},
+					{
+						type: "paragraph",
+						children: [
+							{
+								type: "text",
+								value: "This is text inside of a paragraph. ",
+							},
+							{
+								type: "text",
+								value: "It is also inside of a hierarchical section node. ",
+							},
+							{
+								type: "emphasis",
+								children: [
+									{
+										type: "text",
+										value: "That's real neat-o.",
+									},
+								],
+							},
+						],
+					},
+				],
+			},
+			documentPath: "./test",
 		};
 
 		const expected = [

@@ -11,8 +11,8 @@ import {
 	type ApiPackage,
 } from "@microsoft/api-extractor-model";
 
-import type { MarkdownDocument } from "../ApiDocument.js";
-import type { Section } from "../mdast/index.js";
+import type { MarkdownDocument, NormalizedMarkdownDocument } from "../ApiDocument.js";
+import { normalizeDocument, type Section } from "../mdast/index.js";
 
 import {
 	doesItemRequireOwnDocument,
@@ -32,9 +32,11 @@ import { createBreadcrumbParagraph, createEntryPointList } from "./helpers/index
  *
  * @public
  */
-export function transformApiModel(options: ApiItemTransformationOptions): MarkdownDocument[] {
+export function transformApiModel(
+	options: ApiItemTransformationOptions,
+): NormalizedMarkdownDocument[] {
 	const config = getApiItemTransformationConfigurationWithDefaults(options);
-	const { apiModel, logger, exclude: excludeItem } = config;
+	const { apiModel, logger, exclude: excludeItem, startingHeadingLevel } = config;
 
 	logger.verbose(`Generating documentation for API Model...`);
 
@@ -121,7 +123,12 @@ export function transformApiModel(options: ApiItemTransformationOptions): Markdo
 	}
 
 	logger.success("API Model documents generated!");
-	return documents;
+
+	return documents.map((document) =>
+		normalizeDocument(document, {
+			startingHeadingLevel,
+		}),
+	);
 }
 
 /**

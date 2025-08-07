@@ -3,7 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import type { BlockContent, Break, Heading, Html, Root, RootContent, Strong } from "mdast";
+import type {
+	BlockContent,
+	Break,
+	Heading,
+	Html,
+	Nodes,
+	Root,
+	RootContent,
+	Strong,
+} from "mdast";
+
+import type { MarkdownDocument, NormalizedMarkdownDocument } from "../ApiDocument.js";
 
 import type { Section } from "./Section.js";
 import type { SectionHeading } from "./SectionHeading.js";
@@ -16,7 +27,13 @@ import type { SectionHeading } from "./SectionHeading.js";
  */
 
 /**
- * Markdown root content, normalized to remove library-specific types.
+ * Markdown `Nodes`, normalized to remove library-specific types.
+ * @public
+ */
+export type NormalizedTree = Exclude<Nodes, Section>;
+
+/**
+ * Markdown `RootContent`, normalized to remove library-specific types.
  * @public
  */
 export type NormalizedRootContent = Exclude<RootContent, Section>;
@@ -40,8 +57,24 @@ interface NormalizationContext {
 }
 
 /**
+ * Converts a document to a standard Markdown representation.
+ * @remarks Collapses section hierarchies and applies heading levels.
+ */
+export function normalizeDocument(
+	document: MarkdownDocument,
+	options?: NormalizationOptions,
+): NormalizedMarkdownDocument {
+	const normalizedContents = normalizeDocumentContents(document.contents, options);
+	return {
+		apiItem: document.apiItem,
+		contents: normalizedContents,
+		documentPath: document.documentPath,
+	};
+}
+
+/**
  * Converts a document's {@link Section}s to a standard Markdown representation.
- * @remarks Collapses hierarchies and applies heading levels.
+ * @remarks Collapses section hierarchies and applies heading levels.
  */
 export function normalizeDocumentContents(
 	contents: readonly Section[],
@@ -60,7 +93,7 @@ export function normalizeDocumentContents(
 
 /**
  * Converts a {@link Section} to a standard Markdown representation.
- * @remarks Collapses hierarchies and applies heading levels.
+ * @remarks Collapses section hierarchies and applies heading levels.
  */
 export function normalizeSection(
 	section: Section,
