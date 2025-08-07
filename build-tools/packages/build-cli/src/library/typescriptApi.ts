@@ -62,13 +62,6 @@ interface ApiSupportLevelInfo {
 }
 
 /**
- * Generates a string representation of {@link ApiSupportLevelInfo}, which can be used in logging / error messaging.
- */
-function supportLevelToString(supportLevel: ApiSupportLevelInfo): string {
-	return `${supportLevel.isLegacy ? "@legacy + " : ""}@${supportLevel.releaseLevel}`;
-}
-
-/**
  * Searches the given JSDocs for known release tags and returns the appropriate {@link ApiSupportLevelInfo | support details} (if any).
  */
 function getSupportInfoFromDocs(jsdocs: JSDoc[]): ApiSupportLevelInfo | undefined {
@@ -155,7 +148,7 @@ function getNodeApiLevel(node: Node): ApiLevel | undefined {
 		return getApiLevelFromTags(supportInfo);
 	} catch (error) {
 		throw new Error(
-			`Error getting API level for ${node.getSymbol()} with support-level tags ${supportLevelToString(supportInfo)} at ${node
+			`Error getting API level for ${node.getSymbol()} at ${node
 				.getSourceFile()
 				.getFilePath()}:${node.getStartLineNumber()}${(error as Error).message ? `: ${(error as Error).message}` : ""}`,
 		);
