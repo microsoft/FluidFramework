@@ -26,18 +26,8 @@ export function isDocumentSessionValid(
 		return true;
 	}
 
-	let isSessionInThisCluster =
+	const isSessionInThisCluster =
 		document.session.ordererUrl === serviceConfiguration.externalOrdererUrl;
-	// Check if externalOrdererUrl's domain is a substring of ordererUrl's domain.
-	if (
-		!isSessionInThisCluster &&
-		document.session.ordererUrl.includes("https://") &&
-		serviceConfiguration.externalOrdererUrl.includes("https://")
-	) {
-		const ordererUrl = document.session.ordererUrl.replace("https://", "");
-		const externalOrdererUrl = serviceConfiguration.externalOrdererUrl.replace("https://", "");
-		isSessionInThisCluster = ordererUrl.includes(externalOrdererUrl);
-	}
 
 	if (document.session.isSessionActive && isSessionInThisCluster) {
 		return true;
@@ -47,6 +37,14 @@ export function isDocumentSessionValid(
 		// Other clients could be routed to alternate locations, resulting in "split-brain" scenario.
 		// Prevent Deli from processing ops.
 		return false;
+	}
+
+	// If the orderer URL contains the tenant ID, the session is private link enabled.
+	// So far we only set one cluster per group for private endpoint.
+	// Skip the isSessionInThisCluster check.
+	const ordererUrlContainsTenantId = document.session.ordererUrl.includes(document.tenantId);
+	if (ordererUrlContainsTenantId) {
+		return true;
 	}
 	return isSessionInThisCluster;
 }

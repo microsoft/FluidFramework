@@ -137,6 +137,7 @@ export function getDocumentUrlsfromNetworkInfo(
 	externalHistorianUrl: string,
 	externalDeltaStreamUrl: string,
 	isPrivateLink?: boolean | false,
+	privateServiceHost?: string | undefined,
 ): {
 	documentOrdererUrl: string;
 	documentHistorianUrl: string;
@@ -144,12 +145,9 @@ export function getDocumentUrlsfromNetworkInfo(
 } {
 	if (isPrivateLink) {
 		return {
-			documentOrdererUrl: externalOrdererUrl.replace("https://", `https://${tenantId}.`),
-			documentHistorianUrl: externalHistorianUrl.replace("https://", `https://${tenantId}.`),
-			documentDeltaStreamUrl: externalDeltaStreamUrl.replace(
-				"https://",
-				`https://${tenantId}.`,
-			),
+			documentOrdererUrl: `https://${tenantId}.alfred.${privateServiceHost}`,
+			documentHistorianUrl: `https://${tenantId}.historian.${privateServiceHost}`,
+			documentDeltaStreamUrl: `https://${tenantId}.nexus.${privateServiceHost}`,
 		};
 	}
 	return {

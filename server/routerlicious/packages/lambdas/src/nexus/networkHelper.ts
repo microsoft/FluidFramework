@@ -15,7 +15,6 @@ import type * as core from "@fluidframework/server-services-core";
  */
 export async function checkNetworkInformation(
 	tenantManager: core.ITenantManager,
-	clusterHost: string | undefined = undefined,
 	socket: core.IWebSocket,
 ): Promise<{ message: string; shouldConnect: boolean }> {
 	const tenantId = socket?.handshake?.query?.tenantId as string | undefined;
@@ -24,27 +23,19 @@ export async function checkNetworkInformation(
 		| string
 		| undefined;
 	const networkInfo = getNetworkInformationFromIP(clientIPAddress);
-	const privateLinkEnable = tenantInfo?.customData?.accountLinkIds ? true : false;
+	const privateLinkEnable = tenantInfo?.customData?.privateEndpoints?.accountLinkId
+		? true
+		: false;
 	if (networkInfo.isPrivateLink) {
 		if (privateLinkEnable) {
-			const accountLinkIds = JSON.parse(tenantInfo?.customData?.accountLinkIds);
-			// Todo: fix the clusterHost logic to check undefined, and skip
-			if (clusterHost && Object.prototype.hasOwnProperty.call(accountLinkIds, clusterHost)) {
-				const accountLinkId = String(accountLinkIds[clusterHost]);
-				return networkInfo.privateLinkId === accountLinkId
-					? { message: "This is a private link socket connection", shouldConnect: true }
-					: {
-							message:
-								"This private link should not be connected since the link id does not match",
-							shouldConnect: false,
-					  };
-			} else {
-				return {
-					message:
-						"This private link should not be connected since the cluster is not found",
-					shouldConnect: false,
-				};
-			}
+			const accountLinkId = tenantInfo?.customData?.privateEndpoints?.accountLinkId;
+			return networkInfo.privateLinkId === accountLinkId
+				? { message: "This is a private link socket connection", shouldConnect: true }
+				: {
+						message:
+							"This private link should not be connected since the link id does not match",
+						shouldConnect: false,
+				  };
 		} else {
 			return {
 				message:

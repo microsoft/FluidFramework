@@ -47,7 +47,6 @@ export function validateRequestParams(...paramNames: (string | number)[]): Reque
  */
 export function validatePrivateLink(
 	tenantManager: ITenantManager,
-	clusterHost: string,
 	enableNetworkCheck: boolean = false,
 ): RequestHandler {
 	return async (req, res, next) => {
@@ -57,30 +56,29 @@ export function validatePrivateLink(
 				next();
 			}
 			const clientIPAddress = req.ip ? req.ip : "";
-			const result = getNetworkInformationFromIP(clientIPAddress);
+			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 			const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
-			const privateLinkEnable = tenantInfo?.customData?.accountLinkIds ? true : false;
-			if (result.isPrivateLink) {
+			const privateLinkEnable = tenantInfo?.customData?.privateEndpoints?.accountLinkId
+				? true
+				: false;
+			if (networkInfo.isPrivateLink) {
 				if (privateLinkEnable) {
-					const accountLinkIds = JSON.parse(tenantInfo?.customData?.accountLinkIds);
-					if (Object.prototype.hasOwnProperty.call(accountLinkIds, clusterHost)) {
-						const accountLinkId = String(accountLinkIds[clusterHost]);
-						if (result.privateLinkId === accountLinkId) {
-							Lumberjack.info("This is a private link request", {
-								tenantId,
-								clientIPAddress,
-							});
-						} else {
-							return handleResponse(
-								Promise.reject(
-									new NetworkError(
-										400,
-										`This private link should not be connected since the link id ${result.privateLinkId} does not match ${accountLinkId}`,
-									),
+					const accountLinkId = tenantInfo?.customData?.privateEndpoints?.accountLinkId;
+					if (networkInfo.privateLinkId === accountLinkId) {
+						Lumberjack.info("This is a private link request", {
+							tenantId,
+							clientIPAddress,
+						});
+					} else {
+						return handleResponse(
+							Promise.reject(
+								new NetworkError(
+									400,
+									`This private link should not be connected since the link id ${networkInfo.privateLinkId} does not match ${accountLinkId}`,
 								),
-								res,
-							);
-						}
+							),
+							res,
+						);
 					}
 				} else {
 					return handleResponse(

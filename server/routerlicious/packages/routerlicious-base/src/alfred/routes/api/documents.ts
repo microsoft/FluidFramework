@@ -180,8 +180,8 @@ export function create(
 	denyList?: IDenyList,
 ): Router {
 	const router: Router = Router();
+	const privateServiceHost: string | undefined = config.get("privateServiceHost");
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
-	const clusterHost: string = config.get("clusterHost");
 	const externalHistorianUrl: string = config.get("worker:blobStorageUrl");
 	const enableNetworkCheck: boolean = config.get("alfred:enableNetworkCheck");
 	const externalDeltaStreamUrl: string =
@@ -284,7 +284,7 @@ export function create(
 	router.post(
 		"/:tenantId",
 		validateRequestParams("tenantId"),
-		validatePrivateLink(tenantManager, clusterHost, enableNetworkCheck),
+		validatePrivateLink(tenantManager, enableNetworkCheck),
 		throttle(
 			clusterThrottlers.get(Constants.createDocThrottleIdPrefix),
 			winston,
@@ -338,6 +338,7 @@ export function create(
 				externalHistorianUrl,
 				externalDeltaStreamUrl,
 				networkInfo.isPrivateLink,
+				privateServiceHost,
 			);
 
 			// If enforcing server generated document id, ignore id parameter
@@ -350,9 +351,6 @@ export function create(
 				? convertFirstSummaryWholeSummaryTreeToSummaryTree(request.body.summary)
 				: request.body.summary;
 
-			Lumberjack.info(
-				`Put a debug message here: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
-			);
 			Lumberjack.info(
 				`Whole summary on First Summary: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
 			);
@@ -453,7 +451,7 @@ export function create(
 	 */
 	router.get(
 		"/:tenantId/session/:id",
-		validatePrivateLink(tenantManager, clusterHost, enableNetworkCheck),
+		validatePrivateLink(tenantManager, enableNetworkCheck),
 		throttle(
 			clusterThrottlers.get(Constants.getSessionThrottleIdPrefix),
 			winston,
@@ -516,6 +514,7 @@ export function create(
 				externalHistorianUrl,
 				externalDeltaStreamUrl,
 				networkInfo.isPrivateLink,
+				privateServiceHost,
 			);
 
 			const session = getSession(
