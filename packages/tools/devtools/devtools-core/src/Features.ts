@@ -61,8 +61,7 @@ export interface ContainerDevtoolsFeatureFlags {
 	 * - **Disconnect**: Disconnecting a connected container
 	 * - **Close**: Permanently closing/disposing the container
 	 *
-	 * When `false`, these operations are not available (typical for data object devtools
-	 * which don't have direct control over container lifecycle).
+	 * When `false`, these operations are not available.
 	 *
 	 * @defaultValue `true`
 	 */
