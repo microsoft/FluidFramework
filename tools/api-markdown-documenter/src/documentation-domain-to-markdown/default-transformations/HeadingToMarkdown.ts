@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	BlockContent as MdastBlockContent,
-	Break as MdastBreak,
-	PhrasingContent as MdastPhrasingContent,
-} from "mdast";
+import type { BlockContent, Break, PhrasingContent } from "mdast";
 
 import type { SectionHeading } from "../../mdast/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
@@ -15,7 +11,7 @@ import type { TransformationContext } from "../TransformationContext.js";
 /**
  * Line break singleton.
  */
-const lineBreak: MdastBreak = { type: "break" };
+const lineBreak: Break = { type: "break" };
 
 /**
  * Markdown supports heading levels from 1 to 6, corresponding to HTML's `<h1>` to `<h6>`.
@@ -37,7 +33,7 @@ function isInHeadingRange(level: number): level is 1 | 2 | 3 | 4 | 5 | 6 {
 export function headingToMarkdown(
 	headingNode: SectionHeading,
 	context: TransformationContext,
-): MdastBlockContent[] {
+): BlockContent[] {
 	// Markdown only supports heading levels up to 6. If our level is beyond that, we will transform the input to simple
 	// bold text, with an accompanying HTML anchor to ensure we can still link to the text.
 	return isInHeadingRange(context.headingLevel)
@@ -48,8 +44,8 @@ export function headingToMarkdown(
 function transformAsHeading(
 	headingNode: SectionHeading,
 	headingLevel: 1 | 2 | 3 | 4 | 5 | 6,
-): MdastBlockContent[] {
-	const result: MdastBlockContent[] = [];
+): BlockContent[] {
+	const result: BlockContent[] = [];
 	if (headingNode.id !== undefined) {
 		result.push({
 			type: "html",
@@ -71,8 +67,8 @@ function transformAsHeading(
 	return result;
 }
 
-function transformAsBoldText(headingNode: SectionHeading): MdastBlockContent[] {
-	const body: MdastPhrasingContent[] = [];
+function transformAsBoldText(headingNode: SectionHeading): [BlockContent] {
+	const body: PhrasingContent[] = [];
 
 	if (headingNode.id !== undefined) {
 		body.push(
