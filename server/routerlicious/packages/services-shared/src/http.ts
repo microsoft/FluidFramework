@@ -55,19 +55,30 @@ export function validatePrivateLink(
 			if (!tenantId) {
 				next();
 			}
-			const clientIPAddress = req.ip ? req.ip : "";
-			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 			const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
 			const privateLinkEnable = tenantInfo?.customData?.privateEndpoints?.accountLinkId
 				? true
 				: false;
+			const clientIPAddress = req.ip ? req.ip : "";
+			if (privateLinkEnable && (!clientIPAddress || clientIPAddress.trim() === "")) {
+				return handleResponse(
+					Promise.reject(
+						new NetworkError(
+							400,
+							`Client IP address is required for private link in req.ip`,
+						),
+					),
+					res,
+				);
+			}
+			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 			if (networkInfo.isPrivateLink) {
 				if (privateLinkEnable) {
 					const accountLinkId = tenantInfo?.customData?.privateEndpoints?.accountLinkId;
 					if (networkInfo.privateLinkId === accountLinkId) {
 						Lumberjack.info("This is a private link request", {
 							tenantId,
-							clientIPAddress,
+							privateLinkId: networkInfo.privateLinkId,
 						});
 					} else {
 						return handleResponse(
