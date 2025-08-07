@@ -14,7 +14,7 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 export type ContainerKey = string;
 
 // @alpha
-export interface ContainerRuntimeDevtoolsProps {
+export interface ContainerRuntimeProps {
     label?: string;
     runtime: IContainerRuntime;
 }
@@ -37,11 +37,11 @@ export interface HasContainerKey {
 export interface IDevtoolsLogger extends ITelemetryBaseLogger {
 }
 
-// @alpha
+// @alpha @sealed
 export interface IFluidDevtools extends IDisposable {
     closeContainerDevtools(containerKey: ContainerKey): void;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
-    registerContainerRuntimeDevtools(props: ContainerRuntimeDevtoolsProps): Promise<void>;
+    registerContainerRuntime(props: ContainerRuntimeProps): Promise<void>;
 }
 
 // @alpha

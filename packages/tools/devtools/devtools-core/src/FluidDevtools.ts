@@ -11,7 +11,7 @@ import type { ContainerKey } from "./CommonInterfaces.js";
 import { ContainerDevtools, type ContainerDevtoolsProps } from "./ContainerDevtools.js";
 import {
 	ContainerRuntimeDevtools,
-	type ContainerRuntimeDevtoolsProps,
+	type ContainerRuntimeProps,
 } from "./ContainerRuntimeDevtools.js";
 import { DecomposedContainerForContainerRuntime } from "./DecomposedContainer.js";
 import type { IDevtoolsLogger } from "./DevtoolsLogger.js";
@@ -328,9 +328,7 @@ export class FluidDevtools implements IFluidDevtools {
 		this.postContainerList();
 	}
 
-	public async registerContainerRuntimeDevtools(
-		props: ContainerRuntimeDevtoolsProps,
-	): Promise<void> {
+	public async registerContainerRuntime(props: ContainerRuntimeProps): Promise<void> {
 		const { runtime, label } = props;
 
 		const containerRuntimeKey = this.generateReadableKey(label ?? "Container-Runtime");
