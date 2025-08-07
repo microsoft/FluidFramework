@@ -114,9 +114,9 @@ The space of possible comparisons looks like this:
                         +----+----+-----+-----+
                         | P1 | P2 |  A  |  B  |
 +------------------+----+----+----+-----+-----+
-| ca introduced by | P1 |    |    |     |     |
+|                  | P1 |    |    |     |     |
 |                  +----+----+----+-----+-----+
-|                  | P2 |    |    |     |     |
+| ca introduced by | P2 |    |    |     |     |
 |                  +----+----+----+-----+-----+
 |                  | A  |    |    |     |     |
 +------------------+----+----+----+-----+-----+
@@ -140,9 +140,9 @@ This takes care of the following cases:
                         +----+----+-----+-----+
                         | P1 | P2 |  A  |  B  |
 +------------------+----+----+----+-----+-----+
-| ca introduced by | P1 | ## |    |     |     |
+|                  | P1 | ## |    |     |     |
 |                  +----+----+----+-----+-----+
-|                  | P2 |    | ## |     |     |
+| ca introduced by | P2 |    | ## |     |     |
 |                  +----+----+----+-----+-----+
 |                  | A  |    |    | ### |     |
 +------------------+----+----+----+-----+-----+
@@ -161,9 +161,9 @@ This takes care of the following cases:
                         +----+----+-----+-----+
                         | P1 | P2 |  A  |  B  |
 +------------------+----+----+----+-----+-----+
-| ca introduced by | P1 |    |    |     |     |
+|                  | P1 |    |    |     |     |
 |                  +----+----+----+-----+-----+
-|                  | P2 |    |    |     |     |
+| ca introduced by | P2 |    |    |     |     |
 |                  +----+----+----+-----+-----+
 |                  | A  |    |    |     | ### |
 +------------------+----+----+----+-----+-----+
@@ -181,9 +181,9 @@ This takes care of the following cases:
                         +----+----+-----+-----+
                         | P1 | P2 |  A  |  B  |
 +------------------+----+----+----+-----+-----+
-| ca introduced by | P1 |    |    | ### | ### |
+|                  | P1 |    |    | ### | ### |
 |                  +----+----+----+-----+-----+
-|                  | P2 |    |    | ### | ### |
+| ca introduced by | P2 |    |    | ### | ### |
 |                  +----+----+----+-----+-----+
 |                  | A  | ## | ## |     |     |
 +------------------+----+----+----+-----+-----+
@@ -213,9 +213,9 @@ This allows us to handle the following cases:
                         +----+-----+-----+
                         | P2 |  A  |  B  |
 +------------------+----+----+-----+-----+
-| ca introduced by | P1 | ## | ### |     |
+|                  | P1 | ## | ### |     |
 |                  +----+----+-----+-----+
-|                  | P2 | ## | ### |     |
+| ca introduced by | P2 | ## | ### |     |
 |                  +----+----+-----+-----+
 |                  | A  | ## | ### |     |
 +------------------+----+----+-----+-----+
@@ -231,9 +231,9 @@ This allows us to handle the following cases:
                         +----+-----+-----+
                         | P2 |  A  |  B  |
 +------------------+----+----+-----+-----+
-| ca introduced by | P1 |    |     |     |
+|                  | P1 |    |     |     |
 |                  +----+----+-----+-----+
-|                  | P2 | ## | ### | ### |
+| ca introduced by | P2 | ## | ### | ### |
 |                  +----+----+-----+-----+
 |                  | A  | ## | ### | ### |
 +------------------+----+----+-----+-----+
@@ -241,7 +241,25 @@ This allows us to handle the following cases:
 
 While this is only applicable to that scenario,
 and different scenarios would yield different ordering capabilities using this approach,
-we don't need to know which scenario we find ourselves in to benefit from this approach.
+we can intuit that this approach can at least be leveraged whenever the inclusion in one of the input commits of references to cells introduced by some commit entail the include of references cells introduced by other commits.
+This is the case here because the inclusion of references to cells introduced by `P2` entail the inclusion of references introduced by `P1`,
+and similarly, for `P1` and `A`.
+This means that this approach can tackle the following cases:
+```
+                        +---------------------+
+                        |   cb introduced by  |
+                        +----+----+-----+-----+
+                        | P1 | P2 |  A  |  B  |
++------------------+----+----+----+-----+-----+
+|                  | P1 | ## | ## | ### |     |
+|                  +----+----+----+-----+-----+
+| ca introduced by | P2 | ## | ## | ### |     |
+|                  +----+----+----+-----+-----+
+|                  | A  | ## | ## | ### |     |
++------------------+----+----+----+-----+-----+
+```
+
+Note that we don't need to know which scenario we find ourselves in to benefit from this approach.
 We can just check whether `A` contains a reference to `cb` or `B` contains a reference to `ca` and leverage whichever is the case.
 
 #### Pairs of Cell Where `ca` Is Unknown to `B`
@@ -258,34 +276,8 @@ One can see from the diagrams that the former always precedes the latter in sequ
 
 #### Putting it All Together
 
-Are all of these approaches, when taken together, enough to address any cell ordering scenario in compositions?
-Because the first three apply in any scenario, it's easy to see that they can be combined to tackle the following cases:
-```
-                        +---------------------+
-                        |   cb introduced by  |
-                        +----+----+-----+-----+
-                        | P1 | P2 |  A  |  B  |
-+------------------+----+----+----+-----+-----+
-| ca introduced by | P1 | ## |    | ### | ### |
-|                  +----+----+----+-----+-----+
-|                  | P2 |    | ## | ### | ### |
-|                  +----+----+----+-----+-----+
-|                  | A  | ## | ## | ### | ### |
-+------------------+----+----+----+-----+-----+
-```
-
-This leaves us with two cases:
-1. `ca` refers to a cell introduced by `P1` while `cb` refers to a cell introduced by `P2`.
-2. `ca` refers to a cell introduced by `P2` while `cb` refers to a cell introduced by `P1`.
-
-These cases can only occur in the following scenarios:<br />
-![](../.attachments/revision-metadata/compose-remainder.png)
-
-In all of these scenarios both commits have references to `P2`,
-this makes it possible to leverage the approach described in
-[Pairs of Cells Both Referred to by Either Commit](#pairs-of-cells-both-referred-to-by-either-commit)
-thus filling in the remaining cases.
-
+By looking at which cases each of these approaches can handle,
+we can see that they are enough to address any cell ordering scenario in compositions when taken together.
 This shows how implementations of compose need not rely on extra metadata in order to correctly order cells.
 
 ### Rebase
@@ -324,48 +316,54 @@ For each pair of cells (`cb`, `cx`) referred to by `B2` and `X` respectively,
 we need to be able to determine the relative ordering of `cb` and `cx`.
 The space of possible comparisons looks like this:
 ```
-                       +------------------+
-                       | cb introduced by |
-                       +-----+------+-----+
-                       |  P  |   A  |  B  |
-+------------------+---+-----+------+-----+
-| cx introduced by | P |     |      |     |
-|                  +---+-----+------+-----+
-|                  | X |     |      |     |
-+------------------+---+-----+------+-----+
+                        +---------------------+
+                        |  cb introduced by   |
+                        +----+----+-----+-----+
+                        | P1 | P2 |  A  |  B  |
++------------------+----+----+----+-----+-----+
+|                  | P1 |    |    |     |     |
+|                  +----+----+----+-----+-----+
+| cx introduced by | P2 |    |    |     |     |
+|                  +----+----+----+-----+-----+
+|                  | X  |    |    |     |     |
++------------------+----+----+----+-----+-----+
 ```
 
-As for compose, we instead consider what relevant information is available to the space of all possible implementations.
+As for compose, we consider what relevant information is available to the space of all possible implementations.
 We gloss over the explanation when it is the same as it was for compose.
 
 #### Pairs of Cells Introduced by The Same Commit
 
 As for compose, this takes care of the following cases:
 ```
-                       +------------------+
-                       | cb introduced by |
-                       +-----+------+-----+
-                       |  P  |   A  |  B  |
-+------------------+---+-----+------+-----+
-| cx introduced by | P | ### |      |     |
-|                  +---+-----+------+-----+
-|                  | X |     |      |     |
-+------------------+---+-----+------+-----+
+                        +---------------------+
+                        |  cb introduced by   |
+                        +----+----+-----+-----+
+                        | P1 | P2 |  A  |  B  |
++------------------+----+----+----+-----+-----+
+|                  | P1 | ## |    |     |     |
+|                  +----+----+----+-----+-----+
+| cx introduced by | P2 |    | ## |     |     |
+|                  +----+----+----+-----+-----+
+|                  | X  |    |    |     |     |
++------------------+----+----+----+-----+-----+
 ```
 
 #### Pairs of Cells Introduced by Different Input Commits
 
 As for compose, this takes care of the following cases:
 ```
-                       +------------------+
-                       | cb introduced by |
-                       +-----+------+-----+
-                       |  P  |   A  |  B  |
-+------------------+---+-----+------+-----+
-| cx introduced by | P |     |      |     |
-|                  +---+-----+------+-----+
-|                  | X |     |      | ### |
-+------------------+---+-----+------+-----+
+                        +---------------------+
+                        |  cb introduced by   |
+                        +----+----+-----+-----+
+                        | P1 | P2 |  A  |  B  |
++------------------+----+----+----+-----+-----+
+|                  | P1 |    |    |     |     |
+|                  +----+----+----+-----+-----+
+| cx introduced by | P2 |    |    |     |     |
+|                  +----+----+----+-----+-----+
+|                  | X  |    |    |     | ### |
++------------------+----+----+----+-----+-----+
 ```
 
 #### Pairs of Cells With One Cell Introduced by Either Input Commit
@@ -375,22 +373,27 @@ and `cx` does not refer to a cell introduced by `X`,
 then we know that `cx` is older that `cb`.
 This takes care of the following cases:
 ```
-                       +------------------+
-                       | cb introduced by |
-                       +-----+------+-----+
-                       |  P  |   A  |  B  |
-+------------------+---+-----+------+-----+
-| cx introduced by | P |     |      | ### |
-|                  +---+-----+------+-----+
-|                  | X |     |      |     |
-+------------------+---+-----+------+-----+
+                        +---------------------+
+                        |  cb introduced by   |
+                        +----+----+-----+-----+
+                        | P1 | P2 |  A  |  B  |
++------------------+----+----+----+-----+-----+
+|                  | P1 |    |    |     | ### |
+|                  +----+----+----+-----+-----+
+| cx introduced by | P2 |    |    |     | ### |
+|                  +----+----+----+-----+-----+
+|                  | X  |    |    |     |     |
++------------------+----+----+----+-----+-----+
 ```
 
 Note that we cannot handle cases where `cx` refers to a cell introduced by `X` and `cb` not not refer to a cell introduced by `B`
-because `cb` might refer either to a cell introduced by `P` or to a cell introduced by `A`,
+because `cb` might refer either to a cell introduced by `P1`, `P2` or `A`,
 which have different implications for cell ordering.
 
 #### Pairs of Cells Both Referred to by Either Commit
+
+This works the same as in compose.
+
 
 Its helpful to visualize the possible scenarios and group them as follows:
 
