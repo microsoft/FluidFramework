@@ -352,21 +352,16 @@ export class BlobManager {
 		}
 
 		let storageId = this.redirectTable.get(localId);
-		if (this.runtime.attachState === AttachState.Detached) {
-			// Blobs created while the container is detached will immediately be placed in detached blob storage,
-			// so it should be guaranteed that we have a redirect table entry for it.
-			assert(storageId !== undefined, 0x383 /* requesting unknown blobs */);
-		} else {
-			if (!payloadPending) {
-				// Only blob handles explicitly marked with pending payload are permitted to exist without
-				// yet knowing their storage id. Otherwise they must already be associated with a storage id.
-				assert(storageId !== undefined, 0x11f /* "requesting unknown blobs" */);
-			}
-			// If we didn't find it in the redirectTable, assume the attach op is coming eventually and wait.
-			// We do this even if the local client doesn't have the blob payloadPending flag enabled, in case a
-			// remote client does have it enabled. This wait may be infinite if the uploading client failed
-			// the upload and doesn't exist anymore.
-			storageId ??= await new Promise<string>((resolve) => {
+		if (storageId === undefined) {
+			// Only blob handles explicitly marked with pending payload are permitted to exist without
+			// yet knowing their storage id. Otherwise they must already be associated with a storage id.
+			// Handles for detached blobs are not payload pending.
+			assert(payloadPending, 0x11f /* "requesting unknown blobs" */);
+			// If we didn't find it in the redirectTable and it's payloadPending, assume the attach op is coming
+			// eventually and wait. We do this even if the local client doesn't have the blob payloadPending flag
+			// enabled, in case a remote client does have it enabled. This wait may be infinite if the uploading
+			// client failed the upload and doesn't exist anymore.
+			storageId = await new Promise<string>((resolve) => {
 				const onProcessBlobAttach = (_localId: string, _storageId: string): void => {
 					if (_localId === localId) {
 						this.internalEvents.off("processedBlobAttach", onProcessBlobAttach);
