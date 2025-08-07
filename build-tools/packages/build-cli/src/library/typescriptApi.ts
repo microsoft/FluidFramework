@@ -136,7 +136,7 @@ function getApiLevelFromTags(tags: ApiSupportLevelInfo): ApiLevel {
 }
 
 /**
- * Searches the given node's JSDocs for known release tags and returns the appropriate {@link ApiSupportLevelInfo | support details} (if any).
+ * Searches the given node's JSDocs for known release tags and returns the appropriate {@link ApiLevel | API support level} (if any).
  */
 function getNodeApiLevel(node: Node): ApiLevel | undefined {
 	const apiTags = getNodeApiTags(node);
