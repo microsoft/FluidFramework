@@ -4,7 +4,9 @@
 
 Test class
 
-## Signature {#testclass-signature}
+<a id="testclass-signature"></a>
+
+## Signature
 
 ```typescript
 export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass
@@ -19,7 +21,9 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 | TTypeParameterA | A type parameter |
 | TTypeParameterB | Another type parameter |
 
-## Remarks {#testclass-remarks}
+<a id="testclass-remarks"></a>
+
+## Remarks
 
 Here are some remarks about the class
 
@@ -65,21 +69,29 @@ Here are some remarks about the class
 
 ## Constructor Details
 
-### (constructor) {#\_constructor\_-constructor}
+<a id="_constructor_-constructor"></a>
+
+### (constructor)
 
 Test class constructor
 
-#### Signature {#\_constructor\_-signature}
+<a id="_constructor_-signature"></a>
+
+#### Signature
 
 ```typescript
 constructor(privateProperty: number, protectedProperty: TestEnum, testClassProperty: TTypeParameterB, testClassEventProperty: () => void);
 ```
 
-#### Remarks {#\_constructor\_-remarks}
+<a id="_constructor_-remarks"></a>
+
+#### Remarks
 
 Here are some remarks about the constructor
 
-#### Parameters {#\_constructor\_-parameters}
+<a id="_constructor_-parameters"></a>
+
+#### Parameters
 
 | Parameter | Type | Description |
 | - | - | - |
@@ -90,11 +102,15 @@ Here are some remarks about the constructor
 
 ## Event Details
 
-### testClassEventProperty {#testclasseventproperty-property}
+<a id="testclasseventproperty-property"></a>
+
+### testClassEventProperty
 
 Test class event property
 
-#### Signature {#testclasseventproperty-signature}
+<a id="testclasseventproperty-signature"></a>
+
+#### Signature
 
 ```typescript
 readonly testClassEventProperty: () => void;
@@ -102,17 +118,23 @@ readonly testClassEventProperty: () => void;
 
 **Type**: () => void
 
-#### Remarks {#testclasseventproperty-remarks}
+<a id="testclasseventproperty-remarks"></a>
+
+#### Remarks
 
 Here are some remarks about the property
 
 ## Property Details
 
-### abstractPropertyGetter {#abstractpropertygetter-property}
+<a id="abstractpropertygetter-property"></a>
+
+### abstractPropertyGetter
 
 A test abstract getter property.
 
-#### Signature {#abstractpropertygetter-signature}
+<a id="abstractpropertygetter-signature"></a>
+
+#### Signature
 
 ```typescript
 get abstractPropertyGetter(): TestMappedType;
@@ -120,11 +142,15 @@ get abstractPropertyGetter(): TestMappedType;
 
 **Type**: [TestMappedType](/test-suite-a/testmappedtype-typealias)
 
-### testClassGetterProperty {#testclassgetterproperty-property}
+<a id="testclassgetterproperty-property"></a>
+
+### testClassGetterProperty
 
 Test class property with both a getter and a setter.
 
-#### Signature {#testclassgetterproperty-signature}
+<a id="testclassgetterproperty-signature"></a>
+
+#### Signature
 
 ```typescript
 /** @virtual */
@@ -135,15 +161,21 @@ set testClassGetterProperty(newValue: number);
 
 **Type**: number
 
-#### Remarks {#testclassgetterproperty-remarks}
+<a id="testclassgetterproperty-remarks"></a>
+
+#### Remarks
 
 Here are some remarks about the getter-only property
 
-### testClassProperty {#testclassproperty-property}
+<a id="testclassproperty-property"></a>
+
+### testClassProperty
 
 Test class property
 
-#### Signature {#testclassproperty-signature}
+<a id="testclassproperty-signature"></a>
+
+#### Signature
 
 ```typescript
 readonly testClassProperty: TTypeParameterB;
@@ -151,15 +183,21 @@ readonly testClassProperty: TTypeParameterB;
 
 **Type**: TTypeParameterB
 
-#### Remarks {#testclassproperty-remarks}
+<a id="testclassproperty-remarks"></a>
+
+#### Remarks
 
 Here are some remarks about the property
 
-### testClassStaticProperty {#testclassstaticproperty-property}
+<a id="testclassstaticproperty-property"></a>
+
+### testClassStaticProperty
 
 Test static class property
 
-#### Signature {#testclassstaticproperty-signature}
+<a id="testclassstaticproperty-signature"></a>
+
+#### Signature
 
 ```typescript
 static testClassStaticProperty: (foo: number) => string;
@@ -169,84 +207,116 @@ static testClassStaticProperty: (foo: number) => string;
 
 ## Method Details
 
-### publicAbstractMethod {#publicabstractmethod-method}
+<a id="publicabstractmethod-method"></a>
+
+### publicAbstractMethod
 
 A test public abstract method.
 
-#### Signature {#publicabstractmethod-signature}
+<a id="publicabstractmethod-signature"></a>
+
+#### Signature
 
 ```typescript
 publicAbstractMethod(): void;
 ```
 
-### testClassMethod {#testclassmethod-method}
+<a id="testclassmethod-method"></a>
+
+### testClassMethod
 
 Test class method
 
-#### Signature {#testclassmethod-signature}
+<a id="testclassmethod-signature"></a>
+
+#### Signature
 
 ```typescript
 /** @sealed */
 testClassMethod(input: TTypeParameterA): TTypeParameterA;
 ```
 
-#### Remarks {#testclassmethod-remarks}
+<a id="testclassmethod-remarks"></a>
+
+#### Remarks
 
 Here are some remarks about the method
 
-#### Parameters {#testclassmethod-parameters}
+<a id="testclassmethod-parameters"></a>
+
+#### Parameters
 
 | Parameter | Type | Description |
 | - | - | - |
 | input | TTypeParameterA | |
 
-#### Returns {#testclassmethod-returns}
+<a id="testclassmethod-returns"></a>
+
+#### Returns
 
 **Return type**: TTypeParameterA
 
-#### Throws {#testclassmethod-throws}
+<a id="testclassmethod-throws"></a>
+
+#### Throws
 
 Some sort of error in 1 case.
 
 Some other sort of error in another case. For example, a case where some thing happens.
 
-### testClassStaticMethod {#testclassstaticmethod-method}
+<a id="testclassstaticmethod-method"></a>
+
+### testClassStaticMethod
 
 Test class static method
 
-#### Signature {#testclassstaticmethod-signature}
+<a id="testclassstaticmethod-signature"></a>
+
+#### Signature
 
 ```typescript
 static testClassStaticMethod(foo: number): string;
 ```
 
-#### Parameters {#testclassstaticmethod-parameters}
+<a id="testclassstaticmethod-parameters"></a>
+
+#### Parameters
 
 | Parameter | Type | Description |
 | - | - | - |
 | foo | number | Some number |
 
-#### Returns {#testclassstaticmethod-returns}
+<a id="testclassstaticmethod-returns"></a>
+
+#### Returns
 
 - Some string
 
 **Return type**: string
 
-### virtualMethod {#virtualmethod-method}
+<a id="virtualmethod-method"></a>
+
+### virtualMethod
 
 Overrides [virtualMethod()](/test-suite-a/testabstractclass-class#virtualmethod-method).
 
-#### Signature {#virtualmethod-signature}
+<a id="virtualmethod-signature"></a>
+
+#### Signature
 
 ```typescript
 /** @override */
 protected virtualMethod(): number;
 ```
 
-#### Returns {#virtualmethod-returns}
+<a id="virtualmethod-returns"></a>
+
+#### Returns
 
 **Return type**: number
 
-## See Also {#testclass-see-also}
+<a id="testclass-see-also"></a>
+
+## See Also
 
 [TestAbstractClass](/test-suite-a/testabstractclass-class)

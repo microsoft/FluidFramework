@@ -2,7 +2,9 @@
 
 Test static class property
 
-### Signature {#testclassstaticproperty-signature}
+<a id="testclassstaticproperty-signature"></a>
+
+### Signature
 
 ```typescript
 static testClassStaticProperty: (foo: number) => string;

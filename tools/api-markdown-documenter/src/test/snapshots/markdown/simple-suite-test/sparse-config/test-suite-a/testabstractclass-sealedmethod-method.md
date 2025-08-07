@@ -2,14 +2,18 @@
 
 A test `@sealed` method.
 
-### Signature {#sealedmethod-signature}
+<a id="sealedmethod-signature"></a>
+
+### Signature
 
 ```typescript
 /** @sealed */
 protected sealedMethod(): string;
 ```
 
-### Returns {#sealedmethod-returns}
+<a id="sealedmethod-returns"></a>
+
+### Returns
 
 A string!
 

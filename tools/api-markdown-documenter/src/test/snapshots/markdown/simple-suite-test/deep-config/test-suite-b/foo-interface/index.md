@@ -4,7 +4,9 @@
 
 Bar
 
-## Signature {#foo-signature}
+<a id="foo-signature"></a>
+
+## Signature
 
 ```typescript
 export interface Foo

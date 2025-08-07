@@ -6,13 +6,17 @@ A namespace tagged as `@beta`.
 
 **WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
-## Signature {#testbetanamespace-signature}
+<a id="testbetanamespace-signature"></a>
+
+## Signature
 
 ```typescript
 export declare namespace TestBetaNamespace
 ```
 
-## Remarks {#testbetanamespace-remarks}
+<a id="testbetanamespace-remarks"></a>
+
+## Remarks
 
 Tests release level inheritance.
 

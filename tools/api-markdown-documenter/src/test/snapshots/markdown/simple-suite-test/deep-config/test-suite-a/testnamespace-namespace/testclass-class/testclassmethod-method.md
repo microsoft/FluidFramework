@@ -4,25 +4,33 @@
 
 Test class method
 
-## Signature {#testclassmethod-signature}
+<a id="testclassmethod-signature"></a>
+
+## Signature
 
 ```typescript
 testClassMethod(testParameter: string): Promise<string>;
 ```
 
-## Parameters {#testclassmethod-parameters}
+<a id="testclassmethod-parameters"></a>
+
+## Parameters
 
 | Parameter | Type | Description |
 | - | - | - |
 | testParameter | string | A string |
 
-## Returns {#testclassmethod-returns}
+<a id="testclassmethod-returns"></a>
+
+## Returns
 
 A Promise
 
 **Return type**: Promise\<string>
 
-## Throws {#testclassmethod-throws}
+<a id="testclassmethod-throws"></a>
+
+## Throws
 
 An Error when something happens for which an error should be thrown. Except in the cases where another kind of error is thrown. We don't throw this error in those cases.
 

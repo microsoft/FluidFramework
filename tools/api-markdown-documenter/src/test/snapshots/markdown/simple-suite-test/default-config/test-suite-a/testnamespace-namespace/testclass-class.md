@@ -4,7 +4,9 @@
 
 Test class
 
-## Signature {#testclass-signature}
+<a id="testclass-signature"></a>
+
+## Signature
 
 ```typescript
 class TestClass
@@ -30,17 +32,23 @@ class TestClass
 
 ## Constructor Details
 
-### (constructor) {#\_constructor\_-constructor}
+<a id="_constructor_-constructor"></a>
+
+### (constructor)
 
 Test class constructor
 
-#### Signature {#\_constructor\_-signature}
+<a id="_constructor_-signature"></a>
+
+#### Signature
 
 ```typescript
 constructor(testClassProperty: string);
 ```
 
-#### Parameters {#\_constructor\_-parameters}
+<a id="_constructor_-parameters"></a>
+
+#### Parameters
 
 | Parameter | Type | Description |
 | - | - | - |
@@ -48,11 +56,15 @@ constructor(testClassProperty: string);
 
 ## Property Details
 
-### testClassProperty {#testclassproperty-property}
+<a id="testclassproperty-property"></a>
+
+### testClassProperty
 
 Test interface property
 
-#### Signature {#testclassproperty-signature}
+<a id="testclassproperty-signature"></a>
+
+#### Signature
 
 ```typescript
 readonly testClassProperty: string;
@@ -62,29 +74,39 @@ readonly testClassProperty: string;
 
 ## Method Details
 
-### testClassMethod {#testclassmethod-method}
+<a id="testclassmethod-method"></a>
+
+### testClassMethod
 
 Test class method
 
-#### Signature {#testclassmethod-signature}
+<a id="testclassmethod-signature"></a>
+
+#### Signature
 
 ```typescript
 testClassMethod(testParameter: string): Promise<string>;
 ```
 
-#### Parameters {#testclassmethod-parameters}
+<a id="testclassmethod-parameters"></a>
+
+#### Parameters
 
 | Parameter | Type | Description |
 | - | - | - |
 | testParameter | string | A string |
 
-#### Returns {#testclassmethod-returns}
+<a id="testclassmethod-returns"></a>
+
+#### Returns
 
 A Promise
 
 **Return type**: Promise\<string>
 
-#### Throws {#testclassmethod-throws}
+<a id="testclassmethod-throws"></a>
+
+#### Throws
 
 An Error when something happens for which an error should be thrown. Except in the cases where another kind of error is thrown. We don't throw this error in those cases.
 

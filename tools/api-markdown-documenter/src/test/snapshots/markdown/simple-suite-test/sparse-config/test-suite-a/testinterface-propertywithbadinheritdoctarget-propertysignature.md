@@ -1,6 +1,8 @@
 ## propertyWithBadInheritDocTarget
 
-### Signature {#propertywithbadinheritdoctarget-signature}
+<a id="propertywithbadinheritdoctarget-signature"></a>
+
+### Signature
 
 ```typescript
 propertyWithBadInheritDocTarget: boolean;

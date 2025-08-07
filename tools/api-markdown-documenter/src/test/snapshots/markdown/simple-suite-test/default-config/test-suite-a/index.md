@@ -4,7 +4,9 @@
 
 Test package
 
-## Remarks {#test-suite-a-remarks}
+<a id="test-suite-a-remarks"></a>
+
+## Remarks
 
 This remarks block includes a bulleted list!
 
@@ -24,7 +26,9 @@ Also, here is a link test, including a bad link, because we should have some rea
 - Bad link (no alias): _InvalidItem_
 - Bad link (with alias): _even though I link to an invalid item, I would still like this text to be rendered_
 
-## Example {#test-suite-a-example}
+<a id="test-suite-a-example"></a>
+
+## Example
 
 A test example
 
@@ -88,13 +92,17 @@ const foo = bar;
 
 ## Function Details
 
-### testFunction {#testfunction-function}
+<a id="testfunction-function"></a>
+
+### testFunction
 
 Test function
 
 **WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
-#### Signature {#testfunction-signature}
+<a id="testfunction-signature"></a>
+
+#### Signature
 
 ```typescript
 export declare function testFunction<TTypeParameter extends TestInterface = TestInterface>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
@@ -106,32 +114,44 @@ export declare function testFunction<TTypeParameter extends TestInterface = Test
 | - | - | - | - |
 | TTypeParameter | [TestInterface](/test-suite-a/testinterface-interface) | [TestInterface](/test-suite-a/testinterface-interface) | A test type parameter |
 
-#### Remarks {#testfunction-remarks}
+<a id="testfunction-remarks"></a>
+
+#### Remarks
 
 This is a test [link](/test-suite-a/testinterface-interface) to another API member
 
-#### Parameters {#testfunction-parameters}
+<a id="testfunction-parameters"></a>
+
+#### Parameters
 
 | Parameter | Modifiers | Type | Description |
 | - | - | - | - |
 | testParameter | | TTypeParameter | A test parameter |
 | testOptionalParameter | optional | TTypeParameter | |
 
-#### Returns {#testfunction-returns}
+<a id="testfunction-returns"></a>
+
+#### Returns
 
 The provided parameter
 
 **Return type**: TTypeParameter
 
-#### Throws {#testfunction-throws}
+<a id="testfunction-throws"></a>
+
+#### Throws
 
 An Error when something bad happens.
 
-### testFunctionReturningInlineType {#testfunctionreturninginlinetype-function}
+<a id="testfunctionreturninginlinetype-function"></a>
+
+### testFunctionReturningInlineType
 
 Test function that returns an inline type
 
-#### Signature {#testfunctionreturninginlinetype-signature}
+<a id="testfunctionreturninginlinetype-signature"></a>
+
+#### Signature
 
 ```typescript
 export declare function testFunctionReturningInlineType(): {
@@ -140,13 +160,17 @@ export declare function testFunctionReturningInlineType(): {
 };
 ```
 
-#### Returns {#testfunctionreturninginlinetype-returns}
+<a id="testfunctionreturninginlinetype-returns"></a>
+
+#### Returns
 
 An inline type
 
 **Return type**: {     foo: number;     bar: [TestEnum](/test-suite-a/testenum-enum); }
 
-### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
+<a id="testfunctionreturningintersectiontype-function"></a>
+
+### testFunctionReturningIntersectionType
 
 Test function that returns an inline type
 
@@ -154,29 +178,39 @@ Test function that returns an inline type
 
 This is a test deprecation notice. Here is a [link](/test-suite-a/#testfunctionreturninguniontype-function) to something else!
 
-#### Signature {#testfunctionreturningintersectiontype-signature}
+<a id="testfunctionreturningintersectiontype-signature"></a>
+
+#### Signature
 
 ```typescript
 export declare function testFunctionReturningIntersectionType(): TestEmptyInterface & TestInterfaceWithTypeParameter<number>;
 ```
 
-#### Returns {#testfunctionreturningintersectiontype-returns}
+<a id="testfunctionreturningintersectiontype-returns"></a>
+
+#### Returns
 
 an intersection type
 
 **Return type**: [TestEmptyInterface](/test-suite-a/testemptyinterface-interface) & [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)\<number>
 
-### testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
+<a id="testfunctionreturninguniontype-function"></a>
+
+### testFunctionReturningUnionType
 
 Test function that returns an inline type
 
-#### Signature {#testfunctionreturninguniontype-signature}
+<a id="testfunctionreturninguniontype-signature"></a>
+
+#### Signature
 
 ```typescript
 export declare function testFunctionReturningUnionType(): string | TestInterface;
 ```
 
-#### Returns {#testfunctionreturninguniontype-returns}
+<a id="testfunctionreturninguniontype-returns"></a>
+
+#### Returns
 
 A union type
 
@@ -184,29 +218,39 @@ A union type
 
 ## Variable Details
 
-### testConst {#testconst-variable}
+<a id="testconst-variable"></a>
+
+### testConst
 
 Test Constant
 
 **WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
-#### Signature {#testconst-signature}
+<a id="testconst-signature"></a>
+
+#### Signature
 
 ```typescript
 testConst = 42
 ```
 
-#### Remarks {#testconst-remarks}
+<a id="testconst-remarks"></a>
+
+#### Remarks
 
 Here are some remarks about the variable
 
-### testConstWithEmptyDeprecatedBlock {#testconstwithemptydeprecatedblock-variable}
+<a id="testconstwithemptydeprecatedblock-variable"></a>
+
+### testConstWithEmptyDeprecatedBlock
 
 I have a `@deprecated` tag with an empty comment block.
 
 **WARNING: This API is deprecated and will be removed in a future release.**
 
-#### Signature {#testconstwithemptydeprecatedblock-signature}
+<a id="testconstwithemptydeprecatedblock-signature"></a>
+
+#### Signature
 
 ```typescript
 testConstWithEmptyDeprecatedBlock: string

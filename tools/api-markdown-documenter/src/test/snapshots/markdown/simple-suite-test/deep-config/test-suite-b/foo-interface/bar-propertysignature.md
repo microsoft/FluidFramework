@@ -4,7 +4,9 @@
 
 Test Enum
 
-## Signature {#bar-signature}
+<a id="bar-signature"></a>
+
+## Signature
 
 ```typescript
 bar: TestEnum;
@@ -12,6 +14,8 @@ bar: TestEnum;
 
 **Type**: [TestEnum](/test-suite-a/testenum-enum/)
 
-## Remarks {#bar-remarks}
+<a id="bar-remarks"></a>
+
+## Remarks
 
 Here are some remarks about the enum

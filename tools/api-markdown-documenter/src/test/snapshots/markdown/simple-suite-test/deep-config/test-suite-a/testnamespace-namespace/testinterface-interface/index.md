@@ -6,7 +6,9 @@ Test interface
 
 **WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
-## Signature {#testinterface-signature}
+<a id="testinterface-signature"></a>
+
+## Signature
 
 ```typescript
 interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum>

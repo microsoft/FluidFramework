@@ -2,7 +2,9 @@
 
 An empty interface
 
-### Signature {#testemptyinterface-signature}
+<a id="testemptyinterface-signature"></a>
+
+### Signature
 
 ```typescript
 export interface TestEmptyInterface

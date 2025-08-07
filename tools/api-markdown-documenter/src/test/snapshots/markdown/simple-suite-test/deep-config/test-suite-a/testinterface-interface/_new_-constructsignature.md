@@ -4,12 +4,16 @@
 
 Test construct signature.
 
-## Signature {#\_new\_-signature}
+<a id="_new_-signature"></a>
+
+## Signature
 
 ```typescript
 new (): TestInterface;
 ```
 
-## Returns {#\_new\_-returns}
+<a id="_new_-returns"></a>
+
+## Returns
 
 **Return type**: [TestInterface](/test-suite-a/testinterface-interface/)

@@ -4,7 +4,9 @@
 
 Test package
 
-## Remarks {#test-suite-a-remarks}
+<a id="test-suite-a-remarks"></a>
+
+## Remarks
 
 This remarks block includes a bulleted list!
 
@@ -24,7 +26,9 @@ Also, here is a link test, including a bad link, because we should have some rea
 - Bad link (no alias): _InvalidItem_
 - Bad link (with alias): _even though I link to an invalid item, I would still like this text to be rendered_
 
-## Example {#test-suite-a-example}
+<a id="test-suite-a-example"></a>
+
+## Example
 
 A test example
 

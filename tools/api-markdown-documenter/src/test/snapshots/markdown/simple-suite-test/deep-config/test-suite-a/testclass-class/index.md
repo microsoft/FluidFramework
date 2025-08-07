@@ -4,7 +4,9 @@
 
 Test class
 
-## Signature {#testclass-signature}
+<a id="testclass-signature"></a>
+
+## Signature
 
 ```typescript
 export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass
@@ -19,7 +21,9 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 | TTypeParameterA | A type parameter |
 | TTypeParameterB | Another type parameter |
 
-## Remarks {#testclass-remarks}
+<a id="testclass-remarks"></a>
+
+## Remarks
 
 Here are some remarks about the class
 
@@ -63,6 +67,8 @@ Here are some remarks about the class
 | [testClassMethod(input)](/test-suite-a/testclass-class/testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
 | [virtualMethod()](/test-suite-a/testclass-class/virtualmethod-method) | | number | Overrides [virtualMethod()](/test-suite-a/testabstractclass-class/virtualmethod-method). |
 
-## See Also {#testclass-see-also}
+<a id="testclass-see-also"></a>
+
+## See Also
 
 [TestAbstractClass](/test-suite-a/testabstractclass-class/)

@@ -2,7 +2,9 @@
 
 A test protected property.
 
-### Signature {#protectedproperty-signature}
+<a id="protectedproperty-signature"></a>
+
+### Signature
 
 ```typescript
 protected readonly protectedProperty: TestEnum;

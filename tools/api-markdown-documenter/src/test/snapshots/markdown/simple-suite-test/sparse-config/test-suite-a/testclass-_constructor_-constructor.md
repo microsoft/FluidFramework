@@ -2,17 +2,23 @@
 
 Test class constructor
 
-### Signature {#\_constructor\_-signature}
+<a id="_constructor_-signature"></a>
+
+### Signature
 
 ```typescript
 constructor(privateProperty: number, protectedProperty: TestEnum, testClassProperty: TTypeParameterB, testClassEventProperty: () => void);
 ```
 
-### Remarks {#\_constructor\_-remarks}
+<a id="_constructor_-remarks"></a>
+
+### Remarks
 
 Here are some remarks about the constructor
 
-### Parameters {#\_constructor\_-parameters}
+<a id="_constructor_-parameters"></a>
+
+### Parameters
 
 | Parameter | Type | Description |
 | - | - | - |

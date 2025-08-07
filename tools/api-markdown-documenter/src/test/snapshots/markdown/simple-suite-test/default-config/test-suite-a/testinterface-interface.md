@@ -4,13 +4,17 @@
 
 Test interface
 
-## Signature {#testinterface-signature}
+<a id="testinterface-signature"></a>
+
+## Signature
 
 ```typescript
 export interface TestInterface
 ```
 
-## Remarks {#testinterface-remarks}
+<a id="testinterface-remarks"></a>
+
+## Remarks
 
 Here are some remarks about the interface
 
@@ -51,27 +55,37 @@ Here are some remarks about the interface
 
 ## Constructor Details
 
-### new (): TestInterface {#\_new\_-constructsignature}
+<a id="_new_-constructsignature"></a>
+
+### new (): TestInterface
 
 Test construct signature.
 
-#### Signature {#\_new\_-signature}
+<a id="_new_-signature"></a>
+
+#### Signature
 
 ```typescript
 new (): TestInterface;
 ```
 
-#### Returns {#\_new\_-returns}
+<a id="_new_-returns"></a>
+
+#### Returns
 
 **Return type**: [TestInterface](/test-suite-a/testinterface-interface)
 
 ## Event Details
 
-### testClassEventProperty {#testclasseventproperty-propertysignature}
+<a id="testclasseventproperty-propertysignature"></a>
+
+### testClassEventProperty
 
 Test interface event property
 
-#### Signature {#testclasseventproperty-signature}
+<a id="testclasseventproperty-signature"></a>
+
+#### Signature
 
 ```typescript
 readonly testClassEventProperty: () => void;
@@ -79,17 +93,23 @@ readonly testClassEventProperty: () => void;
 
 **Type**: () => void
 
-#### Remarks {#testclasseventproperty-remarks}
+<a id="testclasseventproperty-remarks"></a>
+
+#### Remarks
 
 Here are some remarks about the event property
 
 ## Property Details
 
-### getterProperty {#getterproperty-property}
+<a id="getterproperty-property"></a>
+
+### getterProperty
 
 A test getter-only interface property.
 
-#### Signature {#getterproperty-signature}
+<a id="getterproperty-signature"></a>
+
+#### Signature
 
 ```typescript
 get getterProperty(): boolean;
@@ -97,9 +117,13 @@ get getterProperty(): boolean;
 
 **Type**: boolean
 
-### propertyWithBadInheritDocTarget {#propertywithbadinheritdoctarget-propertysignature}
+<a id="propertywithbadinheritdoctarget-propertysignature"></a>
 
-#### Signature {#propertywithbadinheritdoctarget-signature}
+### propertyWithBadInheritDocTarget
+
+<a id="propertywithbadinheritdoctarget-signature"></a>
+
+#### Signature
 
 ```typescript
 propertyWithBadInheritDocTarget: boolean;
@@ -107,11 +131,15 @@ propertyWithBadInheritDocTarget: boolean;
 
 **Type**: boolean
 
-### setterProperty {#setterproperty-property}
+<a id="setterproperty-property"></a>
+
+### setterProperty
 
 A test property with a getter and a setter.
 
-#### Signature {#setterproperty-signature}
+<a id="setterproperty-signature"></a>
+
+#### Signature
 
 ```typescript
 get setterProperty(): boolean;
@@ -121,11 +149,15 @@ set setterProperty(newValue: boolean);
 
 **Type**: boolean
 
-### testInterfaceProperty {#testinterfaceproperty-propertysignature}
+<a id="testinterfaceproperty-propertysignature"></a>
+
+### testInterfaceProperty
 
 Test interface property
 
-#### Signature {#testinterfaceproperty-signature}
+<a id="testinterfaceproperty-signature"></a>
+
+#### Signature
 
 ```typescript
 testInterfaceProperty: number;
@@ -133,15 +165,21 @@ testInterfaceProperty: number;
 
 **Type**: number
 
-#### Remarks {#testinterfaceproperty-remarks}
+<a id="testinterfaceproperty-remarks"></a>
+
+#### Remarks
 
 Here are some remarks about the property
 
-### testOptionalInterfaceProperty {#testoptionalinterfaceproperty-propertysignature}
+<a id="testoptionalinterfaceproperty-propertysignature"></a>
+
+### testOptionalInterfaceProperty
 
 Test optional property
 
-#### Signature {#testoptionalinterfaceproperty-signature}
+<a id="testoptionalinterfaceproperty-signature"></a>
+
+#### Signature
 
 ```typescript
 testOptionalInterfaceProperty?: number;
@@ -151,51 +189,71 @@ testOptionalInterfaceProperty?: number;
 
 ## Method Details
 
-### testInterfaceMethod {#testinterfacemethod-methodsignature}
+<a id="testinterfacemethod-methodsignature"></a>
+
+### testInterfaceMethod
 
 Test interface method
 
-#### Signature {#testinterfacemethod-signature}
+<a id="testinterfacemethod-signature"></a>
+
+#### Signature
 
 ```typescript
 testInterfaceMethod(): void;
 ```
 
-#### Remarks {#testinterfacemethod-remarks}
+<a id="testinterfacemethod-remarks"></a>
+
+#### Remarks
 
 Here are some remarks about the method
 
 ## Call Signature Details
 
-### (event: 'testCallSignature', listener: (input: unknown) => void): any {#\_call\_-callsignature}
+<a id="_call_-callsignature"></a>
+
+### (event: 'testCallSignature', listener: (input: unknown) => void): any
 
 Test interface event call signature
 
-#### Signature {#\_call\_-signature}
+<a id="_call_-signature"></a>
+
+#### Signature
 
 ```typescript
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
 ```
 
-#### Remarks {#\_call\_-remarks}
+<a id="_call_-remarks"></a>
+
+#### Remarks
 
 Here are some remarks about the event call signature
 
-### (event: 'anotherTestCallSignature', listener: (input: number) => string): number {#\_call\_\_1-callsignature}
+<a id="_call__1-callsignature"></a>
+
+### (event: 'anotherTestCallSignature', listener: (input: number) => string): number
 
 Another example call signature
 
-#### Signature {#\_call\_\_1-signature}
+<a id="_call__1-signature"></a>
+
+#### Signature
 
 ```typescript
 (event: 'anotherTestCallSignature', listener: (input: number) => string): number;
 ```
 
-#### Remarks {#\_call\_\_1-remarks}
+<a id="_call__1-remarks"></a>
+
+#### Remarks
 
 Here are some remarks about the event call signature
 
-## See Also {#testinterface-see-also}
+<a id="testinterface-see-also"></a>
+
+## See Also
 
 [testInterfaceMethod()](/test-suite-a/testinterface-interface#testinterfacemethod-methodsignature)
 

@@ -4,19 +4,27 @@
 
 Test Enum
 
-## Signature {#testenum-signature}
+<a id="testenum-signature"></a>
+
+## Signature
 
 ```typescript
 export declare enum TestEnum
 ```
 
-## Remarks {#testenum-remarks}
+<a id="testenum-remarks"></a>
+
+## Remarks
 
 Here are some remarks about the enum
 
-## Examples {#testenum-examples}
+<a id="testenum-examples"></a>
 
-### Example 1 {#testenum-example1}
+## Examples
+
+<a id="testenum-example1"></a>
+
+### Example 1
 
 Some example
 
@@ -24,7 +32,9 @@ Some example
 const foo = TestEnum.TestEnumValue1
 ```
 
-### Example 2 {#testenum-example2}
+<a id="testenum-example2"></a>
+
+### Example 2
 
 Another example
 
@@ -40,44 +50,62 @@ const bar = TestEnum.TestEnumValue2
 | [TestEnumValue2](/test-suite-a/testenum-enum#testenumvalue2-enummember) | Test enum value 2 (number) |
 | [TestEnumValue3](/test-suite-a/testenum-enum#testenumvalue3-enummember) | Test enum value 3 (default) |
 
-### TestEnumValue1 {#testenumvalue1-enummember}
+<a id="testenumvalue1-enummember"></a>
+
+### TestEnumValue1
 
 Test enum value 1 (string)
 
-#### Signature {#testenumvalue1-signature}
+<a id="testenumvalue1-signature"></a>
+
+#### Signature
 
 ```typescript
 TestEnumValue1 = "test-enum-value-1"
 ```
 
-#### Remarks {#testenumvalue1-remarks}
+<a id="testenumvalue1-remarks"></a>
+
+#### Remarks
 
 Here are some remarks about the enum value
 
-### TestEnumValue2 {#testenumvalue2-enummember}
+<a id="testenumvalue2-enummember"></a>
+
+### TestEnumValue2
 
 Test enum value 2 (number)
 
-#### Signature {#testenumvalue2-signature}
+<a id="testenumvalue2-signature"></a>
+
+#### Signature
 
 ```typescript
 TestEnumValue2 = 3
 ```
 
-#### Remarks {#testenumvalue2-remarks}
+<a id="testenumvalue2-remarks"></a>
+
+#### Remarks
 
 Here are some remarks about the enum value
 
-### TestEnumValue3 {#testenumvalue3-enummember}
+<a id="testenumvalue3-enummember"></a>
+
+### TestEnumValue3
 
 Test enum value 3 (default)
 
-#### Signature {#testenumvalue3-signature}
+<a id="testenumvalue3-signature"></a>
+
+#### Signature
 
 ```typescript
 TestEnumValue3 = 4
 ```
 
-#### Remarks {#testenumvalue3-remarks}
+<a id="testenumvalue3-remarks"></a>
+
+#### Remarks
 
 Here are some remarks about the enum value

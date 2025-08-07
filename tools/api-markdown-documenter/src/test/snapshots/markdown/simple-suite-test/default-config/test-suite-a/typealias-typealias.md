@@ -4,12 +4,16 @@
 
 Test Type-Alias
 
-## Signature {#typealias-signature}
+<a id="typealias-signature"></a>
+
+## Signature
 
 ```typescript
 export type TypeAlias = string;
 ```
 
-## Remarks {#typealias-remarks}
+<a id="typealias-remarks"></a>
+
+## Remarks
 
 Here are some remarks about the type alias

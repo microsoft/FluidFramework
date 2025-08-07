@@ -2,7 +2,9 @@
 
 Test Mapped Type, using [TestEnum](docs/test-suite-a/testenum-enum)
 
-### Signature {#testmappedtype-signature}
+<a id="testmappedtype-signature"></a>
+
+### Signature
 
 ```typescript
 export type TestMappedType = {
@@ -10,6 +12,8 @@ export type TestMappedType = {
 };
 ```
 
-### Remarks {#testmappedtype-remarks}
+<a id="testmappedtype-remarks"></a>
+
+### Remarks
 
 Here are some remarks about the mapped type

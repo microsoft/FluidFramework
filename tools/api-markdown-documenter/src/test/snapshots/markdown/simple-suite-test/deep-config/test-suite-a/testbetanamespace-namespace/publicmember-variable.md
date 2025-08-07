@@ -4,7 +4,9 @@
 
 **WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
-## Signature {#publicmember-signature}
+<a id="publicmember-signature"></a>
+
+## Signature
 
 ```typescript
 publicMember = "public"

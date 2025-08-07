@@ -4,7 +4,9 @@
 
 Test function that returns an inline type
 
-## Signature {#testfunctionreturninginlinetype-signature}
+<a id="testfunctionreturninginlinetype-signature"></a>
+
+## Signature
 
 ```typescript
 export declare function testFunctionReturningInlineType(): {
@@ -13,7 +15,9 @@ export declare function testFunctionReturningInlineType(): {
 };
 ```
 
-## Returns {#testfunctionreturninginlinetype-returns}
+<a id="testfunctionreturninginlinetype-returns"></a>
+
+## Returns
 
 An inline type
 

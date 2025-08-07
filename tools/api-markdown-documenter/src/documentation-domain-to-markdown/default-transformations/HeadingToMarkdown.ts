@@ -6,13 +6,16 @@
 import type {
 	BlockContent as MdastBlockContent,
 	Break as MdastBreak,
-	Heading as MdastHeading,
-	Html as MdastHtml,
-	Strong as MdastStrong,
+	PhrasingContent as MdastPhrasingContent,
 } from "mdast";
 
 import type { SectionHeading } from "../../mdast/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
+
+/**
+ * Line break singleton.
+ */
+const lineBreak: MdastBreak = { type: "break" };
 
 /**
  * Markdown supports heading levels from 1 to 6, corresponding to HTML's `<h1>` to `<h6>`.
@@ -46,27 +49,42 @@ function transformAsHeading(
 	headingNode: SectionHeading,
 	headingLevel: 1 | 2 | 3 | 4 | 5 | 6,
 ): MdastBlockContent[] {
-	let headingText: string = headingNode.title;
+	const result: MdastBlockContent[] = [];
 	if (headingNode.id !== undefined) {
-		headingText = `${headingText} {#${headingNode.id}}`;
+		result.push({
+			type: "html",
+			value: `<a id="${headingNode.id}"></a>`,
+		});
 	}
 
-	const heading: MdastHeading = {
+	result.push({
 		type: "heading",
 		depth: headingLevel,
 		children: [
 			{
 				type: "text",
-				value: headingText,
+				value: headingNode.title,
 			},
 		],
-	};
+	});
 
-	return [heading];
+	return result;
 }
 
 function transformAsBoldText(headingNode: SectionHeading): MdastBlockContent[] {
-	const boldText: MdastStrong = {
+	const body: MdastPhrasingContent[] = [];
+
+	if (headingNode.id !== undefined) {
+		body.push(
+			{
+				type: "html",
+				value: `<a id="${headingNode.id}"></a>`,
+			},
+			lineBreak,
+		);
+	}
+
+	body.push({
 		type: "strong",
 		children: [
 			{
@@ -74,26 +92,12 @@ function transformAsBoldText(headingNode: SectionHeading): MdastBlockContent[] {
 				value: headingNode.title,
 			},
 		],
-	};
+	});
 
-	if (headingNode.id === undefined) {
-		return [
-			{
-				type: "paragraph",
-				children: [boldText],
-			},
-		];
-	}
-
-	const anchorHtml: MdastHtml = {
-		type: "html",
-		value: `<a id="${headingNode.id}"></a>`,
-	};
-	const lineBreak: MdastBreak = { type: "break" };
 	return [
 		{
 			type: "paragraph",
-			children: [anchorHtml, lineBreak, boldText],
+			children: body,
 		},
 	];
 }

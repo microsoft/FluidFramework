@@ -2,13 +2,17 @@
 
 Overrides [virtualMethod()](docs/test-suite-a/testabstractclass-virtualmethod-method).
 
-### Signature {#virtualmethod-signature}
+<a id="virtualmethod-signature"></a>
+
+### Signature
 
 ```typescript
 /** @override */
 protected virtualMethod(): number;
 ```
 
-### Returns {#virtualmethod-returns}
+<a id="virtualmethod-returns"></a>
+
+### Returns
 
 **Return type**: number

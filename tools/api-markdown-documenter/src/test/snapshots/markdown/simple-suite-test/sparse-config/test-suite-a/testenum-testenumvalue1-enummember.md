@@ -2,12 +2,16 @@
 
 Test enum value 1 (string)
 
-### Signature {#testenumvalue1-signature}
+<a id="testenumvalue1-signature"></a>
+
+### Signature
 
 ```typescript
 TestEnumValue1 = "test-enum-value-1"
 ```
 
-### Remarks {#testenumvalue1-remarks}
+<a id="testenumvalue1-remarks"></a>
+
+### Remarks
 
 Here are some remarks about the enum value

@@ -4,7 +4,9 @@
 
 Test interface that extends other interfaces
 
-## Signature {#testinterfaceextendingotherinterfaces-signature}
+<a id="testinterfaceextendingotherinterfaces-signature"></a>
+
+## Signature
 
 ```typescript
 export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter<number>
@@ -12,7 +14,9 @@ export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, Te
 
 **Extends**: [TestInterface](/test-suite-a/testinterface-interface/), [TestMappedType](/test-suite-a/testmappedtype-typealias/), [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface/)\<number>
 
-## Remarks {#testinterfaceextendingotherinterfaces-remarks}
+<a id="testinterfaceextendingotherinterfaces-remarks"></a>
+
+## Remarks
 
 Here are some remarks about the interface
 
@@ -22,7 +26,9 @@ Here are some remarks about the interface
 | - | - | - |
 | [testMethod(input)](/test-suite-a/testinterfaceextendingotherinterfaces-interface/testmethod-methodsignature) | number | Test interface method accepting a string and returning a number. |
 
-## See Also {#testinterfaceextendingotherinterfaces-see-also}
+<a id="testinterfaceextendingotherinterfaces-see-also"></a>
+
+## See Also
 
 - [TestInterface](/test-suite-a/testinterface-interface/)
 - [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface/)

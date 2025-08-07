@@ -4,7 +4,9 @@
 
 Test interface that extends other interfaces
 
-## Signature {#testinterfaceextendingotherinterfaces-signature}
+<a id="testinterfaceextendingotherinterfaces-signature"></a>
+
+## Signature
 
 ```typescript
 export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter<number>
@@ -12,7 +14,9 @@ export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, Te
 
 **Extends**: [TestInterface](/test-suite-a/testinterface-interface), [TestMappedType](/test-suite-a/testmappedtype-typealias), [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)\<number>
 
-## Remarks {#testinterfaceextendingotherinterfaces-remarks}
+<a id="testinterfaceextendingotherinterfaces-remarks"></a>
+
+## Remarks
 
 Here are some remarks about the interface
 
@@ -24,33 +28,45 @@ Here are some remarks about the interface
 
 ## Method Details
 
-### testMethod {#testmethod-methodsignature}
+<a id="testmethod-methodsignature"></a>
+
+### testMethod
 
 Test interface method accepting a string and returning a number.
 
-#### Signature {#testmethod-signature}
+<a id="testmethod-signature"></a>
+
+#### Signature
 
 ```typescript
 testMethod(input: string): number;
 ```
 
-#### Remarks {#testmethod-remarks}
+<a id="testmethod-remarks"></a>
+
+#### Remarks
 
 Here are some remarks about the method
 
-#### Parameters {#testmethod-parameters}
+<a id="testmethod-parameters"></a>
+
+#### Parameters
 
 | Parameter | Type | Description |
 | - | - | - |
 | input | string | A string |
 
-#### Returns {#testmethod-returns}
+<a id="testmethod-returns"></a>
+
+#### Returns
 
 A number
 
 **Return type**: number
 
-## See Also {#testinterfaceextendingotherinterfaces-see-also}
+<a id="testinterfaceextendingotherinterfaces-see-also"></a>
+
+## See Also
 
 - [TestInterface](/test-suite-a/testinterface-interface)
 - [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)

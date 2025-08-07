@@ -6,7 +6,9 @@ Test Constant
 
 **WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
-## Signature {#testconst-signature}
+<a id="testconst-signature"></a>
+
+## Signature
 
 ```typescript
 TestConst = "Hello world!"

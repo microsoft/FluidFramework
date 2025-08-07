@@ -2,24 +2,32 @@
 
 Test function
 
-### Signature {#testfunction-signature}
+<a id="testfunction-signature"></a>
+
+### Signature
 
 ```typescript
 function testFunction(testParameter: number): number;
 ```
 
-### Parameters {#testfunction-parameters}
+<a id="testfunction-parameters"></a>
+
+### Parameters
 
 | Parameter | Type | Description |
 | - | - | - |
 | testParameter | number | |
 
-### Returns {#testfunction-returns}
+<a id="testfunction-returns"></a>
+
+### Returns
 
 A number
 
 **Return type**: number
 
-### Throws {#testfunction-throws}
+<a id="testfunction-throws"></a>
+
+### Throws
 
 An Error

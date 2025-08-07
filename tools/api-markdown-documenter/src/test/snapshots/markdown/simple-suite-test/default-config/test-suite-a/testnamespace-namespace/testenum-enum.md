@@ -4,7 +4,9 @@
 
 Test Enum
 
-## Signature {#testenum-signature}
+<a id="testenum-signature"></a>
+
+## Signature
 
 ```typescript
 enum TestEnum
@@ -17,21 +19,29 @@ enum TestEnum
 | [TestEnumValue1](/test-suite-a/testnamespace-namespace/testenum-enum#testenumvalue1-enummember) | Test enum value 1 |
 | [TestEnumValue2](/test-suite-a/testnamespace-namespace/testenum-enum#testenumvalue2-enummember) | Test enum value 2 |
 
-### TestEnumValue1 {#testenumvalue1-enummember}
+<a id="testenumvalue1-enummember"></a>
+
+### TestEnumValue1
 
 Test enum value 1
 
-#### Signature {#testenumvalue1-signature}
+<a id="testenumvalue1-signature"></a>
+
+#### Signature
 
 ```typescript
 TestEnumValue1 = 0
 ```
 
-### TestEnumValue2 {#testenumvalue2-enummember}
+<a id="testenumvalue2-enummember"></a>
+
+### TestEnumValue2
 
 Test enum value 2
 
-#### Signature {#testenumvalue2-signature}
+<a id="testenumvalue2-signature"></a>
+
+#### Signature
 
 ```typescript
 TestEnumValue2 = 1

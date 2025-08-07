@@ -6,7 +6,9 @@ Test interface
 
 **WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
-## Signature {#testinterface-signature}
+<a id="testinterface-signature"></a>
+
+## Signature
 
 ```typescript
 interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum>
@@ -28,13 +30,17 @@ interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum>
 
 ## Property Details
 
-### testInterfaceProperty {#testinterfaceproperty-propertysignature}
+<a id="testinterfaceproperty-propertysignature"></a>
+
+### testInterfaceProperty
 
 Test interface property
 
 **WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
-#### Signature {#testinterfaceproperty-signature}
+<a id="testinterfaceproperty-signature"></a>
+
+#### Signature
 
 ```typescript
 testInterfaceProperty: boolean;
@@ -44,13 +50,17 @@ testInterfaceProperty: boolean;
 
 ## Method Details
 
-### testInterfaceMethod {#testinterfacemethod-methodsignature}
+<a id="testinterfacemethod-methodsignature"></a>
+
+### testInterfaceMethod
 
 Test interface method
 
 **WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
-#### Signature {#testinterfacemethod-signature}
+<a id="testinterfacemethod-signature"></a>
+
+#### Signature
 
 ```typescript
 testInterfaceMethod(): void;

@@ -4,7 +4,9 @@ A test abstract getter property.
 
 @escapedTag
 
-### Signature {#abstractpropertygetter-signature}
+<a id="abstractpropertygetter-signature"></a>
+
+### Signature
 
 ```typescript
 abstract get abstractPropertyGetter(): TestMappedType;
