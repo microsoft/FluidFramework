@@ -255,6 +255,30 @@ function getLocalUnscopedPackageName(packageJson: PackageJson): string {
 	return unscopedPackageName;
 }
 
+/**
+ * External-facing API levels, ordered from most restrictive to least restrictive.
+ *
+ * @remarks
+ * This order is critical as alpha should include beta should include public.
+ * Legacy is separate and should not be included in any other level. But it
+ * may include public.
+ *
+ * ```
+ * (legacyPublic) -> (legacyBeta) -> (legacyAlpha)
+ *       ^                ^                ^
+ *       |                |                |
+ *    (public)    ->    (beta)    ->    (alpha)
+ * ```
+ */
+const apiLevels: readonly Exclude<ApiLevel, typeof ApiLevel.internal>[] = [
+	ApiLevel.public,
+	ApiLevel.legacyPublic,
+	ApiLevel.beta,
+	ApiLevel.legacyBeta,
+	ApiLevel.alpha,
+	ApiLevel.legacyAlpha,
+] as const;
+
 function getOutputConfiguration(
 	flags: Options & { node10TypeCompat: boolean },
 	packageJson: PackageJson,
@@ -277,6 +301,11 @@ function getOutputConfiguration(
 
 	const pathPrefix = getOutPathPrefix(flags, packageJson).replace(/\\/g, "/");
 
+	// Note: the order below is significant, as it determines which outfile will take precedence if multiple
+	// API levels are mapped to the same outfile.
+	// The levels are ordered from most restrictive to least restrictive, such that the least restrictive takes precedence
+	// in the case of a collision.
+	// This order matches that of the `apiLevels` array above.
 	const outFileToApiLevelEntries: [string, ApiLevel][] = [];
 	if (outFilePublic !== undefined && outFilePublic !== "none") {
 		outFileToApiLevelEntries.push([outFilePublic, ApiLevel.public]);
@@ -432,21 +461,6 @@ async function generateEntrypoints(
 	const packageDocumentationHeader = getPackageDocumentationText(mainSourceFile);
 	const newFileHeader = `${generatedHeader}${packageDocumentationHeader}`;
 
-	// This order is critical as alpha should include beta should include public.
-	// Legacy is separate and should not be included in any other level. But it
-	// may include public.
-	//   (legacyPublic) -> (legacyBeta)    -> (legacyAlpha)
-	//         ^                ^                  ^
-	//         |                |                  |
-	//      (public)    ->    (beta)       ->    (alpha)
-	const apiLevels: readonly Exclude<ApiLevel, typeof ApiLevel.internal>[] = [
-		ApiLevel.public,
-		ApiLevel.legacyPublic,
-		ApiLevel.beta,
-		ApiLevel.legacyBeta,
-		ApiLevel.alpha,
-		ApiLevel.legacyAlpha,
-	] as const;
 	const commonNamedExports: Omit<ExportSpecifierStructure, "kind">[] = [];
 
 	if (exports.unknown.size > 0) {
