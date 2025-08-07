@@ -238,11 +238,6 @@ describeCompat("Layer compatibility validation", "NoCompat", (getTestObjectProvi
 			layer1: "DataStore",
 			layer2: "Runtime",
 		},
-		// This will be enabled once Runtime / Driver compatibility enforcement is implemented - AB#33773.
-		// {
-		// 	layer1: "Runtime",
-		// 	layer2: "Driver",
-		// },
 	];
 
 	for (const { layer1, layer2 } of layerCombinations) {
@@ -296,6 +291,12 @@ describeCompat("Layer compatibility validation", "NoCompat", (getTestObjectProvi
 				const expectedErrorEvents: ExpectedEvents = [
 					{ eventName: "fluid:telemetry:Container:ContainerDispose", errorType: "usageError" },
 				];
+
+				// Loader layer validates Driver compatibility during container creation, so if it fails,
+				// there is no container to dispose of and we won't get the dispose event.
+				if (layer1 === "Loader" && layer2 === "Driver") {
+					expectedErrorEvents.pop();
+				}
 
 				// In case of validating Runtime and DataStore, we expect one of the following addition error events
 				// to be logged before the container dispose event:

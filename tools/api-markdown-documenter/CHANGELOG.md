@@ -1,5 +1,24 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.22.0
+
+### Documentation Domain has been removed
+
+`DocumentationNode` and its implementations have been removed.
+Their usage has been replaced with [mdast](https://github.com/syntax-tree/mdast) directly.
+
+The transformation to Markdown and HTML still exist, but will be removed soon.
+
+### `DocumentNode` renamed to `ApiDocument`
+
+It is no longer a `unist` node, and is now an interface rather than a class.
+Its "children" property has also been renamed to "contents`.
+
+### `DocumentNode` renamed to `ApiDocument`
+
+It is no longer a `unist` node, and is now an interface rather than a class.
+Its "children" property has also been renamed to "contents`.
+
 ## 0.21.0
 
 ### Add DocumentationNode -> mdast transformation layer

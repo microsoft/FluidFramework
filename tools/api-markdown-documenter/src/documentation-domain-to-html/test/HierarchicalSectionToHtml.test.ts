@@ -3,31 +3,35 @@
  * Licensed under the MIT License.
  */
 
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
 import { h } from "hastscript";
 
-import {
-	HeadingNode,
-	HorizontalRuleNode,
-	ParagraphNode,
-	SectionNode,
-} from "../../documentation-domain/index.js";
+import type { Section } from "../../mdast/index.js";
 
 import { assertTransformation } from "./Utilities.js";
 
 describe("HierarchicalSection HTML rendering tests", () => {
 	it("Simple section", () => {
-		const input = new SectionNode(
-			[
-				ParagraphNode.createFromPlainText("Foo"),
-				HorizontalRuleNode.Singleton,
-				ParagraphNode.createFromPlainText("Bar"),
+		const input: Section = {
+			type: "section",
+			children: [
+				{
+					type: "paragraph",
+					children: [{ type: "text", value: "Foo" }],
+				},
+				{
+					type: "thematicBreak",
+				},
+				{
+					type: "paragraph",
+					children: [{ type: "text", value: "Bar" }],
+				},
 			],
-			/* heading: */ new HeadingNode("Hello World", /* id: */ "heading-id"),
-		);
+			heading: {
+				type: "sectionHeading",
+				title: "Hello World",
+				id: "heading-id",
+			},
+		};
 
 		const expected = h("section", [
 			h("h1", { id: "heading-id" }, "Hello World"),
@@ -40,25 +44,49 @@ describe("HierarchicalSection HTML rendering tests", () => {
 	});
 
 	it("Nested section", () => {
-		const input = new SectionNode(
-			[
-				new SectionNode(
-					[ParagraphNode.createFromPlainText("Foo")],
-					/* heading: */ new HeadingNode("Sub-Heading 1", /* id: */ "sub-heading-1"),
-				),
-
-				new SectionNode(
-					[
-						new SectionNode(
-							[ParagraphNode.createFromPlainText("Bar")],
-							/* heading: */ new HeadingNode("Sub-Heading 2b"),
-						),
+		const input: Section = {
+			type: "section",
+			children: [
+				{
+					type: "section",
+					children: [
+						{
+							type: "paragraph",
+							children: [{ type: "text", value: "Foo" }],
+						},
 					],
-					/* heading: */ undefined,
-				),
+					heading: {
+						type: "sectionHeading",
+						title: "Sub-Heading 1",
+						id: "sub-heading-1",
+					},
+				},
+
+				{
+					type: "section",
+					children: [
+						{
+							type: "section",
+							children: [
+								{
+									type: "paragraph",
+									children: [{ type: "text", value: "Bar" }],
+								},
+							],
+							heading: {
+								type: "sectionHeading",
+								title: "Sub-Heading 2b",
+							},
+						},
+					],
+				},
 			],
-			/* heading: */ new HeadingNode("Root Heading", /* id: */ "root-heading"),
-		);
+			heading: {
+				type: "sectionHeading",
+				title: "Root Heading",
+				id: "root-heading",
+			},
+		};
 
 		const expected = h("section", [
 			h("h1", { id: "root-heading" }, "Root Heading"),

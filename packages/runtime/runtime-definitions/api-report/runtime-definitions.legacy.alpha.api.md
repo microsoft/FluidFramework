@@ -419,6 +419,9 @@ export interface LocalAttributionKey {
 }
 
 // @alpha @legacy
+export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
+
+// @alpha @legacy
 export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry2>;
 
 // @alpha @legacy

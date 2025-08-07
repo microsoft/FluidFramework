@@ -147,9 +147,7 @@ export function prepareConnectedPresence(
 } {
 	// Set runtime to connected state
 	runtime.clientId = clientConnectionId;
-	// TODO: runtime.connected has been hacked in past to lie about true connection.
-	// This will need to be updated to an alternate status provider.
-	runtime.connected = true;
+	runtime.joined = true;
 
 	logger?.registerExpectedEvent({ eventName: "Presence:PresenceInstantiated" });
 

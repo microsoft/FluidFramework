@@ -14,7 +14,7 @@ import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunk
 import { updateShapesAndIdentifiersEncoding } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import type {
 	BufferFormat,
-	EncoderCache,
+	EncoderContext,
 	FieldEncoder,
 	NodeEncoder,
 	// eslint-disable-next-line import/no-internal-modules
@@ -34,13 +34,13 @@ import { testIdCompressor } from "../../../utils.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export function checkNodeEncode(
-	shape: NodeEncoder,
-	cache: EncoderCache,
+	nodeEncoder: NodeEncoder,
+	context: EncoderContext,
 	tree: JsonableTree,
 ): BufferFormat {
-	const buffer: BufferFormat = [shape.shape];
+	const buffer: BufferFormat = [nodeEncoder.shape];
 	const cursor = cursorForJsonableTreeNode(tree);
-	shape.encodeNode(cursor, cache, buffer);
+	nodeEncoder.encodeNode(cursor, context, buffer);
 
 	// Check round-trip
 	checkDecode([buffer], [[tree]]);
@@ -49,14 +49,14 @@ export function checkNodeEncode(
 }
 
 export function checkFieldEncode(
-	shape: FieldEncoder,
-	cache: EncoderCache,
+	fieldEncoder: FieldEncoder,
+	context: EncoderContext,
 	tree: JsonableTree[],
 	idCompressor?: IIdCompressor,
 ): BufferFormat {
-	const buffer: BufferFormat = [shape.shape];
+	const buffer: BufferFormat = [fieldEncoder.shape];
 	const cursor = cursorForJsonableTreeField(tree);
-	shape.encodeField(cursor, cache, buffer);
+	fieldEncoder.encodeField(cursor, context, buffer);
 
 	// Check round-trip
 	checkDecode([buffer], [tree], idCompressor);

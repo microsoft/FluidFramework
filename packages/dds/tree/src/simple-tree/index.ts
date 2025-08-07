@@ -54,7 +54,11 @@ export {
 	type FlexList,
 	type FlexListToUnion,
 	type ExtractItemType,
+	walkNodeSchema,
+	walkAllowedTypes,
+	type SchemaVisitor,
 } from "./core/index.js";
+export { walkFieldSchema } from "./walkFieldSchema.js";
 export type { UnsafeUnknownSchema, Insertable } from "./unsafeUnknownSchema.js";
 export {
 	type ITree,
@@ -178,7 +182,7 @@ export {
 	type UnannotateImplicitFieldSchema,
 	FieldKind,
 	FieldSchema,
-	type FieldSchemaAlpha,
+	FieldSchemaAlpha,
 	type InsertableTreeFieldFromImplicitField,
 	type DefaultProvider,
 	type FieldProps,
@@ -245,11 +249,3 @@ export {
 	nullSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
-export {
-	getAllowedContentDiscrepancies,
-	type FieldDiscrepancy,
-	comparePosetElements,
-	fieldRealizer,
-	type Realizer,
-	PosetComparisonResult,
-} from "./discrepancies.js";

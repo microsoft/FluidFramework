@@ -3,19 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	BlockContent as MdastBlockContent,
-	Root as MdastRoot,
-	RootContent as MdastRootContent,
-	PhrasingContent as MdastPhrasingContent,
-} from "mdast";
+import type { BlockContent, Root, RootContent as MdastRootContent } from "mdast";
 
-import type {
-	BlockContent,
-	DocumentNode,
-	PhrasingContent,
-	SectionContent,
-} from "../documentation-domain/index.js";
+import type { ApiDocument } from "../ApiDocument.js";
 
 import {
 	createTransformationContext,
@@ -24,7 +14,7 @@ import {
 import type { Transformation, TransformationConfiguration } from "./configuration/index.js";
 
 /**
- * Generates a Markdown AST from the provided {@link DocumentNode}.
+ * Generates a Markdown AST from the provided {@link ApiDocument}.
  *
  * @param document - The document to transform.
  * @param config - Markdown transformation configuration.
@@ -32,13 +22,13 @@ import type { Transformation, TransformationConfiguration } from "./configuratio
  * @public
  */
 export function documentToMarkdown(
-	document: DocumentNode,
+	document: ApiDocument,
 	config: TransformationConfiguration,
-): MdastRoot {
+): Root {
 	const transformationContext = createTransformationContext(config);
 
 	const transformedSections: MdastRootContent[] = [];
-	for (const section of document.children) {
+	for (const section of document.contents) {
 		transformedSections.push(...sectionContentToMarkdown(section, transformationContext));
 	}
 
@@ -49,7 +39,7 @@ export function documentToMarkdown(
 }
 
 /**
- * Generates a Markdown AST from the provided {@link SectionContent}.
+ * Generates a Markdown AST from the provided `BlockContent`.
  *
  * @param node - The node to transform.
  * @param config - Markdown transformation configuration.
@@ -57,62 +47,19 @@ export function documentToMarkdown(
  * @public
  */
 export function sectionContentToMarkdown(
-	node: SectionContent,
+	node: BlockContent,
 	context: TransformationContext,
 ): MdastRootContent[] {
 	const { transformations } = context;
 
-	const transformation = transformations[node.type] as Transformation<
-		SectionContent,
-		MdastRootContent[]
-	>;
-	if (transformation === undefined) {
-		throw new Error(`No transformation defined for node type: ${node.type}`);
+	// If the node is not a hierarchical section, then it is Markdown "block content" and can be returned directly.
+	if (node.type !== "section") {
+		return [node];
 	}
-	return transformation(node, context);
-}
-
-/**
- * Generates a Markdown AST from the provided {@link SectionContent}.
- *
- * @param node - The node to transform.
- * @param config - Markdown transformation configuration.
- *
- * @public
- */
-export function blockContentToMarkdown(
-	node: BlockContent,
-	context: TransformationContext,
-): [MdastBlockContent] {
-	const { transformations } = context;
 
 	const transformation = transformations[node.type] as Transformation<
 		BlockContent,
-		[MdastBlockContent]
-	>;
-	if (transformation === undefined) {
-		throw new Error(`No transformation defined for node type: ${node.type}`);
-	}
-	return transformation(node, context);
-}
-
-/**
- * Generates a Markdown AST from the provided {@link SectionContent}.
- *
- * @param node - The node to transform.
- * @param config - Markdown transformation configuration.
- *
- * @public
- */
-export function phrasingContentToMarkdown(
-	node: PhrasingContent,
-	context: TransformationContext,
-): [MdastPhrasingContent] {
-	const { transformations } = context;
-
-	const transformation = transformations[node.type] as Transformation<
-		PhrasingContent,
-		[MdastPhrasingContent]
+		MdastRootContent[]
 	>;
 	if (transformation === undefined) {
 		throw new Error(`No transformation defined for node type: ${node.type}`);

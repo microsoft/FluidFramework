@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import path from "node:path";
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
@@ -13,10 +14,15 @@ import {
 	type ForestRootId,
 	RevisionTagCodec,
 } from "../../../core/index.js";
+import {
+	makeDetachedFieldIndexCodec,
+	makeDetachedFieldIndexCodecFamily,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../core/tree/detachedFieldIndexCodecs.js";
 // eslint-disable-next-line import/no-internal-modules
-import { makeDetachedNodeToFieldCodec } from "../../../core/tree/detachedFieldIndexCodec.js";
+import type { FormatV1 } from "../../../core/tree/detachedFieldIndexFormatV1.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { Format } from "../../../core/tree/detachedFieldIndexFormat.js";
+import { version2, type FormatV2 } from "../../../core/tree/detachedFieldIndexFormatV2.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { DetachedFieldSummaryData } from "../../../core/tree/detachedFieldIndexTypes.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
@@ -31,16 +37,18 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 	createSnapshotCompressor,
+	assertIsSessionId,
 } from "../../utils.js";
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 
 const mintedTag = testIdCompressor.generateCompressedId();
 const finalizedTag = testIdCompressor.normalizeToOpSpace(mintedTag);
 
-const malformedIdCompressor = createIdCompressor();
-const malformedRevisionTagCodec = new RevisionTagCodec(malformedIdCompressor);
+const unfinalizedIdCompressor = createIdCompressor(
+	assertIsSessionId("00000000-0000-4000-b000-000000000000"),
+);
 
-const malformedData: [string, JsonCompatibleReadOnly][] = [
+const malformedData: readonly [string, JsonCompatibleReadOnly][] = [
 	[
 		"missing data",
 		{
@@ -51,7 +59,7 @@ const malformedData: [string, JsonCompatibleReadOnly][] = [
 	[
 		"incorrect version",
 		{
-			version: 2,
+			version: 999,
 			data: [],
 			maxId: -1,
 		},
@@ -80,17 +88,9 @@ const malformedData: [string, JsonCompatibleReadOnly][] = [
 			maxId: -1,
 		}),
 	],
-	[
-		"Unfinalized id",
-		{
-			version: 1,
-			data: [[malformedIdCompressor.generateCompressedId(), 2, 3]],
-			maxId: -1,
-		},
-	],
 ];
 
-const validData: [string, Format][] = [
+const validV1Data: readonly [string, FormatV1][] = [
 	[
 		"empty data",
 		{
@@ -124,11 +124,37 @@ const validData: [string, Format][] = [
 		},
 	],
 ];
+const validV2Data: readonly [string, FormatV2][] = [
+	...validV1Data.map(([name, data]): [string, FormatV2] => [name, { ...data, version: 2 }]),
+	[
+		"revision represented as a StableId",
+		{
+			version: 2,
+			data: [[testIdCompressor.decompress(mintedTag), 0, brand(1)]],
+			maxId: brand(-1),
+		},
+	],
+];
+const validData = new Map<number, readonly [string, FormatV1 | FormatV2][]>([
+	[1, validV1Data],
+	[2, validV2Data],
+]);
 
-export function generateTestCases(
-	idCompressor: IIdCompressor,
-): { name: string; data: DetachedFieldSummaryData }[] {
-	const revision = idCompressor.generateCompressedId();
+interface TestCase {
+	readonly name: string;
+	readonly data: DetachedFieldSummaryData;
+	/** The set of versions that this test case is valid for */
+	readonly validFor?: ReadonlySet<number>;
+	/** The id compressor to use for this test case */
+	readonly idCompressor: IIdCompressor;
+}
+
+function generateTestCases(
+	finalizedCompressor: IIdCompressor,
+	unfinalizedCompressor: IIdCompressor,
+): TestCase[] {
+	const finalizedRevision = finalizedCompressor.generateCompressedId();
+	const unfinalizedRevision = unfinalizedCompressor.generateCompressedId();
 	const maxId: ForestRootId = brand(42);
 	return [
 		{
@@ -137,13 +163,15 @@ export function generateTestCases(
 				maxId,
 				data: new Map(),
 			},
+			idCompressor: finalizedCompressor,
 		},
 		{
 			name: "single range with single node",
 			data: {
 				maxId,
-				data: new Map([[revision, new Map([[0, { root: 1 }]])]]),
+				data: new Map([[finalizedRevision, new Map([[0, { root: 1 }]])]]),
 			},
+			idCompressor: finalizedCompressor,
 		},
 		{
 			name: "multiple nodes that do not form a single range",
@@ -151,7 +179,7 @@ export function generateTestCases(
 				maxId,
 				data: new Map([
 					[
-						revision,
+						finalizedRevision,
 						new Map([
 							[2, { root: 1 }],
 							[0, { root: 2 }],
@@ -160,6 +188,7 @@ export function generateTestCases(
 					],
 				]),
 			},
+			idCompressor: finalizedCompressor,
 		},
 		{
 			name: "multiple nodes that form ranges",
@@ -167,7 +196,7 @@ export function generateTestCases(
 				maxId,
 				data: new Map([
 					[
-						revision,
+						finalizedRevision,
 						new Map([
 							[1, { root: 2 }],
 							[3, { root: 4 }],
@@ -178,11 +207,21 @@ export function generateTestCases(
 					],
 				]),
 			},
+			idCompressor: finalizedCompressor,
+		},
+		{
+			name: "Unfinalized id",
+			validFor: new Set([version2]),
+			data: {
+				maxId,
+				data: new Map([[unfinalizedRevision, new Map([[0, { root: brand(1) }]])]]),
+			},
+			idCompressor: unfinalizedCompressor,
 		},
 	];
 }
 
-describe("DetachedFieldIndex", () => {
+describe("DetachedFieldIndex Codecs", () => {
 	const options: CodecWriteOptions = {
 		jsonValidator: typeboxValidator,
 		oldestCompatibleClient: FluidClientVersion.v2_0,
@@ -203,48 +242,48 @@ describe("DetachedFieldIndex", () => {
 		};
 		assert.deepEqual(detachedFieldIndex.encode(), expected);
 	});
+
 	describe("round-trip through JSON", () => {
-		const codec = makeDetachedNodeToFieldCodec(
-			testRevisionTagCodec,
-			options,
+		for (const { name, data, idCompressor, validFor } of generateTestCases(
 			testIdCompressor,
-		);
-		for (const { name, data } of generateTestCases(testIdCompressor)) {
-			it(name, () => {
-				const encoded = codec.encode(data);
-				const decoded = codec.decode(encoded);
-				assert.deepEqual(decoded, data);
+			unfinalizedIdCompressor,
+		)) {
+			describe(name, () => {
+				const family = makeDetachedFieldIndexCodecFamily(
+					new RevisionTagCodec(idCompressor),
+					options,
+					idCompressor,
+				);
+				for (const version of family.getSupportedFormats()) {
+					if (validFor !== undefined && version !== undefined && !validFor.has(version)) {
+						continue;
+					}
+					it(`version ${version}`, () => {
+						const codec = family.resolve(version);
+						const encoded = codec.json.encode(data);
+						const decoded = codec.json.decode(encoded);
+						assert.deepEqual(decoded, data);
+					});
+				}
 			});
 		}
 	});
 	describe("loadData", () => {
-		describe("accepts correct data", () => {
-			for (const [name, data] of validData) {
-				it(name, () => {
-					const detachedFieldIndex = new DetachedFieldIndex(
-						"test",
-						idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
-						testRevisionTagCodec,
-						testIdCompressor,
-						options,
-					);
-					detachedFieldIndex.loadData(data as JsonCompatibleReadOnly);
-				});
-			}
-		});
+		const codec = makeDetachedFieldIndexCodec(testRevisionTagCodec, options, testIdCompressor);
+		for (const [version, cases] of validData) {
+			describe(`accepts correct version ${version} data`, () => {
+				for (const [name, data] of cases) {
+					it(name, () => {
+						codec.decode(data);
+					});
+				}
+			});
+		}
 		describe("throws on receiving malformed data", () => {
 			for (const [name, data] of malformedData) {
 				it(name, () => {
-					const id = idAllocatorFromMaxId() as IdAllocator<ForestRootId>;
-					const detachedFieldIndex = new DetachedFieldIndex(
-						"test",
-						id,
-						malformedRevisionTagCodec,
-						testIdCompressor,
-						options,
-					);
 					assert.throws(
-						() => detachedFieldIndex.loadData(data),
+						() => codec.decode(data),
 						"Expected malformed data to throw an error on decode, but it did not.",
 					);
 				});
@@ -252,21 +291,29 @@ describe("DetachedFieldIndex", () => {
 		});
 	});
 	describe("Snapshots", () => {
-		useSnapshotDirectory("detached-field-index");
 		const snapshotIdCompressor = createSnapshotCompressor();
-		const snapshotRevisionTagCodec = new RevisionTagCodec(snapshotIdCompressor);
-		const codec = makeDetachedNodeToFieldCodec(
-			snapshotRevisionTagCodec,
-			options,
-			testIdCompressor,
-		);
-
-		const testCases = generateTestCases(snapshotIdCompressor);
-
-		for (const { name, data: change } of testCases) {
-			it(name, () => {
-				const encoded = codec.encode(change);
-				takeJsonSnapshot(encoded as JsonCompatibleReadOnly);
+		for (const { name, data, idCompressor, validFor } of generateTestCases(
+			snapshotIdCompressor,
+			unfinalizedIdCompressor,
+		)) {
+			describe(name, () => {
+				const family = makeDetachedFieldIndexCodecFamily(
+					new RevisionTagCodec(idCompressor),
+					options,
+					idCompressor,
+				);
+				for (const version of family.getSupportedFormats()) {
+					if (validFor !== undefined && version !== undefined && !validFor.has(version)) {
+						continue;
+					}
+					const dir = path.join("detached-field-index", name, `V${version}`);
+					useSnapshotDirectory(dir);
+					it(`version ${version}`, () => {
+						const codec = family.resolve(version);
+						const encoded = codec.json.encode(data);
+						takeJsonSnapshot(encoded);
+					});
+				}
 			});
 		}
 	});

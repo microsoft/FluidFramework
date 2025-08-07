@@ -1,5 +1,9 @@
 # @fluid-tools/markdown-magic
 
+## 2.52.0
+
+Dependency updates only.
+
 ## 2.51.0
 
 Dependency updates only.
