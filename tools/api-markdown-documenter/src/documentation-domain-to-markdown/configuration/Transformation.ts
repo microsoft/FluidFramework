@@ -7,28 +7,25 @@ import type {
 	Nodes as MdastTree,
 	BlockContent as MdastBlockContent,
 	RootContent as MdastRootContent,
+	Nodes,
 } from "mdast";
 
-import type {
-	DocumentationNode,
-	SectionNode,
-	HeadingNode,
-} from "../../documentation-domain/index.js";
+import type { Section, SectionHeading } from "../../mdast/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import { headingToMarkdown, sectionToMarkdown } from "../default-transformations/index.js";
 
 /**
- * Transformations from {@link DocumentationNode}s to {@link https://github.com/syntax-tree/mdast | Markdown syntax tree}s.
+ * Transformations from documentation nodes to {@link https://github.com/syntax-tree/mdast | Markdown syntax tree}s.
  *
  * @public
  */
 export interface Transformations {
-	readonly ["heading"]: Transformation<HeadingNode, MdastBlockContent[]>;
-	readonly ["section"]: Transformation<SectionNode, MdastRootContent[]>;
+	readonly sectionHeading: Transformation<SectionHeading, MdastBlockContent[]>;
+	readonly section: Transformation<Section, MdastRootContent[]>;
 }
 
 /**
- * Transformation from a {@link DocumentationNode} to a {@link https://github.com/syntax-tree/mdast | Markdown syntax tree}.
+ * Transformation from a documentation node to a {@link https://github.com/syntax-tree/mdast | Markdown syntax tree}.
  *
  * @param node - The input node to be transformed.
  * @param context - Transformation context, including custom transformation implementations.
@@ -36,14 +33,14 @@ export interface Transformations {
  * @public
  */
 export type Transformation<
-	TIn extends DocumentationNode = DocumentationNode,
+	TIn extends Nodes | SectionHeading = Nodes | SectionHeading,
 	TOut extends MdastTree[] = [MdastTree],
 > = (node: TIn, context: TransformationContext) => TOut;
 
 /**
- * Default {@link DocumentationNode} to {@link https://github.com/syntax-tree/mdast | mdast} transformations.
+ * Default documentation node to {@link https://github.com/syntax-tree/mdast | mdast} transformations.
  */
 export const defaultTransformations: Transformations = {
-	heading: headingToMarkdown,
+	sectionHeading: headingToMarkdown,
 	section: sectionToMarkdown,
 };

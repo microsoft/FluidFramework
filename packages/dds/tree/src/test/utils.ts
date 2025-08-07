@@ -142,7 +142,6 @@ import {
 	type ImplicitFieldSchema,
 	type TreeViewConfiguration,
 	SchemaFactory,
-	toStoredSchema,
 	type TreeView,
 	type TreeBranchEvents,
 	type ITree,
@@ -152,6 +151,8 @@ import {
 	type SimpleNodeSchema,
 	type TreeNodeSchema,
 	getStoredSchema,
+	restrictiveStoredSchemaGenerationOptions,
+	toInitialSchema,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -693,7 +694,7 @@ export function validateTreeContent(tree: ITreeCheckout, content: TreeSimpleCont
 		fieldCursorFromInsertable<UnsafeUnknownSchema>(content.schema, content.initialTree),
 	);
 	assert.deepEqual(toJsonableTree(tree), contentReference);
-	expectSchemaEqual(tree.storedSchema, toStoredSchema(content.schema));
+	expectSchemaEqual(tree.storedSchema, toInitialSchema(content.schema));
 }
 export function validateTreeStoredContent(
 	tree: ITreeCheckout,
@@ -863,7 +864,7 @@ export function flexTreeViewWithContent(
 				content.schema,
 				content.initialTree,
 			),
-			schema: toStoredSchema(content.schema),
+			schema: toInitialSchema(content.schema),
 		},
 		args,
 	);
@@ -920,7 +921,7 @@ export const IdentifierSchema = sf.object("identifier-object", {
  */
 export function makeTreeFromJson(json: JsonCompatible, optionalRoot = false): ITreeCheckout {
 	return checkoutWithContent({
-		schema: toStoredSchema(
+		schema: toInitialSchema(
 			optionalRoot ? SchemaFactory.optional(JsonAsTree.Tree) : JsonAsTree.Tree,
 		),
 		initialTree: singleJsonCursor(json),
@@ -1392,7 +1393,7 @@ export function validateUsageError(expectedErrorMsg: string | RegExp): (error: E
 				: !expectedErrorMsg.test(error.message)
 		) {
 			throw new Error(
-				`Unexpected assertion thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
+				`Unexpected UsageError thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
 			);
 		}
 		return true;
@@ -1531,7 +1532,7 @@ export class TestSchemaRepository extends TreeStoredSchemaRepository {
 	 * @returns true iff update was performed.
 	 */
 	public tryUpdateTreeSchema(schema: SimpleNodeSchema & TreeNodeSchema): boolean {
-		const storedSchema = getStoredSchema(schema);
+		const storedSchema = getStoredSchema(schema, restrictiveStoredSchemaGenerationOptions);
 		const name: TreeNodeSchemaIdentifier = brand(schema.identifier);
 		const original = this.nodeSchema.get(name);
 		if (allowsTreeSuperset(this.policy, this, original, storedSchema)) {

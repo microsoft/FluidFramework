@@ -4,23 +4,20 @@
  */
 
 import type { Nodes as HastNodes } from "hast";
+import type { Nodes } from "mdast";
 
-import type {
-	DocumentationNode,
-	HeadingNode,
-	SectionNode,
-} from "../../documentation-domain/index.js";
+import type { SectionHeading, Section } from "../../mdast/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import { headingToHtml, sectionToHtml } from "../default-transformations/index.js";
 
 /**
- * Configuration for transforming {@link DocumentationNode}s to {@link https://github.com/syntax-tree/hast | hast},
+ * Configuration for transforming documentation to {@link https://github.com/syntax-tree/hast | hast},
  * specified by its "type".
  *
  * @remarks
  *
- * The system supplies a suite of default transformations for all {@link DocumentationNode} types exported by this library.
- * For any other custom {@link DocumentationNode}s, transformations must be specified or the system will throw an error
+ * The system supplies a suite of default transformations for all documentation node types exported by this library.
+ * For any other custom documentation nodes, transformations must be specified or the system will throw an error
  * when handling an unknown node kind.
  *
  * @public
@@ -29,14 +26,14 @@ import { headingToHtml, sectionToHtml } from "../default-transformations/index.j
 // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 export interface Transformations {
 	/**
-	 * Maps from a {@link DocumentationNode}'s "type" to a transformation implementation
+	 * Maps from a documentation node's "type" to a transformation implementation
 	 * for that kind of node.
 	 */
 	readonly [documentationNodeKind: string]: Transformation;
 }
 
 /**
- * Transformation from a {@link DocumentationNode} to a {@link https://github.com/syntax-tree/hast | HTML syntax tree}.
+ * Transformation from a documentation node to a {@link https://github.com/syntax-tree/hast | HTML syntax tree}.
  *
  * @param node - The input node to be transformed.
  * @param context - Transformation context, including custom transformation implementations.
@@ -44,14 +41,14 @@ export interface Transformations {
  * @public
  */
 export type Transformation = (
-	node: DocumentationNode,
+	node: Nodes | SectionHeading,
 	context: TransformationContext,
 ) => HastNodes;
 
 /**
- * Default {@link DocumentationNode} to {@link https://github.com/syntax-tree/hast | hast} transformations.
+ * Default documentation node to {@link https://github.com/syntax-tree/hast | hast} transformations.
  */
 export const defaultTransformations: Transformations = {
-	heading: (node, context) => headingToHtml(node as HeadingNode, context),
-	section: (node, context) => sectionToHtml(node as SectionNode, context),
+	sectionHeading: (node, context) => headingToHtml(node as SectionHeading, context),
+	section: (node, context) => sectionToHtml(node as Section, context),
 };

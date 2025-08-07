@@ -5,14 +5,15 @@
 
 import { h } from "hastscript";
 
-import { HeadingNode, SectionNode } from "../../documentation-domain/index.js";
+import type { Section } from "../../mdast/index.js";
 
 import { assertTransformation } from "./Utilities.js";
 
 describe("HierarchicalSection HTML rendering tests", () => {
 	it("Simple section", () => {
-		const input = new SectionNode(
-			[
+		const input: Section = {
+			type: "section",
+			children: [
 				{
 					type: "paragraph",
 					children: [{ type: "text", value: "Foo" }],
@@ -25,8 +26,12 @@ describe("HierarchicalSection HTML rendering tests", () => {
 					children: [{ type: "text", value: "Bar" }],
 				},
 			],
-			/* heading: */ new HeadingNode("Hello World", /* id: */ "heading-id"),
-		);
+			heading: {
+				type: "sectionHeading",
+				title: "Hello World",
+				id: "heading-id",
+			},
+		};
 
 		const expected = h("section", [
 			h("h1", { id: "heading-id" }, "Hello World"),
@@ -39,35 +44,49 @@ describe("HierarchicalSection HTML rendering tests", () => {
 	});
 
 	it("Nested section", () => {
-		const input = new SectionNode(
-			[
-				new SectionNode(
-					[
+		const input: Section = {
+			type: "section",
+			children: [
+				{
+					type: "section",
+					children: [
 						{
 							type: "paragraph",
 							children: [{ type: "text", value: "Foo" }],
 						},
 					],
-					/* heading: */ new HeadingNode("Sub-Heading 1", /* id: */ "sub-heading-1"),
-				),
+					heading: {
+						type: "sectionHeading",
+						title: "Sub-Heading 1",
+						id: "sub-heading-1",
+					},
+				},
 
-				new SectionNode(
-					[
-						new SectionNode(
-							[
+				{
+					type: "section",
+					children: [
+						{
+							type: "section",
+							children: [
 								{
 									type: "paragraph",
 									children: [{ type: "text", value: "Bar" }],
 								},
 							],
-							/* heading: */ new HeadingNode("Sub-Heading 2b"),
-						),
+							heading: {
+								type: "sectionHeading",
+								title: "Sub-Heading 2b",
+							},
+						},
 					],
-					/* heading: */ undefined,
-				),
+				},
 			],
-			/* heading: */ new HeadingNode("Root Heading", /* id: */ "root-heading"),
-		);
+			heading: {
+				type: "sectionHeading",
+				title: "Root Heading",
+				id: "root-heading",
+			},
+		};
 
 		const expected = h("section", [
 			h("h1", { id: "root-heading" }, "Root Heading"),
