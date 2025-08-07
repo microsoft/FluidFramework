@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { TestThrottlerHelper } from "@fluidframework/server-test-utils";
-import { Throttler } from "../throttler";
+import { Throttler } from "../../throttling";
 import { IThrottler, ThrottlingError } from "@fluidframework/server-services-core";
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import Sinon from "sinon";

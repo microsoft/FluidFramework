@@ -28,7 +28,7 @@ import {
 	CommonLocalThrottleConfigs,
 	type ILocalThrottleConfig,
 } from "..";
-import { RedisThrottleAndUsageStorageManager } from "../../redisThrottleAndUsageStorageManager";
+import { RedisThrottleAndUsageStorageManager } from "../../throttling";
 
 // Example 1: Basic Setup for a Medium-Scale Deployment
 export function createBasicHybridThrottler(
