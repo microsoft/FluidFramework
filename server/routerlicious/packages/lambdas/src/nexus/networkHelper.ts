@@ -4,7 +4,7 @@
  */
 
 import { getNetworkInformationFromIP } from "@fluidframework/server-services-client";
-import * as core from "@fluidframework/server-services-core";
+import type * as core from "@fluidframework/server-services-core";
 
 /**
  * Check the network information to determine if the socket should connect.
