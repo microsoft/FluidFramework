@@ -243,6 +243,12 @@ export interface LocalServerStressOptions {
 		 * If the current number of clients has reached the maximum, this probability is ignored.
 		 */
 		clientAddProbability: number;
+
+		/**
+		 *
+		 * The probability that a client will be restarted from its pending local state at any given operation.
+		 */
+		clientRestartFromPendingProbability: number;
 	};
 
 	/**
@@ -374,6 +380,7 @@ const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
 	clientJoinOptions: {
 		clientAddProbability: 0.01,
 		maxNumberOfClients: 6,
+		clientRestartFromPendingProbability: 0.01,
 	},
 	only: [],
 	skip: [],
@@ -1395,7 +1402,7 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 				options.clientJoinOptions !== undefined &&
 				validationClient.container.attachState !== AttachState.Detached &&
 				clients.length > 0 &&
-				random.bool(options.clientJoinOptions.clientAddProbability) &&
+				random.bool(options.clientJoinOptions.clientRestartFromPendingProbability) &&
 				// AB#45904: Clarify restart-from-pending behavior in staging mode
 				!anyClientInStaging
 			) {
