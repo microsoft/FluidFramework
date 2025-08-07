@@ -164,6 +164,18 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 	}
 
 	protected applyStashedOp(_content: unknown): void {
-		throw new Error("Not implemented");
+		const op = _content as ISignalOperation<T>;
+
+		switch (op.type) {
+			case "signal": {
+				this.notifyCore(op, true);
+				break;
+			}
+
+			default: {
+				throw new Error("Unknown operation");
+			}
+		}
+		this.submitLocalMessage(op);
 	}
 }
