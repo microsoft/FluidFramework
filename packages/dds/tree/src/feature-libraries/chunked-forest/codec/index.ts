@@ -11,5 +11,5 @@ export {
 	type FieldBatchEncodingContext,
 	fluidVersionToFieldBatchCodecWriteVersion,
 	type IncrementalEncoderDecoder,
-	ChunkReferenceId,
+	type ChunkReferenceId,
 } from "./codecs.js";

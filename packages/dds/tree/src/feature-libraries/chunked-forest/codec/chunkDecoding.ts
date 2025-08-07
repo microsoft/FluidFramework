@@ -17,7 +17,7 @@ import type {
 	Value,
 	TreeChunk,
 } from "../../../core/index.js";
-import { assertValidIndex } from "../../../util/index.js";
+import { assertValidIndex, brand } from "../../../util/index.js";
 import { BasicChunk } from "../basicChunk.js";
 import { emptyChunk } from "../emptyChunk.js";
 import { SequenceChunk } from "../sequenceChunk.js";
@@ -245,7 +245,9 @@ export class IncrementalChunkDecoder implements ChunkDecoder {
 			"incremental decoder not available for incremental field decoding",
 		);
 		const chunkReferenceId = readStreamNumber(stream);
-		const batch = this.cache.incrementalDecoder.getEncodedIncrementalChunk(chunkReferenceId);
+		const batch = this.cache.incrementalDecoder.getEncodedIncrementalChunk(
+			brand(chunkReferenceId),
+		);
 		assert(batch !== undefined, "Incremental chunk data missing");
 		const chunks = genericDecode(decoderLibrary, this.cache, batch, anyDecoder);
 		return aggregateChunks(chunks);

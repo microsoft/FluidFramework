@@ -349,12 +349,12 @@ export class InlineArrayEncoder
 	}
 }
 
-/*
+/**
  * Encodes the shape for a nested array as {@link EncodedNestedArray} shape.
  */
 export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> {
 	/**
-	 * @param innerShape - the shape of each item in this nested array.
+	 * @param innerShape - The shape of each item in this nested array.
 	 */
 	public constructor(public readonly innerShape: Shape) {
 		super();
@@ -383,7 +383,7 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> {
 /**
  * Encodes a field as a nested array with the {@link EncodedNestedArrayShape} shape.
  * @remarks
- * The fact this is also exposes a Shape is an implementation detail: that allows the shape it uses to be itself
+ * The fact this is also exposes a Shape is an implementation detail: it allows the shape it uses to be itself
  * which is an easy way to keep all the related code together without extra objects.
  */
 export class NestedArrayEncoder implements FieldEncoder {
@@ -524,23 +524,9 @@ export function encodeValue(
 }
 
 /**
- * Validates that incremental encoding is enabled and incrementalEncoder is.
- * @param shouldEncodeIncrementally - Whether incremental encoding should be used.
- * @param incrementalEncoder - The incremental encoder to use for encoding chunks.
- */
-function validateIncrementalEncodingEnabled(
-	shouldEncodeIncrementally: boolean,
-	incrementalEncoder: IncrementalEncoder | undefined,
-): asserts incrementalEncoder is IncrementalEncoder {
-	assert(
-		shouldEncodeIncrementally && incrementalEncoder !== undefined,
-		"incremental encoding must be enabled",
-	);
-}
-
-/**
  * Provides common contextual information during encoding, like schema and policy settings.
  * Also, provides a cache to avoid duplicating equivalent shapes during a batch of encode operations.
+ * @remarks
  * To avoid Shape duplication, any Shapes used in the encoding should either be:
  * - Singletons defined in a static scope.
  * - Cached in this object for future reuse such that all equivalent Shapes are deduplicated.
@@ -582,10 +568,7 @@ export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 		cursor: ITreeCursorSynchronous,
 		encoder: (chunk: TreeChunk) => BufferFormat,
 	): ChunkReferenceId[] {
-		validateIncrementalEncodingEnabled(
-			this.shouldEncodeIncrementally,
-			this.incrementalEncoder,
-		);
+		assert(this.incrementalEncoder !== undefined, "incremental encoding must be enabled");
 		// Encoder for the chunk that encodes its data using the provided encoder function and
 		// updates the encoded data for shapes and identifiers.
 		const chunkEncoder = (chunk: TreeChunk): EncodedFieldBatch => {

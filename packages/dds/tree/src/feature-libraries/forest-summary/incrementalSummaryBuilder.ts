@@ -9,7 +9,12 @@ import {
 	SummaryTreeBuilder,
 	type ReadAndParseBlob,
 } from "@fluidframework/runtime-utils/internal";
-import { setInNestedMap, tryGetFromNestedMap, type NestedMap } from "../../util/index.js";
+import {
+	brand,
+	setInNestedMap,
+	tryGetFromNestedMap,
+	type NestedMap,
+} from "../../util/index.js";
 import type {
 	ChunkReferenceId,
 	EncodedFieldBatch,
@@ -44,7 +49,8 @@ export type ForestSummaryTrackingState =
 	(typeof ForestSummaryTrackingState)[keyof typeof ForestSummaryTrackingState];
 
 /**
- * The properties of a chunk that is tracked for every summary. If a chunk doesn't change between summaries,
+ * The properties of a chunk that is tracked for every summary.
+ * If a chunk doesn't change between summaries,
  * these properties will be used to generate a summary handle for the chunk.
  */
 interface ChunkSummaryProperties {
@@ -69,7 +75,8 @@ interface TrackedSummaryProperties {
 	 */
 	readonly summarySequenceNumber: number;
 	/**
-	 * The base path for the latest summary that was successful. This is used to generate summary handles.
+	 * The base path for the latest summary that was successful.
+	 * This is used to generate summary handles.
 	 */
 	readonly latestSummaryBasePath: string;
 	/**
@@ -86,8 +93,8 @@ interface TrackedSummaryProperties {
 	 */
 	readonly chunkSummaryPath: ChunkReferenceId[];
 	/**
-	 * The parent summary builder to use to build the incremental summary tree. When a chunk is being summarized,
-	 * it will add its summary to this builder against its reference ID.
+	 * The parent summary builder to use to build the incremental summary tree.
+	 * When a chunk is being summarized, it will add its summary to this builder against its reference ID.
 	 */
 	parentSummaryBuilder: SummaryTreeBuilder;
 }
@@ -141,8 +148,9 @@ function validateReadyToTrackSummary(
 /* eslint-disable jsdoc/check-indentation */
 /**
  * Tracks and builds the incremental summary tree for a forest where chunks that support incremental encoding are
- * stored in a separate tree in the summary. The summary tree for a chunk is self-sufficient and can be independently
- * loaded and used to reconstruct the chunk's contents without any additional context from its parent.
+ * stored in a separate tree in the summary.
+ * The summary tree for a chunk is self-sufficient and can be independently loaded and used to reconstruct the
+ * chunk's contents without any additional context from its parent.
  *
  * An example summary tree with incremental summary:
  *     Forest
@@ -173,7 +181,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	/**
 	 * The next reference ID to use for a chunk.
 	 */
-	private nextReferenceId: ChunkReferenceId = 0;
+	private nextReferenceId: ChunkReferenceId = brand(0);
 
 	/**
 	 * For a given summary sequence number, keeps track of a chunk's properties that will be used to generate
@@ -336,7 +344,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			);
 		} else {
 			// Generate a new reference ID for the chunk.
-			chunkReferenceId = this.nextReferenceId++;
+			chunkReferenceId = brand(this.nextReferenceId++);
 			// Add the reference ID of this chunk to the chunk summary path and use the path as the summary path
 			// for the chunk in its summary properties.
 			// This is done before encoding the chunk so that the summary path is updated correctly when encoding
@@ -407,8 +415,8 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	}
 
 	/**
-	 * Called to get the encoded contents of an incremental chunk with the given reference ID. This is typically used
-	 * when loading the forest to retrieve the contents of incremental chunks.
+	 * Called to get the encoded contents of an incremental chunk with the given reference ID.
+	 * This is typically used when loading the forest to retrieve the contents of incremental chunks.
 	 * @param referenceId - The reference ID of the chunk to retrieve.
 	 * @returns The encoded contents of the chunk.
 	 */

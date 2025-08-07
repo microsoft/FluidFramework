@@ -49,7 +49,7 @@ export const EncodedAnyShape = Type.Literal(0);
 
 /**
  * Encoded content is a {@link ChunkReferenceId}.
- * This represents the shape of a chunk that is encoded separately and is referenced by its reference id.
+ * This represents the shape of a chunk that is encoded separately and is referenced by its {@link ChunkReferenceId}.
  */
 export const EncodedIncrementalChunkShape = Type.Literal(0);
 

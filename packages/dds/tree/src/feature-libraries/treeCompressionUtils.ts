@@ -23,8 +23,8 @@ export enum TreeCompressionStrategy {
 }
 
 /**
- * This is an internal type that extends TreeCompressionStrategy. It is used to add compression
- * strategies that are not intended for public use just yet.
+ * This is an internal type that extends TreeCompressionStrategy.
+ * It is used to add compression strategies that are not intended for public use just yet.
  * @internal
  */
 export enum TreeCompressionStrategyExtended {

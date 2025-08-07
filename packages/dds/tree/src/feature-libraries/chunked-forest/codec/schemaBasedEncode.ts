@@ -37,9 +37,11 @@ import type { IncrementalEncoder } from "./codecs.js";
 import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
 
 /**
- * Encode data from `fieldBatch` in into an `EncodedChunk`. If `incrementalEncoder` is provided, fields that
- * support incremental encoding will encode their chunks separately via the `incrementalEncoder`. See
- * {@link IncrementalEncoder} for more details.
+ * Encode data from `fieldBatch` in into an `EncodedChunk`.
+ * @remarks
+ * If `incrementalEncoder` is provided,
+ * fields that support incremental encoding will encode their chunks separately via the `incrementalEncoder`.
+ * See {@link IncrementalEncoder} for more details.
  *
  * Optimized for encoded size and encoding performance.
  * TODO: This function should eventually also take in the root FieldSchema to more efficiently compress the nodes.

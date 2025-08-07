@@ -48,20 +48,20 @@ import { ForestIncrementalSummaryBuilder } from "./incrementalSummaryBuilder.js"
 import { TreeCompressionStrategyExtended } from "../treeCompressionUtils.js";
 
 /**
+ * The key for the tree that contains the overall forest's summary tree.
+ * This tree is added by the parent of the forest summarizer.
+ */
+export const forestSummaryKey = "Forest";
+
+/**
  * The key for the blob in the summary containing the forest's contents.
  */
 export const forestSummaryContentKey = "ForestTree";
-
-export const forestSummaryKey = "Forest";
 
 /**
  * Provides methods for summarizing and loading a forest.
  */
 export class ForestSummarizer implements Summarizable {
-	/**
-	 * The key for the tree that contains the overall forest's summary tree. This tree is added by the parent
-	 * of the forest summarizer.
-	 */
 	public readonly key = forestSummaryKey;
 
 	private readonly codec: ForestCodec;
@@ -100,13 +100,13 @@ export class ForestSummarizer implements Summarizable {
 
 	/**
 	 * Summarization of the forest's tree content.
+	 * @returns a summary tree containing the forest's tree content.
+	 * @remarks
 	 * If incremental summary is disabled, all the content will be added to a single summary blob.
-	 * If incremental summary is enabled, the summary will be a tree. See {@link ForestIncrementalSummaryBuilder}
-	 * for details of what this tree looks like.
+	 * If incremental summary is enabled, the summary will be a tree.
+	 * See {@link ForestIncrementalSummaryBuilder} for details of what this tree looks like.
 	 *
 	 * TODO: when perf matters, this should be replaced with a chunked async version using a binary format.
-	 *
-	 * @returns a summary tree containing the forest's tree content.
 	 */
 	public summarize(props: {
 		stringify: SummaryElementStringifier;
