@@ -118,6 +118,7 @@ export {
 	type InternalTreeNode,
 	type WithType,
 	type NodeChangedData,
+	type SchemaUpgrade,
 	// Types not really intended for public use, but used in links.
 	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
 	// Error: src/simple-tree/objectNode.ts:72:1 - (ae-unresolved-link) The @link reference could not be resolved: The package "@fluidframework/tree" does not have an export "TreeNodeApi"
@@ -171,6 +172,7 @@ export {
 	type UnannotateAllowedTypeOrLazyItem,
 	type UnannotateImplicitFieldSchema,
 	type UnannotateSchemaRecord,
+	type SchemaStaticsAlpha,
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,

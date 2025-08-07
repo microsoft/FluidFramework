@@ -30,18 +30,21 @@ function makeAnnotated(
 	};
 }
 
-function mockWalkAllowedTypes(
+function recordWalkAllowedTypes(
 	annotatedAllowedTypes: NormalizedAnnotatedAllowedTypes,
+	walkStagedAllowedTypes?: true,
 ): [TreeNodeSchema[], readonly NormalizedAnnotatedAllowedTypes[]] {
 	const visitedNodes: TreeNodeSchema[] = [];
 	const visitedAllowedTypes: NormalizedAnnotatedAllowedTypes[] = [];
 
-	const mockVisitor: SchemaVisitor = {
+	const visitor: SchemaVisitor = {
 		node: (schema) => visitedNodes.push(schema),
 		allowedTypes: (types) => visitedAllowedTypes.push(types),
+		allowedTypeFilter: (type) =>
+			type.metadata.stagedSchemaUpgrade === undefined || (walkStagedAllowedTypes ?? false),
 	};
 
-	walkAllowedTypes(annotatedAllowedTypes, mockVisitor);
+	walkAllowedTypes(annotatedAllowedTypes, visitor);
 
 	return [visitedNodes, visitedAllowedTypes];
 }
@@ -56,7 +59,7 @@ describe("walk schema", () => {
 			types: [annotated],
 		};
 
-		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes(annotatedTypes);
+		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(annotatedTypes);
 
 		assert.deepEqual(visitedNodes, [annotated.type]);
 		assert.deepEqual(visitedAllowedTypes, [annotatedTypes]);
@@ -69,7 +72,7 @@ describe("walk schema", () => {
 		);
 		const schema = sf.arrayAlpha("schema", annotatedObject);
 
-		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes(
+		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(
 			normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
 		);
 
@@ -94,7 +97,7 @@ describe("walk schema", () => {
 		);
 		const schema = sf.arrayAlpha("schema", annotatedObject);
 
-		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes(
+		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(
 			normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
 		);
 
@@ -119,7 +122,7 @@ describe("walk schema", () => {
 		const annotatedNumber = makeAnnotated(sf.number);
 		const schema = sf.arrayAlpha("schema", [annotatedNumber, annotatedString]);
 
-		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes(
+		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(
 			normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
 		);
 
@@ -140,7 +143,7 @@ describe("walk schema", () => {
 			}),
 		);
 
-		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes(
+		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(
 			normalizeFieldSchema(annotatedObject).annotatedAllowedTypesNormalized,
 		);
 
@@ -153,7 +156,7 @@ describe("walk schema", () => {
 	});
 
 	it("handles empty allowed types", () => {
-		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes({
+		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes({
 			metadata: {},
 			types: [],
 		});
@@ -168,5 +171,40 @@ describe("walk schema", () => {
 		assert.doesNotThrow(() =>
 			walkAllowedTypes({ metadata: {}, types: [annotatedString] }, {}),
 		);
+	});
+
+	it("does not call visitor on staged allowed types by default", () => {
+		const stagedString = SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string);
+		class TestObject extends sf.objectAlpha("TestObject", {
+			name: stagedString,
+		}) {}
+
+		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(
+			normalizeFieldSchema(TestObject).annotatedAllowedTypesNormalized,
+		);
+
+		assert.deepEqual(visitedNodes, [TestObject]);
+		assert.deepEqual(visitedAllowedTypes, [
+			{ metadata: {}, types: [stagedString] },
+			{ metadata: {}, types: [{ metadata: {}, type: TestObject }] },
+		]);
+	});
+
+	it("calls visitor on staged allowed types when walkStagedAllowedTypes is set to true", () => {
+		const stagedString = SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string);
+		class TestObject extends sf.objectAlpha("TestObject", {
+			name: stagedString,
+		}) {}
+
+		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(
+			normalizeFieldSchema(TestObject).annotatedAllowedTypesNormalized,
+			true,
+		);
+
+		assert.deepEqual(visitedNodes, [stagedString.type, TestObject]);
+		assert.deepEqual(visitedAllowedTypes, [
+			{ metadata: {}, types: [stagedString] },
+			{ metadata: {}, types: [{ metadata: {}, type: TestObject }] },
+		]);
 	});
 });
