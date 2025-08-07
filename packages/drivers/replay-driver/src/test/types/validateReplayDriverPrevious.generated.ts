@@ -85,7 +85,6 @@ declare type old_as_current_for_Class_ReplayDocumentService = requireAssignableT
  * typeValidation.broken:
  * "Class_ReplayDocumentService": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_ReplayDocumentService = requireAssignableTo<TypeOnly<current.ReplayDocumentService>, TypeOnly<old.ReplayDocumentService>>
 
 /*
@@ -95,7 +94,6 @@ declare type current_as_old_for_Class_ReplayDocumentService = requireAssignableT
  * typeValidation.broken:
  * "Class_ReplayDocumentServiceFactory": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_ReplayDocumentServiceFactory = requireAssignableTo<TypeOnly<old.ReplayDocumentServiceFactory>, TypeOnly<current.ReplayDocumentServiceFactory>>
 
 /*
@@ -177,7 +175,6 @@ declare type current_as_old_for_ClassStatics_ReplayController = requireAssignabl
  * typeValidation.broken:
  * "ClassStatics_ReplayDocumentService": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_ReplayDocumentService = requireAssignableTo<TypeOnly<typeof current.ReplayDocumentService>, TypeOnly<typeof old.ReplayDocumentService>>
 
 /*

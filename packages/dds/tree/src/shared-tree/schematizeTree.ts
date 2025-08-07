@@ -19,7 +19,7 @@ import {
 	defaultSchemaPolicy,
 	mapTreeFromCursor,
 } from "../feature-libraries/index.js";
-import { toStoredSchema, type SchemaCompatibilityTester } from "../simple-tree/index.js";
+import { toUpgradeSchema, type SchemaCompatibilityTester } from "../simple-tree/index.js";
 import { isReadonlyArray } from "../util/index.js";
 
 import type { ITreeCheckout } from "./treeCheckout.js";
@@ -219,7 +219,7 @@ export function ensureSchema(
 			return false;
 		}
 		case UpdateType.SchemaCompatible: {
-			checkout.updateSchema(toStoredSchema(viewSchema.viewSchema.root));
+			checkout.updateSchema(toUpgradeSchema(viewSchema.viewSchema.root));
 			return true;
 		}
 		default: {
