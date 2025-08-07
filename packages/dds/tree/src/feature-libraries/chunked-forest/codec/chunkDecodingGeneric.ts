@@ -51,13 +51,18 @@ export function decode<TEncodedShape extends object, TContext>(
  * Shared data for use in constructing decoders.
  */
 export class DecoderContext<TEncodedShape = unknown> {
-	/**
-	 * @param identifiers - identifier substitution table (use to replace numeric identifier indexes with the actual identifiers from this table).
-	 */
 	public constructor(
+		/**
+		 * Identifier substitution table (use to replace numeric identifier indexes with the actual identifiers from this table).
+		 */
 		public readonly identifiers: readonly string[],
 		public readonly shapes: readonly TEncodedShape[],
 		public readonly idDecodingContext: IdDecodingContext,
+		/**
+		 * To be used to decode incremental chunks, if any.
+		 * @remarks
+		 * See {@link IncrementalDecoder} for more information.
+		 */
 		public readonly incrementalDecoder: IncrementalDecoder | undefined,
 	) {}
 

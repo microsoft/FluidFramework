@@ -23,7 +23,7 @@ import {
 	ModularChangeFamily,
 	type ModularChangeset,
 	type TreeChunk,
-	type TreeCompressionStrategyInternal,
+	type TreeCompressionStrategyPrivate,
 	fieldKindConfigurations,
 	fieldKinds,
 	makeModularChangeCodecFamily,
@@ -61,7 +61,7 @@ export class SharedTreeChangeFamily
 		revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: ICodecOptions,
-		chunkCompressionStrategy?: TreeCompressionStrategyInternal,
+		chunkCompressionStrategy?: TreeCompressionStrategyPrivate,
 		private readonly idCompressor?: IIdCompressor,
 	) {
 		const modularChangeCodec = makeModularChangeCodecFamily(

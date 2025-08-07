@@ -174,7 +174,7 @@ export {
 export {
 	TreeCompressionStrategy,
 	TreeCompressionStrategyExtended,
-	type TreeCompressionStrategyInternal,
+	type TreeCompressionStrategyPrivate,
 } from "./treeCompressionUtils.js";
 
 export { valueSchemaAllows } from "./valueUtilities.js";

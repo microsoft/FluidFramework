@@ -5,14 +5,12 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
-import {
-	SummaryTreeBuilder,
-	type ReadAndParseBlob,
-} from "@fluidframework/runtime-utils/internal";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import {
 	brand,
 	setInNestedMap,
 	tryGetFromNestedMap,
+	type JsonCompatible,
 	type NestedMap,
 } from "../../util/index.js";
 import type {
@@ -30,9 +28,13 @@ import { SummaryType } from "@fluidframework/driver-definitions";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 /**
- * The key for the summary blob that contains the contents of an incremental chunk.
+ * The contents of an incremental chunk is under a summary tree node with its {@link ChunkReferenceId} as the key.
+ * The inline portion of the chunk content is encoded with the forest codec is stored in a blob with this key.
+ * The rest of the chunk contents  is stored in the summary tree under the summary tree node.
+ * See the summary format in {@link ForestIncrementalSummaryBuilder} for more details.
  */
 const chunkContentsBlobKey = "contents";
 
@@ -148,32 +150,32 @@ function validateReadyToTrackSummary(
 /* eslint-disable jsdoc/check-indentation */
 /**
  * Tracks and builds the incremental summary tree for a forest where chunks that support incremental encoding are
- * stored in a separate tree in the summary.
+ * stored in a separate tree in the summary under its {@link ChunkReferenceId}.
  * The summary tree for a chunk is self-sufficient and can be independently loaded and used to reconstruct the
  * chunk's contents without any additional context from its parent.
  *
  * An example summary tree with incremental summary:
  *     Forest
  *     ├── ForestTree
- *     ├── chunk1
+ *     ├── 0
  *     |   ├── contents
- *     |   ├── chunk2
+ *     |   ├── 1
  *     |   |   ├── contents
- *     |   |   ├── chunk3
+ *     |   |   ├── 2
  *     |   |   |   ├── contents
- *     |   ├── chunk4Handle - ".../Forest/ForestTree/chunk1/chunk2/chunk4"
- *     ├── chunk5
+ *     |   ├── 3 - ".../Forest/ForestTree/0/1/3"
+ *     ├── 4
  *     |   ├── contents
  *     |   ├── ...
- *     ├── chunk6Handle - "/.../Forest/ForestTree/chunk3"
- * - Forest is a summary tree added by the shared tree and contains the following:
- *   - The contents of the top-level forest are stored in a summary blob called ForestTree. It contains the
- *     reference IDs of the incremental chunks under it.
- *   - The summary for each incremental chunk is stored against its reference ID.
+ *     ├── 5 - "/.../Forest/ForestTree/5"
+ * - Forest is a summary tree node added by the shared tree and contains the following:
+ *   - The inline portion of the top-level forest content is stored in a summary blob called "ForestTree".
+ *     It also contains the {@link ChunkReferenceId}s of the incremental chunks under it.
+ *   - The summary for each incremental chunk under it is stored against its {@link ChunkReferenceId}.
  * - For each chunk, the structure of the summary tree is the same as the Forest. It contains the following:
- *   - The contents of the chunk are stored in a blob called `contents`. It contains the reference IDs of the
- *     incremental chunks under it.
- *   - The summary for each incremental chunk is stored against its reference ID.
+ *   - The inline portion of the chunk content is stored in a blob called "contents".
+ *     It also contains the {@link ChunkReferenceId}s of the incremental chunks under it.
+ *   - The summary for each incremental chunk under it is stored against its {@link ChunkReferenceId}.
  * - Chunks that do not change between summaries are summarized as handles in the summary tree.
  */
 /* eslint-enable jsdoc/check-indentation */
@@ -236,7 +238,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 */
 	public async load(
 		services: IChannelStorageService,
-		readAndParse: ReadAndParseBlob,
+		readAndParseChunk: <T extends JsonCompatible<IFluidHandle>>(id: string) => Promise<T>,
 	): Promise<void> {
 		const forestTree = services.getSnapshotTree?.();
 		// Snapshot tree should be available when loading forest's contents. However, it is an optional function
@@ -261,7 +263,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 						`SharedTree: Cannot find contents for incremental chunk ${chunkContentsPath}`,
 					);
 				}
-				const chunkContents = await readAndParse<EncodedFieldBatch>(chunkContentsPath);
+				const chunkContents = await readAndParseChunk<EncodedFieldBatch>(chunkContentsPath);
 				this.encodedChunkContentsMap.set(chunkReferenceId, chunkContents);
 
 				// Recursively download the contents of chunks in this chunk's sub tree.
@@ -404,11 +406,11 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 
 		// Delete tracking for summaries that are older than the latest successful summary because they will
 		// never be referenced again for generating summary handles.
-		this.chunkTrackingPropertiesMap.forEach((_, sequenceNumber) => {
+		for (const sequenceNumber of this.chunkTrackingPropertiesMap.keys()) {
 			if (sequenceNumber < this.latestSummarySequenceNumber) {
 				this.chunkTrackingPropertiesMap.delete(sequenceNumber);
 			}
-		});
+		}
 
 		this.forestSummaryState = ForestSummaryTrackingState.ReadyToTrack;
 		this.trackedSummaryProperties = undefined;
@@ -422,9 +424,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 */
 	public getEncodedIncrementalChunk(referenceId: ChunkReferenceId): EncodedFieldBatch {
 		const chunkEncodedContents = this.encodedChunkContentsMap.get(`${referenceId}`);
-		if (!chunkEncodedContents) {
-			throw new Error(`Chunk with reference ID ${referenceId} not found`);
-		}
+		assert(chunkEncodedContents !== undefined, "Incremental chunk contents not found");
 		return chunkEncodedContents;
 	}
 }

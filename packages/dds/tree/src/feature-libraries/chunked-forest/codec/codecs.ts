@@ -28,7 +28,7 @@ import {
 import {
 	TreeCompressionStrategy,
 	TreeCompressionStrategyExtended,
-	type TreeCompressionStrategyInternal,
+	type TreeCompressionStrategyPrivate,
 } from "../../treeCompressionUtils.js";
 
 import { decode } from "./chunkDecoding.js";
@@ -39,7 +39,6 @@ import { uncompressedEncode } from "./uncompressedEncode.js";
 
 /**
  * Reference ID for a chunk that is incrementally encoded.
- * @internal
  */
 export type ChunkReferenceId = Brand<number, "forest.ChunkReferenceId">;
 const ChunkReferenceId = brandedNumberType<ChunkReferenceId>({ multipleOf: 1, minimum: 0 });
@@ -94,12 +93,11 @@ export interface IncrementalDecoder {
 }
 /**
  * Combines the properties of {@link IncrementalEncoder} and {@link IncrementalDecoder}.
- * @internal
  */
 export interface IncrementalEncoderDecoder extends IncrementalEncoder, IncrementalDecoder {}
 
 export interface FieldBatchEncodingContext {
-	readonly encodeType: TreeCompressionStrategyInternal;
+	readonly encodeType: TreeCompressionStrategyPrivate;
 	readonly idCompressor: IIdCompressor;
 	readonly originatorId: SessionId;
 	readonly schema?: SchemaAndPolicy;

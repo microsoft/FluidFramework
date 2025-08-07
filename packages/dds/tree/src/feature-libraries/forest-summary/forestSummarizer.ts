@@ -12,10 +12,7 @@ import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	SummaryTreeBuilder,
-	type ReadAndParseBlob,
-} from "@fluidframework/runtime-utils/internal";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import type { CodecWriteOptions } from "../../codec/index.js";
 import {
@@ -37,15 +34,15 @@ import type {
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
-import { idAllocatorFromMaxId } from "../../util/index.js";
+import { idAllocatorFromMaxId, type JsonCompatible } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
 import { type ForestCodec, makeForestSummarizerCodec } from "./codec.js";
-import type { Format } from "./format.js";
 import { ForestIncrementalSummaryBuilder } from "./incrementalSummaryBuilder.js";
 import { TreeCompressionStrategyExtended } from "../treeCompressionUtils.js";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 /**
  * The key for the tree that contains the overall forest's summary tree.
@@ -54,9 +51,10 @@ import { TreeCompressionStrategyExtended } from "../treeCompressionUtils.js";
 export const forestSummaryKey = "Forest";
 
 /**
- * The key for the blob in the summary containing the forest's contents.
+ * The key for the blob under ForestSummarizer's root.
+ * This blob contains the ForestCodec's output.
  */
-export const forestSummaryContentKey = "ForestTree";
+const forestSummaryContentKey = "ForestTree";
 
 /**
  * Provides methods for summarizing and loading a forest.
@@ -160,19 +158,21 @@ export class ForestSummarizer implements Summarizable {
 		parse: SummaryElementParser,
 	): Promise<void> {
 		if (await services.contains(forestSummaryContentKey)) {
-			const readAndParse: ReadAndParseBlob = async <T>(id: string): Promise<T> => {
-				const blob = await services.readBlob(id);
-				const decoded = bufferToString(blob, "utf8");
-				return parse(decoded) as T;
+			const readAndParseBlob = async <T extends JsonCompatible<IFluidHandle>>(
+				id: string,
+			): Promise<T> => {
+				const treeBuffer = await services.readBlob(id);
+				const treeBufferString = bufferToString(treeBuffer, "utf8");
+				return parse(treeBufferString) as T;
 			};
 
 			// Load the incremental summary builder so that it can download any incremental chunks in the
 			// snapshot.
-			await this.incrementalSummaryBuilder.load(services, readAndParse);
+			await this.incrementalSummaryBuilder.load(services, readAndParseBlob);
 
 			// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
 			// forest summary format.
-			const fields = this.codec.decode(await readAndParse<Format>(forestSummaryContentKey), {
+			const fields = this.codec.decode(await readAndParseBlob(forestSummaryContentKey), {
 				...this.encoderContext,
 				incrementalEncoderDecoder: this.incrementalSummaryBuilder,
 			});

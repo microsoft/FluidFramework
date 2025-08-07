@@ -526,9 +526,7 @@ function scopeStorageService(
 			let scopedTree = snapshotTree;
 			for (const element of pathElements) {
 				const tree = scopedTree.trees[element];
-				if (tree === undefined) {
-					break;
-				}
+				assert(tree !== undefined, "snapshot tree not found for one of tree's summarizables");
 				scopedTree = tree;
 			}
 			return scopedTree;

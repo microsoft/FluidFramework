@@ -57,7 +57,7 @@ import {
 	makeMitigatedChangeFamily,
 	makeSchemaCodec,
 	makeTreeChunker,
-	type TreeCompressionStrategyInternal,
+	type TreeCompressionStrategyPrivate,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { FormatV1 } from "../feature-libraries/schema-index/index.js";
@@ -593,6 +593,8 @@ export interface SharedTreeOptionsInternal
 	 * Returns whether a field should be incrementally encoded.
 	 * @param nodeIdentifier - The identifier of the node containing the field.
 	 * @param fieldKey - The key of the field to check.
+	 * @remarks
+	 * The policy for which fields should get incremental encoding should eventually be specified some other way.
 	 */
 	shouldEncodeFieldIncrementally?(
 		nodeIdentifier: TreeNodeSchemaIdentifier,
@@ -636,7 +638,7 @@ export interface SharedTreeFormatOptions {
 
 export interface SharedTreeFormatOptionsInternal
 	extends Omit<SharedTreeFormatOptions, "treeEncodeType"> {
-	treeEncodeType: TreeCompressionStrategyInternal;
+	treeEncodeType: TreeCompressionStrategyPrivate;
 }
 
 /**
