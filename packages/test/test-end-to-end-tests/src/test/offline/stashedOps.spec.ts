@@ -30,6 +30,7 @@ import type { SharedCounter } from "@fluidframework/counter/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
+	OperationType,
 	SharedArray,
 	SharedArrayRevertible,
 	type IRevertible,
@@ -573,7 +574,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				const array = await d.getSharedObject<ISharedArray<string>>(arrayId);
 				let revertible: IRevertible = new SharedArrayRevertible(array, {
 					entryId: "dummy",
-					type: 3,
+					type: OperationType.toggle,
 					isDeleted: false,
 				} satisfies IToggleOperation);
 				// Attach the revertible event listener.
@@ -582,6 +583,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				});
 				array.insert(0, "test");
 				array.insert(1, "test2");
+				// Reverting the revertible generates a toggle op
+				// which reverts the last insert op and should be resent
+				// by the next container
 				revertible.revert();
 			},
 		);
@@ -609,9 +613,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				const array = await d.getSharedObject<ISharedArray<string>>(arrayId);
 				let revertible: IRevertible = new SharedArrayRevertible(array, {
 					entryId: "dummy",
-					type: 3,
-					isDeleted: false,
-				} satisfies IToggleOperation);
+					type: OperationType.toggleMove,
+					changedToEntryId: "dummy2",
+				});
 				// Attach the revertible event listener.
 				array.on("revertible", (revertibleItem: IRevertible) => {
 					revertible = revertibleItem;
