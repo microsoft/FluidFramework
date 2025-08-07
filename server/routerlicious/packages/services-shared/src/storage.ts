@@ -235,7 +235,7 @@ export class DocumentStorage implements IDocumentStorage {
 			throw err;
 		} finally {
 			createDocMetric.setProperty("createDocTrace", createDocTrace.trace);
-			if (!runTimeError) {
+			if (runTimeError) {
 				createDocMetric.error("Failed created doc", runTimeError);
 			} else {
 				createDocMetric.success("Successfully created doc");
