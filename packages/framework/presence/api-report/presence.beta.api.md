@@ -180,6 +180,11 @@ export interface LatestMap<T, Keys extends string | number = string | number, TR
 }
 
 // @beta @input
+export interface LatestMapArguments<T, Keys extends string | number = string | number> extends LatestMapArgumentsRaw<T, Keys> {
+    validator: StateSchemaValidator<T>;
+}
+
+// @beta @input
 export interface LatestMapArgumentsRaw<T, Keys extends string | number = string | number> {
     local?: {
         [K in Keys]: JsonSerializable<T>;
@@ -214,6 +219,7 @@ export interface LatestMapEvents<T, K extends string | number, TRemoteValueAcces
 
 // @beta @sealed
 export interface LatestMapFactory {
+    <T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args: LatestMapArguments<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
     <T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapArgumentsRaw<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
 }
 
@@ -284,8 +290,8 @@ export interface RawValueAccessor<T> {
 
 // @beta
 export const StateFactory: {
-    latest: LatestFactory;
-    latestMap: LatestMapFactory;
+    latest: LatestFactory_2;
+    latestMap: LatestMapFactory_2;
 };
 
 // @beta @sealed
