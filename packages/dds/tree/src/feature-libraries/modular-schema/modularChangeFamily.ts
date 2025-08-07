@@ -1164,11 +1164,11 @@ export class ModularChangeFamily
 			baseChange: baseFieldChange,
 			rebasedChange: rebasedFieldChange,
 			fieldId,
-			baseNodeIds: [],
+			baseNodeIds: newTupleBTree(),
 		};
 
 		if (baseNodeId !== undefined) {
-			context.baseNodeIds.push(baseNodeId);
+			setInChangeAtomIdMap(context.baseNodeIds, baseNodeId, true);
 		}
 
 		crossFieldTable.baseFieldToContext.set(baseFieldChange, context);
@@ -1251,12 +1251,8 @@ export class ModularChangeFamily
 				return curr;
 			}
 
-			if (base !== undefined) {
-				for (const id of context.baseNodeIds) {
-					if (areEqualChangeAtomIds(base, id)) {
-						return base;
-					}
-				}
+			if (base !== undefined && getFromChangeAtomIdMap(context.baseNodeIds, base) === true) {
+				return base;
 			}
 
 			return undefined;
@@ -1264,9 +1260,6 @@ export class ModularChangeFamily
 
 		let allowInval = false;
 		if (crossFieldTable.fieldsWithUnattachedChild.has(baseField)) {
-			// XXX: It seems like this scheme will allow an infinite loop.
-			// We need to make sure that fieldsWithUnattachedChild can only cause inval once per child.
-			// And that materialized ancestors are shared by multiple children, so they don't overwrite each other.
 			crossFieldTable.fieldsWithUnattachedChild.delete(baseField);
 			allowInval = true;
 		}
@@ -1386,9 +1379,13 @@ export class ModularChangeFamily
 		if (context !== undefined) {
 			// We've already processed this field.
 			// The new child node will be attached in the next pass.
-			context.baseNodeIds.push(baseNodeId);
-			table.fieldsWithUnattachedChild.add(baseFieldChange);
-			table.affectedBaseFields.set(fieldIdKeyFromFieldId(parentFieldIdBase), true);
+			// Note that adding to `fieldsWithUnattachedChild` allows that field to generate new invalidations,
+			// so to avoid invalidation cycles we make sure we only add to it once per new unattached child.
+			// This is done by checking whether `context.baseNodeIds` already contained `baseNodeId`.
+			if (setInChangeAtomIdMap(context.baseNodeIds, baseNodeId, true)) {
+				table.fieldsWithUnattachedChild.add(baseFieldChange);
+				table.affectedBaseFields.set(fieldIdKeyFromFieldId(parentFieldIdBase), true);
+			}
 			return;
 		}
 
@@ -1462,7 +1459,7 @@ export class ModularChangeFamily
 				newChange: fieldChange,
 				rebasedChange: rebasedFieldChange,
 				fieldId,
-				baseNodeIds: [],
+				baseNodeIds: newTupleBTree(),
 			});
 
 			crossFieldTable.rebasedFields.add(rebasedFieldChange);
@@ -2457,7 +2454,7 @@ interface RebaseFieldContext {
 	 * The set of node IDs in the base changeset which should be included in the rebased field,
 	 * even if there is no corresponding node changeset in the new change.
 	 */
-	baseNodeIds: NodeId[];
+	baseNodeIds: ChangeAtomIdBTree<boolean>;
 }
 
 function newComposeTable(
@@ -3819,8 +3816,8 @@ export function setInChangeAtomIdMap<T>(
 	map: ChangeAtomIdBTree<T>,
 	id: ChangeAtomId,
 	value: T,
-): void {
-	map.set([id.revision, id.localId], value);
+): boolean {
+	return map.set([id.revision, id.localId], value);
 }
 
 function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
