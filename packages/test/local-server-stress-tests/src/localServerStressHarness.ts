@@ -1396,22 +1396,15 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 		): Promise<TOperation | RestartClientFromPendingState | typeof done> => {
 			const { clients, random, validationClient } = state;
 
-			const sourceClient = clients.length > 0 ? random.pick(clients) : undefined;
-
-			// AB#45904: Clarify restart-from-pending behavior in staging mode
-			if (sourceClient !== undefined && sourceClient.entryPoint.inStagingMode()) {
-				sourceClient.entryPoint.exitStagingMode(true);
-			}
-
 			if (
-				sourceClient !== undefined &&
+				clients.length > 0 &&
 				validationClient.container.attachState !== AttachState.Detached &&
 				options.clientJoinOptions !== undefined &&
 				random.bool(options.clientJoinOptions.clientRestartFromPendingProbability)
 			) {
 				return {
 					type: "restartClientFromPendingState",
-					sourceClientTag: sourceClient.tag,
+					sourceClientTag: random.pick(clients).tag,
 					newClientTag: state.tag("client"),
 				} satisfies RestartClientFromPendingState;
 			}
@@ -1434,6 +1427,11 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 			const sourceClientIndex = state.clients.findIndex((c) => c.tag === op.sourceClientTag);
 			assert(sourceClientIndex !== -1, `Client ${op.sourceClientTag} not found`);
 			const sourceClient = state.clients[sourceClientIndex];
+
+			// AB#45904: Clarify restart-from-pending behavior in staging mode
+			if (sourceClient !== undefined && sourceClient.entryPoint.inStagingMode()) {
+				sourceClient.entryPoint.exitStagingMode(true);
+			}
 
 			assert(
 				typeof sourceClient.container.getPendingLocalState === "function",
