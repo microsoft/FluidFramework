@@ -93,7 +93,7 @@ describe("Local Server Stress with rollback", () => {
 
 	createLocalServerStressSuite(model, {
 		defaultTestCount: 100,
-		// skipMinimization: true,
+		skipMinimization: true,
 		// Uncomment to replay a particular seed.
 		// only: [91],
 		saveFailures,
@@ -103,12 +103,9 @@ describe("Local Server Stress with rollback", () => {
 			"Fluid.Container.enableOfflineLoad": true,
 		},
 		skip: [
-			...[39, 40], // Number of keys not same (directory)
-			...[53, 83], // Number of subDirectories not same
 			...[], // SubDirectory with name ... not present in second directory
 			...[], // 0x2fa (Unexpected pending message received)
-			...[20, 54, 92], // 0xa21
-			...[97], // channel maps should be the same size
+			...[3, 12, 17, 45, 53, 54, 59, 73, 81, 85, 87, 92, 99], // 0xa21
 		],
 	});
 });

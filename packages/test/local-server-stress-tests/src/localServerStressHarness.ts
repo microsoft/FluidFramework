@@ -1395,19 +1395,23 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 			state: LocalServerStressState,
 		): Promise<TOperation | RestartClientFromPendingState | typeof done> => {
 			const { clients, random, validationClient } = state;
-			const anyClientInStaging = clients.some((c) => c.entryPoint.inStagingMode());
+
+			const sourceClient = clients.length > 0 ? random.pick(clients) : undefined;
+
+			// AB#45904: Clarify restart-from-pending behavior in staging mode
+			if (sourceClient !== undefined && sourceClient.entryPoint.inStagingMode()) {
+				sourceClient.entryPoint.exitStagingMode(true);
+			}
 
 			if (
-				options.clientJoinOptions !== undefined &&
+				sourceClient !== undefined &&
 				validationClient.container.attachState !== AttachState.Detached &&
-				clients.length > 0 &&
-				random.bool(options.clientJoinOptions.clientRestartFromPendingProbability) &&
-				// AB#45904: Clarify restart-from-pending behavior in staging mode
-				!anyClientInStaging
+				options.clientJoinOptions !== undefined &&
+				random.bool(options.clientJoinOptions.clientRestartFromPendingProbability)
 			) {
 				return {
 					type: "restartClientFromPendingState",
-					sourceClientTag: random.pick(clients).tag,
+					sourceClientTag: sourceClient.tag,
 					newClientTag: state.tag("client"),
 				} satisfies RestartClientFromPendingState;
 			}
