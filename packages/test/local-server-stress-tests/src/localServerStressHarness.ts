@@ -245,7 +245,6 @@ export interface LocalServerStressOptions {
 		clientAddProbability: number;
 
 		/**
-		 *
 		 * The probability that a client will be restarted from its pending local state at any given operation.
 		 */
 		clientRestartFromPendingProbability: number;
