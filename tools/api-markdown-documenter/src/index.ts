@@ -52,14 +52,6 @@ export {
 	type TransformationContext as ToHtmlContext,
 } from "./documentation-domain-to-html/index.js";
 export {
-	documentToMarkdown,
-	sectionContentToMarkdown,
-	type Transformation as ToMarkdownTransformation,
-	type TransformationConfiguration as ToMarkdownConfiguration,
-	type TransformationContext as ToMarkdownContext,
-	type Transformations as ToMarkdownTransformations,
-} from "./documentation-domain-to-markdown/index.js";
-export {
 	DocumentWriter,
 	type RenderDocumentAsHtmlConfiguration,
 	type RenderHtmlConfiguration,

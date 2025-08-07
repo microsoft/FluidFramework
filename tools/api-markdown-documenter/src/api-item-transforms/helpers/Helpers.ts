@@ -41,7 +41,7 @@ import type {
 
 import type { Link } from "../../Link.js";
 import type { Logger } from "../../Logging.js";
-import type { Section, SectionHeading } from "../../mdast/index.js";
+import type { Section, SectionContent, SectionHeading } from "../../mdast/index.js";
 import {
 	type ApiFunctionLike,
 	injectSeparator,
@@ -89,7 +89,7 @@ export function createSignatureSection(
 	if (apiItem instanceof ApiDeclaredItem) {
 		const signatureExcerpt = apiItem.getExcerptWithModifiers();
 		if (signatureExcerpt !== "") {
-			const contents: BlockContent[] = [];
+			const contents: SectionContent[] = [];
 
 			contents.push({
 				type: "code",
@@ -131,10 +131,10 @@ export function createSignatureSection(
 function createHeritageTypesContent(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): BlockContent[] | undefined {
+): SectionContent[] | undefined {
 	const { logger } = config;
 
-	const contents: BlockContent[] = [];
+	const contents: SectionContent[] = [];
 
 	if (apiItem instanceof ApiClass) {
 		// Render `extends` type if there is one.
@@ -1116,7 +1116,7 @@ export interface ChildSectionProperties {
 export function createChildDetailsSection(
 	childItems: readonly ChildSectionProperties[],
 	config: ApiItemTransformationConfiguration,
-	createChildContent: (apiItem) => BlockContent[],
+	createChildContent: (apiItem) => SectionContent[],
 ): Section[] | undefined {
 	const sections: Section[] = [];
 
@@ -1128,7 +1128,7 @@ export function createChildDetailsSection(
 			!doesItemKindRequireOwnDocument(childItem.itemKind, config.hierarchy) &&
 			childItem.items.length > 0
 		) {
-			const childContents: BlockContent[] = [];
+			const childContents: SectionContent[] = [];
 			for (const item of childItem.items) {
 				childContents.push(...createChildContent(item));
 			}

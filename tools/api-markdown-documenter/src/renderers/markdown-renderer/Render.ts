@@ -11,10 +11,8 @@ import {
 } from "mdast-util-to-markdown";
 
 import type { ApiDocument } from "../../ApiDocument.js";
-import {
-	documentToMarkdown,
-	type TransformationConfiguration,
-} from "../../documentation-domain-to-markdown/index.js";
+import type { LoggingConfiguration } from "../../LoggingConfiguration.js";
+import { normalizeDocumentContents } from "../../mdast/index.js";
 
 /**
  * Configuration for rendering a document as Markdown.
@@ -22,9 +20,16 @@ import {
  * @sealed
  * @public
  */
-export interface RenderDocumentConfiguration
-	extends TransformationConfiguration,
-		RenderMarkdownConfiguration {}
+export interface RenderDocumentConfiguration extends RenderMarkdownConfiguration {
+	/**
+	 * Optional override for the starting heading level of a document.
+	 *
+	 * @remarks Must be an integer on [1, ∞).
+	 *
+	 * @defaultValue 1
+	 */
+	readonly startingHeadingLevel?: number;
+}
 
 /**
  * Renders a {@link ApiDocument} as Markdown and returns the resulting file contents as a string.
@@ -38,8 +43,10 @@ export function renderDocument(
 	document: ApiDocument,
 	config: RenderDocumentConfiguration,
 ): string {
-	const markdownTree = documentToMarkdown(document, config);
-	return renderMarkdown(markdownTree, config);
+	const normalizedMarkdown = normalizeDocumentContents(document.contents, {
+		startingHeadingLevel: config.startingHeadingLevel,
+	});
+	return renderMarkdown(normalizedMarkdown, config);
 }
 
 /**
@@ -48,7 +55,7 @@ export function renderDocument(
  * @sealed
  * @public
  */
-export interface RenderMarkdownConfiguration {
+export interface RenderMarkdownConfiguration extends LoggingConfiguration {
 	/**
 	 * Options for the Markdown renderer.
 	 *

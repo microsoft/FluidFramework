@@ -36,8 +36,6 @@ import { Options } from 'mdast-util-to-markdown';
 import type { Paragraph } from 'mdast';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
 import type { Root } from 'hast';
-import type { Root as Root_2 } from 'mdast';
-import type { RootContent } from 'mdast';
 import { TypeParameter } from '@microsoft/api-extractor-model';
 
 // @public
@@ -259,9 +257,6 @@ export interface DocumentHierarchyConfiguration extends DocumentationHierarchyCo
 
 // @public
 export function documentToHtml(document: ApiDocument, config: ToHtmlConfiguration): Root;
-
-// @public
-export function documentToMarkdown(document: ApiDocument, config: ToMarkdownConfiguration): Root_2;
 
 // @public
 export interface DocumentWriter {
@@ -498,7 +493,8 @@ export interface RenderDocumentAsHtmlConfiguration extends ToHtmlConfiguration, 
 }
 
 // @public @sealed
-export interface RenderDocumentAsMarkdownConfiguration extends ToMarkdownConfiguration, RenderMarkdownConfiguration {
+export interface RenderDocumentAsMarkdownConfiguration extends RenderMarkdownConfiguration {
+    readonly startingHeadingLevel?: number;
 }
 
 // @public
@@ -520,19 +516,16 @@ export interface RenderHtmlConfiguration {
 function renderMarkdown(tree: Nodes, config: RenderMarkdownConfiguration): string;
 
 // @public @sealed
-export interface RenderMarkdownConfiguration {
+export interface RenderMarkdownConfiguration extends LoggingConfiguration {
     readonly mdastToMarkdownOptions?: Partial<Options>;
 }
 
 // @public @sealed
 export interface Section extends Node_2 {
-    children: BlockContent[];
+    children: SectionContent[];
     heading?: SectionHeading;
     type: "section";
 }
-
-// @public
-export function sectionContentToMarkdown(node: BlockContent, context: ToMarkdownContext): RootContent[];
 
 // @public @sealed
 export interface SectionHeading extends Node_2 {
@@ -569,30 +562,6 @@ export type ToHtmlTransformation = (node: Nodes | SectionHeading, context: ToHtm
 // @public
 export interface ToHtmlTransformations {
     readonly [documentationNodeKind: string]: ToHtmlTransformation;
-}
-
-// @public
-export interface ToMarkdownConfiguration extends LoggingConfiguration {
-    readonly customTransformations?: Partial<ToMarkdownTransformations>;
-    readonly startingHeadingLevel?: number;
-}
-
-// @public
-export interface ToMarkdownContext {
-    readonly headingLevel: number;
-    readonly logger: Logger;
-    readonly transformations: ToMarkdownTransformations;
-}
-
-// @public
-export type ToMarkdownTransformation<TIn extends Nodes | SectionHeading = Nodes | SectionHeading, TOut extends Nodes[] = [Nodes]> = (node: TIn, context: ToMarkdownContext) => TOut;
-
-// @public
-export interface ToMarkdownTransformations {
-    // (undocumented)
-    readonly section: ToMarkdownTransformation<Section, RootContent[]>;
-    // (undocumented)
-    readonly sectionHeading: ToMarkdownTransformation<SectionHeading, BlockContent[]>;
 }
 
 // @public
