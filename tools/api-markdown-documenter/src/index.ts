@@ -37,8 +37,14 @@ export {
 	transformApiModel,
 	transformTsdoc,
 } from "./api-item-transforms/index.js";
-export type { ApiDocument } from "./ApiDocument.js";
 export type {
+	ApiDocument,
+	HtmlDocument,
+	MarkdownDocument,
+	NormalizedMarkdownDocument,
+} from "./ApiDocument.js";
+export type {
+	NormalizedRootContent,
 	Section,
 	SectionContent,
 	SectionHeading,

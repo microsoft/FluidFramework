@@ -18,7 +18,7 @@ import {
 } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 
-import type { ApiDocument } from "../../ApiDocument.js";
+import type { MarkdownDocument } from "../../ApiDocument.js";
 import type { Section } from "../../mdast/index.js";
 import { createSection } from "../../mdast/index.js";
 import { getHeadingForApiItem } from "../ApiItemTransformUtilities.js";
@@ -755,7 +755,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		// The model-level doc in this case isn't particularly interesting, so we will skip evaluating it.
 
-		const expectedPackageDocument: ApiDocument = {
+		const expectedPackageDocument: MarkdownDocument = {
 			apiItem: model.packages[0],
 			documentPath: "test-package/index",
 			contents: [
@@ -841,7 +841,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 		};
 		expect(documents[1]).to.deep.equal(expectedPackageDocument);
 
-		const expectedEntryPointADocument: ApiDocument = {
+		const expectedEntryPointADocument: MarkdownDocument = {
 			apiItem: model.packages[0].entryPoints[0],
 			documentPath: "test-package/entry-point-a-entrypoint",
 			contents: [
@@ -993,7 +993,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 		};
 		expect(documents[2]).to.deep.equal(expectedEntryPointADocument);
 
-		const expectedEntryPointBDocument: ApiDocument = {
+		const expectedEntryPointBDocument: MarkdownDocument = {
 			apiItem: model.packages[0].entryPoints[1],
 			documentPath: "test-package/entry-point-b-entrypoint",
 			contents: [

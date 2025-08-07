@@ -17,6 +17,7 @@ import type { SectionHeading } from "./SectionHeading.js";
 
 /**
  * Markdown root content, normalized to remove library-specific types.
+ * @public
  */
 export type NormalizedRootContent = Exclude<RootContent, Section>;
 

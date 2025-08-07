@@ -30,21 +30,22 @@ import { DocSection } from '@microsoft/tsdoc';
 import { Excerpt } from '@microsoft/api-extractor-model';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'mdast';
-import type { Nodes } from 'hast';
-import type { Nodes as Nodes_2 } from 'mdast';
+import type { Nodes } from 'mdast';
+import type { Nodes as Nodes_2 } from 'hast';
 import { Options } from 'mdast-util-to-markdown';
 import type { Paragraph } from 'mdast';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
 import type { Root } from 'hast';
+import type { RootContent } from 'mdast';
 import { TypeParameter } from '@microsoft/api-extractor-model';
 
 // @public
 function ancestryHasModifierTag(apiItem: ApiItem, tagName: string): boolean;
 
 // @public @sealed
-export interface ApiDocument {
+export interface ApiDocument<TContents> {
     readonly apiItem: ApiItem;
-    readonly contents: readonly Section[];
+    readonly contents: TContents;
     readonly documentPath: string;
 }
 
@@ -221,6 +222,18 @@ export interface DocumentationHierarchyConfigurationBase {
 }
 
 // @public
+export function documentationNodesToHtml(nodes: readonly (Nodes | SectionHeading)[], config: ToHtmlConfiguration): Nodes_2[];
+
+// @public
+export function documentationNodesToHtml(nodes: readonly (Nodes | SectionHeading)[], transformationContext: ToHtmlContext): Nodes_2[];
+
+// @public
+export function documentationNodeToHtml(node: Nodes | SectionHeading, config: ToHtmlConfiguration): Nodes_2;
+
+// @public
+export function documentationNodeToHtml(node: Nodes | SectionHeading, context: ToHtmlContext): Nodes_2;
+
+// @public
 export interface DocumentationSuiteConfiguration {
     readonly exclude: (apiItem: ApiItem) => boolean;
     readonly getAlertsForItem: (apiItem: ApiItem) => string[];
@@ -244,7 +257,7 @@ export interface DocumentHierarchyConfiguration extends DocumentationHierarchyCo
 }
 
 // @public
-export function documentToHtml(document: ApiDocument, config: ToHtmlConfiguration): Root;
+export function documentToHtml(document: MarkdownDocument, config: ToHtmlConfiguration): Root;
 
 // @public
 export interface DocumentWriter {
@@ -371,6 +384,9 @@ export type HierarchyOptions = {
     readonly getFolderName?: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
 };
 
+// @public @sealed
+export type HtmlDocument = ApiDocument<Root>;
+
 declare namespace HtmlRenderer {
     export {
         RenderApiModelAsHtmlOptions as RenderApiModelOptions,
@@ -465,6 +481,9 @@ export interface LoggingConfiguration {
 // @public
 export type LoggingFunction = (message: string | Error, ...parameters: unknown[]) => void;
 
+// @public @sealed
+export type MarkdownDocument = ApiDocument<readonly Section[]>;
+
 declare namespace MarkdownRenderer {
     export {
         RenderApiModelAsMarkdownOptions as RenderApiModelOptions,
@@ -480,6 +499,12 @@ export { MarkdownRenderer }
 
 export { NewlineKind }
 
+// @public @sealed
+export type NormalizedMarkdownDocument = ApiDocument<readonly NormalizedRootContent[]>;
+
+// @public
+export type NormalizedRootContent = Exclude<RootContent, Section>;
+
 // @public
 export type ReleaseLevel = Exclude<ReleaseTag, ReleaseTag.None>;
 
@@ -493,10 +518,10 @@ interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationOptions, 
 }
 
 // @public
-function renderDocument(document: ApiDocument, config: RenderDocumentAsHtmlConfiguration): string;
+function renderDocument(document: MarkdownDocument, config: RenderDocumentAsHtmlConfiguration): string;
 
 // @public
-function renderDocument_2(document: ApiDocument, config: RenderDocumentAsMarkdownConfiguration): string;
+function renderDocument_2(document: MarkdownDocument, config: RenderDocumentAsMarkdownConfiguration): string;
 
 // @public @sealed
 export interface RenderDocumentAsHtmlConfiguration extends ToHtmlConfiguration, RenderHtmlConfiguration {
@@ -508,14 +533,14 @@ export interface RenderDocumentAsMarkdownConfiguration extends RenderMarkdownCon
 }
 
 // @public
-function renderDocumentsAsMarkdown(documents: readonly ApiDocument[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
+function renderDocumentsAsMarkdown(documents: readonly MarkdownDocument[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
 
 // @public
 interface RenderDocumentsAsMarkdownOptions extends RenderDocumentAsMarkdownConfiguration, FileSystemConfiguration {
 }
 
 // @public
-function renderHtml(html: Nodes, config: RenderHtmlConfiguration): string;
+function renderHtml(html: Nodes_2, config: RenderHtmlConfiguration): string;
 
 // @public @sealed
 export interface RenderHtmlConfiguration {
@@ -523,7 +548,7 @@ export interface RenderHtmlConfiguration {
 }
 
 // @public
-function renderMarkdown(tree: Nodes_2, config: RenderMarkdownConfiguration): string;
+function renderMarkdown(tree: Nodes, config: RenderMarkdownConfiguration): string;
 
 // @public @sealed
 export interface RenderMarkdownConfiguration extends LoggingConfiguration {
@@ -557,8 +582,24 @@ function shouldItemBeIncluded(apiItem: ApiItem, config: ApiItemTransformationCon
 
 // @public
 export interface ToHtmlConfiguration extends LoggingConfiguration {
+    readonly customTransformations?: ToHtmlTransformations;
     readonly language?: string;
     readonly startingHeadingLevel?: number;
+}
+
+// @public
+export interface ToHtmlContext {
+    readonly headingLevel: number;
+    readonly logger: Logger;
+    readonly transformations: ToHtmlTransformations;
+}
+
+// @public
+export type ToHtmlTransformation = (node: Nodes | SectionHeading, context: ToHtmlContext) => Nodes_2;
+
+// @public
+export interface ToHtmlTransformations {
+    readonly [documentationNodeKind: string]: ToHtmlTransformation;
 }
 
 // @public
@@ -568,7 +609,7 @@ export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: T
 export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: ApiItemTransformationConfiguration) => Section[];
 
 // @public
-export function transformApiModel(options: ApiItemTransformationOptions): ApiDocument[];
+export function transformApiModel(options: ApiItemTransformationOptions): MarkdownDocument[];
 
 // @public
 export function transformTsdoc(node: DocSection, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): BlockContent[];

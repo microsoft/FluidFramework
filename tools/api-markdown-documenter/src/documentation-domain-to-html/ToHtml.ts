@@ -8,7 +8,7 @@ import { h } from "hastscript";
 import type { Nodes } from "mdast";
 import { toHast } from "mdast-util-to-hast";
 
-import type { ApiDocument } from "../ApiDocument.js";
+import type { MarkdownDocument } from "../ApiDocument.js";
 import type { SectionHeading } from "../mdast/index.js";
 
 import {
@@ -26,7 +26,7 @@ import type { TransformationConfiguration } from "./configuration/index.js";
  * @public
  */
 export function documentToHtml(
-	document: ApiDocument,
+	document: MarkdownDocument,
 	config: TransformationConfiguration,
 ): HastRoot {
 	const transformationContext = createTransformationContext(config);
