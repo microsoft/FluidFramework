@@ -75,6 +75,9 @@
 			},
 			"Interface_IWebSocket": {
 				"forwardCompat": false
+			},
+			"Interface_ITenantManager": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "public"
