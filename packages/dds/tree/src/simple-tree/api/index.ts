@@ -33,7 +33,7 @@ export {
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 } from "./schemaFactory.js";
-export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
+export { SchemaFactoryAlpha, type SchemaStaticsAlpha } from "./schemaFactoryAlpha.js";
 export type {
 	ValidateRecursiveSchema,
 	FixRecursiveArraySchema,

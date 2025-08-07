@@ -7,8 +7,12 @@ import { strict as assert } from "node:assert";
 
 import { hydrate } from "./utils.js";
 import {
+	convertField,
+	normalizeFieldSchema,
 	prepareForInsertionContextless,
+	restrictiveStoredSchemaGenerationOptions,
 	SchemaFactory,
+	stringSchema,
 	TreeArrayNode,
 } from "../../simple-tree/index.js";
 import {
@@ -25,7 +29,11 @@ import {
 	type TreeNodeStoredSchema,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
-import { checkoutWithContent, validateUsageError } from "../utils.js";
+import {
+	checkoutWithContent,
+	fieldSchema as createFieldSchema,
+	validateUsageError,
+} from "../utils.js";
 import {
 	defaultSchemaPolicy,
 	FieldKinds,
@@ -161,6 +169,7 @@ describe("prepareForInsertion", () => {
 						content,
 						schemaFactory.string,
 						...schemaValidationPolicy,
+						createFieldSchema(FieldKinds.required, [brand(stringSchema.identifier)]),
 					);
 				});
 
@@ -173,6 +182,7 @@ describe("prepareForInsertion", () => {
 								content,
 								[schemaFactory.string],
 								...schemaValidationPolicy,
+								createFieldSchema(FieldKinds.required, [brand(stringSchema.identifier)]),
 							),
 						validateUsageError(/LeafNode_InvalidValue/),
 					);
@@ -213,6 +223,10 @@ describe("prepareForInsertion", () => {
 						content,
 						[myObjectSchema, schemaFactory.string],
 						...schemaValidationPolicy,
+						convertField(
+							normalizeFieldSchema([myObjectSchema, schemaFactory.string]),
+							restrictiveStoredSchemaGenerationOptions,
+						),
 					);
 				});
 
@@ -224,6 +238,10 @@ describe("prepareForInsertion", () => {
 								content,
 								[myObjectSchema, schemaFactory.string],
 								...schemaValidationPolicy,
+								convertField(
+									normalizeFieldSchema([myObjectSchema, schemaFactory.string]),
+									restrictiveStoredSchemaGenerationOptions,
+								),
 							),
 						outOfSchemaExpectedError,
 					);
@@ -239,6 +257,10 @@ describe("prepareForInsertion", () => {
 						{ foo: "Hello world", notInSchemaKey: 5, anotherNotInSchemaKey: false },
 						[myObjectSchema, schemaFactory.string],
 						...schemaValidationPolicy,
+						convertField(
+							normalizeFieldSchema([myObjectSchema, schemaFactory.string]),
+							restrictiveStoredSchemaGenerationOptions,
+						),
 					);
 				});
 			});
@@ -270,6 +292,10 @@ describe("prepareForInsertion", () => {
 						content,
 						[myMapSchema, schemaFactory.string],
 						...schemaValidationPolicy,
+						convertField(
+							normalizeFieldSchema([myMapSchema, schemaFactory.string]),
+							restrictiveStoredSchemaGenerationOptions,
+						),
 					);
 				});
 
@@ -281,6 +307,10 @@ describe("prepareForInsertion", () => {
 								content,
 								[myMapSchema, schemaFactory.string],
 								...schemaValidationPolicy,
+								convertField(
+									normalizeFieldSchema([myMapSchema, schemaFactory.string]),
+									restrictiveStoredSchemaGenerationOptions,
+								),
 							),
 						outOfSchemaExpectedError,
 					);
@@ -314,6 +344,10 @@ describe("prepareForInsertion", () => {
 						content,
 						[myArrayNodeSchema, schemaFactory.string],
 						...schemaValidationPolicy,
+						convertField(
+							normalizeFieldSchema([myArrayNodeSchema, schemaFactory.string]),
+							restrictiveStoredSchemaGenerationOptions,
+						),
 					);
 				});
 
@@ -325,6 +359,10 @@ describe("prepareForInsertion", () => {
 								content,
 								[myArrayNodeSchema, schemaFactory.string],
 								...schemaValidationPolicy,
+								convertField(
+									normalizeFieldSchema([myArrayNodeSchema, schemaFactory.string]),
+									restrictiveStoredSchemaGenerationOptions,
+								),
 							),
 						outOfSchemaExpectedError,
 					);

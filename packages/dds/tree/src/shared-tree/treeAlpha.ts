@@ -36,7 +36,6 @@ import {
 	verboseFromCursor,
 	type TreeEncodingOptions,
 	type VerboseTree,
-	toStoredSchema,
 	extractPersistedSchema,
 	type TreeBranch,
 	TreeViewConfigurationAlpha,
@@ -52,6 +51,9 @@ import {
 	tryGetTreeNodeForField,
 	isObjectNodeSchema,
 	isTreeNode,
+	toInitialSchema,
+	convertField,
+	toUnhydratedSchema,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
@@ -493,7 +495,11 @@ export const TreeAlpha: TreeAlpha = {
 			return undefined as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 		}
 		const cursor = cursorFromVerbose(data, schemalessConfig);
-		return createFromCursor(schema, cursor);
+		return createFromCursor(
+			schema,
+			cursor,
+			convertField(normalizeFieldSchema(schema), toUnhydratedSchema),
+		);
 	},
 
 	exportConcise,
@@ -523,11 +529,18 @@ export const TreeAlpha: TreeAlpha = {
 		const batch: FieldBatch = [cursor];
 		// If none provided, create a compressor which will not compress anything.
 		const idCompressor = options.idCompressor ?? createIdCompressor();
+
+		// Grabbing an existing stored schema from the node is important to ensure that unknown optional fields can be preserved.
+		// Note that if the node is unhydrated, this can result in all staged allowed types being included in the schema, which might be undesired.
+		const storedSchema = isTreeNode(node)
+			? getKernel(node).context.flexContext.schema
+			: toInitialSchema(schema);
+
 		const context: FieldBatchEncodingContext = {
 			encodeType: TreeCompressionStrategy.Compressed,
 			idCompressor,
 			originatorId: idCompressor.localSessionId, // TODO: Why is this needed?
-			schema: { schema: toStoredSchema(schema), policy: defaultSchemaPolicy },
+			schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 		};
 		const result = codec.encode(batch, context);
 		return result;
@@ -543,7 +556,8 @@ export const TreeAlpha: TreeAlpha = {
 		const config = new TreeViewConfigurationAlpha({ schema });
 		const content: ViewContent = {
 			// Always use a v1 schema codec for consistency.
-			schema: extractPersistedSchema(config, FluidClientVersion.v2_0),
+			// TODO: reevaluate how staged schema should behave in schema import/export APIs before stabilizing this.
+			schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true),
 			tree: compressedData,
 			idCompressor: options.idCompressor ?? createIdCompressor(),
 		};
