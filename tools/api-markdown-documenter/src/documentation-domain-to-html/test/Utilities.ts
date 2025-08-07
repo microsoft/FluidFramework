@@ -6,16 +6,16 @@
 import { expect } from "chai";
 import type { Nodes as HastNodes } from "hast";
 
-import type { HeadingNode, SectionContent } from "../../documentation-domain/index.js";
+import type { Section, SectionHeading } from "../../mdast/index.js";
 import { documentationNodeToHtml } from "../ToHtml.js";
 import { createTransformationContext } from "../TransformationContext.js";
 import type { TransformationConfiguration } from "../configuration/index.js";
 
 /**
- * Tests transforming an individual {@link DocumentationNode} to HTML.
+ * Tests transforming an individual documentation node to HTML.
  */
-export function testTransformation(
-	node: SectionContent | HeadingNode,
+function testTransformation(
+	node: Section | SectionHeading,
 	config?: Partial<TransformationConfiguration>,
 ): HastNodes {
 	return documentationNodeToHtml(node, createTransformationContext(config));
@@ -26,7 +26,7 @@ export function testTransformation(
  * `hast` tree.
  */
 export function assertTransformation(
-	input: SectionContent | HeadingNode,
+	input: Section | SectionHeading,
 	expected: HastNodes,
 	transformationConfig?: TransformationConfiguration,
 ): void {

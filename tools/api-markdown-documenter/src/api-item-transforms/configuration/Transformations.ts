@@ -26,13 +26,13 @@ import {
 	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import type { SectionNode } from "../../documentation-domain/index.js";
+import type { Section } from "../../mdast/index.js";
 import * as DefaultTransformationImplementations from "../default-implementations/index.js";
 
 import type { ApiItemTransformationConfiguration } from "./Configuration.js";
 
 /**
- * Signature for a function which generates one or more {@link SectionNode}s describing an
+ * Signature for a function which generates one or more {@link Section}s describing an
  * API item that potentially has child items to be rendered as content under it.
  *
  * @public
@@ -40,11 +40,11 @@ import type { ApiItemTransformationConfiguration } from "./Configuration.js";
 export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (
 	apiItem: TApiItem,
 	config: ApiItemTransformationConfiguration,
-	generateChildSection: (apiItem: ApiItem) => SectionNode[],
-) => SectionNode[];
+	generateChildSection: (apiItem: ApiItem) => Section[],
+) => Section[];
 
 /**
- * Signature for a function which generates one or more {@link SectionNode}s describing an
+ * Signature for a function which generates one or more {@link Section}s describing an
  * API item that *does not* have child items to be rendered.
  *
  * @public
@@ -52,10 +52,10 @@ export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (
 export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (
 	apiItem: TApiItem,
 	config: ApiItemTransformationConfiguration,
-) => SectionNode[];
+) => Section[];
 
 /**
- * Transformations for generating {@link DocumentationNode} trees from different kinds of API content.
+ * Transformations for generating Markdown trees from different kinds of API content.
  *
  * @privateRemarks TODO: Make transformation for package items configurable
  *
