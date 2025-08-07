@@ -243,12 +243,12 @@ FLAGS
                                  generating this entrypoint, set to `none`.
   --outFileBeta=<value>          [default: beta] Base file name for beta entrypoint declaration files. To opt out of
                                  generating this entrypoint, set to `none`.
-  --outFileLegacyAlpha=<value>   Base file name for legacyAlpha entrypoint declaration files. To opt out of generating
-                                 this entrypoint, set to `none`.
-  --outFileLegacyBeta=<value>    Base file name for legacyBeta entrypoint declaration files. To opt out of generating
-                                 this entrypoint, set to `none`.
-  --outFileLegacyPublic=<value>  Base file name for legacyPublic entrypoint declaration files. To opt out of generating
-                                 this entrypoint, set to `none`.
+  --outFileLegacyAlpha=<value>   Base file name for legacyAlpha entrypoint declaration files. To opt into generating
+                                 this entrypoint, set to a value other than `none`.
+  --outFileLegacyBeta=<value>    Base file name for legacyBeta entrypoint declaration files. To opt into generating this
+                                 entrypoint, set to a value other than `none`.
+  --outFileLegacyPublic=<value>  Base file name for legacyPublic entrypoint declaration files. To opt into generating
+                                 this entrypoint, set to a value other than `none`.
   --outFilePrefix=<value>        File name prefix for emitting entrypoint declaration files. Pattern of
                                  '{@unscopedPackageName}' within value will be replaced with the unscoped name of this
                                  package.

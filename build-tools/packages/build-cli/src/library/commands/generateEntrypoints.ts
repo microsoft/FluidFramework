@@ -121,17 +121,17 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 		}),
 		outFileLegacyAlpha: Flags.string({
 			description:
-				"Base file name for legacyAlpha entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
+				"Base file name for legacyAlpha entrypoint declaration files. To opt into generating this entrypoint, set to a value other than `none`.",
 			default: optionDefaults.outFileLegacyAlpha,
 		}),
 		outFileLegacyBeta: Flags.string({
 			description:
-				"Base file name for legacyBeta entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
+				"Base file name for legacyBeta entrypoint declaration files. To opt into generating this entrypoint, set to a value other than `none`.",
 			default: optionDefaults.outFileLegacyBeta,
 		}),
 		outFileLegacyPublic: Flags.string({
 			description:
-				"Base file name for legacyPublic entrypoint declaration files. To opt out of generating this entrypoint, set to `none`.",
+				"Base file name for legacyPublic entrypoint declaration files. To opt into generating this entrypoint, set to a value other than `none`.",
 			default: optionDefaults.outFileLegacyPublic,
 		}),
 		outFileSuffix: Flags.string({
