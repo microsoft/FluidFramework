@@ -33,8 +33,10 @@ import {
 	OperationType,
 	SharedArray,
 	SharedArrayRevertible,
+	SharedSignal,
 	type IRevertible,
 	type ISharedArray,
+	type ISharedSignal,
 	type IToggleOperation,
 } from "@fluidframework/legacy-dds/internal";
 import type {
@@ -73,6 +75,7 @@ import { SharedTree } from "@fluidframework/tree/internal";
 import { generatePendingState, loadContainerOffline } from "./offlineTestsUtils.js";
 
 const mapId = "map";
+const signalId = "signal";
 const stringId = "sharedStringKey";
 const cellId = "cellKey";
 const counterId = "counterKey";
@@ -136,6 +139,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[directoryId, SharedDirectory.getFactory()],
 		[treeId, SharedTree.getFactory()],
 		[arrayId, SharedArray.getFactory()],
+		[signalId, SharedSignal.getFactory()],
 	];
 
 	const testContainerConfig: ITestContainerConfig = {
@@ -202,6 +206,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	let loader: IHostLoader;
 	let container1: IContainerExperimental;
 	let map1: ISharedMap;
+	let signal1: ISharedSignal<string>;
 	let string1: SharedString;
 	let cell1: ISharedCell;
 	let array1: ISharedArray<string>;
@@ -223,6 +228,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 		cell1 = await dataStore1.getSharedObject<ISharedCell>(cellId);
 		array1 = await dataStore1.getSharedObject<ISharedArray<string>>(arrayId);
+		signal1 = await dataStore1.getSharedObject<ISharedSignal<string>>(signalId);
 		counter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
 		directory1 = await dataStore1.getSharedObject<SharedDirectory>(directoryId);
 		string1 = await dataStore1.getSharedObject<SharedString>(stringId);
@@ -645,6 +651,28 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(realArray[1], "test2", "Wrong element after revert");
 		assert.strictEqual(realArray2[2], "test3", "Wrong element after revert");
 		assert.strictEqual(realArray[2], "test3", "Wrong element after revert");
+	});
+
+	it("resends signal notify op", async function () {
+		const pendingOps = await generatePendingState(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (c, d) => {
+				const signal = await d.getSharedObject<ISharedSignal<string>>(signalId);
+				signal.notify("test");
+			},
+		);
+
+		let received: string | undefined;
+		signal1.on("notify", (value: string) => {
+			received = value;
+		});
+		// load container with pending ops, which should resend the op not sent by previous container
+		const container2 = await loader.resolve({ url }, pendingOps);
+		await waitForContainerConnection(container2);
+		await provider.ensureSynchronized();
+		assert.strictEqual(received, "test", "Signal1 did not receive notify");
 	});
 
 	it("resends all shared directory ops", async function () {
