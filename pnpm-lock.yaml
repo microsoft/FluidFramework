@@ -15302,6 +15302,9 @@ importers:
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../../dds/matrix
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../../runtime/runtime-definitions
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../../dds/sequence

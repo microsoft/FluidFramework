@@ -94,6 +94,7 @@ declare type current_as_old_for_Interface_IDevtoolsLogger = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IFluidDevtools": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IFluidDevtools = requireAssignableTo<TypeOnly<old.IFluidDevtools>, TypeOnly<current.IFluidDevtools>>
 
 /*
