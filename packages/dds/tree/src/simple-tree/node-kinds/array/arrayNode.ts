@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy, oob, fail } from "@fluidframework/core-utils/internal";
+import { Lazy, oob, fail, assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey } from "../../../core/index.js";
+import { EmptyKey, ObjectNodeStoredSchema } from "../../../core/index.js";
 import type {
 	FlexibleFieldContent,
 	FlexTreeNode,
@@ -48,6 +48,7 @@ import {
 	createTreeNodeSchemaPrivateData,
 	type FlexContent,
 	type TreeNodeSchemaPrivateData,
+	convertAllowedTypes,
 } from "../../core/index.js";
 import {
 	type FactoryContent,
@@ -68,6 +69,7 @@ import type {
 } from "./arrayNodeTypes.js";
 import { brand, type JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 import { nullSchema } from "../../leafNodeSchema.js";
+import { arrayNodeStoredSchema } from "../../toStoredSchema.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -888,10 +890,21 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAnnotatedAllowedTypes
 		const contentArray = content.flatMap((c): InsertableContent[] =>
 			c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
 		);
+
+		const kernel = getKernel(this);
+		const flexContext = kernel.getOrCreateInnerNode().context;
+		assert(flexContext === kernel.context.flexContext, "Expected flexContext to match");
+		const innerSchema = kernel.context.flexContext.schema.nodeSchema.get(
+			brand(kernel.schema.identifier),
+		);
+		assert(innerSchema instanceof ObjectNodeStoredSchema, "Expected ObjectNodeStoredSchema");
+		const fieldSchema = innerSchema.getFieldSchema(EmptyKey);
+
 		const mapTrees = prepareArrayContentForInsertion(
 			contentArray,
 			this.simpleSchema,
 			sequenceField.context,
+			fieldSchema.types,
 		);
 
 		return mapTrees;
@@ -1029,6 +1042,11 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAnnotatedAllowedTypes
 	): void {
 		const destinationField = getSequenceField(this);
 		const destinationSchema = this.allowedTypes;
+		const kernel = getKernel(this);
+		const destinationStored = (
+			kernel.context.flexContext.schema.nodeSchema.get(brand(kernel.schema.identifier)) ??
+			fail("missing schema for array node")
+		).getFieldSchema(EmptyKey).types;
 		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
 
 		validateIndex(destinationGap, destinationField, "moveRangeToIndex", true);
@@ -1040,7 +1058,15 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAnnotatedAllowedTypes
 				const sourceNode = sourceField.boxedAt(i) ?? oob();
 				const sourceSchema = getSimpleNodeSchemaFromInnerNode(sourceNode);
 				if (!destinationSchema.has(sourceSchema)) {
-					throw new UsageError("Type in source sequence is not allowed in destination.");
+					throw new UsageError(
+						`Type ${sourceNode.type} in source sequence is not allowed in destination.`,
+					);
+				}
+				if (!destinationStored.has(sourceNode.type)) {
+					// TODO: better and centralized messages for missing staged schema updates.
+					throw new UsageError(
+						`Type ${sourceNode.type} in source sequence is not allowed in destination's stored schema: this would likely require upgrading the document to permit a staged schema.`,
+					);
 				}
 			}
 		}
@@ -1250,7 +1276,9 @@ export function arraySchema<
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(this, [info]));
+			return (privateData ??= createTreeNodeSchemaPrivateData(this, [info], (storedOptions) =>
+				arrayNodeStoredSchema(convertAllowedTypes(info, storedOptions), persistedMetadata),
+			));
 		}
 	}
 

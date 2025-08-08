@@ -11,7 +11,9 @@ export const ApiLevel = {
 	beta: "beta",
 	alpha: "alpha",
 	internal: "internal",
-	legacy: "legacy",
+	legacyAlpha: "legacyAlpha",
+	legacyBeta: "legacyBeta",
+	legacyPublic: "legacyPublic",
 } as const;
 export type ApiLevel = (typeof ApiLevel)[keyof typeof ApiLevel];
 
@@ -27,7 +29,9 @@ export const knownApiLevels = [
 	ApiLevel.alpha,
 	ApiLevel.beta,
 	ApiLevel.internal,
-	ApiLevel.legacy,
+	ApiLevel.legacyPublic,
+	ApiLevel.legacyBeta,
+	ApiLevel.legacyAlpha,
 ] as const;
 
 const knownApiLevelSet: ReadonlySet<string> = new Set(knownApiLevels);
@@ -40,4 +44,12 @@ const knownApiLevelSet: ReadonlySet<string> = new Set(knownApiLevels);
  */
 export function isKnownApiLevel(level: string): level is ApiLevel {
 	return knownApiLevelSet.has(level);
+}
+
+export function isLegacy(level: ApiLevel): boolean {
+	return (
+		level === ApiLevel.legacyAlpha ||
+		level === ApiLevel.legacyBeta ||
+		level === ApiLevel.legacyPublic
+	);
 }

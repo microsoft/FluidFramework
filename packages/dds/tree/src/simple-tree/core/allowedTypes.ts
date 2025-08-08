@@ -5,7 +5,12 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { getOrCreate, isReadonlyArray, type IsUnion } from "../../util/index.js";
+import {
+	getOrCreate,
+	isReadonlyArray,
+	type IsUnion,
+	type MakeNominal,
+} from "../../util/index.js";
 import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 import {
 	NodeKind,
@@ -134,7 +139,34 @@ export interface AllowedTypeMetadata {
 	 */
 	readonly custom?: unknown;
 
-	// TODO metadata for enablable types will be added here
+	/**
+	 * If defined, indicates that an allowed type is {@link SchemaStaticsAlpha.staged | staged}.
+	 */
+	readonly stagedSchemaUpgrade?: SchemaUpgrade;
+}
+
+/**
+ * Package internal {@link SchemaUpgrade} construction API.
+ */
+export let createSchemaUpgrade: () => SchemaUpgrade;
+
+/**
+ * Unique token used to upgrade schemas and determine if a particular upgrade has been completed.
+ * @remarks
+ * Create using {@link SchemaStaticsAlpha.staged}.
+ * @privateRemarks
+ * TODO:#38722 implement runtime schema upgrades.
+ * Until then, the class purely behaves mostly as a placeholder.
+ * TODO: Consider allowing users to store a name for the upgrade to use in error messages.
+ * @sealed @alpha
+ */
+export class SchemaUpgrade {
+	protected _typeCheck!: MakeNominal;
+	static {
+		createSchemaUpgrade = () => new SchemaUpgrade();
+	}
+
+	private constructor() {}
 }
 
 /**
@@ -258,22 +290,13 @@ export function normalizeAllowedTypes(
 }
 
 /**
- * Normalizes an allowed type to an {@link AnnotatedAllowedType}, by adding empty annotations if they don't already exist
- * and eagerly evaluating any lazy schema declarations.
- *
- * @remarks
- * Note: this must only be called after all required schemas have been declared, otherwise evaluation of
- * recursive schemas may fail.
- * type is frozen and should not be modified after being passed in.
+ * Normalizes an allowed type to an {@link AnnotatedAllowedType}, by adding empty annotations if they don't already exist.
  */
-export function normalizeToAnnotatedAllowedType<T extends TreeNodeSchema>(
-	type: T | AnnotatedAllowedType<T> | AnnotatedAllowedType<LazyItem<T>>,
+export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchema>>(
+	type: T | AnnotatedAllowedType<T>,
 ): AnnotatedAllowedType<T> {
 	return isAnnotatedAllowedType(type)
-		? {
-				metadata: type.metadata,
-				type: evaluateLazySchema(type.type),
-			}
+		? type
 		: {
 				metadata: {},
 				type,

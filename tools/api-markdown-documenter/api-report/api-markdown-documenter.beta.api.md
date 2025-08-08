@@ -28,6 +28,7 @@ import { ApiVariable } from '@microsoft/api-extractor-model';
 import type { BlockContent } from 'mdast';
 import { DocSection } from '@microsoft/tsdoc';
 import { Excerpt } from '@microsoft/api-extractor-model';
+import type { Link } from 'mdast';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'mdast';
 import type { Nodes } from 'mdast';
@@ -429,12 +430,6 @@ declare namespace LayoutUtilities {
 }
 export { LayoutUtilities }
 
-// @public
-export interface Link {
-    readonly target: UrlTarget;
-    readonly text: string;
-}
-
 // @beta
 export function lintApiModel(configuration: LintApiModelConfiguration): Promise<LinterErrors | undefined>;
 
@@ -628,9 +623,6 @@ export function transformApiModel(options: ApiItemTransformationOptions): ApiDoc
 
 // @public
 export function transformTsdoc(node: DocSection, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): BlockContent[];
-
-// @public
-export type UrlTarget = string;
 
 // @public
 export type ValidApiItemKind = Exclude<ApiItemKind, ApiItemKind.None>;

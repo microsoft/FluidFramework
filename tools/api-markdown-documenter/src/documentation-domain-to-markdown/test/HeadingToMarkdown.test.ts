@@ -42,9 +42,8 @@ describe("headingToMarkdown", () => {
 			);
 			expect(result).to.deep.equal([
 				{
-					type: "heading",
-					depth: 2,
-					children: [{ type: "text", value: "Hello world! {#my-heading-id}" }],
+					type: "html",
+					value: '<h2 id="my-heading-id">Hello world!</h2>',
 				},
 			]);
 		});

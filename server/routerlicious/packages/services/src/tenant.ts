@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { ScopeType, type IUser } from "@fluidframework/protocol-definitions";
 import {
 	GitManager,
@@ -166,9 +165,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			lumberProperties /* telemetryProperties */,
 		);
 
-		const defaultQueryString = {
-			token: fromUtf8ToBase64(`${tenantId}`),
-		};
+		const defaultQueryString = {};
 		const getDefaultHeaders = () => {
 			const credentials: ICredentials = {
 				password: accessToken,

@@ -3,16 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	BlockContent as MdastBlockContent,
-	Break as MdastBreak,
-	Heading as MdastHeading,
-	Html as MdastHtml,
-	Strong as MdastStrong,
-} from "mdast";
+import type { BlockContent, Break, PhrasingContent } from "mdast";
 
 import type { SectionHeading } from "../../mdast/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
+
+/**
+ * Line break singleton.
+ */
+const lineBreak: Break = { type: "break" };
 
 /**
  * Markdown supports heading levels from 1 to 6, corresponding to HTML's `<h1>` to `<h6>`.
@@ -34,7 +33,7 @@ function isInHeadingRange(level: number): level is 1 | 2 | 3 | 4 | 5 | 6 {
 export function headingToMarkdown(
 	headingNode: SectionHeading,
 	context: TransformationContext,
-): MdastBlockContent[] {
+): BlockContent[] {
 	// Markdown only supports heading levels up to 6. If our level is beyond that, we will transform the input to simple
 	// bold text, with an accompanying HTML anchor to ensure we can still link to the text.
 	return isInHeadingRange(context.headingLevel)
@@ -45,28 +44,45 @@ export function headingToMarkdown(
 function transformAsHeading(
 	headingNode: SectionHeading,
 	headingLevel: 1 | 2 | 3 | 4 | 5 | 6,
-): MdastBlockContent[] {
-	let headingText: string = headingNode.title;
-	if (headingNode.id !== undefined) {
-		headingText = `${headingText} {#${headingNode.id}}`;
-	}
-
-	const heading: MdastHeading = {
-		type: "heading",
-		depth: headingLevel,
-		children: [
-			{
-				type: "text",
-				value: headingText,
-			},
-		],
-	};
-
-	return [heading];
+): [BlockContent] {
+	// Markdown headings don't natively support anchor IDs.
+	// If the heading has an ID set, we will render it as an HTML element.
+	// While there are extended syntax options for Markdown that do support IDs, none of them are widely supported.
+	return headingNode.id === undefined
+		? [
+				{
+					type: "heading",
+					depth: headingLevel,
+					children: [
+						{
+							type: "text",
+							value: headingNode.title,
+						},
+					],
+				},
+			]
+		: [
+				{
+					type: "html",
+					value: `<h${headingLevel} id="${headingNode.id}">${headingNode.title}</h${headingLevel}>`,
+				},
+			];
 }
 
-function transformAsBoldText(headingNode: SectionHeading): MdastBlockContent[] {
-	const boldText: MdastStrong = {
+function transformAsBoldText(headingNode: SectionHeading): [BlockContent] {
+	const body: PhrasingContent[] = [];
+
+	if (headingNode.id !== undefined) {
+		body.push(
+			{
+				type: "html",
+				value: `<a id="${headingNode.id}"></a>`,
+			},
+			lineBreak,
+		);
+	}
+
+	body.push({
 		type: "strong",
 		children: [
 			{
@@ -74,26 +90,12 @@ function transformAsBoldText(headingNode: SectionHeading): MdastBlockContent[] {
 				value: headingNode.title,
 			},
 		],
-	};
+	});
 
-	if (headingNode.id === undefined) {
-		return [
-			{
-				type: "paragraph",
-				children: [boldText],
-			},
-		];
-	}
-
-	const anchorHtml: MdastHtml = {
-		type: "html",
-		value: `<a id="${headingNode.id}"></a>`,
-	};
-	const lineBreak: MdastBreak = { type: "break" };
 	return [
 		{
 			type: "paragraph",
-			children: [anchorHtml, lineBreak, boldText],
+			children: body,
 		},
 	];
 }

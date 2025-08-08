@@ -21,12 +21,12 @@ import {
 import { brand } from "../../../util/index.js";
 import {
 	SchemaFactoryAlpha,
-	toStoredSchema,
 	type AnnotatedAllowedType,
 	type TreeNodeSchema,
 	SchemaFactory,
 	TreeViewConfigurationAlpha,
 	NodeKind,
+	toInitialSchema,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { LeafNodeSchema } from "../../../simple-tree/leafNodeSchema.js";
@@ -48,13 +48,13 @@ const numberName = brand<TreeNodeSchemaIdentifier>(SchemaFactory.number.identifi
 describe("Schema Discrepancies", () => {
 	it("Node kind difference for each possible combination", () => {
 		class ObjectNode extends schemaFactory.objectAlpha(testTreeNodeName, {}) {}
-		const objectNodeStoredSchema = toStoredSchema(ObjectNode);
+		const objectNodeStoredSchema = toInitialSchema(ObjectNode);
 
 		class MapNode extends schemaFactory.mapAlpha(testTreeNodeName, []) {}
-		const mapNodeStoredSchema = toStoredSchema(MapNode);
+		const mapNodeStoredSchema = toInitialSchema(MapNode);
 
 		const leafNodeSchema = new LeafNodeSchema(testTreeNodeIdentifier, ValueSchema.Number);
-		const leafNodeStoredSchema = toStoredSchema(leafNodeSchema);
+		const leafNodeStoredSchema = toInitialSchema(leafNodeSchema);
 
 		assert.deepEqual(
 			[
@@ -151,7 +151,7 @@ describe("Schema Discrepancies", () => {
 			[
 				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: mapNodeSchema1 }),
-					toStoredSchema(mapNodeSchema2),
+					toInitialSchema(mapNodeSchema2),
 				),
 			],
 			[
@@ -176,7 +176,7 @@ describe("Schema Discrepancies", () => {
 			[
 				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: mapNodeSchema2 }),
-					toStoredSchema(mapNodeSchema3),
+					toInitialSchema(mapNodeSchema3),
 				),
 			],
 			[
@@ -211,7 +211,7 @@ describe("Schema Discrepancies", () => {
 			y: SchemaFactory.optional(SchemaFactory.string),
 		}) {}
 		const objectNodeSchema2 = SchemaFactory.optional(ObjectNode2);
-		const objectNodeStoredSchema2 = toStoredSchema(objectNodeSchema2);
+		const objectNodeStoredSchema2 = toInitialSchema(objectNodeSchema2);
 
 		assert.deepEqual(
 			[
@@ -272,7 +272,7 @@ describe("Schema Discrepancies", () => {
 			y: SchemaFactory.optional(SchemaFactory.string),
 		}) {}
 		const objectNodeRoot2 = SchemaFactory.optional(ObjectNode2);
-		const objectNodeStoredSchema2 = toStoredSchema(objectNodeRoot2);
+		const objectNodeStoredSchema2 = toInitialSchema(objectNodeRoot2);
 
 		assert.deepEqual(
 			[
@@ -510,7 +510,7 @@ describe("Schema Discrepancies", () => {
 			const view = [typeA, typeB];
 			const stored = getIdentifiers(view);
 
-			const { viewExtra, storedExtra } = findExtraAllowedTypes(view, stored);
+			const { view: viewExtra, stored: storedExtra } = findExtraAllowedTypes(view, stored);
 
 			assert.deepEqual(viewExtra, []); // extras in view
 			assert.deepEqual(storedExtra, []); // extras in stored
@@ -520,7 +520,7 @@ describe("Schema Discrepancies", () => {
 			const view = [typeA, typeB, typeC];
 			const stored = getIdentifiers([typeA, typeB]);
 
-			const { viewExtra, storedExtra } = findExtraAllowedTypes(view, stored);
+			const { view: viewExtra, stored: storedExtra } = findExtraAllowedTypes(view, stored);
 
 			assert.deepEqual(viewExtra, [typeC]);
 			assert.deepEqual(storedExtra, []);
@@ -530,7 +530,7 @@ describe("Schema Discrepancies", () => {
 			const view = [typeA];
 			const stored = getIdentifiers([typeA, typeB]);
 
-			const { viewExtra, storedExtra } = findExtraAllowedTypes(view, stored);
+			const { view: viewExtra, stored: storedExtra } = findExtraAllowedTypes(view, stored);
 
 			assert.deepEqual(viewExtra, []);
 			assert.deepEqual(storedExtra, [typeB.type.identifier]);
@@ -540,14 +540,14 @@ describe("Schema Discrepancies", () => {
 			const view = [typeA, typeB];
 			const stored = getIdentifiers([typeB, typeC]);
 
-			const { viewExtra, storedExtra } = findExtraAllowedTypes(view, stored);
+			const { view: viewExtra, stored: storedExtra } = findExtraAllowedTypes(view, stored);
 
 			assert.deepEqual(viewExtra, [typeA]);
 			assert.deepEqual(storedExtra, [typeC.type.identifier]);
 		});
 
 		it("handles empty inputs", () => {
-			const { viewExtra, storedExtra } = findExtraAllowedTypes([], new Set());
+			const { view: viewExtra, stored: storedExtra } = findExtraAllowedTypes([], new Set());
 			assert.deepEqual(viewExtra, []);
 			assert.deepEqual(storedExtra, []);
 		});
