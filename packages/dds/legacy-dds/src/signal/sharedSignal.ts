@@ -4,7 +4,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -169,13 +169,12 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 		switch (op.type) {
 			case "signal": {
 				this.notifyCore(op, true);
+				this.submitLocalMessage(op);
 				break;
 			}
-
 			default: {
-				throw new Error("Unknown operation");
+				unreachableCase(op as never);
 			}
 		}
-		this.submitLocalMessage(op);
 	}
 }

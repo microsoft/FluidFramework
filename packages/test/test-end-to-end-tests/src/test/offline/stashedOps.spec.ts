@@ -33,8 +33,10 @@ import {
 	OperationType,
 	SharedArray,
 	SharedArrayRevertible,
+	SharedSignal,
 	type IRevertible,
 	type ISharedArray,
+	type ISharedSignal,
 	type IToggleOperation,
 } from "@fluidframework/legacy-dds/internal";
 import type {
@@ -73,6 +75,7 @@ import { SharedTree } from "@fluidframework/tree/internal";
 import { generatePendingState, loadContainerOffline } from "./offlineTestsUtils.js";
 
 const mapId = "map";
+const signalId = "signal";
 const stringId = "sharedStringKey";
 const cellId = "cellKey";
 const counterId = "counterKey";
@@ -136,6 +139,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[directoryId, SharedDirectory.getFactory()],
 		[treeId, SharedTree.getFactory()],
 		[arrayId, SharedArray.getFactory()],
+		[signalId, SharedSignal.getFactory()],
 	];
 
 	const testContainerConfig: ITestContainerConfig = {
@@ -202,6 +206,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	let loader: IHostLoader;
 	let container1: IContainerExperimental;
 	let map1: ISharedMap;
+	let signal1: ISharedSignal<string>;
 	let string1: SharedString;
 	let cell1: ISharedCell;
 	let array1: ISharedArray<string>;
