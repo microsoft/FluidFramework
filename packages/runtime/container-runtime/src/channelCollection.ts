@@ -98,7 +98,12 @@ import {
 import { DataStoreContexts } from "./dataStoreContexts.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import { GCNodeType, IGCNodeUpdatedProps, urlToGCNodePath } from "./gc/index.js";
-import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes.js";
+import {
+	ContainerMessageType,
+	LocalContainerRuntimeMessage,
+	type AnyNode,
+	type RuntimeOp,
+} from "./messageTypes.js";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
 import {
 	IContainerRuntimeMetadata,
@@ -205,20 +210,9 @@ function wrapContextForInnerChannel(
 ): IFluidParentContext {
 	const context = wrapContext(parentContext);
 
-	context.submitMessage = (type: string, content: unknown, localOpMetadata: unknown) => {
-		const fluidDataStoreContent: FluidDataStoreMessage = {
-			content,
-			type,
-		};
-		const envelope: IEnvelope = {
-			address: id,
-			contents: fluidDataStoreContent,
-		};
-		parentContext.submitMessage(
-			ContainerMessageType.FluidDataStoreOp,
-			envelope,
-			localOpMetadata,
-		);
+	context.submitMessage = (type: string, innerOp: AnyNode[], localOpMetadata: unknown) => {
+		const op: RuntimeOp = [ContainerMessageType.FluidDataStoreOp, id, type, ...innerOp];
+		parentContext.submitMessage(op, localOpMetadata);
 	};
 
 	context.submitSignal = (type: string, contents: unknown, targetClientId?: string) => {

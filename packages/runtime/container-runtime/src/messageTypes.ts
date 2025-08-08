@@ -81,8 +81,8 @@ interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TCont
 
 type Id = string;
 
-type AnyNode = string | Record<string, unknown>;
-type UnknownNode = "__unknown__NOT_A_RUNTIME_VALUE__";
+export type AnyNode = string | Record<string, unknown>;
+export type UnknownNode = "__unknown__NOT_A_RUNTIME_VALUE__";
 export type RuntimeOp =
 	| ["component", Id, ...AnyNode[]]
 	| ["attach", Id, AttachData]
