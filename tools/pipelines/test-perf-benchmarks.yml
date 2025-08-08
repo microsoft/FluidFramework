@@ -27,6 +27,7 @@ parameters:
 - name: memoryTestPackages
   type: object
   default:
+    - "@fluidframework/tree"
     - "@fluidframework/sequence"
     - "@fluidframework/map"
     - "@fluidframework/matrix"
