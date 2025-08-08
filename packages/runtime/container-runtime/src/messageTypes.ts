@@ -79,24 +79,14 @@ interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TCont
 	contents: TContents;
 }
 
-// ["component", "id1", "ddsOp", ["1234", { ... }]]
-type AnyNode = string | [string, unknown];
-type BaseNode<R extends string, D> = D extends undefined ? R : [R, D];
-type Router<R extends string, D = undefined> = BaseNode<R, D>;
-type Id2D = BaseNode<string, undefined>;
-type Item<D> = BaseNode<string, D>;
-type UnknownNode = BaseNode<"__unknown__NOT_A_RUNTIME_VALUE__", unknown>;
-export type OtherNode = BaseNode<"other", { foo: number }>;
-export const sampleId: Id2D = "id1";
-export type RuntimeOp_explicit =
-	| ["component", [string], ...AnyNode[]]
-	| ["attach", Item<AttachData>]
-	| [["gc", GarbageCollectionMessage]]
-	| [UnknownNode];
+type Id = string;
+
+type AnyNode = string | Record<string, unknown>;
+type UnknownNode = "__unknown__NOT_A_RUNTIME_VALUE__";
 export type RuntimeOp =
-	| [Router<"component">, Id2D, ...AnyNode[]]
-	| [Router<"attach">, Item<AttachData>]
-	| [Router<"gc", GarbageCollectionMessage>]
+	| ["component", Id, ...AnyNode[]]
+	| ["attach", Id, AttachData]
+	| ["gc", GarbageCollectionMessage]
 	| [UnknownNode];
 
 interface AttachData {
@@ -104,11 +94,12 @@ interface AttachData {
 	snapshot: ITree;
 }
 
-// [ ["component"], ["ABCD"], ["ddsOp"], ["1234", { ... }] ] => [ "component", "ABCD", "ddsOp", "1234" ]
+// Not enforced, but we would only expect one data between each string route part (the data owned by that layer)
+// [ "component", "ABCD", {componentData: 123},"ddsOp", "XYZ", { ddsData: 456 } ] => [ "component", "ABCD", "ddsOp", "XYZ" ]
 export function fullRoute(runtimeOp: AnyNode[]): string[] {
-	return runtimeOp.map((n) => (typeof n === "string" ? n : n[0]));
+	return runtimeOp.filter((n) => typeof n === "string");
 }
-const op: RuntimeOp = ["component", "default", "ddsOp", ["dds1", { foo: 123 }]];
+const op: RuntimeOp = ["component", "default", "ddsOp", "dds1", { foo: 123 }];
 fullRoute(op);
 
 export function processRuntimeOp(runtimeOp: RuntimeOp): void {
@@ -119,14 +110,14 @@ export function processRuntimeOp(runtimeOp: RuntimeOp): void {
 			break;
 		}
 		case "attach": {
-			const [_, item] = runtimeOp;
+			const [_, id, attachData] = runtimeOp;
 
 			break;
 		}
-		// case { routing: "gc" }: {
-		// 	const [{ data }] = runtimeOp;
-		// 	break;
-		// }
+		case "gc": {
+			const [_, gcMsgData] = runtimeOp;
+			break;
+		}
 		default: {
 			const x = runtimeOp;
 			break;
