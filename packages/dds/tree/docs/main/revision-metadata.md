@@ -49,9 +49,19 @@ This occurs in two cases:
 
 One can infer from the above that for a given commit `C`...
 * `C` refers to all cells introduced by `C`.
-* `C` refers to all cells introduced by ancestors of `C` up to some ancestor.
+* `C` refers to all cells introduced by ancestors of `C` up to some ancestor `A`.
 
 The commits that introduce cells that `C` refers to therefore from a contiguous subsequence always including and ending in `C`.
+In other words, when considering a single branch,
+if a commit `C` has a reference to a cell introduced by commit `A`,
+then it also has references to every cell introduced by `A`,
+references to every cells introduced by commits sequenced between `A` and `C`,
+as well as references to every cells introduced by `C`.*
+
+*This currently violated by two things:
+1. [Rollback commits](#rollback-commits)
+1. How we rebase over [commits with constraint violations](#commit-with-constraint-violations).
+See the relevant sections for more details.
 
 In commit graph diagrams, we can represent this contiguous subsequence visually with a segment that extends from `C` backwards under all the commits that introduced cells that `C` refers to:
 
@@ -285,30 +295,33 @@ This shows how implementations of compose need not rely on extra metadata in ord
 
 When rebasing `B ↷ X`, we know the following about the commit graph:
 
-* `X` and `B` are concurrent and have the same ancestry.
+* `X` and `B` are concurrent.
 * `X` comes before `B` in sequencing order.
 
-Note that it does _not_ follow from the above that `B` comes directly after `X` in sequencing order.
-In the simplest case, `B` does comes directly after `X`,
-which amounts to the following graph:<br />
+In the simplest case, it's also true that `X` and `B` have the same ancestry and therefore the same input context.
+This is true when rebasing a branch that contains a single commit:<br />
 ![](../.attachments/revision-metadata/rebase-b-over-x.png)<br />
 with the goal to produce `B'`:<br />
 ![](../.attachments/revision-metadata/rebase-to-bprime.png)<br />
 
-In the more general case, there can be any number of commits between `P` and `B`,
-which amounts to the following graph:<br />
+In the more general case, there can be any number of commits between `P` and `B` on the branch to be rebased:<br />
 ![](../.attachments/revision-metadata/rebase-ab-over-x.png)<br />
 with the goal to produce rebased versions of each before `B'`:<br />
 ![](../.attachments/revision-metadata/rebase-to-abprime.png)<br />
 
+This prevents us from directly rebasing `B` over `X` because they have different input context.
 When confronted to this general case,
 we first rebase `B` over the inverses of all the commits between `P` and `B`.
-This produces to a commit `B2` that is akin to what `B` would have been if `P` were its direct ancestor:<br />
+This maneuver produces to a commit `B2` whose input context is compatible with `X`'s:<br />
 ![](../.attachments/revision-metadata/rebase-b2.png)
 
 It is this `B2` commit that is passed to the rebase function when performing `B ↷ X`.
 The graph of relevant commits in the general case therefore looks like this:<br />
 ![](../.attachments/revision-metadata/rebase-b2-over-x.png)
+
+When we say that `B2`'s input context is compatible with `X`'s,
+what we means is that they are only different in ways that rebase is equipped to handle.
+Specifically, rebase can handle the fact that `B2` may refer to cells that were introduced by ancestors that it does not share with `X` (`A` in our example).
 
 In the remainder of this section, we use `B` to refer to all variants of `B`,
 and `B2` when statements more specifically apply to that particular variant of `B`.
@@ -445,3 +458,92 @@ This is because the rebase implementation has no way of determining whether `cb`
 In order to be able to tackle the remaining cases,
 rebase needs to be able to detect references to cells that were introduced by any commit between `B` and the lowest common ancestor of `X` and `B`.
 In other words, rebase needs to be able to check if a cell was introduced by a commit on the branch that is being rebased.
+
+### Rebase 2.0
+
+It's interesting to note that rebase's need for metadata only comes from our choice of scheme for handling branch rebasing.
+We can imagine a different approach where all commits on the branch are composed together into a single commit that is then rebased as a unit.
+Such an approach would ensure that the rebased commit and the commit that it is rebased over truly have the same ancestry and the same input context,
+and it would make remove the need to the extra metadata.
+
+### Rollback Commits
+
+They're just a tool, they're not real commits:
+* They don't define a valid revision in the document history.
+* They are not rebasable.
+
+When composing, rollback commits break the expectation that commits ony refer to cells introduced by that commit or an earlier commit.
+We can handle this in the compose implementation because  each rollback commit contains information about which commit it is a rollback of.
+You could say each rollback comes with its own metadata that the compose implementation knows to pay attention to.
+
+#### Tiding Up
+
+We could avoid ever passing rollback commits to compose
+(and therefore not require logic in the compose implementation to watch out for rollback commits).
+
+For rebasing commit `C` when rebasing branch `[A, B, C]` over commit `X`,
+we currently do `C ↷ (A⁻¹ ○ B⁻¹ ○ X ○ A' ○ B')`.
+Instead, we could do `(C ↷ (A ○ B)⁻¹) ↷ (X ○ A' ○ B')`.
+
+We could define an `unbase` operation that performs `C ↷ (A ○ B)⁻¹` as an implementation detail.
+The advantage of that is that the changeset produced by `(A ○ B)⁻¹` wouldn't exist outside the scope of this `unbase` operation.
+
+For producing a delta when rebasing branch `[A, B]` over commit `X`,
+we currently apply `Δ(A⁻¹ ○ B⁻¹ ○ X ○ A' ○ B')`.
+Instead, we could apply `Δ((A ○ B)⁻¹)` then apply `Δ(X ○ A' ○ B')`.
+The trouble with that, is that it will feed a lot of change notifications to delta visitors (and ultimately the app)
+even when the net change is minimal.
+
+Instead we could try to implement composition for delta and apply the composition of these two deltas
+(which should largely cancel out).
+
+### Commit With Constraint Violations
+
+Commits with a constraint violations may introduce cells that downstream commits depend on for ordering.
+Our implementation of rebase skips over conflicted commits,
+which means that the rebased change will not include references to the cells introduced by that conflicted commit.
+
+This breaks our invariant that every commit `X` that includes references to cells introduced by some commit `C`,
+will also have references to cell introduced by commits sequenced between `C` and `X`.
+
+Here's a test:
+```typescript
+const tree1 = makeTreeFromJsonSequence(["C", "D"]);
+
+const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.events);
+remove(tree1, 0, 1);
+const restoreA = undoStack.pop() ?? assert.fail("Missing undo");
+unsubscribe();
+
+const tree2 = tree1.branch();
+
+tree2.transaction.start();
+tree2.editor.addNodeExistsConstraint(rootNode);
+tree2.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["A"]));
+tree2.transaction.commit();
+
+tree2.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["B"]));
+expectJsonTree(tree2, ["A", "B", "D"]);
+
+// Removing "D" will violate the constraint in the transaction that adds A.
+remove(tree1, 0, 1);
+
+tree1.merge(tree2);
+expectJsonTree(tree1, ["B"]);
+
+// This revert should fail when trying to order the cells for "A" and "C".
+// However, the rebase metadata includes information about the commit that added "A".
+// This is because:
+// - We include base changes in the metadata.
+// - We don't update the metadata per rebase step, and provide to every rebase step the metadata about the overall rebase.
+// This allows the rebaser to correctly determine that the cell for "A" is more recent than the cell for "C".
+restoreA.revert();
+
+expectJsonTree(tree1, ["B", "C"]);
+```
+
+Because you can't directly target cells from a commit with constraint violations,
+A commit with references to cells introduced by a commit with constraint violations must have been rebased at least once.
+This means that the commit will have tombstones for all commits 
+
+In practice this is not a problem because cell references are only needed when rebasing or composing commits that both refer to these cells. This can only happen for commits that were downstream of the conflicted commit at a time when it wasn't conflicted.
