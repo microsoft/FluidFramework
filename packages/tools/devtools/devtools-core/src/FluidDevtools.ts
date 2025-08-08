@@ -235,7 +235,7 @@ export class FluidDevtools implements IFluidDevtools {
 
 	private constructor(props?: FluidDevtoolsProps) {
 		// Populate initial Container-level devtools
-		this.containers = new Map<ContainerKey, ContainerDevtools>();
+		this.containers = new Map<ContainerKey, BaseDevtools<DecomposedContainer>>();
 		if (props?.initialContainers !== undefined) {
 			for (const containerConfig of props.initialContainers) {
 				this.containers.set(
