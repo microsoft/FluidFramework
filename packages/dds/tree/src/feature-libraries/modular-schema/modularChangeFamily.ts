@@ -1057,6 +1057,8 @@ export class ModularChangeFamily
 			refreshers: change.refreshers,
 		});
 
+		// XXX: This is an expensive assert which should be disabled before merging.
+		this.validateChangeset(rebased);
 		return rebased;
 	}
 
@@ -1209,7 +1211,11 @@ export class ModularChangeFamily
 			crossFieldTable.affectedBaseFields.clear();
 
 			for (const baseFieldIdKey of baseFields.keys()) {
-				const baseFieldId = fieldIdFromFieldIdKey(baseFieldIdKey);
+				const baseFieldId = normalizeFieldId(
+					fieldIdFromFieldIdKey(baseFieldIdKey),
+					crossFieldTable.baseChange.nodeAliases,
+				);
+
 				const baseField = fieldChangeFromId(crossFieldTable.baseChange, baseFieldId);
 
 				assert(
