@@ -30,7 +30,6 @@ export interface ContainerRuntimeProps {
 
 /**
  * Properties for constructing a {@link ContainerRuntimeDevtools} instance.
- * @alpha
  */
 export interface ContainerRuntimeDevtoolsConstructorProps {
 	/**
