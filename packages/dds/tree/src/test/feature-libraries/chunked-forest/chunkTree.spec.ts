@@ -54,7 +54,7 @@ import {
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
-	toStoredSchema,
+	toInitialSchema,
 } from "../../../simple-tree/index.js";
 import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
 import { testIdCompressor } from "../../utils.js";
@@ -67,7 +67,7 @@ const structValue = builder.object("structValue", { x: valueField });
 const optionalField = builder.optional(builder.number);
 const structOptional = builder.object("structOptional", { x: optionalField });
 
-const schema = toStoredSchema([empty, builder.number, structValue, structOptional]);
+const schema = toInitialSchema([empty, builder.number, structValue, structOptional]);
 
 function expectEqual(a: ShapeInfo, b: ShapeInfo): void {
 	assert.deepEqual(a, b);
@@ -401,7 +401,7 @@ describe("chunkTree", () => {
 			const info = tryShapeFromFieldSchema(
 				schema,
 				defaultSchemaPolicy,
-				toStoredSchema(valueField).rootFieldSchema,
+				toInitialSchema(valueField).rootFieldSchema,
 				brand("key"),
 				new Map(),
 			);
@@ -415,7 +415,7 @@ describe("chunkTree", () => {
 			const info = tryShapeFromFieldSchema(
 				schema,
 				defaultSchemaPolicy,
-				toStoredSchema(optionalField).rootFieldSchema,
+				toInitialSchema(optionalField).rootFieldSchema,
 				brand("key"),
 				new Map(),
 			);

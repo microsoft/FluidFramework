@@ -24,7 +24,8 @@ import {
 	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import type { DocumentNode, SectionNode } from "../documentation-domain/index.js";
+import type { ApiDocument } from "../ApiDocument.js";
+import type { Section } from "../mdast/index.js";
 import { getApiItemKind } from "../utilities/index.js";
 
 import {
@@ -33,10 +34,10 @@ import {
 } from "./ApiItemTransformUtilities.js";
 import { createDocument } from "./Utilities.js";
 import type { ApiItemTransformationConfiguration } from "./configuration/index.js";
-import { createBreadcrumbParagraph, wrapInSection } from "./helpers/index.js";
+import { createBreadcrumbParagraph } from "./helpers/index.js";
 
 /**
- * Creates a {@link DocumentNode} for the specified `apiItem`.
+ * Creates a {@link ApiDocument} for the specified `apiItem`.
  *
  * @remarks
  *
@@ -58,7 +59,7 @@ import { createBreadcrumbParagraph, wrapInSection } from "./helpers/index.js";
 export function apiItemToDocument(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): DocumentNode {
+): ApiDocument {
 	const itemKind = getApiItemKind(apiItem);
 
 	if (
@@ -85,11 +86,14 @@ export function apiItemToDocument(
 
 	logger.verbose(`Generating document for ${apiItem.displayName} (${itemKind})...`);
 
-	const sections: SectionNode[] = [];
+	const sections: Section[] = [];
 
 	// Render breadcrumb
 	if (config.includeBreadcrumb) {
-		sections.push(wrapInSection([createBreadcrumbParagraph(apiItem, config)]));
+		sections.push({
+			type: "section",
+			children: [createBreadcrumbParagraph(apiItem, config)],
+		});
 	}
 
 	// Render body content for the item
@@ -114,7 +118,7 @@ export function apiItemToDocument(
 export function apiItemToSections(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): SectionNode[] {
+): Section[] {
 	const itemKind = getApiItemKind(apiItem);
 
 	if (
@@ -133,12 +137,12 @@ export function apiItemToSections(
 
 	const { logger, transformations } = config;
 
-	const transformChildren = (childItem: ApiItem): SectionNode[] =>
+	const transformChildren = (childItem: ApiItem): Section[] =>
 		apiItemToSections(childItem, config);
 
 	logger.verbose(`Generating documentation section for ${apiItem.displayName}...`);
 
-	let sections: SectionNode[];
+	let sections: Section[];
 	switch (itemKind) {
 		case ApiItemKind.CallSignature: {
 			sections = transformations[ApiItemKind.CallSignature](

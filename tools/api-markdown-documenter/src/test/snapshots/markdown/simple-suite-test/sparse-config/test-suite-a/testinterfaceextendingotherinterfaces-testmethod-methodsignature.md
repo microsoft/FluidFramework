@@ -2,23 +2,23 @@
 
 Test interface method accepting a string and returning a number.
 
-### Signature {#testmethod-signature}
+<h3 id="testmethod-signature">Signature</h3>
 
 ```typescript
 testMethod(input: string): number;
 ```
 
-### Remarks {#testmethod-remarks}
+<h3 id="testmethod-remarks">Remarks</h3>
 
 Here are some remarks about the method
 
-### Parameters {#testmethod-parameters}
+<h3 id="testmethod-parameters">Parameters</h3>
 
 | Parameter | Type | Description |
 | - | - | - |
 | input | string | A string |
 
-### Returns {#testmethod-returns}
+<h3 id="testmethod-returns">Returns</h3>
 
 A number
 

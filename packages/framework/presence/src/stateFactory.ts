@@ -3,18 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { LatestMapFactory } from "./latestMapValueManager.js";
 import { latestMap } from "./latestMapValueManager.js";
-import type { LatestFactory } from "./latestValueManager.js";
 import { latest } from "./latestValueManager.js";
-
-/**
- * Factory for creating presence State objects.
- */
-export const StateFactoryInternal = {
-	latest,
-	latestMap,
-};
 
 /**
  * Factory for creating presence State objects.
@@ -25,7 +15,7 @@ export const StateFactoryInternal = {
  *
  * @beta
  */
-export const StateFactory: {
-	latest: LatestFactory;
-	latestMap: LatestMapFactory;
-} = StateFactoryInternal;
+export const StateFactory = {
+	latest,
+	latestMap,
+};

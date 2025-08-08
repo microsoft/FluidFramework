@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { defaultSchemaPolicy } from "../../feature-libraries/index.js";
+import type { TreeFieldStoredSchema } from "../../core/index.js";
+import { defaultSchemaPolicy, FieldKinds } from "../../feature-libraries/index.js";
+import { brand } from "../../util/index.js";
 import {
 	Context,
 	getKernel,
@@ -141,7 +143,7 @@ export interface TreeBeta {
 
 	// TODO: support more clone options
 	// /**
-	//  * Like {@link TreeBeta.create}, except deeply clones existing nodes.
+	//  * Like {@link (TreeBeta:interface).create}, except deeply clones existing nodes.
 	//  * @remarks
 	//  * This only clones the persisted data associated with a node.
 	//  * Local state, such as properties added to customized schema classes, will not be cloned:
@@ -191,7 +193,12 @@ export const TreeBeta: TreeBeta = {
 		);
 		const context = new Context(flexContext, getUnhydratedContext(kernel.schema).schema);
 
-		return createFromCursor(kernel.schema, cursor, context) as Unhydrated<
+		const fieldSchema: TreeFieldStoredSchema = {
+			kind: FieldKinds.required.identifier,
+			types: new Set([brand(kernel.schema.identifier)]),
+			persistedMetadata: undefined,
+		};
+		return createFromCursor(kernel.schema, cursor, fieldSchema, context) as Unhydrated<
 			TreeFieldFromImplicitField<TSchema>
 		>;
 	},

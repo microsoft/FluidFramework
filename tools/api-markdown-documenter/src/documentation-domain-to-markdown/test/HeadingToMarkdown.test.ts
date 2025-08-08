@@ -5,7 +5,7 @@
 
 import { expect } from "chai";
 
-import { HeadingNode } from "../../documentation-domain/index.js";
+import type { SectionHeading } from "../../mdast/index.js";
 import { createTransformationContext } from "../TransformationContext.js";
 
 describe("headingToMarkdown", () => {
@@ -13,8 +13,11 @@ describe("headingToMarkdown", () => {
 		const transformationContext = createTransformationContext({ startingHeadingLevel: 2 });
 
 		it("Without ID", () => {
-			const input = new HeadingNode("Hello world!");
-			const result = transformationContext.transformations.heading(
+			const input: SectionHeading = {
+				type: "sectionHeading",
+				title: "Hello world!",
+			};
+			const result = transformationContext.transformations.sectionHeading(
 				input,
 				transformationContext,
 			);
@@ -28,16 +31,19 @@ describe("headingToMarkdown", () => {
 		});
 
 		it("With ID", () => {
-			const input = new HeadingNode("Hello world!", "my-heading-id");
-			const result = transformationContext.transformations.heading(
+			const input: SectionHeading = {
+				type: "sectionHeading",
+				title: "Hello world!",
+				id: "my-heading-id",
+			};
+			const result = transformationContext.transformations.sectionHeading(
 				input,
 				transformationContext,
 			);
 			expect(result).to.deep.equal([
 				{
-					type: "heading",
-					depth: 2,
-					children: [{ type: "text", value: "Hello world! {#my-heading-id}" }],
+					type: "html",
+					value: '<h2 id="my-heading-id">Hello world!</h2>',
 				},
 			]);
 		});
@@ -48,8 +54,11 @@ describe("headingToMarkdown", () => {
 		const transformationContext = createTransformationContext({ startingHeadingLevel: 7 });
 
 		it("Without ID", () => {
-			const input = new HeadingNode("Hello world!");
-			const result = transformationContext.transformations.heading(
+			const input: SectionHeading = {
+				type: "sectionHeading",
+				title: "Hello world!",
+			};
+			const result = transformationContext.transformations.sectionHeading(
 				input,
 				transformationContext,
 			);
@@ -67,8 +76,12 @@ describe("headingToMarkdown", () => {
 		});
 
 		it("With ID", () => {
-			const input = new HeadingNode("Hello world!", "my-heading-id");
-			const result = transformationContext.transformations.heading(
+			const input: SectionHeading = {
+				type: "sectionHeading",
+				title: "Hello world!",
+				id: "my-heading-id",
+			};
+			const result = transformationContext.transformations.sectionHeading(
 				input,
 				transformationContext,
 			);

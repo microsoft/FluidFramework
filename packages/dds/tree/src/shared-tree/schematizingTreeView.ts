@@ -51,9 +51,10 @@ import {
 	areImplicitFieldSchemaEqual,
 	prepareForInsertionContextless,
 	type FieldSchema,
-	toStoredSchema,
 	tryDisposeTreeNode,
+	FieldSchemaAlpha,
 	TreeViewConfigurationAlpha,
+	toInitialSchema,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -171,7 +172,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const schema = toStoredSchema(this.config.schema);
+			const schema = toInitialSchema(this.config.schema);
 			const mapTree = prepareForInsertionContextless(
 				content as InsertableContent | undefined,
 				this.rootFieldSchema,
@@ -180,6 +181,7 @@ export class SchematizingSimpleTreeView<
 					policy: defaultSchemaPolicy,
 				},
 				this,
+				schema.rootFieldSchema,
 			);
 
 			initialize(this.checkout, {
@@ -317,12 +319,16 @@ export class SchematizingSimpleTreeView<
 				this.nodeKeyManager,
 			);
 			assert(!slots.has(SimpleContextSlot), 0xa47 /* extra simple tree context */);
+			assert(
+				this.rootFieldSchema instanceof FieldSchemaAlpha,
+				0xbfa /* all field schema should be FieldSchemaAlpha */,
+			);
 			slots.set(
 				SimpleContextSlot,
 				new HydratedContext(
 					this.flexTreeContext,
 					HydratedContext.schemaMapFromRootSchema(
-						normalizeFieldSchema(this.rootFieldSchema).annotatedAllowedTypesNormalized,
+						this.rootFieldSchema.annotatedAllowedTypesNormalized,
 					),
 				),
 			);
@@ -431,7 +437,12 @@ export class SchematizingSimpleTreeView<
 			);
 		}
 		const view = this.getFlexTreeContext();
-		setField(view.root, this.rootFieldSchema, newRoot as InsertableContent | undefined);
+		setField(
+			view.root,
+			this.rootFieldSchema,
+			newRoot as InsertableContent | undefined,
+			this.checkout.storedSchema.rootFieldSchema,
+		);
 	}
 
 	// #region Branching

@@ -311,6 +311,7 @@ async function loadDataRuntime(
 				SharedString,
 				SparseMatrix,
 				SharedArray,
+				SharedArray,
 				SharedSignal,
 			},
 			packages: {

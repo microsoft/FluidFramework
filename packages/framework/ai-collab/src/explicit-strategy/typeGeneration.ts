@@ -17,7 +17,7 @@ import type {
 	SimpleTreeSchema,
 	TreeNode,
 } from "@fluidframework/tree/internal";
-import { z } from "zod";
+import { z, type ZodTypeAny } from "zod";
 
 import { objectIdKey, typeField } from "./agentEditTypes.js";
 import { fail, getOrCreate, mapIterable } from "./utils.js";
@@ -106,12 +106,12 @@ const cache = new WeakMap<SimpleTreeSchema, ReturnType<typeof generateGenericEdi
 export function generateGenericEditTypes(
 	schema: SimpleTreeSchema,
 	generateDomainTypes: boolean,
-): [Record<string, Zod.ZodTypeAny>, root: string] {
+): [Record<string, ZodTypeAny>, root: string] {
 	return getOrCreate(cache, schema, () => {
 		const insertSet = new Set<string>();
 		const modifyFieldSet = new Set<string>();
 		const modifyTypeSet = new Set<string>();
-		const typeMap = new Map<string, Zod.ZodTypeAny>();
+		const typeMap = new Map<string, ZodTypeAny>();
 
 		for (const name of schema.definitions.keys()) {
 			getOrCreateType(
@@ -123,7 +123,7 @@ export function generateGenericEditTypes(
 				name,
 			);
 		}
-		function getType(allowedTypes: ReadonlySet<string>): Zod.ZodTypeAny {
+		function getType(allowedTypes: ReadonlySet<string>): ZodTypeAny {
 			switch (allowedTypes.size) {
 				case 0: {
 					return z.never();
@@ -187,7 +187,7 @@ export function generateGenericEditTypes(
 			})
 			.describe("Moves an object or Range of objects to a new Place or ArrayPlace.");
 
-		const typeRecord: Record<string, Zod.ZodTypeAny> = {
+		const typeRecord: Record<string, ZodTypeAny> = {
 			ObjectTarget: objectTarget,
 			Modify: modify,
 		};
@@ -221,12 +221,12 @@ const editDescription =
 	"A description of what this edit is meant to accomplish in human readable English";
 function getOrCreateType(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
-	typeMap: Map<string, Zod.ZodTypeAny>,
+	typeMap: Map<string, ZodTypeAny>,
 	insertSet: Set<string>,
 	modifyFieldSet: Set<string>,
 	modifyTypeSet: Set<string>,
 	definition: string,
-): Zod.ZodTypeAny {
+): ZodTypeAny {
 	return getOrCreate(typeMap, definition, () => {
 		const nodeSchema = definitionMap.get(definition) ?? fail("Unexpected definition");
 		switch (nodeSchema.kind) {
@@ -318,12 +318,12 @@ function getOrCreateType(
 }
 function getOrCreateTypeForField(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
-	typeMap: Map<string, Zod.ZodTypeAny>,
+	typeMap: Map<string, ZodTypeAny>,
 	insertSet: Set<string>,
 	modifyFieldSet: Set<string>,
 	modifyTypeSet: Set<string>,
 	fieldSchema: SimpleFieldSchema,
-): Zod.ZodTypeAny | undefined {
+): ZodTypeAny | undefined {
 	switch (fieldSchema.kind) {
 		case FieldKind.Required: {
 			return getTypeForAllowedTypes(
@@ -359,12 +359,12 @@ function getOrCreateTypeForField(
 
 function getTypeForAllowedTypes(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
-	typeMap: Map<string, Zod.ZodTypeAny>,
+	typeMap: Map<string, ZodTypeAny>,
 	insertSet: Set<string>,
 	modifyFieldSet: Set<string>,
 	modifyTypeSet: Set<string>,
 	allowedTypes: ReadonlySet<string>,
-): Zod.ZodTypeAny {
+): ZodTypeAny {
 	const single = tryGetSingleton(allowedTypes);
 	if (single === undefined) {
 		const types = [

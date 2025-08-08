@@ -121,6 +121,7 @@ import {
 	type MinimalMapTreeNodeView,
 	jsonableTreeFromCursor,
 	cursorForMapTreeNode,
+	type FullSchemaPolicy,
 } from "../feature-libraries/index.js";
 import {
 	type CheckoutEvents,
@@ -141,13 +142,17 @@ import {
 	type ImplicitFieldSchema,
 	type TreeViewConfiguration,
 	SchemaFactory,
-	toStoredSchema,
 	type TreeView,
 	type TreeBranchEvents,
 	type ITree,
 	type UnsafeUnknownSchema,
 	type InsertableField,
 	unhydratedFlexTreeFromInsertable,
+	type SimpleNodeSchema,
+	type TreeNodeSchema,
+	getStoredSchema,
+	restrictiveStoredSchemaGenerationOptions,
+	toInitialSchema,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -157,6 +162,7 @@ import {
 	forEachInNestedMap,
 	tryGetFromNestedMap,
 	isReadonlyArray,
+	brand,
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
@@ -180,6 +186,11 @@ import type {
 } from "@fluidframework/shared-object-base/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
+import {
+	allowsFieldSuperset,
+	allowsTreeSuperset,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../feature-libraries/modular-schema/index.js";
 
 // Testing utilities
 
@@ -683,7 +694,7 @@ export function validateTreeContent(tree: ITreeCheckout, content: TreeSimpleCont
 		fieldCursorFromInsertable<UnsafeUnknownSchema>(content.schema, content.initialTree),
 	);
 	assert.deepEqual(toJsonableTree(tree), contentReference);
-	expectSchemaEqual(tree.storedSchema, toStoredSchema(content.schema));
+	expectSchemaEqual(tree.storedSchema, toInitialSchema(content.schema));
 }
 export function validateTreeStoredContent(
 	tree: ITreeCheckout,
@@ -853,7 +864,7 @@ export function flexTreeViewWithContent(
 				content.schema,
 				content.initialTree,
 			),
-			schema: toStoredSchema(content.schema),
+			schema: toInitialSchema(content.schema),
 		},
 		args,
 	);
@@ -910,7 +921,7 @@ export const IdentifierSchema = sf.object("identifier-object", {
  */
 export function makeTreeFromJson(json: JsonCompatible, optionalRoot = false): ITreeCheckout {
 	return checkoutWithContent({
-		schema: toStoredSchema(
+		schema: toInitialSchema(
 			optionalRoot ? SchemaFactory.optional(JsonAsTree.Tree) : JsonAsTree.Tree,
 		),
 		initialTree: singleJsonCursor(json),
@@ -1382,7 +1393,7 @@ export function validateUsageError(expectedErrorMsg: string | RegExp): (error: E
 				: !expectedErrorMsg.test(error.message)
 		) {
 			throw new Error(
-				`Unexpected assertion thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
+				`Unexpected UsageError thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
 			);
 		}
 		return true;
@@ -1494,4 +1505,41 @@ export function fieldSchema(
 		types: new Set(types),
 		persistedMetadata: undefined,
 	};
+}
+
+export class TestSchemaRepository extends TreeStoredSchemaRepository {
+	public constructor(
+		public readonly policy: FullSchemaPolicy,
+		data?: TreeStoredSchema,
+	) {
+		super(data);
+	}
+
+	/**
+	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
+	 * @returns true iff update was performed.
+	 */
+	public tryUpdateRootFieldSchema(schema: TreeFieldStoredSchema): boolean {
+		if (allowsFieldSuperset(this.policy, this, this.rootFieldSchema, schema)) {
+			this.rootFieldSchemaData = schema;
+			this._events.emit("afterSchemaChange", this);
+			return true;
+		}
+		return false;
+	}
+	/**
+	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
+	 * @returns true iff update was performed.
+	 */
+	public tryUpdateTreeSchema(schema: SimpleNodeSchema & TreeNodeSchema): boolean {
+		const storedSchema = getStoredSchema(schema, restrictiveStoredSchemaGenerationOptions);
+		const name: TreeNodeSchemaIdentifier = brand(schema.identifier);
+		const original = this.nodeSchema.get(name);
+		if (allowsTreeSuperset(this.policy, this, original, storedSchema)) {
+			this.nodeSchemaData.set(name, storedSchema);
+			this._events.emit("afterSchemaChange", this);
+			return true;
+		}
+		return false;
+	}
 }

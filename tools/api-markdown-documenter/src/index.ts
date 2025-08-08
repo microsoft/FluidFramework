@@ -37,48 +37,11 @@ export {
 	transformApiModel,
 	transformTsdoc,
 } from "./api-item-transforms/index.js";
-
-export {
-	type BlockContent,
-	type BlockContentMap,
-	CodeSpanNode,
-	DocumentNode,
-	type DocumentNodeProps,
-	type DocumentationNode,
-	type DocumentationLiteralNode,
-	DocumentationLiteralNodeBase,
-	type DocumentationParentNode,
-	DocumentationParentNodeBase,
-	FencedCodeBlockNode,
-	type FencedCodeBlockNodeContent,
-	HeadingNode,
-	HorizontalRuleNode,
-	LineBreakNode,
-	LinkNode,
-	ListItemNode,
-	ListNode,
-	MarkdownBlockContentNode,
-	MarkdownPhrasingContentNode,
-	ParagraphNode,
-	type PhrasingContent,
-	type PhrasingContentMap,
-	PlainTextNode,
-	SectionNode,
-	type SectionContent,
-	SpanNode,
-	type TableCellContent,
-	TableCellNode,
-	TableBodyCellNode,
-	TableHeaderCellNode,
-	TableCellKind,
-	TableRowNode,
-	TableBodyRowNode,
-	TableHeaderRowNode,
-	TableRowKind,
-	TableNode,
-	type TextFormatting,
-} from "./documentation-domain/index.js";
-
+export type { ApiDocument } from "./ApiDocument.js";
+export type {
+	Section,
+	SectionHeading,
+} from "./mdast/index.js";
 export {
 	documentToHtml,
 	documentationNodeToHtml,
@@ -89,11 +52,7 @@ export {
 	type TransformationContext as ToHtmlContext,
 } from "./documentation-domain-to-html/index.js";
 export {
-	blockContentToMarkdown,
-	type BlockContentTransformations as BlockContentToMarkdownTransformations,
 	documentToMarkdown,
-	phrasingContentToMarkdown,
-	type PhrasingContentTransformations as PhrasingContentToMarkdownTransformations,
 	sectionContentToMarkdown,
 	type Transformation as ToMarkdownTransformation,
 	type TransformationConfiguration as ToMarkdownConfiguration,
@@ -109,8 +68,6 @@ export {
 } from "./renderers/index.js";
 export type { LoggingConfiguration } from "./LoggingConfiguration.js";
 export type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
-export type { Heading } from "./Heading.js";
-export type { Link, UrlTarget } from "./Link.js";
 export {
 	lintApiModel,
 	type LintApiModelConfiguration,
@@ -161,7 +118,7 @@ export {
 	 */
 	ApiItemUtilities,
 	/**
-	 * Utilities related to generating {@link DocumentationNode} content for {@link @microsoft/api-extractor-model#ApiItem}s.
+	 * Utilities related to generating Markdown content for {@link @microsoft/api-extractor-model#ApiItem}s.
 	 *
 	 * @remarks
 	 *
@@ -171,13 +128,13 @@ export {
 	 */
 	LayoutUtilities,
 	/**
-	 * Functionality for rendering {@link DocumentationNode}s as HTML.
+	 * Functionality for rendering documentation as HTML.
 	 *
 	 * @alpha
 	 */
 	HtmlRenderer,
 	/**
-	 * Functionality for rendering {@link DocumentationNode}s as Markdown.
+	 * Functionality for rendering documentation as Markdown.
 	 *
 	 * @public
 	 */

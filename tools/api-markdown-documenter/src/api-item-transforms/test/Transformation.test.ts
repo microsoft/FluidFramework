@@ -18,27 +18,9 @@ import {
 } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 
-import {
-	CodeSpanNode,
-	DocumentNode,
-	type DocumentationNode,
-	FencedCodeBlockNode,
-	HeadingNode,
-	LinkNode,
-	ListItemNode,
-	ListNode,
-	MarkdownBlockContentNode,
-	MarkdownPhrasingContentNode,
-	ParagraphNode,
-	PlainTextNode,
-	SectionNode,
-	SpanNode,
-	TableBodyCellNode,
-	TableBodyRowNode,
-	TableHeaderCellNode,
-	TableHeaderRowNode,
-	TableNode,
-} from "../../documentation-domain/index.js";
+import type { ApiDocument } from "../../ApiDocument.js";
+import type { Section } from "../../mdast/index.js";
+import { createSection } from "../../mdast/index.js";
 import { getHeadingForApiItem } from "../ApiItemTransformUtilities.js";
 import { apiItemToSections } from "../TransformApiItem.js";
 import { transformApiModel } from "../TransformApiModel.js";
@@ -47,7 +29,7 @@ import {
 	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "../configuration/index.js";
-import { betaWarningSpan, wrapInSection } from "../helpers/index.js";
+import { betaWarningSpan } from "../helpers/index.js";
 
 /**
  * Sample "default" configuration.
@@ -142,24 +124,33 @@ describe("ApiItem to Documentation transformation tests", () => {
 		const result = config.transformations[ApiItemKind.Variable](apiVariable, config);
 
 		const expected = [
-			wrapInSection(
-				[
-					wrapInSection([
-						new MarkdownBlockContentNode({
-							type: "paragraph",
-							children: [{ type: "text", value: "Test Constant" }],
-						}),
-					]),
-					wrapInSection(
-						[new FencedCodeBlockNode('TestConst = "Hello world!"', "typescript")],
-						{
+			createSection({
+				children: [
+					createSection({
+						children: [
+							{
+								type: "paragraph",
+								children: [{ type: "text", value: "Test Constant" }],
+							},
+						],
+					}),
+					createSection({
+						children: [
+							{
+								type: "code",
+								lang: "typescript",
+								value: 'TestConst = "Hello world!"',
+							},
+						],
+						heading: {
+							type: "sectionHeading",
 							title: "Signature",
 							id: `testconst-signature`,
 						},
-					),
+					}),
 				],
-				getHeadingForApiItem(apiVariable, config),
-			),
+				heading: getHeadingForApiItem(apiVariable, config),
+			}),
 		];
 
 		expect(result).deep.equals(expected);
@@ -179,129 +170,182 @@ describe("ApiItem to Documentation transformation tests", () => {
 		const result = config.transformations[ApiItemKind.Function](apiFunction, config);
 
 		const expected = [
-			wrapInSection(
-				[
+			createSection({
+				children: [
 					// Summary section
-					wrapInSection([
-						new MarkdownBlockContentNode({
-							type: "paragraph",
-							children: [{ type: "text", value: "Test function" }],
-						}),
-					]),
+					createSection({
+						children: [
+							{
+								type: "paragraph",
+								children: [{ type: "text", value: "Test function" }],
+							},
+						],
+					}),
 
 					// Signature section
-					wrapInSection(
-						[
-							new FencedCodeBlockNode(
-								"export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;",
-								"typescript",
-							),
-							new SectionNode(
-								[
-									new TableNode(
-										[
-											new TableBodyRowNode([
-												TableBodyCellNode.createFromPlainText("TTypeParameter"),
-												new TableBodyCellNode([
-													new MarkdownPhrasingContentNode({
-														type: "text",
-														value: "A test type parameter",
-													}),
-												]),
-											]),
+					createSection({
+						children: [
+							{
+								type: "code",
+								lang: "typescript",
+								value:
+									"export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;",
+							},
+							createSection({
+								children: [
+									{
+										type: "table",
+										children: [
+											{
+												type: "tableRow",
+												children: [
+													{
+														type: "tableCell",
+														children: [{ type: "text", value: "Parameter" }],
+													},
+													{
+														type: "tableCell",
+														children: [{ type: "text", value: "Description" }],
+													},
+												],
+											},
+											{
+												type: "tableRow",
+												children: [
+													{
+														type: "tableCell",
+														children: [{ type: "text", value: "TTypeParameter" }],
+													},
+													{
+														type: "tableCell",
+														children: [{ type: "text", value: "A test type parameter" }],
+													},
+												],
+											},
 										],
-										new TableHeaderRowNode([
-											TableHeaderCellNode.createFromPlainText("Parameter"),
-											TableHeaderCellNode.createFromPlainText("Description"),
-										]),
-									),
+									},
 								],
-								new HeadingNode("Type Parameters"),
-							),
+								heading: {
+									type: "sectionHeading",
+									title: "Type Parameters",
+								},
+							}),
 						],
-						{
+						heading: {
+							type: "sectionHeading",
 							title: "Signature",
 							id: `testfunction-signature`,
 						},
-					),
+					}),
 
 					// Parameters table section
-					wrapInSection(
-						[
-							new TableNode(
-								[
-									new TableBodyRowNode([
-										TableBodyCellNode.createFromPlainText("testParameter"),
-										TableBodyCellNode.Empty,
-										new TableBodyCellNode([new PlainTextNode("TTypeParameter")]),
-										new TableBodyCellNode([
-											new MarkdownPhrasingContentNode({
-												type: "text",
-												value: "A test parameter",
-											}),
-										]),
-									]),
-									new TableBodyRowNode([
-										TableBodyCellNode.createFromPlainText("testOptionalParameter"),
-										TableBodyCellNode.createFromPlainText("optional"),
-										new TableBodyCellNode([new PlainTextNode("TTypeParameter")]),
-										new TableBodyCellNode([
-											new MarkdownPhrasingContentNode({
-												type: "text",
-												value: "An optional parameter",
-											}),
-										]),
-									]),
+					createSection({
+						children: [
+							{
+								type: "table",
+								children: [
+									{
+										type: "tableRow",
+										children: [
+											{ type: "tableCell", children: [{ type: "text", value: "Parameter" }] },
+											{ type: "tableCell", children: [{ type: "text", value: "Modifiers" }] },
+											{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
+											{
+												type: "tableCell",
+												children: [{ type: "text", value: "Description" }],
+											},
+										],
+									},
+									{
+										type: "tableRow",
+										children: [
+											{
+												type: "tableCell",
+												children: [{ type: "text", value: "testParameter" }],
+											},
+											{ type: "tableCell", children: [] },
+											{
+												type: "tableCell",
+												children: [{ type: "text", value: "TTypeParameter" }],
+											},
+											{
+												type: "tableCell",
+												children: [{ type: "text", value: "A test parameter" }],
+											},
+										],
+									},
+									{
+										type: "tableRow",
+										children: [
+											{
+												type: "tableCell",
+												children: [{ type: "text", value: "testOptionalParameter" }],
+											},
+											{ type: "tableCell", children: [{ type: "text", value: "optional" }] },
+											{
+												type: "tableCell",
+												children: [{ type: "text", value: "TTypeParameter" }],
+											},
+											{
+												type: "tableCell",
+												children: [{ type: "text", value: "An optional parameter" }],
+											},
+										],
+									},
 								],
-								new TableHeaderRowNode([
-									TableHeaderCellNode.createFromPlainText("Parameter"),
-									TableHeaderCellNode.createFromPlainText("Modifiers"),
-									TableHeaderCellNode.createFromPlainText("Type"),
-									TableHeaderCellNode.createFromPlainText("Description"),
-								]),
-							),
+							},
 						],
-						{
+						heading: {
+							type: "sectionHeading",
 							title: "Parameters",
 							id: "testfunction-parameters",
 						},
-					),
+					}),
 
 					// Returns section
-					wrapInSection(
-						[
-							new MarkdownBlockContentNode({
+					createSection({
+						children: [
+							{
 								type: "paragraph",
 								children: [{ type: "text", value: "The provided parameter" }],
-							}),
-							new ParagraphNode([
-								SpanNode.createFromPlainText("Return type", { bold: true }),
-								new PlainTextNode(": "),
-								new PlainTextNode("TTypeParameter"),
-							]),
+							},
+							{
+								type: "paragraph",
+								children: [
+									{ type: "strong", children: [{ type: "text", value: "Return type" }] },
+									{ type: "text", value: ": " },
+									{ type: "text", value: "TTypeParameter" },
+								],
+							},
 						],
-						{
+						heading: {
+							type: "sectionHeading",
 							title: "Returns",
 							id: "testfunction-returns",
 						},
-					),
+					}),
 
 					// Throws section
-					wrapInSection(
-						[
-							new MarkdownBlockContentNode({
+					createSection({
+						children: [
+							{
 								type: "paragraph",
 								children: [{ type: "text", value: "An Error when something bad happens." }],
-							}),
+							},
 						],
-						{
+						heading: {
+							type: "sectionHeading",
 							title: "Throws",
 							id: `testfunction-throws`,
 						},
-					),
+					}),
 				],
-				{ title: "testFunction", id: "testfunction-function" },
-			),
+				heading: {
+					type: "sectionHeading",
+					title: "testFunction",
+					id: "testfunction-function",
+				},
+			}),
 		];
 
 		expect(result).deep.equals(expected);
@@ -324,111 +368,158 @@ describe("ApiItem to Documentation transformation tests", () => {
 			(childItem) => apiItemToSections(childItem, config),
 		);
 
-		const expected: DocumentationNode[] = [
+		const expected: Section[] = [
 			// Summary section
-			wrapInSection([
-				new MarkdownBlockContentNode({
-					type: "paragraph",
-					children: [{ type: "text", value: "Test interface" }],
-				}),
-			]),
+			createSection({
+				children: [
+					{
+						type: "paragraph",
+						children: [{ type: "text", value: "Test interface" }],
+					},
+				],
+			}),
 
 			// Signature section
-			wrapInSection(
-				[new FencedCodeBlockNode("export interface TestInterface", "typescript")],
-				{ title: "Signature", id: "testinterface-signature" },
-			),
+			createSection({
+				children: [
+					{
+						type: "code",
+						lang: "typescript",
+						value: "export interface TestInterface",
+					},
+				],
+				heading: {
+					type: "sectionHeading",
+					title: "Signature",
+					id: "testinterface-signature",
+				},
+			}),
 
 			// Remarks section
-			wrapInSection(
-				[
-					new MarkdownBlockContentNode({
+			createSection({
+				children: [
+					{
 						type: "paragraph",
 						children: [{ type: "text", value: "Here are some remarks about the interface" }],
-					}),
+					},
 				],
-				{ title: "Remarks", id: "testinterface-remarks" },
-			),
+				heading: {
+					type: "sectionHeading",
+					title: "Remarks",
+					id: "testinterface-remarks",
+				},
+			}),
 
 			// Properties section
-			wrapInSection(
-				[
-					new TableNode(
-						[
-							new TableBodyRowNode([
-								new TableBodyCellNode([
-									new LinkNode(
-										"testOptionalInterfaceProperty",
-										"/test-package/testinterface-interface#testoptionalinterfaceproperty-propertysignature",
-									),
-								]),
-								new TableBodyCellNode([new CodeSpanNode("optional")]),
-								new TableBodyCellNode([
-									new MarkdownPhrasingContentNode({
-										type: "text",
-										value: "0",
-									}),
-								]),
-								new TableBodyCellNode([new PlainTextNode("number")]),
-								new TableBodyCellNode([
-									new MarkdownPhrasingContentNode({
-										type: "text",
-										value: "Test optional property",
-									}),
-								]),
-							]),
+			createSection({
+				children: [
+					{
+						type: "table",
+
+						children: [
+							{
+								type: "tableRow",
+								children: [
+									{ type: "tableCell", children: [{ type: "text", value: "Property" }] },
+									{ type: "tableCell", children: [{ type: "text", value: "Modifiers" }] },
+									{ type: "tableCell", children: [{ type: "text", value: "Default Value" }] },
+									{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
+									{ type: "tableCell", children: [{ type: "text", value: "Description" }] },
+								],
+							},
+							{
+								type: "tableRow",
+								children: [
+									{
+										type: "tableCell",
+										children: [
+											{
+												type: "link",
+												url: "/test-package/testinterface-interface#testoptionalinterfaceproperty-propertysignature",
+												children: [{ type: "text", value: "testOptionalInterfaceProperty" }],
+											},
+										],
+									},
+									{
+										type: "tableCell",
+										children: [{ type: "inlineCode", value: "optional" }],
+									},
+									{
+										type: "tableCell",
+										children: [{ type: "text", value: "0" }],
+									},
+									{
+										type: "tableCell",
+										children: [{ type: "text", value: "number" }],
+									},
+									{
+										type: "tableCell",
+										children: [{ type: "text", value: "Test optional property" }],
+									},
+								],
+							},
 						],
-						new TableHeaderRowNode([
-							TableHeaderCellNode.createFromPlainText("Property"),
-							TableHeaderCellNode.createFromPlainText("Modifiers"),
-							TableHeaderCellNode.createFromPlainText("Default Value"),
-							TableHeaderCellNode.createFromPlainText("Type"),
-							TableHeaderCellNode.createFromPlainText("Description"),
-						]),
-					),
+					},
 				],
-				{ title: "Properties" },
-			),
+				heading: {
+					type: "sectionHeading",
+					title: "Properties",
+				},
+			}),
 
 			// Property details section
-			wrapInSection(
-				[
-					wrapInSection(
-						[
+			createSection({
+				children: [
+					createSection({
+						children: [
 							// Summary section
-							wrapInSection([
-								new MarkdownBlockContentNode({
-									type: "paragraph",
-									children: [{ type: "text", value: "Test optional property" }],
-								}),
-							]),
-							// Signature section
-							wrapInSection(
-								[
-									new FencedCodeBlockNode(
-										"testOptionalInterfaceProperty?: number;",
-										"typescript",
-									),
-									new ParagraphNode([
-										SpanNode.createFromPlainText("Type", { bold: true }),
-										new PlainTextNode(": "),
-										new PlainTextNode("number"),
-									]),
+							createSection({
+								children: [
+									{
+										type: "paragraph",
+										children: [{ type: "text", value: "Test optional property" }],
+									},
 								],
-								{
+							}),
+							// Signature section
+							createSection({
+								children: [
+									{
+										type: "code",
+										lang: "typescript",
+										value: "testOptionalInterfaceProperty?: number;",
+									},
+									{
+										type: "paragraph",
+										children: [
+											{
+												type: "strong",
+												children: [{ type: "text", value: "Type" }],
+											},
+											{ type: "text", value: ": " },
+											{ type: "text", value: "number" },
+										],
+									},
+								],
+								heading: {
+									type: "sectionHeading",
 									title: "Signature",
 									id: "testoptionalinterfaceproperty-signature",
 								},
-							),
+							}),
 						],
-						{
+						heading: {
+							type: "sectionHeading",
 							title: "testOptionalInterfaceProperty",
 							id: "testoptionalinterfaceproperty-propertysignature",
 						},
-					),
+					}),
 				],
-				{ title: "Property Details" },
-			),
+				heading: {
+					type: "sectionHeading",
+					title: "Property Details",
+				},
+			}),
 		];
 
 		expect(result).deep.equals(expected);
@@ -463,102 +554,193 @@ describe("ApiItem to Documentation transformation tests", () => {
 		// - baz (@alpha)
 		// We expect docs to be generated for `foo` and `bar`, but not `baz`, since it's @alpha, and we are filtering those out per our config above.
 		// Also note that child items are listed alphabetically, so we expect `bar` before `foo`.
-		const expected: DocumentationNode[] = [
+		const expected: Section[] = [
 			// Summary section
-			wrapInSection([
-				new MarkdownBlockContentNode({
-					type: "paragraph",
-					children: [{ type: "text", value: "Test namespace" }],
-				}),
-			]),
+			createSection({
+				children: [
+					{
+						type: "paragraph",
+						children: [{ type: "text", value: "Test namespace" }],
+					},
+				],
+			}),
 
 			// Signature section
-			wrapInSection(
-				[new FencedCodeBlockNode("export declare namespace TestNamespace", "typescript")],
-				{ title: "Signature", id: "testnamespace-signature" },
-			),
+			createSection({
+				children: [
+					{
+						type: "code",
+						lang: "typescript",
+						value: "export declare namespace TestNamespace",
+					},
+				],
+				heading: {
+					title: "Signature",
+					id: "testnamespace-signature",
+					type: "sectionHeading",
+				},
+			}),
 
 			// Variables section
-			wrapInSection(
-				[
-					new TableNode(
-						[
+			createSection({
+				children: [
+					{
+						type: "table",
+
+						children: [
+							// Table header row
+							{
+								type: "tableRow",
+								children: [
+									{ type: "tableCell", children: [{ type: "text", value: "Variable" }] },
+									{ type: "tableCell", children: [{ type: "text", value: "Alerts" }] },
+									{ type: "tableCell", children: [{ type: "text", value: "Modifiers" }] },
+									{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
+									{ type: "tableCell", children: [{ type: "text", value: "Description" }] },
+								],
+							},
 							// Table row for `bar`
-							new TableBodyRowNode([
-								new TableBodyCellNode([
-									new LinkNode("bar", "/test-package/testnamespace-namespace/#bar-variable"),
-								]),
-								new TableBodyCellNode([new CodeSpanNode("Beta")]), // Alert
-								new TableBodyCellNode([new CodeSpanNode("readonly")]), // Modifier
-								TableBodyCellNode.Empty, // Type
-								TableBodyCellNode.Empty, // Description
-							]),
+							{
+								type: "tableRow",
+								children: [
+									{
+										type: "tableCell",
+										children: [
+											{
+												type: "link",
+												url: "/test-package/testnamespace-namespace/#bar-variable",
+												children: [{ type: "text", value: "bar" }],
+											},
+										],
+									},
+									{
+										type: "tableCell",
+										children: [{ type: "inlineCode", value: "Beta" }],
+									},
+									{
+										type: "tableCell",
+										children: [{ type: "inlineCode", value: "readonly" }],
+									},
+									{
+										type: "tableCell",
+										children: [],
+									},
+									{
+										type: "tableCell",
+										children: [],
+									},
+								],
+							},
 							// Table row for `foo`
-							new TableBodyRowNode([
-								new TableBodyCellNode([
-									new LinkNode("foo", "/test-package/testnamespace-namespace/#foo-variable"),
-								]),
-								TableBodyCellNode.Empty, // No alert for `@public`
-								new TableBodyCellNode([new CodeSpanNode("readonly")]), // Modifier
-								TableBodyCellNode.Empty, // Type
-								TableBodyCellNode.Empty, // Description
-							]),
-							// No entry should be included for `baz` because it is `@alpha`
+							{
+								type: "tableRow",
+								children: [
+									{
+										type: "tableCell",
+										children: [
+											{
+												type: "link",
+												url: "/test-package/testnamespace-namespace/#foo-variable",
+												children: [{ type: "text", value: "foo" }],
+											},
+										],
+									},
+									{
+										type: "tableCell",
+										children: [],
+									},
+									{
+										type: "tableCell",
+										children: [{ type: "inlineCode", value: "readonly" }],
+									},
+									{
+										type: "tableCell",
+										children: [],
+									},
+									{
+										type: "tableCell",
+										children: [],
+									},
+								],
+							},
+							// No entry for `baz`
 						],
-						new TableHeaderRowNode([
-							TableHeaderCellNode.createFromPlainText("Variable"),
-							TableHeaderCellNode.createFromPlainText("Alerts"),
-							TableHeaderCellNode.createFromPlainText("Modifiers"),
-							TableHeaderCellNode.createFromPlainText("Type"),
-							TableHeaderCellNode.createFromPlainText("Description"),
-						]),
-					),
+					},
 				],
-				{ title: "Variables" },
-			),
+				heading: { title: "Variables", type: "sectionHeading" },
+			}),
 
 			// Variables details section
-			wrapInSection(
-				[
+			createSection({
+				children: [
 					// Details for `bar`
-					wrapInSection(
-						[
+					createSection({
+						children: [
 							// No summary docs on `bar`
 
 							// Beta warning
-							wrapInSection([new ParagraphNode([betaWarningSpan])]),
+							createSection({
+								children: [
+									{
+										type: "paragraph",
+										children: [betaWarningSpan],
+									},
+								],
+							}),
 							// Signature
-							wrapInSection([new FencedCodeBlockNode('bar = "bar"', "typescript")], {
-								title: "Signature",
-								id: "bar-signature",
+							createSection({
+								children: [
+									{
+										type: "code",
+										lang: "typescript",
+										value: 'bar = "bar"',
+									},
+								],
+								heading: {
+									title: "Signature",
+									id: "bar-signature",
+									type: "sectionHeading",
+								},
 							}),
 						],
-						{
+						heading: {
 							title: "bar",
 							id: "bar-variable",
+							type: "sectionHeading",
 						},
-					),
+					}),
 					// Details for `foo`
-					wrapInSection(
-						[
+					createSection({
+						children: [
 							// No summary docs on `foo`
 
 							// Signature
-							wrapInSection([new FencedCodeBlockNode('foo = "foo"', "typescript")], {
-								title: "Signature",
-								id: "foo-signature",
+							createSection({
+								children: [
+									{
+										type: "code",
+										lang: "typescript",
+										value: 'foo = "foo"',
+									},
+								],
+								heading: {
+									title: "Signature",
+									id: "foo-signature",
+									type: "sectionHeading",
+								},
 							}),
 						],
-						{
+						heading: {
 							title: "foo",
 							id: "foo-variable",
+							type: "sectionHeading",
 						},
-					),
+					}),
 
 					// No entry should be included for `baz` because it is `@alpha`
 				],
-				{ title: "Variable Details" },
-			),
+				heading: { title: "Variable Details", type: "sectionHeading" },
+			}),
 		];
 
 		expect(result).deep.equals(expected);
@@ -573,197 +755,383 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		// The model-level doc in this case isn't particularly interesting, so we will skip evaluating it.
 
-		const expectedPackageDocument = new DocumentNode({
+		const expectedPackageDocument: ApiDocument = {
 			apiItem: model.packages[0],
 			documentPath: "test-package/index",
-			children: [
-				new SectionNode(
-					[
+			contents: [
+				createSection({
+					children: [
 						// Breadcrumb
-						new SectionNode([
-							new ParagraphNode([
-								new LinkNode("Packages", "/"),
-								new PlainTextNode(" > "),
-								new LinkNode("test-package", "/test-package/"),
-							]),
-						]),
+						createSection({
+							children: [
+								{
+									type: "paragraph",
+									children: [
+										{
+											type: "link",
+											url: "/",
+											children: [{ type: "text", value: "Packages" }],
+										},
+										{
+											type: "text",
+											value: " > ",
+										},
+										{
+											type: "link",
+											url: "/test-package/",
+											children: [{ type: "text", value: "test-package" }],
+										},
+									],
+								},
+							],
+						}),
 
 						// Body
-						new SectionNode(
-							[
-								new ListNode(
-									[
-										new ListItemNode([
-											new LinkNode("entry-point-a", "/test-package/entry-point-a-entrypoint"),
-										]),
-										new ListItemNode([
-											new LinkNode("entry-point-b", "/test-package/entry-point-b-entrypoint"),
-										]),
+						createSection({
+							children: [
+								{
+									type: "list",
+									ordered: false,
+									children: [
+										{
+											type: "listItem",
+											children: [
+												{
+													type: "paragraph",
+													children: [
+														{
+															type: "link",
+															url: "/test-package/entry-point-a-entrypoint",
+															children: [{ type: "text", value: "entry-point-a" }],
+														},
+													],
+												},
+											],
+										},
+										{
+											type: "listItem",
+											children: [
+												{
+													type: "paragraph",
+													children: [
+														{
+															type: "link",
+															url: "/test-package/entry-point-b-entrypoint",
+															children: [{ type: "text", value: "entry-point-b" }],
+														},
+													],
+												},
+											],
+										},
 									],
-									/* ordered */ false,
-								),
+								},
 							],
-							new HeadingNode("Entry Points"),
-						),
+							heading: {
+								type: "sectionHeading",
+								title: "Entry Points",
+							},
+						}),
 					],
-					new HeadingNode("test-package"),
-				),
+					heading: {
+						type: "sectionHeading",
+						title: "test-package",
+					},
+				}),
 			],
-		});
+		};
 		expect(documents[1]).to.deep.equal(expectedPackageDocument);
 
-		const expectedEntryPointADocument = new DocumentNode({
+		const expectedEntryPointADocument: ApiDocument = {
 			apiItem: model.packages[0].entryPoints[0],
 			documentPath: "test-package/entry-point-a-entrypoint",
-			children: [
-				new SectionNode(
-					[
+			contents: [
+				createSection({
+					children: [
 						// Breadcrumb
-						new SectionNode([
-							new ParagraphNode([
-								new LinkNode("Packages", "/"),
-								new PlainTextNode(" > "),
-								new LinkNode("test-package", "/test-package/"),
-								new PlainTextNode(" > "),
-								new LinkNode("entry-point-a", "/test-package/entry-point-a-entrypoint"),
-							]),
-						]),
+						createSection({
+							children: [
+								{
+									type: "paragraph",
+									children: [
+										{
+											type: "link",
+											url: "/",
+											children: [{ type: "text", value: "Packages" }],
+										},
+										{
+											type: "text",
+											value: " > ",
+										},
+										{
+											type: "link",
+											url: "/test-package/",
+											children: [{ type: "text", value: "test-package" }],
+										},
+										{
+											type: "text",
+											value: " > ",
+										},
+										{
+											type: "link",
+											url: "/test-package/entry-point-a-entrypoint",
+											children: [{ type: "text", value: "entry-point-a" }],
+										},
+									],
+								},
+							],
+						}),
 
 						// Variables table
-						new SectionNode(
-							[
-								new TableNode(
-									[
-										new TableBodyRowNode([
-											new TableBodyCellNode([
-												new LinkNode("hello", "/test-package/#hello-variable"),
-											]),
-											new TableBodyCellNode([new CodeSpanNode("readonly")]),
-											TableBodyCellNode.Empty, // Type
-											new TableBodyCellNode([
-												new MarkdownPhrasingContentNode({
-													type: "text",
-													value: "Test Constant",
-												}),
-											]),
-										]),
+						createSection({
+							children: [
+								{
+									type: "table",
+
+									children: [
+										{
+											type: "tableRow",
+											children: [
+												{ type: "tableCell", children: [{ type: "text", value: "Variable" }] },
+												{
+													type: "tableCell",
+													children: [{ type: "text", value: "Modifiers" }],
+												},
+												{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
+												{
+													type: "tableCell",
+													children: [{ type: "text", value: "Description" }],
+												},
+											],
+										},
+										{
+											type: "tableRow",
+											children: [
+												{
+													type: "tableCell",
+													children: [
+														{
+															type: "link",
+															url: "/test-package/#hello-variable",
+															children: [{ type: "text", value: "hello" }],
+														},
+													],
+												},
+												{
+													type: "tableCell",
+													children: [
+														{
+															type: "inlineCode",
+															value: "readonly",
+														},
+													],
+												},
+												{
+													type: "tableCell",
+													children: [],
+												},
+												{
+													type: "tableCell",
+													children: [
+														{
+															type: "text",
+															value: "Test Constant",
+														},
+													],
+												},
+											],
+										},
 									],
-									new TableHeaderRowNode([
-										TableHeaderCellNode.createFromPlainText("Variable"),
-										TableHeaderCellNode.createFromPlainText("Modifiers"),
-										TableHeaderCellNode.createFromPlainText("Type"),
-										TableHeaderCellNode.createFromPlainText("Description"),
-									]),
-								),
+								},
 							],
-							new HeadingNode("Variables"),
-						),
+							heading: { title: "Variables", type: "sectionHeading" },
+						}),
 
 						// Variables details
-						new SectionNode(
-							[
-								new SectionNode(
-									[
+						createSection({
+							children: [
+								createSection({
+									children: [
 										// Summary
-										new SectionNode([
-											new MarkdownBlockContentNode({
-												type: "paragraph",
-												children: [{ type: "text", value: "Test Constant" }],
-											}),
-										]),
+										createSection({
+											children: [
+												{
+													type: "paragraph",
+													children: [{ type: "text", value: "Test Constant" }],
+												},
+											],
+										}),
 
 										// Signature
-										new SectionNode(
-											[new FencedCodeBlockNode('hello = "Hello"', "typescript")],
-											new HeadingNode("Signature", "hello-signature"),
-										),
+										createSection({
+											children: [
+												{
+													type: "code",
+													lang: "typescript",
+													value: 'hello = "Hello"',
+												},
+											],
+											heading: {
+												title: "Signature",
+												id: "hello-signature",
+												type: "sectionHeading",
+											},
+										}),
 									],
-									new HeadingNode("hello", "hello-variable"),
-								),
+									heading: {
+										title: "hello",
+										id: "hello-variable",
+										type: "sectionHeading",
+									},
+								}),
 							],
-							new HeadingNode("Variable Details"),
-						),
+							heading: { title: "Variable Details", type: "sectionHeading" },
+						}),
 					],
-					new HeadingNode("entry-point-a"),
-				),
+					heading: { title: "entry-point-a", type: "sectionHeading" },
+				}),
 			],
-		});
+		};
 		expect(documents[2]).to.deep.equal(expectedEntryPointADocument);
 
-		const expectedEntryPointBDocument = new DocumentNode({
+		const expectedEntryPointBDocument: ApiDocument = {
 			apiItem: model.packages[0].entryPoints[1],
 			documentPath: "test-package/entry-point-b-entrypoint",
-			children: [
-				new SectionNode(
-					[
+			contents: [
+				createSection({
+					children: [
 						// Breadcrumb
-						new SectionNode([
-							new ParagraphNode([
-								new LinkNode("Packages", "/"),
-								new PlainTextNode(" > "),
-								new LinkNode("test-package", "/test-package/"),
-								new PlainTextNode(" > "),
-								new LinkNode("entry-point-b", "/test-package/entry-point-b-entrypoint"),
-							]),
-						]),
+						createSection({
+							children: [
+								{
+									type: "paragraph",
+									children: [
+										{
+											type: "link",
+											url: "/",
+											children: [{ type: "text", value: "Packages" }],
+										},
+										{
+											type: "text",
+											value: " > ",
+										},
+										{
+											type: "link",
+											url: "/test-package/",
+											children: [{ type: "text", value: "test-package" }],
+										},
+										{
+											type: "text",
+											value: " > ",
+										},
+										{
+											type: "link",
+											url: "/test-package/entry-point-b-entrypoint",
+											children: [{ type: "text", value: "entry-point-b" }],
+										},
+									],
+								},
+							],
+						}),
 
 						// Variables table
-						new SectionNode(
-							[
-								new TableNode(
-									[
-										new TableBodyRowNode([
-											new TableBodyCellNode([
-												new LinkNode("world", "/test-package/#world-variable"),
-											]),
-											TableBodyCellNode.Empty, // Type
-											new TableBodyCellNode([
-												new MarkdownPhrasingContentNode({
-													type: "text",
-													value: "Test Constant",
-												}),
-											]),
-										]),
+						createSection({
+							children: [
+								{
+									type: "table",
+									children: [
+										{
+											type: "tableRow",
+											children: [
+												{ type: "tableCell", children: [{ type: "text", value: "Variable" }] },
+												{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
+												{
+													type: "tableCell",
+													children: [{ type: "text", value: "Description" }],
+												},
+											],
+										},
+										{
+											type: "tableRow",
+											children: [
+												{
+													type: "tableCell",
+													children: [
+														{
+															type: "link",
+															url: "/test-package/#world-variable",
+															children: [{ type: "text", value: "world" }],
+														},
+													],
+												},
+												{
+													type: "tableCell",
+													children: [],
+												},
+												{
+													type: "tableCell",
+													children: [
+														{
+															type: "text",
+															value: "Test Constant",
+														},
+													],
+												},
+											],
+										},
 									],
-									new TableHeaderRowNode([
-										TableHeaderCellNode.createFromPlainText("Variable"),
-										TableHeaderCellNode.createFromPlainText("Type"),
-										TableHeaderCellNode.createFromPlainText("Description"),
-									]),
-								),
+								},
 							],
-							new HeadingNode("Variables"),
-						),
+							heading: { title: "Variables", type: "sectionHeading" },
+						}),
 
 						// Variables details
-						new SectionNode(
-							[
-								new SectionNode(
-									[
+						createSection({
+							children: [
+								createSection({
+									children: [
 										// Summary
-										new SectionNode([
-											new MarkdownBlockContentNode({
-												type: "paragraph",
-												children: [{ type: "text", value: "Test Constant" }],
-											}),
-										]),
+										createSection({
+											children: [
+												{
+													type: "paragraph",
+													children: [{ type: "text", value: "Test Constant" }],
+												},
+											],
+										}),
 
 										// Signature
-										new SectionNode(
-											[new FencedCodeBlockNode('world = "world"', "typescript")],
-											new HeadingNode("Signature", "world-signature"),
-										),
+										createSection({
+											children: [
+												{
+													type: "code",
+													lang: "typescript",
+													value: 'world = "world"',
+												},
+											],
+											heading: {
+												title: "Signature",
+												id: "world-signature",
+												type: "sectionHeading",
+											},
+										}),
 									],
-									new HeadingNode("world", "world-variable"),
-								),
+									heading: {
+										title: "world",
+										id: "world-variable",
+										type: "sectionHeading",
+									},
+								}),
 							],
-							new HeadingNode("Variable Details"),
-						),
+							heading: {
+								title: "Variable Details",
+								type: "sectionHeading",
+							},
+						}),
 					],
-					new HeadingNode("entry-point-b"),
-				),
+					heading: { title: "entry-point-b", type: "sectionHeading" },
+				}),
 			],
-		});
+		};
 		expect(documents[3]).to.deep.equal(expectedEntryPointBDocument);
 	});
 });

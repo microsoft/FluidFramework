@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	Serializable,
 	IChannelAttributes,
@@ -893,7 +893,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				break;
 			}
 			default: {
-				throw new Error(`Operation type not supported or recognized: ${op}`);
+				unreachableCase(op);
 			}
 		}
 		this.submitLocalMessage(op);
