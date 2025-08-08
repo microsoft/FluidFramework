@@ -31,11 +31,6 @@ export namespace ContainerList {
 		 * List of keys for the Containers registered with the Devtools.
 		 */
 		containers: ContainerKey[];
-
-		/**
-		 * List of keys for the Container Runtimes registered with the Devtools.
-		 */
-		containerRuntimes?: ContainerKey[];
 	}
 
 	/**

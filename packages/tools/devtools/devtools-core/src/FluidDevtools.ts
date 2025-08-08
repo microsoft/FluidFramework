@@ -7,13 +7,17 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import type { BaseDevtools } from "./BaseDevtools.js";
 import type { ContainerKey } from "./CommonInterfaces.js";
 import { ContainerDevtools, type ContainerDevtoolsProps } from "./ContainerDevtools.js";
 import {
 	ContainerRuntimeDevtools,
 	type ContainerRuntimeProps,
 } from "./ContainerRuntimeDevtools.js";
-import { DecomposedContainerForContainerRuntime } from "./DecomposedContainer.js";
+import {
+	DecomposedContainerForContainerRuntime,
+	type DecomposedContainer,
+} from "./DecomposedContainer.js";
 import type { IDevtoolsLogger } from "./DevtoolsLogger.js";
 import type { DevtoolsFeatureFlags } from "./Features.js";
 import type { IContainerDevtools } from "./IContainerDevtools.js";
@@ -139,13 +143,7 @@ export class FluidDevtools implements IFluidDevtools {
 	 * Stores Container-level devtools instances registered with this object.
 	 * Maps from a {@link ContainerKey} to the corresponding {@link ContainerDevtools} instance.
 	 */
-	private readonly containers: Map<ContainerKey, ContainerDevtools>;
-
-	/**
-	 * Stores Container Runtime-level devtools instances registered with this object.
-	 * Maps from a {@link ContainerKey} to the corresponding {@link ContainerRuntimeDevtools} instance.
-	 */
-	private readonly containerRuntimes: Map<ContainerKey, ContainerRuntimeDevtools>;
+	private readonly containers: Map<ContainerKey, BaseDevtools<DecomposedContainer>>;
 
 	/**
 	 * Private {@link FluidDevtools.disposed} tracking.
@@ -221,15 +219,11 @@ export class FluidDevtools implements IFluidDevtools {
 		const containers: ContainerKey[] = this.getAllContainers().map(
 			(container) => container.containerKey,
 		);
-		const containerRuntimes: ContainerKey[] = this.getAllContainerRuntimes().map(
-			(containerRuntime) => containerRuntime.containerKey,
-		);
 
 		postMessagesToWindow(
 			devtoolsMessageLoggingOptions,
 			ContainerList.createMessage({
 				containers,
-				containerRuntimes,
 			}),
 		);
 	};
@@ -244,7 +238,6 @@ export class FluidDevtools implements IFluidDevtools {
 	private constructor(props?: FluidDevtoolsProps) {
 		// Populate initial Container-level devtools
 		this.containers = new Map<ContainerKey, ContainerDevtools>();
-		this.containerRuntimes = new Map<ContainerKey, ContainerRuntimeDevtools>();
 		if (props?.initialContainers !== undefined) {
 			for (const containerConfig of props.initialContainers) {
 				this.containers.set(
@@ -338,7 +331,7 @@ export class FluidDevtools implements IFluidDevtools {
 		const decomposedContainer = new DecomposedContainerForContainerRuntime(runtime);
 
 		// Check if the container runtime is already registered.
-		if (this.containerRuntimes.has(containerRuntimeKey)) {
+		if (this.containers.has(containerRuntimeKey)) {
 			throw new UsageError(getContainerAlreadyRegisteredErrorText(containerRuntimeKey));
 		}
 
@@ -347,7 +340,7 @@ export class FluidDevtools implements IFluidDevtools {
 			container: decomposedContainer,
 			containerData: extractedContainerRuntimeData,
 		});
-		this.containerRuntimes.set(containerRuntimeKey, containerRuntimeDevtools);
+		this.containers.set(containerRuntimeKey, containerRuntimeDevtools);
 
 		this.postContainerList();
 	}
@@ -397,8 +390,6 @@ export class FluidDevtools implements IFluidDevtools {
 
 		if (this.containers.has(containerKey)) {
 			this.removeContainer(containerKey);
-		} else if (this.containerRuntimes.has(containerKey)) {
-			this.removeContainerRuntime(containerKey);
 		} else {
 			console.warn(
 				`No ContainerDevtools or ContainerRuntimeDevtools associated with key "${containerKey}" was found.`,
@@ -415,29 +406,18 @@ export class FluidDevtools implements IFluidDevtools {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
 
-		return this.containers.get(containerKey) ?? this.containerRuntimes.get(containerKey);
+		return this.containers.get(containerKey);
 	}
 
 	/**
 	 * Gets all container devtools instances (not data objects).
 	 */
-	public getAllContainers(): readonly ContainerDevtools[] {
+	public getAllContainers(): readonly BaseDevtools<DecomposedContainer>[] {
 		if (this.disposed) {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
 
 		return [...this.containers.values()];
-	}
-
-	/**
-	 * Gets all container runtime devtools instances registered with this object.
-	 */
-	public getAllContainerRuntimes(): readonly ContainerRuntimeDevtools[] {
-		if (this.disposed) {
-			throw new UsageError(useAfterDisposeErrorText);
-		}
-
-		return [...this.containerRuntimes.values()];
 	}
 
 	/**
@@ -463,12 +443,6 @@ export class FluidDevtools implements IFluidDevtools {
 			containerDevtools.dispose();
 		}
 		this.containers.clear();
-
-		// Dispose of container runtime-level devtools
-		for (const [, containerRuntimeDevtools] of this.containerRuntimes) {
-			containerRuntimeDevtools.dispose();
-		}
-		this.containerRuntimes.clear();
 
 		// Notify listeners that the list of Containers changed.
 		this.postContainerList();
@@ -517,36 +491,14 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
-	 * Removes a container runtime devtools instance from the devtools instance.
-	 * @param containerKey - The key of the container runtime to remove.
-	 */
-	private removeContainerRuntime(containerKey: ContainerKey): void {
-		if (this.disposed) {
-			throw new UsageError(useAfterDisposeErrorText);
-		}
-
-		const containerRuntimeDevtools = this.containerRuntimes.get(containerKey);
-		if (containerRuntimeDevtools === undefined) {
-			console.warn(
-				`No ContainerRuntimeDevtools associated with key "${containerKey}" was found.`,
-			);
-			return;
-		}
-
-		containerRuntimeDevtools.dispose();
-		this.containerRuntimes.delete(containerKey);
-
-		// Post message for container list change
-		this.postContainerList();
-	}
-
-	/**
 	 * Tracks the number of {@link ContainerRuntimeDevtools} instances created for each base key.
 	 */
 	private readonly containerRuntimesInstanceCounts = new Map<string, number>();
 
 	/**
 	 * Generates a readable key for a container runtime using package path and sequential numbering.
+	 *
+	 * TODO: Once we enable automatic extration of ContainerData for IContainer instance, extend the usage of assigning readable key.
 	 */
 	private generateReadableKey(baseKey: string): string {
 		// Get the next number for this base key
