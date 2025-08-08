@@ -15284,6 +15284,9 @@ importers:
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../loader/container-loader
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:~
+        version: link:../../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../common/core-interfaces
@@ -15302,6 +15305,9 @@ importers:
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../../dds/matrix
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../../runtime/runtime-definitions
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../../dds/sequence
@@ -21612,7 +21618,7 @@ packages:
         optional: true
 
   eslint-module-utils@2.12.0:
-    resolution: {integrity: sha512-wALZ0HFoytlyh/1+4wuZ9FJCD/leWHQzzrxJ8+rebyReSLk7LApMyd3WJaLVoN+D5+WIdJyDK1c6JnE65V4Zyg==}
+    resolution: {integrity: sha1-/kz7lI1h9JID17CIcZgrZbmvCws=}
     engines: {node: '>=4'}
     peerDependencies:
       '@typescript-eslint/parser': '*'
@@ -22266,7 +22272,7 @@ packages:
     engines: {node: '>= 0.4'}
 
   get-tsconfig@4.10.0:
-    resolution: {integrity: sha512-kGzZ3LWWQcGIAmg6iWvXn0ei6WDtV26wzHRMwDSzmAbcXrTEXxHy6IehI6/4eT6VRKyMP1eF1VqwrVUmE/LR7A==}
+    resolution: {integrity: sha1-QDpoKzc6gjYSR1pMKSjHMm/A9rs=}
 
   get-uri@6.0.4:
     resolution: {integrity: sha512-E1b1lFFLvLgak2whF2xDBcOy6NLVGZBqqjJjsIhvopKfWWEi64pLVTWWehV8KlLerZkfNTA95sTe2OdJKm1OzQ==}
@@ -24208,7 +24214,7 @@ packages:
     engines: {node: '>=16 || 14 >=14.17'}
 
   minimatch@9.0.3:
-    resolution: {integrity: sha512-RHiac9mvaRw0x3AYRgDC1CxAP7HTcNrrECeA8YYJeWnpo+2Q5CegtZjaotWTWxDG3UeGA1coE05iH1mPjT/2mg==}
+    resolution: {integrity: sha1-puAMPeRMOlQr+q5wq/wiQgptqCU=}
     engines: {node: '>=16 || 14 >=14.17'}
 
   minimatch@9.0.5:
@@ -25736,7 +25742,7 @@ packages:
     engines: {node: '>=8'}
 
   resolve-pkg-maps@1.0.0:
-    resolution: {integrity: sha512-seS2Tj26TBVOC2NIc2rOe2y2ZO7efxITtLZcGSOnHHNOQ7CkiUBfw0Iw2ck6xkIhPwLhKNLS8BO+hEpngQlqzw==}
+    resolution: {integrity: sha1-YWs9wsVwVrVYjDHN9LPWTbEzcg8=}
 
   resolve.exports@2.0.3:
     resolution: {integrity: sha512-OcXjMsGdhL4XnbShKpAcSqPMzQoYkYyhbEaeSko47MjRP9NfEQMhZkXL1DoFlt9LWQn4YttrdnV6X2OiyzBi+A==}
