@@ -30,8 +30,8 @@ import { useLogger } from "../TelemetryUtils.js";
 
 import { AudienceView } from "./AudienceView.js";
 import { ContainerHistoryView } from "./ContainerHistoryView.js";
-import { ContainerRuntimeView } from "./ContainerRuntimeView.js";
 import { ContainerSummaryView } from "./ContainerSummaryView.js";
+import { DataObjectsView } from "./DataObjectsView.js";
 import { Waiting } from "./Waiting.js";
 
 // TODOs:
@@ -157,7 +157,6 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 	const styles = useStyles();
 	const usageLogger = useLogger();
 	const panelViews = Object.values(PanelView);
-
 	// Inner view selection
 	const [innerViewSelection, setInnerViewSelection] = React.useState<TabValue>(
 		supportedFeatures.containerDataVisualization === true
@@ -168,7 +167,13 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 	let innerView: React.ReactElement;
 	switch (innerViewSelection) {
 		case PanelView.ContainerData: {
-			innerView = <ContainerRuntimeView containerKey={containerKey} />;
+			innerView = (
+				<ContainerFeatureFlagContext.Provider
+					value={{ containerFeatureFlags: supportedFeatures }}
+				>
+					<DataObjectsView containerKey={containerKey} />
+				</ContainerFeatureFlagContext.Provider>
+			);
 			break;
 		}
 		case PanelView.Audience: {

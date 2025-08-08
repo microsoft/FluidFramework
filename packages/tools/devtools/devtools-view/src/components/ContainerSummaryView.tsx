@@ -209,8 +209,6 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		ContainerStateMetadata | undefined
 	>();
 
-	const { containerFeatureFlags } = useContainerFeaturesContext();
-
 	const [columns] = React.useState<TableColumnDefinition<Item>[]>(columnsDef);
 	const [columnSizingOptions] = React.useState<TableColumnSizingOptions>({
 		containerProperty: {
@@ -218,6 +216,8 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 			minWidth: 70,
 		},
 	});
+
+	const { containerFeatureFlags } = useContainerFeaturesContext();
 
 	const { columnSizing_unstable, tableRef } = useTableFeatures({ columns, items }, [
 		useTableColumnSizing_unstable({ columnSizingOptions }),
@@ -323,11 +323,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 					<TableBody>
 						<DataRow
 							label="Status"
-							infoTooltipContent={containerStatusTooltipText(
-								containerFeatureFlags.canModifyContainerState === false
-									? "Container Runtime"
-									: "Container",
-							)}
+							infoTooltipContent={containerStatusTooltipText}
 							value={containerStatusValueCell(statusComponents)}
 							columnProps={columnSizing_unstable}
 						/>
