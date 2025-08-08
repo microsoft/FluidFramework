@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import { type ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
+import type { Link } from "mdast";
 
-import type { Link } from "../Link.js";
 import type { SectionHeading } from "../mdast/index.js";
 import {
 	getApiItemKind,
@@ -42,7 +42,7 @@ export interface ApiItemWithHierarchy<
 }
 
 /**
- * Creates a {@link Link} for the provided API item.
+ * Creates a link for the provided API item.
  *
  * @remarks
  * If that item is one that will be rendered to a parent document, it will contain the necessary heading identifier
@@ -62,8 +62,14 @@ export function getLinkForApiItem(
 	const text = textOverride ?? config.getLinkTextForItem(apiItem);
 	const url = getLinkUrlForApiItem(apiItem, config);
 	return {
-		text,
-		target: url,
+		type: "link",
+		url,
+		children: [
+			{
+				type: "text",
+				value: text,
+			},
+		],
 	};
 }
 
@@ -77,7 +83,7 @@ export function getLinkForApiItem(
  * @param apiItem - The API item for which we are generating the link.
  * @param config - See {@link ApiItemTransformationConfiguration}
  */
-function getLinkUrlForApiItem(
+export function getLinkUrlForApiItem(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): string {
