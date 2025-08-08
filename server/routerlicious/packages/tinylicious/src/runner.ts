@@ -90,6 +90,7 @@ export class TinyliciousRunner implements IRunner {
 			undefined /* isTokenExpiryEnabled */,
 			undefined /* isClientConnectivityCountingEnabled */,
 			undefined /* isSignalUsageCountingEnabled */,
+			undefined /* enablePrivateLinkNetworkCheck */,
 			undefined /* cache */,
 			undefined /* connectThrottlerPerTenant */,
 			undefined /* connectThrottlerPerCluster */,
