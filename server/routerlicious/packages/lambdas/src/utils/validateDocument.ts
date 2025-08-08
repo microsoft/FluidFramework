@@ -42,9 +42,7 @@ export function isDocumentSessionValid(
 	// If the orderer URL contains the tenant ID, the session is private link enabled.
 	// So far we only set one cluster per group for private endpoint.
 	// Skip the isSessionInThisCluster check.
-	const ordererUrlContainsTenantId = document.session.ordererUrl.includes(document.tenantId);
-	if (ordererUrlContainsTenantId) {
-		return true;
-	}
+	if (document.session.ordererUrl.includes(document.tenantId)) return true;
+
 	return isSessionInThisCluster;
 }
