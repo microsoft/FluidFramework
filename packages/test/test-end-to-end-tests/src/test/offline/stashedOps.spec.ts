@@ -653,37 +653,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(realArray[2], "test3", "Wrong element after revert");
 	});
 
-	it("resends insert, delete and move shared array ops", async function () {
-		const pendingOps = await generatePendingState(
-			testContainerConfig,
-			provider,
-			false, // Don't send ops from first container instance before closing
-			async (c, d) => {
-				const array = await d.getSharedObject<ISharedArray<string>>(arrayId);
-				array.insert(0, "test");
-				array.insert(1, "test2");
-				array.insert(2, "test3");
-				array.delete(0);
-				array.insert(0, "test4");
-				array.insert(1, "test5");
-				array.insert(2, "test6");
-				array.insertBulkAfter("test6", ["test7", "test8"]);
-				array.move(0, 3);
-				array.move(1, 4);
-				array.delete(5);
-				array.insert(5, "test9");
-			},
-		);
-
-		// load container with pending ops, which should resend the op not sent by previous container
-		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const array2 = await dataStore2.getSharedObject<ISharedArray<string>>(arrayId);
-		await waitForContainerConnection(container2);
-		await provider.ensureSynchronized();
-		assert.deepEqual(array1.get(), array2.get());
-	});
-
 	it("resends signal notify op", async function () {
 		const pendingOps = await generatePendingState(
 			testContainerConfig,
@@ -704,85 +673,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
 		assert.strictEqual(received, "test", "Signal1 did not receive notify");
-	});
-
-	it("resends toggle shared array op", async function () {
-		const pendingOps = await generatePendingState(
-			testContainerConfig,
-			provider,
-			false, // Don't send ops from first container instance before closing
-			async (c, d) => {
-				const array = await d.getSharedObject<ISharedArray<string>>(arrayId);
-				let revertible: IRevertible = new SharedArrayRevertible(array, {
-					entryId: "dummy",
-					type: 3,
-					isDeleted: false,
-				} satisfies IToggleOperation);
-				// Attach the revertible event listener.
-				array.on("revertible", (revertibleItem: IRevertible) => {
-					revertible = revertibleItem;
-				});
-				array.insert(0, "test");
-				array.insert(1, "test2");
-				revertible.revert();
-			},
-		);
-
-		// load container with pending ops, which should resend the op not sent by previous container
-		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const array2 = await dataStore2.getSharedObject<ISharedArray<string>>(arrayId);
-		await waitForContainerConnection(container2);
-		await provider.ensureSynchronized();
-		const realArray2 = array2.get();
-		const realArray = array1.get();
-		assert.strictEqual(realArray2.length, 1, "Array should have one element after revert");
-		assert.strictEqual(realArray.length, 1, "Array should have one element after revert");
-		assert.strictEqual(realArray2[0], "test", "Wrong element after revert");
-		assert.strictEqual(realArray[0], "test", "Wrong element after revert");
-	});
-
-	it("resends toggle move shared array op", async function () {
-		const pendingOps = await generatePendingState(
-			testContainerConfig,
-			provider,
-			false, // Don't send ops from first container instance before closing
-			async (c, d) => {
-				const array = await d.getSharedObject<ISharedArray<string>>(arrayId);
-				let revertible: IRevertible = new SharedArrayRevertible(array, {
-					entryId: "dummy",
-					type: 3,
-					isDeleted: false,
-				} satisfies IToggleOperation);
-				// Attach the revertible event listener.
-				array.on("revertible", (revertibleItem: IRevertible) => {
-					revertible = revertibleItem;
-				});
-				array.insert(0, "test");
-				array.insert(1, "test2");
-				array.insert(2, "test3");
-				array.move(0, 2);
-				// Revert the move operation.
-				revertible.revert();
-			},
-		);
-
-		// load container with pending ops, which should resend the op not sent by previous container
-		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const array2 = await dataStore2.getSharedObject<ISharedArray<string>>(arrayId);
-		await waitForContainerConnection(container2);
-		await provider.ensureSynchronized();
-		const realArray2 = array2.get();
-		const realArray = array1.get();
-		assert.strictEqual(realArray2.length, 3, "Array should have three elements after revert");
-		assert.strictEqual(realArray.length, 3, "Array should have three elements after revert");
-		assert.strictEqual(realArray2[0], "test", "Wrong element after revert");
-		assert.strictEqual(realArray[0], "test", "Wrong element after revert");
-		assert.strictEqual(realArray2[1], "test2", "Wrong element after revert");
-		assert.strictEqual(realArray[1], "test2", "Wrong element after revert");
-		assert.strictEqual(realArray2[2], "test3", "Wrong element after revert");
-		assert.strictEqual(realArray[2], "test3", "Wrong element after revert");
 	});
 
 	it("resends all shared directory ops", async function () {
