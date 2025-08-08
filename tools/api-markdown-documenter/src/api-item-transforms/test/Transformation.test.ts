@@ -101,15 +101,6 @@ function createConfig(
 	});
 }
 
-// TODO: do we need this helper?
-function testTransformation(
-	apiItem: ApiItem,
-	config: ApiItemTransformationConfiguration,
-): NormalizedTree {
-	const document = apiItemToDocument(apiItem, config);
-	return document.contents;
-}
-
 describe("ApiItem to Documentation transformation tests", () => {
 	it("Transform ApiVariable", () => {
 		const model = generateModel("test-variable.json");
@@ -131,7 +122,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 			model,
 		);
 
-		const result: NormalizedTree = testTransformation(apiVariable, config);
+		const result: NormalizedTree = apiItemToDocument(apiVariable, config).contents;
 
 		const expected: NormalizedTree = {
 			type: "root",
@@ -212,7 +203,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 			model,
 		);
 
-		const result: NormalizedTree = testTransformation(apiFunction, config);
+		const result: NormalizedTree = apiItemToDocument(apiFunction, config).contents;
 
 		const expected: NormalizedTree = {
 			type: "root",
@@ -412,7 +403,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const config = createConfig({}, model);
 
-		const result: NormalizedTree = testTransformation(apiInterface, config);
+		const result: NormalizedTree = apiItemToDocument(apiInterface, config).contents;
 
 		const expected: NormalizedTree = {
 			type: "root",
@@ -595,7 +586,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 			model,
 		);
 
-		const result: NormalizedTree = testTransformation(apiNamespace, config);
+		const result: NormalizedTree = apiItemToDocument(apiNamespace, config).contents;
 
 		// Note: the namespace being processed includes 3 const variables:
 		// - foo (@public)
