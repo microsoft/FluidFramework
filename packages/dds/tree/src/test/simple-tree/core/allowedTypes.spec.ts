@@ -382,15 +382,24 @@ describe("allowedTypes", () => {
 			assert.deepEqual(result, input);
 		});
 
-		it("evaluates any lazy schemas", () => {
+		it("does not evaluate any lazy schema", () => {
+			const noEval: () => typeof SchemaFactory.string = () =>
+				assert.fail("Should not evaluate lazy schema");
+
 			const input: AnnotatedAllowedType = {
 				metadata: { custom: { something: true } },
-				type: lazy,
+				type: noEval,
 			};
 			const result = normalizeToAnnotatedAllowedType(input);
 			assert.deepEqual(result, {
 				metadata: { custom: { something: true } },
-				type: fakeSchema,
+				type: noEval,
+			});
+
+			const result2 = normalizeToAnnotatedAllowedType(noEval);
+			assert.deepEqual(result2, {
+				metadata: {},
+				type: noEval,
 			});
 		});
 	});

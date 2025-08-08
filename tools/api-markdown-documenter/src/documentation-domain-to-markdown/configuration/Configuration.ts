@@ -9,7 +9,7 @@ import type { LoggingConfiguration } from "../../LoggingConfiguration.js";
 import type { Transformations } from "./Transformation.js";
 
 /**
- * Configuration for transforming {@link DocumentationNode}s to Markdown.
+ * Configuration for transforming documentation to Markdown.
  *
  * @public
  */
@@ -17,7 +17,7 @@ export interface TransformationConfiguration extends LoggingConfiguration {
 	/**
 	 * User-specified transformations.
 	 *
-	 * @remarks May override default behaviors or add transformation capabilities for custom {@link DocumentationNode}s.
+	 * @remarks May override default behaviors or add transformation capabilities for custom documentation nodes.
 	 */
 	readonly customTransformations?: Partial<Transformations>;
 
