@@ -722,36 +722,48 @@ function addRevision(effect: MarkEffect, revision: RevisionTag): void {
 export function getCrossFieldKeys(change: Changeset): CrossFieldKeyRange[] {
 	const keys: CrossFieldKeyRange[] = [];
 	for (const mark of change) {
-		const key = getCrossFieldKeysForMark(mark, mark.count);
-		if (key !== undefined) {
-			keys.push(key);
-		}
+		keys.push(...getCrossFieldKeysForMark(mark, mark.count));
 	}
 
 	return keys;
 }
 
-function getCrossFieldKeysForMark(mark: Mark, count: number): CrossFieldKeyRange | undefined {
+function getCrossFieldKeysForMark(mark: Mark, count: number): CrossFieldKeyRange[] {
 	switch (mark.type) {
-		case "Insert":
-			return {
-				key: {
-					revision: mark.revision,
-					localId: mark.id,
-					target: CrossFieldTarget.Destination,
+		case "Insert": {
+			const keys = [
+				{
+					key: {
+						revision: mark.revision,
+						localId: mark.id,
+						target: CrossFieldTarget.Destination,
+					},
+					count,
 				},
-				count,
-			};
+			];
+
+			if (mark.cellId === undefined) {
+				// This is a pin, which is treated as a detach and attach.
+				keys.push({
+					key: { revision: mark.revision, localId: mark.id, target: CrossFieldTarget.Source },
+					count,
+				});
+			}
+
+			return keys;
+		}
 		case "Remove":
-			return {
-				key: {
-					revision: mark.revision,
-					localId: mark.id,
-					target: CrossFieldTarget.Source,
+			return [
+				{
+					key: {
+						revision: mark.revision,
+						localId: mark.id,
+						target: CrossFieldTarget.Source,
+					},
+					count,
 				},
-				count,
-			};
+			];
 		default:
-			return undefined;
+			return [];
 	}
 }

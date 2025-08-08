@@ -211,7 +211,7 @@ export class ModularChangeFamily
 			change2,
 		);
 
-		return makeModularChangeset({
+		const composed = makeModularChangeset({
 			fieldChanges,
 			nodeChanges,
 			nodeToParent,
@@ -224,6 +224,9 @@ export class ModularChangeFamily
 			destroys: allDestroys,
 			refreshers: allRefreshers,
 		});
+
+		// this.validateChangeset(composed);
+		return composed;
 	}
 
 	private composeAllFields(
@@ -1862,23 +1865,62 @@ export class ModularChangeFamily
 	}
 
 	public validateChangeset(change: ModularChangeset): void {
-		let numNodes = this.validateFieldChanges(change, change.fieldChanges, undefined);
+		const unreachableNodes: ChangeAtomIdBTree<NodeLocation> = brand(
+			change.nodeToParent.clone(),
+		);
+
+		const unreachableCFKs = change.crossFieldKeys.clone();
+
+		this.validateFieldChanges(
+			change,
+			change.fieldChanges,
+			undefined,
+			unreachableNodes,
+			unreachableCFKs,
+		);
 
 		for (const [[revision, localId], node] of change.nodeChanges.entries()) {
 			if (node.fieldChanges === undefined) {
 				continue;
 			}
 
-			const nodeId: NodeId = { revision, localId };
-			const numChildren = this.validateFieldChanges(change, node.fieldChanges, nodeId);
-
-			numNodes += numChildren;
+			const nodeId = normalizeNodeId({ revision, localId }, change.nodeAliases);
+			this.validateFieldChanges(
+				change,
+				node.fieldChanges,
+				nodeId,
+				unreachableNodes,
+				unreachableCFKs,
+			);
 		}
 
-		assert(
-			numNodes === change.nodeChanges.size,
-			0xa4d /* Node table contains unparented nodes */,
-		);
+		for (const [detachIdKey, nodeId] of change.rootNodes.nodeChanges.entries()) {
+			const detachId: ChangeAtomId = { revision: detachIdKey[0], localId: detachIdKey[1] };
+			const location = getNodeParent(change, nodeId);
+			assert(areEqualChangeAtomIdOpts(location.root, detachId), "Inconsistent node location");
+
+			const normalizedNodeId = normalizeNodeId(nodeId, change.nodeAliases);
+			unreachableNodes.delete([normalizedNodeId.revision, normalizedNodeId.localId]);
+
+			const fieldChanges = nodeChangeFromId(
+				change.nodeChanges,
+				change.nodeAliases,
+				nodeId,
+			).fieldChanges;
+
+			if (fieldChanges !== undefined) {
+				this.validateFieldChanges(
+					change,
+					fieldChanges,
+					normalizedNodeId,
+					unreachableNodes,
+					unreachableCFKs,
+				);
+			}
+		}
+
+		assert(unreachableNodes.size === 0, "Unreachable nodes found");
+		assert(unreachableCFKs.entries().length === 0, "Unreachable cross-field keys found");
 	}
 
 	/**
@@ -1890,8 +1932,9 @@ export class ModularChangeFamily
 		change: ModularChangeset,
 		fieldChanges: FieldChangeMap,
 		nodeParent: NodeId | undefined,
-	): number {
-		let numChildren = 0;
+		unreachableNodes: ChangeAtomIdBTree<NodeLocation>,
+		unreachableCFKs: CrossFieldRangeTable<FieldId>,
+	): void {
 		for (const [field, fieldChange] of fieldChanges.entries()) {
 			const fieldId = { nodeId: nodeParent, field };
 			const handler = getChangeHandler(this.fieldKinds, fieldChange.fieldKind);
@@ -1901,21 +1944,23 @@ export class ModularChangeFamily
 					parentFieldId.field !== undefined && areEqualFieldIds(parentFieldId.field, fieldId),
 					0xa4e /* Inconsistent node parentage */,
 				);
-				numChildren += 1;
+
+				unreachableNodes.delete([child.revision, child.localId]);
 			}
 
 			for (const keyRange of handler.getCrossFieldKeys(fieldChange.change)) {
 				const fields = getFieldsForCrossFieldKey(change, keyRange.key, keyRange.count);
-				assert(
-					fields.length === 1 &&
-						fields[0] !== undefined &&
-						areEqualFieldIds(fields[0], fieldId),
-					0xa4f /* Inconsistent cross field keys */,
-				);
+				assert(fields.length > 0, "Cross-field key does not have associated field");
+				for (const fieldFromLookup of fields) {
+					assert(
+						areEqualFieldIds(fieldFromLookup, fieldId),
+						0xa4f /* Inconsistent cross field keys */,
+					);
+				}
+
+				unreachableCFKs.delete(keyRange.key, keyRange.count);
 			}
 		}
-
-		return numChildren;
 	}
 }
 
@@ -3215,6 +3260,7 @@ function makeModularChangeset(
 	if (props.refreshers !== undefined && props.refreshers.size > 0) {
 		changeset.refreshers = props.refreshers;
 	}
+
 	return changeset;
 }
 

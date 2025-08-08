@@ -484,18 +484,11 @@ export const optionalChangeHandler: FieldChangeHandler<
 
 function getCrossFieldKeys(change: OptionalChangeset): CrossFieldKeyRange[] {
 	const keys: CrossFieldKeyRange[] = [];
-	if (change.valueReplace !== undefined) {
+	if (change.valueReplace?.src !== undefined) {
 		keys.push({
-			key: { ...change.valueReplace.dst, target: CrossFieldTarget.Source },
+			key: { ...change.valueReplace.src, target: CrossFieldTarget.Destination },
 			count: 1,
 		});
-
-		if (change.valueReplace.src !== undefined) {
-			keys.push({
-				key: { ...change.valueReplace.src, target: CrossFieldTarget.Destination },
-				count: 1,
-			});
-		}
 	}
 
 	const detachId = getEffectiveDetachId(change);
