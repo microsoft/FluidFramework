@@ -80,17 +80,41 @@ interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TCont
 }
 
 // Nodes in the payload are either plain strings, or objects with a routing string and optional data.
+// Before
+type Node2<D = unknown> = string | { data: D };
 type Node<R extends string = string, D = unknown> = R | { routing: R; data?: D };
 type Id = Node<string, undefined>;
 type Item<D = unknown> = Node<string, D>;
 type UnknownNode = Node<"__unknown__NOT_A_RUNTIME_VALUE__">;
 
+type Test<T = never> = never extends T ? true : false; // true, so this is a valid type
+
+// [["component"], ["id1"], ["ddsOp"], ["1234", { ... }]]
+type AnyNode2D = [string] | [string, unknown];
+type BaseNode2D<R extends string = string, D = unknown> = D extends undefined ? [R] : [R, D];
+type Router2D<R extends string, D = undefined> = BaseNode2D<R, D>;
+type Id2D = BaseNode2D<string, undefined>;
+type Item2D<D> = BaseNode2D<string, D>;
+type UnknownNode2D = BaseNode2D<"__unknown__NOT_A_RUNTIME_VALUE__">;
+export type OtherNode = BaseNode2D<"other", { foo: number }>;
+export const sampleId2D: Id2D = ["id1"];
+export type RuntimeOp2D_explicit =
+	| [["component"], [string], ...AnyNode2D[]]
+	| [["attach"], Item2D<AttachData>]
+	| [["gc", GarbageCollectionMessage]]
+	| [UnknownNode2D];
+export type RuntimeOp2D =
+	| [Router2D<"component">, Id2D, ...AnyNode2D[]]
+	| [Router2D<"attach">, Item2D<AttachData>]
+	| [Router2D<"gc", GarbageCollectionMessage>]
+	| [UnknownNode2D];
+
 // I had hoped this would support type narrowing on the rest of the tuple based on the first element,
 // but it doesn't (see processRuntimeOp)
 type RuntimeOp =
-	| ["component", Id, ...Node[]]
+	| ["component", Id, ...Node2[]]
 	| ["attach", Item<AttachData>]
-	| [Node<"gc", GarbageCollectionMessage>]
+	| ["gc", Node2<GarbageCollectionMessage>]
 	| [UnknownNode];
 
 interface AttachData {
@@ -98,19 +122,20 @@ interface AttachData {
 	snapshot: ITree;
 }
 
-// [ "component", "ABCD", "ddsOp", { routing: 1234, data: { ... } } ] => [ "component", "ABCD", "ddsOp", "1234" ]
-export function fullRoute(runtimeOp: RuntimeOp): string[] {
-	return runtimeOp.map((x: Node | string) => {
-		return typeof x === "string" ? x : x.routing;
-	});
+// [ ["component"], ["ABCD"], ["ddsOp"], ["1234", { ... }] ] => [ "component", "ABCD", "ddsOp", "1234" ]
+export function fullRoute2D(runtimeOp: AnyNode2D[]): string[] {
+	return runtimeOp.map(([r]) => r);
 }
+const op: RuntimeOp2D = [["component"], ["default"], ["ddsOp"], ["dds1", { foo: 123 }]];
+fullRoute2D(op);
 
-export function processRuntimeOp(runtimeOp: RuntimeOp): void {
+export function processRuntimeOp(runtimeOp: RuntimeOp2D_explicit): void {
 	// Array destructuring would replace unwrapping the envelope
-	switch (runtimeOp[0]) {
+	switch (runtimeOp[0][0]) {
 		case "component": {
 			// WOMP WOMP - no type narrowing here.
 			// I hoped that id would be known to be a string, and inner would be an array of Node
+			const idid = runtimeOp[1];
 			const [_, id, ...inner] = runtimeOp;
 			break;
 		}
@@ -119,11 +144,12 @@ export function processRuntimeOp(runtimeOp: RuntimeOp): void {
 
 			break;
 		}
-		case { routing: "gc" }: {
-			const [{ data }] = runtimeOp;
-			break;
-		}
+		// case { routing: "gc" }: {
+		// 	const [{ data }] = runtimeOp;
+		// 	break;
+		// }
 		default: {
+			const x = runtimeOp;
 			break;
 		}
 	}
