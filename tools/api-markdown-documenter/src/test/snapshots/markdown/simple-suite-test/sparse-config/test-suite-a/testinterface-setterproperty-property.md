@@ -2,7 +2,7 @@
 
 A test property with a getter and a setter.
 
-### Signature {#setterproperty-signature}
+<h3 id="setterproperty-signature">Signature</h3>
 
 ```typescript
 get setterProperty(): boolean;

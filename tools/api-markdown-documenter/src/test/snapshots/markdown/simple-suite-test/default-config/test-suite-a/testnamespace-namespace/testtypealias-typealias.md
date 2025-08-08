@@ -4,7 +4,7 @@
 
 Test Type-Alias
 
-## Signature {#testtypealias-signature}
+<h2 id="testtypealias-signature">Signature</h2>
 
 ```typescript
 type TestTypeAlias = boolean;
