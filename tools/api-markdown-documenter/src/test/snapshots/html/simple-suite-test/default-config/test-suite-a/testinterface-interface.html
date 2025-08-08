@@ -4,315 +4,185 @@
     <meta charset="utf-8">
   </head>
   <body>
-    <section>
-      <h1>TestInterface</h1>
-      <section>
-        <p><a href="/">Packages</a> > <a href="/test-suite-a/">test-suite-a</a> > <a href="/test-suite-a/testinterface-interface">TestInterface</a></p>
-      </section>
-      <section>
-        <p>Test interface</p>
-      </section>
-      <section>
-        <h2 id="testinterface-signature">Signature</h2>
-        <pre><code class="language-typescript">export interface TestInterface
+    <h1>TestInterface</h1>
+    <p><a href="/">Packages</a> > <a href="/test-suite-a/">test-suite-a</a> > <a href="/test-suite-a/testinterface-interface">TestInterface</a></p>
+    <p>Test interface</p><h2 id="testinterface-signature">Signature</h2>
+    <pre><code class="language-typescript">export interface TestInterface
+</code></pre><h2 id="testinterface-remarks">Remarks</h2>
+    <p>Here are some remarks about the interface</p>
+    <h2>Constructors</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Constructor</th>
+          <th>Return Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="/test-suite-a/testinterface-interface#_new_-constructsignature">new (): TestInterface</a></td>
+          <td><a href="/test-suite-a/testinterface-interface">TestInterface</a></td>
+          <td>Test construct signature.</td>
+        </tr>
+      </tbody>
+    </table>
+    <h2>Events</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Property</th>
+          <th>Modifiers</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="/test-suite-a/testinterface-interface#testclasseventproperty-propertysignature">testClassEventProperty</a></td>
+          <td><code>readonly</code></td>
+          <td>() => void</td>
+          <td>Test interface event property</td>
+        </tr>
+      </tbody>
+    </table>
+    <h2>Properties</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Property</th>
+          <th>Modifiers</th>
+          <th>Default Value</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="/test-suite-a/testinterface-interface#getterproperty-property">getterProperty</a></td>
+          <td><code>readonly</code></td>
+          <td></td>
+          <td>boolean</td>
+          <td>A test getter-only interface property.</td>
+        </tr>
+        <tr>
+          <td><a href="/test-suite-a/testinterface-interface#propertywithbadinheritdoctarget-propertysignature">propertyWithBadInheritDocTarget</a></td>
+          <td></td>
+          <td></td>
+          <td>boolean</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td><a href="/test-suite-a/testinterface-interface#setterproperty-property">setterProperty</a></td>
+          <td></td>
+          <td></td>
+          <td>boolean</td>
+          <td>A test property with a getter and a setter.</td>
+        </tr>
+        <tr>
+          <td><a href="/test-suite-a/testinterface-interface#testinterfaceproperty-propertysignature">testInterfaceProperty</a></td>
+          <td></td>
+          <td></td>
+          <td>number</td>
+          <td>Test interface property</td>
+        </tr>
+        <tr>
+          <td><a href="/test-suite-a/testinterface-interface#testoptionalinterfaceproperty-propertysignature">testOptionalInterfaceProperty</a></td>
+          <td><code>optional</code></td>
+          <td>0</td>
+          <td>number</td>
+          <td>Test optional property</td>
+        </tr>
+      </tbody>
+    </table>
+    <h2>Methods</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>Return Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="/test-suite-a/testinterface-interface#testinterfacemethod-methodsignature">testInterfaceMethod()</a></td>
+          <td>void</td>
+          <td>Test interface method</td>
+        </tr>
+      </tbody>
+    </table>
+    <h2>Call Signatures</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>CallSignature</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="/test-suite-a/testinterface-interface#_call_-callsignature">(event: 'testCallSignature', listener: (input: unknown) => void): any</a></td>
+          <td>Test interface event call signature</td>
+        </tr>
+        <tr>
+          <td><a href="/test-suite-a/testinterface-interface#_call__1-callsignature">(event: 'anotherTestCallSignature', listener: (input: number) => string): number</a></td>
+          <td>Another example call signature</td>
+        </tr>
+      </tbody>
+    </table>
+    <h2>Constructor Details</h2><h3 id="_new_-constructsignature">new (): TestInterface</h3>
+    <p>Test construct signature.</p><h4 id="_new_-signature">Signature</h4>
+    <pre><code class="language-typescript">new (): TestInterface;
+</code></pre><h4 id="_new_-returns">Returns</h4>
+    <p><strong>Return type</strong>: <a href="/test-suite-a/testinterface-interface">TestInterface</a></p>
+    <h2>Event Details</h2><h3 id="testclasseventproperty-propertysignature">testClassEventProperty</h3>
+    <p>Test interface event property</p><h4 id="testclasseventproperty-signature">Signature</h4>
+    <pre><code class="language-typescript">readonly testClassEventProperty: () => void;
 </code></pre>
-      </section>
-      <section>
-        <h2 id="testinterface-remarks">Remarks</h2>
-        <p>Here are some remarks about the interface</p>
-      </section>
-      <section>
-        <h2>Constructors</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Constructor</th>
-              <th>Return Type</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><a href="/test-suite-a/testinterface-interface#_new_-constructsignature">new (): TestInterface</a></td>
-              <td><a href="/test-suite-a/testinterface-interface">TestInterface</a></td>
-              <td>Test construct signature.</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-      <section>
-        <h2>Events</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Property</th>
-              <th>Modifiers</th>
-              <th>Type</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><a href="/test-suite-a/testinterface-interface#testclasseventproperty-propertysignature">testClassEventProperty</a></td>
-              <td><code>readonly</code></td>
-              <td>() => void</td>
-              <td>Test interface event property</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-      <section>
-        <h2>Properties</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Property</th>
-              <th>Modifiers</th>
-              <th>Default Value</th>
-              <th>Type</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><a href="/test-suite-a/testinterface-interface#getterproperty-property">getterProperty</a></td>
-              <td><code>readonly</code></td>
-              <td></td>
-              <td>boolean</td>
-              <td>A test getter-only interface property.</td>
-            </tr>
-            <tr>
-              <td><a href="/test-suite-a/testinterface-interface#propertywithbadinheritdoctarget-propertysignature">propertyWithBadInheritDocTarget</a></td>
-              <td></td>
-              <td></td>
-              <td>boolean</td>
-              <td></td>
-            </tr>
-            <tr>
-              <td><a href="/test-suite-a/testinterface-interface#setterproperty-property">setterProperty</a></td>
-              <td></td>
-              <td></td>
-              <td>boolean</td>
-              <td>A test property with a getter and a setter.</td>
-            </tr>
-            <tr>
-              <td><a href="/test-suite-a/testinterface-interface#testinterfaceproperty-propertysignature">testInterfaceProperty</a></td>
-              <td></td>
-              <td></td>
-              <td>number</td>
-              <td>Test interface property</td>
-            </tr>
-            <tr>
-              <td><a href="/test-suite-a/testinterface-interface#testoptionalinterfaceproperty-propertysignature">testOptionalInterfaceProperty</a></td>
-              <td><code>optional</code></td>
-              <td>0</td>
-              <td>number</td>
-              <td>Test optional property</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-      <section>
-        <h2>Methods</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Method</th>
-              <th>Return Type</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><a href="/test-suite-a/testinterface-interface#testinterfacemethod-methodsignature">testInterfaceMethod()</a></td>
-              <td>void</td>
-              <td>Test interface method</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-      <section>
-        <h2>Call Signatures</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>CallSignature</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><a href="/test-suite-a/testinterface-interface#_call_-callsignature">(event: 'testCallSignature', listener: (input: unknown) => void): any</a></td>
-              <td>Test interface event call signature</td>
-            </tr>
-            <tr>
-              <td><a href="/test-suite-a/testinterface-interface#_call__1-callsignature">(event: 'anotherTestCallSignature', listener: (input: number) => string): number</a></td>
-              <td>Another example call signature</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-      <section>
-        <h2>Constructor Details</h2>
-        <section>
-          <h3 id="_new_-constructsignature">new (): TestInterface</h3>
-          <section>
-            <p>Test construct signature.</p>
-          </section>
-          <section>
-            <h4 id="_new_-signature">Signature</h4>
-            <pre><code class="language-typescript">new (): TestInterface;
+    <p><strong>Type</strong>: () => void</p><h4 id="testclasseventproperty-remarks">Remarks</h4>
+    <p>Here are some remarks about the event property</p>
+    <h2>Property Details</h2><h3 id="getterproperty-property">getterProperty</h3>
+    <p>A test getter-only interface property.</p><h4 id="getterproperty-signature">Signature</h4>
+    <pre><code class="language-typescript">get getterProperty(): boolean;
 </code></pre>
-          </section>
-          <section>
-            <h4 id="_new_-returns">Returns</h4>
-            <p><strong>Return type</strong>: <a href="/test-suite-a/testinterface-interface">TestInterface</a></p>
-          </section>
-        </section>
-      </section>
-      <section>
-        <h2>Event Details</h2>
-        <section>
-          <h3 id="testclasseventproperty-propertysignature">testClassEventProperty</h3>
-          <section>
-            <p>Test interface event property</p>
-          </section>
-          <section>
-            <h4 id="testclasseventproperty-signature">Signature</h4>
-            <pre><code class="language-typescript">readonly testClassEventProperty: () => void;
+    <p><strong>Type</strong>: boolean</p><h3 id="propertywithbadinheritdoctarget-propertysignature">propertyWithBadInheritDocTarget</h3>
+    <h4 id="propertywithbadinheritdoctarget-signature">Signature</h4>
+    <pre><code class="language-typescript">propertyWithBadInheritDocTarget: boolean;
 </code></pre>
-            <p><strong>Type</strong>: () => void</p>
-          </section>
-          <section>
-            <h4 id="testclasseventproperty-remarks">Remarks</h4>
-            <p>Here are some remarks about the event property</p>
-          </section>
-        </section>
-      </section>
-      <section>
-        <h2>Property Details</h2>
-        <section>
-          <h3 id="getterproperty-property">getterProperty</h3>
-          <section>
-            <p>A test getter-only interface property.</p>
-          </section>
-          <section>
-            <h4 id="getterproperty-signature">Signature</h4>
-            <pre><code class="language-typescript">get getterProperty(): boolean;
-</code></pre>
-            <p><strong>Type</strong>: boolean</p>
-          </section>
-        </section>
-        <section>
-          <h3 id="propertywithbadinheritdoctarget-propertysignature">propertyWithBadInheritDocTarget</h3>
-          <section>
-            <h4 id="propertywithbadinheritdoctarget-signature">Signature</h4>
-            <pre><code class="language-typescript">propertyWithBadInheritDocTarget: boolean;
-</code></pre>
-            <p><strong>Type</strong>: boolean</p>
-          </section>
-        </section>
-        <section>
-          <h3 id="setterproperty-property">setterProperty</h3>
-          <section>
-            <p>A test property with a getter and a setter.</p>
-          </section>
-          <section>
-            <h4 id="setterproperty-signature">Signature</h4>
-            <pre><code class="language-typescript">get setterProperty(): boolean;
+    <p><strong>Type</strong>: boolean</p><h3 id="setterproperty-property">setterProperty</h3>
+    <p>A test property with a getter and a setter.</p><h4 id="setterproperty-signature">Signature</h4>
+    <pre><code class="language-typescript">get setterProperty(): boolean;
 
 set setterProperty(newValue: boolean);
 </code></pre>
-            <p><strong>Type</strong>: boolean</p>
-          </section>
-        </section>
-        <section>
-          <h3 id="testinterfaceproperty-propertysignature">testInterfaceProperty</h3>
-          <section>
-            <p>Test interface property</p>
-          </section>
-          <section>
-            <h4 id="testinterfaceproperty-signature">Signature</h4>
-            <pre><code class="language-typescript">testInterfaceProperty: number;
+    <p><strong>Type</strong>: boolean</p><h3 id="testinterfaceproperty-propertysignature">testInterfaceProperty</h3>
+    <p>Test interface property</p><h4 id="testinterfaceproperty-signature">Signature</h4>
+    <pre><code class="language-typescript">testInterfaceProperty: number;
 </code></pre>
-            <p><strong>Type</strong>: number</p>
-          </section>
-          <section>
-            <h4 id="testinterfaceproperty-remarks">Remarks</h4>
-            <p>Here are some remarks about the property</p>
-          </section>
-        </section>
-        <section>
-          <h3 id="testoptionalinterfaceproperty-propertysignature">testOptionalInterfaceProperty</h3>
-          <section>
-            <p>Test optional property</p>
-          </section>
-          <section>
-            <h4 id="testoptionalinterfaceproperty-signature">Signature</h4>
-            <pre><code class="language-typescript">testOptionalInterfaceProperty?: number;
+    <p><strong>Type</strong>: number</p><h4 id="testinterfaceproperty-remarks">Remarks</h4>
+    <p>Here are some remarks about the property</p><h3 id="testoptionalinterfaceproperty-propertysignature">testOptionalInterfaceProperty</h3>
+    <p>Test optional property</p><h4 id="testoptionalinterfaceproperty-signature">Signature</h4>
+    <pre><code class="language-typescript">testOptionalInterfaceProperty?: number;
 </code></pre>
-            <p><strong>Type</strong>: number</p>
-          </section>
-        </section>
-      </section>
-      <section>
-        <h2>Method Details</h2>
-        <section>
-          <h3 id="testinterfacemethod-methodsignature">testInterfaceMethod</h3>
-          <section>
-            <p>Test interface method</p>
-          </section>
-          <section>
-            <h4 id="testinterfacemethod-signature">Signature</h4>
-            <pre><code class="language-typescript">testInterfaceMethod(): void;
-</code></pre>
-          </section>
-          <section>
-            <h4 id="testinterfacemethod-remarks">Remarks</h4>
-            <p>Here are some remarks about the method</p>
-          </section>
-        </section>
-      </section>
-      <section>
-        <h2>Call Signature Details</h2>
-        <section>
-          <h3 id="_call_-callsignature">(event: 'testCallSignature', listener: (input: unknown) => void): any</h3>
-          <section>
-            <p>Test interface event call signature</p>
-          </section>
-          <section>
-            <h4 id="_call_-signature">Signature</h4>
-            <pre><code class="language-typescript">(event: 'testCallSignature', listener: (input: unknown) => void): any;
-</code></pre>
-          </section>
-          <section>
-            <h4 id="_call_-remarks">Remarks</h4>
-            <p>Here are some remarks about the event call signature</p>
-          </section>
-        </section>
-        <section>
-          <h3 id="_call__1-callsignature">(event: 'anotherTestCallSignature', listener: (input: number) => string): number</h3>
-          <section>
-            <p>Another example call signature</p>
-          </section>
-          <section>
-            <h4 id="_call__1-signature">Signature</h4>
-            <pre><code class="language-typescript">(event: 'anotherTestCallSignature', listener: (input: number) => string): number;
-</code></pre>
-          </section>
-          <section>
-            <h4 id="_call__1-remarks">Remarks</h4>
-            <p>Here are some remarks about the event call signature</p>
-          </section>
-        </section>
-      </section>
-      <section>
-        <h2 id="testinterface-see-also">See Also</h2>
-        <p><a href="/test-suite-a/testinterface-interface#testinterfacemethod-methodsignature">testInterfaceMethod()</a></p>
-        <p><a href="/test-suite-a/testinterface-interface#testinterfaceproperty-propertysignature">testInterfaceProperty</a></p>
-        <p><a href="/test-suite-a/testinterface-interface#testoptionalinterfaceproperty-propertysignature">testOptionalInterfaceProperty</a></p>
-        <p><a href="/test-suite-a/testinterface-interface#testclasseventproperty-propertysignature">testClassEventProperty</a></p>
-      </section>
-    </section>
+    <p><strong>Type</strong>: number</p>
+    <h2>Method Details</h2><h3 id="testinterfacemethod-methodsignature">testInterfaceMethod</h3>
+    <p>Test interface method</p><h4 id="testinterfacemethod-signature">Signature</h4>
+    <pre><code class="language-typescript">testInterfaceMethod(): void;
+</code></pre><h4 id="testinterfacemethod-remarks">Remarks</h4>
+    <p>Here are some remarks about the method</p>
+    <h2>Call Signature Details</h2><h3 id="_call_-callsignature">(event: 'testCallSignature', listener: (input: unknown) => void): any</h3>
+    <p>Test interface event call signature</p><h4 id="_call_-signature">Signature</h4>
+    <pre><code class="language-typescript">(event: 'testCallSignature', listener: (input: unknown) => void): any;
+</code></pre><h4 id="_call_-remarks">Remarks</h4>
+    <p>Here are some remarks about the event call signature</p><h3 id="_call__1-callsignature">(event: 'anotherTestCallSignature', listener: (input: number) => string): number</h3>
+    <p>Another example call signature</p><h4 id="_call__1-signature">Signature</h4>
+    <pre><code class="language-typescript">(event: 'anotherTestCallSignature', listener: (input: number) => string): number;
+</code></pre><h4 id="_call__1-remarks">Remarks</h4>
+    <p>Here are some remarks about the event call signature</p><h2 id="testinterface-see-also">See Also</h2>
+    <p><a href="/test-suite-a/testinterface-interface#testinterfacemethod-methodsignature">testInterfaceMethod()</a></p>
+    <p><a href="/test-suite-a/testinterface-interface#testinterfaceproperty-propertysignature">testInterfaceProperty</a></p>
+    <p><a href="/test-suite-a/testinterface-interface#testoptionalinterfaceproperty-propertysignature">testOptionalInterfaceProperty</a></p>
+    <p><a href="/test-suite-a/testinterface-interface#testclasseventproperty-propertysignature">testClassEventProperty</a></p>
   </body>
 </html>
