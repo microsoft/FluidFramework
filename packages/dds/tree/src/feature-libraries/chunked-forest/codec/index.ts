@@ -10,4 +10,6 @@ export {
 	makeFieldBatchCodec,
 	type FieldBatchEncodingContext,
 	fluidVersionToFieldBatchCodecWriteVersion,
+	type IncrementalEncoderDecoder,
+	type ChunkReferenceId,
 } from "./codecs.js";

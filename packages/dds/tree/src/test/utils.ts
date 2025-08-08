@@ -137,6 +137,7 @@ import {
 	SchematizingSimpleTreeView,
 	type ForestOptions,
 	type SharedTreeOptionsInternal,
+	type SharedTreeOptions,
 } from "../shared-tree/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -609,10 +610,13 @@ export class SharedTreeTestFactory implements IChannelFactory<ISharedTree> {
 		protected readonly onLoad?: (tree: ISharedTree) => void,
 		options: SharedTreeOptionsInternal = {},
 	) {
-		this.inner = configuredSharedTree({
+		const optionsUpdated: SharedTreeOptionsInternal = {
 			...options,
 			jsonValidator: typeboxValidator,
-		}).getFactory() as IChannelFactory<ISharedTree>;
+		};
+		this.inner = configuredSharedTree(
+			optionsUpdated as SharedTreeOptions,
+		).getFactory() as IChannelFactory<ISharedTree>;
 	}
 
 	public get type(): string {
