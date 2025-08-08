@@ -15,29 +15,10 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import type { IEventProvider } from "@fluidframework/core-interfaces";
 
 /**
- * Container state modification methods that must be implemented together.
+ * A lightweight abstraction of a container that provides
+ * only the essential properties and methods needed for Fluid DevTools functionality.
  */
-export interface ContainerStateModifications {
-	/**
-	 * {@inheritDoc @fluidframework/container-definitions#IContainer.connect}
-	 */
-	connect(): void;
-
-	/**
-	 * {@inheritDoc @fluidframework/container-definitions#IContainer.disconnect}
-	 */
-	disconnect(): void;
-
-	/**
-	 * {@inheritDoc @fluidframework/container-definitions#IContainer.close}
-	 */
-	close(error?: ICriticalContainerError): void;
-}
-
-/**
- * Base interface for container properties that are always required.
- */
-export interface DecomposedContainerBase extends IEventProvider<IContainerEvents> {
+export interface DecomposedContainer extends IEventProvider<IContainerEvents> {
 	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.audience}
 	 */
@@ -62,16 +43,22 @@ export interface DecomposedContainerBase extends IEventProvider<IContainerEvents
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.closed}
 	 */
 	readonly closed: boolean;
-}
 
-/**
- * A lightweight abstraction of a container that provides
- * only the essential properties and methods needed for Fluid DevTools functionality.
- *
- * Note: State modification methods (connect, disconnect, close) must be implemented together or not at all to ensure type safety.
- */
-export type DecomposedContainer = DecomposedContainerBase &
-	(ContainerStateModifications | { _: never });
+	/**
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.connect}
+	 */
+	connect?(): void;
+
+	/**
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.disconnect}
+	 */
+	disconnect?(): void;
+
+	/**
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.close}
+	 */
+	close?(error?: ICriticalContainerError): void;
+}
 
 /**
  * Implementation of {@link DecomposedContainer} that wraps an {@link @fluidframework/container-runtime-definitions/internal#IContainerRuntime}.
@@ -79,18 +66,15 @@ export type DecomposedContainer = DecomposedContainerBase &
  */
 export class DecomposedContainerForContainerRuntime
 	extends TypedEventEmitter<IContainerEvents>
-	implements DecomposedContainerBase
+	implements DecomposedContainer
 {
 	private _disposed = false; // Track actual disposed state
-	public readonly _: never = undefined as never;
 
 	public constructor(runtime: IContainerRuntime) {
 		super();
 		this.runtime = runtime;
-		/*
-		 * Note: IContainerRuntime doesn't emit "closed" events like IContainer does
-		 * Only bind to events that IContainerRuntime actually supports
-		 */
+		// Note: IContainerRuntime doesn't emit "closed" events like IContainer does
+		// Only bind to events that IContainerRuntime actually supports
 		runtime.on("attached", this.attachedHandler);
 		runtime.on("connected", this.connectedHandler);
 		runtime.on("disconnected", this.disconnectedHandler);
@@ -102,7 +86,9 @@ export class DecomposedContainerForContainerRuntime
 		this.emit("connected", clientId);
 	private readonly disconnectedHandler = (): boolean => this.emit("disconnected");
 	private readonly disposedHandler = (): boolean => {
-		this._disposed = true;
+		this._disposed = true; // Mark as disposed when dispose event occurs
+		// IContainerRuntime emits "dispose" (no error) but we emit "disposed" (optional error) to match IContainerEvents
+		// Since IContainerRuntime doesn't provide error info, we emit without error parameter
 		return this.emit("disposed");
 	};
 
@@ -121,10 +107,11 @@ export class DecomposedContainerForContainerRuntime
 	}
 
 	public get connectionState(): ConnectionState {
+		// TODO: Investigate if this is an accurate mapping of the connection state.
 		return this.runtime.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
 	}
 
 	public get closed(): boolean {
-		return this._disposed;
+		return this._disposed; // Only return true if actually disposed, not just disconnected
 	}
 }
