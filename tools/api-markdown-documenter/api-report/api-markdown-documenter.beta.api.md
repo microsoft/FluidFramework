@@ -225,18 +225,6 @@ export interface DocumentationHierarchyConfigurationBase {
 }
 
 // @public
-export function documentationNodesToHtml(nodes: readonly (Nodes | SectionHeading)[], config: ToHtmlConfiguration): Nodes_2[];
-
-// @public
-export function documentationNodesToHtml(nodes: readonly (Nodes | SectionHeading)[], transformationContext: ToHtmlContext): Nodes_2[];
-
-// @public
-export function documentationNodeToHtml(node: Nodes | SectionHeading, config: ToHtmlConfiguration): Nodes_2;
-
-// @public
-export function documentationNodeToHtml(node: Nodes | SectionHeading, context: ToHtmlContext): Nodes_2;
-
-// @public
 export interface DocumentationSuiteConfiguration {
     readonly exclude: (apiItem: ApiItem) => boolean;
     readonly getAlertsForItem: (apiItem: ApiItem) => string[];
@@ -580,24 +568,7 @@ function shouldItemBeIncluded(apiItem: ApiItem, config: ApiItemTransformationCon
 
 // @public
 export interface ToHtmlConfiguration extends LoggingConfiguration {
-    readonly customTransformations?: ToHtmlTransformations;
     readonly language?: string;
-    readonly startingHeadingLevel?: number;
-}
-
-// @public
-export interface ToHtmlContext {
-    readonly headingLevel: number;
-    readonly logger: Logger;
-    readonly transformations: ToHtmlTransformations;
-}
-
-// @public
-export type ToHtmlTransformation = (node: Nodes | SectionHeading, context: ToHtmlContext) => Nodes_2;
-
-// @public
-export interface ToHtmlTransformations {
-    readonly [documentationNodeKind: string]: ToHtmlTransformation;
 }
 
 // @public

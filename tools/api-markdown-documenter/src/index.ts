@@ -52,12 +52,7 @@ export type {
 } from "./mdast/index.js";
 export {
 	documentToHtml,
-	documentationNodeToHtml,
-	documentationNodesToHtml,
-	type Transformation as ToHtmlTransformation,
-	type Transformations as ToHtmlTransformations,
 	type TransformationConfiguration as ToHtmlConfiguration,
-	type TransformationContext as ToHtmlContext,
 } from "./documentation-domain-to-html/index.js";
 export {
 	DocumentWriter,

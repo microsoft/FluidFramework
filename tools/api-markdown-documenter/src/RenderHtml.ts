@@ -9,6 +9,7 @@ import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 
 import type { MarkdownDocument } from "./ApiDocument.js";
 import type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
+import type { LoggingConfiguration } from "./LoggingConfiguration.js";
 import {
 	type ApiItemTransformationOptions,
 	transformApiModel,
@@ -26,7 +27,8 @@ import {
 export interface RenderApiModelAsHtmlOptions
 	extends ApiItemTransformationOptions,
 		RenderDocumentAsHtmlConfiguration,
-		FileSystemConfiguration {}
+		FileSystemConfiguration,
+		LoggingConfiguration {}
 
 /**
  * Renders the provided model and its contents, and writes each document to a file on disk.
