@@ -303,7 +303,7 @@ export interface ISweepMessage {
 	/**
 	 * @see GarbageCollectionMessageType.Sweep
 	 */
-	type: typeof GarbageCollectionMessageType.Sweep;
+	id: typeof GarbageCollectionMessageType.Sweep;
 	/**
 	 * The ids of nodes that are deleted.
 	 */
@@ -318,12 +318,14 @@ export interface ITombstoneLoadedMessage {
 	/**
 	 * @see GarbageCollectionMessageType.TombstoneLoaded
 	 */
-	type: typeof GarbageCollectionMessageType.TombstoneLoaded;
+	id: typeof GarbageCollectionMessageType.TombstoneLoaded;
 	/**
 	 * The id of Tombstoned node that was loaded.
 	 */
 	nodePath: string;
 }
+
+type GCMessageRouted = [] | [];
 
 /**
  * Type for a message to be used for sending / received garbage collection messages.

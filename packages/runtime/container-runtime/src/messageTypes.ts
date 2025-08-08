@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	ISequencedDocumentMessage,
+	type ITree,
+} from "@fluidframework/driver-definitions/internal";
 import type { IdCreationRange } from "@fluidframework/id-compressor/internal";
 import {
 	IAttachMessage,
@@ -74,6 +77,56 @@ interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TCont
 	 * Domain-specific contents, interpreted according to the type
 	 */
 	contents: TContents;
+}
+
+// Nodes in the payload are either plain strings, or objects with a routing string and optional data.
+type Node<R extends string = string, D = unknown> = R | { routing: R; data?: D };
+type Id = Node<string, undefined>;
+type Item<D = unknown> = Node<string, D>;
+type UnknownNode = Node<"__unknown__NOT_A_RUNTIME_VALUE__">;
+
+// I had hoped this would support type narrowing on the rest of the tuple based on the first element,
+// but it doesn't (see processRuntimeOp)
+type RuntimeOp =
+	| ["component", Id, ...Node[]]
+	| ["attach", Item<AttachData>]
+	| [Node<"gc", GarbageCollectionMessage>]
+	| [UnknownNode];
+
+interface AttachData {
+	type: string;
+	snapshot: ITree;
+}
+
+// [ "component", "ABCD", "ddsOp", { routing: 1234, data: { ... } } ] => [ "component", "ABCD", "ddsOp", "1234" ]
+export function fullRoute(runtimeOp: RuntimeOp): string[] {
+	return runtimeOp.map((x: Node | string) => {
+		return typeof x === "string" ? x : x.routing;
+	});
+}
+
+export function processRuntimeOp(runtimeOp: RuntimeOp): void {
+	// Array destructuring would replace unwrapping the envelope
+	switch (runtimeOp[0]) {
+		case "component": {
+			// WOMP WOMP - no type narrowing here.
+			// I hoped that id would be known to be a string, and inner would be an array of Node
+			const [_, id, ...inner] = runtimeOp;
+			break;
+		}
+		case "attach": {
+			const [_, item] = runtimeOp;
+
+			break;
+		}
+		case { routing: "gc" }: {
+			const [{ data }] = runtimeOp;
+			break;
+		}
+		default: {
+			break;
+		}
+	}
 }
 
 export type ContainerRuntimeDataStoreOpMessage = TypedContainerRuntimeMessage<
