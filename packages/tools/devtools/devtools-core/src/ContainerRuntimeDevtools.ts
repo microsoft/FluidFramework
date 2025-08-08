@@ -155,7 +155,7 @@ export class DecomposedContainerForContainerRuntime
 	}
 
 	public get connectionState(): ConnectionState {
-		// TODO: Investigate if this is an accurate mapping of the connection state.
+		// TODO: Attempt to map all possible connection states. If the runtime exposes a more granular connectionState property, use it.
 		return this.runtime.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
 	}
 
