@@ -351,8 +351,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 		baseurl?: string,
 		initialTokenP?: Promise<ITokenResponse>,
 	): RouterliciousStorageRestWrapper {
-		const defaultQueryString = {
-		};
+		const defaultQueryString = {};
 
 		const getAuthorizationHeader: AuthorizationHeaderGetter = (
 			token: ITokenResponse,
