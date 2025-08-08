@@ -6,7 +6,7 @@ Test interface method
 
 **WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
-## Signature {#testinterfacemethod-signature}
+<h2 id="testinterfacemethod-signature">Signature</h2>
 
 ```typescript
 testInterfaceMethod(): void;
