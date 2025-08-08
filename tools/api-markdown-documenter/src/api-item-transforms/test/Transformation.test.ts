@@ -786,10 +786,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 			],
 		};
 
-		expect(result).deep.equals(
-			expected,
-			// `EXPECTED: ${JSON.stringify(expected, undefined, 2)}\n\nACTUAL: ${JSON.stringify(result, undefined, 2)}`,
-		);
+		expect(result).deep.equals(expected);
 	});
 
 	it("Transform a Model with multiple entry-points", () => {
@@ -1124,9 +1121,6 @@ describe("ApiItem to Documentation transformation tests", () => {
 				],
 			},
 		};
-		expect(documents[3]).to.deep.equal(
-			expectedEntryPointBDocument,
-			// `EXPECTED: ${JSON.stringify(expectedEntryPointBDocument.contents, undefined, 2)}\n\nACTUAL: ${JSON.stringify(documents[3].contents, undefined, 2)}`,
-		);
+		expect(documents[3]).to.deep.equal(expectedEntryPointBDocument);
 	});
 });
