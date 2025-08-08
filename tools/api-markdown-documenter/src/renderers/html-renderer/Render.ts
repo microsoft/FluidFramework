@@ -61,13 +61,10 @@ export function renderDocument(
  * @param document - The document to render.
  * @param config - HTML transformation configuration.
  */
-function renderHtml(html: HastTree, config: RenderHtmlConfiguration): string {
+function renderHtml(html: HastRoot, config: RenderHtmlConfiguration): string {
 	const { prettyFormatting } = config;
 	if (prettyFormatting !== false) {
-		// Pretty formatting. Modifies the tree in place.
-		// Note: this API is specifically typed to only accept a `Root` node, but its code only requires any `Nodes`.
-		// TODO: file an issue.
-		format(html as HastRoot);
+		format(html);
 	}
 	return toHtmlString(html, {
 		// Needed as a temporary workaround for lack of support for `hast` trees directly in `mdast`.
