@@ -51,10 +51,6 @@ export type {
 	SectionHeading,
 } from "./mdast/index.js";
 export {
-	documentToHtml,
-	type TransformationConfiguration as ToHtmlConfiguration,
-} from "./documentation-domain-to-html/index.js";
-export {
 	DocumentWriter,
 	type RenderDocumentAsHtmlConfiguration,
 	type RenderHtmlConfiguration,

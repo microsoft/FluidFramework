@@ -248,9 +248,6 @@ export interface DocumentHierarchyConfiguration extends DocumentationHierarchyCo
 }
 
 // @public
-export function documentToHtml(document: MarkdownDocument, config: ToHtmlConfiguration): HtmlDocument;
-
-// @public
 export interface DocumentWriter {
     decreaseIndent(): void;
     ensureNewLine(): void;
@@ -509,7 +506,7 @@ function renderDocument(document: MarkdownDocument, config: RenderDocumentAsHtml
 function renderDocument_2(document: MarkdownDocument, config: RenderDocumentAsMarkdownConfiguration): string;
 
 // @public @sealed
-export interface RenderDocumentAsHtmlConfiguration extends ToHtmlConfiguration, RenderHtmlConfiguration {
+export interface RenderDocumentAsHtmlConfiguration extends RenderHtmlConfiguration, LoggingConfiguration {
 }
 
 // @public @sealed
@@ -530,6 +527,7 @@ function renderHtml(html: Nodes_2, config: RenderHtmlConfiguration): string;
 
 // @public @sealed
 export interface RenderHtmlConfiguration {
+    readonly language?: string;
     readonly prettyFormatting?: boolean;
 }
 
@@ -565,11 +563,6 @@ export interface SectionHierarchyConfiguration extends DocumentationHierarchyCon
 
 // @public
 function shouldItemBeIncluded(apiItem: ApiItem, config: ApiItemTransformationConfiguration): boolean;
-
-// @public
-export interface ToHtmlConfiguration extends LoggingConfiguration {
-    readonly language?: string;
-}
 
 // @public
 export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: ApiItemTransformationConfiguration, generateChildSection: (apiItem: ApiItem) => Section[]) => Section[];

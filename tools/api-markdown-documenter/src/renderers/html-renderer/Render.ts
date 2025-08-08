@@ -6,12 +6,11 @@
 import type { Root as HastRoot, Nodes as HastTree } from "hast";
 import { format } from "hast-util-format";
 import { toHtml as toHtmlString } from "hast-util-to-html";
+import { h } from "hastscript";
+import { toHast } from "mdast-util-to-hast";
 
-import type { MarkdownDocument, RenderedDocument } from "../../ApiDocument.js";
-import {
-	documentToHtml,
-	type TransformationConfiguration,
-} from "../../documentation-domain-to-html/index.js";
+import type { HtmlDocument, MarkdownDocument, RenderedDocument } from "../../ApiDocument.js";
+import type { LoggingConfiguration } from "../../LoggingConfiguration.js";
 
 /**
  * Configuration for rendering HTML.
@@ -20,6 +19,15 @@ import {
  * @public
  */
 export interface RenderHtmlConfiguration {
+	/**
+	 * HTML language attribute.
+	 *
+	 * @defaultValue "en"
+	 *
+	 * @see {@link https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/lang}
+	 */
+	readonly language?: string;
+
 	/**
 	 * Whether or not to render the generated HTML "pretty", human-readable formatting.
 	 * @defaultValue `true`
@@ -34,8 +42,8 @@ export interface RenderHtmlConfiguration {
  * @public
  */
 export interface RenderDocumentConfiguration
-	extends TransformationConfiguration,
-		RenderHtmlConfiguration {}
+	extends RenderHtmlConfiguration,
+		LoggingConfiguration {}
 
 /**
  * Renders a {@link MarkdownDocument} as HTML, and returns the resulting file contents as a string.
@@ -80,4 +88,48 @@ export function renderHtml(html: HastTree, config: RenderHtmlConfiguration): str
 		// All HTML content is generated directly by this library. No user HTML content is passed through, so this is safe, just not a best practice.
 		allowDangerousHtml: true,
 	});
+}
+
+/**
+ * Generates an HTML AST from the provided {@link MarkdownDocument}.
+ */
+function documentToHtml(
+	document: MarkdownDocument,
+	config: RenderHtmlConfiguration,
+): HtmlDocument {
+	const transformedContents = toHast(document.contents, {
+		// Needed as a temporary workaround for lack of support for `hast` trees directly in `mdast`.
+		// Only raw HTML strings are supported by default in `mdast`.
+		// In a future PR, we will introduce an extension that allows `hast` trees to be used directly instead of this.
+		// All HTML content is generated directly by this library. No user HTML content is passed through, so this is safe, just not a best practice.
+		allowDangerousHtml: true,
+	});
+
+	return {
+		apiItem: document.apiItem,
+		contents: treeFromBody(transformedContents, config),
+		documentPath: document.documentPath,
+	};
+}
+
+/**
+ * Creates a complete HTML AST from the provided body contents.
+ */
+function treeFromBody(body: HastTree, config: RenderHtmlConfiguration): HastRoot {
+	const rootBodyContents: HastTree[] = [];
+	rootBodyContents.push({
+		type: "doctype",
+	});
+	rootBodyContents.push(
+		h(
+			"html",
+			{
+				lang: config.language ?? "en",
+			},
+			// eslint-disable-next-line unicorn/text-encoding-identifier-case
+			[h("head", [h("meta", { charset: "utf-8" })]), h("body", body)],
+		),
+	);
+
+	return h(undefined, rootBodyContents);
 }
