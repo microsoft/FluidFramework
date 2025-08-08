@@ -251,8 +251,14 @@ const markdownDocuments = await transformApiModel({
 
 // Convert the Markdown AST documents to HTML
 const htmlDocuments = markdownDocuments.map((document) => {
-	const hast = toHast(document.contents);
-	const html = toHtml(hast);
+	const hast = toHast(document.contents, {
+		// Required for embedded HTML contents to be rendered correctly
+		allowDangerousHtml: true,
+	});
+	const html = toHtml(hast, {
+		// Required for embedded HTML contents to be rendered correctly
+		allowDangerousHtml: true,
+	});
 	return {
 		apiItem: document.apiItem,
 		contents: html,
