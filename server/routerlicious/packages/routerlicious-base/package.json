@@ -130,7 +130,14 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_NexusResources": {
+				"forwardCompat": false
+			},
+			"Class_AlfredResources": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }

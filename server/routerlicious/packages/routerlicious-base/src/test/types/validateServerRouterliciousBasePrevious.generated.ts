@@ -22,6 +22,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_AlfredResources": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_AlfredResources = requireAssignableTo<TypeOnly<old.AlfredResources>, TypeOnly<current.AlfredResources>>
 
 /*
@@ -148,6 +149,7 @@ declare type current_as_old_for_Class_MongoTenantRepository = requireAssignableT
  * typeValidation.broken:
  * "Class_NexusResources": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_NexusResources = requireAssignableTo<TypeOnly<old.NexusResources>, TypeOnly<current.NexusResources>>
 
 /*

@@ -136,7 +136,7 @@ export function create(
 							: "";
 						additionalProperties.hashedClientIPAddress = hashedClientIP;
 
-						const clientIPAddress = req.ip ? req.ip : "";
+						const clientIPAddress = req.ip ?? "";
 						if (isIPv4(clientIPAddress)) {
 							additionalProperties.clientIPType = "IPv4";
 						} else if (isIPv6(clientIPAddress)) {
