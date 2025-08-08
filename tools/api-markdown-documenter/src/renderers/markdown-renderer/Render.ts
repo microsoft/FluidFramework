@@ -10,7 +10,7 @@ import {
 	type Options as MdastToMarkdownOptions,
 } from "mdast-util-to-markdown";
 
-import type { NormalizedMarkdownDocument } from "../../ApiDocument.js";
+import type { MarkdownDocument } from "../../ApiDocument.js";
 import type { LoggingConfiguration } from "../../LoggingConfiguration.js";
 
 /**
@@ -30,7 +30,7 @@ export type RenderDocumentConfiguration = RenderMarkdownConfiguration;
  * @public
  */
 export function renderDocument(
-	document: NormalizedMarkdownDocument,
+	document: MarkdownDocument,
 	config: RenderDocumentConfiguration,
 ): string {
 	return renderMarkdown(document.contents, config);

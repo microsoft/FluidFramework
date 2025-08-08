@@ -6,7 +6,7 @@
 import type { ApiItem } from "@microsoft/api-extractor-model";
 import type { Root as HtmlRoot } from "hast";
 
-import type { NormalizedTree, Section } from "./mdast/index.js";
+import type { NormalizedTree } from "./mdast/index.js";
 
 /**
  * A document for an API item.
@@ -34,24 +34,14 @@ export interface ApiDocument<TContents = unknown> {
 }
 
 /**
- * An {@link ApiDocument} with Markdown content.
- *
- * @remarks
- * Note that the Markdown content contains custom `mdast` types introduced by this library.
- * TODO: link to normalization utilities once they are formalized.
- *
- * @public
- * @sealed
- */
-export type MarkdownDocument = ApiDocument<readonly Section[]>;
-
-/**
  * An {@link ApiDocument} with standard Markdown content.
  *
+ * @remarks The contents will be "normalized", meaning that they will not include any library-specific node kinds.
+ *
  * @public
  * @sealed
  */
-export type NormalizedMarkdownDocument = ApiDocument<NormalizedTree>;
+export type MarkdownDocument = ApiDocument<NormalizedTree>;
 
 /**
  * An {@link ApiDocument} with HTML content.

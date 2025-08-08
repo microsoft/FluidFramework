@@ -5,8 +5,6 @@
 
 import type { BlockContent, Break, Html, Nodes, Root, RootContent, Strong } from "mdast";
 
-import type { MarkdownDocument, NormalizedMarkdownDocument } from "../ApiDocument.js";
-
 import type { Section } from "./Section.js";
 import type { SectionHeading } from "./SectionHeading.js";
 
@@ -45,22 +43,6 @@ export interface NormalizationOptions {
 
 interface NormalizationContext {
 	readonly headingLevel: number;
-}
-
-/**
- * Converts a document to a standard Markdown representation.
- * @remarks Collapses section hierarchies and applies heading levels.
- */
-export function normalizeDocument(
-	document: MarkdownDocument,
-	options?: NormalizationOptions,
-): NormalizedMarkdownDocument {
-	const normalizedContents = normalizeDocumentContents(document.contents, options);
-	return {
-		apiItem: document.apiItem,
-		contents: normalizedContents,
-		documentPath: document.documentPath,
-	};
 }
 
 /**

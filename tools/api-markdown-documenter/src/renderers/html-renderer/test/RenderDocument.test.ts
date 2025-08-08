@@ -6,12 +6,12 @@
 import type { ApiItem } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 
-import type { NormalizedMarkdownDocument } from "../../../ApiDocument.js";
+import type { MarkdownDocument } from "../../../ApiDocument.js";
 import { renderDocument } from "../Render.js";
 
 describe("Document HTML rendering tests", () => {
 	it("Renders a simple document", () => {
-		const document: NormalizedMarkdownDocument = {
+		const document: MarkdownDocument = {
 			apiItem: {} as unknown as ApiItem, // Mock ApiItem for testing
 			contents: {
 				type: "root",
@@ -73,14 +73,10 @@ describe("Document HTML rendering tests", () => {
 			'    <meta charset="utf-8">',
 			"  </head>",
 			"  <body>",
-			"    <section>",
-			"      <h1>Sample Document</h1>",
-			"      <p>This is a sample document. It has very basic content.</p>",
-			"      <section>",
-			"        <h2>Section Heading</h2>",
-			"        <p>This is text inside of a paragraph. It is also inside of a hierarchical section node. <em>That's real neat-o.</em></p>",
-			"      </section>",
-			"    </section>",
+			"    <h1>Sample Document</h1>",
+			"    <p>This is a sample document. It has very basic content.</p>",
+			"    <h2>Section Heading</h2>",
+			"    <p>This is text inside of a paragraph. It is also inside of a hierarchical section node. <em>That's real neat-o.</em></p>",
 			"  </body>",
 			"</html>",
 			"",

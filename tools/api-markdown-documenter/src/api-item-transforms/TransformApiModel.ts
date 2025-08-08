@@ -11,8 +11,8 @@ import {
 	type ApiPackage,
 } from "@microsoft/api-extractor-model";
 
-import type { MarkdownDocument, NormalizedMarkdownDocument } from "../ApiDocument.js";
-import { normalizeDocument, type Section } from "../mdast/index.js";
+import type { MarkdownDocument } from "../ApiDocument.js";
+import type { Section } from "../mdast/index.js";
 
 import {
 	doesItemRequireOwnDocument,
@@ -32,18 +32,16 @@ import { createBreadcrumbParagraph, createEntryPointList } from "./helpers/index
  *
  * @public
  */
-export function transformApiModel(
-	options: ApiItemTransformationOptions,
-): NormalizedMarkdownDocument[] {
+export function transformApiModel(options: ApiItemTransformationOptions): MarkdownDocument[] {
 	const config = getApiItemTransformationConfigurationWithDefaults(options);
-	const { apiModel, logger, exclude: excludeItem, startingHeadingLevel } = config;
+	const { apiModel, logger, exclude: excludeItem } = config;
 
 	logger.verbose(`Generating documentation for API Model...`);
 
 	// If a package has multiple entry-points, it's possible for the same API item to appear under more than one
 	// entry-point (i.e., we are traversing a graph, rather than a tree).
 	// To avoid redundant computation, we will keep a ledger of which API items we have transformed.
-	const documentsMap: Map<ApiItem, MarkdownDocument> = new Map<ApiItem, MarkdownDocument>();
+	const documentsMap = new Map<ApiItem, MarkdownDocument>();
 
 	// Always render Model document (this is the "root" of the generated documentation suite).
 	documentsMap.set(apiModel, createDocumentForApiModel(apiModel, config));
@@ -124,11 +122,7 @@ export function transformApiModel(
 
 	logger.success("API Model documents generated!");
 
-	return documents.map((document) =>
-		normalizeDocument(document, {
-			startingHeadingLevel,
-		}),
-	);
+	return documents;
 }
 
 /**

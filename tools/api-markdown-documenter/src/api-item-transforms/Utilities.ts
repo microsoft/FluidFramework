@@ -9,6 +9,7 @@ import type { Link } from "mdast";
 
 import type { ApiDocument, MarkdownDocument } from "../ApiDocument.js";
 import type { Section } from "../mdast/index.js";
+import { normalizeDocumentContents } from "../mdast/index.js";
 import { resolveSymbolicReference } from "../utilities/index.js";
 
 import {
@@ -48,9 +49,13 @@ export function createDocument(
 			]
 		: sections;
 
+	const normalizedContents = normalizeDocumentContents(contents, {
+		startingHeadingLevel: config.startingHeadingLevel,
+	});
+
 	return {
 		apiItem: documentItem,
-		contents,
+		contents: normalizedContents,
 		documentPath: getDocumentPathForApiItem(documentItem, config.hierarchy),
 	};
 }

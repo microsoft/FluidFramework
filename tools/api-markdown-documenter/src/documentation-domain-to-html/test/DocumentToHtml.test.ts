@@ -7,12 +7,12 @@ import type { ApiItem } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 import { h } from "hastscript";
 
-import type { NormalizedMarkdownDocument } from "../../ApiDocument.js";
+import type { MarkdownDocument } from "../../ApiDocument.js";
 import { documentToHtml } from "../ToHtml.js";
 
 describe("documentToHtml tests", () => {
 	it("Renders a simple document", () => {
-		const document: NormalizedMarkdownDocument = {
+		const document: MarkdownDocument = {
 			apiItem: {} as unknown as ApiItem, // Mock ApiItem for testing
 			contents: {
 				type: "root",
@@ -77,17 +77,16 @@ describe("documentToHtml tests", () => {
 					h("meta", { charset: "utf-8" }),
 				]),
 				h("body", [
-					h("section", [
-						h("h1", "Sample Document"),
-						h("p", ["This is a sample document. ", "It has very basic content.\t"]),
-						h("section", [
-							h("h2", "Section Heading"),
-							h("p", [
-								"This is test inside of a paragraph. ",
-								"It is also inside of a hierarchical section node. ",
-								h("em", "That's real neat-o."),
-							]),
-						]),
+					h("h1", "Sample Document"),
+					{ type: "text", value: "\n" },
+					h("p", ["This is a sample document. ", "It has very basic content.\t"]),
+					{ type: "text", value: "\n" },
+					h("h2", "Section Heading"),
+					{ type: "text", value: "\n" },
+					h("p", [
+						"This is text inside of a paragraph. ",
+						"It is also inside of a hierarchical section node. ",
+						h("em", "That's real neat-o."),
 					]),
 				]),
 			]),

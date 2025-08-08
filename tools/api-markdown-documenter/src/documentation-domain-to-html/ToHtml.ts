@@ -8,7 +8,7 @@ import { h } from "hastscript";
 import type { Nodes } from "mdast";
 import { toHast } from "mdast-util-to-hast";
 
-import type { NormalizedMarkdownDocument } from "../ApiDocument.js";
+import type { MarkdownDocument } from "../ApiDocument.js";
 import type { SectionHeading } from "../mdast/index.js";
 
 import {
@@ -18,7 +18,7 @@ import {
 import type { TransformationConfiguration } from "./configuration/index.js";
 
 /**
- * Generates an HTML AST from the provided {@link NormalizedMarkdownDocument}.
+ * Generates an HTML AST from the provided {@link MarkdownDocument}.
  *
  * @param document - The document to transform.
  * @param config - HTML transformation configuration.
@@ -26,7 +26,7 @@ import type { TransformationConfiguration } from "./configuration/index.js";
  * @public
  */
 export function documentToHtml(
-	document: NormalizedMarkdownDocument,
+	document: MarkdownDocument,
 	config: TransformationConfiguration,
 ): HastRoot {
 	const transformationContext = createTransformationContext(config);

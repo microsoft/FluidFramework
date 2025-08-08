@@ -6,12 +6,12 @@
 import type { ApiItem } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 
-import type { NormalizedMarkdownDocument } from "../../../ApiDocument.js";
+import type { MarkdownDocument } from "../../../ApiDocument.js";
 import { renderDocument } from "../Render.js";
 
 describe("Document Markdown rendering tests", () => {
 	it("Renders a simple document", () => {
-		const document: NormalizedMarkdownDocument = {
+		const document: MarkdownDocument = {
 			apiItem: {} as unknown as ApiItem, // Mock ApiItem for testing
 			contents: {
 				type: "root",
@@ -65,17 +65,16 @@ describe("Document Markdown rendering tests", () => {
 			},
 			documentPath: "./test",
 		};
+		const result = renderDocument(document, {});
 
-		const expected = [
-			"# Sample Document",
-			"",
-			"This is a sample document. It has very basic content.&#x9;",
-			"",
-			"## Section Heading",
-			"",
-			"This is test inside of a paragraph. It is also inside of a hierarchical section node. _That's real neat-o._",
-			"",
-		].join("\n");
-		expect(renderDocument(document, {})).to.equal(expected);
+		const expected = `# Sample Document
+
+This is a sample document. It has very basic content.&#x9;
+
+## Section Heading
+
+This is text inside of a paragraph. It is also inside of a hierarchical section node. _That's real neat-o._
+`;
+		expect(result).to.equal(expected);
 	});
 });

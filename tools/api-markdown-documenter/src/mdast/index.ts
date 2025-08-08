@@ -6,7 +6,7 @@
 export {
 	type NormalizedRootContent,
 	type NormalizedTree,
-	normalizeDocument,
+	normalizeDocumentContents,
 } from "./Normalize.js";
 export { createSection, type Section, type SectionContent } from "./Section.js";
 export type { SectionHeading } from "./SectionHeading.js";
