@@ -12,7 +12,7 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import type { ApiDocument } from "../ApiDocument.js";
-import type { SectionNode } from "../documentation-domain/index.js";
+import type { Section } from "../mdast/index.js";
 
 import {
 	doesItemRequireOwnDocument,
@@ -25,11 +25,7 @@ import {
 	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./configuration/index.js";
-import {
-	createBreadcrumbParagraph,
-	createEntryPointList,
-	wrapInSection,
-} from "./helpers/index.js";
+import { createBreadcrumbParagraph, createEntryPointList } from "./helpers/index.js";
 
 /**
  * Renders the provided model and its contents to a series of {@link ApiDocument}s.
@@ -200,11 +196,14 @@ function createDocumentForSingleEntryPointPackage(
 
 	logger.verbose(`Generating ${apiPackage.name} package document...`);
 
-	const sections: SectionNode[] = [];
+	const sections: Section[] = [];
 
 	// Render breadcrumb
 	if (includeBreadcrumb) {
-		sections.push(wrapInSection([createBreadcrumbParagraph(apiPackage, config)]));
+		sections.push({
+			type: "section",
+			children: [createBreadcrumbParagraph(apiPackage, config)],
+		});
 	}
 
 	// Render sub-sections for the single entry-point. We will bundle these with body comments from the package item.
@@ -243,21 +242,27 @@ function createDocumentForMultiEntryPointPackage(
 
 	logger.verbose(`Generating ${apiPackage.name} package document...`);
 
-	const sections: SectionNode[] = [];
+	const sections: Section[] = [];
 
 	// Render breadcrumb
 	if (includeBreadcrumb) {
-		sections.push(wrapInSection([createBreadcrumbParagraph(apiPackage, config)]));
+		sections.push({
+			type: "section",
+			children: [createBreadcrumbParagraph(apiPackage, config)],
+		});
 	}
 
 	// Render list of links to entry-points, each of which will get its own document.
 	const renderedEntryPointList = createEntryPointList(apiEntryPoints, config);
 	if (renderedEntryPointList !== undefined) {
-		sections.push(
-			wrapInSection([renderedEntryPointList], {
+		sections.push({
+			type: "section",
+			children: [renderedEntryPointList],
+			heading: {
+				type: "sectionHeading",
 				title: "Entry Points",
-			}),
-		);
+			},
+		});
 	}
 
 	logger.verbose(`Package document rendered successfully.`);
@@ -273,11 +278,14 @@ function createDocumentForApiEntryPoint(
 
 	logger.verbose(`Generating ${apiEntryPoint.displayName} API entry-point document...`);
 
-	const sections: SectionNode[] = [];
+	const sections: Section[] = [];
 
 	// Render breadcrumb
 	if (includeBreadcrumb) {
-		sections.push(wrapInSection([createBreadcrumbParagraph(apiEntryPoint, config)]));
+		sections.push({
+			type: "section",
+			children: [createBreadcrumbParagraph(apiEntryPoint, config)],
+		});
 	}
 
 	// Render body contents
