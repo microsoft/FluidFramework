@@ -18,12 +18,12 @@ import {
 import {
 	defaultSchemaFactoryObjectOptions,
 	SchemaFactory,
-	schemaStatics,
 	structuralName,
 	type NodeSchemaOptionsAlpha,
 	type SchemaFactoryObjectOptions,
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
+import { schemaStatics } from "./schemaStatics.js";
 import type { ImplicitAnnotatedFieldSchema, ImplicitFieldSchema } from "../fieldSchema.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type {
