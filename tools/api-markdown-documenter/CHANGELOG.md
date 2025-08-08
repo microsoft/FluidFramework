@@ -12,7 +12,7 @@ Their usage has been replaced with [mdast](https://github.com/syntax-tree/mdast)
 The API transformation layer now outputs standard `mdast` Markdown trees directly.
 These can be used as input to both the Markdown and HTML rendering layers.
 
-If you wish to convert your contents to a `hast` representation, please use [mdast-util-to-hast](https://github.com/syntax-tree/mdast-util-to-hast) or another comperable library.
+If you wish to convert your contents to a `hast` representation, please use [mdast-util-to-hast](https://github.com/syntax-tree/mdast-util-to-hast) or another comparable library.
 
 ### `DocumentNode` renamed to `ApiDocument`
 
