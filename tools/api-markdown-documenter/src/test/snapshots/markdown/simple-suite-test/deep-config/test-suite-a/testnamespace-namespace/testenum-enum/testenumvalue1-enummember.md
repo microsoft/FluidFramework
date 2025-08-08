@@ -4,9 +4,7 @@
 
 Test enum value 1
 
-<a id="testenumvalue1-signature"></a>
-
-## Signature
+<h2 id="testenumvalue1-signature">Signature</h2>
 
 ```typescript
 TestEnumValue1 = 0

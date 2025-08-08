@@ -2,9 +2,7 @@
 
 Test constant in module.
 
-<a id="foo-signature"></a>
-
-### Signature
+<h3 id="foo-signature">Signature</h3>
 
 ```typescript
 foo = 2

@@ -4,9 +4,7 @@
 
 Test class
 
-<a id="testclass-signature"></a>
-
-## Signature
+<h2 id="testclass-signature">Signature</h2>
 
 ```typescript
 export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass
@@ -21,9 +19,7 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 | TTypeParameterA | A type parameter |
 | TTypeParameterB | Another type parameter |
 
-<a id="testclass-remarks"></a>
-
-## Remarks
+<h2 id="testclass-remarks">Remarks</h2>
 
 Here are some remarks about the class
 
@@ -69,29 +65,21 @@ Here are some remarks about the class
 
 ## Constructor Details
 
-<a id="_constructor_-constructor"></a>
-
-### (constructor)
+<h3 id="_constructor_-constructor">(constructor)</h3>
 
 Test class constructor
 
-<a id="_constructor_-signature"></a>
-
-#### Signature
+<h4 id="_constructor_-signature">Signature</h4>
 
 ```typescript
 constructor(privateProperty: number, protectedProperty: TestEnum, testClassProperty: TTypeParameterB, testClassEventProperty: () => void);
 ```
 
-<a id="_constructor_-remarks"></a>
-
-#### Remarks
+<h4 id="_constructor_-remarks">Remarks</h4>
 
 Here are some remarks about the constructor
 
-<a id="_constructor_-parameters"></a>
-
-#### Parameters
+<h4 id="_constructor_-parameters">Parameters</h4>
 
 | Parameter | Type | Description |
 | - | - | - |
@@ -102,15 +90,11 @@ Here are some remarks about the constructor
 
 ## Event Details
 
-<a id="testclasseventproperty-property"></a>
-
-### testClassEventProperty
+<h3 id="testclasseventproperty-property">testClassEventProperty</h3>
 
 Test class event property
 
-<a id="testclasseventproperty-signature"></a>
-
-#### Signature
+<h4 id="testclasseventproperty-signature">Signature</h4>
 
 ```typescript
 readonly testClassEventProperty: () => void;
@@ -118,23 +102,17 @@ readonly testClassEventProperty: () => void;
 
 **Type**: () => void
 
-<a id="testclasseventproperty-remarks"></a>
-
-#### Remarks
+<h4 id="testclasseventproperty-remarks">Remarks</h4>
 
 Here are some remarks about the property
 
 ## Property Details
 
-<a id="abstractpropertygetter-property"></a>
-
-### abstractPropertyGetter
+<h3 id="abstractpropertygetter-property">abstractPropertyGetter</h3>
 
 A test abstract getter property.
 
-<a id="abstractpropertygetter-signature"></a>
-
-#### Signature
+<h4 id="abstractpropertygetter-signature">Signature</h4>
 
 ```typescript
 get abstractPropertyGetter(): TestMappedType;
@@ -142,15 +120,11 @@ get abstractPropertyGetter(): TestMappedType;
 
 **Type**: [TestMappedType](/test-suite-a/testmappedtype-typealias)
 
-<a id="testclassgetterproperty-property"></a>
-
-### testClassGetterProperty
+<h3 id="testclassgetterproperty-property">testClassGetterProperty</h3>
 
 Test class property with both a getter and a setter.
 
-<a id="testclassgetterproperty-signature"></a>
-
-#### Signature
+<h4 id="testclassgetterproperty-signature">Signature</h4>
 
 ```typescript
 /** @virtual */
@@ -161,21 +135,15 @@ set testClassGetterProperty(newValue: number);
 
 **Type**: number
 
-<a id="testclassgetterproperty-remarks"></a>
-
-#### Remarks
+<h4 id="testclassgetterproperty-remarks">Remarks</h4>
 
 Here are some remarks about the getter-only property
 
-<a id="testclassproperty-property"></a>
-
-### testClassProperty
+<h3 id="testclassproperty-property">testClassProperty</h3>
 
 Test class property
 
-<a id="testclassproperty-signature"></a>
-
-#### Signature
+<h4 id="testclassproperty-signature">Signature</h4>
 
 ```typescript
 readonly testClassProperty: TTypeParameterB;
@@ -183,21 +151,15 @@ readonly testClassProperty: TTypeParameterB;
 
 **Type**: TTypeParameterB
 
-<a id="testclassproperty-remarks"></a>
-
-#### Remarks
+<h4 id="testclassproperty-remarks">Remarks</h4>
 
 Here are some remarks about the property
 
-<a id="testclassstaticproperty-property"></a>
-
-### testClassStaticProperty
+<h3 id="testclassstaticproperty-property">testClassStaticProperty</h3>
 
 Test static class property
 
-<a id="testclassstaticproperty-signature"></a>
-
-#### Signature
+<h4 id="testclassstaticproperty-signature">Signature</h4>
 
 ```typescript
 static testClassStaticProperty: (foo: number) => string;
@@ -207,116 +169,84 @@ static testClassStaticProperty: (foo: number) => string;
 
 ## Method Details
 
-<a id="publicabstractmethod-method"></a>
-
-### publicAbstractMethod
+<h3 id="publicabstractmethod-method">publicAbstractMethod</h3>
 
 A test public abstract method.
 
-<a id="publicabstractmethod-signature"></a>
-
-#### Signature
+<h4 id="publicabstractmethod-signature">Signature</h4>
 
 ```typescript
 publicAbstractMethod(): void;
 ```
 
-<a id="testclassmethod-method"></a>
-
-### testClassMethod
+<h3 id="testclassmethod-method">testClassMethod</h3>
 
 Test class method
 
-<a id="testclassmethod-signature"></a>
-
-#### Signature
+<h4 id="testclassmethod-signature">Signature</h4>
 
 ```typescript
 /** @sealed */
 testClassMethod(input: TTypeParameterA): TTypeParameterA;
 ```
 
-<a id="testclassmethod-remarks"></a>
-
-#### Remarks
+<h4 id="testclassmethod-remarks">Remarks</h4>
 
 Here are some remarks about the method
 
-<a id="testclassmethod-parameters"></a>
-
-#### Parameters
+<h4 id="testclassmethod-parameters">Parameters</h4>
 
 | Parameter | Type | Description |
 | - | - | - |
 | input | TTypeParameterA | |
 
-<a id="testclassmethod-returns"></a>
-
-#### Returns
+<h4 id="testclassmethod-returns">Returns</h4>
 
 **Return type**: TTypeParameterA
 
-<a id="testclassmethod-throws"></a>
-
-#### Throws
+<h4 id="testclassmethod-throws">Throws</h4>
 
 Some sort of error in 1 case.
 
 Some other sort of error in another case. For example, a case where some thing happens.
 
-<a id="testclassstaticmethod-method"></a>
-
-### testClassStaticMethod
+<h3 id="testclassstaticmethod-method">testClassStaticMethod</h3>
 
 Test class static method
 
-<a id="testclassstaticmethod-signature"></a>
-
-#### Signature
+<h4 id="testclassstaticmethod-signature">Signature</h4>
 
 ```typescript
 static testClassStaticMethod(foo: number): string;
 ```
 
-<a id="testclassstaticmethod-parameters"></a>
-
-#### Parameters
+<h4 id="testclassstaticmethod-parameters">Parameters</h4>
 
 | Parameter | Type | Description |
 | - | - | - |
 | foo | number | Some number |
 
-<a id="testclassstaticmethod-returns"></a>
-
-#### Returns
+<h4 id="testclassstaticmethod-returns">Returns</h4>
 
 - Some string
 
 **Return type**: string
 
-<a id="virtualmethod-method"></a>
-
-### virtualMethod
+<h3 id="virtualmethod-method">virtualMethod</h3>
 
 Overrides [virtualMethod()](/test-suite-a/testabstractclass-class#virtualmethod-method).
 
-<a id="virtualmethod-signature"></a>
-
-#### Signature
+<h4 id="virtualmethod-signature">Signature</h4>
 
 ```typescript
 /** @override */
 protected virtualMethod(): number;
 ```
 
-<a id="virtualmethod-returns"></a>
-
-#### Returns
+<h4 id="virtualmethod-returns">Returns</h4>
 
 **Return type**: number
 
-<a id="testclass-see-also"></a>
-
-## See Also
+<h2 id="testclass-see-also">See Also</h2>
 
 [TestAbstractClass](/test-suite-a/testabstractclass-class)

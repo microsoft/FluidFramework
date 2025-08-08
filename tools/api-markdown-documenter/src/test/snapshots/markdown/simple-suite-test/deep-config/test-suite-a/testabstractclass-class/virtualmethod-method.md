@@ -4,18 +4,14 @@
 
 A test `@virtual` method.
 
-<a id="virtualmethod-signature"></a>
-
-## Signature
+<h2 id="virtualmethod-signature">Signature</h2>
 
 ```typescript
 /** @virtual */
 protected virtualMethod(): number;
 ```
 
-<a id="virtualmethod-returns"></a>
-
-## Returns
+<h2 id="virtualmethod-returns">Returns</h2>
 
 A number!
 

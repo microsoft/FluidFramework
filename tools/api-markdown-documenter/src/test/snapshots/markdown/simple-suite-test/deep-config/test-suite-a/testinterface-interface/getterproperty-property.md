@@ -4,9 +4,7 @@
 
 A test getter-only interface property.
 
-<a id="getterproperty-signature"></a>
-
-## Signature
+<h2 id="getterproperty-signature">Signature</h2>
 
 ```typescript
 get getterProperty(): boolean;

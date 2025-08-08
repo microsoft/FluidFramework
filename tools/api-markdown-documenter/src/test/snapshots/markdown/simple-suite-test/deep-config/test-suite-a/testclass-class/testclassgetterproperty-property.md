@@ -4,9 +4,7 @@
 
 Test class property with both a getter and a setter.
 
-<a id="testclassgetterproperty-signature"></a>
-
-## Signature
+<h2 id="testclassgetterproperty-signature">Signature</h2>
 
 ```typescript
 /** @virtual */
@@ -17,8 +15,6 @@ set testClassGetterProperty(newValue: number);
 
 **Type**: number
 
-<a id="testclassgetterproperty-remarks"></a>
-
-## Remarks
+<h2 id="testclassgetterproperty-remarks">Remarks</h2>
 
 Here are some remarks about the getter-only property

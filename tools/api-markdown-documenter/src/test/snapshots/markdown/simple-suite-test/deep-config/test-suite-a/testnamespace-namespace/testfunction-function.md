@@ -4,32 +4,24 @@
 
 Test function
 
-<a id="testfunction-signature"></a>
-
-## Signature
+<h2 id="testfunction-signature">Signature</h2>
 
 ```typescript
 function testFunction(testParameter: number): number;
 ```
 
-<a id="testfunction-parameters"></a>
-
-## Parameters
+<h2 id="testfunction-parameters">Parameters</h2>
 
 | Parameter | Type | Description |
 | - | - | - |
 | testParameter | number | |
 
-<a id="testfunction-returns"></a>
-
-## Returns
+<h2 id="testfunction-returns">Returns</h2>
 
 A number
 
 **Return type**: number
 
-<a id="testfunction-throws"></a>
-
-## Throws
+<h2 id="testfunction-throws">Throws</h2>
 
 An Error

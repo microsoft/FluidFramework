@@ -4,9 +4,7 @@
 
 Test class
 
-<a id="testclass-signature"></a>
-
-## Signature
+<h2 id="testclass-signature">Signature</h2>
 
 ```typescript
 class TestClass
@@ -32,23 +30,17 @@ class TestClass
 
 ## Constructor Details
 
-<a id="_constructor_-constructor"></a>
-
-### (constructor)
+<h3 id="_constructor_-constructor">(constructor)</h3>
 
 Test class constructor
 
-<a id="_constructor_-signature"></a>
-
-#### Signature
+<h4 id="_constructor_-signature">Signature</h4>
 
 ```typescript
 constructor(testClassProperty: string);
 ```
 
-<a id="_constructor_-parameters"></a>
-
-#### Parameters
+<h4 id="_constructor_-parameters">Parameters</h4>
 
 | Parameter | Type | Description |
 | - | - | - |
@@ -56,15 +48,11 @@ constructor(testClassProperty: string);
 
 ## Property Details
 
-<a id="testclassproperty-property"></a>
-
-### testClassProperty
+<h3 id="testclassproperty-property">testClassProperty</h3>
 
 Test interface property
 
-<a id="testclassproperty-signature"></a>
-
-#### Signature
+<h4 id="testclassproperty-signature">Signature</h4>
 
 ```typescript
 readonly testClassProperty: string;
@@ -74,39 +62,29 @@ readonly testClassProperty: string;
 
 ## Method Details
 
-<a id="testclassmethod-method"></a>
-
-### testClassMethod
+<h3 id="testclassmethod-method">testClassMethod</h3>
 
 Test class method
 
-<a id="testclassmethod-signature"></a>
-
-#### Signature
+<h4 id="testclassmethod-signature">Signature</h4>
 
 ```typescript
 testClassMethod(testParameter: string): Promise<string>;
 ```
 
-<a id="testclassmethod-parameters"></a>
-
-#### Parameters
+<h4 id="testclassmethod-parameters">Parameters</h4>
 
 | Parameter | Type | Description |
 | - | - | - |
 | testParameter | string | A string |
 
-<a id="testclassmethod-returns"></a>
-
-#### Returns
+<h4 id="testclassmethod-returns">Returns</h4>
 
 A Promise
 
 **Return type**: Promise\<string>
 
-<a id="testclassmethod-throws"></a>
-
-#### Throws
+<h4 id="testclassmethod-throws">Throws</h4>
 
 An Error when something happens for which an error should be thrown. Except in the cases where another kind of error is thrown. We don't throw this error in those cases.
 

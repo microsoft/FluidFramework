@@ -4,9 +4,7 @@
 
 Test class property
 
-<a id="testclassproperty-signature"></a>
-
-## Signature
+<h2 id="testclassproperty-signature">Signature</h2>
 
 ```typescript
 readonly testClassProperty: TTypeParameterB;
@@ -14,8 +12,6 @@ readonly testClassProperty: TTypeParameterB;
 
 **Type**: TTypeParameterB
 
-<a id="testclassproperty-remarks"></a>
-
-## Remarks
+<h2 id="testclassproperty-remarks">Remarks</h2>
 
 Here are some remarks about the property

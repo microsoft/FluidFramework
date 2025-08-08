@@ -44,27 +44,29 @@ export function headingToMarkdown(
 function transformAsHeading(
 	headingNode: SectionHeading,
 	headingLevel: 1 | 2 | 3 | 4 | 5 | 6,
-): BlockContent[] {
-	const result: BlockContent[] = [];
-	if (headingNode.id !== undefined) {
-		result.push({
-			type: "html",
-			value: `<a id="${headingNode.id}"></a>`,
-		});
-	}
-
-	result.push({
-		type: "heading",
-		depth: headingLevel,
-		children: [
-			{
-				type: "text",
-				value: headingNode.title,
-			},
-		],
-	});
-
-	return result;
+): [BlockContent] {
+	// Markdown headings don't natively support anchor IDs.
+	// If the heading has an ID set, we will render it as an HTML element.
+	// While there are extended syntax options for Markdown that do support IDs, none of them are widely supported.
+	return headingNode.id === undefined
+		? [
+				{
+					type: "heading",
+					depth: headingLevel,
+					children: [
+						{
+							type: "text",
+							value: headingNode.title,
+						},
+					],
+				},
+			]
+		: [
+				{
+					type: "html",
+					value: `<h${headingLevel} id="${headingNode.id}">${headingNode.title}</h${headingLevel}>`,
+				},
+			];
 }
 
 function transformAsBoldText(headingNode: SectionHeading): [BlockContent] {

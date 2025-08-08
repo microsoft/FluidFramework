@@ -4,9 +4,7 @@
 
 An empty interface
 
-<a id="testemptyinterface-signature"></a>
-
-## Signature
+<h2 id="testemptyinterface-signature">Signature</h2>
 
 ```typescript
 export interface TestEmptyInterface

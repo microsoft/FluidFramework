@@ -2,16 +2,12 @@
 
 Test construct signature.
 
-<a id="_new_-signature"></a>
-
-### Signature
+<h3 id="_new_-signature">Signature</h3>
 
 ```typescript
 new (): TestInterface;
 ```
 
-<a id="_new_-returns"></a>
-
-### Returns
+<h3 id="_new_-returns">Returns</h3>
 
 **Return type**: [TestInterface](docs/test-suite-a/testinterface-interface)

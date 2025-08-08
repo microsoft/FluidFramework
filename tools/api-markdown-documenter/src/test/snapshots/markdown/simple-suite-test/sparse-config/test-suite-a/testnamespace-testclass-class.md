@@ -2,9 +2,7 @@
 
 Test class
 
-<a id="testclass-signature"></a>
-
-### Signature
+<h3 id="testclass-signature">Signature</h3>
 
 ```typescript
 class TestClass

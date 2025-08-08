@@ -4,23 +4,17 @@
 
 Test class constructor
 
-<a id="_constructor_-signature"></a>
-
-## Signature
+<h2 id="_constructor_-signature">Signature</h2>
 
 ```typescript
 constructor(privateProperty: number, protectedProperty: TestEnum, testClassProperty: TTypeParameterB, testClassEventProperty: () => void);
 ```
 
-<a id="_constructor_-remarks"></a>
-
-## Remarks
+<h2 id="_constructor_-remarks">Remarks</h2>
 
 Here are some remarks about the constructor
 
-<a id="_constructor_-parameters"></a>
-
-## Parameters
+<h2 id="_constructor_-parameters">Parameters</h2>
 
 | Parameter | Type | Description |
 | - | - | - |

@@ -4,9 +4,7 @@
 
 Test constant in module.
 
-<a id="foo-signature"></a>
-
-## Signature
+<h2 id="foo-signature">Signature</h2>
 
 ```typescript
 foo = 2

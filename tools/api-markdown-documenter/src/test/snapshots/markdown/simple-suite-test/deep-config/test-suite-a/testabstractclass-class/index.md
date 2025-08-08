@@ -4,9 +4,7 @@
 
 A test abstract class.
 
-<a id="testabstractclass-signature"></a>
-
-## Signature
+<h2 id="testabstractclass-signature">Signature</h2>
 
 ```typescript
 export declare abstract class TestAbstractClass

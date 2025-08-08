@@ -2,16 +2,12 @@
 
 Another example call signature
 
-<a id="_call__1-signature"></a>
-
-### Signature
+<h3 id="_call__1-signature">Signature</h3>
 
 ```typescript
 (event: 'anotherTestCallSignature', listener: (input: number) => string): number;
 ```
 
-<a id="_call__1-remarks"></a>
-
-### Remarks
+<h3 id="_call__1-remarks">Remarks</h3>
 
 Here are some remarks about the event call signature

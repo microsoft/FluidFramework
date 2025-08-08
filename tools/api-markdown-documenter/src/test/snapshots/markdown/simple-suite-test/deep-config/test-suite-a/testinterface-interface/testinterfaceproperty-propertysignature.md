@@ -4,9 +4,7 @@
 
 Test interface property
 
-<a id="testinterfaceproperty-signature"></a>
-
-## Signature
+<h2 id="testinterfaceproperty-signature">Signature</h2>
 
 ```typescript
 testInterfaceProperty: number;
@@ -14,8 +12,6 @@ testInterfaceProperty: number;
 
 **Type**: number
 
-<a id="testinterfaceproperty-remarks"></a>
-
-## Remarks
+<h2 id="testinterfaceproperty-remarks">Remarks</h2>
 
 Here are some remarks about the property

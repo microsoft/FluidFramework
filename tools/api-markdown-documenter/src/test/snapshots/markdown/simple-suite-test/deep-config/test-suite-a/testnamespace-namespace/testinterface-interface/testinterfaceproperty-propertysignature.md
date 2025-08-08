@@ -6,9 +6,7 @@ Test interface property
 
 **WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
-<a id="testinterfaceproperty-signature"></a>
-
-## Signature
+<h2 id="testinterfaceproperty-signature">Signature</h2>
 
 ```typescript
 testInterfaceProperty: boolean;

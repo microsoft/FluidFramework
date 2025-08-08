@@ -2,16 +2,12 @@
 
 Test interface event call signature
 
-<a id="_call_-signature"></a>
-
-### Signature
+<h3 id="_call_-signature">Signature</h3>
 
 ```typescript
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
 ```
 
-<a id="_call_-remarks"></a>
-
-### Remarks
+<h3 id="_call_-remarks">Remarks</h3>
 
 Here are some remarks about the event call signature

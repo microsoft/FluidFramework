@@ -2,9 +2,7 @@
 
 Test index signature.
 
-<a id="_indexer_-signature"></a>
-
-### Signature
+<h3 id="_indexer_-signature">Signature</h3>
 
 ```typescript
 [foo: number]: {

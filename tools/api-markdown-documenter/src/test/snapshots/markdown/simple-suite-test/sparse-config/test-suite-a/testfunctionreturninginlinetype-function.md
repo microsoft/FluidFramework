@@ -2,9 +2,7 @@
 
 Test function that returns an inline type
 
-<a id="testfunctionreturninginlinetype-signature"></a>
-
-### Signature
+<h3 id="testfunctionreturninginlinetype-signature">Signature</h3>
 
 ```typescript
 export declare function testFunctionReturningInlineType(): {
@@ -13,9 +11,7 @@ export declare function testFunctionReturningInlineType(): {
 };
 ```
 
-<a id="testfunctionreturninginlinetype-returns"></a>
-
-### Returns
+<h3 id="testfunctionreturninginlinetype-returns">Returns</h3>
 
 An inline type
 

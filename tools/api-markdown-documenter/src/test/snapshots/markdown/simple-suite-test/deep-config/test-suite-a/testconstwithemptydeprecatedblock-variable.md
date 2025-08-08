@@ -6,9 +6,7 @@ I have a `@deprecated` tag with an empty comment block.
 
 **WARNING: This API is deprecated and will be removed in a future release.**
 
-<a id="testconstwithemptydeprecatedblock-signature"></a>
-
-## Signature
+<h2 id="testconstwithemptydeprecatedblock-signature">Signature</h2>
 
 ```typescript
 testConstWithEmptyDeprecatedBlock: string

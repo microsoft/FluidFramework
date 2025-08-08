@@ -4,9 +4,7 @@
 
 Test interface that extends other interfaces
 
-<a id="testinterfaceextendingotherinterfaces-signature"></a>
-
-## Signature
+<h2 id="testinterfaceextendingotherinterfaces-signature">Signature</h2>
 
 ```typescript
 export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter<number>
@@ -14,9 +12,7 @@ export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, Te
 
 **Extends**: [TestInterface](/test-suite-a/testinterface-interface), [TestMappedType](/test-suite-a/testmappedtype-typealias), [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)\<number>
 
-<a id="testinterfaceextendingotherinterfaces-remarks"></a>
-
-## Remarks
+<h2 id="testinterfaceextendingotherinterfaces-remarks">Remarks</h2>
 
 Here are some remarks about the interface
 
@@ -28,45 +24,33 @@ Here are some remarks about the interface
 
 ## Method Details
 
-<a id="testmethod-methodsignature"></a>
-
-### testMethod
+<h3 id="testmethod-methodsignature">testMethod</h3>
 
 Test interface method accepting a string and returning a number.
 
-<a id="testmethod-signature"></a>
-
-#### Signature
+<h4 id="testmethod-signature">Signature</h4>
 
 ```typescript
 testMethod(input: string): number;
 ```
 
-<a id="testmethod-remarks"></a>
-
-#### Remarks
+<h4 id="testmethod-remarks">Remarks</h4>
 
 Here are some remarks about the method
 
-<a id="testmethod-parameters"></a>
-
-#### Parameters
+<h4 id="testmethod-parameters">Parameters</h4>
 
 | Parameter | Type | Description |
 | - | - | - |
 | input | string | A string |
 
-<a id="testmethod-returns"></a>
-
-#### Returns
+<h4 id="testmethod-returns">Returns</h4>
 
 A number
 
 **Return type**: number
 
-<a id="testinterfaceextendingotherinterfaces-see-also"></a>
-
-## See Also
+<h2 id="testinterfaceextendingotherinterfaces-see-also">See Also</h2>
 
 - [TestInterface](/test-suite-a/testinterface-interface)
 - [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)

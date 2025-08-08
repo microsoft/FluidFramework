@@ -4,9 +4,7 @@
 
 Test interface with generic type parameter
 
-<a id="testinterfacewithtypeparameter-signature"></a>
-
-## Signature
+<h2 id="testinterfacewithtypeparameter-signature">Signature</h2>
 
 ```typescript
 export interface TestInterfaceWithTypeParameter<T>
@@ -18,9 +16,7 @@ export interface TestInterfaceWithTypeParameter<T>
 | - | - |
 | T | A type parameter |
 
-<a id="testinterfacewithtypeparameter-remarks"></a>
-
-## Remarks
+<h2 id="testinterfacewithtypeparameter-remarks">Remarks</h2>
 
 Here are some remarks about the interface
 
@@ -32,15 +28,11 @@ Here are some remarks about the interface
 
 ## Property Details
 
-<a id="testproperty-propertysignature"></a>
-
-### testProperty
+<h3 id="testproperty-propertysignature">testProperty</h3>
 
 A test interface property using generic type parameter
 
-<a id="testproperty-signature"></a>
-
-#### Signature
+<h4 id="testproperty-signature">Signature</h4>
 
 ```typescript
 testProperty: T;
@@ -48,8 +40,6 @@ testProperty: T;
 
 **Type**: T
 
-<a id="testproperty-remarks"></a>
-
-#### Remarks
+<h4 id="testproperty-remarks">Remarks</h4>
 
 Here are some remarks about the property

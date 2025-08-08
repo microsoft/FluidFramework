@@ -2,17 +2,13 @@
 
 Test function that returns an inline type
 
-<a id="testfunctionreturninguniontype-signature"></a>
-
-### Signature
+<h3 id="testfunctionreturninguniontype-signature">Signature</h3>
 
 ```typescript
 export declare function testFunctionReturningUnionType(): string | TestInterface;
 ```
 
-<a id="testfunctionreturninguniontype-returns"></a>
-
-### Returns
+<h3 id="testfunctionreturninguniontype-returns">Returns</h3>
 
 A union type
 

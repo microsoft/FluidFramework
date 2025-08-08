@@ -2,9 +2,7 @@
 
 Test Enum
 
-<a id="testenum-signature"></a>
-
-### Signature
+<h3 id="testenum-signature">Signature</h3>
 
 ```typescript
 enum TestEnum
@@ -19,9 +17,7 @@ enum TestEnum
 
 Test enum value 1
 
-<a id="testenumvalue1-signature"></a>
-
-#### Signature
+<h4 id="testenumvalue1-signature">Signature</h4>
 
 ```typescript
 TestEnumValue1 = 0
@@ -29,9 +25,7 @@ TestEnumValue1 = 0
 
 Test enum value 2
 
-<a id="testenumvalue2-signature"></a>
-
-#### Signature
+<h4 id="testenumvalue2-signature">Signature</h4>
 
 ```typescript
 TestEnumValue2 = 1

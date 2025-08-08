@@ -2,9 +2,7 @@
 
 Test interface property
 
-<a id="testinterfaceproperty-signature"></a>
-
-### Signature
+<h3 id="testinterfaceproperty-signature">Signature</h3>
 
 ```typescript
 testInterfaceProperty: number;
@@ -12,8 +10,6 @@ testInterfaceProperty: number;
 
 **Type**: number
 
-<a id="testinterfaceproperty-remarks"></a>
-
-### Remarks
+<h3 id="testinterfaceproperty-remarks">Remarks</h3>
 
 Here are some remarks about the property

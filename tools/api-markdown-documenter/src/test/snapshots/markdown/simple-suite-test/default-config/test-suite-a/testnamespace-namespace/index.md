@@ -4,27 +4,19 @@
 
 Test Namespace
 
-<a id="testnamespace-signature"></a>
-
-## Signature
+<h2 id="testnamespace-signature">Signature</h2>
 
 ```typescript
 export declare namespace TestNamespace
 ```
 
-<a id="testnamespace-remarks"></a>
-
-## Remarks
+<h2 id="testnamespace-remarks">Remarks</h2>
 
 Here are some remarks about the namespace
 
-<a id="testnamespace-examples"></a>
+<h2 id="testnamespace-examples">Examples</h2>
 
-## Examples
-
-<a id="testnamespace-example1"></a>
-
-### Example: TypeScript Example
+<h3 id="testnamespace-example1">Example: TypeScript Example</h3>
 
 ```typescript
 const foo: Foo = {
@@ -33,9 +25,7 @@ const foo: Foo = {
 };
 ```
 
-<a id="testnamespace-example2"></a>
-
-### Example: JavaScript Example
+<h3 id="testnamespace-example2">Example: JavaScript Example</h3>
 
 ```javascript
 const foo = {
@@ -88,55 +78,41 @@ const foo = {
 
 ## Function Details
 
-<a id="testfunction-function"></a>
-
-### testFunction
+<h3 id="testfunction-function">testFunction</h3>
 
 Test function
 
-<a id="testfunction-signature"></a>
-
-#### Signature
+<h4 id="testfunction-signature">Signature</h4>
 
 ```typescript
 function testFunction(testParameter: number): number;
 ```
 
-<a id="testfunction-parameters"></a>
-
-#### Parameters
+<h4 id="testfunction-parameters">Parameters</h4>
 
 | Parameter | Type | Description |
 | - | - | - |
 | testParameter | number | |
 
-<a id="testfunction-returns"></a>
-
-#### Returns
+<h4 id="testfunction-returns">Returns</h4>
 
 A number
 
 **Return type**: number
 
-<a id="testfunction-throws"></a>
-
-#### Throws
+<h4 id="testfunction-throws">Throws</h4>
 
 An Error
 
 ## Variable Details
 
-<a id="testconst-variable"></a>
-
-### TestConst
+<h3 id="testconst-variable">TestConst</h3>
 
 Test Constant
 
 **WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
-<a id="testconst-signature"></a>
-
-#### Signature
+<h4 id="testconst-signature">Signature</h4>
 
 ```typescript
 TestConst = "Hello world!"

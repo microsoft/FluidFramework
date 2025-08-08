@@ -2,9 +2,7 @@
 
 Test optional property
 
-<a id="testoptionalinterfaceproperty-signature"></a>
-
-### Signature
+<h3 id="testoptionalinterfaceproperty-signature">Signature</h3>
 
 ```typescript
 testOptionalInterfaceProperty?: number;

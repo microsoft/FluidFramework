@@ -4,9 +4,7 @@
 
 Bar
 
-<a id="foo-signature"></a>
-
-## Signature
+<h2 id="foo-signature">Signature</h2>
 
 ```typescript
 export interface Foo

@@ -4,9 +4,7 @@
 
 Test Enum
 
-<a id="bar-signature"></a>
-
-## Signature
+<h2 id="bar-signature">Signature</h2>
 
 ```typescript
 bar: TestEnum;
@@ -14,8 +12,6 @@ bar: TestEnum;
 
 **Type**: [TestEnum](/test-suite-a/testenum-enum/)
 
-<a id="bar-remarks"></a>
-
-## Remarks
+<h2 id="bar-remarks">Remarks</h2>
 
 Here are some remarks about the enum

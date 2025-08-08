@@ -4,9 +4,7 @@
 
 Test static class property
 
-<a id="testclassstaticproperty-signature"></a>
-
-## Signature
+<h2 id="testclassstaticproperty-signature">Signature</h2>
 
 ```typescript
 static testClassStaticProperty: (foo: number) => string;

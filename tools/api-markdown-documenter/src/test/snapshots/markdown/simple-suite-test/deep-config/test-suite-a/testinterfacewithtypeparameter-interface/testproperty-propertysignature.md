@@ -4,9 +4,7 @@
 
 A test interface property using generic type parameter
 
-<a id="testproperty-signature"></a>
-
-## Signature
+<h2 id="testproperty-signature">Signature</h2>
 
 ```typescript
 testProperty: T;
@@ -14,8 +12,6 @@ testProperty: T;
 
 **Type**: T
 
-<a id="testproperty-remarks"></a>
-
-## Remarks
+<h2 id="testproperty-remarks">Remarks</h2>
 
 Here are some remarks about the property

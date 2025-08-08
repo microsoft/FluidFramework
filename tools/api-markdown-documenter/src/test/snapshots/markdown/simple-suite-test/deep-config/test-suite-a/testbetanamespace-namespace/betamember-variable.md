@@ -4,9 +4,7 @@
 
 **WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
-<a id="betamember-signature"></a>
-
-## Signature
+<h2 id="betamember-signature">Signature</h2>
 
 ```typescript
 betaMember = "beta"

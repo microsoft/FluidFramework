@@ -4,17 +4,13 @@
 
 This is a _{@customTag constructor}_.
 
-<a id="_constructor_-signature"></a>
-
-## Signature
+<h2 id="_constructor_-signature">Signature</h2>
 
 ```typescript
 protected constructor(privateProperty: number, protectedProperty: TestEnum);
 ```
 
-<a id="_constructor_-parameters"></a>
-
-## Parameters
+<h2 id="_constructor_-parameters">Parameters</h2>
 
 | Parameter | Type | Description |
 | - | - | - |

@@ -2,9 +2,7 @@
 
 A test abstract getter property.
 
-<a id="abstractpropertygetter-signature"></a>
-
-### Signature
+<h3 id="abstractpropertygetter-signature">Signature</h3>
 
 ```typescript
 get abstractPropertyGetter(): TestMappedType;

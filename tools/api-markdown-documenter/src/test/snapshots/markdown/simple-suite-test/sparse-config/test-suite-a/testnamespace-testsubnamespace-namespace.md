@@ -2,9 +2,7 @@
 
 Test sub-namespace
 
-<a id="testsubnamespace-signature"></a>
-
-### Signature
+<h3 id="testsubnamespace-signature">Signature</h3>
 
 ```typescript
 namespace TestSubNamespace

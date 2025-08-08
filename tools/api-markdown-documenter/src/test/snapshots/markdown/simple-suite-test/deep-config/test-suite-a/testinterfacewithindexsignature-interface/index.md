@@ -4,9 +4,7 @@
 
 An interface with an index signature.
 
-<a id="testinterfacewithindexsignature-signature"></a>
-
-## Signature
+<h2 id="testinterfacewithindexsignature-signature">Signature</h2>
 
 ```typescript
 export interface TestInterfaceWithIndexSignature

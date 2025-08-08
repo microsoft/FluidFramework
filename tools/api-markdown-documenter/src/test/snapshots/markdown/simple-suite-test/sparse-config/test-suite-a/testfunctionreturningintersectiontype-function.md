@@ -6,17 +6,13 @@ Test function that returns an inline type
 
 This is a test deprecation notice. Here is a [link](docs/test-suite-a/testfunctionreturninguniontype-function) to something else!
 
-<a id="testfunctionreturningintersectiontype-signature"></a>
-
-### Signature
+<h3 id="testfunctionreturningintersectiontype-signature">Signature</h3>
 
 ```typescript
 export declare function testFunctionReturningIntersectionType(): TestEmptyInterface & TestInterfaceWithTypeParameter<number>;
 ```
 
-<a id="testfunctionreturningintersectiontype-returns"></a>
-
-### Returns
+<h3 id="testfunctionreturningintersectiontype-returns">Returns</h3>
 
 an intersection type
 
