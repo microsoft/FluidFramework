@@ -82,6 +82,6 @@ describe("Document HTML rendering tests", () => {
 			"",
 		].join("\n");
 
-		expect(renderDocument(document, { prettyFormatting: true })).to.equal(expected);
+		expect(renderDocument(document, { prettyFormatting: true }).contents).to.equal(expected);
 	});
 });

@@ -41,9 +41,11 @@ export type {
 	ApiDocument,
 	HtmlDocument,
 	MarkdownDocument,
+	RenderedDocument,
 } from "./ApiDocument.js";
 export type {
 	NormalizedRootContent,
+	NormalizedTree,
 	Section,
 	SectionContent,
 	SectionHeading,

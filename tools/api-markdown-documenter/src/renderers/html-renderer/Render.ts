@@ -7,7 +7,7 @@ import type { Root as HastRoot, Nodes as HastTree } from "hast";
 import { format } from "hast-util-format";
 import { toHtml as toHtmlString } from "hast-util-to-html";
 
-import type { MarkdownDocument } from "../../ApiDocument.js";
+import type { MarkdownDocument, RenderedDocument } from "../../ApiDocument.js";
 import {
 	documentToHtml,
 	type TransformationConfiguration,
@@ -48,9 +48,13 @@ export interface RenderDocumentConfiguration
 export function renderDocument(
 	document: MarkdownDocument,
 	config: RenderDocumentConfiguration,
-): string {
-	const htmlTree = documentToHtml(document, config);
-	return renderHtml(htmlTree, config);
+): RenderedDocument {
+	const htmlDocument = documentToHtml(document, config);
+	return {
+		apiItem: htmlDocument.apiItem,
+		contents: renderHtml(htmlDocument.contents, config),
+		documentPath: htmlDocument.documentPath,
+	};
 }
 
 /**

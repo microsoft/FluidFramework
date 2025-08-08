@@ -92,6 +92,6 @@ describe("documentToHtml tests", () => {
 			]),
 		]);
 
-		expect(result).to.deep.equal(expected);
+		expect(result.contents).to.deep.equal(expected);
 	});
 });

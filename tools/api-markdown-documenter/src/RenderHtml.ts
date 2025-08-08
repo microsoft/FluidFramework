@@ -73,7 +73,7 @@ export async function renderDocumentsAsHtml(
 			const renderedDocument = renderDocumentAsHtml(document, options);
 
 			const filePath = Path.join(outputDirectoryPath, `${document.documentPath}.html`);
-			await FileSystem.writeFileAsync(filePath, renderedDocument, {
+			await FileSystem.writeFileAsync(filePath, renderedDocument.contents, {
 				convertLineEndings: newlineKind ?? NewlineKind.OsDefault,
 				ensureFolderExists: true,
 			});

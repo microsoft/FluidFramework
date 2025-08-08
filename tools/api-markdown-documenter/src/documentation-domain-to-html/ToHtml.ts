@@ -8,7 +8,7 @@ import { h } from "hastscript";
 import type { Nodes } from "mdast";
 import { toHast } from "mdast-util-to-hast";
 
-import type { MarkdownDocument } from "../ApiDocument.js";
+import type { HtmlDocument, MarkdownDocument } from "../ApiDocument.js";
 import type { SectionHeading } from "../mdast/index.js";
 
 import {
@@ -28,14 +28,18 @@ import type { TransformationConfiguration } from "./configuration/index.js";
 export function documentToHtml(
 	document: MarkdownDocument,
 	config: TransformationConfiguration,
-): HastRoot {
+): HtmlDocument {
 	const transformationContext = createTransformationContext(config);
 
 	const transformedChildren = documentationNodeToHtml(
 		document.contents,
 		transformationContext,
 	);
-	return treeFromBody(transformedChildren, config);
+	return {
+		apiItem: document.apiItem,
+		contents: treeFromBody(transformedChildren, config),
+		documentPath: document.documentPath,
+	};
 }
 
 /**

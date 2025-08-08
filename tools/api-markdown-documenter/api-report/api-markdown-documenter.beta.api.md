@@ -260,7 +260,7 @@ export interface DocumentHierarchyConfiguration extends DocumentationHierarchyCo
 }
 
 // @public
-export function documentToHtml(document: MarkdownDocument, config: ToHtmlConfiguration): Root;
+export function documentToHtml(document: MarkdownDocument, config: ToHtmlConfiguration): HtmlDocument;
 
 // @public
 export interface DocumentWriter {
@@ -500,6 +500,9 @@ export { NewlineKind }
 export type NormalizedRootContent = Exclude<RootContent, Section>;
 
 // @public
+export type NormalizedTree = Exclude<Nodes, Section>;
+
+// @public
 export type ReleaseLevel = Exclude<ReleaseTag, ReleaseTag.None>;
 
 export { ReleaseTag }
@@ -512,7 +515,7 @@ interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationOptions, 
 }
 
 // @public
-function renderDocument(document: MarkdownDocument, config: RenderDocumentAsHtmlConfiguration): string;
+function renderDocument(document: MarkdownDocument, config: RenderDocumentAsHtmlConfiguration): RenderedDocument;
 
 // @public
 function renderDocument_2(document: MarkdownDocument, config: RenderDocumentAsMarkdownConfiguration): string;
@@ -530,6 +533,9 @@ function renderDocumentsAsMarkdown(documents: readonly MarkdownDocument[], optio
 // @public
 interface RenderDocumentsAsMarkdownOptions extends RenderDocumentAsMarkdownConfiguration, FileSystemConfiguration {
 }
+
+// @public @sealed
+export type RenderedDocument = ApiDocument<string>;
 
 // @public
 function renderHtml(html: Nodes_2, config: RenderHtmlConfiguration): string;
