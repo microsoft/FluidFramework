@@ -52,9 +52,7 @@ export type {
 } from "./mdast/index.js";
 export {
 	DocumentWriter,
-	type RenderDocumentAsHtmlConfiguration,
 	type RenderHtmlConfiguration,
-	type RenderDocumentAsMarkdownConfiguration,
 	type RenderMarkdownConfiguration,
 } from "./renderers/index.js";
 export type { LoggingConfiguration } from "./LoggingConfiguration.js";

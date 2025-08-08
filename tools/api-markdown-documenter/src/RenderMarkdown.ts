@@ -14,7 +14,7 @@ import {
 	transformApiModel,
 } from "./api-item-transforms/index.js";
 import {
-	type RenderDocumentAsMarkdownConfiguration,
+	type RenderMarkdownConfiguration,
 	renderDocumentAsMarkdown,
 } from "./renderers/index.js";
 
@@ -25,7 +25,7 @@ import {
  */
 export interface RenderApiModelAsMarkdownOptions
 	extends ApiItemTransformationOptions,
-		RenderDocumentAsMarkdownConfiguration,
+		RenderMarkdownConfiguration,
 		FileSystemConfiguration {}
 
 /**
@@ -47,7 +47,7 @@ export async function renderApiModelAsMarkdown(
  * @public
  */
 export interface RenderDocumentsAsMarkdownOptions
-	extends RenderDocumentAsMarkdownConfiguration,
+	extends RenderMarkdownConfiguration,
 		FileSystemConfiguration {}
 
 /**

@@ -13,4 +13,4 @@ export {
 	type RenderDocumentsAsHtmlOptions as RenderDocumentsOptions,
 	renderDocumentsAsHtml as renderDocuments,
 } from "./RenderHtml.js";
-export { renderDocumentAsHtml as renderDocument, renderHtml } from "./renderers/index.js";
+export { renderDocumentAsHtml as renderDocument } from "./renderers/index.js";

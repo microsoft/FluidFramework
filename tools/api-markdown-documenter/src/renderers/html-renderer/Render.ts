@@ -18,7 +18,7 @@ import type { LoggingConfiguration } from "../../LoggingConfiguration.js";
  * @sealed
  * @public
  */
-export interface RenderHtmlConfiguration {
+export interface RenderHtmlConfiguration extends LoggingConfiguration {
 	/**
 	 * HTML language attribute.
 	 *
@@ -36,16 +36,6 @@ export interface RenderHtmlConfiguration {
 }
 
 /**
- * Configuration for rendering a document as HTML.
- *
- * @sealed
- * @public
- */
-export interface RenderDocumentConfiguration
-	extends RenderHtmlConfiguration,
-		LoggingConfiguration {}
-
-/**
  * Renders a {@link MarkdownDocument} as HTML, and returns the resulting file contents as a string.
  *
  * @param document - The document to render.
@@ -55,7 +45,7 @@ export interface RenderDocumentConfiguration
  */
 export function renderDocument(
 	document: MarkdownDocument,
-	config: RenderDocumentConfiguration,
+	config: RenderHtmlConfiguration,
 ): RenderedDocument {
 	const htmlDocument = documentToHtml(document, config);
 	return {
@@ -70,10 +60,8 @@ export function renderDocument(
  *
  * @param document - The document to render.
  * @param config - HTML transformation configuration.
- *
- * @public
  */
-export function renderHtml(html: HastTree, config: RenderHtmlConfiguration): string {
+function renderHtml(html: HastTree, config: RenderHtmlConfiguration): string {
 	const { prettyFormatting } = config;
 	if (prettyFormatting !== false) {
 		// Pretty formatting. Modifies the tree in place.

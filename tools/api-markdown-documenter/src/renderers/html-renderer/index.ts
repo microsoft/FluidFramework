@@ -3,13 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/**
- * Library for rendering documentation node trees as `HTML`.
- */
-
 export {
 	renderDocument,
-	type RenderDocumentConfiguration,
-	renderHtml,
 	type RenderHtmlConfiguration,
 } from "./Render.js";

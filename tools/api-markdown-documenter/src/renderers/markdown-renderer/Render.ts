@@ -14,29 +14,6 @@ import type { MarkdownDocument } from "../../ApiDocument.js";
 import type { LoggingConfiguration } from "../../LoggingConfiguration.js";
 
 /**
- * Configuration for rendering a document as Markdown.
- *
- * @sealed
- * @public
- */
-export type RenderDocumentConfiguration = RenderMarkdownConfiguration;
-
-/**
- * Renders a {@link ApiDocument} as Markdown and returns the resulting file contents as a string.
- *
- * @param document - The document to render.
- * @param config - Markdown transformation configuration.
- *
- * @public
- */
-export function renderDocument(
-	document: MarkdownDocument,
-	config: RenderDocumentConfiguration,
-): string {
-	return renderMarkdown(document.contents, config);
-}
-
-/**
  * Configuration for rendering Markdown content.
  *
  * @sealed
@@ -52,16 +29,29 @@ export interface RenderMarkdownConfiguration extends LoggingConfiguration {
 }
 
 /**
+ * Renders a {@link ApiDocument} as Markdown and returns the resulting file contents as a string.
+ *
+ * @param document - The document to render.
+ * @param config - Markdown transformation configuration.
+ *
+ * @public
+ */
+export function renderDocument(
+	document: MarkdownDocument,
+	config: RenderMarkdownConfiguration,
+): string {
+	return renderMarkdown(document.contents, config);
+}
+
+/**
  * Renders the provided Markdown tree and returns the resulting file contents as a string.
  *
  * @remarks Leverages {@link https://github.com/syntax-tree/mdast-util-to-markdown | mdast-util-to-markdown}
  *
  * @param document - The document to transform.
  * @param config - Markdown transformation configuration.
- *
- * @public
  */
-export function renderMarkdown(tree: MdastTree, config: RenderMarkdownConfiguration): string {
+function renderMarkdown(tree: MdastTree, config: RenderMarkdownConfiguration): string {
 	const options: MdastToMarkdownOptions = {
 		emphasis: "_",
 		bullet: "-",

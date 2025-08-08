@@ -32,7 +32,6 @@ import type { Link } from 'mdast';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'mdast';
 import type { Nodes } from 'mdast';
-import type { Nodes as Nodes_2 } from 'hast';
 import { Options } from 'mdast-util-to-markdown';
 import type { Paragraph } from 'mdast';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
@@ -381,8 +380,7 @@ declare namespace HtmlRenderer {
         renderApiModelAsHtml as renderApiModel,
         RenderDocumentsAsHtmlOptions as RenderDocumentsOptions,
         renderDocumentsAsHtml as renderDocuments,
-        renderDocument,
-        renderHtml
+        renderDocument
     }
 }
 export { HtmlRenderer }
@@ -450,9 +448,7 @@ declare namespace MarkdownRenderer {
         renderApiModelAsMarkdown as renderApiModel,
         RenderDocumentsAsMarkdownOptions as RenderDocumentsOptions,
         renderDocumentsAsMarkdown as renderDocuments,
-        renderDocument_2 as renderDocument,
-        RenderDocumentAsMarkdownConfiguration,
-        renderMarkdown
+        renderDocument_2 as renderDocument
     }
 }
 export { MarkdownRenderer }
@@ -474,43 +470,30 @@ export { ReleaseTag }
 function renderApiModelAsMarkdown(options: RenderApiModelAsMarkdownOptions): Promise<void>;
 
 // @public
-interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationOptions, RenderDocumentAsMarkdownConfiguration, FileSystemConfiguration {
+interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationOptions, RenderMarkdownConfiguration, FileSystemConfiguration {
 }
 
 // @public
-function renderDocument(document: MarkdownDocument, config: RenderDocumentAsHtmlConfiguration): RenderedDocument;
+function renderDocument(document: MarkdownDocument, config: RenderHtmlConfiguration): RenderedDocument;
 
 // @public
-function renderDocument_2(document: MarkdownDocument, config: RenderDocumentAsMarkdownConfiguration): string;
-
-// @public @sealed
-export interface RenderDocumentAsHtmlConfiguration extends RenderHtmlConfiguration, LoggingConfiguration {
-}
-
-// @public @sealed
-export type RenderDocumentAsMarkdownConfiguration = RenderMarkdownConfiguration;
+function renderDocument_2(document: MarkdownDocument, config: RenderMarkdownConfiguration): string;
 
 // @public
 function renderDocumentsAsMarkdown(documents: readonly MarkdownDocument[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
 
 // @public
-interface RenderDocumentsAsMarkdownOptions extends RenderDocumentAsMarkdownConfiguration, FileSystemConfiguration {
+interface RenderDocumentsAsMarkdownOptions extends RenderMarkdownConfiguration, FileSystemConfiguration {
 }
 
 // @public @sealed
 export type RenderedDocument = ApiDocument<string>;
 
-// @public
-function renderHtml(html: Nodes_2, config: RenderHtmlConfiguration): string;
-
 // @public @sealed
-export interface RenderHtmlConfiguration {
+export interface RenderHtmlConfiguration extends LoggingConfiguration {
     readonly language?: string;
     readonly prettyFormatting?: boolean;
 }
-
-// @public
-function renderMarkdown(tree: Nodes, config: RenderMarkdownConfiguration): string;
 
 // @public @sealed
 export interface RenderMarkdownConfiguration extends LoggingConfiguration {

@@ -9,15 +9,11 @@ import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 
 import type { MarkdownDocument } from "./ApiDocument.js";
 import type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
-import type { LoggingConfiguration } from "./LoggingConfiguration.js";
 import {
 	type ApiItemTransformationOptions,
 	transformApiModel,
 } from "./api-item-transforms/index.js";
-import {
-	type RenderDocumentAsHtmlConfiguration,
-	renderDocumentAsHtml,
-} from "./renderers/index.js";
+import { type RenderHtmlConfiguration, renderDocumentAsHtml } from "./renderers/index.js";
 
 /**
  * API Model HTML rendering options.
@@ -26,9 +22,8 @@ import {
  */
 export interface RenderApiModelAsHtmlOptions
 	extends ApiItemTransformationOptions,
-		RenderDocumentAsHtmlConfiguration,
-		FileSystemConfiguration,
-		LoggingConfiguration {}
+		RenderHtmlConfiguration,
+		FileSystemConfiguration {}
 
 /**
  * Renders the provided model and its contents, and writes each document to a file on disk.
@@ -49,7 +44,7 @@ export async function renderApiModelAsHtml(
  * @alpha
  */
 export interface RenderDocumentsAsHtmlOptions
-	extends RenderDocumentAsHtmlConfiguration,
+	extends RenderHtmlConfiguration,
 		FileSystemConfiguration {}
 
 /**
