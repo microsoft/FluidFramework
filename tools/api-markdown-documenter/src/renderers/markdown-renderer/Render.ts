@@ -10,7 +10,7 @@ import {
 	type Options as MdastToMarkdownOptions,
 } from "mdast-util-to-markdown";
 
-import type { MarkdownDocument } from "../../ApiDocument.js";
+import type { MarkdownDocument, RenderedDocument } from "../../ApiDocument.js";
 import type { LoggingConfiguration } from "../../LoggingConfiguration.js";
 
 /**
@@ -39,8 +39,12 @@ export interface RenderMarkdownConfiguration extends LoggingConfiguration {
 export function renderDocument(
 	document: MarkdownDocument,
 	config: RenderMarkdownConfiguration,
-): string {
-	return renderMarkdown(document.contents, config);
+): RenderedDocument {
+	return {
+		apiItem: document.apiItem,
+		contents: renderMarkdown(document.contents, config),
+		filePath: `${document.documentPath}.md`, // Append .md extension
+	};
 }
 
 /**

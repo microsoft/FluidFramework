@@ -7,7 +7,7 @@ import type { ApiItem } from "@microsoft/api-extractor-model";
 import type { DocDeclarationReference } from "@microsoft/tsdoc";
 import type { Link } from "mdast";
 
-import type { ApiDocument, MarkdownDocument } from "../ApiDocument.js";
+import type { MarkdownDocument } from "../ApiDocument.js";
 import type { Section } from "../mdast/index.js";
 import { normalizeDocumentContents } from "../mdast/index.js";
 import { resolveSymbolicReference } from "../utilities/index.js";
@@ -95,8 +95,8 @@ export function resolveSymbolicLink(
  * Checks for duplicate {@link ApiDocument.documentPath}s among the provided set of documents.
  * @throws If any duplicates are found.
  */
-export function checkForDuplicateDocumentPaths(documents: readonly ApiDocument[]): void {
-	const documentPathMap = new Map<string, ApiDocument[]>();
+export function checkForDuplicateDocumentPaths(documents: readonly MarkdownDocument[]): void {
+	const documentPathMap = new Map<string, MarkdownDocument[]>();
 	for (const document of documents) {
 		let entries = documentPathMap.get(document.documentPath);
 		if (entries === undefined) {

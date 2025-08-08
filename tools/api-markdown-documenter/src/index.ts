@@ -37,12 +37,7 @@ export {
 	transformApiModel,
 	transformTsdoc,
 } from "./api-item-transforms/index.js";
-export type {
-	ApiDocument,
-	HtmlDocument,
-	MarkdownDocument,
-	RenderedDocument,
-} from "./ApiDocument.js";
+export type { MarkdownDocument } from "./ApiDocument.js";
 export type {
 	NormalizedRootContent,
 	NormalizedTree,
@@ -52,11 +47,10 @@ export type {
 } from "./mdast/index.js";
 export {
 	DocumentWriter,
-	type RenderHtmlConfiguration,
 	type RenderMarkdownConfiguration,
 } from "./renderers/index.js";
 export type { LoggingConfiguration } from "./LoggingConfiguration.js";
-export type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
+export { type SaveDocumentsOptions, saveDocuments } from "./FileSystem.js";
 export {
 	lintApiModel,
 	type LintApiModelConfiguration,
@@ -92,7 +86,6 @@ import * as ApiItemUtilities from "./ApiItemUtilitiesModule.js";
 import * as LayoutUtilities from "./LayoutUtilitiesModule.js";
 
 // Export renderers
-import * as HtmlRenderer from "./HtmlRendererModule.js";
 import * as MarkdownRenderer from "./MarkdownRendererModule.js";
 
 export {
@@ -116,12 +109,6 @@ export {
 	 * @public
 	 */
 	LayoutUtilities,
-	/**
-	 * Functionality for rendering documentation as HTML.
-	 *
-	 * @alpha
-	 */
-	HtmlRenderer,
 	/**
 	 * Functionality for rendering documentation as Markdown.
 	 *

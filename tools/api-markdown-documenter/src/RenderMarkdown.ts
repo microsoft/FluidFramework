@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as Path from "node:path";
-
-import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
-
 import type { MarkdownDocument } from "./ApiDocument.js";
-import type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
+import { type SaveDocumentsOptions, saveDocuments } from "./FileSystem.js";
 import {
 	type ApiItemTransformationOptions,
 	transformApiModel,
@@ -26,7 +22,7 @@ import {
 export interface RenderApiModelAsMarkdownOptions
 	extends ApiItemTransformationOptions,
 		RenderMarkdownConfiguration,
-		FileSystemConfiguration {}
+		SaveDocumentsOptions {}
 
 /**
  * Renders the provided model and its contents, and writes each document to a file on disk.
@@ -38,7 +34,7 @@ export async function renderApiModelAsMarkdown(
 ): Promise<void> {
 	const documents = transformApiModel(options);
 
-	return renderDocumentsAsMarkdown(documents, options);
+	return renderMarkdownDocuments(documents, options);
 }
 
 /**
@@ -48,7 +44,7 @@ export async function renderApiModelAsMarkdown(
  */
 export interface RenderDocumentsAsMarkdownOptions
 	extends RenderMarkdownConfiguration,
-		FileSystemConfiguration {}
+		SaveDocumentsOptions {}
 
 /**
  * Renders the provided documents using Markdown syntax, and writes each document to a file on disk.
@@ -58,27 +54,19 @@ export interface RenderDocumentsAsMarkdownOptions
  *
  * @public
  */
-export async function renderDocumentsAsMarkdown(
+export async function renderMarkdownDocuments(
 	documents: readonly MarkdownDocument[],
 	options: RenderDocumentsAsMarkdownOptions,
 ): Promise<void> {
-	const { logger, newlineKind, outputDirectoryPath } = options;
+	const { logger } = options;
 
-	logger?.verbose("Rendering documents as Markdown and writing to disk...");
+	logger?.verbose("Rendering documents as Markdown...");
 
-	await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
-
-	await Promise.all(
-		documents.map(async (document) => {
-			const renderedDocument = renderDocumentAsMarkdown(document, options);
-
-			const filePath = Path.join(outputDirectoryPath, `${document.documentPath}.md`);
-			await FileSystem.writeFileAsync(filePath, renderedDocument, {
-				convertLineEndings: newlineKind ?? NewlineKind.OsDefault,
-				ensureFolderExists: true,
-			});
-		}),
+	const renderedDocuments = await Promise.all(
+		documents.map((document) => renderDocumentAsMarkdown(document, options)),
 	);
 
-	logger?.success("Markdown documents written to disk.");
+	logger?.success("Documents rendered as Markdown!");
+
+	return saveDocuments(renderedDocuments, options);
 }

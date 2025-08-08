@@ -35,19 +35,11 @@ import type { Nodes } from 'mdast';
 import { Options } from 'mdast-util-to-markdown';
 import type { Paragraph } from 'mdast';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
-import type { Root } from 'hast';
 import type { RootContent } from 'mdast';
 import { TypeParameter } from '@microsoft/api-extractor-model';
 
 // @public
 function ancestryHasModifierTag(apiItem: ApiItem, tagName: string): boolean;
-
-// @public @sealed
-export interface ApiDocument<TContents = unknown> {
-    readonly apiItem: ApiItem;
-    readonly contents: TContents;
-    readonly documentPath: string;
-}
 
 // @public
 export type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFunction | ApiMethod | ApiMethodSignature;
@@ -265,12 +257,6 @@ export namespace DocumentWriter {
 }
 
 // @public
-export interface FileSystemConfiguration {
-    readonly newlineKind?: NewlineKind;
-    readonly outputDirectoryPath: string;
-}
-
-// @public
 function filterItems(apiItems: readonly ApiItem[], config: ApiItemTransformationConfiguration): ApiItem[];
 
 // @public
@@ -371,20 +357,6 @@ export type HierarchyOptions = {
     readonly getFolderName?: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
 };
 
-// @public @sealed
-export type HtmlDocument = ApiDocument<Root>;
-
-declare namespace HtmlRenderer {
-    export {
-        RenderApiModelAsHtmlOptions as RenderApiModelOptions,
-        renderApiModelAsHtml as renderApiModel,
-        RenderDocumentsAsHtmlOptions as RenderDocumentsOptions,
-        renderDocumentsAsHtml as renderDocuments,
-        renderDocument
-    }
-}
-export { HtmlRenderer }
-
 // @public
 function isDeprecated(apiItem: ApiItem): boolean;
 
@@ -462,15 +434,19 @@ export interface LoggingConfiguration {
 export type LoggingFunction = (message: string | Error, ...parameters: unknown[]) => void;
 
 // @public @sealed
-export type MarkdownDocument = ApiDocument<NormalizedTree>;
+export interface MarkdownDocument {
+    readonly apiItem: ApiItem;
+    readonly contents: NormalizedTree;
+    readonly documentPath: string;
+}
 
 declare namespace MarkdownRenderer {
     export {
         RenderApiModelAsMarkdownOptions as RenderApiModelOptions,
         renderApiModelAsMarkdown as renderApiModel,
         RenderDocumentsAsMarkdownOptions as RenderDocumentsOptions,
-        renderDocumentsAsMarkdown as renderDocuments,
-        renderDocument_2 as renderDocument
+        renderMarkdownDocuments,
+        renderDocument
     }
 }
 export { MarkdownRenderer }
@@ -492,34 +468,31 @@ export { ReleaseTag }
 function renderApiModelAsMarkdown(options: RenderApiModelAsMarkdownOptions): Promise<void>;
 
 // @public
-interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationOptions, RenderMarkdownConfiguration, FileSystemConfiguration {
+interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationOptions, RenderMarkdownConfiguration, SaveDocumentsOptions {
 }
 
 // @public
-function renderDocument(document: MarkdownDocument, config: RenderHtmlConfiguration): RenderedDocument;
+function renderDocument(document: MarkdownDocument, config: RenderMarkdownConfiguration): RenderedDocument;
 
 // @public
-function renderDocument_2(document: MarkdownDocument, config: RenderMarkdownConfiguration): string;
-
-// @public
-function renderDocumentsAsMarkdown(documents: readonly MarkdownDocument[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
-
-// @public
-interface RenderDocumentsAsMarkdownOptions extends RenderMarkdownConfiguration, FileSystemConfiguration {
-}
-
-// @public @sealed
-export type RenderedDocument = ApiDocument<string>;
-
-// @public @sealed
-export interface RenderHtmlConfiguration extends LoggingConfiguration {
-    readonly language?: string;
-    readonly prettyFormatting?: boolean;
+interface RenderDocumentsAsMarkdownOptions extends RenderMarkdownConfiguration, SaveDocumentsOptions {
 }
 
 // @public @sealed
 export interface RenderMarkdownConfiguration extends LoggingConfiguration {
     readonly mdastToMarkdownOptions?: Partial<Options>;
+}
+
+// @public
+function renderMarkdownDocuments(documents: readonly MarkdownDocument[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
+
+// @public
+export function saveDocuments(documents: readonly RenderedDocument[], options: SaveDocumentsOptions): Promise<void>;
+
+// @public
+export interface SaveDocumentsOptions extends LoggingConfiguration {
+    readonly newlineKind?: NewlineKind;
+    readonly outputDirectoryPath: string;
 }
 
 // @public @sealed
