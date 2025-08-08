@@ -432,10 +432,7 @@ export abstract class BaseDevtools<DevtoolsType extends DecomposedContainer>
 		this.container.on("connected", this.containerConnectedHandler);
 		this.container.on("disconnected", this.containerDisconnectedHandler);
 		this.container.on("disposed", this.containerDisposedHandler);
-		// Only bind "closed" event if the container supports it
-		if ("closed" in this.container) {
-			this.container.on("closed", this.containerClosedHandler);
-		}
+		this.container.on("closed", this.containerClosedHandler);
 	}
 
 	/**
@@ -446,10 +443,7 @@ export abstract class BaseDevtools<DevtoolsType extends DecomposedContainer>
 		this.container.off("connected", this.containerConnectedHandler);
 		this.container.off("disconnected", this.containerDisconnectedHandler);
 		this.container.off("disposed", this.containerDisposedHandler);
-		// Only unbind "closed" event if the container supports it
-		if ("closed" in this.container) {
-			this.container.off("closed", this.containerClosedHandler);
-		}
+		this.container.off("closed", this.containerClosedHandler);
 	}
 
 	/**
