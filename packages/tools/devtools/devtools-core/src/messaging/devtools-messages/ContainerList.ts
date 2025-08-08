@@ -9,8 +9,6 @@ import type { IDevtoolsMessage } from "../Messages.js";
 /**
  * Encapsulates types and logic related to {@link ContainerList.Message}.
  *
- * @remarks Handles both containers and data objects registered with the devtools.
- *
  * @internal
  */
 export namespace ContainerList {

@@ -16,7 +16,8 @@ export type ContainerKey = string;
 // @alpha
 export interface ContainerRuntimeProps {
     label?: string;
-    runtime: IContainerRuntime;
+    // @input
+    readonly runtime: IContainerRuntime;
 }
 
 // @beta

@@ -13,11 +13,9 @@ import { ContainerDevtools, type ContainerDevtoolsProps } from "./ContainerDevto
 import {
 	ContainerRuntimeDevtools,
 	type ContainerRuntimeProps,
-} from "./ContainerRuntimeDevtools.js";
-import {
 	DecomposedContainerForContainerRuntime,
-	type DecomposedContainer,
-} from "./DecomposedContainer.js";
+} from "./ContainerRuntimeDevtools.js";
+import type { DecomposedContainer } from "./DecomposedContainer.js";
 import type { IDevtoolsLogger } from "./DevtoolsLogger.js";
 import type { DevtoolsFeatureFlags } from "./Features.js";
 import type { IContainerDevtools } from "./IContainerDevtools.js";
