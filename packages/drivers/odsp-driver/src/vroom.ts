@@ -89,7 +89,7 @@ export const fetchJoinSession = mockify(
 				postBody += `X-HTTP-Method-Override: POST\r\n`;
 				postBody += `Content-Type: application/json\r\n`;
 				if (!disableJoinSessionRefresh) {
-					postBody += `prefer: FluidRemoveCheckAccess\r\n`;
+					postBody += `Prefer: FluidRemoveCheckAccess, Return-Sensitivity-Labels\r\n`;
 				}
 				postBody += `_post: 1\r\n`;
 
