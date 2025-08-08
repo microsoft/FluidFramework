@@ -183,7 +183,9 @@ export function create(
 	const privateServiceHost: string | undefined = config.get("privateServiceHost");
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
 	const externalHistorianUrl: string = config.get("worker:blobStorageUrl");
-	const enableNetworkCheck: boolean = config.get("alfred:enableNetworkCheck");
+	const enablePrivateLinkNetworkCheck: boolean = config.get(
+		"alfred:enablePrivateLinkNetworkCheck",
+	);
 	const externalDeltaStreamUrl: string =
 		config.get("worker:deltaStreamUrl") || externalOrdererUrl;
 	const messageBrokerId: string | undefined =
@@ -284,7 +286,7 @@ export function create(
 	router.post(
 		"/:tenantId",
 		validateRequestParams("tenantId"),
-		validatePrivateLink(tenantManager, enableNetworkCheck),
+		validatePrivateLink(tenantManager, enablePrivateLinkNetworkCheck),
 		throttle(
 			clusterThrottlers.get(Constants.createDocThrottleIdPrefix),
 			winston,
@@ -451,7 +453,7 @@ export function create(
 	 */
 	router.get(
 		"/:tenantId/session/:id",
-		validatePrivateLink(tenantManager, enableNetworkCheck),
+		validatePrivateLink(tenantManager, enablePrivateLinkNetworkCheck),
 		throttle(
 			clusterThrottlers.get(Constants.getSessionThrottleIdPrefix),
 			winston,

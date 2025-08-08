@@ -89,7 +89,7 @@
 	},
 	"alfred": {
 		"kafkaClientId": "alfred",
-		"enableNetworkCheck": false,
+		"enablePrivateLinkNetworkCheck": false,
 		"sessionStickinessDurationMs": 3600000,
 		"ignoreEphemeralFlag": true,
 		"enableClientIPLogging": false,
@@ -142,7 +142,7 @@
 		"verifyMaxMessageSize": false,
 		"maxNumberOfClientsPerDocument": 1000000,
 		"numberOfMessagesPerTrace": 100,
-		"enableNetworkCheck": false,
+		"enablePrivateLinkNetworkCheck": false,
 		"throttling": {
 			"socketConnectionsPerTenant": "disabled",
 			"socketConnectionsPerCluster": "disabled",

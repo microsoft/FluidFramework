@@ -88,7 +88,9 @@ export class NexusRunner implements IRunner {
 				"nexus:maxNumberOfClientsPerDocument",
 			);
 			const numberOfMessagesPerTrace = this.config.get("nexus:numberOfMessagesPerTrace");
-			const enableNetworkCheck = this.config.get("nexus:enableNetworkCheck");
+			const enablePrivateLinkNetworkCheck = this.config.get(
+				"nexus:enablePrivateLinkNetworkCheck",
+			);
 			const preconnectTTLMs = this.config.get("nexus:preconnectTTLMs");
 			const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
 			const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
@@ -118,7 +120,7 @@ export class NexusRunner implements IRunner {
 				isTokenExpiryEnabled,
 				isClientConnectivityCountingEnabled,
 				isSignalUsageCountingEnabled,
-				enableNetworkCheck,
+				enablePrivateLinkNetworkCheck,
 				this.redisCache,
 				this.socketConnectTenantThrottler,
 				this.socketConnectClusterThrottler,

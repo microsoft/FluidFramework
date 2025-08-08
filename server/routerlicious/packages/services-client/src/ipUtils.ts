@@ -35,6 +35,7 @@ const PrivateLinkIpStructure = {
 	privateAddressMostSignificantByte: 13,
 };
 
+// Todo: Add the unit tests for this function
 /**
  * Get the network information from the client IP address, including whether it is a private link and the private link ID.
  *

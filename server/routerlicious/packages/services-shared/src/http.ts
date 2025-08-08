@@ -47,10 +47,10 @@ export function validateRequestParams(...paramNames: (string | number)[]): Reque
  */
 export function validatePrivateLink(
 	tenantManager: ITenantManager,
-	enableNetworkCheck: boolean = false,
+	enablePrivateLinkNetworkCheck: boolean = false,
 ): RequestHandler {
 	return async (req, res, next) => {
-		if (enableNetworkCheck) {
+		if (enablePrivateLinkNetworkCheck) {
 			const tenantId = req.params.tenantId;
 			if (!tenantId) {
 				next();
@@ -59,7 +59,7 @@ export function validatePrivateLink(
 			const privateLinkEnable = tenantInfo?.customData?.privateEndpoints?.accountLinkId
 				? true
 				: false;
-			const clientIPAddress = req.ip ? req.ip : "";
+			const clientIPAddress = req.ip ?? "";
 			if (privateLinkEnable && (!clientIPAddress || clientIPAddress.trim() === "")) {
 				return handleResponse(
 					Promise.reject(

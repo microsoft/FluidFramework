@@ -65,7 +65,9 @@ export function create(
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
 
-	const enableNetworkCheck: boolean = config.get("alfred:enableNetworkCheck");
+	const enablePrivateLinkNetworkCheck: boolean = config.get(
+		"alfred:enablePrivateLinkNetworkCheck",
+	);
 
 	// Jwt token cache
 	const enableJwtTokenCache: boolean = getBooleanFromConfig(
@@ -155,7 +157,7 @@ export function create(
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
-		validatePrivateLink(tenantManager, enableNetworkCheck),
+		validatePrivateLink(tenantManager, enablePrivateLinkNetworkCheck),
 		throttle(
 			clusterThrottlers.get(Constants.getDeltasThrottleIdPrefix),
 			winston,
