@@ -25,6 +25,8 @@ export class ConsensusRegisterCollectionClass<T> extends SharedObject<IConsensus
     read(key: string, readPolicy?: ReadPolicy): T | undefined;
     // (undocumented)
     readVersions(key: string): T[] | undefined;
+    // @sealed
+    protected rollback(content: unknown, localOpMetadata: unknown): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     write(key: string, value: T): Promise<boolean>;
