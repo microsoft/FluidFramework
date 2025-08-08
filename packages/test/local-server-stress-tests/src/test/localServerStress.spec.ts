@@ -35,17 +35,23 @@ describe("Local Server Stress", () => {
 		defaultTestCount: 100,
 		// skipMinimization: true,
 		// Uncomment to replay a particular seed.
-		// replay: 93,
-		// only: [9],
+		// replay: 4,
+		// only: [30],
 		saveFailures,
 		// saveSuccesses,
 		configurations: { "Fluid.Container.enableOfflineLoad": true },
 		skip: [
-			...[4, 11, 13, 19, 30, 39, 54, 57, 69, 78, 80, 82], // 0xa21
+			/**
+			 * Problems loading new client from it's pending state after exiting the staging mode.
+			 */
+			...[13, 39], // client is closed
+			...[19, 82], // The Container is closed and cannot be connected
+			...[30, 39, 69, 80], // 0xa21
 			...[9, 79], // Number of subDirectories not same
 			...[22, 72], // Key not found or value not matching key
 			...[26], // Rollback op does not match last pending
 			...[34, 35, 38, 45, 46, 71, 91], // Number of keys not same
+			...[54], // timeout
 		],
 	});
 });

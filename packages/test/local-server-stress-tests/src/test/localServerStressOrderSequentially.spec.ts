@@ -95,7 +95,7 @@ describe("Local Server Stress with rollback", () => {
 		defaultTestCount: 100,
 		// skipMinimization: true,
 		// Uncomment to replay a particular seed.
-		// only: [91],
+		// only: [13, 20, 31, 54, 81, 91, 92],
 		saveFailures,
 		// saveSuccesses,
 		configurations: {
@@ -103,7 +103,8 @@ describe("Local Server Stress with rollback", () => {
 			"Fluid.Container.enableOfflineLoad": true,
 		},
 		skip: [
-			...[6, 13, 20, 31, 54, 81, 82, 91, 92], // 0xa21
+			...[13, 31, 91], // client is closed
+			...[20, 54, 81, 92], // 0xa21
 			...[39, 40, 53], // Number of keys not same
 			...[83], // Number of subDirectories not same
 			...[97], // channel maps should be the same size
