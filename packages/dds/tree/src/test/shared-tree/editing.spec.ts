@@ -3135,7 +3135,7 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2, tree3], expected);
 		});
 
-		it("Rebase over conflicted change then rebase over that change", () => {
+		it("Rebase over a commit that depends on a commit that has become conflicted", () => {
 			const tree1 = makeTreeFromJsonSequence(["C", "D"]);
 
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.events);
