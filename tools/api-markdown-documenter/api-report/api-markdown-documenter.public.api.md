@@ -28,6 +28,7 @@ import { ApiVariable } from '@microsoft/api-extractor-model';
 import type { BlockContent } from 'mdast';
 import { DocSection } from '@microsoft/tsdoc';
 import { Excerpt } from '@microsoft/api-extractor-model';
+import type { Link } from 'mdast';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'mdast';
 import type { Nodes } from 'mdast';
@@ -431,12 +432,6 @@ declare namespace LayoutUtilities {
 export { LayoutUtilities }
 
 // @public
-export interface Link {
-    readonly target: UrlTarget;
-    readonly text: string;
-}
-
-// @public
 export function loadModel(options: LoadModelOptions): Promise<ApiModel>;
 
 // @public
@@ -591,9 +586,6 @@ export function transformApiModel(options: ApiItemTransformationOptions): Normal
 
 // @public
 export function transformTsdoc(node: DocSection, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): BlockContent[];
-
-// @public
-export type UrlTarget = string;
 
 // @public
 export type ValidApiItemKind = Exclude<ApiItemKind, ApiItemKind.None>;

@@ -29,8 +29,8 @@ import {
 } from "@microsoft/tsdoc";
 import type {
 	BlockContent,
+	Link,
 	List,
-	Link as MdastLink,
 	Nodes,
 	Paragraph,
 	Parent,
@@ -39,7 +39,6 @@ import type {
 	Text,
 } from "mdast";
 
-import type { Link } from "../../Link.js";
 import type { Logger } from "../../Logging.js";
 import type { Section, SectionContent, SectionHeading } from "../../mdast/index.js";
 import {
@@ -417,16 +416,9 @@ export function createExcerptSpanWithHyperlinks(
 				config.apiModel.resolveDeclarationReference(token.canonicalReference, undefined);
 
 			if (apiItemResult.resolvedApiItem) {
-				const link = getLinkForApiItem(
-					apiItemResult.resolvedApiItem,
-					config,
-					unwrappedTokenText,
+				content.push(
+					getLinkForApiItem(apiItemResult.resolvedApiItem, config, unwrappedTokenText),
 				);
-				content.push({
-					type: "link",
-					url: link.target,
-					children: [{ type: "text", value: link.text }],
-				});
 				wroteHyperlink = true;
 			}
 		}
@@ -478,12 +470,6 @@ export function createBreadcrumbParagraph(
 
 	// #endregion
 
-	const renderedLinks: MdastLink[] = breadcrumbLinks.map((link) => ({
-		type: "link",
-		url: link.target,
-		children: [{ type: "text", value: link.text }],
-	}));
-
 	const breadcrumbSeparator: Text = {
 		type: "text",
 		value: " > ",
@@ -491,7 +477,7 @@ export function createBreadcrumbParagraph(
 
 	// Inject breadcrumb separator between each link
 	const contents: PhrasingContent[] = injectSeparator<PhrasingContent>(
-		renderedLinks,
+		breadcrumbLinks,
 		breadcrumbSeparator,
 	);
 
@@ -1168,18 +1154,7 @@ export function createEntryPointList(
 				children: [
 					{
 						type: "paragraph",
-						children: [
-							{
-								type: "link",
-								url: link.target,
-								children: [
-									{
-										type: "text",
-										value: link.text,
-									},
-								],
-							},
-						],
+						children: [link],
 					},
 				],
 			};

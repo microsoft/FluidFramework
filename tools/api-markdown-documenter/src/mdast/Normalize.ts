@@ -3,16 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	BlockContent,
-	Break,
-	Heading,
-	Html,
-	Nodes,
-	Root,
-	RootContent,
-	Strong,
-} from "mdast";
+import type { BlockContent, Break, Html, Nodes, Root, RootContent, Strong } from "mdast";
 
 import type { MarkdownDocument, NormalizedMarkdownDocument } from "../ApiDocument.js";
 
@@ -146,25 +137,29 @@ export function normalizeHeading(
 function transformAsHeading(
 	headingNode: SectionHeading,
 	headingLevel: 1 | 2 | 3 | 4 | 5 | 6,
-): BlockContent[] {
-	let headingText: string = headingNode.title;
-	if (headingNode.id !== undefined) {
-		// TODO: this won't convert to HTML correctly. Need to find a proper way to embed the ID in the heading.
-		headingText = `${headingText} {#${headingNode.id}}`;
-	}
-
-	const heading: Heading = {
-		type: "heading",
-		depth: headingLevel,
-		children: [
-			{
-				type: "text",
-				value: headingText,
-			},
-		],
-	};
-
-	return [heading];
+): [BlockContent] {
+	// Markdown headings don't natively support anchor IDs.
+	// If the heading has an ID set, we will render it as an HTML element.
+	// While there are extended syntax options for Markdown that do support IDs, none of them are widely supported.
+	return headingNode.id === undefined
+		? [
+				{
+					type: "heading",
+					depth: headingLevel,
+					children: [
+						{
+							type: "text",
+							value: headingNode.title,
+						},
+					],
+				},
+			]
+		: [
+				{
+					type: "html",
+					value: `<h${headingLevel} id="${headingNode.id}">${headingNode.title}</h${headingLevel}>`,
+				},
+			];
 }
 
 function transformAsBoldText(headingNode: SectionHeading): BlockContent[] {

@@ -67,7 +67,6 @@ export {
 } from "./renderers/index.js";
 export type { LoggingConfiguration } from "./LoggingConfiguration.js";
 export type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
-export type { Link, UrlTarget } from "./Link.js";
 export {
 	lintApiModel,
 	type LintApiModelConfiguration,
