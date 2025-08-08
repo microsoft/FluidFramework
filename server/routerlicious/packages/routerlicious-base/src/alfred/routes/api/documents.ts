@@ -183,9 +183,8 @@ export function create(
 	const privateServiceHost: string | undefined = config.get("privateServiceHost");
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
 	const externalHistorianUrl: string = config.get("worker:blobStorageUrl");
-	const enablePrivateLinkNetworkCheck: boolean = config.get(
-		"alfred:enablePrivateLinkNetworkCheck",
-	);
+	const enablePrivateLinkNetworkCheck: boolean =
+		config.get("alfred:enablePrivateLinkNetworkCheck") ?? false;
 	const externalDeltaStreamUrl: string =
 		config.get("worker:deltaStreamUrl") || externalOrdererUrl;
 	const messageBrokerId: string | undefined =
