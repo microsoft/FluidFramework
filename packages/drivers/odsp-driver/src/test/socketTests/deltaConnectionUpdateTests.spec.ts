@@ -7,7 +7,10 @@ import { strict as assert } from "node:assert";
 
 import type { IClient } from "@fluidframework/driver-definitions";
 import type { ISignalMessage } from "@fluidframework/driver-definitions/internal";
-import type { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions/internal";
+import type {
+	ISensitivityLabel,
+	ISocketStorageDiscovery,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,
 	MockLogger,
@@ -77,15 +80,24 @@ describe("DeltaConnectionMetadata update tests", () => {
 		await yieldEventLoop();
 	}
 
-	function addJoinSessionStub(label: string): SinonStub {
-		joinSessionResponse.sensitivityLabelsInfo = JSON.stringify({
-			labels: label,
-			timestamp: Date.now(),
-		});
+	function addJoinSessionStub(label: ISensitivityLabel): SinonStub {
+		joinSessionResponse.sensitivityLabelsInfo = {
+			timestamp: new Date().toISOString(),
+			labels: [label],
+		};
 		const joinSessionStub = stub(fetchJoinSession, mockify.key).callsFake(
 			async () => joinSessionResponse,
 		);
 		return joinSessionStub;
+	}
+
+	function testSensitivityLabelObjectWithId(id: string): ISensitivityLabel {
+		return {
+			sensitivityLabelId: id,
+			tenantId: "tenantId",
+			assignmentMethod: "standard",
+			appliedByUserEmail: "fakeemail@microsoft.com",
+		};
 	}
 
 	before(async () => {
@@ -134,85 +146,19 @@ describe("DeltaConnectionMetadata update tests", () => {
 		}
 	}
 
-	it.skip("Delta connection metadata should be updated via Fluid signals and join session response", async () => {
-		await tickClock(1);
-		socket = new ClientSocketMock();
-		let eventRaised = false;
-		let content: Record<string, string>;
-
-		const handler = (metadata: Record<string, string>): void => {
-			eventRaised = true;
-			assert.strictEqual(
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				JSON.parse(metadata.sensitivityLabelsInfo).labels,
-				content.labels,
-				"label via event should match",
-			);
-		};
-
-		let joinSessionStub = addJoinSessionStub("label1");
-
-		content = { labels: "label1" };
-		service.on("metadataUpdate", handler);
-		const connection = (await mockSocket(socket as unknown as Socket, async () =>
-			service.connectToDeltaStream(client),
-		)) as OdspDocumentDeltaConnection;
-		assert(eventRaised, "event1 should have been raised");
-		service.off("metadataUpdate", handler);
-		joinSessionStub.restore();
-
-		assert(!connection.disposed, "connection should not be disposed");
-
-		assert(joinSessionStub.calledOnce, "Should called once on first try");
-
-		await tickClock(1);
-
-		// Now change label through signal and listen as event on service.
-		// eslint-disable-next-line require-atomic-updates
-		eventRaised = false;
-		content = { labels: "label2" };
-		const signalContent1 = { labels: "label2", timestamp: Date.now() };
-		const signalMessage1: ISignalMessage = {
-			clientId: null,
-			content: JSON.stringify({
-				contents: {
-					type: "PolicyLabelsUpdate",
-					content: signalContent1,
-				},
-			}),
-		};
-
-		service.on("metadataUpdate", handler);
-
-		socket.emit("signal", signalMessage1, joinSessionResponse.id);
-		assert(eventRaised, "event2 should have been raised");
-		service.off("metadataUpdate", handler);
-
-		await tickClock(1);
-
-		// Now update through join session response
-		// eslint-disable-next-line require-atomic-updates
-		eventRaised = false;
-		content = { labels: "label3" };
-		service.on("metadataUpdate", handler);
-		joinSessionStub = addJoinSessionStub("label3");
-		await tickClock(70000);
-		joinSessionStub.restore();
-		assert(eventRaised, "event3 should have been raised");
-		service.off("metadataUpdate", handler);
-	});
-
 	it("Join session response parsing", async () => {
-
 		await tickClock(1);
 		socket = new ClientSocketMock();
 		let eventRaised = false;
 
-		const sensititivityLabelsString = `[
-			{"sensitivityLabelId":"sensitivityLabelId",
-			"tenantId":"tenantId",
-			"assignmentMethod":"standard",
-			"appliedByUserEmail":"fakeemail@microsoft.com"}]`
+		const exampleSensitivityLabelsInfo = `{
+			"timestamp":"2025-05-28T14:56:21-07:00",
+			"labels":[
+				{"sensitivityLabelId":"sensitivityLabelId",
+				"tenantId":"tenantId",
+				"assignmentMethod":"standard",
+				"appliedByUserEmail":"fakeemail@microsoft.com"}
+			]}`;
 
 		const joinSessionResponseString = `
 			{
@@ -224,17 +170,14 @@ describe("DeltaConnectionMetadata update tests", () => {
 				"runtimeTenantId":"1!1!3",
 				"snapshotStorageUrl":"https://fake/snapshotStorageUrl",
 				"socketToken":"",
-				"sensitivityLabelsInfo":
-					{"timestamp":"2025-05-28T14:56:21-07:00",
-					"labels":${sensititivityLabelsString}}}`;
-
+				"sensitivityLabelsInfo": ${exampleSensitivityLabelsInfo}
+			}`;
 
 		const parsedResponse = JSON.parse(joinSessionResponseString) as ISocketStorageDiscovery;
 
 		const handler = (metadata: Record<string, string>): void => {
 			eventRaised = true;
-			assert.strictEqual(
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			assert.deepStrictEqual(
 				JSON.parse(metadata.sensitivityLabelsInfo),
 				parsedResponse.sensitivityLabelsInfo,
 				"sensitivity info via event should match",
@@ -257,6 +200,75 @@ describe("DeltaConnectionMetadata update tests", () => {
 		assert(!connection.disposed, "connection should not be disposed");
 
 		assert(joinSessionStub.calledOnce, "Should called once on first try");
+	});
+
+	it("Delta connection metadata should be updated via Fluid signals and join session response", async () => {
+		await tickClock(1);
+		socket = new ClientSocketMock();
+		let eventRaised = false;
+		let content: Record<string, ISensitivityLabel[]>;
+
+		const handler = (metadata: Record<string, string>): void => {
+			eventRaised = true;
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+			const arg1 = JSON.parse(metadata.sensitivityLabelsInfo).labels;
+			const arg2: ISensitivityLabel[] | undefined = content.labels;
+			assert.deepStrictEqual(arg1, arg2, "label via event should match");
+		};
+
+		const label1Object = testSensitivityLabelObjectWithId("label1");
+		let joinSessionStub = addJoinSessionStub(label1Object);
+
+		content = { labels: [label1Object] };
+		service.on("metadataUpdate", handler);
+		const connection = (await mockSocket(socket as unknown as Socket, async () =>
+			service.connectToDeltaStream(client),
+		)) as OdspDocumentDeltaConnection;
+		assert(eventRaised, "event1 should have been raised");
+		service.off("metadataUpdate", handler);
+		joinSessionStub.restore();
+
+		assert(!connection.disposed, "connection should not be disposed");
+
+		assert(joinSessionStub.calledOnce, "Should called once on first try");
+
+		await tickClock(1);
+
+		// Now change label through signal and listen as event on service.
+		// eslint-disable-next-line require-atomic-updates
+		eventRaised = false;
+		const label2Object = testSensitivityLabelObjectWithId("label2");
+		content = { labels: [label2Object] };
+		const signalContent1 = { labels: [label2Object], timestamp: new Date().toISOString() };
+		const signalMessage1: ISignalMessage = {
+			clientId: null,
+			content: JSON.stringify({
+				contents: {
+					type: "PolicyLabelsUpdate",
+					content: signalContent1,
+				},
+			}),
+		};
+
+		service.on("metadataUpdate", handler);
+
+		socket.emit("signal", signalMessage1, joinSessionResponse.id);
+		assert(eventRaised, "event2 should have been raised");
+		service.off("metadataUpdate", handler);
+
+		await tickClock(1);
+
+		// Now update through join session response
+		// eslint-disable-next-line require-atomic-updates
+		eventRaised = false;
+		const label3Object = testSensitivityLabelObjectWithId("label3");
+		content = { labels: [label3Object] };
+		service.on("metadataUpdate", handler);
+		joinSessionStub = addJoinSessionStub(label3Object);
+		await tickClock(70000);
+		joinSessionStub.restore();
+		assert(eventRaised, "event3 should have been raised");
+		service.off("metadataUpdate", handler);
 	});
 
 	afterEach(async () => {

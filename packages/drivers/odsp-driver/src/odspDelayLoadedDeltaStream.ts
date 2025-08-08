@@ -25,6 +25,7 @@ import {
 	type IOdspError,
 	type IOdspResolvedUrl,
 	type ISocketStorageDiscovery,
+	type ISensitivityLabelsInfo,
 	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 	type TokenFetchOptions,
@@ -189,9 +190,7 @@ export class OdspDelayLoadedDeltaStream {
 				);
 			}
 			if (websocketEndpoint.sensitivityLabelsInfo !== undefined) {
-				this.emitMetaDataUpdateEvent({
-					sensitivityLabelsInfo: websocketEndpoint.sensitivityLabelsInfo,
-				});
+				this.emitSensitivityLabelUpdateEvent(websocketEndpoint.sensitivityLabelsInfo);
 			}
 
 			const connectionId = uuid();
@@ -283,9 +282,9 @@ export class OdspDelayLoadedDeltaStream {
 					// Drop error
 				}
 				if (envelope?.contents?.type === policyLabelsUpdatesSignalType) {
-					this.emitMetaDataUpdateEvent({
-						sensitivityLabelsInfo: JSON.stringify(envelope.contents.content),
-					});
+					this.emitSensitivityLabelUpdateEvent(
+						envelope.contents.content as ISensitivityLabelsInfo,
+					);
 				}
 			}
 		}
@@ -435,9 +434,7 @@ export class OdspDelayLoadedDeltaStream {
 			);
 			// Emit event only in case it is fetched from the network.
 			if (joinSessionResponse.sensitivityLabelsInfo !== undefined) {
-				this.emitMetaDataUpdateEvent({
-					sensitivityLabelsInfo: joinSessionResponse.sensitivityLabelsInfo,
-				});
+				this.emitSensitivityLabelUpdateEvent(joinSessionResponse.sensitivityLabelsInfo);
 			}
 			return {
 				entryTime: Date.now(),
@@ -507,17 +504,15 @@ export class OdspDelayLoadedDeltaStream {
 		return response.joinSessionResponse;
 	}
 
-	private emitMetaDataUpdateEvent(metadata: Record<string, string>): void {
-		const label = JSON.parse(metadata.sensitivityLabelsInfo) as {
-			labels: unknown;
-			timestamp: number;
-		};
-		const time = label.timestamp;
-		assert(time > 0, 0x8e0 /* time should be positive */);
-		if (time > this.labelUpdateTimestamp) {
-			this.labelUpdateTimestamp = time;
+	private emitSensitivityLabelUpdateEvent(
+		sensitivityLabelsInfo: ISensitivityLabelsInfo,
+	): void {
+		const createdTimestamp = Date.parse(sensitivityLabelsInfo.timestamp);
+		assert(createdTimestamp > 0, 0x8e0 /* time should be positive */);
+		if (createdTimestamp > this.labelUpdateTimestamp) {
+			this.labelUpdateTimestamp = createdTimestamp;
 			this.metadataUpdateHandler({
-				sensitivityLabelsInfo: metadata.sensitivityLabelsInfo,
+				sensitivityLabelsInfo: JSON.stringify(sensitivityLabelsInfo),
 			});
 		}
 	}
