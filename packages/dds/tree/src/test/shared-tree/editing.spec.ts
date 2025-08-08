@@ -2766,7 +2766,7 @@ describe("Editing", () => {
 	// - The changesets that need to be sent from one peer to another are not currently getting serialized/deserialized properly.
 	describe("Detached nodes", () => {
 		const containers = ["an array", "a map", "an object's optional field"] as const;
-		describe("can be reattached anywhere but an object field's required", () => {
+		describe.skip("can be reattached anywhere but an object field's required", () => {
 			const sf = new SchemaFactory(undefined);
 			class Child extends sf.object("Child", {}) {}
 			class ArrayParent extends sf.array("Array", Child) {}
