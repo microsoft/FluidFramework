@@ -700,13 +700,7 @@ export function createApiTitleCell(
 	const link = getLinkForApiItem(apiItem, config);
 	return {
 		type: "tableCell",
-		children: [
-			{
-				type: "link",
-				url: link.target,
-				children: [{ type: "text", value: link.text }],
-			},
-		],
+		children: [link],
 	};
 }
 
