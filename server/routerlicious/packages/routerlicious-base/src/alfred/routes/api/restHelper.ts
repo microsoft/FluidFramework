@@ -136,6 +136,7 @@ export function getDocumentUrlsfromNetworkInfo(
 	externalOrdererUrl: string,
 	externalHistorianUrl: string,
 	externalDeltaStreamUrl: string,
+	enablePrivateLinkNetworkCheck: boolean = false,
 	isPrivateLink?: boolean | false,
 	privateServiceHost?: string | undefined,
 ): {
@@ -143,7 +144,7 @@ export function getDocumentUrlsfromNetworkInfo(
 	documentHistorianUrl: string;
 	documentDeltaStreamUrl: string;
 } {
-	if (isPrivateLink) {
+	if (enablePrivateLinkNetworkCheck && isPrivateLink) {
 		return {
 			documentOrdererUrl: `https://${tenantId}.alfred.${privateServiceHost}`,
 			documentHistorianUrl: `https://${tenantId}.historian.${privateServiceHost}`,

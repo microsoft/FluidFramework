@@ -339,6 +339,7 @@ export function create(
 				externalOrdererUrl,
 				externalHistorianUrl,
 				externalDeltaStreamUrl,
+				enablePrivateLinkNetworkCheck,
 				networkInfo.isPrivateLink,
 				privateServiceHost,
 			);
@@ -515,6 +516,7 @@ export function create(
 				externalOrdererUrl,
 				externalHistorianUrl,
 				externalDeltaStreamUrl,
+				enablePrivateLinkNetworkCheck,
 				networkInfo.isPrivateLink,
 				privateServiceHost,
 			);

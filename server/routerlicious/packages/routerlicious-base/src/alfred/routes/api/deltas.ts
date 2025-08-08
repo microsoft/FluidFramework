@@ -65,9 +65,8 @@ export function create(
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
 
-	const enablePrivateLinkNetworkCheck: boolean = config.get(
-		"alfred:enablePrivateLinkNetworkCheck",
-	);
+	const enablePrivateLinkNetworkCheck: boolean =
+		config.get("alfred:enablePrivateLinkNetworkCheck") ?? false;
 
 	// Jwt token cache
 	const enableJwtTokenCache: boolean = getBooleanFromConfig(
