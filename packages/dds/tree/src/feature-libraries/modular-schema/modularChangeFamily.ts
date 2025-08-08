@@ -1958,7 +1958,7 @@ export class ModularChangeFamily
 
 			for (const keyRange of handler.getCrossFieldKeys(fieldChange.change)) {
 				const fields = getFieldsForCrossFieldKey(change, keyRange.key, keyRange.count);
-				assert(fields.length > 0, "Cross-field key does not have associated field");
+				assert(fields.length > 0, "Unregistered cross-field key");
 				for (const fieldFromLookup of fields) {
 					assert(
 						areEqualFieldIds(fieldFromLookup, fieldId),
@@ -4102,12 +4102,14 @@ function composeRename(
 		// so we invalidate the detach location so that the detach's ID can be replaced with the new ID.
 		pendingCompositions.affectedBaseFields.set(fieldIdKeyFromFieldId(detachEntry.value), true);
 
-		// `change1`'s detach will be replaced by `change2`'s detach, so we update the cross-field keys.
-		removedCrossFieldKeys.set(
-			{ ...oldId, target: CrossFieldTarget.Source },
-			countToProcess,
-			true,
-		);
+		if (!areEqualChangeAtomIds(oldId, newId)) {
+			// `change1`'s detach will be replaced by `change2`'s detach, so we update the cross-field keys.
+			removedCrossFieldKeys.set(
+				{ ...oldId, target: CrossFieldTarget.Source },
+				countToProcess,
+				true,
+			);
+		}
 
 		movedCrossFieldKeys.set(
 			{ ...newId, target: CrossFieldTarget.Source },
