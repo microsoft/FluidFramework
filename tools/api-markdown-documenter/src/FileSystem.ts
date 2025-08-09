@@ -11,7 +11,7 @@ import type { RenderedDocument } from "./ApiDocument.js";
 import type { LoggingConfiguration } from "./LoggingConfiguration.js";
 
 /**
- * Options for rendering {@link MarkdownDocument}s as Markdown.
+ * Options for writing {@link RenderedDocument}s to disk.
  *
  * @public
  */

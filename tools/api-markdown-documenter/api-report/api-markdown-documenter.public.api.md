@@ -41,6 +41,13 @@ import { TypeParameter } from '@microsoft/api-extractor-model';
 // @public
 function ancestryHasModifierTag(apiItem: ApiItem, tagName: string): boolean;
 
+// @public @sealed
+export interface ApiDocument {
+    readonly apiItem: ApiItem;
+    readonly contents: NormalizedTree;
+    readonly documentPath: string;
+}
+
 // @public
 export type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFunction | ApiMethod | ApiMethodSignature;
 
@@ -411,13 +418,6 @@ export interface LoggingConfiguration {
 // @public
 export type LoggingFunction = (message: string | Error, ...parameters: unknown[]) => void;
 
-// @public @sealed
-export interface MarkdownDocument {
-    readonly apiItem: ApiItem;
-    readonly contents: NormalizedTree;
-    readonly documentPath: string;
-}
-
 declare namespace MarkdownRenderer {
     export {
         RenderApiModelAsMarkdownOptions as RenderApiModelOptions,
@@ -450,10 +450,17 @@ interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationOptions, 
 }
 
 // @public
-function renderDocument(document: MarkdownDocument, config: RenderMarkdownConfiguration): RenderedDocument;
+function renderDocument(document: ApiDocument, config: RenderMarkdownConfiguration): RenderedDocument;
 
 // @public
 interface RenderDocumentsAsMarkdownOptions extends RenderMarkdownConfiguration, SaveDocumentsOptions {
+}
+
+// @public @sealed
+export interface RenderedDocument {
+    readonly apiItem: ApiItem;
+    readonly contents: string;
+    readonly filePath: string;
 }
 
 // @public @sealed
@@ -462,7 +469,7 @@ export interface RenderMarkdownConfiguration extends LoggingConfiguration {
 }
 
 // @public
-function renderMarkdownDocuments(documents: readonly MarkdownDocument[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
+function renderMarkdownDocuments(documents: readonly ApiDocument[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
 
 // @public
 export function saveDocuments(documents: readonly RenderedDocument[], options: SaveDocumentsOptions): Promise<void>;
@@ -505,7 +512,7 @@ export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: T
 export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: ApiItemTransformationConfiguration) => Section[];
 
 // @public
-export function transformApiModel(options: ApiItemTransformationOptions): MarkdownDocument[];
+export function transformApiModel(options: ApiItemTransformationOptions): ApiDocument[];
 
 // @public
 export function transformTsdoc(node: DocSection, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): BlockContent[];

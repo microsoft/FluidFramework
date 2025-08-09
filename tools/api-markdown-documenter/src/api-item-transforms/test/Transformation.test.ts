@@ -18,7 +18,7 @@ import {
 } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 
-import type { MarkdownDocument } from "../../ApiDocument.js";
+import type { ApiDocument } from "../../ApiDocument.js";
 import type { NormalizedTree } from "../../mdast/index.js";
 import { apiItemToDocument } from "../TransformApiItem.js";
 import { transformApiModel } from "../TransformApiModel.js";
@@ -798,7 +798,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		// The model-level doc in this case isn't particularly interesting, so we will skip evaluating it.
 
-		const expectedPackageDocument: MarkdownDocument = {
+		const expectedPackageDocument: ApiDocument = {
 			apiItem: model.packages[0],
 			documentPath: "test-package/index",
 			contents: {
@@ -876,7 +876,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 		};
 		expect(documents[1]).to.deep.equal(expectedPackageDocument);
 
-		const expectedEntryPointADocument: MarkdownDocument = {
+		const expectedEntryPointADocument: ApiDocument = {
 			apiItem: model.packages[0].entryPoints[0],
 			documentPath: "test-package/entry-point-a-entrypoint",
 			contents: {
@@ -1002,7 +1002,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 		};
 		expect(documents[2]).to.deep.equal(expectedEntryPointADocument);
 
-		const expectedEntryPointBDocument: MarkdownDocument = {
+		const expectedEntryPointBDocument: ApiDocument = {
 			apiItem: model.packages[0].entryPoints[1],
 			documentPath: "test-package/entry-point-b-entrypoint",
 			contents: {

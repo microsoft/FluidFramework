@@ -11,7 +11,7 @@ import {
 	type ApiPackage,
 } from "@microsoft/api-extractor-model";
 
-import type { MarkdownDocument } from "../ApiDocument.js";
+import type { ApiDocument } from "../ApiDocument.js";
 import type { Section } from "../mdast/index.js";
 
 import {
@@ -28,11 +28,11 @@ import {
 import { createBreadcrumbParagraph, createEntryPointList } from "./helpers/index.js";
 
 /**
- * Renders the provided model and its contents to a series of {@link MarkdownDocument}s.
+ * Renders the provided model and its contents to a series of {@link ApiDocument}s.
  *
  * @public
  */
-export function transformApiModel(options: ApiItemTransformationOptions): MarkdownDocument[] {
+export function transformApiModel(options: ApiItemTransformationOptions): ApiDocument[] {
 	const config = getApiItemTransformationConfigurationWithDefaults(options);
 	const { apiModel, logger, exclude: excludeItem } = config;
 
@@ -41,7 +41,7 @@ export function transformApiModel(options: ApiItemTransformationOptions): Markdo
 	// If a package has multiple entry-points, it's possible for the same API item to appear under more than one
 	// entry-point (i.e., we are traversing a graph, rather than a tree).
 	// To avoid redundant computation, we will keep a ledger of which API items we have transformed.
-	const documentsMap = new Map<ApiItem, MarkdownDocument>();
+	const documentsMap = new Map<ApiItem, ApiDocument>();
 
 	// Always render Model document (this is the "root" of the generated documentation suite).
 	documentsMap.set(apiModel, createDocumentForApiModel(apiModel, config));
@@ -151,7 +151,7 @@ function getDocumentItems(
 }
 
 /**
- * Generates a {@link MarkdownDocument} for the specified `apiModel`.
+ * Generates a {@link ApiDocument} for the specified `apiModel`.
  *
  * @param apiModel - The API model content to be rendered. Represents the root of the API suite.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
@@ -161,7 +161,7 @@ function getDocumentItems(
 function createDocumentForApiModel(
 	apiModel: ApiModel,
 	config: ApiItemTransformationConfiguration,
-): MarkdownDocument {
+): ApiDocument {
 	const { logger, transformations } = config;
 
 	logger.verbose(`Generating API Model document...`);
@@ -177,7 +177,7 @@ function createDocumentForApiModel(
 }
 
 /**
- * Creates a {@link MarkdownDocument} for an `ApiPackage` that has a single entry-point.
+ * Creates a {@link ApiDocument} for an `ApiPackage` that has a single entry-point.
  *
  * Bubbles up the entry-point's contents into the package-level document to reduce indirection in the generated
  * documentation.
@@ -192,7 +192,7 @@ function createDocumentForSingleEntryPointPackage(
 	apiPackage: ApiPackage,
 	apiEntryPoint: ApiEntryPoint,
 	config: ApiItemTransformationConfiguration,
-): MarkdownDocument {
+): ApiDocument {
 	const { includeBreadcrumb, logger, transformations } = config;
 
 	logger.verbose(`Generating ${apiPackage.name} package document...`);
@@ -224,7 +224,7 @@ function createDocumentForSingleEntryPointPackage(
 }
 
 /**
- * Creates a {@link MarkdownDocument} for an `ApiPackage` that has a 2 or more entry-points.
+ * Creates a {@link ApiDocument} for an `ApiPackage` that has a 2 or more entry-points.
  *
  * The document will include a list of links to the entry-points, which will have their own documents generated.
  *
@@ -238,7 +238,7 @@ function createDocumentForMultiEntryPointPackage(
 	apiPackage: ApiPackage,
 	apiEntryPoints: readonly ApiEntryPoint[],
 	config: ApiItemTransformationConfiguration,
-): MarkdownDocument {
+): ApiDocument {
 	const { includeBreadcrumb, logger } = config;
 
 	logger.verbose(`Generating ${apiPackage.name} package document...`);
@@ -274,7 +274,7 @@ function createDocumentForMultiEntryPointPackage(
 function createDocumentForApiEntryPoint(
 	apiEntryPoint: ApiEntryPoint,
 	config: ApiItemTransformationConfiguration,
-): MarkdownDocument {
+): ApiDocument {
 	const { includeBreadcrumb, logger, transformations } = config;
 
 	logger.verbose(`Generating ${apiEntryPoint.displayName} API entry-point document...`);

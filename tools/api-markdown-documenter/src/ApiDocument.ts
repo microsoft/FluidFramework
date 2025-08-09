@@ -13,7 +13,7 @@ import type { NormalizedTree } from "./mdast/index.js";
  * @public
  * @sealed
  */
-export interface MarkdownDocument {
+export interface ApiDocument {
 	/**
 	 * The API item this document was created for.
 	 */

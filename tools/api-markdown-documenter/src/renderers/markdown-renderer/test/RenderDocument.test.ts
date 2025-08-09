@@ -6,12 +6,12 @@
 import type { ApiItem } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 
-import type { MarkdownDocument, RenderedDocument } from "../../../ApiDocument.js";
+import type { ApiDocument, RenderedDocument } from "../../../ApiDocument.js";
 import { renderDocument } from "../Render.js";
 
 describe("Document Markdown rendering tests", () => {
 	it("Renders a simple document", () => {
-		const document: MarkdownDocument = {
+		const document: ApiDocument = {
 			apiItem: {} as unknown as ApiItem, // Mock ApiItem for testing
 			contents: {
 				type: "root",

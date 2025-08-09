@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { MarkdownDocument } from "./ApiDocument.js";
+import type { ApiDocument } from "./ApiDocument.js";
 import { type SaveDocumentsOptions, saveDocuments } from "./FileSystem.js";
 import {
 	type ApiItemTransformationOptions,
@@ -38,7 +38,7 @@ export async function renderApiModelAsMarkdown(
 }
 
 /**
- * Options for rendering {@link MarkdownDocument}s as Markdown.
+ * Options for rendering {@link ApiDocument}s as Markdown.
  *
  * @public
  */
@@ -55,7 +55,7 @@ export interface RenderDocumentsAsMarkdownOptions
  * @public
  */
 export async function renderMarkdownDocuments(
-	documents: readonly MarkdownDocument[],
+	documents: readonly ApiDocument[],
 	options: RenderDocumentsAsMarkdownOptions,
 ): Promise<void> {
 	const { logger } = options;

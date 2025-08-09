@@ -7,7 +7,7 @@ import type { ApiItem } from "@microsoft/api-extractor-model";
 import type { DocDeclarationReference } from "@microsoft/tsdoc";
 import type { Link } from "mdast";
 
-import type { MarkdownDocument } from "../ApiDocument.js";
+import type { ApiDocument } from "../ApiDocument.js";
 import type { Section } from "../mdast/index.js";
 import { normalizeDocumentContents } from "../mdast/index.js";
 import { resolveSymbolicReference } from "../utilities/index.js";
@@ -20,19 +20,19 @@ import {
 import type { ApiItemTransformationConfiguration } from "./configuration/index.js";
 
 /**
- * Creates a {@link MarkdownDocument} representing the provided API item.
+ * Creates a {@link ApiDocument} representing the provided API item.
  *
  * @param documentItem - The API item to be documented.
  * @param sections - An array of sections to be included in the document.
  * @param config - The transformation configuration for the API item.
  *
- * @returns A {@link MarkdownDocument} representing the constructed document.
+ * @returns A {@link ApiDocument} representing the constructed document.
  */
 export function createDocument(
 	documentItem: ApiItem,
 	sections: Section[],
 	config: ApiItemTransformationConfiguration,
-): MarkdownDocument {
+): ApiDocument {
 	const title = config.getHeadingTextForItem(documentItem);
 
 	// Wrap sections in a root section if top-level heading is requested.
@@ -95,8 +95,8 @@ export function resolveSymbolicLink(
  * Checks for duplicate {@link ApiDocument.documentPath}s among the provided set of documents.
  * @throws If any duplicates are found.
  */
-export function checkForDuplicateDocumentPaths(documents: readonly MarkdownDocument[]): void {
-	const documentPathMap = new Map<string, MarkdownDocument[]>();
+export function checkForDuplicateDocumentPaths(documents: readonly ApiDocument[]): void {
+	const documentPathMap = new Map<string, ApiDocument[]>();
 	for (const document of documents) {
 		let entries = documentPathMap.get(document.documentPath);
 		if (entries === undefined) {
