@@ -151,6 +151,26 @@ export interface IRelaySessionAwareDriverFactory extends IProvideSessionAwareDri
 }
 
 // @alpha @legacy
+export interface ISensitivityLabel {
+    // (undocumented)
+    appliedByUserEmail: string;
+    // (undocumented)
+    assignmentMethod: string;
+    // (undocumented)
+    sensitivityLabelId: string;
+    // (undocumented)
+    tenantId: string;
+}
+
+// @alpha @legacy
+export interface ISensitivityLabelsInfo {
+    // (undocumented)
+    labels: ISensitivityLabel[];
+    // (undocumented)
+    timestamp: string;
+}
+
+// @alpha @legacy
 export interface ISharingLink extends ISharingLinkKind {
     // (undocumented)
     webUrl: string;
@@ -187,7 +207,7 @@ export interface ISocketStorageDiscovery {
     refreshSessionDurationSeconds?: number;
     // (undocumented)
     runtimeTenantId?: string;
-    sensitivityLabelsInfo?: string;
+    sensitivityLabelsInfo?: ISensitivityLabelsInfo;
     // (undocumented)
     snapshotStorageUrl: string;
     socketToken?: string;

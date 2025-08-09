@@ -45,7 +45,35 @@ export interface ISocketStorageDiscovery {
 	 * response will contain empty labels when the file has no labels, so this field will be there
 	 * even if file has no labels when the service will implement this contract.
 	 */
-	sensitivityLabelsInfo?: string;
+	sensitivityLabelsInfo?: ISensitivityLabelsInfo;
+}
+
+/**
+ * Sensitivity labels information for a file, part of the socket storage discovery response.
+ * @legacy
+ * @alpha
+ */
+export interface ISensitivityLabelsInfo {
+	// ISO format timestamp when the label info snapshot was generated
+	timestamp: string;
+	// List of applied sensitivity labels (empty if none)
+	labels: ISensitivityLabel[];
+}
+
+/**
+ * A single sensitivity label applied to a document, part of the socket storage discovery response.
+ * @legacy
+ * @alpha
+ */
+export interface ISensitivityLabel {
+	// Unique identifier of the sensitivity label
+	sensitivityLabelId: string;
+	// Tenant under which the label is defined
+	tenantId: string;
+	// How the label was assigned
+	assignmentMethod: string;
+	// Email of user who applied the label (may be empty / placeholder)
+	appliedByUserEmail: string;
 }
 
 /**
