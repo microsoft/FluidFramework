@@ -275,6 +275,13 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 
 	const styles = useDevtoolsStyles();
 
+	/**
+	 * Handles removing a container from the list when the dismiss button is clicked.
+	 */
+	const handleRemoveContainer = React.useCallback((containerKey: ContainerKey): void => {
+		setContainers((prev) => prev?.filter((key) => key !== containerKey));
+	}, []);
+
 	return (
 		<div className={styles.root}>
 			<Menu
@@ -282,6 +289,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 				setSelection={setMenuSelection}
 				containers={containers}
 				supportedFeatures={supportedFeatures}
+				onRemoveContainer={handleRemoveContainer}
 			/>
 			<div style={{ width: "1px", backgroundColor: tokens.colorNeutralForeground1 }}></div>
 			<View menuSelection={menuSelection} containers={containers} />
