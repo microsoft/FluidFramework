@@ -1,0 +1,66 @@
+<!-- Copyright (c) Microsoft Corporation and contributors. All rights reserved. -->
+<!-- Licensed under the MIT License. -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SharedMap Browser Tests</title>
+    <link rel="stylesheet" href="https://unpkg.com/mocha/mocha.css">
+  </head>
+  <body>
+    <div id="mocha"></div>
+
+    <script src="https://unpkg.com/mocha/mocha.js"></script>
+    <script>
+      // Setup for both visual and console output
+      const isHeadless = new URLSearchParams(window.location.search).get('headless') === 'true';
+
+      mocha.setup({
+        ui: 'bdd',
+        reporter: isHeadless ? 'tap' : 'html', // TAP format for console
+        cleanReferencesAfterRun: false,
+        timeout: 10000
+      });
+
+      function checkAndRunTests() {
+        const suites = mocha.suite.suites;
+
+        if (suites.length === 0) {
+          console.log("No test suites found!");
+          return;
+        }
+
+        const runner = mocha.run();
+
+        if (isHeadless) {
+          const failures = [];
+
+          runner.on('fail', (test, err) => {
+            failures.push({
+              title: test.title,
+              fullTitle: test.fullTitle(),
+              error: err.message,
+              stack: err.stack
+            });
+          });
+
+          runner.on('end', () => {
+            console.log(`\nTests: ${runner.stats.tests}, Passed: ${runner.stats.passes}, Failed: ${runner.stats.failures}`);
+            // Signal completion for headless runners with detailed failure info
+            window.testResults = {
+              ...runner.stats,
+              failureDetails: failures
+            };
+          });
+        }
+      }
+
+      window.addEventListener('testsLoaded', checkAndRunTests);
+      setTimeout(() => {
+        if (!window.testsLoaded) {
+          checkAndRunTests();
+        }
+      }, 5000);
+    </script>
+  </body>
+</html>
