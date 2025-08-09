@@ -13,31 +13,7 @@ import type {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../core/index.js";
 import type { InsertableObjectFromSchemaRecord } from "../node-kinds/index.js";
-import {
-	type FieldKind,
-	type FieldProps,
-	createFieldSchema,
-	type ImplicitFieldSchema,
-} from "../fieldSchema.js";
-
-import type { FieldSchemaAlphaUnsafe, System_Unsafe } from "./typesUnsafe.js";
-
-export function createFieldSchemaUnsafe<
-	Kind extends FieldKind,
-	Types extends System_Unsafe.ImplicitAllowedTypesUnsafe,
-	TCustomMetadata = unknown,
->(
-	kind: Kind,
-	allowedTypes: Types,
-	props?: FieldProps<TCustomMetadata>,
-): FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata> {
-	// At runtime, we still want this to be a FieldSchema instance, but we can't satisfy its extends clause, so just return it as an FieldSchemaUnsafe
-	return createFieldSchema(
-		kind,
-		allowedTypes as ImplicitAllowedTypes & Types,
-		props,
-	) as FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata>;
-}
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
 
 /**
  * Compile time check for validity of a recursive schema.

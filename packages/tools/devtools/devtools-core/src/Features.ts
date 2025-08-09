@@ -51,6 +51,7 @@ export interface ContainerDevtoolsFeatureFlags {
 	 * Indicates that the Container Devtools supports visualizing the data associated with the Container.
 	 */
 	containerDataVisualization?: boolean;
+
 	/**
 	 * Indicates that the Container Devtools supports modifying the container's connection and lifecycle state.
 	 *
@@ -62,7 +63,7 @@ export interface ContainerDevtoolsFeatureFlags {
 	 *
 	 * When `false`, these operations are not available.
 	 *
-	 * @defaultValue true
+	 * @defaultValue `true`
 	 */
 	canModifyContainerState?: boolean;
 }

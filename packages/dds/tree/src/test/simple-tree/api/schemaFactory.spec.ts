@@ -35,10 +35,13 @@ import {
 import {
 	SchemaFactory,
 	schemaFromValue,
-	schemaStaticsBase,
-	type SchemaStatics,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
+import {
+	schemaStaticsStable,
+	type SchemaStatics,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../simple-tree/api/schemaStatics.js";
 import {
 	brand,
 	type areSafelyAssignable,
@@ -995,7 +998,7 @@ describe("schemaFactory", () => {
 
 	it("statics", () => {
 		const f = new SchemaFactory("");
-		for (const [key, value] of Object.entries(schemaStaticsBase)) {
+		for (const [key, value] of Object.entries(schemaStaticsStable)) {
 			assert.equal((SchemaFactory as unknown as Record<string, unknown>)[key], value);
 			assert.equal((f as unknown as Record<string, unknown>)[key], value);
 		}
