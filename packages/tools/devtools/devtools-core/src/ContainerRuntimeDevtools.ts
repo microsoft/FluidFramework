@@ -4,12 +4,12 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { ConnectionState } from "@fluidframework/container-definitions";
 import type {
 	AttachState,
 	IAudience,
 	IContainerEvents,
 } from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 
