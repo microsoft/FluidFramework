@@ -3178,7 +3178,9 @@ describe("Editing", () => {
 			rootTree.merge(addB);
 			expectJsonTree(rootTree, ["B"]);
 
-			rootTree.merge(partiallyRebasedRestoreC); // Fails when trying to order the cells of "A" and "C"
+			// This merge requires that we order the cells of "A" and "C".
+			// This is challenging because they were introduced commits that are not taking part in the rebase.
+			rootTree.merge(partiallyRebasedRestoreC);
 			expectJsonTree(rootTree, ["B", "C"]);
 		});
 	});

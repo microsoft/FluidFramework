@@ -41,6 +41,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 		compose: (change1: 0, change2: 0) => 0,
 		invert: (changes: 0) => 0,
 		rebase: (change: 0, over: 0) => 0,
+		mute: (changes: 0) => 0,
 	}),
 	codecsFactory: () => noChangeCodecFamily,
 	editor: { buildChildChanges: () => fail(0xb0d /* Child changes not supported */) },
