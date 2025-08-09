@@ -1395,15 +1395,12 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 			state: LocalServerStressState,
 		): Promise<TOperation | RestartClientFromPendingState | typeof done> => {
 			const { clients, random, validationClient } = state;
-			const anyClientInStaging = clients.some((c) => c.entryPoint.inStagingMode());
 
 			if (
-				options.clientJoinOptions !== undefined &&
-				validationClient.container.attachState !== AttachState.Detached &&
 				clients.length > 0 &&
-				random.bool(options.clientJoinOptions.clientRestartFromPendingProbability) &&
-				// AB#45904: Clarify restart-from-pending behavior in staging mode
-				!anyClientInStaging
+				validationClient.container.attachState !== AttachState.Detached &&
+				options.clientJoinOptions !== undefined &&
+				random.bool(options.clientJoinOptions.clientRestartFromPendingProbability)
 			) {
 				return {
 					type: "restartClientFromPendingState",
@@ -1440,6 +1437,11 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 
 			const url = await sourceClient.container.getAbsoluteUrl("");
 			assert(url !== undefined, "url of container must be available");
+
+			// AB#45904: Clarify restart-from-pending behavior in staging mode
+			if (sourceClient.entryPoint.inStagingMode()) {
+				sourceClient.entryPoint.exitStagingMode(true);
+			}
 
 			const newClient = await loadClient(
 				state.localDeltaConnectionServer,
