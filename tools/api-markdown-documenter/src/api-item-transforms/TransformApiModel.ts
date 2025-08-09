@@ -41,7 +41,7 @@ export function transformApiModel(options: ApiItemTransformationOptions): ApiDoc
 	// If a package has multiple entry-points, it's possible for the same API item to appear under more than one
 	// entry-point (i.e., we are traversing a graph, rather than a tree).
 	// To avoid redundant computation, we will keep a ledger of which API items we have transformed.
-	const documentsMap: Map<ApiItem, ApiDocument> = new Map<ApiItem, ApiDocument>();
+	const documentsMap = new Map<ApiItem, ApiDocument>();
 
 	// Always render Model document (this is the "root" of the generated documentation suite).
 	documentsMap.set(apiModel, createDocumentForApiModel(apiModel, config));
@@ -121,6 +121,7 @@ export function transformApiModel(options: ApiItemTransformationOptions): ApiDoc
 	}
 
 	logger.success("API Model documents generated!");
+
 	return documents;
 }
 

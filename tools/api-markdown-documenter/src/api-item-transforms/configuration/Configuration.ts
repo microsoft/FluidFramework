@@ -69,6 +69,13 @@ export interface ApiItemTransformationConfiguration
 	readonly transformations: ApiItemTransformations;
 
 	/**
+	 * Optional override for the starting heading level of a document.
+	 *
+	 * @remarks Must be an integer on [1, ∞).
+	 */
+	readonly startingHeadingLevel: number;
+
+	/**
 	 * Generates the default section layout used by all default {@link ApiItemTransformations}.
 	 *
 	 * @remarks
@@ -108,6 +115,13 @@ export interface ApiItemTransformationOptions
 	readonly transformations?: Partial<ApiItemTransformations>;
 
 	/**
+	 * {@inheritDoc ApiItemTransformationConfiguration.startingHeadingLevel}
+	 *
+	 * @defaultValue 1
+	 */
+	readonly startingHeadingLevel?: number | undefined;
+
+	/**
 	 * {@inheritDoc ApiItemTransformationConfiguration.defaultSectionLayout}
 	 */
 	readonly defaultSectionLayout?: (
@@ -135,6 +149,7 @@ export function getApiItemTransformationConfigurationWithDefaults(
 		transformations,
 		apiModel: options.apiModel,
 		uriRoot: options.uriRoot ?? "",
+		startingHeadingLevel: options.startingHeadingLevel ?? 1,
 		logger,
 		defaultSectionLayout,
 	};

@@ -1,5 +1,0 @@
-{
-	"tags": ["to-html"],
-	"exports": ["index"],
-	"imports": ["common", "utilities"]
-}

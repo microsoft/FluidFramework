@@ -1,5 +1,0 @@
-{
-	"tags": ["html-renderer"],
-	"exports": ["index"],
-	"imports": ["common", "documentation-domain", "to-html", "utilities"]
-}

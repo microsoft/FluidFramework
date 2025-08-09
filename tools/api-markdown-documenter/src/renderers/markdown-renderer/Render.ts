@@ -10,21 +10,23 @@ import {
 	type Options as MdastToMarkdownOptions,
 } from "mdast-util-to-markdown";
 
-import type { ApiDocument } from "../../ApiDocument.js";
-import {
-	documentToMarkdown,
-	type TransformationConfiguration,
-} from "../../documentation-domain-to-markdown/index.js";
+import type { ApiDocument, RenderedDocument } from "../../ApiDocument.js";
+import type { LoggingConfiguration } from "../../LoggingConfiguration.js";
 
 /**
- * Configuration for rendering a document as Markdown.
+ * Configuration for rendering Markdown content.
  *
  * @sealed
  * @public
  */
-export interface RenderDocumentConfiguration
-	extends TransformationConfiguration,
-		RenderMarkdownConfiguration {}
+export interface RenderMarkdownConfiguration extends LoggingConfiguration {
+	/**
+	 * Options for the Markdown renderer.
+	 *
+	 * @see {@link https://github.com/syntax-tree/mdast-util-to-markdown?tab=readme-ov-file#options}
+	 */
+	readonly mdastToMarkdownOptions?: Partial<MdastToMarkdownOptions>;
+}
 
 /**
  * Renders a {@link ApiDocument} as Markdown and returns the resulting file contents as a string.
@@ -36,25 +38,13 @@ export interface RenderDocumentConfiguration
  */
 export function renderDocument(
 	document: ApiDocument,
-	config: RenderDocumentConfiguration,
-): string {
-	const markdownTree = documentToMarkdown(document, config);
-	return renderMarkdown(markdownTree, config);
-}
-
-/**
- * Configuration for rendering Markdown content.
- *
- * @sealed
- * @public
- */
-export interface RenderMarkdownConfiguration {
-	/**
-	 * Options for the Markdown renderer.
-	 *
-	 * @see {@link https://github.com/syntax-tree/mdast-util-to-markdown?tab=readme-ov-file#options}
-	 */
-	readonly mdastToMarkdownOptions?: Partial<MdastToMarkdownOptions>;
+	config: RenderMarkdownConfiguration,
+): RenderedDocument {
+	return {
+		apiItem: document.apiItem,
+		contents: renderMarkdown(document.contents, config),
+		filePath: `${document.documentPath}.md`, // Append .md extension
+	};
 }
 
 /**
@@ -64,10 +54,8 @@ export interface RenderMarkdownConfiguration {
  *
  * @param document - The document to transform.
  * @param config - Markdown transformation configuration.
- *
- * @public
  */
-export function renderMarkdown(tree: MdastTree, config: RenderMarkdownConfiguration): string {
+function renderMarkdown(tree: MdastTree, config: RenderMarkdownConfiguration): string {
 	const options: MdastToMarkdownOptions = {
 		emphasis: "_",
 		bullet: "-",

@@ -7,7 +7,16 @@
 `DocumentationNode` and its implementations have been removed.
 Their usage has been replaced with [mdast](https://github.com/syntax-tree/mdast) directly.
 
-The transformation to Markdown and HTML still exist, but will be removed soon.
+### `toMarkdown` and `toHtml` transformation layers have been removed
+
+The API transformation layer now outputs standard `mdast` Markdown trees directly.
+These can be used as input to both the Markdown and HTML rendering layers.
+
+If you wish to convert your contents to a `hast` representation, please use [mdast-util-to-hast](https://github.com/syntax-tree/mdast-util-to-hast) or another comparable library.
+
+### `HtmlRenderer` has been removed
+
+If you wish to render your contents as HTML, use `mdast-util-to-hast` (or something comparable), then render that tree using [hast-util-to-html](https://github.com/syntax-tree/hast-util-to-html) or another comparable library.
 
 ### `DocumentNode` renamed to `ApiDocument`
 

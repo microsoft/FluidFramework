@@ -19,24 +19,16 @@ import {
 import { expect } from "chai";
 
 import type { ApiDocument } from "../../ApiDocument.js";
-import type { Section } from "../../mdast/index.js";
-import { createSection } from "../../mdast/index.js";
-import { getHeadingForApiItem } from "../ApiItemTransformUtilities.js";
-import { apiItemToSections } from "../TransformApiItem.js";
+import type { NormalizedTree } from "../../mdast/index.js";
+import { apiItemToDocument } from "../TransformApiItem.js";
 import { transformApiModel } from "../TransformApiModel.js";
 import {
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
+	HierarchyKind,
 } from "../configuration/index.js";
 import { betaWarningSpan } from "../helpers/index.js";
-
-/**
- * Sample "default" configuration.
- */
-const defaultPartialConfig: Omit<ApiItemTransformationOptions, "apiModel"> = {
-	uriRoot: "",
-};
 
 // Relative to lib/api-item-transforms/test
 const dirname = Path.dirname(fileURLToPath(import.meta.url));
@@ -119,39 +111,74 @@ describe("ApiItem to Documentation transformation tests", () => {
 			ApiItemKind.Variable,
 		) as ApiVariable;
 
-		const config = createConfig(defaultPartialConfig, model);
+		const config = createConfig(
+			{
+				hierarchy: {
+					// Allow test to transform variables to their own documents.
+					// By default, they are included in the document of their parent context.
+					[ApiItemKind.Variable]: HierarchyKind.Document,
+				},
+			},
+			model,
+		);
 
-		const result = config.transformations[ApiItemKind.Variable](apiVariable, config);
+		const result: NormalizedTree = apiItemToDocument(apiVariable, config).contents;
 
-		const expected = [
-			createSection({
-				children: [
-					createSection({
-						children: [
-							{
-								type: "paragraph",
-								children: [{ type: "text", value: "Test Constant" }],
-							},
-						],
-					}),
-					createSection({
-						children: [
-							{
-								type: "code",
-								lang: "typescript",
-								value: 'TestConst = "Hello world!"',
-							},
-						],
-						heading: {
-							type: "sectionHeading",
-							title: "Signature",
-							id: `testconst-signature`,
+		const expected: NormalizedTree = {
+			type: "root",
+			children: [
+				{
+					type: "heading",
+					depth: 1,
+					children: [{ type: "text", value: "TestConst" }],
+				},
+				// Breadcrumb
+				{
+					type: "paragraph",
+					children: [
+						{
+							type: "link",
+							url: "/",
+							children: [{ type: "text", value: "Packages" }],
 						},
-					}),
-				],
-				heading: getHeadingForApiItem(apiVariable, config),
-			}),
-		];
+						{
+							type: "text",
+							value: " > ",
+						},
+						{
+							type: "link",
+							url: "/test-package/",
+							children: [{ type: "text", value: "test-package" }],
+						},
+						{
+							type: "text",
+							value: " > ",
+						},
+						{
+							type: "link",
+							url: "/test-package/testconst-variable",
+							children: [{ type: "text", value: "TestConst" }],
+						},
+					],
+				},
+				// Summary section
+				{
+					type: "paragraph",
+					children: [{ type: "text", value: "Test Constant" }],
+				},
+				// #region Signature section
+				{
+					type: "html",
+					value: '<h2 id="testconst-signature">Signature</h2>',
+				},
+				{
+					type: "code",
+					lang: "typescript",
+					value: 'TestConst = "Hello world!"',
+				},
+				// #endregion
+			],
+		};
 
 		expect(result).deep.equals(expected);
 	});
@@ -165,188 +192,202 @@ describe("ApiItem to Documentation transformation tests", () => {
 			ApiItemKind.Function,
 		) as ApiFunction;
 
-		const config = createConfig(defaultPartialConfig, model);
-
-		const result = config.transformations[ApiItemKind.Function](apiFunction, config);
-
-		const expected = [
-			createSection({
-				children: [
-					// Summary section
-					createSection({
-						children: [
-							{
-								type: "paragraph",
-								children: [{ type: "text", value: "Test function" }],
-							},
-						],
-					}),
-
-					// Signature section
-					createSection({
-						children: [
-							{
-								type: "code",
-								lang: "typescript",
-								value:
-									"export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;",
-							},
-							createSection({
-								children: [
-									{
-										type: "table",
-										children: [
-											{
-												type: "tableRow",
-												children: [
-													{
-														type: "tableCell",
-														children: [{ type: "text", value: "Parameter" }],
-													},
-													{
-														type: "tableCell",
-														children: [{ type: "text", value: "Description" }],
-													},
-												],
-											},
-											{
-												type: "tableRow",
-												children: [
-													{
-														type: "tableCell",
-														children: [{ type: "text", value: "TTypeParameter" }],
-													},
-													{
-														type: "tableCell",
-														children: [{ type: "text", value: "A test type parameter" }],
-													},
-												],
-											},
-										],
-									},
-								],
-								heading: {
-									type: "sectionHeading",
-									title: "Type Parameters",
-								},
-							}),
-						],
-						heading: {
-							type: "sectionHeading",
-							title: "Signature",
-							id: `testfunction-signature`,
-						},
-					}),
-
-					// Parameters table section
-					createSection({
-						children: [
-							{
-								type: "table",
-								children: [
-									{
-										type: "tableRow",
-										children: [
-											{ type: "tableCell", children: [{ type: "text", value: "Parameter" }] },
-											{ type: "tableCell", children: [{ type: "text", value: "Modifiers" }] },
-											{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
-											{
-												type: "tableCell",
-												children: [{ type: "text", value: "Description" }],
-											},
-										],
-									},
-									{
-										type: "tableRow",
-										children: [
-											{
-												type: "tableCell",
-												children: [{ type: "text", value: "testParameter" }],
-											},
-											{ type: "tableCell", children: [] },
-											{
-												type: "tableCell",
-												children: [{ type: "text", value: "TTypeParameter" }],
-											},
-											{
-												type: "tableCell",
-												children: [{ type: "text", value: "A test parameter" }],
-											},
-										],
-									},
-									{
-										type: "tableRow",
-										children: [
-											{
-												type: "tableCell",
-												children: [{ type: "text", value: "testOptionalParameter" }],
-											},
-											{ type: "tableCell", children: [{ type: "text", value: "optional" }] },
-											{
-												type: "tableCell",
-												children: [{ type: "text", value: "TTypeParameter" }],
-											},
-											{
-												type: "tableCell",
-												children: [{ type: "text", value: "An optional parameter" }],
-											},
-										],
-									},
-								],
-							},
-						],
-						heading: {
-							type: "sectionHeading",
-							title: "Parameters",
-							id: "testfunction-parameters",
-						},
-					}),
-
-					// Returns section
-					createSection({
-						children: [
-							{
-								type: "paragraph",
-								children: [{ type: "text", value: "The provided parameter" }],
-							},
-							{
-								type: "paragraph",
-								children: [
-									{ type: "strong", children: [{ type: "text", value: "Return type" }] },
-									{ type: "text", value: ": " },
-									{ type: "text", value: "TTypeParameter" },
-								],
-							},
-						],
-						heading: {
-							type: "sectionHeading",
-							title: "Returns",
-							id: "testfunction-returns",
-						},
-					}),
-
-					// Throws section
-					createSection({
-						children: [
-							{
-								type: "paragraph",
-								children: [{ type: "text", value: "An Error when something bad happens." }],
-							},
-						],
-						heading: {
-							type: "sectionHeading",
-							title: "Throws",
-							id: `testfunction-throws`,
-						},
-					}),
-				],
-				heading: {
-					type: "sectionHeading",
-					title: "testFunction",
-					id: "testfunction-function",
+		const config = createConfig(
+			{
+				hierarchy: {
+					// Allow test to transform variables to their own documents.
+					// By default, they are included in the document of their parent context.
+					[ApiItemKind.Function]: HierarchyKind.Document,
 				},
-			}),
-		];
+			},
+			model,
+		);
+
+		const result: NormalizedTree = apiItemToDocument(apiFunction, config).contents;
+
+		const expected: NormalizedTree = {
+			type: "root",
+			children: [
+				{
+					type: "heading",
+					depth: 1,
+					children: [{ type: "text", value: "testFunction" }],
+				},
+				// Breadcrumb
+				{
+					type: "paragraph",
+					children: [
+						{
+							type: "link",
+							url: "/",
+							children: [{ type: "text", value: "Packages" }],
+						},
+						{
+							type: "text",
+							value: " > ",
+						},
+						{
+							type: "link",
+							url: "/test-package/",
+							children: [{ type: "text", value: "test-package" }],
+						},
+						{
+							type: "text",
+							value: " > ",
+						},
+						{
+							type: "link",
+							url: "/test-package/testfunction-function",
+							children: [
+								{ type: "text", value: "testFunction(testParameter, testOptionalParameter)" },
+							],
+						},
+					],
+				},
+				// Summary section
+				{
+					type: "paragraph",
+					children: [{ type: "text", value: "Test function" }],
+				},
+				// #region Signature section
+				{
+					type: "html",
+					value: '<h2 id="testfunction-signature">Signature</h2>',
+				},
+				{
+					type: "code",
+					lang: "typescript",
+					value:
+						"export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;",
+				},
+				// #endregion
+				// #region Type parameters table section
+				{
+					type: "heading",
+					depth: 3,
+					children: [{ type: "text", value: "Type Parameters" }],
+				},
+				{
+					type: "table",
+					children: [
+						{
+							type: "tableRow",
+							children: [
+								{
+									type: "tableCell",
+									children: [{ type: "text", value: "Parameter" }],
+								},
+								{
+									type: "tableCell",
+									children: [{ type: "text", value: "Description" }],
+								},
+							],
+						},
+						{
+							type: "tableRow",
+							children: [
+								{
+									type: "tableCell",
+									children: [{ type: "text", value: "TTypeParameter" }],
+								},
+								{
+									type: "tableCell",
+									children: [{ type: "text", value: "A test type parameter" }],
+								},
+							],
+						},
+					],
+				},
+				// #endregion
+				// #region Parameters table section
+				{
+					type: "html",
+					value: '<h2 id="testfunction-parameters">Parameters</h2>',
+				},
+				{
+					type: "table",
+					children: [
+						{
+							type: "tableRow",
+							children: [
+								{ type: "tableCell", children: [{ type: "text", value: "Parameter" }] },
+								{ type: "tableCell", children: [{ type: "text", value: "Modifiers" }] },
+								{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
+								{
+									type: "tableCell",
+									children: [{ type: "text", value: "Description" }],
+								},
+							],
+						},
+						{
+							type: "tableRow",
+							children: [
+								{
+									type: "tableCell",
+									children: [{ type: "text", value: "testParameter" }],
+								},
+								{ type: "tableCell", children: [] },
+								{
+									type: "tableCell",
+									children: [{ type: "text", value: "TTypeParameter" }],
+								},
+								{
+									type: "tableCell",
+									children: [{ type: "text", value: "A test parameter" }],
+								},
+							],
+						},
+						{
+							type: "tableRow",
+							children: [
+								{
+									type: "tableCell",
+									children: [{ type: "text", value: "testOptionalParameter" }],
+								},
+								{ type: "tableCell", children: [{ type: "text", value: "optional" }] },
+								{
+									type: "tableCell",
+									children: [{ type: "text", value: "TTypeParameter" }],
+								},
+								{
+									type: "tableCell",
+									children: [{ type: "text", value: "An optional parameter" }],
+								},
+							],
+						},
+					],
+				},
+				// #endregion
+				// #region Returns section
+				{
+					type: "html",
+					value: '<h2 id="testfunction-returns">Returns</h2>',
+				},
+				{
+					type: "paragraph",
+					children: [{ type: "text", value: "The provided parameter" }],
+				},
+				{
+					type: "paragraph",
+					children: [
+						{ type: "strong", children: [{ type: "text", value: "Return type" }] },
+						{ type: "text", value: ": " },
+						{ type: "text", value: "TTypeParameter" },
+					],
+				},
+				// #endregion
+				// #region Throws section
+				{
+					type: "html",
+					value: '<h2 id="testfunction-throws">Throws</h2>',
+				},
+				{
+					type: "paragraph",
+					children: [{ type: "text", value: "An Error when something bad happens." }],
+				},
+				// #endregion
+			],
+		};
 
 		expect(result).deep.equals(expected);
 	});
@@ -360,167 +401,170 @@ describe("ApiItem to Documentation transformation tests", () => {
 			ApiItemKind.Interface,
 		) as ApiInterface;
 
-		const config = createConfig(defaultPartialConfig, model);
+		const config = createConfig({}, model);
 
-		const result = config.transformations[ApiItemKind.Interface](
-			apiInterface,
-			config,
-			(childItem) => apiItemToSections(childItem, config),
-		);
+		const result: NormalizedTree = apiItemToDocument(apiInterface, config).contents;
 
-		const expected: Section[] = [
-			// Summary section
-			createSection({
-				children: [
-					{
-						type: "paragraph",
-						children: [{ type: "text", value: "Test interface" }],
-					},
-				],
-			}),
-
-			// Signature section
-			createSection({
-				children: [
-					{
-						type: "code",
-						lang: "typescript",
-						value: "export interface TestInterface",
-					},
-				],
-				heading: {
-					type: "sectionHeading",
-					title: "Signature",
-					id: "testinterface-signature",
+		const expected: NormalizedTree = {
+			type: "root",
+			children: [
+				{
+					type: "heading",
+					depth: 1,
+					children: [{ type: "text", value: "TestInterface" }],
 				},
-			}),
-
-			// Remarks section
-			createSection({
-				children: [
-					{
-						type: "paragraph",
-						children: [{ type: "text", value: "Here are some remarks about the interface" }],
-					},
-				],
-				heading: {
-					type: "sectionHeading",
-					title: "Remarks",
-					id: "testinterface-remarks",
-				},
-			}),
-
-			// Properties section
-			createSection({
-				children: [
-					{
-						type: "table",
-
-						children: [
-							{
-								type: "tableRow",
-								children: [
-									{ type: "tableCell", children: [{ type: "text", value: "Property" }] },
-									{ type: "tableCell", children: [{ type: "text", value: "Modifiers" }] },
-									{ type: "tableCell", children: [{ type: "text", value: "Default Value" }] },
-									{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
-									{ type: "tableCell", children: [{ type: "text", value: "Description" }] },
-								],
-							},
-							{
-								type: "tableRow",
-								children: [
-									{
-										type: "tableCell",
-										children: [
-											{
-												type: "link",
-												url: "/test-package/testinterface-interface#testoptionalinterfaceproperty-propertysignature",
-												children: [{ type: "text", value: "testOptionalInterfaceProperty" }],
-											},
-										],
-									},
-									{
-										type: "tableCell",
-										children: [{ type: "inlineCode", value: "optional" }],
-									},
-									{
-										type: "tableCell",
-										children: [{ type: "text", value: "0" }],
-									},
-									{
-										type: "tableCell",
-										children: [{ type: "text", value: "number" }],
-									},
-									{
-										type: "tableCell",
-										children: [{ type: "text", value: "Test optional property" }],
-									},
-								],
-							},
-						],
-					},
-				],
-				heading: {
-					type: "sectionHeading",
-					title: "Properties",
-				},
-			}),
-
-			// Property details section
-			createSection({
-				children: [
-					createSection({
-						children: [
-							// Summary section
-							createSection({
-								children: [
-									{
-										type: "paragraph",
-										children: [{ type: "text", value: "Test optional property" }],
-									},
-								],
-							}),
-							// Signature section
-							createSection({
-								children: [
-									{
-										type: "code",
-										lang: "typescript",
-										value: "testOptionalInterfaceProperty?: number;",
-									},
-									{
-										type: "paragraph",
-										children: [
-											{
-												type: "strong",
-												children: [{ type: "text", value: "Type" }],
-											},
-											{ type: "text", value: ": " },
-											{ type: "text", value: "number" },
-										],
-									},
-								],
-								heading: {
-									type: "sectionHeading",
-									title: "Signature",
-									id: "testoptionalinterfaceproperty-signature",
-								},
-							}),
-						],
-						heading: {
-							type: "sectionHeading",
-							title: "testOptionalInterfaceProperty",
-							id: "testoptionalinterfaceproperty-propertysignature",
+				// Breadcrumb
+				{
+					type: "paragraph",
+					children: [
+						{
+							type: "link",
+							url: "/",
+							children: [{ type: "text", value: "Packages" }],
 						},
-					}),
-				],
-				heading: {
-					type: "sectionHeading",
-					title: "Property Details",
+						{
+							type: "text",
+							value: " > ",
+						},
+						{
+							type: "link",
+							url: "/test-package/",
+							children: [{ type: "text", value: "test-package" }],
+						},
+						{
+							type: "text",
+							value: " > ",
+						},
+						{
+							type: "link",
+							url: "/test-package/testinterface-interface",
+							children: [{ type: "text", value: "TestInterface" }],
+						},
+					],
 				},
-			}),
-		];
+				// Summary section
+				{
+					type: "paragraph",
+					children: [{ type: "text", value: "Test interface" }],
+				},
+				// #region Signature section
+				{
+					type: "html",
+					value: '<h2 id="testinterface-signature">Signature</h2>',
+				},
+				{
+					type: "code",
+					lang: "typescript",
+					value: "export interface TestInterface",
+				},
+				// #endregion
+				// #region Remarks section
+				{
+					type: "html",
+					value: '<h2 id="testinterface-remarks">Remarks</h2>',
+				},
+				{
+					type: "paragraph",
+					children: [{ type: "text", value: "Here are some remarks about the interface" }],
+				},
+				// #endregion
+				// #region Properties section
+				{
+					type: "heading",
+					depth: 2,
+					children: [{ type: "text", value: "Properties" }],
+				},
+				{
+					type: "table",
+					children: [
+						{
+							type: "tableRow",
+							children: [
+								{ type: "tableCell", children: [{ type: "text", value: "Property" }] },
+								{ type: "tableCell", children: [{ type: "text", value: "Modifiers" }] },
+								{
+									type: "tableCell",
+									children: [{ type: "text", value: "Default Value" }],
+								},
+								{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
+								{ type: "tableCell", children: [{ type: "text", value: "Description" }] },
+							],
+						},
+						{
+							type: "tableRow",
+							children: [
+								{
+									type: "tableCell",
+									children: [
+										{
+											type: "link",
+											url: "/test-package/testinterface-interface#testoptionalinterfaceproperty-propertysignature",
+											children: [{ type: "text", value: "testOptionalInterfaceProperty" }],
+										},
+									],
+								},
+								{
+									type: "tableCell",
+									children: [{ type: "inlineCode", value: "optional" }],
+								},
+								{
+									type: "tableCell",
+									children: [{ type: "text", value: "0" }],
+								},
+								{
+									type: "tableCell",
+									children: [{ type: "text", value: "number" }],
+								},
+								{
+									type: "tableCell",
+									children: [{ type: "text", value: "Test optional property" }],
+								},
+							],
+						},
+					],
+				},
+
+				// #endregion
+				// #region Property details section
+				{
+					type: "heading",
+					depth: 2,
+					children: [{ type: "text", value: "Property Details" }],
+				},
+				{
+					type: "html",
+					value: `<h3 id="testoptionalinterfaceproperty-propertysignature">testOptionalInterfaceProperty</h3>`,
+				},
+				// Summary section
+				{
+					type: "paragraph",
+					children: [{ type: "text", value: "Test optional property" }],
+				},
+				// Signature section
+				{
+					type: "html",
+					value: `<h4 id="testoptionalinterfaceproperty-signature">Signature</h4>`,
+				},
+				{
+					type: "code",
+					lang: "typescript",
+					value: "testOptionalInterfaceProperty?: number;",
+				},
+				{
+					type: "paragraph",
+					children: [
+						{
+							type: "strong",
+							children: [{ type: "text", value: "Type" }],
+						},
+						{ type: "text", value: ": " },
+						{ type: "text", value: "number" },
+					],
+				},
+
+				// #endregion
+			],
+		};
 
 		expect(result).deep.equals(expected);
 	});
@@ -536,17 +580,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const config = createConfig(
 			{
-				...defaultPartialConfig,
-				minimumReleaseLevel: ReleaseTag.Beta, // Only include `@beta` and `@public` items in generated docs
+				// Only include `@beta` and `@public` items in generated docs
+				minimumReleaseLevel: ReleaseTag.Beta,
 			},
 			model,
 		);
 
-		const result = config.transformations[ApiItemKind.Namespace](
-			apiNamespace,
-			config,
-			(childItem) => apiItemToSections(childItem, config),
-		);
+		const result: NormalizedTree = apiItemToDocument(apiNamespace, config).contents;
 
 		// Note: the namespace being processed includes 3 const variables:
 		// - foo (@public)
@@ -554,201 +594,204 @@ describe("ApiItem to Documentation transformation tests", () => {
 		// - baz (@alpha)
 		// We expect docs to be generated for `foo` and `bar`, but not `baz`, since it's @alpha, and we are filtering those out per our config above.
 		// Also note that child items are listed alphabetically, so we expect `bar` before `foo`.
-		const expected: Section[] = [
-			// Summary section
-			createSection({
-				children: [
-					{
-						type: "paragraph",
-						children: [{ type: "text", value: "Test namespace" }],
-					},
-				],
-			}),
-
-			// Signature section
-			createSection({
-				children: [
-					{
-						type: "code",
-						lang: "typescript",
-						value: "export declare namespace TestNamespace",
-					},
-				],
-				heading: {
-					title: "Signature",
-					id: "testnamespace-signature",
-					type: "sectionHeading",
+		const expected: NormalizedTree = {
+			type: "root",
+			children: [
+				{
+					type: "heading",
+					depth: 1,
+					children: [{ type: "text", value: "TestNamespace" }],
 				},
-			}),
-
-			// Variables section
-			createSection({
-				children: [
-					{
-						type: "table",
-
-						children: [
-							// Table header row
-							{
-								type: "tableRow",
-								children: [
-									{ type: "tableCell", children: [{ type: "text", value: "Variable" }] },
-									{ type: "tableCell", children: [{ type: "text", value: "Alerts" }] },
-									{ type: "tableCell", children: [{ type: "text", value: "Modifiers" }] },
-									{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
-									{ type: "tableCell", children: [{ type: "text", value: "Description" }] },
-								],
-							},
-							// Table row for `bar`
-							{
-								type: "tableRow",
-								children: [
-									{
-										type: "tableCell",
-										children: [
-											{
-												type: "link",
-												url: "/test-package/testnamespace-namespace/#bar-variable",
-												children: [{ type: "text", value: "bar" }],
-											},
-										],
-									},
-									{
-										type: "tableCell",
-										children: [{ type: "inlineCode", value: "Beta" }],
-									},
-									{
-										type: "tableCell",
-										children: [{ type: "inlineCode", value: "readonly" }],
-									},
-									{
-										type: "tableCell",
-										children: [],
-									},
-									{
-										type: "tableCell",
-										children: [],
-									},
-								],
-							},
-							// Table row for `foo`
-							{
-								type: "tableRow",
-								children: [
-									{
-										type: "tableCell",
-										children: [
-											{
-												type: "link",
-												url: "/test-package/testnamespace-namespace/#foo-variable",
-												children: [{ type: "text", value: "foo" }],
-											},
-										],
-									},
-									{
-										type: "tableCell",
-										children: [],
-									},
-									{
-										type: "tableCell",
-										children: [{ type: "inlineCode", value: "readonly" }],
-									},
-									{
-										type: "tableCell",
-										children: [],
-									},
-									{
-										type: "tableCell",
-										children: [],
-									},
-								],
-							},
-							// No entry for `baz`
-						],
-					},
-				],
-				heading: { title: "Variables", type: "sectionHeading" },
-			}),
-
-			// Variables details section
-			createSection({
-				children: [
-					// Details for `bar`
-					createSection({
-						children: [
-							// No summary docs on `bar`
-
-							// Beta warning
-							createSection({
-								children: [
-									{
-										type: "paragraph",
-										children: [betaWarningSpan],
-									},
-								],
-							}),
-							// Signature
-							createSection({
-								children: [
-									{
-										type: "code",
-										lang: "typescript",
-										value: 'bar = "bar"',
-									},
-								],
-								heading: {
-									title: "Signature",
-									id: "bar-signature",
-									type: "sectionHeading",
-								},
-							}),
-						],
-						heading: {
-							title: "bar",
-							id: "bar-variable",
-							type: "sectionHeading",
+				// Breadcrumb
+				{
+					type: "paragraph",
+					children: [
+						{
+							type: "link",
+							url: "/",
+							children: [{ type: "text", value: "Packages" }],
 						},
-					}),
-					// Details for `foo`
-					createSection({
-						children: [
-							// No summary docs on `foo`
-
-							// Signature
-							createSection({
-								children: [
-									{
-										type: "code",
-										lang: "typescript",
-										value: 'foo = "foo"',
-									},
-								],
-								heading: {
-									title: "Signature",
-									id: "foo-signature",
-									type: "sectionHeading",
-								},
-							}),
-						],
-						heading: {
-							title: "foo",
-							id: "foo-variable",
-							type: "sectionHeading",
+						{
+							type: "text",
+							value: " > ",
 						},
-					}),
-
-					// No entry should be included for `baz` because it is `@alpha`
-				],
-				heading: { title: "Variable Details", type: "sectionHeading" },
-			}),
-		];
+						{
+							type: "link",
+							url: "/test-package/",
+							children: [{ type: "text", value: "test-package" }],
+						},
+						{
+							type: "text",
+							value: " > ",
+						},
+						{
+							type: "link",
+							url: "/test-package/testnamespace-namespace/",
+							children: [{ type: "text", value: "TestNamespace" }],
+						},
+					],
+				},
+				// #region Summary section
+				{
+					type: "paragraph",
+					children: [{ type: "text", value: "Test namespace" }],
+				},
+				// #endregion
+				// #region Signature section
+				{
+					type: "html",
+					value: '<h2 id="testnamespace-signature">Signature</h2>',
+				},
+				{
+					type: "code",
+					lang: "typescript",
+					value: "export declare namespace TestNamespace",
+				},
+				// #endregion
+				// #region Variables section
+				{
+					type: "heading",
+					depth: 2,
+					children: [{ type: "text", value: "Variables" }],
+				},
+				{
+					type: "table",
+					children: [
+						// Table header row
+						{
+							type: "tableRow",
+							children: [
+								{ type: "tableCell", children: [{ type: "text", value: "Variable" }] },
+								{ type: "tableCell", children: [{ type: "text", value: "Alerts" }] },
+								{ type: "tableCell", children: [{ type: "text", value: "Modifiers" }] },
+								{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
+								{ type: "tableCell", children: [{ type: "text", value: "Description" }] },
+							],
+						},
+						// Table row for `bar`
+						{
+							type: "tableRow",
+							children: [
+								{
+									type: "tableCell",
+									children: [
+										{
+											type: "link",
+											url: "/test-package/testnamespace-namespace/#bar-variable",
+											children: [{ type: "text", value: "bar" }],
+										},
+									],
+								},
+								{
+									type: "tableCell",
+									children: [{ type: "inlineCode", value: "Beta" }],
+								},
+								{
+									type: "tableCell",
+									children: [{ type: "inlineCode", value: "readonly" }],
+								},
+								{
+									type: "tableCell",
+									children: [],
+								},
+								{
+									type: "tableCell",
+									children: [],
+								},
+							],
+						},
+						// Table row for `foo`
+						{
+							type: "tableRow",
+							children: [
+								{
+									type: "tableCell",
+									children: [
+										{
+											type: "link",
+											url: "/test-package/testnamespace-namespace/#foo-variable",
+											children: [{ type: "text", value: "foo" }],
+										},
+									],
+								},
+								{
+									type: "tableCell",
+									children: [],
+								},
+								{
+									type: "tableCell",
+									children: [{ type: "inlineCode", value: "readonly" }],
+								},
+								{
+									type: "tableCell",
+									children: [],
+								},
+								{
+									type: "tableCell",
+									children: [],
+								},
+							],
+						},
+						// No entry for `baz`
+					],
+				},
+				// #endregion
+				// #region Variables details section
+				{
+					type: "heading",
+					depth: 2,
+					children: [{ type: "text", value: "Variable Details" }],
+				},
+				// #region Details for `bar`
+				{
+					type: "html",
+					value: `<h3 id="bar-variable">bar</h3>`,
+				},
+				// No summary docs on `bar`
+				// Beta warning
+				{
+					type: "paragraph",
+					children: [betaWarningSpan],
+				},
+				// Signature
+				{
+					type: "html",
+					value: `<h4 id="bar-signature">Signature</h4>`,
+				},
+				{
+					type: "code",
+					lang: "typescript",
+					value: 'bar = "bar"',
+				},
+				// #endregion
+				// #region Details for `foo`
+				{
+					type: "html",
+					value: `<h3 id="foo-variable">foo</h3>`,
+				},
+				// No summary docs on `foo`
+				// Signature
+				{
+					type: "html",
+					value: `<h4 id="foo-signature">Signature</h4>`,
+				},
+				{
+					type: "code",
+					lang: "typescript",
+					value: 'foo = "foo"',
+				},
+				// #endregion
+				// No entry should be included for `baz` because it is `@alpha`
+				// #endregion
+			],
+		};
 
 		expect(result).deep.equals(expected);
 	});
 
 	it("Transform a Model with multiple entry-points", () => {
 		const model = generateModel("multiple-entry-points.json");
-		const config = createConfig(defaultPartialConfig, model);
+		const config = createConfig({}, model);
 
 		const documents = transformApiModel(config);
 		expect(documents).to.have.length(4); // Model, package, and 2 entry-points
@@ -758,379 +801,325 @@ describe("ApiItem to Documentation transformation tests", () => {
 		const expectedPackageDocument: ApiDocument = {
 			apiItem: model.packages[0],
 			documentPath: "test-package/index",
-			contents: [
-				createSection({
-					children: [
-						// Breadcrumb
-						createSection({
-							children: [
-								{
-									type: "paragraph",
-									children: [
-										{
-											type: "link",
-											url: "/",
-											children: [{ type: "text", value: "Packages" }],
-										},
-										{
-											type: "text",
-											value: " > ",
-										},
-										{
-											type: "link",
-											url: "/test-package/",
-											children: [{ type: "text", value: "test-package" }],
-										},
-									],
-								},
-							],
-						}),
-
-						// Body
-						createSection({
-							children: [
-								{
-									type: "list",
-									ordered: false,
-									children: [
-										{
-											type: "listItem",
-											children: [
-												{
-													type: "paragraph",
-													children: [
-														{
-															type: "link",
-															url: "/test-package/entry-point-a-entrypoint",
-															children: [{ type: "text", value: "entry-point-a" }],
-														},
-													],
-												},
-											],
-										},
-										{
-											type: "listItem",
-											children: [
-												{
-													type: "paragraph",
-													children: [
-														{
-															type: "link",
-															url: "/test-package/entry-point-b-entrypoint",
-															children: [{ type: "text", value: "entry-point-b" }],
-														},
-													],
-												},
-											],
-										},
-									],
-								},
-							],
-							heading: {
-								type: "sectionHeading",
-								title: "Entry Points",
-							},
-						}),
-					],
-					heading: {
-						type: "sectionHeading",
-						title: "test-package",
+			contents: {
+				type: "root",
+				children: [
+					{
+						type: "heading",
+						depth: 1,
+						children: [{ type: "text", value: "test-package" }],
 					},
-				}),
-			],
+					// Breadcrumb
+					{
+						type: "paragraph",
+						children: [
+							{
+								type: "link",
+								url: "/",
+								children: [{ type: "text", value: "Packages" }],
+							},
+							{
+								type: "text",
+								value: " > ",
+							},
+							{
+								type: "link",
+								url: "/test-package/",
+								children: [{ type: "text", value: "test-package" }],
+							},
+						],
+					},
+					// Body
+					{
+						type: "heading",
+						depth: 2,
+						children: [{ type: "text", value: "Entry Points" }],
+					},
+					{
+						type: "list",
+						ordered: false,
+						children: [
+							{
+								type: "listItem",
+								children: [
+									{
+										type: "paragraph",
+										children: [
+											{
+												type: "link",
+												url: "/test-package/entry-point-a-entrypoint",
+												children: [{ type: "text", value: "entry-point-a" }],
+											},
+										],
+									},
+								],
+							},
+							{
+								type: "listItem",
+								children: [
+									{
+										type: "paragraph",
+										children: [
+											{
+												type: "link",
+												url: "/test-package/entry-point-b-entrypoint",
+												children: [{ type: "text", value: "entry-point-b" }],
+											},
+										],
+									},
+								],
+							},
+						],
+					},
+				],
+			},
 		};
 		expect(documents[1]).to.deep.equal(expectedPackageDocument);
 
 		const expectedEntryPointADocument: ApiDocument = {
 			apiItem: model.packages[0].entryPoints[0],
 			documentPath: "test-package/entry-point-a-entrypoint",
-			contents: [
-				createSection({
-					children: [
-						// Breadcrumb
-						createSection({
-							children: [
-								{
-									type: "paragraph",
-									children: [
-										{
-											type: "link",
-											url: "/",
-											children: [{ type: "text", value: "Packages" }],
-										},
-										{
-											type: "text",
-											value: " > ",
-										},
-										{
-											type: "link",
-											url: "/test-package/",
-											children: [{ type: "text", value: "test-package" }],
-										},
-										{
-											type: "text",
-											value: " > ",
-										},
-										{
-											type: "link",
-											url: "/test-package/entry-point-a-entrypoint",
-											children: [{ type: "text", value: "entry-point-a" }],
-										},
-									],
-								},
-							],
-						}),
+			contents: {
+				type: "root",
+				children: [
+					{ type: "heading", depth: 1, children: [{ type: "text", value: "entry-point-a" }] },
+					// Breadcrumb
+					{
+						type: "paragraph",
+						children: [
+							{
+								type: "link",
+								url: "/",
+								children: [{ type: "text", value: "Packages" }],
+							},
+							{
+								type: "text",
+								value: " > ",
+							},
+							{
+								type: "link",
+								url: "/test-package/",
+								children: [{ type: "text", value: "test-package" }],
+							},
+							{
+								type: "text",
+								value: " > ",
+							},
+							{
+								type: "link",
+								url: "/test-package/entry-point-a-entrypoint",
+								children: [{ type: "text", value: "entry-point-a" }],
+							},
+						],
+					},
 
-						// Variables table
-						createSection({
-							children: [
-								{
-									type: "table",
+					// Variables table
+					{ type: "heading", depth: 2, children: [{ type: "text", value: "Variables" }] },
+					{
+						type: "table",
 
-									children: [
-										{
-											type: "tableRow",
-											children: [
-												{ type: "tableCell", children: [{ type: "text", value: "Variable" }] },
-												{
-													type: "tableCell",
-													children: [{ type: "text", value: "Modifiers" }],
-												},
-												{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
-												{
-													type: "tableCell",
-													children: [{ type: "text", value: "Description" }],
-												},
-											],
-										},
-										{
-											type: "tableRow",
-											children: [
-												{
-													type: "tableCell",
-													children: [
-														{
-															type: "link",
-															url: "/test-package/#hello-variable",
-															children: [{ type: "text", value: "hello" }],
-														},
-													],
-												},
-												{
-													type: "tableCell",
-													children: [
-														{
-															type: "inlineCode",
-															value: "readonly",
-														},
-													],
-												},
-												{
-													type: "tableCell",
-													children: [],
-												},
-												{
-													type: "tableCell",
-													children: [
-														{
-															type: "text",
-															value: "Test Constant",
-														},
-													],
-												},
-											],
-										},
-									],
-								},
-							],
-							heading: { title: "Variables", type: "sectionHeading" },
-						}),
-
-						// Variables details
-						createSection({
-							children: [
-								createSection({
-									children: [
-										// Summary
-										createSection({
-											children: [
-												{
-													type: "paragraph",
-													children: [{ type: "text", value: "Test Constant" }],
-												},
-											],
-										}),
-
-										// Signature
-										createSection({
-											children: [
-												{
-													type: "code",
-													lang: "typescript",
-													value: 'hello = "Hello"',
-												},
-											],
-											heading: {
-												title: "Signature",
-												id: "hello-signature",
-												type: "sectionHeading",
-											},
-										}),
-									],
-									heading: {
-										title: "hello",
-										id: "hello-variable",
-										type: "sectionHeading",
+						children: [
+							{
+								type: "tableRow",
+								children: [
+									{
+										type: "tableCell",
+										children: [{ type: "text", value: "Variable" }],
 									},
-								}),
-							],
-							heading: { title: "Variable Details", type: "sectionHeading" },
-						}),
-					],
-					heading: { title: "entry-point-a", type: "sectionHeading" },
-				}),
-			],
+									{
+										type: "tableCell",
+										children: [{ type: "text", value: "Modifiers" }],
+									},
+									{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
+									{
+										type: "tableCell",
+										children: [{ type: "text", value: "Description" }],
+									},
+								],
+							},
+							{
+								type: "tableRow",
+								children: [
+									{
+										type: "tableCell",
+										children: [
+											{
+												type: "link",
+												url: "/test-package/#hello-variable",
+												children: [{ type: "text", value: "hello" }],
+											},
+										],
+									},
+									{
+										type: "tableCell",
+										children: [
+											{
+												type: "inlineCode",
+												value: "readonly",
+											},
+										],
+									},
+									{
+										type: "tableCell",
+										children: [],
+									},
+									{
+										type: "tableCell",
+										children: [
+											{
+												type: "text",
+												value: "Test Constant",
+											},
+										],
+									},
+								],
+							},
+						],
+					},
+
+					// Variables details
+					{
+						type: "heading",
+						depth: 2,
+						children: [{ type: "text", value: "Variable Details" }],
+					},
+					{ type: "html", value: `<h3 id="hello-variable">hello</h3>` },
+					// Summary
+					{
+						type: "paragraph",
+						children: [{ type: "text", value: "Test Constant" }],
+					},
+
+					// Signature
+					{ type: "html", value: `<h4 id="hello-signature">Signature</h4>` },
+					{
+						type: "code",
+						lang: "typescript",
+						value: 'hello = "Hello"',
+					},
+				],
+			},
 		};
 		expect(documents[2]).to.deep.equal(expectedEntryPointADocument);
 
 		const expectedEntryPointBDocument: ApiDocument = {
 			apiItem: model.packages[0].entryPoints[1],
 			documentPath: "test-package/entry-point-b-entrypoint",
-			contents: [
-				createSection({
-					children: [
-						// Breadcrumb
-						createSection({
-							children: [
-								{
-									type: "paragraph",
-									children: [
-										{
-											type: "link",
-											url: "/",
-											children: [{ type: "text", value: "Packages" }],
-										},
-										{
-											type: "text",
-											value: " > ",
-										},
-										{
-											type: "link",
-											url: "/test-package/",
-											children: [{ type: "text", value: "test-package" }],
-										},
-										{
-											type: "text",
-											value: " > ",
-										},
-										{
-											type: "link",
-											url: "/test-package/entry-point-b-entrypoint",
-											children: [{ type: "text", value: "entry-point-b" }],
-										},
-									],
-								},
-							],
-						}),
-
-						// Variables table
-						createSection({
-							children: [
-								{
-									type: "table",
-									children: [
-										{
-											type: "tableRow",
-											children: [
-												{ type: "tableCell", children: [{ type: "text", value: "Variable" }] },
-												{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
-												{
-													type: "tableCell",
-													children: [{ type: "text", value: "Description" }],
-												},
-											],
-										},
-										{
-											type: "tableRow",
-											children: [
-												{
-													type: "tableCell",
-													children: [
-														{
-															type: "link",
-															url: "/test-package/#world-variable",
-															children: [{ type: "text", value: "world" }],
-														},
-													],
-												},
-												{
-													type: "tableCell",
-													children: [],
-												},
-												{
-													type: "tableCell",
-													children: [
-														{
-															type: "text",
-															value: "Test Constant",
-														},
-													],
-												},
-											],
-										},
-									],
-								},
-							],
-							heading: { title: "Variables", type: "sectionHeading" },
-						}),
-
-						// Variables details
-						createSection({
-							children: [
-								createSection({
-									children: [
-										// Summary
-										createSection({
-											children: [
-												{
-													type: "paragraph",
-													children: [{ type: "text", value: "Test Constant" }],
-												},
-											],
-										}),
-
-										// Signature
-										createSection({
-											children: [
-												{
-													type: "code",
-													lang: "typescript",
-													value: 'world = "world"',
-												},
-											],
-											heading: {
-												title: "Signature",
-												id: "world-signature",
-												type: "sectionHeading",
-											},
-										}),
-									],
-									heading: {
-										title: "world",
-										id: "world-variable",
-										type: "sectionHeading",
-									},
-								}),
-							],
-							heading: {
-								title: "Variable Details",
-								type: "sectionHeading",
+			contents: {
+				type: "root",
+				children: [
+					{ type: "heading", depth: 1, children: [{ type: "text", value: "entry-point-b" }] },
+					// Breadcrumb
+					{
+						type: "paragraph",
+						children: [
+							{
+								type: "link",
+								url: "/",
+								children: [{ type: "text", value: "Packages" }],
 							},
-						}),
-					],
-					heading: { title: "entry-point-b", type: "sectionHeading" },
-				}),
-			],
+							{
+								type: "text",
+								value: " > ",
+							},
+							{
+								type: "link",
+								url: "/test-package/",
+								children: [{ type: "text", value: "test-package" }],
+							},
+							{
+								type: "text",
+								value: " > ",
+							},
+							{
+								type: "link",
+								url: "/test-package/entry-point-b-entrypoint",
+								children: [{ type: "text", value: "entry-point-b" }],
+							},
+						],
+					},
+
+					// #region Variables table
+					{ type: "heading", depth: 2, children: [{ type: "text", value: "Variables" }] },
+					{
+						type: "table",
+						children: [
+							{
+								type: "tableRow",
+								children: [
+									{
+										type: "tableCell",
+										children: [{ type: "text", value: "Variable" }],
+									},
+									{ type: "tableCell", children: [{ type: "text", value: "Type" }] },
+									{
+										type: "tableCell",
+										children: [{ type: "text", value: "Description" }],
+									},
+								],
+							},
+							{
+								type: "tableRow",
+								children: [
+									{
+										type: "tableCell",
+										children: [
+											{
+												type: "link",
+												url: "/test-package/#world-variable",
+												children: [{ type: "text", value: "world" }],
+											},
+										],
+									},
+									{
+										type: "tableCell",
+										children: [],
+									},
+									{
+										type: "tableCell",
+										children: [
+											{
+												type: "text",
+												value: "Test Constant",
+											},
+										],
+									},
+								],
+							},
+						],
+					},
+					// #endregion
+					// #region Variables details
+					{
+						type: "heading",
+						depth: 2,
+						children: [{ type: "text", value: "Variable Details" }],
+					},
+					// #region Details for `world`
+					{
+						type: "html",
+						value: `<h3 id="world-variable">world</h3>`,
+					},
+					// Summary
+					{
+						type: "paragraph",
+						children: [{ type: "text", value: "Test Constant" }],
+					},
+					// #region Signature
+					{
+						type: "html",
+						value: `<h4 id="world-signature">Signature</h4>`,
+					},
+					{
+						type: "code",
+						lang: "typescript",
+						value: 'world = "world"',
+					},
+					// #endregion
+					// #endregion
+					// #endregion
+				],
+			},
 		};
 		expect(documents[3]).to.deep.equal(expectedEntryPointBDocument);
 	});
