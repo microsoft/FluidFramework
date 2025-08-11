@@ -152,21 +152,15 @@ export interface IRelaySessionAwareDriverFactory extends IProvideSessionAwareDri
 
 // @alpha @legacy
 export interface ISensitivityLabel {
-    // (undocumented)
     appliedByUserEmail: string;
-    // (undocumented)
     assignmentMethod: string;
-    // (undocumented)
     sensitivityLabelId: string;
-    // (undocumented)
     tenantId: string;
 }
 
 // @alpha @legacy
 export interface ISensitivityLabelsInfo {
-    // (undocumented)
     labels: ISensitivityLabel[];
-    // (undocumented)
     timestamp: string;
 }
 

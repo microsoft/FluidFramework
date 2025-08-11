@@ -54,9 +54,9 @@ export interface ISocketStorageDiscovery {
  * @alpha
  */
 export interface ISensitivityLabelsInfo {
-	// ISO format timestamp when the label info snapshot was generated
+	/** ISO format timestamp when the label info snapshot was generated. */
 	timestamp: string;
-	// List of applied sensitivity labels (empty if none)
+	/** List of applied sensitivity labels. Empty if none. */
 	labels: ISensitivityLabel[];
 }
 
@@ -66,13 +66,16 @@ export interface ISensitivityLabelsInfo {
  * @alpha
  */
 export interface ISensitivityLabel {
-	// Unique identifier of the sensitivity label
+	/** Unique identifier of the sensitivity label. */
 	sensitivityLabelId: string;
-	// Tenant under which the label is defined
+	/** Tenant under which the label is defined. */
 	tenantId: string;
-	// How the label was assigned
+	/** How the label was assigned. */
 	assignmentMethod: string;
-	// Email of user who applied the label (may be empty / placeholder)
+	/**
+	 * Email of the user who applied the label.
+	 * May be empty or a placeholder value.
+	 */
 	appliedByUserEmail: string;
 }
 
