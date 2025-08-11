@@ -1428,6 +1428,11 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 			assert(sourceClientIndex !== -1, `Client ${op.sourceClientTag} not found`);
 			const sourceClient = state.clients[sourceClientIndex];
 
+			// AB#45904: Clarify restart-from-pending behavior in staging mode
+			if (sourceClient.entryPoint.inStagingMode()) {
+				sourceClient.entryPoint.exitStagingMode(true);
+			}
+
 			assert(
 				typeof sourceClient.container.getPendingLocalState === "function",
 				`Client ${op.sourceClientTag} does not support getPendingLocalState`,
@@ -1435,13 +1440,14 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 
 			const pendingLocalState = await sourceClient.container.getPendingLocalState();
 
+			const removed = state.clients.splice(
+				state.clients.findIndex((c) => c.tag === op.sourceClientTag),
+				1,
+			);
+			removed[0].container.dispose();
+
 			const url = await sourceClient.container.getAbsoluteUrl("");
 			assert(url !== undefined, "url of container must be available");
-
-			// AB#45904: Clarify restart-from-pending behavior in staging mode
-			if (sourceClient.entryPoint.inStagingMode()) {
-				sourceClient.entryPoint.exitStagingMode(true);
-			}
 
 			const newClient = await loadClient(
 				state.localDeltaConnectionServer,
@@ -1453,11 +1459,6 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 				pendingLocalState,
 			);
 
-			const removed = state.clients.splice(
-				state.clients.findIndex((c) => c.tag === op.sourceClientTag),
-				1,
-			);
-			removed[0].container.dispose();
 			state.clients.push(newClient);
 			return state;
 		}
