@@ -853,6 +853,8 @@ export class ModularChangeFamily
 		potentiallyConflictedOver: TaggedChange<ModularChangeset>,
 		revisionMetadata: RevisionMetadataSource,
 	): ModularChangeset {
+		// Our current cell ordering scheme depends on acquiring tombstones when rebasing over a change with conflicts.
+		// TODO: remove once AD#46104 is completed
 		const over = mapTaggedChange(
 			potentiallyConflictedOver,
 			this.getEffectiveChange(potentiallyConflictedOver.change),
