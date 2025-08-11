@@ -174,16 +174,19 @@ describe("SharedTree table APIs execution time", () => {
 					title: `Undo insert the middle column ${count} times`,
 					tableSize,
 					initialCellValue,
-					beforeOperation: (table) => {
+					beforeOperation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							const column = new Column({});
 							table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
 						}
+						assert(undoRedoManager.canUndo);
 					},
 					operation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							undoRedoManager.undo();
 						}
+					},
+					afterOperation: (table, undoRedoManager) => {
 						assert(!undoRedoManager.canUndo);
 					},
 					maxBenchmarkDurationSeconds,
@@ -203,11 +206,14 @@ describe("SharedTree table APIs execution time", () => {
 							undoRedoManager.undo();
 						}
 						assert(!undoRedoManager.canUndo);
+						assert(undoRedoManager.canRedo);
 					},
 					operation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							undoRedoManager.redo();
 						}
+					},
+					afterOperation: (table, undoRedoManager) => {
 						assert(!undoRedoManager.canRedo);
 					},
 					maxBenchmarkDurationSeconds,
@@ -234,16 +240,19 @@ describe("SharedTree table APIs execution time", () => {
 					title: `Undo insert the middle row ${count} times`,
 					tableSize,
 					initialCellValue,
-					beforeOperation: (table) => {
+					beforeOperation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							const row = new Row({ cells: {} });
 							table.insertRow({ index: Math.floor(table.rows.length / 2), row });
 						}
+						assert(undoRedoManager.canUndo);
 					},
 					operation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							undoRedoManager.undo();
 						}
+					},
+					afterOperation: (table, undoRedoManager) => {
 						assert(!undoRedoManager.canUndo);
 					},
 					maxBenchmarkDurationSeconds,
@@ -263,11 +272,14 @@ describe("SharedTree table APIs execution time", () => {
 							undoRedoManager.undo();
 						}
 						assert(!undoRedoManager.canUndo);
+						assert(undoRedoManager.canRedo);
 					},
 					operation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							undoRedoManager.redo();
 						}
+					},
+					afterOperation: (table, undoRedoManager) => {
 						assert(!undoRedoManager.canRedo);
 					},
 					maxBenchmarkDurationSeconds,
@@ -296,13 +308,14 @@ describe("SharedTree table APIs execution time", () => {
 					title: `Undo insert the middle column and row ${count} times`,
 					tableSize,
 					initialCellValue,
-					beforeOperation: (table) => {
+					beforeOperation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							const column = new Column({});
 							const row = new Row({ cells: {} });
 							table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
 							table.insertRow({ index: Math.floor(table.rows.length / 2), row });
 						}
+						assert(undoRedoManager.canUndo);
 					},
 					operation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
@@ -311,6 +324,8 @@ describe("SharedTree table APIs execution time", () => {
 							// Undo insert column
 							undoRedoManager.undo();
 						}
+					},
+					afterOperation: (table, undoRedoManager) => {
 						assert(!undoRedoManager.canUndo);
 					},
 					maxBenchmarkDurationSeconds,
@@ -336,6 +351,7 @@ describe("SharedTree table APIs execution time", () => {
 				// 			undoRedoManager.undo();
 				// 		}
 				// 		assert(!undoRedoManager.canUndo);
+				// 		assert(undoRedoManager.canRedo);
 				// 	},
 				// 	operation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
@@ -344,6 +360,8 @@ describe("SharedTree table APIs execution time", () => {
 				// 			// Redo insert column
 				// 			undoRedoManager.redo();
 				// 		}
+				// 	},
+				// 	afterOperation: (table, undoRedoManager) => {
 				// 		assert(!undoRedoManager.canRedo);
 				// 	},
 				// 	maxBenchmarkDurationSeconds,
@@ -375,7 +393,7 @@ describe("SharedTree table APIs execution time", () => {
 				// 	title: `Undo insert the middle column and row ${count} times`,
 				// 	tableSize,
 				// 	initialCellValue,
-				// 	beforeOperation: (table) => {
+				// 	beforeOperation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			const column = new Column({});
 				// 			const row = new Row({ cells: {} });
@@ -384,6 +402,7 @@ describe("SharedTree table APIs execution time", () => {
 				// 			removeColumnAndCells(table, column);
 				// 			table.removeRow(row);
 				// 		}
+				// 		assert(undoRedoManager.canUndo);
 				// 	},
 				// 	operation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
@@ -396,12 +415,15 @@ describe("SharedTree table APIs execution time", () => {
 				// 			// Undo insert column
 				// 			undoRedoManager.undo();
 				// 		}
+				// 	},
+				// 	afterOperation: (table, undoRedoManager) => {
 				// 		assert(!undoRedoManager.canUndo);
 				// 	},
 				// 	maxBenchmarkDurationSeconds,
 				// });
 
-				// // Test the execute time of the SharedTree for redoing an insert row and a column and removing them right away for a given number of times.
+				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
+				// Test the execute time of the SharedTree for redoing an insert row and a column and removing them right away for a given number of times.
 				// runBenchmark({
 				// 	title: `Redo insert the middle column and row ${count} times`,
 				// 	tableSize,
@@ -461,20 +483,23 @@ describe("SharedTree table APIs execution time", () => {
 				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
 				// Test the execute time of undoing insert a row and a column and removing them right away for a given number of times.
 				// Test the execute time of undoing remove a column in the middle for a given number of times.
-				// runUndoRedoBenchmark({
+				// runBenchmark({
 				// 	title: `Undo remove the middle column ${count} times`,
 				// 	tableSize,
-				// 	cellValue: initialCellValue,
-				// 	setupOperation: (table) => {
+				// 	initialCellValue,
+				// 	beforeOperation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			const column = table.columns[Math.floor(table.columns.length / 2)];
 				// 			removeColumnAndCells(table, column);
 				// 		}
+				// 		assert(undoRedoManager.canUndo);
 				// 	},
-				// 	stackOperation: (undoRedoManager) => {
+				// 	operation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			undoRedoManager.undo();
 				// 		}
+				// 	},
+				// 	afterOperation: (table, undoRedoManager) => {
 				// 		assert(!undoRedoManager.canUndo);
 				// 	},
 				// 	maxBenchmarkDurationSeconds,
@@ -482,11 +507,11 @@ describe("SharedTree table APIs execution time", () => {
 
 				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
 				// Test the execute time of the SharedTree for redoing a remove column in the middle for a given number of times.
-				// runUndoRedoBenchmark({
+				// runBenchmark({
 				// 	title: `Redo remove the middle column ${count} times`,
 				// 	tableSize,
-				// 	cellValue: initialCellValue,
-				// 	setupOperation: (table, undoRedoManager) => {
+				// 	initialCellValue,
+				// 	beforeOperation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			const column = table.columns[Math.floor(table.columns.length / 2)];
 				// 			removeColumnAndCells(table, column);
@@ -495,11 +520,14 @@ describe("SharedTree table APIs execution time", () => {
 				// 			undoRedoManager.undo();
 				// 		}
 				// 		assert(!undoRedoManager.canUndo);
+				// 		assert(undoRedoManager.canRedo);
 				// 	},
-				// 	stackOperation: (undoRedoManager) => {
+				// 	operation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			undoRedoManager.redo();
 				// 		}
+				// 	},
+				// 	afterOperation: (table, undoRedoManager) => {
 				// 		assert(!undoRedoManager.canRedo);
 				// 	},
 				// 	maxBenchmarkDurationSeconds,
@@ -526,16 +554,19 @@ describe("SharedTree table APIs execution time", () => {
 					title: `Undo remove the middle row ${count} times`,
 					tableSize,
 					initialCellValue,
-					beforeOperation: (table) => {
+					beforeOperation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							const row = table.rows[Math.floor(table.rows.length / 2)];
 							table.removeRow(row);
 						}
+						assert(undoRedoManager.canUndo);
 					},
 					operation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							undoRedoManager.undo();
 						}
+					},
+					afterOperation: (table, undoRedoManager) => {
 						assert(!undoRedoManager.canUndo);
 					},
 					maxBenchmarkDurationSeconds,
@@ -555,11 +586,14 @@ describe("SharedTree table APIs execution time", () => {
 							undoRedoManager.undo();
 						}
 						assert(!undoRedoManager.canUndo);
+						assert(undoRedoManager.canRedo);
 					},
 					operation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							undoRedoManager.redo();
 						}
+					},
+					afterOperation: (table, undoRedoManager) => {
 						assert(!undoRedoManager.canRedo);
 					},
 					maxBenchmarkDurationSeconds,
@@ -590,13 +624,14 @@ describe("SharedTree table APIs execution time", () => {
 				// 	title: `Undo remove the middle column and row ${count} times`,
 				// 	tableSize,
 				// 	initialCellValue,
-				// 	beforeOperation: (table) => {
+				// 	beforeOperation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			const column = table.columns[Math.floor(table.columns.length / 2)];
 				// 			removeColumnAndCells(table, column);
 				// 			const row = table.rows[Math.floor(table.rows.length / 2)];
 				// 			table.removeRow(row);
 				// 		}
+				// 		assert(undoRedoManager.canUndo);
 				// 	},
 				// 	operation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
@@ -605,6 +640,8 @@ describe("SharedTree table APIs execution time", () => {
 				// 			// Undo remove column
 				// 			undoRedoManager.undo();
 				// 		}
+				// 	},
+				// 	afterOperation: (table, undoRedoManager) => {
 				// 		assert(!undoRedoManager.canUndo);
 				// 	},
 				// 	maxBenchmarkDurationSeconds,
@@ -628,6 +665,7 @@ describe("SharedTree table APIs execution time", () => {
 				// 			undoRedoManager.undo();
 				// 		}
 				// 		assert(!undoRedoManager.canUndo);
+				// 		assert(undoRedoManager.canRedo);
 				// 	},
 				// 	operation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
@@ -636,6 +674,8 @@ describe("SharedTree table APIs execution time", () => {
 				// 			// Redo remove column
 				// 			undoRedoManager.redo();
 				// 		}
+				// 	},
+				// 	afterOperation: (table, undoRedoManager) => {
 				// 		assert(!undoRedoManager.canRedo);
 				// 	},
 				// 	maxBenchmarkDurationSeconds,
@@ -681,11 +721,14 @@ describe("SharedTree table APIs execution time", () => {
 								cell: initialCellValue,
 							});
 						}
+						assert(undoRedoManager.canUndo);
 					},
 					operation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							undoRedoManager.undo();
 						}
+					},
+					afterOperation: (table, undoRedoManager) => {
 						assert(!undoRedoManager.canUndo);
 					},
 					maxBenchmarkDurationSeconds,
@@ -712,11 +755,14 @@ describe("SharedTree table APIs execution time", () => {
 							undoRedoManager.undo();
 						}
 						assert(!undoRedoManager.canUndo);
+						assert(undoRedoManager.canRedo);
 					},
 					operation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							undoRedoManager.redo();
 						}
+					},
+					afterOperation: (table, undoRedoManager) => {
 						assert(!undoRedoManager.canRedo);
 					},
 					maxBenchmarkDurationSeconds,
