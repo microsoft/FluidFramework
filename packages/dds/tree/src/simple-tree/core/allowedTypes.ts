@@ -250,7 +250,7 @@ export type UnannotateAllowedTypes<T extends AnnotatedAllowedTypes> =
 /**
  * Removes annotations from an allowed type.
  * @remarks
- * In the input could be lazy
+ * If the input could be lazy
  * (is a LazyItem or AnnotatedAllowedType<LazyItem> instead of just a TreeNodeSchema | AnnotatedAllowedType<TreeNodeSchema>)
  * then the output of this will be a LazyItem and thus is not valid as an ImplicitAllowedTypes without wrapping it in an array.
  * This can however be used on items within an AllowedTypes array.
