@@ -68,7 +68,7 @@ function createAdditionalClient(
 	return { sharedDirectory, dataStoreRuntime, containerRuntime };
 }
 
-describe("SharedDirectory rollback", () => {
+describe.only("SharedDirectory rollback", () => {
 	describe("Storage operations (root subdirectory)", () => {
 		it("should rollback set operation", () => {
 			const { sharedDirectory, containerRuntime } = setupRollbackTest();
@@ -862,6 +862,173 @@ describe("SharedDirectory rollback", () => {
 					[["remoteKey", "remoteValue"]],
 				],
 				"Subdirectory entries on remote client should match expected values post-rollback",
+			);
+		});
+	});
+
+	describe("Events", () => {
+		it("should fire correct events for rollback of local delete", () => {
+			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
+				setupRollbackTest();
+
+			let disposedCount = 0;
+			let undisposedCount = 0;
+			let subdirDeletedCount = 0;
+			let subdirCreatedCount = 0;
+
+			sharedDirectory.createSubDirectory("subdir");
+			const subdir = sharedDirectory.getSubDirectory("subdir");
+			assert(subdir !== undefined);
+			subdir.on("disposed", () => {
+				disposedCount++;
+			});
+			subdir.on("undisposed", () => {
+				undisposedCount++;
+			});
+			sharedDirectory.on("subDirectoryCreated", (path: string) => {
+				if (path === "subdir") {
+					subdirCreatedCount++;
+				}
+			});
+			sharedDirectory.on("subDirectoryDeleted", (path: string) => {
+				if (path === "subdir") {
+					subdirDeletedCount++;
+				}
+			});
+
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			sharedDirectory.deleteSubDirectory("subdir");
+			assert.strictEqual(disposedCount, 1, "disposed should fire once on local delete");
+			assert.strictEqual(
+				subdirDeletedCount,
+				1,
+				"subdirDeleted should fire once on local delete",
+			);
+
+			containerRuntime.rollback?.();
+
+			assert.strictEqual(undisposedCount, 1, "undisposed should fire once on rollback");
+			assert.strictEqual(subdirCreatedCount, 1, "subdirCreated should fire once on rollback");
+		});
+
+		it("should fire correct events for rollback of local delete across nested subdirectories", () => {
+			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
+				setupRollbackTest();
+
+			let rootDeleted = 0;
+			let rootCreated = 0;
+			let parentCreated = 0;
+			let parentDeleted = 0;
+			let childCreated = 0;
+			let childDeleted = 0;
+			let childDisposed = 0;
+			let childUndisposed = 0;
+			let grandchildDisposed = 0;
+			let grandchildUndisposed = 0;
+
+			sharedDirectory.on("subDirectoryDeleted", (path: string) => {
+				if (path === "parent") {
+					rootDeleted++;
+				}
+			});
+			sharedDirectory.on("subDirectoryCreated", (path: string) => {
+				if (path === "parent") {
+					rootCreated++;
+				}
+			});
+			sharedDirectory.createSubDirectory("parent");
+			const parent = sharedDirectory.getSubDirectory("parent");
+			assert(parent !== undefined);
+
+			parent.on("subDirectoryCreated", (path: string) => {
+				if (path === "child") {
+					parentCreated++;
+				}
+			});
+			parent.on("subDirectoryDeleted", (path: string) => {
+				if (path === "child") {
+					parentDeleted++;
+				}
+			});
+
+			const child = parent.createSubDirectory("child");
+			assert(child !== undefined);
+
+			child.on("subDirectoryCreated", (path: string) => {
+				if (path === "grandchild") {
+					childCreated++;
+				}
+			});
+			child.on("subDirectoryDeleted", (path: string) => {
+				if (path === "grandchild") {
+					childDeleted++;
+				}
+			});
+			child.on("disposed", () => {
+				childDisposed++;
+			});
+			child.on("undisposed", () => {
+				childUndisposed++;
+			});
+
+			const grandchild = child.createSubDirectory("grandchild");
+			assert(grandchild !== undefined);
+			grandchild.on("disposed", () => {
+				grandchildDisposed++;
+			});
+			grandchild.on("undisposed", () => {
+				grandchildUndisposed++;
+			});
+
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			parent.deleteSubDirectory("child");
+
+			assert.deepStrictEqual(
+				[rootCreated, rootDeleted],
+				[1, 0],
+				"root events correct pre-rollback",
+			);
+			assert.deepStrictEqual(
+				[parentCreated, parentDeleted],
+				[1, 1],
+				"parent events correct pre-rollback",
+			);
+			assert.deepStrictEqual(
+				[childCreated, childDeleted, childDisposed, childUndisposed],
+				[1, 0, 1, 0],
+				"child events correct pre-rollback",
+			);
+			assert.deepStrictEqual(
+				[grandchildDisposed, grandchildUndisposed],
+				[1, 0],
+				"grandchild events correct pre-rollback",
+			);
+
+			containerRuntime.rollback?.();
+
+			assert.deepStrictEqual(
+				[rootCreated, rootDeleted],
+				[1, 0],
+				"root events correct post-rollback",
+			);
+			assert.deepStrictEqual(
+				[parentCreated, parentDeleted],
+				[2, 1],
+				"parent events correct post-rollback",
+			);
+			assert.deepStrictEqual(
+				[childCreated, childDeleted, childDisposed, childUndisposed],
+				[1, 0, 1, 1],
+				"child events correct post-rollback",
+			);
+			assert.deepStrictEqual(
+				[grandchildDisposed, grandchildUndisposed],
+				[1, 1],
+				"grandchild events correct post-rollback",
 			);
 		});
 	});

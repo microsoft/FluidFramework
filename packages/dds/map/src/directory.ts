@@ -2097,10 +2097,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			if (subDir.disposed) {
 				this.undisposeSubdirectoryTree(subDir);
 			}
-
 			this.sequencedSubdirectories.set(op.subdirName, subDir);
-
-			this.emit("subDirectoryCreated", op.subdirName, local, this);
 		} else {
 			subDir = this.getOptimisticSubDirectoryEvenIfDisposed(op.subdirName);
 			if (subDir === undefined) {
