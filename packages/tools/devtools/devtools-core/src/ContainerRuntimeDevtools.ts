@@ -110,6 +110,7 @@ export class ContainerRuntimeDevtools extends BaseDevtools<DecomposedContainer> 
 
 /**
  * Implementation of {@link DecomposedContainer} that wraps an {@link @fluidframework/container-runtime-definitions/internal#IContainerRuntime}.
+ * @remarks
  * This class provides a bridge between {@link @fluidframework/container-runtime-definitions/internal#IContainerRuntime} and the devtools system by exposing runtime properties and events.
  */
 export class DecomposedContainerForContainerRuntime
