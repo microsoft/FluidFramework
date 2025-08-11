@@ -61,19 +61,20 @@ function createMatrix(options: TestMatrixOptions): {
  */
 interface BenchmarkOptions {
 	/**
-	 * Benchmark test title.
+	 * The title of the benchmark test.
 	 */
 	readonly title: string;
 
 	/**
-	 * Initial size of the matrix.
+	 * Height and width of the matrix to be used in the benchmark.
 	 */
 	readonly matrixSize: number;
 
 	/**
-	 * Initial value for each cell in the matrix.
+	 * Value used to fill the cells of the matrix.
+	 * @remarks If not provided, no cells will be filled.
 	 */
-	readonly initialValue: string | undefined;
+	readonly cellValue?: string | undefined;
 
 	/**
 	 * The operation to be measured.
@@ -87,7 +88,7 @@ interface BenchmarkOptions {
 function createBenchmark({
 	title,
 	matrixSize,
-	initialValue,
+	cellValue,
 	operation,
 }: BenchmarkOptions): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
@@ -103,7 +104,7 @@ function createBenchmark({
 			this.localMatrix = createLocalMatrix({
 				id: "testLocalMatrix",
 				size: matrixSize,
-				initialValue,
+				initialValue: cellValue,
 			});
 		}
 	})();
@@ -122,7 +123,7 @@ interface UndoRedoBenchmarkOptions extends BenchmarkOptions {
 function createUndoBenchmark({
 	title,
 	matrixSize,
-	initialValue,
+	cellValue: initialValue,
 	stackCount,
 	operation,
 }: UndoRedoBenchmarkOptions): IMemoryTestObject {
@@ -159,7 +160,7 @@ function createUndoBenchmark({
 function createRedoBenchmark({
 	title,
 	matrixSize,
-	initialValue,
+	cellValue: initialValue,
 	stackCount,
 	operation,
 }: UndoRedoBenchmarkOptions): IMemoryTestObject {
@@ -244,7 +245,7 @@ describe("SharedMatrix memory usage", () => {
 						createBenchmark({
 							title: `Insert a column in the middle ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
@@ -258,7 +259,7 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo insert column in the middle ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							stackCount: count,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
@@ -273,7 +274,7 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo insert column in the middle ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							stackCount: count,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
@@ -290,7 +291,7 @@ describe("SharedMatrix memory usage", () => {
 						createBenchmark({
 							title: `Insert a row in the middle ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
 									matrix.insertRows(Math.floor(matrix.colCount / 2), 1);
@@ -304,7 +305,7 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo insert row in the middle ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							stackCount: count,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
@@ -319,7 +320,7 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo insert row in the middle ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							stackCount: count,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
@@ -336,7 +337,7 @@ describe("SharedMatrix memory usage", () => {
 						createBenchmark({
 							title: `Insert a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
@@ -351,7 +352,7 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo insert a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							stackCount: 2 * count,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
@@ -367,7 +368,7 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo insert a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							stackCount: 2 * count,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
@@ -390,7 +391,7 @@ describe("SharedMatrix memory usage", () => {
 						createBenchmark({
 							title: `Insert and remove a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
@@ -407,7 +408,7 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo insert and remove a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							stackCount: 4 * count,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
@@ -425,7 +426,7 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo insert a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							stackCount: 4 * count,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
@@ -448,7 +449,7 @@ describe("SharedMatrix memory usage", () => {
 						createBenchmark({
 							title: `Remove the middle column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
@@ -462,7 +463,7 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo remove the middle column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							stackCount: count,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
@@ -477,7 +478,7 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo remove the middle column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							stackCount: count,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
@@ -494,7 +495,7 @@ describe("SharedMatrix memory usage", () => {
 						createBenchmark({
 							title: `Remove the middle row ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
 									matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
@@ -508,7 +509,7 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo remove the middle row ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							stackCount: count,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
@@ -523,7 +524,7 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo remove the middle row ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							stackCount: count,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
@@ -540,7 +541,7 @@ describe("SharedMatrix memory usage", () => {
 						createBenchmark({
 							title: `Remove a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
@@ -555,7 +556,7 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo remove a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							stackCount: 2 * count,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
@@ -571,7 +572,7 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo remove a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							stackCount: 2 * count,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
@@ -589,7 +590,7 @@ describe("SharedMatrix memory usage", () => {
 						createBenchmark({
 							title: `Set a 3-character string in ${count} cells`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
 									matrix.setCell(i, i, "abc");
@@ -603,7 +604,7 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo setting a 3-character string in ${count} cells`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							stackCount: count,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
@@ -618,7 +619,7 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo setting a 3-character string in ${count} cells`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							stackCount: count,
 							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {

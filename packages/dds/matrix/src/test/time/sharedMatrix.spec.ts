@@ -50,8 +50,7 @@ interface BenchmarkConfig extends BenchmarkTimingOptions {
 	) => void;
 
 	/**
-	 * The operation to perform on the matrix. This should be a function that takes a SharedMatrix
-	 * and performs the desired operation.
+	 * The operation to be measured.
 	 */
 	readonly operation: (matrix: ISharedMatrix, undoRedoStack: UndoRedoStackManager) => void;
 
