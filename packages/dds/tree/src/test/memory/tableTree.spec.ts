@@ -17,7 +17,6 @@ import {
 	createTableTree,
 	removeColumnAndCells,
 	type Table,
-	type TableTreeDefinition,
 	type TableTreeOptions,
 } from "../tablePerformanceTestUtilities.js";
 import type { TreeNodeFromImplicitAllowedTypes } from "../../simple-tree/index.js";
@@ -232,7 +231,7 @@ describe("SharedTree table APIs memory usage", () => {
 								const column = new Column({});
 								table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
 							}
-						}
+						},
 					}),
 				);
 
@@ -295,8 +294,8 @@ describe("SharedTree table APIs memory usage", () => {
 								const row = new Row({ cells: {} });
 								table.insertRow({ index: Math.floor(table.rows.length / 2), row });
 							}
-						}
-					})
+						},
+					}),
 				);
 
 				// Test the memory usage of the SharedTree for undoing the insertion of a row at the end for a given number of times.
@@ -360,8 +359,8 @@ describe("SharedTree table APIs memory usage", () => {
 								const row = new Row({ id: `row-${i}`, cells: {} });
 								table.insertRow({ index: Math.floor(table.rows.length / 2), row });
 							}
-						}
-					})
+						},
+					}),
 				);
 
 				// Test the memory usage of the SharedTree for undoing the insertion of a column and a row in the middle for a given number of times.
@@ -440,8 +439,8 @@ describe("SharedTree table APIs memory usage", () => {
 								const column = table.columns[Math.floor(table.columns.length / 2)];
 								removeColumnAndCells(table, column);
 							}
-						}
-					})
+						},
+					}),
 				);
 
 				// Test the memory usage of the SharedTree for undoing the removal of a column in the middle for a given number of times.
@@ -500,12 +499,12 @@ describe("SharedTree table APIs memory usage", () => {
 						tableSize,
 						initialCellValue,
 						operation: (table) => {
-						for (let i = 0; i < count; i++) {
+							for (let i = 0; i < count; i++) {
 								const row = table.rows[Math.floor(table.rows.length / 2)];
 								table.removeRow(row);
 							}
-						}
-					})
+						},
+					}),
 				);
 
 				// Test the memory usage of the SharedTree for undoing the removal of a row in the middle for a given number of times.
@@ -569,8 +568,8 @@ describe("SharedTree table APIs memory usage", () => {
 								const row = table.rows[Math.floor(table.rows.length / 2)];
 								table.removeRow(row);
 							}
-						}
-					})
+						},
+					}),
 				);
 
 				// Test the memory usage of the SharedTree for undoing the removal of a column and a row in the middle for a given number of times.
@@ -642,7 +641,7 @@ describe("SharedTree table APIs memory usage", () => {
 						tableSize,
 						initialCellValue,
 						operation: (table) => {
-						for (let i = 0; i < count; i++) {
+							for (let i = 0; i < count; i++) {
 								const column = new Column({});
 								table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
 								const row = new Row({ id: `row-${i}`, cells: {} });
@@ -650,8 +649,8 @@ describe("SharedTree table APIs memory usage", () => {
 								removeColumnAndCells(table, column);
 								table.removeRow(row);
 							}
-						}
-					})
+						},
+					}),
 				);
 
 				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
@@ -750,7 +749,7 @@ describe("SharedTree table APIs memory usage", () => {
 									cell: initialCellValue,
 								});
 							}
-						}
+						},
 					}),
 				);
 
