@@ -1178,6 +1178,8 @@ export class Container
 
 				this.storageAdapter.dispose();
 
+				this.serializedStateManager.dispose();
+
 				// Notify storage about critical errors. They may be due to disconnect between client & server knowledge
 				// about file, like file being overwritten in storage, but client having stale local cache.
 				// Driver need to ensure all caches are cleared on critical errors

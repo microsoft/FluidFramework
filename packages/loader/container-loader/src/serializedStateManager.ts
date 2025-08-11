@@ -415,6 +415,13 @@ export class SerializedStateManager {
 	}
 
 	/**
+	 * Dispose of the SerializedStateManager and clean up resources.
+	 */
+	public dispose(): void {
+		this.refreshTimer.clear();
+	}
+
+	/**
 	 * Assembles and serializes the {@link IPendingContainerState} for the container,
 	 * to be stored and used to rehydrate the container at a later time.
 	 */
