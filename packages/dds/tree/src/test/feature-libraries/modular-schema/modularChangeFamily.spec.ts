@@ -108,6 +108,7 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 			? undefined
 			: composeChild(change1, change2),
 	invert: (change) => change,
+	mute: (change: SingleNodeChangeset) => change,
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
 	replaceRevisions: (change, oldRevisions, newRevision) =>

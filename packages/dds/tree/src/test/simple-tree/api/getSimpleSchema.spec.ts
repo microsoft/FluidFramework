@@ -9,6 +9,7 @@ import {
 	NodeKind,
 	SchemaFactory,
 	SchemaFactoryAlpha,
+	stringSchema,
 	type SimpleLeafNodeSchema,
 	type SimpleNodeSchema,
 	type SimpleObjectFieldSchema,
@@ -18,8 +19,6 @@ import {
 import { ValueSchema } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toSimpleTreeSchema } from "../../../simple-tree/api/viewSchemaToSimpleSchema.js";
-// eslint-disable-next-line import/no-internal-modules
-import { schemaStatics } from "../../../simple-tree/api/schemaFactory.js";
 
 const simpleString: SimpleLeafNodeSchema = {
 	leafKind: ValueSchema.String,
@@ -37,8 +36,8 @@ const simpleNumber: SimpleLeafNodeSchema = {
 
 describe("getSimpleSchema", () => {
 	it("non-copying", () => {
-		const Schema = schemaStatics.string;
-		const root = schemaStatics.optional(Schema);
+		const Schema = stringSchema;
+		const root = SchemaFactoryAlpha.optional(Schema);
 
 		const actual = toSimpleTreeSchema(root, false);
 

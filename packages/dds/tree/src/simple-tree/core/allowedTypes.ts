@@ -5,7 +5,12 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { getOrCreate, isReadonlyArray, type IsUnion } from "../../util/index.js";
+import {
+	getOrCreate,
+	isReadonlyArray,
+	type IsUnion,
+	type MakeNominal,
+} from "../../util/index.js";
 import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 import {
 	NodeKind,
@@ -76,6 +81,7 @@ export interface NormalizedAnnotatedAllowedTypes {
 export function isAnnotatedAllowedTypes(
 	allowedTypes: ImplicitAnnotatedAllowedTypes,
 ): allowedTypes is AnnotatedAllowedTypes {
+	checkForUninitializedSchema(allowedTypes);
 	return (
 		// Class based schema, and lazy schema references report type "function": filtering them out with typeof makes narrowing based on members mostly safe
 		typeof allowedTypes === "object" && "metadata" in allowedTypes && "types" in allowedTypes
@@ -116,7 +122,9 @@ export interface AllowedTypesMetadata {
 export function isAnnotatedAllowedType(
 	allowedType: AnnotatedAllowedType | LazyItem<TreeNodeSchema>,
 ): allowedType is AnnotatedAllowedType {
-	return "metadata" in allowedType && "type" in allowedType;
+	checkForUninitializedSchema(allowedType);
+	// Class based schema, and lazy schema references report type "function": filtering them out with typeof makes narrowing based on members mostly safe
+	return typeof allowedType === "object" && "metadata" in allowedType && "type" in allowedType;
 }
 
 /**
@@ -131,7 +139,34 @@ export interface AllowedTypeMetadata {
 	 */
 	readonly custom?: unknown;
 
-	// TODO metadata for enablable types will be added here
+	/**
+	 * If defined, indicates that an allowed type is {@link SchemaStaticsAlpha.staged | staged}.
+	 */
+	readonly stagedSchemaUpgrade?: SchemaUpgrade;
+}
+
+/**
+ * Package internal {@link SchemaUpgrade} construction API.
+ */
+export let createSchemaUpgrade: () => SchemaUpgrade;
+
+/**
+ * Unique token used to upgrade schemas and determine if a particular upgrade has been completed.
+ * @remarks
+ * Create using {@link SchemaStaticsAlpha.staged}.
+ * @privateRemarks
+ * TODO:#38722 implement runtime schema upgrades.
+ * Until then, the class purely behaves mostly as a placeholder.
+ * TODO: Consider allowing users to store a name for the upgrade to use in error messages.
+ * @sealed @alpha
+ */
+export class SchemaUpgrade {
+	protected _typeCheck!: MakeNominal;
+	static {
+		createSchemaUpgrade = () => new SchemaUpgrade();
+	}
+
+	private constructor() {}
 }
 
 /**
@@ -224,7 +259,7 @@ export type UnannotateAllowedTypes<T extends AnnotatedAllowedTypes> =
  * Removes annotations from an allowed type.
  * @system @alpha
  */
-export type UnannotateAllowedType<T extends AnnotatedAllowedType> =
+export type UnannotateAllowedType<T extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>> =
 	T extends AnnotatedAllowedType<infer X> ? [X] : T;
 
 /**
@@ -237,17 +272,19 @@ export type UnannotateAllowedType<T extends AnnotatedAllowedType> =
  * @internal
  */
 export function normalizeAllowedTypes(
-	types: ImplicitAllowedTypes,
+	types: ImplicitAnnotatedAllowedTypes,
 ): ReadonlySet<TreeNodeSchema> {
+	// remove annotations before normalizing
+	const unannotated = unannotateImplicitAllowedTypes(types);
 	const normalized = new Set<TreeNodeSchema>();
-	if (isReadonlyArray(types)) {
+	if (isReadonlyArray(unannotated)) {
 		// Types array must not be modified after it is normalized since that would result in the user of the normalized data having wrong (out of date) content.
-		Object.freeze(types);
-		for (const lazyType of types) {
+		Object.freeze(unannotated);
+		for (const lazyType of unannotated) {
 			normalized.add(evaluateLazySchema(lazyType));
 		}
 	} else {
-		normalized.add(evaluateLazySchema(types));
+		normalized.add(evaluateLazySchema(unannotated));
 	}
 	return normalized;
 }
@@ -255,9 +292,9 @@ export function normalizeAllowedTypes(
 /**
  * Normalizes an allowed type to an {@link AnnotatedAllowedType}, by adding empty annotations if they don't already exist.
  */
-export function normalizeToAnnotatedAllowedType<T extends TreeNodeSchema>(
-	type: T | AnnotatedAllowedType<T> | AnnotatedAllowedType<LazyItem<T>>,
-): AnnotatedAllowedType<T> | AnnotatedAllowedType<LazyItem<T>> {
+export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchema>>(
+	type: T | AnnotatedAllowedType<T>,
+): AnnotatedAllowedType<T> {
 	return isAnnotatedAllowedType(type)
 		? type
 		: {
@@ -317,17 +354,26 @@ export function unannotateImplicitAllowedTypes<Types extends ImplicitAnnotatedAl
 ): UnannotateImplicitAllowedTypes<Types> {
 	return (
 		isAnnotatedAllowedTypes(types)
-			? types.types.map((allowedType) =>
-					isAnnotatedAllowedType(allowedType) ? allowedType.type : allowedType,
-				)
+			? types.types.map(unannotateAllowedType)
 			: isReadonlyArray(types)
-				? types.map((allowedType) =>
-						isAnnotatedAllowedType(allowedType) ? allowedType.type : allowedType,
-					)
+				? types.map(unannotateAllowedType)
 				: isAnnotatedAllowedType(types)
-					? (types.type as UnannotateImplicitAllowedTypes<Types>)
+					? types.type
 					: types
 	) as UnannotateImplicitAllowedTypes<Types>;
+}
+
+/**
+ * Converts an {@link AnnotatedAllowedType} to an {@link LazyItem} by removing any annotations.
+ * @remarks
+ * This does not evaluate any lazy schemas.
+ */
+export function unannotateAllowedType<
+	Type extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>,
+>(allowedType: Type): UnannotateAllowedType<Type> {
+	return isAnnotatedAllowedType(allowedType)
+		? (allowedType.type as UnannotateAllowedType<Type>)
+		: (allowedType as UnannotateAllowedType<Type>);
 }
 
 const cachedLazyItem = new WeakMap<() => unknown, unknown>();
@@ -342,13 +388,23 @@ export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>)
 	const evaluatedSchema = isLazy(value)
 		? (getOrCreate(cachedLazyItem, value, value) as T)
 		: value;
-	if (evaluatedSchema === undefined) {
-		throw new UsageError(
-			`Encountered an undefined schema. This could indicate that some referenced schema has not yet been instantiated.`,
-		);
-	}
+
+	checkForUninitializedSchema(evaluatedSchema);
 	markSchemaMostDerived(evaluatedSchema);
 	return evaluatedSchema;
+}
+
+/**
+ * Throws a UsageError if the provided schema is undefined, most likely due to being used before it was initialized.
+ */
+export function checkForUninitializedSchema(
+	schema: ImplicitAnnotatedAllowedTypes | LazyItem<TreeNodeSchema>,
+): void {
+	if (schema === undefined) {
+		throw new UsageError(
+			`Encountered an undefined schema. This could indicate that some referenced schema has not yet been instantiated. Consider using a lazy schema reference (like "() => schema") or delaying the evaluation of the lazy reference if one is already being used.`,
+		);
+	}
 }
 
 /**

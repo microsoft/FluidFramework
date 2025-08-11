@@ -7,7 +7,11 @@ import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/inte
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
-import type { FieldKey } from "../../../core/index.js";
+import {
+	ObjectNodeStoredSchema,
+	type FieldKey,
+	type TreeFieldStoredSchema,
+} from "../../../core/index.js";
 import {
 	FieldKinds,
 	isTreeValue,
@@ -86,7 +90,7 @@ import {
 	type FactoryContentObject,
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
-import { convertFieldKind } from "../../toStoredSchema.js";
+import { convertField, convertFieldKind } from "../../toStoredSchema.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
@@ -223,8 +227,9 @@ function createFlexKeyMapping(
 ): SimpleKeyMap {
 	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> = new Map();
 	for (const [propertyKey, fieldSchema] of Object.entries(fields)) {
-		const storedKey = getStoredKey(propertyKey, fieldSchema);
-		keyMap.set(propertyKey, { storedKey, schema: normalizeFieldSchema(fieldSchema) });
+		const schema = normalizeFieldSchema(fieldSchema);
+		const storedKey = getStoredKey(propertyKey, schema);
+		keyMap.set(propertyKey, { storedKey, schema });
 	}
 
 	return keyMap;
@@ -287,10 +292,16 @@ function createProxyHandler(
 					: false;
 			}
 
+			const innerNode = getOrCreateInnerNode(proxy);
+
+			const innerSchema = innerNode.context.schema.nodeSchema.get(brand(schema.identifier));
+			assert(innerSchema instanceof ObjectNodeStoredSchema, "Expected ObjectNodeStoredSchema");
+
 			setField(
-				getOrCreateInnerNode(proxy).getBoxed(fieldInfo.storedKey),
+				innerNode.getBoxed(fieldInfo.storedKey),
 				fieldInfo.schema,
 				value,
+				innerSchema.getFieldSchema(fieldInfo.storedKey),
 			);
 			return true;
 		},
@@ -347,8 +358,14 @@ export function setField(
 	field: FlexTreeField,
 	simpleFieldSchema: FieldSchema,
 	value: InsertableContent | undefined,
+	destinationSchema: TreeFieldStoredSchema,
 ): void {
-	const mapTree = prepareForInsertion(value, simpleFieldSchema, field.context);
+	const mapTree = prepareForInsertion(
+		value,
+		simpleFieldSchema,
+		field.context,
+		destinationSchema,
+	);
 
 	switch (field.schema) {
 		case FieldKinds.required.identifier: {
@@ -584,6 +601,20 @@ export function objectSchema<
 					flexKeyMap.values(),
 					({ schema }) => normalizeFieldSchema(schema).annotatedAllowedTypes,
 				),
+				(storedOptions) => {
+					const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
+					for (const fieldSchema of flexKeyMap.values()) {
+						assert(
+							fieldSchema.schema instanceof FieldSchemaAlpha,
+							"Expected FieldSchemaAlpha",
+						);
+						fields.set(
+							brand(fieldSchema.storedKey),
+							convertField(fieldSchema.schema, storedOptions),
+						);
+					}
+					return new ObjectNodeStoredSchema(fields, persistedMetadata);
+				},
 			));
 		}
 	}
