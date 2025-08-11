@@ -4,7 +4,7 @@
  */
 
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import { IAlfredTenant, NetworkError } from "@fluidframework/server-services-client";
+import { BasicRestWrapper, IAlfredTenant, NetworkError } from "@fluidframework/server-services-client";
 import {
 	IDocument,
 	MongoDatabaseManager,
@@ -63,6 +63,7 @@ const defaultProvider = new nconf.Provider({}).defaults({
 		blobStorageUrl: "http://localhost:3001",
 		deltaStreamUrl: "http://localhost:3005",
 		serverUrl: "http://localhost:3003",
+		alfredUrl: "http://localhost:3003",
 	},
 });
 
@@ -449,6 +450,25 @@ describe("Routerlicious", () => {
 						testFluidAccessTokenGenerator,
 					);
 					supertest = request(app);
+				});
+
+				let sessionGetStub: Sinon.SinonStub;
+				afterEach(() => {
+					Sinon.restore();
+					sessionGetStub?.restore();
+				});
+				beforeEach(() => {
+					// ...existing code that builds app and supertest...
+					const aliveActiveSession = {
+						ordererUrl: defaultProvider.get("worker:serverUrl"),
+						deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
+						historianUrl: defaultProvider.get("worker:blobStorageUrl"),
+						isSessionAlive: true,
+						isSessionActive: true,
+					};
+					sessionGetStub = Sinon.stub(BasicRestWrapper.prototype, "get").resolves(
+						aliveActiveSession as any,
+					);
 				});
 
 				describe("/api/v1", () => {
@@ -1010,6 +1030,7 @@ describe("Routerlicious", () => {
 
 			describe("functionality", () => {
 				const maxThrottlerLimit = 10;
+				let sessionGetStub: Sinon.SinonStub;
 				beforeEach(() => {
 					const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
@@ -1075,10 +1096,22 @@ describe("Routerlicious", () => {
 						testFluidAccessTokenGenerator,
 					);
 					supertest = request(app);
+
+					const aliveActiveSession = {
+						ordererUrl: defaultProvider.get("worker:serverUrl"),
+						deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
+						historianUrl: defaultProvider.get("worker:blobStorageUrl"),
+						isSessionAlive: true,
+						isSessionActive: true,
+					};
+					sessionGetStub = Sinon.stub(BasicRestWrapper.prototype, "get").resolves(
+						aliveActiveSession as any,
+					);
 				});
 
 				afterEach(() => {
 					Sinon.restore();
+					sessionGetStub?.restore();
 				});
 
 				describe("/api/v1", () => {
@@ -1121,6 +1154,7 @@ describe("Routerlicious", () => {
 
 				describe("/api/v1/:tenantId/:id/broadcast-signal", () => {
 					it("Successful request", async () => {
+						// sessionGetStub already set to alive/active + same cluster
 						const body = {
 							signalContent: {
 								contents: {
@@ -1139,6 +1173,7 @@ describe("Routerlicious", () => {
 					});
 
 					it("Invalid request content", async () => {
+						// sessionGetStub presence is harmless; validation fails before session call
 						const body = {
 							signalContent: {},
 						};
@@ -1152,6 +1187,16 @@ describe("Routerlicious", () => {
 					});
 
 					it("Successful request with redirect", async () => {
+						// Replace session to point to a different cluster to trigger redirect
+						sessionGetStub.restore();
+						sessionGetStub = Sinon.stub(BasicRestWrapper.prototype, "get").resolves({
+							ordererUrl: "http://localhost:3006",
+							deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
+							historianUrl: defaultProvider.get("worker:blobStorageUrl"),
+							isSessionAlive: true,
+							isSessionActive: true,
+						} as any);
+
 						const body = {
 							signalContent: {
 								contents: {
@@ -1160,31 +1205,9 @@ describe("Routerlicious", () => {
 								},
 							},
 						};
-						const documentHostedInOtherUrl = {
-							_id: "doc-1",
-							tenantId: appTenant1.id,
-							version: "1.0",
-							documentId: "doc-1",
-							content: "Hello, World!",
-							session: {
-								ordererUrl: "http://localhost:3006",
-								deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
-								historianUrl: defaultProvider.get("worker:blobStorageUrl"),
-								isSessionAlive: true,
-								isSessionActive: true,
-							},
-							createTime: Date.now(),
-							scribe: "",
-							deli: "",
-						};
-
-						Sinon.stub(defaultStorage, "getDocument").returns(
-							Promise.resolve(documentHostedInOtherUrl),
-						);
-
 						await supertest
 							.post(
-								`/api/v1/${appTenant1.id}/${documentHostedInOtherUrl._id}/broadcast-signal`,
+								`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`,
 							)
 							.send(body)
 							.set("Authorization", tenantToken1)
@@ -1193,6 +1216,21 @@ describe("Routerlicious", () => {
 					});
 
 					it("Document not found", async () => {
+						// First call: no session (treat as 404), second call: session not alive (also 404)
+						sessionGetStub.restore();
+						sessionGetStub = Sinon.stub(BasicRestWrapper.prototype, "get");
+						sessionGetStub
+							.onFirstCall()
+							.resolves(undefined as any)
+							.onSecondCall()
+							.resolves({
+								ordererUrl: defaultProvider.get("worker:serverUrl"),
+								deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
+								historianUrl: defaultProvider.get("worker:blobStorageUrl"),
+								isSessionAlive: false,
+								isSessionActive: false,
+							} as any);
+
 						const body = {
 							signalContent: {
 								contents: {
@@ -1202,33 +1240,9 @@ describe("Routerlicious", () => {
 							},
 						};
 
-						const documentNotFound = {
-							_id: "doc-1",
-							tenantId: appTenant1.id,
-							version: "1.0",
-							documentId: "doc-1",
-							content: "Hello, World!",
-							session: {
-								ordererUrl: defaultProvider.get("worker:serverUrl"),
-								deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
-								historianUrl: defaultProvider.get("worker:blobStorageUrl"),
-								isSessionAlive: false,
-								isSessionActive: false,
-							},
-							createTime: Date.now(),
-							scribe: "",
-							deli: "",
-						};
-
-						Sinon.stub(defaultStorage, "getDocument")
-							.onFirstCall()
-							.returns(Promise.resolve(null))
-							.onSecondCall()
-							.returns(Promise.resolve(documentNotFound));
-
 						await supertest
 							.post(
-								`/api/v1/${appTenant1.id}/${documentNotFound._id}/broadcast-signal`,
+								`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`,
 							)
 							.send(body)
 							.set("Authorization", tenantToken1)
@@ -1237,7 +1251,7 @@ describe("Routerlicious", () => {
 
 						await supertest
 							.post(
-								`/api/v1/${appTenant1.id}/${documentNotFound._id}/broadcast-signal`,
+								`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`,
 							)
 							.send(body)
 							.set("Authorization", tenantToken1)
@@ -1246,6 +1260,15 @@ describe("Routerlicious", () => {
 					});
 
 					it("Document session not active", async () => {
+						sessionGetStub.restore();
+						sessionGetStub = Sinon.stub(BasicRestWrapper.prototype, "get").resolves({
+							ordererUrl: defaultProvider.get("worker:serverUrl"),
+							deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
+							historianUrl: defaultProvider.get("worker:blobStorageUrl"),
+							isSessionAlive: true,
+							isSessionActive: false,
+						} as any);
+
 						const body = {
 							signalContent: {
 								contents: {
@@ -1254,31 +1277,10 @@ describe("Routerlicious", () => {
 								},
 							},
 						};
-						const documentNoActiveSession = {
-							_id: "doc-1",
-							tenantId: appTenant1.id,
-							version: "1.0",
-							documentId: "doc-1",
-							content: "Hello, World!",
-							session: {
-								ordererUrl: defaultProvider.get("worker:serverUrl"),
-								deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
-								historianUrl: defaultProvider.get("worker:blobStorageUrl"),
-								isSessionAlive: true,
-								isSessionActive: false,
-							},
-							createTime: Date.now(),
-							scribe: "",
-							deli: "",
-						};
-
-						Sinon.stub(defaultStorage, "getDocument").returns(
-							Promise.resolve(documentNoActiveSession),
-						);
 
 						await supertest
 							.post(
-								`/api/v1/${appTenant1.id}/${documentNoActiveSession._id}/broadcast-signal`,
+								`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`,
 							)
 							.send(body)
 							.set("Authorization", tenantToken1)
