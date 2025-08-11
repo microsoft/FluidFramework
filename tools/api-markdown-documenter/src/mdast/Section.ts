@@ -65,7 +65,7 @@ export function createSection({
 	return section;
 }
 
-// Extend the mdast to include `Section` in "block content" and "root content" contexts
+// Extend the mdast to include `Section` in the "root content" context.
 declare module "mdast" {
 	interface RootContentMap {
 		section: Section;
