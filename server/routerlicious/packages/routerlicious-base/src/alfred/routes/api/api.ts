@@ -12,7 +12,11 @@ import {
 	createRuntimeMessage,
 } from "@fluidframework/server-lambdas";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
-import { BasicRestWrapper, NetworkError, type ISession } from "@fluidframework/server-services-client";
+import {
+	BasicRestWrapper,
+	NetworkError,
+	type ISession,
+} from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import {
 	Lumberjack,
@@ -36,7 +40,7 @@ import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
 import winston from "winston";
 
-import { Constants, } from "../../../utils";
+import { Constants } from "../../../utils";
 
 import {
 	craftClientJoinMessage,
@@ -430,11 +434,7 @@ async function handleBroadcastSignal(
 
 	const serverUrl: string = config.get("worker:serverUrl");
 	const alfredUrl: string = config.get("worker:alfredUrl");
-	const session = await getSession(
-		alfredUrl,
-		tenantId,
-		documentId,
-	);
+	const session = await getSession(alfredUrl, tenantId, documentId);
 
 	if (!session?.isSessionAlive) {
 		Lumberjack.error("Document not found", { tenantId, documentId });
@@ -473,7 +473,7 @@ async function getSession(
 		undefined /* maxBodyLength */,
 		undefined /* maxContentLength */,
 		{
-			Accept: "application/json",
+			"Accept": "application/json",
 			"Content-Type": "application/json",
 		} /* defaultHeaders */,
 		undefined /* axios */,

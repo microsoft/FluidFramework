@@ -4,7 +4,11 @@
  */
 
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import { BasicRestWrapper, IAlfredTenant, NetworkError } from "@fluidframework/server-services-client";
+import {
+	BasicRestWrapper,
+	IAlfredTenant,
+	NetworkError,
+} from "@fluidframework/server-services-client";
 import {
 	IDocument,
 	MongoDatabaseManager,
@@ -1206,9 +1210,7 @@ describe("Routerlicious", () => {
 							},
 						};
 						await supertest
-							.post(
-								`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`,
-							)
+							.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
 							.send(body)
 							.set("Authorization", tenantToken1)
 							.set("Content-Type", "application/json")
@@ -1241,18 +1243,14 @@ describe("Routerlicious", () => {
 						};
 
 						await supertest
-							.post(
-								`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`,
-							)
+							.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
 							.send(body)
 							.set("Authorization", tenantToken1)
 							.set("Content-Type", "application/json")
 							.expect(404);
 
 						await supertest
-							.post(
-								`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`,
-							)
+							.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
 							.send(body)
 							.set("Authorization", tenantToken1)
 							.set("Content-Type", "application/json")
@@ -1279,9 +1277,7 @@ describe("Routerlicious", () => {
 						};
 
 						await supertest
-							.post(
-								`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`,
-							)
+							.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
 							.send(body)
 							.set("Authorization", tenantToken1)
 							.set("Content-Type", "application/json")
