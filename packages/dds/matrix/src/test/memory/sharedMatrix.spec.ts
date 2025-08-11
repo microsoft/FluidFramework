@@ -33,7 +33,6 @@ import { createLocalMatrix, type TestMatrixOptions } from "../utils.js";
 function createMatrix(options: TestMatrixOptions): {
 	matrix: ISharedMatrix;
 	undoStack: UndoRedoStackManager;
-	eventListeners: IMatrixConsumer<string>;
 } {
 	const matrix = createLocalMatrix(options);
 
@@ -52,7 +51,6 @@ function createMatrix(options: TestMatrixOptions): {
 	return {
 		matrix,
 		undoStack,
-		eventListeners,
 	};
 }
 
