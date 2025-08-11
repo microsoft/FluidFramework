@@ -474,6 +474,14 @@ export class SerializedStateManager {
 			},
 		);
 	}
+
+	/**
+	 * Dispose of the SerializedStateManager, cleaning up any active timers.
+	 * This prevents Node.js processes from hanging due to the refresh timer.
+	 */
+	public dispose(): void {
+		this.refreshTimer.clear();
+	}
 }
 
 /**
