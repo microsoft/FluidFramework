@@ -24,6 +24,9 @@ import { createLocalMatrix, type TestMatrixOptions } from "../utils.js";
  * to ensure consistency and comparability between the two implementations.
  */
 
+/**
+ * {@link runBenchmark} configuration.
+ */
 interface BenchmarkConfig extends BenchmarkTimingOptions, TestMatrixOptions {
 	/**
 	 * The title of the benchmark test.
