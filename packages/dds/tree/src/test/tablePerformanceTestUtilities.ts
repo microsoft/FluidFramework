@@ -98,14 +98,15 @@ export function createTableTree(tableSize: number, cellValue: string): TableTree
 
 	treeView.initialize(Table.empty());
 	const table = treeView.root;
-	for (let i = 0; i < tableSize; i++) {
-		const column = new Column({});
-		table.insertColumn({ index: i, column });
-	}
-	for (let i = 0; i < tableSize; i++) {
-		const row = new Row({ cells: {} });
-		table.insertRow({ index: i, row });
-	}
+
+	const columns = Array.from({ length: tableSize }, () => new Column({}));
+	table.insertColumns({index: 0, columns});
+
+	const rows = Array.from({ length: tableSize }, () => new Row({
+		cells: {}
+	}));
+	table.insertRows({index: 0, rows});
+
 	for (const row of table.rows) {
 		for (const column of table.columns) {
 			table.setCell({
