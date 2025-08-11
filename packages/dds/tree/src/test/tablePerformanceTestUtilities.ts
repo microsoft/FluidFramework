@@ -73,16 +73,29 @@ export class Table extends TableSchema.table({
 }) {}
 
 /**
+ * {@link createTableTree} options.
+ */
+export interface TableTreeOptions {
+	/**
+	 * The number of rows and columns that will be in the table.
+	 */
+	readonly tableSize: number;
+	/**
+	 * The initial value of each cell in the dense table.
+	 * @remarks If not specified, no cell values will be inserted into the table, leaving it sparse.
+	 */
+	readonly initialCellValue?: string | undefined;
+}
+
+/**
  * Provides a simple table tree initialized with the specified size and cell value.
  * This helper function creates a table schema, initializes a SharedTree instance,
  * and populates it with the specified number of rows and columns.
  * Each cell is initialized with the provided cell value.
  *
- * @param tableSize - The number of rows and columns to create in the table.
- * @param cellValue - The initial value to set in each cell of the table.
  * @returns A fully initialized table tree definition, including table instance, undo/redo stacks, and a cleanup function.
  */
-export function createTableTree(tableSize: number, cellValue: string): TableTreeDefinition {
+export function createTableTree({tableSize, initialCellValue}: TableTreeOptions): TableTreeDefinition {
 	const sharedTreeFactory = DefaultTestSharedTreeKind.getFactory();
 	const runtime = new MockFluidDataStoreRuntime({
 		idCompressor: createIdCompressor(),
@@ -107,15 +120,17 @@ export function createTableTree(tableSize: number, cellValue: string): TableTree
 	}));
 	table.insertRows({index: 0, rows});
 
-	for (const row of table.rows) {
-		for (const column of table.columns) {
-			table.setCell({
-				key: {
-					column,
-					row,
-				},
-				cell: cellValue,
-			});
+	if (initialCellValue !== undefined) {
+		for (const row of table.rows) {
+			for (const column of table.columns) {
+				table.setCell({
+					key: {
+						column,
+						row,
+					},
+					cell: initialCellValue,
+				});
+			}
 		}
 	}
 
