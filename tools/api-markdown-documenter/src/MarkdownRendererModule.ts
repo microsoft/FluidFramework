@@ -11,6 +11,6 @@ export {
 	type RenderApiModelAsMarkdownOptions as RenderApiModelOptions,
 	renderApiModelAsMarkdown as renderApiModel,
 	type RenderDocumentsAsMarkdownOptions as RenderDocumentsOptions,
-	renderMarkdownDocuments as renderMarkdownDocuments,
+	renderMarkdownDocuments,
 } from "./RenderMarkdown.js";
 export { renderDocumentAsMarkdown as renderDocument } from "./renderers/index.js";
