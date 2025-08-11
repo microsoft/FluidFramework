@@ -134,9 +134,9 @@ export class DecomposedContainerForContainerRuntime
 		this.emit("connected", clientId);
 	private readonly disconnectedHandler = (): boolean => this.emit("disconnected");
 	private readonly disposedHandler = (): boolean => {
-		this._disposed = true; // Mark as disposed when dispose event occurs
-		// IContainerRuntime emits "dispose" (no error) but we emit "disposed" (optional error) to match IContainerEvents
+		// IContainerRuntime emits "dispose" (no error) but we emit "disposed" to match IContainerEvents
 		// Since IContainerRuntime doesn't provide error info, we emit without error parameter
+		this._disposed = true; // Mark as disposed when dispose event occurs
 		return this.emit("disposed");
 	};
 
