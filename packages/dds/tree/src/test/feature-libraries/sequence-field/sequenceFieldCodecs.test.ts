@@ -41,6 +41,10 @@ const context: FieldChangeEncodingContext = {
 	baseContext,
 	encodeNode: (node) => TestNodeId.encode(node, baseContext),
 	decodeNode: (node) => TestNodeId.decode(node, baseContext),
+	rootNodeChanges: [],
+	rootRenames: [],
+	decodeRootNodeChange: () => {},
+	decodeRootRename: () => {},
 };
 
 const changes = TestNodeId.create({ localId: brand(2) }, TestChange.mint([], 1));

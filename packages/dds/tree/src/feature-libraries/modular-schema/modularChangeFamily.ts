@@ -2501,7 +2501,7 @@ interface RebaseTable {
 	readonly fieldsWithUnattachedChild: Set<FieldChange>;
 }
 
-type FieldIdKey = [RevisionTag | undefined, ChangesetLocalId | undefined, FieldKey];
+export type FieldIdKey = [RevisionTag | undefined, ChangesetLocalId | undefined, FieldKey];
 
 interface RebaseFieldContext {
 	baseChange: FieldChange;
@@ -3916,6 +3916,7 @@ export function newRootTable(): RootNodeTable {
 		newToOldId: newChangeAtomIdTransform(),
 		oldToNewId: newChangeAtomIdTransform(),
 		nodeChanges: newTupleBTree(),
+		detachLocations: newChangeAtomIdRangeMap(),
 	};
 }
 
@@ -4152,6 +4153,7 @@ function cloneRootTable(table: RootNodeTable): RootNodeTable {
 		oldToNewId: table.oldToNewId.clone(),
 		newToOldId: table.newToOldId.clone(),
 		nodeChanges: brand(table.nodeChanges.clone()),
+		detachLocations: table.detachLocations.clone(),
 	};
 }
 
@@ -4360,7 +4362,12 @@ function replaceRootTableRevision(
 		]),
 	);
 
-	return { oldToNewId, newToOldId, nodeChanges };
+	const detachLocations = table.detachLocations.mapEntries(
+		(id) => replaceAtomRevisions(id, oldRevisions, newRevision),
+		(fieldId) => replaceFieldIdRevision(fieldId, oldRevisions, newRevision),
+	);
+
+	return { oldToNewId, newToOldId, nodeChanges, detachLocations };
 }
 
 function newDetachedEntryMap(): ChangeAtomIdRangeMap<DetachedNodeEntry> {

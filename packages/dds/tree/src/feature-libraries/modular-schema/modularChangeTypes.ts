@@ -81,6 +81,7 @@ export interface RootNodeTable {
 	oldToNewId: ChangeAtomIdRangeMap<ChangeAtomId>;
 	newToOldId: ChangeAtomIdRangeMap<ChangeAtomId>;
 	nodeChanges: ChangeAtomIdBTree<NodeId>;
+	detachLocations: ChangeAtomIdRangeMap<FieldId>;
 }
 
 export type ChangeAtomIdBTree<V> = TupleBTree<[RevisionTag | undefined, ChangesetLocalId], V>;
@@ -133,6 +134,10 @@ export interface RootParent {
 }
 
 export type NodeLocation = FieldParent | RootParent;
+export interface DetachLocation {
+	field: FieldId;
+	atomId: ChangeAtomId | undefined;
+}
 
 /**
  */

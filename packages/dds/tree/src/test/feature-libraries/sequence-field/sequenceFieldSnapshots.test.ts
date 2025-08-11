@@ -5,8 +5,8 @@
 
 import path from "node:path";
 
-import { RevisionTagCodec } from "../../../core/index.js";
-import { SequenceField } from "../../../feature-libraries/index.js";
+import { RevisionTagCodec, type ChangeAtomId } from "../../../core/index.js";
+import { SequenceField, type NodeId } from "../../../feature-libraries/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { createSnapshotCompressor, testIdCompressor } from "../../utils.js";
@@ -37,6 +37,10 @@ export function testSnapshots() {
 							baseContext,
 							encodeNode: (node) => TestNodeId.encode(node, baseContext),
 							decodeNode: (node) => TestNodeId.decode(node, baseContext),
+							rootNodeChanges: [],
+							rootRenames: [],
+							decodeRootNodeChange: () => {},
+							decodeRootRename: () => {},
 						});
 						takeJsonSnapshot(encoded);
 					});

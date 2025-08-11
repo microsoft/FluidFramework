@@ -44,7 +44,6 @@ import {
 	validateAnchors,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
-import { SharedTreeFormatVersion } from "../../../shared-tree/sharedTree.js";
 
 interface UndoRedoFuzzTestState extends FuzzTestState {
 	initialTreeState?: JsonableTree[];
@@ -78,9 +77,7 @@ describe("Fuzz - revert", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "revert sequenced commits last-to-first",
-			factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState), undefined, {
-				formatVersion: SharedTreeFormatVersion.v5,
-			}),
+			factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,
@@ -171,9 +168,7 @@ describe("Fuzz - revert", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "revert unsequenced commits first-to-last",
-			factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState), undefined, {
-				formatVersion: SharedTreeFormatVersion.v5,
-			}),
+			factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,

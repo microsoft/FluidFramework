@@ -73,7 +73,6 @@ export function makeEditManagerCodecs<TChangeset>(
 		[2, makeV1CodecWithVersion(changeCodecs.resolve(2), revisionTagCodec, options, 2)],
 		[3, makeV1CodecWithVersion(changeCodecs.resolve(3), revisionTagCodec, options, 3)],
 		[4, makeV1CodecWithVersion(changeCodecs.resolve(4), revisionTagCodec, options, 4)],
-		[5, makeV1CodecWithVersion(changeCodecs.resolve(5), revisionTagCodec, options, 5)],
 	]);
 }
 

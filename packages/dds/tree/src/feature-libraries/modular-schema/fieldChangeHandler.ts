@@ -222,6 +222,11 @@ export interface RebaseRevisionMetadata extends RevisionMetadataSource {
 
 export interface FieldChangeEncodingContext {
 	readonly baseContext: ChangeEncodingContext;
+	readonly rootNodeChanges: [detachId: ChangeAtomId, nodeId: NodeId][];
+	readonly rootRenames: [oldId: ChangeAtomId, newId: ChangeAtomId, count: number][];
 	encodeNode(nodeId: NodeId): EncodedNodeChangeset;
+
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
+	decodeRootNodeChange(detachId: ChangeAtomId, nodeId: NodeId): void;
+	decodeRootRename(oldId: ChangeAtomId, newId: ChangeAtomId, count: number): void;
 }

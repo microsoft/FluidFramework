@@ -45,9 +45,9 @@ const codecOptions: ICodecOptions = {
 };
 
 const fieldKindConfiguration: FieldKindConfiguration =
-	fieldKindConfigurations.get(5) ?? assert.fail("Field kind configuration not found");
+	fieldKindConfigurations.get(4) ?? assert.fail("Field kind configuration not found");
 assert(
-	fieldKindConfigurations.get(6) === undefined,
+	fieldKindConfigurations.get(5) === undefined,
 	"There's a newer configuration. It probably should be used.",
 );
 

@@ -47,6 +47,10 @@ export function testSnapshots() {
 							baseContext,
 							encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
 							decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
+							rootNodeChanges: [],
+							rootRenames: [],
+							decodeRootNodeChange: () => {},
+							decodeRootRename: () => {},
 						});
 						takeJsonSnapshot(encoded);
 					});

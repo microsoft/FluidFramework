@@ -14,7 +14,6 @@ import type { FieldChangeEncodingContext } from "../modular-schema/index.js";
 import type { OptionalChangeset } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodec as makeV1Codec } from "./optionalFieldCodecV1.js";
 import { makeOptionalFieldCodec as makeV2Codec } from "./optionalFieldCodecV2.js";
-import { makeOptionalFieldCodec as makeV3Codec } from "./optionalFieldCodecV3.js";
 
 export const makeOptionalFieldCodecFamily = (
 	revisionTagCodec: IJsonCodec<
@@ -27,5 +26,4 @@ export const makeOptionalFieldCodecFamily = (
 	makeCodecFamily([
 		[1, makeV1Codec(revisionTagCodec)],
 		[2, makeV2Codec(revisionTagCodec)],
-		[3, makeV3Codec(revisionTagCodec)],
 	]);

@@ -55,19 +55,6 @@ const EncodedFieldChangeMap = Type.Array(EncodedFieldChange);
  */
 export type EncodedFieldChangeMap = Static<typeof EncodedFieldChangeMap>;
 
-const EncodedRenames = Type.Optional(
-	Type.Array(
-		Type.Object({
-			oldId: EncodedChangeAtomId,
-			newId: EncodedChangeAtomId,
-			count: Type.Number(),
-		}),
-		noAdditionalProps,
-	),
-);
-
-export type EncodedRenames = Static<typeof EncodedRenames>;
-
 const EncodedNodeExistsConstraint = Type.Object(
 	{
 		violated: Type.Boolean(),
@@ -88,17 +75,6 @@ export const EncodedNodeChangeset = Type.Object(
  * Format for encoding as json.
  */
 export type EncodedNodeChangeset = Static<typeof EncodedNodeChangeset>;
-
-const EncodedRootNodes = Type.Optional(
-	Type.Array(
-		Type.Object(
-			{ detachId: EncodedChangeAtomId, nodeChangeset: EncodedNodeChangeset },
-			noAdditionalProps,
-		),
-	),
-);
-
-export type EncodedRootNodes = Static<typeof EncodedRootNodes>;
 
 export const EncodedRevisionInfo = Type.Object(
 	{
@@ -152,10 +128,7 @@ export type EncodedBuilds = Static<typeof EncodedBuilds>;
 export const EncodedModularChangeset = Type.Object(
 	{
 		maxId: Type.Optional(ChangesetLocalIdSchema),
-		fieldChanges: EncodedFieldChangeMap,
-		rootNodes: EncodedRootNodes,
-		nodeRenames: EncodedRenames,
-
+		changes: EncodedFieldChangeMap,
 		revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
 		// TODO#8574: separating `builds` and `refreshers` here means that we encode their `EncodedBuilds.trees` separately.
 		// This can lead to a less efficient wire representation because of duplicated schema/shape information.
