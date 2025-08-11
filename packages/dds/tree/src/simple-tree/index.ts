@@ -47,7 +47,6 @@ export {
 	type UnannotateAllowedTypes,
 	type UnannotateAllowedType,
 	type UnannotateAllowedTypesList,
-	type UnannotateAllowedTypeOrLazyItem,
 	type AllowedTypeMetadata,
 	type AnnotatedAllowedTypes,
 	type SchemaUpgrade,
