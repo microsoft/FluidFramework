@@ -17,22 +17,21 @@ export class RequestParser implements IRequest {
 	 */
 	public static getPathParts(url: string): readonly string[] {
 		const queryStartIndex = url.indexOf("?");
-		const pathParts: string[] = [];
-		const urlPath = url.slice(0, queryStartIndex < 0 ? url.length : queryStartIndex);
-
-		for (const part of urlPath.split("/")) {
-			if (part !== undefined && part.length > 0) {
-				pathParts.push(decodeURIComponent(part));
-			}
-		}
-
-		return pathParts;
+		return url
+			.substring(0, queryStartIndex < 0 ? url.length : queryStartIndex)
+			.split("/")
+			.reduce<string[]>((pv, cv) => {
+				if (cv !== undefined && cv.length > 0) {
+					pv.push(decodeURIComponent(cv));
+				}
+				return pv;
+			}, []);
 	}
 
 	private requestPathParts: readonly string[] | undefined;
 	public readonly query: string;
 
-	public static create(request: Readonly<IRequest>): RequestParser {
+	public static create(request: Readonly<IRequest>) {
 		// Perf optimizations.
 		if (request instanceof RequestParser) {
 			return request;
@@ -42,7 +41,7 @@ export class RequestParser implements IRequest {
 
 	protected constructor(private readonly request: Readonly<IRequest>) {
 		const queryStartIndex = this.request.url.indexOf("?");
-		this.query = queryStartIndex >= 0 ? this.request.url.slice(queryStartIndex) : "";
+		this.query = queryStartIndex >= 0 ? this.request.url.substring(queryStartIndex) : "";
 		if (request.headers !== undefined) {
 			this.headers = request.headers;
 		}
@@ -68,7 +67,7 @@ export class RequestParser implements IRequest {
 	 * Returns true if it's a terminating path, i.e. no more elements after `elements` entries and empty query.
 	 * @param elements - number of elements in path
 	 */
-	public isLeaf(elements: number): boolean {
+	public isLeaf(elements: number) {
 		return this.query === "" && this.pathParts.length === elements;
 	}
 

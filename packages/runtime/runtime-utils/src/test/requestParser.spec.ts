@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert } from "assert";
 
 import { RequestParser } from "../requestParser.js";
 
@@ -89,7 +89,7 @@ describe("RequestParser", () => {
 		});
 	});
 
-	const testSubRequest = function (uri: string): void {
+	const testSubRequest = function (uri: string) {
 		describe(".createSubRequest with query params", () => {
 			let requestParser2: RequestParser;
 			beforeEach(() => {

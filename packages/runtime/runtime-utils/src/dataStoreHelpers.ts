@@ -12,68 +12,45 @@ interface IResponseException extends Error {
 	message: string;
 	code: number;
 	stack?: string;
-	underlyingResponseHeaders?: { [key: string]: unknown };
+	underlyingResponseHeaders?: { [key: string]: any };
 }
 
 /**
- * Type guard for determining if an error is an {@link IResponseException}.
  * @internal
  */
-function isResponseException(err: unknown): err is IResponseException {
-	return (
-		err !== null &&
-		typeof err === "object" &&
-		"errorFromRequestFluidObject" in err &&
-		(err as { errorFromRequestFluidObject: unknown }).errorFromRequestFluidObject === true
-	);
-}
-
-/**
- * Converts an error object into an {@link @fluidframework/core-interfaces#IResponse}.
- * @internal
- */
-export function exceptionToResponse(error: unknown): IResponse {
+export function exceptionToResponse(err: any): IResponse {
 	const status = 500;
-	if (isResponseException(error)) {
+	if (err !== null && typeof err === "object" && err.errorFromRequestFluidObject === true) {
+		const responseErr: IResponseException = err;
 		return {
 			mimeType: "text/plain",
-			status: error.code,
-			value: error.message,
+			status: responseErr.code,
+			value: responseErr.message,
 			get stack() {
-				return error.stack;
+				return responseErr.stack;
 			},
-			headers: error.underlyingResponseHeaders,
+			headers: responseErr.underlyingResponseHeaders,
 		};
 	}
 
-	// Capture error objects, not stack itself, as stack retrieval is very expensive operation
+	// Capture error objects, not stack itself, as stack retrieval is very expensive operation, so we delay it
 	const errWithStack = generateErrorWithStack();
 
 	return {
 		mimeType: "text/plain",
 		status,
-		value: `${error}`,
+		value: `${err}`,
 		get stack() {
-			// Use type assertion after checking if error is an object with stack
-			return (
-				(typeof error === "object" && error !== null && "stack" in error
-					? (error.stack as string | undefined)
-					: undefined) ?? errWithStack.stack
-			);
+			return (err?.stack as string | undefined) ?? errWithStack.stack;
 		},
 	};
 }
 
 /**
- * Converts an {@link @fluidframework/core-interfaces#IResponse} back into an Error object that can be thrown.
- * @param response - The {@link @fluidframework/core-interfaces#IResponse} to convert.
- * @param request - The original {@link @fluidframework/core-interfaces#IRequest}.
- * @returns An Error object with additional properties from the response
  * @internal
  */
 export function responseToException(response: IResponse, request: IRequest): Error {
-	// IResponse.value is typed as 'any', but we expect it to be a string error message
-	const message = response.value as string;
+	const message = response.value;
 	const errWithStack = generateErrorWithStack();
 	const responseErr: Error & IResponseException = {
 		errorFromRequestFluidObject: true,
@@ -90,29 +67,20 @@ export function responseToException(response: IResponse, request: IRequest): Err
 }
 
 /**
- * Creates a 404 "not found" response for the given request
- * @param request - The request that resulted in the 404 response
- * @returns An {@link @fluidframework/core-interfaces#IResponse} with 404 status code.
  * @legacy
  * @alpha
  */
-export const create404Response = (request: IRequest): IResponse =>
+export const create404Response = (request: IRequest) =>
 	createResponseError(404, "not found", request);
 
 /**
- * Creates an error response with the specified status code and message
- * @param status - HTTP status code for the error (must not be 200)
- * @param value - Error message or description
- * @param request - The request that resulted in this error
- * @param headers - Optional headers to include in the response
- * @returns An {@link @fluidframework/core-interfaces#IResponse} representing the error
  * @internal
  */
 export function createResponseError(
 	status: number,
 	value: string,
 	request: IRequest,
-	headers?: { [key: string]: unknown },
+	headers?: { [key: string]: any },
 ): IResponse {
 	assert(status !== 200, 0x19b /* "Cannot not create response error on 200 status" */);
 	// Omit query string which could contain personal data unfit for logging

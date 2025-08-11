@@ -36,11 +36,11 @@ export interface ISerializedHandle {
 }
 
 /**
- * Narrow a value to {@link ISerializedHandle} by checking its type property.
+ * Is the input object a @see ISerializedHandle?
  * @internal
  */
-export const isSerializedHandle = (value: unknown): value is ISerializedHandle =>
-	(value as { type?: string } | undefined)?.type === "__fluid_handle__";
+export const isSerializedHandle = (value: any): value is ISerializedHandle =>
+	value?.type === "__fluid_handle__";
 
 /**
  * @internal
@@ -180,6 +180,10 @@ export function toFluidHandleErased<T>(
 export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
 	public abstract absolutePath: string;
 	public abstract attachGraph(): void;
+	/**
+	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
+	 */
+	public abstract bind(handle: IFluidHandleInternal): void;
 	public abstract readonly isAttached: boolean;
 	public abstract get(): Promise<T>;
 

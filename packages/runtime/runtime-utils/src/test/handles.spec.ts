@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert } from "assert";
 
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
 
@@ -15,7 +15,6 @@ describe("Handles", () => {
 			assert(!isFluidHandle(0));
 			assert(!isFluidHandle({}));
 			assert(!isFluidHandle(undefined));
-			// eslint-disable-next-line unicorn/no-null -- We want to explicitly test for null
 			assert(!isFluidHandle(null));
 			assert(!isFluidHandle([]));
 			assert(!isFluidHandle({ get: () => {} }));
@@ -27,7 +26,6 @@ describe("Handles", () => {
 			assert(isFluidHandle(loopy));
 			assert(!isFluidHandle({ IFluidHandle: 5 }));
 			assert(!isFluidHandle({ IFluidHandle: {} }));
-			// eslint-disable-next-line unicorn/no-null -- We want to explicitly test for null
 			assert(!isFluidHandle({ IFluidHandle: null }));
 
 			// Symbol based:
