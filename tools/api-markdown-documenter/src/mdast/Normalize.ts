@@ -67,6 +67,8 @@ export function normalizeDocumentContents(
 /**
  * Converts a {@link Section} to a standard Markdown representation.
  * @remarks Collapses section hierarchies and applies heading levels.
+ * @param section - The section to normalize.
+ * @param context - The normalization context, which tracks the heading level as nested sections are processed.
  */
 export function normalizeSection(
 	section: Section,
@@ -103,7 +105,12 @@ function isInHeadingRange(level: number): level is 1 | 2 | 3 | 4 | 5 | 6 {
 }
 
 /**
- * TODO
+ * Converts a {@link SectionHeading} to a standard Markdown heading.
+ * @param sectionHeading - The section heading to normalize.
+ * @param level - The heading level to apply.
+ *
+ * @remarks If the level is beyond 6, the heading will be transformed to bold text with an HTML anchor.
+ * This is due to Markdown's limitation of supporting only up to 6 heading levels.
  */
 export function normalizeHeading(
 	sectionHeading: SectionHeading,
