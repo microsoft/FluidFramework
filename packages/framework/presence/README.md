@@ -143,7 +143,7 @@ A change to the `local` property automatically initiates a broadcast of updates 
 `local` is a [StateMap](https://fluidframework.com/docs/api/presence/statemap-interface) that mimics `Map` though it only supports `string | number` as property keys.
 
 ```typescript
-function updateCounter(counterTracker: LatestMapRaw<number, string>, counterName: string, value: number): void {
+function updateCounter(counterTracker: LatestMap<number, string>, counterName: string, value: number): void {
 	counterTracker.local.set(counterName, value);
 }
 ```
@@ -167,7 +167,7 @@ Accumulated data can be enumerated using `getRemotes`.
 
 ```typescript
 // Logs other attendee's current counters (excludes now _disconnected_ attendees)
-function logOthersCounters(counterTracker: LatestMapRaw<number, string>): void {
+function logOthersCounters(counterTracker: LatestMap<number, string>): void {
 	const counterMap = new Map<string, { attendee: Attendee; value: number }[]>();
 	// Collect counters from all remote attendees
 	for (const { attendee, items } of counterTracker.getRemotes()) {
@@ -180,7 +180,11 @@ function logOthersCounters(counterTracker: LatestMapRaw<number, string>): void {
 					entry = [];
 					counterMap.set(counterName, entry);
 				}
-				entry.push({ attendee, value: state.value });
+				const value = state.value();
+				// Just skip unrecognized data
+				if (value !== undefined) {
+					entry.push({ attendee, value });
+				}
 			}
 		}
 	}
@@ -209,7 +213,7 @@ function usePresence(container: IFluidContainer): void {
 #### Schema Definition and Workspace
 
 ```typescript
-import type { Latest, LatestMapRaw, Presence, StatesWorkspaceSchema } from "@fluidframework/presence/beta";
+import type { Latest, LatestMap, Presence, StatesWorkspaceSchema } from "@fluidframework/presence/beta";
 import { StateFactory } from "@fluidframework/presence/beta";
 
 interface PointXY { x: number; y: number }
@@ -220,6 +224,10 @@ function isPointXY(value: unknown): value is PointXY {
 		typeof value.x === "number" && typeof value.y === "number";
 }
 
+function numberOrUndefined(value: unknown): number | undefined {
+	return typeof value === 'number' ? value : undefined;
+}
+
 // A Presence workspace schema with two State objects named "position" and "counters".
 const PresenceSchemaV1 = {
 	// This `Latest<PointXY>` state defaults all values to (0, 0).
@@ -228,14 +236,14 @@ const PresenceSchemaV1 = {
 		validator: (v) => isPointXY(v) ? v : undefined
 	}),
 	// This `LatestMap<number, string>` state has `string` keys storing `number` values.
-	counters: StateFactory.latestMap<number, string>({ }),
+	counters: StateFactory.latestMap<number, string>({ validator: numberOrUndefined }),
 } as const satisfies StatesWorkspaceSchema;
 
 // Creates our unique workspace with the State objects declared in above schema.
 function getOurWorkspace(presence: Presence):
 	{
 		position: Latest<PointXY>;
-		counters: LatestMapRaw<number, string>;
+		counters: LatestMap<number, string>;
 	} {
 	return presence.states.getWorkspace("name:PointsAndCountersV1", PresenceSchemaV1).states;
 }
@@ -245,12 +253,59 @@ function getOurWorkspace(presence: Presence):
 
 ### Runtime data validation
 
-Runtime data validation is partially implemented.
-The StateFactory.latest API does accept a `validator` argument but StateFactory.latestMap API does not.
-Passing a validator function is recommended to ensure data from other attendees conforms to expectations.
-The validator will be invoked on the first attempt to read a remote value (always a `.value()` call) and validator may return data conforming to schema or `undefined`.
-Whatever the result, it will be cached and returned immediately for future `.value()` calls.
-**Passing the `validator` argument in version 2.43.0 will result in a runtime exception.**
+The Presence API provides a simple mechanism (fully added in version 2.53.0) to validate that state data received within session from other clients matches the types declared.
+
+When creating State objects using `StateFactory.latest` or `StateFactory.latestMap`, it is recommended that a validator function is specified.
+That function will be called on-demand at runtime to verify data from other clients is valid.
+
+When you provide a validator function, the data in a State object must be accessed via `.value()` function call instead of a directly accessing `.value` as a property.
+This is reflected in the types.
+
+> [!IMPORTANT]
+> If no validator function is provided, then the data shared in Presence is assumed to be compatible.
+> This may result in runtime errors if the data does not match the expected type.
+> It is recommended to always provide a validator function to ensure that the data is valid and to prevent runtime errors.
+
+#### Validator Requirements
+
+1. Validator functions take the form `function validator(value: unknown): ExpectedType | undefined`.
+1. Validator functions may not manipulate the given value.
+1. Validator functions are not expected to throw exceptions.
+1. When malformed data is found, a validator function may either return `undefined` or create a substitute value.
+
+The result of call to validator is returned as-is to the `.value()` call that first attempted access to remote data.
+That result is cached and will be returned to future `.value()` callers without invoking the validator.
+
+#### Example Validated Setup
+
+Custom validators can be convenient for simple types.
+See [Schema Definition and Workspace](#schema-definition-and-workspace) for example.
+For more complex types or peace of mind, consider a schema builder / validation package such as [TypeBox](https://github.com/sinclairzx81/typebox) or [Zod](https://zod.dev/).
+
+Example using TypeBox:
+```typescript
+import { type Static, Type } from "@sinclair/typebox";
+import { TypeCompiler } from '@sinclair/typebox/compiler'
+
+const PointXY = Type.Object({
+	x: Type.Number(),
+	y: Type.Number(),
+});
+type PointXY = Static<typeof PointXY>;
+
+const typeCheckPointXY = TypeCompiler.Compile(PointXY);
+
+function validatorPointXY(value: unknown): PointXY | undefined {
+	return typeCheckPointXY.Check(value) ? value : undefined;
+}
+
+const PresenceSchemaV1 = {
+	position: StateFactory.latest({
+		local: { x: 0, y: 0 },
+		validator: validatorPointXY
+	}),
+} as const satisfies StatesWorkspaceSchema;
+```
 
 ## Limitations
 

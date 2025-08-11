@@ -29,9 +29,9 @@ import type {
 	Paragraph,
 	PhrasingContent,
 	Text,
+	Link,
 } from "mdast";
 
-import type { Link } from "../Link.js";
 import type { LoggingConfiguration } from "../LoggingConfiguration.js";
 
 import { resolveSymbolicLink } from "./Utilities.js";
@@ -39,7 +39,7 @@ import type { ApiItemTransformationConfiguration } from "./configuration/index.j
 
 /**
  * Library of transformations from {@link https://github.com/microsoft/tsdoc/blob/main/tsdoc/src/nodes/DocNode.ts| DocNode}s
- * to {@link DocumentationNode}s.
+ * to Markdown.
  */
 
 /**
@@ -97,7 +97,7 @@ export function transformTsdoc(
 }
 
 /**
- * Converts a {@link @microsoft/tsdoc#DocSection} to a {@link SectionNode}.
+ * Converts a {@link @microsoft/tsdoc#DocSection} to a {@link HierarchicalSection}.
  * @remarks Exported only for testing purposes.
  */
 export function transformTsdocSection(
@@ -350,9 +350,9 @@ function transformTsdocLinkTag(
 	options: TsdocNodeTransformOptions,
 ): PhrasingContent {
 	if (input.codeDestination !== undefined) {
-		const link = options.resolveApiReference(input.codeDestination);
+		const itemLink = options.resolveApiReference(input.codeDestination);
 
-		if (link === undefined) {
+		if (itemLink === undefined) {
 			// If the code link could not be resolved, print the unresolved text in italics.
 			const linkText = input.linkText?.trim() ?? input.codeDestination.emitAsTsdoc().trim();
 			return {
@@ -365,18 +365,14 @@ function transformTsdocLinkTag(
 				],
 			};
 		} else {
-			const linkText = input.linkText?.trim() ?? link.text;
-			const linkTarget = link.target;
-			return {
-				type: "link",
-				url: linkTarget,
-				children: [
-					{
-						type: "text",
-						value: linkText,
-					},
-				],
-			};
+			// If the doc link included alias text, override the default item link text here.
+			return input.linkText === undefined
+				? itemLink
+				: {
+						type: "link",
+						url: itemLink.url,
+						children: [{ type: "text", value: input.linkText.trim() }],
+					};
 		}
 	}
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	Serializable,
 	IChannelAttributes,
@@ -829,7 +829,73 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		deadEntry.isDeleted = true;
 	}
 
-	protected applyStashedOp(_content: unknown): void {
-		throw new Error("Not implemented");
+	protected applyStashedOp(content: unknown): void {
+		const op = content as ISharedArrayOperation<T>;
+
+		switch (op.type) {
+			case OperationType.insertEntry: {
+				this.handleInsertOp<SerializableTypeForSharedArray>(
+					op.entryId,
+					op.insertAfterEntryId,
+					false, // treat it as remote op
+					op.value,
+				);
+				break;
+			}
+			case OperationType.deleteEntry: {
+				if (!this.isLocalPending(op.entryId, "isLocalPendingDelete")) {
+					// last element in skip list is the most recent and live entry, so marking it deleted
+					this.getLiveEntry(op.entryId).isDeleted = true;
+				}
+				break;
+			}
+			case OperationType.moveEntry: {
+				const opEntry = this.getEntryForId(op.entryId);
+				this.handleInsertOp<SerializableTypeForSharedArray>(
+					op.changedToEntryId,
+					op.insertAfterEntryId,
+					false, // treat it as remote op
+					opEntry.value,
+				);
+				const newElementEntryId = op.changedToEntryId;
+				const newElement = this.getEntryForId(newElementEntryId);
+				if (
+					this.isLocalPending(op.entryId, "isLocalPendingDelete") ||
+					this.isLocalPending(op.entryId, "isLocalPendingMove")
+				) {
+					// If local pending then simply mark the new location dead as finally the local op will win
+					this.updateDeadEntry(op.entryId, newElementEntryId);
+				} else {
+					// move the element
+					const liveEntry = this.getLiveEntry(op.entryId);
+					const isDeleted = liveEntry.isDeleted;
+					this.updateLiveEntry(liveEntry.entryId, newElementEntryId);
+					// mark newly added element as deleted if existing live element was already deleted
+					if (isDeleted) {
+						newElement.isDeleted = isDeleted;
+					}
+				}
+				break;
+			}
+			case OperationType.toggle: {
+				if (!this.isLocalPending(op.entryId, "isLocalPendingDelete")) {
+					this.getLiveEntry(op.entryId).isDeleted = op.isDeleted;
+				}
+				break;
+			}
+			case OperationType.toggleMove: {
+				if (
+					!this.isLocalPending(op.entryId, "isLocalPendingDelete") &&
+					!this.isLocalPending(op.entryId, "isLocalPendingMove")
+				) {
+					this.updateLiveEntry(this.getLiveEntry(op.entryId).entryId, op.entryId);
+				}
+				break;
+			}
+			default: {
+				unreachableCase(op);
+			}
+		}
+		this.submitLocalMessage(op);
 	}
 }

@@ -39,7 +39,7 @@ import { CitmCatalog, generateCitmJson } from "./citm.js";
 import { clone } from "./jsObjectUtil.js";
 import { generateTwitterJsonByByteSize } from "./twitter.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
+import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
 import { cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { initializeForest } from "../../feature-libraries/index.js";
@@ -126,7 +126,7 @@ function bench(
 					() => {
 						const forest = buildChunkedForest(
 							makeTreeChunker(
-								new TreeStoredSchemaRepository(toStoredSchema(JsonAsTree.Tree)),
+								new TreeStoredSchemaRepository(toInitialSchema(JsonAsTree.Tree)),
 								defaultSchemaPolicy,
 							),
 						);

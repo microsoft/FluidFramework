@@ -2,7 +2,7 @@
 
 An interface with an index signature.
 
-### Signature {#testinterfacewithindexsignature-signature}
+<h3 id="testinterfacewithindexsignature-signature">Signature</h3>
 
 ```typescript
 export interface TestInterfaceWithIndexSignature

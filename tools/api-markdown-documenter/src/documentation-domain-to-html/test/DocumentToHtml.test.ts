@@ -8,7 +8,6 @@ import { expect } from "chai";
 import { h } from "hastscript";
 
 import type { ApiDocument } from "../../ApiDocument.js";
-import { HeadingNode, SectionNode } from "../../documentation-domain/index.js";
 import { documentToHtml } from "../ToHtml.js";
 
 describe("documentToHtml tests", () => {
@@ -16,8 +15,9 @@ describe("documentToHtml tests", () => {
 		const document: ApiDocument = {
 			apiItem: {} as unknown as ApiItem, // Mock ApiItem for testing
 			contents: [
-				new SectionNode(
-					[
+				{
+					type: "section",
+					children: [
 						{
 							type: "paragraph",
 							children: [
@@ -31,8 +31,9 @@ describe("documentToHtml tests", () => {
 								},
 							],
 						},
-						new SectionNode(
-							[
+						{
+							type: "section",
+							children: [
 								{
 									type: "paragraph",
 									children: [
@@ -56,11 +57,17 @@ describe("documentToHtml tests", () => {
 									],
 								},
 							],
-							new HeadingNode("Section Heading"),
-						),
+							heading: {
+								type: "sectionHeading",
+								title: "Section Heading",
+							},
+						},
 					],
-					new HeadingNode("Sample Document"),
-				),
+					heading: {
+						type: "sectionHeading",
+						title: "Sample Document",
+					},
+				},
 			],
 			documentPath: "./test",
 		};
