@@ -1181,7 +1181,7 @@ export class GarbageCollector implements IGarbageCollector {
 		this.sessionExpiryTimer = undefined;
 
 		// Clear all unreferenced node timers
-		for (const [, tracker] of this.unreferencedNodesState) {
+		for (const tracker of this.unreferencedNodesState.values()) {
 			tracker.stopTracking();
 		}
 		this.unreferencedNodesState.clear();
