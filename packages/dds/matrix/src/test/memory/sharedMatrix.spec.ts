@@ -32,7 +32,8 @@ import { createLocalMatrix, type TestMatrixOptions } from "../utils.js";
  */
 function createMatrix(options: TestMatrixOptions): {
 	matrix: ISharedMatrix;
-	undoStack: UndoRedoStackManager;
+	undoRedoStack: UndoRedoStackManager;
+	cleanUp: () => void;
 } {
 	const matrix = createLocalMatrix(options);
 
@@ -45,12 +46,17 @@ function createMatrix(options: TestMatrixOptions): {
 	matrix.openMatrix(eventListeners);
 
 	// Configure undo/redo
-	const undoStack = new UndoRedoStackManager();
-	matrix.openUndo(undoStack);
+	const undoRedoStack = new UndoRedoStackManager();
+	matrix.openUndo(undoRedoStack);
+
+	const cleanUp = (): void => {
+		matrix.closeMatrix(eventListeners);
+	};
 
 	return {
 		matrix,
-		undoStack,
+		undoRedoStack,
+		cleanUp,
 	};
 }
 
@@ -80,18 +86,34 @@ function createBenchmark({
 }: BenchmarkOptions): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
 		readonly title = title;
-		private localMatrix: ISharedMatrix | undefined;
+
+		private matrix: ISharedMatrix | undefined;
+		private cleanUp: (() => void) | undefined;
 
 		async run(): Promise<void> {
-			assert(this.localMatrix !== undefined, "localMatrix is not initialized");
-			operation(this.localMatrix);
+			assert(this.matrix !== undefined, "matrix is not initialized");
+			operation(this.matrix);
 		}
 
 		beforeIteration(): void {
-			this.localMatrix = createLocalMatrix({
+			const {
+				matrix,
+				undoRedoStack: undoStack,
+				cleanUp,
+			} = createMatrix({
 				matrixSize,
 				initialCellValue,
 			});
+			this.matrix = matrix;
+			this.cleanUp = cleanUp;
+		}
+
+		afterIteration(): void {
+			assert(this.cleanUp !== undefined, "cleanUp is not initialized");
+
+			this.cleanUp();
+			this.matrix = undefined;
+			this.cleanUp = undefined;
 		}
 	})();
 }
@@ -115,8 +137,10 @@ function createUndoBenchmark({
 }: UndoRedoBenchmarkOptions): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
 		readonly title = title;
-		private localMatrix: ISharedMatrix | undefined;
+
+		private matrix: ISharedMatrix | undefined;
 		private undoRedoStack: UndoRedoStackManager | undefined;
+		private cleanUp: (() => void) | undefined;
 
 		async run(): Promise<void> {
 			assert(this.undoRedoStack !== undefined, "undoRedoStack is not initialized");
@@ -126,15 +150,28 @@ function createUndoBenchmark({
 		}
 
 		beforeIteration(): void {
-			const { matrix, undoStack } = createMatrix({
+			const {
+				matrix,
+				undoRedoStack: undoStack,
+				cleanUp,
+			} = createMatrix({
 				matrixSize,
 				initialCellValue,
 			});
-			this.localMatrix = matrix;
+			this.matrix = matrix;
 			this.undoRedoStack = undoStack;
+			this.cleanUp = cleanUp;
 
-			operation(this.localMatrix);
+			operation(this.matrix);
 			assert.equal(this.undoRedoStack.undoStackLength, stackCount);
+		}
+
+		afterIteration(): void {
+			assert(this.cleanUp !== undefined, "cleanUp is not initialized");
+
+			this.cleanUp();
+			this.matrix = undefined;
+			this.cleanUp = undefined;
 		}
 	})();
 }
@@ -151,8 +188,10 @@ function createRedoBenchmark({
 }: UndoRedoBenchmarkOptions): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
 		readonly title = title;
-		private localMatrix: ISharedMatrix | undefined;
+
+		private matrix: ISharedMatrix | undefined;
 		private undoRedoStack: UndoRedoStackManager | undefined;
+		private cleanUp: (() => void) | undefined;
 
 		async run(): Promise<void> {
 			assert(this.undoRedoStack !== undefined, "undoRedoStack is not initialized");
@@ -162,14 +201,15 @@ function createRedoBenchmark({
 		}
 
 		beforeIteration(): void {
-			const { matrix, undoStack } = createMatrix({
+			const { matrix, undoRedoStack, cleanUp } = createMatrix({
 				matrixSize,
 				initialCellValue,
 			});
-			this.localMatrix = matrix;
-			this.undoRedoStack = undoStack;
+			this.matrix = matrix;
+			this.undoRedoStack = undoRedoStack;
+			this.cleanUp = cleanUp;
 
-			operation(this.localMatrix);
+			operation(this.matrix);
 			assert.equal(this.undoRedoStack.undoStackLength, stackCount);
 
 			for (let i = 0; i < stackCount; i++) {
@@ -177,6 +217,14 @@ function createRedoBenchmark({
 			}
 			assert.equal(this.undoRedoStack.undoStackLength, 0);
 			assert.equal(this.undoRedoStack.redoStackLength, stackCount);
+		}
+
+		afterIteration(): void {
+			assert(this.cleanUp !== undefined, "cleanUp is not initialized");
+
+			this.cleanUp();
+			this.matrix = undefined;
+			this.cleanUp = undefined;
 		}
 	})();
 }
