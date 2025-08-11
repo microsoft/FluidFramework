@@ -7,7 +7,7 @@ import type { Root as HastRoot, Nodes as HastTree } from "hast";
 import { format } from "hast-util-format";
 import { toHtml as toHtmlString } from "hast-util-to-html";
 
-import type { DocumentNode } from "../../documentation-domain/index.js";
+import type { ApiDocument } from "../../ApiDocument.js";
 import {
 	documentToHtml,
 	type TransformationConfiguration,
@@ -38,7 +38,7 @@ export interface RenderDocumentConfiguration
 		RenderHtmlConfiguration {}
 
 /**
- * Renders a {@link DocumentNode} as HTML, and returns the resulting file contents as a string.
+ * Renders a {@link ApiDocument} as HTML, and returns the resulting file contents as a string.
  *
  * @param document - The document to render.
  * @param config - HTML transformation configuration.
@@ -46,7 +46,7 @@ export interface RenderDocumentConfiguration
  * @public
  */
 export function renderDocument(
-	document: DocumentNode,
+	document: ApiDocument,
 	config: RenderDocumentConfiguration,
 ): string {
 	const htmlTree = documentToHtml(document, config);
@@ -54,7 +54,7 @@ export function renderDocument(
 }
 
 /**
- * Renders a {@link DocumentNode} as HTML, and returns the resulting file contents as a string.
+ * Renders a {@link ApiDocument} as HTML, and returns the resulting file contents as a string.
  *
  * @param document - The document to render.
  * @param config - HTML transformation configuration.

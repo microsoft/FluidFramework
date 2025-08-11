@@ -11,10 +11,10 @@ import {
 } from "../../../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {
-	toStoredSchema,
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
 	TreeViewConfigurationAlpha,
+	toUpgradeSchema,
 } from "../../../simple-tree/index.js";
 import { SchemaFactoryAlpha } from "../../../simple-tree/index.js";
 
@@ -38,7 +38,8 @@ function expectCompatibility(
 	const compatibility = viewSchema.checkCompatibility(stored);
 	assert.deepEqual(compatibility, expected);
 
-	const viewStored = toStoredSchema(view);
+	// This does not include staged allowed types.
+	const viewStored = toUpgradeSchema(view);
 
 	// if it says upgradable, deriving a stored schema from the view schema gives one thats a superset of the old stored schema
 	if (compatibility.canUpgrade) {
@@ -86,7 +87,7 @@ describe("SchemaCompatibilityTester", () => {
 		describe("recognizes identical schema as equivalent", () => {
 			function expectSelfEquivalent(view: ImplicitFieldSchema) {
 				expectCompatibility(
-					{ view, stored: toStoredSchema(view) },
+					{ view, stored: toUpgradeSchema(view) },
 					{ canView: true, canUpgrade: true, isEquivalent: true },
 				);
 			}
@@ -139,7 +140,7 @@ describe("SchemaCompatibilityTester", () => {
 				class NeverMap extends factory.map("TestNode", []) {}
 				class SomethingMap extends factory.mapRecursive("TestNode", [factory.number]) {}
 				expectCompatibility(
-					{ view: SomethingMap, stored: toStoredSchema(NeverMap) },
+					{ view: SomethingMap, stored: toUpgradeSchema(NeverMap) },
 					expected,
 				);
 			});
@@ -153,7 +154,7 @@ describe("SchemaCompatibilityTester", () => {
 					x: [factory.number, factory.string],
 				}) {}
 				expectCompatibility(
-					{ view: FlexibleObject, stored: toStoredSchema(StricterObject) },
+					{ view: FlexibleObject, stored: toUpgradeSchema(StricterObject) },
 					expected,
 				);
 			});
@@ -168,7 +169,7 @@ describe("SchemaCompatibilityTester", () => {
 					y: factory.number,
 					z: factory.optional(factory.number),
 				}) {}
-				expectCompatibility({ view: Point3D, stored: toStoredSchema(Point2D) }, expected);
+				expectCompatibility({ view: Point3D, stored: toUpgradeSchema(Point2D) }, expected);
 			});
 
 			describe("due to field kind relaxation", () => {
@@ -177,14 +178,14 @@ describe("SchemaCompatibilityTester", () => {
 					expectCompatibility(
 						{
 							view: factory.string,
-							stored: toStoredSchema(factory.identifier),
+							stored: toUpgradeSchema(factory.identifier),
 						},
 						expected,
 					);
 					expectCompatibility(
 						{
 							view: factory.number,
-							stored: toStoredSchema(factory.identifier),
+							stored: toUpgradeSchema(factory.identifier),
 						},
 						{ canView: false, canUpgrade: false, isEquivalent: false },
 					);
@@ -192,7 +193,7 @@ describe("SchemaCompatibilityTester", () => {
 					expectCompatibility(
 						{
 							view: factory.optional(factory.string),
-							stored: toStoredSchema(factory.identifier),
+							stored: toUpgradeSchema(factory.identifier),
 						},
 						expected,
 					);
@@ -201,7 +202,7 @@ describe("SchemaCompatibilityTester", () => {
 					expectCompatibility(
 						{
 							view: factory.optional(factory.number),
-							stored: toStoredSchema(factory.required(factory.number)),
+							stored: toUpgradeSchema(factory.required(factory.number)),
 						},
 						expected,
 					);
@@ -224,7 +225,7 @@ describe("SchemaCompatibilityTester", () => {
 					expectCompatibility(
 						{
 							view: factory.identifier,
-							stored: toStoredSchema(factory.string),
+							stored: toUpgradeSchema(factory.string),
 						},
 						{
 							canView: false,
@@ -240,7 +241,7 @@ describe("SchemaCompatibilityTester", () => {
 					expectCompatibility(
 						{
 							view: factory.array("x", factory.string),
-							stored: toStoredSchema(factory.object("x", { [EmptyKey]: factory.string })),
+							stored: toUpgradeSchema(factory.object("x", { [EmptyKey]: factory.string })),
 						},
 						{
 							canView: false,
@@ -252,7 +253,7 @@ describe("SchemaCompatibilityTester", () => {
 					expectCompatibility(
 						{
 							view: factory.array("x", factory.string),
-							stored: toStoredSchema(
+							stored: toUpgradeSchema(
 								factory.object("x", { [EmptyKey]: factory.optional(factory.string) }),
 							),
 						},
@@ -266,7 +267,7 @@ describe("SchemaCompatibilityTester", () => {
 					expectCompatibility(
 						{
 							view: factory.array("x", factory.string),
-							stored: toStoredSchema(factory.object("x", { [EmptyKey]: factory.identifier })),
+							stored: toUpgradeSchema(factory.object("x", { [EmptyKey]: factory.identifier })),
 						},
 						{
 							canView: false,
@@ -282,7 +283,7 @@ describe("SchemaCompatibilityTester", () => {
 			expectCompatibility(
 				{
 					view: factory.map("x", [factory.string, factory.number]),
-					stored: toStoredSchema(
+					stored: toUpgradeSchema(
 						factory.object("x", {
 							a: factory.string,
 							b: factory.number,
@@ -315,7 +316,7 @@ describe("SchemaCompatibilityTester", () => {
 					z: factory.optional(factory.number),
 				}) {}
 				expectCompatibility(
-					{ view: Point2D, stored: toStoredSchema(Point3D) },
+					{ view: Point2D, stored: toUpgradeSchema(Point3D) },
 					{ canView: true, canUpgrade: false, isEquivalent: false },
 				);
 			});
@@ -330,8 +331,8 @@ describe("SchemaCompatibilityTester", () => {
 						canUpgrade: false,
 						isEquivalent: false,
 					};
-					expectCompatibility({ view: a, stored: toStoredSchema(b) }, expected);
-					expectCompatibility({ view: b, stored: toStoredSchema(a) }, expected);
+					expectCompatibility({ view: a, stored: toUpgradeSchema(b) }, expected);
+					expectCompatibility({ view: b, stored: toUpgradeSchema(a) }, expected);
 				}
 
 				describe("due to an allowed type difference", () => {
@@ -404,7 +405,7 @@ describe("SchemaCompatibilityTester", () => {
 						y: factory.number,
 						z: factory.optional(factory.number),
 					}) {}
-					expectCompatibility({ view: Point2D, stored: toStoredSchema(Point3D) }, expected);
+					expectCompatibility({ view: Point2D, stored: toUpgradeSchema(Point3D) }, expected);
 				});
 
 				// This case demonstrates some need for care when allowing view schema to open documents with more flexible stored schema
@@ -412,12 +413,15 @@ describe("SchemaCompatibilityTester", () => {
 					expectCompatibility(
 						{
 							view: factory.identifier,
-							stored: toStoredSchema(factory.optional(factory.string)),
+							stored: toUpgradeSchema(factory.optional(factory.string)),
 						},
 						expected,
 					);
 					expectCompatibility(
-						{ view: factory.number, stored: toStoredSchema(factory.optional(factory.number)) },
+						{
+							view: factory.number,
+							stored: toUpgradeSchema(factory.optional(factory.number)),
+						},
 						expected,
 					);
 				});
@@ -427,7 +431,7 @@ describe("SchemaCompatibilityTester", () => {
 						expectCompatibility(
 							{
 								view: factory.number,
-								stored: toStoredSchema(factory.required([factory.number, factory.string])),
+								stored: toUpgradeSchema(factory.required([factory.number, factory.string])),
 							},
 							expected,
 						);
@@ -441,7 +445,7 @@ describe("SchemaCompatibilityTester", () => {
 							x: [factory.number, factory.string],
 						}) {}
 						expectCompatibility(
-							{ view: IncompatibleObject1, stored: toStoredSchema(IncompatibleObject2) },
+							{ view: IncompatibleObject1, stored: toUpgradeSchema(IncompatibleObject2) },
 							expected,
 						);
 					});
@@ -453,11 +457,108 @@ describe("SchemaCompatibilityTester", () => {
 							factory.string,
 						]) {}
 						expectCompatibility(
-							{ view: IncompatibleMap1, stored: toStoredSchema(IncompatibleMap2) },
+							{ view: IncompatibleMap1, stored: toUpgradeSchema(IncompatibleMap2) },
 							expected,
 						);
 					});
 				});
+			});
+		});
+
+		describe("with staged allowed types", () => {
+			it("adding a staged allowed type does not break compatibility", () => {
+				class Compatible1 extends factory.objectAlpha("MyType", {
+					foo: SchemaFactoryAlpha.number,
+				}) {}
+
+				class Compatible2 extends factory.objectAlpha("MyType", {
+					foo: [
+						SchemaFactoryAlpha.number,
+						SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+					],
+				}) {}
+
+				expectCompatibility(
+					{ view: Compatible2, stored: toUpgradeSchema(Compatible1) },
+					{ canView: true, canUpgrade: true, isEquivalent: true },
+				);
+			});
+
+			it("can upgrade from staged to allowed", () => {
+				class Compatible1 extends factory.objectAlpha("MyType", {
+					foo: [
+						SchemaFactoryAlpha.number,
+						SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+					],
+				}) {}
+
+				class Compatible2 extends factory.objectAlpha("MyType", {
+					foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.string],
+				}) {}
+
+				expectCompatibility(
+					{ view: Compatible2, stored: toUpgradeSchema(Compatible1) },
+					{ canView: false, canUpgrade: true, isEquivalent: false },
+				);
+			});
+
+			it("clients with staged schema allow viewing but not upgrading after upgrade", () => {
+				class Compatible1 extends factory.objectAlpha("MyType", {
+					foo: [
+						SchemaFactoryAlpha.number,
+						SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+					],
+				}) {}
+
+				class Compatible2 extends factory.objectAlpha("MyType", {
+					foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.string],
+				}) {}
+
+				expectCompatibility(
+					{ view: Compatible1, stored: toUpgradeSchema(Compatible2) },
+					{ canView: true, canUpgrade: false, isEquivalent: false },
+				);
+			});
+
+			it("staged schema which mismatches stored can not view", () => {
+				class Compatible1 extends factory.objectAlpha("MyType", {
+					foo: [
+						SchemaFactoryAlpha.number,
+						SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+					],
+				}) {}
+
+				class Compatible2 extends factory.objectAlpha("MyType", {
+					foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.null],
+				}) {}
+
+				expectCompatibility(
+					{ view: Compatible1, stored: toUpgradeSchema(Compatible2) },
+					{ canView: false, canUpgrade: false, isEquivalent: false },
+				);
+			});
+
+			it("staged schema which deeply mismatches stored can not view", () => {
+				class Deep1 extends factory.objectAlpha("Deep", {
+					foo: SchemaFactoryAlpha.number,
+				}) {}
+
+				class Deep2 extends factory.objectAlpha("Deep", {
+					bar: SchemaFactoryAlpha.number,
+				}) {}
+
+				class Compatible1 extends factory.objectAlpha("MyType", {
+					foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(Deep1)],
+				}) {}
+
+				class Compatible2 extends factory.objectAlpha("MyType", {
+					foo: [SchemaFactoryAlpha.number, Deep2],
+				}) {}
+
+				expectCompatibility(
+					{ view: Compatible1, stored: toUpgradeSchema(Compatible2) },
+					{ canView: false, canUpgrade: false, isEquivalent: false },
+				);
 			});
 		});
 	});

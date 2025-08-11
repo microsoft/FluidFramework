@@ -3,18 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import type { ApiItem } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 import type { Root } from "mdast";
 
-import { DocumentNode, HeadingNode, SectionNode } from "../../documentation-domain/index.js";
+import type { ApiDocument } from "../../ApiDocument.js";
 import { documentToMarkdown } from "../ToMarkdown.js";
 
 describe("documentToMarkdown", () => {
 	it("Transforms a simple document", () => {
-		const document = new DocumentNode({
-			children: [
-				new SectionNode(
-					[
+		const document: ApiDocument = {
+			apiItem: {} as unknown as ApiItem, // Mock ApiItem for testing
+			contents: [
+				{
+					type: "section",
+					children: [
 						{
 							type: "paragraph",
 							children: [
@@ -28,8 +31,9 @@ describe("documentToMarkdown", () => {
 								},
 							],
 						},
-						new SectionNode(
-							[
+						{
+							type: "section",
+							children: [
 								{
 									type: "paragraph",
 									children: [
@@ -53,14 +57,20 @@ describe("documentToMarkdown", () => {
 									],
 								},
 							],
-							new HeadingNode("Section Heading"),
-						),
+							heading: {
+								type: "sectionHeading",
+								title: "Section Heading",
+							},
+						},
 					],
-					new HeadingNode("Sample Document"),
-				),
+					heading: {
+						type: "sectionHeading",
+						title: "Sample Document",
+					},
+				},
 			],
 			documentPath: "./test",
-		});
+		};
 
 		const result = documentToMarkdown(document, {});
 
