@@ -25,7 +25,11 @@ import {
 	evaluateLazySchema,
 	markSchemaMostDerived,
 } from "../core/index.js";
-import { toStoredSchema } from "../toStoredSchema.js";
+import {
+	permissiveStoredSchemaGenerationOptions,
+	restrictiveStoredSchemaGenerationOptions,
+	toStoredSchema,
+} from "../toStoredSchema.js";
 import {
 	isArrayNodeSchema,
 	isMapNodeSchema,
@@ -161,6 +165,9 @@ export interface ITreeViewConfiguration<
 
 /**
  * Configuration for {@link ViewableTree.viewWith}.
+ * @privateRemarks
+ * When `ImplicitAnnotatedFieldSchema` is stabilized, TSchema should be updated to use it.
+ * When doing this, the example for `staged` will need to be updated/simplified.
  * @sealed @public
  */
 export class TreeViewConfiguration<
@@ -213,7 +220,8 @@ export class TreeViewConfiguration<
 
 		// Eagerly perform this conversion to surface errors sooner.
 		// Includes detection of duplicate schema identifiers.
-		toStoredSchema(config.schema);
+		toStoredSchema(config.schema, restrictiveStoredSchemaGenerationOptions);
+		toStoredSchema(config.schema, permissiveStoredSchemaGenerationOptions);
 
 		const definitions = new Map<string, SimpleNodeSchema & TreeNodeSchema>();
 

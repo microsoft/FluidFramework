@@ -27,6 +27,7 @@ import {
 import type { InternalTreeNode } from "./types.js";
 import { typeSchemaSymbol } from "./withType.js";
 import type { ImplicitAnnotatedAllowedTypes } from "./allowedTypes.js";
+import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 
 /**
  * Class which all {@link TreeNode}s must extend.
@@ -233,7 +234,7 @@ export interface MostDerivedData {
 export function schemaAsTreeNodeValid(
 	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
 ): typeof TreeNodeValid & TreeNodeSchema {
-	if (!inPrototypeChain(schema, TreeNodeValid)) {
+	if (!isClassBasedSchema(schema)) {
 		// Use JSON.stringify to quote and escape identifier string.
 		throw new UsageError(
 			`Schema for ${JSON.stringify(
@@ -242,7 +243,16 @@ export function schemaAsTreeNodeValid(
 		);
 	}
 
-	return schema as typeof TreeNodeValid & TreeNodeSchema;
+	return schema;
+}
+
+/**
+ * Check if a schema is a {@link TreeNodeValid}.
+ */
+export function isClassBasedSchema(
+	schema: SimpleNodeSchemaBase<NodeKind>,
+): schema is typeof TreeNodeValid & TreeNodeSchema {
+	return inPrototypeChain(schema, TreeNodeValid);
 }
 
 /**
@@ -253,6 +263,7 @@ export function schemaAsTreeNodeValid(
 export function createTreeNodeSchemaPrivateData(
 	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
 	childAnnotatedAllowedTypes: readonly ImplicitAnnotatedAllowedTypes[],
+	toStored: TreeNodeSchemaPrivateData["toStored"],
 ): TreeNodeSchemaPrivateData {
 	const schemaValid = schemaAsTreeNodeValid(schema);
 	// Since this closes over the schema, ensure this schema is marked as most derived
@@ -262,6 +273,7 @@ export function createTreeNodeSchemaPrivateData(
 	return {
 		idempotentInitialize: () => schemaValid.oneTimeInitialize().oneTimeInitialized,
 		childAnnotatedAllowedTypes,
+		toStored,
 	};
 }
 

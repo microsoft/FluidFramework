@@ -20,7 +20,7 @@ import { toHtml } from "hast-util-to-html";
 import type { Html, PhrasingContent, Table, TableCell, TableRow } from "mdast";
 import { toHast } from "mdast-util-to-hast";
 
-import { HeadingNode, SectionNode } from "../../documentation-domain/index.js";
+import type { Section } from "../../mdast/index.js";
 import {
 	type ApiFunctionLike,
 	type ApiModifier,
@@ -81,8 +81,8 @@ export interface TableCreationOptions {
 export function createMemberTables(
 	memberTableProperties: readonly MemberTableProperties[],
 	config: ApiItemTransformationConfiguration,
-): SectionNode[] | undefined {
-	const sections: SectionNode[] = [];
+): Section[] | undefined {
+	const sections: Section[] = [];
 
 	for (const member of memberTableProperties) {
 		const table = createTableWithHeading(member, config);
@@ -103,7 +103,7 @@ export function createMemberTables(
 export function createTableWithHeading(
 	memberTableProperties: MemberTableProperties,
 	config: ApiItemTransformationConfiguration,
-): SectionNode | undefined {
+): Section | undefined {
 	const table = createSummaryTable(
 		memberTableProperties.items,
 		memberTableProperties.itemKind,
@@ -113,7 +113,14 @@ export function createTableWithHeading(
 
 	return table === undefined
 		? undefined
-		: new SectionNode([table], new HeadingNode(memberTableProperties.headingTitle));
+		: {
+				type: "section",
+				children: [table],
+				heading: {
+					type: "sectionHeading",
+					title: memberTableProperties.headingTitle,
+				},
+			};
 }
 
 /**
@@ -693,13 +700,7 @@ export function createApiTitleCell(
 	const link = getLinkForApiItem(apiItem, config);
 	return {
 		type: "tableCell",
-		children: [
-			{
-				type: "link",
-				url: link.target,
-				children: [{ type: "text", value: link.text }],
-			},
-		],
+		children: [link],
 	};
 }
 

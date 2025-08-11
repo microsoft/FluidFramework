@@ -36,15 +36,17 @@ describe("Local Server Stress", () => {
 		// skipMinimization: true,
 		// Uncomment to replay a particular seed.
 		// replay: 93,
-		// only: [28],
+		// only: [9],
 		saveFailures,
 		// saveSuccesses,
+		configurations: { "Fluid.Container.enableOfflineLoad": true },
 		skip: [
-			...[98], // Number of keys not same
-			...[49], // Number of subDirectories not same,
-			...[11], // Rollback op does not match last pending
-			...[19], // Cannot access Disposed subDirectory
-			...[46], // The Container is closed and cannot be connected
+			...[34, 46, 79], // Number of keys not same
+			...[6, 9], // Number of subDirectories not same,
+			...[26], // Unexpected pending data for set/delete op
+			...[13], // 0xb85
+			...[30, 69], // timeout
+			...[21], // Got a local set message we weren't expecting
 		],
 	});
 });

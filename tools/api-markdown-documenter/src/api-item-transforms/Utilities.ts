@@ -5,10 +5,10 @@
 
 import type { ApiItem } from "@microsoft/api-extractor-model";
 import type { DocDeclarationReference } from "@microsoft/tsdoc";
+import type { Link } from "mdast";
 
 import type { ApiDocument } from "../ApiDocument.js";
-import type { Link } from "../Link.js";
-import type { SectionNode } from "../documentation-domain/index.js";
+import type { Section } from "../mdast/index.js";
 import { resolveSymbolicReference } from "../utilities/index.js";
 
 import {
@@ -17,7 +17,6 @@ import {
 	shouldItemBeIncluded,
 } from "./ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "./configuration/index.js";
-import { wrapInSection } from "./helpers/index.js";
 
 /**
  * Creates a {@link ApiDocument} representing the provided API item.
@@ -30,14 +29,23 @@ import { wrapInSection } from "./helpers/index.js";
  */
 export function createDocument(
 	documentItem: ApiItem,
-	sections: SectionNode[],
+	sections: Section[],
 	config: ApiItemTransformationConfiguration,
 ): ApiDocument {
 	const title = config.getHeadingTextForItem(documentItem);
 
 	// Wrap sections in a root section if top-level heading is requested.
-	const contents = config.includeTopLevelDocumentHeading
-		? [wrapInSection(sections, { title })]
+	const contents: Section[] = config.includeTopLevelDocumentHeading
+		? [
+				{
+					type: "section",
+					children: sections,
+					heading: {
+						type: "sectionHeading",
+						title,
+					},
+				},
+			]
 		: sections;
 
 	return {

@@ -25,8 +25,10 @@ export function isDocumentSessionValid(
 		// No session location to validate.
 		return true;
 	}
+
 	const isSessionInThisCluster =
 		document.session.ordererUrl === serviceConfiguration.externalOrdererUrl;
+
 	if (document.session.isSessionActive && isSessionInThisCluster) {
 		return true;
 	}
@@ -36,5 +38,11 @@ export function isDocumentSessionValid(
 		// Prevent Deli from processing ops.
 		return false;
 	}
+
+	// If the orderer URL contains the tenant ID, the session is private link enabled.
+	// So far we only set one cluster per group for private endpoint.
+	// Skip the isSessionInThisCluster check.
+	if (document.session.ordererUrl.includes(document.tenantId)) return true;
+
 	return isSessionInThisCluster;
 }

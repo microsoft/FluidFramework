@@ -786,7 +786,7 @@ export class SharedDirectory
 	protected processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
-		localOpMetadata: DirectoryLocalOpMetadata,
+		localOpMetadata: DirectoryLocalOpMetadata | undefined,
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
@@ -914,11 +914,6 @@ export class SharedDirectory
 				if (subdir && (!this.isSubDirectoryDeletePending(op.path) || !local)) {
 					migrateIfSharedSerializable(op.value, this.serializer, this.handle);
 					const localValue: unknown = local ? undefined : op.value.value;
-					assert(
-						localOpMetadata === undefined ||
-							(localOpMetadata !== undefined && localOpMetadata.type === "set"),
-						"unexpected localOpMetadata",
-					);
 					subdir.processSetMessage(msg, op, localValue, local, localOpMetadata);
 				}
 			},
@@ -2410,17 +2405,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.throwIfDisposed();
 		this.registerEventsOnSubDirectory(newSubDir, subdirName);
 		this.sequencedSubdirectories.set(subdirName, newSubDir);
-	}
-
-	/**
-	 * Retrieve the local value at the given key.  This is used to get value type information stashed on the local
-	 * value so op handlers can be retrieved
-	 * @param key - The key to retrieve from
-	 * @returns The local value
-	 */
-	public getLocalValue<T>(key: string): T {
-		this.throwIfDisposed();
-		return this.getOptimisticValue(key) as T;
 	}
 
 	/**
