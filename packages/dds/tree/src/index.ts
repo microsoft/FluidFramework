@@ -169,7 +169,6 @@ export {
 	type UnannotateAllowedTypes,
 	type UnannotateAllowedType,
 	type UnannotateAllowedTypesList,
-	type UnannotateAllowedTypeOrLazyItem,
 	type UnannotateImplicitFieldSchema,
 	type UnannotateSchemaRecord,
 	type SchemaStaticsAlpha,
