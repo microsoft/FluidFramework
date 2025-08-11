@@ -31,8 +31,19 @@ import { createLocalMatrix, type TestMatrixOptions } from "../utils.js";
  * @remarks Includes initialization of the undo/redo stack, as well as mock event subscriptions.
  */
 function createMatrix(options: TestMatrixOptions): {
+	/**
+	 * The initialized matrix.
+	 */
 	matrix: ISharedMatrix;
+
+	/**
+	 * The undo/redo stack manager for the matrix.
+	 */
 	undoRedoStack: UndoRedoStackManager;
+
+	/**
+	 * Cleanup function to run after the test to close the matrix and release resources.
+	 */
 	cleanUp: () => void;
 } {
 	const matrix = createLocalMatrix(options);

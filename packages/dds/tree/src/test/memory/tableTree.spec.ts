@@ -37,8 +37,19 @@ import { Tree } from "../../shared-tree/index.js";
  * @remarks Includes initialization of the undo/redo stack, as well as mock event subscriptions.
  */
 function createTable(options: TableTreeOptions): {
+	/**
+	 * The initialized table tree.
+	 */
 	table: TreeNodeFromImplicitAllowedTypes<typeof Table>;
+
+	/**
+	 * The undo/redo stack manager for the table.
+	 */
 	undoRedoStack: UndoRedoManager;
+
+	/**
+	 * Cleanup function to run after the test to close the table and release resources.
+	 */
 	cleanUp: () => void;
 } {
 	const { table, treeView } = createTableTree(options);
