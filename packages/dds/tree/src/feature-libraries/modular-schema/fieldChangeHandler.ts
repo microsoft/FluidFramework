@@ -172,7 +172,7 @@ export interface FieldChangeRebaser<TChangeset> {
 
 	/**
 	 * Returns a copy of the given changeset with the same declarations (e.g., new cells) but no actual changes.
-	 * This is a kludge. TODO: remove once AD#46104 is completed.
+	 * This is a kludge. TODO: remove once AB#46104 is completed.
 	 */
 	mute(change: TChangeset): TChangeset;
 }

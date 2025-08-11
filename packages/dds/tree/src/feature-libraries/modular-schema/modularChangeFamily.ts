@@ -221,7 +221,7 @@ export class ModularChangeFamily
 	): ModularChangesetContent {
 		// Our current cell ordering scheme in sequences depends on being able to rebase over a change with conflicts.
 		// This means that compose must preserve declarations (e.g., new cells) made by conflicted changes (so that we can rebase over the composition).
-		// TODO: remove once AD#46104 is completed
+		// TODO: remove once AB#46104 is completed
 		const change1 = this.getEffectiveChange(potentiallyConflictedChange1);
 		const change2 = this.getEffectiveChange(potentiallyConflictedChange2);
 
@@ -856,7 +856,7 @@ export class ModularChangeFamily
 		// Our current cell ordering scheme in sequences depends on being able to rebase over a change with conflicts.
 		// This means that we must rebase over a muted version of the conflicted changeset.
 		// That is, a version that includes its declarations (e.g., new cells) but not its changes.
-		// TODO: remove once AD#46104 is completed
+		// TODO: remove once AB#46104 is completed
 		const over = mapTaggedChange(
 			potentiallyConflictedOver,
 			this.getEffectiveChange(potentiallyConflictedOver.change),
