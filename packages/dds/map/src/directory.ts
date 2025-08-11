@@ -820,7 +820,7 @@ export class SharedDirectory
 	protected processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
-		localOpMetadata: DirectoryLocalOpMetadata,
+		localOpMetadata: DirectoryLocalOpMetadata | undefined,
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
