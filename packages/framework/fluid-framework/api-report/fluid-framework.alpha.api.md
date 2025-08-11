@@ -15,7 +15,7 @@ export function adaptEnum<TScope extends string, const TEnum extends Record<stri
         }, Record<string, never>, true, Record<string, never>, undefined>; }[keyof TEnum]>;
 };
 
-// @alpha
+// @alpha @input
 export interface AllowedTypeMetadata {
     readonly custom?: unknown;
     readonly stagedSchemaUpgrade?: SchemaUpgrade;
@@ -24,7 +24,7 @@ export interface AllowedTypeMetadata {
 // @public @system
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
-// @alpha
+// @alpha @input
 export interface AllowedTypesMetadata {
     readonly custom?: unknown;
 }
@@ -32,16 +32,16 @@ export interface AllowedTypesMetadata {
 // @alpha
 export function allowUnused<T>(t?: T): void;
 
-// @alpha
+// @alpha @sealed
 export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
     readonly metadata: AllowedTypeMetadata;
     readonly type: T;
 }
 
-// @alpha
-export interface AnnotatedAllowedTypes {
+// @alpha @sealed
+export interface AnnotatedAllowedTypes<T = LazyItem<TreeNodeSchema>> {
     readonly metadata: AllowedTypesMetadata;
-    readonly types: readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[];
+    readonly types: readonly AnnotatedAllowedType<T>[];
 }
 
 // @public @system
@@ -606,10 +606,10 @@ export interface IMember {
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
-// @alpha
+// @alpha @input
 export type ImplicitAnnotatedAllowedTypes = TreeNodeSchema | AnnotatedAllowedType | AnnotatedAllowedTypes | readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[];
 
-// @alpha
+// @alpha @input
 export type ImplicitAnnotatedFieldSchema = FieldSchema | ImplicitAnnotatedAllowedTypes;
 
 // @public
@@ -979,10 +979,8 @@ export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown> extends N
 // @alpha
 export const noopValidator: JsonValidator;
 
-// @alpha
-export interface NormalizedAnnotatedAllowedTypes {
-    readonly metadata: AllowedTypesMetadata;
-    readonly types: readonly AnnotatedAllowedType<TreeNodeSchema>[];
+// @alpha @sealed
+export interface NormalizedAnnotatedAllowedTypes extends AnnotatedAllowedTypes<TreeNodeSchema> {
 }
 
 // @public @system
