@@ -46,6 +46,7 @@ describe("Local Server Stress", () => {
 			...[13, 46, 79], // Number of subDirectories not same
 			...[30, 69], // timeout
 			...[21], // Got a local set message we weren't expecting
+			...[38], // Cannot access Disposed subDirectory
 		],
 	});
 });
