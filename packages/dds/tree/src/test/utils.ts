@@ -137,6 +137,8 @@ import {
 	SchematizingSimpleTreeView,
 	type ForestOptions,
 	type SharedTreeOptionsInternal,
+	buildConfiguredForest,
+	ForestTypeOptimized,
 } from "../shared-tree/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -191,6 +193,8 @@ import {
 	allowsTreeSuperset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../feature-libraries/modular-schema/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { initializeForest } from "./feature-libraries/initializeForest.js";
 
 // Testing utilities
 
@@ -810,6 +814,8 @@ export function checkoutWithContent(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 		additionalAsserts?: boolean;
+		// Creates a chunked forest instead of an object forest.
+		chunkedForest?: true;
 	},
 ): TreeCheckout {
 	const { checkout } = createCheckoutWithContent(content, args);
@@ -823,16 +829,29 @@ function createCheckoutWithContent(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 		additionalAsserts?: boolean;
+		// Creates a chunked forest instead of an object forest.
+		chunkedForest?: boolean;
 	},
 ): { checkout: TreeCheckout; logger: IMockLoggerExt } {
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
-	const roots: MapTree = mapTreeWithField(mapTreeFieldFromCursor(fieldCursor));
 	const schema = new TreeStoredSchemaRepository(content.schema);
-	const forest = buildTestForest({
-		additionalAsserts: args?.additionalAsserts ?? true,
-		schema,
-		roots,
-	});
+	let forest: IEditableForest;
+	if (args?.chunkedForest === true) {
+		forest = buildConfiguredForest(
+			new Breakable("buildTestChunkedForest"),
+			ForestTypeOptimized,
+			schema,
+			testIdCompressor,
+		);
+		initializeForest(forest, fieldCursor, testRevisionTagCodec, testIdCompressor);
+	} else {
+		const roots: MapTree = mapTreeWithField(mapTreeFieldFromCursor(fieldCursor));
+		forest = buildTestForest({
+			additionalAsserts: args?.additionalAsserts ?? true,
+			schema,
+			roots,
+		});
+	}
 
 	const logger = createMockLoggerExt();
 	const checkout = createTreeCheckout(
