@@ -68,7 +68,7 @@ function createAdditionalClient(
 	return { sharedDirectory, dataStoreRuntime, containerRuntime };
 }
 
-describe.only("SharedDirectory rollback", () => {
+describe("SharedDirectory rollback", () => {
 	describe("Storage operations (root subdirectory)", () => {
 		it("should rollback set operation", () => {
 			const { sharedDirectory, containerRuntime } = setupRollbackTest();
