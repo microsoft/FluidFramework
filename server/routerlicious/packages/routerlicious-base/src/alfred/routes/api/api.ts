@@ -12,8 +12,8 @@ import {
 	createRuntimeMessage,
 } from "@fluidframework/server-lambdas";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
-import { BasicRestWrapper, NetworkError } from "@fluidframework/server-services-client";
-import type * as core from "@fluidframework/server-services-core";
+import { BasicRestWrapper, NetworkError, type ISession } from "@fluidframework/server-services-client";
+import * as core from "@fluidframework/server-services-core";
 import {
 	Lumberjack,
 	getLumberBaseProperties,
@@ -36,7 +36,7 @@ import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
 import winston from "winston";
 
-import { Constants } from "../../../utils";
+import { Constants, } from "../../../utils";
 
 import {
 	craftClientJoinMessage,
@@ -429,22 +429,28 @@ async function handleBroadcastSignal(
 	}
 
 	const serverUrl: string = config.get("worker:serverUrl");
-	const document = await storage?.getDocument(tenantId, documentId);
-	if (!document?.session?.isSessionAlive) {
+	const alfredUrl: string = config.get("worker:alfredUrl");
+	const session = await getSession(
+		alfredUrl,
+		tenantId,
+		documentId,
+	);
+
+	if (!session?.isSessionAlive) {
 		Lumberjack.error("Document not found", { tenantId, documentId });
 		throw new NetworkError(404, "Document not found");
 	}
-	if (!document.session.isSessionActive) {
+	if (!session.isSessionActive) {
 		Lumberjack.warning("Document session not active", { tenantId, documentId });
 		throw new NetworkError(410, "Document session not active");
 	}
-	if (document.session.ordererUrl !== serverUrl) {
+	if (session.ordererUrl !== serverUrl) {
 		Lumberjack.info("Redirecting broadcast-signal to correct cluster", {
-			documentUrl: document.session.ordererUrl,
+			documentUrl: session.ordererUrl,
 			currentUrl: serverUrl,
-			targetUrlAndPath: `${document.session.ordererUrl}${request.originalUrl}`,
+			targetUrlAndPath: `${session.ordererUrl}${request.originalUrl}`,
 		});
-		response.redirect(`${document.session.ordererUrl}${request.originalUrl}`);
+		response.redirect(`${session.ordererUrl}${request.originalUrl}`);
 		return;
 	}
 
@@ -455,3 +461,36 @@ async function handleBroadcastSignal(
 }
 
 const getRoomId = (room: IRoom): string => `${room.tenantId}/${room.documentId}`;
+
+async function getSession(
+	baseUrl: string,
+	tenantId: string,
+	documentId: string,
+): Promise<ISession | undefined> {
+	const restWrapper = new BasicRestWrapper(
+		baseUrl /* Baseurl */,
+		undefined /* defaultQueryString */,
+		undefined /* maxBodyLength */,
+		undefined /* maxContentLength */,
+		{
+			Accept: "application/json",
+			"Content-Type": "application/json",
+		} /* defaultHeaders */,
+		undefined /* axios */,
+		undefined /* refreshDefaultQueryString */,
+		undefined /* refreshDefaultHeaders */,
+		() => getGlobalTelemetryContext().getProperties().correlationId /* getCorrelationId */,
+		() => getGlobalTelemetryContext().getProperties() /* getTelemetryProperties */,
+		undefined /* refreshTokenIfNeeded */,
+		logHttpMetrics /* logHttpMetrics */,
+		() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
+	);
+
+	return core.runWithRetry(
+		async () =>
+			restWrapper.get<ISession>(`/documents/${tenantId}/session/${documentId}`) /* api */,
+		"Alfred.Api.BroadcastSignal.GetSession" /* callName */,
+		3 /* maxRetries */,
+		1000 /* retryAfterMs */,
+	);
+}
