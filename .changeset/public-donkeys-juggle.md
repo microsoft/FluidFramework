@@ -3,9 +3,9 @@
 "fluid-framework": minor
 "__section": fix
 ---
-Allow edits in arrays and sequences to be concurrent to dependent edits of transactions with violated constraints
+Allow edits in arrays to be concurrent to dependent edits of transactions with violated constraints
 
-Before this release, making concurrent edits to an array or a sequence could lead to assertion error `0x8a2` being thrown if the following conditions were met:
+Before this release, making concurrent edits to an array could lead to assertion error `0x8a2` being thrown if the following conditions were met:
 * Some edit `e1` was a transaction with a constraint that turned out to be violated by edits concurrent to (and sequenced before) `e1`
 * Some edit `e2` was dependent on `e1` (from before the violation of its constraint)
 * Some edit `e3` was concurrent to and sequenced after both `e1` and `e2`
