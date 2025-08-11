@@ -64,7 +64,7 @@ function createUndoRedoBenchmark({
 		}
 
 		public beforeIteration(): void {
-			this.localTree = createTableTree(tableSize, initialValue);
+			this.localTree = createTableTree({ tableSize, initialCellValue: initialValue });
 			this.undoRedoManager = new UndoRedoManager(this.localTree.treeView);
 			setupOperation(this.localTree.table, this.undoRedoManager);
 		}
@@ -135,7 +135,7 @@ describe("SharedTree table APIs memory usage", () => {
 						}
 
 						public beforeIteration(): void {
-							this.localTree = createTableTree(tableSize, cellValue);
+							this.localTree = createTableTree({ tableSize, initialCellValue: cellValue });
 						}
 					})(),
 				);
@@ -204,7 +204,7 @@ describe("SharedTree table APIs memory usage", () => {
 						}
 
 						public beforeIteration(): void {
-							this.localTree = createTableTree(tableSize, cellValue);
+							this.localTree = createTableTree({ tableSize, initialCellValue: cellValue });
 						}
 					})(),
 				);
@@ -275,7 +275,7 @@ describe("SharedTree table APIs memory usage", () => {
 						}
 
 						public beforeIteration(): void {
-							this.localTree = createTableTree(tableSize, cellValue);
+							this.localTree = createTableTree({ tableSize, initialCellValue: cellValue });
 						}
 					})(),
 				);
@@ -361,7 +361,7 @@ describe("SharedTree table APIs memory usage", () => {
 						}
 
 						public beforeIteration(): void {
-							this.localTree = createTableTree(tableSize, cellValue);
+							this.localTree = createTableTree({ tableSize, initialCellValue: cellValue });
 						}
 					})(),
 				);
@@ -431,7 +431,7 @@ describe("SharedTree table APIs memory usage", () => {
 						}
 
 						public beforeIteration(): void {
-							this.localTree = createTableTree(tableSize, cellValue);
+							this.localTree = createTableTree({ tableSize, initialCellValue: cellValue });
 						}
 					})(),
 				);
@@ -502,7 +502,7 @@ describe("SharedTree table APIs memory usage", () => {
 						}
 
 						public beforeIteration(): void {
-							this.localTree = createTableTree(tableSize, cellValue);
+							this.localTree = createTableTree({ tableSize, initialCellValue: cellValue });
 						}
 					})(),
 				);
@@ -590,7 +590,7 @@ describe("SharedTree table APIs memory usage", () => {
 						}
 
 						public beforeIteration(): void {
-							this.localTree = createTableTree(tableSize, cellValue);
+							this.localTree = createTableTree({ tableSize, initialCellValue: cellValue });
 						}
 					})(),
 				);
@@ -696,7 +696,7 @@ describe("SharedTree table APIs memory usage", () => {
 						}
 
 						public beforeIteration(): void {
-							this.localTree = createTableTree(tableSize, cellValue);
+							this.localTree = createTableTree({ tableSize, initialCellValue: cellValue });
 						}
 					})(),
 				);

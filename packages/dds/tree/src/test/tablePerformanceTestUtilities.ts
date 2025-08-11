@@ -95,7 +95,10 @@ export interface TableTreeOptions {
  *
  * @returns A fully initialized table tree definition, including table instance, undo/redo stacks, and a cleanup function.
  */
-export function createTableTree({tableSize, initialCellValue}: TableTreeOptions): TableTreeDefinition {
+export function createTableTree({
+	tableSize,
+	initialCellValue,
+}: TableTreeOptions): TableTreeDefinition {
 	const sharedTreeFactory = DefaultTestSharedTreeKind.getFactory();
 	const runtime = new MockFluidDataStoreRuntime({
 		idCompressor: createIdCompressor(),
@@ -113,12 +116,16 @@ export function createTableTree({tableSize, initialCellValue}: TableTreeOptions)
 	const table = treeView.root;
 
 	const columns = Array.from({ length: tableSize }, () => new Column({}));
-	table.insertColumns({index: 0, columns});
+	table.insertColumns({ index: 0, columns });
 
-	const rows = Array.from({ length: tableSize }, () => new Row({
-		cells: {}
-	}));
-	table.insertRows({index: 0, rows});
+	const rows = Array.from(
+		{ length: tableSize },
+		() =>
+			new Row({
+				cells: {},
+			}),
+	);
+	table.insertRows({ index: 0, rows });
 
 	if (initialCellValue !== undefined) {
 		for (const row of table.rows) {

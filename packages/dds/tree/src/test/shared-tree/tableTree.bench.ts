@@ -56,7 +56,10 @@ function runBenchmark({
 				assert.equal(state.iterationsPerBatch, 1, "Expected exactly one iteration per batch");
 
 				// Setup
-				const localTree: TableTreeDefinition = createTableTree(tableSize, cellValue);
+				const localTree: TableTreeDefinition = createTableTree({
+					tableSize,
+					initialCellValue: cellValue,
+				});
 
 				// Operation
 				const before = state.timer.now();
@@ -112,7 +115,10 @@ function runUndoRedoBenchmark({
 				assert.equal(state.iterationsPerBatch, 1, "Expected exactly one iteration per batch");
 
 				// Setup
-				const localTree: TableTreeDefinition = createTableTree(tableSize, cellValue);
+				const localTree: TableTreeDefinition = createTableTree({
+					tableSize,
+					initialCellValue: cellValue,
+				});
 				const undoRedoManager = new UndoRedoManager(localTree.treeView);
 				setupOperation(localTree.table, undoRedoManager);
 
