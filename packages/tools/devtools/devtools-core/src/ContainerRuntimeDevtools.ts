@@ -22,12 +22,11 @@ import type { InboundHandlers } from "./messaging/index.js";
 /**
  * Properties for registering a container runtime with the Devtools.
  * @alpha
+ * @input
  */
 export interface ContainerRuntimeProps {
 	/**
 	 * The container runtime to register with the Devtools.
-	 *
-	 * @input
 	 */
 	readonly runtime: IContainerRuntime;
 
@@ -156,11 +155,10 @@ export class DecomposedContainerForContainerRuntime
 	}
 
 	public get connectionState(): ConnectionState {
-		// TODO: Attempt to map all possible connection states. If the runtime exposes a more granular connectionState property, use it.
 		return this.runtime.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
 	}
 
 	public get closed(): boolean {
-		return this._disposed; // Only return true if actually disposed, not just disconnected
+		return this._disposed; // IContainerRuntime doesn't have a "closed" state - only "disconnected" (reconnectable) and "disposed" (permanent)
 	}
 }
