@@ -2504,6 +2504,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				pendingEntry !== undefined && pendingEntry.type === "createSubDirectory",
 				"Unexpected pending data for createSubDirectory op",
 			);
+
+			// We still need to emit the disposed event for any locally created (and now
+			// rolled back) subdirectory trees so listeners can observer the lifecycle
+			// changes properly.
+			this.emitDisposeForSubdirTree(pendingEntry.subdir);
+
 			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
 			this.emit("subDirectoryDeleted", subdirName, true, this);
 		} else if (
