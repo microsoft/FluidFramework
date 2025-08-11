@@ -9,7 +9,7 @@ Before this release, making concurrent edits to an array or a sequence could lea
 * Some edit `e1` was a transaction with a constraint that turned out to be violated by edits concurrent to (and sequenced before) `e1`
 * Some edit `e2` was dependent on `e1` (from before the violation of its constraint)
 * Some edit `e3` was concurrent to and sequenced after both `e1` and `e2`
-* `e3` was either rebased over or the revert of some other edit `e0` that predated `e1`, `e2`, and `e3`.
-* `e0` and `e2` made edits to the same gap (i.e., in the same space between nodes) in the sequence/array.
+* `e3` was either concurrent to or the revert of some other edit `e0` that predated `e1`, `e2`, and `e3`.
+* `e0` and `e2` made edits to the same gap (that is, in the same space between nodes) in the sequence/array.
 
-After this release, these scenarios will work as expected (i.e., no assert).
+After this release, these scenarios will work as expected (that is, no assert).
