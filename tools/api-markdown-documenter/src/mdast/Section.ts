@@ -12,6 +12,12 @@ import type { SectionHeading } from "./SectionHeading.js";
 // Block content following a section will otherwise be considered part of preceeding section, rather than a sibling section.
 
 /**
+ * The kinds of content that a {@link Section} can have.
+ * @public
+ */
+export type SectionContent = BlockContent | Section;
+
+/**
  * Represents a hierarchically nested section.
  * @remarks Influences things like automatic heading level generation.
  * @sealed
@@ -26,7 +32,7 @@ export interface Section extends Node {
 	/**
 	 * Section contents.
 	 */
-	children: BlockContent[];
+	children: SectionContent[];
 
 	/**
 	 * Optional heading to display for the section.
@@ -45,7 +51,7 @@ export interface Section extends Node {
 export function createSection({
 	children,
 	heading,
-}: { children: BlockContent[]; heading?: SectionHeading }): Section {
+}: { children: SectionContent[]; heading?: SectionHeading }): Section {
 	const section: Section = {
 		type: "section",
 		children,
@@ -59,11 +65,8 @@ export function createSection({
 	return section;
 }
 
-// Extend the mdast to include `Section` in "block content" and "root content" contexts
+// Extend the mdast to include `Section` in the "root content" context.
 declare module "mdast" {
-	interface BlockContentMap {
-		section: Section;
-	}
 	interface RootContentMap {
 		section: Section;
 	}
