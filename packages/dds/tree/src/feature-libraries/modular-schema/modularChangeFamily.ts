@@ -1723,6 +1723,7 @@ export class ModularChangeFamily
 	private muteChange(change: ModularChangeset): ModularChangeset {
 		const muted: Mutable<ModularChangeset> = {
 			...change,
+			crossFieldKeys: newCrossFieldKeyTable(),
 			fieldChanges: this.muteFieldChanges(change.fieldChanges),
 			nodeChanges: brand(change.nodeChanges.mapValues((v) => this.muteNodeChange(v))),
 		};
