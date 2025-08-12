@@ -4,4 +4,3 @@
  */
 
 export { baseTreeModel } from "./shared-tree/index.js";
-export { expectTreesEqual } from "./treeComparisonUtils.js";
