@@ -660,7 +660,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			false, // Don't send ops from first container instance before closing
 			async (c, d) => {
 				const signal = await d.getSharedObject<ISharedSignal<string>>(signalId);
+				const array = await d.getSharedObject<ISharedArray<string>>(arrayId);
+				array.insert(0, "test");
+				// signal should not have any effect on array
 				signal.notify("test");
+				array.insert(1, "test2");
 			},
 		);
 
@@ -670,9 +674,19 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 		// load container with pending ops, which should resend the op not sent by previous container
 		const container2 = await loader.resolve({ url }, pendingOps);
+		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const array2 = await dataStore2.getSharedObject<ISharedArray<string>>(arrayId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
-		assert.strictEqual(received, "test", "Signal1 did not receive notify");
+		const realArray2 = array2.get();
+		const realArray = array1.get();
+		// The notify op should not change the array, but it should be resent
+		assert.strictEqual(realArray2.length, 2, "Array should have two elements after notify");
+		assert.strictEqual(realArray.length, 2, "Array should have two elements after notify");
+		assert.strictEqual(realArray2[0], "test", "Wrong element after notify");
+		assert.strictEqual(realArray[0], "test", "Wrong element after notify");
+		assert.strictEqual(realArray2[1], "test2", "Wrong element after notify");
+		assert.strictEqual(realArray[1], "test2", "Wrong element after notify");
 	});
 
 	it("resends all shared directory ops", async function () {

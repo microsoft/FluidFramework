@@ -168,8 +168,6 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 
 		switch (op.type) {
 			case "signal": {
-				this.notifyCore(op, true);
-				this.submitLocalMessage(op);
 				break;
 			}
 			default: {
