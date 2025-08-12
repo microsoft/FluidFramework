@@ -16,12 +16,15 @@ import type {
 } from "@fluidframework/server-services-core";
 import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 
+import { ITenantRepository } from "../riddler";
+
 import type { IDocumentDeleteService } from "./services";
 
 /**
  * @internal
  */
 export interface IAlfredResourcesCustomizations {
+	tenantRepository?: ITenantRepository;
 	documentRepository?: IDocumentRepository;
 	storageNameAllocator?: IStorageNameAllocator;
 	documentDeleteService?: IDocumentDeleteService;

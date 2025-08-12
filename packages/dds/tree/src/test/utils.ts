@@ -137,6 +137,9 @@ import {
 	SchematizingSimpleTreeView,
 	type ForestOptions,
 	type SharedTreeOptionsInternal,
+	buildConfiguredForest,
+	type ForestType,
+	ForestTypeReference,
 } from "../shared-tree/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -191,6 +194,7 @@ import {
 	allowsTreeSuperset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../feature-libraries/modular-schema/index.js";
+import { initializeForest } from "./feature-libraries/index.js";
 
 // Testing utilities
 
@@ -809,7 +813,7 @@ export function checkoutWithContent(
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
-		additionalAsserts?: boolean;
+		forestType?: ForestType;
 	},
 ): TreeCheckout {
 	const { checkout } = createCheckoutWithContent(content, args);
@@ -822,17 +826,19 @@ function createCheckoutWithContent(
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
-		additionalAsserts?: boolean;
+		forestType?: ForestType;
 	},
 ): { checkout: TreeCheckout; logger: IMockLoggerExt } {
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
-	const roots: MapTree = mapTreeWithField(mapTreeFieldFromCursor(fieldCursor));
 	const schema = new TreeStoredSchemaRepository(content.schema);
-	const forest = buildTestForest({
-		additionalAsserts: args?.additionalAsserts ?? true,
+
+	const forest = buildConfiguredForest(
+		new Breakable("buildTestForest"),
+		args?.forestType ?? ForestTypeReference,
 		schema,
-		roots,
-	});
+		testIdCompressor,
+	);
+	initializeForest(forest, fieldCursor, testRevisionTagCodec, testIdCompressor);
 
 	const logger = createMockLoggerExt();
 	const checkout = createTreeCheckout(

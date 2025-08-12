@@ -11,9 +11,11 @@ import type {
 	ValidateRecursiveSchema,
 	// #region Unused imports to make d.ts cleaner
 	/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
+	ArrayNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
 	TreeNodeSchemaNonClass,
 	TreeNodeSchemaClass,
+	TreeRecordNodeUnsafe,
 	NodeKind,
 	TreeNodeSchemaCore,
 	WithType,
@@ -52,6 +54,7 @@ export namespace JsonAsTree {
 	] as const satisfies AllowedTypes;
 
 	/**
+	 * {@inheritDoc JsonAsTree.(Primitive:variable)}
 	 * @alpha
 	 */
 	export type Primitive = TreeNodeFromImplicitAllowedTypes<typeof Primitive>;
@@ -72,6 +75,7 @@ export namespace JsonAsTree {
 	export const Tree = [...Primitive, () => JsonObject, () => Array] as const;
 
 	/**
+	 * {@inheritDoc JsonAsTree.(Tree:variable)}
 	 * @alpha
 	 */
 	export type Tree = TreeNodeFromImplicitAllowedTypes<typeof Tree>;

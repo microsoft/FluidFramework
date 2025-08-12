@@ -89,7 +89,11 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_TestTenantManager": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }

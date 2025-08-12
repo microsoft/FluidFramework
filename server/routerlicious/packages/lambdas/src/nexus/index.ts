@@ -35,6 +35,7 @@ import type {
 	INexusLambdaConnectionStateTrackers,
 	INexusLambdaDependencies,
 } from "./interfaces";
+import { checkNetworkInformation } from "./networkHelper";
 import { isValidConnectionMessage } from "./protocol";
 import {
 	checkThrottleAndUsage,
@@ -137,6 +138,7 @@ export function configureWebSocketServices(
 	isTokenExpiryEnabled: boolean = false,
 	isClientConnectivityCountingEnabled: boolean = false,
 	isSignalUsageCountingEnabled: boolean = false,
+	enablePrivateLinkNetworkCheck: boolean = false,
 	cache?: core.ICache,
 	connectThrottlerPerTenant?: core.IThrottler,
 	connectThrottlerPerCluster?: core.IThrottler,
@@ -297,6 +299,25 @@ export function configureWebSocketServices(
 				[CommonProperties.roomClients]: JSON.stringify([...roomMap.keys()]),
 				[BaseTelemetryProperties.correlationId]: correlationId,
 			};
+
+			if (enablePrivateLinkNetworkCheck) {
+				const networkInfo = await checkNetworkInformation(tenantManager, socket);
+				if (!networkInfo.shouldConnect) {
+					const nackMessage = createNackMessage(
+						404,
+						NackErrorType.BadRequestError,
+						networkInfo.message,
+					);
+					const error = new NetworkError(404, "socket private link check failed");
+					Lumberjack.warning(
+						"socket private link check failed",
+						baseLumberjackProperties,
+						error,
+					);
+					socket.emit("nack", "", [nackMessage]);
+					return;
+				}
+			}
 
 			connectDocumentP = getGlobalTelemetryContext().bindPropertiesAsync(
 				{ correlationId, ...baseLumberjackProperties },

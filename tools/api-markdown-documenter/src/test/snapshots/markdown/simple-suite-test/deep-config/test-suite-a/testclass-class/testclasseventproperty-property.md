@@ -4,7 +4,7 @@
 
 Test class event property
 
-## Signature {#testclasseventproperty-signature}
+<h2 id="testclasseventproperty-signature">Signature</h2>
 
 ```typescript
 readonly testClassEventProperty: () => void;
@@ -12,6 +12,6 @@ readonly testClassEventProperty: () => void;
 
 **Type**: () => void
 
-## Remarks {#testclasseventproperty-remarks}
+<h2 id="testclasseventproperty-remarks">Remarks</h2>
 
 Here are some remarks about the property

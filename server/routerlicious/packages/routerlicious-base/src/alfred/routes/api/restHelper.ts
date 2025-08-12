@@ -130,3 +130,30 @@ export function craftMapSet(op: IMapSetOperation) {
 
 	return opMessage;
 }
+
+export function getDocumentUrlsfromNetworkInfo(
+	tenantId: string,
+	externalOrdererUrl: string,
+	externalHistorianUrl: string,
+	externalDeltaStreamUrl: string,
+	enablePrivateLinkNetworkCheck: boolean = false,
+	isPrivateLink?: boolean | false,
+	privateServiceHost?: string | undefined,
+): {
+	documentOrdererUrl: string;
+	documentHistorianUrl: string;
+	documentDeltaStreamUrl: string;
+} {
+	if (enablePrivateLinkNetworkCheck && isPrivateLink) {
+		return {
+			documentOrdererUrl: `https://${tenantId}.alfred.${privateServiceHost}`,
+			documentHistorianUrl: `https://${tenantId}.historian.${privateServiceHost}`,
+			documentDeltaStreamUrl: `https://${tenantId}.nexus.${privateServiceHost}`,
+		};
+	}
+	return {
+		documentOrdererUrl: externalOrdererUrl,
+		documentHistorianUrl: externalHistorianUrl,
+		documentDeltaStreamUrl: externalDeltaStreamUrl,
+	};
+}

@@ -620,8 +620,9 @@ function arePersistedMetadataEqual(
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 /**
- * Annotated schema for a field of a tree node.
+ * {@link ImplicitFieldSchema} which supports {@link AnnotatedAllowedTypes | annotations} on the allowed types.
  * @alpha
+ * @input
  */
 export type ImplicitAnnotatedFieldSchema = FieldSchema | ImplicitAnnotatedAllowedTypes;
 
