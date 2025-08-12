@@ -57,8 +57,8 @@ In the table I have used the failure ones.
 | fluid:telemetry:OdspDriver:createNewEmptyFile_cancel | `/_api/v2.1/drives/DRIVEID/items/root://FILEPATH/FILENAME:/content?@name.conflictBehavior=rename&select=id,name,parentReference&ump=1` | Error when creating a new empty Fluid file. (Storage Call) |
 | fluid:telemetry:OdspDriver:uploadSummary_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/snapshots/snapshot` | Error when uploading Fluid summary to storage. (Storage Call) |
 | fluid:telemetry:OdspDriver:RedeemShareLink_cancel | `_api/v2.0/shares/${encodedShareUrl}/driveItem` | Error when redeeming the share link after single Round Trip redeem during snapshot fetch already failed. |
-| OdspDriver:odspFileLink_cancel<br>OdspDriver:getShareLink_cancel | `/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl,sharepointIds` | Error when fetching sharing link with Data_requestName = getFileItemLite in Telemetry. |
-| OdspDriver:odspFileLink_cancel<br>OdspDriver:getShareLink_cancel | `/_api/web/GetFileById(@a1)/ListItemAllFields/GetSharingInformation?@a1=guid${encodeURIComponent(`'${fileItem.sharepointIds.listItemUniqueId}'`)}` | Error when fetching sharing link with Data_requestName = getSharingInformation in Telemetry. |
+| OdspDriver:odspFileLink_cancel<br>OdspDriver:getShareLink_cancel | `/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl,sharepointIds` | Error when fetching sharing link with Data_requestName = getFileItemLite in Telemetry. `getShareLink` event is parent of `odspFileLink` event. |
+| OdspDriver:odspFileLink_cancel<br>OdspDriver:getShareLink_cancel | `/_api/web/GetFileById(@a1)/ListItemAllFields/GetSharingInformation?@a1=guid${encodeURIComponent(`'${fileItem.sharepointIds.listItemUniqueId}'`)}` | Error when fetching sharing link with Data_requestName = getSharingInformation in Telemetry. `getShareLink` event is parent of `odspFileLink` event. |
 
 
 <!-- prettier-ignore-end -->
