@@ -1137,7 +1137,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	public [Symbol.toStringTag]: string = "SubDirectory";
 
 	/**
-	 * The subdirectories the directory is holding.
+	 * The sequenced subdirectories the directory is holding.
 	 */
 	private readonly sequencedSubdirectories = new Map<string, SubDirectory>();
 
@@ -1703,11 +1703,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	private readonly pendingStorageData: PendingStorageEntry[] = [];
 
 	/**
-	 * A data structure containing all local pending subdirectory modifications, which is used in combination
+	 * A data structure containing all local pending subdirectory create/deletes, which is used in combination
 	 * with the sequencedSubdirectories to compute optimistic values.
-	 *
-	 * Pending subdirectory creates are aggregated into "lifetimes", which permit correct relative iteration order
-	 * even across remote operations and rollbacks.
 	 */
 	private readonly pendingSubDirectoryData: PendingSubDirectoryEntry[] = [];
 
