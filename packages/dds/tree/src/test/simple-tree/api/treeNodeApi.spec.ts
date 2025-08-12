@@ -70,7 +70,7 @@ import {
 	SchematizingSimpleTreeView,
 	TreeAlpha,
 	type TreeCheckout,
-	type TreeStoredContent,
+	type TreeStoredContentStrict,
 } from "../../../shared-tree/index.js";
 import { FieldKinds } from "../../../feature-libraries/index.js";
 import {
@@ -3143,7 +3143,7 @@ function checkoutWithInitialTree(
 		viewConfig.schema,
 		unhydratedInitialTree,
 	);
-	const treeContent: TreeStoredContent = {
+	const treeContent: TreeStoredContentStrict = {
 		schema: toInitialSchema(viewConfig.schema),
 		initialTree,
 	};

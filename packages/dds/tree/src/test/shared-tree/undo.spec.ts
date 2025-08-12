@@ -10,7 +10,7 @@ import {
 	RevertibleStatus,
 	rootFieldKey,
 } from "../../core/index.js";
-import { singleJsonCursor } from "../json/index.js";
+import { fieldJsonCursor } from "../json/index.js";
 import type { ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
 import {
@@ -709,7 +709,7 @@ export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITr
 	runtimeFactory.createContainerRuntime(runtime);
 	initialize(tree.kernel.checkout, {
 		schema: jsonSequenceRootSchema,
-		initialTree: json.map(singleJsonCursor),
+		initialTree: fieldJsonCursor(json),
 	});
 
 	if (attachTree) {
