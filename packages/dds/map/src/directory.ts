@@ -862,7 +862,7 @@ export class SharedDirectory
 					| undefined;
 				// Note: We allow processing **remote** messages of subdirectories that are pending delete.
 				// This is because if we rollback the pending delete, we want to make sure we still processed the
-				// messages that would now be visible.
+				// messages that would become visible.
 				if (subdir && (!this.isSubDirectoryDeletePending(op.path) || !local)) {
 					subdir.processClearMessage(msg, op, local, localOpMetadata);
 				}
@@ -886,7 +886,7 @@ export class SharedDirectory
 					| undefined;
 				// Note: We allow processing **remote** messages of subdirectories that are pending delete.
 				// This is because if we rollback the pending delete, we want to make sure we still processed the
-				// messages that would now be visible.
+				// messages that would become visible.
 				if (subdir && (!this.isSubDirectoryDeletePending(op.path) || !local)) {
 					subdir.processDeleteMessage(msg, op, local, localOpMetadata);
 				}
@@ -910,7 +910,7 @@ export class SharedDirectory
 					| undefined;
 				// Note: We allow processing **remote** messages of subdirectories that are pending delete.
 				// This is because if we rollback the pending delete, we want to make sure we still processed the
-				// messages that would now be visible.
+				// messages that would become visible.
 				if (subdir && (!this.isSubDirectoryDeletePending(op.path) || !local)) {
 					migrateIfSharedSerializable(op.value, this.serializer, this.handle);
 					const localValue: unknown = local ? undefined : op.value.value;
@@ -932,11 +932,17 @@ export class SharedDirectory
 				local: boolean,
 				localOpMetadata: SubDirLocalOpMetadata | undefined,
 			) => {
-				const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
+				const parentSubdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
+					| SubDirectory
+					| undefined;
 				// Note: We allow processing **remote** messages of subdirectories that are pending delete.
 				// This is because if we rollback the pending delete, we want to make sure we still processed the
-				// messages that would now be visible.
-				if (parentSubdir && (!this.isSubDirectoryDeletePending(op.path) || !local)) {
+				// messages that would become visible.
+				if (
+					parentSubdir &&
+					!parentSubdir.disposed &&
+					(!this.isSubDirectoryDeletePending(op.path) || !local)
+				) {
 					parentSubdir.processCreateSubDirectoryMessage(msg, op, local, localOpMetadata);
 				}
 			},
@@ -959,11 +965,17 @@ export class SharedDirectory
 				local: boolean,
 				localOpMetadata: SubDirLocalOpMetadata | undefined,
 			) => {
-				const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
+				const parentSubdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
+					| SubDirectory
+					| undefined;
 				// Note: We allow processing **remote** messages of subdirectories that are pending delete.
 				// This is because if we rollback the pending delete, we want to make sure we still processed the
 				// messages that would now be visible.
-				if (parentSubdir && (!this.isSubDirectoryDeletePending(op.path) || !local)) {
+				if (
+					parentSubdir &&
+					!parentSubdir.disposed &&
+					(!this.isSubDirectoryDeletePending(op.path) || !local)
+				) {
 					parentSubdir.processDeleteSubDirectoryMessage(msg, op, local, localOpMetadata);
 				}
 			},
@@ -2129,19 +2141,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 
 		// Ensure correct seqData
-		if (this.seqData.seq !== -1 && this.seqData.seq <= msg.sequenceNumber) {
-			if (subDir.seqData.seq === -1) {
-				subDir.seqData.seq = msg.sequenceNumber;
-				subDir.seqData.clientSeq = msg.clientSequenceNumber;
-			}
-			// The client created the dir at or after the dirs seq, so list its client id as a creator.
-			if (
-				subDir !== undefined &&
-				!subDir.clientIds.has(msg.clientId) &&
-				subDir.seqData.seq <= msg.sequenceNumber
-			) {
-				// subDir.clientIds.add(msg.clientId);
-			}
+		if (
+			this.seqData.seq !== -1 &&
+			this.seqData.seq <= msg.sequenceNumber &&
+			subDir.seqData.seq === -1
+		) {
+			subDir.seqData.seq = msg.sequenceNumber;
+			subDir.seqData.clientSeq = msg.clientSequenceNumber;
 		}
 	}
 
