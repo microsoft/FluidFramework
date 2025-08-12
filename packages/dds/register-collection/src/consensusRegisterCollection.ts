@@ -113,9 +113,9 @@ interface IConsensusRegisterCollectionInternalEvents {
 	/**
 	 * Emitted when a pending message is acknowledged.
 	 * @param ackMessageId - A unique identifying number for the pending message.
-	 * @param winner - Whether the message won the FWW race to modify the value.
+	 * @param isWinner - Whether the message won the FWW race to modify the value.
 	 */
-	pendingMessageAck: (ackMessageId: number, winner: boolean) => void;
+	pendingMessageAck: (ackMessageId: number, isWinner: boolean) => void;
 }
 
 /**
@@ -181,9 +181,9 @@ export class ConsensusRegisterCollection<T>
 		// 3. The runtime is disposed
 		// The boolean value returned by the promise is true if the attempted write was ack'd and won, false otherwise.
 		return new Promise<boolean>((resolve) => {
-			const handleAck = (ackMessageId: number, winner: boolean) => {
+			const handleAck = (ackMessageId: number, isWinner: boolean) => {
 				if (ackMessageId === pendingMessageId) {
-					resolve(winner);
+					resolve(isWinner);
 					removeListeners();
 				}
 			};
@@ -298,7 +298,7 @@ export class ConsensusRegisterCollection<T>
 					const value = incomingOpMatchesPlainFormat<T>(op)
 						? op.value.value
 						: (this.parse(op.serializedValue, this.serializer) as T);
-					const winner = this.processInboundWrite(
+					const isWinner = this.processInboundWrite(
 						op.key,
 						value,
 						refSeqWhenCreated,
@@ -311,7 +311,7 @@ export class ConsensusRegisterCollection<T>
 							typeof localOpMetadata === "number",
 							"Expect localOpMetadata to be a number",
 						);
-						this.internalEvents.emit("pendingMessageAck", localOpMetadata, winner);
+						this.internalEvents.emit("pendingMessageAck", localOpMetadata, isWinner);
 					}
 					break;
 				}
@@ -344,8 +344,8 @@ export class ConsensusRegisterCollection<T>
 		let data = this.data.get(key);
 		// Atomic update if it's a new register or the write was not concurrent,
 		// meaning our state was known to the remote client at the time of write
-		const winner = data === undefined || refSeq >= data.atomic.sequenceNumber;
-		if (winner) {
+		const isWinner = data === undefined || refSeq >= data.atomic.sequenceNumber;
+		if (isWinner) {
 			const atomicUpdate = newLocalRegister<T>(sequenceNumber, value);
 			if (data === undefined) {
 				data = {
@@ -385,12 +385,12 @@ export class ConsensusRegisterCollection<T>
 		data.versions.push(versionUpdate);
 
 		// Raise events at the end, to avoid reentrancy issues
-		if (winner) {
+		if (isWinner) {
 			this.emit("atomicChanged", key, value, local);
 		}
 		this.emit("versionChanged", key, value, local);
 
-		return winner;
+		return isWinner;
 	}
 
 	private stringify(value: any, serializer: IFluidSerializer): string {
