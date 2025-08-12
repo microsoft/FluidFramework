@@ -343,12 +343,12 @@ export interface MenuItemProps {
 	/**
 	 * Icon to display next to the container name based on its state.
 	 */
-	stateIcon?: React.ReactElement;
+	readonly stateIcon?: React.ReactElement;
 
 	/**
 	 * Whether the container or container runtime has recent changes.
 	 */
-	hasChanges?: boolean;
+	readonly hasChanges?: boolean;
 }
 
 const useMenuItemStyles = makeStyles({
