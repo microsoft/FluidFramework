@@ -505,7 +505,7 @@ describe("SchematizingSimpleTreeView", () => {
 			assert(!view.compatibility.canUpgrade);
 
 			// Case which doesn't update due to root being required
-			assert.throws(() => view.upgradeSchema());
+			assert.throws(() => view.upgradeSchema(), validateUsageError(/cannot be upgraded/));
 
 			const reference = checkoutWithContent({
 				schema: emptySchema,
