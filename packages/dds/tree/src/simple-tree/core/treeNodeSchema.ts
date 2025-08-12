@@ -252,9 +252,9 @@ export type TreeNodeSchemaBoth<
  * @sealed @public
  */
 export interface TreeNodeSchemaCore<
-	out Name extends string,
-	out Kind extends NodeKind,
-	out ImplicitlyConstructable extends boolean,
+	out Name extends string = string,
+	out Kind extends NodeKind = NodeKind,
+	out ImplicitlyConstructable extends boolean = boolean,
 	out Info = unknown,
 	out TInsertable = never,
 	out TCustomMetadata = unknown,
@@ -489,7 +489,7 @@ export enum CompatibilityLevel {
  * Downcasts a {@link TreeNodeSchemaCore} to {@link TreeNodeSchemaCorePrivate} and get its {@link TreeNodeSchemaPrivateData}.
  */
 export function getTreeNodeSchemaPrivateData(
-	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
+	schema: TreeNodeSchemaCore,
 ): TreeNodeSchemaPrivateData {
 	assert(
 		privateDataSymbol in schema,
@@ -635,10 +635,15 @@ export type InsertableTypedNode<
  * except that the more complex typing in TreeNodeSchema case breaks for non-class schema and leaks in `undefined` from optional crete parameters.
  * @system @public
  */
-export type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> =
-	T extends TreeNodeSchemaCore<string, NodeKind, boolean, unknown, infer TBuild>
-		? TBuild
-		: never;
+export type NodeBuilderData<T extends TreeNodeSchemaCore> = T extends TreeNodeSchemaCore<
+	string,
+	NodeKind,
+	boolean,
+	unknown,
+	infer TBuild
+>
+	? TBuild
+	: never;
 
 /**
  * Value that may be stored as a leaf node.

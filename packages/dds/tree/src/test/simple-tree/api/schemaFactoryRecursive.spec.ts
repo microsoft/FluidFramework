@@ -23,6 +23,7 @@ import {
 	type ApplyKindInput,
 	type NodeBuilderData,
 	SchemaFactoryAlpha,
+	type AnnotatedAllowedType,
 } from "../../../simple-tree/index.js";
 import {
 	allowUnused,
@@ -512,6 +513,28 @@ describe("SchemaFactory Recursive methods", () => {
 			}
 		});
 
+		it("Valid cases: annotated", () => {
+			{
+				class Test extends sf.arrayRecursive("Test", {
+					metadata: {},
+					types: [{ type: () => Test, metadata: {} }],
+				}) {}
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
+
+			{
+				class Test extends sf.objectRecursive("Test", {
+					x: sf.optionalRecursive([() => Test]),
+				}) {}
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
+
+			{
+				class Test extends sf.mapRecursive("Test", [() => Test]) {}
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
+		});
+
 		it("Invalid cases", () => {
 			// These are type tests and expected to fail during compilation
 			// eslint-disable-next-line no-constant-condition
@@ -835,6 +858,38 @@ describe("SchemaFactory Recursive methods", () => {
 
 		const r = hydrate(Root, { r: new ArrayRecursive([]) });
 		assert.deepEqual([...r.r], []);
+	});
+
+	describe("stagedRecursive", () => {
+		it("minimal use", () => {
+			const ref = {
+				type: () => SchemaFactoryAlpha.number,
+				metadata: {},
+			} satisfies AnnotatedAllowedType<() => System_Unsafe.TreeNodeSchemaUnsafe>;
+			const staged = SchemaFactoryAlpha.stagedRecursive(ref);
+		});
+
+		it("recursive annotated", () => {
+			const factory = new SchemaFactoryAlpha("");
+			class Recursive extends factory.arrayRecursive("Recursive", [
+				{ type: () => Recursive, metadata: {} },
+			]) {}
+
+			{
+				type _check = ValidateRecursiveSchema<typeof Recursive>;
+			}
+		});
+
+		it("recursive staged", () => {
+			const factory = new SchemaFactoryAlpha("");
+			class Recursive extends factory.arrayRecursive("Recursive", [
+				SchemaFactoryAlpha.stagedRecursive({ type: () => Recursive, metadata: {} }),
+			]) {}
+
+			{
+				type _check = ValidateRecursiveSchema<typeof Recursive>;
+			}
+		});
 	});
 
 	/**

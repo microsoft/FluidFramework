@@ -29,6 +29,9 @@ import type {
 	TreeLeafValue,
 	FlexListToUnion,
 	LazyItem,
+	AnnotatedAllowedType,
+	AnnotatedAllowedTypes,
+	ImplicitAnnotatedAllowedTypes,
 } from "../core/index.js";
 import type { TreeArrayNode } from "../node-kinds/index.js";
 import type { SimpleArrayNodeSchema, SimpleMapNodeSchema } from "../simpleSchema.js";
@@ -543,3 +546,30 @@ export interface TreeRecordNodeUnsafe<
 		[string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>]
 	>;
 }
+
+/**
+ * {@link Unenforced} version of {@link ImplicitAnnotatedAllowedTypes}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @sealed @alpha
+ */
+export type ImplicitAnnotatedAllowedTypesUnsafe =
+	ImplicitAnnotatedAllowedTypes<System_Unsafe.TreeNodeSchemaUnsafe>;
+
+/**
+ * {@link Unenforced} version of {@link AnnotatedAllowedType}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @sealed @alpha
+ */
+export interface AnnotatedAllowedTypeUnsafe
+	extends AnnotatedAllowedType<System_Unsafe.TreeNodeSchemaUnsafe> {}
+
+/**
+ * {@link Unenforced} version of {@link AnnotatedAllowedTypes}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @sealed @alpha
+ */
+export interface AnnotatedAllowedTypesUnsafe
+	extends AnnotatedAllowedTypes<System_Unsafe.TreeNodeSchemaUnsafe> {}

@@ -41,6 +41,7 @@ import type {
 import { normalizeToAnnotatedAllowedType, createSchemaUpgrade } from "../core/index.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,
+	ImplicitAnnotatedAllowedTypesUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
 	TreeRecordNodeUnsafe,
@@ -190,6 +191,17 @@ export interface SchemaStaticsAlpha {
 	staged: <const T extends LazyItem<TreeNodeSchema>>(
 		t: T | AnnotatedAllowedType<T>,
 	) => AnnotatedAllowedType<T>;
+
+	/**
+	 * {@link SchemaStaticsAlpha.staged} except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of {@link SchemaStaticsAlpha.staged} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 */
+	stagedRecursive: <const T extends System_Unsafe.TreeNodeSchemaUnsafe>(
+		t: AnnotatedAllowedType<() => T>,
+	) => AnnotatedAllowedType<() => T>;
 }
 
 const schemaStaticsAlpha: SchemaStaticsAlpha = {
@@ -204,6 +216,12 @@ const schemaStaticsAlpha: SchemaStaticsAlpha = {
 				stagedSchemaUpgrade: createSchemaUpgrade(),
 			},
 		};
+	},
+
+	stagedRecursive: <const T extends LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>>(
+		t: LazyItem<T> | AnnotatedAllowedType<T>,
+	): AnnotatedAllowedType<T> => {
+		return schemaStaticsAlpha.staged(t as TreeNodeSchema) as AnnotatedAllowedType<T>;
 	},
 };
 
@@ -387,6 +405,16 @@ export class SchemaFactoryAlpha<
 	public staged = schemaStaticsAlpha.staged;
 
 	/**
+	 * {@inheritDoc SchemaStaticsAlpha.stagedRecursive}
+	 */
+	public static stagedRecursive = schemaStaticsAlpha.stagedRecursive;
+
+	/**
+	 * {@inheritDoc SchemaStaticsAlpha.stagedRecursive}
+	 */
+	public stagedRecursive = schemaStaticsAlpha.stagedRecursive;
+
+	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
@@ -474,9 +502,9 @@ export class SchemaFactoryAlpha<
 	 * {@inheritDoc SchemaFactory.objectRecursive}
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	public override arrayRecursive<
+	public arrayRecursiveAlpha<
 		const Name extends TName,
-		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
+		const T extends ImplicitAnnotatedAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
 	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
 		return this.arrayAlpha(
@@ -485,7 +513,7 @@ export class SchemaFactoryAlpha<
 			options,
 		) as unknown as ArrayNodeCustomizableSchemaUnsafe<
 			ScopedSchemaName<TScope, Name>,
-			T,
+			UnannotateImplicitAllowedTypes<T>,
 			TCustomMetadata
 		>;
 	}
