@@ -345,14 +345,14 @@ export interface MenuItemProps {
 	 *
 	 * @defaultValue `undefined` - No state icon is displayed when not provided.
 	 */
-	stateIcon?: React.ReactElement;
+	readonly stateIcon?: React.ReactElement;
 
 	/**
 	 * Whether the container or container runtime has recent changes.
 	 *
 	 * @defaultValue `false` - No change indicator is shown when not provided.
 	 */
-	hasChanges?: boolean;
+	readonly hasChanges?: boolean;
 }
 
 const useMenuItemStyles = makeStyles({
