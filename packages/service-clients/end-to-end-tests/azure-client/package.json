@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-end-to-end-tests",
-	"version": "2.52.0",
+	"version": "2.53.0",
 	"description": "Azure client end to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -25,7 +25,7 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"start:tinylicious:test": "PORT=7071 tinylicious > tinylicious.log 2>&1",
+		"start:tinylicious:test": "cross-env PORT=7071 tinylicious > tinylicious.log 2>&1",
 		"test": "npm run test:realsvc",
 		"test:coverage": "c8 npm test",
 		"test:realsvc": "npm run test:realsvc:tinylicious",

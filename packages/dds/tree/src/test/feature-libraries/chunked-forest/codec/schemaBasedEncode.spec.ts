@@ -60,7 +60,8 @@ import { SpecialField } from "../../../../feature-libraries/chunked-forest/codec
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	getStoredSchema,
-	toStoredSchema,
+	restrictiveStoredSchemaGenerationOptions,
+	toInitialSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../simple-tree/toStoredSchema.js";
 import { numberSchema, stringSchema } from "../../../../simple-tree/index.js";
@@ -104,7 +105,7 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				toStoredSchema(Minimal).rootFieldSchema,
+				toInitialSchema(Minimal).rootFieldSchema,
 				context,
 				{ nodeSchema: new Map() },
 			);
@@ -134,7 +135,7 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				toStoredSchema([Minimal, numberSchema]).rootFieldSchema,
+				toInitialSchema([Minimal, numberSchema]).rootFieldSchema,
 				context,
 				{ nodeSchema: new Map() },
 			);
@@ -210,7 +211,10 @@ describe("schemaBasedEncoding", () => {
 				context,
 				{
 					nodeSchema: new Map([
-						[brand(stringSchema.identifier), getStoredSchema(stringSchema)],
+						[
+							brand(stringSchema.identifier),
+							getStoredSchema(stringSchema, restrictiveStoredSchemaGenerationOptions),
+						],
 					]),
 				},
 			);
@@ -237,7 +241,7 @@ describe("schemaBasedEncoding", () => {
 			);
 			const nodeEncoder = getNodeEncoder(
 				{ fieldEncoderFromSchema: () => fail() },
-				toStoredSchema(Minimal),
+				toInitialSchema(Minimal),
 				brand(Minimal.identifier),
 			);
 			const buffer = checkNodeEncode(nodeEncoder, context, {
@@ -262,7 +266,7 @@ describe("schemaBasedEncoding", () => {
 						return context.nestedArrayEncoder(numericShape);
 					},
 				},
-				toStoredSchema(HasOptionalField),
+				toInitialSchema(HasOptionalField),
 				brand(HasOptionalField.identifier),
 			);
 			assert.deepEqual(
@@ -301,7 +305,7 @@ describe("schemaBasedEncoding", () => {
 						return context.nestedArrayEncoder(numericShape);
 					},
 				},
-				toStoredSchema(NumericMap),
+				toInitialSchema(NumericMap),
 				brand(NumericMap.identifier),
 			);
 			assert.deepEqual(
@@ -327,7 +331,7 @@ describe("schemaBasedEncoding", () => {
 
 	it("recursiveType", () => {
 		const context = buildContext(
-			toStoredSchema(RecursiveType),
+			toInitialSchema(RecursiveType),
 			defaultSchemaPolicy,
 			testIdCompressor,
 			undefined /* incrementalEncoder */,

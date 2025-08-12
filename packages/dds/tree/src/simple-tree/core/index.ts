@@ -53,9 +53,12 @@ export {
 	isAnnotatedAllowedType,
 	normalizeAllowedTypes,
 	normalizeAnnotatedAllowedTypes,
+	normalizeToAnnotatedAllowedType,
 	unannotateImplicitAllowedTypes,
 	markSchemaMostDerived,
 	evaluateLazySchema,
+	createSchemaUpgrade,
+	type SchemaUpgrade,
 } from "./allowedTypes.js";
 export type {
 	AnnotatedAllowedType,
@@ -72,7 +75,6 @@ export type {
 	UnannotateAllowedTypes,
 	UnannotateAllowedType,
 	UnannotateAllowedTypesList,
-	UnannotateAllowedTypeOrLazyItem,
 	AllowedTypeMetadata,
 	AnnotatedAllowedTypes,
 } from "./allowedTypes.js";
@@ -100,4 +102,11 @@ export {
 	TreeNodeValid,
 	type MostDerivedData,
 	createTreeNodeSchemaPrivateData,
+	isClassBasedSchema,
 } from "./treeNodeValid.js";
+export type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
+export {
+	type StoredSchemaGenerationOptions,
+	convertAllowedTypes,
+	allowedTypeFilter,
+} from "./toStored.js";

@@ -24,7 +24,10 @@ import type {
 	ILoader,
 	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
-import { isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
+import {
+	ConnectionState,
+	isIDeltaManagerFull,
+} from "@fluidframework/container-definitions/internal";
 import type {
 	ContainerExtensionFactory,
 	ContainerExtensionId,
@@ -36,6 +39,7 @@ import type {
 	IContainerRuntimeInternal,
 	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeWithResolveHandle_Deprecated,
+	JoinedStatus,
 	OutboundExtensionMessage,
 	UnverifiedBrand,
 } from "@fluidframework/container-runtime-definitions/internal";
@@ -121,11 +125,11 @@ import {
 	FlushModeExperimental,
 	channelsTreeName,
 	gcTreeKey,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	defaultMinVersionForCollab,
 	isValidMinVersionForCollab,
-	type MinimumVersionForCollab,
 	type SemanticVersion,
 } from "@fluidframework/runtime-utils/internal";
 import {
@@ -1344,6 +1348,9 @@ export class ContainerRuntime
 	private flushScheduled = false;
 
 	private canSendOps: boolean;
+	private canSendSignals: boolean | undefined;
+
+	private readonly getConnectionState?: () => ConnectionState;
 
 	private consecutiveReconnects = 0;
 
@@ -1536,15 +1543,18 @@ export class ContainerRuntime
 			pendingLocalState,
 			supportedFeatures,
 			snapshotWithContents,
+			getConnectionState,
 		} = context;
+
+		this.getConnectionState = getConnectionState;
 
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
 
 		// Validate that the Loader is compatible with this Runtime.
-		const maybeloaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
+		const maybeLoaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
 		validateLoaderCompatibility(
-			maybeloaderCompatDetailsForRuntime.ILayerCompatDetails,
+			maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails,
 			this.disposeFn,
 		);
 
@@ -1680,6 +1690,9 @@ export class ContainerRuntime
 		// Note that we only need to pull the *initial* connected state from the context.
 		// Later updates come through calls to setConnectionState.
 		this.canSendOps = connected;
+		this.canSendSignals = this.getConnectionState
+			? this.getConnectionState() === ConnectionState.Connected
+			: undefined;
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
@@ -1763,7 +1776,7 @@ export class ContainerRuntime
 		// If the context has ILayerCompatDetails, it supports referenceSequenceNumbers since that features
 		// predates ILayerCompatDetails.
 		const referenceSequenceNumbersSupported =
-			maybeloaderCompatDetailsForRuntime.ILayerCompatDetails === undefined
+			maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails === undefined
 				? supportedFeatures?.get("referenceSequenceNumbers") === true
 				: true;
 		if (
@@ -1898,7 +1911,7 @@ export class ContainerRuntime
 			routeContext: this.handleContext,
 			blobManagerLoadInfo,
 			storage: this.storage,
-			sendBlobAttachOp: (localId: string, blobId?: string) => {
+			sendBlobAttachOp: (localId: string, blobId: string) => {
 				if (!this.disposed) {
 					this.submit(
 						{ type: ContainerMessageType.BlobAttach, contents: undefined },
@@ -2837,7 +2850,44 @@ export class ContainerRuntime
 		this.channelCollection.setConnectionState(canSendOps, clientId);
 		this.garbageCollector.setConnectionState(canSendOps, clientId);
 
+		// Emit "connected" and "disconnected" events based on ability to send ops
 		raiseConnectedEvent(this.mc.logger, this, this.connected /* canSendOps */, clientId);
+		// Emit "connectedToService" and "disconnectedFromService" events based on service connection status
+		this.emitServiceConnectionEvents(canSendOpsChanged, canSendOps, clientId);
+	}
+
+	/**
+	 * Emits service connection events based on connection state changes.
+	 *
+	 * @remarks
+	 * "connectedToService" is emitted when container connection state transitions to 'Connected' regardless of connection mode.
+	 * "disconnectedFromService" excludes false "disconnected" events that happen when readonly client transitions to 'Connected'.
+	 */
+	private emitServiceConnectionEvents(
+		canSendOpsChanged: boolean,
+		canSendOps: boolean,
+		clientId?: string,
+	): void {
+		if (!this.getConnectionState) {
+			return;
+		}
+
+		const canSendSignals = this.getConnectionState() === ConnectionState.Connected;
+		const canSendSignalsChanged = this.canSendSignals !== canSendSignals;
+		this.canSendSignals = canSendSignals;
+		if (canSendSignalsChanged) {
+			// If canSendSignals changed, we either transitioned from Connected to Disconnected or CatchingUp to Connected
+			if (canSendSignals) {
+				// Emit for CatchingUp to Connected transition
+				this.emit("connectedToService", clientId, canSendOps);
+			} else {
+				// Emit for Connected to Disconnected transition
+				this.emit("disconnectedFromService");
+			}
+		} else if (canSendOpsChanged) {
+			// If canSendSignals did not change but canSendOps did, then connection type has changed.
+			this.emit("connectionTypeChanged", canSendOps);
+		}
 	}
 
 	public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {
@@ -5063,10 +5113,35 @@ export class ContainerRuntime
 	// It is lazily create to avoid listeners (old events) that ultimately go nowhere.
 	private readonly lazyEventsForExtensions = new Lazy<Listenable<ExtensionHostEvents>>(() => {
 		const eventEmitter = createEmitter<ExtensionHostEvents>();
-		this.on("connected", (clientId) => eventEmitter.emit("connected", clientId));
-		this.on("disconnected", () => eventEmitter.emit("disconnected"));
+		if (this.getConnectionState) {
+			this.on("connectedToService", (clientId: string, canWrite: boolean) => {
+				eventEmitter.emit("joined", { clientId, canWrite });
+			});
+			this.on("disconnectedFromService", () => eventEmitter.emit("disconnected"));
+			this.on("connectionTypeChanged", (canWrite: boolean) =>
+				eventEmitter.emit("connectionTypeChanged", canWrite),
+			);
+		} else {
+			this.on("connected", (clientId: string) => {
+				eventEmitter.emit("joined", { clientId, canWrite: true });
+			});
+			this.on("disconnected", () => eventEmitter.emit("disconnected"));
+		}
 		return eventEmitter;
 	});
+
+	private getJoinedStatus(): JoinedStatus {
+		const getConnectionState = this.getConnectionState;
+		if (getConnectionState) {
+			const connectionState = getConnectionState();
+			if (connectionState === ConnectionState.Connected) {
+				return this.canSendOps ? "joinedForWriting" : "joinedForReading";
+			}
+		} else if (this.canSendOps) {
+			return "joinedForWriting";
+		}
+		return "disconnected";
+	}
 
 	private readonly submitExtensionSignal: <TMessage extends TypedMessage>(
 		id: string,
@@ -5086,7 +5161,7 @@ export class ContainerRuntime
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
 			const runtime = {
-				isConnected: () => this.connected,
+				getJoinedStatus: this.getJoinedStatus.bind(this),
 				getClientId: () => this.clientId,
 				events: this.lazyEventsForExtensions.value,
 				logger: this.baseLogger,
