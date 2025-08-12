@@ -723,7 +723,7 @@ export namespace System_TableSchema {
 			}
 
 			public removeColumns(
-				indexOrColumns: readonly string[] | readonly ColumnValueType[],
+				indexOrColumns: number | readonly string[] | readonly ColumnValueType[],
 				end: number | undefined = undefined,
 			): ColumnValueType[] {
 				if (typeof indexOrColumns === "number") {
@@ -784,13 +784,23 @@ export namespace System_TableSchema {
 			}
 
 			/**
-			 * Removes a range of rows from the table.
+			 * Removes a range of columns from the table.
 			 * @param index - The starting index of the range to remove (inclusive).
 			 * @param end - The ending index of the range to remove (exclusive). Defaults to `array.length`.
 			 * @throws Throws an error if the specified range is invalid.
-			 * In this case, no rows are removed.
+			 * In this case, no columns are removed.
 			 */
 			private removeRangeOfColumns(index: number, end: number | undefined): ColumnValueType[] {
+				if (index < 0 || index >= this.columns.length) {
+					throw new UsageError(
+						`Start index out of bounds. Expected index to be on [0, ${this.columns.length - 1}], but got ${index}.`,
+					);
+				}
+				if (end !== undefined && (end > this.columns.length || end < index)) {
+					throw new UsageError(
+						`End index out of bounds. Expected end to be on [${index}, ${this.columns.length}], but got ${end}.`,
+					);
+				}
 				const removedColumns = this.columns.slice(index, end);
 				this.columns.removeRange(index, end);
 
@@ -868,6 +878,17 @@ export namespace System_TableSchema {
 			 * In this case, no rows are removed.
 			 */
 			private removeRangeOfRows(index: number, end: number | undefined): RowValueType[] {
+				if (index < 0 || index >= this.rows.length) {
+					throw new UsageError(
+						`Start index out of bounds. Expected index to be on [0, ${this.rows.length - 1}], but got ${index}.`,
+					);
+				}
+				if (end !== undefined && (end > this.rows.length || end < index)) {
+					throw new UsageError(
+						`End index out of bounds. Expected end to be on [${index}, ${this.rows.length}], but got ${end}.`,
+					);
+				}
+
 				const removedRows = this.rows.slice(index, end);
 				this.rows.removeRange(index, end);
 
@@ -1547,6 +1568,17 @@ export namespace TableSchema {
 		 */
 		setCell(params: SetCellParameters<TCell, TColumn, TRow>): void;
 
+		/**
+		 * Removes a range of columns from the table.
+		 * @param index - The starting index of the range to remove (inclusive).
+		 * @param end - The ending index of the range to remove (exclusive). Defaults to `array.length`.
+		 * @throws Throws an error if the specified range is invalid.
+		 * In this case, no columns are removed.
+		 */
+		removeColumns(
+			index: number,
+			end: number | undefined,
+		): TreeNodeFromImplicitAllowedTypes<TColumn>[];
 		/**
 		 * Removes 0 or more columns from the table.
 		 *
