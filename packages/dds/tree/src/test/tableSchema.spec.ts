@@ -822,22 +822,21 @@ describe.only("TableFactory unit tests", () => {
 				rows: [],
 			});
 
-			// Remove column0
+			// Remove column0 (by node)
 			treeView.root.removeColumns([column0]);
 			assertEqualTrees(treeView.root, {
 				columns: [{ id: "column-1", props: {} }],
 				rows: [],
 			});
 
-			// Remove column1
-			treeView.root.removeColumns([column1]);
+			// Remove column1 (by ID)
+			treeView.root.removeColumns(["column-1"]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
 				rows: [],
 			});
 		});
 
-		// TODO: by ID
 		it("Remove multiple columns", () => {
 			const { treeView, Column } = createTableTree();
 			const column0 = new Column({ id: "column-0", props: {} });
@@ -986,7 +985,6 @@ describe.only("TableFactory unit tests", () => {
 			});
 		});
 
-		// TODO: by ID
 		it("Remove single row", () => {
 			const { treeView, Row } = createTableTree();
 			const row0 = new Row({ id: "row-0", cells: {}, props: {} });
@@ -996,22 +994,21 @@ describe.only("TableFactory unit tests", () => {
 				rows: [row0, row1],
 			});
 
-			// Remove row0
+			// Remove row0 (by node)
 			treeView.root.removeRows([row0]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
 				rows: [{ id: "row-1", cells: {}, props: {} }],
 			});
 
-			// Remove row1
-			treeView.root.removeRows([row1]);
+			// Remove row1 (by ID)
+			treeView.root.removeRows(["row-1"]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
 				rows: [],
 			});
 		});
 
-		// TODO: by ID
 		it("Remove multiple rows", () => {
 			const { treeView, Row } = createTableTree();
 			const row0 = new Row({ id: "row-0", cells: {}, props: {} });
