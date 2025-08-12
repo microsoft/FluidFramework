@@ -43,7 +43,7 @@ API documentation for **@fluidframework/odsp-driver** is available at <https://f
 
 ## Telemetry Event names to SPO API mapping:
 
-This event names are suffixed by `_end` in case they are successful API calls or by `_cancel` in case they are failures.
+These event names are suffixed by `_end` in case they are successful API calls or by `_cancel` in case they are failures.
 In the table I have used the failure ones.
 
 | Event Name | Endpoint | Notes |
