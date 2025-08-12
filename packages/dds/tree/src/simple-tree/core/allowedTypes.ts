@@ -226,9 +226,10 @@ export type UnannotateImplicitAllowedTypes<T extends ImplicitAnnotatedAllowedTyp
 			? UnannotateAllowedTypesList<[T]>
 			: T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]
 				? UnannotateAllowedTypesList<T>
-				: T extends TreeNodeSchema
+				: // This should able to just return `T` here, however doing so breaks generic code in ArrayNode.
+					T extends TreeNodeSchema
 					? T
-					: never;
+					: ImplicitAllowedTypes;
 
 /**
  * Removes annotations from a list of allowed types that may contain annotations.
@@ -395,7 +396,7 @@ export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>)
  * Throws a UsageError if the provided schema is undefined, most likely due to being used before it was initialized.
  */
 export function checkForUninitializedSchema(
-	schema: ImplicitAnnotatedAllowedTypes | LazyItem<TreeNodeSchema>,
+	schema: ImplicitAnnotatedAllowedTypes | LazyItem<TreeNodeSchema> | AnnotatedAllowedType,
 ): void {
 	if (schema === undefined) {
 		throw new UsageError(
