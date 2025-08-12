@@ -118,6 +118,7 @@ function runBenchmark({
 
 				// Clean up
 				clearEventListener();
+				undoRedoStack.dispose();
 				treeView.dispose();
 			} while (state.recordBatch(duration));
 		},
