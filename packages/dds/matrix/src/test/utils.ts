@@ -226,29 +226,36 @@ export function insertFragmented(
 }
 
 /**
+ * {@link createLocalMatrix} options.
+ */
+export interface TestMatrixOptions {
+	/**
+	 * The number of rows and columns that will be in the matrix.
+	 */
+	readonly matrixSize: number;
+	/**
+	 * The initial value of each cell in the dense matrix.
+	 * @remarks If not specified, no cell values will be inserted into the table, leaving it sparse.
+	 */
+	readonly initialCellValue?: string | undefined;
+}
+
+/**
  * Creates a local matrix with the specified size and for dense test matrix given initial value.
  * Otherwise, leaving the initial value as undefined will create a sparse matrix.
  */
 export function createLocalMatrix({
-	id,
-	size,
-	initialValue,
-}: {
-	// The id of the matrix.
-	readonly id: string;
-	// The number of rows and columns that will be in the matrix.
-	readonly size: number;
-	// The initial value of each cell in the dense matrix. If not specified, no cell values will be inserted into the table, leaving it sparse.
-	readonly initialValue?: string;
-}): ISharedMatrix & IChannel {
-	const matrix = matrixFactory.create(new MockFluidDataStoreRuntime(), id);
-	matrix.insertRows(0, size);
-	matrix.insertCols(0, size);
+	matrixSize,
+	initialCellValue,
+}: TestMatrixOptions): ISharedMatrix & IChannel {
+	const matrix = matrixFactory.create(new MockFluidDataStoreRuntime(), "test-matrix");
+	matrix.insertRows(0, matrixSize);
+	matrix.insertCols(0, matrixSize);
 
-	if (initialValue !== undefined) {
-		for (let row = 0; row < size; row++) {
-			for (let col = 0; col < size; col++) {
-				matrix.setCell(row, col, initialValue);
+	if (initialCellValue !== undefined) {
+		for (let row = 0; row < matrixSize; row++) {
+			for (let col = 0; col < matrixSize; col++) {
+				matrix.setCell(row, col, initialCellValue);
 			}
 		}
 	}

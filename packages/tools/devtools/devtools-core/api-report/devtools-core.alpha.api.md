@@ -13,10 +13,9 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 // @beta
 export type ContainerKey = string;
 
-// @alpha
+// @alpha @input
 export interface ContainerRuntimeProps {
     label?: string;
-    // @input
     readonly runtime: IContainerRuntime;
 }
 

@@ -496,6 +496,7 @@ export class FluidDevtools implements IFluidDevtools {
 	/**
 	 * Generates a readable key for a container runtime using package path and sequential numbering.
 	 *
+	 * @privateRemarks
 	 * TODO: Once we enable automatic extraction of ContainerData for IContainer instance, extend the usage of assigning readable key.
 	 */
 	private generateReadableKey(baseKey: string): string {

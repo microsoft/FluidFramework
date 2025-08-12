@@ -22,12 +22,11 @@ import type { InboundHandlers } from "./messaging/index.js";
 /**
  * Properties for registering a container runtime with the Devtools.
  * @alpha
+ * @input
  */
 export interface ContainerRuntimeProps {
 	/**
 	 * The container runtime to register with the Devtools.
-	 *
-	 * @input
 	 */
 	readonly runtime: IContainerRuntime;
 
@@ -110,6 +109,7 @@ export class ContainerRuntimeDevtools extends BaseDevtools<DecomposedContainer> 
 
 /**
  * Implementation of {@link DecomposedContainer} that wraps an {@link @fluidframework/container-runtime-definitions/internal#IContainerRuntime}.
+ * @remarks
  * This class provides a bridge between {@link @fluidframework/container-runtime-definitions/internal#IContainerRuntime} and the devtools system by exposing runtime properties and events.
  */
 export class DecomposedContainerForContainerRuntime
@@ -134,9 +134,9 @@ export class DecomposedContainerForContainerRuntime
 		this.emit("connected", clientId);
 	private readonly disconnectedHandler = (): boolean => this.emit("disconnected");
 	private readonly disposedHandler = (): boolean => {
-		this._disposed = true; // Mark as disposed when dispose event occurs
-		// IContainerRuntime emits "dispose" (no error) but we emit "disposed" (optional error) to match IContainerEvents
+		// IContainerRuntime emits "dispose" (no error) but we emit "disposed" to match IContainerEvents
 		// Since IContainerRuntime doesn't provide error info, we emit without error parameter
+		this._disposed = true; // Mark as disposed when dispose event occurs
 		return this.emit("disposed");
 	};
 
@@ -155,11 +155,10 @@ export class DecomposedContainerForContainerRuntime
 	}
 
 	public get connectionState(): ConnectionState {
-		// TODO: Attempt to map all possible connection states. If the runtime exposes a more granular connectionState property, use it.
 		return this.runtime.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
 	}
 
 	public get closed(): boolean {
-		return this._disposed; // Only return true if actually disposed, not just disconnected
+		return this._disposed; // IContainerRuntime doesn't have a "closed" state - only "disconnected" (reconnectable) and "disposed" (permanent)
 	}
 }
