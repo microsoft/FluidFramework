@@ -138,7 +138,8 @@ import {
 	type ForestOptions,
 	type SharedTreeOptionsInternal,
 	buildConfiguredForest,
-	ForestTypeOptimized,
+	type ForestType,
+	ForestTypeReference,
 } from "../shared-tree/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -193,8 +194,7 @@ import {
 	allowsTreeSuperset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../feature-libraries/modular-schema/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { initializeForest } from "./feature-libraries/initializeForest.js";
+import { initializeForest } from "./feature-libraries/index.js";
 
 // Testing utilities
 
@@ -813,9 +813,7 @@ export function checkoutWithContent(
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
-		additionalAsserts?: boolean;
-		// Creates a chunked forest instead of an object forest.
-		chunkedForest?: true;
+		forestType?: ForestType;
 	},
 ): TreeCheckout {
 	const { checkout } = createCheckoutWithContent(content, args);
@@ -828,30 +826,19 @@ function createCheckoutWithContent(
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
-		additionalAsserts?: boolean;
-		// Creates a chunked forest instead of an object forest.
-		chunkedForest?: boolean;
+		forestType?: ForestType;
 	},
 ): { checkout: TreeCheckout; logger: IMockLoggerExt } {
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
 	const schema = new TreeStoredSchemaRepository(content.schema);
-	let forest: IEditableForest;
-	if (args?.chunkedForest === true) {
-		forest = buildConfiguredForest(
-			new Breakable("buildTestChunkedForest"),
-			ForestTypeOptimized,
-			schema,
-			testIdCompressor,
-		);
-		initializeForest(forest, fieldCursor, testRevisionTagCodec, testIdCompressor);
-	} else {
-		const roots: MapTree = mapTreeWithField(mapTreeFieldFromCursor(fieldCursor));
-		forest = buildTestForest({
-			additionalAsserts: args?.additionalAsserts ?? true,
-			schema,
-			roots,
-		});
-	}
+
+	const forest = buildConfiguredForest(
+		new Breakable("buildTestForest"),
+		args?.forestType ?? ForestTypeReference,
+		schema,
+		testIdCompressor,
+	);
+	initializeForest(forest, fieldCursor, testRevisionTagCodec, testIdCompressor);
 
 	const logger = createMockLoggerExt();
 	const checkout = createTreeCheckout(
