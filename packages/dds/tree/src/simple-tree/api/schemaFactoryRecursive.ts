@@ -9,11 +9,15 @@ import type {
 	TreeNodeSchema,
 	WithType,
 	TreeNode,
-	ImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
+	ImplicitAnnotatedAllowedTypes,
+	UnannotateImplicitAllowedTypes,
 } from "../core/index.js";
-import type { InsertableObjectFromSchemaRecord } from "../node-kinds/index.js";
-import type { ImplicitFieldSchema } from "../fieldSchema.js";
+import type {
+	InsertableObjectFromSchemaRecord,
+	UnannotateSchemaRecord,
+} from "../node-kinds/index.js";
+import type { ImplicitAnnotatedFieldSchema } from "../fieldSchema.js";
 
 /**
  * Compile time check for validity of a recursive schema.
@@ -155,17 +159,28 @@ export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNode
 	// TInsertable: What can be passed to the constructor. This should be enough to catch most issues with incorrect schema.
 	// These match whats defined in the recursive methods on `SchemaFactory` except they do not use `Unenforced`.
 	{
-		[NodeKind.Object]: T["info"] extends RestrictiveStringRecord<ImplicitFieldSchema>
-			? InsertableObjectFromSchemaRecord<T["info"]>
+		[NodeKind.Object]: T["info"] extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>
+			? InsertableObjectFromSchemaRecord<UnannotateSchemaRecord<T["info"]>>
 			: unknown;
-		[NodeKind.Array]: T["info"] extends ImplicitAllowedTypes
-			? Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>>
+		[NodeKind.Array]: T["info"] extends ImplicitAnnotatedAllowedTypes
+			? Iterable<
+					InsertableTreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T["info"]>>
+				>
 			: unknown;
-		[NodeKind.Map]: T["info"] extends ImplicitAllowedTypes
-			? Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>]>
+		[NodeKind.Map]: T["info"] extends ImplicitAnnotatedAllowedTypes
+			? Iterable<
+					[
+						string,
+						InsertableTreeNodeFromImplicitAllowedTypes<
+							UnannotateImplicitAllowedTypes<T["info"]>
+						>,
+					]
+				>
 			: unknown;
 		[NodeKind.Record]: {
-			readonly [P in string]: InsertableTreeNodeFromImplicitAllowedTypes<T>;
+			readonly [P in string]: InsertableTreeNodeFromImplicitAllowedTypes<
+				UnannotateImplicitAllowedTypes<T>
+			>;
 		};
 		[NodeKind.Leaf]: unknown;
 	}[T["kind"]],
@@ -173,10 +188,10 @@ export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNode
 	false,
 	// Info: What's passed to the method to create the schema. Constraining these here should be about as effective as if the actual constraints existed on the actual method itself.
 	{
-		[NodeKind.Object]: RestrictiveStringRecord<ImplicitFieldSchema>;
-		[NodeKind.Array]: ImplicitAllowedTypes;
-		[NodeKind.Map]: ImplicitAllowedTypes;
-		[NodeKind.Record]: ImplicitAllowedTypes;
+		[NodeKind.Object]: RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>;
+		[NodeKind.Array]: ImplicitAnnotatedAllowedTypes;
+		[NodeKind.Map]: ImplicitAnnotatedAllowedTypes;
+		[NodeKind.Record]: ImplicitAnnotatedAllowedTypes;
 		[NodeKind.Leaf]: unknown;
 	}[T["kind"]]
 >;
