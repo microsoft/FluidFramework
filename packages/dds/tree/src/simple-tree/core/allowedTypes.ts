@@ -229,7 +229,15 @@ export type UnannotateImplicitAllowedTypes<T extends ImplicitAnnotatedAllowedTyp
 				: // This should able to just return `T` here, however doing so breaks generic code in ArrayNode.
 					T extends TreeNodeSchema
 					? T
-					: ImplicitAllowedTypes;
+					: // Ideally this case would not be hit as it should be impossible.
+						// Due to limitations of TypeScript some generic code does depend on this case,
+						// so return a valid nonspecific schema in this otherwise unreachable case.
+						// This ensures that when this case is hit, the type system can still reason about it.
+						// It also ensures that if bugs cause this to matter in other cases, they will error on the side of restricting the API
+						// (due to non-specific schema) rather than being unsafe.
+						// This helps any such bugs be noticed more easily, be less likely to lead to runtime errors,
+						// and be more likely to be fixable as non-breaking changes.
+						ImplicitAllowedTypes;
 
 /**
  * Removes annotations from a list of allowed types that may contain annotations.
