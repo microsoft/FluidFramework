@@ -249,7 +249,15 @@ export class IncrementalChunkDecoder implements ChunkDecoder {
 			brand(chunkReferenceId),
 		);
 		assert(batch !== undefined, "Incremental chunk data missing");
-		const chunks = genericDecode(decoderLibrary, this.cache, batch, anyDecoder);
+		// The incremental chunk data is self-describing, i.e., it contain its own shapes list and identifier table.
+		// Use these to create a new decoder context to be used to decode the incremental chunk's data.
+		const context = new DecoderContext(
+			batch.identifiers,
+			batch.shapes,
+			this.cache.idDecodingContext,
+			this.cache.incrementalDecoder,
+		);
+		const chunks = genericDecode(decoderLibrary, context, batch, anyDecoder);
 		return aggregateChunks(chunks);
 	}
 }

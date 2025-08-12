@@ -404,6 +404,24 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 
 		validateTrackingSummary(this.forestSummaryState, this.trackedSummaryProperties);
 
+		// Copy over the entries from the latest summary to the current summary.
+		// In the current summary, there can be fields that haven't changed since the latest summary and the chunks
+		// in these fields and in any of its children weren't encoded. So, we need get the entries for these chunks
+		// to be able to incrementally summarize them in the next summary.
+		const latestSummaryTrackingMap = this.chunkTrackingPropertiesMap.get(
+			this.latestSummarySequenceNumber,
+		);
+		const currentSummaryTrackingMap = this.chunkTrackingPropertiesMap.get(
+			this.trackedSummaryProperties.summarySequenceNumber,
+		);
+		if (latestSummaryTrackingMap !== undefined && currentSummaryTrackingMap !== undefined) {
+			for (const [chunk, chunkProperties] of latestSummaryTrackingMap.entries()) {
+				if (!currentSummaryTrackingMap.has(chunk)) {
+					currentSummaryTrackingMap.set(chunk, chunkProperties);
+				}
+			}
+		}
+
 		// Delete tracking for summaries that are older than the latest successful summary because they will
 		// never be referenced again for generating summary handles.
 		for (const sequenceNumber of this.chunkTrackingPropertiesMap.keys()) {

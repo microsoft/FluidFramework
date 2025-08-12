@@ -24,6 +24,8 @@ import {
 	version,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { IncrementalDecoder } from "../../../../feature-libraries/chunked-forest/codec/index.js";
 import {
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
@@ -53,13 +55,14 @@ export function checkFieldEncode(
 	context: EncoderContext,
 	tree: JsonableTree[],
 	idCompressor?: IIdCompressor,
+	incrementalDecoder?: IncrementalDecoder,
 ): BufferFormat {
 	const buffer: BufferFormat = [fieldEncoder.shape];
 	const cursor = cursorForJsonableTreeField(tree);
 	fieldEncoder.encodeField(cursor, context, buffer);
 
 	// Check round-trip
-	checkDecode([buffer], [tree], idCompressor);
+	checkDecode([buffer], [tree], idCompressor, incrementalDecoder);
 
 	return buffer.slice(1);
 }
@@ -68,10 +71,11 @@ function checkDecode(
 	buffer: BufferFormat[],
 	tree: JsonableTree[][],
 	idCompressor?: IIdCompressor,
+	incrementalDecoder?: IncrementalDecoder,
 ): void {
 	// Check round-trips with identifiers inline and out of line
-	testDecode(buffer, tree, () => false, idCompressor);
-	testDecode(buffer, tree, () => true, idCompressor);
+	testDecode(buffer, tree, () => false, idCompressor, incrementalDecoder);
+	testDecode(buffer, tree, () => true, idCompressor, incrementalDecoder);
 }
 
 /**
@@ -86,6 +90,7 @@ function testDecode(
 	expectedTree: JsonableTree[][],
 	identifierFilter: CounterFilter<string>,
 	idCompressor?: IIdCompressor,
+	incrementalDecoder?: IncrementalDecoder,
 ): EncodedFieldBatch {
 	const chunk = updateShapesAndIdentifiersEncoding(
 		version,
@@ -107,6 +112,7 @@ function testDecode(
 					idCompressor: testIdCompressor,
 					originatorId: testIdCompressor.localSessionId,
 				},
+		incrementalDecoder,
 	);
 	assertChunkCursorBatchEquals(result, expectedTree);
 
@@ -143,6 +149,7 @@ function testDecode(
 						idCompressor: testIdCompressor,
 						originatorId: testIdCompressor.localSessionId,
 					},
+			incrementalDecoder,
 		);
 		assert.deepEqual(parsedResult, result);
 	}

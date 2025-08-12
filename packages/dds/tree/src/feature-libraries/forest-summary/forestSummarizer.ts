@@ -54,7 +54,7 @@ export const forestSummaryKey = "Forest";
  * The key for the blob under ForestSummarizer's root.
  * This blob contains the ForestCodec's output.
  */
-const forestSummaryContentKey = "ForestTree";
+export const forestSummaryContentKey = "ForestTree";
 
 /**
  * Provides methods for summarizing and loading a forest.
