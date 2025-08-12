@@ -1,5 +1,0 @@
-{
-	"tags": ["to-markdown"],
-	"exports": ["index"],
-	"imports": ["common", "utilities"]
-}

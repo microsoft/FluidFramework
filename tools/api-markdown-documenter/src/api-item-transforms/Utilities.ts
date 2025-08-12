@@ -5,10 +5,11 @@
 
 import type { ApiItem } from "@microsoft/api-extractor-model";
 import type { DocDeclarationReference } from "@microsoft/tsdoc";
+import type { Link } from "mdast";
 
 import type { ApiDocument } from "../ApiDocument.js";
-import type { Link } from "../Link.js";
 import type { Section } from "../mdast/index.js";
+import { normalizeDocumentContents } from "../mdast/index.js";
 import { resolveSymbolicReference } from "../utilities/index.js";
 
 import {
@@ -48,9 +49,13 @@ export function createDocument(
 			]
 		: sections;
 
+	const normalizedContents = normalizeDocumentContents(contents, {
+		startingHeadingLevel: config.startingHeadingLevel,
+	});
+
 	return {
 		apiItem: documentItem,
-		contents,
+		contents: normalizedContents,
 		documentPath: getDocumentPathForApiItem(documentItem, config.hierarchy),
 	};
 }

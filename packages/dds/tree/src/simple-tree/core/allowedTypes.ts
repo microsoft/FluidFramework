@@ -47,7 +47,10 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
 /**
  * Stores annotations for an individual allowed type.
+ * @remarks
+ * Create using APIs on {@link SchemaFactoryAlpha}, like {@link SchemaStaticsAlpha.staged}.
  * @alpha
+ * @sealed
  */
 export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
 	/**
@@ -61,19 +64,12 @@ export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
 }
 
 /**
- * Stores annotations for a set of evaluated annotated allowed types.
+ * {@link AnnotatedAllowedTypes} but with the lazy schema references eagerly evaluated.
+ * @sealed
  * @alpha
  */
-export interface NormalizedAnnotatedAllowedTypes {
-	/**
-	 * Annotations that apply to a set of allowed types.
-	 */
-	readonly metadata: AllowedTypesMetadata;
-	/**
-	 * All the evaluated allowed types that the annotations apply to. The types themselves are also individually annotated.
-	 */
-	readonly types: readonly AnnotatedAllowedType<TreeNodeSchema>[];
-}
+export interface NormalizedAnnotatedAllowedTypes
+	extends AnnotatedAllowedTypes<TreeNodeSchema> {}
 
 /**
  * Checks if the input is an {@link AnnotatedAllowedTypes}.
@@ -91,8 +87,9 @@ export function isAnnotatedAllowedTypes(
 /**
  * Stores annotations for a set of allowed types.
  * @alpha
+ * @sealed
  */
-export interface AnnotatedAllowedTypes {
+export interface AnnotatedAllowedTypes<T = LazyItem<TreeNodeSchema>> {
 	/**
 	 * Annotations that apply to a set of allowed types.
 	 */
@@ -100,7 +97,7 @@ export interface AnnotatedAllowedTypes {
 	/**
 	 * All the allowed types that the annotations apply to. The types themselves may also have individual annotations.
 	 */
-	readonly types: readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[];
+	readonly types: readonly AnnotatedAllowedType<T>[];
 }
 
 /**
@@ -108,6 +105,7 @@ export interface AnnotatedAllowedTypes {
  * @remarks
  * Additional optionals may be added to this as non-breaking changes, so implementations of it should be simple object literals with no unlisted members.
  * @alpha
+ * @input
  */
 export interface AllowedTypesMetadata {
 	/**
@@ -132,6 +130,7 @@ export function isAnnotatedAllowedType(
  * @remarks
  * Additional optionals may be added to this as non-breaking changes, so implementations of it should be simple object literals with no unlisted members.
  * @alpha
+ * @input
  */
 export interface AllowedTypeMetadata {
 	/**
@@ -208,6 +207,7 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
  * Types of {@link TreeNode|TreeNodes} or {@link TreeLeafValue|TreeLeafValues} allowed at a location in a tree with
  * additional metadata associated with the location they're allowed at.
  * @alpha
+ * @input
  */
 export type ImplicitAnnotatedAllowedTypes =
 	| TreeNodeSchema
@@ -223,7 +223,7 @@ export type UnannotateImplicitAllowedTypes<T extends ImplicitAnnotatedAllowedTyp
 	T extends AnnotatedAllowedTypes
 		? UnannotateAllowedTypes<T>
 		: T extends AnnotatedAllowedType
-			? UnannotateAllowedType<T>
+			? UnannotateAllowedTypesList<[T]>
 			: T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]
 				? UnannotateAllowedTypesList<T>
 				: T extends TreeNodeSchema
@@ -237,16 +237,8 @@ export type UnannotateImplicitAllowedTypes<T extends ImplicitAnnotatedAllowedTyp
 export type UnannotateAllowedTypesList<
 	T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
 > = {
-	[I in keyof T]: UnannotateAllowedTypeOrLazyItem<T[I]>;
+	[I in keyof T]: UnannotateAllowedType<T[I]>;
 };
-
-/**
- * Removes annotations from an allowed type that may contain annotations.
- * @system @alpha
- */
-export type UnannotateAllowedTypeOrLazyItem<
-	T extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>,
-> = T extends AnnotatedAllowedType<infer X> ? X : T;
 
 /**
  * Removes all annotations from a set of allowed types.
@@ -257,10 +249,15 @@ export type UnannotateAllowedTypes<T extends AnnotatedAllowedTypes> =
 
 /**
  * Removes annotations from an allowed type.
+ * @remarks
+ * If the input could be lazy
+ * (is a LazyItem or AnnotatedAllowedType<LazyItem> instead of just a TreeNodeSchema | AnnotatedAllowedType<TreeNodeSchema>)
+ * then the output of this will be a LazyItem and thus is not valid as an ImplicitAllowedTypes without wrapping it in an array.
+ * This can however be used on items within an AllowedTypes array.
  * @system @alpha
  */
 export type UnannotateAllowedType<T extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>> =
-	T extends AnnotatedAllowedType<infer X> ? [X] : T;
+	T extends AnnotatedAllowedType<infer X> ? X : T;
 
 /**
  * Normalizes a {@link ImplicitAllowedTypes} to a set of {@link TreeNodeSchema}s, by eagerly evaluating any

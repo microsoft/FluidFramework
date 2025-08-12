@@ -29,6 +29,7 @@ import { makeValueCodec } from "../../codec/index.js";
 export function lastWriteWinsRebaser<TChange>(data: {
 	noop: TChange;
 	invert: (changes: TChange) => TChange;
+	mute: (changes: TChange) => TChange;
 }): FieldChangeRebaser<TChange> {
 	const compose = (_change1: TChange, change2: TChange) => change2;
 	const rebase = (change: TChange, _over: TChange) => change;
@@ -69,6 +70,9 @@ export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
 		},
 		invert: (changes: ReplaceOp<T>) => {
 			return changes === 0 ? 0 : { old: changes.new, new: changes.old };
+		},
+		mute: (_change: ReplaceOp<T>) => {
+			return 0;
 		},
 	});
 }
