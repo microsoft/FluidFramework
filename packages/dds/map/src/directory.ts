@@ -2308,7 +2308,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	private submitDeleteSubDirectoryMessage(
 		op: IDirectorySubDirectoryOperation,
-		subDir: SubDirectory | undefined,
+		subDir: SubDirectory,
 	): void {
 		this.throwIfDisposed();
 
@@ -2353,6 +2353,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				this.submitCreateSubDirectoryMessage(op);
 			}
 		} else if (localOpMetadata.type === "deleteSubDir") {
+			assert(localOpMetadata.subDirectory !== undefined, "Subdirectory should exist");
 			// For delete operations, look specifically for deleteSubDirectory entries
 			const pendingEntryIndex = this.pendingSubDirectoryData.findIndex(
 				(entry) => entry.subdirName === op.subdirName && entry.type === "deleteSubDirectory",

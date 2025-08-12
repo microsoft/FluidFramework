@@ -75,7 +75,6 @@ export type {
 	UnannotateAllowedTypes,
 	UnannotateAllowedType,
 	UnannotateAllowedTypesList,
-	UnannotateAllowedTypeOrLazyItem,
 	AllowedTypeMetadata,
 	AnnotatedAllowedTypes,
 } from "./allowedTypes.js";
