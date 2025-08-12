@@ -135,7 +135,7 @@ describe("TableFactory unit tests", () => {
 				validateUsageError(/Column with ID "column-0" is not contained in a table./),
 			);
 
-			table.insertColumn({ column: column0 });
+			table.insertColumns({ columns: [column0] });
 
 			// No rows or cells have been inserted yet.
 			assert.equal(column0.getCells().length, 0);
@@ -204,7 +204,7 @@ describe("TableFactory unit tests", () => {
 			const table = treeView.root;
 
 			const row = new Row({ id: "row-0", cells: {} });
-			table.insertRow({ row });
+			table.insertRows({ rows: [row] });
 
 			// No columns or cells have been inserted yet.
 			assert.equal(row.getCells().length, 0);
@@ -396,110 +396,6 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
-	describe("insertColumn", () => {
-		it("Insert new column into empty list", () => {
-			const { treeView, Table } = createTableTree();
-			treeView.initialize(Table.empty());
-
-			treeView.root.insertColumn({
-				index: 0,
-				column: { id: "column-0", props: {} },
-			});
-
-			assertEqualTrees(treeView.root, {
-				columns: [
-					{
-						id: "column-0",
-						props: {},
-					},
-				],
-				rows: [],
-			});
-		});
-
-		it("Insert new column into non-empty list", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				rows: [],
-				columns: [
-					{ id: "column-a", props: {} },
-					{ id: "column-b", props: {} },
-				],
-			});
-
-			treeView.root.insertColumn({
-				index: 1,
-				column: { id: "column-c", props: {} },
-			});
-
-			assertEqualTrees(treeView.root, {
-				columns: [
-					{
-						id: "column-a",
-						props: {},
-					},
-					{
-						id: "column-c",
-						props: {},
-					},
-					{
-						id: "column-b",
-						props: {},
-					},
-				],
-				rows: [],
-			});
-		});
-
-		it("Append new column", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				rows: [],
-				columns: [
-					{ id: "column-a", props: {} },
-					{ id: "column-b", props: {} },
-				],
-			});
-
-			// By not specifying an index, the column should be appended to the end of the list.
-			treeView.root.insertColumn({
-				column: { id: "column-c", props: {} },
-			});
-
-			assertEqualTrees(treeView.root, {
-				columns: [
-					{
-						id: "column-a",
-						props: {},
-					},
-					{
-						id: "column-b",
-						props: {},
-					},
-					{
-						id: "column-c",
-						props: {},
-					},
-				],
-				rows: [],
-			});
-		});
-
-		it("Inserting column at out-of-bounds index fails", () => {
-			const { treeView, Table } = createTableTree();
-			treeView.initialize(Table.empty());
-
-			assert.throws(
-				() =>
-					treeView.root.insertColumn({
-						index: 1,
-						column: { props: {} },
-					}),
-				validateUsageError(/The index specified for insertion is out of bounds./),
-			);
-		});
-	});
-
 	describe("insertColumns", () => {
 		it("Insert empty columns list", () => {
 			const { treeView, Table } = createTableTree();
@@ -641,147 +537,6 @@ describe("TableFactory unit tests", () => {
 				],
 				rows: [],
 			});
-		});
-	});
-
-	describe("insertRow", () => {
-		it("Insert new row into empty list", () => {
-			const { treeView, Table } = createTableTree();
-			treeView.initialize(Table.empty());
-
-			treeView.root.insertRow({
-				index: 0,
-				row: { id: "row-0", cells: {}, props: {} },
-			});
-
-			assertEqualTrees(treeView.root, {
-				columns: [],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-				],
-			});
-		});
-
-		it("Insert new row into non-empty list", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				columns: [],
-				rows: [
-					{ id: "row-a", cells: {}, props: {} },
-					{ id: "row-b", cells: {}, props: {} },
-				],
-			});
-
-			treeView.root.insertRow({
-				index: 1,
-				row: { id: "row-c", cells: {}, props: {} },
-			});
-
-			assertEqualTrees(treeView.root, {
-				columns: [],
-				rows: [
-					{
-						id: "row-a",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-c",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-b",
-						cells: {},
-						props: {},
-					},
-				],
-			});
-		});
-
-		it("Append new row", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				columns: [],
-				rows: [
-					{ id: "row-a", cells: {}, props: {} },
-					{ id: "row-b", cells: {}, props: {} },
-				],
-			});
-
-			// By not specifying an index, the column should be appended to the end of the list.
-			treeView.root.insertRow({
-				row: { id: "row-c", cells: {}, props: {} },
-			});
-
-			assertEqualTrees(treeView.root, {
-				columns: [],
-				rows: [
-					{
-						id: "row-a",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-b",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-c",
-						cells: {},
-						props: {},
-					},
-				],
-			});
-		});
-
-		it("Inserting row at out-of-bounds index fails", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				columns: [],
-				rows: [],
-			});
-
-			assert.throws(
-				() =>
-					treeView.root.insertRow({
-						index: 1,
-						row: { cells: {}, props: {} },
-					}),
-				validateUsageError(/The index specified for insertion is out of bounds./),
-			);
-		});
-
-		it("Inserting a row with cells that have no matching column fails", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				rows: [],
-				columns: [{ id: "column-a", props: {} }],
-			});
-
-			assert.throws(
-				() =>
-					treeView.root.insertRow({
-						row: {
-							id: "row-a",
-							cells: {
-								"column-a": { value: "Hello" },
-								"column-b": { value: "world!" },
-							},
-						},
-					}),
-				validateUsageError(
-					/Attempted to insert row a cell under column ID "column-b", but the table does not contain a column with that ID./,
-				),
-			);
-
-			// Ensure the row was not inserted
-			assert(treeView.root.rows.length === 0);
 		});
 	});
 
@@ -1376,14 +1131,14 @@ describe("TableFactory unit tests", () => {
 			});
 
 			// Add a row
-			treeView.root.insertRow({
-				row: new Row({ id: "row-0", cells: {}, props: {} }),
+			treeView.root.insertRows({
+				rows: [new Row({ id: "row-0", cells: {}, props: {} })],
 			});
 			assert.equal(eventCount, 1);
 
 			// Add a column
-			treeView.root.insertColumn({
-				column: { id: "column-0", props: {} },
+			treeView.root.insertColumns({
+				columns: [{ id: "column-0", props: {} }],
 			});
 			assert.equal(eventCount, 2);
 
@@ -1438,7 +1193,7 @@ describe("TableFactory unit tests", () => {
 			assert.equal(eventCount, 1); // Event should not have fired for column node changes
 
 			// Insert a row
-			table.insertRow({ row: { id: "row-0", cells: {}, props: {} } });
+			table.insertRows({ rows: [{ id: "row-0", cells: {}, props: {} }] });
 			assert.equal(eventCount, 1); // Event should not have fired for row insertion
 
 			// Re-order columns
