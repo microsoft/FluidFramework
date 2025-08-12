@@ -527,7 +527,7 @@ describe("SharedTree table APIs memory usage", () => {
 						operation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const row = table.rows[Math.floor(table.rows.length / 2)];
-								table.removeRow(row);
+								table.removeRows([row]);
 							}
 						},
 					}),
@@ -542,7 +542,7 @@ describe("SharedTree table APIs memory usage", () => {
 						setupOperation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const row = table.rows[Math.floor(table.rows.length / 2)];
-								table.removeRow(row);
+								table.removeRows([row]);
 							}
 						},
 						stackOperation: (undoRedoManager) => {
@@ -563,7 +563,7 @@ describe("SharedTree table APIs memory usage", () => {
 						setupOperation: (table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
 								const row = table.rows[Math.floor(table.rows.length / 2)];
-								table.removeRow(row);
+								table.removeRows([row]);
 							}
 							for (let i = 0; i < count; i++) {
 								undoRedoManager.undo();
@@ -592,7 +592,7 @@ describe("SharedTree table APIs memory usage", () => {
 								const column = table.columns[Math.floor(table.columns.length / 2)];
 								removeColumnAndCells(table, column);
 								const row = table.rows[Math.floor(table.rows.length / 2)];
-								table.removeRow(row);
+								table.removeRows([row]);
 							}
 						},
 					}),
@@ -609,7 +609,7 @@ describe("SharedTree table APIs memory usage", () => {
 								const column = table.columns[Math.floor(table.columns.length / 2)];
 								removeColumnAndCells(table, column);
 								const row = table.rows[Math.floor(table.rows.length / 2)];
-								table.removeRow(row);
+								table.removeRows([row]);
 							}
 						},
 						stackOperation: (undoRedoManager) => {
@@ -676,7 +676,7 @@ describe("SharedTree table APIs memory usage", () => {
 								const row = new Row({ id: `row-${i}`, cells: {} });
 								table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 								removeColumnAndCells(table, column);
-								table.removeRow(row);
+								table.removeRows([row]);
 							}
 						},
 					}),

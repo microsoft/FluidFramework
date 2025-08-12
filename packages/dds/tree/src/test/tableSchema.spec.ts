@@ -797,78 +797,79 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
-	describe("removeColumn", () => {
-		it("Remove column by ID", () => {
-			const { treeView } = createTableTree();
+	describe("removeColumns", () => {
+		it("Remove empty list", () => {
+			const { treeView, Column } = createTableTree();
 			treeView.initialize({
-				columns: [
-					{
-						id: "column-0",
-						props: { label: "Column 0" },
-					},
-				],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-				],
+				columns: [new Column({ id: "column-0", props: {} })],
+				rows: [],
 			});
 
-			const removed = treeView.root.removeColumn("column-0");
-			assertEqualTrees(removed, {
-				id: "column-0",
-				props: { label: "Column 0" },
-			});
+			treeView.root.removeColumns([]);
 			assertEqualTrees(treeView.root, {
-				columns: [],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-				],
+				columns: [{ id: "column-0", props: {} }],
+				rows: [],
 			});
 		});
 
-		it("Remove column by node", () => {
-			const { treeView } = createTableTree();
+		// TODO: by ID
+		it("Remove single column", () => {
+			const { treeView, Column } = createTableTree();
+			const column0 = new Column({ id: "column-0", props: {} });
+			const column1 = new Column({ id: "column-1", props: {} });
 			treeView.initialize({
-				columns: [
-					{
-						id: "column-0",
-						props: { label: "Column 0" },
-					},
-				],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-				],
+				columns: [column0, column1],
+				rows: [],
 			});
 
-			const removed = treeView.root.removeColumn(treeView.root.columns[0]);
-			assertEqualTrees(removed, {
-				id: "column-0",
-				props: { label: "Column 0" },
+			// Remove column0
+			treeView.root.removeColumns([column0]);
+			assertEqualTrees(treeView.root, {
+				columns: [{ id: "column-1", props: {} }],
+				rows: [],
 			});
+
+			// Remove column1
+			treeView.root.removeColumns([column1]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-				],
+				rows: [],
 			});
 		});
 
-		it("Removing column that does not exist on table errors", () => {
+		// TODO: by ID
+		it("Remove multiple columns", () => {
+			const { treeView, Column } = createTableTree();
+			const column0 = new Column({ id: "column-0", props: {} });
+			const column1 = new Column({ id: "column-1", props: {} });
+			const column2 = new Column({ id: "column-2", props: {} });
+			const column3 = new Column({ id: "column-3", props: {} });
+			treeView.initialize({
+				columns: [column0, column1, column2, column3],
+				rows: [],
+			});
+
+			const table = treeView.root;
+
+			// Remove columns 1 and 3
+			table.removeColumns([column1, column3]);
+			assertEqualTrees(table, {
+				columns: [
+					{ id: "column-0", props: {} },
+					{ id: "column-2", props: {} },
+				],
+				rows: [],
+			});
+
+			// Remove rows 0 and 2
+			treeView.root.removeColumns([column0, column2]);
+			assertEqualTrees(table, {
+				columns: [],
+				rows: [],
+			});
+		});
+
+		it("Removing single column that doesn't exist on table errors", () => {
 			const { treeView, Column } = createTableTree();
 			treeView.initialize({
 				columns: [],
@@ -876,29 +877,48 @@ describe("TableFactory unit tests", () => {
 			});
 
 			assert.throws(
-				() => treeView.root.removeColumn(new Column({ id: "unhydrated-column", props: {} })),
-				validateUsageError(
-					/Specified column with ID "unhydrated-column" does not exist in the table./,
-				),
+				() => treeView.root.removeColumns([new Column({ id: "column-0", props: {} })]),
+				validateUsageError(/Specified column with ID "column-0" does not exist in the table./),
 			);
 		});
+
+		it("Removing multiple columns errors if at least one column doesn't exist", () => {
+			const { treeView, Column } = createTableTree();
+			const column0 = new Column({ id: "column-0", props: {} });
+			treeView.initialize({
+				columns: [column0],
+				rows: [],
+			});
+
+			assert.throws(
+				() =>
+					treeView.root.removeColumns([column0, new Column({ id: "column-1", props: {} })]),
+				validateUsageError(/Specified column with ID "column-1" does not exist in the table./),
+			);
+
+			// Additionally, `column-0` should not have been removed.
+			assert(treeView.root.columns.length === 1);
+		});
+
+		// TODO: by range
 	});
 
 	describe("removeRows", () => {
 		it("Remove empty list", () => {
-			const { treeView } = createTableTree();
+			const { treeView, Row } = createTableTree();
 			treeView.initialize({
 				columns: [],
-				rows: [],
+				rows: [new Row({ id: "row-0", cells: {}, props: {} })],
 			});
 
-			treeView.root.removeAllRows();
+			treeView.root.removeRows([]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
-				rows: [],
+				rows: [{ id: "row-0", cells: {}, props: {} }],
 			});
 		});
 
+		// TODO: by ID
 		it("Remove single row", () => {
 			const { treeView, Row } = createTableTree();
 			const row0 = new Row({ id: "row-0", cells: {}, props: {} });
@@ -923,6 +943,7 @@ describe("TableFactory unit tests", () => {
 			});
 		});
 
+		// TODO: by ID
 		it("Remove multiple rows", () => {
 			const { treeView, Row } = createTableTree();
 			const row0 = new Row({ id: "row-0", cells: {}, props: {} });
@@ -959,6 +980,8 @@ describe("TableFactory unit tests", () => {
 				rows: [],
 			});
 		});
+
+		// TODO: by range
 
 		it("Removing single row that doesn't exist on table errors", () => {
 			const { treeView, Row } = createTableTree();
@@ -1201,7 +1224,7 @@ describe("TableFactory unit tests", () => {
 			assert.equal(eventCount, 2);
 
 			// Remove column
-			table.removeColumn("column-0");
+			table.removeColumns(["column-0"]);
 			assert.equal(eventCount, 3);
 		});
 	});
@@ -1451,7 +1474,7 @@ describe("TableFactory unit tests", () => {
 			// The "transaction" method will ensure that all changes are applied atomically.
 			Tree.runTransaction(table, () => {
 				// Remove column1
-				table.removeColumn(column1);
+				table.removeColumns([column1]);
 
 				// Remove the cell at column1 for each row.
 				for (const row of table.rows) {

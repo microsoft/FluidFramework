@@ -154,7 +154,7 @@ export function createTableTree({
  */
 export function removeColumnAndCells(table: InstanceType<typeof Table>, column: Column): void {
 	Tree.runTransaction(table, () => {
-		table.removeColumn(column);
+		table.removeColumns([column]);
 		for (const row of table.rows) {
 			table.removeCell({ column, row });
 		}
