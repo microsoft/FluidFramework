@@ -69,6 +69,7 @@ export function makeOptionalFieldCodec(
 
 	return {
 		encode: (change: OptionalChangeset, context: FieldChangeEncodingContext) => {
+			assert(context.rootNodeChanges.length === 0 && context.rootRenames.length === 0, "XXX");
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 			if (change.valueReplace !== undefined) {
 				encoded.r = {
@@ -84,6 +85,7 @@ export function makeOptionalFieldCodec(
 				encoded.c = [[null, context.encodeNode(change.childChange)]];
 			}
 
+			assert(change.nodeDetach === undefined, "XXX");
 			return encoded;
 		},
 
@@ -113,6 +115,8 @@ export function makeOptionalFieldCodec(
 				);
 				decoded.childChange = context.decodeNode(firstNode[1]);
 			}
+
+			assert(encoded.m === undefined, "XXX");
 
 			return decoded;
 		},

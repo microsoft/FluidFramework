@@ -19,6 +19,7 @@ import { isNoopMark } from "./utils.js";
 import type { FieldChangeEncodingContext } from "../index.js";
 import { EncodedNodeChangeset } from "../modular-schema/index.js";
 import { makeV2CodecHelpers } from "./sequenceFieldCodecV2.js";
+import { assert } from "@fluidframework/core-utils/internal";
 
 export function makeV3Codec(
 	revisionTagCodec: IJsonCodec<
@@ -88,6 +89,8 @@ export function makeV3Codec(
 			changeset: Changeset,
 			context: FieldChangeEncodingContext,
 		): JsonCompatibleReadOnly & Encoded.Changeset<NodeChangeSchema> => {
+			assert(context.rootNodeChanges.length === 0 && context.rootRenames.length === 0, "XXX");
+
 			const jsonMarks: Encoded.Changeset<NodeChangeSchema> = [];
 			for (const mark of changeset) {
 				const encodedMark: Encoded.Mark<NodeChangeSchema> = {
@@ -118,13 +121,17 @@ export function makeV3Codec(
 
 				if (mark.effect !== undefined) {
 					Object.assign(decodedMark, markEffectCodec.decode(mark.effect, context.baseContext));
+					assert(mark.effect.rename === undefined, "XXX");
+					assert(mark.effect.attachAndDetach === undefined, "XXX");
 				}
 				if (mark.cellId !== undefined) {
 					decodedMark.cellId = atomIdCodec.decode(mark.cellId, context.baseContext);
 				}
 				if (mark.changes !== undefined) {
+					assert(mark.cellId === undefined, "XXX");
 					decodedMark.changes = context.decodeNode(mark.changes);
 				}
+
 				marks.push(decodedMark);
 			}
 			return marks;

@@ -278,8 +278,7 @@ function makeModularChangeCodec(
 				},
 
 				decodeRootRename: (oldId, newId, count): void => {
-					addNodeRename(decodedRootTable, oldId, newId, count);
-					decodedRootTable.detachLocations.set(oldId, count, fieldId);
+					addNodeRename(decodedRootTable, oldId, newId, count, fieldId);
 				},
 			};
 
@@ -630,6 +629,7 @@ function getFieldToRoots(rootTable: RootNodeTable): FieldRootMap {
 		} else {
 			fail("Untracked root change");
 		}
+		fail("");
 	}
 
 	for (const entry of rootTable.oldToNewId.entries()) {
@@ -643,6 +643,7 @@ function getFieldToRoots(rootTable: RootNodeTable): FieldRootMap {
 		} else {
 			fail("Untracked root change");
 		}
+		fail("");
 	}
 
 	return fieldToRoots;

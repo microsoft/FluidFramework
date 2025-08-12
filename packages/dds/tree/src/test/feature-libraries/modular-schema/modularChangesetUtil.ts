@@ -182,7 +182,7 @@ function normalizeNodeIds(change: ModularChangeset): ModularChangeset {
 			// while pruning is supposed to be an optimization which could be skipped.
 			normalizedFieldChanges.set(
 				field,
-				changeHandler.rebaser.prune(fieldChange.change, normalizeNodeChanges),
+				changeHandler.rebaser.prune(fieldChange.change, normalizeNodeChanges, () => true),
 			);
 
 			const crossFieldKeys = changeHandler.getCrossFieldKeys(fieldChange.change);
@@ -536,7 +536,13 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 
 	if (args.renames !== undefined) {
 		for (const rename of args.renames) {
-			addNodeRename(result.rootNodes, rename.oldId, rename.newId, rename.count);
+			addNodeRename(
+				result.rootNodes,
+				rename.oldId,
+				rename.newId,
+				rename.count,
+				rename.detachLocation,
+			);
 		}
 	}
 
