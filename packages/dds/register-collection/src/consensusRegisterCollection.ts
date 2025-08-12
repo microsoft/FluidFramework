@@ -106,11 +106,14 @@ const snapshotFileName = "header";
 interface IConsensusRegisterCollectionInternalEvents {
 	/**
 	 * Emitted when a pending message is rolled back.
+	 * @param rollbackMessageId - A unique identifying number for the pending message.
 	 */
 	pendingMessageRollback: (rollbackMessageId: number) => void;
 
 	/**
 	 * Emitted when a pending message is acknowledged.
+	 * @param ackMessageId - A unique identifying number for the pending message.
+	 * @param winner - Whether the message won the FWW race to modify the value.
 	 */
 	pendingMessageAck: (ackMessageId: number, winner: boolean) => void;
 }
@@ -304,8 +307,11 @@ export class ConsensusRegisterCollection<T>
 					);
 					if (local) {
 						// Resolve the pending promise for this operation now that we have received an ack for it.
-						const ackMessageId = localOpMetadata as number;
-						this.internalEvents.emit("pendingMessageAck", ackMessageId, winner);
+						assert(
+							typeof localOpMetadata === "number",
+							"Expect localOpMetadata to be a number",
+						);
+						this.internalEvents.emit("pendingMessageAck", localOpMetadata, winner);
 					}
 					break;
 				}
@@ -403,7 +409,8 @@ export class ConsensusRegisterCollection<T>
 		// We don't need to do anything to roll back CRC, it's safe to just drop
 		// the op on the floor since we don't modify the DDS until the ack.
 		// We emit an internal event so we know to resolve the pending promise.
-		this.internalEvents.emit("pendingMessageRollback", localOpMetadata as number);
+		assert(typeof localOpMetadata === "number", "Expect localOpMetadata to be a number");
+		this.internalEvents.emit("pendingMessageRollback", localOpMetadata);
 	}
 
 	protected applyStashedOp(): void {
