@@ -342,11 +342,15 @@ export interface MenuItemProps {
 	isActive: boolean;
 	/**
 	 * Icon to display next to the container name based on its state.
+	 *
+	 * @defaultValue `undefined` - No state icon is displayed when not provided.
 	 */
 	stateIcon?: React.ReactElement;
 
 	/**
 	 * Whether the container or container runtime has recent changes.
+	 *
+	 * @defaultValue `false` - No change indicator is shown when not provided.
 	 */
 	hasChanges?: boolean;
 }
@@ -470,6 +474,8 @@ export interface MenuProps {
 
 	/**
 	 * Callback function when a container should be removed from the list.
+	 *
+	 * @defaultValue `undefined` - No remove functionality is available when not provided.
 	 */
 	onRemoveContainer?: (containerKey: ContainerKey) => void;
 }
@@ -496,6 +502,8 @@ interface ContainersMenuSectionProps {
 
 	/**
 	 * Callback function when a container should be removed from the list.
+	 *
+	 * @defaultValue `undefined` - No remove functionality is available when not provided.
 	 */
 	onRemoveContainer?: (containerKey: ContainerKey) => void;
 }
