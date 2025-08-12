@@ -744,7 +744,9 @@ export namespace System_TableSchema {
 
 					if (index === undefined) {
 						const columnId = this._getColumnId(columnOrIdToRemove);
-						throw new UsageError(`No column with ID "${columnId}" exists in the table.`);
+						throw new UsageError(
+							`Specified column with ID "${columnId}" does not exist in the table.`,
+						);
 					}
 					const removedColumn = this.columns[index] as ColumnValueType;
 					this.columns.removeAt(index);
@@ -755,16 +757,21 @@ export namespace System_TableSchema {
 
 				// To reduce the number of operations in the transaction, we will build up a series of
 				// contiguous ranges to be removed from the input list and remove each range as a single operation.
-				const columnNodesToRemove = columnsToRemove.map((column) => {
-					const node = this._getColumn(column);
-					if (node === undefined) {
+				const columnIndicesToRemove: number[] = [];
+				const columnNodesToRemove: ColumnValueType[] = [];
+				for (const column of columnsToRemove) {
+					const columnIndex = this._getColumnIndex(column);
+					if (columnIndex === undefined) {
 						const columnId = this._getColumnId(column);
-						throw new UsageError(`No column with ID "${columnId}" exists in the table.`);
+						throw new UsageError(
+							`Specified column with ID "${columnId}" does not exist in the table.`,
+						);
 					}
-					return node;
-				});
+					columnIndicesToRemove.push(columnIndex);
+					columnNodesToRemove.push(this.columns[columnIndex] as ColumnValueType);
+				}
 
-				const rangesToRemove = this._nodesToIndexRanges(columnNodesToRemove, this.columns);
+				const rangesToRemove = Table._groupIndicesIntoRanges(columnIndicesToRemove);
 
 				Tree.runTransaction(this, () => {
 					// Note, throwing an error within a transaction will abort the entire transaction.
@@ -814,7 +821,9 @@ export namespace System_TableSchema {
 
 					if (index === undefined) {
 						const rowId = this._getRowId(rowOrIdToRemove);
-						throw new UsageError(`No row with ID "${rowId}" exists in the table.`);
+						throw new UsageError(
+							`Specified row with ID "${rowId}" does not exist in the table.`,
+						);
 					}
 					const removedRow = this.rows[index] as RowValueType;
 					this.rows.removeAt(index);
@@ -825,16 +834,21 @@ export namespace System_TableSchema {
 
 				// To reduce the number of operations in the transaction, we will build up a series of
 				// contiguous ranges to be removed from the input list and remove each range as a single operation.
-				const rowNodesToRemove = rowsToRemove.map((row) => {
-					const node = this._getRow(row);
-					if (node === undefined) {
+				const rowIndicesToRemove: number[] = [];
+				const rowNodesToRemove: RowValueType[] = [];
+				for (const row of rowsToRemove) {
+					const rowIndex = this._getRowIndex(row);
+					if (rowIndex === undefined) {
 						const rowId = this._getRowId(row);
-						throw new UsageError(`No row with ID "${rowId}" exists in the table.`);
+						throw new UsageError(
+							`Specified row with ID "${rowId}" does not exist in the table.`,
+						);
 					}
-					return node;
-				});
+					rowIndicesToRemove.push(rowIndex);
+					rowNodesToRemove.push(this.rows[rowIndex] as RowValueType);
+				}
 
-				const rangesToRemove = this._nodesToIndexRanges(rowNodesToRemove, this.rows);
+				const rangesToRemove = Table._groupIndicesIntoRanges(rowIndicesToRemove);
 
 				Tree.runTransaction(this, () => {
 					// Note, throwing an error within a transaction will abort the entire transaction.
@@ -900,10 +914,12 @@ export namespace System_TableSchema {
 			}
 
 			private _getColumnIndex(columnOrId: string | ColumnValueType): number | undefined {
+				const columnId = this._getColumnId(columnOrId);
 				// TypeScript is unable to narrow the types correctly here, hence the cast.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
-				const column = this._getColumn(columnOrId);
-				const index = this.columns.findIndex((currentColumn) => currentColumn === column);
+				const index = this.columns.findIndex(
+					(currentColumn) => (currentColumn as ColumnValueType).id === columnId,
+				);
 				return index === -1 ? undefined : index;
 			}
 
@@ -920,10 +936,12 @@ export namespace System_TableSchema {
 			}
 
 			private _getRowIndex(rowOrId: string | RowValueType): number | undefined {
+				const rowId = this._getRowId(rowOrId);
 				// TypeScript is unable to narrow the types correctly here, hence the cast.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
-				const row = this._getRow(rowOrId);
-				const index = this.rows.findIndex((currentRow) => currentRow === row);
+				const index = this.rows.findIndex(
+					(currentRow) => (currentRow as RowValueType).id === rowId,
+				);
 				return index === -1 ? undefined : index;
 			}
 
@@ -931,20 +949,9 @@ export namespace System_TableSchema {
 				return this._getRowIndex(rowId) !== undefined;
 			}
 
-			private _nodesToIndexRanges<TNode>(
-				nodes: readonly TNode[],
-				referenceList: readonly TNode[],
+			private static _groupIndicesIntoRanges(
+				indices: number[],
 			): { start: number; end: number }[] {
-				// First, collect all indices and validate they exist
-				const indices: number[] = [];
-				for (const node of nodes) {
-					const index = referenceList.indexOf(node);
-					if (index === -1) {
-						throw new UsageError(`Specified node does not exist in the table.`);
-					}
-					indices.push(index);
-				}
-
 				// Sort indices in descending order to remove from the end first
 				// This prevents index shifting issues during removal
 				indices.sort((a, b) => b - a);
@@ -1163,7 +1170,7 @@ export namespace System_TableSchema {
  * // The "transaction" method will ensure that all changes are applied atomically.
  * Tree.runTransaction(table, () => {
  * 	// Remove column1.
- * 	table.removeColumns([column1]);
+ * 	table.removeColumns([column1]\);
  *
  * 	// Remove the cell at column1 for each row.
  * 	for (const row of table.rows) {
