@@ -381,7 +381,7 @@ const useMenuItemStyles = makeStyles({
 		flex: 1,
 		gap: "8px",
 		minWidth: 0, // Allow flex item to shrink below content size
-		overflow: "hidden", // Hide overflow
+		overflow: "visible",
 	},
 	changeIndicator: {
 		width: "6px",
@@ -392,13 +392,18 @@ const useMenuItemStyles = makeStyles({
 		flexShrink: 0,
 	},
 	textSpan: {
-		whiteSpace: "nowrap",
+		whiteSpace: "normal",
+		overflowWrap: "anywhere",
 		flex: 1,
 		minWidth: 0,
 		marginRight: "8px",
 	},
 	stateIconContainer: {
 		flexShrink: 0,
+		width: "28px",
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "center",
 	},
 	deleteButton: {
 		backgroundColor: "transparent",
@@ -441,7 +446,7 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 			<div className={styles.itemContent}>
 				{hasChanges && <div className={styles.changeIndicator} />}
 				<span className={styles.textSpan}>{text}</span>
-				{stateIcon && <div className={styles.stateIconContainer}>{stateIcon}</div>}
+				<div className={styles.stateIconContainer}>{stateIcon}</div>
 			</div>
 		</div>
 	);
