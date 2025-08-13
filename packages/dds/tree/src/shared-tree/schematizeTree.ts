@@ -3,86 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
-import {
-	type ITreeCursorSynchronous,
-	type TreeStoredSchema,
-	rootFieldKey,
-	schemaDataIsEmpty,
-} from "../core/index.js";
+import { type TreeStoredSchema, rootFieldKey, schemaDataIsEmpty } from "../core/index.js";
 import {
 	FieldKinds,
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
+	type IDefaultEditBuilder,
+	type TreeChunk,
 } from "../feature-libraries/index.js";
 
 import type { ITreeCheckout } from "./treeCheckout.js";
-
-/**
- * Modify `storedSchema` and invoke `setInitialTree` when it's time to set the tree content.
- *
- * Requires `storedSchema` to be in its default/empty state.
- *
- * This is done in such a way that if the content (implicitly assumed to start empty)
- * is never out of schema.
- * This means that if the root field of the new schema requires content (like a value field),
- * a temporary intermediate schema is used so the initial empty state is not out of schema.
- *
- * Since this makes multiple changes, callers may want to wrap it in a transaction.
- */
-export function initializeContent(
-	schemaRepository: {
-		storedSchema: ITreeCheckout["storedSchema"];
-		updateSchema: ITreeCheckout["updateSchema"];
-	},
-	newSchema: TreeStoredSchema,
-	setInitialTree: () => void,
-): void {
-	assert(
-		schemaDataIsEmpty(schemaRepository.storedSchema),
-		0x743 /* cannot initialize after a schema is set */,
-	);
-
-	const rootSchema = newSchema.rootFieldSchema;
-	const rootKind = rootSchema.kind;
-
-	// To keep the data in schema during the update, first define a schema that tolerates the current (empty) tree as well as the final (initial) tree.
-	let incrementalSchemaUpdate: TreeStoredSchema;
-	if (
-		rootKind === FieldKinds.sequence.identifier ||
-		rootKind === FieldKinds.optional.identifier
-	) {
-		// These kinds are known to tolerate empty, so use the schema as is:
-		incrementalSchemaUpdate = newSchema;
-	} else {
-		assert(rootKind === FieldKinds.required.identifier, 0x5c8 /* Unexpected kind */);
-		// Replace value kind with optional kind in root field schema:
-		incrementalSchemaUpdate = {
-			nodeSchema: newSchema.nodeSchema,
-			rootFieldSchema: {
-				kind: FieldKinds.optional.identifier,
-				types: rootSchema.types,
-				persistedMetadata: rootSchema.persistedMetadata,
-			},
-		};
-	}
-
-	assert(
-		allowsRepoSuperset(defaultSchemaPolicy, newSchema, incrementalSchemaUpdate),
-		0x5c9 /* Incremental Schema during update should allow a superset of the final schema */,
-	);
-	// Update to intermediate schema
-	schemaRepository.updateSchema(incrementalSchemaUpdate);
-	// Insert initial tree
-	setInitialTree();
-
-	// If intermediate schema is not final desired schema, update to the final schema:
-	if (incrementalSchemaUpdate !== newSchema) {
-		// This makes the root more strict, so set allowNonSupersetSchema to true.
-		schemaRepository.updateSchema(newSchema, true);
-	}
-}
 
 export function canInitialize(checkout: ITreeCheckout): boolean {
 	// Check for empty.
@@ -92,58 +24,103 @@ export function canInitialize(checkout: ITreeCheckout): boolean {
 /**
  * Initialize a checkout with a schema and tree content.
  * This function should only be called when the tree is uninitialized (no schema or content).
- * @remarks
  *
- * If the proposed schema (from `treeContent`) is not compatible with the empty tree, this function handles using an intermediate schema
+ * @param checkout - The tree checkout to initialize.
+ * @param newSchema - The new schema to apply.
+ * @param contentFactory - A function that sets the initial tree content.
+ * Invoked after a schema containing all nodes from newSchema is applied.
+ * Note that the final root field schema may not have been applied yet: if the root is required, it will be optional at this time
+ * (so the root being empty before the insertion is not out of schema).
+ * @remarks
+ * If `newSchema` is not compatible with the empty tree, this function handles it using an intermediate schema
  * which supports the empty tree as well as the final tree content.
+ * @privateRemarks
+ * This takes in a checkout using a subset of the checkout interface to enable easier unit testing.
  */
 export function initialize(
-	checkout: ITreeCheckout,
-	treeContent: TreeStoredContentStrict,
+	checkout: Pick<ITreeCheckout, "storedSchema" | "updateSchema">,
+	newSchema: TreeStoredSchema,
+	setInitialTree: () => void,
 ): void {
-	checkout.transaction.start();
-	try {
-		initializeContent(checkout, treeContent.schema, () => {
-			const field = { field: rootFieldKey, parent: undefined };
-			const contentChunk = checkout.forest.chunkField(treeContent.initialTree);
+	assert(
+		schemaDataIsEmpty(checkout.storedSchema),
+		0x743 /* cannot initialize after a schema is set */,
+	);
 
-			switch (checkout.storedSchema.rootFieldSchema.kind) {
-				case FieldKinds.optional.identifier: {
-					const fieldEditor = checkout.editor.optionalField(field);
-					assert(
-						contentChunk.topLevelLength <= 1,
-						0x7f4 /* optional field content should normalize at most one item */,
-					);
-					fieldEditor.set(contentChunk.topLevelLength === 0 ? undefined : contentChunk, true);
-					break;
-				}
-				case FieldKinds.sequence.identifier: {
-					const fieldEditor = checkout.editor.sequenceField(field);
-					// TODO: should do an idempotent edit here.
-					fieldEditor.insert(0, contentChunk);
-					break;
-				}
-				default: {
-					fail(0xac7 /* unexpected root field kind during initialize */);
-				}
-			}
-		});
-	} finally {
-		checkout.transaction.commit();
+	// To keep the data in schema during the update, first define a schema that tolerates the current (empty) tree as well as the final (initial) tree.
+	let intermediateSchema: TreeStoredSchema;
+	{
+		const rootSchema = newSchema.rootFieldSchema;
+		const rootKind = rootSchema.kind;
+		if (
+			rootKind === FieldKinds.sequence.identifier ||
+			rootKind === FieldKinds.optional.identifier
+		) {
+			// These kinds are known to tolerate empty, so use the schema as is:
+			intermediateSchema = newSchema;
+		} else {
+			assert(rootKind === FieldKinds.required.identifier, 0x5c8 /* Unexpected kind */);
+			// Replace value kind with optional kind in root field schema:
+			intermediateSchema = {
+				nodeSchema: newSchema.nodeSchema,
+				rootFieldSchema: {
+					kind: FieldKinds.optional.identifier,
+					types: rootSchema.types,
+					persistedMetadata: rootSchema.persistedMetadata,
+				},
+			};
+		}
+	}
+
+	assert(
+		allowsRepoSuperset(defaultSchemaPolicy, newSchema, intermediateSchema),
+		0x5c9 /* Incremental Schema during update should allow a superset of the final schema */,
+	);
+
+	checkout.updateSchema(intermediateSchema);
+	setInitialTree();
+
+	// If intermediate schema is not final desired schema, update to the final schema:
+	if (intermediateSchema !== newSchema) {
+		// This makes the root more strict, so set allowNonSupersetSchema to true.
+		checkout.updateSchema(newSchema, true);
 	}
 }
 
 /**
- * Content that can populate a `SharedTree`.
+ * Construct a general purpose `setInitialTree` for use with {@link initialize} from a function that returns a chunk.
+ * @param contentFactory - A function that returns the initial tree content as a chunk.
+ * Invoked after a schema containing all nodes from newSchema is applied.
+ * Note that the final root field schema may not have been applied yet: if the root is required, it will be optional at this time
+ * (so the root being empty before the insertion is not out of schema).
+ * @remarks
+ * This does not support sequence roots as they are not allowed in the public API surface.
+ * A test utility for them can be found as `initializeSequenceRoot` for testing internal logic which uses a sequence root.
  */
-export interface TreeStoredContentStrict {
-	/**
-	 * The stored schema.
-	 */
-	readonly schema: TreeStoredSchema;
+export function initializerFromChunk(
+	checkout: Pick<ITreeCheckout, "storedSchema"> & {
+		readonly editor: IDefaultEditBuilder;
+	},
+	contentFactory: () => TreeChunk,
+): () => void {
+	return () => initializeFromChunk(checkout, contentFactory());
+}
 
-	/**
-	 * Field cursor with the initial tree content for the {@link rootField}.
-	 */
-	readonly initialTree: ITreeCursorSynchronous;
+function initializeFromChunk(
+	checkout: Pick<ITreeCheckout, "storedSchema"> & {
+		readonly editor: IDefaultEditBuilder;
+	},
+	contentChunk: TreeChunk,
+): void {
+	const field = { field: rootFieldKey, parent: undefined };
+	assert(
+		checkout.storedSchema.rootFieldSchema.kind === FieldKinds.optional.identifier,
+		"initializerFromChunk only supports optional roots",
+	);
+	const fieldEditor = checkout.editor.optionalField(field);
+	assert(
+		contentChunk.topLevelLength <= 1,
+		0x7f4 /* optional field content should normalize at most one item */,
+	);
+	fieldEditor.set(contentChunk.topLevelLength === 0 ? undefined : contentChunk, true);
 }

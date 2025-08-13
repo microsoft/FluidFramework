@@ -92,6 +92,7 @@ export { mapRootChanges } from "./deltaUtils.js";
 export {
 	type TreeChunk,
 	chunkTree,
+	chunkField,
 	chunkFieldSingle,
 	buildChunkedForest,
 	defaultChunkPolicy,
@@ -101,6 +102,7 @@ export {
 	makeFieldBatchCodec,
 	fluidVersionToFieldBatchCodecWriteVersion,
 	type FieldBatchEncodingContext,
+	emptyChunk,
 } from "./chunked-forest/index.js";
 
 export {
