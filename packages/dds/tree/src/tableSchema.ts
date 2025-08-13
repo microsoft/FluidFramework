@@ -1519,7 +1519,13 @@ export namespace TableSchema {
 
 		/**
 		 * Removes the specified column from the table.
-		 * @remarks Also removes any corresponding cells from the table's rows.
+		 * @remarks
+		 * Also removes any corresponding cells from the table's rows.
+		 *
+		 * Note: this operation can be slow for tables with many rows.
+		 * We are actively working on improving the performance of this operation, but for now it may have a negative
+		 * impact on performance.
+		 *
 		 * @param column - The {@link TableSchema.Column | column} or {@link TableSchema.Column.id | column ID} to remove.
 		 * @throws Throws an error if the column is not in the table.
 		 * In this case, no columns are removed.
@@ -1530,7 +1536,13 @@ export namespace TableSchema {
 
 		/**
 		 * Removes 0 or more columns from the table.
-		 * @remarks Also removes any corresponding cells from the table's rows.
+		 * @remarks
+		 * Also removes any corresponding cells from the table's rows.
+		 *
+		 * Note: this operation can be slow for tables with many rows.
+		 * We are actively working on improving the performance of this operation, but for now it may have a negative
+		 * impact on performance.
+		 *
 		 * @param columns - The columns to remove.
 		 * @throws Throws an error if any of the columns are not in the table.
 		 * In this case, no columns are removed.
@@ -1540,7 +1552,14 @@ export namespace TableSchema {
 		): TreeNodeFromImplicitAllowedTypes<TColumn>[];
 		/**
 		 * Removes 0 or more columns from the table.
-		 * @remarks Also removes any corresponding cells from the table's rows.
+		 *
+		 * @remarks
+		 * Also removes any corresponding cells from the table's rows.
+		 *
+		 * Note: this operation can be slow for tables with many rows.
+		 * We are actively working on improving the performance of this operation, but for now it may have a negative
+		 * impact on performance.
+		 *
 		 * @param columns - The columns to remove, specified by their {@link TableSchema.Column.id}.
 		 * @throws Throws an error if any of the columns are not in the table.
 		 * In this case, no columns are removed.
@@ -1549,6 +1568,14 @@ export namespace TableSchema {
 
 		/**
 		 * Removes all columns from the table.
+		 *
+		 * @remarks
+		 * Also removes any corresponding cells from the table's rows.
+		 *
+		 * Note: this operation can be slow for tables with many rows.
+		 * We are actively working on improving the performance of this operation, but for now it may have a negative
+		 * impact on performance.
+		 *
 		 * @returns The removed columns.
 		 */
 		removeAllColumns(): TreeNodeFromImplicitAllowedTypes<TColumn>[];
