@@ -151,26 +151,45 @@ const schema = new SchemaFactory("com.example");
 	// UnannotateImplicitAllowedTypes
 	{
 		{
-			type _check = requireAssignableTo<
-				UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>,
-				ImplicitAllowedTypes
+			type _check = requireTrue<
+				areSafelyAssignable<
+					UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>,
+					ImplicitAllowedTypes
+				>
 			>;
 		}
 
 		{
-			type T = TreeNodeSchema;
-			type _check = requireAssignableTo<
-				T,
-				UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>
-			>;
+			type Result = UnannotateImplicitAllowedTypes<AnnotatedAllowedTypes>;
+			type _check = requireTrue<areSafelyAssignable<Result, AllowedTypes>>;
 		}
 
 		{
-			type T = AllowedTypes;
-			type _check = requireAssignableTo<
-				T,
-				UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>
-			>;
+			type Result = UnannotateImplicitAllowedTypes<ImplicitAllowedTypes>;
+			type _check = requireTrue<areSafelyAssignable<Result, ImplicitAllowedTypes>>;
+		}
+
+		{
+			type Result = UnannotateImplicitAllowedTypes<TreeNodeSchema>;
+			type _check = requireTrue<areSafelyAssignable<Result, TreeNodeSchema>>;
+		}
+		{
+			type Result = UnannotateImplicitAllowedTypes<[AnnotatedAllowedType]>;
+			type _check = requireTrue<areSafelyAssignable<Result, [LazyItem<TreeNodeSchema>]>>;
+		}
+
+		// eslint-disable-next-line no-inner-declarations
+		function _genericCase<T extends ImplicitAnnotatedAllowedTypes>(): void {
+			type Result = UnannotateImplicitAllowedTypes<T>;
+			// @ts-expect-error Ideally this would compile, however TypeScript can't solve the type equivalence so it does not.
+			type _check = requireTrue<areSafelyAssignable<Result, ImplicitAllowedTypes>>;
+		}
+
+		// eslint-disable-next-line no-inner-declarations
+		function _genericCase2<T extends ImplicitAllowedTypes>(): void {
+			type Result = UnannotateImplicitAllowedTypes<T>;
+			// @ts-expect-error Ideally this would compile, however TypeScript can't solve the type equivalence so it does not.
+			type _check = requireTrue<areSafelyAssignable<Result, T>>;
 		}
 	}
 

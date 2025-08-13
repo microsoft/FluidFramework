@@ -16,7 +16,7 @@ import { anchorSlot } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
-	cursorForMapTreeNode,
+	cursorForMapTreeField,
 	TreeStatus,
 	Context,
 } from "../feature-libraries/index.js";
@@ -186,7 +186,7 @@ export class SchematizingSimpleTreeView<
 
 			initialize(this.checkout, {
 				schema,
-				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
+				initialTree: cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
 			});
 		});
 	}
