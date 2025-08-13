@@ -135,7 +135,7 @@ function validateHandlesInForestSummary(
 	const expectedHandleCount = validationArgs.shouldContainHandle
 		? validationArgs.handleCount
 		: 0;
-	assert.strictEqual(totalHandles, expectedHandleCount, "Expected handle count to match");
+	assert.equal(totalHandles, expectedHandleCount, "Expected handle count to match");
 }
 
 /**

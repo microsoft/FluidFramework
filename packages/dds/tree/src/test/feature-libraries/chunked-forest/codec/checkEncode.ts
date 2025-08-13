@@ -39,13 +39,14 @@ export function checkNodeEncode(
 	nodeEncoder: NodeEncoder,
 	context: EncoderContext,
 	tree: JsonableTree,
+	incrementalDecoder?: IncrementalDecoder,
 ): BufferFormat {
 	const buffer: BufferFormat = [nodeEncoder.shape];
 	const cursor = cursorForJsonableTreeNode(tree);
 	nodeEncoder.encodeNode(cursor, context, buffer);
 
 	// Check round-trip
-	checkDecode([buffer], [[tree]]);
+	checkDecode([buffer], [[tree]], undefined, incrementalDecoder);
 
 	return buffer.slice(1);
 }

@@ -98,7 +98,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 	describe("startingSummary", () => {
 		it("returns ShouldSummarizeIncrementally=false when incrementalSummaryContext is undefined", () => {
 			const builder = createIncrementalSummaryBuilder();
-			assert.strictEqual(
+			assert.equal(
 				builder.forestSummaryState,
 				ForestSummaryTrackingState.ReadyToTrack,
 				"Expected forestSummaryState to be ReadyToTrack",
@@ -110,12 +110,12 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				undefined /* incrementalSummaryContext */,
 			);
 
-			assert.strictEqual(
+			assert.equal(
 				shouldSummarizeIncrementally,
 				false,
 				"Expected ShouldSummarizeIncrementally to be false when context is undefined",
 			);
-			assert.strictEqual(
+			assert.equal(
 				builder.forestSummaryState,
 				ForestSummaryTrackingState.ReadyToTrack,
 				"Expected forestSummaryState to remain ReadyToTrack",
@@ -124,7 +124,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 
 		it("returns ShouldSummarizeIncrementally=true when incrementalSummaryContext is defined", () => {
 			const builder = createIncrementalSummaryBuilder();
-			assert.strictEqual(
+			assert.equal(
 				builder.forestSummaryState,
 				ForestSummaryTrackingState.ReadyToTrack,
 				"Expected forestSummaryState to be ReadyToTrack",
@@ -135,12 +135,12 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				false /* fullTree */,
 				incrementalSummaryContext,
 			);
-			assert.strictEqual(
+			assert.equal(
 				shouldSummarizeIncrementally,
 				true,
 				"Expected ShouldSummarizeIncrementally to be true when context is provided",
 			);
-			assert.strictEqual(
+			assert.equal(
 				builder.forestSummaryState,
 				ForestSummaryTrackingState.Tracking,
 				"Expected forestSummaryState to change to Tracking",
@@ -149,7 +149,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 
 		it("returns ShouldSummarizeIncrementally=true when fullTree is true", () => {
 			const builder = createIncrementalSummaryBuilder();
-			assert.strictEqual(
+			assert.equal(
 				builder.forestSummaryState,
 				ForestSummaryTrackingState.ReadyToTrack,
 				"Expected forestSummaryState to be ReadyToTrack",
@@ -160,12 +160,12 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				true /* fullTree */,
 				incrementalSummaryContext,
 			);
-			assert.strictEqual(
+			assert.equal(
 				shouldSummarizeIncrementally,
 				true,
 				"Expected ShouldSummarizeIncrementally to be true when fullTree is true",
 			);
-			assert.strictEqual(
+			assert.equal(
 				builder.forestSummaryState,
 				ForestSummaryTrackingState.Tracking,
 				"Expected forestSummaryState to change to Tracking",
@@ -182,7 +182,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				false /* fullTree */,
 				incrementalSummaryContext,
 			);
-			assert.strictEqual(
+			assert.equal(
 				builder.forestSummaryState,
 				ForestSummaryTrackingState.Tracking,
 				"Expected forestSummaryState to be Tracking",
@@ -194,7 +194,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 					builder.startingSummary(new SummaryTreeBuilder(), false, incrementalSummaryContext),
 				"calling startingSummary while already tracking should throw",
 			);
-			assert.strictEqual(
+			assert.equal(
 				builder.forestSummaryState,
 				ForestSummaryTrackingState.Tracking,
 				"Expected forestSummaryState to remain Tracking after failed start",
@@ -205,7 +205,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 	describe("completedSummary", () => {
 		it("does nothing when incrementalSummaryContext is undefined", () => {
 			const builder = createIncrementalSummaryBuilder();
-			assert.strictEqual(
+			assert.equal(
 				builder.forestSummaryState,
 				ForestSummaryTrackingState.ReadyToTrack,
 				"Expected forestSummaryState to be ReadyToTrack",
@@ -214,7 +214,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				() => builder.completedSummary(undefined),
 				"Completed summary with undefined context should not throw",
 			);
-			assert.strictEqual(
+			assert.equal(
 				builder.forestSummaryState,
 				ForestSummaryTrackingState.ReadyToTrack,
 				"Expected forestSummaryState to remain ReadyToTrack",
@@ -223,7 +223,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 
 		it("throws when not tracking summary", () => {
 			const builder = createIncrementalSummaryBuilder();
-			assert.strictEqual(
+			assert.equal(
 				builder.forestSummaryState,
 				ForestSummaryTrackingState.ReadyToTrack,
 				"Expected forestSummaryState to be ReadyToTrack",
@@ -233,7 +233,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				() => builder.completedSummary(incrementalSummaryContext),
 				"Calling completedSummary without starting should throw",
 			);
-			assert.strictEqual(
+			assert.equal(
 				builder.forestSummaryState,
 				ForestSummaryTrackingState.ReadyToTrack,
 				"Expected forestSummaryState to remain ReadyToTrack after failed completion",
@@ -242,7 +242,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 
 		it("clears tracking state when called after starting summary", () => {
 			const builder = createIncrementalSummaryBuilder();
-			assert.strictEqual(
+			assert.equal(
 				builder.forestSummaryState,
 				ForestSummaryTrackingState.ReadyToTrack,
 				"Expected forestSummaryState to be ReadyToTrack",
@@ -250,7 +250,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			const summaryBuilder = new SummaryTreeBuilder();
 			const incrementalSummaryContext = createMockIncrementalSummaryContext(10, 0);
 			builder.startingSummary(summaryBuilder, false /* fullTree */, incrementalSummaryContext);
-			assert.strictEqual(
+			assert.equal(
 				builder.forestSummaryState,
 				ForestSummaryTrackingState.Tracking,
 				"Expected forestSummaryState to change to Tracking",
@@ -259,7 +259,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				() => builder.completedSummary(incrementalSummaryContext),
 				"Calling completedSummary after starting should be successful",
 			);
-			assert.strictEqual(
+			assert.equal(
 				builder.forestSummaryState,
 				ForestSummaryTrackingState.ReadyToTrack,
 				"Expected forestSummaryState to be back to ReadyToTrack",
@@ -305,12 +305,12 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			const chunk0 = builder.getEncodedIncrementalChunk(0 as ChunkReferenceId);
 			const chunk1 = builder.getEncodedIncrementalChunk(1 as ChunkReferenceId);
 
-			assert.deepStrictEqual(
+			assert.deepEqual(
 				chunk0,
 				blobMap.get("0/contents"),
 				"Chunk 0 should match stored contents",
 			);
-			assert.deepStrictEqual(
+			assert.deepEqual(
 				chunk1,
 				blobMap.get("1/contents"),
 				"Chunk 1 should match stored contents",
@@ -348,8 +348,8 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			const parentChunk = builder.getEncodedIncrementalChunk(0 as ChunkReferenceId);
 			const nestedChunk = builder.getEncodedIncrementalChunk(1 as ChunkReferenceId);
 
-			assert.deepStrictEqual(parentChunk, blobMap.get("0/contents"));
-			assert.deepStrictEqual(nestedChunk, blobMap.get("0/1/contents"));
+			assert.deepEqual(parentChunk, blobMap.get("0/contents"));
+			assert.deepEqual(nestedChunk, blobMap.get("0/1/contents"));
 		});
 
 		it("throws when chunk contents are missing", async () => {
@@ -395,9 +395,9 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				incrementalSummaryContext,
 			);
 			const referenceIds = builder.encodeIncrementalField(testCursor, () => mockEncodedChunk);
-			assert.strictEqual(referenceIds.length, 1, "Should return one reference ID");
+			assert.equal(referenceIds.length, 1, "Should return one reference ID");
 			const referenceId = referenceIds[0];
-			assert.strictEqual(typeof referenceId, "number", "Reference ID should be a number");
+			assert.equal(typeof referenceId, "number", "Reference ID should be a number");
 		});
 
 		it("always encodes chunks in full tree mode", () => {
@@ -423,11 +423,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			// Should still encode (not use handle) because it's full tree mode
 			const referenceIds2 = builder.encodeIncrementalField(testCursor, () => mockEncodedChunk);
 			// Should get different reference IDs because both were encoded
-			assert.notDeepStrictEqual(
-				referenceIds1,
-				referenceIds2,
-				"Reference IDs should be different",
-			);
+			assert.notDeepEqual(referenceIds1, referenceIds2, "Reference IDs should be different");
 		});
 
 		it("creates summary handles for unchanged chunks", () => {
@@ -456,15 +452,15 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			builder.startingSummary(summaryBuilder, false, incrementalSummaryContext2);
 			const referenceIds2 = builder.encodeIncrementalField(testCursor, () => mockEncodedChunk);
 			// Should reuse the same reference ID
-			assert.deepStrictEqual(referenceIds1, referenceIds2, "Reference IDs should match");
+			assert.deepEqual(referenceIds1, referenceIds2, "Reference IDs should match");
 
 			// Verify that a handle was added to the summary builder
-			assert.strictEqual(referenceIds1.length, 1, "Should return one reference ID");
+			assert.equal(referenceIds1.length, 1, "Should return one reference ID");
 			const referenceId1 = referenceIds1[0];
 			const summary = summaryBuilder.getSummaryTree();
 			const summaryEntry: { type?: SummaryType } | undefined =
 				summary.summary.tree[`${referenceId1}`];
-			assert.strictEqual(
+			assert.equal(
 				summaryEntry?.type,
 				SummaryType.Handle,
 				"Expected summary entry to be a handle",
@@ -504,15 +500,15 @@ describe("ForestIncrementalSummaryBuilder", () => {
 
 			// Should reuse the same reference ID since the chunk hasn't changed since the last successful summary.
 			const referenceIds2 = builder.encodeIncrementalField(testCursor, () => mockEncodedChunk);
-			assert.deepStrictEqual(referenceIds1, referenceIds2, "Reference IDs should match");
+			assert.deepEqual(referenceIds1, referenceIds2, "Reference IDs should match");
 
 			// Verify that a handle was added to the summary builder
-			assert.strictEqual(referenceIds1.length, 1, "Should return one reference ID");
+			assert.equal(referenceIds1.length, 1, "Should return one reference ID");
 			const referenceId1 = referenceIds1[0];
 			const summary = summaryBuilder.getSummaryTree();
 			const summaryEntry: { type?: SummaryType } | undefined =
 				summary.summary.tree[`${referenceId1}`];
-			assert.strictEqual(
+			assert.equal(
 				summaryEntry?.type,
 				SummaryType.Handle,
 				"Expected summary entry to be a handle",
@@ -540,7 +536,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			await builder.load(storageService, getReadAndParseChunk(blobMap));
 
 			const result = builder.getEncodedIncrementalChunk(0 as ChunkReferenceId);
-			assert.deepStrictEqual(
+			assert.deepEqual(
 				result,
 				blobMap.get("0/contents"),
 				"Should return correct chunk contents",
