@@ -27,7 +27,7 @@ export function canInitialize(checkout: ITreeCheckout): boolean {
  *
  * @param checkout - The tree checkout to initialize.
  * @param newSchema - The new schema to apply.
- * @param contentFactory - A function that returns the initial tree content as a chunk.
+ * @param contentFactory - A function that sets the initial tree content.
  * Invoked after a schema containing all nodes from newSchema is applied.
  * Note that the final root field schema may not have been applied yet: if the root is required, it will be optional at this time
  * (so the root being empty before the insertion is not out of schema).
@@ -38,11 +38,9 @@ export function canInitialize(checkout: ITreeCheckout): boolean {
  * This takes in a checkout using a subset of the checkout interface to enable easier unit testing.
  */
 export function initialize(
-	checkout: Pick<ITreeCheckout, "storedSchema" | "updateSchema"> & {
-		readonly editor: IDefaultEditBuilder;
-	},
+	checkout: Pick<ITreeCheckout, "storedSchema" | "updateSchema">,
 	newSchema: TreeStoredSchema,
-	contentFactory: () => TreeChunk,
+	setInitialTree: () => void,
 ): void {
 	assert(
 		schemaDataIsEmpty(checkout.storedSchema),
@@ -83,28 +81,7 @@ export function initialize(
 	checkout.updateSchema(incrementalSchemaUpdate);
 
 	// Insert initial tree
-	const contentChunk = contentFactory();
-	const field = { field: rootFieldKey, parent: undefined };
-	switch (checkout.storedSchema.rootFieldSchema.kind) {
-		case FieldKinds.optional.identifier: {
-			const fieldEditor = checkout.editor.optionalField(field);
-			assert(
-				contentChunk.topLevelLength <= 1,
-				0x7f4 /* optional field content should normalize at most one item */,
-			);
-			fieldEditor.set(contentChunk.topLevelLength === 0 ? undefined : contentChunk, true);
-			break;
-		}
-		case FieldKinds.sequence.identifier: {
-			const fieldEditor = checkout.editor.sequenceField(field);
-			// TODO: should do an idempotent edit here.
-			fieldEditor.insert(0, contentChunk);
-			break;
-		}
-		default: {
-			fail(0xac7 /* unexpected root field kind during initialize */);
-		}
-	}
+	setInitialTree();
 
 	// If intermediate schema is not final desired schema, update to the final schema:
 	if (incrementalSchemaUpdate !== newSchema) {
@@ -113,38 +90,23 @@ export function initialize(
 	}
 }
 
+/**
+ * Construct a general purpose `setInitialTree` for use with {@link initialize} from a function that returns a chunk.
+ * @param contentFactory - A function that returns the initial tree content as a chunk.
+ * Invoked after a schema containing all nodes from newSchema is applied.
+ * Note that the final root field schema may not have been applied yet: if the root is required, it will be optional at this time
+ * (so the root being empty before the insertion is not out of schema).
+ */
 export function initializerFromChunk(
 	checkout: Pick<ITreeCheckout, "storedSchema"> & {
 		readonly editor: IDefaultEditBuilder;
 	},
 	contentFactory: () => TreeChunk,
 ): () => void {
-	const contentChunk = contentFactory();
-	const field = { field: rootFieldKey, parent: undefined };
-	switch (checkout.storedSchema.rootFieldSchema.kind) {
-		case FieldKinds.optional.identifier: {
-			const fieldEditor = checkout.editor.optionalField(field);
-			assert(
-				contentChunk.topLevelLength <= 1,
-				0x7f4 /* optional field content should normalize at most one item */,
-			);
-			fieldEditor.set(contentChunk.topLevelLength === 0 ? undefined : contentChunk, true);
-			break;
-		}
-		// This case is not reachable from the public API, but the internal flex-tree abstraction layer can have sequence roots.
-		case FieldKinds.sequence.identifier: {
-			const fieldEditor = checkout.editor.sequenceField(field);
-			// TODO: should do an idempotent edit here.
-			fieldEditor.insert(0, contentChunk);
-			break;
-		}
-		default: {
-			fail(0xac7 /* unexpected root field kind during initialize */);
-		}
-	}
+	return () => initializeFromChunk(checkout, contentFactory);
 }
 
-function initializerFromChunk(
+function initializeFromChunk(
 	checkout: Pick<ITreeCheckout, "storedSchema"> & {
 		readonly editor: IDefaultEditBuilder;
 	},

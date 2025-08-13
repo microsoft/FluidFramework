@@ -31,6 +31,7 @@ import type {
 import {
 	canInitialize,
 	initialize,
+	initializerFromChunk,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizeTree.js";
 import type { Listenable } from "@fluidframework/core-interfaces";
@@ -66,7 +67,7 @@ function expectSchema(actual: TreeStoredSchema, expected: TreeStoredSchema): voi
 	assert(allowsRepoSuperset(defaultSchemaPolicy, expected, actual));
 }
 
-function makeSchemaRepository(
+function makeCheckout(
 	repository: TreeStoredSchemaRepository,
 	onChange: (change: TaggedChange<ModularChangeset>) => void = () => {},
 ) {
@@ -89,10 +90,11 @@ describe("schematizeTree", () => {
 				it("correct output", () => {
 					const storedSchema = new TreeStoredSchemaRepository();
 					let count = 0;
+					const checkout = makeCheckout(storedSchema, () => count++);
 					initialize(
-						makeSchemaRepository(storedSchema, () => count++),
+						checkout,
 						content.schema,
-						() => treeChunkFromCursor(content.initialTree),
+						initializerFromChunk(checkout, () => treeChunkFromCursor(content.initialTree)),
 					);
 					assert.equal(count, 1);
 					expectSchema(storedSchema, content.schema);
@@ -112,14 +114,15 @@ describe("schematizeTree", () => {
 					});
 
 					let currentData: typeof content.initialTree;
+					const checkout = makeCheckout(storedSchema, () => {
+						// TODO: check currentData is compatible with current schema.
+						// TODO: check data in cursors is compatible with current schema.
+						currentData = content.initialTree;
+					});
 					initialize(
-						makeSchemaRepository(storedSchema, () => {
-							// TODO: check currentData is compatible with current schema.
-							// TODO: check data in cursors is compatible with current schema.
-							currentData = content.initialTree;
-						}),
+						checkout,
 						content.schema,
-						() => treeChunkFromCursor(content.initialTree),
+						initializerFromChunk(checkout, () => treeChunkFromCursor(content.initialTree)),
 					);
 
 					// Ensure final schema change was actually tested.
@@ -134,10 +137,11 @@ describe("schematizeTree", () => {
 					storedSchema.events.on("afterSchemaChange", () => {
 						log.push("schema");
 					});
+					const checkout = makeCheckout(storedSchema, () => log.push("content"));
 					initialize(
-						makeSchemaRepository(storedSchema, () => log.push("content")),
+						checkout,
 						content.schema,
-						() => treeChunkFromCursor(content.initialTree),
+						initializerFromChunk(checkout, () => treeChunkFromCursor(content.initialTree)),
 					);
 
 					assert.deepEqual(

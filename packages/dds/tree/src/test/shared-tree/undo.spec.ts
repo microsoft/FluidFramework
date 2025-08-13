@@ -36,7 +36,7 @@ import {
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { initialize } from "../../shared-tree/schematizeTree.js";
+import { initialize, initializerFromChunk } from "../../shared-tree/schematizeTree.js";
 
 const rootPath: NormalizedUpPath = {
 	detachedNodeId: undefined,
@@ -707,8 +707,12 @@ export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITr
 	const tree = sharedTreeFactory.create(runtime, "tree");
 	const runtimeFactory = new MockContainerRuntimeFactory();
 	runtimeFactory.createContainerRuntime(runtime);
-	initialize(tree.kernel.checkout, jsonSequenceRootSchema, () =>
-		tree.kernel.checkout.forest.chunkField(fieldJsonCursor(json)),
+	initialize(
+		tree.kernel.checkout,
+		jsonSequenceRootSchema,
+		initializerFromChunk(tree.kernel.checkout, () =>
+			tree.kernel.checkout.forest.chunkField(fieldJsonCursor(json)),
+		),
 	);
 
 	if (attachTree) {
