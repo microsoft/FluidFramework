@@ -48,7 +48,7 @@ export function initialize(
 	);
 
 	// To keep the data in schema during the update, first define a schema that tolerates the current (empty) tree as well as the final (initial) tree.
-	let incrementalSchemaUpdate: TreeStoredSchema;
+	let intermediateSchema: TreeStoredSchema;
 	{
 		const rootSchema = newSchema.rootFieldSchema;
 		const rootKind = rootSchema.kind;
@@ -57,11 +57,11 @@ export function initialize(
 			rootKind === FieldKinds.optional.identifier
 		) {
 			// These kinds are known to tolerate empty, so use the schema as is:
-			incrementalSchemaUpdate = newSchema;
+			intermediateSchema = newSchema;
 		} else {
 			assert(rootKind === FieldKinds.required.identifier, 0x5c8 /* Unexpected kind */);
 			// Replace value kind with optional kind in root field schema:
-			incrementalSchemaUpdate = {
+			intermediateSchema = {
 				nodeSchema: newSchema.nodeSchema,
 				rootFieldSchema: {
 					kind: FieldKinds.optional.identifier,
@@ -73,18 +73,15 @@ export function initialize(
 	}
 
 	assert(
-		allowsRepoSuperset(defaultSchemaPolicy, newSchema, incrementalSchemaUpdate),
+		allowsRepoSuperset(defaultSchemaPolicy, newSchema, intermediateSchema),
 		0x5c9 /* Incremental Schema during update should allow a superset of the final schema */,
 	);
 
-	// Update to intermediate schema
-	checkout.updateSchema(incrementalSchemaUpdate);
-
-	// Insert initial tree
+	checkout.updateSchema(intermediateSchema);
 	setInitialTree();
 
 	// If intermediate schema is not final desired schema, update to the final schema:
-	if (incrementalSchemaUpdate !== newSchema) {
+	if (intermediateSchema !== newSchema) {
 		// This makes the root more strict, so set allowNonSupersetSchema to true.
 		checkout.updateSchema(newSchema, true);
 	}
@@ -96,6 +93,9 @@ export function initialize(
  * Invoked after a schema containing all nodes from newSchema is applied.
  * Note that the final root field schema may not have been applied yet: if the root is required, it will be optional at this time
  * (so the root being empty before the insertion is not out of schema).
+ * @remarks
+ * This does not support sequence roots as they are now allowed in the public API surface.
+ * A test utility for them can be found as `initializeSequenceRoot` for testing internal logic which uses a sequence root.
  */
 export function initializerFromChunk(
 	checkout: Pick<ITreeCheckout, "storedSchema"> & {
