@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */
+
 import { strict as assert } from "node:assert";
 
 import {
@@ -17,15 +19,16 @@ import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-sta
 import {
 	getPresence,
 	type Attendee,
-	ExperimentalPresenceManager,
 	type Presence,
+	StateFactory,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/presence/alpha";
+} from "@fluidframework/presence/beta";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import type { ScopeType } from "../AzureClientFactory.js";
 import { createAzureTokenProvider } from "../AzureTokenFactory.js";
+import { TestDataObject } from "../TestDataObject.js";
 import type { configProvider } from "../utils.js";
 
 import type { MessageFromChild, MessageToChild } from "./messageTypes.js";
@@ -83,7 +86,7 @@ const getOrCreatePresenceContainer = async (
 	const schema: ContainerSchema = {
 		initialObjects: {
 			// A DataObject is added as otherwise fluid-static complains "Container cannot be initialized without any DataTypes"
-			_unused: ExperimentalPresenceManager,
+			_unused: TestDataObject,
 		},
 	};
 	let services: AzureContainerServices;
@@ -133,6 +136,68 @@ class MessageHandler {
 	public presence: Presence | undefined;
 	public container: IFluidContainer | undefined;
 	public containerId: string | undefined;
+	// Use any to simplify typing issues - we'll handle type safety at runtime
+	private readonly latestStates = new Map<string, any>();
+	private readonly latestMapStates = new Map<string, any>();
+
+	private preCreateTestWorkspaces(): void {
+		if (!this.presence) {
+			return;
+		}
+
+		// Pre-create common test workspaces to ensure all clients have the same setup
+		const testWorkspaces = [
+			"testLatestWorkspace",
+			"testLatestMapWorkspace",
+			"testMultiKeyMap",
+		];
+
+		for (const workspaceId of testWorkspaces) {
+			// Create Latest workspace
+			const latestWorkspace = this.presence.states.getWorkspace(
+				`test:${workspaceId}` as const,
+				{
+					latestValue: StateFactory.latest<object | null>({ local: {} }),
+				},
+			);
+			const latestState = latestWorkspace.states.latestValue;
+			this.latestStates.set(workspaceId, latestState);
+
+			// Set up event listeners on the state object
+			latestState.events.on("remoteUpdated", (update) => {
+				send({
+					event: "latestValueUpdated",
+					workspaceId,
+					attendeeId: update.attendee.attendeeId,
+					value: update.value,
+				});
+			});
+
+			// Create LatestMap workspace
+			const latestMapWorkspace = this.presence.states.getWorkspace(
+				`test:${workspaceId}` as const,
+				{
+					latestMap: StateFactory.latestMap<object | null, string>({ local: {} }),
+				},
+			);
+			const latestMapState = latestMapWorkspace.states.latestMap;
+			this.latestMapStates.set(workspaceId, latestMapState);
+
+			// Set up event listeners on the map state object
+			latestMapState.events.on("remoteUpdated", (update) => {
+				// FluidFramework passes items as a ReadonlyMap, we need to iterate through it
+				for (const [key, valueWithMetadata] of update.items) {
+					send({
+						event: "latestMapValueUpdated",
+						workspaceId,
+						attendeeId: update.attendee.attendeeId,
+						key: String(key),
+						value: valueWithMetadata.value, // Extract just the value, not metadata
+					});
+				}
+			});
+		}
+	}
 
 	public async onMessage(msg: MessageFromParent): Promise<void> {
 		switch (msg.command) {
@@ -171,6 +236,10 @@ class MessageHandler {
 					};
 					send(m);
 				});
+
+				// Pre-create workspaces that tests will use to ensure all clients are set up identically
+				this.preCreateTestWorkspaces();
+
 				send({
 					event: "ready",
 					containerId,
@@ -199,6 +268,113 @@ class MessageHandler {
 
 				break;
 			}
+
+			case "setLatestValue": {
+				if (!this.presence) {
+					send({ event: "error", error: `${process_id} is not connected to presence` });
+					break;
+				}
+
+				const latestState = this.latestStates.get(msg.workspaceId);
+				if (latestState === undefined) {
+					send({
+						event: "error",
+						error: `${process_id} workspace ${msg.workspaceId} not found`,
+					});
+					break;
+				}
+				latestState.local = JSON.parse(JSON.stringify(msg.value));
+				break;
+			}
+
+			case "setLatestMapValue": {
+				if (!this.presence) {
+					send({ event: "error", error: `${process_id} is not connected to presence` });
+					break;
+				}
+
+				const latestMapState = this.latestMapStates.get(msg.workspaceId);
+				if (latestMapState === undefined) {
+					send({
+						event: "error",
+						error: `${process_id} map workspace ${msg.workspaceId} not found`,
+					});
+					break;
+				}
+				latestMapState.local.set(msg.key, JSON.parse(JSON.stringify(msg.value)));
+				break;
+			}
+
+			case "getLatestValue": {
+				if (!this.presence) {
+					send({ event: "error", error: `${process_id} is not connected to presence` });
+					break;
+				}
+
+				const latestState = this.latestStates.get(msg.workspaceId);
+				if (latestState === undefined) {
+					send({
+						event: "error",
+						error: `${process_id} workspace ${msg.workspaceId} not found`,
+					});
+					break;
+				}
+
+				let value: unknown;
+				if (msg.attendeeId) {
+					const attendee = this.presence.attendees.getAttendee(msg.attendeeId);
+					const remoteData = latestState.getRemote(attendee);
+					value = remoteData.value;
+				} else {
+					value = latestState.local;
+				}
+
+				send({
+					event: "latestValueGetResponse",
+					workspaceId: msg.workspaceId,
+					attendeeId: msg.attendeeId,
+					value,
+				});
+
+				break;
+			}
+
+			case "getLatestMapValue": {
+				if (!this.presence) {
+					send({ event: "error", error: `${process_id} is not connected to presence` });
+					break;
+				}
+
+				const latestMapState = this.latestMapStates.get(msg.workspaceId);
+				if (latestMapState === undefined) {
+					send({
+						event: "error",
+						error: `${process_id} workspace ${msg.workspaceId} not found`,
+					});
+					break;
+				}
+
+				let value: unknown;
+				if (msg.attendeeId) {
+					const attendee = this.presence.attendees.getAttendee(msg.attendeeId);
+					const remoteData = latestMapState.getRemote(attendee);
+					const keyData = remoteData.get(msg.key);
+					value = keyData?.value;
+				} else {
+					value = latestMapState.local.get(msg.key);
+				}
+
+				send({
+					event: "latestMapValueGetResponse",
+					workspaceId: msg.workspaceId,
+					attendeeId: msg.attendeeId,
+					key: msg.key,
+					value,
+				});
+
+				break;
+			}
+
 			default: {
 				console.error(`${process_id}: Unknown command`);
 				send({ event: "error", error: `${process_id} Unknown command` });
