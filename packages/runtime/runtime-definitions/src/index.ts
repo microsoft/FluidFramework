@@ -84,3 +84,4 @@ export {
 	CreateSummarizerNodeSource,
 	totalBlobSizePropertyName,
 } from "./summary.js";
+export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";

@@ -78,9 +78,9 @@
 		"ws": "^7.5.10"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.56.0",
+		"@fluid-tools/build-cli": "^0.57.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.56.0",
+		"@fluidframework/build-tools": "^0.57.0",
 		"@fluidframework/eslint-config-fluid": "^5.8.0",
 		"@fluidframework/server-memory-orderer-previous": "npm:@fluidframework/server-memory-orderer@7.0.0",
 		"@types/mocha": "^10.0.1",
@@ -94,7 +94,14 @@
 		"webpack": "^5.94.0"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_WebSocketSubscriber": {
+				"forwardCompat": false
+			},
+			"Interface_ISubscriber": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }

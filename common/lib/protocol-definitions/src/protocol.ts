@@ -4,7 +4,7 @@
  */
 
 /**
- * @legacy @alpha
+ * @legacy @beta
  */
 export enum MessageType {
 	/**
@@ -113,7 +113,7 @@ export interface ITrace {
 }
 
 /**
- * @legacy @alpha
+ * @legacy @beta
  */
 export interface INack {
 	/**
@@ -134,7 +134,7 @@ export interface INack {
 
 /**
  * Document-specific message.
- * @legacy @alpha
+ * @legacy @beta
  */
 export interface IDocumentMessage {
 	/**
@@ -382,7 +382,7 @@ export interface ISignalMessage extends ISignalMessageBase {
 export type ISentSignalMessage = ISignalMessageBase;
 
 /**
- * @legacy @alpha
+ * @legacy @beta
  */
 export interface IUploadedSummaryDetails {
 	/**
@@ -392,7 +392,7 @@ export interface IUploadedSummaryDetails {
 }
 
 /**
- * @legacy @alpha
+ * @legacy @beta
  */
 export interface ISummaryContent {
 	/**
@@ -438,7 +438,7 @@ export interface IServerError {
 
 /**
  * Data about the original proposed summary message.
- * @legacy @alpha
+ * @legacy @beta
  */
 export interface ISummaryProposal {
 	/**
@@ -449,7 +449,7 @@ export interface ISummaryProposal {
 
 /**
  * Contents of summary ack expected from the server.
- * @legacy @alpha
+ * @legacy @beta
  */
 export interface ISummaryAck {
 	/**
@@ -465,7 +465,7 @@ export interface ISummaryAck {
 
 /**
  * Contents of summary nack expected from the server.
- * @legacy @alpha
+ * @legacy @beta
  */
 export interface ISummaryNack {
 	/**
@@ -495,7 +495,7 @@ export interface ISummaryNack {
 
 /**
  * Interface for nack content.
- * @legacy @alpha
+ * @legacy @beta
  */
 export interface INackContent {
 	/**
@@ -525,7 +525,7 @@ export interface INackContent {
 
 /**
  * Type of the nack.
- * @legacy @alpha
+ * @legacy @beta
  */
 export enum NackErrorType {
 	/**

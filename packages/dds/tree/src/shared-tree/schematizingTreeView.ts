@@ -16,7 +16,7 @@ import { anchorSlot } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
-	cursorForMapTreeNode,
+	cursorForMapTreeField,
 	TreeStatus,
 	Context,
 } from "../feature-libraries/index.js";
@@ -51,9 +51,11 @@ import {
 	areImplicitFieldSchemaEqual,
 	prepareForInsertionContextless,
 	type FieldSchema,
-	toStoredSchema,
 	tryDisposeTreeNode,
+	FieldSchemaAlpha,
 	TreeViewConfigurationAlpha,
+	toInitialSchema,
+	toUpgradeSchema,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -62,7 +64,7 @@ import {
 	type WithBreakable,
 } from "../util/index.js";
 
-import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
+import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
 
 /**
@@ -171,7 +173,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const schema = toStoredSchema(this.config.schema);
+			const schema = toInitialSchema(this.config.schema);
 			const mapTree = prepareForInsertionContextless(
 				content as InsertableContent | undefined,
 				this.rootFieldSchema,
@@ -180,12 +182,22 @@ export class SchematizingSimpleTreeView<
 					policy: defaultSchemaPolicy,
 				},
 				this,
+				schema.rootFieldSchema,
 			);
 
-			initialize(this.checkout, {
+			this.checkout.transaction.start();
+
+			initialize(
+				this.checkout,
 				schema,
-				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
-			});
+				initializerFromChunk(this.checkout, () => {
+					// This must be done after initial schema is set!
+					return this.checkout.forest.chunkField(
+						cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
+					);
+				}),
+			);
+			this.checkout.transaction.commit();
 		});
 	}
 
@@ -204,10 +216,8 @@ export class SchematizingSimpleTreeView<
 			);
 		}
 
-		this.runSchemaEdit(() => {
-			const result = ensureSchema(this.viewSchema, this.checkout);
-			assert(result, 0x8bf /* Schema upgrade should always work if canUpgrade is set. */);
-		});
+		const newSchema = toUpgradeSchema(this.viewSchema.viewSchema.root);
+		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
 	}
 
 	/**
@@ -317,11 +327,17 @@ export class SchematizingSimpleTreeView<
 				this.nodeKeyManager,
 			);
 			assert(!slots.has(SimpleContextSlot), 0xa47 /* extra simple tree context */);
+			assert(
+				this.rootFieldSchema instanceof FieldSchemaAlpha,
+				0xbfa /* all field schema should be FieldSchemaAlpha */,
+			);
 			slots.set(
 				SimpleContextSlot,
 				new HydratedContext(
-					normalizeFieldSchema(this.rootFieldSchema).annotatedAllowedTypesNormalized,
 					this.flexTreeContext,
+					HydratedContext.schemaMapFromRootSchema(
+						this.rootFieldSchema.annotatedAllowedTypesNormalized,
+					),
 				),
 			);
 
@@ -429,7 +445,12 @@ export class SchematizingSimpleTreeView<
 			);
 		}
 		const view = this.getFlexTreeContext();
-		setField(view.root, this.rootFieldSchema, newRoot as InsertableContent | undefined);
+		setField(
+			view.root,
+			this.rootFieldSchema,
+			newRoot as InsertableContent | undefined,
+			this.checkout.storedSchema.rootFieldSchema,
+		);
 	}
 
 	// #region Branching

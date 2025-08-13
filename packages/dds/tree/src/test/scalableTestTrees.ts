@@ -22,18 +22,17 @@ import {
 import { brand } from "../util/index.js";
 import {
 	SchemaFactory,
+	toInitialSchema,
 	type InsertableContent,
 	type UnsafeUnknownSchema,
 	type ValidateRecursiveSchema,
 } from "../simple-tree/index.js";
-import type { TreeStoredContent } from "../shared-tree/index.js";
-import { toStoredSchema } from "../simple-tree/index.js";
 
 import type {
 	TreeSimpleContent,
 	// eslint-disable-next-line import/no-internal-modules
 } from "./feature-libraries/flex-tree/utils.js";
-import { fieldCursorFromInsertable } from "./utils.js";
+import { fieldCursorFromInsertable, type TreeStoredContentStrict } from "./utils.js";
 
 /**
  * Test trees which can be parametrically scaled to any size.
@@ -90,14 +89,14 @@ export function makeDeepContentSimple(
 export function makeDeepStoredContent(
 	depth: number,
 	leafValue: number = 1,
-): TreeStoredContent {
+): TreeStoredContentStrict {
 	const content = makeDeepContentSimple(depth, leafValue);
 	return {
 		initialTree: fieldCursorFromInsertable<UnsafeUnknownSchema>(
 			content.schema,
 			content.initialTree,
 		),
-		schema: toStoredSchema(content.schema),
+		schema: toInitialSchema(content.schema),
 	};
 }
 
@@ -125,14 +124,14 @@ export function makeWideContentWithEndValueSimple(
 export function makeWideStoredContentWithEndValue(
 	numberOfNodes: number,
 	endLeafValue?: number,
-): TreeStoredContent {
+): TreeStoredContentStrict {
 	const content = makeWideContentWithEndValueSimple(numberOfNodes, endLeafValue);
 	return {
 		initialTree: fieldCursorFromInsertable<UnsafeUnknownSchema>(
 			content.schema,
 			content.initialTree,
 		),
-		schema: toStoredSchema(content.schema),
+		schema: toInitialSchema(content.schema),
 	};
 }
 

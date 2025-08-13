@@ -22,3 +22,4 @@ export {
 	type FieldBatchEncodingContext,
 	fluidVersionToFieldBatchCodecWriteVersion,
 } from "./codec/index.js";
+export { emptyChunk } from "./emptyChunk.js";

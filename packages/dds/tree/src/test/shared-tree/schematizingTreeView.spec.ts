@@ -22,8 +22,9 @@ import {
 	type UnsafeUnknownSchema,
 	type TransactionResult,
 	type TransactionResultExt,
-	toStoredSchema,
 	getKernel,
+	toInitialSchema,
+	toUpgradeSchema,
 } from "../../simple-tree/index.js";
 import {
 	checkoutWithContent,
@@ -32,20 +33,23 @@ import {
 	getView,
 	TestTreeProviderLite,
 	validateUsageError,
+	validateViewConsistency,
+	type TreeStoredContentStrict,
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
 import {
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
 	type TreeCheckout,
-	type TreeStoredContent,
 } from "../../shared-tree/index.js";
 import type { Mutable } from "../../util/index.js";
 import { brand } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
+import { testDocumentIndependentView } from "../testTrees.js";
+import { fieldJsonCursor } from "../json/index.js";
 
-const schema = new SchemaFactory("com.example");
+const schema = new SchemaFactoryAlpha("com.example");
 const config = new TreeViewConfiguration({ schema: schema.number });
 const configGeneralized = new TreeViewConfiguration({
 	schema: [schema.number, schema.string],
@@ -62,15 +66,15 @@ function checkoutWithInitialTree(
 		viewConfig.schema,
 		unhydratedInitialTree,
 	);
-	const treeContent: TreeStoredContent = {
-		schema: toStoredSchema(viewConfig.schema),
+	const treeContent: TreeStoredContentStrict = {
+		schema: toInitialSchema(viewConfig.schema),
 		initialTree,
 	};
 	return checkoutWithContent(treeContent);
 }
 
 // Schema for tree that must always be empty.
-const emptySchema = toStoredSchema(schema.optional([]));
+const emptySchema = toInitialSchema(schema.optional([]));
 
 describe("SchematizingSimpleTreeView", () => {
 	describe("initialize", () => {
@@ -124,7 +128,7 @@ describe("SchematizingSimpleTreeView", () => {
 					assert(child instanceof UnhydratedFlexTreeNode);
 
 					// Modify the tree so that it is out of schema.
-					// The public API is supposed to prevent out of schema trees,
+					// The public API is supposed to prevent out of schema trees (other than staged allowed types),
 					// so this hack using internal APIs is needed a workaround to test the additional schema validation layer.
 					// In production cases this extra validation exists to help prevent corruption when bugs
 					// allow invalid data through the public API.
@@ -138,6 +142,34 @@ describe("SchematizingSimpleTreeView", () => {
 					);
 
 					assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
+				});
+
+				it(`Initialize invalid content: staged allowed type with enableSchemaValidation: ${enableSchemaValidation}, additionalAsserts: ${additionalAsserts}`, () => {
+					class StagedSchema extends schema.arrayAlpha("TestArray", [
+						SchemaFactoryAlpha.number,
+						SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+					]) {}
+
+					const emptyContent = {
+						schema: emptySchema,
+						initialTree: undefined,
+					};
+					const checkout = checkoutWithContent(emptyContent);
+					const view = new SchematizingSimpleTreeView(
+						checkout,
+						new TreeViewConfiguration({ schema: StagedSchema }),
+						new MockNodeIdentifierManager(),
+					);
+
+					const { compatibility } = view;
+					assert.equal(compatibility.canView, false);
+					assert.equal(compatibility.canUpgrade, false);
+					assert.equal(compatibility.canInitialize, true);
+
+					assert.throws(
+						() => view.initialize([5, "test"]),
+						validateUsageError(/Tree does not conform to schema./),
+					);
 				});
 			}
 		}
@@ -259,7 +291,7 @@ describe("SchematizingSimpleTreeView", () => {
 		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
 
 		// Modify schema to invalidate view
-		checkout.updateSchema(toStoredSchema([schema.number, schema.string]));
+		checkout.updateSchema(toUpgradeSchema([schema.number, schema.string]));
 
 		assert.deepEqual(log, [
 			["schemaChanged", "SchemaCompatibilityStatus canView: false canUpgrade: false"],
@@ -275,7 +307,7 @@ describe("SchematizingSimpleTreeView", () => {
 		);
 		view.breaker.clearError();
 		// Modify schema to be compatible again
-		checkout.updateSchema(toStoredSchema([schema.number]), true);
+		checkout.updateSchema(toUpgradeSchema([schema.number]), true);
 		assert.equal(view.compatibility.isEquivalent, true);
 		assert.equal(view.compatibility.canUpgrade, true);
 		assert.equal(view.compatibility.canView, true);
@@ -419,6 +451,92 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(viewGeneralized.root[1].address, "123 Main St");
 	});
 
+	describe("upgradeSchema", () => {
+		const builder = new SchemaFactory("test");
+		const root = builder.number;
+
+		const schemaGeneralized = builder.optional([root, builder.string]);
+		const schemaValueRoot = [root, builder.string];
+
+		// Schema for tree that must always be empty.
+		const emptyViewSchema = builder.optional([]);
+
+		it("compatible empty schema", () => {
+			const view = testDocumentIndependentView({
+				ambiguous: false,
+				schema: emptyViewSchema,
+				schemaData: emptySchema,
+				treeFactory: () => [],
+			});
+
+			view.events.on("rootChanged", () => assert.fail());
+			view.events.on("schemaChanged", () => assert.fail());
+
+			assert(view.compatibility.isEquivalent);
+			assert(view.compatibility.canUpgrade);
+			view.upgradeSchema();
+		});
+
+		it("compatible: upgrade optional root", () => {
+			const view = testDocumentIndependentView({
+				ambiguous: false,
+				schema: schemaGeneralized,
+				schemaData: emptySchema,
+				treeFactory: () => [],
+			});
+
+			view.upgradeSchema();
+			const reference = checkoutWithContent({
+				schema: toInitialSchema(schemaGeneralized),
+				initialTree: fieldJsonCursor([]),
+			});
+			validateViewConsistency(reference, view.checkout);
+		});
+
+		it("incompatible: empty to required root", () => {
+			const view = testDocumentIndependentView({
+				ambiguous: false,
+				schema: schemaValueRoot,
+				schemaData: emptySchema,
+				treeFactory: () => [],
+			});
+
+			assert(!view.compatibility.isEquivalent);
+			assert(!view.compatibility.canUpgrade);
+
+			// Case which doesn't update due to root being required
+			assert.throws(() => view.upgradeSchema(), validateUsageError(/cannot be upgraded/));
+
+			const reference = checkoutWithContent({
+				schema: emptySchema,
+				initialTree: fieldJsonCursor([]),
+			});
+			validateViewConsistency(reference, view.checkout);
+		});
+
+		it("update non-empty", () => {
+			const view = testDocumentIndependentView({
+				ambiguous: false,
+				schema: schemaGeneralized,
+				schemaData: toInitialSchema(builder.number),
+				treeFactory: () => [
+					{ type: brand(SchemaFactory.number.identifier), value: 5, fields: {} },
+				],
+			});
+
+			const updatedCheckout = checkoutWithContent({
+				schema: toInitialSchema(schemaGeneralized),
+				initialTree: fieldJsonCursor([5]),
+			});
+
+			assert(!view.compatibility.isEquivalent);
+			assert(view.compatibility.canUpgrade);
+
+			view.upgradeSchema();
+			validateViewConsistency(view.checkout, updatedCheckout);
+		});
+	});
+
 	it("Open upgradable document, then upgrade schema", () => {
 		const checkout = checkoutWithInitialTree(config, 5);
 		const view = new SchematizingSimpleTreeView(
@@ -545,7 +663,7 @@ describe("SchematizingSimpleTreeView", () => {
 	describe("events", () => {
 		it("schemaChanged", () => {
 			const content = {
-				schema: toStoredSchema(SchemaFactory.optional([])),
+				schema: toInitialSchema(SchemaFactory.optional([])),
 				initialTree: undefined,
 			};
 			const checkout = checkoutWithContent(content);
@@ -580,7 +698,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 		it("does not emit changed events for rebases", () => {
 			const stringArraySchema = schema.array([schema.string]);
-			const stringArrayStoredSchema = toStoredSchema(stringArraySchema);
+			const stringArrayStoredSchema = toInitialSchema(stringArraySchema);
 			const stringArrayContent = {
 				schema: stringArrayStoredSchema,
 				initialTree: fieldCursorFromInsertable(stringArraySchema, ["a", "b", "c"]),

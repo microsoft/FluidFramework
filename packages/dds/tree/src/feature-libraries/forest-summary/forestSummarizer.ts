@@ -42,7 +42,7 @@ import type { Format } from "./format.js";
 /**
  * The storage key for the blob in the summary containing tree data
  */
-const treeBlobKey = "ForestTree";
+export const treeBlobKey = "ForestTree";
 
 /**
  * Provides methods for summarizing and loading a forest.

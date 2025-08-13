@@ -18,7 +18,7 @@ import {
 import {
 	InlineArrayDecoder,
 	NestedArrayDecoder,
-	TreeDecoder,
+	NodeDecoder,
 	aggregateChunks,
 	anyDecoder,
 	deaggregateChunks,
@@ -186,7 +186,7 @@ describe("chunkDecoding", () => {
 		}
 	});
 
-	describe("EncodedNestedArray", () => {
+	describe("EncodedNestedArrayShape", () => {
 		it("empty", () => {
 			const decoder = new NestedArrayDecoder(0);
 			const log: string[] = [];
@@ -238,7 +238,7 @@ describe("chunkDecoding", () => {
 		});
 	});
 
-	describe("EncodedInlineArray", () => {
+	describe("EncodedInlineArrayShape", () => {
 		it("empty", () => {
 			const decoder = new InlineArrayDecoder({ length: 0, shape: 0 });
 			const log: string[] = [];
@@ -278,10 +278,10 @@ describe("chunkDecoding", () => {
 		assert.deepEqual(log, ["a", "b", "c"]);
 	});
 
-	describe("TreeDecoder", () => {
+	describe("NodeDecoder", () => {
 		it("empty node", () => {
 			const cache = new DecoderContext([], [], idDecodingContext);
-			const decoder = new TreeDecoder(
+			const decoder = new NodeDecoder(
 				{
 					value: false,
 					fields: [],
@@ -295,7 +295,7 @@ describe("chunkDecoding", () => {
 
 		it("typed node", () => {
 			const cache = new DecoderContext([], [], idDecodingContext);
-			const decoder = new TreeDecoder(
+			const decoder = new NodeDecoder(
 				{
 					type: "baz",
 					value: false,
@@ -313,7 +313,7 @@ describe("chunkDecoding", () => {
 			const stableId = testIdCompressor.decompress(compressedId);
 			const cache = new DecoderContext([], [], idDecodingContext);
 
-			const decoder = new TreeDecoder(
+			const decoder = new NodeDecoder(
 				{
 					type: "identifier",
 					value: SpecialField.Identifier,
@@ -331,7 +331,7 @@ describe("chunkDecoding", () => {
 			const log: string[] = [];
 			const localChunk = new BasicChunk(brand("local"), new Map());
 			const decoders = [makeLoggingDecoder(log, localChunk)];
-			const decoder = new TreeDecoder(
+			const decoder = new NodeDecoder(
 				{
 					fields: [],
 					extraFields: 0,
@@ -366,7 +366,7 @@ describe("chunkDecoding", () => {
 			const log: string[] = [];
 			const localChunk = new BasicChunk(brand("local"), new Map());
 			const decoders = [makeLoggingDecoder(log, localChunk)];
-			const decoder = new TreeDecoder(
+			const decoder = new NodeDecoder(
 				{
 					fields: [[0, 0]],
 					value: false,
