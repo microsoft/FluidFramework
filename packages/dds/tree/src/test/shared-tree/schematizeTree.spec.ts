@@ -14,7 +14,7 @@ import {
 	TreeStoredSchemaRepository,
 	type AnchorSetRootEvents,
 } from "../../core/index.js";
-import { singleJsonCursor } from "../json/index.js";
+import { fieldJsonCursor } from "../json/index.js";
 import {
 	FieldKinds,
 	allowsRepoSuperset,
@@ -25,9 +25,9 @@ import type {
 	ITreeCheckoutFork,
 	CheckoutEvents,
 	ISharedTreeEditor,
+	TreeStoredContentStrict,
 } from "../../shared-tree/index.js";
 import {
-	type TreeStoredContent,
 	UpdateType,
 	canInitialize,
 	ensureSchema,
@@ -81,7 +81,7 @@ function makeSchemaRepository(repository: TreeStoredSchemaRepository): {
 
 describe("schematizeTree", () => {
 	describe("initializeContent", () => {
-		function testInitialize(name: string, content: TreeStoredContent): void {
+		function testInitialize(name: string, content: TreeStoredContentStrict): void {
 			describe(`Initialize ${name}`, () => {
 				it("correct output", () => {
 					const storedSchema = new TreeStoredSchemaRepository();
@@ -141,15 +141,15 @@ describe("schematizeTree", () => {
 
 		testInitialize("optional-empty", {
 			schema: toInitialSchema(schema),
-			initialTree: undefined,
+			initialTree: fieldJsonCursor([]),
 		});
 		testInitialize("optional-full", {
 			schema: toInitialSchema(schema),
-			initialTree: singleJsonCursor(5),
+			initialTree: fieldJsonCursor([5]),
 		});
 		testInitialize("value", {
 			schema: toInitialSchema(schemaValueRoot),
-			initialTree: singleJsonCursor(6),
+			initialTree: fieldJsonCursor([6]),
 		});
 
 		// TODO: Test schema validation of initial tree (once we have a utility for it)
@@ -249,9 +249,9 @@ describe("schematizeTree", () => {
 		});
 
 		it("compatible: upgrade optional root", () => {
-			const emptyContent: TreeStoredContent = {
+			const emptyContent: TreeStoredContentStrict = {
 				schema: toInitialSchema(emptySchema),
-				initialTree: undefined,
+				initialTree: fieldJsonCursor([]),
 			};
 
 			// Schema upgraded, but content not initialized
@@ -272,9 +272,9 @@ describe("schematizeTree", () => {
 		});
 
 		it("incompatible: empty to required root", () => {
-			const emptyContent: TreeStoredContent = {
+			const emptyContent: TreeStoredContentStrict = {
 				schema: toInitialSchema(emptySchema),
-				initialTree: undefined,
+				initialTree: fieldJsonCursor([]),
 			};
 			const emptyCheckout = checkoutWithContent(emptyContent);
 
@@ -289,16 +289,16 @@ describe("schematizeTree", () => {
 		});
 
 		it("update non-empty", () => {
-			const initialContent: TreeStoredContent = {
+			const initialContent: TreeStoredContentStrict = {
 				schema: toInitialSchema(schema),
 				get initialTree() {
-					return singleJsonCursor(5);
+					return fieldJsonCursor([5]);
 				},
 			};
 			const initialCheckout = checkoutWithContent(initialContent);
-			const content: TreeStoredContent = {
+			const content: TreeStoredContentStrict = {
 				schema: toInitialSchema(schemaGeneralized),
-				initialTree: singleJsonCursor("Should not be used"),
+				initialTree: fieldJsonCursor(["Should not be used"]),
 			};
 			const updatedCheckout = checkoutWithContent({
 				schema: toInitialSchema(schemaGeneralized),

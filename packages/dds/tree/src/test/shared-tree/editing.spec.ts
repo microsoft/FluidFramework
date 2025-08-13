@@ -16,7 +16,7 @@ import {
 	type NormalizedUpPath,
 	type TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
-import type { ITreeCheckout, TreeStoredContent } from "../../shared-tree/index.js";
+import type { ITreeCheckout, TreeStoredContentStrict } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand, makeArray } from "../../util/index.js";
 import {
 	checkoutWithContent,
@@ -32,6 +32,7 @@ import {
 import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
 import { numberSchema, SchemaFactory, toInitialSchema } from "../../simple-tree/index.js";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
+import { fieldJsonCursor } from "../json/index.js";
 
 const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
@@ -52,9 +53,11 @@ const rootNode2: NormalizedUpPath = {
 	detachedNodeId: undefined,
 };
 
-const emptyJsonContent: TreeStoredContent = {
+const emptyJsonContent: TreeStoredContentStrict = {
 	schema: toInitialSchema(SchemaFactory.optional(JsonAsTree.Tree)),
-	initialTree: undefined,
+	get initialTree() {
+		return fieldJsonCursor([]);
+	},
 };
 
 describe("Editing", () => {
