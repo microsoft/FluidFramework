@@ -738,14 +738,15 @@ export namespace System_TableSchema {
 			}
 
 			public removeColumns(
-				indexOrColumns: number | readonly string[] | readonly ColumnValueType[],
+				indexOrColumns: number | undefined | readonly string[] | readonly ColumnValueType[],
 				count: number | undefined = undefined,
 			): ColumnValueType[] {
-				if (typeof indexOrColumns === "number") {
+				if (typeof indexOrColumns === "number" || indexOrColumns === undefined) {
+					const startIndex = indexOrColumns ?? 0;
 					return Table._removeRange(
 						{
-							start: indexOrColumns,
-							count: count ?? this.columns.length - indexOrColumns,
+							start: startIndex,
+							count: count ?? this.columns.length - startIndex,
 						},
 						this.columns,
 					);
@@ -816,14 +817,15 @@ export namespace System_TableSchema {
 			}
 
 			public removeRows(
-				indexOrRows: number | readonly string[] | readonly RowValueType[],
+				indexOrRows: number | undefined | readonly string[] | readonly RowValueType[],
 				count?: number | undefined,
 			): RowValueType[] {
-				if (typeof indexOrRows === "number") {
+				if (typeof indexOrRows === "number" || indexOrRows === undefined) {
+					const startIndex = indexOrRows ?? 0;
 					return Table._removeRange(
 						{
-							start: indexOrRows,
-							count: count ?? this.rows.length - indexOrRows,
+							start: startIndex,
+							count: count ?? this.rows.length - startIndex,
 						},
 						this.rows,
 					);
@@ -1629,8 +1631,8 @@ export namespace TableSchema {
 		 * @throws Throws an error if the specified range is invalid. In this case, no columns are removed.
 		 */
 		removeColumns(
-			index: number,
-			count: number | undefined,
+			index?: number | undefined,
+			count?: number | undefined,
 		): TreeNodeFromImplicitAllowedTypes<TColumn>[];
 		/**
 		 * Removes 0 or more columns from the table.
@@ -1666,8 +1668,8 @@ export namespace TableSchema {
 		 * @throws Throws an error if the specified range is invalid. In this case, no rows are removed.
 		 */
 		removeRows(
-			index: number,
-			count: number | undefined,
+			index?: number | undefined,
+			count?: number | undefined,
 		): TreeNodeFromImplicitAllowedTypes<TRow>[];
 		/**
 		 * Removes 0 or more rows from the table.
