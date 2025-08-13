@@ -33,18 +33,21 @@ import {
 	getView,
 	TestTreeProviderLite,
 	validateUsageError,
+	validateViewConsistency,
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
 import {
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
 	type TreeCheckout,
-	type TreeStoredContent,
+	type TreeStoredContentStrict,
 } from "../../shared-tree/index.js";
 import type { Mutable } from "../../util/index.js";
 import { brand } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
+import { testDocumentIndependentView } from "../testTrees.js";
+import { fieldJsonCursor } from "../json/index.js";
 
 const schema = new SchemaFactoryAlpha("com.example");
 const config = new TreeViewConfiguration({ schema: schema.number });
@@ -63,7 +66,7 @@ function checkoutWithInitialTree(
 		viewConfig.schema,
 		unhydratedInitialTree,
 	);
-	const treeContent: TreeStoredContent = {
+	const treeContent: TreeStoredContentStrict = {
 		schema: toInitialSchema(viewConfig.schema),
 		initialTree,
 	};
@@ -446,6 +449,92 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(viewGeneralized.root[1].name, "Alice");
 		assert.equal(viewGeneralized.root[1].age, 42);
 		assert.equal(viewGeneralized.root[1].address, "123 Main St");
+	});
+
+	describe("upgradeSchema", () => {
+		const builder = new SchemaFactory("test");
+		const root = builder.number;
+
+		const schemaGeneralized = builder.optional([root, builder.string]);
+		const schemaValueRoot = [root, builder.string];
+
+		// Schema for tree that must always be empty.
+		const emptyViewSchema = builder.optional([]);
+
+		it("compatible empty schema", () => {
+			const view = testDocumentIndependentView({
+				ambiguous: false,
+				schema: emptyViewSchema,
+				schemaData: emptySchema,
+				treeFactory: () => [],
+			});
+
+			view.events.on("rootChanged", () => assert.fail());
+			view.events.on("schemaChanged", () => assert.fail());
+
+			assert(view.compatibility.isEquivalent);
+			assert(view.compatibility.canUpgrade);
+			view.upgradeSchema();
+		});
+
+		it("compatible: upgrade optional root", () => {
+			const view = testDocumentIndependentView({
+				ambiguous: false,
+				schema: schemaGeneralized,
+				schemaData: emptySchema,
+				treeFactory: () => [],
+			});
+
+			view.upgradeSchema();
+			const reference = checkoutWithContent({
+				schema: toInitialSchema(schemaGeneralized),
+				initialTree: fieldJsonCursor([]),
+			});
+			validateViewConsistency(reference, view.checkout);
+		});
+
+		it("incompatible: empty to required root", () => {
+			const view = testDocumentIndependentView({
+				ambiguous: false,
+				schema: schemaValueRoot,
+				schemaData: emptySchema,
+				treeFactory: () => [],
+			});
+
+			assert(!view.compatibility.isEquivalent);
+			assert(!view.compatibility.canUpgrade);
+
+			// Case which doesn't update due to root being required
+			assert.throws(() => view.upgradeSchema(), validateUsageError(/cannot be upgraded/));
+
+			const reference = checkoutWithContent({
+				schema: emptySchema,
+				initialTree: fieldJsonCursor([]),
+			});
+			validateViewConsistency(reference, view.checkout);
+		});
+
+		it("update non-empty", () => {
+			const view = testDocumentIndependentView({
+				ambiguous: false,
+				schema: schemaGeneralized,
+				schemaData: toInitialSchema(builder.number),
+				treeFactory: () => [
+					{ type: brand(SchemaFactory.number.identifier), value: 5, fields: {} },
+				],
+			});
+
+			const updatedCheckout = checkoutWithContent({
+				schema: toInitialSchema(schemaGeneralized),
+				initialTree: fieldJsonCursor([5]),
+			});
+
+			assert(!view.compatibility.isEquivalent);
+			assert(view.compatibility.canUpgrade);
+
+			view.upgradeSchema();
+			validateViewConsistency(view.checkout, updatedCheckout);
+		});
 	});
 
 	it("Open upgradable document, then upgrade schema", () => {

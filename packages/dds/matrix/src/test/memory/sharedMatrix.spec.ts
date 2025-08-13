@@ -10,10 +10,11 @@ import {
 	benchmarkMemory,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
+import type { IMatrixConsumer } from "@tiny-calc/nano";
 
-import type { SharedMatrix } from "../../index.js";
+import type { ISharedMatrix } from "../../index.js";
 import { UndoRedoStackManager } from "../undoRedoStackManager.js";
-import { createLocalMatrix } from "../utils.js";
+import { createLocalMatrix, type TestMatrixOptions } from "../utils.js";
 
 /**
  * Note: These benchmarks are designed to closely match the benchmarks in SharedTree.
@@ -21,46 +22,167 @@ import { createLocalMatrix } from "../utils.js";
  * to ensure consistency and comparability between the two implementations.
  */
 
+// TODOs (AB#46340):
+// - single helper function with before and after hooks for setup and teardown
+// - unify with time measurement tests (in terms of API)
+
+/**
+ * Initializes a SharedMatrix for testing.
+ * @remarks Includes initialization of the undo/redo stack, as well as mock event subscriptions.
+ */
+function createMatrix(options: TestMatrixOptions): {
+	/**
+	 * The initialized matrix.
+	 */
+	matrix: ISharedMatrix;
+
+	/**
+	 * The undo/redo stack manager for the matrix.
+	 */
+	undoRedoStack: UndoRedoStackManager;
+
+	/**
+	 * Cleanup function to run after the test to close the matrix and release resources.
+	 */
+	cleanUp: () => void;
+} {
+	const matrix = createLocalMatrix(options);
+
+	// Configure event listeners
+	const eventListeners: IMatrixConsumer<string> = {
+		rowsChanged: () => {},
+		colsChanged: () => {},
+		cellsChanged: () => {},
+	};
+	matrix.openMatrix(eventListeners);
+
+	// Configure undo/redo
+	const undoRedoStack = new UndoRedoStackManager();
+	matrix.openUndo(undoRedoStack);
+
+	const cleanUp = (): void => {
+		matrix.closeMatrix(eventListeners);
+	};
+
+	return {
+		matrix,
+		undoRedoStack,
+		cleanUp,
+	};
+}
+
+/**
+ * {@link createBenchmark} options.
+ */
+interface BenchmarkOptions extends TestMatrixOptions {
+	/**
+	 * The title of the benchmark test.
+	 */
+	readonly title: string;
+
+	/**
+	 * The operation to be measured.
+	 */
+	readonly operation: (matrix: ISharedMatrix) => void;
+}
+
+/**
+ * Creates a benchmark for operations on a SharedMatrix.
+ */
+function createBenchmark({
+	title,
+	matrixSize,
+	initialCellValue,
+	operation,
+}: BenchmarkOptions): IMemoryTestObject {
+	return new (class implements IMemoryTestObject {
+		readonly title = title;
+
+		private matrix: ISharedMatrix | undefined;
+		private cleanUp: (() => void) | undefined;
+
+		async run(): Promise<void> {
+			assert(this.matrix !== undefined, "matrix is not initialized");
+			operation(this.matrix);
+		}
+
+		beforeIteration(): void {
+			const {
+				matrix,
+				undoRedoStack: undoStack,
+				cleanUp,
+			} = createMatrix({
+				matrixSize,
+				initialCellValue,
+			});
+			this.matrix = matrix;
+			this.cleanUp = cleanUp;
+		}
+
+		afterIteration(): void {
+			assert(this.cleanUp !== undefined, "cleanUp is not initialized");
+
+			this.cleanUp();
+			this.matrix = undefined;
+			this.cleanUp = undefined;
+		}
+	})();
+}
+
+interface UndoRedoBenchmarkOptions extends BenchmarkOptions {
+	/**
+	 * The number of times undo/redo operations should be performed.
+	 */
+	readonly stackCount: number;
+}
+
 /**
  * Creates a benchmark for undo operations on a SharedMatrix.
  */
 function createUndoBenchmark({
 	title,
 	matrixSize,
-	initialValue,
-	operationCount,
+	initialCellValue,
 	stackCount,
 	operation,
-}: {
-	title: string;
-	matrixSize: number;
-	initialValue: string;
-	operationCount: number;
-	stackCount: number;
-	operation: (matrix: SharedMatrix, count: number) => void;
-}): IMemoryTestObject {
+}: UndoRedoBenchmarkOptions): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
 		readonly title = title;
-		private localMatrix: SharedMatrix | undefined;
-		private undoStack: UndoRedoStackManager | undefined;
+
+		private matrix: ISharedMatrix | undefined;
+		private undoRedoStack: UndoRedoStackManager | undefined;
+		private cleanUp: (() => void) | undefined;
 
 		async run(): Promise<void> {
-			assert(this.undoStack !== undefined, "undoStack is not initialized");
-			assert.equal(this.undoStack.undoStackLength, stackCount);
+			assert(this.undoRedoStack !== undefined, "undoRedoStack is not initialized");
 			for (let i = 0; i < stackCount; i++) {
-				this.undoStack.undoOperation();
+				this.undoRedoStack.undoOperation();
 			}
 		}
 
 		beforeIteration(): void {
-			this.localMatrix = createLocalMatrix({
-				id: "testLocalMatrix",
-				size: matrixSize,
-				initialValue,
+			const {
+				matrix,
+				undoRedoStack: undoStack,
+				cleanUp,
+			} = createMatrix({
+				matrixSize,
+				initialCellValue,
 			});
-			this.undoStack = new UndoRedoStackManager();
-			this.localMatrix.openUndo(this.undoStack);
-			operation(this.localMatrix, operationCount);
+			this.matrix = matrix;
+			this.undoRedoStack = undoStack;
+			this.cleanUp = cleanUp;
+
+			operation(this.matrix);
+			assert.equal(this.undoRedoStack.undoStackLength, stackCount);
+		}
+
+		afterIteration(): void {
+			assert(this.cleanUp !== undefined, "cleanUp is not initialized");
+
+			this.cleanUp();
+			this.matrix = undefined;
+			this.cleanUp = undefined;
 		}
 	})();
 }
@@ -71,51 +193,57 @@ function createUndoBenchmark({
 function createRedoBenchmark({
 	title,
 	matrixSize,
-	initialValue,
-	operationCount,
+	initialCellValue,
 	stackCount,
 	operation,
-}: {
-	title: string;
-	matrixSize: number;
-	initialValue: string;
-	operationCount: number;
-	stackCount: number;
-	operation: (matrix: SharedMatrix, count: number) => void;
-}): IMemoryTestObject {
+}: UndoRedoBenchmarkOptions): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
 		readonly title = title;
-		private localMatrix: SharedMatrix | undefined;
-		private redoStack: UndoRedoStackManager | undefined;
+
+		private matrix: ISharedMatrix | undefined;
+		private undoRedoStack: UndoRedoStackManager | undefined;
+		private cleanUp: (() => void) | undefined;
 
 		async run(): Promise<void> {
-			assert(this.redoStack !== undefined, "redoStack is not initialized");
-			assert.equal(this.redoStack.redoStackLength, stackCount);
+			assert(this.undoRedoStack !== undefined, "undoRedoStack is not initialized");
 			for (let i = 0; i < stackCount; i++) {
-				this.redoStack.redoOperation();
+				this.undoRedoStack.redoOperation();
 			}
 		}
 
 		beforeIteration(): void {
-			this.localMatrix = createLocalMatrix({
-				id: "testLocalMatrix",
-				size: matrixSize,
-				initialValue,
+			const { matrix, undoRedoStack, cleanUp } = createMatrix({
+				matrixSize,
+				initialCellValue,
 			});
-			this.redoStack = new UndoRedoStackManager();
-			this.localMatrix.openUndo(this.redoStack);
-			operation(this.localMatrix, operationCount);
-			assert.equal(this.redoStack.undoStackLength, stackCount);
+			this.matrix = matrix;
+			this.undoRedoStack = undoRedoStack;
+			this.cleanUp = cleanUp;
+
+			operation(this.matrix);
+			assert.equal(this.undoRedoStack.undoStackLength, stackCount);
+
 			for (let i = 0; i < stackCount; i++) {
-				this.redoStack.undoOperation();
+				this.undoRedoStack.undoOperation();
 			}
+			assert.equal(this.undoRedoStack.undoStackLength, 0);
+			assert.equal(this.undoRedoStack.redoStackLength, stackCount);
+		}
+
+		afterIteration(): void {
+			assert(this.cleanUp !== undefined, "cleanUp is not initialized");
+
+			this.cleanUp();
+			this.matrix = undefined;
+			this.cleanUp = undefined;
 		}
 	})();
 }
 
 describe("SharedMatrix memory usage", () => {
 	// The value to be set in the cells of the matrix.
-	const matrixValue = "cellValue";
+	const initialCellValue = "cellValue";
+
 	// The test matrix's size will be 10*10, 100*100.
 	// Matrix size 1000 benchmarks removed due to high overhead and unreliable results.
 	const matrixSizes = isInPerformanceTestingMode
@@ -158,25 +286,16 @@ describe("SharedMatrix memory usage", () => {
 				describe(`Column Insertion`, () => {
 					// Test the memory usage of the SharedMatrix for inserting a column in the middle for a given number of times.
 					benchmarkMemory(
-						new (class implements IMemoryTestObject {
-							readonly title = `Insert a column in the middle ${count} times`;
-							private localMatrix: SharedMatrix | undefined;
-
-							async run(): Promise<void> {
-								assert(this.localMatrix !== undefined, "localMatrix is not initialized");
+						createBenchmark({
+							title: `Insert a column in the middle ${count} times`,
+							matrixSize,
+							initialCellValue,
+							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
-									this.localMatrix.insertCols(Math.floor(this.localMatrix.colCount / 2), 1);
+									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 								}
-							}
-
-							beforeIteration(): void {
-								this.localMatrix = createLocalMatrix({
-									id: "testLocalMatrix",
-									size: matrixSize,
-									initialValue: matrixValue,
-								});
-							}
-						})(),
+							},
+						}),
 					);
 
 					// Test the memory usage of the SharedMatrix for undoing the insertion of a column in the middle for a given number of times.
@@ -184,11 +303,10 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo insert column in the middle ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
-							operationCount: count,
+							initialCellValue,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 								}
 							},
@@ -200,11 +318,10 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo insert column in the middle ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
-							operationCount: count,
+							initialCellValue,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 								}
 							},
@@ -215,25 +332,16 @@ describe("SharedMatrix memory usage", () => {
 				describe("Row Insertion", () => {
 					// Test the memory usage of the SharedMatrix for inserting a row in the middle for a given number of times.
 					benchmarkMemory(
-						new (class implements IMemoryTestObject {
-							readonly title = `Insert a row in the middle ${count} times`;
-							private localMatrix: SharedMatrix | undefined;
-
-							async run(): Promise<void> {
-								assert(this.localMatrix !== undefined, "localMatrix is not initialized");
+						createBenchmark({
+							title: `Insert a row in the middle ${count} times`,
+							matrixSize,
+							initialCellValue,
+							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
-									this.localMatrix.insertRows(Math.floor(this.localMatrix.colCount / 2), 1);
+									matrix.insertRows(Math.floor(matrix.colCount / 2), 1);
 								}
-							}
-
-							beforeIteration(): void {
-								this.localMatrix = createLocalMatrix({
-									id: "testLocalMatrix",
-									size: matrixSize,
-									initialValue: matrixValue,
-								});
-							}
-						})(),
+							},
+						}),
 					);
 
 					// Test the memory usage of the SharedMatrix for undoing the insertion of a row in the middle for a given number of times.
@@ -241,11 +349,10 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo insert row in the middle ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
-							operationCount: count,
+							initialCellValue,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertRows(Math.floor(matrix.colCount / 2), 1);
 								}
 							},
@@ -257,11 +364,10 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo insert row in the middle ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
-							operationCount: count,
+							initialCellValue,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertRows(Math.floor(matrix.colCount / 2), 1);
 								}
 							},
@@ -272,26 +378,17 @@ describe("SharedMatrix memory usage", () => {
 				describe("Row and Column Insertion", () => {
 					// Test the memory usage of the SharedMatrix for inserting a row and a column in the middle for a given number of times.
 					benchmarkMemory(
-						new (class implements IMemoryTestObject {
-							readonly title = `Insert a row and a column ${count} times`;
-							private localMatrix: SharedMatrix | undefined;
-
-							async run(): Promise<void> {
-								assert(this.localMatrix !== undefined, "localMatrix is not initialized");
+						createBenchmark({
+							title: `Insert a row and a column ${count} times`,
+							matrixSize,
+							initialCellValue,
+							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
-									this.localMatrix.insertCols(Math.floor(this.localMatrix.colCount / 2), 1);
-									this.localMatrix.insertRows(Math.floor(this.localMatrix.rowCount / 2), 1);
+									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
+									matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 								}
-							}
-
-							beforeIteration(): void {
-								this.localMatrix = createLocalMatrix({
-									id: "testLocalMatrix",
-									size: matrixSize,
-									initialValue: matrixValue,
-								});
-							}
-						})(),
+							},
+						}),
 					);
 
 					// Test the memory usage of the SharedMatrix for undoing the insertion of a row and a column in the middle for a given number of times.
@@ -299,11 +396,10 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo insert a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
-							operationCount: count,
+							initialCellValue,
 							stackCount: 2 * count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 									matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 								}
@@ -316,11 +412,10 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo insert a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
-							operationCount: count,
+							initialCellValue,
 							stackCount: 2 * count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 									matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 								}
@@ -337,40 +432,30 @@ describe("SharedMatrix memory usage", () => {
 				describe("Row and Column Insertion and Removal right away", () => {
 					// Test the memory usage of the SharedMatrix for inserting a row and a column and then removing them right away for a given number of times.
 					benchmarkMemory(
-						new (class implements IMemoryTestObject {
-							readonly title = `Insert a row and a column ${count} times`;
-							private localMatrix: SharedMatrix | undefined;
-
-							async run(): Promise<void> {
-								assert(this.localMatrix !== undefined, "localMatrix is not initialized");
+						createBenchmark({
+							title: `Insert and remove a row and a column ${count} times`,
+							matrixSize,
+							initialCellValue,
+							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
-									this.localMatrix.insertCols(Math.floor(this.localMatrix.colCount / 2), 1);
-									this.localMatrix.insertRows(Math.floor(this.localMatrix.rowCount / 2), 1);
-									this.localMatrix.removeCols(Math.floor(this.localMatrix.colCount / 2), 1);
-									this.localMatrix.removeRows(Math.floor(this.localMatrix.rowCount / 2), 1);
+									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
+									matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
+									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
+									matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 								}
-							}
-
-							beforeIteration(): void {
-								this.localMatrix = createLocalMatrix({
-									id: "testLocalMatrix",
-									size: matrixSize,
-									initialValue: matrixValue,
-								});
-							}
-						})(),
+							},
+						}),
 					);
 
 					// Test the memory usage of the SharedMatrix for undoing the insertion of a row and a column and then removing them right away for a given number of times.
 					benchmarkMemory(
 						createUndoBenchmark({
-							title: `Undo insert a row and a column ${count} times`,
+							title: `Undo insert and remove a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
-							operationCount: count,
+							initialCellValue,
 							stackCount: 4 * count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 									matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
@@ -385,11 +470,10 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo insert a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
-							operationCount: count,
+							initialCellValue,
 							stackCount: 4 * count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 									matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
@@ -406,25 +490,16 @@ describe("SharedMatrix memory usage", () => {
 				describe("Column Removal", () => {
 					// Test the memory usage of the SharedMatrix for removing a column in the middle for a given number of times.
 					benchmarkMemory(
-						new (class implements IMemoryTestObject {
-							readonly title = `Remove the middle column ${count} times`;
-							private localMatrix: SharedMatrix | undefined;
-
-							async run(): Promise<void> {
-								assert(this.localMatrix !== undefined, "localMatrix is not initialized");
+						createBenchmark({
+							title: `Remove the middle column ${count} times`,
+							matrixSize,
+							initialCellValue,
+							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
-									this.localMatrix.removeCols(Math.floor(this.localMatrix.colCount / 2), 1);
+									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 								}
-							}
-
-							beforeIteration(): void {
-								this.localMatrix = createLocalMatrix({
-									id: "testLocalMatrix",
-									size: matrixSize,
-									initialValue: matrixValue,
-								});
-							}
-						})(),
+							},
+						}),
 					);
 
 					// Test the memory usage of the SharedMatrix for undoing the removal of a column in the middle for a given number of times.
@@ -432,11 +507,10 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo remove the middle column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
-							operationCount: count,
+							initialCellValue,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 								}
 							},
@@ -448,11 +522,10 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo remove the middle column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
-							operationCount: count,
+							initialCellValue,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 								}
 							},
@@ -463,25 +536,16 @@ describe("SharedMatrix memory usage", () => {
 				describe("Row Removal", () => {
 					// Test the memory usage of the SharedMatrix for removing a row in the middle for a given number of times.
 					benchmarkMemory(
-						new (class implements IMemoryTestObject {
-							readonly title = `Remove the middle row ${count} times`;
-							private localMatrix: SharedMatrix | undefined;
-
-							async run(): Promise<void> {
-								assert(this.localMatrix !== undefined, "localMatrix is not initialized");
+						createBenchmark({
+							title: `Remove the middle row ${count} times`,
+							matrixSize,
+							initialCellValue,
+							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
-									this.localMatrix.removeRows(Math.floor(this.localMatrix.rowCount / 2), 1);
+									matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 								}
-							}
-
-							beforeIteration(): void {
-								this.localMatrix = createLocalMatrix({
-									id: "testLocalMatrix",
-									size: matrixSize,
-									initialValue: matrixValue,
-								});
-							}
-						})(),
+							},
+						}),
 					);
 
 					// Test the memory usage of the SharedMatrix for undoing the removal of a row in the middle for a given number of times.
@@ -489,11 +553,10 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo remove the middle row ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
-							operationCount: count,
+							initialCellValue,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 								}
 							},
@@ -505,11 +568,10 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo remove the middle row ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
-							operationCount: count,
+							initialCellValue,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 								}
 							},
@@ -520,26 +582,17 @@ describe("SharedMatrix memory usage", () => {
 				describe("Row and Column Removal", () => {
 					// Test the memory usage of the SharedMatrix for removing a row and a column in the middle for a given number of times.
 					benchmarkMemory(
-						new (class implements IMemoryTestObject {
-							readonly title = `Remove a row and a column ${count} times`;
-							private localMatrix: SharedMatrix | undefined;
-
-							async run(): Promise<void> {
-								assert(this.localMatrix !== undefined, "localMatrix is not initialized");
+						createBenchmark({
+							title: `Remove a row and a column ${count} times`,
+							matrixSize,
+							initialCellValue,
+							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
-									this.localMatrix.removeCols(Math.floor(this.localMatrix.colCount / 2), 1);
-									this.localMatrix.removeRows(Math.floor(this.localMatrix.rowCount / 2), 1);
+									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
+									matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 								}
-							}
-
-							beforeIteration(): void {
-								this.localMatrix = createLocalMatrix({
-									id: "testLocalMatrix",
-									size: matrixSize,
-									initialValue: matrixValue,
-								});
-							}
-						})(),
+							},
+						}),
 					);
 
 					// Test the memory usage of the SharedMatrix for undoing the removal of a row and a column in the middle for a given number of times.
@@ -547,11 +600,10 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo remove a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
-							operationCount: count,
+							initialCellValue,
 							stackCount: 2 * count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 									matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 								}
@@ -564,11 +616,10 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo remove a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
-							operationCount: count,
+							initialCellValue,
 							stackCount: 2 * count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 									matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 								}
@@ -580,25 +631,16 @@ describe("SharedMatrix memory usage", () => {
 				describe("Cell Value Setting", () => {
 					// Test the memory usage of the SharedMatrix for setting a 3-character string in a given number of cells.
 					benchmarkMemory(
-						new (class implements IMemoryTestObject {
-							readonly title = `Set a 3-character string in ${count} cells`;
-							private localMatrix: SharedMatrix | undefined;
-
-							async run(): Promise<void> {
-								assert(this.localMatrix !== undefined, "localMatrix is not initialized");
+						createBenchmark({
+							title: `Set a 3-character string in ${count} cells`,
+							matrixSize,
+							initialCellValue,
+							operation: (matrix) => {
 								for (let i = 0; i < count; i++) {
-									this.localMatrix.setCell(i, i, "abc");
+									matrix.setCell(i, i, "abc");
 								}
-							}
-
-							beforeIteration(): void {
-								this.localMatrix = createLocalMatrix({
-									id: "testLocalMatrix",
-									size: matrixSize,
-									initialValue: matrixValue,
-								});
-							}
-						})(),
+							},
+						}),
 					);
 
 					// Test the memory usage of the SharedMatrix for undoing the setting of a 3-character string in a given number of cells.
@@ -606,11 +648,10 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo setting a 3-character string in ${count} cells`,
 							matrixSize,
-							initialValue: matrixValue,
-							operationCount: count,
+							initialCellValue,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.setCell(i, i, "abc");
 								}
 							},
@@ -622,11 +663,10 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo setting a 3-character string in ${count} cells`,
 							matrixSize,
-							initialValue: matrixValue,
-							operationCount: count,
+							initialCellValue,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.setCell(i, i, "abc");
 								}
 							},

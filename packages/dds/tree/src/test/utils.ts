@@ -133,7 +133,6 @@ import {
 	type ISharedTreeEditor,
 	type ITreeCheckoutFork,
 	independentView,
-	type TreeStoredContent,
 	SchematizingSimpleTreeView,
 	type ForestOptions,
 	type SharedTreeOptionsInternal,
@@ -693,23 +692,12 @@ export function validateFuzzTreeConsistency(
 	);
 }
 
-function contentToJsonableTree(content: TreeStoredContent): JsonableTree[] {
-	return jsonableTreeFromFieldCursor(normalizeNewFieldContent(content.initialTree));
-}
-
 export function validateTreeContent(tree: ITreeCheckout, content: TreeSimpleContent): void {
 	const contentReference = jsonableTreeFromFieldCursor(
 		fieldCursorFromInsertable<UnsafeUnknownSchema>(content.schema, content.initialTree),
 	);
 	assert.deepEqual(toJsonableTree(tree), contentReference);
 	expectSchemaEqual(tree.storedSchema, toInitialSchema(content.schema));
-}
-export function validateTreeStoredContent(
-	tree: ITreeCheckout,
-	content: TreeStoredContent,
-): void {
-	assert.deepEqual(toJsonableTree(tree), contentToJsonableTree(content));
-	expectSchemaEqual(tree.storedSchema, content.schema);
 }
 
 export function expectSchemaEqual(
@@ -1552,4 +1540,23 @@ export class TestSchemaRepository extends TreeStoredSchemaRepository {
 		}
 		return false;
 	}
+}
+
+/**
+ * Content that can populate a `SharedTree`.
+ * @remarks
+ * Consider using TreeStoredContentStrict instead which has more specific typing.
+ */
+interface TreeStoredContent {
+	readonly schema: TreeStoredSchema;
+
+	/**
+	 * Default tree content to initialize the tree with iff the tree is uninitialized
+	 * (meaning it does not even have any schema set at all).
+	 *
+	 * Can be a single field cursor, array of nodes cursors, or undefined, or a single node cursor (in which case the root is assumed to have a single child).
+	 *
+	 * This cannot encode the dummy "above root" node and thus can not specify additional detached fields.
+	 */
+	readonly initialTree: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined;
 }

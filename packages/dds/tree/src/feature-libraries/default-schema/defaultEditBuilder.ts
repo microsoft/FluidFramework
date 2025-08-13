@@ -414,17 +414,15 @@ export interface ValueFieldEditBuilder<TContent> {
 	/**
 	 * Issues a change which replaces the current newContent of the field with `newContent`.
 	 * @param newContent - the new content for the field.
-	 * The cursor can be in either Field or Node mode and must represent exactly one node.
 	 */
 	set(newContent: TContent): void;
 }
 
 export interface OptionalFieldEditBuilder<TContent> {
 	/**
-	 * Issues a change which replaces the current newContent of the field with `newContent`
+	 * Issues a change which replaces the current newContent of the field with `newContent`.
 	 * @param newContent - the new content for the field.
-	 * If provided, the cursor can be in either Field or Node mode and must represent exactly one node.
-	 * @param wasEmpty - whether the field is empty when creating this change
+	 * @param wasEmpty - whether the field is empty when creating this change.
 	 */
 	set(newContent: TContent | undefined, wasEmpty: boolean): void;
 }

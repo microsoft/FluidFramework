@@ -35,7 +35,7 @@ import {
 	ForestTypeReference,
 	type ForestType,
 	type TreeCheckout,
-	type TreeStoredContent,
+	type TreeStoredContentStrict,
 } from "../../../shared-tree/index.js";
 import {
 	permissiveStoredSchemaGenerationOptions,
@@ -43,7 +43,7 @@ import {
 	toStoredSchema,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
-import { singleJsonCursor } from "../../json/index.js";
+import { fieldJsonCursor } from "../../json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { forestSummaryContentKey } from "../../../feature-libraries/forest-summary/forestSummarizer.js";
 import type { FieldKey, TreeNodeSchemaIdentifier } from "../../../core/index.js";
@@ -60,7 +60,7 @@ function createForestSummarizer(args: {
 	// The type of forest to create.
 	forestType: ForestType;
 	// The content and schema to initialize the forest with. By default, it is an empty forest.
-	initialContent?: TreeStoredContent;
+	initialContent?: TreeStoredContentStrict;
 	shouldEncodeFieldIncrementally?: (
 		nodeIdentifier: TreeNodeSchemaIdentifier,
 		fieldKey: FieldKey,
@@ -223,10 +223,10 @@ describe("ForestSummarizer", () => {
 
 			it(`can summarize ${testType} forest with simple content and load from it`, async () => {
 				const schema = SchemaFactory.number;
-				const initialContent: TreeStoredContent = {
+				const initialContent: TreeStoredContentStrict = {
 					schema: toStoredSchema(schema, permissiveStoredSchemaGenerationOptions),
 					get initialTree() {
-						return singleJsonCursor(5);
+						return fieldJsonCursor([5]);
 					},
 				};
 				const { forestSummarizer } = createForestSummarizer({
@@ -282,7 +282,7 @@ describe("ForestSummarizer", () => {
 				class SimpleObject extends sf.object("simpleObject", {
 					foo: sf.string,
 				}) {}
-				const initialContent: TreeStoredContent = {
+				const initialContent: TreeStoredContentStrict = {
 					schema: toStoredSchema(SimpleObject, permissiveStoredSchemaGenerationOptions),
 					initialTree: fieldCursorFromInsertable(SimpleObject, {
 						foo: "bar",
@@ -356,8 +356,8 @@ describe("ForestSummarizer", () => {
 			function setupForestForIncrementalSummarization(initialBoard: Root | undefined) {
 				const fieldCursor = initialBoard
 					? fieldCursorFromInsertable(Root, initialBoard)
-					: undefined;
-				const initialContent: TreeStoredContent = {
+					: fieldJsonCursor([]);
+				const initialContent: TreeStoredContentStrict = {
 					schema: toStoredSchema(Root, permissiveStoredSchemaGenerationOptions),
 					initialTree: fieldCursor,
 				};
