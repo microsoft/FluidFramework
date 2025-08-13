@@ -106,7 +106,6 @@ describe("Local Server Stress with rollback", () => {
 			...[20], // 0xa21
 			...[97], // channel maps should be the same size
 			...[54, 92], // timeout
-			...[28], // Cannot access Disposed subDirectory
 		],
 	});
 });

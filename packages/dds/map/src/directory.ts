@@ -911,7 +911,11 @@ export class SharedDirectory
 				// Note: We allow processing **remote** messages of subdirectories that are pending delete.
 				// This is because if we rollback the pending delete, we want to make sure we still processed the
 				// messages that would become visible.
-				if (subdir && (!this.isSubDirectoryDeletePending(op.path) || !local)) {
+				if (
+					subdir &&
+					!subdir.disposed &&
+					(!this.isSubDirectoryDeletePending(op.path) || !local)
+				) {
 					migrateIfSharedSerializable(op.value, this.serializer, this.handle);
 					const localValue: unknown = local ? undefined : op.value.value;
 					subdir.processSetMessage(msg, op, localValue, local, localOpMetadata);
@@ -2617,12 +2621,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	}
 
 	private undisposeSubdirectoryTree(directory: SubDirectory): void {
-		// Restore deleted subdirectory tree. Need to undispose the current directory first, then get access to the iterator.
-		// This will unmark "deleted" from the subdirectories from top to bottom.
-		directory.undispose();
+		// This will unmark "deleted" from the subdirectories from bottom to top.
 		for (const [_, subDirectory] of directory.getSubdirectoriesEvenIfDisposed()) {
 			this.undisposeSubdirectoryTree(subDirectory as SubDirectory);
 		}
+		directory.undispose();
 	}
 
 	private getSubdirectoriesEvenIfDisposed(): IterableIterator<[string, IDirectory]> {
