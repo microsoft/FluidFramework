@@ -16,7 +16,7 @@ import {
 	type NormalizedUpPath,
 	type TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
-import type { ITreeCheckout, TreeStoredContent } from "../../shared-tree/index.js";
+import type { ITreeCheckout, TreeStoredContentStrict } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand, makeArray } from "../../util/index.js";
 import {
 	checkoutWithContent,
@@ -32,6 +32,7 @@ import {
 import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
 import { numberSchema, SchemaFactory, toInitialSchema } from "../../simple-tree/index.js";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
+import { fieldJsonCursor } from "../json/index.js";
 
 const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
@@ -52,9 +53,11 @@ const rootNode2: NormalizedUpPath = {
 	detachedNodeId: undefined,
 };
 
-const emptyJsonContent: TreeStoredContent = {
+const emptyJsonContent: TreeStoredContentStrict = {
 	schema: toInitialSchema(SchemaFactory.optional(JsonAsTree.Tree)),
-	initialTree: undefined,
+	get initialTree() {
+		return fieldJsonCursor([]);
+	},
 };
 
 describe("Editing", () => {
@@ -3133,6 +3136,55 @@ describe("Editing", () => {
 
 			const expected = ["B", "C"];
 			expectJsonTree([tree1, tree2, tree3], expected);
+		});
+
+		it("Rebase over a commit that depends on a commit that has become conflicted", () => {
+			const rootTree = makeTreeFromJsonSequence(["C", "D"]);
+
+			const removeAnRestoreC = rootTree.branch();
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(removeAnRestoreC.events);
+			remove(removeAnRestoreC, 0, 1);
+			const removeC = removeAnRestoreC.branch();
+			expectJsonTree(removeC, ["D"]);
+
+			(undoStack.pop() ?? assert.fail("Missing undo")).revert();
+			unsubscribe();
+			const restoreC = removeAnRestoreC.branch();
+			expectJsonTree(restoreC, ["C", "D"]);
+
+			const addA = removeC.branch();
+			addA.transaction.start();
+			addA.editor.addNodeExistsConstraint(rootNode);
+			addA.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["A"]));
+			addA.transaction.commit();
+			expectJsonTree(addA, ["A", "D"]);
+
+			const addB = addA.branch();
+			addB.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["B"]));
+			expectJsonTree(addB, ["A", "B", "D"]);
+
+			// Removing "D" will violate the constraint in the transaction that adds A.
+			const removeD = removeC.branch();
+			remove(removeD, 0, 1);
+			expectJsonTree(removeD, []);
+
+			expectJsonTree(rootTree, ["C", "D"]);
+			rootTree.merge(removeC);
+			rootTree.merge(removeD);
+			rootTree.merge(addA); // No-op
+			expectJsonTree(rootTree, []);
+
+			const partiallyRebasedRestoreC = rootTree.branch();
+			partiallyRebasedRestoreC.merge(restoreC);
+			expectJsonTree(partiallyRebasedRestoreC, ["C"]);
+
+			rootTree.merge(addB);
+			expectJsonTree(rootTree, ["B"]);
+
+			// This merge requires that we order the cells of "A" and "C".
+			// This is challenging because they were introduced commits that are not taking part in the rebase.
+			rootTree.merge(partiallyRebasedRestoreC);
+			expectJsonTree(rootTree, ["B", "C"]);
 		});
 	});
 

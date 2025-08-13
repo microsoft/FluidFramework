@@ -29,8 +29,8 @@ import {
 } from "@microsoft/tsdoc";
 import type {
 	BlockContent,
+	Link,
 	List,
-	Link as MdastLink,
 	Nodes,
 	Paragraph,
 	Parent,
@@ -39,9 +39,8 @@ import type {
 	Text,
 } from "mdast";
 
-import type { Link } from "../../Link.js";
 import type { Logger } from "../../Logging.js";
-import type { Section, SectionHeading } from "../../mdast/index.js";
+import type { Section, SectionContent, SectionHeading } from "../../mdast/index.js";
 import {
 	type ApiFunctionLike,
 	injectSeparator,
@@ -89,7 +88,7 @@ export function createSignatureSection(
 	if (apiItem instanceof ApiDeclaredItem) {
 		const signatureExcerpt = apiItem.getExcerptWithModifiers();
 		if (signatureExcerpt !== "") {
-			const contents: BlockContent[] = [];
+			const contents: SectionContent[] = [];
 
 			contents.push({
 				type: "code",
@@ -131,10 +130,10 @@ export function createSignatureSection(
 function createHeritageTypesContent(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): BlockContent[] | undefined {
+): SectionContent[] | undefined {
 	const { logger } = config;
 
-	const contents: BlockContent[] = [];
+	const contents: SectionContent[] = [];
 
 	if (apiItem instanceof ApiClass) {
 		// Render `extends` type if there is one.
@@ -417,16 +416,9 @@ export function createExcerptSpanWithHyperlinks(
 				config.apiModel.resolveDeclarationReference(token.canonicalReference, undefined);
 
 			if (apiItemResult.resolvedApiItem) {
-				const link = getLinkForApiItem(
-					apiItemResult.resolvedApiItem,
-					config,
-					unwrappedTokenText,
+				content.push(
+					getLinkForApiItem(apiItemResult.resolvedApiItem, config, unwrappedTokenText),
 				);
-				content.push({
-					type: "link",
-					url: link.target,
-					children: [{ type: "text", value: link.text }],
-				});
 				wroteHyperlink = true;
 			}
 		}
@@ -478,12 +470,6 @@ export function createBreadcrumbParagraph(
 
 	// #endregion
 
-	const renderedLinks: MdastLink[] = breadcrumbLinks.map((link) => ({
-		type: "link",
-		url: link.target,
-		children: [{ type: "text", value: link.text }],
-	}));
-
 	const breadcrumbSeparator: Text = {
 		type: "text",
 		value: " > ",
@@ -491,7 +477,7 @@ export function createBreadcrumbParagraph(
 
 	// Inject breadcrumb separator between each link
 	const contents: PhrasingContent[] = injectSeparator<PhrasingContent>(
-		renderedLinks,
+		breadcrumbLinks,
 		breadcrumbSeparator,
 	);
 
@@ -1116,7 +1102,7 @@ export interface ChildSectionProperties {
 export function createChildDetailsSection(
 	childItems: readonly ChildSectionProperties[],
 	config: ApiItemTransformationConfiguration,
-	createChildContent: (apiItem) => BlockContent[],
+	createChildContent: (apiItem) => SectionContent[],
 ): Section[] | undefined {
 	const sections: Section[] = [];
 
@@ -1128,7 +1114,7 @@ export function createChildDetailsSection(
 			!doesItemKindRequireOwnDocument(childItem.itemKind, config.hierarchy) &&
 			childItem.items.length > 0
 		) {
-			const childContents: BlockContent[] = [];
+			const childContents: SectionContent[] = [];
 			for (const item of childItem.items) {
 				childContents.push(...createChildContent(item));
 			}
@@ -1168,18 +1154,7 @@ export function createEntryPointList(
 				children: [
 					{
 						type: "paragraph",
-						children: [
-							{
-								type: "link",
-								url: link.target,
-								children: [
-									{
-										type: "text",
-										value: link.text,
-									},
-								],
-							},
-						],
+						children: [link],
 					},
 				],
 			};

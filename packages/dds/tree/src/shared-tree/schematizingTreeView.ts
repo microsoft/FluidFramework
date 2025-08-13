@@ -16,7 +16,7 @@ import { anchorSlot } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
-	cursorForMapTreeNode,
+	cursorForMapTreeField,
 	TreeStatus,
 	Context,
 } from "../feature-libraries/index.js";
@@ -55,6 +55,7 @@ import {
 	FieldSchemaAlpha,
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
+	toUpgradeSchema,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -63,7 +64,7 @@ import {
 	type WithBreakable,
 } from "../util/index.js";
 
-import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
+import { canInitialize, initialize } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
 
 /**
@@ -186,7 +187,7 @@ export class SchematizingSimpleTreeView<
 
 			initialize(this.checkout, {
 				schema,
-				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
+				initialTree: cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
 			});
 		});
 	}
@@ -206,10 +207,8 @@ export class SchematizingSimpleTreeView<
 			);
 		}
 
-		this.runSchemaEdit(() => {
-			const result = ensureSchema(this.viewSchema, this.checkout);
-			assert(result, 0x8bf /* Schema upgrade should always work if canUpgrade is set. */);
-		});
+		const newSchema = toUpgradeSchema(this.viewSchema.viewSchema.root);
+		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
 	}
 
 	/**
