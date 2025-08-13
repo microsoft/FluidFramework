@@ -434,7 +434,8 @@ async function handleBroadcastSignal(
 
 	const serverUrl: string = config.get("worker:serverUrl");
 	const alfredUrl: string = config.get("worker:alfredUrl");
-	const session = await getSession(alfredUrl, tenantId, documentId);
+
+	const session = await getSession(alfredUrl, tenantId, documentId, request);
 
 	if (!session?.isSessionAlive) {
 		Lumberjack.error("Document not found", { tenantId, documentId });
@@ -466,16 +467,14 @@ async function getSession(
 	baseUrl: string,
 	tenantId: string,
 	documentId: string,
+	request: Request,
 ): Promise<ISession | undefined> {
 	const restWrapper = new BasicRestWrapper(
 		baseUrl /* Baseurl */,
 		undefined /* defaultQueryString */,
 		undefined /* maxBodyLength */,
 		undefined /* maxContentLength */,
-		{
-			"Accept": "application/json",
-			"Content-Type": "application/json",
-		} /* defaultHeaders */,
+		request.headers /* defaultHeaders */,
 		undefined /* axios */,
 		undefined /* refreshDefaultQueryString */,
 		undefined /* refreshDefaultHeaders */,
