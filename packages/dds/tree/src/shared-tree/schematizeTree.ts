@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import { type TreeStoredSchema, rootFieldKey, schemaDataIsEmpty } from "../core/index.js";
 import {
@@ -103,36 +103,24 @@ export function initializerFromChunk(
 	},
 	contentFactory: () => TreeChunk,
 ): () => void {
-	return () => initializeFromChunk(checkout, contentFactory);
+	return () => initializeFromChunk(checkout, contentFactory());
 }
 
 function initializeFromChunk(
 	checkout: Pick<ITreeCheckout, "storedSchema"> & {
 		readonly editor: IDefaultEditBuilder;
 	},
-	contentFactory: () => TreeChunk,
+	contentChunk: TreeChunk,
 ): void {
-	const contentChunk = contentFactory();
 	const field = { field: rootFieldKey, parent: undefined };
-	switch (checkout.storedSchema.rootFieldSchema.kind) {
-		case FieldKinds.optional.identifier: {
-			const fieldEditor = checkout.editor.optionalField(field);
-			assert(
-				contentChunk.topLevelLength <= 1,
-				0x7f4 /* optional field content should normalize at most one item */,
-			);
-			fieldEditor.set(contentChunk.topLevelLength === 0 ? undefined : contentChunk, true);
-			break;
-		}
-		// This case is not reachable from the public API, but the internal flex-tree abstraction layer can have sequence roots.
-		case FieldKinds.sequence.identifier: {
-			const fieldEditor = checkout.editor.sequenceField(field);
-			// TODO: should do an idempotent edit here.
-			fieldEditor.insert(0, contentChunk);
-			break;
-		}
-		default: {
-			fail(0xac7 /* unexpected root field kind during initialize */);
-		}
-	}
+	assert(
+		checkout.storedSchema.rootFieldSchema.kind === FieldKinds.optional.identifier,
+		"initializerFromChunk only supports optional roots",
+	);
+	const fieldEditor = checkout.editor.optionalField(field);
+	assert(
+		contentChunk.topLevelLength <= 1,
+		0x7f4 /* optional field content should normalize at most one item */,
+	);
+	fieldEditor.set(contentChunk.topLevelLength === 0 ? undefined : contentChunk, true);
 }
