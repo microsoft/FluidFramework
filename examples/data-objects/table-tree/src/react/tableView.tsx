@@ -39,32 +39,34 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 	const [draggedRowIndex, setDraggedRowIndex] = useState<number | undefined>(undefined);
 	const [draggedColumnIndex, setDraggedColumnIndex] = useState<number | undefined>(undefined);
 
-	useTree(tableModel.treeView.root);
+	const table = tableModel.treeView.root;
 
-	const columns = [...tableModel.treeView.root.columns];
-	const rows = [...tableModel.treeView.root.rows];
+	useTree(table);
+
+	const columns = [...table.columns];
+	const rows = [...table.rows];
 
 	const handleAppendNewRow = (): void => {
-		tableModel.treeView.root.insertRows({
-			rows: [{ cells: {} }],
+		table.insertRow({
+			row: { cells: {} },
 		});
 	};
 
 	const handleRemoveRow = (index: number): void => {
 		if (index >= 0 && index < rows.length) {
-			tableModel.treeView.root.rows.removeAt(index);
+			table.removeRows(index, 1);
 		}
 	};
 
 	const handleAppendNewColumn = (newColumn: Column): void => {
-		tableModel.treeView.root.insertColumns({
-			columns: [newColumn],
+		table.insertColumn({
+			column: newColumn,
 		});
 	};
 
 	const handleRemoveColumn = (index: number): void => {
 		if (index >= 0 && index < columns.length) {
-			tableModel.treeView.root.columns.removeAt(index);
+			table.removeColumns(index, 1);
 		}
 	};
 
@@ -79,7 +81,7 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 	const handleRowDrop = (targetIndex: number): void => {
 		if (draggedRowIndex !== undefined && draggedRowIndex !== targetIndex) {
 			const destinationGap = draggedRowIndex < targetIndex ? targetIndex + 1 : targetIndex;
-			tableModel.treeView.root.rows.moveToIndex(destinationGap, draggedRowIndex);
+			table.rows.moveToIndex(destinationGap, draggedRowIndex);
 		}
 		setDraggedRowIndex(undefined);
 	};
@@ -95,7 +97,7 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 	const handleColumnDrop = (targetIndex: number): void => {
 		if (draggedColumnIndex !== undefined && draggedColumnIndex !== targetIndex) {
 			const destinationGap = draggedColumnIndex < targetIndex ? targetIndex + 1 : targetIndex;
-			tableModel.treeView.root.columns.moveToIndex(destinationGap, draggedColumnIndex);
+			table.columns.moveToIndex(destinationGap, draggedColumnIndex);
 		}
 		setDraggedColumnIndex(undefined);
 	};
