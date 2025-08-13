@@ -16,7 +16,6 @@ import { DefaultTestSharedTreeKind } from "./utils.js";
 import { AttachState } from "@fluidframework/container-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { CommitKind, type Revertible } from "../core/index.js";
-import { Tree } from "../shared-tree/index.js";
 import assert from "node:assert";
 
 /**
@@ -145,20 +144,6 @@ export function createTableTree({
 		table,
 		treeView,
 	};
-}
-
-/**
- * Currently table schema does not support removing cells when a column is removed.
- * This function provides a way to remove a column and its associated cells from the table. Might remove in the future
- * if the table schema is updated to handle this automatically.
- */
-export function removeColumnAndCells(table: InstanceType<typeof Table>, column: Column): void {
-	Tree.runTransaction(table, () => {
-		table.removeColumns([column]);
-		for (const row of table.rows) {
-			table.removeCell({ column, row });
-		}
-	});
 }
 
 /**

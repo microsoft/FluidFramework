@@ -759,24 +759,6 @@ export namespace System_TableSchema {
 					return [];
 				}
 
-				// If there is only one column to remove, remove it (and don't incur cost of transaction)
-				if (columnsToRemove.length === 1) {
-					const columnOrIdToRemove = columnsToRemove[0] ?? oob();
-					const index = this._getColumnIndex(columnOrIdToRemove);
-
-					if (index === undefined) {
-						const columnId = this._getColumnId(columnOrIdToRemove);
-						throw new UsageError(
-							`Specified column with ID "${columnId}" does not exist in the table.`,
-						);
-					}
-					const removedColumn = this.columns[index] as ColumnValueType;
-					this.columns.removeAt(index);
-					return [removedColumn];
-				}
-
-				// If there are multiple columns to remove, remove them in a transaction.
-
 				// To reduce the number of operations in the transaction, we will build up a series of
 				// contiguous ranges to be removed from the input list and remove each range as a single operation.
 				const columnIndicesToRemove: number[] = [];
@@ -795,13 +777,13 @@ export namespace System_TableSchema {
 
 				const removedColumns: ColumnValueType[] = [];
 				Tree.runTransaction(this, () => {
+					// #region Remove columns in batches of contiguous ranges
+
 					// Note: Each range we remove from the list impacts the indices of the remaining items.
 					// As a result, we need to adjust each subsequent range we remove to account for the changes.
 					// `rangesToRemove` is sorted in ascending order, so it is sufficient to just track and modify based on a single offset.
 					let offset = 0;
 					for (const range of rangesToRemove) {
-						// Note, throwing an error within a transaction will abort the entire transaction.
-						// So if we throw an error here for any column, no columns will be removed.
 						const removed = Table._removeRange(
 							{
 								start: range.start - offset,
@@ -812,6 +794,20 @@ export namespace System_TableSchema {
 						removedColumns.push(...removed);
 						offset = offset + range.count;
 					}
+
+					// #endregion
+
+					// #region Remove cells corresponding with removed columns from each row
+
+					for (const row of this.rows) {
+						for (const column of removedColumns) {
+							// TypeScript is unable to narrow the row type correctly here, hence the cast.
+							// See: https://github.com/microsoft/TypeScript/issues/52144
+							(row as RowValueType).removeCell(column);
+						}
+					}
+
+					// #endregion
 				});
 				return removedColumns;
 			}
@@ -1236,29 +1232,6 @@ export namespace System_TableSchema {
  * });
  * ```
  *
- * @example Removing column and cells in a transaction
- *
- * When removing a column, if you wish to ensure that all of its corresponding cells are also removed (and not
- * orphaned), you can remove the column and all of the relevant cells in a transaction.
- * Note that there are performance implications to this.
- *
- * ```typescript
- * // Remove column1 and all of its cells.
- * // The "transaction" method will ensure that all changes are applied atomically.
- * Tree.runTransaction(table, () => {
- * 	// Remove column1.
- * 	table.removeColumns([column1]);
- *
- * 	// Remove the cell at column1 for each row.
- * 	for (const row of table.rows) {
- * 		table.removeCell({
- * 			column: column1,
- * 			row,
- * 		});
- * 	}
- * });
- * ```
- *
  * @privateRemarks
  * The above examples are backed by tests in `tableSchema.spec.ts`.
  * Those tests and these examples should be kept in-sync to ensure that the examples are correct.
@@ -1626,6 +1599,13 @@ export namespace TableSchema {
 
 		/**
 		 * Removes a range of columns from the table.
+		 *
+		 * @remarks
+		 * Also removes any corresponding cells from the table's rows.
+		 *
+		 * Note: this operation can be slow for tables with many rows.
+		 * We are actively working on improving the performance of this operation, but for now it may have a negative
+		 * impact on performance.
 		 * @param index - The starting index of the range to remove. Default: `0`.
 		 * @param count - The number of columns to remove. Default: all remaining columns starting from `index`.
 		 * @throws Throws an error if the specified range is invalid. In this case, no columns are removed.
@@ -1638,8 +1618,11 @@ export namespace TableSchema {
 		 * Removes 0 or more columns from the table.
 		 *
 		 * @remarks
-		 * Note: this does not remove any cells from the table's rows.
-		 * To remove the corresponding cells, use {@link TableSchema.Table.removeCell}.
+		 * Also removes any corresponding cells from the table's rows.
+		 *
+		 * Note: this operation can be slow for tables with many rows.
+		 * We are actively working on improving the performance of this operation, but for now it may have a negative
+		 * impact on performance.
 		 *
 		 * @param columns - The columns to remove.
 		 * @throws Throws an error if any of the columns are not in the table.
@@ -1652,8 +1635,11 @@ export namespace TableSchema {
 		 * Removes 0 or more columns from the table.
 		 *
 		 * @remarks
-		 * Note: this does not remove any cells from the table's rows.
-		 * To remove the corresponding cells, use {@link TableSchema.Table.removeCell}.
+		 * Also removes any corresponding cells from the table's rows.
+		 *
+		 * Note: this operation can be slow for tables with many rows.
+		 * We are actively working on improving the performance of this operation, but for now it may have a negative
+		 * impact on performance.
 		 *
 		 * @param columns - The columns to remove, specified by their {@link TableSchema.Column.id}.
 		 * @throws Throws an error if any of the columns are not in the table.

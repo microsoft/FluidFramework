@@ -27,7 +27,7 @@ import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshots/index.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
 
-describe.only("TableFactory unit tests", () => {
+describe("TableFactory unit tests", () => {
 	function createTableSchema() {
 		class Cell extends schemaFactory.object("table-cell", {
 			value: schemaFactory.string,
@@ -799,44 +799,85 @@ describe.only("TableFactory unit tests", () => {
 
 	describe("removeColumns", () => {
 		it("Remove empty list", () => {
-			const { treeView, Column } = createTableTree();
+			const { treeView, Column, Row } = createTableTree();
 			treeView.initialize({
-				columns: [new Column({ id: "column-0", props: {} })],
-				rows: [],
+				columns: [
+					new Column({
+						id: "column-0",
+						props: {},
+					}),
+				],
+				rows: [
+					new Row({
+						id: "row-0",
+						cells: {
+							"column-0": { value: "Hello world!" },
+						},
+						props: {},
+					}),
+				],
 			});
 
 			treeView.root.removeColumns([]);
 			assertEqualTrees(treeView.root, {
 				columns: [{ id: "column-0", props: {} }],
-				rows: [],
+				rows: [
+					{
+						id: "row-0",
+						cells: {
+							"column-0": { value: "Hello world!" },
+						},
+						props: {},
+					},
+				],
 			});
 		});
 
-		// TODO: by ID
 		it("Remove single column", () => {
-			const { treeView, Column } = createTableTree();
+			const { treeView, Column, Row } = createTableTree();
 			const column0 = new Column({ id: "column-0", props: {} });
 			const column1 = new Column({ id: "column-1", props: {} });
 			treeView.initialize({
 				columns: [column0, column1],
-				rows: [],
+				rows: [
+					new Row({
+						id: "row-0",
+						cells: {
+							"column-0": { value: "Hello world!" },
+						},
+						props: {},
+					}),
+				],
 			});
 
 			// Remove column0 (by node)
 			treeView.root.removeColumns([column0]);
 			assertEqualTrees(treeView.root, {
 				columns: [{ id: "column-1", props: {} }],
-				rows: [],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+						props: {},
+					},
+				],
 			});
 
 			// Remove column1 (by ID)
 			treeView.root.removeColumns(["column-1"]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
-				rows: [],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+						props: {},
+					},
+				],
 			});
 		});
 
+		// TODO: update case to have some cells populated to verify cell deletion behavior
 		it("Remove multiple columns", () => {
 			const { treeView, Column } = createTableTree();
 			const column0 = new Column({ id: "column-0", props: {} });
@@ -1530,96 +1571,6 @@ describe.only("TableFactory unit tests", () => {
 			// But it won't fire when a row's properties change, or when the row's cells change, etc.
 			Tree.on(table.rows, "nodeChanged", () => {
 				// Respond to the change.
-			});
-		});
-
-		it("TableSchema: Remove column and corresponding cells in a transaction", () => {
-			// #region Don't include this in the example docs.
-
-			const Cell = schemaFactory.string;
-
-			class Column extends TableSchema.column({
-				schemaFactory,
-				cell: Cell,
-				props: schemaFactory.object("TableColumnProps", {
-					label: schemaFactory.string,
-				}),
-			}) {}
-
-			class Row extends TableSchema.row({
-				schemaFactory,
-				cell: Cell,
-			}) {}
-
-			class Table extends TableSchema.table({
-				schemaFactory,
-				cell: Cell,
-				column: Column,
-				row: Row,
-			}) {}
-
-			const treeView = independentView(
-				new TreeViewConfiguration({
-					schema: Table,
-					enableSchemaValidation: true,
-				}),
-				{ idCompressor: createIdCompressor() },
-			);
-			treeView.initialize(
-				new Table({
-					columns: [
-						{ id: "column-0", props: { label: "Column 0" } },
-						{ id: "column-1", props: { label: "Column 1" } },
-						{ id: "column-2", props: { label: "Column 2" } },
-					],
-					rows: [
-						{
-							id: "row-0",
-							cells: {
-								"column-0": "0-0",
-								"column-1": "0-1",
-								"column-2": "0-2",
-							},
-						},
-						{
-							id: "row-1",
-							cells: {
-								"column-0": "1-0",
-								"column-1": "1-1",
-								"column-2": "1-2",
-							},
-						},
-						{
-							id: "row-2",
-							cells: {
-								"column-0": "2-0",
-								"column-1": "2-1",
-								"column-2": "2-2",
-							},
-						},
-					],
-				}),
-			);
-
-			const table = treeView.root;
-
-			const column1 = table.getColumn("column-1") ?? fail("Column not found");
-
-			// #endregion
-
-			// Remove column1 and all of its cells.
-			// The "transaction" method will ensure that all changes are applied atomically.
-			Tree.runTransaction(table, () => {
-				// Remove column1
-				table.removeColumns([column1]);
-
-				// Remove the cell at column1 for each row.
-				for (const row of table.rows) {
-					table.removeCell({
-						column: column1,
-						row,
-					});
-				}
 			});
 		});
 	});

@@ -47,8 +47,8 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 	const rows = [...table.rows];
 
 	const handleAppendNewRow = (): void => {
-		table.insertRow({
-			row: { cells: {} },
+		table.insertRows({
+			rows: [{ cells: {} }],
 		});
 	};
 
@@ -59,8 +59,8 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 	};
 
 	const handleAppendNewColumn = (newColumn: Column): void => {
-		table.insertColumn({
-			column: newColumn,
+		table.insertColumns({
+			columns: [newColumn],
 		});
 	};
 
