@@ -86,11 +86,11 @@ See the [Rollback commits](#rollback-commits) section for more details.
 
 In commit graph diagrams, we can represent this contiguous subsequence visually with a segment that extends from `C` backwards under all the commits that introduced cells that `C` refers to:
 
-![C refers to cells in C](../.attachments/revision-metadata/C-knows-of-C.png)<br />
+![C refers to cells in C](../.attachments/cell-ordering/C-knows-of-C.png)<br />
 _`C` refers to all cells introduced by `C` and all its ancestors up to and excluding `B`._
 
 
-![C refers to cells in A, B and C](../.attachments/revision-metadata/C-knows-of-ABC.png)<br />
+![C refers to cells in A, B and C](../.attachments/cell-ordering/C-knows-of-ABC.png)<br />
 _`C` refers to all cells introduced by `C` and all its ancestors up to and including `A`._
 
 In this last example, the cell reference accumulation invariant means that since `C` refers to cells introduced by `A`,
@@ -129,13 +129,13 @@ It does this based on the relative sequencing order of the commits in the commit
 This happens in two cases:
 
 1. When cells are being introduced by the same gap by concurrent commits.<br />
-   ![X and A are concurrent](../.attachments/revision-metadata/XvsA.png)<br />
+   ![X and A are concurrent](../.attachments/cell-ordering/XvsA.png)<br />
    _`X` and `A` are concurrent so the relative order of cells they introduced by the same gap is unspecified.<br />
    The colors have no intrinsic meaning. Their purpose is to depict which commit refers to cells introduced by which commit._
 
 2. When a commit `C` introduces cells in a gap where one of its ancestors (commit `A`) introduced cells that are empty in the input context of `C`,
    and `C` does not include references to the cells introduced by `A`.<br />
-   ![A is an ancestor of C](../.attachments/revision-metadata/C-knows-of-C.png)<br />
+   ![A is an ancestor of C](../.attachments/cell-ordering/C-knows-of-C.png)<br />
    _`C` does not refer to cells introduced by its ancestor `A`,
    so the relative order of cells `C` and `A` introduce in the same gap is unspecified._
 
@@ -156,7 +156,7 @@ When composing `A ○ B`, we know the following about the commit graph:
 * There may be commits before `A` that either `A` and/or `B` can refer to.
 
 We can represent this situation with the following commit graph:<br />
-![P1->P2->A->B](../.attachments/revision-metadata/compose-a-b.png)<br />
+![P1->P2->A->B](../.attachments/cell-ordering/compose-a-b.png)<br />
 `P1` and `P2` are  prior commits (which are not being composed).
 They are included here because `A` and/or `B` may refer to cells that `P1` and `P2` introduce.
 While there may be any number of such prior commits that introduced cells that `A` and/or `B` may refer to,
@@ -257,7 +257,7 @@ This insight requires taking into consideration how the set of commits that have
 Specifically, it requires taking into consideration where these sets intersect.
 
 As an example, consider the following scenario:<br />
-![](../.attachments/revision-metadata/compose-a-ref-p1-b-ref-p2.png)<br />
+![](../.attachments/cell-ordering/compose-a-ref-p1-b-ref-p2.png)<br />
 _`A` refers to cells introduced by `P1`, `P2`, and `A`.
 `B` refers to cells introduced by `P2`, `A`, and `B`._
 
@@ -327,7 +327,7 @@ Whenever `ca` refers to a cell that `B` has no reference to,
 we can be sure that `ca` was introduced by a commit that is older than whichever one introduced the cell that `cb` refers to.
 
 To see this is true, consider all the possible scenarios where `A` could make a reference to a cell that `B` does not refer to:<br />
-![](../.attachments/revision-metadata/compose-b-no-ref-to-ca.png)
+![](../.attachments/cell-ordering/compose-b-no-ref-to-ca.png)
 
 In all such scenarios, cells known to `A` and unknown to `B` are introduced by commits that have a blue underline but no red underline,
 while `cb` must be introduced by a commit that has a red underline (whether or not it also has blue underline).
@@ -352,24 +352,24 @@ When rebasing `B ↷ X`, we know the following about the commit graph:
 
 In the simplest case, it's also true that `X` and `B` have the same ancestry and therefore the same input context.
 This is true when rebasing a branch that contains a single commit:<br />
-![](../.attachments/revision-metadata/rebase-b-over-x.png)<br />
+![](../.attachments/cell-ordering/rebase-b-over-x.png)<br />
 with the goal to produce `B'`:<br />
-![](../.attachments/revision-metadata/rebase-to-bprime.png)<br />
+![](../.attachments/cell-ordering/rebase-to-bprime.png)<br />
 
 In the more general case, there can be any number of commits between `P` and `B` on the branch to be rebased:<br />
-![](../.attachments/revision-metadata/rebase-ab-over-x.png)<br />
+![](../.attachments/cell-ordering/rebase-ab-over-x.png)<br />
 with the goal to produce rebased versions of each before `B'`:<br />
-![](../.attachments/revision-metadata/rebase-to-abprime.png)<br />
+![](../.attachments/cell-ordering/rebase-to-abprime.png)<br />
 
 This prevents us from directly rebasing `B` over `X` because they have different input context.
 When confronted to this general case,
 we first rebase `B` over the inverses of all the commits between `B` and its lowest common ancestor with `X` (`P2` here).
 This maneuver produces to a commit `B2` whose input context is *compatible* with `X`'s:<br />
-![](../.attachments/revision-metadata/rebase-b2.png)
+![](../.attachments/cell-ordering/rebase-b2.png)
 
 It is this `B2` commit that is passed to the rebase function when performing `B ↷ X`.
 The graph of relevant commits in the general case therefore looks like this:<br />
-![](../.attachments/revision-metadata/rebase-b2-over-x.png)
+![](../.attachments/cell-ordering/rebase-b2-over-x.png)
 
 When we say that `B2`'s input context is compatible with `X`'s,
 what we means is that they are only different in ways that rebase is equipped to handle.
