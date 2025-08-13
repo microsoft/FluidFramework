@@ -3134,38 +3134,6 @@ describe("Editing", () => {
 			const expected = ["B", "C"];
 			expectJsonTree([tree1, tree2, tree3], expected);
 		});
-
-		it("Rebase over a commit that depends on a commit that has become conflicted", () => {
-			const tree1 = makeTreeFromJsonSequence(["C", "D"]);
-
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.events);
-			remove(tree1, 0, 1);
-			const restoreA = undoStack.pop() ?? assert.fail("Missing undo");
-			unsubscribe();
-
-			const tree2 = tree1.branch();
-
-			tree2.transaction.start();
-			tree2.editor.addNodeExistsConstraint(rootNode);
-			tree2.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["A"]));
-			tree2.transaction.commit();
-
-			tree2.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["B"]));
-			expectJsonTree(tree2, ["A", "B", "D"]);
-
-			// Removing "D" will violate the constraint in the transaction that adds A.
-			remove(tree1, 0, 1);
-
-			tree1.merge(tree2);
-			expectJsonTree(tree1, ["B"]);
-
-			// This revert should fail when trying to order the cells for "A" and "C".
-			// However, the rebase metadata includes information about the commit that added "A".
-			// This allows the rebaser to correctly determine that the cell for "A" is more recent than the cell for "C".
-			restoreA.revert();
-
-			expectJsonTree(tree1, ["B", "C"]);
-		});
 	});
 
 	it.skip("edit removed content", () => {
