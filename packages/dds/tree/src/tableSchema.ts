@@ -555,14 +555,14 @@ export namespace System_TableSchema {
 	 */
 	interface IndexRange {
 		/**
-		 * Start of the range (inclusive)
+		 * Start of the range (inclusive).
 		 */
 		start: number;
 
 		/**
-		 * End of the range (exclusive)
+		 * The number of items.
 		 */
-		end: number;
+		count: number;
 	}
 
 	/**
@@ -739,10 +739,16 @@ export namespace System_TableSchema {
 
 			public removeColumns(
 				indexOrColumns: number | readonly string[] | readonly ColumnValueType[],
-				end: number | undefined = undefined,
+				count: number | undefined = undefined,
 			): ColumnValueType[] {
 				if (typeof indexOrColumns === "number") {
-					return this.removeRangeOfColumns(indexOrColumns, end);
+					return Table._removeRange(
+						{
+							start: indexOrColumns,
+							count: count ?? this.columns.length - indexOrColumns,
+						},
+						this.columns,
+					);
 				}
 
 				const columnsToRemove = indexOrColumns;
@@ -795,49 +801,32 @@ export namespace System_TableSchema {
 					for (const range of rangesToRemove) {
 						// Note, throwing an error within a transaction will abort the entire transaction.
 						// So if we throw an error here for any column, no columns will be removed.
-						const removed = this.removeRangeOfColumns(
-							range.start - offset,
-							range.end - offset,
+						const removed = Table._removeRange(
+							{
+								start: range.start - offset,
+								count: range.count,
+							},
+							this.columns,
 						);
 						removedColumns.push(...removed);
-						offset = offset + (range.end - range.start);
+						offset = offset + range.count;
 					}
 				});
 				return removedColumns;
 			}
 
-			/**
-			 * Removes a range of columns from the table.
-			 * @param index - The starting index of the range to remove (inclusive).
-			 * @param end - The ending index of the range to remove (exclusive). Defaults to `array.length`.
-			 * @throws Throws an error if the specified range is invalid.
-			 * In this case, no columns are removed.
-			 */
-			private removeRangeOfColumns(index: number, end: number | undefined): ColumnValueType[] {
-				if (index < 0 || index >= this.columns.length) {
-					throw new UsageError(
-						`Start index out of bounds. Expected index to be on [0, ${this.columns.length - 1}], but got ${index}.`,
-					);
-				}
-				if (end !== undefined && (end > this.columns.length || end < index)) {
-					throw new UsageError(
-						`End index out of bounds. Expected end to be on [${index}, ${this.columns.length}], but got ${end}.`,
-					);
-				}
-				const removedColumns = this.columns.slice(index, end);
-				this.columns.removeRange(index, end);
-
-				// TypeScript is unable to narrow the column type correctly here, hence the cast.
-				// See: https://github.com/microsoft/TypeScript/issues/52144
-				return removedColumns as unknown as ColumnValueType[];
-			}
-
 			public removeRows(
 				indexOrRows: number | readonly string[] | readonly RowValueType[],
-				end?: number | undefined,
+				count?: number | undefined,
 			): RowValueType[] {
 				if (typeof indexOrRows === "number") {
-					return this.removeRangeOfRows(indexOrRows, end);
+					return Table._removeRange(
+						{
+							start: indexOrRows,
+							count: count ?? this.rows.length - indexOrRows,
+						},
+						this.rows,
+					);
 				}
 
 				const rowsToRemove = indexOrRows;
@@ -890,39 +879,18 @@ export namespace System_TableSchema {
 					for (const range of rangesToRemove) {
 						// Note, throwing an error within a transaction will abort the entire transaction.
 						// So if we throw an error here for any column, no columns will be removed.
-						const removed = this.removeRangeOfRows(range.start - offset, range.end - offset);
+						const removed = Table._removeRange(
+							{
+								start: range.start - offset,
+								count: range.count,
+							},
+							this.rows,
+						);
 						removedRows.push(...removed);
-						offset = offset + (range.end - range.start);
+						offset = offset + range.count;
 					}
 				});
 				return removedRows;
-			}
-
-			/**
-			 * Removes a range of rows from the table.
-			 * @param index - The starting index of the range to remove (inclusive).
-			 * @param end - The ending index of the range to remove (exclusive). Defaults to `array.length`.
-			 * @throws Throws an error if the specified range is invalid.
-			 * In this case, no rows are removed.
-			 */
-			private removeRangeOfRows(index: number, end: number | undefined): RowValueType[] {
-				if (index < 0 || index > this.rows.length) {
-					throw new UsageError(
-						`Start index out of bounds. Expected index to be on [0, ${this.rows.length - 1}], but got ${index}.`,
-					);
-				}
-				if (end !== undefined && (end > this.rows.length + 1 || end < index)) {
-					throw new UsageError(
-						`End index out of bounds. Expected end to be on [${index}, ${this.rows.length}], but got ${end}.`,
-					);
-				}
-
-				const removedRows = this.rows.slice(index, end);
-				this.rows.removeRange(index, end);
-
-				// TypeScript is unable to narrow the row type correctly here, hence the cast.
-				// See: https://github.com/microsoft/TypeScript/issues/52144
-				return removedRows as unknown as RowValueType[];
 			}
 
 			public removeCell(
@@ -998,6 +966,39 @@ export namespace System_TableSchema {
 				return this._getRowIndex(rowId) !== undefined;
 			}
 
+			private static _removeRange<TNodeSchema extends ImplicitAllowedTypes>(
+				range: IndexRange,
+				array: TreeArrayNode<TNodeSchema>,
+			): TreeNodeFromImplicitAllowedTypes<TNodeSchema>[] {
+				const { start, count } = range;
+
+				if (start < 0 || start >= array.length) {
+					throw new UsageError(
+						`Start index out of bounds. Expected index to be on [0, ${array.length - 1}], but got ${start}.`,
+					);
+				}
+				if (count < 0) {
+					throw new UsageError(`Expected non-negative count. Got ${count}.`);
+				}
+
+				const end = start + count; // exclusive
+				if (end > array.length) {
+					throw new UsageError(
+						`End index out of bounds. Expected end to be on [${start}, ${array.length}], but got ${end}.`,
+					);
+				}
+
+				// TypeScript is unable to narrow the row type correctly here, hence the cast.
+				// See: https://github.com/microsoft/TypeScript/issues/52144
+				const removedRows = array.slice(
+					start,
+					end,
+				) as TreeNodeFromImplicitAllowedTypes<TNodeSchema>[];
+				array.removeRange(start, end);
+
+				return removedRows;
+			}
+
 			/**
 			 * Groups the provided list of indices into a list of ordered, contiguous ranges.
 			 */
@@ -1014,9 +1015,9 @@ export namespace System_TableSchema {
 					compare: (a, b) => a.start - b.start,
 					min: {
 						start: Number.MIN_VALUE,
-						// Note: end here is arbitrary - it isn't used by the comparison function,
+						// Note: the count here is arbitrary - it isn't used by the comparison function,
 						// but the Heap type requires that "min" be of the same type as the elements being inserted.
-						end: Number.NaN,
+						count: Number.NaN,
 					},
 				});
 
@@ -1043,8 +1044,7 @@ export namespace System_TableSchema {
 						visited.add(i);
 					}
 
-					// Note that the upper bound above is inclusive, but the range we're generating uses an exclusive upper bound.
-					sortedRanges.add({ start, end: end + 1 });
+					sortedRanges.add({ start, count: end - start + 1 });
 				}
 
 				const result: IndexRange[] = [];
@@ -1624,14 +1624,13 @@ export namespace TableSchema {
 
 		/**
 		 * Removes a range of columns from the table.
-		 * @param index - The starting index of the range to remove (inclusive).
-		 * @param end - The ending index of the range to remove (exclusive). Defaults to `array.length`.
-		 * @throws Throws an error if the specified range is invalid.
-		 * In this case, no columns are removed.
+		 * @param index - The starting index of the range to remove. Default: `0`.
+		 * @param count - The number of columns to remove. Default: all remaining columns starting from `index`.
+		 * @throws Throws an error if the specified range is invalid. In this case, no columns are removed.
 		 */
 		removeColumns(
 			index: number,
-			end: number | undefined,
+			count: number | undefined,
 		): TreeNodeFromImplicitAllowedTypes<TColumn>[];
 		/**
 		 * Removes 0 or more columns from the table.
@@ -1662,14 +1661,13 @@ export namespace TableSchema {
 
 		/**
 		 * Removes a range of rows from the table.
-		 * @param index - The starting index of the range to remove (inclusive).
-		 * @param end - The ending index of the range to remove (exclusive). Defaults to `array.length`.
-		 * @throws Throws an error if the specified range is invalid.
-		 * In this case, no rows are removed.
+		 * @param index - The starting index of the range to remove. Default: `0`.
+		 * @param count - The number of rows to remove. Default: all remaining rows starting from `index`.
+		 * @throws Throws an error if the specified range is invalid. In this case, no rows are removed.
 		 */
 		removeRows(
 			index: number,
-			end: number | undefined,
+			count: number | undefined,
 		): TreeNodeFromImplicitAllowedTypes<TRow>[];
 		/**
 		 * Removes 0 or more rows from the table.

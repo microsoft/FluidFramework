@@ -925,7 +925,7 @@ describe.only("TableFactory unit tests", () => {
 			});
 
 			// Remove columns 1-2
-			treeView.root.removeColumns(1, 3);
+			treeView.root.removeColumns(1, 2);
 			assertEqualTrees(treeView.root, {
 				columns: [
 					{ id: "column-0", props: {} },
@@ -952,10 +952,8 @@ describe.only("TableFactory unit tests", () => {
 			);
 
 			assert.throws(
-				() => treeView.root.removeColumns(1, 0),
-				validateUsageError(
-					/End index out of bounds. Expected end to be on \[1, 2], but got 0/,
-				),
+				() => treeView.root.removeColumns(1, -1),
+				validateUsageError(/Expected non-negative count. Got -1./),
 			);
 
 			assert.throws(
@@ -1102,7 +1100,7 @@ describe.only("TableFactory unit tests", () => {
 			});
 
 			// Remove rows 1-2
-			treeView.root.removeRows(1, 3);
+			treeView.root.removeRows(1, 2);
 			assertEqualTrees(treeView.root, {
 				columns: [],
 				rows: [
@@ -1137,10 +1135,8 @@ describe.only("TableFactory unit tests", () => {
 			);
 
 			assert.throws(
-				() => treeView.root.removeRows(1, 0),
-				validateUsageError(
-					/End index out of bounds. Expected end to be on \[1, 2], but got 0/,
-				),
+				() => treeView.root.removeRows(1, -1),
+				validateUsageError(/Expected non-negative count. Got -1./),
 			);
 
 			assert.throws(
