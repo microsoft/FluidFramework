@@ -670,12 +670,10 @@ describe("SharedDirectory rollback", () => {
 			containerRuntime.flush();
 			containerRuntimeFactory.processAllMessages();
 
-			child.deleteSubDirectory("grandchild1");
-			child.deleteSubDirectory("grandchild2");
+			sharedDirectory.deleteSubDirectory("child");
 			assert(
-				child.getSubDirectory("grandchild1") === undefined &&
-					child.getSubDirectory("grandchild2") === undefined,
-				"grandchild directories should not exist pre-rollback",
+				sharedDirectory.getSubDirectory("child") === undefined,
+				"child subdir should not exist pre-rollback",
 			);
 
 			containerRuntime.rollback?.();

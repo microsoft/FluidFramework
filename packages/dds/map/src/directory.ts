@@ -950,7 +950,9 @@ export class SharedDirectory
 				op: IDirectoryCreateSubDirectoryOperation,
 				localOpMetadata: SubDirLocalOpMetadata,
 			) => {
-				const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
+				const parentSubdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
+					| SubDirectory
+					| undefined;
 				if (parentSubdir) {
 					// We don't reuse the metadata but send a new one on each submit.
 					parentSubdir.resubmitSubDirectoryMessage(op, localOpMetadata);
@@ -983,7 +985,9 @@ export class SharedDirectory
 				op: IDirectoryDeleteSubDirectoryOperation,
 				localOpMetadata: SubDirLocalOpMetadata,
 			) => {
-				const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
+				const parentSubdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
+					| SubDirectory
+					| undefined;
 				if (parentSubdir) {
 					// We don't reuse the metadata but send a new one on each submit.
 					parentSubdir.resubmitSubDirectoryMessage(op, localOpMetadata);
@@ -2290,8 +2294,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param op - The operation
 	 */
 	private submitCreateSubDirectoryMessage(op: IDirectorySubDirectoryOperation): void {
-		this.throwIfDisposed();
-
 		const localOpMetadata: ICreateSubDirLocalOpMetadata = {
 			type: "createSubDir",
 		};
@@ -2307,8 +2309,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		op: IDirectorySubDirectoryOperation,
 		subDir: SubDirectory,
 	): void {
-		this.throwIfDisposed();
-
 		const localOpMetadata: IDeleteSubDirLocalOpMetadata = {
 			type: "deleteSubDir",
 			subDirectory: subDir,
@@ -2325,11 +2325,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		op: IDirectorySubDirectoryOperation,
 		localOpMetadata: SubDirLocalOpMetadata,
 	): void {
-		// Don't resubmit if this subdirectory is disposed
-		if (this.disposed) {
-			return;
-		}
-
 		// Only submit the op, if we have record for it, otherwise it is possible that the older instance
 		// is already deleted, in which case we don't need to submit the op.
 		if (localOpMetadata.type === "createSubDir") {
@@ -2625,9 +2620,46 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// Restore deleted subdirectory tree. Need to undispose the current directory first, then get access to the iterator.
 		// This will unmark "deleted" from the subdirectories from top to bottom.
 		directory.undispose();
-		for (const [_, subDirectory] of directory.subdirectories()) {
+		for (const [_, subDirectory] of directory.getSubdirectoriesEvenIfDisposed()) {
 			this.undisposeSubdirectoryTree(subDirectory as SubDirectory);
 		}
+	}
+
+	private getSubdirectoriesEvenIfDisposed(): IterableIterator<[string, IDirectory]> {
+		const sequencedSubdirs: [string, SubDirectory][] = [];
+		const sequencedSubdirNames = new Set([...this.sequencedSubdirectories.keys()]);
+		for (const subdirName of sequencedSubdirNames) {
+			const optimisticSubdir = this.getOptimisticSubDirectoryEvenIfDisposed(subdirName);
+			if (optimisticSubdir !== undefined) {
+				sequencedSubdirs.push([subdirName, optimisticSubdir]);
+			}
+		}
+
+		const pendingSubdirNames = [
+			...new Set(
+				this.pendingSubDirectoryData
+					.map((entry) => entry.subdirName)
+					.filter((subdirName) => !sequencedSubdirNames.has(subdirName)),
+			),
+		];
+		const pendingSubdirs: [string, SubDirectory][] = [];
+		for (const subdirName of pendingSubdirNames) {
+			const optimisticSubdir = this.getOptimisticSubDirectoryEvenIfDisposed(subdirName);
+			if (optimisticSubdir !== undefined) {
+				pendingSubdirs.push([subdirName, optimisticSubdir]);
+			}
+		}
+
+		const allSubdirs = [...sequencedSubdirs, ...pendingSubdirs];
+
+		const orderedSubdirs = allSubdirs.sort((a, b) => {
+			const aSeqData = a[1].seqData;
+			const bSeqData = b[1].seqData;
+			assert(aSeqData !== undefined && bSeqData !== undefined, "seqData should be defined");
+			return seqDataComparator(aSeqData, bSeqData);
+		});
+
+		return orderedSubdirs[Symbol.iterator]();
 	}
 
 	/**
