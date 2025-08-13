@@ -85,7 +85,6 @@ const getOrCreatePresenceContainer = async (
 	const client = new AzureClient({ connection: connectionProps });
 	const schema: ContainerSchema = {
 		initialObjects: {
-			// A DataObject is added as otherwise fluid-static complains "Container cannot be initialized without any DataTypes"
 			_unused: TestDataObject,
 		},
 	};
@@ -136,19 +135,17 @@ class MessageHandler {
 	public presence: Presence | undefined;
 	public container: IFluidContainer | undefined;
 	public containerId: string | undefined;
-	// Use any to simplify typing issues - we'll handle type safety at runtime
 	private readonly latestStates = new Map<string, LatestRaw<{ value: string }>>();
 	private readonly latestMapStates = new Map<
 		string,
 		LatestMapRaw<{ value: string }, string>
 	>();
 
-	private preCreateTestWorkspaces(): void {
+	private connectSetup(): void {
 		if (!this.presence) {
 			return;
 		}
 
-		// Pre-create common test workspaces to ensure all clients have the same setup
 		const testWorkspaces = [
 			"testLatestWorkspace",
 			"testLatestMapWorkspace",
@@ -156,7 +153,6 @@ class MessageHandler {
 		];
 
 		for (const workspaceId of testWorkspaces) {
-			// Create Latest workspace
 			const latestWorkspace = this.presence.states.getWorkspace(
 				`test:${workspaceId}` as const,
 				{
@@ -165,8 +161,6 @@ class MessageHandler {
 			);
 			const latestState = latestWorkspace.states.latestValue;
 			this.latestStates.set(workspaceId, latestState);
-
-			// Set up event listeners on the state object
 			latestState.events.on("remoteUpdated", (update) => {
 				send({
 					event: "latestValueUpdated",
@@ -176,7 +170,6 @@ class MessageHandler {
 				});
 			});
 
-			// Create LatestMap workspace
 			const latestMapWorkspace = this.presence.states.getWorkspace(
 				`test:${workspaceId}` as const,
 				{
@@ -185,10 +178,7 @@ class MessageHandler {
 			);
 			const latestMapState = latestMapWorkspace.states.latestMap;
 			this.latestMapStates.set(workspaceId, latestMapState);
-
-			// Set up event listeners on the map state object
 			latestMapState.events.on("remoteUpdated", (update) => {
-				// FluidFramework passes items as a ReadonlyMap, we need to iterate through it
 				for (const [key, valueWithMetadata] of update.items) {
 					send({
 						event: "latestMapValueUpdated",
@@ -240,8 +230,8 @@ class MessageHandler {
 					send(m);
 				});
 
-				// Pre-create workspaces that tests will use to ensure all clients are set up identically
-				this.preCreateTestWorkspaces();
+				// Get test workspaces and set up event listeners
+				this.connectSetup();
 
 				send({
 					event: "ready",
