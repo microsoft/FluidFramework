@@ -45,8 +45,8 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 	const rows = [...tableModel.treeView.root.rows];
 
 	const handleAppendNewRow = (): void => {
-		tableModel.treeView.root.insertRow({
-			row: { cells: {} },
+		tableModel.treeView.root.insertRows({
+			rows: [{ cells: {} }],
 		});
 	};
 
@@ -57,8 +57,8 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 	};
 
 	const handleAppendNewColumn = (newColumn: Column): void => {
-		tableModel.treeView.root.insertColumn({
-			column: newColumn,
+		tableModel.treeView.root.insertColumns({
+			columns: [newColumn],
 		});
 	};
 
