@@ -27,7 +27,7 @@ import {
 	type UnsafeUnknownSchema,
 	type ValidateRecursiveSchema,
 } from "../simple-tree/index.js";
-import type { TreeStoredContent } from "../shared-tree/index.js";
+import type { TreeStoredContentStrict } from "../shared-tree/index.js";
 
 import type {
 	TreeSimpleContent,
@@ -90,7 +90,7 @@ export function makeDeepContentSimple(
 export function makeDeepStoredContent(
 	depth: number,
 	leafValue: number = 1,
-): TreeStoredContent {
+): TreeStoredContentStrict {
 	const content = makeDeepContentSimple(depth, leafValue);
 	return {
 		initialTree: fieldCursorFromInsertable<UnsafeUnknownSchema>(
@@ -125,7 +125,7 @@ export function makeWideContentWithEndValueSimple(
 export function makeWideStoredContentWithEndValue(
 	numberOfNodes: number,
 	endLeafValue?: number,
-): TreeStoredContent {
+): TreeStoredContentStrict {
 	const content = makeWideContentWithEndValueSimple(numberOfNodes, endLeafValue);
 	return {
 		initialTree: fieldCursorFromInsertable<UnsafeUnknownSchema>(

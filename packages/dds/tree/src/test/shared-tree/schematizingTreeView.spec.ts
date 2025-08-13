@@ -39,7 +39,7 @@ import {
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
 	type TreeCheckout,
-	type TreeStoredContent,
+	type TreeStoredContentStrict,
 } from "../../shared-tree/index.js";
 import type { Mutable } from "../../util/index.js";
 import { brand } from "../../util/index.js";
@@ -63,7 +63,7 @@ function checkoutWithInitialTree(
 		viewConfig.schema,
 		unhydratedInitialTree,
 	);
-	const treeContent: TreeStoredContent = {
+	const treeContent: TreeStoredContentStrict = {
 		schema: toInitialSchema(viewConfig.schema),
 		initialTree,
 	};
