@@ -1,24 +1,21 @@
-# Revision Metadata
+# Cell Ordering
 
-Rebase operations need metadata to provided by the caller (e.g., the high-level rebasing algorithm) about the overall branching structure that the rebase takes place in.
-For example, if commit `B` from a branch `[A, B]` is being rebased over some commit `X` as part of rebasing `[A, B]` over `X`,
-then that rebase operation needs to be informed about `A`'s relative position in the commit graph w.r.t. to `X`.
+This document aims to explain the cell ordering scheme currently used by arrays/sequence fields.
 
-This page aims to explain why this is the case and precisely define the characteristics of this scheme.
-While the scheme for revision metadata is not specific to sequence fields, sequence fields are currently the only motivator for it.
-This document therefore focuses on them.
-
-## Commits and Cell IDs
+## Cells
 
 The idea of cells is introduced in [cell-model-of-collaborative-editing.md](cell-model-of-collaborative-editing.md).
 The core idea is that, in addition to requiring a way to refer to positions that nodes occupy
 (which we accomplish using integer indices for nodes in a given sequence, at a given point in the commit graph)
-we need a way to refer to the positions that nodes will occupy or have occupied in the past.
+we need a way to refer to the empty locations that nodes may occupy or have occupied in the past.
 We call these "cells".
 
 We accomplish this by assigning a unique ID to each such cell.
+
+## Cell IDs and Commits
+
 Each cell ID is associated with the commit that introduced it,
-which makes it easy to check if a given commit introduced a given cell.
+which makes it easy to check if a given commit introduced a given cell ID.
 
 Being able to refer to empty cells makes it possible for commits to convey position information relative to such cells.
 For example, if some commit `A` inserts content before some empty cell `c`
@@ -27,7 +24,7 @@ then we know that, the content inserted by `A` should come before the content in
 no matter the order in which the commits `A` and `X` end up sequenced in the commit history.
 If these commits had not been able to refer to `c`, then there would not have been a way to guarantee the relative ordering of their inserted contents.
 
-There are two cases where a commit introduces new cell ID:
+There are two cases where a commit introduces a new cell ID:
 
 1. Inserting a new node in a sequence introduces a cell ID to refer to the cell that will hold the node.
    In the input context of the commit, the cell is empty.
@@ -39,13 +36,15 @@ There are two cases where a commit introduces new cell ID:
 Commits can also refer to a cell using an ID that was introduced by a prior commit.
 This occurs in two cases:
 
-1. An inverse commit (whether a rollback or revert) refers to cells that the commit it is the inverse of referred to and uses the same IDs to do so.
+1. An inverse commit (whether a rollback or revert) refers to all cells that the commit it is the inverse of referred to and uses the same IDs to do so.
    For example, if commit `A` removes a node and therefore introduces cell ID `Id1` to refer to the cell it empties,
    then the inverse of `A` will restore that node to the same cell, referring to that cell using `Id1`.
 
-2. Rebasing a commit `A` over a commit `X` leads to a commit `A'` that refers to all that either `A` or `X` referred to.
+2. Rebasing a commit `A` over a commit `X` leads to a commit `A'` that refers to all cells that either `A` or `X` referred to.
    For example, if `A` inserts a node next to a node `n`, and `X` removes `n` thereby introducing cell ID `Id1` to refer to the cell where `n` used to be,
    then `A'` will carry a mark that uses `Id1` in order to describe the location of the cell that used to contain `n`.
+
+## The Cell Reference Accumulation Invariant
 
 One can infer from the above that for a given commit `C`...
 * `C` refers to all cells introduced by `C`.
@@ -56,12 +55,10 @@ In other words, when considering a single branch,
 if a commit `C` has a reference to a cell introduced by commit `A`,
 then it also has references to every cell introduced by `A`,
 references to every cells introduced by commits sequenced between `A` and `C`,
-as well as references to every cells introduced by `C`.*
+as well as references to every cells introduced by `C`.
 
-*This currently violated by two things:
-1. [Rollback commits](#rollback-commits)
-1. How we rebase over [commits with constraint violations](#commit-with-constraint-violations).
-See the relevant sections for more details.
+Note that rollback commits are excluded from this invariant because they are not truly considered to be part of any branch.
+See the [Rollback commits](#rollback-commits) section for more details.
 
 In commit graph diagrams, we can represent this contiguous subsequence visually with a segment that extends from `C` backwards under all the commits that introduced cells that `C` refers to:
 
@@ -72,12 +69,38 @@ _`C` refers to all cells introduced by `C` and all its ancestors up to and exclu
 ![C refers to cells in A, B and C](../.attachments/revision-metadata/C-knows-of-ABC.png)<br />
 _`C` refers to all cells introduced by `C` and all its ancestors up to and including `A`._
 
+In this last example, the cell reference accumulation invariant means that since `C` refers to cells introduced by `A`,
+it must also refer to cells introduced by `B`.
+
+## Cell Reference Accumulation In Practice
+
+The above invariant can be interpreted to mean that the following is true for any commit `C`:
+* There is a commit `OldestRef(C)` that is the commit which introduces the oldest cell that `C` refers to.
+* `OldestRef(C)` is either `C` itself or one of its ancestors.
+* `C` contains references to all cells introduced by commits `OldestRef(C)`, `C`, and all commits in between.
+
+Since this property stems from inverses and rebases,
+it's tempting to think that the `OldestRef(C)` of any commit `C` is the earliest commit it rebased over,
+or the commit it is the inverse of (if it is the inverse of a commit and has not been rebased),
+or itself, whichever is earliest in sequencing order.
+This intuition is wrong.
+In practice, the `OldestRef(C)` of any commit `C` can be an earlier commit.
+This is due to the following:
+1. When we invert `C`, the inverse will contain references to all cells that `C` referred to,
+   not just the ones that `C` introduced.
+2. When we rebase `C` over `X`, we don't just include in `C'` references to cell introduced by `X`.
+   We also includes references to all cells that `X` has references to.
+3. Rebasing `B` over a rollback commit `A⁻¹` adds to the rebased commit references to cells introduced by `A`.
+   These references are not dropped when later rebasing that commit over `A'`.
+
+This can lead to more cells references than strictly necessary.
+We may attempt to reduced the number of unnecessary references in the future.
 
 ## Cell Ordering From Commit Ordering
 
 While cells help specify the relative order of content in sequences,
-there are some situation where the information contained in commits only specify a partial order.
-The rebasing system is responsible for picking a total ordering that is consistent across peers.
+there are some situation where the information contained in commits only specifies a partial order.
+Through a process know as "tie-breaking", the rebasing system is responsible for picking a total ordering that is consistent across peers.
 It does this based on the relative sequencing order of the commits in the commit graph.
 This happens in two cases:
 
@@ -97,9 +120,9 @@ This leads to a system where,
 in order to determine the relative order of two cells,
 we sometimes need to know the relative order of the two commits that introduced the cells.
 
-In the remainder of this section, we consider the cell-ordering scenarios that compose and rebase operation face.
+## Compose
 
-### Compose
+In this section, we consider the cell-ordering scenarios that compose operations face.
 
 When composing `A ○ B`, we know the following about the commit graph:
 
@@ -139,7 +162,7 @@ We instead consider what information and techniques are available to possible im
 Reminder: given a commit `C` and a reference to a cell `c`,
 we can use the cell ID used to reference `c` to check if `c` was introduced by `C`.
 
-#### Pairs of Cells Introduced by The Same Commit
+### Pairs of Cells Introduced by The Same Commit
 
 If `ca` and `cb` both refer to cells introduced by the same commit
 (whether or not they refer to the exact same cell), then,
@@ -161,7 +184,7 @@ This takes care of the following cases:
 +------------------+----+----+----+-----+-----+
 ```
 
-#### Pairs of Cells Introduced by Different Input Commits
+### Pairs of Cells Introduced by Different Input Commits
 
 The compose function can detect cases where `ca` refers to `A` and `cb` refers to `B`.
 These cases are trivially resolvable because we know `A` comes before `B` in sequencing order.
@@ -180,7 +203,7 @@ This takes care of the following cases:
 +------------------+----+----+----+-----+-----+
 ```
 
-#### Pairs of Cells With One Cell Introduced by Either Input Commit
+### Pairs of Cells With One Cell Introduced by Either Input Commit
 
 Being able to detect whether `ca` and/or `cb` were introduced by `A` or `B` also allows us to handle cases where only one of `ca` and `cb` refers to a cell introduced by `A` or `B`.
 This is because any commit other than `A` and `B` that introduced cells that `A` or `B` might refer to must be an ancestor of `A` and `B`,
@@ -200,7 +223,7 @@ This takes care of the following cases:
 +------------------+----+----+----+-----+-----+
 ```
 
-#### Pairs of Cells Both Referred to by Either Commit
+### Pairs of Cells Both Referred to by Either Commit
 
 If `A` refers to both `ca` and `cb`, then the relative order of `ca` and `cb` can be looked up in `A`.
 Similarly, if `B` refers to both `ca` and `cb`, then the relative order of `ca` and `cb` can be looked up in `B`.
@@ -273,7 +296,7 @@ This means that this approach can tackle the following cases:
 Note that we don't need to know which scenario we find ourselves in to benefit from this approach.
 We can just check whether `A` contains a reference to `cb` or `B` contains a reference to `ca` and leverage whichever is the case.
 
-#### Pairs of Cell Where `ca` Is Unknown to `B`
+### Pairs of Cell Where `ca` Is Unknown to `B`
 
 Whenever `ca` refers to a cell that `B` has no reference to,
 we can be sure that `ca` was introduced by a commit that is older than whichever one introduced the cell that `cb` refers to.
@@ -285,13 +308,17 @@ In all such scenarios, cells known to `A` and unknown to `B` are introduced by c
 while `cb` must be introduced by a commit that has a red underline (whether or not it also has blue underline).
 One can see from the diagrams that the former always precedes the latter in sequencing order.
 
-#### Putting it All Together
+### Putting it All Together
 
 By looking at which cases each of these approaches can handle,
-we can see that they are enough to address any cell ordering scenario in compositions when taken together.
-This shows how implementations of compose need not rely on extra metadata in order to correctly order cells.
+we can see that, when taken together, they are sufficient to address any cell ordering scenario in compositions.
+This shows how implementations of compose need not rely on extra metadata in order to correctly order cells.*
 
-### Rebase
+*See the [Rollback commits](#rollback-commits) section to see how they fit into this.
+
+## Rebase
+
+In this section, we consider the cell-ordering scenarios that rebase operations face.
 
 When rebasing `B ↷ X`, we know the following about the commit graph:
 
@@ -352,7 +379,7 @@ and there's nothing that would make this process different for `A1` compared to 
 As we did for compose, we consider what information and techniques are available to possible implementations.
 We gloss over the explanation when it is the same as it was for compose.
 
-#### Pairs of Cells Introduced by The Same Commit
+### Pairs of Cells Introduced by The Same Commit
 
 As for compose, this takes care of the following cases:
 ```
@@ -369,7 +396,7 @@ As for compose, this takes care of the following cases:
 +------------------+----+----+----+-----+-----+
 ```
 
-#### Pairs of Cells Introduced by Different Input Commits
+### Pairs of Cells Introduced by Different Input Commits
 
 As for compose, this takes care of the following cases:
 ```
@@ -386,7 +413,7 @@ As for compose, this takes care of the following cases:
 +------------------+----+----+----+-----+-----+
 ```
 
-#### Pairs of Cells With One Cell Introduced by `B`
+### Pairs of Cells With One Cell Introduced by `B`
 
 If `cb` refers to a cell introduced by `B`,
 then we know that `cx` is older that `cb` because any commit that introduced a cell that `cx` might refer to is older than `B`.
@@ -409,7 +436,7 @@ Note that we cannot handle cases where `cx` refers to a cell introduced by `X` a
 because `cb` might refer either to a cell introduced by `P1`, `P2` or `A`,
 which have different implications for cell ordering.
 
-#### Pairs of Cells Both Referred to by Either Commit
+### Pairs of Cells Both Referred to by Either Commit
 
 This works the same as in compose,
 though it only applies to cells introduced by `P1` or `P2`:
@@ -427,9 +454,9 @@ though it only applies to cells introduced by `P1` or `P2`:
 +------------------+----+----+----+-----+-----+
 ```
 
-#### Pairs of Cell Where `ca` Is Unknown to `B`
+### Pairs of Cell Where `ca` Is Unknown to `B`
 
-#### Putting it All Together
+### Putting it All Together
 
 By looking at which cases each of these approaches can handle,
 we can see that they are enough to collectively address the following cases:
@@ -453,43 +480,66 @@ The problem is not that we don't know how to handle these cases,
 the problem is that we don't know how to differentiate these cases from the ones were `cb` was introduced by by `P1` or `P2`.
 This is because the rebase implementation has no way of determining whether `cb` was introduced by `A`.
 
-#### Providing Metadata
+### Providing Metadata
 
 In order to be able to tackle the remaining cases,
 rebase needs to be able to detect references to cells that were introduced by any commit between `B` and the lowest common ancestor of `X` and `B`.
 In other words, rebase needs to be able to check if a cell was introduced by a commit on the branch that is being rebased.
 
-### Rebase 2.0
+### A Different Way?
 
 It's interesting to note that rebase's need for metadata only comes from our choice of scheme for handling branch rebasing.
 We can imagine a different approach where all commits on the branch are composed together into a single commit that is then rebased as a unit.
 Such an approach would ensure that the rebased commit and the commit that it is rebased over truly have the same ancestry and the same input context,
 and it would make remove the need to the extra metadata.
 
-### Rollback Commits
+## Rollback Commits
 
-They're just a tool, they're not real commits:
+Rollback commits are a tool that the high-level rebasing algorithm uses in order to leverage low-level rebasing operations for the purpose of performing branch rebases and for computing the net change on a tree whose local edits have been rebased.
+
+Rollback commits are not real commits:
+* They don't represent a user edit.
 * They don't define a valid revision in the document history.
 * They are not rebasable.
 
-When composing, rollback commits break the expectation that commits ony refer to cells introduced by that commit or an earlier commit.
-We can handle this in the compose implementation because  each rollback commit contains information about which commit it is a rollback of.
-You could say each rollback comes with its own metadata that the compose implementation knows to pay attention to.
+Rollback commits do not abide by the cell reference accumulation invariant.
+Consider the scenario where a branch with commits `A` and `B` is being rebased over `X`:
+producing the net change requires composing `B⁻¹ ○ A⁻¹ ○ X ○ A' ○ B'`.
+The rollback commits `B⁻¹` and `A⁻¹` may refer to cells that are introduced by commits `B'` and `A'`,
+which come later in the composition order.
+Also, composing `B⁻¹` with `A⁻¹` might require tie-breaking cells introduced by `A` and `B`.
+This would normally be done based on the ordering of the commit passed to the compose operation,
+but using such an order would yield the wrong tie-break behavior since `B⁻¹` and `A⁻¹` are passed to compose in the order that is the reverse of the actual sequencing order.
 
-#### Tiding Up
+### In Compose
+
+Each rollback commit contains information about which commit it is a rollback of.
+You could say each rollback comes with its own metadata.
+The compose implementation can leverage this metadata to infer the sequencing order of commits from the order of the commits it is given.
+Compose having to know about the existence of rollback commits is a downward leak from the high-level rebasing algorithm.
+
+### In Rebase
+
+Rollback commits do not cause additional cell-ordering challenges during rebasing.
+The rollback commits themselves are never rebased.
+When rebasing over a rollback commit,
+the commit being rebased is always a commit that was sequenced after the commit being rolled back.
+This is in line with rebase's expectations when it comes to the relative sequence ordering of the commits it is passed as input.
+
+### Tiding Up
 
 We could avoid ever passing rollback commits to compose
 (and therefore not require logic in the compose implementation to watch out for rollback commits).
 
 For rebasing commit `C` when rebasing branch `[A, B, C]` over commit `X`,
-we currently do `C ↷ (A⁻¹ ○ B⁻¹ ○ X ○ A' ○ B')`.
+we currently do `C ↷ (B⁻¹ ○ A⁻¹ ○ X ○ A' ○ B')`.
 Instead, we could do `(C ↷ (A ○ B)⁻¹) ↷ (X ○ A' ○ B')`.
 
 We could define an `unbase` operation that performs `C ↷ (A ○ B)⁻¹` as an implementation detail.
 The advantage of that is that the changeset produced by `(A ○ B)⁻¹` wouldn't exist outside the scope of this `unbase` operation.
 
-For producing a delta when rebasing branch `[A, B]` over commit `X`,
-we currently apply `Δ(A⁻¹ ○ B⁻¹ ○ X ○ A' ○ B')`.
+For updating the tree state when rebasing branch `[A, B]` over commit `X`,
+we currently apply `Δ(B⁻¹ ○ A⁻¹ ○ X ○ A' ○ B')`.
 Instead, we could apply `Δ((A ○ B)⁻¹)` then apply `Δ(X ○ A' ○ B')`.
 The trouble with that, is that it will feed a lot of change notifications to delta visitors (and ultimately the app)
 even when the net change is minimal.
@@ -497,53 +547,48 @@ even when the net change is minimal.
 Instead we could try to implement composition for delta and apply the composition of these two deltas
 (which should largely cancel out).
 
-### Commit With Constraint Violations
+## Commit With Constraint Violations
 
-Commits with a constraint violations may introduce cells that downstream commits depend on for ordering.
-Our implementation of rebase skips over conflicted commits,
-which means that the rebased change will not include references to the cells introduced by that conflicted commit.
+Commits with constraint violations may introduce cells that downstream commits depend on for ordering.
+(See the test "Rebase over a commit that depends on a commit that has become conflicted" for an example.)
+We currently handle this by ensuring that rebasing over a commit with constraint violations does add the necessary references.
 
-This breaks our invariant that every commit `X` that includes references to cells introduced by some commit `C`,
-will also have references to cell introduced by commits sequenced between `C` and `X`.
+Longer term, we would rather change the system so that such rebases are not needed.
+See below.
 
-Here's a test:
-```typescript
-const tree1 = makeTreeFromJsonSequence(["C", "D"]);
+## Future Work
 
-const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.events);
-remove(tree1, 0, 1);
-const restoreA = undoStack.pop() ?? assert.fail("Missing undo");
-unsubscribe();
+At a high level, cell ordering is defined by a combination of two things:
+* The partial order that stems from edit operations that impose a relative order between nodes and their corresponding cells.
+* The tie-breaking behavior.
 
-const tree2 = tree1.branch();
+Commits must include enough information to convey the partial order (at least when it goes against the ordering that tie-breaking would yield).
+Tie-breaking requires information about the relative ordering of commits on the relevant branch.
 
-tree2.transaction.start();
-tree2.editor.addNodeExistsConstraint(rootNode);
-tree2.editor.sequenceField(rootField).insert(0, chunkFromJsonTrees(["A"]));
-tree2.transaction.commit();
+Our current scheme for cell ordering tries to minimize the amount of metadata that needs to be passed to operations like rebase and compose.
+It does so by relying on the commit order that is implicitly conveyed when passing commits to these operations,
+and by adding cell references during rebases even when such references are not truly needed to convey the partial order.
+This last part is noticeable in the "Rebase over a commit that depends on a commit that has become conflicted" test:
+A commit that rebases over a conflicted commit needs to acquire new cell references for the sole purpose of making later rebase operations work without knowledge of the relative ordering of the commits that introduced the cells.
 
-tree2.editor.sequenceField(rootField).insert(1, chunkFromJsonTrees(["B"]));
-expectJsonTree(tree2, ["A", "B", "D"]);
+Our current scheme therefore has the following smells:
+1. It tries to minimize the use of metadata, but never fully succeeds in making it unnecessary.
+1. It relies on the commit order that is implicitly conveyed when passing commits to rebase and compose,
+   but that order doesn't alway match the true sequencing order.
+1. Storing extra cell references in commits in order to make up of a lack of commit ordering information later on
+   is inefficient and makes it harder to keep track of what references are needed and why.
+1. The need to rebase over conflicted commits goes against the reasonable intuition that such commits make no changes and therefore shouldn't need to be rebased over.
 
-// Removing "D" will violate the constraint in the transaction that adds A.
-remove(tree1, 0, 1);
+The current scheme is designed around the flawed assumption that the commits passed to rebase and compose operations contain all the information that these operations requires.
+We then make up for the flaw in convoluted ways.
+We should instead move to a system where we fully embrace the fact that commit ordering information about some commits might be needed in operations that don't directly involve these commits.
 
-tree1.merge(tree2);
-expectJsonTree(tree1, ["B"]);
+Such as system would be more in tune with how we would like to think of cells being introduced:
+merely as being a declaration that such a cell exists, has existed for all time, and will continue to exist for all time.
+Such a declaration should not constitute a change (and therefore does not need to be rebased over).
+In fact, under this model, it would be wrong for the rebase logic to take such a declaration into account.
 
-// This revert should fail when trying to order the cells for "A" and "C".
-// However, the rebase metadata includes information about the commit that added "A".
-// This is because:
-// - We include base changes in the metadata.
-// - We don't update the metadata per rebase step, and provide to every rebase step the metadata about the overall rebase.
-// This allows the rebaser to correctly determine that the cell for "A" is more recent than the cell for "C".
-restoreA.revert();
-
-expectJsonTree(tree1, ["B", "C"]);
-```
-
-Because you can't directly target cells from a commit with constraint violations,
-A commit with references to cells introduced by a commit with constraint violations must have been rebased at least once.
-This means that the commit will have tombstones for all commits 
-
-In practice this is not a problem because cell references are only needed when rebasing or composing commits that both refer to these cells. This can only happen for commits that were downstream of the conflicted commit at a time when it wasn't conflicted.
+We want to make metadata about commit sequencing fully available to rebase and compose operations.
+This will allow us to only use cell references where they are truly needed for the purpose of capturing information about the partial ordering of empty cells.
+It will also make the scenarios where the true commit ordering doesn't match the implicit order of commits less special since the ordering metadata will provide the source of truth for these cases just as it does for more normal cases.
+This effectively reduces the amount of leakage from the high-level rebase logic to the low-level rebase and compose operations.
