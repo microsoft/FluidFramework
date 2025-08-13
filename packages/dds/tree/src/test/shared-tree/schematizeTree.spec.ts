@@ -13,23 +13,24 @@ import {
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type AnchorSetRootEvents,
+	type TaggedChange,
 } from "../../core/index.js";
 import { fieldJsonCursor } from "../json/index.js";
 import {
 	FieldKinds,
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
+	type ModularChangeset,
 } from "../../feature-libraries/index.js";
 import type {
 	ITreeCheckout,
 	ITreeCheckoutFork,
 	CheckoutEvents,
 	ISharedTreeEditor,
-	TreeStoredContentStrict,
 } from "../../shared-tree/index.js";
 import {
 	canInitialize,
-	initializeContent,
+	initialize,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizeTree.js";
 import type { Listenable } from "@fluidframework/core-interfaces";
@@ -42,6 +43,13 @@ import {
 import { toInitialSchema } from "../../simple-tree/index.js";
 import type { Transactor } from "../../shared-tree-core/index.js";
 import { Breakable } from "../../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { makeTestDefaultChangeFamily } from "../shared-tree-core/utils.js";
+import {
+	mintRevisionTag,
+	type TreeStoredContentStrict,
+	treeChunkFromCursor,
+} from "../utils.js";
 
 const builder = new SchemaFactory("test");
 const root = builder.number;
@@ -58,29 +66,34 @@ function expectSchema(actual: TreeStoredSchema, expected: TreeStoredSchema): voi
 	assert(allowsRepoSuperset(defaultSchemaPolicy, expected, actual));
 }
 
-function makeSchemaRepository(repository: TreeStoredSchemaRepository): {
-	storedSchema: ITreeCheckout["storedSchema"];
-	updateSchema: ITreeCheckout["updateSchema"];
-} {
+function makeSchemaRepository(
+	repository: TreeStoredSchemaRepository,
+	onChange: (change: TaggedChange<ModularChangeset>) => void = () => {},
+) {
+	const editor = makeTestDefaultChangeFamily().buildEditor(mintRevisionTag, onChange);
+
 	return {
 		storedSchema: repository,
 		updateSchema: (newSchema: TreeStoredSchema) => {
 			// This test repository applies the schema immediately.
 			repository.apply(newSchema);
 		},
+		editor,
 	};
 }
 
 describe("schematizeTree", () => {
-	describe("initializeContent", () => {
+	describe("initialize", () => {
 		function testInitialize(name: string, content: TreeStoredContentStrict): void {
 			describe(`Initialize ${name}`, () => {
 				it("correct output", () => {
 					const storedSchema = new TreeStoredSchemaRepository();
 					let count = 0;
-					initializeContent(makeSchemaRepository(storedSchema), content.schema, () => {
-						count++;
-					});
+					initialize(
+						makeSchemaRepository(storedSchema, () => count++),
+						content.schema,
+						() => treeChunkFromCursor(content.initialTree),
+					);
 					assert.equal(count, 1);
 					expectSchema(storedSchema, content.schema);
 				});
@@ -99,11 +112,15 @@ describe("schematizeTree", () => {
 					});
 
 					let currentData: typeof content.initialTree;
-					initializeContent(makeSchemaRepository(storedSchema), content.schema, () => {
-						// TODO: check currentData is compatible with current schema.
-						// TODO: check data in cursors is compatible with current schema.
-						currentData = content.initialTree;
-					});
+					initialize(
+						makeSchemaRepository(storedSchema, () => {
+							// TODO: check currentData is compatible with current schema.
+							// TODO: check data in cursors is compatible with current schema.
+							currentData = content.initialTree;
+						}),
+						content.schema,
+						() => treeChunkFromCursor(content.initialTree),
+					);
 
 					// Ensure final schema change was actually tested.
 					// This would fail if event is triggered before schema update so last update is missed (and first update checks noop).
@@ -117,8 +134,10 @@ describe("schematizeTree", () => {
 					storedSchema.events.on("afterSchemaChange", () => {
 						log.push("schema");
 					});
-					initializeContent(makeSchemaRepository(storedSchema), content.schema, () =>
-						log.push("content"),
+					initialize(
+						makeSchemaRepository(storedSchema, () => log.push("content")),
+						content.schema,
+						() => treeChunkFromCursor(content.initialTree),
 					);
 
 					assert.deepEqual(
@@ -132,11 +151,11 @@ describe("schematizeTree", () => {
 		}
 
 		testInitialize("optional-empty", {
-			schema: toInitialSchema(schema),
+			schema: toInitialSchema(builder.optional(schema)),
 			initialTree: fieldJsonCursor([]),
 		});
 		testInitialize("optional-full", {
-			schema: toInitialSchema(schema),
+			schema: toInitialSchema(builder.optional(schema)),
 			initialTree: fieldJsonCursor([5]),
 		});
 		testInitialize("value", {

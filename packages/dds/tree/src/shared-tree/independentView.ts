@@ -152,7 +152,7 @@ export function independentInitializedViewInternal<const TSchema extends Implici
 		breaker,
 	});
 
-	initialize(checkout, { schema, initialTree: rootFieldCursor });
+	initialize(checkout, schema, () => checkout.forest.chunkField(rootFieldCursor));
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,

@@ -1556,3 +1556,25 @@ interface TreeStoredContent {
 	 */
 	readonly initialTree: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined;
 }
+
+/**
+ * Content that can populate a `SharedTree`.
+ */
+export interface TreeStoredContentStrict {
+	/**
+	 * The stored schema.
+	 */
+	readonly schema: TreeStoredSchema;
+
+	/**
+	 * Field cursor with the initial tree content for the {@link rootField}.
+	 */
+	readonly initialTree: ITreeCursorSynchronous;
+}
+
+export function treeChunkFromCursor(fieldCursor: ITreeCursorSynchronous): TreeChunk {
+	return chunkFieldSingle(fieldCursor, {
+		policy: defaultChunkPolicy,
+		idCompressor: testIdCompressor,
+	});
+}

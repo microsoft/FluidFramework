@@ -185,10 +185,14 @@ export class SchematizingSimpleTreeView<
 				schema.rootFieldSchema,
 			);
 
-			initialize(this.checkout, {
-				schema,
-				initialTree: cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
+			this.checkout.transaction.start();
+			initialize(this.checkout, schema, () => {
+				// This must be done after initial schema is set!
+				return this.checkout.forest.chunkField(
+					cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
+				);
 			});
+			this.checkout.transaction.commit();
 		});
 	}
 

@@ -27,13 +27,12 @@ import {
 	type UnsafeUnknownSchema,
 	type ValidateRecursiveSchema,
 } from "../simple-tree/index.js";
-import type { TreeStoredContentStrict } from "../shared-tree/index.js";
 
 import type {
 	TreeSimpleContent,
 	// eslint-disable-next-line import/no-internal-modules
 } from "./feature-libraries/flex-tree/utils.js";
-import { fieldCursorFromInsertable } from "./utils.js";
+import { fieldCursorFromInsertable, type TreeStoredContentStrict } from "./utils.js";
 
 /**
  * Test trees which can be parametrically scaled to any size.
