@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any */
-
 import { strict as assert } from "node:assert";
 
 import {
@@ -21,6 +19,8 @@ import {
 	type Attendee,
 	type Presence,
 	StateFactory,
+	type LatestRaw,
+	type LatestMapRaw,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/presence/beta";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
@@ -137,8 +137,11 @@ class MessageHandler {
 	public container: IFluidContainer | undefined;
 	public containerId: string | undefined;
 	// Use any to simplify typing issues - we'll handle type safety at runtime
-	private readonly latestStates = new Map<string, any>();
-	private readonly latestMapStates = new Map<string, any>();
+	private readonly latestStates = new Map<string, LatestRaw<{ value: string }>>();
+	private readonly latestMapStates = new Map<
+		string,
+		LatestMapRaw<{ value: string }, string>
+	>();
 
 	private preCreateTestWorkspaces(): void {
 		if (!this.presence) {
@@ -157,7 +160,7 @@ class MessageHandler {
 			const latestWorkspace = this.presence.states.getWorkspace(
 				`test:${workspaceId}` as const,
 				{
-					latestValue: StateFactory.latest<object | null>({ local: {} }),
+					latestValue: StateFactory.latest<{ value: string }>({ local: { value: "" } }),
 				},
 			);
 			const latestState = latestWorkspace.states.latestValue;
@@ -169,7 +172,7 @@ class MessageHandler {
 					event: "latestValueUpdated",
 					workspaceId,
 					attendeeId: update.attendee.attendeeId,
-					value: update.value,
+					value: update.value.value,
 				});
 			});
 
@@ -177,7 +180,7 @@ class MessageHandler {
 			const latestMapWorkspace = this.presence.states.getWorkspace(
 				`test:${workspaceId}` as const,
 				{
-					latestMap: StateFactory.latestMap<object | null, string>({ local: {} }),
+					latestMap: StateFactory.latestMap<{ value: string }, string>({ local: {} }),
 				},
 			);
 			const latestMapState = latestMapWorkspace.states.latestMap;
@@ -192,7 +195,7 @@ class MessageHandler {
 						workspaceId,
 						attendeeId: update.attendee.attendeeId,
 						key: String(key),
-						value: valueWithMetadata.value, // Extract just the value, not metadata
+						value: valueWithMetadata.value.value, // Extract just the value, not metadata
 					});
 				}
 			});
@@ -283,7 +286,7 @@ class MessageHandler {
 					});
 					break;
 				}
-				latestState.local = JSON.parse(JSON.stringify(msg.value));
+				latestState.local = { value: msg.value as string };
 				break;
 			}
 
@@ -301,7 +304,7 @@ class MessageHandler {
 					});
 					break;
 				}
-				latestMapState.local.set(msg.key, JSON.parse(JSON.stringify(msg.value)));
+				latestMapState.local.set(msg.key, { value: msg.value as string });
 				break;
 			}
 
@@ -320,7 +323,7 @@ class MessageHandler {
 					break;
 				}
 
-				let value: unknown;
+				let value: { value: string };
 				if (msg.attendeeId) {
 					const attendee = this.presence.attendees.getAttendee(msg.attendeeId);
 					const remoteData = latestState.getRemote(attendee);
@@ -333,7 +336,7 @@ class MessageHandler {
 					event: "latestValueGetResponse",
 					workspaceId: msg.workspaceId,
 					attendeeId: msg.attendeeId,
-					value,
+					value: value.value,
 				});
 
 				break;
@@ -354,7 +357,7 @@ class MessageHandler {
 					break;
 				}
 
-				let value: unknown;
+				let value: { value: string } | undefined;
 				if (msg.attendeeId) {
 					const attendee = this.presence.attendees.getAttendee(msg.attendeeId);
 					const remoteData = latestMapState.getRemote(attendee);
@@ -369,7 +372,7 @@ class MessageHandler {
 					workspaceId: msg.workspaceId,
 					attendeeId: msg.attendeeId,
 					key: msg.key,
-					value,
+					value: value?.value,
 				});
 
 				break;
