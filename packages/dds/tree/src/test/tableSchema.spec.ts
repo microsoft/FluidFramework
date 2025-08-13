@@ -850,7 +850,7 @@ describe.only("TableFactory unit tests", () => {
 
 			const table = treeView.root;
 
-			// Remove columns 1 and 3
+			// Remove columns 1 and 3 (by node)
 			table.removeColumns([column1, column3]);
 			assertEqualTrees(table, {
 				columns: [
@@ -860,8 +860,8 @@ describe.only("TableFactory unit tests", () => {
 				rows: [],
 			});
 
-			// Remove rows 0 and 2
-			treeView.root.removeColumns([column0, column2]);
+			// Remove columns 2 and 0 (by ID)
+			treeView.root.removeColumns([column2.id, column0.id]);
 			assertEqualTrees(table, {
 				columns: [],
 				rows: [],
@@ -1020,7 +1020,7 @@ describe.only("TableFactory unit tests", () => {
 				rows: [row0, row1, row2, row3],
 			});
 
-			// Remove rows 1 and 3
+			// Remove rows 1 and 3 (by node)
 			treeView.root.removeRows([row1, row3]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
@@ -1038,8 +1038,8 @@ describe.only("TableFactory unit tests", () => {
 				],
 			});
 
-			// Remove rows 0 and 2
-			treeView.root.removeRows([row0, row2]);
+			// Remove rows 2 and 0 (by ID)
+			treeView.root.removeRows([row2.id, row0.id]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
 				rows: [],

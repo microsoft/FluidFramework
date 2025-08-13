@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { oob } from "@fluidframework/core-utils/internal";
+import { Heap, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { Tree, TreeAlpha } from "./shared-tree/index.js";
@@ -551,6 +551,21 @@ export namespace System_TableSchema {
 	> = OptionsWithSchemaFactory<TSchemaFactory> & OptionsWithCellSchema<TCell>;
 
 	/**
+	 * An index range.
+	 */
+	interface IndexRange {
+		/**
+		 * Start of the range (inclusive)
+		 */
+		start: number;
+
+		/**
+		 * End of the range (exclusive)
+		 */
+		end: number;
+	}
+
+	/**
 	 * Factory for creating table schema.
 	 * @system @alpha
 	 */
@@ -758,7 +773,6 @@ export namespace System_TableSchema {
 				// To reduce the number of operations in the transaction, we will build up a series of
 				// contiguous ranges to be removed from the input list and remove each range as a single operation.
 				const columnIndicesToRemove: number[] = [];
-				const columnNodesToRemove: ColumnValueType[] = [];
 				for (const column of columnsToRemove) {
 					const columnIndex = this._getColumnIndex(column);
 					if (columnIndex === undefined) {
@@ -768,19 +782,28 @@ export namespace System_TableSchema {
 						);
 					}
 					columnIndicesToRemove.push(columnIndex);
-					columnNodesToRemove.push(this.columns[columnIndex] as ColumnValueType);
 				}
 
 				const rangesToRemove = Table._groupIndicesIntoRanges(columnIndicesToRemove);
 
+				const removedColumns: ColumnValueType[] = [];
 				Tree.runTransaction(this, () => {
-					// Note, throwing an error within a transaction will abort the entire transaction.
-					// So if we throw an error here for any column, no columns will be removed.
+					// Note: Each range we remove from the list impacts the indices of the remaining items.
+					// As a result, we need to adjust each subsequent range we remove to account for the changes.
+					// `rangesToRemove` is sorted in ascending order, so it is sufficient to just track and modify based on a single offset.
+					let offset = 0;
 					for (const range of rangesToRemove) {
-						this.removeRangeOfColumns(range.start, range.end);
+						// Note, throwing an error within a transaction will abort the entire transaction.
+						// So if we throw an error here for any column, no columns will be removed.
+						const removed = this.removeRangeOfColumns(
+							range.start - offset,
+							range.end - offset,
+						);
+						removedColumns.push(...removed);
+						offset = offset + (range.end - range.start);
 					}
 				});
-				return columnNodesToRemove;
+				return removedColumns;
 			}
 
 			/**
@@ -845,7 +868,6 @@ export namespace System_TableSchema {
 				// To reduce the number of operations in the transaction, we will build up a series of
 				// contiguous ranges to be removed from the input list and remove each range as a single operation.
 				const rowIndicesToRemove: number[] = [];
-				const rowNodesToRemove: RowValueType[] = [];
 				for (const row of rowsToRemove) {
 					const rowIndex = this._getRowIndex(row);
 					if (rowIndex === undefined) {
@@ -855,19 +877,25 @@ export namespace System_TableSchema {
 						);
 					}
 					rowIndicesToRemove.push(rowIndex);
-					rowNodesToRemove.push(this.rows[rowIndex] as RowValueType);
 				}
 
 				const rangesToRemove = Table._groupIndicesIntoRanges(rowIndicesToRemove);
 
+				const removedRows: RowValueType[] = [];
 				Tree.runTransaction(this, () => {
-					// Note, throwing an error within a transaction will abort the entire transaction.
-					// So if we throw an error here for any row, no rows will be removed.
+					// Note: Each range we remove from the list impacts the indices of the remaining items.
+					// As a result, we need to adjust each subsequent range we remove to account for the changes.
+					// `rangesToRemove` is sorted in ascending order, so it is sufficient to just track and modify based on a single offset.
+					let offset = 0;
 					for (const range of rangesToRemove) {
-						this.removeRangeOfRows(range.start, range.end);
+						// Note, throwing an error within a transaction will abort the entire transaction.
+						// So if we throw an error here for any column, no columns will be removed.
+						const removed = this.removeRangeOfRows(range.start - offset, range.end - offset);
+						removedRows.push(...removed);
+						offset = offset + (range.end - range.start);
 					}
 				});
-				return rowNodesToRemove;
+				return removedRows;
 			}
 
 			/**
@@ -878,12 +906,12 @@ export namespace System_TableSchema {
 			 * In this case, no rows are removed.
 			 */
 			private removeRangeOfRows(index: number, end: number | undefined): RowValueType[] {
-				if (index < 0 || index >= this.rows.length) {
+				if (index < 0 || index > this.rows.length) {
 					throw new UsageError(
 						`Start index out of bounds. Expected index to be on [0, ${this.rows.length - 1}], but got ${index}.`,
 					);
 				}
-				if (end !== undefined && (end > this.rows.length || end < index)) {
+				if (end !== undefined && (end > this.rows.length + 1 || end < index)) {
 					throw new UsageError(
 						`End index out of bounds. Expected end to be on [${index}, ${this.rows.length}], but got ${end}.`,
 					);
@@ -970,34 +998,60 @@ export namespace System_TableSchema {
 				return this._getRowIndex(rowId) !== undefined;
 			}
 
-			private static _groupIndicesIntoRanges(
-				indices: number[],
-			): { start: number; end: number }[] {
-				// Sort indices in descending order to remove from the end first
-				// This prevents index shifting issues during removal
-				indices.sort((a, b) => b - a);
+			/**
+			 * Groups the provided list of indices into a list of ordered, contiguous ranges.
+			 */
+			private static _groupIndicesIntoRanges(indices: readonly number[]): IndexRange[] {
+				// We will leverage a set for unique index lookup.
+				const indexSet = new Set(indices);
 
-				// Build contiguous ranges
-				const ranges: { start: number; end: number }[] = [];
-				let currentRangeStart = indices[0] ?? oob();
-				let currentRangeEnd = (indices[0] ?? oob()) + 1;
+				// Tracks which indices have already been visited by the walk to ensure
+				// indices are not double-counted, and to ensure the algorithm remains O(n).
+				const visited = new Set<number>();
 
-				for (let i = 1; i < indices.length; i++) {
-					const currentIndex = indices[i] ?? oob();
-					if (currentIndex === currentRangeStart - 1) {
-						// Extend the current range
-						currentRangeStart = currentIndex;
-					} else {
-						// Save the current range and start a new one
-						ranges.push({ start: currentRangeStart, end: currentRangeEnd });
-						currentRangeStart = currentIndex;
-						currentRangeEnd = currentIndex + 1;
+				// Tracks the set of disjoint index ranges, sorted in ascending order.
+				const sortedRanges = new Heap<IndexRange>({
+					compare: (a, b) => a.start - b.start,
+					min: {
+						start: Number.MIN_VALUE,
+						// Note: end here is arbitrary - it isn't used by the comparison function,
+						// but the Heap type requires that "min" be of the same type as the elements being inserted.
+						end: Number.NaN,
+					},
+				});
+
+				for (const index of indices) {
+					if (visited.has(index)) {
+						continue;
 					}
-				}
-				// Don't forget the last range
-				ranges.push({ start: currentRangeStart, end: currentRangeEnd });
 
-				return ranges;
+					let start = index; // inclusive
+					let end = index; // inclusive
+
+					// Expand backward
+					while (indexSet.has(start - 1)) {
+						start--;
+					}
+
+					// Expand forward
+					while (indexSet.has(end + 1)) {
+						end++;
+					}
+
+					// Mark all indices in this range as visited so we don't consider them again.
+					for (let i = start; i <= end; i++) {
+						visited.add(i);
+					}
+
+					// Note that the upper bound above is inclusive, but the range we're generating uses an exclusive upper bound.
+					sortedRanges.add({ start, end: end + 1 });
+				}
+
+				const result: IndexRange[] = [];
+				while (sortedRanges.peek() !== undefined) {
+					result.push(sortedRanges.get() ?? oob());
+				}
+				return result;
 			}
 
 			/**
@@ -1191,7 +1245,7 @@ export namespace System_TableSchema {
  * // The "transaction" method will ensure that all changes are applied atomically.
  * Tree.runTransaction(table, () => {
  * 	// Remove column1.
- * 	table.removeColumns([column1]\);
+ * 	table.removeColumns([column1]);
  *
  * 	// Remove the cell at column1 for each row.
  * 	for (const row of table.rows) {
