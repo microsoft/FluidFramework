@@ -1191,7 +1191,7 @@ export namespace System_TableSchema {
  * // The "transaction" method will ensure that all changes are applied atomically.
  * Tree.runTransaction(table, () => {
  * 	// Remove column1.
- * 	table.removeColumns([column1]\);
+ * 	table.removeColumns([column1]);
  *
  * 	// Remove the cell at column1 for each row.
  * 	for (const row of table.rows) {
