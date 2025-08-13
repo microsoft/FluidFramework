@@ -29,6 +29,7 @@ export class BlobTreeEntry {
 	constructor(
 		public readonly path: string,
 		contents: string,
+		// eslint-disable-next-line unicorn/text-encoding-identifier-case -- IBlob encoding type is defined as "utf-8" in public driver API
 		encoding: "utf-8" | "base64" = "utf-8",
 	) {
 		this.value = { contents, encoding };

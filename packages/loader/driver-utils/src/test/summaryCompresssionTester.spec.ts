@@ -9,7 +9,7 @@
 
 /* eslint-disable @typescript-eslint/dot-notation */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
@@ -73,7 +73,7 @@ function generateSummaryWithContent(contentSize: number) {
 	let contentString = "";
 	while (contentString.length < contentSize) {
 		if (contentString.length + 10 > contentSize) {
-			contentString += "0123456789".substring(0, contentSize - contentString.length);
+			contentString += "0123456789".slice(0, Math.max(0, contentSize - contentString.length));
 			break;
 		} else {
 			contentString += "0123456789";

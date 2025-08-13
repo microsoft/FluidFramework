@@ -43,7 +43,7 @@ export abstract class DocumentServiceProxy
 		return this._service.connectToDeltaStream(client);
 	}
 
-	public dispose(error?: any): void {
+	public dispose(error?: unknown): void {
 		this._service.dispose(error);
 	}
 

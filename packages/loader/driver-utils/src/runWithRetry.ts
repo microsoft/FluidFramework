@@ -41,10 +41,11 @@ export interface IProgress {
 	 * as well as information provided by service (like 429 error asking to wait for some time before retry)
 	 * @param error - error object returned from the call.
 	 */
-	onRetry?(delayInMs: number, error: any): void;
+	onRetry?(delayInMs: number, error: unknown): void;
 }
 
 /**
+ * Retry a cancellable API call with backoff and telemetry, until success or a non-retryable error.
  * @internal
  */
 export async function runWithRetry<T>(
@@ -59,14 +60,14 @@ export async function runWithRetry<T>(
 	let retryAfterMs = 500; // has to be positive!
 	let numRetries = 0;
 	const startTime = performanceNow();
-	let lastError: any;
+	let lastError: unknown;
 	do {
 		try {
 			result = await api(progress.cancel);
 			success = true;
-		} catch (err) {
+		} catch (error) {
 			// If it is not retriable, then just throw the error.
-			if (!canRetryOnError(err)) {
+			if (!canRetryOnError(error)) {
 				logger.sendTelemetryEvent(
 					{
 						eventName: `${fetchCallName}_cancel`,
@@ -74,9 +75,9 @@ export async function runWithRetry<T>(
 						duration: performanceNow() - startTime,
 						fetchCallName,
 					},
-					err,
+					error,
 				);
-				throw err;
+				throw error;
 			}
 
 			if (progress.cancel?.aborted === true) {
@@ -86,9 +87,9 @@ export async function runWithRetry<T>(
 						retry: numRetries,
 						duration: performanceNow() - startTime,
 						fetchCallName,
-						reason: progress.cancel.reason,
+						reason: String(progress.cancel.reason),
 					},
-					err,
+					error,
 				);
 				throw new NonRetryableError(
 					"runWithRetry was Aborted",
@@ -96,7 +97,7 @@ export async function runWithRetry<T>(
 					{
 						driverVersion: pkgVersion,
 						fetchCallName,
-						reason: progress.cancel.reason,
+						reason: String(progress.cancel.reason),
 					},
 				);
 			}
@@ -111,16 +112,16 @@ export async function runWithRetry<T>(
 						duration: performanceNow() - startTime,
 						fetchCallName,
 					},
-					err,
+					error,
 				);
 			}
 
 			numRetries++;
-			lastError = err;
+			lastError = error;
 			// Wait for the calculated time before retrying.
-			retryAfterMs = calculateMaxWaitTime(retryAfterMs, err);
+			retryAfterMs = calculateMaxWaitTime(retryAfterMs, error);
 			if (progress.onRetry) {
-				progress.onRetry(retryAfterMs, err);
+				progress.onRetry(retryAfterMs, error);
 			}
 			await delay(retryAfterMs);
 		}
