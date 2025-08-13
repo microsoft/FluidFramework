@@ -2607,7 +2607,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	}
 
 	private emitDisposeForSubdirTree(directory: SubDirectory): void {
-		if (directory === undefined) {
+		if (directory === undefined || directory.disposed) {
 			return;
 		}
 		// Dispose the subdirectory tree. This will dispose the subdirectories from bottom to top.
