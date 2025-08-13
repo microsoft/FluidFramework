@@ -43,7 +43,6 @@ describe("Local Server Stress", () => {
 		skip: [
 			...[26], // Unexpected pending data for set/delete op
 			...[30, 69], // timeout
-			...[21], // Got a local set message we weren't expecting
 			...[79], // Number of subDirectories not same
 		],
 	});

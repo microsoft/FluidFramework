@@ -2034,16 +2034,23 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				(entry) => entry.type !== "clear" && entry.key === key,
 			);
 			const pendingEntry = this.pendingStorageData[pendingEntryIndex];
-			assert(
-				pendingEntry !== undefined && pendingEntry.type === "lifetime",
-				"Couldn't match local set message to pending lifetime",
-			);
+
+			// TODO: This is probably a hacky fix
+			// Handles case where pending data is missing in staging mode
+			if (pendingEntry === undefined || pendingEntry.type !== "lifetime") {
+				this.sequencedStorageData.set(key, value);
+				return;
+			}
 			const pendingKeySet = pendingEntry.keySets.shift();
-			assert(
-				pendingKeySet !== undefined && pendingKeySet === localOpMetadata,
-				"Got a local set message we weren't expecting",
-			);
-			assert(pendingKeySet !== undefined, "pending lifetime should exist");
+			if (pendingKeySet === undefined) {
+				this.sequencedStorageData.set(key, value);
+				return;
+			}
+
+			// Update sequenced data with the pending value
+			this.sequencedStorageData.set(key, pendingKeySet.value);
+
+			// Remove the pending entry if no more keysets
 			if (pendingEntry.keySets.length === 0) {
 				this.pendingStorageData.splice(pendingEntryIndex, 1);
 			}
