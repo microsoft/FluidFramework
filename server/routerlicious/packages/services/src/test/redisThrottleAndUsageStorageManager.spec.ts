@@ -6,7 +6,7 @@
 import assert from "assert";
 import { IThrottlingMetrics, IUsageData } from "@fluidframework/server-services-core";
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { RedisThrottleAndUsageStorageManager } from "../../throttling";
+import { RedisThrottleAndUsageStorageManager } from "../redisThrottleAndUsageStorageManager";
 import { TestRedisClientConnectionManager } from "@fluidframework/server-test-utils";
 import Sinon from "sinon";
 

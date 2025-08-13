@@ -11,6 +11,10 @@ export { createMessageSender } from "./messageSender";
 export { createMetricClient } from "./metricClient";
 export { DeltaManager } from "./deltaManager";
 export {
+	Throttler as LegacyThrottler,
+	ThrottlerHelper as LegacyThrottlerHelper,
+} from "./legacy-throttling";
+export {
 	MongoCollection,
 	MongoDb,
 	MongoDbFactory,
@@ -28,7 +32,7 @@ export { CollaborationSessionTracker } from "./sessionTracker";
 export { SocketIoRedisPublisher, SocketIoRedisTopic } from "./socketIoRedisPublisher";
 export { StorageNameRetriever } from "./storageNameRetriever";
 export { Tenant, TenantManager } from "./tenant";
-export { RedisThrottleAndUsageStorageManager, Throttler, ThrottlerHelper } from "./throttling";
+export { RedisThrottleAndUsageStorageManager } from "./redisThrottleAndUsageStorageManager";
 export {
 	BasicWebServerFactory,
 	NodeClusterWebServerFactory,

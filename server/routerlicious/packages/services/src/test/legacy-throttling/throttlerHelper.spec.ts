@@ -8,7 +8,7 @@ import { TestThrottleAndUsageStorageManager } from "@fluidframework/server-test-
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import assert from "assert";
 import Sinon from "sinon";
-import { ThrottlerHelper } from "../../throttling";
+import { ThrottlerHelper } from "../../legacy-throttling";
 
 const lumberjackEngine = new TestEngine1();
 if (!Lumberjack.isSetupCompleted()) {
