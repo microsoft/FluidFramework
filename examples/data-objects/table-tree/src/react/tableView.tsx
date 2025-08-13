@@ -54,7 +54,7 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 
 	const handleRemoveRow = (index: number): void => {
 		if (index >= 0 && index < rows.length) {
-			table.rows.removeAt(index);
+			table.removeRow(table.rows[index]);
 		}
 	};
 
