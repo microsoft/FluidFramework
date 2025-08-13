@@ -94,7 +94,7 @@ export function initialize(
  * Note that the final root field schema may not have been applied yet: if the root is required, it will be optional at this time
  * (so the root being empty before the insertion is not out of schema).
  * @remarks
- * This does not support sequence roots as they are now allowed in the public API surface.
+ * This does not support sequence roots as they are not allowed in the public API surface.
  * A test utility for them can be found as `initializeSequenceRoot` for testing internal logic which uses a sequence root.
  */
 export function initializerFromChunk(
