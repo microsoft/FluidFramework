@@ -188,7 +188,6 @@ describe("DeltaConnectionMetadata update tests", () => {
 			async () => parsedResponse,
 		);
 
-		// const content: Record<string, string> = { labels: "label1" };
 		service.on("metadataUpdate", handler);
 		const connection = (await mockSocket(socket as unknown as Socket, async () =>
 			service.connectToDeltaStream(client),
