@@ -284,7 +284,7 @@ describe("SharedMatrix memory usage", () => {
 			// Insert-related tests that are not limited by matrixSize
 			for (const count of operationCounts) {
 				describe(`Column Insertion`, () => {
-					// Test the memory usage of the SharedMatrix for inserting a single column in the middle of the table N times.
+					// Test the memory usage of inserting a single column in the middle of the table N times.
 					benchmarkMemory(
 						createBenchmark({
 							title: `Insert a column in the middle ${count} times`,
@@ -298,7 +298,7 @@ describe("SharedMatrix memory usage", () => {
 						}),
 					);
 
-					// Test the memory usage of the SharedMatrix for undoing the insertion of a single column in the middle of the table N times.
+					// Test the memory usage of undoing the insertion of a single column in the middle of the table N times.
 					benchmarkMemory(
 						createUndoBenchmark({
 							title: `Undo insert column in the middle ${count} times`,
@@ -313,7 +313,7 @@ describe("SharedMatrix memory usage", () => {
 						}),
 					);
 
-					// Test the memory usage of the SharedMatrix for redoing the insertion of a single column in the middle of the table N times.
+					// Test the memory usage of redoing the insertion of a single column in the middle of the table N times.
 					benchmarkMemory(
 						createRedoBenchmark({
 							title: `Redo insert column in the middle ${count} times`,
@@ -327,10 +327,48 @@ describe("SharedMatrix memory usage", () => {
 							},
 						}),
 					);
+
+					// Test the memory usage of inserting a batch of N columns in the middle of the table.
+					benchmarkMemory(
+						createBenchmark({
+							title: `Insert a batch of ${count} columns in the middle of the table`,
+							matrixSize,
+							initialCellValue,
+							operation: (matrix) => {
+								matrix.insertCols(Math.floor(matrix.colCount / 2), count);
+							},
+						}),
+					);
+
+					// Test the memory usage of undoing the insertion of a batch of N columns in the middle of the table.
+					benchmarkMemory(
+						createUndoBenchmark({
+							title: `Undo: insert a batch of ${count} columns in the middle of the table`,
+							matrixSize,
+							initialCellValue,
+							stackCount: 1,
+							operation: (matrix) => {
+								matrix.insertCols(Math.floor(matrix.colCount / 2), count);
+							},
+						}),
+					);
+
+					// Test the memory usage of redoing the insertion of a batch of N columns in the middle of the table.
+					benchmarkMemory(
+						createRedoBenchmark({
+							title: `Redo: insert a batch of ${count} columns in the middle of the table`,
+							matrixSize,
+							initialCellValue,
+							stackCount: 1,
+							operation: (matrix) => {
+								matrix.insertCols(Math.floor(matrix.colCount / 2), count);
+							},
+						}),
+					);
 				});
 
 				describe("Row Insertion", () => {
-					// Test the memory usage of the SharedMatrix for inserting a single empty row in the middle of the table N times.
+					// Test the memory usage of inserting a single empty row in the middle of the table N times.
 					benchmarkMemory(
 						createBenchmark({
 							title: `Insert a row in the middle ${count} times`,
@@ -344,7 +382,7 @@ describe("SharedMatrix memory usage", () => {
 						}),
 					);
 
-					// Test the memory usage of the SharedMatrix for undoing the insertion of a single empty row in the middle of the table N times.
+					// Test the memory usage of undoing the insertion of a single empty row in the middle of the table N times.
 					benchmarkMemory(
 						createUndoBenchmark({
 							title: `Undo insert row in the middle ${count} times`,
@@ -359,7 +397,7 @@ describe("SharedMatrix memory usage", () => {
 						}),
 					);
 
-					// Test the memory usage of the SharedMatrix for redoing the insertion of a single empty row in the middle of the table N times.
+					// Test the memory usage of redoing the insertion of a single empty row in the middle of the table N times.
 					benchmarkMemory(
 						createRedoBenchmark({
 							title: `Redo insert row in the middle ${count} times`,
@@ -373,10 +411,48 @@ describe("SharedMatrix memory usage", () => {
 							},
 						}),
 					);
+
+					// Test the memory usage of inserting a batch of N rows in the middle of the table.
+					benchmarkMemory(
+						createBenchmark({
+							title: `Insert a batch of ${count} rows in the middle of the table`,
+							matrixSize,
+							initialCellValue,
+							operation: (matrix) => {
+								matrix.insertRows(Math.floor(matrix.rowCount / 2), count);
+							},
+						}),
+					);
+
+					// Test the memory usage of undoing the insertion of a batch of N rows in the middle of the table.
+					benchmarkMemory(
+						createUndoBenchmark({
+							title: `Undo: insert a batch of ${count} rows in the middle of the table`,
+							matrixSize,
+							initialCellValue,
+							stackCount: 1,
+							operation: (matrix) => {
+								matrix.insertRows(Math.floor(matrix.rowCount / 2), count);
+							},
+						}),
+					);
+
+					// Test the memory usage of redoing the insertion of a batch of N rows in the middle of the table.
+					benchmarkMemory(
+						createRedoBenchmark({
+							title: `Redo: insert a batch of ${count} rows in the middle of the table`,
+							matrixSize,
+							initialCellValue,
+							stackCount: 1,
+							operation: (matrix) => {
+								matrix.insertRows(Math.floor(matrix.rowCount / 2), count);
+							},
+						}),
+					);
 				});
 
 				describe("Row and Column Insertion", () => {
-					// Test the memory usage of the SharedMatrix for inserting a single empty row and a column in the middle of the table N times.
+					// Test the memory usage of inserting a single empty row and a column in the middle of the table N times.
 					benchmarkMemory(
 						createBenchmark({
 							title: `Insert a row and a column ${count} times`,
@@ -391,7 +467,7 @@ describe("SharedMatrix memory usage", () => {
 						}),
 					);
 
-					// Test the memory usage of the SharedMatrix for undoing the insertion of a single empty row and a column in the middle of the table N times.
+					// Test the memory usage of undoing the insertion of a single empty row and a column in the middle of the table N times.
 					benchmarkMemory(
 						createUndoBenchmark({
 							title: `Undo insert a row and a column ${count} times`,
@@ -407,7 +483,7 @@ describe("SharedMatrix memory usage", () => {
 						}),
 					);
 
-					// Test the memory usage of the SharedMatrix for redoing the insertion of a single empty row and a column in the middle of the table N times.
+					// Test the memory usage of redoing the insertion of a single empty row and a column in the middle of the table N times.
 					benchmarkMemory(
 						createRedoBenchmark({
 							title: `Redo insert a row and a column ${count} times`,
@@ -425,12 +501,12 @@ describe("SharedMatrix memory usage", () => {
 				});
 
 				/**
-				 * Test the memory usage of the SharedMatrix for inserting a single column and a row
+				 * Test the memory usage of inserting a single column and a row
 				 * and then removing them right away to see if the memory is released.
 				 * Memory usage should be very low for these test cases.
 				 */
 				describe("Row and Column Insertion and Removal right away", () => {
-					// Test the memory usage of the SharedMatrix for inserting a single empty row and a column and then removing them right away for a given number of times.
+					// Test the memory usage of inserting a single empty row and a column and then removing them right away for a given number of times.
 					benchmarkMemory(
 						createBenchmark({
 							title: `Insert and remove a row and a column ${count} times`,
@@ -447,7 +523,7 @@ describe("SharedMatrix memory usage", () => {
 						}),
 					);
 
-					// Test the memory usage of the SharedMatrix for undoing the insertion of a single empty row and a column and then removing them right away for a given number of times.
+					// Test the memory usage of undoing the insertion of a single empty row and a column and then removing them right away for a given number of times.
 					benchmarkMemory(
 						createUndoBenchmark({
 							title: `Undo insert and remove a row and a column ${count} times`,
@@ -465,7 +541,7 @@ describe("SharedMatrix memory usage", () => {
 						}),
 					);
 
-					// Test the memory usage of the SharedMatrix for redoing the insertion of a single empty row and a column and then removing them right away for a given number of times.
+					// Test the memory usage of redoing the insertion of a single empty row and a column and then removing them right away for a given number of times.
 					benchmarkMemory(
 						createRedoBenchmark({
 							title: `Redo insert a row and a column ${count} times`,
@@ -488,7 +564,7 @@ describe("SharedMatrix memory usage", () => {
 			// Remove-related tests that operation counts are up to matrixSize
 			for (const count of validRemoveCounts) {
 				describe("Column Removal", () => {
-					// Test the memory usage of the SharedMatrix for removing a column in the middle of the table N times.
+					// Test the memory usage of removing a column in the middle of the table N times.
 					benchmarkMemory(
 						createBenchmark({
 							title: `Remove the middle column ${count} times`,
@@ -502,7 +578,7 @@ describe("SharedMatrix memory usage", () => {
 						}),
 					);
 
-					// Test the memory usage of the SharedMatrix for undoing the removal of a column in the middle of the table N times.
+					// Test the memory usage of undoing the removal of a column in the middle of the table N times.
 					benchmarkMemory(
 						createUndoBenchmark({
 							title: `Undo remove the middle column ${count} times`,
@@ -517,7 +593,7 @@ describe("SharedMatrix memory usage", () => {
 						}),
 					);
 
-					// Test the memory usage of the SharedMatrix for redoing the removal of a column in the middle of the table N times.
+					// Test the memory usage of redoing the removal of a column in the middle of the table N times.
 					benchmarkMemory(
 						createRedoBenchmark({
 							title: `Redo remove the middle column ${count} times`,
@@ -534,7 +610,7 @@ describe("SharedMatrix memory usage", () => {
 				});
 
 				describe("Row Removal", () => {
-					// Test the memory usage of the SharedMatrix for removing a row in the middle of the table N times.
+					// Test the memory usage of removing a row in the middle of the table N times.
 					benchmarkMemory(
 						createBenchmark({
 							title: `Remove the middle row ${count} times`,
@@ -548,7 +624,7 @@ describe("SharedMatrix memory usage", () => {
 						}),
 					);
 
-					// Test the memory usage of the SharedMatrix for undoing the removal of a row in the middle of the table N times.
+					// Test the memory usage of undoing the removal of a row in the middle of the table N times.
 					benchmarkMemory(
 						createUndoBenchmark({
 							title: `Undo remove the middle row ${count} times`,
@@ -563,7 +639,7 @@ describe("SharedMatrix memory usage", () => {
 						}),
 					);
 
-					// Test the memory usage of the SharedMatrix for redoing the removal of a row in the middle of the table N times.
+					// Test the memory usage of redoing the removal of a row in the middle of the table N times.
 					benchmarkMemory(
 						createRedoBenchmark({
 							title: `Redo remove the middle row ${count} times`,
@@ -580,7 +656,7 @@ describe("SharedMatrix memory usage", () => {
 				});
 
 				describe("Row and Column Removal", () => {
-					// Test the memory usage of the SharedMatrix for removing a row and a column in the middle of the table N times.
+					// Test the memory usage of removing a row and a column in the middle of the table N times.
 					benchmarkMemory(
 						createBenchmark({
 							title: `Remove a row and a column ${count} times`,
@@ -595,7 +671,7 @@ describe("SharedMatrix memory usage", () => {
 						}),
 					);
 
-					// Test the memory usage of the SharedMatrix for undoing the removal of a row and a column in the middle of the table N times.
+					// Test the memory usage of undoing the removal of a row and a column in the middle of the table N times.
 					benchmarkMemory(
 						createUndoBenchmark({
 							title: `Undo remove a row and a column ${count} times`,
@@ -611,7 +687,7 @@ describe("SharedMatrix memory usage", () => {
 						}),
 					);
 
-					// Test the memory usage of the SharedMatrix for redoing the removal of a row and a column in the middle of the table N times.
+					// Test the memory usage of redoing the removal of a row and a column in the middle of the table N times.
 					benchmarkMemory(
 						createRedoBenchmark({
 							title: `Redo remove a row and a column ${count} times`,
@@ -629,7 +705,7 @@ describe("SharedMatrix memory usage", () => {
 				});
 
 				describe("Cell Value Setting", () => {
-					// Test the memory usage of the SharedMatrix for setting a 3-character string in a given number of cells.
+					// Test the memory usage of setting a 3-character string in a given number of cells.
 					benchmarkMemory(
 						createBenchmark({
 							title: `Set a 3-character string in ${count} cells`,
@@ -643,7 +719,7 @@ describe("SharedMatrix memory usage", () => {
 						}),
 					);
 
-					// Test the memory usage of the SharedMatrix for undoing the setting of a 3-character string in a given number of cells.
+					// Test the memory usage of undoing the setting of a 3-character string in a given number of cells.
 					benchmarkMemory(
 						createUndoBenchmark({
 							title: `Undo setting a 3-character string in ${count} cells`,
@@ -658,7 +734,7 @@ describe("SharedMatrix memory usage", () => {
 						}),
 					);
 
-					// Test the memory usage of the SharedMatrix for redoing the setting of a 3-character string in a given number of cells.
+					// Test the memory usage of redoing the setting of a 3-character string in a given number of cells.
 					benchmarkMemory(
 						createRedoBenchmark({
 							title: `Redo setting a 3-character string in ${count} cells`,

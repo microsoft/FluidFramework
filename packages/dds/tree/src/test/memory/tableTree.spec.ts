@@ -231,10 +231,10 @@ describe("SharedTree table APIs memory usage", () => {
 		// Insert-related tests that are not limited by tableSize
 		for (const count of operationCounts) {
 			describe(`Column Insertion`, () => {
-				// Test the memory usage of the SharedTree for inserting a column in the middle for a given number of times.
+				// Test the memory usage of inserting a single column in the middle of the table N times.
 				benchmarkMemory(
 					createBenchmark({
-						title: `Insert a column in the middle ${count} times`,
+						title: `Insert a single column in the middle ${count} times`,
 						tableSize,
 						initialCellValue,
 						operation: (table) => {
@@ -249,13 +249,13 @@ describe("SharedTree table APIs memory usage", () => {
 					}),
 				);
 
-				// Test the memory usage of the SharedTree for undoing the insertion of a column in the middle for a given number of times.
+				// Test the memory usage of undoing the insertion of a single column in the middle of the table N times.
 				benchmarkMemory(
 					createUndoRedoBenchmark({
-						title: `Undo insert column in the middle ${count} times`,
+						title: `Undo: insert a single column in the middle ${count} times`,
 						tableSize,
 						initialCellValue,
-						setupOperation: (table) => {
+						setupOperation: (table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
 								const column = new Column({});
 								table.insertColumns({
@@ -263,6 +263,7 @@ describe("SharedTree table APIs memory usage", () => {
 									columns: [column],
 								});
 							}
+							assert(undoRedoManager.canUndo);
 						},
 						stackOperation: (undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
@@ -273,10 +274,10 @@ describe("SharedTree table APIs memory usage", () => {
 					}),
 				);
 
-				// Test the memory usage of the SharedTree for redoing the insertion of a column in the middle for a given number of times.
+				// Test the memory usage of redoing the insertion of a single column in the middle of a table N of times.
 				benchmarkMemory(
 					createUndoRedoBenchmark({
-						title: `Redo insert column in the middle ${count} times`,
+						title: `Redo: insert a single column in the middle ${count} times`,
 						tableSize,
 						initialCellValue,
 						setupOperation: (table, undoRedoManager) => {
@@ -300,10 +301,69 @@ describe("SharedTree table APIs memory usage", () => {
 						},
 					}),
 				);
+
+				// Test the memory usage of inserting a batch of N columns in the middle of the table.
+				benchmarkMemory(
+					createBenchmark({
+						title: `Insert a batch of ${count} columns in the middle of the table`,
+						tableSize,
+						initialCellValue,
+						operation: (table) => {
+							table.insertColumns({
+								index: Math.floor(table.columns.length / 2),
+								columns: Array.from({ length: count }, () => new Column({})),
+							});
+						},
+					}),
+				);
+
+				// Test the memory usage of undoing the insertion of a batch of N columns in the middle of the table.
+				benchmarkMemory(
+					createUndoRedoBenchmark({
+						title: `Undo: insert a batch of ${count} columns in the middle of the table`,
+						tableSize,
+						initialCellValue,
+						setupOperation: (table, undoRedoManager) => {
+							table.insertColumns({
+								index: Math.floor(table.columns.length / 2),
+								columns: Array.from({ length: count }, () => new Column({})),
+							});
+							assert(undoRedoManager.canUndo);
+						},
+						stackOperation: (undoRedoManager) => {
+							undoRedoManager.undo();
+							assert(!undoRedoManager.canUndo);
+						},
+					}),
+				);
+
+				// Test the memory usage of redoing the insertion of a batch of N columns in the middle of the table.
+				benchmarkMemory(
+					createUndoRedoBenchmark({
+						title: `Redo: insert a batch of ${count} columns in the middle of the table`,
+						tableSize,
+						initialCellValue,
+						setupOperation: (table, undoRedoManager) => {
+							table.insertColumns({
+								index: Math.floor(table.columns.length / 2),
+								columns: Array.from({ length: count }, () => new Column({})),
+							});
+							assert(undoRedoManager.canUndo);
+
+							undoRedoManager.undo();
+							assert(!undoRedoManager.canUndo);
+							assert(undoRedoManager.canRedo);
+						},
+						stackOperation: (undoRedoManager) => {
+							undoRedoManager.redo();
+							assert(!undoRedoManager.canRedo);
+						},
+					}),
+				);
 			});
 
 			describe(`Row Insertion`, () => {
-				// Test the memory usage of the SharedTree for inserting a row in the middle for a given number of times.
+				// Test the memory usage of inserting a single empty row in the middle of the table N times.
 				benchmarkMemory(
 					createBenchmark({
 						title: `Insert a row in the middle ${count} times`,
@@ -318,10 +378,10 @@ describe("SharedTree table APIs memory usage", () => {
 					}),
 				);
 
-				// Test the memory usage of the SharedTree for undoing the insertion of a row at the end for a given number of times.
+				// Test the memory usage of undoing the insertion of a single empty row in the middle of the table N times.
 				benchmarkMemory(
 					createUndoRedoBenchmark({
-						title: `Undo insert row in the middle ${count} times`,
+						title: `Undo: insert row in the middle ${count} times`,
 						tableSize,
 						initialCellValue,
 						setupOperation: (table) => {
@@ -339,10 +399,10 @@ describe("SharedTree table APIs memory usage", () => {
 					}),
 				);
 
-				// Test the memory usage of the SharedTree for redoing the insertion of a row in the middle for a given number of times.
+				// Test the memory usage of redoing the insertion of a single empty row in the middle of the table N times.
 				benchmarkMemory(
 					createUndoRedoBenchmark({
-						title: `Redo insert row in the middle ${count} times`,
+						title: `Redo: insert row in the middle ${count} times`,
 						tableSize,
 						initialCellValue,
 						setupOperation: (table, undoRedoManager) => {
@@ -363,10 +423,69 @@ describe("SharedTree table APIs memory usage", () => {
 						},
 					}),
 				);
+
+				// Test the memory usage of inserting a batch of N rows in the middle of the table.
+				benchmarkMemory(
+					createBenchmark({
+						title: `Insert a batch of ${count} empty rows in the middle of the table`,
+						tableSize,
+						initialCellValue,
+						operation: (table) => {
+							table.insertRows({
+								index: Math.floor(table.rows.length / 2),
+								rows: Array.from({ length: count }, () => new Row({ cells: {} })),
+							});
+						},
+					}),
+				);
+
+				// Test the memory usage of undoing the insertion of a batch of empty rows in the middle of the table.
+				benchmarkMemory(
+					createUndoRedoBenchmark({
+						title: `Undo: insert a batch of ${count} rows in the middle of the table`,
+						tableSize,
+						initialCellValue,
+						setupOperation: (table, undoRedoManager) => {
+							table.insertRows({
+								index: Math.floor(table.rows.length / 2),
+								rows: Array.from({ length: count }, () => new Row({ cells: {} })),
+							});
+							assert(undoRedoManager.canUndo);
+						},
+						stackOperation: (undoRedoManager) => {
+							undoRedoManager.undo();
+							assert(!undoRedoManager.canUndo);
+						},
+					}),
+				);
+
+				// Test the memory usage of redoing the insertion of a batch of empty rows in the middle of the table.
+				benchmarkMemory(
+					createUndoRedoBenchmark({
+						title: `Redo: insert a batch of ${count} rows in the middle of the table`,
+						tableSize,
+						initialCellValue,
+						setupOperation: (table, undoRedoManager) => {
+							table.insertRows({
+								index: Math.floor(table.rows.length / 2),
+								rows: Array.from({ length: count }, () => new Row({ cells: {} })),
+							});
+							assert(undoRedoManager.canUndo);
+
+							undoRedoManager.undo();
+							assert(!undoRedoManager.canUndo);
+							assert(undoRedoManager.canRedo);
+						},
+						stackOperation: (undoRedoManager) => {
+							undoRedoManager.redo();
+							assert(!undoRedoManager.canRedo);
+						},
+					}),
+				);
 			});
 
 			describe(`Column and Row Insertion`, () => {
-				// Test the memory usage of the SharedTree for inserting a column and a row in the middle for a given number of times.
+				// Test the memory usage of inserting a column and a row in the middle for a given number of times.
 				benchmarkMemory(
 					createBenchmark({
 						title: `Insert a column and a row in the middle ${count} times`,
@@ -386,7 +505,7 @@ describe("SharedTree table APIs memory usage", () => {
 					}),
 				);
 
-				// Test the memory usage of the SharedTree for undoing the insertion of a column and a row in the middle for a given number of times.
+				// Test the memory usage of undoing the insertion of a column and a row in the middle for a given number of times.
 				benchmarkMemory(
 					createUndoRedoBenchmark({
 						title: `Undo insert column and row in the middle ${count} times`,
@@ -416,7 +535,7 @@ describe("SharedTree table APIs memory usage", () => {
 				);
 
 				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
-				// Test the memory usage of the SharedTree for redoing the insertion of a column and a row in the middle for a given number of times.
+				// Test the memory usage of redoing the insertion of a column and a row in the middle for a given number of times.
 				// benchmarkMemory(
 				// 	createUndoRedoBenchmark({
 				// 		title: `Redo insert column and row in the middle ${count} times`,
@@ -454,7 +573,7 @@ describe("SharedTree table APIs memory usage", () => {
 		// Set/Remove-related tests that are limited by treeSize
 		for (const count of validRemoveCounts) {
 			describe(`Column Removal`, () => {
-				// Test the memory usage of the SharedTree for removing a column in the middle for a given number of times.
+				// Test the memory usage of removing a column in the middle for a given number of times.
 				benchmarkMemory(
 					createBenchmark({
 						title: `Remove a column in the middle ${count} times`,
@@ -469,7 +588,7 @@ describe("SharedTree table APIs memory usage", () => {
 					}),
 				);
 
-				// Test the memory usage of the SharedTree for undoing the removal of a column in the middle for a given number of times.
+				// Test the memory usage of undoing the removal of a column in the middle for a given number of times.
 				benchmarkMemory(
 					createUndoRedoBenchmark({
 						title: `Undo remove column in the middle ${count} times`,
@@ -491,7 +610,7 @@ describe("SharedTree table APIs memory usage", () => {
 				);
 
 				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
-				// Test the memory usage of the SharedTree for redoing the removal of a column in the middle for a given number of times.
+				// Test the memory usage of redoing the removal of a column in the middle for a given number of times.
 				// benchmarkMemory(
 				// 	createUndoRedoBenchmark({
 				// 		title: `Redo remove column in the middle ${count} times`,
@@ -518,7 +637,7 @@ describe("SharedTree table APIs memory usage", () => {
 			});
 
 			describe(`Row Removal`, () => {
-				// Test the memory usage of the SharedTree for removing a row in the middle for a given number of times.
+				// Test the memory usage of removing a row in the middle for a given number of times.
 				benchmarkMemory(
 					createBenchmark({
 						title: `Remove a row in the middle ${count} times`,
@@ -533,7 +652,7 @@ describe("SharedTree table APIs memory usage", () => {
 					}),
 				);
 
-				// Test the memory usage of the SharedTree for undoing the removal of a row in the middle for a given number of times.
+				// Test the memory usage of undoing the removal of a row in the middle for a given number of times.
 				benchmarkMemory(
 					createUndoRedoBenchmark({
 						title: `Undo remove row in the middle ${count} times`,
@@ -554,7 +673,7 @@ describe("SharedTree table APIs memory usage", () => {
 					}),
 				);
 
-				// Test the memory usage of the SharedTree for redoing the removal of a row in the middle for a given number of times.
+				// Test the memory usage of redoing the removal of a row in the middle for a given number of times.
 				benchmarkMemory(
 					createUndoRedoBenchmark({
 						title: `Redo remove row in the middle ${count} times`,
@@ -581,7 +700,7 @@ describe("SharedTree table APIs memory usage", () => {
 			});
 
 			describe(`Column and Row Removal`, () => {
-				// Test the memory usage of the SharedTree for removing a column and a row in the middle for a given number of times.
+				// Test the memory usage of removing a column and a row in the middle for a given number of times.
 				benchmarkMemory(
 					createBenchmark({
 						title: `Remove a column and a row in the middle ${count} times`,
@@ -598,7 +717,7 @@ describe("SharedTree table APIs memory usage", () => {
 					}),
 				);
 
-				// Test the memory usage of the SharedTree for undoing the removal of a column and a row in the middle for a given number of times.
+				// Test the memory usage of undoing the removal of a column and a row in the middle for a given number of times.
 				benchmarkMemory(
 					createUndoRedoBenchmark({
 						title: `Undo remove column and row in the middle ${count} times`,
@@ -625,7 +744,7 @@ describe("SharedTree table APIs memory usage", () => {
 				);
 
 				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
-				// Test the memory usage of the SharedTree for redoing the removal of a column and a row in the middle for a given number of times.
+				// Test the memory usage of redoing the removal of a column and a row in the middle for a given number of times.
 				// benchmarkMemory(
 				// 	createUndoRedoBenchmark({
 				// 		title: `Redo remove column and row in the middle ${count} times`,
@@ -660,7 +779,7 @@ describe("SharedTree table APIs memory usage", () => {
 			});
 
 			describe(`Insert a column and a row and remove right away`, () => {
-				// Test the memory usage of the SharedTree for inserting a column and a row in the middle and removing them right away for a given number of times.
+				// Test the memory usage of inserting a column and a row in the middle and removing them right away for a given number of times.
 				benchmarkMemory(
 					createBenchmark({
 						title: `Insert a column and a row in the middle and remove right away ${count} times`,
@@ -683,7 +802,7 @@ describe("SharedTree table APIs memory usage", () => {
 				);
 
 				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
-				// Test the memory usage of the SharedTree for undoing the insertion and removal of a column and a row in the middle for a given number of times.
+				// Test the memory usage of undoing the insertion and removal of a column and a row in the middle for a given number of times.
 				// benchmarkMemory(
 				// 	createUndoRedoBenchmark({
 				// 		title: `Undo insert and remove column and row in the middle ${count} times`,
@@ -715,7 +834,7 @@ describe("SharedTree table APIs memory usage", () => {
 				// 	}),
 				// );
 
-				// // Test the memory usage of the SharedTree for redoing the insertion and removal of a column and a row in the middle for a given number of times.
+				// // Test the memory usage of redoing the insertion and removal of a column and a row in the middle for a given number of times.
 				// benchmarkMemory(
 				// 	createUndoRedoBenchmark({
 				// 		title: `Redo insert and remove column and row in the middle ${count} times`,
@@ -760,7 +879,7 @@ describe("SharedTree table APIs memory usage", () => {
 			});
 
 			describe(`Cell Value Setting`, () => {
-				// Test the memory usage of the SharedTree for setting a cell value in the middle for a given number of times.
+				// Test the memory usage of setting a cell value in the middle for a given number of times.
 				benchmarkMemory(
 					createBenchmark({
 						title: `Set cell value in the middle ${count} times`,
@@ -782,7 +901,7 @@ describe("SharedTree table APIs memory usage", () => {
 					}),
 				);
 
-				// Test the memory usage of the SharedTree for undoing the setting of a cell value in the middle for a given number of times.
+				// Test the memory usage of undoing the setting of a cell value in the middle for a given number of times.
 				benchmarkMemory(
 					createUndoRedoBenchmark({
 						title: `Undo set cell value in the middle ${count} times`,
@@ -810,7 +929,7 @@ describe("SharedTree table APIs memory usage", () => {
 					}),
 				);
 
-				// Test the memory usage of the SharedTree for redoing the setting of a cell value in the middle for a given number of times.
+				// Test the memory usage of redoing the setting of a cell value in the middle for a given number of times.
 				benchmarkMemory(
 					createUndoRedoBenchmark({
 						title: `Redo set cell value in the middle ${count} times`,
