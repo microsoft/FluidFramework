@@ -148,7 +148,7 @@ describe("SharedMatrix execution time", () => {
 			// Insert-related tests that are not limited by matrixSize
 			for (const count of operationCounts) {
 				describe(`Column Insertion`, () => {
-					// Test the execute time of the SharedMatrix for inserting a column in the middle for a given number of times.
+					// Test the execute time of the SharedMatrix for inserting a single column in the middle of the table N times.
 					runBenchmark({
 						title: `Insert a column in the middle ${count} times`,
 						matrixSize,
@@ -161,9 +161,9 @@ describe("SharedMatrix execution time", () => {
 						maxBenchmarkDurationSeconds,
 					});
 
-					// Test the execute time of the SharedMatrix for inserting a column in the middle for a given number of times.
+					// Test the execute time of the SharedMatrix for undoing the insertion of a single column in the middle of the table N times.
 					runBenchmark({
-						title: `Undo insert the middle column ${count} times`,
+						title: `Undo: insert a column in the middle ${count} times`,
 						matrixSize,
 						initialCellValue,
 						beforeOperation: (matrix, undoRedoStack) => {
@@ -183,9 +183,9 @@ describe("SharedMatrix execution time", () => {
 						maxBenchmarkDurationSeconds,
 					});
 
-					// Test the execute time of the SharedMatrix for inserting a column in the middle for a given number of times.
+					// Test the execute time of the SharedMatrix for redoing the insertion of a single column in the middle of the table N times.
 					runBenchmark({
-						title: `Redo insert the middle column ${count} times`,
+						title: `Redo: insert a column in the middle ${count} times`,
 						matrixSize,
 						initialCellValue,
 						beforeOperation: (matrix, undoRedoStack) => {
@@ -212,7 +212,7 @@ describe("SharedMatrix execution time", () => {
 				});
 
 				describe(`Row Insertion`, () => {
-					// Test the execute time of the SharedMatrix for inserting a row in the middle for a given number of times.
+					// Test the execute time of the SharedMatrix for inserting a row in the middle of the table N times.
 					runBenchmark({
 						title: `Insert a row in the middle ${count} times`,
 						matrixSize,
@@ -225,7 +225,7 @@ describe("SharedMatrix execution time", () => {
 						maxBenchmarkDurationSeconds,
 					});
 
-					// Test the execute time of the SharedMatrix for inserting a row in the middle for a given number of times.
+					// Test the execute time of the SharedMatrix for inserting a row in the middle of the table N times.
 					runBenchmark({
 						title: `Undo insert the middle row ${count} times`,
 						matrixSize,
@@ -247,7 +247,7 @@ describe("SharedMatrix execution time", () => {
 						maxBenchmarkDurationSeconds,
 					});
 
-					// Test the execute time of the SharedMatrix for inserting a row in the middle for a given number of times.
+					// Test the execute time of the SharedMatrix for inserting a row in the middle of the table N times.
 					runBenchmark({
 						title: `Redo insert the middle row ${count} times`,
 						matrixSize,
@@ -276,7 +276,7 @@ describe("SharedMatrix execution time", () => {
 				});
 
 				describe(`Column and Row Insertion`, () => {
-					// Test the execute time of the SharedMatrix for inserting a row and a column in the middle for a given number of times.
+					// Test the execute time of the SharedMatrix for inserting a row and a column in the middle of the table N times.
 					runBenchmark({
 						title: `Insert a row and a column in the middle ${count} times`,
 						matrixSize,
@@ -290,7 +290,7 @@ describe("SharedMatrix execution time", () => {
 						maxBenchmarkDurationSeconds,
 					});
 
-					// Test the execute time of the SharedMatrix for inserting a row and a column in the middle for a given number of times.
+					// Test the execute time of the SharedMatrix for inserting a row and a column in the middle of the table N times.
 					runBenchmark({
 						title: `Undo insert the middle a row and a column ${count} times`,
 						matrixSize,
@@ -313,7 +313,7 @@ describe("SharedMatrix execution time", () => {
 						maxBenchmarkDurationSeconds,
 					});
 
-					// Test the execute time of the SharedMatrix for inserting a row and a column in the middle for a given number of times.
+					// Test the execute time of the SharedMatrix for inserting a row and a column in the middle of the table N times.
 					runBenchmark({
 						title: `Redo insert the middle a row and a column ${count} times`,
 						matrixSize,
@@ -345,7 +345,7 @@ describe("SharedMatrix execution time", () => {
 			// Set/Remove-related tests that are limited by matrixSize
 			for (const count of validRemoveCounts) {
 				describe(`Column Removal`, () => {
-					// Test the execute time of the SharedMatrix for removing a column in the middle for a given number of times.
+					// Test the execute time of the SharedMatrix for removing a column in the middle of the table N times.
 					runBenchmark({
 						title: `Remove the middle column ${count} times`,
 						matrixSize,
@@ -358,7 +358,7 @@ describe("SharedMatrix execution time", () => {
 						maxBenchmarkDurationSeconds,
 					});
 
-					// Test the execute time of the SharedMatrix for removing a column in the middle for a given number of times.
+					// Test the execute time of the SharedMatrix for removing a column in the middle of the table N times.
 					runBenchmark({
 						title: `Undo remove the middle column ${count} times`,
 						matrixSize,
@@ -380,7 +380,7 @@ describe("SharedMatrix execution time", () => {
 						maxBenchmarkDurationSeconds,
 					});
 
-					// Test the execute time of the SharedMatrix for removing a column in the middle for a given number of times.
+					// Test the execute time of the SharedMatrix for removing a column in the middle of the table N times.
 					runBenchmark({
 						title: `Redo remove the middle column ${count} times`,
 						matrixSize,
@@ -409,7 +409,7 @@ describe("SharedMatrix execution time", () => {
 				});
 
 				describe(`Row Removal`, () => {
-					// Test the execute time of the SharedMatrix for removing a row in the middle for a given number of times.
+					// Test the execute time of the SharedMatrix for removing a row in the middle of the table N times.
 					runBenchmark({
 						title: `Remove the middle row ${count} times`,
 						matrixSize,
@@ -422,7 +422,7 @@ describe("SharedMatrix execution time", () => {
 						maxBenchmarkDurationSeconds,
 					});
 
-					// Test the execute time of the SharedMatrix for removing a row in the middle for a given number of times.
+					// Test the execute time of the SharedMatrix for removing a row in the middle of the table N times.
 					runBenchmark({
 						title: `Undo remove the middle row ${count} times`,
 						matrixSize,
@@ -444,7 +444,7 @@ describe("SharedMatrix execution time", () => {
 						maxBenchmarkDurationSeconds,
 					});
 
-					// Test the execute time of the SharedMatrix for removing a row in the middle for a given number of times.
+					// Test the execute time of the SharedMatrix for removing a row in the middle of the table N times.
 					runBenchmark({
 						title: `Redo remove the middle row ${count} times`,
 						matrixSize,
@@ -473,7 +473,7 @@ describe("SharedMatrix execution time", () => {
 				});
 
 				describe(`Column and Row Removal`, () => {
-					// Test the execute time of the SharedMatrix for removing a row and a column in the middle for a given number of times.
+					// Test the execute time of the SharedMatrix for removing a row and a column in the middle of the table N times.
 					runBenchmark({
 						title: `Remove the middle row and column ${count} times`,
 						matrixSize,
@@ -487,7 +487,7 @@ describe("SharedMatrix execution time", () => {
 						maxBenchmarkDurationSeconds,
 					});
 
-					// Test the execute time of the SharedMatrix for removing a row and a column in the middle for a given number of times.
+					// Test the execute time of the SharedMatrix for removing a row and a column in the middle of the table N times.
 					runBenchmark({
 						title: `Undo remove the middle row and column ${count} times`,
 						matrixSize,
@@ -510,7 +510,7 @@ describe("SharedMatrix execution time", () => {
 						maxBenchmarkDurationSeconds,
 					});
 
-					// Test the execute time of the SharedMatrix for removing a row and a column in the middle for a given number of times.
+					// Test the execute time of the SharedMatrix for removing a row and a column in the middle of the table N times.
 					runBenchmark({
 						title: `Redo remove the middle row and column ${count} times`,
 						matrixSize,
