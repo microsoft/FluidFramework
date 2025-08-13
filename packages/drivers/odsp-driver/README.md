@@ -7,6 +7,25 @@ The ODSP Fluid service is not a publicly available service, and currently it is 
 to connect to it. This driver is present as an illustration of a different Fluid driver implementation.
 Developers should not depend on this driver for their own solutions.
 
+## Telemetry Event names to SPO API mapping:
+
+These event names are suffixed by `_end` in case they are successful API calls or by `_cancel` in case they are failures.
+In the table I have used the failure ones.
+
+| Event Name | Endpoint | Notes |
+|:---|:---|:---|
+| fluid:telemetry:OdspDriver:TreesLatest_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/snapshots/trees/latest?ump=1` | Error when fetching snapshot from storage. (Storage Call) |
+| fluid:telemetry:OdspDriver:GetDeltas_cancel<br>fluid:telemetry:OdspDriver:OpsFetch_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream?ump=1&filter=sequenceNumber ge START and sequenceNumber le END` | Error when fetching ops from the storage. (Storage Call) |
+| fluid:telemetry:OdspDriver:JoinSession_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/joinSession?ump=1` | Error when calling join session before connecting to socket. It is also called every 15 mins to renew session. (Storage Call) |
+| fluid:telemetry:BlobManager:AttachmentReadBlob_cancel<br>fluid:telemetry:OdspDriver:readDataBlob_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/attachments/BLOB_ID/content` | Error when reading attachment blobs. (Storage Call) |
+| fluid:telemetry:OdspDriver:createBlob_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/attachment/content` | Error when creating a blob. (Storage Call) |
+| fluid:telemetry:OdspDriver:CreateNewFile_cancel | `/_api/v2.1/drives/DRIVEID/items/root:%2f<path>.fluid:/opStream/snapshots/snapshot?ump=1` | Error when creating a new Fluid file. (Storage Call) |
+| fluid:telemetry:OdspDriver:createNewEmptyFile_cancel | `/_api/v2.1/drives/DRIVEID/items/root://FILEPATH/FILENAME:/content?@name.conflictBehavior=rename&select=id,name,parentReference&ump=1` | Error when creating a new empty Fluid file. (Storage Call) |
+| fluid:telemetry:OdspDriver:uploadSummary_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/snapshots/snapshot` | Error when uploading Fluid summary to storage. (Storage Call) |
+| fluid:telemetry:OdspDriver:RedeemShareLink_cancel | `_api/v2.0/shares/${encodedShareUrl}/driveItem` | Error when redeeming the share link after single Round Trip redeem during snapshot fetch already failed. |
+| OdspDriver:odspFileLink_cancel<br>OdspDriver:getShareLink_cancel | `/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl,sharepointIds` | Error when fetching sharing link with Data_requestName = getFileItemLite in Telemetry. `getShareLink` event is parent of `odspFileLink` event. |
+| OdspDriver:odspFileLink_cancel<br>OdspDriver:getShareLink_cancel | `/_api/web/GetFileById(@a1)/ListItemAllFields/GetSharingInformation?@a1=guid${encodeURIComponent(`'${fileItem.sharepointIds.listItemUniqueId}'`)}` | Error when fetching sharing link with Data_requestName = getSharingInformation in Telemetry. `getShareLink` event is parent of `odspFileLink` event. |
+
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
@@ -40,26 +59,6 @@ To access the `legacy` APIs, import via `@fluidframework/odsp-driver/legacy`.
 ## API Documentation
 
 API documentation for **@fluidframework/odsp-driver** is available at <https://fluidframework.com/docs/apis/odsp-driver>.
-
-## Telemetry Event names to SPO API mapping:
-
-These event names are suffixed by `_end` in case they are successful API calls or by `_cancel` in case they are failures.
-In the table I have used the failure ones.
-
-| Event Name | Endpoint | Notes |
-|:---|:---|:---|
-| fluid:telemetry:OdspDriver:TreesLatest_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/snapshots/trees/latest?ump=1` | Error when fetching snapshot from storage. (Storage Call) |
-| fluid:telemetry:OdspDriver:GetDeltas_cancel<br>fluid:telemetry:OdspDriver:OpsFetch_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream?ump=1&filter=sequenceNumber ge START and sequenceNumber le END` | Error when fetching ops from the storage. (Storage Call) |
-| fluid:telemetry:OdspDriver:JoinSession_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/joinSession?ump=1` | Error when calling join session before connecting to socket. It is also called every 15 mins to renew session. (Storage Call) |
-| fluid:telemetry:BlobManager:AttachmentReadBlob_cancel<br>fluid:telemetry:OdspDriver:readDataBlob_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/attachments/BLOB_ID/content` | Error when reading attachment blobs. (Storage Call) |
-| fluid:telemetry:OdspDriver:createBlob_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/attachment/content` | Error when creating a blob. (Storage Call) |
-| fluid:telemetry:OdspDriver:CreateNewFile_cancel | `/_api/v2.1/drives/DRIVEID/items/root:%2f<path>.fluid:/opStream/snapshots/snapshot?ump=1` | Error when creating a new Fluid file. (Storage Call) |
-| fluid:telemetry:OdspDriver:createNewEmptyFile_cancel | `/_api/v2.1/drives/DRIVEID/items/root://FILEPATH/FILENAME:/content?@name.conflictBehavior=rename&select=id,name,parentReference&ump=1` | Error when creating a new empty Fluid file. (Storage Call) |
-| fluid:telemetry:OdspDriver:uploadSummary_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/snapshots/snapshot` | Error when uploading Fluid summary to storage. (Storage Call) |
-| fluid:telemetry:OdspDriver:RedeemShareLink_cancel | `_api/v2.0/shares/${encodedShareUrl}/driveItem` | Error when redeeming the share link after single Round Trip redeem during snapshot fetch already failed. |
-| OdspDriver:odspFileLink_cancel<br>OdspDriver:getShareLink_cancel | `/_api/v2.0/drives/${driveId}/items/${itemId}?select=webUrl,webDavUrl,sharepointIds` | Error when fetching sharing link with Data_requestName = getFileItemLite in Telemetry. `getShareLink` event is parent of `odspFileLink` event. |
-| OdspDriver:odspFileLink_cancel<br>OdspDriver:getShareLink_cancel | `/_api/web/GetFileById(@a1)/ListItemAllFields/GetSharingInformation?@a1=guid${encodeURIComponent(`'${fileItem.sharepointIds.listItemUniqueId}'`)}` | Error when fetching sharing link with Data_requestName = getSharingInformation in Telemetry. `getShareLink` event is parent of `odspFileLink` event. |
-
 
 <!-- prettier-ignore-end -->
 
