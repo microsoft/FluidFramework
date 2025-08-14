@@ -186,7 +186,7 @@ describe(`Presence Multi-Process E2E Tests`, () => {
 
 	describe("Attendee Connection/Disconnection", () => {
 		it("announces 'attendeeConnected' when remote client joins session and 'attendeeDisconnected' when remote client disconnects", async () => {
-			// Setup: Create a promise to track all attendeeConnected events
+			// Setup
 			const attendeeConnectedPromise = timeoutPromise(
 				(resolve) => {
 					let attendeesJoinedEvents = 0;
@@ -205,13 +205,13 @@ describe(`Presence Multi-Process E2E Tests`, () => {
 				},
 			);
 
-			// Act: Connect all child processes
+			// Act
 			const { creatorSessionId } = await connectChildProcesses(children);
 
-			// Verify: Wait for all 'attendeeConnected' events
+			// Verify
 			await Promise.race([attendeeConnectedPromise, childErrorPromise]);
 
-			// Setup: Create promises to wait for disconnection events
+			// Setup
 			const waitForDisconnected = children
 				.filter((_, index) => index !== 0)
 				.map(async (child, index) =>
@@ -233,95 +233,135 @@ describe(`Presence Multi-Process E2E Tests`, () => {
 					),
 				);
 
-			// Act: Disconnect first child process
+			// Act
 			children[0].send({ command: "disconnectSelf" });
 
-			// Verify: Wait for all 'attendeeDisconnected' events
+			// Verify
 			await Promise.race([Promise.all(waitForDisconnected), childErrorPromise]);
 		});
 	});
 
 	describe("Latest State Synchronization", () => {
 		it("synchronizes Latest state updates between clients", async () => {
-			// Setup: Connect all clients
+			// Setup
 			await connectChildProcesses(children);
 
 			const workspaceId = "testLatestWorkspace";
 			const testValue = { message: "Hello from client 0", timestamp: Date.now() };
 
-			// Act: Set a value in client 0
+			const remoteClients = children.filter((_, index) => index !== 0);
+			const updateEventPromises: Promise<MessageFromChild>[] = [];
+
+			for (let i = 0; i < remoteClients.length; i++) {
+				const child = remoteClients[i];
+				const promise = waitForEvent(
+					child,
+					"latestValueUpdated",
+					(msg) => isLatestValueUpdated(msg) && msg.workspaceId === workspaceId,
+					`Client ${i + 1} did not receive latest value update`,
+				);
+				updateEventPromises.push(promise);
+			}
+
+			// Act
 			children[0].send({
 				command: "setLatestValue",
 				workspaceId,
 				value: testValue,
 			});
 
-			// Setup: Wait for client 1 to receive the update
-			const updateEventPromise = waitForEvent(
-				children[1],
-				"latestValueUpdated",
-				(msg) => isLatestValueUpdated(msg) && msg.workspaceId === workspaceId,
-				"did not receive latest value update",
-			);
+			// Verify
+			const updateEvents = await Promise.race([
+				Promise.all(updateEventPromises),
+				childErrorPromise,
+			]);
+			assert(Array.isArray(updateEvents), "Expected array of update events but got error");
 
-			// Verify: Client 1 should receive the update
-			const updateEvent = await Promise.race([updateEventPromise, childErrorPromise]);
-			assert(updateEvent !== undefined, "Expected update event but got error");
-			assert(isLatestValueUpdated(updateEvent), "Expected LatestValueUpdated event");
-			assert.deepStrictEqual(updateEvent.value, testValue);
+			for (const updateEvent of updateEvents) {
+				assert(isLatestValueUpdated(updateEvent), "Expected LatestValueUpdated event");
+				assert.deepStrictEqual(updateEvent.value, testValue);
+			}
 		});
 
 		it("allows clients to read Latest state from other clients", async () => {
-			// Setup: Connect all clients
+			// Setup
 			const { creatorSessionId } = await connectChildProcesses(children);
 
 			const workspaceId = "testLatestWorkspace";
 			const testValue = { message: "Hello from client 0", counter: 42 };
+			const remoteClients = children.filter((_, index) => index !== 0);
+			const getResponsePromises: Promise<MessageFromChild>[] = [];
 
-			// Act: Set a value in client 0
+			// Act
 			children[0].send({
 				command: "setLatestValue",
 				workspaceId,
 				value: testValue,
 			});
 
-			// Wait a bit for synchronization
-			await new Promise((resolve) => setTimeout(resolve, 500));
+			await new Promise((resolve) => setTimeout(resolve, 100));
 
-			// Act: Request the value from client 1
-			const getResponsePromise = waitForEvent(
-				children[1],
-				"latestValueGetResponse",
-				(msg) =>
-					isLatestValueGetResponse(msg) &&
-					msg.workspaceId === workspaceId &&
-					msg.attendeeId === creatorSessionId,
-			);
+			for (let i = 0; i < remoteClients.length; i++) {
+				const child = remoteClients[i];
+				const responsePromise = waitForEvent(
+					child,
+					"latestValueGetResponse",
+					(msg) =>
+						isLatestValueGetResponse(msg) &&
+						msg.workspaceId === workspaceId &&
+						msg.attendeeId === creatorSessionId,
+					`Client ${i + 1} did not receive latest value response`,
+				);
 
-			children[1].send({
-				command: "getLatestValue",
-				workspaceId,
-				attendeeId: creatorSessionId,
-			});
+				// Send the request
+				child.send({
+					command: "getLatestValue",
+					workspaceId,
+					attendeeId: creatorSessionId,
+				});
 
-			// Verify: Client 1 should be able to read client 0's value
-			const getResponse = await Promise.race([getResponsePromise, childErrorPromise]);
-			assert(getResponse !== undefined, "Expected response event but got error");
-			assert(isLatestValueGetResponse(getResponse), "Expected LatestValueGetResponse event");
-			assert.deepStrictEqual(getResponse.value, testValue);
+				getResponsePromises.push(responsePromise);
+			}
+
+			// Verify
+			const getResponses = await Promise.race([
+				Promise.all(getResponsePromises),
+				childErrorPromise,
+			]);
+			assert(Array.isArray(getResponses), "Expected array of response events but got error");
+			for (const getResponse of getResponses) {
+				assert(isLatestValueGetResponse(getResponse), "Expected LatestValueGetResponse event");
+				assert.deepStrictEqual(getResponse.value, testValue);
+			}
 		});
 	});
 
 	describe("LatestMap State Synchronization", () => {
 		it("synchronizes LatestMap state updates between clients", async () => {
-			// Setup: Connect all clients
+			// Setup
 			await connectChildProcesses(children);
 
 			const workspaceId = "testLatestMapWorkspace";
 			const testKey = "player1";
 			const testValue = { x: 100, y: 200, color: "red" };
+			const remoteClients = children.filter((_, index) => index !== 0);
+			const updateEventPromises: Promise<MessageFromChild>[] = [];
 
-			// Act: Set a value in the map on client 0
+			for (let i = 0; i < remoteClients.length; i++) {
+				const child = remoteClients[i];
+				const promise = waitForEvent(
+					child,
+					"latestMapValueUpdated",
+					(msg) =>
+						isLatestMapValueUpdated(msg) &&
+						msg.workspaceId === workspaceId &&
+						msg.key === testKey,
+					`Client ${i + 1} did not receive latest map value update`,
+				);
+				updateEventPromises.push(promise);
+			}
+
+			// Act
 			children[0].send({
 				command: "setLatestMapValue",
 				workspaceId,
@@ -329,33 +369,31 @@ describe(`Presence Multi-Process E2E Tests`, () => {
 				value: testValue,
 			});
 
-			// Setup: Wait for client 1 to receive the update
-			const updateEventPromise = waitForEvent(
-				children[1],
-				"latestMapValueUpdated",
-				(msg) =>
-					isLatestMapValueUpdated(msg) &&
-					msg.workspaceId === workspaceId &&
-					msg.key === testKey,
-				"did not receive latest map value update",
-			);
+			// Verify
+			const updateEvents = await Promise.race([
+				Promise.all(updateEventPromises),
+				childErrorPromise,
+			]);
+			assert(Array.isArray(updateEvents), "Expected array of update events but got error");
 
-			// Verify: Client 1 should receive the update
-			const updateEvent = await Promise.race([updateEventPromise, childErrorPromise]);
-			assert(updateEvent !== undefined, "Expected update event but got error");
-			assert(isLatestMapValueUpdated(updateEvent), "Expected LatestMapValueUpdated event");
-			assert.deepStrictEqual(updateEvent.value, testValue);
+			// Verify
+			for (const updateEvent of updateEvents) {
+				assert(isLatestMapValueUpdated(updateEvent), "Expected LatestMapValueUpdated event");
+				assert.deepStrictEqual(updateEvent.value, testValue);
+			}
 		});
 
 		it("allows clients to read LatestMap values from other clients", async () => {
-			// Setup: Connect all clients
+			// Setup
 			const { creatorSessionId } = await connectChildProcesses(children);
 
 			const workspaceId = "testLatestMapWorkspace";
 			const testKey = "cursor";
 			const testValue = { x: 150, y: 300, visible: true };
+			const remoteClients = children.filter((_, index) => index !== 0);
+			const getResponsePromises: Promise<MessageFromChild>[] = [];
 
-			// Act: Set a value in the map on client 0
+			// Act
 			children[0].send({
 				command: "setLatestMapValue",
 				workspaceId,
@@ -363,39 +401,49 @@ describe(`Presence Multi-Process E2E Tests`, () => {
 				value: testValue,
 			});
 
-			// Wait a bit for synchronization
-			await new Promise((resolve) => setTimeout(resolve, 500));
+			await new Promise((resolve) => setTimeout(resolve, 100));
 
-			// Act: Request the value from client 1
-			const getResponsePromise = waitForEvent(
-				children[1],
-				"latestMapValueGetResponse",
-				(msg) =>
-					isLatestMapValueGetResponse(msg) &&
-					msg.workspaceId === workspaceId &&
-					msg.key === testKey &&
-					msg.attendeeId === creatorSessionId,
-			);
+			for (let i = 0; i < remoteClients.length; i++) {
+				const child = remoteClients[i];
+				const responsePromise = waitForEvent(
+					child,
+					"latestMapValueGetResponse",
+					(msg) =>
+						isLatestMapValueGetResponse(msg) &&
+						msg.workspaceId === workspaceId &&
+						msg.key === testKey &&
+						msg.attendeeId === creatorSessionId,
+					`Client ${i + 1} did not receive latest map value response`,
+				);
 
-			children[1].send({
-				command: "getLatestMapValue",
-				workspaceId,
-				key: testKey,
-				attendeeId: creatorSessionId,
-			});
+				// Send the request
+				child.send({
+					command: "getLatestMapValue",
+					workspaceId,
+					key: testKey,
+					attendeeId: creatorSessionId,
+				});
 
-			// Verify: Client 1 should be able to read client 0's value
-			const getResponse = await Promise.race([getResponsePromise, childErrorPromise]);
-			assert(getResponse !== undefined, "Expected response event but got error");
-			assert(
-				isLatestMapValueGetResponse(getResponse),
-				"Expected LatestMapValueGetResponse event",
-			);
-			assert.deepStrictEqual(getResponse.value, testValue);
+				getResponsePromises.push(responsePromise);
+			}
+
+			// Verify
+			const getResponses = await Promise.race([
+				Promise.all(getResponsePromises),
+				childErrorPromise,
+			]);
+			assert(Array.isArray(getResponses), "Expected array of response events but got error");
+			for (const getResponse of getResponses) {
+				assert(
+					isLatestMapValueGetResponse(getResponse),
+					"Expected LatestMapValueGetResponse event",
+				);
+				assert.deepStrictEqual(getResponse.value, testValue);
+			}
 		});
 
 		it("handles multiple keys in LatestMap independently", async () => {
-			// Setup: Connect all clients
+			// Setup
 			await connectChildProcesses(children);
 
 			const workspaceId = "testMultiKeyMap";
@@ -404,25 +452,35 @@ describe(`Presence Multi-Process E2E Tests`, () => {
 			const value1 = { name: "Alice", score: 100 };
 			const value2 = { name: "Bob", score: 200 };
 
-			// Setup: Wait for updates to propagate (set up listeners first)
-			const updateEvent1Promise = waitForEvent(
-				children[1],
-				"latestMapValueUpdated",
-				(msg) =>
-					isLatestMapValueUpdated(msg) && msg.workspaceId === workspaceId && msg.key === key1,
-			);
-
-			const updateEvent2Promise = waitForEvent(
-				children[0],
-				"latestMapValueUpdated",
-				(msg) =>
-					isLatestMapValueUpdated(msg) && msg.workspaceId === workspaceId && msg.key === key2,
-			);
-
-			// Give a small delay to ensure event listeners are set up
+			const allUpdatePromises: Promise<MessageFromChild>[] = [];
+			for (let i = 1; i < children.length; i++) {
+				const promise = waitForEvent(
+					children[i],
+					"latestMapValueUpdated",
+					(msg) =>
+						isLatestMapValueUpdated(msg) &&
+						msg.workspaceId === workspaceId &&
+						msg.key === key1,
+					`Client ${i} did not receive key1 update`,
+				);
+				allUpdatePromises.push(promise);
+			}
+			for (let i = 0; i < children.length; i++) {
+				if (i === 1) continue; // Skip the sender
+				const promise = waitForEvent(
+					children[i],
+					"latestMapValueUpdated",
+					(msg) =>
+						isLatestMapValueUpdated(msg) &&
+						msg.workspaceId === workspaceId &&
+						msg.key === key2,
+					`Client ${i} did not receive key2 update`,
+				);
+				allUpdatePromises.push(promise);
+			}
 			await new Promise((resolve) => setTimeout(resolve, 100));
 
-			// Act: Set multiple values from different clients
+			// Act
 			children[0].send({
 				command: "setLatestMapValue",
 				workspaceId,
@@ -437,24 +495,28 @@ describe(`Presence Multi-Process E2E Tests`, () => {
 				value: value2,
 			});
 
-			// Verify: Both updates should be received
+			// Verify
 			const updateEvents = await Promise.race([
-				Promise.all([updateEvent1Promise, updateEvent2Promise]),
+				Promise.all(allUpdatePromises),
 				childErrorPromise,
 			]);
-
 			assert(Array.isArray(updateEvents), "Expected array of update events but got error");
-			const [updateEvent1, updateEvent2] = updateEvents;
-			assert(
-				isLatestMapValueUpdated(updateEvent1),
-				"Expected LatestMapValueUpdated event for updateEvent1",
+			const key1Updates = updateEvents.filter(
+				(event) => isLatestMapValueUpdated(event) && event.key === key1,
 			);
-			assert.deepStrictEqual(updateEvent1.value, value1);
-			assert(
-				isLatestMapValueUpdated(updateEvent2),
-				"Expected LatestMapValueUpdated event for updateEvent2",
+			const key2Updates = updateEvents.filter(
+				(event) => isLatestMapValueUpdated(event) && event.key === key2,
 			);
-			assert.deepStrictEqual(updateEvent2.value, value2);
+			assert.strictEqual(key1Updates.length, 2, "Expected 2 key1 updates");
+			assert.strictEqual(key2Updates.length, 2, "Expected 2 key2 updates");
+			for (const updateEvent of key1Updates) {
+				assert(isLatestMapValueUpdated(updateEvent), "Expected LatestMapValueUpdated event");
+				assert.deepStrictEqual(updateEvent.value, value1);
+			}
+			for (const updateEvent of key2Updates) {
+				assert(isLatestMapValueUpdated(updateEvent), "Expected LatestMapValueUpdated event");
+				assert.deepStrictEqual(updateEvent.value, value2);
+			}
 		});
 	});
 });
