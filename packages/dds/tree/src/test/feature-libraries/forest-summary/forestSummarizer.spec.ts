@@ -16,20 +16,24 @@ import {
 	makeFieldBatchCodec,
 	type FieldBatchEncodingContext,
 } from "../../../feature-libraries/index.js";
-import { checkoutWithContent, testIdCompressor, testRevisionTagCodec } from "../../utils.js";
+import {
+	checkoutWithContent,
+	testIdCompressor,
+	testRevisionTagCodec,
+	type TreeStoredContentStrict,
+} from "../../utils.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
 	ForestTypeOptimized,
 	ForestTypeReference,
 	type ForestType,
-	type TreeStoredContent,
 } from "../../../shared-tree/index.js";
 import {
 	permissiveStoredSchemaGenerationOptions,
 	SchemaFactory,
 	toStoredSchema,
 } from "../../../simple-tree/index.js";
-import { singleJsonCursor } from "../../json/index.js";
+import { fieldJsonCursor } from "../../json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { treeBlobKey } from "../../../feature-libraries/forest-summary/forestSummarizer.js";
 
@@ -40,7 +44,7 @@ describe("ForestSummarizer", () => {
 		// The type of forest to create.
 		forestType: ForestType;
 		// The content and schema to initialize the forest with. By default, it is an empty forest.
-		initialContent?: TreeStoredContent;
+		initialContent?: TreeStoredContentStrict;
 	}): ForestSummarizer {
 		const {
 			initialContent = {
@@ -126,10 +130,10 @@ describe("ForestSummarizer", () => {
 
 			it(`can summarize ${testType} forest with simple content and load from it`, async () => {
 				const schema = SchemaFactory.number;
-				const initialContent: TreeStoredContent = {
+				const initialContent: TreeStoredContentStrict = {
 					schema: toStoredSchema(schema, permissiveStoredSchemaGenerationOptions),
 					get initialTree() {
-						return singleJsonCursor(5);
+						return fieldJsonCursor([5]);
 					},
 				};
 				const forestSummarizer = createForestSummarizer({

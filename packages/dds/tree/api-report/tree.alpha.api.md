@@ -1568,7 +1568,7 @@ export type UnannotateAllowedTypesList<T extends readonly (AnnotatedAllowedType 
 };
 
 // @alpha @system
-export type UnannotateImplicitAllowedTypes<T extends ImplicitAnnotatedAllowedTypes> = T extends AnnotatedAllowedTypes ? UnannotateAllowedTypes<T> : T extends AnnotatedAllowedType ? UnannotateAllowedTypesList<[T]> : T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[] ? UnannotateAllowedTypesList<T> : T extends TreeNodeSchema ? T : never;
+export type UnannotateImplicitAllowedTypes<T extends ImplicitAnnotatedAllowedTypes> = T extends AnnotatedAllowedTypes ? UnannotateAllowedTypes<T> : T extends AnnotatedAllowedType ? UnannotateAllowedTypesList<[T]> : T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[] ? UnannotateAllowedTypesList<T> : T extends TreeNodeSchema ? T : ImplicitAllowedTypes;
 
 // @alpha @system
 export type UnannotateImplicitFieldSchema<T extends ImplicitAnnotatedFieldSchema> = T extends ImplicitAnnotatedAllowedTypes ? UnannotateImplicitAllowedTypes<T> : T;
