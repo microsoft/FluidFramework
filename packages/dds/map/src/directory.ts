@@ -1313,7 +1313,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			throw new Error(`SubDirectory name may not contain ${posix.sep}`);
 		}
 
-		let subDir = this.getOptimisticSubDirectoryEvenIfDisposed(subdirName);
+		let subDir = this.getOptimisticSubDirectory(subdirName, true);
 		const seqData = this.getLocalSeq();
 		const clientId = this.runtime.clientId ?? "detached";
 		const isNewSubDirectory = subDir === undefined;
@@ -1829,6 +1829,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 	private readonly getOptimisticSubDirectory = (
 		subdirName: string,
+		getIfDisposed: boolean = false,
 	): SubDirectory | undefined => {
 		const latestPendingEntry = findLast(
 			this.pendingSubDirectoryData,
@@ -1845,30 +1846,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			return undefined;
 		}
 
-		// If the subdirectory is disposed, treat it as non-existent for optimistic reads
-		if (subdir?.disposed) {
-			return undefined;
-		}
-
-		return subdir;
-	};
-
-	// TODO: Consider merging this with getOptimisticSubDirectory fn
-	private readonly getOptimisticSubDirectoryEvenIfDisposed = (
-		subdirName: string,
-	): SubDirectory | undefined => {
-		const latestPendingEntry = findLast(
-			this.pendingSubDirectoryData,
-			(entry) => entry.subdirName === subdirName,
-		);
-		let subdir: SubDirectory | undefined;
-		if (latestPendingEntry === undefined) {
-			subdir = this.sequencedSubdirectories.get(subdirName);
-		} else if (latestPendingEntry.type === "createSubDirectory") {
-			subdir = latestPendingEntry.subdir;
-			assert(subdir !== undefined, "Subdirectory should exist in pending data");
-		} else {
-			// Pending delete
+		// If the subdirectory is disposed, treat it as non-existent for optimistic reads (unless specified otherwise)
+		if (subdir?.disposed && !getIfDisposed) {
 			return undefined;
 		}
 
@@ -2116,7 +2095,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			}
 			this.sequencedSubdirectories.set(op.subdirName, subDir);
 		} else {
-			subDir = this.getOptimisticSubDirectoryEvenIfDisposed(op.subdirName);
+			subDir = this.getOptimisticSubDirectory(op.subdirName, true);
 			if (subDir === undefined) {
 				const absolutePath = posix.join(this.absolutePath, op.subdirName);
 				subDir = new SubDirectory(
@@ -2638,7 +2617,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const sequencedSubdirs: [string, SubDirectory][] = [];
 		const sequencedSubdirNames = new Set([...this.sequencedSubdirectories.keys()]);
 		for (const subdirName of sequencedSubdirNames) {
-			const optimisticSubdir = this.getOptimisticSubDirectoryEvenIfDisposed(subdirName);
+			const optimisticSubdir = this.getOptimisticSubDirectory(subdirName, true);
 			if (optimisticSubdir !== undefined) {
 				sequencedSubdirs.push([subdirName, optimisticSubdir]);
 			}
@@ -2653,7 +2632,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		];
 		const pendingSubdirs: [string, SubDirectory][] = [];
 		for (const subdirName of pendingSubdirNames) {
-			const optimisticSubdir = this.getOptimisticSubDirectoryEvenIfDisposed(subdirName);
+			const optimisticSubdir = this.getOptimisticSubDirectory(subdirName, true);
 			if (optimisticSubdir !== undefined) {
 				pendingSubdirs.push([subdirName, optimisticSubdir]);
 			}
