@@ -65,9 +65,9 @@ The throttler is configured via `IDistributedTokenBucketThrottlerConfig`:
 
 ```typescript
 localTokenBucket: {
-	capacity: number; // Maximum tokens the bucket can hold
-	refillRatePerMs: number; // Tokens added per millisecond
-	minCooldownIntervalMs: number; // Minimum time between refill operations
+	capacity: number; // Maximum tokens the bucket can hold. Limits traffic spikes.
+	refillRatePerMs: number; // Tokens added per millisecond. Maintains average rate of operations.
+	minCooldownIntervalMs: number; // Minimum time between refill operations. Forces throttling for service to recover.
 }
 ```
 
@@ -75,48 +75,61 @@ localTokenBucket: {
 
 ```typescript
 distributedTokenBucket: {
-	capacity: number; // Maximum tokens across all instances
-	refillRatePerMs: number; // Tokens added per millisecond globally
-	minCooldownIntervalMs: number; // Minimum time between refill operations
-	distributedSyncIntervalInMs: number; // How often to sync with storage
+	capacity: number; // Maximum tokens the bucket can hold. Limits traffic spikes.
+	refillRatePerMs: number; // Tokens added per millisecond. Maintains average rate of operations.
+	minCooldownIntervalMs: number; // Minimum time between refill operations. Forces throttling for service to recover.
+	distributedSyncIntervalInMs: number; // How often to sync with storage. Limits the frequency of shared storage access.
 }
 ```
 
 ### Cache and Telemetry Options
 
 ```typescript
-maxLocalCacheSize?: number;        // Max number of tracked IDs (default: 1,000,000)
-maxLocalCacheAgeInMs?: number;     // Cache entry expiration (default: 60,000ms)
-enableEnhancedTelemetry?: boolean; // Detailed logging (default: false)
+{
+    maxLocalCacheSize?: number;        // Max number of tracked IDs (default: 1,000,000)
+    maxLocalCacheAgeInMs?: number;     // Cache entry expiration (default: 60,000ms)
+    enableEnhancedTelemetry?: boolean; // Detailed logging (default: false)
+}
 ```
 
 ## Usage Examples
 
 ### Basic Setup
 
+The following sets up the throttler to use Redis for synchronized storage
+
 ```typescript
 import {
 	DistributedTokenBucketThrottler,
 	IDistributedTokenBucketThrottlerConfig,
+    RedisThrottleAndUsageStorageManager,
 } from "@fluidframework/server-services";
+
+const storageManager = new RedisThrottleAndUsageStorageManager(
+    redisClientConnectionManager,
+    parameters,
+);
 
 const config: IDistributedTokenBucketThrottlerConfig = {
 	localTokenBucket: {
-		capacity: 10, // Allow 10 operations per instance immediately
+		capacity: 10, // Allow 10 operation burst per instance
 		refillRatePerMs: 0.1, // Add 1 token every 10ms (100 ops/second)
 		minCooldownIntervalMs: 100,
 	},
 	distributedTokenBucket: {
-		capacity: 100, // Allow 100 operations across all instances
-		refillRatePerMs: 1, // Add 1 token per ms (1000 ops/second globally)
+		capacity: 100, // Allow 100 operation burst across all instances
+		refillRatePerMs: 1, // Allow 1 token per ms (1000 ops/second globally)
 		minCooldownIntervalMs: 1000,
 		distributedSyncIntervalInMs: 5000, // Sync every 5 seconds
 	},
+    maxLocalCacheSize: 1000, // Cap tracked IDs to 1000 to limit memory use
+    maxLocalCacheAgeInMs: 60000; // Clear stale tracked IDs after 1 minute
+    enableEnhancedTelemetry: false; // Disable verbose logging to limit telemetry noise
 };
 
 const throttler = new DistributedTokenBucketThrottler(
 	storageManager, // IThrottleAndUsageStorageManager instance
-	logger, // Optional ILogger instance
+	undefined, // No special logging
 	config,
 );
 ```
@@ -135,13 +148,19 @@ try {
 } catch (error) {
 	if (error instanceof ThrottlingError) {
 		// Handle throttling
-		const retryAfterSeconds = error.retryAfterInSeconds;
+		const retryAfterSeconds = error.retryAfter;
 		console.log(`Rate limited. Retry after ${retryAfterSeconds} seconds`);
+		response
+			.status(error.code)
+			.json({ message: error.message, retryAfterSeconds: error.retryAfter });
 	}
 }
 ```
 
 ### Replenishing Tokens
+
+If desired, tokens can be replenished using `decrementCount`. This could be useful in a scenario where an expensive operation was cancelled before
+consuming resources.
 
 ```typescript
 // Return tokens for cancelled/failed operations
@@ -151,56 +170,13 @@ throttler.decrementCount("user:12345", 1);
 throttler.decrementCount("api:upload", 5);
 ```
 
-### Production Configuration Examples
-
-#### API Gateway Setup
-
-```typescript
-const apiGatewayConfig: IDistributedTokenBucketThrottlerConfig = {
-	localTokenBucket: {
-		capacity: 50, // Burst protection per instance
-		refillRatePerMs: 0.5, // 500 requests/second per instance
-		minCooldownIntervalMs: 100,
-	},
-	distributedTokenBucket: {
-		capacity: 500, // Global burst capacity
-		refillRatePerMs: 5, // 5000 requests/second globally
-		minCooldownIntervalMs: 1000,
-		distributedSyncIntervalInMs: 10000, // Sync every 10 seconds
-	},
-	maxLocalCacheSize: 10000, // Track up to 10K users
-	maxLocalCacheAgeInMs: 300000, // 5 minute cache expiration
-	enableEnhancedTelemetry: true,
-};
-```
-
-#### Low-Latency Service Setup
-
-```typescript
-const lowLatencyConfig: IDistributedTokenBucketThrottlerConfig = {
-	localTokenBucket: {
-		capacity: 100, // Higher local capacity for responsiveness
-		refillRatePerMs: 2, // 2000 ops/second per instance
-		minCooldownIntervalMs: 50, // Faster local refill
-	},
-	distributedTokenBucket: {
-		capacity: 1000,
-		refillRatePerMs: 20, // 20000 ops/second globally
-		minCooldownIntervalMs: 500,
-		distributedSyncIntervalInMs: 2000, // More frequent syncing
-	},
-	maxLocalCacheSize: 50000,
-	maxLocalCacheAgeInMs: 120000, // 2 minute cache
-};
-```
-
 ## Best Practices
 
 ### Configuration Guidelines
 
-1. **Local vs Distributed Capacity**: Set local capacity to 10-20% of distributed capacity
+1. **Local vs Distributed Capacity**: Set local capacity to what _one_ instance of the service can handle, and distributed to what a full suite of instances can handle.
 2. **Sync Interval**: Balance between accuracy and storage load (5-30 seconds typical)
-3. **Cache Size**: Size cache to handle expected concurrent users with some overhead
+3. **Cache Size**: Size cache to handle expected concurrent users with some overhead within single-instance memory constraints.
 4. **Cache Age**: Should be longer than sync interval to avoid losing tracking data
 
 ### Operational Considerations
