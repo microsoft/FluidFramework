@@ -37,6 +37,9 @@ When a commit `C` includes a reference to a cell introduced in some commit `A`
 For any pair of references `ra` and `rb` that commits `C` contains,
 `C` also includes enough information to totally order `ra` relative to `rb`.
 
+Note that the above two properties, when taken together, entail that we should never be tie-breaking pairs of cells introduced by the same commit.
+
+
 ## Cell IDs and Commits
 
 Each cell ID includes the ID of the commit that introduced it,
@@ -146,7 +149,7 @@ we sometimes need to know the relative order of the two commits that introduced 
 
 ## Compose
 
-In this section, we consider the cell-ordering scenarios that compose operations face.
+In this section, we consider the cell-ordering scenarios (tie-breaking and otherwise) that compose operations face.
 
 When composing `A ○ B`, we know the following about the commit graph:
 
@@ -333,6 +336,14 @@ In all such scenarios, cells known to `A` and unknown to `B` are introduced by c
 while `cb` must be introduced by a commit that has a red underline (whether or not it also has blue underline).
 One can see from the diagrams that the former always precedes the latter in sequencing order.
 
+### Pairs of Cell Where `cb` Is Unknown to `A` But Not Introduced by `B`
+
+Whenever `cb` refers to a cell that `A` has no reference to,
+and `cb` was not introduced by `B`,
+then we know that `cb` must have been introduced by either `P1` or `P2`,
+and that `A` has no reference to cells introduced that far back.
+This means that `cb` refers to a cell introduced before `ca` was introduced.
+
 ### Putting it All Together
 
 By looking at which cases each of these approaches can handle,
@@ -343,7 +354,7 @@ This shows how implementations of compose need not rely on extra metadata in ord
 
 ## Rebase
 
-In this section, we consider the cell-ordering scenarios that rebase operations face.
+In this section, we consider the cell-ordering scenarios (tie-breaking and otherwise) that rebase operations face.
 
 When rebasing `B ↷ X`, we know the following about the commit graph:
 
@@ -482,6 +493,11 @@ though it only applies to cells introduced by `P1` or `P2`:
 ### Pairs of Cell Where `cx` Is Unknown to `B`
 
 This works the same as in compose.
+
+### Pairs of Cell Where `cb` Is Unknown to `X` But Not Introduced by `B`
+
+We cannot leverage this situation for ordering cells because `cb` could be introduced in either `A`, `P1`, or `P2`,
+which have different ordering implication with respect to `cx`.
 
 ### Putting it All Together
 
