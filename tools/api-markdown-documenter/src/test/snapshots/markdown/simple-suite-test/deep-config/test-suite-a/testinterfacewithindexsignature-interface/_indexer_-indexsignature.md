@@ -4,7 +4,7 @@
 
 Test index signature.
 
-## Signature {#\_indexer\_-signature}
+<h2 id="_indexer_-signature">Signature</h2>
 
 ```typescript
 [foo: number]: {

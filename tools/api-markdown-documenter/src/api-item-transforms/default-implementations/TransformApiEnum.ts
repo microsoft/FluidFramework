@@ -9,9 +9,8 @@ import {
 	type ApiItem,
 	ApiItemKind,
 } from "@microsoft/api-extractor-model";
-import type { BlockContent } from "mdast";
 
-import type { Section } from "../../mdast/index.js";
+import type { Section, SectionContent } from "../../mdast/index.js";
 import { getApiItemKind, getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
 import { getFilteredMembers } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
@@ -66,7 +65,7 @@ export function transformApiEnum(
 
 		// Render individual flag details
 		if (flags.length > 0) {
-			const detailsSubSections: BlockContent[] = [];
+			const detailsSubSections: SectionContent[] = [];
 			for (const flag of flags) {
 				detailsSubSections.push(...generateChildContent(flag));
 			}

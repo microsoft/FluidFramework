@@ -5040,6 +5040,11 @@ export class ContainerRuntime
 	}
 
 	public getPendingLocalState(props?: IGetPendingLocalStateProps): unknown {
+		// AB#46464 - Add support for serializing pending state while in staging mode
+		if (this.inStagingMode) {
+			throw new UsageError("getPendingLocalState is not yet supported in staging mode");
+		}
+
 		this.verifyNotClosed();
 		if (props?.notifyImminentClosure) {
 			throw new UsageError("notifyImminentClosure is no longer supported in ContainerRuntime");

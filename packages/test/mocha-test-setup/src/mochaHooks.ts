@@ -17,7 +17,7 @@ import { pkgName } from "./packageVersion.js";
 Error.stackTraceLimit = Number.POSITIVE_INFINITY;
 
 const testVariant = process.env.FLUID_TEST_VARIANT;
-const propsDict =
+const envLoggerProps =
 	process.env.FLUID_LOGGER_PROPS != null
 		? JSON.parse(process.env.FLUID_LOGGER_PROPS)
 		: undefined;
@@ -46,8 +46,8 @@ class FluidTestRunLogger implements ITelemetryBufferedLogger {
 			...event,
 			// Setting hostname to pkgName is the behavior we had for a long time, so keeping it just in case.
 			// But prefer a value set through FLUID_LOGGER_PROPS if it exists.
-			hostName: propsDict?.hostName ?? pkgName,
-			details: JSON.stringify(propsDict),
+			hostName: envLoggerProps?.hostName ?? pkgName,
+			testEnvProps: JSON.stringify(envLoggerProps),
 		});
 	}
 	async flush() {

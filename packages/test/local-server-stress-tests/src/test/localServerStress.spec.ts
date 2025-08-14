@@ -41,10 +41,9 @@ describe("Local Server Stress", () => {
 		// saveSuccesses,
 		configurations: { "Fluid.Container.enableOfflineLoad": true },
 		skip: [
-			...[9, 79], // Number of subDirectories not same
-			...[22], // Key not found or value not matching key
-			...[26], // Rollback op does not match last pending
-			...[34, 35, 38, 45, 46, 71, 72, 91], // Number of keys not same
+			...[46], // Number of keys not same
+			...[9, 79], // Number of subDirectories not same,
+			...[26], // Unexpected pending data for set/delete op
 		],
 	});
 });

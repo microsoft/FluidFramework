@@ -18,12 +18,12 @@ import {
 import {
 	defaultSchemaFactoryObjectOptions,
 	SchemaFactory,
-	schemaStatics,
 	structuralName,
 	type NodeSchemaOptionsAlpha,
 	type SchemaFactoryObjectOptions,
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
+import { schemaStatics } from "./schemaStatics.js";
 import type { ImplicitAnnotatedFieldSchema, ImplicitFieldSchema } from "../fieldSchema.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type {
@@ -46,6 +46,20 @@ import type {
 	TreeRecordNodeUnsafe,
 } from "./typesUnsafe.js";
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
+
+// This import prevents a large number of type references in the API reports from showing up as *_2.
+/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import/no-duplicates */
+import type {
+	FieldProps,
+	FieldSchemaAlpha,
+	FieldPropsAlpha,
+	FieldKind,
+} from "../fieldSchema.js";
+import type { LeafSchema } from "../leafNodeSchema.js";
+import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
+import type { UnannotateImplicitAllowedTypes } from "../core/index.js";
+import type { FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
+/* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import/no-duplicates */
 
 /**
  * Stateless APIs exposed via {@link SchemaFactoryAlpha} as both instance properties and as statics.
@@ -109,7 +123,7 @@ export interface SchemaStaticsAlpha {
 	 * ```
 	 * @example
 	 * Below is a full example of how the schema migration process works.
-	 * This can also be found in our {@link https://github.com/CraigMacomber/FluidFramework/blob/readonly-allowedtypes/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts | tests}.
+	 * This can also be found in our {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts | tests}.
 	 * ```typescript
 	 * // Schema A: only number allowed
 	 * const schemaA = SchemaFactoryAlpha.optional([SchemaFactoryAlpha.number]);
@@ -172,8 +186,6 @@ export interface SchemaStaticsAlpha {
 	 * TODO: the example above does not work tell in intellisense: its formatted to work onm the website. We should find a solution that works well for both.
 	 *
 	 * TODO: AB#45711: Update the docs above when recursive type support is added.
-	 *
-	 * TODO: Once merged, a follow-up change should be made to update the URL above to point to the upstream file (here and in the changeset).
 	 */
 	staged: <const T extends LazyItem<TreeNodeSchema>>(
 		t: T | AnnotatedAllowedType<T>,
