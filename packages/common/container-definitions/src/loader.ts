@@ -633,6 +633,16 @@ export type ILoaderOptions = {
 	 * Max time (in ms) container will wait for a leave message of a disconnected client.
 	 */
 	maxClientLeaveWaitTime?: number;
+
+	/**
+	 * Optional property for specifying a timeout for connection retry loop.
+	 *
+	 * If provided, container will use this value as the maximum time to wait
+	 * for a successful connection before giving up and throwing the most recent error.
+	 *
+	 * If not provided, default behavior will be to retry until non-retryable error occurs.
+	 */
+	readonly connectRetriesTimeoutMs?: number;
 };
 
 /**

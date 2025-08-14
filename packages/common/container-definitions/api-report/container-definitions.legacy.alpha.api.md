@@ -390,6 +390,7 @@ export type ILoaderOptions = {
     enableOfflineLoad?: boolean;
     provideScopeLoader?: boolean;
     maxClientLeaveWaitTime?: number;
+    readonly connectRetriesTimeoutMs?: number;
 };
 
 // @alpha @legacy (undocumented)

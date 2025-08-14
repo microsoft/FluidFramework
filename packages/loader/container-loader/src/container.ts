@@ -126,6 +126,7 @@ import {
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
+import type { ILoaderServices } from "./loader.js";
 import { RelativeLoader } from "./loader.js";
 import {
 	validateDriverCompatibility,
@@ -192,10 +193,7 @@ export interface IContainerLoadProps {
 	readonly pendingLocalState?: IPendingContainerState;
 }
 
-/**
- * @internal
- */
-export interface IContainerCreateProps {
+interface IContainerCreateProps extends ILoaderServices {
 	/**
 	 * Disables the Container from reconnecting if false, allows reconnect otherwise.
 	 */
@@ -204,57 +202,6 @@ export interface IContainerCreateProps {
 	 * Client details provided in the override will be merged over the default client.
 	 */
 	readonly clientDetailsOverride?: IClientDetails;
-
-	/**
-	 * The url resolver used by the loader for resolving external urls
-	 * into Fluid urls such that the container specified by the
-	 * external url can be loaded.
-	 */
-	readonly urlResolver: IUrlResolver;
-	/**
-	 * The document service factory take the Fluid url provided
-	 * by the resolved url and constructs all the necessary services
-	 * for communication with the container's server.
-	 */
-	readonly documentServiceFactory: IDocumentServiceFactory;
-	/**
-	 * The code loader handles loading the necessary code
-	 * for running a container once it is loaded.
-	 */
-	readonly codeLoader: ICodeDetailsLoader;
-
-	/**
-	 * A property bag of options used by various layers
-	 * to control features
-	 */
-	readonly options: ILoaderOptions;
-
-	/**
-	 * Scope is provided to all container and is a set of shared
-	 * services for container's to integrate with their host environment.
-	 */
-	readonly scope: FluidObject;
-
-	/**
-	 * The logger downstream consumers should construct their loggers from
-	 */
-	readonly subLogger: ITelemetryLoggerExt;
-
-	/**
-	 * Optional property for allowing the container to use a custom
-	 * protocol implementation for handling the quorum and/or the audience.
-	 */
-	readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
-
-	/**
-	 * Optional property for specifying a timeout for retry connection loop.
-	 *
-	 * If provided, container will use this value as the maximum time to wait
-	 * for a successful connection before giving up throwing the most recent error.
-	 *
-	 * If not provided, default behavior will be to retry until non-retryable error occurs.
-	 */
-	readonly retryConnectionTimeoutMs?: number;
 }
 
 /**
@@ -617,7 +564,7 @@ export class Container
 	private attachmentData: AttachmentData = { state: AttachState.Detached };
 	private readonly serializedStateManager: SerializedStateManager;
 	private readonly _containerId: string;
-	private readonly _retryConnectionTimeoutMs: number | undefined;
+	private readonly _connectRetriesTimeoutMs: number | undefined;
 
 	private lastVisible: number | undefined;
 	private readonly visibilityEventHandler: (() => void) | undefined;
@@ -800,7 +747,6 @@ export class Container
 			scope,
 			subLogger,
 			protocolHandlerBuilder,
-			retryConnectionTimeoutMs,
 		} = createProps;
 
 		// Validate that the Driver is compatible with this Loader.
@@ -815,7 +761,7 @@ export class Container
 		const pendingLocalState = loadProps?.pendingLocalState;
 
 		this._canReconnect = canReconnect ?? true;
-		this._retryConnectionTimeoutMs = retryConnectionTimeoutMs;
+		this._connectRetriesTimeoutMs = options.connectRetriesTimeoutMs;
 		this.clientDetailsOverride = clientDetailsOverride;
 		this.urlResolver = urlResolver;
 		this.serviceFactory = documentServiceFactory;
@@ -2052,10 +1998,12 @@ export class Container
 					serviceProvider,
 					() => this.isDirty,
 					this.client,
-					this._canReconnect,
+					{
+						reconnectAllowed: this._canReconnect,
+						connectRetriesTimeoutMs: this._connectRetriesTimeoutMs,
+					},
 					createChildLogger({ logger: this.subLogger, namespace: "ConnectionManager" }),
 					props,
-					this._retryConnectionTimeoutMs,
 				),
 		);
 

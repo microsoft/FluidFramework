@@ -230,6 +230,11 @@ export class ConnectionManager implements IConnectionManager {
 	private _reconnectMode: ReconnectMode;
 
 	/**
+	 * Timeout for series of connect attempts.
+	 */
+	private readonly connectRetriesTimeoutMs: number | undefined;
+
+	/**
 	 * True if there is pending (async) reconnection from "read" to "write"
 	 */
 	private pendingReconnect = false;
@@ -247,12 +252,6 @@ export class ConnectionManager implements IConnectionManager {
 	private lastSubmittedClientId: string | undefined;
 
 	private connectFirstConnection = true;
-
-	/**
-	 * Tracks the initial connection start time for the entire lifetime of the class.
-	 * This is used only for retryConnectionTimeoutMs checks and is never reset.
-	 */
-	private initialConnectionStartTime: number | undefined;
 
 	private _connectionVerboseProps: Record<string, string | number> = {};
 
@@ -409,14 +408,16 @@ export class ConnectionManager implements IConnectionManager {
 		private readonly serviceProvider: () => IDocumentService | undefined,
 		public readonly containerDirty: () => boolean,
 		private readonly client: IClient,
-		reconnectAllowed: boolean,
+		options: { reconnectAllowed: boolean; connectRetriesTimeoutMs: number | undefined },
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly props: IConnectionManagerFactoryArgs,
-		private readonly retryConnectionTimeoutMs?: number,
 	) {
 		this.clientDetails = this.client.details;
 		this.defaultReconnectionMode = this.client.mode;
-		this._reconnectMode = reconnectAllowed ? ReconnectMode.Enabled : ReconnectMode.Never;
+		this._reconnectMode = options.reconnectAllowed
+			? ReconnectMode.Enabled
+			: ReconnectMode.Never;
+		this.connectRetriesTimeoutMs = options.connectRetriesTimeoutMs;
 
 		// Outbound message queue. The outbound queue is represented as a queue of an array of ops. Ops contained
 		// within an array *must* fit within the maxMessageSize and are guaranteed to be ordered sequentially.
@@ -579,11 +580,9 @@ export class ConnectionManager implements IConnectionManager {
 
 		this.props.establishConnectionHandler(reason);
 
-		let connection: IDocumentDeltaConnection | undefined;
-
 		if (docService.policies?.storageOnly === true) {
-			connection = new NoDeltaStream();
-			this.setupNewSuccessfulConnection(connection, "read", reason);
+			const noDeltaStreamConnection = new NoDeltaStream();
+			this.setupNewSuccessfulConnection(noDeltaStreamConnection, "read", reason);
 			assert(this.pendingConnection === undefined, 0x2b3 /* "logic error" */);
 			return;
 		}
@@ -591,11 +590,6 @@ export class ConnectionManager implements IConnectionManager {
 		let delayMs = InitialReconnectDelayInMs;
 		let connectRepeatCount = 0;
 		const connectStartTime = performanceNow();
-
-		// Set the initial connection start time only once for the entire lifetime of the class
-		if (this.initialConnectionStartTime === undefined) {
-			this.initialConnectionStartTime = connectStartTime;
-		}
 
 		let lastError: unknown;
 
@@ -609,6 +603,7 @@ export class ConnectionManager implements IConnectionManager {
 		};
 
 		// This loop will keep trying to connect until successful, with a delay between each iteration.
+		let connection: IDocumentDeltaConnection | undefined;
 		while (connection === undefined) {
 			if (this._disposed) {
 				throw new Error("Attempting to connect a closed DeltaManager");
@@ -718,10 +713,9 @@ export class ConnectionManager implements IConnectionManager {
 				}
 
 				// Check if the calculated delay would exceed the remaining timeout with a conservative buffer
-				if (this.retryConnectionTimeoutMs !== undefined) {
-					const elapsedTime = performanceNow() - this.initialConnectionStartTime;
-					const remainingTime = this.retryConnectionTimeoutMs - elapsedTime;
-					const connectionAttemptDuration = performanceNow() - connectStartTime;
+				if (this.connectRetriesTimeoutMs !== undefined) {
+					const connectionAttemptDuration = waitStartTime - connectStartTime;
+					const remainingTime = this.connectRetriesTimeoutMs - connectionAttemptDuration;
 
 					// Use a 75% buffer to be conservative about timeout usage
 					const timeoutBufferThreshold = remainingTime * 0.75;
@@ -732,10 +726,10 @@ export class ConnectionManager implements IConnectionManager {
 						this.logger.sendTelemetryEvent({
 							eventName: "RetryDelayExceedsConnectionTimeout",
 							attempts: connectRepeatCount,
-							duration: formatTick(elapsedTime),
+							duration: formatTick(connectionAttemptDuration),
 							calculatedDelayMs: delayMs,
 							remainingTimeMs: remainingTime,
-							timeoutMs: this.retryConnectionTimeoutMs,
+							timeoutMs: this.connectRetriesTimeoutMs,
 						});
 						// Throw the error immediately since the estimated time for delay + next connection attempt would exceed our conservative timeout buffer
 						throw normalizeError(origError, { props: fatalConnectErrorProp });
