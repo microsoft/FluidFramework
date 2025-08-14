@@ -103,10 +103,12 @@ describe("Local Server Stress with rollback", () => {
 			"Fluid.Container.enableOfflineLoad": true,
 		},
 		skip: [
-			...[83], // Number of subDirectories not same
-			...[20, 54], // 0xa21
+			...[39, 40], // Number of keys not same (directory)
+			...[53, 83], // Number of subDirectories not same
+			...[], // SubDirectory with name ... not present in second directory
+			...[], // 0x2fa (Unexpected pending message received)
+			...[20, 54, 92], // 0xa21
 			...[97], // channel maps should be the same size
-			...[92], // timeout
 		],
 	});
 });

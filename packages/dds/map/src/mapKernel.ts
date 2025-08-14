@@ -23,7 +23,6 @@ import {
 	serializeValue,
 	migrateIfSharedSerializable,
 } from "./localValues.js";
-import { findLast, findLastIndex } from "./utils.js";
 
 /**
  * Defines the means to process and resubmit a given op on a map.
@@ -106,6 +105,25 @@ type PendingDataEntry = PendingKeyLifetime | PendingKeyDelete | PendingClear;
  * (though the PendingKeySets will be contained within a PendingKeyLifetime there).
  */
 type PendingLocalOpMetadata = PendingKeySet | PendingKeyDelete | PendingClear;
+
+/**
+ * Rough polyfill for Array.findLastIndex until we target ES2023 or greater.
+ */
+const findLastIndex = <T>(array: T[], callbackFn: (value: T) => boolean): number => {
+	for (let i = array.length - 1; i >= 0; i--) {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		if (callbackFn(array[i]!)) {
+			return i;
+		}
+	}
+	return -1;
+};
+
+/**
+ * Rough polyfill for Array.findLast until we target ES2023 or greater.
+ */
+const findLast = <T>(array: T[], callbackFn: (value: T) => boolean): T | undefined =>
+	array[findLastIndex(array, callbackFn)];
 
 /**
  * A SharedMap is a map-like distributed data structure.
