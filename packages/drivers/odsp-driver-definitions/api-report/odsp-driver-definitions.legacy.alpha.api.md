@@ -89,6 +89,9 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
         attachmentGETStorageUrl: string;
         deltaStorageUrl: string;
     };
+    fileMetadata?: {
+        eTag?: string;
+    };
     // (undocumented)
     fileName: string;
     // (undocumented)
@@ -148,6 +151,20 @@ export interface IRelaySessionAwareDriverFactory extends IProvideSessionAwareDri
 }
 
 // @alpha @legacy
+export interface ISensitivityLabel {
+    appliedByUserEmail: string;
+    assignmentMethod: string;
+    sensitivityLabelId: string;
+    tenantId: string;
+}
+
+// @alpha @legacy
+export interface ISensitivityLabelsInfo {
+    labels: ISensitivityLabel[];
+    timestamp: string;
+}
+
+// @alpha @legacy
 export interface ISharingLink extends ISharingLinkKind {
     // (undocumented)
     webUrl: string;
@@ -184,7 +201,7 @@ export interface ISocketStorageDiscovery {
     refreshSessionDurationSeconds?: number;
     // (undocumented)
     runtimeTenantId?: string;
-    sensitivityLabelsInfo?: string;
+    sensitivityLabelsInfo?: ISensitivityLabelsInfo;
     // (undocumented)
     snapshotStorageUrl: string;
     socketToken?: string;

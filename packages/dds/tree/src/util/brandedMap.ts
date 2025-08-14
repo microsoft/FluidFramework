@@ -16,8 +16,6 @@ import { getOrCreate } from "./utils.js";
  */
 export type BrandedKey<TKey, TContent> = TKey & Invariant<TContent>;
 
-/**
- */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey extends BrandedKey<
 	unknown,

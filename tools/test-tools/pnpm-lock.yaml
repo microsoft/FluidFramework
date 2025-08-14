@@ -12,11 +12,11 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.53.0
-        version: 0.53.0(@types/node@18.19.31)
+        specifier: ^0.57.0
+        version: 0.57.0(@types/node@18.19.31)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -96,22 +96,22 @@ packages:
   '@fluid-internal/eslint-plugin-fluid@0.1.5':
     resolution: {integrity: sha512-p0nVeMiEfLL2deQJQaRUxid08jgV5wEkh9h9WXNosR1BRq9nFCjD8nZpC1K+YhjwQZEvgGDE+s+28VR2lAg61Q==}
 
-  '@fluid-tools/version-tools@0.53.0':
-    resolution: {integrity: sha512-jGxNBjWP9PYOh0v0kYs6sJ1kNiebyb+LqqsFvv7IfMDAVE8Qsd/bOj66ghRYJ7vREwn/hMj0gZw98mIwfVFHTg==}
-    engines: {node: '>=18.17.1'}
+  '@fluid-tools/version-tools@0.57.0':
+    resolution: {integrity: sha512-SViGNYQff84ZHlra9WI8VJe70mnPKbFByuBnA7ZFThGUKPg5ZTmdstkOjaYluQXcz2SPCFnJ/FDNTuXNQPHOjQ==}
+    engines: {node: '>=20.15.1'}
     hasBin: true
 
   '@fluidframework/build-common@2.0.3':
     resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
     hasBin: true
 
-  '@fluidframework/build-tools@0.53.0':
-    resolution: {integrity: sha512-mJ/x0dKM42z9WwTvgD2ZCLoMwPNvJkgSETLODynzukViykA4PsZaXG5H3bmL9oW9hjL66wKeNdJTs7UARB+7VA==}
-    engines: {node: '>=18.17.1'}
+  '@fluidframework/build-tools@0.57.0':
+    resolution: {integrity: sha512-zFCXXM9Gj+gCNAH9AzrgrA0svAm8kcXzrMGkWB98rDjOoYtBDC4MJg4EsM/fzlwG1Qc7ms+yGUYtMOoKJAqwUA==}
+    engines: {node: '>=20.15.1'}
     hasBin: true
 
-  '@fluidframework/eslint-config-fluid@5.7.4':
-    resolution: {integrity: sha512-2JD0fKhR0wk8kWkUmjNY6FcavLxs0/oQ413z0gFHUSzd8UTkwTYumFQWpDBEoAvXqQw4nUOTAbicNIqHY25EyQ==}
+  '@fluidframework/eslint-config-fluid@5.8.0':
+    resolution: {integrity: sha512-MH0phD6UXLI1HGr9L8IDEYhv1UfnT55PeENu63mz7m/fNsawDQr/MI7OopIFKcW99vDtnMOEy5WHQk+hUFCkrw==}
 
   '@humanwhocodes/config-array@0.11.14':
     resolution: {integrity: sha512-3T8LkOmg45BV5FICb15QQMsyUSWrQ8AygVfC7ZG32zOalnqrilm018ZVCw0eapXux8FtA33q8PSRSstjee3jSg==}
@@ -1879,8 +1879,8 @@ packages:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
     hasBin: true
 
-  semver@7.6.3:
-    resolution: {integrity: sha512-oVekP1cKtI+CTDvHWYFUcMtsK/00wmAEfyqKfNdARm8u1wNVhSgaX7A8d4UuIlUI5e84iEwOhs7ZPYRmzU9U6A==}
+  semver@7.7.2:
+    resolution: {integrity: sha512-RF0Fw+rO5AMf9MAyaRXI4AV0Ulj5lMHqVxxdSgiVbixSCXoEmmX/jk0CuJw4+3SqroYO9VoUh+HcuJivvtJemA==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -2282,14 +2282,14 @@ snapshots:
       - supports-color
       - typescript
 
-  '@fluid-tools/version-tools@0.53.0(@types/node@18.19.31)':
+  '@fluid-tools/version-tools@0.57.0(@types/node@18.19.31)':
     dependencies:
       '@oclif/core': 4.0.33
       '@oclif/plugin-autocomplete': 3.2.11
       '@oclif/plugin-commands': 4.1.11
       '@oclif/plugin-help': 6.2.18
       '@oclif/plugin-not-found': 3.2.29(@types/node@18.19.31)
-      semver: 7.6.3
+      semver: 7.7.2
       table: 6.8.2
     transitivePeerDependencies:
       - '@types/node'
@@ -2300,9 +2300,9 @@ snapshots:
 
   '@fluidframework/build-common@2.0.3': {}
 
-  '@fluidframework/build-tools@0.53.0(@types/node@18.19.31)':
+  '@fluidframework/build-tools@0.57.0(@types/node@18.19.31)':
     dependencies:
-      '@fluid-tools/version-tools': 0.53.0(@types/node@18.19.31)
+      '@fluid-tools/version-tools': 0.57.0(@types/node@18.19.31)
       '@manypkg/get-packages': 2.2.2
       async: 3.2.6
       cosmiconfig: 8.3.6(typescript@5.4.5)
@@ -2315,17 +2315,15 @@ snapshots:
       globby: 11.1.0
       ignore: 5.3.2
       json5: 2.2.3
-      lodash: 4.17.21
       lodash.isequal: 4.5.0
       multimatch: 5.0.0
       picocolors: 1.1.1
       picomatch: 2.3.1
       picospinner: 2.1.0
       rimraf: 4.4.1
-      semver: 7.6.3
+      semver: 7.7.2
       sort-package-json: 1.57.0
       ts-deepmerge: 7.0.1
-      ts-morph: 22.0.0
       type-fest: 2.19.0
       typescript: 5.4.5
       yaml: 2.6.1
@@ -2336,7 +2334,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/eslint-config-fluid@5.7.4(eslint@8.55.0)(typescript@5.4.5)':
+  '@fluidframework/eslint-config-fluid@5.8.0(eslint@8.55.0)(typescript@5.4.5)':
     dependencies:
       '@fluid-internal/eslint-plugin-fluid': 0.1.5(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/tsdoc': 0.14.2
@@ -2544,7 +2542,7 @@ snapshots:
       is-wsl: 2.2.0
       lilconfig: 3.1.2
       minimatch: 9.0.5
-      semver: 7.6.3
+      semver: 7.7.2
       string-width: 4.2.3
       supports-color: 8.1.1
       widest-line: 3.1.0
@@ -2674,7 +2672,7 @@ snapshots:
       graphemer: 1.4.0
       ignore: 5.3.2
       natural-compare: 1.4.0
-      semver: 7.6.3
+      semver: 7.7.2
       ts-api-utils: 1.2.1(typescript@5.4.5)
     optionalDependencies:
       typescript: 5.4.5
@@ -2755,7 +2753,7 @@ snapshots:
       debug: 4.3.7(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.6.3
+      semver: 7.7.2
       tsutils: 3.21.0(typescript@5.4.5)
     optionalDependencies:
       typescript: 5.4.5
@@ -2770,7 +2768,7 @@ snapshots:
       globby: 11.1.0
       is-glob: 4.0.3
       minimatch: 9.0.3
-      semver: 7.6.3
+      semver: 7.7.2
       ts-api-utils: 1.2.1(typescript@5.4.5)
     optionalDependencies:
       typescript: 5.4.5
@@ -2784,7 +2782,7 @@ snapshots:
       debug: 4.3.7(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.6.3
+      semver: 7.7.2
       ts-api-utils: 1.2.1(typescript@5.4.5)
     optionalDependencies:
       typescript: 5.4.5
@@ -2801,7 +2799,7 @@ snapshots:
       '@typescript-eslint/typescript-estree': 5.59.11(typescript@5.4.5)
       eslint: 8.55.0
       eslint-scope: 5.1.1
-      semver: 7.6.3
+      semver: 7.7.2
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -2815,7 +2813,7 @@ snapshots:
       '@typescript-eslint/types': 6.7.5
       '@typescript-eslint/typescript-estree': 6.7.5(typescript@5.4.5)
       eslint: 8.55.0
-      semver: 7.6.3
+      semver: 7.7.2
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -3320,7 +3318,7 @@ snapshots:
       get-tsconfig: 4.8.1
       is-glob: 4.0.3
       minimatch: 3.1.2
-      semver: 7.6.3
+      semver: 7.7.2
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
       - eslint-import-resolver-typescript
@@ -3337,7 +3335,7 @@ snapshots:
       eslint: 8.55.0
       esquery: 1.5.0
       is-builtin-module: 3.2.1
-      semver: 7.6.3
+      semver: 7.7.2
       spdx-expression-parse: 3.0.1
     transitivePeerDependencies:
       - supports-color
@@ -3391,7 +3389,7 @@ snapshots:
       read-pkg-up: 7.0.1
       regexp-tree: 0.1.27
       regjsparser: 0.10.0
-      semver: 7.6.3
+      semver: 7.7.2
       strip-indent: 3.0.0
 
   eslint-plugin-unused-imports@3.0.0(@typescript-eslint/eslint-plugin@6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0):
@@ -3799,7 +3797,7 @@ snapshots:
 
   is-bun-module@1.2.1:
     dependencies:
-      semver: 7.6.3
+      semver: 7.7.2
 
   is-callable@1.2.7: {}
 
@@ -4362,7 +4360,7 @@ snapshots:
 
   semver@6.3.1: {}
 
-  semver@7.6.3: {}
+  semver@7.7.2: {}
 
   serialize-javascript@6.0.2:
     dependencies:

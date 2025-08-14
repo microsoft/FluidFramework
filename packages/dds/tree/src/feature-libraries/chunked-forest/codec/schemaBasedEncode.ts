@@ -20,18 +20,18 @@ import {
 import type { FullSchemaPolicy } from "../../modular-schema/index.js";
 
 import {
-	EncoderCache,
+	EncoderContext,
 	type FieldEncoder,
-	type FieldShaper,
+	type FieldEncodeBuilder,
 	type KeyedFieldEncoder,
-	type TreeShaper,
+	type NodeEncodeBuilder,
 	anyNodeEncoder,
 	asFieldEncoder,
 	compressedEncode,
 } from "./compressedEncode.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import { type EncodedFieldBatch, type EncodedValueShape, SpecialField } from "./format.js";
-import { NodeShape } from "./nodeShape.js";
+import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk`.
@@ -45,37 +45,38 @@ export function schemaCompressedEncode(
 	fieldBatch: FieldBatch,
 	idCompressor: IIdCompressor,
 ): EncodedFieldBatch {
-	return compressedEncode(fieldBatch, buildCache(schema, policy, idCompressor));
+	return compressedEncode(fieldBatch, buildContext(schema, policy, idCompressor));
 }
 
-export function buildCache(
-	schema: StoredSchemaCollection,
+export function buildContext(
+	storedSchema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	idCompressor: IIdCompressor,
-): EncoderCache {
-	const cache: EncoderCache = new EncoderCache(
-		(fieldHandler: FieldShaper, schemaName: TreeNodeSchemaIdentifier) =>
-			treeShaper(schema, policy, fieldHandler, schemaName),
-		(treeHandler: TreeShaper, field: TreeFieldStoredSchema) =>
-			fieldShaper(treeHandler, field, cache, schema),
+): EncoderContext {
+	const context: EncoderContext = new EncoderContext(
+		(fieldBuilder: FieldEncodeBuilder, schemaName: TreeNodeSchemaIdentifier) =>
+			getNodeEncoder(fieldBuilder, storedSchema, schemaName),
+		(nodeBuilder: NodeEncodeBuilder, fieldSchema: TreeFieldStoredSchema) =>
+			getFieldEncoder(nodeBuilder, fieldSchema, context, storedSchema),
 		policy.fieldKinds,
 		idCompressor,
 	);
-	return cache;
+	return context;
 }
 
 /**
- * Selects shapes to use to encode fields.
+ * Selects an encoder to use to encode fields.
  */
-export function fieldShaper(
-	treeHandler: TreeShaper,
+export function getFieldEncoder(
+	nodeBuilder: NodeEncodeBuilder,
 	field: TreeFieldStoredSchema,
-	cache: EncoderCache,
+	context: EncoderContext,
 	storedSchema: StoredSchemaCollection,
 ): FieldEncoder {
-	const kind = cache.fieldShapes.get(field.kind) ?? fail(0xb52 /* missing FieldKind */);
+	const kind = context.fieldShapes.get(field.kind) ?? fail(0xb52 /* missing FieldKind */);
 	const type = oneFromSet(field.types);
-	const nodeEncoder = type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder;
+	const nodeEncoder =
+		type !== undefined ? nodeBuilder.nodeEncoderFromSchema(type) : anyNodeEncoder;
 	if (kind.multiplicity === Multiplicity.Single) {
 		if (field.kind === identifierFieldKindIdentifier) {
 			assert(type !== undefined, 0x999 /* field type must be defined in identifier field */);
@@ -89,7 +90,7 @@ export function fieldShaper(
 				nodeSchema.leafValue === ValueSchema.String,
 				0x99c /* identifier field can only be type string */,
 			);
-			const identifierNodeEncoder = new NodeShape(
+			const identifierNodeEncoder = new NodeShapeBasedEncoder(
 				type,
 				SpecialField.Identifier,
 				[],
@@ -99,21 +100,20 @@ export function fieldShaper(
 		}
 		return asFieldEncoder(nodeEncoder);
 	} else {
-		return cache.nestedArray(nodeEncoder);
+		return context.nestedArrayEncoder(nodeEncoder);
 	}
 }
 
 /**
- * Selects shapes to use to encode trees.
+ * Selects an encoder to use to encode nodes.
  */
-export function treeShaper(
-	fullSchema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
-	fieldHandler: FieldShaper,
+export function getNodeEncoder(
+	fieldBuilder: FieldEncodeBuilder,
+	storedSchema: StoredSchemaCollection,
 	schemaName: TreeNodeSchemaIdentifier,
-): NodeShape {
+): NodeShapeBasedEncoder {
 	const schema =
-		fullSchema.nodeSchema.get(schemaName) ?? fail(0xb53 /* missing node schema */);
+		storedSchema.nodeSchema.get(schemaName) ?? fail(0xb53 /* missing node schema */);
 
 	if (schema instanceof ObjectNodeStoredSchema) {
 		// TODO:Performance:
@@ -122,14 +122,14 @@ export function treeShaper(
 
 		const objectNodeFields: KeyedFieldEncoder[] = [];
 		for (const [key, field] of schema.objectNodeFields ?? []) {
-			objectNodeFields.push({ key, encoder: fieldHandler.shapeFromField(field) });
+			objectNodeFields.push({ key, encoder: fieldBuilder.fieldEncoderFromSchema(field) });
 		}
 
-		const shape = new NodeShape(schemaName, false, objectNodeFields, undefined);
+		const shape = new NodeShapeBasedEncoder(schemaName, false, objectNodeFields, undefined);
 		return shape;
 	}
 	if (schema instanceof LeafNodeStoredSchema) {
-		const shape = new NodeShape(
+		const shape = new NodeShapeBasedEncoder(
 			schemaName,
 			valueShapeFromSchema(schema.leafValue),
 			[],
@@ -138,11 +138,11 @@ export function treeShaper(
 		return shape;
 	}
 	if (schema instanceof MapNodeStoredSchema) {
-		const shape = new NodeShape(
+		const shape = new NodeShapeBasedEncoder(
 			schemaName,
 			false,
 			[],
-			fieldHandler.shapeFromField(schema.mapFields),
+			fieldBuilder.fieldEncoderFromSchema(schema.mapFields),
 		);
 		return shape;
 	}

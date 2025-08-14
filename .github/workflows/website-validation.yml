@@ -16,7 +16,7 @@ defaults:
     working-directory: ./docs
 
 permissions:
-  pull-requests: read
+  contents: read
 
 jobs:
 

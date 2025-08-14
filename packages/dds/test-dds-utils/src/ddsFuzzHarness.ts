@@ -47,7 +47,10 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import {
+	isISharedObjectHandle,
+	type IFluidSerializer,
+} from "@fluidframework/shared-object-base/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
@@ -155,6 +158,14 @@ export interface TriggerRebase {
 /**
  * @internal
  */
+export interface Rollback {
+	type: "applyThenRollback";
+	ddsOp: BaseOperation;
+}
+
+/**
+ * @internal
+ */
 export interface AddClient {
 	type: "addClient";
 	addedClientId: string;
@@ -177,7 +188,8 @@ export type HarnessOperation =
 	| ChangeConnectionState
 	| TriggerRebase
 	| Synchronize
-	| StashClient;
+	| StashClient
+	| Rollback;
 
 /**
  * Represents a generic fuzz model for testing eventual consistency of a DDS.
@@ -382,6 +394,12 @@ export interface DDSFuzzSuiteOptions {
 	detachedStartOptions: {
 		numOpsBeforeAttach: number;
 		rehydrateDisabled?: true;
+		/**
+		 * If true, disable rehydrating DDSes while they are in the "attaching" state.
+		 *
+		 * BEWARE: The harness has known correctness issues with rehydration when there are outstanding id compressor ops. DDSes that use id-compressor
+		 * should set this to `true` if they test rehydration. AB#43127 has more context.
+		 */
 		attachingBeforeRehydrateDisable?: true;
 	};
 
@@ -439,6 +457,11 @@ export interface DDSFuzzSuiteOptions {
 	 * Each non-synchronization option has this probability of rebasing the current batch before sending it.
 	 */
 	rebaseProbability: number;
+
+	/**
+	 * Each generated DDS operation has this probability of being rolled back immediately after application.
+	 */
+	rollbackProbability: number;
 
 	/**
 	 * Seed which should be replayed from disk.
@@ -563,6 +586,7 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	saveFailures: false,
 	saveSuccesses: false,
 	validationStrategy: { type: "random", probability: 0.05 },
+	rollbackProbability: 0.01,
 };
 
 /**
@@ -774,7 +798,9 @@ export function mixinAttach<
 			state.isDetached = false;
 			assert.equal(state.clients.length, 1);
 			const clientA: ClientWithStashData<TChannelFactory> = state.clients[0];
-			finalizeAllocatedIds(clientA);
+			if (clientA.dataStoreRuntime.attachState === AttachState.Detached) {
+				finalizeAllocatedIds(clientA);
+			}
 			clientA.dataStoreRuntime.setAttachState(AttachState.Attached);
 			const services: IChannelServices = {
 				deltaConnection: clientA.dataStoreRuntime.createDeltaConnection(),
@@ -818,6 +844,11 @@ export function mixinAttach<
 
 			state.containerRuntimeFactory.removeContainerRuntime(clientA.containerRuntime);
 
+			// TODO: AB#43127: Using a detached load here is not right with respect to id compressor ops in all cases.
+			// The general strategy that the mocks use for resubmit does not align with the production implementation,
+			// and that should probably be rectified here. The immediate problem with using `loadDetached` here is that
+			// it finalizes IDs, which is only OK if this rehydrate is happening while the container is detached (not attaching).
+			// See comment on `attachingBeforeRehydrateDisable` for more context.
 			const summarizerClient = await loadDetached(
 				state.containerRuntimeFactory,
 				clientA,
@@ -1114,6 +1145,56 @@ export function mixinClientSelection<
 	};
 	return {
 		...model,
+		generatorFactory,
+		reducer,
+	};
+}
+
+/**
+ * Mixes in functionality to allow for rollback operations in a DDS fuzz model and applies them during state transitions.
+ */
+export function mixinRollback<
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+	TState extends DDSFuzzTestState<TChannelFactory>,
+>(
+	model: DDSFuzzHarnessModel<TChannelFactory, TOperation, TState>,
+	options: DDSFuzzSuiteOptions,
+): DDSFuzzHarnessModel<TChannelFactory, TOperation | Rollback, TState> {
+	const generatorFactory: () => AsyncGenerator<TOperation | Rollback, TState> = () => {
+		const baseGenerator = model.generatorFactory();
+		return async (state): Promise<TOperation | Rollback | typeof done> => {
+			const baseOp = await baseGenerator(state);
+			if (baseOp !== done && state.random.bool(options.rollbackProbability)) {
+				return {
+					type: "applyThenRollback",
+					ddsOp: baseOp,
+				};
+			}
+
+			return baseOp;
+		};
+	};
+
+	const minimizationTransforms = model.minimizationTransforms as
+		| MinimizationTransform<TOperation | Rollback>[]
+		| undefined;
+
+	const reducer: AsyncReducer<TOperation | Rollback, TState> = async (state, operation) => {
+		if (isOperationType<Rollback>("applyThenRollback", operation)) {
+			state.client.containerRuntime.flush();
+			await state.client.containerRuntime.runWithManualFlush(async () => {
+				await model.reducer(state, operation.ddsOp as TOperation);
+			});
+			state.client.containerRuntime.rollback?.();
+			return state;
+		} else {
+			return model.reducer(state, operation);
+		}
+	};
+	return {
+		...model,
+		minimizationTransforms,
 		generatorFactory,
 		reducer,
 	};
@@ -1499,7 +1580,16 @@ export async function runTestForSeed<
 		initialState.summarizerClient.dataStoreRuntime.id,
 		false,
 	);
-	const rootHandle = new DDSFuzzHandle("", initialState.summarizerClient.dataStoreRuntime);
+
+	// This is unfortunately needed to pass to the Serializer, even though we don't do any handle binding.
+	const dummyHandleBindSource = Object.assign(
+		new DDSFuzzHandle("", initialState.summarizerClient.dataStoreRuntime),
+		{ bind: () => {} },
+	);
+	assert(
+		isISharedObjectHandle(dummyHandleBindSource),
+		"PRECONDITION: must satisfy this for serializer",
+	);
 
 	let operationCount = 0;
 	const generator = model.generatorFactory();
@@ -1509,7 +1599,7 @@ export async function runTestForSeed<
 		// to encode here and decode in the reducer.
 		async (state) => {
 			const operation = await generator(state);
-			return serializer.encode(operation, rootHandle) as TOperation;
+			return serializer.encode(operation, dummyHandleBindSource) as TOperation;
 		},
 		async (state, operation) => {
 			const decodedHandles = serializer.decode(operation) as TOperation;
@@ -1716,7 +1806,7 @@ const getFullModel = <
 			mixinNewClient(
 				mixinStashedClient(
 					mixinClientSelection(
-						mixinReconnect(mixinRebase(ddsModel, options), options),
+						mixinReconnect(mixinRebase(mixinRollback(ddsModel, options), options), options),
 						options,
 					),
 					options,

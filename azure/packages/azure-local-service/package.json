@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-local-service",
-	"version": "2.50.0",
+	"version": "2.53.0",
 	"description": "Local implementation of the Azure Fluid Relay service for testing/development use",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,39 +11,34 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"type": "module",
-	"bin": "lib/index.js",
+	"bin": "index.js",
 	"scripts": {
-		"build": "fluid-build . --task build",
-		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"eslint": "eslint --format stylish index.js",
+		"eslint:fix": "eslint --format stylish index.js --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"start": "pm2 start -n azure-local-service lib/index.js",
-		"start:debug": "node --inspect=0.0.0.0:9229 lib/index.js",
+		"start": "pm2 start -n azure-local-service index.js",
+		"start:debug": "node --inspect=0.0.0.0:9229 index.js",
 		"stop": "pm2 stop azure-local-service",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"dependencies": {
-		"tinylicious": "^5.0.0"
+		"tinylicious": "^7.0.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.56.0",
+		"@fluidframework/build-tools": "^0.57.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.4",
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"pm2": "^5.4.2",
-		"rimraf": "^4.4.0",
-		"ts-node": "^10.9.1",
-		"typescript": "~5.4.5"
+		"rimraf": "^4.4.0"
 	},
 	"typeValidation": {
 		"disabled": true,

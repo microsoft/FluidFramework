@@ -15,9 +15,7 @@ import type {
 	FieldKind,
 	FieldSchema,
 	FieldSchemaAlpha,
-	ImplicitAllowedTypes,
-	TreeLeafValue,
-} from "../schemaTypes.js";
+} from "../fieldSchema.js";
 import type {
 	NodeKind,
 	WithType,
@@ -27,9 +25,12 @@ import type {
 	TreeNodeSchema,
 	TreeNodeSchemaCore,
 	TreeNodeSchemaClass,
+	ImplicitAllowedTypes,
+	TreeLeafValue,
+	FlexListToUnion,
+	LazyItem,
 } from "../core/index.js";
 import type { TreeArrayNode } from "../node-kinds/index.js";
-import type { FlexListToUnion, LazyItem } from "../flexList.js";
 import type { SimpleArrayNodeSchema, SimpleMapNodeSchema } from "../simpleSchema.js";
 
 /*
@@ -527,3 +528,18 @@ export interface MapNodeCustomizableSchemaUnsafe<
 			TCustomMetadata
 		>,
 		SimpleMapNodeSchema<TCustomMetadata> {}
+
+/**
+ * {@link Unenforced} version of {@link TreeRecordNode}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @system @sealed @alpha
+ */
+export interface TreeRecordNodeUnsafe<
+	TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe,
+> extends Record<string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>>,
+		TreeNode {
+	[Symbol.iterator](): IterableIterator<
+		[string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>]
+	>;
+}

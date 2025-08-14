@@ -4,7 +4,6 @@
  */
 
 export {
-	createUnknownOptionalFieldPolicy,
 	type FieldHasDefault,
 	type InsertableObjectFromAnnotatedSchemaRecord,
 	type InsertableObjectFromSchemaRecord,
@@ -12,5 +11,11 @@ export {
 	objectSchema,
 	setField,
 	type TreeObjectNode,
+	type SimpleKeyMap,
 } from "./objectNode.js";
-export { isObjectNodeSchema, ObjectNodeSchema } from "./objectNodeTypes.js";
+export {
+	isObjectNodeSchema,
+	ObjectNodeSchema,
+	type ObjectNodeSchemaPrivate,
+	type UnannotateSchemaRecord,
+} from "./objectNodeTypes.js";

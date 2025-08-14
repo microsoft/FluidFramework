@@ -28,17 +28,17 @@ export function createTestDocumentServiceFactoryProxy(
 	resolvedUrl: IResolvedUrl,
 	compatibilityDetails?: ILayerCompatDetails,
 ): IDocumentServiceFactory {
-	return failSometimeProxy<IDocumentServiceFactory>({
+	return failSometimeProxy<IDocumentServiceFactory & IProvideLayerCompatDetails>({
 		createContainer: async () =>
-			failSometimeProxy<IDocumentService & IProvideLayerCompatDetails>({
+			failSometimeProxy<IDocumentService>({
 				policies: {},
 				resolvedUrl,
-				ILayerCompatDetails: compatibilityDetails,
 				connectToStorage: async () =>
 					failSometimeProxy<IDocumentStorageService>({
 						createBlob: async () => ({ id: uuid() }),
 					}),
 			}),
+		ILayerCompatDetails: compatibilityDetails,
 	});
 }
 

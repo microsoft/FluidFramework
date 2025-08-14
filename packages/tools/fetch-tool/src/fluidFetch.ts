@@ -6,7 +6,10 @@
 import fs from "fs";
 import util from "util";
 
-import { IOdspDriveItem, isOdspHostname } from "@fluidframework/odsp-doclib-utils/internal";
+import {
+	type IOdspDriveItem,
+	isOdspHostname,
+} from "@fluidframework/odsp-doclib-utils/internal";
 
 import { paramSaveDir, paramURL, parseArguments } from "./fluidFetchArgs.js";
 import { connectionInfo, fluidFetchInit } from "./fluidFetchInit.js";

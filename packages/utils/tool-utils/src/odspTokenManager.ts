@@ -17,7 +17,6 @@ import {
 	refreshTokens,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import { Mutex } from "async-mutex";
-import { jwtDecode } from "jwt-decode";
 
 import { debug } from "./debug.js";
 import type { IAsyncCache, IResources } from "./fluidToolRc.js";
@@ -66,15 +65,20 @@ export interface IOdspTokenManagerCacheKey {
 	readonly userOrServer: string;
 }
 
-const isValidToken = (token: string): boolean => {
+const isValidAndNotExpiredToken = (tokens: IOdspTokens): boolean => {
 	// Return false for undefined or empty tokens.
-	if (!token || token.length === 0) {
+	if (!tokens.accessToken || tokens.accessToken.length === 0) {
 		return false;
 	}
 
-	const decodedToken = jwtDecode<{ exp: number }>(token);
+	if (tokens.receivedAt === undefined || tokens.expiresIn === undefined) {
+		// If we don't have receivedAt or expiresIn, we treat the token as expired.
+		return false;
+	}
+
+	const expiresAt = tokens.receivedAt + tokens.expiresIn;
 	// Give it a 60s buffer
-	return decodedToken.exp - 60 >= Date.now() / 1000;
+	return expiresAt - 60 >= Date.now() / 1000;
 };
 
 const cacheKeyToString = (key: IOdspTokenManagerCacheKey): string => {
@@ -189,7 +193,7 @@ export class OdspTokenManager {
 			const cacheKey = OdspTokenManager.getCacheKey(isPush, tokenConfig, server);
 			const tokensFromCache = await this.getTokenFromCache(cacheKey);
 			if (tokensFromCache) {
-				if (isValidToken(tokensFromCache.accessToken)) {
+				if (isValidAndNotExpiredToken(tokensFromCache)) {
 					debug(`${cacheKeyToString(cacheKey)}: Token reused from cache `);
 					await this.onTokenRetrievalFromCache(tokenConfig, tokensFromCache);
 					return tokensFromCache;
@@ -219,7 +223,7 @@ export class OdspTokenManager {
 			// check the cache again under the lock (if it is there)
 			const tokensFromCache = await this.getTokenFromCache(cacheKey);
 			if (tokensFromCache) {
-				if (forceRefresh || !isValidToken(tokensFromCache.accessToken)) {
+				if (forceRefresh || !isValidAndNotExpiredToken(tokensFromCache)) {
 					try {
 						// This updates the tokens in tokensFromCache
 						tokens = await refreshTokens(server, scope, clientConfig, tokensFromCache);
@@ -264,6 +268,13 @@ export class OdspTokenManager {
 			default: {
 				unreachableCase(tokenConfig);
 			}
+		}
+
+		if (!isValidAndNotExpiredToken(tokens)) {
+			throw new Error(
+				`Acquired invalid tokens for ${cacheKeyToString(cacheKey)}. ` +
+					`Acquired token JSON: ${JSON.stringify(tokens)}`,
+			);
 		}
 
 		await this.updateTokensCacheWithoutLock(cacheKey, tokens);

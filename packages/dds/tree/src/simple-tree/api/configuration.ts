@@ -3,22 +3,43 @@
  * Licensed under the MIT License.
  */
 
-import { assert, debugAssert, fail } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	debugAssert,
+	fail,
+	oob,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type FieldSchemaAlpha,
 	type ImplicitFieldSchema,
-	evaluateLazySchema,
 	FieldKind,
-	isAnnotatedAllowedType,
-	markSchemaMostDerived,
 	normalizeFieldSchema,
-} from "../schemaTypes.js";
-import { NodeKind, type TreeNodeSchema } from "../core/index.js";
-import { toStoredSchema } from "../toStoredSchema.js";
-import { LeafNodeSchema } from "../leafNodeSchema.js";
-import { isObjectNodeSchema, type ObjectNodeSchema } from "../node-kinds/index.js";
+} from "../fieldSchema.js";
+import {
+	NodeKind,
+	type TreeNodeSchema,
+	isAnnotatedAllowedType,
+	evaluateLazySchema,
+	markSchemaMostDerived,
+} from "../core/index.js";
+import {
+	permissiveStoredSchemaGenerationOptions,
+	restrictiveStoredSchemaGenerationOptions,
+	toStoredSchema,
+} from "../toStoredSchema.js";
+import {
+	isArrayNodeSchema,
+	isMapNodeSchema,
+	isObjectNodeSchema,
+	isRecordNodeSchema,
+	type ArrayNodeSchema,
+	type MapNodeSchema,
+	type ObjectNodeSchema,
+	type RecordNodeSchema,
+} from "../node-kinds/index.js";
 import { getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
@@ -30,14 +51,20 @@ import type { SimpleNodeSchema, SimpleTreeSchema } from "../simpleSchema.js";
  */
 export interface ITreeConfigurationOptions {
 	/**
-	 * If `true`, the tree will validate new content against its stored schema at insertion time
+	 * If `true`, the tree will perform additional validation of content against its stored schema
 	 * and throw an error if the new content doesn't match the expected schema.
 	 *
 	 * @defaultValue `false`.
 	 *
-	 * @remarks Enabling schema validation has a performance penalty when inserting new content into the tree because
+	 * @remarks
+	 * Currently most cases already have some schema validation, so this is mainly for additional validation which may be useful when debugging issues,
+	 * working with untyped APIs, or when the small performance overhead is a non-issue.
+	 *
+	 * Enabling schema validation has a performance penalty when inserting new content into the tree because
 	 * additional checks are done. Enable this option only in scenarios where you are ok with that operation being a
 	 * bit slower.
+	 *
+	 * For additional validation in more cases, see {@link ForestTypeExpensiveDebug}.
 	 */
 	enableSchemaValidation?: boolean;
 
@@ -138,6 +165,9 @@ export interface ITreeViewConfiguration<
 
 /**
  * Configuration for {@link ViewableTree.viewWith}.
+ * @privateRemarks
+ * When `ImplicitAnnotatedFieldSchema` is stabilized, TSchema should be updated to use it.
+ * When doing this, the example for `staged` will need to be updated/simplified.
  * @sealed @public
  */
 export class TreeViewConfiguration<
@@ -190,7 +220,8 @@ export class TreeViewConfiguration<
 
 		// Eagerly perform this conversion to surface errors sooner.
 		// Includes detection of duplicate schema identifiers.
-		toStoredSchema(config.schema);
+		toStoredSchema(config.schema, restrictiveStoredSchemaGenerationOptions);
+		toStoredSchema(config.schema, permissiveStoredSchemaGenerationOptions);
 
 		const definitions = new Map<string, SimpleNodeSchema & TreeNodeSchema>();
 
@@ -293,10 +324,11 @@ export function checkUnion(
 	ambiguityErrors: string[],
 ): void {
 	const checked: Set<TreeNodeSchema> = new Set();
-	const maps: TreeNodeSchema[] = [];
-	const arrays: TreeNodeSchema[] = [];
-
+	const maps: MapNodeSchema[] = [];
+	const arrays: ArrayNodeSchema[] = [];
+	const records: RecordNodeSchema[] = [];
 	const objects: ObjectNodeSchema[] = [];
+
 	// Map from key to schema using that key
 	const allObjectKeys: Map<string, Set<TreeNodeSchema>> = new Map();
 
@@ -306,18 +338,37 @@ export function checkUnion(
 		}
 		checked.add(schema);
 
-		if (schema instanceof LeafNodeSchema) {
-			// nothing to do
-		} else if (isObjectNodeSchema(schema)) {
-			objects.push(schema);
-			for (const key of schema.fields.keys()) {
-				getOrCreate(allObjectKeys, key, () => new Set()).add(schema);
+		switch (schema.kind) {
+			case NodeKind.Leaf: {
+				// nothing to do
+				break;
 			}
-		} else if (schema.kind === NodeKind.Array) {
-			arrays.push(schema);
-		} else {
-			assert(schema.kind === NodeKind.Map, 0x9e7 /* invalid schema */);
-			maps.push(schema);
+			case NodeKind.Object: {
+				assert(isObjectNodeSchema(schema), 0xbde /* Expected object schema. */);
+				objects.push(schema);
+				for (const key of schema.fields.keys()) {
+					getOrCreate(allObjectKeys, key, () => new Set()).add(schema);
+				}
+				break;
+			}
+			case NodeKind.Array: {
+				assert(isArrayNodeSchema(schema), 0xbdf /* Expected array schema. */);
+				arrays.push(schema);
+				break;
+			}
+			case NodeKind.Map: {
+				assert(isMapNodeSchema(schema), 0xbe0 /* Expected map schema. */);
+				maps.push(schema);
+				break;
+			}
+			case NodeKind.Record: {
+				assert(isRecordNodeSchema(schema), 0xbe1 /* Expected record schema. */);
+				records.push(schema);
+				break;
+			}
+			default: {
+				unreachableCase(schema.kind);
+			}
 		}
 	}
 
@@ -338,15 +389,35 @@ export function checkUnion(
 		);
 	}
 
+	if (records.length > 1) {
+		ambiguityErrors.push(
+			`More than one kind of record allowed within union (${formatTypes(records)}). This would require type disambiguation which is not supported by records during import or export.`,
+		);
+	}
+
 	if (maps.length > 0 && arrays.length > 0) {
 		ambiguityErrors.push(
 			`Both a map and an array allowed within union (${formatTypes([...arrays, ...maps])}). Both can be implicitly constructed from iterables like arrays, which are ambiguous when the array is empty.`,
 		);
 	}
 
-	if (objects.length > 0 && maps.length > 0) {
+	const nodeKindListEntries = [];
+	if (objects.length > 0) {
+		nodeKindListEntries.push("objects");
+	}
+	if (maps.length > 0) {
+		nodeKindListEntries.push("maps");
+	}
+	if (records.length > 0) {
+		nodeKindListEntries.push("records");
+	}
+	if (nodeKindListEntries.length > 1) {
+		const nodeKindListString =
+			nodeKindListEntries.length === 2
+				? `${nodeKindListEntries[0] ?? oob()} and ${nodeKindListEntries[1] ?? oob()}`
+				: `${nodeKindListEntries.slice(0, -1).join(", ")}, and ${nodeKindListEntries[nodeKindListEntries.length - 1]}`;
 		ambiguityErrors.push(
-			`Both a object and a map allowed within union (${formatTypes([...objects, ...maps])}). Both can be constructed from objects and can be ambiguous.`,
+			`A combination of ${nodeKindListString} is allowed within union (${formatTypes([...objects, ...maps, ...records])}). These can be constructed from objects and can be ambiguous.`,
 		);
 	}
 

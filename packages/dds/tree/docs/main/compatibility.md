@@ -234,7 +234,7 @@ To make a breaking change in `SchemaChangeCodec`,
     -   Make this write version create edit manager & message codecs of the appropriate versions
     -   Be sure to document code saturation requirements which must be met before the new version can be used
 
-## Example
+## Example: New format for optional-field
 
 A new format was introduced for optional-field in [this PR](https://github.com/microsoft/FluidFramework/pull/20341).
 
@@ -244,6 +244,20 @@ That format was added as an option for `SharedTree` users in [this PR](https://g
 
 Waiting to expose the new format in `SharedTreeFormatVersion` has the benefit of allowing iteration on the new format without preserving compatibility.
 Once the format is exposed & released to users, it must be supported indefinitely.
+
+## Example: New schema format
+
+As part of the persisted metadata feature, a new schema format and codec were introduced in [this PR](https://github.com/microsoft/FluidFramework/pull/24812).
+
+At a high level, the change had the following parts:
+
+- Add schema FormatV2
+- Schema codec for FormatV2
+- Add a new Shared Tree format version
+- simple-tree changes
+- Feature flag for enabling Shared Tree Format v5
+
+The PR description goes into further detail and breaks down the changes in each area.
 
 ## Possible Improvements
 

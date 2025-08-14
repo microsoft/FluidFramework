@@ -4,9 +4,9 @@
  */
 
 import { DenseVector, RowMajorMatrix } from "@tiny-calc/micro";
-import { IMatrixConsumer, IMatrixProducer, IMatrixReader } from "@tiny-calc/nano";
+import type { IMatrixConsumer, IMatrixProducer, IMatrixReader } from "@tiny-calc/nano";
 
-import { MatrixItem } from "../index.js";
+import type { MatrixItem } from "../index.js";
 
 /**
  * IMatrixConsumer implementation that applies change notifications to it's own

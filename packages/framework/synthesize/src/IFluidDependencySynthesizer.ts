@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncFluidObjectProvider, FluidObjectSymbolProvider } from "./types.js";
+import type { AsyncFluidObjectProvider, FluidObjectSymbolProvider } from "./types.js";
 
 /**
  * @legacy

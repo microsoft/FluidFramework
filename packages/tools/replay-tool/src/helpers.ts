@@ -6,26 +6,29 @@
 import { strict } from "assert";
 import fs from "fs";
 
-import { IContainer, ILoaderOptions } from "@fluidframework/container-definitions/internal";
+import type {
+	IContainer,
+	ILoaderOptions,
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import {
+import type {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import {
+import type {
 	ConfigTypes,
 	FluidObject,
 	IConfigProviderBase,
-	type ITelemetryBaseLogger,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import { IFileSnapshot } from "@fluidframework/replay-driver/internal";
+import type { IFileSnapshot } from "@fluidframework/replay-driver/internal";
 import {
-	ISnapshotNormalizerConfig,
+	type ISnapshotNormalizerConfig,
 	getNormalizedSnapshot,
 } from "@fluidframework/tool-utils/internal";
 import stringify from "json-stable-stringify";

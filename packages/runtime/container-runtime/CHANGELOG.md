@@ -1,5 +1,23 @@
 # @fluidframework/container-runtime
 
+## 2.52.0
+
+### Minor Changes
+
+- Moved MinimumVersionForCollab to @fluidframework/runtime-definitions ([#25059](https://github.com/microsoft/FluidFramework/pull/25059)) [4a7b370667](https://github.com/microsoft/FluidFramework/commit/4a7b3706675139af6d8aaae707b96b74081f1fc8)
+
+  MinimumVersionForCollab has been moved from @fluidframework/container-runtime to @fluidframework/runtime-definitions.
+  The export in @fluidframework/container-runtime is now deprecated and will be removed in a future version.
+  Consumers should import it from @fluidframework/runtime-definitions going forward.
+
+## 2.51.0
+
+Dependency updates only.
+
+## 2.50.0
+
+Dependency updates only.
+
 ## 2.43.0
 
 Dependency updates only.

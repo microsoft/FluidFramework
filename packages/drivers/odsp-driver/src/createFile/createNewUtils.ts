@@ -6,31 +6,31 @@
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	ISummaryBlob,
-	ISummaryTree,
+	type ISummaryBlob,
+	type ISummaryTree,
 	type SummaryObject,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
-import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	getDocAttributesFromProtocolSummary,
 	getGitType,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils/internal";
-import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
+import type { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import {
+import type {
 	IOdspSummaryPayload,
 	IOdspSummaryTree,
 	OdspSummaryTreeEntry,
 	OdspSummaryTreeValue,
 } from "./../contracts.js";
-import { EpochTracker, FetchType } from "./../epochTracker.js";
+import type { EpochTracker, FetchType } from "./../epochTracker.js";
 import { getHeadersWithAuth } from "./../getUrlAndHeadersWithAuth.js";
 import { checkForKnownServerFarmType } from "./../odspUrlHelper.js";
 import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./../odspUtils.js";
@@ -212,6 +212,7 @@ export async function createNewFluidContainerCore<T>(args: {
 	telemetryName: string;
 	fetchType: FetchType;
 	validateResponseCallback?: (content: T) => void;
+	additionalHeaders?: { [key: string]: string };
 }): Promise<T> {
 	const {
 		containerSnapshot,
@@ -222,6 +223,7 @@ export async function createNewFluidContainerCore<T>(args: {
 		telemetryName,
 		fetchType,
 		validateResponseCallback,
+		additionalHeaders = {},
 	} = args;
 	const internalFarmType = checkForKnownServerFarmType(initialUrl);
 
@@ -243,14 +245,23 @@ export async function createNewFluidContainerCore<T>(args: {
 					{ ...options, request: { url: authInBodyUrl, method } },
 					telemetryName,
 				);
-				const postBodyWithAuth =
-					`--${formBoundary}\r\n` +
-					`Authorization: ${authHeader}\r\n` +
-					`X-HTTP-Method-Override: POST\r\n` +
-					`Content-Type: application/json\r\n` +
-					`_post: 1\r\n` +
-					`\r\n${snapshotBody}\r\n` +
-					`\r\n--${formBoundary}--`;
+				const postBodyWithAuthHeaders = [
+					`Authorization: ${authHeader}`,
+					`X-HTTP-Method-Override: POST`,
+					`Content-Type: application/json`,
+				];
+				if (additionalHeaders !== undefined) {
+					for (const [key, value] of Object.entries(additionalHeaders)) {
+						postBodyWithAuthHeaders.push(`${key}: ${value}`);
+					}
+				}
+				const postBodyWithAuth = [
+					`--${formBoundary}`,
+					...postBodyWithAuthHeaders,
+					`_post: 1`,
+					`\r\n${snapshotBody}`,
+					`\r\n--${formBoundary}--`,
+				].join("\r\n");
 
 				let postBody = snapshotBody;
 				// We use the byte length of the post body to determine if we should use the multipart/form-data or not. This helps
@@ -272,6 +283,7 @@ export async function createNewFluidContainerCore<T>(args: {
 						telemetryName,
 					);
 					headers = {
+						...additionalHeaders,
 						...getHeadersWithAuth(authHeaderNoUmp),
 						"Content-Type": "application/json",
 					};

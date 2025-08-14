@@ -204,7 +204,6 @@ declare type current_as_old_for_Class_NexusRunnerFactory = requireAssignableTo<T
  * typeValidation.broken:
  * "Class_OrdererManager": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_OrdererManager = requireAssignableTo<TypeOnly<old.OrdererManager>, TypeOnly<current.OrdererManager>>
 
 /*
@@ -241,7 +240,6 @@ declare type current_as_old_for_Class_OrderingResourcesFactory = requireAssignab
  * typeValidation.broken:
  * "Class_RiddlerResources": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_RiddlerResources = requireAssignableTo<TypeOnly<old.RiddlerResources>, TypeOnly<current.RiddlerResources>>
 
 /*
@@ -251,7 +249,6 @@ declare type old_as_current_for_Class_RiddlerResources = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Class_RiddlerResources": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_RiddlerResources = requireAssignableTo<TypeOnly<current.RiddlerResources>, TypeOnly<old.RiddlerResources>>
 
 /*
@@ -315,7 +312,6 @@ declare type current_as_old_for_Class_RiddlerRunnerFactory = requireAssignableTo
  * typeValidation.broken:
  * "Class_TenantManager": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_TenantManager = requireAssignableTo<TypeOnly<old.TenantManager>, TypeOnly<current.TenantManager>>
 
 /*
@@ -442,7 +438,6 @@ declare type current_as_old_for_ClassStatics_OrderingResourcesFactory = requireA
  * typeValidation.broken:
  * "ClassStatics_RiddlerResources": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_RiddlerResources = requireAssignableTo<TypeOnly<typeof current.RiddlerResources>, TypeOnly<typeof old.RiddlerResources>>
 
 /*
@@ -605,7 +600,6 @@ declare type old_as_current_for_Interface_ITenantDocument = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ITenantDocument": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ITenantDocument = requireAssignableTo<TypeOnly<current.ITenantDocument>, TypeOnly<old.ITenantDocument>>
 
 /*

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/devtools-core",
-	"version": "2.50.0",
+	"version": "2.53.0",
 	"description": "Fluid Framework developer tools core functionality",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -117,12 +117,14 @@
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/counter": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
+		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
@@ -132,10 +134,10 @@
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.56.0",
+		"@fluid-tools/build-cli": "^0.57.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.56.0",
-		"@fluidframework/devtools-core-previous": "npm:@fluidframework/devtools-core@2.42.0",
+		"@fluidframework/build-tools": "^0.57.0",
+		"@fluidframework/devtools-core-previous": "npm:@fluidframework/devtools-core@2.52.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.4",
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
@@ -156,7 +158,11 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IFluidDevtools": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "alpha"
 	}
 }

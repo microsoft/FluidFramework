@@ -1,5 +1,27 @@
 # @fluidframework/runtime-utils
 
+## 2.52.0
+
+### Minor Changes
+
+- Moved MinimumVersionForCollab to @fluidframework/runtime-definitions ([#25059](https://github.com/microsoft/FluidFramework/pull/25059)) [4a7b370667](https://github.com/microsoft/FluidFramework/commit/4a7b3706675139af6d8aaae707b96b74081f1fc8)
+
+  MinimumVersionForCollab has been moved from @fluidframework/container-runtime to @fluidframework/runtime-definitions.
+  The export in @fluidframework/container-runtime is now deprecated and will be removed in a future version.
+  Consumers should import it from @fluidframework/runtime-definitions going forward.
+
+## 2.51.0
+
+Dependency updates only.
+
+## 2.50.0
+
+### Minor Changes
+
+- IFluidHandleInternal.bind (deprecated) has been removed ([#24974](https://github.com/microsoft/FluidFramework/pull/24974)) [07e183795f](https://github.com/microsoft/FluidFramework/commit/07e183795fa8118fae717c118ab7a7945ac1ad57)
+
+  `IFluidHandleInternal.bind` was deprecated in 2.40 and has now been removed. See [release notes entry](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.40.0#user-content-ifluidhandleinternalbind-has-been-deprecated-24553) for more details.
+
 ## 2.43.0
 
 Dependency updates only.

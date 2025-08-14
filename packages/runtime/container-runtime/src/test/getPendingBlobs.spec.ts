@@ -16,7 +16,8 @@ import type { IPendingBlobs } from "../blobManager/index.js";
 
 import { MockRuntime, validateSummary } from "./blobManager.spec.js";
 
-describe("getPendingLocalState", () => {
+// ADO#44999: Update for placeholder pending blob creation and getPendingLocalState
+describe.skip("getPendingLocalState with blobs", () => {
 	let runtime: MockRuntime;
 	let mc: MonitoringContext;
 

@@ -8,14 +8,7 @@ import { assert, oob, fail, unreachableCase } from "@fluidframework/core-utils/i
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
 import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
 import { extractFromOpaque } from "../../util/index.js";
-import {
-	type TreeLeafValue,
-	type ImplicitFieldSchema,
-	FieldSchema,
-	type ImplicitAllowedTypes,
-	type TreeNodeFromImplicitAllowedTypes,
-	normalizeAllowedTypes,
-} from "../schemaTypes.js";
+import { type ImplicitFieldSchema, FieldSchema } from "../fieldSchema.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -36,9 +29,13 @@ import {
 	getOrCreateNodeFromInnerNode,
 	typeSchemaSymbol,
 	getOrCreateInnerNode,
+	type TreeLeafValue,
+	type ImplicitAllowedTypes,
+	type TreeNodeFromImplicitAllowedTypes,
+	normalizeAllowedTypes,
 } from "../core/index.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
-import { isObjectNodeSchema } from "../node-kinds/index.js";
+import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
 import { tryGetTreeNodeForField } from "../getTreeNodeForField.js";
 
 /**
@@ -193,7 +190,7 @@ export const treeNodeApi: TreeNodeApi = {
 						);
 						listener({ changedProperties });
 					});
-				} else if (nodeSchema.kind === NodeKind.Array) {
+				} else if (isArrayNodeSchema(nodeSchema)) {
 					return kernel.events.on("childrenChangedAfterBatch", () => {
 						listener({ changedProperties: undefined });
 					});

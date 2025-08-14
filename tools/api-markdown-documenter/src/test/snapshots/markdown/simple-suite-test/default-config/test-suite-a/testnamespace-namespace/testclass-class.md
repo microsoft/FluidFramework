@@ -4,7 +4,7 @@
 
 Test class
 
-## Signature {#testclass-signature}
+<h2 id="testclass-signature">Signature</h2>
 
 ```typescript
 class TestClass
@@ -30,17 +30,17 @@ class TestClass
 
 ## Constructor Details
 
-### (constructor) {#\_constructor\_-constructor}
+<h3 id="_constructor_-constructor">(constructor)</h3>
 
 Test class constructor
 
-#### Signature {#\_constructor\_-signature}
+<h4 id="_constructor_-signature">Signature</h4>
 
 ```typescript
 constructor(testClassProperty: string);
 ```
 
-#### Parameters {#\_constructor\_-parameters}
+<h4 id="_constructor_-parameters">Parameters</h4>
 
 | Parameter | Type | Description |
 | - | - | - |
@@ -48,11 +48,11 @@ constructor(testClassProperty: string);
 
 ## Property Details
 
-### testClassProperty {#testclassproperty-property}
+<h3 id="testclassproperty-property">testClassProperty</h3>
 
 Test interface property
 
-#### Signature {#testclassproperty-signature}
+<h4 id="testclassproperty-signature">Signature</h4>
 
 ```typescript
 readonly testClassProperty: string;
@@ -62,29 +62,29 @@ readonly testClassProperty: string;
 
 ## Method Details
 
-### testClassMethod {#testclassmethod-method}
+<h3 id="testclassmethod-method">testClassMethod</h3>
 
 Test class method
 
-#### Signature {#testclassmethod-signature}
+<h4 id="testclassmethod-signature">Signature</h4>
 
 ```typescript
 testClassMethod(testParameter: string): Promise<string>;
 ```
 
-#### Parameters {#testclassmethod-parameters}
+<h4 id="testclassmethod-parameters">Parameters</h4>
 
 | Parameter | Type | Description |
 | - | - | - |
 | testParameter | string | A string |
 
-#### Returns {#testclassmethod-returns}
+<h4 id="testclassmethod-returns">Returns</h4>
 
 A Promise
 
 **Return type**: Promise\<string>
 
-#### Throws {#testclassmethod-throws}
+<h4 id="testclassmethod-throws">Throws</h4>
 
 An Error when something happens for which an error should be thrown. Except in the cases where another kind of error is thrown. We don't throw this error in those cases.
 

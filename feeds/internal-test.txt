@@ -31,6 +31,7 @@
 @fluidframework/driver-utils
 @fluidframework/container-loader
 @fluidframework/undo-redo
+@fluidframework/tree-agent
 @fluidframework/synthesize
 @fluidframework/request-handler
 @fluidframework/presence
@@ -69,6 +70,7 @@ fluid-framework
 @fluidframework/merge-tree
 @fluidframework/matrix
 @fluidframework/map
+@fluidframework/legacy-dds
 @fluid-experimental/ink
 @fluidframework/counter
 @fluidframework/cell
@@ -84,7 +86,6 @@ fluid-framework
 @fluid-experimental/sequence-deprecated
 @fluid-experimental/sharejs-json1
 @fluid-experimental/ot
-@fluid-experimental/attributable-map
 @fluid-experimental/property-properties
 @fluid-experimental/property-dds
 @fluid-experimental/property-common

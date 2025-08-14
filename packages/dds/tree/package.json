@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree",
-	"version": "2.50.0",
+	"version": "2.53.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -62,6 +62,18 @@
 				"types": "./dist/legacy.d.ts",
 				"default": "./dist/index.js"
 			}
+		},
+		"./internal/test": {
+			"allow-ff-test-exports": {
+				"import": {
+					"types": "./lib/test/index.d.ts",
+					"default": "./lib/test/index.js"
+				},
+				"require": {
+					"types": "./dist/test/index.d.ts",
+					"default": "./dist/test/index.js"
+				}
+			}
 		}
 	},
 	"main": "lib/index.js",
@@ -84,7 +96,7 @@
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack .",
+		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./internal/test",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
@@ -166,7 +178,7 @@
 		"@tylerbu/sorted-btree-es6": "^1.8.0",
 		"@types/ungap__structured-clone": "^1.2.0",
 		"@ungap/structured-clone": "^1.2.0",
-		"uuid": "^9.0.0"
+		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
@@ -176,21 +188,20 @@
 		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
 		"@fluid-tools/benchmark": "^0.51.0",
-		"@fluid-tools/build-cli": "^0.56.0",
+		"@fluid-tools/build-cli": "^0.57.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.56.0",
+		"@fluidframework/build-tools": "^0.57.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.7.4",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.42.0",
+		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.52.0",
 		"@microsoft/api-extractor": "7.52.8",
 		"@types/diff": "^3.5.1",
 		"@types/easy-table": "^0.0.32",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
-		"@types/uuid": "^9.0.2",
 		"ajv": "^8.12.0",
 		"ajv-formats": "^3.0.1",
 		"c8": "^8.0.1",

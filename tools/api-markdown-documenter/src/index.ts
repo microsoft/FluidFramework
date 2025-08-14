@@ -37,32 +37,20 @@ export {
 	transformApiModel,
 	transformTsdoc,
 } from "./api-item-transforms/index.js";
-
-// We want to make sure the entirety of this domain is accessible.
-// eslint-disable-next-line no-restricted-syntax
-export * from "./documentation-domain/index.js";
-
-export {
-	documentToHtml,
-	documentationNodeToHtml,
-	documentationNodesToHtml,
-	type Transformation as ToHtmlTransformation,
-	type Transformations as ToHtmlTransformations,
-	type TransformationConfiguration as ToHtmlConfiguration,
-	type TransformationContext as ToHtmlContext,
-} from "./documentation-domain-to-html/index.js";
+export type { ApiDocument, RenderedDocument } from "./ApiDocument.js";
+export type {
+	NormalizedRootContent,
+	NormalizedTree,
+	Section,
+	SectionContent,
+	SectionHeading,
+} from "./mdast/index.js";
 export {
 	DocumentWriter,
-	type RenderDocumentAsHtmlConfiguration,
-	type RenderHtmlConfiguration,
-	type MarkdownRenderContext,
-	type MarkdownRenderers,
-	type MarkdownRenderConfiguration,
+	type RenderMarkdownConfiguration,
 } from "./renderers/index.js";
 export type { LoggingConfiguration } from "./LoggingConfiguration.js";
-export type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
-export type { Heading } from "./Heading.js";
-export type { Link, UrlTarget } from "./Link.js";
+export { type SaveDocumentsOptions, saveDocuments } from "./FileSystem.js";
 export {
 	lintApiModel,
 	type LintApiModelConfiguration,
@@ -98,7 +86,6 @@ import * as ApiItemUtilities from "./ApiItemUtilitiesModule.js";
 import * as LayoutUtilities from "./LayoutUtilitiesModule.js";
 
 // Export renderers
-import * as HtmlRenderer from "./HtmlRendererModule.js";
 import * as MarkdownRenderer from "./MarkdownRendererModule.js";
 
 export {
@@ -113,7 +100,7 @@ export {
 	 */
 	ApiItemUtilities,
 	/**
-	 * Utilities related to generating {@link DocumentationNode} content for {@link @microsoft/api-extractor-model#ApiItem}s.
+	 * Utilities related to generating Markdown content for {@link @microsoft/api-extractor-model#ApiItem}s.
 	 *
 	 * @remarks
 	 *
@@ -123,13 +110,7 @@ export {
 	 */
 	LayoutUtilities,
 	/**
-	 * Functionality for rendering {@link DocumentationNode}s as HTML.
-	 *
-	 * @alpha
-	 */
-	HtmlRenderer,
-	/**
-	 * Functionality for rendering {@link DocumentationNode}s as Markdown.
+	 * Functionality for rendering documentation as Markdown.
 	 *
 	 * @public
 	 */

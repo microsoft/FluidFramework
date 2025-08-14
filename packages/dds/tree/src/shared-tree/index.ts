@@ -35,11 +35,7 @@ export {
 	type TreeBranchFork,
 } from "./treeCheckout.js";
 
-export { type TreeStoredContent } from "./schematizeTree.js";
-
 export { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-
-export { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 
 export type {
 	ISharedTreeEditor,

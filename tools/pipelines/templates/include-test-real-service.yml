@@ -88,6 +88,10 @@ parameters:
   type: string
   default: '@ff-internal/aria-logger'
 
+- name: tenantSetupPackage
+  type: string
+  default: '@ff-internal/trips-setup'
+
 # If true, skip publishing report files for test results.
 # Useful because our stress tests pipeline doesn't generate any test result files.
 - name: skipTestResultPublishing
@@ -107,6 +111,8 @@ parameters:
 
 stages:
 - stage: ${{ parameters.stageId}}
+  ${{ if in(parameters.stageId, 'e2e_routerlicious', 'e2e_frs', 'stress_tests_odsp', 'stress_tests_odspdf', 'stress_tests_frs', 'stress_tests_frs_canary') }}:
+    lockBehavior: sequential
   condition: ${{ parameters.condition }}
   displayName: ${{ parameters.stageDisplayName }}
   dependsOn: ${{ parameters.stageDependencies }}
@@ -251,7 +257,7 @@ stages:
                 exit -1
               fi
 
-        # Install test and logger package
+        # Install test and logger packages
         - task: Bash@3
           displayName: 'npm install'
           # ADO feeds have latency on the order of minutes before packages are available downstream. See:
@@ -340,12 +346,46 @@ stages:
               key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}"'
               path: ${{ parameters.testWorkspace }}/node_modules/@fluid-private/test-version-utils/node_modules/.legacy/
 
+        # Only check out tenants from the tenant pool if we are running tests against ODSP
+        - ${{ if eq(parameters.stageId, 'e2e_odsp') }}:
+          # Retrieve a tenant from the tenant pool
+          - task: AzureCLI@2
+            displayName: 'Log in to retrieve tenant credentials'
+            inputs:
+              azureSubscription: 'Fluid Framework Tests'
+              # This injects environment variables into the below script. See https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/azure-cli-v2?view=azure-pipelines
+              addSpnToEnvironment: true
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                set -eu -o pipefail
+
+                az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
+
+          - task: Bash@3
+            displayName: 'Run tenant setup script'
+            env:
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+            inputs:
+              workingDirectory: ${{ parameters.testWorkspace }}
+              targetType: 'inline'
+              script: |
+                set -eu -o pipefail
+
+                # Increase the maximum time to wait for a tenant to 1 hour to accommodate multiple test runs at the same time.
+                npx --package=@ff-internal/trips-setup@0.0.5 -- trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN
+                echo "##vso[task.setvariable variable=tenantSetupSuccess;]true"
+
         # run the test
         - task: Npm@1
           displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
           continueOnError: ${{ parameters.continueOnError }}
           env:
-            ${{ parameters.env }}
+            ${{ if ne(parameters.stageId, 'e2e_odsp') }}:
+              ${{ parameters.env }}
+            ${{ if eq(parameters.stageId, 'e2e_odsp') }}:
+              login__odsp__test__tenants: $(tenantCreds)
+              login__microsoft__clientId: $(appClientId)
           inputs:
             command: 'custom'
             workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
@@ -395,6 +435,35 @@ stages:
               publishLocation: 'pipeline'
             condition: always()
             continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
+
+        # Only release tenants that were checked out from the tenant pool for ODSP tests
+        - ${{ if eq(parameters.stageId, 'e2e_odsp') }}:
+          # Login to release tenant credentials
+          # Currently, some of the compat tests run for longer than 60 minutes and exceed the average token lifetime:
+          # https://learn.microsoft.com/en-us/entra/identity-platform/configurable-token-lifetimes#access-tokens
+          - task: AzureCLI@2
+            displayName: 'Log in to release tenant credentials'
+            inputs:
+              azureSubscription: 'Fluid Framework Tests'
+              addSpnToEnvironment: true
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                set -eu -o pipefail
+
+                az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
+            condition: eq(variables['tenantSetupSuccess'], 'true')
+
+          # Release the tenant back to the tenant pool
+          - task: Bash@3
+            displayName: 'Release tenant credentials'
+            inputs:
+              targetType: 'inline'
+              script: |
+                set -eu -o pipefail
+
+                npx --package=@ff-internal/trips-setup@0.0.5 -- trips-cleanup --reservationId=$(stringBearerToken)
+            condition: eq(variables['tenantSetupSuccess'], 'true')
 
         # Log Test Failures
         # - template: /tools/pipelines/templates/include-process-test-results.yml@self

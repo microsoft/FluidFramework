@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISignalClient } from "@fluidframework/protocol-definitions";
+import type { ISignalClient } from "@fluidframework/protocol-definitions";
 
 /**
  * Client information used for tracking a collaboration session.
@@ -130,6 +130,18 @@ export interface ICollaborationSessionManager {
 	 * Get a list of all active sessions.
 	 */
 	getAllSessions(): Promise<ICollaborationSession[]>;
+	/**
+	 * Iterate over all active sessions, calling the provided callback for each session.
+	 *
+	 * @remarks
+	 * This is useful for cases where the number of sessions is large and you want to process
+	 * them in smaller batches to avoid memory issues or timeouts.
+	 *
+	 * The callback should be designed to handle each session independently and not rely on the order of processing.
+	 *
+	 * @param callback - Function to call for each session.
+	 */
+	iterateAllSessions<T>(callback: (session: ICollaborationSession) => Promise<T>): Promise<T[]>;
 }
 
 /**

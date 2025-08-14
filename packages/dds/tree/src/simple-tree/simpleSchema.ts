@@ -5,37 +5,13 @@
 
 import type { ValueSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
-import type { NodeKind } from "./core/index.js";
-import type { FieldKind, FieldSchemaMetadata, NodeSchemaMetadata } from "./schemaTypes.js";
+import type { NodeKind, SimpleNodeSchemaBase } from "./core/index.js";
+import type { FieldKind, FieldSchemaMetadata } from "./fieldSchema.js";
 
 /*
  * TODO:
  * - Customize their JSON serialization to use these formats or provide some other serialization scheme.
  */
-
-/**
- * Base interface for {@link TreeNodeSchema} and {@link SimpleNodeSchema} types.
- * Once simple schema is stable this doesn't have a reason to be kept `@system`, but it could be.
- * @system
- * @public
- * @sealed
- */
-export interface SimpleNodeSchemaBase<
-	out TNodeKind extends NodeKind,
-	out TCustomMetadata = unknown,
-> {
-	/**
-	 * The {@link NodeKind}.
-	 *
-	 * @remarks can be used to type-switch between implementations.
-	 */
-	readonly kind: TNodeKind;
-
-	/**
-	 * User-provided {@link NodeSchemaMetadata} for this schema.
-	 */
-	readonly metadata: NodeSchemaMetadata<TCustomMetadata>;
-}
 
 /**
  * A {@link SimpleNodeSchema} containing fields for alpha features.
@@ -127,6 +103,23 @@ export interface SimpleMapNodeSchema<out TCustomMetadata = unknown>
 }
 
 /**
+ * A {@link SimpleNodeSchema} for a map node.
+ *
+ * @alpha
+ * @sealed
+ */
+export interface SimpleRecordNodeSchema<out TCustomMetadata = unknown>
+	extends SimpleNodeSchemaBaseAlpha<NodeKind.Record, TCustomMetadata> {
+	/**
+	 * The types allowed as values in the record.
+	 *
+	 * @remarks Refers to the types by identifier.
+	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
+	 */
+	readonly allowedTypesIdentifiers: ReadonlySet<string>;
+}
+
+/**
  * A {@link SimpleNodeSchema} for a leaf node.
  *
  * @alpha
@@ -157,7 +150,8 @@ export type SimpleNodeSchema =
 	| SimpleLeafNodeSchema
 	| SimpleMapNodeSchema
 	| SimpleArrayNodeSchema
-	| SimpleObjectNodeSchema;
+	| SimpleObjectNodeSchema
+	| SimpleRecordNodeSchema;
 
 /**
  * A simple, shallow representation of a schema for a field.
@@ -212,7 +206,11 @@ export interface SimpleTreeSchema {
 	/**
 	 * The complete set of node schema definitions recursively referenced by the tree's {@link SimpleTreeSchema.root}.
 	 *
-	 * @remarks the keys are the schemas' {@link TreeNodeSchemaCore.identifier | identifiers}.
+	 * @remarks
+	 * The keys are the schemas' {@link TreeNodeSchemaCore.identifier | identifiers}.
+	 *
+	 * Information about if a schema is {@link SchemaStaticsAlpha.staged | staged} or not is not available as the "Simple Schema" layer of abstraction: they are included unconditionally.
+	 * Options for filtering out staged schemas from view schema are available in {@link extractPersistedSchema}.
 	 */
 	readonly definitions: ReadonlyMap<string, SimpleNodeSchema>;
 }

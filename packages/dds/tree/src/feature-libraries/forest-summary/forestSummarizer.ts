@@ -34,8 +34,7 @@ import type {
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 import { idAllocatorFromMaxId } from "../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
+import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
 import { type ForestCodec, makeForestSummarizerCodec } from "./codec.js";
@@ -43,7 +42,7 @@ import type { Format } from "./format.js";
 /**
  * The storage key for the blob in the summary containing tree data
  */
-const treeBlobKey = "ForestTree";
+export const treeBlobKey = "ForestTree";
 
 /**
  * Provides methods for summarizing and loading a forest.

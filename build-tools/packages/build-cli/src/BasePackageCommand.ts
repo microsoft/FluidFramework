@@ -4,14 +4,14 @@
  */
 
 import { strict as assert } from "node:assert";
-import { Package } from "@fluidframework/build-tools";
-import { Command, Flags, ux } from "@oclif/core";
+import type { Package } from "@fluidframework/build-tools";
+import { type Command, Flags, ux } from "@oclif/core";
 import async from "async";
 import {
-	PackageFilterOptions,
-	PackageKind,
-	PackageSelectionCriteria,
-	PackageWithKind,
+	type PackageFilterOptions,
+	type PackageKind,
+	type PackageSelectionCriteria,
+	type PackageWithKind,
 	parsePackageFilterFlags,
 	parsePackageSelectionFlags,
 	selectAndFilterPackages,

@@ -5,10 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import {
-	IDocumentStorageService,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { IRuntimeStorageService } from "@fluidframework/runtime-definitions/internal";
 import { getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -31,7 +29,7 @@ export class ChannelStorageService implements IChannelStorageService {
 
 	constructor(
 		private readonly tree: ISnapshotTree | undefined,
-		private readonly storage: Pick<IDocumentStorageService, "readBlob">,
+		private readonly storage: Pick<IRuntimeStorageService, "readBlob">,
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly extraBlobs?: Map<string, ArrayBufferLike>,
 	) {
@@ -75,6 +73,10 @@ export class ChannelStorageService implements IChannelStorageService {
 		}
 
 		return Object.keys(tree?.blobs ?? {});
+	}
+
+	public getSnapshotTree(): ISnapshotTree | undefined {
+		return this.tree;
 	}
 
 	private async getIdForPath(path: string): Promise<string | undefined> {

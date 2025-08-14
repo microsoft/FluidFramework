@@ -5,8 +5,8 @@
 
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { VersionBumpType } from "@fluid-tools/version-tools";
-import { Logger } from "@fluidframework/build-tools";
+import type { VersionBumpType } from "@fluid-tools/version-tools";
+import type { Logger } from "@fluidframework/build-tools";
 import { compareAsc, formatISO, parseISO } from "date-fns";
 import globby from "globby";
 import matter from "gray-matter";
@@ -14,7 +14,7 @@ import issueParser from "issue-parser";
 import { simpleGit } from "simple-git";
 
 import type { ReleaseNotesSectionName } from "../config.js";
-import { ReleasePackage } from "../releaseGroups.js";
+import type { ReleasePackage } from "../releaseGroups.js";
 
 export const DEFAULT_CHANGESET_PATH = ".changeset";
 
