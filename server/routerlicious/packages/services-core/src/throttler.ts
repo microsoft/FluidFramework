@@ -113,6 +113,11 @@ export interface IThrottler {
 	/**
 	 * Increment the current processing count of operations by `weight`.
 	 * Optionally, stores usage data if provided with.
+	 *
+	 * @param id - The identifier for the group of operations to increment.
+	 * @param weight - The weight of the operation to increment (defaults to 1).
+	 * @param usageStorageId - The identifier to store usage data against.
+	 * @param usageData - The usage data to store.
 	 * @throws {@link ThrottlingError} when throttled.
 	 */
 	incrementCount(

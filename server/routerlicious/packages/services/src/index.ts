@@ -32,6 +32,11 @@ export { CollaborationSessionTracker } from "./sessionTracker";
 export { SocketIoRedisPublisher, SocketIoRedisTopic } from "./socketIoRedisPublisher";
 export { StorageNameRetriever } from "./storageNameRetriever";
 export { Tenant, TenantManager } from "./tenant";
+export { Throttler, ThrottlerHelper } from "./legacy-throttling";
+export {
+	DistributedTokenBucketThrottler,
+	IDistributedTokenBucketThrottlerConfig,
+} from "./throttling";
 export { RedisThrottleAndUsageStorageManager } from "./redisThrottleAndUsageStorageManager";
 export {
 	BasicWebServerFactory,

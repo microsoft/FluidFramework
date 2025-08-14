@@ -99,6 +99,12 @@ interface ITokenBucketCacheEntry {
  * for separately tracked identifiers (e.g API, user, etc.).
  * Depending on the provided storage manager, the token buckets may be persisted across instances.
  * @internal
+ *
+ * @remarks
+ * The DistributedTokenBucketThrottler contains 2 separate TokenBuckets for each tracked identifier: 1 local, 1 distributed.
+ * The local token bucket is used for rate limiting operations within a single instance, while the distributed token bucket is used for rate limiting operations across multiple instances.
+ * Importantly, the distributed token bucket is only updated once every distributedSyncIntervalInMs, which alleviates pressure on the distributed storage,
+ * but may introduce some latency in reflecting usage patterns across instances. The local token bucket exists to reduce the likelihood of missing large usage spikes in a single instance.
  */
 export class DistributedTokenBucketThrottler implements IThrottler {
 	/**
