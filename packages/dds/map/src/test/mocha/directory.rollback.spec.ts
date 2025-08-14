@@ -16,6 +16,8 @@ import {
 import { DirectoryFactory } from "../../directoryFactory.js";
 import type { ISharedDirectory, IValueChanged } from "../../interfaces.js";
 
+import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
+
 interface RollbackTestSetup {
 	sharedDirectory: ISharedDirectory;
 	dataStoreRuntime: MockFluidDataStoreRuntime;
@@ -762,6 +764,43 @@ describe("SharedDirectory rollback", () => {
 				["value", "value", "remoteValue", "remoteValue"],
 				"Subdirectory key values should match expected values post-rollback",
 			);
+		});
+
+		it("should rollback local delete/recreation with remote create", async () => {
+			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
+				setupRollbackTest();
+			// Create a second client
+			const { sharedDirectory: sharedDirectory2, containerRuntime: containerRuntime2 } =
+				createAdditionalClient(containerRuntimeFactory);
+
+			// Create a/b
+			sharedDirectory.createSubDirectory("a");
+			sharedDirectory.getSubDirectory("a")?.createSubDirectory("b");
+
+			containerRuntime.flush();
+			containerRuntime2.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			// Create a/b/c
+			sharedDirectory?.getSubDirectory("a")?.getSubDirectory("b")?.createSubDirectory("c");
+
+			sharedDirectory2.deleteSubDirectory("a");
+			sharedDirectory2.createSubDirectory("a");
+
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			containerRuntime2.rollback?.();
+
+			containerRuntime.flush();
+			containerRuntime2.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			assert(
+				sharedDirectory?.getSubDirectory("a")?.getSubDirectory("b")?.getSubDirectory("c") !==
+					undefined,
+			);
+			await assertEquivalentDirectories(sharedDirectory, sharedDirectory2);
 		});
 
 		it("should rollback local subdirectory changes with remote changes and storage operations", () => {
