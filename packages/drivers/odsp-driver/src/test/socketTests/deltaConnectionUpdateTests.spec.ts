@@ -110,7 +110,11 @@ describe("DeltaConnectionMetadata update tests", () => {
 			async (_options) => "token",
 			async (_options) => "token",
 			new LocalPersistentCache(2000),
-			{ snapshotOptions: { timeout: 2000 } },
+			{
+				snapshotOptions: { timeout: 2000 },
+				// Ensure each test uses its own socket reuse namespace and won’t share sockets.
+				isolateSocketCache: true,
+			},
 		);
 		const locator: OdspFluidDataStoreLocator = {
 			driveId,
@@ -271,6 +275,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 	});
 
 	afterEach(async () => {
+		service?.dispose();
 		clock.reset();
 		socket?.close();
 		await epochTracker.removeEntries().catch(() => {});
