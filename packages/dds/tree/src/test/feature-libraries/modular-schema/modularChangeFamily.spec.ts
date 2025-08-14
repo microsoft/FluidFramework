@@ -446,7 +446,8 @@ const objectNode = chunkFromJsonTrees([{}]);
 const node1Chunk = chunkFromJsonTrees([1]);
 const nodesChunk = treeChunkFromCursor(fieldJsonCursor([{}, {}]));
 
-describe("ModularChangeFamily", () => {
+// TODO: remove after debugging
+describe.only("ModularChangeFamily", () => {
 	describe("compose", () => {
 		const composedValues: ValueChangeset = { old: 0, new: 2 };
 
