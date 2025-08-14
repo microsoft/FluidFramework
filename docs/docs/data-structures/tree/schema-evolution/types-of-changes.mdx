@@ -60,7 +60,7 @@ class Circle extends factory.object("Circle", {
 
 ### Adding New Allowed Types
 
-Adding new allowed types to existing fields is compatible, but may require forward compatibility planning:
+Adding new allowed types to existing fields is compatible, but may require a [staged rollout](./index.mdx#staged-rollouts) to be backwards compatible:
 
 ```typescript
 // Before
@@ -74,7 +74,7 @@ class Whiteboard extends factory.object("Whiteboard", {
 }) {}
 ```
 
-To maintain forwards compatibility, staged allowed types (TODO: link to docs) can be used to roll out support for reading before writing.
+To maintain backwards compatibility, staged allowed types can be used to roll out support for reading before writing, allowing older clients to read data created with new types.
 
 ## Incompatible Changes
 
