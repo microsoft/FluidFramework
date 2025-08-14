@@ -30,16 +30,16 @@ There are some important properties when it comes to cell references in commits.
 
 When a commit `C` includes a reference to a cell introduced in some commit `A`
 (`A` is either `C` itself or one of its ancestors),
-`C` will includes references to all cells introduced by `A`.
+`C` will include references to all cells introduced by `A`.
 
 ### Ordering of References
 
-When for any pair or references `ra` and `rb` that commits `C` contains,
+For any pair of references `ra` and `rb` that commits `C` contains,
 `C` also includes enough information to totally order `ra` relative to `rb`.
 
 ## Cell IDs and Commits
 
-Each cell ID include the ID of the commit that introduced it,
+Each cell ID includes the ID of the commit that introduced it,
 which makes it easy to check if a given commit introduced a given cell ID.
 
 There are two cases where a commit introduces a new cell ID:
@@ -74,12 +74,12 @@ One can infer from the above that for a given commit `C`...
 * `C` refers to all cells introduced by `C`.
 * `C` refers to all cells introduced by ancestors of `C` up to some ancestor `A`.
 
-The commits that introduce cells that `C` refers to therefore from a contiguous subsequence always including and ending in `C`.
+The commits that introduce cells that `C` refers to therefore form a contiguous subsequence always including and ending in `C`.
 In other words, when considering a single branch,
 if a commit `C` has a reference to a cell introduced by commit `A`,
 then it also has references to every cell introduced by `A`,
-references to every cells introduced by commits sequenced between `A` and `C`,
-as well as references to every cells introduced by `C`.
+references to every cell introduced by commits sequenced between `A` and `C`,
+as well as references to every cell introduced by `C`.
 
 Note that rollback commits are excluded from this invariant because they are not truly considered to be part of any branch.
 See the [Rollback commits](#rollback-commits) section for more details.
@@ -118,13 +118,13 @@ This is due to the following:
    These references are not dropped when later rebasing that commit over `A'`.
 
 This can lead to more cells references than strictly necessary.
-We may attempt to reduced the number of unnecessary references in [the future](#future-work).
+We may attempt to reduce the number of unnecessary references in [the future](#future-work).
 
 ## Tie-Breaking: Cell Ordering From Commit Ordering
 
 While cells help specify the relative order of content in sequences,
 there are some situation where the information contained in commits only specifies a partial order.
-Through a process know as "tie-breaking", the rebasing system is responsible for picking a total ordering that is consistent across peers.
+Through a process known as "tie-breaking", the rebasing system is responsible for picking a total ordering that is consistent across peers.
 It does this based on the relative sequencing order of the commits in the commit graph.
 This happens in two cases:
 
@@ -139,7 +139,7 @@ This happens in two cases:
    _`C` does not refer to cells introduced by its ancestor `A`,
    so the relative order of cells `C` and `A` introduce in the same gap is unspecified._
 
-In both of this cases we order the cells introduced by the later commit left of the cells introduced by the earlier commit.
+In both of these cases we order the cells introduced by the later commit left of the cells introduced by the earlier commit.
 This leads to a system where,
 in order to determine the relative order of two cells,
 we sometimes need to know the relative order of the two commits that introduced the cells.
@@ -157,7 +157,7 @@ When composing `A ○ B`, we know the following about the commit graph:
 
 We can represent this situation with the following commit graph:<br />
 ![P1->P2->A->B](../.attachments/cell-ordering/compose-a-b.png)<br />
-`P1` and `P2` are  prior commits (which are not being composed).
+`P1` and `P2` are prior commits (which are not being composed).
 They are included here because `A` and/or `B` may refer to cells that `P1` and `P2` introduce.
 While there may be any number of such prior commits that introduced cells that `A` and/or `B` may refer to,
 using two commits is sufficient to fully consider the relevant cases.
@@ -504,7 +504,7 @@ we can see that they are enough to collectively address the following cases:
 The three cases where `cb` is a cell introduced by `A` seem like they ought to be straightforward:
 `A` comes after `P1`, `P2`, and `X`, so `cx` is older than `cb`.
 The problem is that we don't know how to differentiate these cases from the ones were `cb` was introduced by by `P1` or `P2`.
-This is because the rebase implementation has no way of determining whether `cb` was introduced by `A`.
+This is because the rebase implementation has no way of determining if `cb` was introduced by `A`.
 
 ### Providing Metadata
 
@@ -604,7 +604,7 @@ Our current scheme therefore has the following smells:
    but that order doesn't always match the true sequencing order.
 1. Storing extra cell references inside commits in order to make up of a lack of commit ordering information later on
    is inefficient and makes it harder to keep track of what references are needed and why.
-   It also lead to situations where we rebase over conflicted commits which goes against the reasonable intuition that such commits make no changes and therefore shouldn't need to be rebased over.
+   It also leads to situations where we rebase over conflicted commits which goes against the reasonable intuition that such commits make no changes and therefore shouldn't need to be rebased over.
 
 The current scheme is designed around the flawed assumption that the commits passed to rebase and compose operations contain all the information that these operations requires
 or that such information can be inferred from the call (e.g., `A ○ B` implies `A` was sequenced before `B`).
