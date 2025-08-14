@@ -13,9 +13,7 @@ import {
 	type BenchmarkTimingOptions,
 } from "@fluid-tools/benchmark";
 
-import type { ISharedMatrix } from "../../index.js";
-import { createTestMatrix, type TestMatrixOptions } from "../performanceTestUtilities.js";
-import type { UndoRedoStackManager } from "../undoRedoStackManager.js";
+import { createTestMatrix, type MatrixBenchmarkOptions } from "../performanceTestUtilities.js";
 
 /**
  * Note: These benchmarks are designed to closely match the benchmarks in SharedTree.
@@ -26,33 +24,7 @@ import type { UndoRedoStackManager } from "../undoRedoStackManager.js";
 /**
  * {@link runBenchmark} configuration.
  */
-interface BenchmarkConfig extends BenchmarkTimingOptions, TestMatrixOptions {
-	/**
-	 * The title of the benchmark test.
-	 */
-	readonly title: string;
-
-	/**
-	 * Optional action to perform on the matrix before the operation being measured.
-	 */
-	readonly beforeOperation?: (
-		matrix: ISharedMatrix,
-		undoRedoStack: UndoRedoStackManager,
-	) => void;
-
-	/**
-	 * The operation to be measured.
-	 */
-	readonly operation: (matrix: ISharedMatrix, undoRedoStack: UndoRedoStackManager) => void;
-
-	/**
-	 * Optional action to perform on the matrix after the operation being measured.
-	 */
-	readonly afterOperation?: (
-		matrix: ISharedMatrix,
-		undoRedoStack: UndoRedoStackManager,
-	) => void;
-
+interface BenchmarkConfig extends BenchmarkTimingOptions, MatrixBenchmarkOptions {
 	/**
 	 * {@inheritDoc @fluid-tools/benchmark#BenchmarkTimingOptions.maxBenchmarkDurationSeconds}
 	 */

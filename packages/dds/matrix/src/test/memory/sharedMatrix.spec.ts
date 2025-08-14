@@ -12,7 +12,7 @@ import {
 } from "@fluid-tools/benchmark";
 
 import type { ISharedMatrix } from "../../index.js";
-import { createTestMatrix, type TestMatrixOptions } from "../performanceTestUtilities.js";
+import { createTestMatrix, type MatrixBenchmarkOptions } from "../performanceTestUtilities.js";
 import type { UndoRedoStackManager } from "../undoRedoStackManager.js";
 
 /**
@@ -25,37 +25,6 @@ import type { UndoRedoStackManager } from "../undoRedoStackManager.js";
 // - unify with time measurement tests (in terms of API)
 
 /**
- * {@link createBenchmark} options.
- */
-interface BenchmarkOptions extends TestMatrixOptions {
-	/**
-	 * The title of the benchmark test.
-	 */
-	readonly title: string;
-
-	/**
-	 * Optional action to perform on the matrix before the operation being measured.
-	 */
-	readonly beforeOperation?: (
-		matrix: ISharedMatrix,
-		undoRedoStack: UndoRedoStackManager,
-	) => void;
-
-	/**
-	 * The operation to be measured.
-	 */
-	readonly operation: (matrix: ISharedMatrix, undoRedo: UndoRedoStackManager) => void;
-
-	/**
-	 * Optional action to perform on the matrix after the operation being measured.
-	 */
-	readonly afterOperation?: (
-		matrix: ISharedMatrix,
-		undoRedoStack: UndoRedoStackManager,
-	) => void;
-}
-
-/**
  * Creates a benchmark for operations on a SharedMatrix.
  */
 function createBenchmark({
@@ -65,7 +34,7 @@ function createBenchmark({
 	beforeOperation,
 	operation,
 	afterOperation,
-}: BenchmarkOptions): IMemoryTestObject {
+}: MatrixBenchmarkOptions): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
 		readonly title = title;
 
