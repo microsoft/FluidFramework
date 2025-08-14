@@ -70,12 +70,9 @@ export interface ISensitivityLabel {
 	sensitivityLabelId: string;
 	/** Tenant under which the label is defined. */
 	tenantId: string;
-	/** How the label was assigned. */
+	/** How the label was assigned, for example "standard". */
 	assignmentMethod: string;
-	/**
-	 * Email of the user who applied the label.
-	 * May be empty or a placeholder value.
-	 */
+	/** Email of the user who applied the label. */
 	appliedByUserEmail: string;
 }
 
