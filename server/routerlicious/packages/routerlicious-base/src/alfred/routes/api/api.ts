@@ -434,8 +434,15 @@ async function handleBroadcastSignal(
 
 	const serverUrl: string = config.get("worker:serverUrl");
 	const alfredUrl: string = config.get("worker:alfredUrl");
+	// TODO: Delete
+	const useServerUrl: boolean = config.get("useServerUrl") ?? false;
 
-	const session = await getSession(alfredUrl, tenantId, documentId, request);
+	const session = await getSession(
+		useServerUrl ? serverUrl : `${alfredUrl}.default.svc.cluster.local`,
+		tenantId,
+		documentId,
+		request,
+	);
 
 	if (!session?.isSessionAlive) {
 		Lumberjack.error("Document not found", { tenantId, documentId });
