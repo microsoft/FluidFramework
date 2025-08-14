@@ -206,7 +206,7 @@ export const TreeBeta: TreeBeta = {
 		}
 
 		const kernel = getKernel(node);
-		const cursor = kernel.getOrCreateInnerNode().borrowCursor();
+		const cursor = kernel.getInnerNode().borrowCursor();
 
 		// To handle when the node transitively contains unknown optional fields,
 		// derive the context from the source node's stored schema which has stored schema for any such fields and their contents.

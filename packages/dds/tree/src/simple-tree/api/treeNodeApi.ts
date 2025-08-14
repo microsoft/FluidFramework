@@ -28,7 +28,7 @@ import {
 	tryGetTreeNodeSchema,
 	getOrCreateNodeFromInnerNode,
 	typeSchemaSymbol,
-	getOrCreateInnerNode,
+	getInnerNode,
 	type TreeLeafValue,
 	type ImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
@@ -141,7 +141,7 @@ export interface TreeNodeApi {
  */
 export const treeNodeApi: TreeNodeApi = {
 	parent(node: TreeNode): TreeNode | undefined {
-		const editNode = getOrCreateInnerNode(node).parentField.parent.parent;
+		const editNode = getInnerNode(node).parentField.parent.parent;
 		if (editNode === undefined) {
 			return undefined;
 		}
@@ -306,7 +306,7 @@ export function getIdentifierFromNode(
 		return undefined;
 	}
 
-	const flexNode = getOrCreateInnerNode(node);
+	const flexNode = getInnerNode(node);
 	const identifierFieldKeys = schema.identifierFieldKeys;
 
 	switch (identifierFieldKeys.length) {
@@ -361,7 +361,7 @@ export function getIdentifierFromNode(
 export function getStoredKey(node: TreeNode): string | number {
 	// Note: the flex domain strictly works with "stored keys", and knows nothing about the developer-facing
 	// "property keys".
-	const parentField = getOrCreateInnerNode(node).parentField;
+	const parentField = getInnerNode(node).parentField;
 	if (parentField.parent.schema === FieldKinds.sequence.identifier) {
 		// The parent of `node` is an array node
 		assert(

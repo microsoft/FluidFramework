@@ -21,6 +21,10 @@ import {
 	type FlexibleFieldContent,
 	type FlexibleNodeContent,
 	throwOutOfSchema,
+	flexTreeSlot,
+	ContextSlot,
+	getOrCreateHydratedFlexTreeNode,
+	assertFlexTreeEntityNotFreed,
 } from "../feature-libraries/index.js";
 import type { ImplicitAnnotatedFieldSchema } from "./fieldSchema.js";
 import {
@@ -35,7 +39,7 @@ import {
 	type TreeNode,
 	type UnhydratedFlexTreeNode,
 } from "./core/index.js";
-import { debugAssert, oob } from "@fluidframework/core-utils/internal";
+import { debugAssert, fail, oob } from "@fluidframework/core-utils/internal";
 import { isFieldInSchema } from "../feature-libraries/index.js";
 
 /**
@@ -121,11 +125,18 @@ export function prepareForInsertionContextless<TIn extends InsertableContent | u
 	schemaAndPolicy: SchemaAndPolicy,
 	hydratedData: FlexTreeHydratedContextMinimal | undefined,
 	destinationSchema: TreeFieldStoredSchema,
+	scheduleHydrationOverride?: HydrationScheduler,
 ): TIn extends undefined ? undefined : FlexibleNodeContent {
 	const mapTree = unhydratedFlexTreeFromInsertable(data, schema);
 
 	const contentArray = mapTree === undefined ? [] : [mapTree];
-	validateAndPrepare(schemaAndPolicy, hydratedData, destinationSchema, contentArray);
+	validateAndPrepare(
+		schemaAndPolicy,
+		hydratedData,
+		destinationSchema,
+		contentArray,
+		scheduleHydrationOverride,
+	);
 
 	return mapTree;
 }
@@ -141,12 +152,19 @@ function validateAndPrepare(
 	hydratedData: FlexTreeHydratedContextMinimal | undefined,
 	fieldSchema: TreeFieldStoredSchema,
 	mapTrees: readonly UnhydratedFlexTreeNode[],
+	scheduleHydrationOverride?: HydrationScheduler,
 ): void {
 	if (hydratedData !== undefined) {
 		// Run `prepareContentForHydration` before walking the tree in `isFieldInSchema`.
 		// This ensures that when `isFieldInSchema` requests identifiers (or any other contextual defaults),
 		// they were already creating used the more specific context we have access to from `hydratedData`.
-		prepareContentForHydration(mapTrees, hydratedData.checkout.forest, hydratedData);
+		prepareContentForHydration(
+			mapTrees,
+			scheduleHydrationOverride ??
+				((batch, doHydration) =>
+					scheduleHydration(batch, hydratedData.checkout.forest, doHydration)),
+			hydratedData,
+		);
 		// TODO: AB#45723
 		// Now that staged schema rely on this validation, its a bit odd we don't do it for insertion into unhydrated contexts.
 		// We can't simply enable it for them however due to contextual default fields which would not have been created yet (see comment above).
@@ -204,7 +222,7 @@ const placeholderKey: DetachedField & FieldKey = brand("placeholder" as const);
  */
 export function prepareContentForHydration(
 	content: readonly UnhydratedFlexTreeNode[],
-	forest: IForestSubscription,
+	scheduler: HydrationScheduler,
 	context: FlexTreeHydratedContextMinimal,
 ): void {
 	const batches: LocatedNodesBatch[] = [];
@@ -228,7 +246,8 @@ export function prepareContentForHydration(
 		);
 	}
 
-	scheduleHydration(batches, forest);
+	const doHydration = doHydrationDefault(batches, context.checkout.forest);
+	scheduler(batches, doHydration);
 }
 
 function walkMapTree(
@@ -270,6 +289,11 @@ function walkMapTree(
 	}
 }
 
+type HydrationScheduler = (
+	locatedNodes: readonly LocatedNodesBatch[],
+	doHydration: (index: number, fieldKey: FieldKey) => void,
+) => void;
+
 /**
  * Register events which will hydrate batches of nodes when they are inserted.
  * The next edits to forest must be their insertions, in order, or data corruption can occur.
@@ -280,22 +304,49 @@ function walkMapTree(
 function scheduleHydration(
 	locatedNodes: readonly LocatedNodesBatch[],
 	forest: IForestSubscription,
+	doHydration: (index: number, fieldKey: FieldKey) => void,
 ): void {
 	// Only subscribe to the event if there is at least one TreeNode tree to hydrate - this is not the case when inserting an empty array [].
 	if (locatedNodes.length > 0) {
 		// Creating a new array emits one event per element in the array, so listen to the event once for each element
 		let i = 0;
 		const off = forest.events.on("afterRootFieldCreated", (fieldKey) => {
-			// Indexing is safe here because of the length check above. This assumes the array has not been modified which should be the case.
-			const batch = locatedNodes[i] ?? oob();
-			debugAssert(() => batch.rootPath.parentField === placeholderKey);
-			batch.rootPath.parentField = brand(fieldKey);
-			for (const { path, node } of batch.paths) {
-				getKernel(node).hydrate(forest.anchors, path);
-			}
+			doHydration(i, fieldKey);
 			if (++i === locatedNodes.length) {
 				off();
 			}
 		});
 	}
+}
+
+function doHydrationDefault(
+	locatedNodes: readonly LocatedNodesBatch[],
+	forest: IForestSubscription,
+): (index: number, fieldKey: FieldKey) => void {
+	return (index: number, fieldKey: FieldKey) => {
+		const context = forest.anchors.slots.get(ContextSlot) ?? fail(0xb41 /* missing context */);
+
+		// Indexing is safe here because of the length check above. This assumes the array has not been modified which should be the case.
+		const batch = locatedNodes[index] ?? oob();
+		debugAssert(() => batch.rootPath.parentField === placeholderKey);
+		batch.rootPath.parentField = brand(fieldKey);
+		for (const { path, node } of batch.paths) {
+			const anchor = forest.anchors.track(path);
+			const anchorNode = forest.anchors.locate(anchor) ?? fail("missing anchor");
+
+			let flexNode = anchorNode.slots.get(flexTreeSlot);
+			if (flexNode === undefined) {
+				// the flex node must be created
+				const cursor = forest.allocateCursor("getFlexNode");
+				forest.moveCursorToPath(anchorNode, cursor);
+
+				flexNode = getOrCreateHydratedFlexTreeNode(context, cursor);
+				cursor.free();
+				assertFlexTreeEntityNotFreed(flexNode);
+			}
+
+			getKernel(node).hydrate(flexNode);
+			forest.anchors.forget(anchor);
+		}
+	};
 }

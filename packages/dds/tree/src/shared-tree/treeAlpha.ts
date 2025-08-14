@@ -46,7 +46,7 @@ import {
 	unhydratedFlexTreeFromInsertable,
 	getOrCreateNodeFromInnerNode,
 	getOrCreateNodeFromInnerUnboxedNode,
-	getOrCreateInnerNode,
+	getInnerNode,
 	NodeKind,
 	tryGetTreeNodeForField,
 	isObjectNodeSchema,
@@ -890,7 +890,7 @@ export const TreeAlpha: TreeAlpha = {
 		node: TreeNode,
 		propertyKey: string | number,
 	): TreeNode | TreeLeafValue | undefined => {
-		const flexNode = getOrCreateInnerNode(node);
+		const flexNode = getInnerNode(node);
 		debugAssert(
 			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
 		);
@@ -960,7 +960,7 @@ export const TreeAlpha: TreeAlpha = {
 	},
 
 	children(node: TreeNode): [propertyKey: string | number, child: TreeNode | TreeLeafValue][] {
-		const flexNode = getOrCreateInnerNode(node);
+		const flexNode = getInnerNode(node);
 		debugAssert(
 			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
 		);
@@ -1056,7 +1056,7 @@ function borrowCursorFromTreeNodeOrValue(
 		return cursorFromVerbose(node, {});
 	}
 	const kernel = getKernel(node);
-	const cursor = kernel.getOrCreateInnerNode().borrowCursor();
+	const cursor = kernel.getInnerNode().borrowCursor();
 	return cursor;
 }
 

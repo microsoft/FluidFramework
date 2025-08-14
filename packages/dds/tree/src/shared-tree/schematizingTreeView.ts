@@ -12,13 +12,17 @@ import type {
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { anchorSlot } from "../core/index.js";
+import { anchorSlot, rootFieldKey } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
 	cursorForMapTreeField,
 	TreeStatus,
 	Context,
+	type FlexTreeOptionalField,
+	type FlexTreeUnknownUnboxed,
+	FieldKinds,
+	type FlexTreeRequiredField,
 } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -38,7 +42,7 @@ import {
 	type UnsafeUnknownSchema,
 	type TreeBranch,
 	type TreeBranchEvents,
-	getOrCreateInnerNode,
+	getInnerNode,
 	getKernel,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
@@ -117,6 +121,11 @@ export class SchematizingSimpleTreeView<
 	 */
 	private midUpgrade = false;
 
+	/**
+	 * Hydration work deferred until Context has been created.
+	 */
+	private pendingHydration?: () => void;
+
 	private readonly rootFieldSchema: FieldSchema;
 	public readonly breaker: Breakable;
 
@@ -183,6 +192,15 @@ export class SchematizingSimpleTreeView<
 				},
 				this,
 				schema.rootFieldSchema,
+				(batches, doHydration) => {
+					assert(this.pendingHydration === undefined, "pendingHydration already set");
+					this.pendingHydration = () => {
+						assert(batches.length <= 1, "initialize should have a single batch");
+						if (batches.length !== 0) {
+							doHydration(0, rootFieldKey);
+						}
+					};
+				},
 			);
 
 			this.checkout.transaction.start();
@@ -350,7 +368,9 @@ export class SchematizingSimpleTreeView<
 				// TODO: provide a better event: this.view.flexTree.on(????) and/or integrate with with the normal event code paths.
 
 				// Track what the root was before to be able to detect changes.
-				let lastRoot: ReadableField<TRootSchema> = this.root;
+				let lastRoot: FlexTreeUnknownUnboxed | undefined = (
+					this.flexTreeContext.root as FlexTreeOptionalField
+				).content;
 
 				this.flexTreeViewUnregisterCallbacks.add(
 					this.checkout.events.on("afterBatch", () => {
@@ -359,8 +379,8 @@ export class SchematizingSimpleTreeView<
 						// - The rootChanged event will already be raised at the end of the current upgrade
 						// - It doesn't matter that `lastRoot` isn't updated in this case, because `update` will be called again before the upgrade
 						//   completes (at which point this callback and the `lastRoot` captured here will be out of scope anyway)
-						if (!this.midUpgrade && lastRoot !== this.root) {
-							lastRoot = this.root;
+						if (!this.midUpgrade && lastRoot !== this.flexRoot.content) {
+							lastRoot = this.flexRoot.content;
 							this.events.emit("rootChanged");
 						}
 					}),
@@ -374,6 +394,8 @@ export class SchematizingSimpleTreeView<
 		);
 
 		if (!this.midUpgrade) {
+			this.pendingHydration?.();
+			this.pendingHydration = undefined;
 			this.events.emit("schemaChanged");
 			this.events.emit("rootChanged");
 		}
@@ -386,6 +408,8 @@ export class SchematizingSimpleTreeView<
 		} finally {
 			this.midUpgrade = false;
 		}
+		this.pendingHydration?.();
+		this.pendingHydration = undefined;
 		this.events.emit("schemaChanged");
 		this.events.emit("rootChanged");
 	}
@@ -426,7 +450,7 @@ export class SchematizingSimpleTreeView<
 		}
 	}
 
-	public get root(): ReadableField<TRootSchema> {
+	private get flexRoot(): FlexTreeOptionalField | FlexTreeRequiredField {
 		this.breaker.use();
 		if (!this.compatibility.canView) {
 			throw new UsageError(
@@ -434,7 +458,17 @@ export class SchematizingSimpleTreeView<
 			);
 		}
 		const view = this.getFlexTreeContext();
-		return tryGetTreeNodeForField(view.root) as ReadableField<TRootSchema>;
+		assert(
+			view.root.is(FieldKinds.optional) ||
+				view.root.is(FieldKinds.required) ||
+				view.root.is(FieldKinds.identifier),
+			"unexpected root field kind",
+		);
+		return view.root;
+	}
+
+	public get root(): ReadableField<TRootSchema> {
+		return tryGetTreeNodeForField(this.flexRoot) as ReadableField<TRootSchema>;
 	}
 
 	public set root(newRoot: InsertableField<TRootSchema>) {
@@ -499,7 +533,7 @@ export function addConstraintsToTransaction(
 	for (const constraint of constraints) {
 		switch (constraint.type) {
 			case "nodeInDocument": {
-				const node = getOrCreateInnerNode(constraint.node);
+				const node = getInnerNode(constraint.node);
 				const nodeStatus = getKernel(constraint.node).getStatus();
 				if (nodeStatus !== TreeStatus.InDocument) {
 					const revertText = constraintsOnRevert ? " on revert" : "";
