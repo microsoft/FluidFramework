@@ -15,8 +15,8 @@ import {
 import type { IMatrixConsumer } from "@tiny-calc/nano";
 
 import type { ISharedMatrix } from "../../index.js";
+import { createLocalMatrix, type TestMatrixOptions } from "../performanceTestUtilities.js";
 import { UndoRedoStackManager } from "../undoRedoStackManager.js";
-import { createLocalMatrix, type TestMatrixOptions } from "../utils.js";
 
 /**
  * Note: These benchmarks are designed to closely match the benchmarks in SharedTree.
