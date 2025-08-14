@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { oob } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { Tree, TreeAlpha } from "./shared-tree/index.js";
@@ -780,8 +780,20 @@ export namespace System_TableSchema {
 						`Specified column with ID "${columnId}" does not exist in the table.`,
 					);
 				}
-				this.columns.removeAt(index);
-				return column as ColumnValueType;
+				assert(column !== undefined, "column should not be undefined");
+
+				Tree.runTransaction(this, () => {
+					// Remove the corresponding cell from all rows.
+					for (const row of this.rows) {
+						// TypeScript is unable to narrow the row type correctly here, hence the cast.
+						// See: https://github.com/microsoft/TypeScript/issues/52144
+						(row as RowValueType).removeCell(column);
+					}
+
+					this.columns.removeAt(index);
+				});
+
+				return column;
 			}
 
 			public removeAllColumns(): ColumnValueType[] {
@@ -1078,29 +1090,6 @@ export namespace System_TableSchema {
  * // But it won't fire when a row's properties change, or when the row's cells change, etc.
  * Tree.on(table.rows, "nodeChanged", () => {
  * 	// Respond to the change.
- * });
- * ```
- *
- * @example Removing column and cells in a transaction
- *
- * When removing a column, if you wish to ensure that all of its corresponding cells are also removed (and not
- * orphaned), you can remove the column and all of the relevant cells in a transaction.
- * Note that there are performance implications to this.
- *
- * ```typescript
- * // Remove column1 and all of its cells.
- * // The "transaction" method will ensure that all changes are applied atomically.
- * Tree.runTransaction(table, () => {
- * 	// Remove column1.
- * 	table.removeColumn(column1);
- *
- * 	// Remove the cell at column1 for each row.
- * 	for (const row of table.rows) {
- * 		table.removeCell({
- * 			column: column1,
- * 			row,
- * 		});
- * 	}
  * });
  * ```
  *
@@ -1530,14 +1519,16 @@ export namespace TableSchema {
 
 		/**
 		 * Removes the specified column from the table.
-		 *
 		 * @remarks
-		 * Note: this does not remove any cells from the table's rows.
-		 * To remove the corresponding cells, use {@link TableSchema.Table.removeCell}.
+		 * Also removes any corresponding cells from the table's rows.
+		 *
+		 * Note: this operation can be slow for tables with many rows.
+		 * We are actively working on improving the performance of this operation, but for now it may have a negative
+		 * impact on performance.
 		 *
 		 * @param column - The {@link TableSchema.Column | column} or {@link TableSchema.Column.id | column ID} to remove.
 		 * @throws Throws an error if the column is not in the table.
-		 * @privateRemarks TODO (future): Actually remove corresponding cells from table rows.
+		 * In this case, no columns are removed.
 		 */
 		removeColumn(
 			column: string | TreeNodeFromImplicitAllowedTypes<TColumn>,
@@ -1545,10 +1536,12 @@ export namespace TableSchema {
 
 		/**
 		 * Removes 0 or more columns from the table.
-		 *
 		 * @remarks
-		 * Note: this does not remove any cells from the table's rows.
-		 * To remove the corresponding cells, use {@link TableSchema.Table.removeCell}.
+		 * Also removes any corresponding cells from the table's rows.
+		 *
+		 * Note: this operation can be slow for tables with many rows.
+		 * We are actively working on improving the performance of this operation, but for now it may have a negative
+		 * impact on performance.
 		 *
 		 * @param columns - The columns to remove.
 		 * @throws Throws an error if any of the columns are not in the table.
@@ -1561,8 +1554,11 @@ export namespace TableSchema {
 		 * Removes 0 or more columns from the table.
 		 *
 		 * @remarks
-		 * Note: this does not remove any cells from the table's rows.
-		 * To remove the corresponding cells, use {@link TableSchema.Table.removeCell}.
+		 * Also removes any corresponding cells from the table's rows.
+		 *
+		 * Note: this operation can be slow for tables with many rows.
+		 * We are actively working on improving the performance of this operation, but for now it may have a negative
+		 * impact on performance.
 		 *
 		 * @param columns - The columns to remove, specified by their {@link TableSchema.Column.id}.
 		 * @throws Throws an error if any of the columns are not in the table.
@@ -1572,6 +1568,14 @@ export namespace TableSchema {
 
 		/**
 		 * Removes all columns from the table.
+		 *
+		 * @remarks
+		 * Also removes any corresponding cells from the table's rows.
+		 *
+		 * Note: this operation can be slow for tables with many rows.
+		 * We are actively working on improving the performance of this operation, but for now it may have a negative
+		 * impact on performance.
+		 *
 		 * @returns The removed columns.
 		 */
 		removeAllColumns(): TreeNodeFromImplicitAllowedTypes<TColumn>[];
@@ -1580,6 +1584,7 @@ export namespace TableSchema {
 		 * Removes the specified row from the table.
 		 * @param row - The {@link TableSchema.Row | row} or {@link TableSchema.Row.id | row ID} to remove.
 		 * @throws Throws an error if the row is not in the table.
+		 * In this case, no rows are removed.
 		 */
 		removeRow(
 			row: string | TreeNodeFromImplicitAllowedTypes<TRow>,

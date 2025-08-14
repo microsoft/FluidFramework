@@ -34,13 +34,13 @@ import {
 	TestTreeProviderLite,
 	validateUsageError,
 	validateViewConsistency,
+	type TreeStoredContentStrict,
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
 import {
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
 	type TreeCheckout,
-	type TreeStoredContentStrict,
 } from "../../shared-tree/index.js";
 import type { Mutable } from "../../util/index.js";
 import { brand } from "../../util/index.js";
