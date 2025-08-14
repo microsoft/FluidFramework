@@ -1,0 +1,281 @@
+---
+title: Rolling Out New Allowed Types
+sidebar_position: 1
+---
+
+# Rolling Out New Allowed Types
+
+This guide shows you how to safely add new allowed types to existing fields in your [SharedTree](../../index.mdx) schema without breaking compatibility with existing applications.
+
+## The Challenge
+
+When you want to add a new node type to an existing field, you face a deployment challenge:
+
+- **Old clients** can't read documents with the new type
+- **New clients** need to support both old and new document formats
+- **Mixed deployments** mean some users have old versions, some have new
+
+Direct addition of new types would break old clients immediately.
+
+## The Solution: Staged Rollout
+
+Use the [`staged()`](../../../api/fluid-framework/schemastaticsalpha-interface#staged-method) method to roll out new types in two phases:
+
+1. **Phase 1: Reading support** - Deploy ability to read the new type 
+2. **Phase 2: Creation support** - Deploy ability to create the new type
+
+## Step-by-Step Guide
+
+### Step 1: Define Your New Type
+
+Create the new node type you want to add:
+
+```typescript
+import { SchemaFactory } from "@fluidframework/tree";
+
+const factory = new SchemaFactory("MyApp");
+
+// Existing content types
+class TextContent extends factory.object("TextContent", {
+    text: factory.string,
+}) {}
+
+class ImageContent extends factory.object("ImageContent", {
+    url: factory.string,
+    alt: factory.string,
+}) {}
+
+// New type to add
+class VideoContent extends factory.object("VideoContent", {
+    url: factory.string,
+    duration: factory.optional(factory.number),
+}) {}
+```
+
+### Step 2: Stage the New Type
+
+Import the alpha APIs and use [`staged()`](../../../api/fluid-framework/schemastaticsalpha-interface#staged-method) to mark the new type:
+
+```typescript
+import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
+
+class Document extends factory.object("Document", {
+    title: factory.string,
+    content: factory.array([
+        TextContent,
+        ImageContent,
+        SchemaFactoryAlpha.staged(VideoContent), // Staged for reading only
+    ]),
+}) {}
+```
+
+### Step 3: Deploy Reading Support
+
+Deploy this version to all clients.
+
+**What happens now:**
+- ✅ **All clients can read** documents containing VideoContent
+- ❌ **No clients can create** new VideoContent yet
+- ✅ **Old clients without VideoContent** continue working normally
+
+### Step 4: Wait for Full Deployment
+
+Ensure all clients in your deployment have the staged support before proceeding.
+Monitor your deployment to confirm coverage.
+
+### Step 5: Promote to Full Support
+
+Once all clients have reading support, remove the [`staged()`](../../../api/fluid-framework/schemastaticsalpha-interface#staged-method) wrapper:
+
+```typescript
+class Document extends factory.object("Document", {
+    title: factory.string,
+    content: factory.array([
+        TextContent,
+        ImageContent,
+        VideoContent, // Now fully supported - can read AND create
+    ]),
+}) {}
+```
+
+### Step 6: Deploy Creation Support
+
+Deploy this final version.
+
+**What happens now:**
+- ✅ **All clients can read** documents with VideoContent
+- ✅ **All clients can create** new VideoContent
+- ✅ **Full feature rollout** is complete
+
+## Rollout Timeline Example
+
+Here's a practical timeline for rolling out video support in a document editor:
+
+```typescript
+// Week 1: Deploy staged support everywhere
+class Document extends factory.object("Document", {
+    title: factory.string,
+    content: factory.array([
+        TextContent,
+        ImageContent,
+        SchemaFactoryAlpha.staged(VideoContent),
+    ]),
+}) {}
+
+// Week 3: Promote to full support (after confirming deployment)
+class Document extends factory.object("Document", {
+    title: factory.string,
+    content: factory.array([
+        TextContent,
+        ImageContent,
+        VideoContent, // No longer staged
+    ]),
+}) {}
+```
+
+## Advanced Rollout Strategies
+
+### Feature Flag Integration
+
+Combine [`staged()`](../../../api/fluid-framework/schemastaticsalpha-interface#staged-method) with feature flags for safer roll-outs:
+
+```typescript
+const enableVideoContent = featureFlags.videoSupport;
+
+const contentTypes = [
+    TextContent,
+    ImageContent,
+    ...(enableVideoContent ? [SchemaFactoryAlpha.staged(VideoContent)] : []),
+];
+
+class Document extends factory.object("Document", {
+    title: factory.string,
+    content: factory.array(contentTypes),
+}) {}
+```
+
+### Multiple Type Staging
+
+Stage multiple new types simultaneously:
+
+```typescript
+class Document extends factory.object("Document", {
+    title: factory.string,
+    content: factory.array([
+        TextContent,
+        ImageContent,
+        // Stage multiple types together
+        SchemaFactoryAlpha.staged(VideoContent),
+        SchemaFactoryAlpha.staged(AudioContent),
+        SchemaFactoryAlpha.staged(EmbedContent),
+    ]),
+}) {}
+```
+
+### Gradual Promotion
+
+Promote types individually based on adoption metrics:
+
+```typescript
+// Week 1: Stage all types
+content: factory.array([
+    TextContent,
+    ImageContent,
+    SchemaFactoryAlpha.staged(VideoContent),
+    SchemaFactoryAlpha.staged(AudioContent),
+])
+
+// Week 3: Promote video, keep audio staged
+content: factory.array([
+    TextContent,
+    ImageContent,
+    VideoContent, // Promoted
+    SchemaFactoryAlpha.staged(AudioContent), // Still staged
+])
+
+// Week 5: Promote audio
+content: factory.array([
+    TextContent,
+    ImageContent,
+    VideoContent,
+    AudioContent, // Now promoted
+])
+```
+
+## Common Mistakes to Avoid
+
+### ❌ Skipping the Staged Phase
+
+```typescript
+// DON'T: Jump directly to full support
+content: factory.array([
+    TextContent,
+    ImageContent,
+    VideoContent, // ❌ Old clients will break
+])
+```
+
+### ❌ Promoting Too Quickly
+
+```typescript
+// DON'T: Promote before all clients have staged support
+// Week 1: Deploy staged
+// Week 1.5: Promote (❌ Too fast! Some clients still don't have staging)
+```
+
+### ❌ Using [`staged()`](../../../api/fluid-framework/schemastaticsalpha-interface#staged-method) for Required Fields
+
+```typescript
+// DON'T: Stage required fields in objects
+class User extends factory.object("User", {
+    name: factory.string,
+    email: SchemaFactoryAlpha.staged(factory.string), // ❌ Breaks existing users
+}) {}
+```
+
+## Monitoring Your Rollout
+
+### Track Deployment Progress
+
+Monitor which clients have the staged support:
+
+```typescript
+// Add telemetry to track staged support
+const hasVideoSupport = 'VideoContent' in factory;
+telemetry.track('clientCapabilities', { hasVideoSupport });
+```
+
+### Validate Mixed Environments
+
+Test scenarios with mixed client versions:
+
+1. **Old client** opens document with new content
+2. **New client with staging** opens old document
+3. **New client with staging** opens document with new content
+4. **Fully updated client** creates and edits new content
+
+### Monitor Error Rates
+
+Watch for schema validation errors during rollout phases:
+
+- Spikes during initial staged deployment
+- Issues when promoting staged types
+- Problems with mixed-version collaboration
+
+## When Not to Use This Guide
+
+This staged rollout approach is **not needed** for:
+
+- **Adding optional fields** to existing node types (safe by default)
+- **Single-deployment scenarios** where all clients update simultaneously  
+- **Breaking changes** (require different migration strategies)
+- **Development/testing environments** with controlled client versions
+
+For these cases, direct schema updates are simpler and appropriate.
+
+## See Also
+
+- [Schema Evolution](./index.mdx) - Overview of schema evolution strategies
+- [`SchemaStaticsAlpha.staged()` API](../../../api/fluid-framework/schemastaticsalpha-interface#staged-method) - API documentation
+- [Schema Definition](../../schema-definition.mdx) - How to define schemas
+- [Node Types](../../node-types.mdx) - Understanding different node types
