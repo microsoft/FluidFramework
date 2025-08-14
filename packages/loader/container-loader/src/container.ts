@@ -171,6 +171,7 @@ const savedContainerEvent = "saved";
 const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
 /**
+ * @remarks Export for testing only
  * @internal
  */
 export interface IContainerLoadProps {
@@ -193,7 +194,11 @@ export interface IContainerLoadProps {
 	readonly pendingLocalState?: IPendingContainerState;
 }
 
-interface IContainerCreateProps extends ILoaderServices {
+/**
+ * @remarks Export for testing only
+ * @internal
+ */
+export interface IContainerCreateProps extends ILoaderServices {
 	/**
 	 * Disables the Container from reconnecting if false, allows reconnect otherwise.
 	 */
