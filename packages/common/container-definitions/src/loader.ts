@@ -635,12 +635,14 @@ export type ILoaderOptions = {
 	maxClientLeaveWaitTime?: number;
 
 	/**
-	 * Optional property for specifying a timeout for connection retry loop.
+	 * Specifies a timeout for connect retry loop, expressed in milliseconds.
 	 *
+	 * @remarks
 	 * If provided, container will use this value as the maximum time to wait
-	 * for a successful connection before giving up and throwing the most recent error.
+	 * for a successful connect before giving up and throwing the most recent error.
 	 *
-	 * If not provided, default behavior will be to retry until non-retryable error occurs.
+	 * If not provided, behavior will be to retry until non-retryable error occurs or
+	 * loop is interrupted, such as by a call to {@link IContainer.disconnect}.
 	 */
 	readonly connectRetriesTimeoutMs?: number;
 };
