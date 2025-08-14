@@ -32,16 +32,15 @@ The stored schema can grow over time but cannot shrink:
 - Fields cannot be removed from node types
 - Node types cannot be completely removed
 
-This constraint enables virtualized documents where only portions are loaded at a time.
-
 **3. Field Key Stability**
 Field keys are permanent once introduced.
 If a field is removed and later reintroduced with a different type, SharedTree cannot distinguish between old and new data without inspecting values.
 
 ### Why These Constraints?
 
-Documents persist indefinitely and applications must handle any document version.
-While schema growth sounds concerning, it's negligible since schema size is constant per document regardless of data volume.
+It's assumed that a Fluid application developer does not have absolute control over all user documents.
+Documents can persist for an unbounded length of time before they are re-opened by an application.
+Therefore, a Fluid application should be prepared to encounter any version of a document, even a very old one, and handle it appropriately.
 
 ## Monitoring Schema Compatibility
 
@@ -158,27 +157,6 @@ If a client upgrades a document to a new schema that older clients cannot read, 
 Theoretically, some changes don't require a staged rollout and are therefore capable of cross-version collaboration.
 In that case, new clients can read and write to the same document as old clients without either one being fundamentally incompatible.
 However, staged rollouts are not easily avoidable. Even seemingly simple schema changes, like adding a single required field to a node, cannot support cross-version collaboration and require a staged rollout.
-
-```typescript
-// Example: Controlled upgrade rollout
-const UPGRADE_ENABLED = featureFlags.enableSchemaUpgrade;
-
-function handleDocumentOpen(tree: ITree) {
-    const view = tree.viewWith(configuration);
-
-    if (!view.compatibility.isEquivalent && UPGRADE_ENABLED) {
-        if (view.compatibility.canUpgrade) {
-            // Log upgrade for monitoring
-            telemetry.track("schemaUpgrade", {
-                fromVersion: view.compatibility.stored.version,
-                toVersion: view.compatibility.view.version
-            });
-
-            view.upgradeSchema();
-        }
-    }
-}
-```
 
 **Best Practices:**
 - Allow appropriate amount of time between release cycles to ensure client version adoption
