@@ -1,0 +1,194 @@
+---
+title: Schema Evolution
+sidebar_position: 8
+---
+
+# Schema Evolution
+
+As your application grows and evolves, you may need to modify the structure of your [SharedTree](../index.mdx) data.
+SharedTree provides safe, backward-compatible ways to update your [schemas](../schema-definition.mdx) without breaking existing data or older application versions (see [understanding compatibility](./index.mdx#understanding-compatibility)).
+
+> **Note:** For detailed information about which types of changes are safe versus breaking, see [types of schema changes](./types-of-changes).
+
+## Stored vs View Schema
+
+When updating your schema, it's important to understand the difference between the two types of schemas:
+
+- **View Schema**: The schema defined in your application code using [`SchemaFactory`](../../../api/fluid-framework/schemafactory-class)
+- **Stored Schema**: The schema persisted with each document, it describes the tree it is stored alongside
+
+### Stored Schema Invariants
+
+The stored schema follows additional constraints that don't apply to view schemas:
+
+**1. Complete Description**
+The stored schema completely describes all data in the tree.
+Every node and field in the document is known to the stored schema.
+
+**2. Additive Only**
+The stored schema can grow over time but cannot shrink:
+- New allowed types can be added to fields
+- Existing types cannot be removed from fields
+- Fields cannot be removed from node types
+- Node types cannot be completely removed
+
+This constraint enables virtualized documents where only portions are loaded at a time.
+
+**3. Field Key Stability**
+Field keys are permanent once introduced.
+If a field is removed and later reintroduced with a different type, SharedTree cannot distinguish between old and new data without inspecting values.
+
+### Why These Constraints?
+
+Documents persist indefinitely and applications must handle any document version.
+While schema growth sounds concerning, it's negligible since schema size is constant per document regardless of data volume.
+
+## Monitoring Schema Compatibility
+
+When you open a document, SharedTree compares your application's view schema with the document's stored schema to determine compatibility:
+
+- **Compatible**: Document can be opened and used normally
+- **Upgradeable**: Document can be upgraded to match your view schema using [`view.upgradeSchema()`](../../../api/fluid-framework/treeview-interface#upgradeschema-method)
+- **Incompatible**: Document cannot be opened with your current view schema
+
+This separation allows multiple application versions with different schemas to collaborate on the same document safely.
+
+### Understanding Compatibility
+
+**Backward compatibility** means old clients can still read documents created with new schemas (not breaking older app versions).
+**Forward compatibility** means new clients can read documents created with old schemas (not breaking existing data).
+SharedTree supports both to ensure seamless collaboration between different application versions as you evolve your schema.
+
+### Checking Compatibility
+
+Use [`TreeView.compatibility`](../../../api/fluid-framework/treeview-interface#compatibility-property) to check if your schema changes are compatible with existing documents:
+
+```typescript
+const view = tree.viewWith(configuration);
+const { compatibility } = view;
+
+if (!compatibility.isEquivalent) {
+    if (compatibility.canUpgrade) {
+        view.upgradeSchema(); // Safe to upgrade
+    } else {
+        // Handle incompatible schema
+        throw new Error("Cannot open document with current schema");
+    }
+}
+```
+
+### Monitoring Remote Schema Changes
+
+In collaborative applications, other clients may upgrade the document's schema while you're working.
+Listen for the `schemaChanged` event to handle these remote upgrades:
+
+```typescript
+// Monitor for remote schema changes
+view.events.on("schemaChanged", () => {
+    if (!view.compatibility.canView) {
+        // Document was upgraded to an incompatible schema
+        // Handle gracefully - perhaps reload or notify user
+        throw new Error("Document was upgraded and is no longer compatible");
+    }
+
+    // Schema changed but is still compatible
+    // You may need to refresh UI or handle new data structures
+    console.log("Document schema was updated by another client");
+});
+```
+
+## Schema Upgrade Process
+
+When you make backward-compatible changes to your schema, you can upgrade existing documents to use the new schema using [`view.upgradeSchema()`](../../../api/fluid-framework/treeview-interface#upgradeschema-method):
+
+```typescript
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+
+const factory = new SchemaFactory("WhiteboardApp");
+
+// Updated schema with new optional field
+class Note extends factory.object("Note", {
+    id: factory.string,
+    x: factory.number,
+    y: factory.number,
+    color: factory.optional(factory.string), // New optional field
+}) {}
+
+// Create tree view with updated schema
+const config = new TreeViewConfiguration({ schema: Note });
+const view = tree.viewWith(config);
+
+// Check compatibility and upgrade if needed
+if (!view.compatibility.isEquivalent) {
+    if (view.compatibility.canUpgrade) {
+        view.upgradeSchema(); // Upgrade document to new schema
+        console.log("Document upgraded successfully");
+    } else {
+        throw new Error("Schema is incompatible and cannot be upgraded");
+    }
+}
+
+// Now you can use the upgraded document
+view.root.color = "#FF0000";
+```
+
+For detailed information about which types of changes are safe versus breaking, see [Types of Schema Changes](./types-of-changes).
+
+### Staged Rollouts
+
+When deploying schema changes in production, use staged rollouts to ensure compatibility between clients running different application versions.
+
+**Why Staged Rollouts Are Necessary**
+
+In collaborative applications, multiple users with different client versions may work on the same document simultaneously.
+If a client upgrades a document to a new schema that older clients cannot read, those users will be locked out until they update their application.
+
+**Two-Phase Deployment Strategy**
+
+**Phase 1: Deploy Schema Reading Support**
+- Deploy application versions that can read the new schema without upgrading documents
+- Wait until all (or "tolerably most") users have updated to the new application version. This is called client saturation.
+- Monitor deployment metrics to ensure coverage
+
+**Phase 2: Enable Document Upgrades**
+- Deploy code that automatically upgrades documents to the new schema
+- All clients can now collaborate since they support reading the upgraded schema
+- Monitor for any compatibility issues
+
+Theoretically, some changes don't require a staged rollout and are therefore capable of cross-version collaboration.
+In that case, new clients can read and write to the same document as old clients without either one being fundamentally incompatible.
+However, staged rollouts are not easily avoidable. Even seemingly simple schema changes, like adding a single required field to a node, cannot support cross-version collaboration and require a staged rollout.
+
+```typescript
+// Example: Controlled upgrade rollout
+const UPGRADE_ENABLED = featureFlags.enableSchemaUpgrade;
+
+function handleDocumentOpen(tree: ITree) {
+    const view = tree.viewWith(configuration);
+
+    if (!view.compatibility.isEquivalent && UPGRADE_ENABLED) {
+        if (view.compatibility.canUpgrade) {
+            // Log upgrade for monitoring
+            telemetry.track("schemaUpgrade", {
+                fromVersion: view.compatibility.stored.version,
+                toVersion: view.compatibility.view.version
+            });
+
+            view.upgradeSchema();
+        }
+    }
+}
+```
+
+**Best Practices:**
+- Allow appropriate amount of time between release cycles to ensure client version adoption
+- Monitor client version distribution before enabling upgrades
+- Test compatibility scenarios with mixed client versions
+
+
+## See Also
+
+- [Types of Schema Changes](./types-of-changes) - Detailed guide on safe vs breaking changes
+- [Compatibility Policies](./compatibility-policies) - Sample policies for handling schema differences
+- [Schema Definition](../schema-definition.mdx) - How to define schemas
+- [Node Types](../node-types.mdx) - Understanding different node types

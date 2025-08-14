@@ -1,0 +1,135 @@
+---
+title: Types of Schema Changes
+sidebar_position: 2
+---
+
+# Types of Schema Changes
+
+Understanding which types of schema changes are safe versus breaking is crucial for evolving your [SharedTree](../index.mdx) schemas without disrupting existing applications.
+
+## Compatible Changes
+
+These changes can be made without breaking existing applications or requiring staged rollouts:
+
+### Adding Optional Fields
+
+Adding optional fields to existing node types is always safe:
+
+```typescript
+// Before
+class Note extends factory.object("Note", {
+    id: factory.string,
+    text: factory.string,
+}) {}
+
+// After - Safe addition
+class Note extends factory.object("Note", {
+    id: factory.string,
+    text: factory.string,
+    color: factory.optional(factory.string), // New optional field
+}) {}
+```
+
+For forwards compatibility, use [`allowUnknownOptionalFields`](../../../api/fluid-framework/objectnodeschema-interface#allowunknownoptionalfields-property) to handle new optional fields added by newer clients:
+
+```typescript
+class Note extends factory.object("Note", {
+    id: factory.string,
+    text: factory.string,
+    // Existing optional fields
+}, { allowUnknownOptionalFields: true }) {}
+```
+
+### Making Required Fields Optional
+
+Converting a required field to optional is always safe:
+
+```typescript
+// Before
+class Circle extends factory.object("Circle", {
+    center: Point,
+    radius: factory.number, // Required
+}) {}
+
+// After - Safe change
+class Circle extends factory.object("Circle", {
+    center: Point,
+    radius: factory.optional(factory.number), // Now optional
+}) {}
+```
+
+### Adding New Allowed Types
+
+Adding new allowed types to existing fields is compatible, but may require forward compatibility planning:
+
+```typescript
+// Before
+class Whiteboard extends factory.object("Whiteboard", {
+    elements: factory.array([TextElement]),
+}) {}
+
+// After - Safe addition
+class Whiteboard extends factory.object("Whiteboard", {
+    elements: factory.array([TextElement, ImageElement]), // New type added
+}) {}
+```
+
+To maintain forwards compatibility, staged allowed types (TODO: link to docs) can be used to roll out support for reading before writing.
+
+## Incompatible Changes
+
+These changes will break compatibility with existing data and require careful migration:
+
+### Removing Fields
+
+Removing fields from node types breaks older clients:
+
+```typescript
+// Breaking: Removing field
+class Note extends factory.object("Note", {
+    id: factory.string,
+    // text: factory.string, // REMOVED - breaks older clients
+}) {}
+```
+
+### Making Optional Fields Required
+
+Making an optional field required breaks documents that don't have that field:
+
+```typescript
+// Breaking: Making optional field required
+class Note extends factory.object("Note", {
+    id: factory.string,
+    text: factory.string,
+    color: factory.string, // Was optional, now required - BREAKING!
+}) {}
+```
+
+### Changing Field Types
+
+Changing field types breaks existing data:
+
+```typescript
+// Breaking: Changing field type
+class Note extends factory.object("Note", {
+    id: factory.string,
+    position: factory.string, // Was factory.number - BREAKING!
+}) {}
+```
+
+### Removing Allowed Types
+
+Removing allowed types from fields breaks documents containing those types:
+
+```typescript
+// Breaking: Removing allowed type
+class Whiteboard extends factory.object("Whiteboard", {
+    elements: factory.array([TextElement]), // ImageElement removed - BREAKING!
+}) {}
+```
+
+## See Also
+
+- [Schema Evolution](./index.mdx) - Overview and upgrade process
+- [Schema Definition](../schema-definition.mdx) - How to define schemas
+- [Node Types](../node-types.mdx) - Understanding different node types
