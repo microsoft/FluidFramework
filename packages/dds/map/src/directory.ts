@@ -2034,23 +2034,16 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				(entry) => entry.type !== "clear" && entry.key === key,
 			);
 			const pendingEntry = this.pendingStorageData[pendingEntryIndex];
-
-			// TODO: This is probably a hacky fix
-			// Handles case where pending data is missing in staging mode
-			if (pendingEntry === undefined || pendingEntry.type !== "lifetime") {
-				this.sequencedStorageData.set(key, value);
-				return;
-			}
+			assert(
+				pendingEntry !== undefined && pendingEntry.type === "lifetime",
+				"Couldn't match local set message to pending lifetime",
+			);
 			const pendingKeySet = pendingEntry.keySets.shift();
-			if (pendingKeySet === undefined) {
-				this.sequencedStorageData.set(key, value);
-				return;
-			}
-
-			// Update sequenced data with the pending value
-			this.sequencedStorageData.set(key, pendingKeySet.value);
-
-			// Remove the pending entry if no more keysets
+			assert(
+				pendingKeySet !== undefined && pendingKeySet === localOpMetadata,
+				"Got a local set message we weren't expecting",
+			);
+			assert(pendingKeySet !== undefined, "pending lifetime should exist");
 			if (pendingEntry.keySets.length === 0) {
 				this.pendingStorageData.splice(pendingEntryIndex, 1);
 			}
@@ -2292,9 +2285,15 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	): void {
 		// Only submit the op, if we have record for it, otherwise it is possible that the older instance
 		// is already deleted, in which case we don't need to submit the op.
-		const pendingEntryIndex = this.pendingStorageData.findIndex(
-			(entry) => entry.type !== "clear" && entry.key === op.key,
-		);
+		const pendingEntryIndex = this.pendingStorageData.findIndex((entry) => {
+			return op.type === "set"
+				? entry.type === "lifetime" &&
+						entry.key === op.key &&
+						// We also check that the keySets include the localOpMetadata. It's possible we have new
+						// pending key sets that are not the op we are looking for.
+						entry.keySets.includes(localOpMetadata as PendingKeySet)
+				: entry.type === "delete" && entry.key === op.key;
+		});
 		const pendingEntry = this.pendingStorageData[pendingEntryIndex];
 		if (pendingEntry !== undefined) {
 			this.submitKeyMessage(op, localOpMetadata as PendingKeySet | PendingKeyDelete);
@@ -2681,8 +2680,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	public clearSubDirectorySequencedData(): void {
 		this.sequencedStorageData.clear();
 		this.sequencedSubdirectories.clear();
-		// Also clear the pending subdirectory data
-		// this.pendingSubDirectoryData.length = 0;
 		this.clientIds.clear();
 		this.clientIds.add(this.runtime.clientId ?? "detached");
 	}
