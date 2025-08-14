@@ -15,7 +15,7 @@ import {
 import type { IMatrixConsumer } from "@tiny-calc/nano";
 
 import type { ISharedMatrix } from "../../index.js";
-import { createLocalMatrix, type TestMatrixOptions } from "../performanceTestUtilities.js";
+import { createTestMatrix, type TestMatrixOptions } from "../performanceTestUtilities.js";
 import { UndoRedoStackManager } from "../undoRedoStackManager.js";
 
 /**
@@ -82,7 +82,7 @@ function runBenchmark({
 				assert.equal(state.iterationsPerBatch, 1, "Expected exactly one iteration per batch");
 
 				// Create matrix
-				const localMatrix = createLocalMatrix({
+				const localMatrix = createTestMatrix({
 					matrixSize,
 					initialCellValue,
 				});

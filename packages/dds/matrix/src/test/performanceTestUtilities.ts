@@ -11,7 +11,7 @@ import type { ISharedMatrix } from "../index.js";
 import { matrixFactory } from "./utils.js";
 
 /**
- * {@link createLocalMatrix} options.
+ * {@link createTestMatrix} options.
  */
 export interface TestMatrixOptions {
 	/**
@@ -29,7 +29,7 @@ export interface TestMatrixOptions {
  * Creates a local matrix with the specified size and for dense test matrix given initial value.
  * Otherwise, leaving the initial value as undefined will create a sparse matrix.
  */
-export function createLocalMatrix({
+export function createTestMatrix({
 	matrixSize,
 	initialCellValue,
 }: TestMatrixOptions): ISharedMatrix & IChannel {

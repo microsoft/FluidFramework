@@ -13,7 +13,7 @@ import {
 import type { IMatrixConsumer } from "@tiny-calc/nano";
 
 import type { ISharedMatrix } from "../../index.js";
-import { createLocalMatrix, type TestMatrixOptions } from "../performanceTestUtilities.js";
+import { createTestMatrix, type TestMatrixOptions } from "../performanceTestUtilities.js";
 import { UndoRedoStackManager } from "../undoRedoStackManager.js";
 
 /**
@@ -45,7 +45,7 @@ function createMatrix(options: TestMatrixOptions): {
 	 */
 	cleanUp: () => void;
 } {
-	const matrix = createLocalMatrix(options);
+	const matrix = createTestMatrix(options);
 
 	// Configure event listeners
 	const eventListeners: IMatrixConsumer<string> = {
