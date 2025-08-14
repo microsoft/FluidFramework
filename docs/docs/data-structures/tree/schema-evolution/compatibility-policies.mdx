@@ -161,7 +161,7 @@ const view = tree.viewWith(configuration);
 
 // Basic upgrade handling
 if (view.compatibility.canUpgrade) {
-    [`view.upgradeSchema()`](../../../api/fluid-framework/treeview-interface#upgradeschema-method);
+    view.upgradeSchema();
 }
 
 view.events.on("schemaChanged", () => {
