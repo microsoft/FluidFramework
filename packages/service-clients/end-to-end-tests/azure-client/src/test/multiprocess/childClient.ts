@@ -17,15 +17,18 @@ import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-sta
 import {
 	getPresence,
 	type Attendee,
-	ExperimentalPresenceManager,
 	type Presence,
+	StateFactory,
+	type LatestRaw,
+	type LatestMapRaw,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/presence/alpha";
+} from "@fluidframework/presence/beta";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import type { ScopeType } from "../AzureClientFactory.js";
 import { createAzureTokenProvider } from "../AzureTokenFactory.js";
+import { TestDataObject } from "../TestDataObject.js";
 import type { configProvider } from "../utils.js";
 
 import type { MessageFromChild, MessageToChild } from "./messageTypes.js";
@@ -82,8 +85,7 @@ const getOrCreatePresenceContainer = async (
 	const client = new AzureClient({ connection: connectionProps });
 	const schema: ContainerSchema = {
 		initialObjects: {
-			// A DataObject is added as otherwise fluid-static complains "Container cannot be initialized without any DataTypes"
-			_unused: ExperimentalPresenceManager,
+			_unused: TestDataObject,
 		},
 	};
 	let services: AzureContainerServices;
@@ -133,6 +135,62 @@ class MessageHandler {
 	public presence: Presence | undefined;
 	public container: IFluidContainer | undefined;
 	public containerId: string | undefined;
+	private readonly latestStates = new Map<string, LatestRaw<{ value: string }>>();
+	private readonly latestMapStates = new Map<
+		string,
+		LatestMapRaw<{ value: string }, string>
+	>();
+
+	private connectSetup(): void {
+		if (!this.presence) {
+			return;
+		}
+
+		const testWorkspaces = [
+			"testLatestWorkspace",
+			"testLatestMapWorkspace",
+			"testMultiKeyMap",
+		];
+
+		for (const workspaceId of testWorkspaces) {
+			const latestWorkspace = this.presence.states.getWorkspace(
+				`test:${workspaceId}` as const,
+				{
+					latestValue: StateFactory.latest<{ value: string }>({ local: { value: "" } }),
+				},
+			);
+			const latestState = latestWorkspace.states.latestValue;
+			this.latestStates.set(workspaceId, latestState);
+			latestState.events.on("remoteUpdated", (update) => {
+				send({
+					event: "latestValueUpdated",
+					workspaceId,
+					attendeeId: update.attendee.attendeeId,
+					value: update.value.value,
+				});
+			});
+
+			const latestMapWorkspace = this.presence.states.getWorkspace(
+				`test:${workspaceId}` as const,
+				{
+					latestMap: StateFactory.latestMap<{ value: string }, string>({ local: {} }),
+				},
+			);
+			const latestMapState = latestMapWorkspace.states.latestMap;
+			this.latestMapStates.set(workspaceId, latestMapState);
+			latestMapState.events.on("remoteUpdated", (update) => {
+				for (const [key, valueWithMetadata] of update.items) {
+					send({
+						event: "latestMapValueUpdated",
+						workspaceId,
+						attendeeId: update.attendee.attendeeId,
+						key: String(key),
+						value: valueWithMetadata.value.value, // Extract just the value, not metadata
+					});
+				}
+			});
+		}
+	}
 
 	public async onMessage(msg: MessageFromParent): Promise<void> {
 		switch (msg.command) {
@@ -171,6 +229,10 @@ class MessageHandler {
 					};
 					send(m);
 				});
+
+				// Get test workspaces and set up event listeners
+				this.connectSetup();
+
 				send({
 					event: "ready",
 					containerId,
@@ -199,6 +261,113 @@ class MessageHandler {
 
 				break;
 			}
+
+			case "setLatestValue": {
+				if (!this.presence) {
+					send({ event: "error", error: `${process_id} is not connected to presence` });
+					break;
+				}
+
+				const latestState = this.latestStates.get(msg.workspaceId);
+				if (latestState === undefined) {
+					send({
+						event: "error",
+						error: `${process_id} workspace ${msg.workspaceId} not found`,
+					});
+					break;
+				}
+				latestState.local = { value: msg.value as string };
+				break;
+			}
+
+			case "setLatestMapValue": {
+				if (!this.presence) {
+					send({ event: "error", error: `${process_id} is not connected to presence` });
+					break;
+				}
+
+				const latestMapState = this.latestMapStates.get(msg.workspaceId);
+				if (latestMapState === undefined) {
+					send({
+						event: "error",
+						error: `${process_id} map workspace ${msg.workspaceId} not found`,
+					});
+					break;
+				}
+				latestMapState.local.set(msg.key, { value: msg.value as string });
+				break;
+			}
+
+			case "getLatestValue": {
+				if (!this.presence) {
+					send({ event: "error", error: `${process_id} is not connected to presence` });
+					break;
+				}
+
+				const latestState = this.latestStates.get(msg.workspaceId);
+				if (latestState === undefined) {
+					send({
+						event: "error",
+						error: `${process_id} workspace ${msg.workspaceId} not found`,
+					});
+					break;
+				}
+
+				let value: { value: string };
+				if (msg.attendeeId) {
+					const attendee = this.presence.attendees.getAttendee(msg.attendeeId);
+					const remoteData = latestState.getRemote(attendee);
+					value = remoteData.value;
+				} else {
+					value = latestState.local;
+				}
+
+				send({
+					event: "latestValueGetResponse",
+					workspaceId: msg.workspaceId,
+					attendeeId: msg.attendeeId,
+					value: value.value,
+				});
+
+				break;
+			}
+
+			case "getLatestMapValue": {
+				if (!this.presence) {
+					send({ event: "error", error: `${process_id} is not connected to presence` });
+					break;
+				}
+
+				const latestMapState = this.latestMapStates.get(msg.workspaceId);
+				if (latestMapState === undefined) {
+					send({
+						event: "error",
+						error: `${process_id} workspace ${msg.workspaceId} not found`,
+					});
+					break;
+				}
+
+				let value: { value: string } | undefined;
+				if (msg.attendeeId) {
+					const attendee = this.presence.attendees.getAttendee(msg.attendeeId);
+					const remoteData = latestMapState.getRemote(attendee);
+					const keyData = remoteData.get(msg.key);
+					value = keyData?.value;
+				} else {
+					value = latestMapState.local.get(msg.key);
+				}
+
+				send({
+					event: "latestMapValueGetResponse",
+					workspaceId: msg.workspaceId,
+					attendeeId: msg.attendeeId,
+					key: msg.key,
+					value: value?.value,
+				});
+
+				break;
+			}
+
 			default: {
 				console.error(`${process_id}: Unknown command`);
 				send({ event: "error", error: `${process_id} Unknown command` });
