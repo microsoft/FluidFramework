@@ -131,7 +131,6 @@ export class Throttler implements IThrottler {
 				[ThrottlingTelemetryProperties.reason]: cachedThrottlerResponse.throttleReason,
 				[ThrottlingTelemetryProperties.retryAfterInSeconds]: retryAfterInSeconds,
 			});
-			// eslint-disable-next-line @typescript-eslint/no-throw-literal
 			throw new ThrottlingError(cachedThrottlerResponse.throttleReason, retryAfterInSeconds);
 		}
 	}

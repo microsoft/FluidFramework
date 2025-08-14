@@ -131,7 +131,11 @@ export function throttle(
 			throttler.incrementCount(throttleId, throttleOptions.weight, usageId, httpUsageData);
 		} catch (e) {
 			if (e instanceof ThrottlingError) {
-				return res.status(e.code).json(e);
+				return res.status(e.code).json({
+					message: e.message,
+					code: e.code,
+					retryAfter: e.retryAfter,
+				});
 			} else {
 				logger?.error(`Throttle increment failed: ${safeStringify(e, undefined, 2)}`, {
 					messageMetaData: {
