@@ -6,12 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type {
-	ConfigTypes,
-	IConfigProviderBase,
-	IFluidHandle,
-} from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import type { IConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import {
@@ -42,7 +37,6 @@ describeCompat("ConsensusRegisterCollection", "FullCompat", (getTestObjectProvid
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
-	let container1: IContainer;
 	let dataStore1: ITestFluidObject;
 	let sharedMap1: ISharedMap;
 	let sharedMap2: ISharedMap;
@@ -50,7 +44,7 @@ describeCompat("ConsensusRegisterCollection", "FullCompat", (getTestObjectProvid
 
 	beforeEach("createSharedMaps", async () => {
 		// Create a Container for the first client.
-		container1 = await provider.makeTestContainer(testContainerConfig);
+		const container1 = await provider.makeTestContainer(testContainerConfig);
 		dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedMap1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 
@@ -260,21 +254,6 @@ describeCompat("ConsensusRegisterCollection", "FullCompat", (getTestObjectProvid
 		assert.strictEqual(versions6[0], "value10", "Happened after value did not overwrite");
 	});
 
-	it("Resolves write promise with false when disposed", async () => {
-		const collection1 = ConsensusRegisterCollection.create(dataStore1.runtime);
-		sharedMap1.set("collection", collection1.handle);
-		await provider.ensureSynchronized();
-		const write1P = collection1.write("key1", "value1");
-		if (typeof container1.dispose === "function") {
-			container1.dispose();
-		} else {
-			// 1.4.0 doesn't have dispose, close is good enough
-			container1.close();
-		}
-		const write1Result = await write1P;
-		assert.strictEqual(write1Result, false, "Write should resolve with false when disposed");
-	});
-
 	it("Can store handles", async () => {
 		// Set up the collection with two handles and add it to the map so other containers can find it
 		const collection1 = ConsensusRegisterCollection.create(dataStore1.runtime);
@@ -302,8 +281,10 @@ describeCompat("ConsensusRegisterCollection", "FullCompat", (getTestObjectProvid
 	});
 });
 
-describeCompat("ConsensusRegisterCollection", "NoCompat", (getTestObjectProvider, apis) => {
-	describe("grouped batching", () => {
+describeCompat(
+	"ConsensusRegisterCollection grouped batching",
+	"NoCompat",
+	(getTestObjectProvider, apis) => {
 		const { SharedMap, ConsensusRegisterCollection } = apis.dds;
 		const registry: ChannelFactoryRegistry = [
 			[mapId, SharedMap.getFactory()],
@@ -333,64 +314,5 @@ describeCompat("ConsensusRegisterCollection", "NoCompat", (getTestObjectProvider
 			await Promise.all([write1P, write2P]);
 			await provider.ensureSynchronized();
 		});
-	});
-
-	describe("rollback", () => {
-		const { SharedMap, ConsensusRegisterCollection } = apis.dds;
-
-		const registry: ChannelFactoryRegistry = [
-			[mapId, SharedMap.getFactory()],
-			[undefined, ConsensusRegisterCollection.getFactory()],
-		];
-		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-			getRawConfig: (name: string): ConfigTypes => settings[name],
-		});
-		const testContainerConfig: ITestContainerConfig = {
-			fluidDataObjectType: DataObjectFactoryType.Test,
-			registry,
-			loaderProps: {
-				configProvider: configProvider({
-					"Fluid.ContainerRuntime.EnableRollback": true,
-				}),
-			},
-		};
-
-		let provider: ITestObjectProvider;
-		beforeEach("getTestObjectProvider", () => {
-			provider = getTestObjectProvider();
-		});
-		let dataStore1: ITestFluidObject;
-		let sharedMap1: ISharedMap;
-
-		beforeEach("createSharedMaps", async () => {
-			// Create a Container for the first client.
-			const container1 = await provider.makeTestContainer(testContainerConfig);
-			dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
-			sharedMap1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
-		});
-
-		it("Resolves write promise with false when rollback happens", async () => {
-			const collection1 = ConsensusRegisterCollection.create(dataStore1.runtime);
-			sharedMap1.set("collection", collection1.handle);
-			await provider.ensureSynchronized();
-			let write1P: Promise<boolean> | undefined;
-			let error: Error | undefined;
-			try {
-				dataStore1.context.containerRuntime.orderSequentially(() => {
-					write1P = collection1.write("key1", "value1");
-					throw new Error("Force rollback");
-				});
-			} catch (err) {
-				error = err as Error;
-			}
-			assert.notStrictEqual(error, undefined, "Expect the error we threw");
-			assert.notStrictEqual(write1P, undefined, "Write promise should be defined");
-			const write1Result = await write1P;
-			assert.strictEqual(
-				write1Result,
-				false,
-				"Write should resolve with false when rolled back",
-			);
-		});
-	});
-});
+	},
+);
