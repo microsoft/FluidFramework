@@ -41,7 +41,6 @@ describe("Local Server Stress", () => {
 		// saveSuccesses,
 		configurations: { "Fluid.Container.enableOfflineLoad": true },
 		skip: [
-			...[26], // Unexpected pending data for set/delete op
 			...[30, 69], // timeout
 			...[79], // Number of subDirectories not same
 		],

@@ -2416,10 +2416,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (directoryOp.type === "clear") {
 			// A pending clear will be last in the list, since it terminates all prior lifetimes.
 			const pendingClear = this.pendingStorageData.pop();
+			if (pendingClear === undefined) {
+				// If we can't find a pending entry then it's possible that we deleted an ack'd subdir
+				// from a remote delete subdir op. If that's the case then there is nothing to rollback
+				// since the pending data was removed with the subdirectory deletion.
+				return;
+			}
 			assert(
-				pendingClear !== undefined &&
-					pendingClear.type === "clear" &&
-					localOpMetadata.type === "clear",
+				pendingClear.type === "clear" && localOpMetadata.type === "clear",
 				"Unexpected clear rollback",
 			);
 			for (const [key] of this.internalIterator()) {
@@ -2443,9 +2447,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				(entry) => entry.type !== "clear" && entry.key === directoryOp.key,
 			);
 			const pendingEntry = this.pendingStorageData[pendingEntryIndex];
+			if (pendingEntry === undefined) {
+				// If we can't find a pending entry then it's possible that we deleted an ack'd subdir
+				// from a remote delete subdir op. If that's the case then there is nothing to rollback
+				// since the pending data was removed with the subdirectory deletion.
+				return;
+			}
 			assert(
-				pendingEntry !== undefined &&
-					(pendingEntry.type === "delete" || pendingEntry.type === "lifetime"),
+				pendingEntry.type === "delete" || pendingEntry.type === "lifetime",
 				"Unexpected pending data for set/delete op",
 			);
 			if (pendingEntry.type === "delete") {
