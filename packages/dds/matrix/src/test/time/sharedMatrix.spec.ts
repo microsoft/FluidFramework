@@ -12,11 +12,10 @@ import {
 	type BenchmarkTimer,
 	type BenchmarkTimingOptions,
 } from "@fluid-tools/benchmark";
-import type { IMatrixConsumer } from "@tiny-calc/nano";
 
 import type { ISharedMatrix } from "../../index.js";
 import { createTestMatrix, type TestMatrixOptions } from "../performanceTestUtilities.js";
-import { UndoRedoStackManager } from "../undoRedoStackManager.js";
+import type { UndoRedoStackManager } from "../undoRedoStackManager.js";
 
 /**
  * Note: These benchmarks are designed to closely match the benchmarks in SharedTree.
@@ -82,37 +81,25 @@ function runBenchmark({
 				assert.equal(state.iterationsPerBatch, 1, "Expected exactly one iteration per batch");
 
 				// Create matrix
-				const localMatrix = createTestMatrix({
+				const { matrix, undoRedoStack, cleanUp } = createTestMatrix({
 					matrixSize,
 					initialCellValue,
 				});
 
-				// Configure event listeners
-				const eventListeners: IMatrixConsumer<string> = {
-					rowsChanged: () => {},
-					colsChanged: () => {},
-					cellsChanged: () => {},
-				};
-				localMatrix.openMatrix(eventListeners);
-
-				// Configure undo/redo
-				const undoRedoStack = new UndoRedoStackManager();
-				localMatrix.openUndo(undoRedoStack);
-
-				beforeOperation?.(localMatrix, undoRedoStack);
+				beforeOperation?.(matrix, undoRedoStack);
 
 				// Operation
 				const before = state.timer.now();
-				operation(localMatrix, undoRedoStack);
+				operation(matrix, undoRedoStack);
 				const after = state.timer.now();
 
 				// Measure
 				duration = state.timer.toSeconds(before, after);
 
-				afterOperation?.(localMatrix, undoRedoStack);
+				afterOperation?.(matrix, undoRedoStack);
 
 				// Cleanup
-				localMatrix.closeMatrix(eventListeners);
+				cleanUp();
 			} while (state.recordBatch(duration));
 		},
 		minBatchDurationSeconds,

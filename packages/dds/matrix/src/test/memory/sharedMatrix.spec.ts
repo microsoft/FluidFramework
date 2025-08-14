@@ -10,11 +10,10 @@ import {
 	benchmarkMemory,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
-import type { IMatrixConsumer } from "@tiny-calc/nano";
 
 import type { ISharedMatrix } from "../../index.js";
 import { createTestMatrix, type TestMatrixOptions } from "../performanceTestUtilities.js";
-import { UndoRedoStackManager } from "../undoRedoStackManager.js";
+import type { UndoRedoStackManager } from "../undoRedoStackManager.js";
 
 /**
  * Note: These benchmarks are designed to closely match the benchmarks in SharedTree.
@@ -24,51 +23,6 @@ import { UndoRedoStackManager } from "../undoRedoStackManager.js";
 
 // TODOs (AB#46340):
 // - unify with time measurement tests (in terms of API)
-
-/**
- * Initializes a SharedMatrix for testing.
- * @remarks Includes initialization of the undo/redo stack, as well as mock event subscriptions.
- */
-function createMatrix(options: TestMatrixOptions): {
-	/**
-	 * The initialized matrix.
-	 */
-	matrix: ISharedMatrix;
-
-	/**
-	 * The undo/redo stack manager for the matrix.
-	 */
-	undoRedoStack: UndoRedoStackManager;
-
-	/**
-	 * Cleanup function to run after the test to close the matrix and release resources.
-	 */
-	cleanUp: () => void;
-} {
-	const matrix = createTestMatrix(options);
-
-	// Configure event listeners
-	const eventListeners: IMatrixConsumer<string> = {
-		rowsChanged: () => {},
-		colsChanged: () => {},
-		cellsChanged: () => {},
-	};
-	matrix.openMatrix(eventListeners);
-
-	// Configure undo/redo
-	const undoRedoStack = new UndoRedoStackManager();
-	matrix.openUndo(undoRedoStack);
-
-	const cleanUp = (): void => {
-		matrix.closeMatrix(eventListeners);
-	};
-
-	return {
-		matrix,
-		undoRedoStack,
-		cleanUp,
-	};
-}
 
 /**
  * {@link createBenchmark} options.
@@ -126,7 +80,7 @@ function createBenchmark({
 		}
 
 		beforeIteration(): void {
-			const { matrix, undoRedoStack, cleanUp } = createMatrix({
+			const { matrix, undoRedoStack, cleanUp } = createTestMatrix({
 				matrixSize,
 				initialCellValue,
 			});

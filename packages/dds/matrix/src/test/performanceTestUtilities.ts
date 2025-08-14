@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import type { IMatrixConsumer } from "@tiny-calc/nano";
 
 import type { ISharedMatrix } from "../index.js";
 
+import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 import { matrixFactory } from "./utils.js";
 
 /**
@@ -26,13 +27,28 @@ export interface TestMatrixOptions {
 }
 
 /**
- * Creates a local matrix with the specified size and for dense test matrix given initial value.
- * Otherwise, leaving the initial value as undefined will create a sparse matrix.
+ * Initializes a SharedMatrix for testing.
+ * @remarks Includes initialization of the undo/redo stack, as well as mock event subscriptions.
  */
-export function createTestMatrix({
-	matrixSize,
-	initialCellValue,
-}: TestMatrixOptions): ISharedMatrix & IChannel {
+export function createTestMatrix(options: TestMatrixOptions): {
+	/**
+	 * The initialized matrix.
+	 */
+	matrix: ISharedMatrix;
+
+	/**
+	 * The undo/redo stack manager for the matrix.
+	 */
+	undoRedoStack: UndoRedoStackManager;
+
+	/**
+	 * Cleanup function to run after the test to close the matrix and release resources.
+	 */
+	cleanUp: () => void;
+} {
+	const { matrixSize, initialCellValue } = options;
+
+	// Create and initialize the matrix
 	const matrix = matrixFactory.create(new MockFluidDataStoreRuntime(), "test-matrix");
 	matrix.insertRows(0, matrixSize);
 	matrix.insertCols(0, matrixSize);
@@ -44,5 +60,26 @@ export function createTestMatrix({
 			}
 		}
 	}
-	return matrix;
+
+	// Configure event listeners
+	const eventListeners: IMatrixConsumer<string> = {
+		rowsChanged: () => {},
+		colsChanged: () => {},
+		cellsChanged: () => {},
+	};
+	matrix.openMatrix(eventListeners);
+
+	// Configure undo/redo
+	const undoRedoStack = new UndoRedoStackManager();
+	matrix.openUndo(undoRedoStack);
+
+	const cleanUp = (): void => {
+		matrix.closeMatrix(eventListeners);
+	};
+
+	return {
+		matrix,
+		undoRedoStack,
+		cleanUp,
+	};
 }
