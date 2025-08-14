@@ -12,6 +12,7 @@ import {
 	type BenchmarkTimer,
 	type BenchmarkTimingOptions,
 } from "@fluid-tools/benchmark";
+import type { Test } from "mocha";
 
 import { createTestMatrix, type MatrixBenchmarkOptions } from "../performanceTestUtilities.js";
 
@@ -43,8 +44,8 @@ function runBenchmark({
 	afterOperation,
 	minBatchDurationSeconds = 0,
 	maxBenchmarkDurationSeconds,
-}: BenchmarkConfig): void {
-	benchmark({
+}: BenchmarkConfig): Test {
+	return benchmark({
 		type: BenchmarkType.Measurement,
 		title,
 		benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
