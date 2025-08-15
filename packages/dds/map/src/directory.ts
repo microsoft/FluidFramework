@@ -626,11 +626,10 @@ export class SharedDirectory
 	}
 
 	/**
-	 * Similar to `getWorkingDirectory`, but will return subdirectories with pending delete ops.
+	 * Similar to `getWorkingDirectory`, but returns the directory to use for op processing.
+	 * This differs as it may include directories that are pending deletion.
 	 */
-	private getWorkingDirectoryEvenIfPendingDelete(
-		relativePath: string,
-	): IDirectory | undefined {
+	private getWorkingDirectoryForOpProcessing(relativePath: string): IDirectory | undefined {
 		const absolutePath = this.makeAbsolute(relativePath);
 		if (absolutePath === posix.sep) {
 			return this.root;
@@ -878,7 +877,7 @@ export class SharedDirectory
 				local: boolean,
 				localOpMetadata: ClearLocalOpMetadata | undefined,
 			) => {
-				const subdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
+				const subdir = this.getWorkingDirectoryForOpProcessing(op.path) as
 					| SubDirectory
 					| undefined;
 				if (
@@ -905,7 +904,7 @@ export class SharedDirectory
 				local: boolean,
 				localOpMetadata: EditLocalOpMetadata | undefined,
 			) => {
-				const subdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
+				const subdir = this.getWorkingDirectoryForOpProcessing(op.path) as
 					| SubDirectory
 					| undefined;
 				if (
@@ -932,7 +931,7 @@ export class SharedDirectory
 				local: boolean,
 				localOpMetadata: EditLocalOpMetadata | undefined,
 			) => {
-				const subdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
+				const subdir = this.getWorkingDirectoryForOpProcessing(op.path) as
 					| SubDirectory
 					| undefined;
 				if (
@@ -962,7 +961,7 @@ export class SharedDirectory
 				local: boolean,
 				localOpMetadata: SubDirLocalOpMetadata | undefined,
 			) => {
-				const parentSubdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
+				const parentSubdir = this.getWorkingDirectoryForOpProcessing(op.path) as
 					| SubDirectory
 					| undefined;
 				if (
@@ -979,7 +978,7 @@ export class SharedDirectory
 				op: IDirectoryCreateSubDirectoryOperation,
 				localOpMetadata: SubDirLocalOpMetadata,
 			) => {
-				const parentSubdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
+				const parentSubdir = this.getWorkingDirectoryForOpProcessing(op.path) as
 					| SubDirectory
 					| undefined;
 				if (parentSubdir) {
@@ -996,7 +995,7 @@ export class SharedDirectory
 				local: boolean,
 				localOpMetadata: SubDirLocalOpMetadata | undefined,
 			) => {
-				const parentSubdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
+				const parentSubdir = this.getWorkingDirectoryForOpProcessing(op.path) as
 					| SubDirectory
 					| undefined;
 				if (
@@ -1013,7 +1012,7 @@ export class SharedDirectory
 				op: IDirectoryDeleteSubDirectoryOperation,
 				localOpMetadata: SubDirLocalOpMetadata,
 			) => {
-				const parentSubdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
+				const parentSubdir = this.getWorkingDirectoryForOpProcessing(op.path) as
 					| SubDirectory
 					| undefined;
 				if (parentSubdir) {
@@ -1890,7 +1889,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	};
 
 	/**
-	 * Similar to {@link getSubDirectory}, but also including
+	 * Gets the most "recent" subdirectory even if it has pending delete operations. This includes
+	 * pending subdirectories when there is also a pending delete op after the pending create op.
 	 */
 	public readonly getSubDirectoryEvenIfPendingDelete = (
 		subdirName: string,
