@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 import { getZipObjectFromArtifact } from "@fluidframework/bundle-size-tools";
 import type { WebApi } from "azure-devops-node-api";
 import { BuildResult } from "azure-devops-node-api/interfaces/BuildInterfaces.js";

@@ -26,7 +26,7 @@ import {
 	TestTenantManager,
 	TestThrottler,
 } from "@fluidframework/server-test-utils";
-import assert from "assert";
+import { strict as assert } from "assert";
 import express from "express";
 import nconf from "nconf";
 import Sinon from "sinon";

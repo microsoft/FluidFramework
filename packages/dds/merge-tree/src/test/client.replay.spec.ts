@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 import * as fs from "node:fs";
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";

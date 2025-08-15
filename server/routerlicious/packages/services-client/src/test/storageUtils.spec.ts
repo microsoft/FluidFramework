@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { fromUtf8ToBase64, stringToBuffer } from "@fluidframework/common-utils";
 import {
 	buildTreePath,
