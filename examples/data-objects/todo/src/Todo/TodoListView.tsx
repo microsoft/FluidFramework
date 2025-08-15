@@ -13,7 +13,7 @@ import "./style.css";
 import { TodoItemView } from "../TodoItem/index.js";
 import { useTree } from "../Utils/index.js";
 
-import { type TodoListDataObject } from "./index.js";
+import type { TodoListDataObject } from "./DataObject.js";
 
 export interface TodoListProps {
 	readonly todoModel: TodoListDataObject;

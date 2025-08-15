@@ -139,7 +139,8 @@ declare namespace ApiItemUtilities {
         isDeprecated,
         isOptional,
         isReadonly,
-        isStatic
+        isStatic,
+        isTypeLike
     }
 }
 export { ApiItemUtilities }
@@ -165,6 +166,9 @@ export { ApiPackage }
 
 // @public
 export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
+
+// @public
+export type ApiTypeLike = ApiInterface | ApiClass | ApiTypeAlias;
 
 // @public
 function createBreadcrumbParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): Paragraph;
@@ -375,6 +379,9 @@ function isReadonly(apiItem: ApiItem): boolean;
 
 // @public
 function isStatic(apiItem: ApiItem): boolean;
+
+// @public
+function isTypeLike(apiItem: ApiItem): apiItem is ApiTypeLike;
 
 declare namespace LayoutUtilities {
     export {
