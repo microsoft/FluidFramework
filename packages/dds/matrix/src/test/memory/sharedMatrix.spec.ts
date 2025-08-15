@@ -329,7 +329,9 @@ describe("SharedMatrix memory usage", () => {
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 							}
 						},
-					}); // Test the memory usage of the SharedMatrix for undoing the insertion of a row and a column and then removing them right away for a given number of times.
+					});
+
+					// Test the memory usage of the SharedMatrix for undoing the insertion of a row and a column and then removing them right away for a given number of times.
 					runBenchmark({
 						title: `Undo insert and remove a row and a column ${count} times`,
 						matrixSize,
@@ -398,7 +400,9 @@ describe("SharedMatrix memory usage", () => {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 							}
 						},
-					}); // Test the memory usage of the SharedMatrix for undoing the removal of a column in the middle for a given number of times.
+					});
+
+					// Test the memory usage of the SharedMatrix for undoing the removal of a column in the middle for a given number of times.
 					runBenchmark({
 						title: `Undo remove the middle column ${count} times`,
 						matrixSize,
