@@ -135,7 +135,7 @@ describe("TableFactory unit tests", () => {
 				validateUsageError(/Column with ID "column-0" is not contained in a table./),
 			);
 
-			table.insertColumn({ column: column0 });
+			table.insertColumns({ columns: [column0] });
 
 			// No rows or cells have been inserted yet.
 			assert.equal(column0.getCells().length, 0);
@@ -204,7 +204,7 @@ describe("TableFactory unit tests", () => {
 			const table = treeView.root;
 
 			const row = new Row({ id: "row-0", cells: {} });
-			table.insertRow({ row });
+			table.insertRows({ rows: [row] });
 
 			// No columns or cells have been inserted yet.
 			assert.equal(row.getCells().length, 0);
@@ -396,110 +396,6 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
-	describe("insertColumn", () => {
-		it("Insert new column into empty list", () => {
-			const { treeView, Table } = createTableTree();
-			treeView.initialize(Table.empty());
-
-			treeView.root.insertColumn({
-				index: 0,
-				column: { id: "column-0", props: {} },
-			});
-
-			assertEqualTrees(treeView.root, {
-				columns: [
-					{
-						id: "column-0",
-						props: {},
-					},
-				],
-				rows: [],
-			});
-		});
-
-		it("Insert new column into non-empty list", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				rows: [],
-				columns: [
-					{ id: "column-a", props: {} },
-					{ id: "column-b", props: {} },
-				],
-			});
-
-			treeView.root.insertColumn({
-				index: 1,
-				column: { id: "column-c", props: {} },
-			});
-
-			assertEqualTrees(treeView.root, {
-				columns: [
-					{
-						id: "column-a",
-						props: {},
-					},
-					{
-						id: "column-c",
-						props: {},
-					},
-					{
-						id: "column-b",
-						props: {},
-					},
-				],
-				rows: [],
-			});
-		});
-
-		it("Append new column", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				rows: [],
-				columns: [
-					{ id: "column-a", props: {} },
-					{ id: "column-b", props: {} },
-				],
-			});
-
-			// By not specifying an index, the column should be appended to the end of the list.
-			treeView.root.insertColumn({
-				column: { id: "column-c", props: {} },
-			});
-
-			assertEqualTrees(treeView.root, {
-				columns: [
-					{
-						id: "column-a",
-						props: {},
-					},
-					{
-						id: "column-b",
-						props: {},
-					},
-					{
-						id: "column-c",
-						props: {},
-					},
-				],
-				rows: [],
-			});
-		});
-
-		it("Inserting column at out-of-bounds index fails", () => {
-			const { treeView, Table } = createTableTree();
-			treeView.initialize(Table.empty());
-
-			assert.throws(
-				() =>
-					treeView.root.insertColumn({
-						index: 1,
-						column: { props: {} },
-					}),
-				validateUsageError(/The index specified for insertion is out of bounds./),
-			);
-		});
-	});
-
 	describe("insertColumns", () => {
 		it("Insert empty columns list", () => {
 			const { treeView, Table } = createTableTree();
@@ -641,147 +537,6 @@ describe("TableFactory unit tests", () => {
 				],
 				rows: [],
 			});
-		});
-	});
-
-	describe("insertRow", () => {
-		it("Insert new row into empty list", () => {
-			const { treeView, Table } = createTableTree();
-			treeView.initialize(Table.empty());
-
-			treeView.root.insertRow({
-				index: 0,
-				row: { id: "row-0", cells: {}, props: {} },
-			});
-
-			assertEqualTrees(treeView.root, {
-				columns: [],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-				],
-			});
-		});
-
-		it("Insert new row into non-empty list", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				columns: [],
-				rows: [
-					{ id: "row-a", cells: {}, props: {} },
-					{ id: "row-b", cells: {}, props: {} },
-				],
-			});
-
-			treeView.root.insertRow({
-				index: 1,
-				row: { id: "row-c", cells: {}, props: {} },
-			});
-
-			assertEqualTrees(treeView.root, {
-				columns: [],
-				rows: [
-					{
-						id: "row-a",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-c",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-b",
-						cells: {},
-						props: {},
-					},
-				],
-			});
-		});
-
-		it("Append new row", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				columns: [],
-				rows: [
-					{ id: "row-a", cells: {}, props: {} },
-					{ id: "row-b", cells: {}, props: {} },
-				],
-			});
-
-			// By not specifying an index, the column should be appended to the end of the list.
-			treeView.root.insertRow({
-				row: { id: "row-c", cells: {}, props: {} },
-			});
-
-			assertEqualTrees(treeView.root, {
-				columns: [],
-				rows: [
-					{
-						id: "row-a",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-b",
-						cells: {},
-						props: {},
-					},
-					{
-						id: "row-c",
-						cells: {},
-						props: {},
-					},
-				],
-			});
-		});
-
-		it("Inserting row at out-of-bounds index fails", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				columns: [],
-				rows: [],
-			});
-
-			assert.throws(
-				() =>
-					treeView.root.insertRow({
-						index: 1,
-						row: { cells: {}, props: {} },
-					}),
-				validateUsageError(/The index specified for insertion is out of bounds./),
-			);
-		});
-
-		it("Inserting a row with cells that have no matching column fails", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
-				rows: [],
-				columns: [{ id: "column-a", props: {} }],
-			});
-
-			assert.throws(
-				() =>
-					treeView.root.insertRow({
-						row: {
-							id: "row-a",
-							cells: {
-								"column-a": { value: "Hello" },
-								"column-b": { value: "world!" },
-							},
-						},
-					}),
-				validateUsageError(
-					/Attempted to insert row a cell under column ID "column-b", but the table does not contain a column with that ID./,
-				),
-			);
-
-			// Ensure the row was not inserted
-			assert(treeView.root.rows.length === 0);
 		});
 	});
 
@@ -1042,9 +797,95 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
-	describe("removeColumn", () => {
-		it("Remove column by ID", () => {
-			const { treeView } = createTableTree();
+	describe("removeColumns", () => {
+		it("Remove empty list", () => {
+			const { treeView, Column, Row } = createTableTree();
+			treeView.initialize({
+				columns: [
+					new Column({
+						id: "column-0",
+						props: {},
+					}),
+				],
+				rows: [
+					new Row({
+						id: "row-0",
+						cells: {
+							"column-0": { value: "Hello world!" },
+						},
+						props: {},
+					}),
+				],
+			});
+
+			treeView.root.removeColumns([]);
+			assertEqualTrees(treeView.root, {
+				columns: [{ id: "column-0", props: {} }],
+				rows: [
+					{
+						id: "row-0",
+						cells: {
+							"column-0": { value: "Hello world!" },
+						},
+						props: {},
+					},
+				],
+			});
+		});
+
+		it("Remove single column", () => {
+			const { treeView, Column, Row } = createTableTree();
+			const column0 = new Column({ id: "column-0", props: {} });
+			const column1 = new Column({ id: "column-1", props: {} });
+			treeView.initialize({
+				columns: [column0, column1],
+				rows: [
+					new Row({
+						id: "row-0",
+						cells: {
+							"column-0": { value: "Hello world!" },
+						},
+						props: {},
+					}),
+				],
+			});
+
+			// Remove column0 (by node)
+			treeView.root.removeColumns([column0]);
+			assertEqualTrees(treeView.root, {
+				columns: [{ id: "column-1", props: {} }],
+				rows: [
+					{
+						id: "row-0",
+						cells: {
+							"column-0": { value: "Hello world!" },
+						},
+						props: {},
+					},
+				],
+			});
+
+			// Remove column1 (by ID)
+			treeView.root.removeColumns(["column-1"]);
+			assertEqualTrees(treeView.root, {
+				columns: [],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+						props: {},
+					},
+				],
+			});
+		});
+
+		// TODO: update case to have some cells populated to verify cell deletion behavior
+		it("Remove multiple columns", () => {
+			const { treeView, Column } = createTableTree();
+			const column0 = new Column({ id: "column-0", props: {} });
+			const column1 = new Column({ id: "column-1", props: {} });
+			const column2 = new Column({ id: "column-2", props: {} });
+			const column3 = new Column({ id: "column-3", props: {} });
 			treeView.initialize({
 				columns: [
 					{
@@ -1063,61 +904,27 @@ describe("TableFactory unit tests", () => {
 				],
 			});
 
-			const removed = treeView.root.removeColumn("column-0");
-			assertEqualTrees(removed, {
-				id: "column-0",
-				props: { label: "Column 0" },
-			});
-			assertEqualTrees(treeView.root, {
-				columns: [],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-				],
-			});
-		});
+			const table = treeView.root;
 
-		it("Remove column by node", () => {
-			const { treeView } = createTableTree();
-			treeView.initialize({
+			// Remove columns 1 and 3 (by node)
+			table.removeColumns([column1, column3]);
+			assertEqualTrees(table, {
 				columns: [
-					{
-						id: "column-0",
-						props: { label: "Column 0" },
-					},
+					{ id: "column-0", props: {} },
+					{ id: "column-2", props: {} },
 				],
-				rows: [
-					{
-						id: "row-0",
-						cells: {
-							"column-0": { value: "Hello world!" },
-						},
-						props: {},
-					},
-				],
+				rows: [],
 			});
 
-			const removed = treeView.root.removeColumn(treeView.root.columns[0]);
-			assertEqualTrees(removed, {
-				id: "column-0",
-				props: { label: "Column 0" },
-			});
-			assertEqualTrees(treeView.root, {
+			// Remove columns 2 and 0 (by ID)
+			treeView.root.removeColumns([column2.id, column0.id]);
+			assertEqualTrees(table, {
 				columns: [],
-				rows: [
-					{
-						id: "row-0",
-						cells: {},
-						props: {},
-					},
-				],
+				rows: [],
 			});
 		});
 
-		it("Removing a column that does not exist in the table errors", () => {
+		it("Removing a single column that doesn't exist on table errors", () => {
 			const { treeView, Column } = createTableTree();
 			treeView.initialize({
 				columns: [],
@@ -1125,26 +932,42 @@ describe("TableFactory unit tests", () => {
 			});
 
 			assert.throws(
-				() => treeView.root.removeColumn(new Column({ id: "unhydrated-column", props: {} })),
-				validateUsageError(
-					/Specified column with ID "unhydrated-column" does not exist in the table./,
-				),
+				() => treeView.root.removeColumns([new Column({ id: "column-0", props: {} })]),
+				validateUsageError(/Specified column with ID "column-0" does not exist in the table./),
 			);
+		});
+
+		it("Removing multiple columns errors if at least one column doesn't exist", () => {
+			const { treeView, Column } = createTableTree();
+			const column0 = new Column({ id: "column-0", props: {} });
+			treeView.initialize({
+				columns: [column0],
+				rows: [],
+			});
+
+			assert.throws(
+				() =>
+					treeView.root.removeColumns([column0, new Column({ id: "column-1", props: {} })]),
+				validateUsageError(/Specified column with ID "column-1" does not exist in the table./),
+			);
+
+			// Additionally, `column-0` should not have been removed.
+			assert(treeView.root.columns.length === 1);
 		});
 	});
 
 	describe("removeRows", () => {
 		it("Remove empty list", () => {
-			const { treeView } = createTableTree();
+			const { treeView, Row } = createTableTree();
 			treeView.initialize({
 				columns: [],
-				rows: [],
+				rows: [new Row({ id: "row-0", cells: {}, props: {} })],
 			});
 
-			treeView.root.removeAllRows();
+			treeView.root.removeRows([]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
-				rows: [],
+				rows: [{ id: "row-0", cells: {}, props: {} }],
 			});
 		});
 
@@ -1157,15 +980,15 @@ describe("TableFactory unit tests", () => {
 				rows: [row0, row1],
 			});
 
-			// Remove row0
+			// Remove row0 (by node)
 			treeView.root.removeRows([row0]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
 				rows: [{ id: "row-1", cells: {}, props: {} }],
 			});
 
-			// Remove row1
-			treeView.root.removeRows([row1]);
+			// Remove row1 (by ID)
+			treeView.root.removeRows(["row-1"]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
 				rows: [],
@@ -1183,7 +1006,7 @@ describe("TableFactory unit tests", () => {
 				rows: [row0, row1, row2, row3],
 			});
 
-			// Remove rows 1 and 3
+			// Remove rows 1 and 3 (by node)
 			treeView.root.removeRows([row1, row3]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
@@ -1201,8 +1024,8 @@ describe("TableFactory unit tests", () => {
 				],
 			});
 
-			// Remove rows 0 and 3
-			treeView.root.removeRows([row0, row2]);
+			// Remove rows 2 and 0 (by ID)
+			treeView.root.removeRows([row2.id, row0.id]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
 				rows: [],
@@ -1380,14 +1203,14 @@ describe("TableFactory unit tests", () => {
 			});
 
 			// Add a row
-			treeView.root.insertRow({
-				row: new Row({ id: "row-0", cells: {}, props: {} }),
+			treeView.root.insertRows({
+				rows: [new Row({ id: "row-0", cells: {}, props: {} })],
 			});
 			assert.equal(eventCount, 1);
 
 			// Add a column
-			treeView.root.insertColumn({
-				column: { id: "column-0", props: {} },
+			treeView.root.insertColumns({
+				columns: [{ id: "column-0", props: {} }],
 			});
 			assert.equal(eventCount, 2);
 
@@ -1442,7 +1265,7 @@ describe("TableFactory unit tests", () => {
 			assert.equal(eventCount, 1); // Event should not have fired for column node changes
 
 			// Insert a row
-			table.insertRow({ row: { id: "row-0", cells: {}, props: {} } });
+			table.insertRows({ rows: [{ id: "row-0", cells: {}, props: {} }] });
 			assert.equal(eventCount, 1); // Event should not have fired for row insertion
 
 			// Re-order columns
@@ -1450,7 +1273,7 @@ describe("TableFactory unit tests", () => {
 			assert.equal(eventCount, 2);
 
 			// Remove column
-			table.removeColumn("column-0");
+			table.removeColumns(["column-0"]);
 			assert.equal(eventCount, 3);
 		});
 	});
