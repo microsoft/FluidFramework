@@ -636,15 +636,33 @@ export class SharedDirectory
 			return this.root;
 		}
 
-		let currentSubDir = this.root;
 		const subdirs = absolutePath.slice(1).split(posix.sep);
+		let currentOptimistic: SubDirectory | undefined = this.root;
+		let currentSequencedOnly: SubDirectory | undefined = this.root;
+
 		for (const subdir of subdirs) {
-			currentSubDir = currentSubDir.getSubDirectoryEvenIfPendingDelete(subdir) as SubDirectory;
-			if (!currentSubDir) {
+			// Try optimistic view first (includes pending data)
+			if (currentOptimistic !== undefined) {
+				currentOptimistic = currentOptimistic.getSubDirectoryEvenIfPendingDelete(subdir);
+			}
+
+			// Also try sequenced view in parallel
+			if (currentSequencedOnly !== undefined) {
+				currentSequencedOnly = currentSequencedOnly.sequencedSubdirectories.get(subdir);
+			}
+
+			// If both paths fail, we can't continue
+			if (currentOptimistic === undefined && currentSequencedOnly === undefined) {
 				return undefined;
 			}
 		}
-		return currentSubDir;
+
+		// Prefer optimistic view if available, otherwise fall back to sequenced view.
+		// If we can't find the desired subdirectory within the pending data, we should try
+		// to find it in the ack'd subdirectories. We do this because it's possible that
+		// the pending data deletes the ack'd subdirectory. In this case we should use the
+		// ack'd subdirectory that is pending delete in case the pending delete is rolled back.
+		return currentOptimistic ?? currentSequencedOnly;
 	}
 
 	/**
@@ -1154,7 +1172,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * The sequenced subdirectories the directory is holding independent of any pending
 	 * create/delete subdirectory operations.
 	 */
-	private readonly sequencedSubdirectories = new Map<string, SubDirectory>();
+	private readonly _sequencedSubdirectories = new Map<string, SubDirectory>();
 
 	/**
 	 * Assigns a unique ID to each subdirectory created locally but pending for acknowledgement, facilitating the tracking
@@ -1350,10 +1368,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.registerEventsOnSubDirectory(subDir, subdirName);
 
 		// If we are not attached, don't submit the op and directory commit
-		// the subdir to sequencedSubdirectories.
+		// the subdir to _sequencedSubdirectories.
 		if (!this.directory.isAttached()) {
 			if (isNewSubDirectory) {
-				this.sequencedSubdirectories.set(subdirName, subDir);
+				this._sequencedSubdirectories.set(subdirName, subDir);
 				this.emit("subDirectoryCreated", subdirName, true, this);
 			}
 			return subDir;
@@ -1420,8 +1438,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.throwIfDisposed();
 
 		if (!this.directory.isAttached()) {
-			const previousValue = this.sequencedSubdirectories.get(subdirName);
-			const successfullyRemoved = this.sequencedSubdirectories.delete(subdirName);
+			const previousValue = this._sequencedSubdirectories.get(subdirName);
+			const successfullyRemoved = this._sequencedSubdirectories.delete(subdirName);
 			// Only emit if we actually deleted something.
 			if (successfullyRemoved) {
 				this.disposeSubDirectoryTree(previousValue);
@@ -1465,7 +1483,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// This means that we should return both sequenced and pending subdirectories
 		// that do not also have a pending deletion.
 		const sequencedSubdirs: [string, SubDirectory][] = [];
-		const sequencedSubdirNames = new Set([...this.sequencedSubdirectories.keys()]);
+		const sequencedSubdirNames = new Set([...this._sequencedSubdirectories.keys()]);
 		for (const subdirName of sequencedSubdirNames) {
 			const optimisticSubdir = this.getOptimisticSubDirectory(subdirName);
 			if (optimisticSubdir !== undefined) {
@@ -1723,7 +1741,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 	/**
 	 * A data structure containing all local pending subdirectory create/deletes, which is used in combination
-	 * with the sequencedSubdirectories to compute optimistic values.
+	 * with the _sequencedSubdirectories to compute optimistic values.
 	 */
 	private readonly pendingSubDirectoryData: PendingSubDirectoryEntry[] = [];
 
@@ -1854,7 +1872,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		);
 		let subdir: SubDirectory | undefined;
 		if (latestPendingEntry === undefined) {
-			subdir = this.sequencedSubdirectories.get(subdirName);
+			subdir = this._sequencedSubdirectories.get(subdirName);
 		} else if (latestPendingEntry.type === "createSubDirectory") {
 			subdir = latestPendingEntry.subdir;
 			assert(subdir !== undefined, "Subdirectory should exist in pending data");
@@ -1882,7 +1900,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			(entry) => entry.subdirName === subdirName && entry.type === "createSubDirectory",
 		);
 		if (latestPendingEntry === undefined) {
-			return this.sequencedSubdirectories.get(subdirName);
+			return this._sequencedSubdirectories.get(subdirName);
 		} else {
 			assert(
 				latestPendingEntry.type === "createSubDirectory",
@@ -1893,6 +1911,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			return latestPendingSubdirCreate;
 		}
 	};
+
+	public get sequencedSubdirectories(): ReadonlyMap<string, SubDirectory> {
+		this.throwIfDisposed();
+		return this._sequencedSubdirectories;
+	}
 
 	/**
 	 * Process a clear operation.
@@ -2097,7 +2120,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
 			subDir = pendingEntry.subdir;
 
-			const existingSubdir = this.sequencedSubdirectories.get(op.subdirName);
+			const existingSubdir = this._sequencedSubdirectories.get(op.subdirName);
 			if (existingSubdir !== undefined) {
 				// If the subdirectory already exists, we don't need to create it again.
 				// This can happen if remote clients also create the same subdir and we processed
@@ -2109,7 +2132,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				this.undisposeSubdirectoryTree(subDir);
 			}
 
-			this.sequencedSubdirectories.set(op.subdirName, subDir);
+			this._sequencedSubdirectories.set(op.subdirName, subDir);
 		} else {
 			subDir = this.getOptimisticSubDirectory(op.subdirName, true);
 			if (subDir === undefined) {
@@ -2132,7 +2155,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				subDir.clientIds.add(msg.clientId);
 			}
 			this.registerEventsOnSubDirectory(subDir, op.subdirName);
-			this.sequencedSubdirectories.set(op.subdirName, subDir);
+			this._sequencedSubdirectories.set(op.subdirName, subDir);
 
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (!this.pendingSubDirectoryData.some((entry) => entry.subdirName === op.subdirName)) {
@@ -2171,7 +2194,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			return;
 		}
 
-		const previousValue = this.sequencedSubdirectories.get(op.subdirName);
+		const previousValue = this._sequencedSubdirectories.get(op.subdirName);
 		if (previousValue === undefined) {
 			// We are trying to delete a subdirectory that does not exist.
 			// If this is a local delete, we should remove the pending delete entry.
@@ -2193,7 +2216,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			return;
 		}
 
-		this.sequencedSubdirectories.delete(op.subdirName);
+		this._sequencedSubdirectories.delete(op.subdirName);
 		this.disposeSubDirectoryTree(previousValue);
 
 		if (local) {
@@ -2401,7 +2424,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	public populateSubDirectory(subdirName: string, newSubDir: SubDirectory): void {
 		this.throwIfDisposed();
 		this.registerEventsOnSubDirectory(newSubDir, subdirName);
-		this.sequencedSubdirectories.set(subdirName, newSubDir);
+		this._sequencedSubdirectories.set(subdirName, newSubDir);
 	}
 
 	/**
@@ -2631,7 +2654,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	private getSubdirectoriesEvenIfDisposed(): IterableIterator<[string, IDirectory]> {
 		const sequencedSubdirs: [string, SubDirectory][] = [];
-		const sequencedSubdirNames = new Set([...this.sequencedSubdirectories.keys()]);
+		const sequencedSubdirNames = new Set([...this._sequencedSubdirectories.keys()]);
 		for (const subdirName of sequencedSubdirNames) {
 			const optimisticSubdir = this.getOptimisticSubDirectory(subdirName, true);
 			if (optimisticSubdir !== undefined) {
@@ -2675,7 +2698,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.seqData.seq = -1;
 		this.seqData.clientSeq = -1;
 		this.sequencedStorageData.clear();
-		this.sequencedSubdirectories.clear();
+		this._sequencedSubdirectories.clear();
 		this.clientIds.clear();
 		this.clientIds.add(this.runtime.clientId ?? "detached");
 	}

@@ -42,7 +42,6 @@ describe("Local Server Stress", () => {
 		configurations: { "Fluid.Container.enableOfflineLoad": true },
 		skip: [
 			...[30, 69], // timeout
-			...[79], // Number of subDirectories not same
 		],
 	});
 });
