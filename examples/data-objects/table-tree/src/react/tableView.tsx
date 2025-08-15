@@ -8,7 +8,7 @@ import { Add24Regular } from "@fluentui/react-icons";
 import React, { useState, DragEvent } from "react";
 
 import { TableDataObject } from "../dataObject.js";
-import { Column } from "../schema.js";
+import { Column, Row } from "../schema.js";
 
 import { TableHeaderView } from "./tableHeaderView.js";
 import { TableRowView } from "./tableRowView.js";
@@ -47,26 +47,28 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 	const rows = [...table.rows];
 
 	const handleAppendNewRow = (): void => {
-		table.insertRow({
-			row: { cells: {} },
+		table.insertRows({
+			rows: [new Row({ cells: {} })],
 		});
 	};
 
 	const handleRemoveRow = (index: number): void => {
 		if (index >= 0 && index < rows.length) {
-			table.removeRow(table.rows[index]);
+			// TODO: use index-based removal API once that has been added.
+			table.removeRows([table.rows[index]]);
 		}
 	};
 
 	const handleAppendNewColumn = (newColumn: Column): void => {
-		table.insertColumn({
-			column: newColumn,
+		table.insertColumns({
+			columns: [newColumn],
 		});
 	};
 
 	const handleRemoveColumn = (index: number): void => {
 		if (index >= 0 && index < columns.length) {
-			table.removeColumn(table.columns[index]);
+			// TODO: use index-based removal API once that has been added.
+			table.removeColumns([table.columns[index]]);
 		}
 	};
 

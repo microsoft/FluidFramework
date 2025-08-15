@@ -163,7 +163,10 @@ describe("SharedTree table APIs execution time", () => {
 					operation: (table) => {
 						for (let i = 0; i < count; i++) {
 							const column = new Column({});
-							table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
+							table.insertColumns({
+								index: Math.floor(table.columns.length / 2),
+								columns: [column],
+							});
 						}
 					},
 					maxBenchmarkDurationSeconds,
@@ -177,7 +180,10 @@ describe("SharedTree table APIs execution time", () => {
 					beforeOperation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							const column = new Column({});
-							table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
+							table.insertColumns({
+								index: Math.floor(table.columns.length / 2),
+								columns: [column],
+							});
 						}
 						assert(undoRedoManager.canUndo);
 					},
@@ -200,7 +206,10 @@ describe("SharedTree table APIs execution time", () => {
 					beforeOperation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							const column = new Column({});
-							table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
+							table.insertColumns({
+								index: Math.floor(table.columns.length / 2),
+								columns: [column],
+							});
 						}
 						for (let i = 0; i < count; i++) {
 							undoRedoManager.undo();
@@ -229,7 +238,7 @@ describe("SharedTree table APIs execution time", () => {
 					operation: (table) => {
 						for (let i = 0; i < count; i++) {
 							const row = new Row({ cells: {} });
-							table.insertRow({ index: Math.floor(table.rows.length / 2), row });
+							table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 						}
 					},
 					maxBenchmarkDurationSeconds,
@@ -243,7 +252,7 @@ describe("SharedTree table APIs execution time", () => {
 					beforeOperation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							const row = new Row({ cells: {} });
-							table.insertRow({ index: Math.floor(table.rows.length / 2), row });
+							table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 						}
 						assert(undoRedoManager.canUndo);
 					},
@@ -266,7 +275,7 @@ describe("SharedTree table APIs execution time", () => {
 					beforeOperation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							const row = new Row({ cells: {} });
-							table.insertRow({ index: Math.floor(table.rows.length / 2), row });
+							table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 						}
 						for (let i = 0; i < count; i++) {
 							undoRedoManager.undo();
@@ -296,8 +305,11 @@ describe("SharedTree table APIs execution time", () => {
 						for (let i = 0; i < count; i++) {
 							const column = new Column({});
 							const row = new Row({ cells: {} });
-							table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
-							table.insertRow({ index: Math.floor(table.rows.length / 2), row });
+							table.insertColumns({
+								index: Math.floor(table.columns.length / 2),
+								columns: [column],
+							});
+							table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 						}
 					},
 					maxBenchmarkDurationSeconds,
@@ -312,8 +324,11 @@ describe("SharedTree table APIs execution time", () => {
 						for (let i = 0; i < count; i++) {
 							const column = new Column({});
 							const row = new Row({ cells: {} });
-							table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
-							table.insertRow({ index: Math.floor(table.rows.length / 2), row });
+							table.insertColumns({
+								index: Math.floor(table.columns.length / 2),
+								columns: [column],
+							});
+							table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 						}
 						assert(undoRedoManager.canUndo);
 					},
@@ -341,8 +356,8 @@ describe("SharedTree table APIs execution time", () => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			const column = table.columns[Math.floor(table.columns.length / 2)];
 				// 			const row = table.rows[Math.floor(table.rows.length / 2)];
-				// 			table.removeColumn(column);
-				// 			table.removeRow(row);
+				// 			table.removeColumns([column]);
+				// 			table.removeRows([row]);
 				// 		}
 				// 		for (let i = 0; i < count; i++) {
 				// 			// Undo remove row
@@ -378,10 +393,13 @@ describe("SharedTree table APIs execution time", () => {
 						for (let i = 0; i < count; i++) {
 							const column = new Column({});
 							const row = new Row({ cells: {} });
-							table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
-							table.insertRow({ index: Math.floor(table.rows.length / 2), row });
-							table.removeColumn(column);
-							table.removeRow(row);
+							table.insertColumns({
+								index: Math.floor(table.columns.length / 2),
+								columns: [column],
+							});
+							table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
+							table.removeColumns([column]);
+							table.removeRows([row]);
 						}
 					},
 					maxBenchmarkDurationSeconds,
@@ -397,10 +415,10 @@ describe("SharedTree table APIs execution time", () => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			const column = new Column({});
 				// 			const row = new Row({ cells: {} });
-				// 			table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
-				// 			table.insertRow({ index: Math.floor(table.rows.length / 2), row });
-				// 			table.removeColumn(column);
-				// 			table.removeRow(row);
+				// 			table.insertColumns({ index: Math.floor(table.columns.length / 2), columns: [column] });
+				// 			table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
+				// 			table.removeColumns([column]);
+				// 			table.removeRows([row]);
 				// 		}
 				// 		assert(undoRedoManager.canUndo);
 				// 	},
@@ -432,10 +450,10 @@ describe("SharedTree table APIs execution time", () => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			const column = new Column({});
 				// 			const row = new Row({ cells: {} });
-				// 			table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
-				// 			table.insertRow({ index: Math.floor(table.rows.length / 2), row });
-				// 			table.removeColumn(column);
-				// 			table.removeRow(row);
+				// 			table.insertColumns({ index: Math.floor(table.columns.length / 2), columns: [column] });
+				// 			table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
+				// 			table.removeColumns([column]);
+				// 			table.removeRows([row]);
 				// 		}
 				// 		for (let i = 0; i < count; i++) {
 				// 			undoRedoManager.undo();
@@ -474,7 +492,7 @@ describe("SharedTree table APIs execution time", () => {
 					operation: (table) => {
 						for (let i = 0; i < count; i++) {
 							const column = table.columns[Math.floor(table.columns.length / 2)];
-							table.removeColumn(column);
+							table.removeColumns([column]);
 						}
 					},
 					maxBenchmarkDurationSeconds,
@@ -490,7 +508,7 @@ describe("SharedTree table APIs execution time", () => {
 				// 	beforeOperation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			const column = table.columns[Math.floor(table.columns.length / 2)];
-				// 			table.removeColumn(column);
+				// 			table.removeColumns([column]);
 				// 		}
 				// 		assert(undoRedoManager.canUndo);
 				// 	},
@@ -514,7 +532,7 @@ describe("SharedTree table APIs execution time", () => {
 				// 	beforeOperation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			const column = table.columns[Math.floor(table.columns.length / 2)];
-				// 			table.removeColumn(column);
+				// 			table.removeColumns([column]);
 				// 		}
 				// 		for (let i = 0; i < count; i++) {
 				// 			undoRedoManager.undo();
@@ -543,7 +561,7 @@ describe("SharedTree table APIs execution time", () => {
 					operation: (table) => {
 						for (let i = 0; i < count; i++) {
 							const row = table.rows[Math.floor(table.rows.length / 2)];
-							table.removeRow(row);
+							table.removeRows([row]);
 						}
 					},
 					maxBenchmarkDurationSeconds,
@@ -557,7 +575,7 @@ describe("SharedTree table APIs execution time", () => {
 					beforeOperation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							const row = table.rows[Math.floor(table.rows.length / 2)];
-							table.removeRow(row);
+							table.removeRows([row]);
 						}
 						assert(undoRedoManager.canUndo);
 					},
@@ -580,7 +598,7 @@ describe("SharedTree table APIs execution time", () => {
 					beforeOperation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							const row = table.rows[Math.floor(table.rows.length / 2)];
-							table.removeRow(row);
+							table.removeRows([row]);
 						}
 						for (let i = 0; i < count; i++) {
 							undoRedoManager.undo();
@@ -603,15 +621,15 @@ describe("SharedTree table APIs execution time", () => {
 			describe(`Column and Row Removal`, () => {
 				// Test the execute time of the SharedTree for removing a row and a column in the middle for a given number of times.
 				runBenchmark({
-					title: `Remove a column and a row in the middle ${count} times`,
+					title: `Remove a single column and a row in the middle ${count} times`,
 					tableSize,
 					initialCellValue,
 					operation: (table) => {
 						for (let i = 0; i < count; i++) {
 							const column = table.columns[Math.floor(table.columns.length / 2)];
-							table.removeColumn(column);
+							table.removeColumns([column]);
 							const row = table.rows[Math.floor(table.rows.length / 2)];
-							table.removeRow(row);
+							table.removeRows([row]);
 						}
 					},
 					maxBenchmarkDurationSeconds,
