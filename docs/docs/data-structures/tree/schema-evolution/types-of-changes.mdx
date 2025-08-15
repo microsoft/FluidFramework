@@ -9,7 +9,9 @@ Understanding which types of schema changes are safe versus breaking is crucial 
 
 ## Compatible Changes
 
-These changes can be made without breaking existing applications or requiring staged rollouts:
+The following changes are backwards compatible at a data level.
+However, it's important that applications carefully consider the application-level consequences of clients running older code collaborating with clients using the new schema.
+For example, [adding allowed types] is a case in which [staged rollouts](./index.mdx#staged-rollouts) are required so that new clients writing the new allowed types do not break older clients that don't know about that type.
 
 ### Adding Optional Fields
 
@@ -60,7 +62,7 @@ class Circle extends factory.object("Circle", {
 
 ### Adding New Allowed Types
 
-Adding new allowed types to existing fields is compatible, but may require a [staged rollout](./index.mdx#staged-rollouts) to be backwards compatible:
+Adding new allowed types to existing fields is compatible, but may require a [staged rollout](./index.mdx#staged-rollouts) for cross-client collaboration:
 
 ```typescript
 // Before
