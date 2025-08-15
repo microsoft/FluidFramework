@@ -857,9 +857,7 @@ describe("TableFactory unit tests", () => {
 				rows: [
 					{
 						id: "row-0",
-						cells: {
-							"column-0": { value: "Hello world!" },
-						},
+						cells: {},
 						props: {},
 					},
 				],
@@ -879,28 +877,22 @@ describe("TableFactory unit tests", () => {
 			});
 		});
 
-		// TODO: update case to have some cells populated to verify cell deletion behavior
 		it("Remove multiple columns", () => {
-			const { treeView, Column } = createTableTree();
+			const { treeView, Column, Row } = createTableTree();
 			const column0 = new Column({ id: "column-0", props: {} });
 			const column1 = new Column({ id: "column-1", props: {} });
 			const column2 = new Column({ id: "column-2", props: {} });
 			const column3 = new Column({ id: "column-3", props: {} });
 			treeView.initialize({
-				columns: [
-					{
-						id: "column-0",
-						props: { label: "Column 0" },
-					},
-				],
+				columns: [column0, column1, column2, column3],
 				rows: [
-					{
+					new Row({
 						id: "row-0",
 						cells: {
 							"column-0": { value: "Hello world!" },
 						},
 						props: {},
-					},
+					}),
 				],
 			});
 
@@ -913,14 +905,28 @@ describe("TableFactory unit tests", () => {
 					{ id: "column-0", props: {} },
 					{ id: "column-2", props: {} },
 				],
-				rows: [],
+				rows: [
+					{
+						id: "row-0",
+						cells: {
+							"column-0": { value: "Hello world!" },
+						},
+						props: {},
+					},
+				],
 			});
 
 			// Remove columns 2 and 0 (by ID)
 			treeView.root.removeColumns([column2.id, column0.id]);
 			assertEqualTrees(table, {
 				columns: [],
-				rows: [],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+						props: {},
+					},
+				],
 			});
 		});
 
