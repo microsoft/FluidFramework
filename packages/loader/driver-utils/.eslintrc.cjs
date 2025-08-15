@@ -4,10 +4,7 @@
  */
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
-		"prettier",
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
@@ -21,6 +18,16 @@ module.exports = {
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {
 				"import/no-nodejs-modules": "off", // Node libraries are OK for test files.
+				// Tests often use flexible types and anonymous functions; relax strict rules here only.
+				"@typescript-eslint/explicit-function-return-type": "off",
+				"@typescript-eslint/explicit-module-boundary-types": "off",
+				"@typescript-eslint/no-explicit-any": "off",
+				"@typescript-eslint/no-unsafe-assignment": "off",
+				"@typescript-eslint/no-unsafe-member-access": "off",
+				"@typescript-eslint/no-unsafe-argument": "off",
+				"@rushstack/no-new-null": "off",
+				"jsdoc/require-description": "off",
+				"no-empty": "off",
 			},
 		},
 	],
