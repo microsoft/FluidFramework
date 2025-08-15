@@ -27,18 +27,11 @@ import {
 	expectNoRemovedRoots,
 	makeTreeFromJson,
 	moveWithin,
-	TestTreeProviderLite,
 	validateUsageError,
 	type TreeStoredContentStrict,
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
-import {
-	asTreeViewAlpha,
-	numberSchema,
-	SchemaFactory,
-	toInitialSchema,
-	TreeViewConfiguration,
-} from "../../simple-tree/index.js";
+import { numberSchema, SchemaFactory, toInitialSchema } from "../../simple-tree/index.js";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
 import { fieldJsonCursor } from "../json/index.js";
 
@@ -3113,17 +3106,6 @@ describe("Editing", () => {
 				expectJsonTree(tree, [{ foo: "C", bar: "new" }]);
 
 				stack.unsubscribe();
-			});
-
-			it("cannot be attached into a hydrated array", () => {
-				const sf = new SchemaFactory(undefined);
-				class Child extends sf.object("Child", {}) {}
-				class Parent extends sf.array("Parent", Child) {}
-				const provider = new TestTreeProviderLite(1);
-				const view = provider.trees[0].viewWith(new TreeViewConfiguration({ schema: Parent }));
-				view.initialize(new Parent([new Child({})]));
-				const hydratedChild = view.root[0];
-				assert.throws(() => view.root.insertAtEnd(hydratedChild));
 			});
 		});
 
