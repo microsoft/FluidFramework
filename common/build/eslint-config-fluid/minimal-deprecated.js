@@ -149,6 +149,34 @@ module.exports = {
 		"@typescript-eslint/no-non-null-assertion": "error",
 		"@typescript-eslint/no-unnecessary-type-assertion": "error",
 
+		"@typescript-eslint/no-restricted-imports": [
+			"error",
+			{
+				paths: [
+					// Prefer strict assertions
+					// See: <https://nodejs.org/api/assert.html#strict-assertion-mode>
+					{
+						name: "assert",
+						importNames: ["default", "assert"],
+						message:
+							'Use `strict` instead. E.g. `import { strict as assert } from "assert";`',
+					},
+					{
+						name: "node:assert",
+						importNames: ["default", "assert"],
+						message:
+							'Use `strict` instead. E.g. `import { strict as assert } from "node:assert";`',
+					},
+					// Don't import from the parent index file.
+					{
+						name: "./index.js",
+						message:
+							"Importing from the parent index file tends to cause cyclic dependencies. Import from a more specific sibling file instead.",
+					},
+				],
+			},
+		],
+
 		"eqeqeq": ["error", "smart"],
 		"import/no-deprecated": "error",
 		"max-len": [
