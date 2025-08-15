@@ -52,13 +52,10 @@ const restrictedImportPatternsForProductionCode = [
 ];
 
 /**
- * "Minimal" eslint configuration.
+ * DO NOT USE.
  *
- * This configuration is primarily intended for use in packages during prototyping / initial setup.
- * Ideally, all of packages in the fluid-framework repository should derive from either the "Recommended" or
- * "Strict" configuration.
- *
- * Production packages **should not** use this configuration.
+ * This configuration is extended by our `recommended` and `strict` configurations,
+ * but this configuration should not be used directly.
  *
  * @deprecated This config is too permissive and should not be used. It will be removed in a future release.
  * Use the "Recommended" or "Strict" configuration instead.
