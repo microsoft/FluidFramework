@@ -168,6 +168,9 @@ export { ApiPackage }
 export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
 
 // @public
+export type ApiTypeLike = ApiInterface | ApiClass | ApiTypeAlias;
+
+// @public
 function createBreadcrumbParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): Paragraph;
 
 // @public
