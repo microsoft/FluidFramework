@@ -929,12 +929,12 @@ export namespace System_TableSchema {
 			}
 
 			private _getColumnIndex(columnOrId: string | ColumnValueType): number | undefined {
-				const columnId = this._getColumnId(columnOrId);
-				// TypeScript is unable to narrow the types correctly here, hence the cast.
-				// See: https://github.com/microsoft/TypeScript/issues/52144
-				const index = this.columns.findIndex(
-					(currentColumn) => (currentColumn as ColumnValueType).id === columnId,
-				);
+				const column = this._getColumn(columnOrId);
+				if (column === undefined) {
+					return undefined;
+				}
+
+				const index = this.columns.indexOf(column);
 				return index === -1 ? undefined : index;
 			}
 
@@ -951,12 +951,11 @@ export namespace System_TableSchema {
 			}
 
 			private _getRowIndex(rowOrId: string | RowValueType): number | undefined {
-				const rowId = this._getRowId(rowOrId);
-				// TypeScript is unable to narrow the types correctly here, hence the cast.
-				// See: https://github.com/microsoft/TypeScript/issues/52144
-				const index = this.rows.findIndex(
-					(currentRow) => (currentRow as RowValueType).id === rowId,
-				);
+				const row = this._getRow(rowOrId);
+				if (row === undefined) {
+					return undefined;
+				}
+				const index = this.rows.indexOf(row);
 				return index === -1 ? undefined : index;
 			}
 
