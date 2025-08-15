@@ -139,7 +139,8 @@ declare namespace ApiItemUtilities {
         isDeprecated,
         isOptional,
         isReadonly,
-        isStatic
+        isStatic,
+        isTypeLike
     }
 }
 export { ApiItemUtilities }
@@ -375,6 +376,9 @@ function isReadonly(apiItem: ApiItem): boolean;
 
 // @public
 function isStatic(apiItem: ApiItem): boolean;
+
+// @public
+function isTypeLike(apiItem: ApiItem): apiItem is ApiTypeLike;
 
 declare namespace LayoutUtilities {
     export {
