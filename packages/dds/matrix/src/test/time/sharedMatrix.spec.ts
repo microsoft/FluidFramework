@@ -26,9 +26,6 @@ import { createTestMatrix, type MatrixBenchmarkOptions } from "../performanceTes
  * {@link runBenchmark} configuration.
  */
 interface BenchmarkConfig extends BenchmarkTimingOptions, MatrixBenchmarkOptions {
-	/**
-	 * {@inheritDoc @fluid-tools/benchmark#BenchmarkTimingOptions.maxBenchmarkDurationSeconds}
-	 */
 	readonly maxBenchmarkDurationSeconds: number;
 }
 
