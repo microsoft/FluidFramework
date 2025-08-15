@@ -1522,17 +1522,9 @@ export namespace TableSchema {
     export function column<const TScope extends string | undefined, const TCell extends ImplicitAllowedTypes, const TProps extends ImplicitAnnotatedFieldSchema>(params: System_TableSchema.CreateColumnOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
         readonly props: TProps;
     }): System_TableSchema.ColumnSchemaBase<TScope, TCell, TProps>;
-    export interface InsertColumnParameters<TColumn extends ImplicitAllowedTypes> {
-        readonly column: InsertableTreeNodeFromImplicitAllowedTypes<TColumn>;
-        readonly index?: number | undefined;
-    }
     export interface InsertColumnsParameters<TColumn extends ImplicitAllowedTypes> {
         readonly columns: InsertableTreeNodeFromImplicitAllowedTypes<TColumn>[];
         readonly index?: number | undefined;
-    }
-    export interface InsertRowParameters<TRow extends ImplicitAllowedTypes> {
-        readonly index?: number | undefined;
-        readonly row: InsertableTreeNodeFromImplicitAllowedTypes<TRow>;
     }
     export interface InsertRowsParameters<TRow extends ImplicitAllowedTypes> {
         readonly index?: number | undefined;
@@ -1568,9 +1560,7 @@ export namespace TableSchema {
         getCell(key: CellKey<TColumn, TRow>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
         getColumn(id: string): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
         getRow(id: string): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
-        insertColumn(params: InsertColumnParameters<TColumn>): TreeNodeFromImplicitAllowedTypes<TColumn>;
         insertColumns(params: InsertColumnsParameters<TColumn>): TreeNodeFromImplicitAllowedTypes<TColumn>[];
-        insertRow(params: InsertRowParameters<TRow>): TreeNodeFromImplicitAllowedTypes<TRow>;
         insertRows(params: InsertRowsParameters<TRow>): TreeNodeFromImplicitAllowedTypes<TRow>[];
         removeAllColumns(): TreeNodeFromImplicitAllowedTypes<TColumn>[];
         removeAllRows(): TreeNodeFromImplicitAllowedTypes<TRow>[];
