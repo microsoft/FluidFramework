@@ -68,7 +68,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 */
 	private readonly idToEntryMap: Map<string, SharedArrayEntry<T>>;
 
-	private readonly remoteDeletes: Set<string> = new Set<string>();
+	private readonly remoteWithLocalPendingDelete: Set<string> = new Set<string>();
 
 	/**
 	 * Create a new shared array
@@ -396,15 +396,27 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		const arrayOp = op as ISharedArrayOperation<T>;
 		switch (arrayOp.type) {
 			case OperationType.insertEntry: {
-				this.toggleCore(arrayOp.entryId);
-				this.getEntryForId(arrayOp.entryId).isLocalPendingDelete += 1;
+				const liveEntry = this.getLiveEntry(arrayOp.entryId);
+				liveEntry.isDeleted = true;
+				const deleteOp: IDeleteOperation = {
+					type: OperationType.deleteEntry,
+					entryId: arrayOp.entryId,
+				};
+				this.emitValueChangedEvent(deleteOp, true /* isLocal */);
 				break;
 			}
 			case OperationType.deleteEntry: {
-				if (this.remoteDeletes.has(arrayOp.entryId)) {
-					this.remoteDeletes.delete(arrayOp.entryId);
+				if (this.remoteWithLocalPendingDelete.has(arrayOp.entryId)) {
+					this.remoteWithLocalPendingDelete.delete(arrayOp.entryId);
 				} else {
-					this.toggleCore(arrayOp.entryId);
+					const liveEntry = this.getLiveEntry(arrayOp.entryId);
+					liveEntry.isDeleted = false;
+					const insertOp = {
+						type: OperationType.insertEntry,
+						entryId: arrayOp.entryId,
+						value: liveEntry.value,
+					};
+					this.emitValueChangedEvent(insertOp, true /* isLocal */);
 					this.getEntryForId(arrayOp.entryId).isLocalPendingDelete -= 1;
 				}
 				break;
@@ -576,9 +588,10 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			// Decrementing local pending counter as op is already applied to local state
 			opEntry.isLocalPendingDelete -= 1;
 		} else {
-			this.remoteDeletes.add(op.entryId);
 			// If local pending, then ignore else apply the remote op
-			if (!this.isLocalPending(op.entryId, "isLocalPendingDelete")) {
+			if (this.isLocalPending(op.entryId, "isLocalPendingDelete")) {
+				this.remoteWithLocalPendingDelete.add(op.entryId);
+			} else {
 				// last element in skip list is the most recent and live entry, so marking it deleted
 				this.getLiveEntry(op.entryId).isDeleted = true;
 			}

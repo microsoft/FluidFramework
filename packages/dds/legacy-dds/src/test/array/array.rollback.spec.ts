@@ -81,8 +81,8 @@ describe("SharedArray rollback", () => {
 		assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
 		assert.strictEqual(
 			valueChanges[1].op.type,
-			OperationType.toggle,
-			"Second event should be for toggle",
+			OperationType.deleteEntry,
+			"Second event should be for delete",
 		);
 	});
 
@@ -107,8 +107,8 @@ describe("SharedArray rollback", () => {
 		assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
 		assert.strictEqual(
 			valueChanges[1].op.type,
-			OperationType.toggle,
-			"Second event should be for toggle",
+			OperationType.insertEntry,
+			"Second event should be for insert",
 		);
 	});
 
