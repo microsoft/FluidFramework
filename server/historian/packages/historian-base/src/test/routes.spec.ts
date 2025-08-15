@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import express from "express";
 import * as sinon from "sinon";
 import request from "supertest";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import os from "os";
 
 import { ITestDriver, OdspEndpoint } from "@fluid-internal/test-driver-definitions";
