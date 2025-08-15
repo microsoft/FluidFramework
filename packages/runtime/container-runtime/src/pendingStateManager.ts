@@ -873,8 +873,10 @@ export class PendingStateManager implements IDisposable {
 			this.stateHandler.reSubmitBatch(batch, { batchId, staged, squash });
 		}
 
-		// pending ops should no longer depend on previous sequenced local ops after resubmit
-		this.savedOps = [];
+		if (!committingStagedBatches) {
+			// pending ops should no longer depend on previous sequenced local ops after resubmitting all pending messages (does not apply if only replaying the staged messages)
+			this.savedOps = [];
+		}
 
 		// We replayPendingStates on read connections too - we expect these to get nack'd though, and to then reconnect
 		// on a write connection and replay again. This filters out the replay that happens on the read connection so

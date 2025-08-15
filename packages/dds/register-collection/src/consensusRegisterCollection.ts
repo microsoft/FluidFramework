@@ -309,7 +309,7 @@ export class ConsensusRegisterCollection<T>
 						// Resolve the pending promise for this operation now that we have received an ack for it.
 						assert(
 							typeof localOpMetadata === "number",
-							"Expect localOpMetadata to be a number",
+							0xc0e /* Expect localOpMetadata to be a number */,
 						);
 						this.internalEvents.emit("pendingMessageAck", localOpMetadata, isWinner);
 					}
@@ -409,7 +409,10 @@ export class ConsensusRegisterCollection<T>
 		// We don't need to do anything to roll back CRC, it's safe to just drop
 		// the op on the floor since we don't modify the DDS until the ack.
 		// We emit an internal event so we know to resolve the pending promise.
-		assert(typeof localOpMetadata === "number", "Expect localOpMetadata to be a number");
+		assert(
+			typeof localOpMetadata === "number",
+			0xc0f /* Expect localOpMetadata to be a number */,
+		);
 		this.internalEvents.emit("pendingMessageRollback", localOpMetadata);
 	}
 

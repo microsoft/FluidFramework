@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { SinonSpiedInstance, restore, spy } from "sinon";
 import { Provider } from "nconf";

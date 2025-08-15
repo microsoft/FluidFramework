@@ -67,7 +67,7 @@ function validateBlobStateInSummary(
 	expectDelete: boolean,
 	expectGCStateHandle: boolean,
 ) {
-	const shouldShouldNot = expectDelete ? "should not" : "should";
+	const shouldShouldNot = expectDelete ? "should" : "should not";
 
 	// Validate that the blob tree should not be in the summary since there should be no attachment blobs.
 	const blobsTree = summaryTree.tree[blobsTreeName] as ISummaryTree;

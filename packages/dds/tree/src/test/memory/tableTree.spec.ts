@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 import {
 	benchmarkMemory,
 	isInPerformanceTestingMode,
@@ -15,7 +15,6 @@ import {
 	Row,
 	UndoRedoManager,
 	createTableTree,
-	removeColumnAndCells,
 	type Table,
 	type TableTreeOptions,
 } from "../tablePerformanceTestUtilities.js";
@@ -448,7 +447,7 @@ describe("SharedTree table APIs memory usage", () => {
 						operation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const column = table.columns[Math.floor(table.columns.length / 2)];
-								removeColumnAndCells(table, column);
+								table.removeColumn(column);
 							}
 						},
 					}),
@@ -463,7 +462,7 @@ describe("SharedTree table APIs memory usage", () => {
 						setupOperation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const column = table.columns[Math.floor(table.columns.length / 2)];
-								removeColumnAndCells(table, column);
+								table.removeColumn(column);
 							}
 						},
 						stackOperation: (undoRedoManager) => {
@@ -485,7 +484,7 @@ describe("SharedTree table APIs memory usage", () => {
 				// 		setupOperation: (table, undoRedoManager) => {
 				// 			for (let i = 0; i < count; i++) {
 				// 				const column = table.columns[Math.floor(table.columns.length / 2)];
-				// 				removeColumnAndCells(table, column);
+				// 				table.removeColumn(column);
 				// 			}
 				// 			for (let i = 0; i < count; i++) {
 				// 				undoRedoManager.undo();
@@ -575,7 +574,7 @@ describe("SharedTree table APIs memory usage", () => {
 						operation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const column = table.columns[Math.floor(table.columns.length / 2)];
-								removeColumnAndCells(table, column);
+								table.removeColumn(column);
 								const row = table.rows[Math.floor(table.rows.length / 2)];
 								table.removeRow(row);
 							}
@@ -592,7 +591,7 @@ describe("SharedTree table APIs memory usage", () => {
 						setupOperation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const column = table.columns[Math.floor(table.columns.length / 2)];
-								removeColumnAndCells(table, column);
+								table.removeColumn(column);
 								const row = table.rows[Math.floor(table.rows.length / 2)];
 								table.removeRow(row);
 							}
@@ -619,7 +618,7 @@ describe("SharedTree table APIs memory usage", () => {
 				// 		setupOperation: (table, undoRedoManager) => {
 				// 			for (let i = 0; i < count; i++) {
 				// 				const column = table.columns[Math.floor(table.columns.length / 2)];
-				// 				removeColumnAndCells(table, column);
+				// 				table.removeColumn(column);
 				// 				const row = table.rows[Math.floor(table.rows.length / 2)];
 				// 				table.removeRow(row);
 				// 			}
@@ -657,7 +656,7 @@ describe("SharedTree table APIs memory usage", () => {
 								table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
 								const row = new Row({ id: `row-${i}`, cells: {} });
 								table.insertRow({ index: Math.floor(table.rows.length / 2), row });
-								removeColumnAndCells(table, column);
+								table.removeColumn(column);
 								table.removeRow(row);
 							}
 						},
@@ -677,7 +676,7 @@ describe("SharedTree table APIs memory usage", () => {
 				// 				table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
 				// 				const row = new Row({ id: `row-${i}`, cells: {} });
 				// 				table.insertRow({ index: Math.floor(table.rows.length / 2), row });
-				// 				removeColumnAndCells(table, column);
+				// 				table.removeColumn(column);
 				// 				table.removeRow(row);
 				// 			}
 				// 		},
@@ -709,7 +708,7 @@ describe("SharedTree table APIs memory usage", () => {
 				// 				table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
 				// 				const row = new Row({ id: `row-${i}`, cells: {} });
 				// 				table.insertRow({ index: Math.floor(table.rows.length / 2), row });
-				// 				removeColumnAndCells(table, column);
+				// 				table.removeColumn(column);
 				// 				table.removeRow(row);
 				// 			}
 				// 			for (let i = 0; i < count; i++) {
