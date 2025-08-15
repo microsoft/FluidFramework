@@ -157,15 +157,16 @@ function createSupportNotice(apiItem, isImportable) {
  *
  * @param {ApiItem} apiItem - The API item for which the notice might be created.
  * @param {`@${string}`} tag - The tag to check for.
- * @param {boolean} includeAncestry - Whether or not to include the `apiItem`'s ancestry when checking for the tag.
+ * @param {boolean} includeContainingAncestry - Whether or not to include the `apiItem`'s containing ancestry when checking for the tag.
+ * E.g. whether or not a class member should inherit the tag from its containing class. Or a class inherit from its containing package/namespace.
  * @param {AdmonitionNode} notice - The notice to display if the tag is present.
  */
-function createTagNotice(apiItem, tag, includeAncestry, notice) {
-	if (includeAncestry && ApiItemUtilities.ancestryHasModifierTag(apiItem, tag)) {
+function createTagNotice(apiItem, tag, includeContainingAncestry, notice) {
+	if (includeContainingAncestry && ApiItemUtilities.ancestryHasModifierTag(apiItem, tag)) {
 		return notice;
 	}
 
-	if (!includeAncestry && ApiItemUtilities.hasModifierTag(apiItem, tag)) {
+	if (!includeContainingAncestry && ApiItemUtilities.hasModifierTag(apiItem, tag)) {
 		return notice;
 	}
 
