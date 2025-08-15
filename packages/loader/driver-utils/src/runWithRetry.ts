@@ -45,7 +45,13 @@ export interface IProgress {
 }
 
 /**
- * Retry a cancellable API call with backoff and telemetry, until success or a non-retryable error.
+ * Retries a cancellable API call with exponential backoff and telemetry, until success or a non-retryable error occurs.
+ *
+ * @param api - The asynchronous function to execute. It should accept an optional AbortSignal for cancellation and return a Promise of the result.
+ * @param fetchCallName - A string used to identify the API call in telemetry events.
+ * @param logger - The telemetry logger used to record retry attempts, errors, and final outcomes.
+ * @param progress - An object implementing {@link IProgress} to provide cancellation and retry notification capabilities.
+ * @returns A Promise that resolves with the result of the API call if successful, or rejects with the last encountered non-retryable error.
  * @internal
  */
 export async function runWithRetry<T>(
