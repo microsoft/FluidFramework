@@ -31,7 +31,7 @@ const restrictedImportPaths = [
 	{
 		name: "assert",
 		importNames: ["default"],
-		message: 'Use `strict` instead. E.g. `import { strict as assert } from "assert";`',
+		message: 'Use `strict` instead. E.g. `import { strict as assert } from "node:assert";`',
 	},
 	{
 		name: "node:assert",
