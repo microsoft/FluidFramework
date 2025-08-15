@@ -208,7 +208,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 			set: (newContent: TreeChunk): void => {
 				assert(
 					newContent.topLevelLength === 1,
-					"Value fields should have a single top level node",
+					0xc12 /* Value fields should have a single top level node */,
 				);
 				const revision = this.mintRevisionTag();
 				const fill: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
@@ -239,7 +239,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				// The choice to ban empty chunks here instead of treating them as a clear is a subjective choice made to err of the side of more explicitness and stricter validation.
 				assert(
 					newContent === undefined || newContent.topLevelLength === 1,
-					"optional fields should have a single top level node, or undefined",
+					0xc13 /* optional fields should have a single top level node, or undefined */,
 				);
 				const edits: EditDescription[] = [];
 				let optionalChange: OptionalChangeset;

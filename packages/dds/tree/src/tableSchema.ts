@@ -1616,7 +1616,6 @@ export namespace TableSchema {
 		): TreeNodeFromImplicitAllowedTypes<TColumn>[];
 		/**
 		 * Removes 0 or more columns from the table.
-		 *
 		 * @remarks
 		 * Also removes any corresponding cells from the table's rows.
 		 *

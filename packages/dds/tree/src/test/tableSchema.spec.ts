@@ -857,7 +857,9 @@ describe("TableFactory unit tests", () => {
 				rows: [
 					{
 						id: "row-0",
-						cells: {},
+						cells: {
+							"column-0": { value: "Hello world!" },
+						},
 						props: {},
 					},
 				],
@@ -885,8 +887,21 @@ describe("TableFactory unit tests", () => {
 			const column2 = new Column({ id: "column-2", props: {} });
 			const column3 = new Column({ id: "column-3", props: {} });
 			treeView.initialize({
-				columns: [column0, column1, column2, column3],
-				rows: [],
+				columns: [
+					{
+						id: "column-0",
+						props: { label: "Column 0" },
+					},
+				],
+				rows: [
+					{
+						id: "row-0",
+						cells: {
+							"column-0": { value: "Hello world!" },
+						},
+						props: {},
+					},
+				],
 			});
 
 			const table = treeView.root;
@@ -909,7 +924,7 @@ describe("TableFactory unit tests", () => {
 			});
 		});
 
-		it("Removing single column that doesn't exist on table errors", () => {
+		it("Removing a single column that doesn't exist on table errors", () => {
 			const { treeView, Column } = createTableTree();
 			treeView.initialize({
 				columns: [],
