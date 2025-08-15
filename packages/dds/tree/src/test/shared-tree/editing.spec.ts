@@ -27,11 +27,18 @@ import {
 	expectNoRemovedRoots,
 	makeTreeFromJson,
 	moveWithin,
+	TestTreeProviderLite,
 	validateUsageError,
 	type TreeStoredContentStrict,
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
-import { numberSchema, SchemaFactory, toInitialSchema } from "../../simple-tree/index.js";
+import {
+	asTreeViewAlpha,
+	numberSchema,
+	SchemaFactory,
+	toInitialSchema,
+	TreeViewConfiguration,
+} from "../../simple-tree/index.js";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
 import { fieldJsonCursor } from "../json/index.js";
 
@@ -3032,35 +3039,52 @@ describe("Editing", () => {
 			});
 
 			it("inverse constraint violated by a change between the original and the revert", () => {
-				const tree = makeTreeFromJson({ foo: "A" });
-				const stack = createTestUndoRedoStacks(tree.events);
+				const provider = new TestTreeProviderLite(2);
+				const config = new TreeViewConfiguration({ schema: JsonAsTree.JsonObject });
+				const viewA = asTreeViewAlpha(provider.trees[0].viewWith(config));
+				const viewB = provider.trees[1].viewWith(config);
+				viewA.initialize(
+					new JsonAsTree.JsonObject({ child: new JsonAsTree.JsonObject({ id: "A" }) }),
+				);
+				provider.synchronizeMessages();
+
+				const stack = createTestUndoRedoStacks(provider.trees[0].kernel.checkout.events);
 
 				// Make transaction on a branch that does the following:
-				// 1. Changes value of "foo" to "B".
+				// 1. Changes value of "foo" to a new child.
 				// 2. Adds inverse constraint on existence of node "B" on field "foo".
-				tree.transaction.start();
-				tree.editor
-					.valueField({ parent: rootNode, field: brand("foo") })
-					.set(chunkFromJsonTrees(["B"]));
-				tree.editor.addNodeExistsConstraintOnRevert({
-					parent: rootNode,
-					parentField: brand("foo"),
-					parentIndex: 0,
+				viewA.runTransaction(() => {
+					viewA.root.child = new JsonAsTree.JsonObject({ id: "B" });
+					return {
+						preconditionsOnRevert: [{ type: "nodeInDocument", node: viewA.root.child }],
+					};
 				});
-				tree.transaction.commit();
-				expectJsonTree(tree, [{ foo: "B" }]);
+				provider.synchronizeMessages();
 
-				const changedFooAtoB = stack.undoStack[0] ?? assert.fail("Missing undo");
+				expectJsonTree(
+					[provider.trees[0].kernel.checkout, provider.trees[1].kernel.checkout],
+					[{ child: { id: "B" } }],
+				);
+
+				const restoreChildA = stack.undoStack[0] ?? assert.fail("Missing undo");
 
 				// This change should violate the inverse constraint because it changes the
-				// node "B" to "C" on field "foo".
-				tree.editor
-					.valueField({ parent: rootNode, field: brand("foo") })
-					.set(chunkFromJsonTrees(["C"]));
+				// child node from B to C
+				viewB.root.child = new JsonAsTree.JsonObject({ id: "C" });
+				provider.synchronizeMessages();
 
-				// This revert should do nothing since its constraint has been violated.
-				changedFooAtoB.revert();
-				expectJsonTree(tree, [{ foo: "C" }]);
+				expectJsonTree(
+					[provider.trees[0].kernel.checkout, provider.trees[1].kernel.checkout],
+					[{ child: { id: "C" } }],
+				);
+
+				// This revert should do nothing since its constraint on the undo has been violated.
+				restoreChildA.revert();
+
+				expectJsonTree(
+					[provider.trees[0].kernel.checkout, provider.trees[1].kernel.checkout],
+					[{ child: { id: "C" } }],
+				);
 
 				stack.unsubscribe();
 			});
@@ -3106,6 +3130,17 @@ describe("Editing", () => {
 				expectJsonTree(tree, [{ foo: "C", bar: "new" }]);
 
 				stack.unsubscribe();
+			});
+
+			it("cannot be attached into a hydrated array", () => {
+				const sf = new SchemaFactory(undefined);
+				class Child extends sf.object("Child", {}) {}
+				class Parent extends sf.array("Parent", Child) {}
+				const provider = new TestTreeProviderLite(1);
+				const view = provider.trees[0].viewWith(new TreeViewConfiguration({ schema: Parent }));
+				view.initialize(new Parent([new Child({})]));
+				const hydratedChild = view.root[0];
+				assert.throws(() => view.root.insertAtEnd(hydratedChild));
 			});
 		});
 
