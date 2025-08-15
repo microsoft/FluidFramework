@@ -1,6 +1,6 @@
 # @fluidframework/eslint-config-fluid Changelog
 
-## [5.9.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.9_0)
+## [6.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.0_0)
 
 Adds the following [@typescript-eslint/no-restricted-imports](https://typescript-eslint.io/rules/no-restricted-imports/) rules:
 
