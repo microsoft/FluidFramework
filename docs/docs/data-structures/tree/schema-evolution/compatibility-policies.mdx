@@ -10,6 +10,9 @@ The right policy depends on your application's requirements and deployment patte
 
 > **API Reference:** The examples below use [`ITree`](../../../api/fluid-framework/itree-interface), [`TreeViewConfiguration`](../../../api/fluid-framework/treeviewconfiguration-class), and [`SchemaCompatibilityStatus`](../../../api/fluid-framework/schemacompatibilitystatus-interface) interfaces.
 
+**_WARNING_** Currently, `SharedTree` only supports the 'enforce equivalent schema' policy.
+There are near-term plans (with the same API) to allow opening a document which has additional optional fields in its stored schema that are not present in the view schema, and longer-term plans to allow opening documents using older view schemas when a document's stored schema has been upgraded with other types of backward-compatible changes.
+
 ## Policy Overview
 
 Application authors should use [`TreeView.compatibility`](../../../api/fluid-framework/treeview-interface#compatibility-property) and related APIs to implement policies that make sense for their ecosystem.
@@ -67,9 +70,13 @@ function render(tree: ITree) {
 
 **Disadvantages:**
 - Restrictive: Clients can be locked out when documents are upgraded
-- Deployment coupling: Schema changes require coordinated roll-outs
+- Deployment coupling: Schema changes require [staged rollouts](./index.mdx#staged-rollouts)
 
 ## Policy 2: Allow Optional Field Additions
+
+
+**_WARNING:_** The policy outlined in this section is not currently implementable.
+There are plans to extend the [`TreeView.compatibility`](../../../api/fluid-framework/treeview-interface#compatibility-property) API with information that allows implementing policies such as this, but the exact API is not finalized.
 
 This policy allows collaboration when the stored schema has additional optional fields that aren't present in the view schema.
 
@@ -146,7 +153,7 @@ function render(tree: ITree) {
 - Better collaboration: Mixed client versions can work together
 
 **Disadvantages:**
-- Data loss risk: Old clients may lose optional field data during edits
+- Data loss risk: Old clients may lose optional field data during edits e.g. old client constructs a new object for insertion elsewhere in the tree by spread-copying fields from an existing one
 - Complex: Requires careful consideration of edit scenarios
 
 ## Policy 3: No Explicit Policy (Default Behavior)
