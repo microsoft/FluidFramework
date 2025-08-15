@@ -1055,7 +1055,9 @@ describe("TableFactory unit tests", () => {
 				rows: [
 					{
 						id: "row-0",
-						cells: {},
+						cells: {
+							"column-0": { value: "Hello world!" },
+						},
 						props: {},
 					},
 				],
@@ -1090,7 +1092,9 @@ describe("TableFactory unit tests", () => {
 				rows: [
 					{
 						id: "row-0",
-						cells: {},
+						cells: {
+							"column-0": { value: "Hello world!" },
+						},
 						props: {},
 					},
 				],
@@ -1113,7 +1117,7 @@ describe("TableFactory unit tests", () => {
 			});
 		});
 
-		it("Removing column that does not exist on table errors", () => {
+		it("Removing a column that does not exist in the table errors", () => {
 			const { treeView, Column } = createTableTree();
 			treeView.initialize({
 				columns: [],
@@ -1615,96 +1619,6 @@ describe("TableFactory unit tests", () => {
 			// But it won't fire when a row's properties change, or when the row's cells change, etc.
 			Tree.on(table.rows, "nodeChanged", () => {
 				// Respond to the change.
-			});
-		});
-
-		it("TableSchema: Remove column and corresponding cells in a transaction", () => {
-			// #region Don't include this in the example docs.
-
-			const Cell = schemaFactory.string;
-
-			class Column extends TableSchema.column({
-				schemaFactory,
-				cell: Cell,
-				props: schemaFactory.object("TableColumnProps", {
-					label: schemaFactory.string,
-				}),
-			}) {}
-
-			class Row extends TableSchema.row({
-				schemaFactory,
-				cell: Cell,
-			}) {}
-
-			class Table extends TableSchema.table({
-				schemaFactory,
-				cell: Cell,
-				column: Column,
-				row: Row,
-			}) {}
-
-			const treeView = independentView(
-				new TreeViewConfiguration({
-					schema: Table,
-					enableSchemaValidation: true,
-				}),
-				{ idCompressor: createIdCompressor() },
-			);
-			treeView.initialize(
-				new Table({
-					columns: [
-						{ id: "column-0", props: { label: "Column 0" } },
-						{ id: "column-1", props: { label: "Column 1" } },
-						{ id: "column-2", props: { label: "Column 2" } },
-					],
-					rows: [
-						{
-							id: "row-0",
-							cells: {
-								"column-0": "0-0",
-								"column-1": "0-1",
-								"column-2": "0-2",
-							},
-						},
-						{
-							id: "row-1",
-							cells: {
-								"column-0": "1-0",
-								"column-1": "1-1",
-								"column-2": "1-2",
-							},
-						},
-						{
-							id: "row-2",
-							cells: {
-								"column-0": "2-0",
-								"column-1": "2-1",
-								"column-2": "2-2",
-							},
-						},
-					],
-				}),
-			);
-
-			const table = treeView.root;
-
-			const column1 = table.getColumn("column-1") ?? fail("Column not found");
-
-			// #endregion
-
-			// Remove column1 and all of its cells.
-			// The "transaction" method will ensure that all changes are applied atomically.
-			Tree.runTransaction(table, () => {
-				// Remove column1
-				table.removeColumn(column1);
-
-				// Remove the cell at column1 for each row.
-				for (const row of table.rows) {
-					table.removeCell({
-						column: column1,
-						row,
-					});
-				}
 			});
 		});
 	});
