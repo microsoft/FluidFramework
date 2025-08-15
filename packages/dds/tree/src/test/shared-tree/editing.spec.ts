@@ -3039,6 +3039,8 @@ describe("Editing", () => {
 			});
 
 			it("inverse constraint violated by a change between the original and the revert", () => {
+				// Unlike most other tests, this test uses TestTreeProviderLite codecs are exercised.
+				// This ensures that the feature works across peers as opposed to solely across branches.
 				const provider = new TestTreeProviderLite(2);
 				const config = new TreeViewConfiguration({ schema: JsonAsTree.JsonObject });
 				const viewA = asTreeViewAlpha(provider.trees[0].viewWith(config));
