@@ -23,6 +23,7 @@ import { stub } from "sinon";
 
 import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
 import type { HostStoragePolicyInternal } from "../contracts.js";
+import { SharingLinkHeader } from "../contractsPublic.js";
 import { createOdspUrl } from "../createOdspUrl.js";
 import { EpochTracker } from "../epochTracker.js";
 import {
@@ -33,6 +34,7 @@ import { mockify } from "../mockify.js";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache.js";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
+import { OdspDriverUrlResolverForShareLink } from "../odspDriverUrlResolverForShareLink.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 import {
 	type INewFileInfo,
@@ -580,9 +582,33 @@ describe("Tests1 for snapshot fetch", () => {
 	});
 
 	it("nonDurableRedeem header is set during RedeemFallback behavior", async () => {
+		const shareLinkResolver = new OdspDriverUrlResolverForShareLink({
+			tokenFetcher: async (): Promise<string> => "SharingLinkToken",
+			identityType: "Enterprise",
+		});
+		resolved = await shareLinkResolver.resolve({
+			url: odspUrl,
+			headers: {
+				[SharingLinkHeader.isSharingLinkToRedeem]: true,
+				[SharingLinkHeader.isRedemptionNonDurable]: true,
+			},
+		});
+		service = new OdspDocumentStorageService(
+			resolved,
+			async (_options) => "token",
+			logger,
+			true,
+			{ ...nonPersistentCache, persistedCache: epochTracker },
+			hostPolicy,
+			epochTracker,
+			async () => {
+				return {};
+			},
+			() => "tenantid/id",
+		);
 		resolved.shareLinkInfo = {
+			...resolved.shareLinkInfo,
 			sharingLinkToRedeem: "https://microsoft.sharepoint-df.com/sharelink",
-			isRedemptionNonDurable: true,
 		};
 		hostPolicy.enableRedeemFallback = true;
 
@@ -605,6 +631,7 @@ describe("Tests1 for snapshot fetch", () => {
 				mockFetchMultiple(
 					async () => service.getSnapshot({}),
 					[
+						notFound,
 						notFound,
 						async (): Promise<MockResponse> => okResponse({}, {}),
 						async (): Promise<Response> => {
