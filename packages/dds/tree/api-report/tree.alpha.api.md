@@ -1203,10 +1203,8 @@ export namespace TableSchema {
         removeAllColumns(): TreeNodeFromImplicitAllowedTypes<TColumn>[];
         removeAllRows(): TreeNodeFromImplicitAllowedTypes<TRow>[];
         removeCell(key: CellKey<TColumn, TRow>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
-        removeColumn(column: string | TreeNodeFromImplicitAllowedTypes<TColumn>): TreeNodeFromImplicitAllowedTypes<TColumn>;
         removeColumns(columns: readonly TreeNodeFromImplicitAllowedTypes<TColumn>[]): TreeNodeFromImplicitAllowedTypes<TColumn>[];
         removeColumns(columns: readonly string[]): TreeNodeFromImplicitAllowedTypes<TColumn>[];
-        removeRow(row: string | TreeNodeFromImplicitAllowedTypes<TRow>): TreeNodeFromImplicitAllowedTypes<TRow>;
         removeRows(rows: readonly TreeNodeFromImplicitAllowedTypes<TRow>[]): TreeNodeFromImplicitAllowedTypes<TRow>[];
         removeRows(rows: readonly string[]): TreeNodeFromImplicitAllowedTypes<TRow>[];
         readonly rows: TreeArrayNode<TRow>;

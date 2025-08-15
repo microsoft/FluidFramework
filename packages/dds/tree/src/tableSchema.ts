@@ -1518,23 +1518,6 @@ export namespace TableSchema {
 		setCell(params: SetCellParameters<TCell, TColumn, TRow>): void;
 
 		/**
-		 * Removes the specified column from the table.
-		 * @remarks
-		 * Also removes any corresponding cells from the table's rows.
-		 *
-		 * Note: this operation can be slow for tables with many rows.
-		 * We are actively working on improving the performance of this operation, but for now it may have a negative
-		 * impact on performance.
-		 *
-		 * @param column - The {@link TableSchema.Column | column} or {@link TableSchema.Column.id | column ID} to remove.
-		 * @throws Throws an error if the column is not in the table.
-		 * In this case, no columns are removed.
-		 */
-		removeColumn(
-			column: string | TreeNodeFromImplicitAllowedTypes<TColumn>,
-		): TreeNodeFromImplicitAllowedTypes<TColumn>;
-
-		/**
 		 * Removes 0 or more columns from the table.
 		 * @remarks
 		 * Also removes any corresponding cells from the table's rows.
@@ -1579,16 +1562,6 @@ export namespace TableSchema {
 		 * @returns The removed columns.
 		 */
 		removeAllColumns(): TreeNodeFromImplicitAllowedTypes<TColumn>[];
-
-		/**
-		 * Removes the specified row from the table.
-		 * @param row - The {@link TableSchema.Row | row} or {@link TableSchema.Row.id | row ID} to remove.
-		 * @throws Throws an error if the row is not in the table.
-		 * In this case, no rows are removed.
-		 */
-		removeRow(
-			row: string | TreeNodeFromImplicitAllowedTypes<TRow>,
-		): TreeNodeFromImplicitAllowedTypes<TRow>;
 
 		/**
 		 * Removes 0 or more rows from the table.
