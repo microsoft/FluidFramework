@@ -161,7 +161,11 @@ function createSupportNotice(apiItem, isImportable) {
  * @param {AdmonitionNode} notice - The notice to display if the tag is present.
  */
 function createTagNotice(apiItem, tag, includeAncestry, notice) {
-	if (ApiItemUtilities.ancestryHasModifierTag(apiItem, tag)) {
+	if (includeAncestry && ApiItemUtilities.ancestryHasModifierTag(apiItem, tag)) {
+		return notice;
+	}
+
+	if (!includeAncestry && ApiItemUtilities.hasModifierTag(apiItem, tag)) {
 		return notice;
 	}
 
