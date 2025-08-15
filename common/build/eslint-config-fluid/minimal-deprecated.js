@@ -167,11 +167,13 @@ module.exports = {
 						message:
 							'Use `strict` instead. E.g. `import { strict as assert } from "node:assert";`',
 					},
+				],
+				patterns: [
 					// Don't import from the parent index file.
 					{
-						name: "./index.js",
+						group: ["./index.js", "**/../index.js"],
 						message:
-							"Importing from the parent index file tends to cause cyclic dependencies. Import from a more specific sibling file instead.",
+							"Importing from a parent index file tends to cause cyclic dependencies. Import from a more specific sibling file instead.",
 					},
 				],
 			},
