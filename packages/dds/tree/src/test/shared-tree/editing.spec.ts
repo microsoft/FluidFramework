@@ -3039,54 +3039,35 @@ describe("Editing", () => {
 			});
 
 			it("inverse constraint violated by a change between the original and the revert", () => {
-				// Unlike most other tests, this test uses TestTreeProviderLite codecs are exercised.
-				// This ensures that the feature works across peers as opposed to solely across branches.
-				const provider = new TestTreeProviderLite(2);
-				const config = new TreeViewConfiguration({ schema: JsonAsTree.JsonObject });
-				const viewA = asTreeViewAlpha(provider.trees[0].viewWith(config));
-				const viewB = provider.trees[1].viewWith(config);
-				viewA.initialize(
-					new JsonAsTree.JsonObject({ child: new JsonAsTree.JsonObject({ id: "A" }) }),
-				);
-				provider.synchronizeMessages();
-
-				const stack = createTestUndoRedoStacks(provider.trees[0].kernel.checkout.events);
+				const tree = makeTreeFromJson({ foo: "A" });
+				const stack = createTestUndoRedoStacks(tree.events);
 
 				// Make transaction on a branch that does the following:
-				// 1. Changes value of "foo" to a new child.
+				// 1. Changes value of "foo" to "B".
 				// 2. Adds inverse constraint on existence of node "B" on field "foo".
-				viewA.runTransaction(() => {
-					viewA.root.child = new JsonAsTree.JsonObject({ id: "B" });
-					return {
-						preconditionsOnRevert: [{ type: "nodeInDocument", node: viewA.root.child }],
-					};
+				tree.transaction.start();
+				tree.editor
+					.valueField({ parent: rootNode, field: brand("foo") })
+					.set(chunkFromJsonTrees(["B"]));
+				tree.editor.addNodeExistsConstraintOnRevert({
+					parent: rootNode,
+					parentField: brand("foo"),
+					parentIndex: 0,
 				});
-				provider.synchronizeMessages();
+				tree.transaction.commit();
+				expectJsonTree(tree, [{ foo: "B" }]);
 
-				expectJsonTree(
-					[provider.trees[0].kernel.checkout, provider.trees[1].kernel.checkout],
-					[{ child: { id: "B" } }],
-				);
-
-				const restoreChildA = stack.undoStack[0] ?? assert.fail("Missing undo");
+				const changedFooAtoB = stack.undoStack[0] ?? assert.fail("Missing undo");
 
 				// This change should violate the inverse constraint because it changes the
-				// child node from B to C
-				viewB.root.child = new JsonAsTree.JsonObject({ id: "C" });
-				provider.synchronizeMessages();
+				// node "B" to "C" on field "foo".
+				tree.editor
+					.valueField({ parent: rootNode, field: brand("foo") })
+					.set(chunkFromJsonTrees(["C"]));
 
-				expectJsonTree(
-					[provider.trees[0].kernel.checkout, provider.trees[1].kernel.checkout],
-					[{ child: { id: "C" } }],
-				);
-
-				// This revert should do nothing since its constraint on the undo has been violated.
-				restoreChildA.revert();
-
-				expectJsonTree(
-					[provider.trees[0].kernel.checkout, provider.trees[1].kernel.checkout],
-					[{ child: { id: "C" } }],
-				);
+				// This revert should do nothing since its constraint has been violated.
+				changedFooAtoB.revert();
+				expectJsonTree(tree, [{ foo: "C" }]);
 
 				stack.unsubscribe();
 			});
