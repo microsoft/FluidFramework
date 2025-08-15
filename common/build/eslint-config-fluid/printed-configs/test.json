@@ -262,16 +262,14 @@
                     {
                         "name": "assert",
                         "importNames": [
-                            "default",
-                            "assert"
+                            "default"
                         ],
                         "message": "Use `strict` instead. E.g. `import { strict as assert } from \"assert\";`"
                     },
                     {
                         "name": "node:assert",
                         "importNames": [
-                            "default",
-                            "assert"
+                            "default"
                         ],
                         "message": "Use `strict` instead. E.g. `import { strict as assert } from \"node:assert\";`"
                     },

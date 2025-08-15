@@ -157,13 +157,13 @@ module.exports = {
 					// See: <https://nodejs.org/api/assert.html#strict-assertion-mode>
 					{
 						name: "assert",
-						importNames: ["default", "assert"],
+						importNames: ["default"],
 						message:
 							'Use `strict` instead. E.g. `import { strict as assert } from "assert";`',
 					},
 					{
 						name: "node:assert",
-						importNames: ["default", "assert"],
+						importNames: ["default"],
 						message:
 							'Use `strict` instead. E.g. `import { strict as assert } from "node:assert";`',
 					},

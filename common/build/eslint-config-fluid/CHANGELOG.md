@@ -5,9 +5,9 @@
 Adds the following [@typescript-eslint/no-restricted-imports](https://typescript-eslint.io/rules/no-restricted-imports/) rules:
 
 1. Prefer using [strict](https://nodejs.org/api/assert.html#strict-assertion-mode) assertions from Node's `assert` library.
-	- E.g. prefer `import { strict as assert } from "assert";` over `import assert from "assert";`.
+    - E.g. prefer `import { strict as assert } from "assert";` over `import assert from "assert";`.
 2. Don't import from parent index file.
-	- E.g. prefer `import { Foo } from "./Foo.js";` over `import { Foo } from "./index.js";`
+    - E.g. prefer `import { Foo } from "./Foo.js";` over `import { Foo } from "./index.js";`
 
 ## [5.8.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.8_0)
 
