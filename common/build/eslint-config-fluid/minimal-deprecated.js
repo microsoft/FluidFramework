@@ -24,6 +24,33 @@ const permittedImports = [
 	"*/index.js",
 ];
 
+// Restricted import patterns for all code.
+const restrictedImportPaths = [
+	// Prefer strict assertions
+	// See: <https://nodejs.org/api/assert.html#strict-assertion-mode>
+	{
+		name: "assert",
+		importNames: ["default"],
+		message: 'Use `strict` instead. E.g. `import { strict as assert } from "assert";`',
+	},
+	{
+		name: "node:assert",
+		importNames: ["default"],
+		message: 'Use `strict` instead. E.g. `import { strict as assert } from "node:assert";`',
+	},
+];
+
+// Restricted import patterns for production code.
+// Not applied to test code.
+const restrictedImportPatternsForProductionCode = [
+	// Don't import from the parent index file.
+	{
+		group: ["./index.js", "**/../index.js"],
+		message:
+			"Importing from a parent index file tends to cause cyclic dependencies. Import from a more specific sibling file instead.",
+	},
+];
+
 /**
  * "Minimal" eslint configuration.
  *
@@ -152,30 +179,8 @@ module.exports = {
 		"@typescript-eslint/no-restricted-imports": [
 			"error",
 			{
-				paths: [
-					// Prefer strict assertions
-					// See: <https://nodejs.org/api/assert.html#strict-assertion-mode>
-					{
-						name: "assert",
-						importNames: ["default"],
-						message:
-							'Use `strict` instead. E.g. `import { strict as assert } from "assert";`',
-					},
-					{
-						name: "node:assert",
-						importNames: ["default"],
-						message:
-							'Use `strict` instead. E.g. `import { strict as assert } from "node:assert";`',
-					},
-				],
-				patterns: [
-					// Don't import from the parent index file.
-					{
-						group: ["./index.js", "**/../index.js"],
-						message:
-							"Importing from a parent index file tends to cause cyclic dependencies. Import from a more specific sibling file instead.",
-					},
-				],
+				paths: restrictedImportPaths,
+				patterns: restrictedImportPatternsForProductionCode,
 			},
 		],
 
@@ -472,6 +477,13 @@ module.exports = {
 				// Disabled for test files
 				"@typescript-eslint/consistent-type-exports": "off",
 				"@typescript-eslint/consistent-type-imports": "off",
+
+				"@typescript-eslint/no-restricted-imports": [
+					"error",
+					{
+						paths: restrictedImportPaths,
+					},
+				],
 
 				// For test files only, additionally allow import of '/test*' and '/internal/test*' exports.
 				"import/no-internal-modules": [
