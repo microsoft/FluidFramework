@@ -47,26 +47,26 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 	const rows = [...table.rows];
 
 	const handleAppendNewRow = (): void => {
-		table.insertRow({
-			row: { cells: {} },
+		table.insertRows({
+			rows: [{ cells: {} }],
 		});
 	};
 
 	const handleRemoveRow = (index: number): void => {
 		if (index >= 0 && index < rows.length) {
-			table.removeRow(table.rows[index]);
+			table.removeRows(index, 1);
 		}
 	};
 
 	const handleAppendNewColumn = (newColumn: Column): void => {
-		table.insertColumn({
-			column: newColumn,
+		table.insertColumns({
+			columns: [newColumn],
 		});
 	};
 
 	const handleRemoveColumn = (index: number): void => {
 		if (index >= 0 && index < columns.length) {
-			table.removeColumn(table.columns[index]);
+			table.removeColumns(index, 1);
 		}
 	};
 
