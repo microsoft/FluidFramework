@@ -12,9 +12,17 @@ import {
 	Tooltip,
 } from "@fluentui/react-components";
 import {
-	ArrowSync24Regular,
 	Dismiss24Regular,
-	PlugDisconnected20Regular,
+	QuestionCircle24Regular,
+	ArrowSync24Regular,
+	Attach24Regular,
+	AttachArrowRight24Regular,
+	CatchUp24Regular,
+	Run24Regular,
+	DocumentPageBreak24Regular,
+	LockClosed24Regular,
+	PlugConnected24Regular,
+	PlugDisconnected24Regular,
 } from "@fluentui/react-icons";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type {
@@ -603,8 +611,98 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 								/>
 							</Tooltip>
 						);
-					} else if (state?.connectionState === ConnectionState.Disconnected) {
-						stateIcon = <PlugDisconnected20Regular />;
+					} else if (state) {
+						// Check readonly state first - it takes priority over connection state
+						if (state.readonly === true) {
+							stateIcon = (
+								<Tooltip content="Container is in read-only mode" relationship="label">
+									<LockClosed24Regular />
+								</Tooltip>
+							);
+						} else if (state.connectionState !== undefined) {
+							switch (state.connectionState) {
+								case ConnectionState.Connected: {
+									stateIcon = (
+										<Tooltip content="Container is connected" relationship="label">
+											<PlugConnected24Regular />
+										</Tooltip>
+									);
+									break;
+								}
+								case ConnectionState.Disconnected: {
+									stateIcon = (
+										<Tooltip content="Container is disconnected" relationship="label">
+											<PlugDisconnected24Regular />
+										</Tooltip>
+									);
+									break;
+								}
+								case ConnectionState.EstablishingConnection: {
+									stateIcon = (
+										<Tooltip
+											content="Container is establishing connection"
+											relationship="label"
+										>
+											<Run24Regular />
+										</Tooltip>
+									);
+									break;
+								}
+								case ConnectionState.CatchingUp: {
+									stateIcon = (
+										<Tooltip content="Container is catching up" relationship="label">
+											<CatchUp24Regular />
+										</Tooltip>
+									);
+									break;
+								}
+								default: {
+									// No icon for unknown connection state
+									break;
+								}
+							}
+						}
+
+						// If no icon set yet, check attach state
+						if (stateIcon === undefined && state.attachState !== undefined) {
+							switch (state.attachState) {
+								case "Detached": {
+									stateIcon = (
+										<Tooltip content="Container is detached" relationship="label">
+											<DocumentPageBreak24Regular />
+										</Tooltip>
+									);
+									break;
+								}
+								case "Attaching": {
+									stateIcon = (
+										<Tooltip content="Container is attaching" relationship="label">
+											<AttachArrowRight24Regular />
+										</Tooltip>
+									);
+									break;
+								}
+								case "Attached": {
+									stateIcon = (
+										<Tooltip content="Container is attached" relationship="label">
+											<Attach24Regular />
+										</Tooltip>
+									);
+									break;
+								}
+								default: {
+									// No icon for unknown attach state
+									break;
+								}
+							}
+						}
+					} else {
+						// No state information available (container still loading)
+						stateIcon = (
+							<Tooltip content="Container state unknown" relationship="label">
+								<QuestionCircle24Regular />
+							</Tooltip>
+						);
 					}
 
 					return (

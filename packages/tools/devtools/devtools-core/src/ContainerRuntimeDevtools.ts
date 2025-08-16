@@ -155,10 +155,17 @@ export class DecomposedContainerForContainerRuntime
 	}
 
 	public get connectionState(): ConnectionState {
+		// Normal connection state logic - readonly state is handled separately via readOnlyInfo
 		return this.runtime.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
 	}
 
 	public get closed(): boolean {
 		return this._disposed; // IContainerRuntime doesn't have a "closed" state - only "disconnected" (reconnectable) and "disposed" (permanent)
+	}
+
+	public get readOnlyInfo(): { readonly readonly?: boolean } {
+		// IContainerRuntime doesn't expose readonly in its interface, but the implementation has isReadOnly()
+		const runtimeWithReadOnly = this.runtime as { isReadOnly?: () => boolean };
+		return { readonly: runtimeWithReadOnly.isReadOnly?.() };
 	}
 }

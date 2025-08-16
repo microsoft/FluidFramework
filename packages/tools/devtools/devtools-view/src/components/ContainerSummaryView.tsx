@@ -24,6 +24,7 @@ import {
 	Delete20Regular,
 	PlugConnected20Regular,
 	PlugDisconnected20Regular,
+	LockClosed24Regular,
 } from "@fluentui/react-icons";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -297,12 +298,17 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 
 	// Build up status string
 	const statusComponents: string[] = [];
-	if (closed) {
+	if (containerState.closed) {
 		statusComponents.push("Closed");
 	} else {
 		statusComponents.push(containerState.attachState);
 		if (containerState.attachState === AttachState.Attached) {
-			statusComponents.push(connectionStateToString(containerState.connectionState));
+			// Check if container is readonly first
+			if (containerState.readonly === true) {
+				statusComponents.push("Read-only");
+			} else {
+				statusComponents.push(connectionStateToString(containerState.connectionState));
+			}
 		} else {
 			/*
 			 * If the container is not attached, it is not connected
@@ -401,7 +407,15 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 		props;
 	const styles = useActionBarStyles();
 
-	const changeConnectionStateButton = isContainerConnected ? (
+	// Check if container is in readonly mode
+	const isReadOnly = containerState.readonly === true;
+
+	const changeConnectionStateButton = isReadOnly ? (
+		// Show readonly indicator when container is readonly
+		<Button size="small" icon={<LockClosed24Regular />} disabled={true}>
+			Read-only Mode
+		</Button>
+	) : isContainerConnected ? (
 		<Button
 			size="small"
 			icon={<PlugDisconnected20Regular />}
