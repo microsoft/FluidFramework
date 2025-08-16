@@ -460,7 +460,10 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 			tabIndex={0}
 		>
 			<div className={styles.itemContent}>
-				<div className={styles.changeIndicator} style={{ visibility: hasChanges ? 'visible' : 'hidden' }} />
+				<div
+					className={styles.changeIndicator}
+					style={{ visibility: hasChanges ? "visible" : "hidden" }}
+				/>
 				<span className={styles.textSpan}>{text}</span>
 				<div className={styles.stateIconContainer}>{stateIcon}</div>
 				{onRemove && (
