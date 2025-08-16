@@ -28,6 +28,7 @@ import {
 	fieldCursorFromInsertable,
 	testIdCompressor,
 	testRevisionTagCodec,
+	type TreeStoredContentStrict,
 } from "../../utils.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
@@ -35,7 +36,6 @@ import {
 	ForestTypeReference,
 	type ForestType,
 	type TreeCheckout,
-	type TreeStoredContentStrict,
 } from "../../../shared-tree/index.js";
 import {
 	permissiveStoredSchemaGenerationOptions,

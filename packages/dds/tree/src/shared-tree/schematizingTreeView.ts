@@ -64,7 +64,7 @@ import {
 	type WithBreakable,
 } from "../util/index.js";
 
-import { canInitialize, initialize } from "./schematizeTree.js";
+import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
 
 /**
@@ -185,10 +185,19 @@ export class SchematizingSimpleTreeView<
 				schema.rootFieldSchema,
 			);
 
-			initialize(this.checkout, {
+			this.checkout.transaction.start();
+
+			initialize(
+				this.checkout,
 				schema,
-				initialTree: cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
-			});
+				initializerFromChunk(this.checkout, () => {
+					// This must be done after initial schema is set!
+					return this.checkout.forest.chunkField(
+						cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
+					);
+				}),
+			);
+			this.checkout.transaction.commit();
 		});
 	}
 

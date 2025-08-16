@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 
 import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import sinon from "sinon";

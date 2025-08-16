@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { oob } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICodecFamily } from "../../codec/index.js";
@@ -206,6 +206,10 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public valueField(field: FieldUpPath): ValueFieldEditBuilder<TreeChunk> {
 		return {
 			set: (newContent: TreeChunk): void => {
+				assert(
+					newContent.topLevelLength === 1,
+					0xc12 /* Value fields should have a single top level node */,
+				);
 				const revision = this.mintRevisionTag();
 				const fill: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
 				const detach: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
@@ -232,6 +236,11 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder<TreeChunk> {
 		return {
 			set: (newContent: TreeChunk | undefined, wasEmpty: boolean): void => {
+				// The choice to ban empty chunks here instead of treating them as a clear is a subjective choice made to err of the side of more explicitness and stricter validation.
+				assert(
+					newContent === undefined || newContent.topLevelLength === 1,
+					0xc13 /* optional fields should have a single top level node, or undefined */,
+				);
 				const edits: EditDescription[] = [];
 				let optionalChange: OptionalChangeset;
 				const revision = this.mintRevisionTag();

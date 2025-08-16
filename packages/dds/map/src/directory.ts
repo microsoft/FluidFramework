@@ -1733,7 +1733,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 							entry.type === "clear" || (entry.type === "delete" && entry.key === key),
 					)
 				) {
-					assert(this.has(key), "key should exist in sequenced or pending data");
+					assert(this.has(key), 0xc03 /* key should exist in sequenced or pending data */);
 					const optimisticValue = this.getOptimisticValue(key);
 					return { value: [key, optimisticValue], done: false };
 				}
@@ -1847,7 +1847,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				pendingClear !== undefined &&
 					pendingClear.type === "clear" &&
 					pendingClear === localOpMetadata,
-				"Got a local clear message we weren't expecting",
+				0xc04 /* Got a local clear message we weren't expecting */,
 			);
 		} else {
 			// For pending set operations, collect the previous values before clearing sequenced data
@@ -1908,7 +1908,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				pendingEntry !== undefined &&
 					pendingEntry.type === "delete" &&
 					pendingEntry.key === op.key,
-				"Got a local delete message we weren't expecting",
+				0xc05 /* Got a local delete message we weren't expecting */,
 			);
 			this.pendingStorageData.splice(pendingEntryIndex, 1);
 			this.sequencedStorageData.delete(op.key);
@@ -1962,12 +1962,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const pendingEntry = this.pendingStorageData[pendingEntryIndex];
 			assert(
 				pendingEntry !== undefined && pendingEntry.type === "lifetime",
-				"Couldn't match local set message to pending lifetime",
+				0xc06 /* Couldn't match local set message to pending lifetime */,
 			);
 			const pendingKeySet = pendingEntry.keySets.shift();
 			assert(
 				pendingKeySet !== undefined && pendingKeySet === localOpMetadata,
-				"Got a local set message we weren't expecting",
+				0xc07 /* Got a local set message we weren't expecting */,
 			);
 			if (pendingEntry.keySets.length === 0) {
 				this.pendingStorageData.splice(pendingEntryIndex, 1);
@@ -2202,7 +2202,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this.decrementPendingSubDirCount(this.pendingDeleteSubDirectoriesTracker, op.subdirName);
 			assert(
 				localOpMetadata.subDirectory !== undefined,
-				"localOpMetadata.subDirectory should be defined",
+				0xc08 /* localOpMetadata.subDirectory should be defined */,
 			);
 			this.submitDeleteSubDirectoryMessage(op, localOpMetadata.subDirectory);
 		}
@@ -2270,7 +2270,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				pendingClear !== undefined &&
 					pendingClear.type === "clear" &&
 					localOpMetadata.type === "clear",
-				"Unexpected clear rollback",
+				0xc09 /* Unexpected clear rollback */,
 			);
 			for (const [key] of this.internalIterator()) {
 				const event: IDirectoryValueChanged = {
@@ -2296,10 +2296,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			assert(
 				pendingEntry !== undefined &&
 					(pendingEntry.type === "delete" || pendingEntry.type === "lifetime"),
-				"Unexpected pending data for set/delete op",
+				0xc0a /* Unexpected pending data for set/delete op */,
 			);
 			if (pendingEntry.type === "delete") {
-				assert(pendingEntry === localOpMetadata, "Unexpected delete rollback");
+				assert(pendingEntry === localOpMetadata, 0xc0b /* Unexpected delete rollback */);
 				this.pendingStorageData.splice(pendingEntryIndex, 1);
 				// Only emit if rolling back the delete actually results in a value becoming visible.
 				if (this.getOptimisticValue(directoryOp.key) !== undefined) {
@@ -2319,7 +2319,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				const pendingKeySet = pendingEntry.keySets.pop();
 				assert(
 					pendingKeySet !== undefined && pendingKeySet === localOpMetadata,
-					"Unexpected set rollback",
+					0xc0c /* Unexpected set rollback */,
 				);
 				if (pendingEntry.keySets.length === 0) {
 					this.pendingStorageData.splice(pendingEntryIndex, 1);
@@ -2438,7 +2438,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			(pendingCreateCount !== undefined && pendingCreateCount > 0)
 		) {
 			if (local) {
-				assert(localOpMetadata !== undefined, "localOpMetadata should be defined");
+				assert(localOpMetadata !== undefined, 0xc0d /* localOpMetadata should be defined */);
 				if (localOpMetadata.type === "deleteSubDir") {
 					assert(
 						pendingDeleteCount !== undefined && pendingDeleteCount > 0,
