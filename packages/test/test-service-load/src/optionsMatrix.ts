@@ -37,6 +37,7 @@ const loaderOptionsMatrix: OptionsMatrix<ILoaderOptionsExperimental> = {
 	enableOfflineLoad: booleanCases,
 	enableOfflineSnapshotRefresh: booleanCases,
 	snapshotRefreshTimeoutMs: [undefined, 60 * 5 * 1000 /* 5min */],
+	connectRetriesTimeoutMs: numberCases,
 };
 
 export function applyOverrides<T extends Record<string, any>>(

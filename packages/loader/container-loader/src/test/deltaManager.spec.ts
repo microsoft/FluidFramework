@@ -76,7 +76,7 @@ describe("Loader", () => {
 							() => service,
 							() => false,
 							client as IClient,
-							reconnectAllowed,
+							{ reconnectAllowed, connectRetriesTimeoutMs: undefined },
 							dmLogger,
 							props,
 						),
