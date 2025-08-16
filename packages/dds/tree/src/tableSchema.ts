@@ -947,7 +947,7 @@ export namespace System_TableSchema {
 					);
 				}
 
-				// TypeScript is unable to narrow the row type correctly here, hence the cast.
+				// TypeScript is unable to narrow the array element type correctly here, hence the cast.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
 				const removedRows = array.slice(
 					index,
