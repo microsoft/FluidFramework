@@ -12,11 +12,9 @@ import {
 	type BenchmarkTimer,
 	type BenchmarkTimingOptions,
 } from "@fluid-tools/benchmark";
-import type { IMatrixConsumer } from "@tiny-calc/nano";
+import type { Test } from "mocha";
 
-import type { ISharedMatrix } from "../../index.js";
-import { UndoRedoStackManager } from "../undoRedoStackManager.js";
-import { createLocalMatrix, type TestMatrixOptions } from "../utils.js";
+import { createTestMatrix, type MatrixBenchmarkOptions } from "../performanceTestUtilities.js";
 
 /**
  * Note: These benchmarks are designed to closely match the benchmarks in SharedTree.
@@ -27,36 +25,7 @@ import { createLocalMatrix, type TestMatrixOptions } from "../utils.js";
 /**
  * {@link runBenchmark} configuration.
  */
-interface BenchmarkConfig extends BenchmarkTimingOptions, TestMatrixOptions {
-	/**
-	 * The title of the benchmark test.
-	 */
-	readonly title: string;
-
-	/**
-	 * Optional action to perform on the matrix before the operation being measured.
-	 */
-	readonly beforeOperation?: (
-		matrix: ISharedMatrix,
-		undoRedoStack: UndoRedoStackManager,
-	) => void;
-
-	/**
-	 * The operation to be measured.
-	 */
-	readonly operation: (matrix: ISharedMatrix, undoRedoStack: UndoRedoStackManager) => void;
-
-	/**
-	 * Optional action to perform on the matrix after the operation being measured.
-	 */
-	readonly afterOperation?: (
-		matrix: ISharedMatrix,
-		undoRedoStack: UndoRedoStackManager,
-	) => void;
-
-	/**
-	 * {@inheritDoc @fluid-tools/benchmark#BenchmarkTimingOptions.maxBenchmarkDurationSeconds}
-	 */
+interface BenchmarkConfig extends BenchmarkTimingOptions, MatrixBenchmarkOptions {
 	readonly maxBenchmarkDurationSeconds: number;
 }
 
@@ -72,8 +41,8 @@ function runBenchmark({
 	afterOperation,
 	minBatchDurationSeconds = 0,
 	maxBenchmarkDurationSeconds,
-}: BenchmarkConfig): void {
-	benchmark({
+}: BenchmarkConfig): Test {
+	return benchmark({
 		type: BenchmarkType.Measurement,
 		title,
 		benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
@@ -82,37 +51,25 @@ function runBenchmark({
 				assert.equal(state.iterationsPerBatch, 1, "Expected exactly one iteration per batch");
 
 				// Create matrix
-				const localMatrix = createLocalMatrix({
+				const { matrix, undoRedoStack, cleanUp } = createTestMatrix({
 					matrixSize,
 					initialCellValue,
 				});
 
-				// Configure event listeners
-				const eventListeners: IMatrixConsumer<string> = {
-					rowsChanged: () => {},
-					colsChanged: () => {},
-					cellsChanged: () => {},
-				};
-				localMatrix.openMatrix(eventListeners);
-
-				// Configure undo/redo
-				const undoRedoStack = new UndoRedoStackManager();
-				localMatrix.openUndo(undoRedoStack);
-
-				beforeOperation?.(localMatrix, undoRedoStack);
+				beforeOperation?.(matrix, undoRedoStack);
 
 				// Operation
 				const before = state.timer.now();
-				operation(localMatrix, undoRedoStack);
+				operation(matrix, undoRedoStack);
 				const after = state.timer.now();
 
 				// Measure
 				duration = state.timer.toSeconds(before, after);
 
-				afterOperation?.(localMatrix, undoRedoStack);
+				afterOperation?.(matrix, undoRedoStack);
 
 				// Cleanup
-				localMatrix.closeMatrix(eventListeners);
+				cleanUp();
 			} while (state.recordBatch(duration));
 		},
 		minBatchDurationSeconds,

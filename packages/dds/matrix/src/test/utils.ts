@@ -5,8 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import type {
 	IMatrixConsumer,
 	IMatrixProducer,
@@ -14,7 +12,7 @@ import type {
 	IMatrixWriter,
 } from "@tiny-calc/nano";
 
-import { type ISharedMatrix, SharedMatrix } from "../index.js";
+import { SharedMatrix } from "../index.js";
 
 /**
  * Convenience export of SharedMatrix's factory for usage in tests.
@@ -222,42 +220,5 @@ export function insertFragmented(
 
 	expectSize(matrix, rowCount, colCount);
 
-	return matrix;
-}
-
-/**
- * {@link createLocalMatrix} options.
- */
-export interface TestMatrixOptions {
-	/**
-	 * The number of rows and columns that will be in the matrix.
-	 */
-	readonly matrixSize: number;
-	/**
-	 * The initial value of each cell in the dense matrix.
-	 * @remarks If not specified, no cell values will be inserted into the table, leaving it sparse.
-	 */
-	readonly initialCellValue?: string | undefined;
-}
-
-/**
- * Creates a local matrix with the specified size and for dense test matrix given initial value.
- * Otherwise, leaving the initial value as undefined will create a sparse matrix.
- */
-export function createLocalMatrix({
-	matrixSize,
-	initialCellValue,
-}: TestMatrixOptions): ISharedMatrix & IChannel {
-	const matrix = matrixFactory.create(new MockFluidDataStoreRuntime(), "test-matrix");
-	matrix.insertRows(0, matrixSize);
-	matrix.insertCols(0, matrixSize);
-
-	if (initialCellValue !== undefined) {
-		for (let row = 0; row < matrixSize; row++) {
-			for (let col = 0; col < matrixSize; col++) {
-				matrix.setCell(row, col, initialCellValue);
-			}
-		}
-	}
 	return matrix;
 }
