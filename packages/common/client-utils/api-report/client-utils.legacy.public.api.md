@@ -4,8 +4,6 @@
 
 ```ts
 
-export { EventEmitter }
-
 // (No @packageDocumentation comment for this package)
 
 ```

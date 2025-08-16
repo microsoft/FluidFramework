@@ -311,6 +311,7 @@ export {
 	/**
 	 * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
 	 * They are used internally to implement API aspects, but are not intended for use by external consumers.
+	 * @public
 	 */
 	InternalTypes,
 };
