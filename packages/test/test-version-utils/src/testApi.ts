@@ -27,7 +27,7 @@ import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 // Data Runtime API
 import * as counter from "@fluidframework/counter/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
-import { SharedArray } from "@fluidframework/legacy-dds/internal";
+import { SharedArray, SharedSignal } from "@fluidframework/legacy-dds/internal";
 import * as datastore from "@fluidframework/datastore/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import * as map from "@fluidframework/map/internal";
@@ -165,6 +165,7 @@ export const DataRuntimeApi = {
 		SharedString,
 		SparseMatrix,
 		SharedArray,
+		SharedSignal,
 	},
 	/**
 	 * Contains all APIs from imported DDS packages.
@@ -310,6 +311,7 @@ async function loadDataRuntime(
 				SharedString,
 				SparseMatrix,
 				SharedArray,
+				SharedSignal,
 			},
 			packages: {
 				datastore,
