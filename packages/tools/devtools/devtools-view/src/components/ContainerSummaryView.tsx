@@ -141,6 +141,17 @@ function DataRow(props: DataRowProps): React.ReactElement {
 }
 
 function containerStatusValueCell(statusComponents: string[]): React.ReactElement {
+	// Should render a single box without other container states such as "Attached" or "Connected"
+	if (statusComponents[0] === "Closed") {
+		return (
+			<TableCellLayout>
+				<Badge shape="rounded" color="danger">
+					Closed
+				</Badge>
+			</TableCellLayout>
+		);
+	}
+
 	return (
 		<TableCellLayout
 			media={((): JSX.Element => {
