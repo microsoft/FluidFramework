@@ -5,11 +5,16 @@
 
 import * as path from "node:path";
 
+import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { describe } from "mocha";
 
 import { _dirname } from "./dirname.cjs";
-import { baseSharedArrayModel, eventEmitterForFuzzHarness } from "./fuzzUtils.js";
+import {
+	baseSharedArrayModel,
+	eventEmitterForFuzzHarness,
+	makeSharedArrayOperationGenerator,
+} from "./fuzzUtils.js";
 
 describe("SharedArray fuzz", () => {
 	createDDSFuzzSuite(baseSharedArrayModel, {
@@ -30,4 +35,41 @@ describe("SharedArray fuzz", () => {
 		skip: [9, 15],
 		emitter: eventEmitterForFuzzHarness,
 	});
+
+	createDDSFuzzSuite(
+		{
+			...baseSharedArrayModel,
+			workloadName: "stash ops - insert/delete heavy",
+			generatorFactory: () =>
+				takeAsync(
+					100,
+					makeSharedArrayOperationGenerator({
+						insert: 5,
+						delete: 3,
+						move: 1,
+						insertBulkAfter: 1,
+						toggle: 0,
+						toggleMove: 0,
+					}),
+				),
+		},
+		{
+			validationStrategy: { type: "fixedInterval", interval: 10 },
+			reconnectProbability: 0.15,
+			numberOfClients: 3,
+			clientJoinOptions: {
+				maxNumberOfClients: 5,
+				clientAddProbability: 0.1,
+				stashableClientProbability: 0.3,
+			},
+			detachedStartOptions: {
+				numOpsBeforeAttach: 5,
+				rehydrateDisabled: true,
+			},
+			skip: [28, 38, 40],
+			defaultTestCount: 50,
+			saveFailures: { directory: "." },
+			emitter: eventEmitterForFuzzHarness,
+		},
+	);
 });

@@ -68,6 +68,8 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 */
 	private readonly idToEntryMap: Map<string, SharedArrayEntry<T>>;
 
+	private readonly remoteWithLocalPendingDelete: Set<string> = new Set<string>();
+
 	/**
 	 * Create a new shared array
 	 *
@@ -326,6 +328,18 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 * @param entryId - Entry Id for which the the undo/redo operation is to be applied
 	 */
 	public toggle(entryId: string): void {
+		const op = this.toggleCore(entryId);
+		this.emitRevertibleEvent(op);
+
+		// If we are not attached, don't submit the op.
+		if (!this.isAttached()) {
+			return;
+		}
+
+		this.submitLocalMessage(op);
+	}
+
+	private toggleCore(entryId: string): IToggleOperation {
 		const liveEntry = this.getLiveEntry(entryId);
 		const isDeleted = !liveEntry.isDeleted;
 
@@ -341,16 +355,8 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			isDeleted,
 		};
 		this.emitValueChangedEvent(op, true /* isLocal */);
-		this.emitRevertibleEvent(op);
-
-		// If we are not attached, don't submit the op.
-		if (!this.isAttached()) {
-			return;
-		}
-
-		this.submitLocalMessage(op);
+		return op;
 	}
-
 	/**
 	 * Method to do undo/redo of move operation. All entries of the same payload/value are stored
 	 * in the same doubly linked skip list. This skip list is updated upon every move by adding the
@@ -384,6 +390,46 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		}
 
 		this.submitLocalMessage(op);
+	}
+
+	public rollback(op: unknown, _localOpMetadata: unknown): void {
+		const arrayOp = op as ISharedArrayOperation<T>;
+		switch (arrayOp.type) {
+			case OperationType.insertEntry: {
+				const liveEntry = this.getLiveEntry(arrayOp.entryId);
+				liveEntry.isDeleted = true;
+				const deleteOp: IDeleteOperation = {
+					type: OperationType.deleteEntry,
+					entryId: arrayOp.entryId,
+				};
+				this.emitValueChangedEvent(deleteOp, true /* isLocal */);
+				break;
+			}
+			case OperationType.deleteEntry: {
+				if (this.remoteWithLocalPendingDelete.has(arrayOp.entryId)) {
+					this.remoteWithLocalPendingDelete.delete(arrayOp.entryId);
+				} else {
+					const liveEntry = this.getLiveEntry(arrayOp.entryId);
+					liveEntry.isDeleted = false;
+					const insertOp = {
+						type: OperationType.insertEntry,
+						entryId: arrayOp.entryId,
+						value: liveEntry.value,
+					};
+					this.emitValueChangedEvent(insertOp, true /* isLocal */);
+					this.getEntryForId(arrayOp.entryId).isLocalPendingDelete -= 1;
+				}
+				break;
+			}
+			case OperationType.moveEntry:
+			case OperationType.toggle:
+			case OperationType.toggleMove: {
+				break;
+			}
+			default: {
+				unreachableCase(arrayOp);
+			}
+		}
 	}
 
 	/**
@@ -543,7 +589,9 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			opEntry.isLocalPendingDelete -= 1;
 		} else {
 			// If local pending, then ignore else apply the remote op
-			if (!this.isLocalPending(op.entryId, "isLocalPendingDelete")) {
+			if (this.isLocalPending(op.entryId, "isLocalPendingDelete")) {
+				this.remoteWithLocalPendingDelete.add(op.entryId);
+			} else {
 				// last element in skip list is the most recent and live entry, so marking it deleted
 				this.getLiveEntry(op.entryId).isDeleted = true;
 			}
@@ -852,6 +900,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 					false, // treat it as remote op
 					op.value,
 				);
+				this.getEntryForId(op.entryId).isAckPending = true;
 				break;
 			}
 			case OperationType.deleteEntry: {
