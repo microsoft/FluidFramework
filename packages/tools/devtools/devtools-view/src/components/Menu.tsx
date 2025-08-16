@@ -23,6 +23,7 @@ import {
 	LockClosed24Regular,
 	PlugConnected24Regular,
 	PlugDisconnected24Regular,
+	Delete24Regular,
 } from "@fluentui/react-icons";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type {
@@ -361,6 +362,13 @@ export interface MenuItemProps {
 	 * @defaultValue `false` - No change indicator is shown when not provided.
 	 */
 	readonly hasChanges?: boolean;
+
+	/**
+	 * Callback function when the remove button is clicked.
+	 *
+	 * @defaultValue `undefined` - No remove button is displayed when not provided.
+	 */
+	readonly onRemove?: () => void;
 }
 
 const useMenuItemStyles = makeStyles({
@@ -430,7 +438,7 @@ const useMenuItemStyles = makeStyles({
  * Generic component for a menu item (under a section).
  */
 export function MenuItem(props: MenuItemProps): React.ReactElement {
-	const { isActive, onClick, text, stateIcon, hasChanges = false } = props;
+	const { isActive, onClick, text, stateIcon, hasChanges = false, onRemove } = props;
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
 		if (event.key === "Enter" || event.key === " ") {
@@ -452,9 +460,22 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 			tabIndex={0}
 		>
 			<div className={styles.itemContent}>
-				{hasChanges && <div className={styles.changeIndicator} />}
+				<div className={styles.changeIndicator} style={{ visibility: hasChanges ? 'visible' : 'hidden' }} />
 				<span className={styles.textSpan}>{text}</span>
 				<div className={styles.stateIconContainer}>{stateIcon}</div>
+				{onRemove && (
+					<Tooltip content="Remove container" relationship="label">
+						<Button
+							icon={<Dismiss24Regular />}
+							className={styles.deleteButton}
+							onClick={(e) => {
+								e.stopPropagation();
+								onRemove();
+							}}
+							aria-label="Remove container"
+						/>
+					</Tooltip>
+				)}
 			</div>
 		</div>
 	);
@@ -581,8 +602,6 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 		};
 	}, [containers, messageRelay]);
 
-	const styles = useMenuStyles();
-
 	let containerSectionInnerView: React.ReactElement;
 	if (containers === undefined) {
 		containerSectionInnerView = <Waiting label="Fetching Container list" />;
@@ -594,26 +613,20 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 			<>
 				{containers.map((containerKey: string) => {
 					const state = containerStates.get(containerKey);
-					const isClosed = state?.closed ?? false;
 
 					let stateIcon: React.ReactElement | undefined;
-					if (isClosed) {
-						stateIcon = (
-							<Tooltip content="Remove closed container" relationship="label">
-								<Button
-									icon={<Dismiss24Regular />}
-									className={styles.deleteButton}
-									onClick={(e) => {
-										e.stopPropagation();
-										onRemoveContainer?.(containerKey);
-									}}
-									aria-label="Remove closed container"
-								/>
-							</Tooltip>
-						);
-					} else if (state) {
-						// Check readonly state first - it takes priority over connection state
-						if (state.readonly === true) {
+
+					if (state) {
+						// Check disposed state first - highest priority
+						if (state.closed) {
+							stateIcon = (
+								<Tooltip content="Container is disposed" relationship="label">
+									<Delete24Regular />
+								</Tooltip>
+							);
+						}
+						// Check readonly state - high priority
+						else if (state.readonly === true) {
 							stateIcon = (
 								<Tooltip content="Container is in read-only mode" relationship="label">
 									<LockClosed24Regular />
@@ -715,6 +728,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 								selectContainer(`${containerKey}`);
 							}}
 							hasChanges={containersWithChanges.has(containerKey)}
+							onRemove={onRemoveContainer ? () => onRemoveContainer(containerKey) : undefined}
 						/>
 					);
 				})}
