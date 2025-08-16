@@ -40,7 +40,10 @@ import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTre
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
 import { type ForestCodec, makeForestSummarizerCodec } from "./codec.js";
-import { ForestIncrementalSummaryBuilder } from "./incrementalSummaryBuilder.js";
+import {
+	ForestIncrementalSummaryBehavior,
+	ForestIncrementalSummaryBuilder,
+} from "./incrementalSummaryBuilder.js";
 import { TreeCompressionStrategyExtended } from "../treeCompressionUtils.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
@@ -140,9 +143,10 @@ export class ForestSummarizer implements Summarizable {
 		);
 		const encoderContext: FieldBatchEncodingContext = {
 			...this.encoderContext,
-			incrementalEncoderDecoder: shouldEncodeIncrementally
-				? this.incrementalSummaryBuilder
-				: undefined,
+			incrementalEncoderDecoder:
+				shouldEncodeIncrementally === ForestIncrementalSummaryBehavior.Incremental
+					? this.incrementalSummaryBuilder
+					: undefined,
 		};
 		const encoded = this.codec.encode(fieldMap, encoderContext);
 		fieldMap.forEach((value) => value.free());

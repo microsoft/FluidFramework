@@ -46,12 +46,7 @@ import {
 	TestTreeProviderLite,
 	validateUsageError,
 } from "../../utils.js";
-import {
-	describeHydration,
-	expectTreesEqual,
-	getViewForForkedBranch,
-	hydrate,
-} from "../utils.js";
+import { describeHydration, getViewForForkedBranch, hydrate } from "../utils.js";
 import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 
 import {
@@ -3153,4 +3148,30 @@ function checkoutWithInitialTree(
 		initialTree,
 	};
 	return checkoutWithContent(treeContent);
+}
+
+function expectTreesEqual(
+	a: TreeNode | TreeLeafValue | undefined,
+	b: TreeNode | TreeLeafValue | undefined,
+): void {
+	if (a === undefined || b === undefined) {
+		assert.equal(a === undefined, b === undefined);
+		return;
+	}
+
+	// Validate the same schema objects are used.
+	assert.equal(Tree.schema(a), Tree.schema(b));
+
+	// This should catch all cases, assuming exportVerbose works correctly.
+	// Use stored keys so unknown optional fields can be included.
+	assert.deepEqual(
+		TreeAlpha.exportVerbose(a, { useStoredKeys: true }),
+		TreeAlpha.exportVerbose(b, { useStoredKeys: true }),
+	);
+
+	// Since this uses some of the tools to compare trees that this is testing for, perform the comparison in a few ways to reduce risk of a bug making this pass when it shouldn't:
+	// This case could have false negatives (two trees with ambiguous schema could export the same concise tree),
+	// but should have no false positives since equal trees always have the same concise tree.
+	assert.deepEqual(TreeAlpha.exportConcise(a), TreeAlpha.exportConcise(b));
+	assert.deepEqual(TreeAlpha.exportVerbose(a), TreeAlpha.exportVerbose(b));
 }

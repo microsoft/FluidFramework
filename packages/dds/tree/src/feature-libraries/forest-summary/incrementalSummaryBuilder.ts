@@ -102,12 +102,25 @@ interface TrackedSummaryProperties {
 }
 
 /**
- * Indicates whether the forest should summarize incrementally.
- * If true, the forest may encode some chunks incrementally, i.e., chunks that support incremental encoding will
- * be encoded separately. They will be added to a separate tree than the main summary blob in the summary.
- * If false, the forest will summarize all chunks in the main summary blob.
+ * The behavior of the forest's incremental summary - whether the summary should be a single blob or incremental.
  */
-export type ShouldSummarizeIncrementally = boolean;
+export enum ForestIncrementalSummaryBehavior {
+	/**
+	 * The forest can encode chunks incrementally, i.e., chunks that support incremental encoding will be encoded
+	 * separately - they will be added to a separate tree.
+	 * The incremental summary format is described zin {@link ForestIncrementalSummaryBuilder}.
+	 */
+	Incremental,
+	/**
+	 * The forest should encode all of it's data in a single summary blob.
+	 * @remarks
+	 * The format of the summary will be the same as the old format (pre-incremental summaries) and is fully
+	 * backwards compatible with the old format. The summary will basically look like an incremental summary
+	 * with no incremental fields - it will only contain the "ForestTree" blob in the summary format described
+	 * in {@link ForestIncrementalSummaryBuilder}.
+	 */
+	SingleBlob,
+}
 
 /**
  * Validates that a summary is currently being tracked and that the tracked summary properties are defined.
@@ -118,10 +131,7 @@ function validateTrackingSummary(
 	forestSummaryState: ForestSummaryTrackingState,
 	trackedSummaryProperties: TrackedSummaryProperties | undefined,
 ): asserts trackedSummaryProperties is TrackedSummaryProperties {
-	assert(
-		forestSummaryState === ForestSummaryTrackingState.Tracking,
-		"Summary tracking must be in progress",
-	);
+	assert(forestSummaryState === ForestSummaryTrackingState.Tracking, "Not tracking a summary");
 	assert(
 		trackedSummaryProperties !== undefined,
 		"Tracked summary properties must be available when tracking a summary",
@@ -139,7 +149,7 @@ function validateReadyToTrackSummary(
 ): asserts trackedSummaryProperties is undefined {
 	assert(
 		forestSummaryState === ForestSummaryTrackingState.ReadyToTrack,
-		"Summary tracking must be ready",
+		"Already tracking a summary",
 	);
 	assert(
 		trackedSummaryProperties === undefined,
@@ -280,18 +290,18 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 * any summary handles. All chunks must be summarized in full.
 	 * @param incrementalSummaryContext - The context for the incremental summary that contains the sequence numbers
 	 * for the current and latest summaries.
-	 * @returns whether the forest data should be summarized incrementally.
+	 * @returns the behavior of the forest's incremental summary.
 	 */
 	public startingSummary(
 		summaryBuilder: SummaryTreeBuilder,
 		fullTree: boolean,
 		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined,
-	): ShouldSummarizeIncrementally {
+	): ForestIncrementalSummaryBehavior {
 		// If there is no incremental summary context, do not summarize incrementally. This happens in two scenarios:
 		// 1. When summarizing a detached container, i.e., the first ever summary.
 		// 2. When running GC, the default behavior is to call summarize on DDS without incrementalSummaryContext.
 		if (!this.enableIncrementalSummary || incrementalSummaryContext === undefined) {
-			return false;
+			return ForestIncrementalSummaryBehavior.SingleBlob;
 		}
 
 		validateReadyToTrackSummary(this.forestSummaryState, this.trackedSummaryProperties);
@@ -305,7 +315,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			parentSummaryBuilder: summaryBuilder,
 			fullTree,
 		};
-		return true;
+		return ForestIncrementalSummaryBehavior.Incremental;
 	}
 
 	/**
