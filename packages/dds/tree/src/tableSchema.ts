@@ -803,12 +803,6 @@ export namespace System_TableSchema {
 				return column;
 			}
 
-			public removeAllColumns(): ColumnValueType[] {
-				// TypeScript is unable to narrow the row type correctly here, hence the cast.
-				// See: https://github.com/microsoft/TypeScript/issues/52144
-				return this.removeColumns(this.columns as unknown as ColumnValueType[]);
-			}
-
 			public removeRows(
 				indexOrRows: number | undefined | readonly string[] | readonly RowValueType[],
 				count?: number | undefined,
@@ -857,13 +851,6 @@ export namespace System_TableSchema {
 
 				this.rows.removeAt(index);
 				return rowToRemove as RowValueType;
-			}
-
-			// TODO: remove
-			public removeAllRows(): RowValueType[] {
-				// TypeScript is unable to narrow the row type correctly here, hence the cast.
-				// See: https://github.com/microsoft/TypeScript/issues/52144
-				return this.removeRows(this.rows as unknown as RowValueType[]);
 			}
 
 			public removeCell(
@@ -1641,21 +1628,6 @@ export namespace TableSchema {
 		 */
 		removeColumns(columns: readonly string[]): TreeNodeFromImplicitAllowedTypes<TColumn>[];
 
-		// TODO: remove
-		/**
-		 * Removes all columns from the table.
-		 *
-		 * @remarks
-		 * Also removes any corresponding cells from the table's rows.
-		 *
-		 * Note: this operation can be slow for tables with many rows.
-		 * We are actively working on improving the performance of this operation, but for now it may have a negative
-		 * impact on performance.
-		 *
-		 * @returns The removed columns.
-		 */
-		removeAllColumns(): TreeNodeFromImplicitAllowedTypes<TColumn>[];
-
 		/**
 		 * Removes the specified row from the table.
 		 * @param row - The {@link TableSchema.Row | row} or {@link TableSchema.Row.id | row ID} to remove.
@@ -1692,13 +1664,6 @@ export namespace TableSchema {
 		 * In this case, no rows are removed.
 		 */
 		removeRows(rows: readonly string[]): TreeNodeFromImplicitAllowedTypes<TRow>[];
-
-		// TODO: remove
-		/**
-		 * Removes all rows from the table.
-		 * @returns The removed rows.
-		 */
-		removeAllRows(): TreeNodeFromImplicitAllowedTypes<TRow>[];
 
 		/**
 		 * Removes the cell at the specified location in the table.
