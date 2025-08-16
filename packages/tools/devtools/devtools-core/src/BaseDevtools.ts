@@ -380,7 +380,7 @@ export abstract class BaseDevtools<TContainer extends DecomposedContainer>
 	protected readonly postDataVisualization = (
 		fluidObjectId: FluidObjectId,
 		visualization: FluidObjectNode | undefined,
-		reason: DataVisualization.UpdateReason = DataVisualization.UpdateReason.UserRequested,
+		reason: DataVisualization.UpdateReason,
 	): void => {
 		postMessagesToWindow(
 			this.messageLoggingOptions,
