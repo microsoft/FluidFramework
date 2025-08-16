@@ -1133,6 +1133,76 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
+	describe("removeColumns", () => {
+		it("Remove empty range", () => {
+			const { treeView, Column } = createTableTree();
+			treeView.initialize({
+				columns: [new Column({ id: "column-0", props: {} })],
+				rows: [],
+			});
+
+			treeView.root.removeColumns(0, 0);
+			assertEqualTrees(treeView.root, {
+				columns: [{ id: "column-0", props: {} }],
+				rows: [],
+			});
+		});
+
+		it("Remove by index range", () => {
+			const { treeView, Column } = createTableTree();
+			const column0 = new Column({ id: "column-0", props: {} });
+			const column1 = new Column({ id: "column-1", props: {} });
+			const column2 = new Column({ id: "column-2", props: {} });
+			const column3 = new Column({ id: "column-3", props: {} });
+			treeView.initialize({
+				columns: [column0, column1, column2, column3],
+				rows: [],
+			});
+
+			// Remove columns 1-2
+			treeView.root.removeColumns(1, 2);
+			assertEqualTrees(treeView.root, {
+				columns: [
+					{ id: "column-0", props: {} },
+					{ id: "column-3", props: {} },
+				],
+				rows: [],
+			});
+		});
+
+		it("Removing by range fails for invalid ranges", () => {
+			const { treeView, Column } = createTableTree();
+			const column0 = new Column({ id: "column-0", props: {} });
+			const column1 = new Column({ id: "column-1", props: {} });
+			treeView.initialize({
+				columns: [column0, column1],
+				rows: [],
+			});
+
+			assert.throws(
+				() => treeView.root.removeColumns(-1, undefined),
+				validateUsageError(
+					/Start index out of bounds. Expected index to be on \[0, 1], but got -1/,
+				),
+			);
+
+			assert.throws(
+				() => treeView.root.removeColumns(1, -1),
+				validateUsageError(/Expected non-negative count. Got -1./),
+			);
+
+			assert.throws(
+				() => treeView.root.removeColumns(0, 5),
+				validateUsageError(
+					/End index out of bounds. Expected end to be on \[0, 2], but got 5/,
+				),
+			);
+
+			// Additionally, no columns should have been removed.
+			assert(treeView.root.columns.length === 2);
+		});
+	});
+
 	describe("removeRows", () => {
 		it("Remove empty list", () => {
 			const { treeView } = createTableTree();
@@ -1237,6 +1307,82 @@ describe("TableFactory unit tests", () => {
 
 			// Additionally, `row-0` should not have been removed.
 			assert(treeView.root.rows.length === 1);
+		});
+
+		it("Remove empty range", () => {
+			const { treeView, Row } = createTableTree();
+			treeView.initialize({
+				columns: [],
+				rows: [new Row({ id: "row-0", cells: {}, props: {} })],
+			});
+
+			treeView.root.removeRows(0, 0);
+			assertEqualTrees(treeView.root, {
+				columns: [],
+				rows: [{ id: "row-0", cells: {}, props: {} }],
+			});
+		});
+
+		it("Remove by index range", () => {
+			const { treeView, Row } = createTableTree();
+			const row0 = new Row({ id: "row-0", cells: {}, props: {} });
+			const row1 = new Row({ id: "row-1", cells: {}, props: {} });
+			const row2 = new Row({ id: "row-2", cells: {}, props: {} });
+			const row3 = new Row({ id: "row-3", cells: {}, props: {} });
+			treeView.initialize({
+				columns: [],
+				rows: [row0, row1, row2, row3],
+			});
+
+			// Remove rows 1-2
+			treeView.root.removeRows(1, 2);
+			assertEqualTrees(treeView.root, {
+				columns: [],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+						props: {},
+					},
+					{
+						id: "row-3",
+						cells: {},
+						props: {},
+					},
+				],
+			});
+		});
+
+		it("Removing by range fails for invalid ranges", () => {
+			const { treeView, Row } = createTableTree();
+			const row0 = new Row({ id: "row-0", cells: {}, props: {} });
+			const row1 = new Row({ id: "row-1", cells: {}, props: {} });
+			treeView.initialize({
+				columns: [],
+				rows: [row0, row1],
+			});
+
+			assert.throws(
+				() => treeView.root.removeRows(-1, undefined),
+				validateUsageError(
+					/Start index out of bounds. Expected index to be on \[0, 1], but got -1/,
+				),
+			);
+
+			assert.throws(
+				() => treeView.root.removeRows(1, -1),
+				validateUsageError(/Expected non-negative count. Got -1./),
+			);
+
+			assert.throws(
+				() => treeView.root.removeRows(0, 5),
+				validateUsageError(
+					/End index out of bounds. Expected end to be on \[0, 2], but got 5/,
+				),
+			);
+
+			// Additionally, no rows should have been removed.
+			assert(treeView.root.rows.length === 2);
 		});
 	});
 
