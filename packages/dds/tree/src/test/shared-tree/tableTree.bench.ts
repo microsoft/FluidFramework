@@ -25,6 +25,9 @@ import {
  * to ensure consistency and comparability between the two implementations.
  */
 
+// TODOs (AB#46340):
+// - unify with memory measurement tests (in terms of API)
+
 /**
  * {@link runBenchmark} configuration.
  */
