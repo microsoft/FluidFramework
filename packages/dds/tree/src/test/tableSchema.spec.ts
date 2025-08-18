@@ -1205,16 +1205,24 @@ describe("TableFactory unit tests", () => {
 
 	describe("removeRows", () => {
 		it("Remove empty list", () => {
-			const { treeView } = createTableTree();
+			const { treeView, Row } = createTableTree();
 			treeView.initialize({
 				columns: [],
-				rows: [],
+				rows: [
+					new Row({
+						cells: {},
+					}),
+				],
 			});
 
-			treeView.root.removeAllRows();
+			treeView.root.removeRows([]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
-				rows: [],
+				rows: [
+					{
+						cells: {},
+					},
+				],
 			});
 		});
 
