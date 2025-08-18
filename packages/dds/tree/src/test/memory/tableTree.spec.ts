@@ -239,7 +239,10 @@ describe("SharedTree table APIs memory usage", () => {
 						operation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const column = new Column({});
-								table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
+								table.insertColumns({
+									index: Math.floor(table.columns.length / 2),
+									columns: [column],
+								});
 							}
 						},
 					}),
@@ -254,7 +257,10 @@ describe("SharedTree table APIs memory usage", () => {
 						setupOperation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const column = new Column({});
-								table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
+								table.insertColumns({
+									index: Math.floor(table.columns.length / 2),
+									columns: [column],
+								});
 							}
 						},
 						stackOperation: (undoRedoManager) => {
@@ -275,7 +281,10 @@ describe("SharedTree table APIs memory usage", () => {
 						setupOperation: (table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
 								const column = new Column({});
-								table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
+								table.insertColumns({
+									index: Math.floor(table.columns.length / 2),
+									columns: [column],
+								});
 							}
 							for (let i = 0; i < count; i++) {
 								undoRedoManager.undo();
@@ -302,7 +311,7 @@ describe("SharedTree table APIs memory usage", () => {
 						operation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const row = new Row({ cells: {} });
-								table.insertRow({ index: Math.floor(table.rows.length / 2), row });
+								table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 							}
 						},
 					}),
@@ -317,7 +326,7 @@ describe("SharedTree table APIs memory usage", () => {
 						setupOperation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const row = new Row({ cells: {} });
-								table.insertRow({ index: Math.floor(table.rows.length / 2), row });
+								table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 							}
 						},
 						stackOperation: (undoRedoManager) => {
@@ -338,7 +347,7 @@ describe("SharedTree table APIs memory usage", () => {
 						setupOperation: (table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
 								const row = new Row({ cells: {} });
-								table.insertRow({ index: Math.floor(table.rows.length / 2), row });
+								table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 							}
 							for (let i = 0; i < count; i++) {
 								undoRedoManager.undo();
@@ -365,9 +374,12 @@ describe("SharedTree table APIs memory usage", () => {
 						operation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const column = new Column({});
-								table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
+								table.insertColumns({
+									index: Math.floor(table.columns.length / 2),
+									columns: [column],
+								});
 								const row = new Row({ id: `row-${i}`, cells: {} });
-								table.insertRow({ index: Math.floor(table.rows.length / 2), row });
+								table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 							}
 						},
 					}),
@@ -382,9 +394,12 @@ describe("SharedTree table APIs memory usage", () => {
 						setupOperation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const column = new Column({});
-								table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
+								table.insertColumns({
+									index: Math.floor(table.columns.length / 2),
+									columns: [column],
+								});
 								const row = new Row({ id: `row-${i}`, cells: {} });
-								table.insertRow({ index: Math.floor(table.rows.length / 2), row });
+								table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 							}
 						},
 						stackOperation: (undoRedoManager) => {
@@ -409,9 +424,9 @@ describe("SharedTree table APIs memory usage", () => {
 				// 		setupOperation: (table, undoRedoManager) => {
 				// 			for (let i = 0; i < count; i++) {
 				// 				const column = new Column({});
-				// 				table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
+				// 				table.insertColumns({ index: Math.floor(table.columns.length / 2), columns: [column] });
 				// 				const row = new Row({ id: `row-${i}`, cells: {} });
-				// 				table.insertRow({ index: Math.floor(table.rows.length / 2), row });
+				// 				table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 				// 			}
 				// 			for (let i = 0; i < count; i++) {
 				// 				// Undo row insertion
@@ -447,7 +462,7 @@ describe("SharedTree table APIs memory usage", () => {
 						operation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const column = table.columns[Math.floor(table.columns.length / 2)];
-								table.removeColumn(column);
+								table.removeColumns([column]);
 							}
 						},
 					}),
@@ -462,7 +477,7 @@ describe("SharedTree table APIs memory usage", () => {
 						setupOperation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const column = table.columns[Math.floor(table.columns.length / 2)];
-								table.removeColumn(column);
+								table.removeColumns([column]);
 							}
 						},
 						stackOperation: (undoRedoManager) => {
@@ -484,7 +499,7 @@ describe("SharedTree table APIs memory usage", () => {
 				// 		setupOperation: (table, undoRedoManager) => {
 				// 			for (let i = 0; i < count; i++) {
 				// 				const column = table.columns[Math.floor(table.columns.length / 2)];
-				// 				table.removeColumn(column);
+				// 				table.removeColumns([column]);
 				// 			}
 				// 			for (let i = 0; i < count; i++) {
 				// 				undoRedoManager.undo();
@@ -511,7 +526,7 @@ describe("SharedTree table APIs memory usage", () => {
 						operation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const row = table.rows[Math.floor(table.rows.length / 2)];
-								table.removeRow(row);
+								table.removeRows([row]);
 							}
 						},
 					}),
@@ -526,7 +541,7 @@ describe("SharedTree table APIs memory usage", () => {
 						setupOperation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const row = table.rows[Math.floor(table.rows.length / 2)];
-								table.removeRow(row);
+								table.removeRows([row]);
 							}
 						},
 						stackOperation: (undoRedoManager) => {
@@ -547,7 +562,7 @@ describe("SharedTree table APIs memory usage", () => {
 						setupOperation: (table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
 								const row = table.rows[Math.floor(table.rows.length / 2)];
-								table.removeRow(row);
+								table.removeRows([row]);
 							}
 							for (let i = 0; i < count; i++) {
 								undoRedoManager.undo();
@@ -574,9 +589,9 @@ describe("SharedTree table APIs memory usage", () => {
 						operation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const column = table.columns[Math.floor(table.columns.length / 2)];
-								table.removeColumn(column);
+								table.removeColumns([column]);
 								const row = table.rows[Math.floor(table.rows.length / 2)];
-								table.removeRow(row);
+								table.removeRows([row]);
 							}
 						},
 					}),
@@ -591,9 +606,9 @@ describe("SharedTree table APIs memory usage", () => {
 						setupOperation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const column = table.columns[Math.floor(table.columns.length / 2)];
-								table.removeColumn(column);
+								table.removeColumns([column]);
 								const row = table.rows[Math.floor(table.rows.length / 2)];
-								table.removeRow(row);
+								table.removeRows([row]);
 							}
 						},
 						stackOperation: (undoRedoManager) => {
@@ -618,9 +633,9 @@ describe("SharedTree table APIs memory usage", () => {
 				// 		setupOperation: (table, undoRedoManager) => {
 				// 			for (let i = 0; i < count; i++) {
 				// 				const column = table.columns[Math.floor(table.columns.length / 2)];
-				// 				table.removeColumn(column);
+				// 				table.removeColumns([column]);
 				// 				const row = table.rows[Math.floor(table.rows.length / 2)];
-				// 				table.removeRow(row);
+				// 				table.removeRows([row]);
 				// 			}
 				// 			for (let i = 0; i < count; i++) {
 				// 				// Undo row removal
@@ -653,11 +668,15 @@ describe("SharedTree table APIs memory usage", () => {
 						operation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const column = new Column({});
-								table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
+								table.insertColumns({
+									index: Math.floor(table.columns.length / 2),
+									columns: [column],
+								});
 								const row = new Row({ id: `row-${i}`, cells: {} });
-								table.insertRow({ index: Math.floor(table.rows.length / 2), row });
-								table.removeColumn(column);
-								table.removeRow(row);
+								table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
+
+								table.removeColumns([column]);
+								table.removeRows([row]);
 							}
 						},
 					}),
@@ -673,11 +692,11 @@ describe("SharedTree table APIs memory usage", () => {
 				// 		setupOperation: (table) => {
 				// 			for (let i = 0; i < count; i++) {
 				// 				const column = new Column({});
-				// 				table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
+				// 				table.insertColumns({ index: Math.floor(table.columns.length / 2), columns: [column] });
 				// 				const row = new Row({ id: `row-${i}`, cells: {} });
-				// 				table.insertRow({ index: Math.floor(table.rows.length / 2), row });
-				// 				table.removeColumn(column);
-				// 				table.removeRow(row);
+				// 				table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
+				// 				table.removeColumns([column]);
+				// 				table.removeRows([row]);
 				// 			}
 				// 		},
 				// 		stackOperation: (undoRedoManager) => {
@@ -705,11 +724,11 @@ describe("SharedTree table APIs memory usage", () => {
 				// 		setupOperation: (table, undoRedoManager) => {
 				// 			for (let i = 0; i < count; i++) {
 				// 				const column = new Column({});
-				// 				table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
+				// 				table.insertColumns({ index: Math.floor(table.columns.length / 2), columns: [column] });
 				// 				const row = new Row({ id: `row-${i}`, cells: {} });
-				// 				table.insertRow({ index: Math.floor(table.rows.length / 2), row });
-				// 				table.removeColumn(column);
-				// 				table.removeRow(row);
+				// 				table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
+				// 				table.removeColumns([column]);
+				// 				table.removeRows([row]);
 				// 			}
 				// 			for (let i = 0; i < count; i++) {
 				// 				// Undo row removal
