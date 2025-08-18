@@ -67,7 +67,7 @@ function runBenchmark({
 			}
 
 			public afterIteration(): void {
-				assert(this.table !== undefined, "matrix is not initialized");
+				assert(this.table !== undefined, "table is not initialized");
 				assert(this.undoRedoStack !== undefined, "undoRedoStack is not initialized");
 				assert(this.cleanUp !== undefined, "cleanUp is not initialized");
 
