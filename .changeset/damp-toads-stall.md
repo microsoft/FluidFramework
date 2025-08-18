@@ -6,7 +6,7 @@
 Single-node insertion/removal APIs have been removed from TableSchema (alpha)
 
 There is a significant performance benefit to inserting / removing rows / columns in batches.
-To help encourage more performant usage patterns, single-node insertion and removal APIs.
+To help encourage more performant usage patterns, single-node insertion and removal APIs have been removed.
 The APIs that operate on batches should be used instead.
 
 Specifically:
