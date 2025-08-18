@@ -3,7 +3,7 @@
 "@fluidframework/sequence": minor
 "__section": breaking
 ---
-Remove unnecessary and internal APIs in ISequenceIntervalCollection and related interval types.
+Remove unnecessary and internal APIs in ISequenceIntervalCollection and related interval types
 
 The following APIs are now removed:
 - `IInterval.clone`
