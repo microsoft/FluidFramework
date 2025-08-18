@@ -217,3 +217,28 @@ export class UndoRedoManager {
 		this.unsubscribeFromTreeEvents();
 	}
 }
+
+/**
+ * Benchmark test options.
+ */
+export interface TableBenchmarkOptions extends TableTreeOptions {
+	/**
+	 * The title of the benchmark test.
+	 */
+	readonly title: string;
+
+	/**
+	 * Optional action to perform on the matrix before the operation being measured.
+	 */
+	readonly beforeOperation?: (table: Table, undoRedoStack: UndoRedoManager) => void;
+
+	/**
+	 * The operation to be measured.
+	 */
+	readonly operation: (table: Table, undoRedo: UndoRedoManager) => void;
+
+	/**
+	 * Optional action to perform on the matrix after the operation being measured.
+	 */
+	readonly afterOperation?: (table: Table, undoRedoStack: UndoRedoManager) => void;
+}
