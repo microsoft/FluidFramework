@@ -38,10 +38,20 @@ export interface ITokenBucketConfig {
 }
 
 /**
+ * An effectively disabled token bucket.
+ */
+const defaultTokenBucketConfig: ITokenBucketConfig = {
+	capacity: 1_000_000,
+	refillRatePerMs: 1_000_000,
+	minCooldownIntervalMs: 1_000_000,
+};
+
+/**
  * Implements the Token Bucket algorithm for rate limiting.
  * @internal
  */
 export class TokenBucket implements ITokenBucket {
+	private readonly config: ITokenBucketConfig;
 	/**
 	 * The current number of tokens in the bucket.
 	 */
@@ -55,9 +65,13 @@ export class TokenBucket implements ITokenBucket {
 		/**
 		 * The maximum number of tokens the bucket can hold.
 		 */
-		private readonly config: ITokenBucketConfig,
+		config: Partial<ITokenBucketConfig>,
 	) {
-		this.tokens = config.capacity;
+		this.config = {
+			...defaultTokenBucketConfig,
+			...config,
+		};
+		this.tokens = this.config.capacity;
 		this.lastRefillTimestamp = Date.now();
 	}
 
@@ -116,7 +130,16 @@ export interface IDistributedTokenBucketConfig extends ITokenBucketConfig {
 	distributedSyncIntervalInMs: number;
 }
 
+/**
+ * An effectively disabled distributed token bucket.
+ */
+const defaultDistributedTokenBucketConfig: IDistributedTokenBucketConfig = {
+	...defaultTokenBucketConfig,
+	distributedSyncIntervalInMs: 1_000_000,
+};
+
 export class DistributedTokenBucket implements ITokenBucket {
+	private readonly config: IDistributedTokenBucketConfig;
 	/**
 	 * The number of tokens consumed since the last synchronization.
 	 */
@@ -147,9 +170,14 @@ export class DistributedTokenBucket implements ITokenBucket {
 		/**
 		 * The maximum number of tokens the bucket can hold.
 		 */
-		private readonly config: IDistributedTokenBucketConfig,
+		config: Partial<IDistributedTokenBucketConfig>,
 		private readonly usageStorageId?: string,
-	) {}
+	) {
+		this.config = {
+			...defaultDistributedTokenBucketConfig,
+			...config,
+		};
+	}
 
 	private async tryConsumeCore(usageData?: IUsageData): Promise<void> {
 		const now = Date.now();

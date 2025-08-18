@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import {
 	ILogger,
 	IThrottleAndUsageStorageManager,
@@ -27,7 +32,7 @@ export interface IDistributedTokenBucketThrottlerConfig {
 	 * By default, the local token bucket is effectively disabled with massive limits.
 	 * Default: \{ capacity: 1_000_000, refillRatePerMs: 1_000_000, minCooldownIntervalMs: 1_000_000 \}
 	 */
-	localTokenBucket?: ITokenBucketConfig;
+	localTokenBucket?: Partial<ITokenBucketConfig>;
 	/**
 	 * Configuration for the distributed token bucket.
 	 * This bucket is used for rate limiting operations across multiple instances, and will typically
@@ -35,7 +40,7 @@ export interface IDistributedTokenBucketThrottlerConfig {
 	 * By default, the distributed token bucket is effectively disabled with massive limits.
 	 * Default: \{ capacity: 1_000_000, refillRatePerMs: 1_000_000, minCooldownIntervalMs: 1_000_000, distributedSyncIntervalInMs: 1_000_000 \}
 	 */
-	distributedTokenBucket?: IDistributedTokenBucketConfig;
+	distributedTokenBucket?: Partial<IDistributedTokenBucketConfig>;
 
 	/**
 	 * Maximum number of keys that should be internally tracked at a given time.
@@ -117,7 +122,7 @@ export class DistributedTokenBucketThrottler implements IThrottler {
 	constructor(
 		private readonly throttleAndUsageStorageManager: IThrottleAndUsageStorageManager,
 		private readonly logger?: ILogger,
-		config: IDistributedTokenBucketThrottlerConfig = defaultDistributedTokenBucketThrottlerConfig,
+		config?: Partial<IDistributedTokenBucketThrottlerConfig>,
 	) {
 		this.config = { ...defaultDistributedTokenBucketThrottlerConfig, ...config };
 		const cacheOptions: LRUCacheOptions<string, ITokenBucketCacheEntry> = {

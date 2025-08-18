@@ -17,9 +17,8 @@ import * as utils from "@fluidframework/server-services-utils";
 import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
 import type { Provider } from "nconf";
-import * as winston from "winston";
 
-import { Constants } from "../utils";
+import { Constants, configureThrottler } from "../utils";
 
 import type { IAlfredResourcesCustomizations } from "./customizations";
 import { AlfredRunner } from "./runner";
@@ -301,36 +300,21 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				redisParamsForThrottling,
 			);
 
-		const configureThrottler = (
-			throttleConfig: Partial<utils.IThrottleConfig>,
-		): core.IThrottler => {
-			const throttlerHelper = new services.ThrottlerHelper(
-				redisThrottleAndUsageStorageManager,
-				throttleConfig.maxPerMs,
-				throttleConfig.maxBurst,
-				throttleConfig.minCooldownIntervalInMs,
-			);
-			return new services.Throttler(
-				throttlerHelper,
-				throttleConfig.minThrottleIntervalInMs,
-				winston,
-				throttleConfig.maxInMemoryCacheSize,
-				throttleConfig.maxInMemoryCacheAgeInMs,
-				throttleConfig.enableEnhancedTelemetry,
-			);
-		};
-
 		// Per-tenant Rest API Throttlers
 		const restApiTenantThrottleConfig = utils.getThrottleConfig(
 			config.get("alfred:throttling:restCallsPerTenant:generalRestCall"),
 		);
-		const restTenantThrottler = configureThrottler(restApiTenantThrottleConfig);
+		const restTenantThrottler = configureThrottler(
+			restApiTenantThrottleConfig,
+			redisThrottleAndUsageStorageManager,
+		);
 
 		const restApiTenantCreateDocThrottleConfig = utils.getThrottleConfig(
 			config.get("alfred:throttling:restCallsPerTenant:createDoc"),
 		);
 		const restTenantCreateDocThrottler = configureThrottler(
 			restApiTenantCreateDocThrottleConfig,
+			redisThrottleAndUsageStorageManager,
 		);
 
 		const restApiTenantGetDeltasThrottleConfig = utils.getThrottleConfig(
@@ -338,6 +322,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		);
 		const restTenantGetDeltasThrottler = configureThrottler(
 			restApiTenantGetDeltasThrottleConfig,
+			redisThrottleAndUsageStorageManager,
 		);
 
 		const restApiTenantGetSessionThrottleConfig = utils.getThrottleConfig(
@@ -345,6 +330,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		);
 		const restTenantGetSessionThrottler = configureThrottler(
 			restApiTenantGetSessionThrottleConfig,
+			redisThrottleAndUsageStorageManager,
 		);
 
 		const restTenantThrottlers = new Map<string, core.IThrottler>();
@@ -360,17 +346,26 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const restApiCreateDocThrottleConfig = utils.getThrottleConfig(
 			config.get("alfred:throttling:restCallsPerCluster:createDoc"),
 		);
-		const restCreateDocThrottler = configureThrottler(restApiCreateDocThrottleConfig);
+		const restCreateDocThrottler = configureThrottler(
+			restApiCreateDocThrottleConfig,
+			redisThrottleAndUsageStorageManager,
+		);
 
 		const restApiGetDeltasThrottleConfig = utils.getThrottleConfig(
 			config.get("alfred:throttling:restCallsPerCluster:getDeltas"),
 		);
-		const restGetDeltasThrottler = configureThrottler(restApiGetDeltasThrottleConfig);
+		const restGetDeltasThrottler = configureThrottler(
+			restApiGetDeltasThrottleConfig,
+			redisThrottleAndUsageStorageManager,
+		);
 
 		const restApiGetSessionThrottleConfig = utils.getThrottleConfig(
 			config.get("alfred:throttling:restCallsPerCluster:getSession"),
 		);
-		const restGetSessionThrottler = configureThrottler(restApiGetSessionThrottleConfig);
+		const restGetSessionThrottler = configureThrottler(
+			restApiGetSessionThrottleConfig,
+			redisThrottleAndUsageStorageManager,
+		);
 
 		const restClusterThrottlers = new Map<string, core.IThrottler>();
 		restClusterThrottlers.set(Constants.createDocThrottleIdPrefix, restCreateDocThrottler);

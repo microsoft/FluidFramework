@@ -11,6 +11,7 @@ import safeStringify from "json-stringify-safe";
  * @internal
  */
 export interface ILegacyThrottleConfig {
+	type?: "Throttler";
 	maxPerMs: number;
 	maxBurst: number;
 	minCooldownIntervalInMs: number;
@@ -65,6 +66,7 @@ const expandSimpleLegacyThrottleConfig = ({
  * Also, will only keep throttle value in cache at a given time to avoid unnecessary memory use.
  */
 export const disabledLegacyThrottleConfig: ILegacyThrottleConfig = {
+	type: "Throttler",
 	maxPerMs: 1000000,
 	maxBurst: 1000000,
 	minCooldownIntervalInMs: 1000000,
@@ -106,6 +108,7 @@ export const getLegacyThrottleConfig = (
  * @internal
  */
 export interface IHybridThrottleConfig {
+	type: "DistributedTokenBucket";
 	local: {
 		maxPerMs: number;
 		maxBurst: number;
@@ -155,8 +158,11 @@ const expandSimpleHybridThrottleConfig = ({
 	simpleLocal,
 	simpleDistributed,
 	...overrides
-}: ISimpleHybridThrottleConfig): Partial<IHybridThrottleConfig> => {
-	const throttleConfig: Partial<IHybridThrottleConfig> = {
+}: ISimpleHybridThrottleConfig): Partial<IHybridThrottleConfig> &
+	Required<Pick<IHybridThrottleConfig, "type">> => {
+	const throttleConfig: Partial<IHybridThrottleConfig> &
+		Required<Pick<IHybridThrottleConfig, "type">> = {
+		type: "DistributedTokenBucket",
 		local: {
 			maxPerMs: simpleLocal.maxPerInterval / simpleLocal.intervalInMs,
 			maxBurst: simpleLocal.maxPerInterval,
@@ -181,6 +187,7 @@ const expandSimpleHybridThrottleConfig = ({
  * Also, will only keep throttle value in cache at a given time to avoid unnecessary memory use.
  */
 export const disabledHybridThrottleConfig: IHybridThrottleConfig = {
+	type: "DistributedTokenBucket",
 	local: {
 		maxPerMs: 1000000,
 		maxBurst: 1000000,
@@ -203,7 +210,7 @@ export const getHybridThrottleConfig = (
 		| Partial<IHybridThrottleConfig>
 		| "disabled"
 		| undefined,
-): Partial<IHybridThrottleConfig> => {
+): Partial<IHybridThrottleConfig> & Required<Pick<IHybridThrottleConfig, "type">> => {
 	const throttleConfigValue = configValue ?? "disabled";
 	if (
 		(typeof throttleConfigValue !== "object" || Array.isArray(throttleConfigValue)) &&
@@ -217,7 +224,7 @@ export const getHybridThrottleConfig = (
 	if (isSimpleHybridThrottleConfig(throttleConfigValue)) {
 		return expandSimpleHybridThrottleConfig(throttleConfigValue);
 	}
-	return throttleConfigValue;
+	return { ...throttleConfigValue, type: "DistributedTokenBucket" };
 };
 
 /**

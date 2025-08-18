@@ -61,6 +61,7 @@ describe("Throttler Configs", () => {
 			intervalInMs: 30_000,
 		};
 		const expandedConfig1: ILegacyThrottleConfig = {
+			type: "Throttler",
 			maxPerMs: 0.1,
 			maxBurst: 3_000,
 			minCooldownIntervalInMs: 30_000,
@@ -77,6 +78,7 @@ describe("Throttler Configs", () => {
 			maxInMemoryCacheAgeInMs: 180_000,
 		};
 		const expandedConfig2: ILegacyThrottleConfig = {
+			type: "Throttler",
 			maxPerMs: 0.3,
 			maxBurst: 9_000,
 			minCooldownIntervalInMs: 30_000,
@@ -91,6 +93,7 @@ describe("Throttler Configs", () => {
 			intervalInMs: 30_000,
 		};
 		const expandedConfig3: ILegacyThrottleConfig = {
+			type: "Throttler",
 			maxPerMs: 0.05,
 			maxBurst: 1_500,
 			minCooldownIntervalInMs: 30_000,
@@ -105,6 +108,7 @@ describe("Throttler Configs", () => {
 			intervalInMs: 5_000,
 		};
 		const expandedConfig4: ILegacyThrottleConfig = {
+			type: "Throttler",
 			maxPerMs: 2,
 			maxBurst: 10_000,
 			minCooldownIntervalInMs: 5_000,
@@ -123,6 +127,7 @@ describe("Throttler Configs", () => {
 			maxPerMs: 5,
 		};
 		const expandedConfig1: ILegacyThrottleConfig = {
+			type: "Throttler",
 			maxPerMs: 5,
 			maxBurst: 3_000,
 			minCooldownIntervalInMs: 30_000,
@@ -140,6 +145,7 @@ describe("Throttler Configs", () => {
 			minThrottleIntervalInMs: 140_000,
 		};
 		const expandedConfig2: ILegacyThrottleConfig = {
+			type: "Throttler",
 			maxPerMs: 0.3,
 			maxBurst: 9_000,
 			minCooldownIntervalInMs: 30_000,
@@ -222,6 +228,7 @@ describe("Hybrid Throttler Configs", () => {
 			simpleDistributed: { maxPerInterval: 1_500, intervalInMs: 30_000 },
 		};
 		const expandedConfig1: IHybridThrottleConfig = {
+			type: "DistributedTokenBucket",
 			local: {
 				maxPerMs: 0.1,
 				maxBurst: 3_000,
@@ -246,6 +253,7 @@ describe("Hybrid Throttler Configs", () => {
 			maxInMemoryCacheAgeInMs: 180_000,
 		};
 		const expandedConfig2: IHybridThrottleConfig = {
+			type: "DistributedTokenBucket",
 			local: {
 				maxPerMs: 0.3,
 				maxBurst: 9_000,
@@ -268,6 +276,7 @@ describe("Hybrid Throttler Configs", () => {
 			simpleDistributed: { maxPerInterval: 5_000, intervalInMs: 5_000 },
 		};
 		const expandedConfig3: IHybridThrottleConfig = {
+			type: "DistributedTokenBucket",
 			local: {
 				maxPerMs: 2,
 				maxBurst: 10_000,
@@ -293,6 +302,7 @@ describe("Hybrid Throttler Configs", () => {
 			local: { maxPerMs: 5, maxBurst: 3_000, minCooldownIntervalInMs: 30_000 },
 		};
 		const expandedConfig1: IHybridThrottleConfig = {
+			type: "DistributedTokenBucket",
 			local: {
 				maxPerMs: 5,
 				maxBurst: 3_000,
@@ -323,6 +333,7 @@ describe("Hybrid Throttler Configs", () => {
 			},
 		};
 		const expandedConfig2: IHybridThrottleConfig = {
+			type: "DistributedTokenBucket",
 			local: {
 				maxPerMs: 0.3,
 				maxBurst: 9_000,
@@ -345,6 +356,7 @@ describe("Hybrid Throttler Configs", () => {
 describe("getThrottleConfig (unified)", () => {
 	it("correctly identifies and processes legacy configs", () => {
 		const legacyConfig: ILegacyThrottleConfig = {
+			type: "Throttler",
 			maxPerMs: 0.1,
 			maxBurst: 3000,
 			minCooldownIntervalInMs: 30000,
@@ -365,6 +377,7 @@ describe("getThrottleConfig (unified)", () => {
 
 	it("correctly identifies and processes hybrid configs", () => {
 		const hybridConfig: IHybridThrottleConfig = {
+			type: "DistributedTokenBucket",
 			local: {
 				maxPerMs: 0.1,
 				maxBurst: 3000,
@@ -404,6 +417,7 @@ describe("getThrottleConfig (unified)", () => {
 describe("getThrottleConfigType", () => {
 	it("correctly identifies legacy config types", () => {
 		const legacyConfig: ILegacyThrottleConfig = {
+			type: "Throttler",
 			maxPerMs: 0.1,
 			maxBurst: 3000,
 			minCooldownIntervalInMs: 30000,
@@ -422,6 +436,7 @@ describe("getThrottleConfigType", () => {
 
 	it("correctly identifies hybrid config types", () => {
 		const hybridConfig: IHybridThrottleConfig = {
+			type: "DistributedTokenBucket",
 			local: {
 				maxPerMs: 0.1,
 				maxBurst: 3000,
