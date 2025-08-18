@@ -265,6 +265,7 @@ declare type old_as_current_for_Interface_IInterval = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Interface_IInterval": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IInterval = requireAssignableTo<TypeOnly<current.IInterval>, TypeOnly<old.IInterval>>
 
 /*
@@ -382,6 +383,7 @@ declare type current_as_old_for_Interface_ISequenceOverlappingIntervalsIndex = r
  * typeValidation.broken:
  * "Interface_ISerializableInterval": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ISerializableInterval = requireAssignableTo<TypeOnly<old.ISerializableInterval>, TypeOnly<current.ISerializableInterval>>
 
 /*
@@ -391,6 +393,7 @@ declare type old_as_current_for_Interface_ISerializableInterval = requireAssigna
  * typeValidation.broken:
  * "Interface_ISerializableInterval": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ISerializableInterval = requireAssignableTo<TypeOnly<current.ISerializableInterval>, TypeOnly<old.ISerializableInterval>>
 
 /*
@@ -562,6 +565,7 @@ declare type old_as_current_for_Interface_SequenceInterval = requireAssignableTo
  * typeValidation.broken:
  * "Interface_SequenceInterval": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_SequenceInterval = requireAssignableTo<TypeOnly<current.SequenceInterval>, TypeOnly<old.SequenceInterval>>
 
 /*
@@ -652,6 +656,7 @@ declare type old_as_current_for_TypeAlias_IntervalRevertible = requireAssignable
  * typeValidation.broken:
  * "TypeAlias_IntervalRevertible": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_IntervalRevertible = requireAssignableTo<TypeOnly<current.IntervalRevertible>, TypeOnly<old.IntervalRevertible>>
 
 /*
@@ -760,6 +765,7 @@ declare type old_as_current_for_TypeAlias_SharedStringRevertible = requireAssign
  * typeValidation.broken:
  * "TypeAlias_SharedStringRevertible": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_SharedStringRevertible = requireAssignableTo<TypeOnly<current.SharedStringRevertible>, TypeOnly<old.SharedStringRevertible>>
 
 /*

@@ -8,7 +8,6 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeTextHelper,
 	IRelativePosition,
 	ISegment,
@@ -20,7 +19,6 @@ import {
 	refHasTileLabel,
 } from "@fluidframework/merge-tree/internal";
 
-// eslint-disable-next-line import/no-deprecated
 import { SharedSegmentSequence, type ISharedSegmentSequence } from "./sequence.js";
 import { SharedStringFactory } from "./sequenceFactory.js";
 
@@ -143,7 +141,6 @@ export type SharedStringSegment = TextSegment | Marker;
  * @internal
  */
 export class SharedStringClass
-	// eslint-disable-next-line import/no-deprecated
 	extends SharedSegmentSequence<SharedStringSegment>
 	implements ISharedString
 {
@@ -151,7 +148,6 @@ export class SharedStringClass
 		return this;
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	private readonly mergeTreeTextHelper: IMergeTreeTextHelper;
 
 	constructor(
