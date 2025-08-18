@@ -8,7 +8,7 @@ import { Add24Regular } from "@fluentui/react-icons";
 import React, { useState, DragEvent } from "react";
 
 import { TableDataObject } from "../dataObject.js";
-import { Column } from "../schema.js";
+import { Column, Row } from "../schema.js";
 
 import { TableHeaderView } from "./tableHeaderView.js";
 import { TableRowView } from "./tableRowView.js";
@@ -48,7 +48,7 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 
 	const handleAppendNewRow = (): void => {
 		table.insertRows({
-			rows: [{ cells: {} }],
+			rows: [new Row({ cells: {} })],
 		});
 	};
 
