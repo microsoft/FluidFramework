@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 
 import { Deferred } from "@fluidframework/common-utils";
 import type { IConsumer, IQueuedMessage } from "@fluidframework/server-services-core";
