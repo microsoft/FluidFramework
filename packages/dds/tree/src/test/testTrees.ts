@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "node:assert";
+import { strict as assert } from "node:assert";
 
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	type ITreeCursorSynchronous,
 	type JsonableTree,
-	Multiplicity,
 	ObjectNodeStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
@@ -19,18 +17,14 @@ import {
 } from "../core/index.js";
 import {
 	FieldKinds,
-	type FlexFieldKind,
 	type FullSchemaPolicy,
 	cursorForJsonableTreeField,
-	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
-	fieldKinds,
 	jsonableTreeFromFieldCursor,
 } from "../feature-libraries/index.js";
 import {
 	ForestTypeExpensiveDebug,
 	type SchematizingSimpleTreeView,
-	type TreeStoredContent,
 } from "../shared-tree/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
@@ -48,6 +42,9 @@ import {
 	schemaStatics,
 	type TreeView,
 	TreeViewConfigurationAlpha,
+	toInitialSchema,
+	restrictiveStoredSchemaGenerationOptions,
+	permissiveStoredSchemaGenerationOptions,
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { fieldJsonCursor } from "./json/jsonCursor.js";
@@ -85,7 +82,19 @@ export interface TestDocument extends TestTree, Omit<TestSimpleTree, "root"> {
 	/**
 	 * True if and only if the document had content in unknown optional fields.
 	 */
-	readonly hasUnknownOptionalFields: boolean;
+	readonly hasUnknownOptionalFields?: true;
+
+	/**
+	 * True if and only if the document had staged allowed types.
+	 */
+	readonly hasStagedSchema?: true;
+
+	/**
+	 * True if and only if the document content requires staged allowed types.
+	 *
+	 * For this to be the case, the stored schema must also have had the staged type included.
+	 */
+	readonly requiresStagedSchema?: true;
 }
 
 function testSimpleTree<const TSchema extends ImplicitFieldSchema>(
@@ -106,7 +115,7 @@ function testSimpleTree<const TSchema extends ImplicitFieldSchema>(
 function convertSimpleTreeTest(data: TestSimpleTree): TestTree {
 	return test(
 		data.name,
-		toStoredSchema(data.schema),
+		toInitialSchema(data.schema),
 		jsonableTreeFromFieldCursor(
 			fieldCursorFromInsertable<UnsafeUnknownSchema>(data.schema, data.root()),
 		),
@@ -119,30 +128,6 @@ function test(name: string, schemaData: TreeStoredSchema, data: JsonableTree[]):
 		schemaData,
 		treeFactory: () => data,
 		policy: defaultSchemaPolicy,
-	};
-}
-
-function cursorsToFieldContent(
-	cursors: readonly ITreeCursorSynchronous[],
-	schema: FlexFieldKind,
-): readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined {
-	if (schema.multiplicity === Multiplicity.Sequence) {
-		return cursors;
-	}
-	if (cursors.length === 1) {
-		return cursors[0];
-	}
-	assert(cursors.length === 0);
-	return undefined;
-}
-
-export function treeContentFromTestTree(testData: TestTree): TreeStoredContent {
-	return {
-		schema: testData.schemaData,
-		initialTree: cursorsToFieldContent(
-			testData.treeFactory().map(cursorForJsonableTreeNode),
-			fieldKinds.get(testData.schemaData.rootFieldSchema.kind) ?? fail("missing kind"),
-		),
 	};
 }
 
@@ -238,9 +223,15 @@ const allTheFieldsName: TreeNodeSchemaIdentifier = brand("test.allTheFields");
 
 const library = {
 	nodeSchema: new Map([
-		[brand(Minimal.identifier), getStoredSchema(Minimal)],
+		[
+			brand(Minimal.identifier),
+			getStoredSchema(Minimal, restrictiveStoredSchemaGenerationOptions),
+		],
 		[allTheFieldsName, allTheFields],
-		[brand(factory.number.identifier), getStoredSchema(schemaStatics.number)],
+		[
+			brand(factory.number.identifier),
+			getStoredSchema(schemaStatics.number, restrictiveStoredSchemaGenerationOptions),
+		],
 	]),
 } satisfies Partial<TreeStoredSchema>;
 
@@ -297,7 +288,7 @@ export const testTrees: readonly TestTree[] = [
 	test(
 		"numericSequence",
 		{
-			...toStoredSchema(factory.number),
+			...toStoredSchema(factory.number, restrictiveStoredSchemaGenerationOptions),
 			rootFieldSchema: {
 				kind: FieldKinds.sequence.identifier,
 				types: numberSet,
@@ -308,7 +299,7 @@ export const testTrees: readonly TestTree[] = [
 	),
 	{
 		name: "node-with-identifier-field",
-		schemaData: toStoredSchema(HasIdentifierField),
+		schemaData: toStoredSchema(HasIdentifierField, restrictiveStoredSchemaGenerationOptions),
 		treeFactory: (idCompressor?: IIdCompressor) => {
 			assert(idCompressor !== undefined, "idCompressor must be provided");
 			const id = idCompressor.decompress(idCompressor.generateCompressedId());
@@ -320,7 +311,7 @@ export const testTrees: readonly TestTree[] = [
 	},
 	{
 		name: "identifier-field",
-		schemaData: toStoredSchema(factory.identifier),
+		schemaData: toStoredSchema(factory.identifier, restrictiveStoredSchemaGenerationOptions),
 		treeFactory: (idCompressor?: IIdCompressor) => {
 			assert(idCompressor !== undefined, "idCompressor must be provided");
 			const id = idCompressor.decompress(idCompressor.generateCompressedId());
@@ -390,6 +381,43 @@ export class HasUnknownOptionalFieldsV2 extends factory.objectRecursive(
 	},
 ) {}
 
+export class HasStagedAllowedTypes extends factory.objectAlpha("hasStagedAllowedTypes", {
+	x: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
+}) {}
+
+export class HasStagedAllowedTypesAfterUpdate extends factory.objectAlpha(
+	"hasStagedAllowedTypes",
+	{
+		x: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.string],
+	},
+) {}
+
+class MapWithStaged extends factory.mapAlpha("MapWithStaged", [
+	SchemaFactoryAlpha.number,
+	SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+]) {}
+
+class ArrayWithStaged extends factory.arrayAlpha("ArrayWithStaged", [
+	SchemaFactoryAlpha.number,
+	SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+]) {}
+
+const multiStageCUpgrade = SchemaFactoryAlpha.staged(ArrayWithStaged);
+
+class NestedMultiStage extends factory.object("NestedMultiStage", {
+	a: SchemaFactoryAlpha.optional(SchemaFactoryAlpha.staged(SchemaFactoryAlpha.number)),
+	b: SchemaFactoryAlpha.required([
+		SchemaFactoryAlpha.staged({
+			type: () => MapWithStaged,
+			metadata: {},
+		}),
+		SchemaFactoryAlpha.null,
+	]),
+	c: SchemaFactoryAlpha.required([multiStageCUpgrade, SchemaFactoryAlpha.null]),
+}) {}
+
+// TODO: AB#45711: add recursive staged schema tests documents
+
 /**
  * Collection of {@link TestDocument|TestDocuments}.
  *
@@ -405,10 +433,9 @@ export const testDocuments: readonly TestDocument[] = [
 		(tree): TestDocument => ({
 			name: tree.name,
 			schema: tree.schema,
-			hasUnknownOptionalFields: false,
 			ambiguous: tree.ambiguous,
 			policy: defaultSchemaPolicy,
-			schemaData: toStoredSchema(tree.schema),
+			schemaData: toInitialSchema(tree.schema),
 			treeFactory: () =>
 				jsonableTreeFromFieldCursor(
 					fieldCursorFromInsertable<UnsafeUnknownSchema>(tree.schema, tree.root()),
@@ -420,9 +447,8 @@ export const testDocuments: readonly TestDocument[] = [
 		name: "AllowsUnknownOptionalFields",
 		schema: HasUnknownOptionalFields,
 		// Unknown optional fields are allowed but empty in this document.
-		hasUnknownOptionalFields: false,
 		policy: defaultSchemaPolicy,
-		schemaData: toStoredSchema(HasUnknownOptionalFieldsV2),
+		schemaData: toInitialSchema(HasUnknownOptionalFieldsV2),
 		treeFactory: () =>
 			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(HasUnknownOptionalFields, {})),
 	},
@@ -432,7 +458,7 @@ export const testDocuments: readonly TestDocument[] = [
 		schema: HasUnknownOptionalFields,
 		hasUnknownOptionalFields: true,
 		policy: defaultSchemaPolicy,
-		schemaData: toStoredSchema(HasUnknownOptionalFieldsV2),
+		schemaData: toInitialSchema(HasUnknownOptionalFieldsV2),
 		treeFactory: () =>
 			jsonableTreeFromFieldCursor(
 				fieldCursorFromInsertable(
@@ -446,10 +472,115 @@ export const testDocuments: readonly TestDocument[] = [
 				),
 			),
 	},
+	{
+		ambiguous: false,
+		name: "HasStagedAllowedTypesBeforeUpdate",
+		schema: HasStagedAllowedTypes,
+		hasStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toInitialSchema(HasStagedAllowedTypes),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(HasStagedAllowedTypes, { x: 5 })),
+	},
+	{
+		ambiguous: false,
+		name: "HasStagedAllowedTypesAfterUpdate",
+		schema: HasStagedAllowedTypes,
+		hasStagedSchema: true,
+		requiresStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toInitialSchema(HasStagedAllowedTypesAfterUpdate),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(
+				fieldCursorFromInsertable(HasStagedAllowedTypes, { x: "text" }),
+			),
+	},
+	{
+		ambiguous: false,
+		name: "Staged in root",
+		schema: SchemaFactoryAlpha.required([
+			SchemaFactoryAlpha.number,
+			SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+		]),
+		hasStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toInitialSchema(SchemaFactoryAlpha.number),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(SchemaFactoryAlpha.number, 5)),
+	},
+	{
+		ambiguous: false,
+		name: "Staged node in root",
+		schema: SchemaFactoryAlpha.required([
+			SchemaFactoryAlpha.number,
+			SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+		]),
+		hasStagedSchema: true,
+		requiresStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toInitialSchema(
+			SchemaFactoryAlpha.required([SchemaFactoryAlpha.number, SchemaFactoryAlpha.string]),
+		),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(
+				fieldCursorFromInsertable(SchemaFactoryAlpha.string, "text"),
+			),
+	},
+	{
+		ambiguous: false,
+		name: "Staged in map",
+		schema: MapWithStaged,
+		hasStagedSchema: true,
+		requiresStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toStoredSchema(MapWithStaged, permissiveStoredSchemaGenerationOptions),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(MapWithStaged, [["key", "text"]])),
+	},
+	{
+		ambiguous: false,
+		name: "NestedMultiStage with no upgrades",
+		schema: NestedMultiStage,
+		hasStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toStoredSchema(NestedMultiStage, restrictiveStoredSchemaGenerationOptions),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(
+				fieldCursorFromInsertable(NestedMultiStage, { b: null, c: null }),
+			),
+	},
+	{
+		ambiguous: false,
+		name: "NestedMultiStage with one upgrade",
+		schema: NestedMultiStage,
+		hasStagedSchema: true,
+		requiresStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toStoredSchema(NestedMultiStage, {
+			includeStaged: (upgrade) => upgrade === multiStageCUpgrade.metadata.stagedSchemaUpgrade,
+		}),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(
+				fieldCursorFromInsertable(NestedMultiStage, { b: null, c: [5] }),
+			),
+	},
+	{
+		ambiguous: false,
+		name: "NestedMultiStage with all upgrades",
+		schema: NestedMultiStage,
+		hasStagedSchema: true,
+		requiresStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toStoredSchema(NestedMultiStage, permissiveStoredSchemaGenerationOptions),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(
+				fieldCursorFromInsertable(NestedMultiStage, { a: 5, b: [], c: ["text"] }),
+			),
+	},
 ];
 
 export function testDocumentIndependentView(
-	document: TestDocument,
+	document: Pick<TestDocument, "schema" | "treeFactory" | "schemaData" | "ambiguous">,
 ): SchematizingSimpleTreeView<UnsafeUnknownSchema> {
 	const config = new TreeViewConfigurationAlpha({
 		schema: document.schema,

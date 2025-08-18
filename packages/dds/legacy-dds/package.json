@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/legacy-dds",
-	"version": "2.52.0",
+	"version": "2.60.0",
 	"description": "Legacy DDSs for the Fluid Framework. These are not intended for use in new code.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -127,6 +127,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",

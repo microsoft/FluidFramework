@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeCompat } from "@fluid-private/test-version-utils";

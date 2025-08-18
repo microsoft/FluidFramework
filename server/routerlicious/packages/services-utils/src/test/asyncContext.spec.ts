@@ -5,7 +5,7 @@
 
 import { ITelemetryContextProperties } from "@fluidframework/server-services-telemetry";
 import { v4 as uuid } from "uuid";
-import assert from "assert";
+import { strict as assert } from "assert";
 import {
 	AsyncLocalStorageAbortControllerContext,
 	AsyncLocalStorageContextProvider,

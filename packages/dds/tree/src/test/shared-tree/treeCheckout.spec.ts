@@ -45,19 +45,17 @@ import {
 	viewCheckout,
 } from "../utils.js";
 import { brand } from "../../util/index.js";
-import {
-	SchemaFactory,
-	TreeViewConfiguration,
-	type ImplicitFieldSchema,
-	type InsertableTreeFieldFromImplicitField,
-} from "../../index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import {
 	asTreeViewAlpha,
 	getOrCreateInnerNode,
-	toStoredSchema,
+	SchemaFactory,
+	toUpgradeSchema,
+	TreeViewConfiguration,
+	type ImplicitFieldSchema,
 	type InsertableField,
+	type InsertableTreeFieldFromImplicitField,
 	type TreeBranch,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -179,7 +177,7 @@ describe("sharedTreeView", () => {
 
 				assert.equal(log.length, 0);
 
-				checkout.updateSchema(toStoredSchema(mixedSchema));
+				checkout.updateSchema(toUpgradeSchema(mixedSchema));
 
 				assert.equal(log.length, 1);
 
@@ -192,7 +190,7 @@ describe("sharedTreeView", () => {
 
 				assert.equal(log.length, 2);
 
-				checkout.updateSchema(toStoredSchema(OptionalString), true);
+				checkout.updateSchema(toUpgradeSchema(OptionalString), true);
 
 				assert.equal(log.length, 3);
 				unsubscribe();
@@ -209,14 +207,14 @@ describe("sharedTreeView", () => {
 
 				assert.deepEqual(log, []);
 
-				checkout.updateSchema(toStoredSchema(mixedSchema));
+				checkout.updateSchema(toUpgradeSchema(mixedSchema));
 				checkout.editor
 					.optionalField(rootField)
 					.set(
 						chunkFromJsonableTrees([{ type: brand(stringSchema.identifier), value: "A" }]),
 						true,
 					);
-				checkout.updateSchema(toStoredSchema(OptionalString), true);
+				checkout.updateSchema(toUpgradeSchema(OptionalString), true);
 
 				assert.deepEqual(log, ["not-revertible", "revertible", "not-revertible"]);
 				unsubscribe();
@@ -903,7 +901,7 @@ describe("sharedTreeView", () => {
 		);
 
 		view1.initialize(["A", 1, "B", 2]);
-		const storedSchema1 = toStoredSchema(schema1);
+		const storedSchema1 = toUpgradeSchema(schema1);
 		provider.synchronizeMessages();
 
 		const checkout1Revertibles = createTestUndoRedoStacks(view1.checkout.events);
@@ -932,7 +930,7 @@ describe("sharedTreeView", () => {
 		assert.equal(checkout2Revertibles.redoStack.length, 1);
 		assert.equal(view2.checkout.getRemovedRoots().length, 2);
 
-		provider.trees[0].kernel.checkout.updateSchema(toStoredSchema([sf1.number, schema1]));
+		provider.trees[0].kernel.checkout.updateSchema(toUpgradeSchema([sf1.number, schema1]));
 
 		// The undo stack contains the removal of A but not the schema change
 		assert.equal(checkout1Revertibles.undoStack.length, 1);
@@ -981,7 +979,7 @@ describe("sharedTreeView", () => {
 			view2.root.removeAt(2);
 
 			assert(view2 instanceof SchematizingSimpleTreeView);
-			expectSchemaEqual(toStoredSchema(newSchema), view2.checkout.storedSchema);
+			expectSchemaEqual(toUpgradeSchema(newSchema), view2.checkout.storedSchema);
 			assert.deepEqual(view2.root, ["A", "B"]);
 
 			// Rebase the child branch onto the parent branch.
@@ -989,7 +987,7 @@ describe("sharedTreeView", () => {
 
 			// The schema change and any changes after that should be dropped,
 			// but the changes before the schema change should be preserved
-			expectSchemaEqual(toStoredSchema(oldSchema), view1.checkout.storedSchema);
+			expectSchemaEqual(toUpgradeSchema(oldSchema), view1.checkout.storedSchema);
 			assert.deepEqual(view1.root, ["B", "C"]);
 		});
 
@@ -1039,14 +1037,14 @@ describe("sharedTreeView", () => {
 			view3.upgradeSchema();
 			view3.root.removeAt(0);
 
-			expectSchemaEqual(toStoredSchema(schema2), view2.checkout.storedSchema);
-			expectSchemaEqual(toStoredSchema(schema3), view3.checkout.storedSchema);
+			expectSchemaEqual(toUpgradeSchema(schema2), view2.checkout.storedSchema);
+			expectSchemaEqual(toUpgradeSchema(schema3), view3.checkout.storedSchema);
 
 			// Rebase view3 onto view2.
 			(view3.checkout as ITreeCheckoutFork).rebaseOnto(view2.checkout);
 
 			// All changes on view3 should be dropped but the schema change and edit in view2 should be preserved.
-			expectSchemaEqual(toStoredSchema(schema2), view2.checkout.storedSchema);
+			expectSchemaEqual(toUpgradeSchema(schema2), view2.checkout.storedSchema);
 			assert.deepEqual(view2.root, ["B"]);
 		});
 	});

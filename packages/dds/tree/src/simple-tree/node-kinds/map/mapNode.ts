@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy } from "@fluidframework/core-utils/internal";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	FieldKinds,
 	isTreeValue,
 	type FlexibleNodeContent,
 	type FlexTreeNode,
@@ -44,6 +45,7 @@ import {
 	createTreeNodeSchemaPrivateData,
 	type FlexContent,
 	type TreeNodeSchemaPrivateData,
+	convertAllowedTypes,
 } from "../../core/index.js";
 import {
 	unhydratedFlexTreeFromInsertable,
@@ -65,6 +67,7 @@ import type {
 	MapNodeSchema,
 } from "./mapNodeTypes.js";
 import { recordLikeDataToFlexContent } from "../common.js";
+import { MapNodeStoredSchema } from "../../../core/index.js";
 
 /**
  * A map of string keys to tree objects.
@@ -209,10 +212,19 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): this {
 		const kernel = getKernel(this);
 		const node = this.innerNode;
+		const innerSchema = this.innerNode.context.schema.nodeSchema.get(
+			brand(kernel.schema.identifier),
+		);
+		assert(
+			innerSchema instanceof MapNodeStoredSchema,
+			0xc17 /* Expected MapNodeStoredSchema */,
+		);
+
 		const mapTree = prepareForInsertion(
 			value as InsertableContent | undefined,
 			createFieldSchema(FieldKind.Optional, kernel.schema.info as ImplicitAllowedTypes),
 			node.context,
+			innerSchema.mapFields,
 		);
 
 		const field = node.getBoxed(brand(key));
@@ -328,7 +340,19 @@ export function mapSchema<
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(this, [info]));
+			return (privateData ??= createTreeNodeSchemaPrivateData(
+				this,
+				[info],
+				(storedOptions) =>
+					new MapNodeStoredSchema(
+						{
+							kind: FieldKinds.optional.identifier,
+							types: convertAllowedTypes(info, storedOptions),
+							persistedMetadata,
+						},
+						persistedMetadata,
+					),
+			));
 		}
 	}
 	const schemaErased: MapNodeCustomizableSchema<

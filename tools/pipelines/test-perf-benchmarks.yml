@@ -84,7 +84,8 @@ variables:
     value: 'PerformanceBenchmark'
     readonly: true
   # This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
-  - name: DisableCodeQL
+  # Note that using this variable only works for non-1ES-template pipelines.
+  - name: Codeql.SkipTaskAutoInjection
     value: true
 
 stages:
@@ -216,6 +217,7 @@ stages:
     - job: perf_unit_tests_memory
       displayName: Perf unit tests - memory
       pool: ${{ parameters.poolBuild }}
+      timeoutInMinutes: 90
       steps:
       - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
         parameters:

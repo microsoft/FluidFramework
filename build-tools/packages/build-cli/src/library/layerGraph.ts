@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Package } from "@fluidframework/build-tools";

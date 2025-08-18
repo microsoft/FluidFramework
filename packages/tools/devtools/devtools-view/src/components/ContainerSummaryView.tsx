@@ -42,6 +42,7 @@ import {
 } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
+import { useContainerFeaturesContext } from "../ContainerFeatureFlagHelper.js";
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 import { connectionStateToString } from "../Utilities.js";
@@ -216,6 +217,8 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		},
 	});
 
+	const { containerFeatureFlags } = useContainerFeaturesContext();
+
 	const { columnSizing_unstable, tableRef } = useTableFeatures({ columns, items }, [
 		useTableColumnSizing_unstable({ columnSizingOptions }),
 	]);
@@ -339,15 +342,17 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 					</TableBody>
 				</Table>
 			</div>
-			<div className={styles.actions}>
-				<ActionsBar
-					isContainerConnected={containerState.connectionState === ConnectionState.Connected}
-					containerState={containerState}
-					tryConnect={tryConnect}
-					forceDisconnect={forceDisconnect}
-					closeContainer={closeContainer}
-				/>
-			</div>
+			{containerFeatureFlags.canModifyContainerState !== false && (
+				<div className={styles.actions}>
+					<ActionsBar
+						isContainerConnected={containerState.connectionState === ConnectionState.Connected}
+						containerState={containerState}
+						tryConnect={tryConnect}
+						forceDisconnect={forceDisconnect}
+						closeContainer={closeContainer}
+					/>
+				</div>
+			)}
 		</div>
 	);
 }

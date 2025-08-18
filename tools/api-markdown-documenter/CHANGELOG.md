@@ -2,28 +2,31 @@
 
 ## 0.22.0
 
-### Documentation Domain is being removed
+### Documentation Domain has been removed
 
-This is a work in progress.
+`DocumentationNode` and its implementations have been removed.
+Their usage has been replaced with [mdast](https://github.com/syntax-tree/mdast) directly.
 
-The goal is for transformations to target [mdast](https://github.com/syntax-tree/mdast) directly, rather than going through an intermediate domain.
-Transformations to HTML will use `mdast-util-to-hast`.
+### `toMarkdown` and `toHtml` transformation layers have been removed
 
-#### Markdown Nodes
+The API transformation layer now outputs standard `mdast` Markdown trees directly.
+These can be used as input to both the Markdown and HTML rendering layers.
 
-`MarkdownBlockContentNode` and `MarkdownPhrasingContentNode` have been added to the Documentation Domain temporarily.
-They allow `mdast` trees to be used directly within the `DocumentationNode` hierarchy.
+If you wish to convert your contents to a `hast` representation, please use [mdast-util-to-hast](https://github.com/syntax-tree/mdast-util-to-hast) or another comparable library.
 
-This functionality will be used to iteratively replace and remove `DocumentationNode` implementations, until the entire domain can be removed.
+### `HtmlRenderer` has been removed
 
-#### Removed Node kinds
+If you wish to render your contents as HTML, use `mdast-util-to-hast` (or something comparable), then render that tree using [hast-util-to-html](https://github.com/syntax-tree/hast-util-to-html) or another comparable library.
 
-The following kinds of nodes have been removed from the library.
-Usages should be converted to `MarkdownBlockContentNode` or `MarkdownPhrasingContentNode` as appropriate.
+### `DocumentNode` renamed to `ApiDocument`
 
-- `CodeSpanNode`
-- `FencedCodeBlockNode`
-- `LinkNode`
+It is no longer a `unist` node, and is now an interface rather than a class.
+Its "children" property has also been renamed to "contents`.
+
+### `DocumentNode` renamed to `ApiDocument`
+
+It is no longer a `unist` node, and is now an interface rather than a class.
+Its "children" property has also been renamed to "contents`.
 
 ## 0.21.0
 

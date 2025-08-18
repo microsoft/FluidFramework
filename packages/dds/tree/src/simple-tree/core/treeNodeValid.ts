@@ -8,7 +8,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type FlexTreeNode, isFlexTreeNode } from "../../feature-libraries/index.js";
 
-import { markEager } from "./flexList.js";
 import { inPrototypeChain, privateToken, TreeNode } from "./treeNode.js";
 import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 import {
@@ -27,6 +26,7 @@ import {
 import type { InternalTreeNode } from "./types.js";
 import { typeSchemaSymbol } from "./withType.js";
 import type { ImplicitAnnotatedAllowedTypes } from "./allowedTypes.js";
+import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 
 /**
  * Class which all {@link TreeNode}s must extend.
@@ -208,8 +208,6 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		return result;
 	}
 }
-// Class objects are functions (callable), so we need a strong way to distinguish between `schema` and `() => schema` when used as a `LazyItem`.
-markEager(TreeNodeValid);
 
 /**
  * Data cached about the most derived type in a schema's class hierarchy.
@@ -233,7 +231,7 @@ export interface MostDerivedData {
 export function schemaAsTreeNodeValid(
 	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
 ): typeof TreeNodeValid & TreeNodeSchema {
-	if (!inPrototypeChain(schema, TreeNodeValid)) {
+	if (!isClassBasedSchema(schema)) {
 		// Use JSON.stringify to quote and escape identifier string.
 		throw new UsageError(
 			`Schema for ${JSON.stringify(
@@ -242,7 +240,16 @@ export function schemaAsTreeNodeValid(
 		);
 	}
 
-	return schema as typeof TreeNodeValid & TreeNodeSchema;
+	return schema;
+}
+
+/**
+ * Check if a schema is a {@link TreeNodeValid}.
+ */
+export function isClassBasedSchema(
+	schema: SimpleNodeSchemaBase<NodeKind>,
+): schema is typeof TreeNodeValid & TreeNodeSchema {
+	return inPrototypeChain(schema, TreeNodeValid);
 }
 
 /**
@@ -253,6 +260,7 @@ export function schemaAsTreeNodeValid(
 export function createTreeNodeSchemaPrivateData(
 	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
 	childAnnotatedAllowedTypes: readonly ImplicitAnnotatedAllowedTypes[],
+	toStored: TreeNodeSchemaPrivateData["toStored"],
 ): TreeNodeSchemaPrivateData {
 	const schemaValid = schemaAsTreeNodeValid(schema);
 	// Since this closes over the schema, ensure this schema is marked as most derived
@@ -262,6 +270,7 @@ export function createTreeNodeSchemaPrivateData(
 	return {
 		idempotentInitialize: () => schemaValid.oneTimeInitialize().oneTimeInitialized,
 		childAnnotatedAllowedTypes,
+		toStored,
 	};
 }
 

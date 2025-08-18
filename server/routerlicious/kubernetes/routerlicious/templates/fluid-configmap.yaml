@@ -19,6 +19,7 @@ data:
             "timestamp": false,
             "label": "winston"
         },
+        "privateServiceHost": "us.fluidrelay.azure.com",
         "config": {
             "configDumpEnabled": {{ .Values.config.configDumpEnabled }},
             "secretNamesToRedactInConfigDump": [
@@ -109,6 +110,7 @@ data:
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
             "numberOfMessagesPerTrace": {{ .Values.alfred.numberOfMessagesPerTrace }},
+            "enablePrivateLinkNetworkCheck": {{ .Values.alfred.enablePrivateLinkNetworkCheck }},
             "sessionStickinessDurationMs": {{ .Values.alfred.sessionStickinessDurationMs }},
             "ignoreEphemeralFlag": {{ .Values.alfred.ignoreEphemeralFlag }},
             "throttling": {
@@ -142,6 +144,7 @@ data:
             "maxMessageSize": "16KB",
             "maxNumberOfClientsPerDocument": {{ .Values.nexus.maxNumberOfClientsPerDocument }},
             "numberOfMessagesPerTrace": {{ .Values.nexus.numberOfMessagesPerTrace }},
+            "enablePrivateLinkNetworkCheck": {{ .Values.nexus.enablePrivateLinkNetworkCheck }},
             "throttling": {
                 "socketConnectionsPerTenant": {{ toJson .Values.nexus.throttling.socketConnectionsPerTenant }},
                 "socketConnectionsPerCluster": {{ toJson .Values.nexus.throttling.socketConnectionsPerCluster }},

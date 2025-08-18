@@ -23,6 +23,7 @@ import {
 	serializeValue,
 	migrateIfSharedSerializable,
 } from "./localValues.js";
+import { findLast, findLastIndex } from "./utils.js";
 
 /**
  * Defines the means to process and resubmit a given op on a map.
@@ -105,25 +106,6 @@ type PendingDataEntry = PendingKeyLifetime | PendingKeyDelete | PendingClear;
  * (though the PendingKeySets will be contained within a PendingKeyLifetime there).
  */
 type PendingLocalOpMetadata = PendingKeySet | PendingKeyDelete | PendingClear;
-
-/**
- * Rough polyfill for Array.findLastIndex until we target ES2023 or greater.
- */
-const findLastIndex = <T>(array: T[], callbackFn: (value: T) => boolean): number => {
-	for (let i = array.length - 1; i >= 0; i--) {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		if (callbackFn(array[i]!)) {
-			return i;
-		}
-	}
-	return -1;
-};
-
-/**
- * Rough polyfill for Array.findLast until we target ES2023 or greater.
- */
-const findLast = <T>(array: T[], callbackFn: (value: T) => boolean): T | undefined =>
-	array[findLastIndex(array, callbackFn)];
 
 /**
  * A SharedMap is a map-like distributed data structure.
@@ -214,7 +196,7 @@ export class MapKernel {
 					const optimisticValue = this.getOptimisticLocalValue(key);
 					assert(
 						optimisticValue !== undefined,
-						"Should never iterate to a key with undefined optimisticValue",
+						0xbf1 /* Should never iterate to a key with undefined optimisticValue */,
 					);
 					return { value: [key, optimisticValue], done: false };
 				}
@@ -637,7 +619,7 @@ export class MapKernel {
 				pendingClear !== undefined &&
 					pendingClear.type === "clear" &&
 					pendingClear === typedLocalOpMetadata,
-				"Unexpected clear rollback",
+				0xbf2 /* Unexpected clear rollback */,
 			);
 			for (const [key] of this.internalIterator()) {
 				this.eventEmitter.emit(
@@ -658,10 +640,10 @@ export class MapKernel {
 			assert(
 				pendingEntry !== undefined &&
 					(pendingEntry.type === "delete" || pendingEntry.type === "lifetime"),
-				"Unexpected pending data for set/delete op",
+				0xbf3 /* Unexpected pending data for set/delete op */,
 			);
 			if (pendingEntry.type === "delete") {
-				assert(pendingEntry === typedLocalOpMetadata, "Unexpected delete rollback");
+				assert(pendingEntry === typedLocalOpMetadata, 0xbf4 /* Unexpected delete rollback */);
 				this.pendingData.splice(pendingEntryIndex, 1);
 				// Only emit if rolling back the delete actually results in a value becoming visible.
 				if (this.getOptimisticLocalValue(mapOp.key) !== undefined) {
@@ -676,7 +658,7 @@ export class MapKernel {
 				const pendingKeySet = pendingEntry.keySets.pop();
 				assert(
 					pendingKeySet !== undefined && pendingKeySet === typedLocalOpMetadata,
-					"Unexpected set rollback",
+					0xbf5 /* Unexpected set rollback */,
 				);
 				if (pendingEntry.keySets.length === 0) {
 					this.pendingData.splice(pendingEntryIndex, 1);
@@ -710,7 +692,7 @@ export class MapKernel {
 						pendingClear !== undefined &&
 							pendingClear.type === "clear" &&
 							pendingClear === localOpMetadata,
-						"Got a local clear message we weren't expecting",
+						0xbf6 /* Got a local clear message we weren't expecting */,
 					);
 				} else {
 					// Only emit for remote ops, we would have already emitted for local ops. Only emit if there
@@ -741,7 +723,7 @@ export class MapKernel {
 						pendingEntry !== undefined &&
 							pendingEntry.type === "delete" &&
 							pendingEntry === localOpMetadata,
-						"Got a local delete message we weren't expecting",
+						0xbf7 /* Got a local delete message we weren't expecting */,
 					);
 					this.pendingData.splice(pendingEntryIndex, 1);
 
@@ -779,12 +761,12 @@ export class MapKernel {
 					const pendingEntry = this.pendingData[pendingEntryIndex];
 					assert(
 						pendingEntry !== undefined && pendingEntry.type === "lifetime",
-						"Couldn't match local set message to pending lifetime",
+						0xbf8 /* Couldn't match local set message to pending lifetime */,
 					);
 					const pendingKeySet = pendingEntry.keySets.shift();
 					assert(
 						pendingKeySet !== undefined && pendingKeySet === localOpMetadata,
-						"Got a local set message we weren't expecting",
+						0xbf9 /* Got a local set message we weren't expecting */,
 					);
 					if (pendingEntry.keySets.length === 0) {
 						this.pendingData.splice(pendingEntryIndex, 1);
