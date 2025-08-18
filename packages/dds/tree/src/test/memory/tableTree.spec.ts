@@ -14,14 +14,11 @@ import type { Test } from "mocha";
 import {
 	Column,
 	Row,
-	UndoRedoManager,
-	createTableTree,
+	type UndoRedoManager,
 	type Table,
 	type TableBenchmarkOptions,
-	type TableTreeOptions,
+	createTableTree,
 } from "../tablePerformanceTestUtilities.js";
-import type { TreeNodeFromImplicitAllowedTypes } from "../../simple-tree/index.js";
-import { Tree } from "../../shared-tree/index.js";
 
 /**
  * Note: These benchmarks are designed to closely match the benchmarks in SharedMatrix.
@@ -30,49 +27,7 @@ import { Tree } from "../../shared-tree/index.js";
  */
 
 // TODOs (AB#46340):
-// - single helper function with before and after hooks for setup and teardown
 // - unify with time measurement tests (in terms of API)
-
-/**
- * Initializes a SharedMatrix for testing.
- * @remarks Includes initialization of the undo/redo stack, as well as mock event subscriptions.
- */
-function createTable(options: TableTreeOptions): {
-	/**
-	 * The initialized table tree.
-	 */
-	table: TreeNodeFromImplicitAllowedTypes<typeof Table>;
-
-	/**
-	 * The undo/redo stack manager for the table.
-	 */
-	undoRedoStack: UndoRedoManager;
-
-	/**
-	 * Cleanup function to run after the test to close the table and release resources.
-	 */
-	cleanUp: () => void;
-} {
-	const { table, treeView } = createTableTree(options);
-
-	// Configure event listeners
-	const cleanUpEventHandler = Tree.on(table, "treeChanged", () => {});
-
-	// Configure undo/redo
-	const undoRedoStack = new UndoRedoManager(treeView);
-
-	const cleanUp = (): void => {
-		cleanUpEventHandler();
-		undoRedoStack.dispose();
-		treeView.dispose();
-	};
-
-	return {
-		table,
-		undoRedoStack,
-		cleanUp,
-	};
-}
 
 /**
  * Creates a benchmark for operations on a SharedMatrix.
@@ -100,7 +55,7 @@ function runBenchmark({
 			}
 
 			public beforeIteration(): void {
-				const { table, undoRedoStack, cleanUp } = createTable({
+				const { table, undoRedoStack, cleanUp } = createTableTree({
 					tableSize,
 					initialCellValue,
 				});
