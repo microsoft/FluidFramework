@@ -345,6 +345,62 @@ describe("DistributedTokenBucketThrottler", () => {
 				"Should be limited by most restrictive bucket",
 			);
 		});
+
+		it("resets tokens consumed since last sync after each sync to prevent cumulative throttling", async () => {
+			// This test demonstrates the bug where tokensConsumedSinceLastSync was not reset
+			// after sync when throttling occurred, causing cumulative token tracking issues
+
+			// Set up a distributed bucket with very specific parameters
+			const config: IDistributedTokenBucketThrottlerConfig = {
+				localTokenBucket: {
+					capacity: 100, // High local capacity to avoid local throttling
+					refillRatePerMs: 1,
+					minCooldownIntervalMs: 100,
+				},
+				distributedTokenBucket: {
+					capacity: 5, // Limited distributed capacity
+					refillRatePerMs: 10, // Fast refill for quick recovery
+					minCooldownIntervalMs: 200, // Reasonable cooldown
+					distributedSyncIntervalInMs: 100, // Frequent syncs
+				},
+			};
+
+			const storageManager = new TestThrottleAndUsageStorageManager();
+
+			// Create two separate throttler instances to simulate distributed scenario
+			const throttler1 = new DistributedTokenBucketThrottler(
+				storageManager,
+				undefined,
+				config,
+			);
+			const throttler2 = new DistributedTokenBucketThrottler(
+				storageManager,
+				undefined,
+				config,
+			);
+			const id = "shared-resource";
+
+			// Instance 1: Consume tokens that will trigger throttling
+			throttler1.incrementCount(id, 6); // 6/5 - exceeds capacity
+
+			// Force sync for instance 1
+			Sinon.clock.tick(150);
+			throttler1.incrementCount(id, 0); // Trigger sync
+			await Sinon.clock.nextAsync();
+
+			// Allow time for substantial refill: 10 tokens/ms * 500ms = 5000 tokens (capped at 5)
+			Sinon.clock.tick(500);
+
+			// Instance 2: Try to use the resource after sufficient refill time
+			// This should succeed if tokensConsumedSinceLastSync is properly reset
+			throttler2.incrementCount(id, 0); // Trigger sync to get latest state
+			await Sinon.clock.nextAsync();
+
+			// This operation should succeed after the refill period
+			assert.doesNotThrow(() => {
+				throttler2.incrementCount(id, 3); // Should be within capacity
+			}, "Second instance should be able to use tokens after refill period");
+		});
 	});
 
 	describe("Multiple IDs", () => {

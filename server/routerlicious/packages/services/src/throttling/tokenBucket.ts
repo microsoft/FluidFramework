@@ -201,6 +201,8 @@ export class DistributedTokenBucket implements ITokenBucket {
 			throttlingMetric.retryAfterInMs = retryAfterInMs;
 			await this.setThrottlingMetricAndUsageData(throttlingMetric, usageData);
 			this.lastConsumeTokensSyncResult = throttlingMetric.retryAfterInMs;
+			// Always reset tokensConsumedSinceLastSync after sync, regardless of throttling status
+			this.tokensConsumedSinceLastSync = 0;
 			return;
 		}
 
@@ -227,7 +229,9 @@ export class DistributedTokenBucket implements ITokenBucket {
 
 		await this.setThrottlingMetricAndUsageData(throttlingMetric, usageData);
 
-		this.lastConsumeTokensSyncResult = 0;
+		this.lastConsumeTokensSyncResult = throttlingMetric.retryAfterInMs;
+		// Always reset tokensConsumedSinceLastSync after sync, regardless of throttling status
+		this.tokensConsumedSinceLastSync = 0;
 	}
 
 	private async setThrottlingMetricAndUsageData(

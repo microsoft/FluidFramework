@@ -77,7 +77,7 @@ const defaultDistributedTokenBucketThrottlerConfig: Required<IDistributedTokenBu
 			minCooldownIntervalMs: 1_000_000,
 			distributedSyncIntervalInMs: 1_000_000,
 		},
-		maxLocalCacheSize: 1_000_000,
+		maxLocalCacheSize: 1_000,
 		maxLocalCacheAgeInMs: 60_000,
 		enableEnhancedTelemetry: false,
 	};
