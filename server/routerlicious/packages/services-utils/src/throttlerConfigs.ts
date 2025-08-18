@@ -50,6 +50,7 @@ const expandSimpleLegacyThrottleConfig = ({
 	...overrides
 }: ISimpleLegacyThrottleConfig): Partial<ILegacyThrottleConfig> => {
 	const throttleConfig: Partial<ILegacyThrottleConfig> = {
+		type: "Throttler",
 		maxPerMs: maxPerInterval / intervalInMs,
 		maxBurst: maxPerInterval,
 		minCooldownIntervalInMs: intervalInMs,

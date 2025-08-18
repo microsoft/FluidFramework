@@ -52,7 +52,7 @@ describe("Throttler Configs", () => {
 		const partialConfig4: Partial<ILegacyThrottleConfig> = {
 			enableEnhancedTelemetry: true,
 		};
-		assert.deepStrictEqual(getThrottleConfig(partialConfig4), partialConfig4);
+		assert.deepStrictEqual(getThrottleConfig(partialConfig4), { ...partialConfig4 });
 	});
 
 	it("expands simplified configs", () => {
@@ -196,12 +196,18 @@ describe("Hybrid Throttler Configs", () => {
 
 	it("passes along partial hybrid configs", () => {
 		const partialConfig1: Partial<IHybridThrottleConfig> = {};
-		assert.deepStrictEqual(getHybridThrottleConfig(partialConfig1), partialConfig1);
+		assert.deepStrictEqual(getHybridThrottleConfig(partialConfig1), {
+			...partialConfig1,
+			type: "DistributedTokenBucket",
+		});
 
 		const partialConfig2: Partial<IHybridThrottleConfig> = {
 			local: { maxPerMs: 0.1, maxBurst: 100, minCooldownIntervalInMs: 1000 },
 		};
-		assert.deepStrictEqual(getHybridThrottleConfig(partialConfig2), partialConfig2);
+		assert.deepStrictEqual(getHybridThrottleConfig(partialConfig2), {
+			type: "DistributedTokenBucket",
+			...partialConfig2,
+		});
 
 		const partialConfig3: Partial<IHybridThrottleConfig> = {
 			local: { maxPerMs: 0.05, maxBurst: 50, minCooldownIntervalInMs: 2000 },
@@ -214,12 +220,18 @@ describe("Hybrid Throttler Configs", () => {
 			maxInMemoryCacheSize: 2000,
 			maxInMemoryCacheAgeInMs: 30000,
 		};
-		assert.deepStrictEqual(getHybridThrottleConfig(partialConfig3), partialConfig3);
+		assert.deepStrictEqual(getHybridThrottleConfig(partialConfig3), {
+			type: "DistributedTokenBucket",
+			...partialConfig3,
+		});
 
 		const partialConfig4: Partial<IHybridThrottleConfig> = {
 			enableEnhancedTelemetry: true,
 		};
-		assert.deepStrictEqual(getHybridThrottleConfig(partialConfig4), partialConfig4);
+		assert.deepStrictEqual(getHybridThrottleConfig(partialConfig4), {
+			type: "DistributedTokenBucket",
+			...partialConfig4,
+		});
 	});
 
 	it("expands simplified hybrid configs", () => {
