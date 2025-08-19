@@ -28,6 +28,9 @@ export async function apiExtractorWorker(message: WorkerMessage): Promise<Worker
 	const result: ApiExtractorModule.ExtractorResult =
 		apiExtractorModule.Extractor.loadConfigAndInvoke(configPath, {
 			localBuild: message.command.includes(" --local "),
+			// By default API-Extractor, when run as a CLI tool emits errors,
+			// but it does not appear to have the same defaults when run programmatically.
+			// Passing these options should help surface the errors similar to how it behaves when run as a CLI tool.
 			showDiagnostics: true,
 			showVerboseMessages: true,
 			messageCallback: (message) => messages.push(message),
