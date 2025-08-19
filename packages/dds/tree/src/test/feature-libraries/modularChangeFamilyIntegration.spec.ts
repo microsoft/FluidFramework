@@ -5,6 +5,7 @@
 
 import {
 	type ChangeAtomId,
+	type ChangeEncodingContext,
 	type DeltaFieldChanges,
 	type DeltaFieldMap,
 	type DeltaMark,
@@ -20,7 +21,10 @@ import {
 	tagRollbackInverse,
 } from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
+import {
+	fieldKindConfigurations,
+	sequence,
+} from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
 	type FieldKindWithEditor,
@@ -28,6 +32,9 @@ import {
 	type SequenceField as SF,
 	type EditDescription,
 	genericFieldKind,
+	type EncodedModularChangeset,
+	makeModularChangeCodecFamily,
+	makeFieldBatchCodec,
 } from "../../feature-libraries/index.js";
 import {
 	ModularChangeFamily,
@@ -40,9 +47,13 @@ import {
 	chunkFromJsonTrees,
 	defaultRevisionMetadataFromChanges,
 	failCodecFamily,
+	makeEncodingTestSuite,
 	mintRevisionTag,
 	moveWithin,
 	testChangeReceiver,
+	testIdCompressor,
+	testRevisionTagCodec,
+	type EncodingTestData,
 } from "../utils.js";
 
 import type {
@@ -61,12 +72,26 @@ import {
 } from "./modular-schema/modularChangesetUtil.js";
 // eslint-disable-next-line import/no-internal-modules
 import { newGenericChangeset } from "../../feature-libraries/modular-schema/genericFieldKindTypes.js";
+import type { SessionId } from "@fluidframework/id-compressor";
+import type { ICodecOptions } from "../../codec/index.js";
+import { ajvValidator } from "../codec/index.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map([
 	[sequence.identifier, sequence],
 ]);
 
-const family = new ModularChangeFamily(fieldKinds, failCodecFamily);
+const codecOptions: ICodecOptions = {
+	jsonValidator: ajvValidator,
+};
+
+const codec = makeModularChangeCodecFamily(
+	fieldKindConfigurations,
+	testRevisionTagCodec,
+	makeFieldBatchCodec(codecOptions, 1),
+	codecOptions,
+);
+
+const family = new ModularChangeFamily(fieldKinds, codec);
 
 const rootField: FieldKey = brand("Root");
 const fieldA: FieldKey = brand("FieldA");
@@ -1551,7 +1576,59 @@ describe("ModularChangeFamily integration", () => {
 			assertEqual(actual, expected);
 		});
 	});
+
+	describe("Encoding", () => {
+		const sessionId = "session1" as SessionId;
+		const context: ChangeEncodingContext = {
+			originatorId: sessionId,
+			revision: tag1,
+			idCompressor: testIdCompressor,
+		};
+
+		const fieldAPath = { parent: rootPath, field: fieldA };
+
+		const move = buildTransaction((editor) => {
+			editor.move(fieldAPath, 1, 1, fieldAPath, 0);
+		}, tag1).change;
+
+		const moveAndRemove = buildTransaction((editor) => {
+			editor.move(fieldAPath, 1, 1, fieldAPath, 0);
+			editor.sequenceField(fieldAPath).remove(0, 1);
+		}, tag1).change;
+
+		const encodingTestData: EncodingTestData<
+			ModularChangeset,
+			EncodedModularChangeset,
+			ChangeEncodingContext
+		> = {
+			successes: [
+				["move", move, context],
+				["move and remove", moveAndRemove, context],
+			],
+		};
+
+		makeEncodingTestSuite(family.codecs, encodingTestData, assertModularChangesetsEqual);
+	});
 });
+
+function buildTransaction(
+	delegate: (editor: DefaultEditBuilder) => void,
+	revision?: RevisionTag,
+): TaggedChange<ModularChangeset> {
+	const [changeReceiver, getChanges] = testChangeReceiver(family);
+	const transaction = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
+	delegate(transaction);
+	const changes = getChanges();
+	const tag = revision ?? mintRevisionTag();
+	return tagChange(
+		family.changeRevision(
+			family.compose(changes.map((change) => makeAnonChange(change))),
+			tag,
+			undefined,
+		),
+		tag,
+	);
+}
 
 function tagChangeInline(
 	change: ModularChangeset,

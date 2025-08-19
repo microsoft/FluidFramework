@@ -2867,8 +2867,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 					this.table.rebasedNodeToParent,
 					baseAttachId,
 					nodeChange,
-					// XXX: Is this correct? Could the most recent detach location be different?
-					this.table.baseChange.rootNodes.detachLocations.getFirst(baseAttachId, 1).value,
+					this.fieldId,
 				);
 			}
 
@@ -2952,13 +2951,19 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 
 function assignRootChange(
 	table: RootNodeTable,
-	nodeToParent: ChangeAtomIdBTree<NodeLocation>,
+	nodeToParent: ChangeAtomIdBTree<NodeLocation> | undefined,
 	detachId: ChangeAtomId,
 	nodeId: NodeId,
 	detachLocation: FieldId | undefined,
 ): void {
+	assert(detachLocation !== undefined, "XXX");
+
 	setInChangeAtomIdMap(table.nodeChanges, detachId, nodeId);
-	setInChangeAtomIdMap(nodeToParent, nodeId, { root: detachId });
+
+	if (nodeToParent !== undefined) {
+		setInChangeAtomIdMap(nodeToParent, nodeId, { root: detachId });
+	}
+
 	table.detachLocations.set(detachId, 1, detachLocation);
 }
 
@@ -3180,7 +3185,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 					this.table.movedNodeToParent,
 					baseDetachId,
 					newChanges,
-					this.table.baseChange.rootNodes.detachLocations.getFirst(baseDetachId, 1).value,
+					this.fieldId,
 				);
 			}
 		}
@@ -3914,7 +3919,7 @@ function getFromChangeAtomIdMap<T>(
 	return map.get([id.revision, id.localId]);
 }
 
-function rangeQueryChangeAtomIdMap<T>(
+export function rangeQueryChangeAtomIdMap<T>(
 	map: ChangeAtomIdBTree<T>,
 	id: ChangeAtomId,
 	count: number,
@@ -3990,6 +3995,7 @@ export function newRootTable(): RootNodeTable {
 		oldToNewId: newChangeAtomIdTransform(),
 		nodeChanges: newTupleBTree(),
 		detachLocations: newChangeAtomIdRangeMap(),
+		outputDetachLocations: newChangeAtomIdRangeMap(),
 	};
 }
 
@@ -4169,8 +4175,14 @@ function composeRootTables(
 					true,
 				);
 			} else {
-				setInChangeAtomIdMap(mergedTable.nodeChanges, detachId1, nodeId2);
-				setInChangeAtomIdMap(composedNodeToParent, nodeId2, { root: detachId1 });
+				assignRootChange(
+					mergedTable,
+					composedNodeToParent,
+					detachId1,
+					nodeId2,
+					change1.rootNodes.detachLocations.getFirst(detachId1, 1).value ??
+						change2.rootNodes.detachLocations.getFirst(detachId2, 1).value,
+				);
 			}
 		}
 	}
@@ -4251,6 +4263,7 @@ function cloneRootTable(table: RootNodeTable): RootNodeTable {
 		newToOldId: table.newToOldId.clone(),
 		nodeChanges: brand(table.nodeChanges.clone()),
 		detachLocations: table.detachLocations.clone(),
+		outputDetachLocations: table.detachLocations.clone(),
 	};
 }
 
@@ -4266,7 +4279,13 @@ function invertRootTable(change: ModularChangeset, isRollback: boolean): RootNod
 			change.crossFieldKeys.getFirst({ ...renamedId, target: CrossFieldTarget.Destination }, 1)
 				.value === undefined
 		) {
-			setInChangeAtomIdMap(invertedRoots.nodeChanges, renamedId, nodeId);
+			assignRootChange(
+				invertedRoots,
+				undefined,
+				renamedId,
+				nodeId,
+				change.rootNodes.detachLocations.getFirst(detachId, 1).value,
+			);
 		}
 	}
 
@@ -4335,7 +4354,7 @@ function getDetachFields(
 	return table.getAll2({ ...id, target: CrossFieldTarget.Source }, count);
 }
 
-function getFirstDetachField(
+export function getFirstDetachField(
 	table: CrossFieldKeyTable,
 	id: ChangeAtomId,
 	count: number,
@@ -4343,7 +4362,7 @@ function getFirstDetachField(
 	return table.getFirst({ target: CrossFieldTarget.Source, ...id }, count);
 }
 
-function getFirstAttachField(
+export function getFirstAttachField(
 	table: CrossFieldKeyTable,
 	id: ChangeAtomId,
 	count: number,
@@ -4482,7 +4501,12 @@ function replaceRootTableRevision(
 		(fieldId) => replaceFieldIdRevision(fieldId, oldRevisions, newRevision),
 	);
 
-	return { oldToNewId, newToOldId, nodeChanges, detachLocations };
+	const outputDetachLocations = table.outputDetachLocations.mapEntries(
+		(id) => replaceAtomRevisions(id, oldRevisions, newRevision),
+		(fieldId) => replaceFieldIdRevision(fieldId, oldRevisions, newRevision),
+	);
+
+	return { oldToNewId, newToOldId, nodeChanges, detachLocations, outputDetachLocations };
 }
 
 function newDetachedEntryMap(): ChangeAtomIdRangeMap<DetachedNodeEntry> {

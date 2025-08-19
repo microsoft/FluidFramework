@@ -10,7 +10,10 @@ import type {
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../../core/index.js";
-import type { EncodedChangeAtomId } from "../modular-schema/index.js";
+import type {
+	EncodedChangeAtomId,
+	FieldChangeEncodingContext,
+} from "../modular-schema/index.js";
 
 import type { Attach, CellId, CellMark, Detach, HasMarkFields, Mark } from "./types.js";
 
@@ -37,7 +40,7 @@ export interface SequenceCodecHelpers<TDecodedMarkEffect, TEncodedMarkEffect ext
 		TDecodedMarkEffect,
 		TEncodedMarkEffect,
 		TEncodedMarkEffect,
-		ChangeEncodingContext
+		FieldChangeEncodingContext
 	>;
 	readonly decoderLibrary: DiscriminatedUnionLibrary<
 		TEncodedMarkEffect,

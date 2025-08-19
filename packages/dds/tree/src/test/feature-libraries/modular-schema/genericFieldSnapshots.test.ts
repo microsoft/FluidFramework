@@ -7,12 +7,13 @@ import type { GenericChangeset } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeGenericChangeCodec } from "../../../feature-libraries/modular-schema/genericFieldKindCodecs.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-import { brand } from "../../../util/index.js";
+import { brand, newTupleBTree } from "../../../util/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { TestChange } from "../../testChange.js";
 import { snapshotSessionId, testIdCompressor } from "../../utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKindTypes.js";
+import { newChangeAtomIdTransform } from "../../../core/index.js";
 
 const nodeChange = TestNodeId.create({ localId: brand(0) }, TestChange.mint([], 1));
 const testChangesets: { name: string; change: GenericChangeset }[] = [
@@ -45,10 +46,20 @@ export function testSnapshots() {
 					it(name, () => {
 						const encoded = codec.json.encode(change, {
 							baseContext,
+							isMoveId: (id, count) => ({
+								start: id,
+								value: false,
+								length: count,
+							}),
+							isDetachId: (id, count) => ({
+								start: id,
+								value: false,
+								length: count,
+							}),
 							encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
 							decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
-							rootNodeChanges: [],
-							rootRenames: [],
+							rootNodeChanges: newTupleBTree(),
+							rootRenames: newChangeAtomIdTransform(),
 							decodeRootNodeChange: () => {},
 							decodeRootRename: () => {},
 						});

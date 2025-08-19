@@ -6,6 +6,7 @@
 import type { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import type {
 	ChangeAtomId,
+	ChangeAtomIdRangeMap,
 	ChangeEncodingContext,
 	DeltaFieldChanges,
 	DeltaFieldMap,
@@ -13,14 +14,14 @@ import type {
 	RevisionMetadataSource,
 	RevisionTag,
 } from "../../core/index.js";
-import type { IdAllocator, Invariant } from "../../util/index.js";
+import type { IdAllocator, Invariant, RangeQueryEntry } from "../../util/index.js";
 
 import type {
 	ComposeNodeManager,
 	InvertNodeManager,
 	RebaseNodeManager,
 } from "./crossFieldQueries.js";
-import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
+import type { ChangeAtomIdBTree, CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
 
 export type NestedChangesIndices = [NodeId, number /* inputIndex */][];
@@ -228,9 +229,11 @@ export interface RebaseRevisionMetadata extends RevisionMetadataSource {
 
 export interface FieldChangeEncodingContext {
 	readonly baseContext: ChangeEncodingContext;
-	readonly rootNodeChanges: [detachId: ChangeAtomId, nodeId: NodeId][];
-	readonly rootRenames: [oldId: ChangeAtomId, newId: ChangeAtomId, count: number][];
+	readonly rootNodeChanges: ChangeAtomIdBTree<NodeId>;
+	readonly rootRenames: ChangeAtomIdRangeMap<ChangeAtomId>;
 	encodeNode(nodeId: NodeId): EncodedNodeChangeset;
+	isMoveId(id: ChangeAtomId, count: number): RangeQueryEntry<ChangeAtomId, boolean>;
+	isDetachId(id: ChangeAtomId, count: number): RangeQueryEntry<ChangeAtomId, boolean>;
 
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
 	decodeRootNodeChange(detachId: ChangeAtomId, nodeId: NodeId): void;

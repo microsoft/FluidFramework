@@ -5,12 +5,17 @@
 
 import path from "node:path";
 
-import { RevisionTagCodec, type ChangeAtomId } from "../../../core/index.js";
+import {
+	newChangeAtomIdTransform,
+	RevisionTagCodec,
+	type ChangeAtomId,
+} from "../../../core/index.js";
 import { SequenceField, type NodeId } from "../../../feature-libraries/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { createSnapshotCompressor, testIdCompressor } from "../../utils.js";
 import { generatePopulatedMarks } from "./populatedMarks.js";
+import { newTupleBTree } from "../../../util/bTreeUtils.js";
 
 export function testSnapshots() {
 	describe("Snapshots", () => {
@@ -37,8 +42,18 @@ export function testSnapshots() {
 							baseContext,
 							encodeNode: (node) => TestNodeId.encode(node, baseContext),
 							decodeNode: (node) => TestNodeId.decode(node, baseContext),
-							rootNodeChanges: [],
-							rootRenames: [],
+							rootNodeChanges: newTupleBTree(),
+							rootRenames: newChangeAtomIdTransform(),
+							isMoveId: (id, count) => ({
+								start: id,
+								value: false,
+								length: count,
+							}),
+							isDetachId: (id, count) => ({
+								start: id,
+								value: false,
+								length: count,
+							}),
 							decodeRootNodeChange: () => {},
 							decodeRootRename: () => {},
 						});

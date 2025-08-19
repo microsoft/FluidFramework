@@ -44,23 +44,23 @@ export function makeV3Codec(
 		MarkEffect,
 		Encoded.MarkEffect,
 		Encoded.MarkEffect,
-		ChangeEncodingContext
+		FieldChangeEncodingContext
 	> = {
-		encode(effect: MarkEffect, context: ChangeEncodingContext): Encoded.MarkEffect {
+		encode(effect: MarkEffect, context: FieldChangeEncodingContext): Encoded.MarkEffect {
 			const type = effect.type;
 			switch (type) {
 				case "Rename":
 					return {
 						rename: {
-							idOverride: atomIdCodec.encode(effect.idOverride, context),
+							idOverride: atomIdCodec.encode(effect.idOverride, context.baseContext),
 						},
 					};
 				default:
 					return markEffectV2Codec.encode(effect, context);
 			}
 		},
-		decode(encoded: Encoded.MarkEffect, context: ChangeEncodingContext): MarkEffect {
-			return decoderLibrary.dispatch(encoded, context);
+		decode(encoded: Encoded.MarkEffect, context: FieldChangeEncodingContext): MarkEffect {
+			return decoderLibrary.dispatch(encoded, context.baseContext);
 		},
 	};
 
@@ -89,7 +89,10 @@ export function makeV3Codec(
 			changeset: Changeset,
 			context: FieldChangeEncodingContext,
 		): JsonCompatibleReadOnly & Encoded.Changeset<NodeChangeSchema> => {
-			assert(context.rootNodeChanges.length === 0 && context.rootRenames.length === 0, "XXX");
+			assert(
+				context.rootNodeChanges.length === 0 && context.rootRenames.entries().length === 0,
+				"XXX",
+			);
 
 			const jsonMarks: Encoded.Changeset<NodeChangeSchema> = [];
 			for (const mark of changeset) {
@@ -97,7 +100,7 @@ export function makeV3Codec(
 					count: mark.count,
 				};
 				if (!isNoopMark(mark)) {
-					encodedMark.effect = markEffectCodec.encode(mark, context.baseContext);
+					encodedMark.effect = markEffectCodec.encode(mark, context);
 				}
 				if (mark.cellId !== undefined) {
 					encodedMark.cellId = atomIdCodec.encode(mark.cellId, context.baseContext);
@@ -120,7 +123,7 @@ export function makeV3Codec(
 				};
 
 				if (mark.effect !== undefined) {
-					Object.assign(decodedMark, markEffectCodec.decode(mark.effect, context.baseContext));
+					Object.assign(decodedMark, markEffectCodec.decode(mark.effect, context));
 					assert(mark.effect.rename === undefined, "XXX");
 					assert(mark.effect.attachAndDetach === undefined, "XXX");
 				}

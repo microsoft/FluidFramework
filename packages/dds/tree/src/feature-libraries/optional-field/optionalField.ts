@@ -36,6 +36,7 @@ import {
 
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
+import { invert } from "../sequence-field/invert.js";
 
 export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose,
@@ -76,7 +77,13 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				inverted.childChange = attachEntry.value.nodeChange;
 			}
 
-			inverted.nodeDetach = detachIdForInverse;
+			// TODO: Use nodeDetach instead of valueReplace if not supporting older client versions.
+			// inverted.nodeDetach = detachIdForInverse;
+			if (inverted.valueReplace !== undefined) {
+				(inverted.valueReplace as Mutable<Replace>).dst = detachIdForInverse;
+			} else {
+				inverted.valueReplace = { isEmpty: false, dst: detachIdForInverse };
+			}
 		} else if (detachId === undefined && change.childChange !== undefined) {
 			// This change does not affect which node is in the field, so its child change should remain here.
 			inverted.childChange = change.childChange;

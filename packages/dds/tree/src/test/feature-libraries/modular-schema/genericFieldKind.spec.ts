@@ -7,7 +7,12 @@ import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
 import type { GenericChangeset } from "../../../feature-libraries/index.js";
-import { fakeIdAllocator, brand, idAllocatorFromMaxId } from "../../../util/index.js";
+import {
+	fakeIdAllocator,
+	brand,
+	idAllocatorFromMaxId,
+	newTupleBTree,
+} from "../../../util/index.js";
 import {
 	type EncodingTestData,
 	defaultRevisionMetadataFromChanges,
@@ -29,7 +34,7 @@ import { testSnapshots } from "./genericFieldSnapshots.test.js";
 // eslint-disable-next-line import/no-internal-modules
 import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 import { failComposeManager, failInvertManager, failRebaseManager } from "./nodeQueryUtils.js";
-import type { DeltaFieldChanges } from "../../../core/index.js";
+import { newChangeAtomIdTransform, type DeltaFieldChanges } from "../../../core/index.js";
 
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
@@ -208,10 +213,20 @@ describe("GenericField", () => {
 					]),
 					{
 						baseContext,
+						isMoveId: (id, count) => ({
+							start: id,
+							value: false,
+							length: count,
+						}),
+						isDetachId: (id, count) => ({
+							start: id,
+							value: false,
+							length: count,
+						}),
 						encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
 						decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
-						rootNodeChanges: [],
-						rootRenames: [],
+						rootNodeChanges: newTupleBTree(),
+						rootRenames: newChangeAtomIdTransform(),
 						decodeRootNodeChange: () => {},
 						decodeRootRename: () => {},
 					},

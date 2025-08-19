@@ -141,7 +141,7 @@ function pruneGenericChange(
 	for (const [index, node] of changeset.entries()) {
 		const prunedNode = pruneChild(node);
 		if (prunedNode !== undefined) {
-			pruned.set(index, node);
+			pruned.set(index, prunedNode);
 		}
 	}
 	return pruned;

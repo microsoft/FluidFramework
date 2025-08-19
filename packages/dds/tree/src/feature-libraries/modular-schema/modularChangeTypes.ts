@@ -81,7 +81,19 @@ export interface RootNodeTable {
 	oldToNewId: ChangeAtomIdRangeMap<ChangeAtomId>;
 	newToOldId: ChangeAtomIdRangeMap<ChangeAtomId>;
 	nodeChanges: ChangeAtomIdBTree<NodeId>;
+
+	/**
+	 * Maps from input context detach ID to the field where the node was last attached.
+	 * There should be an entry for every detach ID referenced in `oldToNewId` or `nodeChanges`.
+	 */
 	detachLocations: ChangeAtomIdRangeMap<FieldId>;
+
+	/**
+	 * Maps from either
+	 * - input context detach ID to the field where this change moves (and possible re-detaches) that node.
+	 * - ID of first detach in this changeset of a node to the field where this changeset last detaches that node.
+	 */
+	outputDetachLocations: ChangeAtomIdRangeMap<FieldId>;
 }
 
 export type ChangeAtomIdBTree<V> = TupleBTree<[RevisionTag | undefined, ChangesetLocalId], V>;

@@ -69,7 +69,6 @@ export function makeOptionalFieldCodec(
 
 	return {
 		encode: (change: OptionalChangeset, context: FieldChangeEncodingContext) => {
-			assert(context.rootNodeChanges.length === 0 && context.rootRenames.length === 0, "XXX");
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 			if (change.valueReplace !== undefined) {
 				encoded.r = {
@@ -81,8 +80,41 @@ export function makeOptionalFieldCodec(
 				}
 			}
 
+			const encodedChildChanges: [EncodedRegisterId, EncodedNodeChangeset][] = [];
+
 			if (change.childChange !== undefined) {
-				encoded.c = [[null, context.encodeNode(change.childChange)]];
+				encodedChildChanges.push([null, context.encodeNode(change.childChange)]);
+			}
+
+			for (const [detachId, nodeId] of context.rootNodeChanges.entries()) {
+				encodedChildChanges.push([
+					changeAtomIdCodec.encode(
+						{ revision: detachId[0], localId: detachId[1] },
+						context.baseContext,
+					),
+					context.encodeNode(nodeId),
+				]);
+			}
+
+			if (encodedChildChanges.length > 0) {
+				encoded.c = encodedChildChanges;
+			}
+
+			const encodedMoves: [EncodedChangeAtomId, EncodedChangeAtomId][] = [];
+			for (const {
+				start: oldId,
+				value: newId,
+				length: count,
+			} of context.rootRenames.entries()) {
+				assert(count === 1, "Unexpected range rename in optional field");
+				encodedMoves.push([
+					changeAtomIdCodec.encode(oldId, context.baseContext),
+					changeAtomIdCodec.encode(newId, context.baseContext),
+				]);
+			}
+
+			if (encodedMoves.length > 0) {
+				encoded.m = encodedMoves;
 			}
 
 			assert(change.nodeDetach === undefined, "XXX");
@@ -116,7 +148,13 @@ export function makeOptionalFieldCodec(
 				decoded.childChange = context.decodeNode(firstNode[1]);
 			}
 
-			assert(encoded.m === undefined, "XXX");
+			for (const [encodedOldId, encodedNewId] of encoded.m ?? []) {
+				context.decodeRootRename(
+					changeAtomIdCodec.decode(encodedOldId, context.baseContext),
+					changeAtomIdCodec.decode(encodedNewId, context.baseContext),
+					1,
+				);
+			}
 
 			return decoded;
 		},

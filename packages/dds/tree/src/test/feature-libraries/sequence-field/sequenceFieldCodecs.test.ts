@@ -10,7 +10,7 @@ import {
 } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { Changeset } from "../../../feature-libraries/sequence-field/index.js";
-import { brand, type JsonCompatibleReadOnly } from "../../../util/index.js";
+import { brand, newTupleBTree, type JsonCompatibleReadOnly } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import {
 	type EncodingTestData,
@@ -25,6 +25,7 @@ import { ChangeMaker as Change, cases, MarkMaker as Mark } from "./testEdits.js"
 import { assertChangesetsEqual, inlineRevision } from "./utils.js";
 import { withSchemaValidation } from "../../../codec/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
+import { newChangeAtomIdTransform } from "../../../core/index.js";
 
 type TestCase = [string, Changeset, FieldChangeEncodingContext];
 
@@ -40,9 +41,19 @@ const encodedTag2 = testRevisionTagCodec.encode(tag2);
 const context: FieldChangeEncodingContext = {
 	baseContext,
 	encodeNode: (node) => TestNodeId.encode(node, baseContext),
+	isMoveId: (id, count) => ({
+		start: id,
+		value: false,
+		length: count,
+	}),
+	isDetachId: (id, count) => ({
+		start: id,
+		value: false,
+		length: count,
+	}),
 	decodeNode: (node) => TestNodeId.decode(node, baseContext),
-	rootNodeChanges: [],
-	rootRenames: [],
+	rootNodeChanges: newTupleBTree(),
+	rootRenames: newChangeAtomIdTransform(),
 	decodeRootNodeChange: () => {},
 	decodeRootRename: () => {},
 };

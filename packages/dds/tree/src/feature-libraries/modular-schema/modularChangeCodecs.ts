@@ -15,20 +15,23 @@ import {
 	makeCodecFamily,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import type {
-	ChangeAtomId,
-	ChangeEncodingContext,
-	ChangesetLocalId,
-	EncodedRevisionTag,
-	FieldKey,
-	FieldKindIdentifier,
-	ITreeCursorSynchronous,
-	RevisionInfo,
-	RevisionTag,
+import {
+	newChangeAtomIdTransform,
+	type ChangeAtomId,
+	type ChangeAtomIdRangeMap,
+	type ChangeEncodingContext,
+	type ChangesetLocalId,
+	type EncodedRevisionTag,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type ITreeCursorSynchronous,
+	type RevisionInfo,
+	type RevisionTag,
 } from "../../core/index.js";
 import {
 	type JsonCompatibleReadOnly,
 	type Mutable,
+	type RangeQueryEntry,
 	type TupleBTree,
 	brand,
 	idAllocatorFromMaxId,
@@ -72,6 +75,8 @@ import {
 import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
 import {
 	addNodeRename,
+	getFirstAttachField,
+	getFirstDetachField,
 	newRootTable,
 	setInChangeAtomIdMap,
 	type FieldIdKey,
@@ -178,6 +183,8 @@ function makeModularChangeCodec(
 		fieldToRoots: FieldRootMap,
 		context: ChangeEncodingContext,
 		encodeNode: NodeEncoder,
+		isMoveId: ChangeAtomIdRangeQuery,
+		isDetachId: ChangeAtomIdRangeQuery,
 	): EncodedFieldChangeMap {
 		const encodedFields: EncodedFieldChangeMap = [];
 
@@ -187,10 +194,12 @@ function makeModularChangeCodec(
 
 			const fieldContext: FieldChangeEncodingContext = {
 				baseContext: context,
-				rootNodeChanges: rootChanges?.nodeChanges ?? [],
-				rootRenames: rootChanges?.renames ?? [],
+				rootNodeChanges: rootChanges?.nodeChanges ?? newTupleBTree(),
+				rootRenames: rootChanges?.renames ?? newChangeAtomIdTransform(),
 
 				encodeNode,
+				isMoveId,
+				isDetachId,
 				decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
 				decodeRootNodeChange: () => fail("Should not be called during encoding"),
 				decodeRootRename: () => fail("Should not be called during encoding"),
@@ -220,6 +229,8 @@ function makeModularChangeCodec(
 		fieldToRoots: FieldRootMap,
 		context: ChangeEncodingContext,
 		encodeNode: NodeEncoder,
+		isMoveId: ChangeAtomIdRangeQuery,
+		isDetachId: ChangeAtomIdRangeQuery,
 	): EncodedNodeChangeset {
 		const encodedChange: EncodedNodeChangeset = {};
 		const { fieldChanges, nodeExistsConstraint } = change;
@@ -231,6 +242,8 @@ function makeModularChangeCodec(
 				fieldToRoots,
 				context,
 				encodeNode,
+				isMoveId,
+				isDetachId,
 			);
 		}
 
@@ -263,11 +276,12 @@ function makeModularChangeCodec(
 
 			const fieldContext: FieldChangeEncodingContext = {
 				baseContext: context,
-				rootNodeChanges: [],
-				rootRenames: [],
+				rootNodeChanges: newTupleBTree(),
+				rootRenames: newChangeAtomIdTransform(),
 
 				encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
-
+				isMoveId: () => fail("Should not query move IDs during decoding"),
+				isDetachId: () => fail("Should not query move IDs during decoding"),
 				decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
 					return decodeNode(encodedNode, { field: fieldId });
 				},
@@ -421,6 +435,10 @@ function makeModularChangeCodec(
 		return map;
 	}
 
+	type ChangeAtomIdRangeQuery = (
+		id: ChangeAtomId,
+		count: number,
+	) => RangeQueryEntry<ChangeAtomId, boolean>;
 	type NodeEncoder = (nodeId: NodeId) => EncodedNodeChangeset;
 	type NodeDecoder = (encoded: EncodedNodeChangeset, fieldId: NodeLocation) => NodeId;
 
@@ -483,12 +501,39 @@ function makeModularChangeCodec(
 	const modularChangeCodec: ModularChangeCodec = {
 		encode: (change, context) => {
 			const fieldToRoots = getFieldToRoots(change.rootNodes);
+			const isMoveId = (
+				id: ChangeAtomId,
+				count: number,
+			): RangeQueryEntry<ChangeAtomId, boolean> => {
+				const detachEntry = getFirstDetachField(change.crossFieldKeys, id, count);
+				const attachEntry = getFirstAttachField(change.crossFieldKeys, id, detachEntry.length);
+				const isMove = detachEntry.value !== undefined && attachEntry.value !== undefined;
+				return { start: id, value: isMove, length: attachEntry.length };
+			};
+
+			const isDetachId = (
+				id: ChangeAtomId,
+				count: number,
+			): RangeQueryEntry<ChangeAtomId, boolean> => {
+				const detachEntry = getFirstDetachField(change.crossFieldKeys, id, count);
+				const renameEntry = change.rootNodes.oldToNewId.getFirst(id, detachEntry.length);
+				const isDetach = (detachEntry.value ?? renameEntry.value) !== undefined;
+				return { start: id, value: isDetach, length: renameEntry.length };
+			};
 
 			const encodeNode = (nodeId: NodeId): EncodedNodeChangeset => {
 				// TODO: Handle node aliasing.
 				const node = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
 				assert(node !== undefined, 0x92e /* Unknown node ID */);
-				return encodeNodeChangesForJson(node, nodeId, fieldToRoots, context, encodeNode);
+				return encodeNodeChangesForJson(
+					node,
+					nodeId,
+					fieldToRoots,
+					context,
+					encodeNode,
+					isMoveId,
+					isDetachId,
+				);
 			};
 
 			// Destroys only exist in rollback changesets, which are never sent.
@@ -505,6 +550,8 @@ function makeModularChangeCodec(
 					fieldToRoots,
 					context,
 					encodeNode,
+					isMoveId,
+					isDetachId,
 				),
 				builds: encodeDetachedNodes(change.builds, context),
 				refreshers: encodeDetachedNodes(change.refreshers, context),
@@ -625,25 +672,27 @@ function getFieldToRoots(rootTable: RootNodeTable): FieldRootMap {
 		const detachId: ChangeAtomId = { revision, localId };
 		const fieldId = rootTable.detachLocations.getFirst(detachId, 1).value;
 		if (fieldId !== undefined) {
-			getOrAddInFieldRootMap(fieldToRoots, fieldId).nodeChanges.push([detachId, nodeId]);
+			setInChangeAtomIdMap(
+				getOrAddInFieldRootMap(fieldToRoots, fieldId).nodeChanges,
+				detachId,
+				nodeId,
+			);
 		} else {
 			fail("Untracked root change");
 		}
-		fail("");
 	}
 
 	for (const entry of rootTable.oldToNewId.entries()) {
 		const fieldId = rootTable.detachLocations.getFirst(entry.start, 1).value;
 		if (fieldId !== undefined) {
-			getOrAddInFieldRootMap(fieldToRoots, fieldId).renames.push([
+			getOrAddInFieldRootMap(fieldToRoots, fieldId).renames.set(
 				entry.start,
-				entry.value,
 				entry.length,
-			]);
+				entry.value,
+			);
 		} else {
 			fail("Untracked root change");
 		}
-		fail("");
 	}
 
 	return fieldToRoots;
@@ -656,7 +705,10 @@ function getOrAddInFieldRootMap(map: FieldRootMap, fieldId: FieldId): FieldRootC
 		return rootChanges;
 	}
 
-	const newRootChanges: FieldRootChanges = { nodeChanges: [], renames: [] };
+	const newRootChanges: FieldRootChanges = {
+		nodeChanges: newTupleBTree(),
+		renames: newChangeAtomIdTransform(),
+	};
 	map.set(key, newRootChanges);
 	return newRootChanges;
 }
@@ -664,6 +716,6 @@ function getOrAddInFieldRootMap(map: FieldRootMap, fieldId: FieldId): FieldRootC
 type FieldRootMap = TupleBTree<FieldIdKey, FieldRootChanges>;
 
 interface FieldRootChanges {
-	readonly nodeChanges: [detachId: ChangeAtomId, nodeId: NodeId][];
-	readonly renames: [oldId: ChangeAtomId, newId: ChangeAtomId, count: number][];
+	readonly nodeChanges: ChangeAtomIdBTree<NodeId>;
+	readonly renames: ChangeAtomIdRangeMap<ChangeAtomId>;
 }
