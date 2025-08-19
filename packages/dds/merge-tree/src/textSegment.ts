@@ -21,16 +21,14 @@ import type { PropertySet } from "./properties.js";
 export const TextSegmentGranularity = 256;
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IJSONTextSegment extends IJSONSegment {
 	text: string;
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class TextSegment extends BaseSegment {
 	public static readonly type = "TextSegment";

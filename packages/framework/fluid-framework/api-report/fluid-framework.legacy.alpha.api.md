@@ -75,7 +75,7 @@ export interface ContainerSchema {
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
 
 // @public @sealed
@@ -427,7 +427,7 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
     readonly handle: IFluidHandle;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IInterval {
     compare(b: IInterval): number;
     compareEnd(b: IInterval): number;
@@ -509,7 +509,7 @@ declare namespace InternalTypes {
 }
 export { InternalTypes }
 
-// @alpha @legacy
+// @beta @legacy
 export const IntervalStickiness: {
     readonly NONE: 0;
     readonly START: 1;
@@ -517,10 +517,10 @@ export const IntervalStickiness: {
     readonly FULL: 3;
 };
 
-// @alpha @legacy
+// @beta @legacy
 export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof IntervalStickiness];
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export enum IntervalType {
     // (undocumented)
     Simple = 0,
@@ -554,7 +554,7 @@ export interface ISequencedDocumentMessage {
     type: string;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
     operation: TOperation;
     position: number;
@@ -562,7 +562,7 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
     segment: ISegment;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISequenceIntervalCollection extends TypedEventEmitter<ISequenceIntervalCollectionEvents> {
     // (undocumented)
     [Symbol.iterator](): Iterator<SequenceInterval>;
@@ -603,7 +603,7 @@ export interface ISequenceIntervalCollection extends TypedEventEmitter<ISequence
     removeIntervalById(id: string): SequenceInterval | undefined;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISequenceIntervalCollectionEvents extends IEvent {
     (event: "changeInterval", listener: (interval: SequenceInterval, previousInterval: SequenceInterval, local: boolean, op: ISequencedDocumentMessage | undefined, slide: boolean) => void): void;
     (event: "addInterval" | "deleteInterval", listener: (interval: SequenceInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
@@ -611,7 +611,7 @@ export interface ISequenceIntervalCollectionEvents extends IEvent {
     (event: "changed", listener: (interval: SequenceInterval, propertyDeltas: PropertySet, previousInterval: SequenceInterval | undefined, local: boolean, slide: boolean) => void): void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISerializedInterval {
     end: number | "start" | "end";
     // (undocumented)
@@ -644,7 +644,7 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 // @public
 export function isFluidHandle(value: unknown): value is IFluidHandle;
 
-// @alpha @sealed @legacy
+// @beta @sealed @legacy
 export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>, Omit<IDirectory, "on" | "once" | "off"> {
     // (undocumented)
     [Symbol.iterator](): IterableIterator<[string, any]>;
@@ -652,7 +652,7 @@ export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents &
     readonly [Symbol.toStringTag]: string;
 }
 
-// @alpha @sealed @legacy
+// @beta @sealed @legacy
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IDirectoryValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -660,24 +660,24 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @alpha @sealed @legacy
+// @beta @sealed @legacy
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
 }
 
-// @alpha @sealed @legacy
+// @beta @sealed @legacy
 export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
     bindToContext(): void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISharedObjectEvents extends IErrorEvent {
     // @eventProperty
     (event: "pre-op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -685,7 +685,7 @@ export interface ISharedObjectEvents extends IErrorEvent {
     (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObject<ISharedSegmentSequenceEvents>, MergeTreeRevertibleDriver {
     annotateAdjustRange(start: number, end: number, adjust: MapLike<AdjustParams>): void;
     annotateRange(start: number, end: number, props: PropertySet): void;
@@ -723,7 +723,7 @@ export interface ISharedSegmentSequence<T extends ISegment> extends ISharedObjec
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start?: number, end?: number, accum?: TClientData, splitRange?: boolean): void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
     // (undocumented)
     (event: "createIntervalCollection", listener: (label: string, local: boolean, target: IEventThisPlaceHolder) => void): void;
@@ -733,7 +733,7 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
     (event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void): void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISharedString extends ISharedSegmentSequence<SharedStringSegment> {
     annotateMarker(marker: Marker, props: PropertySet): void;
     getMarkerFromId(id: string): ISegment | undefined;
@@ -1004,14 +1004,14 @@ export interface SchemaStatics {
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
-// @alpha @legacy
+// @beta @legacy
 export interface SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
     readonly isLocal: boolean;
     // (undocumented)
     readonly opArgs: IMergeTreeDeltaOpArgs;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
     readonly clientId: string | undefined;
     // (undocumented)
@@ -1023,7 +1023,7 @@ export interface SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes =
     readonly ranges: readonly Readonly<ISequenceDeltaRange<TOperation>>[];
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface SequenceInterval extends IInterval {
     compare(b: SequenceInterval): number;
     compareEnd(b: SequenceInterval): number;
@@ -1047,13 +1047,13 @@ export interface SequenceInterval extends IInterval {
     readonly stickiness: IntervalStickiness;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface SequenceIntervalIndex {
     add(interval: SequenceInterval): void;
     remove(interval: SequenceInterval): void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenanceType> {
     // (undocumented)
     readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
@@ -1061,16 +1061,16 @@ export interface SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMainten
 
 export { SequencePlace }
 
-// @alpha @legacy
+// @beta @legacy
 export const SharedDirectory: ISharedObjectKind<ISharedDirectory> & SharedObjectKind_2<ISharedDirectory>;
 
-// @alpha @legacy
+// @beta @legacy
 export type SharedDirectory = ISharedDirectory;
 
-// @alpha @legacy
+// @beta @legacy
 export const SharedMap: ISharedObjectKind<ISharedMap> & SharedObjectKind_2<ISharedMap>;
 
-// @alpha @legacy
+// @beta @legacy
 export type SharedMap = ISharedMap;
 
 // @public @sealed
@@ -1078,13 +1078,13 @@ export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedTyp
     is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export const SharedString: ISharedObjectKind<ISharedString> & SharedObjectKind_2<ISharedString>;
 
-// @alpha @legacy
+// @beta @legacy
 export type SharedString = ISharedString;
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export type SharedStringSegment = TextSegment | Marker;
 
 // @public
