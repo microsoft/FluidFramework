@@ -21,6 +21,9 @@ export class ApiExtractorTask extends TscDependentTask {
 	}
 }
 
+/**
+ * Compute if `command` can be handled by `apiExtractorWorker`.
+ */
 export function useWorker(command: string): boolean {
 	// Currently the worker only supports "--local" and "--config config path", both of which are optional.
 	const parts = command.split(" ");

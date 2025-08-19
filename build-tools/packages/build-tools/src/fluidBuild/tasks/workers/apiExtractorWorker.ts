@@ -8,7 +8,11 @@ import type * as ApiExtractorModule from "@microsoft/api-extractor";
 import { getApiExtractorConfigFilePath } from "../taskUtils.js";
 import type { WorkerExecResult, WorkerMessage } from "./worker.js";
 
-export async function apiExtractor(message: WorkerMessage): Promise<WorkerExecResult> {
+/**
+ * Worker for running API Extractor.
+ * See "worker.ts" and "apiExtractorTask.ts" for more details.
+ */
+export async function apiExtractorWorker(message: WorkerMessage): Promise<WorkerExecResult> {
 	// Load the api-extractor version that is in the cwd scope
 	const apiExtractorPath = require.resolve("@microsoft/api-extractor", {
 		paths: [message.cwd],
@@ -19,12 +23,21 @@ export async function apiExtractor(message: WorkerMessage): Promise<WorkerExecRe
 
 	const config = getApiExtractorConfigFilePath(message.command);
 	const configPath = path.join(message.cwd, config);
+	const messages: ApiExtractorModule.ExtractorMessage[] = [];
 	// This assumes the version of API-Extractor we loaded at least has the these APIs.
-	const result = apiExtractorModule.Extractor.loadConfigAndInvoke(configPath, {
-		localBuild: message.command.includes(" --local "),
-	});
+	const result: ApiExtractorModule.ExtractorResult =
+		apiExtractorModule.Extractor.loadConfigAndInvoke(configPath, {
+			localBuild: message.command.includes(" --local "),
+			showDiagnostics: true,
+			showVerboseMessages: true,
+			messageCallback: (message) => messages.push(message),
+		});
 	return {
 		code: result.succeeded ? 0 : 1,
-		error: result.succeeded ? undefined : new Error(`Number of Errors: ${result.errorCount}`),
+		error: result.succeeded
+			? undefined
+			: new Error(
+					`Number of Errors: ${result.errorCount}. Messages: ${JSON.stringify(messages.map((m) => m.text))}`,
+				),
 	};
 }

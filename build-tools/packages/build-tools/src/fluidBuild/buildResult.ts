@@ -9,7 +9,14 @@ export enum BuildResult {
 	Failed,
 }
 
-export function summarizeBuildResult(results: BuildResult[]) {
+/**
+ * Summarizes a collection of build results into a single build result.
+ * @returns The summarized build result.
+ * If any failed, failure is returned.
+ * If there is at least one success and no failures, success is returned.
+ * Otherwise (when there are no results or all are up-to-date) up-to-date is returned.
+ */
+export function summarizeBuildResult(results: readonly BuildResult[]): BuildResult {
 	let retResult = BuildResult.UpToDate;
 	for (const result of results) {
 		if (result === BuildResult.Failed) {
