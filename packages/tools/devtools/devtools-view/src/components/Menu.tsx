@@ -12,18 +12,18 @@ import {
 	Tooltip,
 } from "@fluentui/react-components";
 import {
+	QuestionCircle16Regular,
+	ArrowSync16Regular,
+	CatchUp16Regular,
+	Run16Regular,
+	LockClosed16Regular,
+	PlugConnected16Regular,
+	PlugDisconnected16Regular,
+	Delete16Regular,
 	Dismiss24Regular,
-	QuestionCircle24Regular,
-	ArrowSync24Regular,
-	Attach24Regular,
-	AttachArrowRight24Regular,
-	CatchUp24Regular,
-	Run24Regular,
-	DocumentPageBreak24Regular,
-	LockClosed24Regular,
-	PlugConnected24Regular,
-	PlugDisconnected24Regular,
-	Delete24Regular,
+	Attach16Regular,
+	DocumentDataLink16Regular,
+	DocumentDismiss16Regular,
 } from "@fluentui/react-icons";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type {
@@ -186,7 +186,7 @@ function RefreshButton(): React.ReactElement {
 	return (
 		<Tooltip content="Refresh Containers list" relationship="label">
 			<Button
-				icon={<ArrowSync24Regular />}
+				icon={<ArrowSync16Regular />}
 				style={transparentButtonStyle}
 				onClick={handleRefreshClick}
 				aria-label="Refresh Containers list"
@@ -412,14 +412,15 @@ const useMenuItemStyles = makeStyles({
 		overflowWrap: "anywhere",
 		flex: 1,
 		minWidth: 0,
-		marginRight: "8px",
+		marginRight: "4px",
 	},
 	stateIconContainer: {
 		flexShrink: 0,
-		width: "28px",
+		width: "20px",
 		display: "flex",
 		alignItems: "center",
 		justifyContent: "center",
+		marginRight: "12px",
 	},
 	deleteButton: {
 		backgroundColor: "transparent",
@@ -641,7 +642,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 						if (state.closed) {
 							stateIcon = (
 								<Tooltip content="Container is disposed" relationship="label">
-									<Delete24Regular />
+									<Delete16Regular />
 								</Tooltip>
 							);
 						}
@@ -649,7 +650,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 						else if (state.isReadOnly === true) {
 							stateIcon = (
 								<Tooltip content="Container is in read-only mode" relationship="label">
-									<LockClosed24Regular />
+									<LockClosed16Regular />
 								</Tooltip>
 							);
 						} else if (state.connectionState !== undefined) {
@@ -657,7 +658,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 								case ConnectionState.Connected: {
 									stateIcon = (
 										<Tooltip content="Container is connected" relationship="label">
-											<PlugConnected24Regular />
+											<PlugConnected16Regular />
 										</Tooltip>
 									);
 									break;
@@ -665,7 +666,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 								case ConnectionState.Disconnected: {
 									stateIcon = (
 										<Tooltip content="Container is disconnected" relationship="label">
-											<PlugDisconnected24Regular />
+											<PlugDisconnected16Regular />
 										</Tooltip>
 									);
 									break;
@@ -676,7 +677,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 											content="Container is establishing connection"
 											relationship="label"
 										>
-											<Run24Regular />
+											<Run16Regular />
 										</Tooltip>
 									);
 									break;
@@ -684,7 +685,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 								case ConnectionState.CatchingUp: {
 									stateIcon = (
 										<Tooltip content="Container is catching up" relationship="label">
-											<CatchUp24Regular />
+											<CatchUp16Regular />
 										</Tooltip>
 									);
 									break;
@@ -702,7 +703,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 								case "Detached": {
 									stateIcon = (
 										<Tooltip content="Container is detached" relationship="label">
-											<DocumentPageBreak24Regular />
+											<DocumentDismiss16Regular />
 										</Tooltip>
 									);
 									break;
@@ -710,7 +711,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 								case "Attaching": {
 									stateIcon = (
 										<Tooltip content="Container is attaching" relationship="label">
-											<AttachArrowRight24Regular />
+											<DocumentDataLink16Regular />
 										</Tooltip>
 									);
 									break;
@@ -718,7 +719,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 								case "Attached": {
 									stateIcon = (
 										<Tooltip content="Container is attached" relationship="label">
-											<Attach24Regular />
+											<Attach16Regular />
 										</Tooltip>
 									);
 									break;
@@ -733,7 +734,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 						// No state information available (container still loading)
 						stateIcon = (
 							<Tooltip content="Container state unknown" relationship="label">
-								<QuestionCircle24Regular />
+								<QuestionCircle16Regular />
 							</Tooltip>
 						);
 					}
