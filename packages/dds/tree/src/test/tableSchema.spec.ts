@@ -1132,18 +1132,98 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
+	describe("removeColumns", () => {
+		it("Remove empty range", () => {
+			const { treeView, Column } = createTableTree();
+			treeView.initialize({
+				columns: [new Column({ id: "column-0", props: {} })],
+				rows: [],
+			});
+
+			treeView.root.removeColumns(0, 0);
+			assertEqualTrees(treeView.root, {
+				columns: [{ id: "column-0", props: {} }],
+				rows: [],
+			});
+		});
+
+		it("Remove by index range", () => {
+			const { treeView, Column } = createTableTree();
+			const column0 = new Column({ id: "column-0", props: {} });
+			const column1 = new Column({ id: "column-1", props: {} });
+			const column2 = new Column({ id: "column-2", props: {} });
+			const column3 = new Column({ id: "column-3", props: {} });
+			treeView.initialize({
+				columns: [column0, column1, column2, column3],
+				rows: [],
+			});
+
+			// Remove columns 1-2
+			treeView.root.removeColumns(1, 2);
+			assertEqualTrees(treeView.root, {
+				columns: [
+					{ id: "column-0", props: {} },
+					{ id: "column-3", props: {} },
+				],
+				rows: [],
+			});
+		});
+
+		it("Removing by range fails for invalid ranges", () => {
+			const { treeView, Column } = createTableTree();
+			const column0 = new Column({ id: "column-0", props: {} });
+			const column1 = new Column({ id: "column-1", props: {} });
+			treeView.initialize({
+				columns: [column0, column1],
+				rows: [],
+			});
+
+			assert.throws(
+				() => treeView.root.removeColumns(-1, undefined),
+				validateUsageError(
+					/Start index out of bounds. Expected index to be on \[0, 1], but got -1/,
+				),
+			);
+
+			assert.throws(
+				() => treeView.root.removeColumns(1, -1),
+				validateUsageError(/Expected non-negative count. Got -1./),
+			);
+
+			assert.throws(
+				() => treeView.root.removeColumns(0, 5),
+				validateUsageError(
+					/End index out of bounds. Expected end to be on \[0, 2], but got 5/,
+				),
+			);
+
+			// Additionally, no columns should have been removed.
+			assert(treeView.root.columns.length === 2);
+		});
+	});
+
 	describe("removeRows", () => {
 		it("Remove empty list", () => {
 			const { treeView, Row } = createTableTree();
 			treeView.initialize({
 				columns: [],
-				rows: [new Row({ id: "row-0", cells: {}, props: {} })],
+				rows: [
+					new Row({
+						id: "row-0",
+						cells: {},
+					}),
+				],
 			});
 
 			treeView.root.removeRows([]);
 			assertEqualTrees(treeView.root, {
 				columns: [],
-				rows: [{ id: "row-0", cells: {}, props: {} }],
+				rows: [
+					{
+						id: "row-0",
+						cells: {},
+					},
+				],
 			});
 		});
 
