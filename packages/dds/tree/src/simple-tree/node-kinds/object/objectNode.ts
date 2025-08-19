@@ -295,7 +295,10 @@ function createProxyHandler(
 			const innerNode = getOrCreateInnerNode(proxy);
 
 			const innerSchema = innerNode.context.schema.nodeSchema.get(brand(schema.identifier));
-			assert(innerSchema instanceof ObjectNodeStoredSchema, "Expected ObjectNodeStoredSchema");
+			assert(
+				innerSchema instanceof ObjectNodeStoredSchema,
+				0xc18 /* Expected ObjectNodeStoredSchema */,
+			);
 
 			setField(
 				innerNode.getBoxed(fieldInfo.storedKey),
@@ -606,7 +609,7 @@ export function objectSchema<
 					for (const fieldSchema of flexKeyMap.values()) {
 						assert(
 							fieldSchema.schema instanceof FieldSchemaAlpha,
-							"Expected FieldSchemaAlpha",
+							0xc19 /* Expected FieldSchemaAlpha */,
 						);
 						fields.set(
 							brand(fieldSchema.storedKey),

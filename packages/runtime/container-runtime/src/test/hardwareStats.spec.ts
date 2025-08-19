@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 
 import { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";

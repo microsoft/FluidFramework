@@ -14,7 +14,8 @@ import {
 import type { GraphCommit, TaggedChange } from "../core/index.js";
 import { disposeSymbol, hasSome } from "../util/index.js";
 
-import type { ChangeEnricherReadonlyCheckout, ResubmitMachine } from "./index.js";
+import type { ChangeEnricherReadonlyCheckout } from "./changeEnricher.js";
+import type { ResubmitMachine } from "./resubmitMachine.js";
 
 interface PendingChange<TChange> {
 	commit: GraphCommit<TChange>;

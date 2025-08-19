@@ -9,7 +9,7 @@ import type {
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../../core/index.js";
-import type { FieldChangeEncodingContext } from "../index.js";
+import type { FieldChangeEncodingContext } from "../modular-schema/index.js";
 
 import { makeV1Codec } from "./sequenceFieldCodecV1.js";
 import { makeV2Codec } from "./sequenceFieldCodecV2.js";

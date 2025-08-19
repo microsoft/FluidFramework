@@ -213,6 +213,7 @@ function makeModularChangeCodec(
 		context: FieldChangeEncodingContext,
 	): EncodedNodeChangeset {
 		const encodedChange: EncodedNodeChangeset = {};
+		// Note: revert constraints are ignored for now because they would only be needed if we supported reverting changes made by peers.
 		const { fieldChanges, nodeExistsConstraint } = change;
 
 		if (fieldChanges !== undefined) {

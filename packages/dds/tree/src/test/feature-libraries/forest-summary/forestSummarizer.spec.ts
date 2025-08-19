@@ -16,13 +16,17 @@ import {
 	makeFieldBatchCodec,
 	type FieldBatchEncodingContext,
 } from "../../../feature-libraries/index.js";
-import { checkoutWithContent, testIdCompressor, testRevisionTagCodec } from "../../utils.js";
+import {
+	checkoutWithContent,
+	testIdCompressor,
+	testRevisionTagCodec,
+	type TreeStoredContentStrict,
+} from "../../utils.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
 	ForestTypeOptimized,
 	ForestTypeReference,
 	type ForestType,
-	type TreeStoredContentStrict,
 } from "../../../shared-tree/index.js";
 import {
 	permissiveStoredSchemaGenerationOptions,
