@@ -1,5 +1,6 @@
 # Compiled TypeScript and CSS
 dist
+dist-browser
 lib
 
 # Babel
