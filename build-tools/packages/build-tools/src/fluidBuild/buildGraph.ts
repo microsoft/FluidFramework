@@ -30,32 +30,13 @@ import { options } from "./options";
 import { Task, type TaskExec } from "./tasks/task";
 import { TaskFactory } from "./tasks/taskFactory";
 import { WorkerPool } from "./tasks/workers/workerPool";
+import { BuildResult, summarizeBuildResult } from "./buildResult";
 
 const traceTaskDef = registerDebug("fluid-build:task:definition");
 const traceTaskDepTask = registerDebug("fluid-build:task:init:dep:task");
 const traceGraph = registerDebug("fluid-build:graph");
 
 const { log } = defaultLogger;
-
-export enum BuildResult {
-	Success,
-	UpToDate,
-	Failed,
-}
-
-export function summarizeBuildResult(results: BuildResult[]) {
-	let retResult = BuildResult.UpToDate;
-	for (const result of results) {
-		if (result === BuildResult.Failed) {
-			return BuildResult.Failed;
-		}
-
-		if (result === BuildResult.Success) {
-			retResult = BuildResult.Success;
-		}
-	}
-	return retResult;
-}
 
 class TaskStats {
 	public leafTotalCount = 0;
