@@ -429,17 +429,11 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
 
 // @alpha @legacy
 export interface IInterval {
-    // @deprecated (undocumented)
-    clone(): IInterval;
     compare(b: IInterval): number;
     compareEnd(b: IInterval): number;
     compareStart(b: IInterval): number;
-    // @deprecated
-    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, canSlideToEndpoint?: boolean): IInterval | undefined;
     // (undocumented)
     overlaps(b: IInterval): boolean;
-    // @deprecated
-    union(b: IInterval): IInterval;
 }
 
 // @public
@@ -615,14 +609,6 @@ export interface ISequenceIntervalCollectionEvents extends IEvent {
     (event: "addInterval" | "deleteInterval", listener: (interval: SequenceInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
     (event: "propertyChanged", listener: (interval: SequenceInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
     (event: "changed", listener: (interval: SequenceInterval, propertyDeltas: PropertySet, previousInterval: SequenceInterval | undefined, local: boolean, slide: boolean) => void): void;
-}
-
-// @alpha @deprecated @legacy (undocumented)
-export interface ISerializableInterval extends IInterval {
-    getIntervalId(): string;
-    properties: PropertySet;
-    // @deprecated (undocumented)
-    serialize(): ISerializedInterval;
 }
 
 // @alpha @legacy
@@ -1038,11 +1024,7 @@ export interface SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes =
 }
 
 // @alpha @legacy
-export interface SequenceInterval extends ISerializableInterval {
-    // @deprecated
-    addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void;
-    // @deprecated (undocumented)
-    clone(): SequenceInterval;
+export interface SequenceInterval extends IInterval {
     compare(b: SequenceInterval): number;
     compareEnd(b: SequenceInterval): number;
     compareStart(b: SequenceInterval): number;
@@ -1052,23 +1034,17 @@ export interface SequenceInterval extends ISerializableInterval {
     getIntervalId(): string;
     // (undocumented)
     readonly intervalType: IntervalType;
-    // @deprecated
-    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, canSlideToEndpoint?: boolean): SequenceInterval | undefined;
     // (undocumented)
     overlaps(b: SequenceInterval): boolean;
     // (undocumented)
     overlapsPos(bstart: number, bend: number): boolean;
     properties: PropertySet;
-    // @deprecated
-    removePositionChangeListeners(): void;
     // (undocumented)
     readonly start: LocalReferencePosition;
     // (undocumented)
     readonly startSide: Side;
     // (undocumented)
     readonly stickiness: IntervalStickiness;
-    // @deprecated
-    union(b: SequenceInterval): SequenceInterval;
 }
 
 // @alpha @legacy

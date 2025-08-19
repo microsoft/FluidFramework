@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree/internal";
 
 import { SequenceInterval, createTransientInterval } from "../intervals/index.js";
