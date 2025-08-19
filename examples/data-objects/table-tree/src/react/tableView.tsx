@@ -54,8 +54,7 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 
 	const handleRemoveRow = (index: number): void => {
 		if (index >= 0 && index < rows.length) {
-			// TODO: use index-based removal API once that has been added.
-			table.removeRows([table.rows[index]]);
+			table.removeRows(index, 1);
 		}
 	};
 
@@ -67,8 +66,7 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 
 	const handleRemoveColumn = (index: number): void => {
 		if (index >= 0 && index < columns.length) {
-			// TODO: use index-based removal API once that has been added.
-			table.removeColumns([table.columns[index]]);
+			table.removeColumns(index, 1);
 		}
 	};
 
