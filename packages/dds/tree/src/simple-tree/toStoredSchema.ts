@@ -161,9 +161,6 @@ export const convertFieldKind: ReadonlyMap<FieldKind, FlexFieldKind> = new Map<
  * Converts a {@link TreeNodeSchema} into a {@link TreeNodeStoredSchema}.
  * @privateRemarks
  * TODO: Persist node metadata once schema FormatV2 is supported.
- *
- * TODO: AB#43548: Using a stored schema for unhydrated flex trees does not handle schema evolution features like "allowUnknownOptionalFields".
- * Usage of this and the conversion which wrap it should be audited and reduced.
  */
 export function getStoredSchema(
 	schema: SimpleNodeSchema,
