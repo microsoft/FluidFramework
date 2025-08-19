@@ -412,15 +412,23 @@ const useMenuItemStyles = makeStyles({
 		overflowWrap: "anywhere",
 		flex: 1,
 		minWidth: 0,
-		marginRight: "4px",
+		marginRight: "2px",
 	},
 	stateIconContainer: {
 		flexShrink: 0,
-		width: "20px",
+		minWidth: "12px",
+		width: "16px",
 		display: "flex",
 		alignItems: "center",
 		justifyContent: "center",
-		marginRight: "12px",
+		marginRight: "0px",
+		overflow: "visible",
+	},
+	multipleStateIcons: {
+		display: "flex",
+		alignItems: "center",
+		gap: "0px",
+		flexWrap: "nowrap",
 	},
 	deleteButton: {
 		backgroundColor: "transparent",
@@ -556,6 +564,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 	const { containers, selectContainer, currentContainerSelection, onRemoveContainer } = props;
 
 	const messageRelay = useMessageRelay();
+	const styles = useMenuItemStyles();
 	const [containerStates, setContainerStates] = React.useState<
 		Map<ContainerKey, ContainerStateMetadata>
 	>(new Map());
@@ -635,109 +644,159 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 				{containers.map((containerKey: string) => {
 					const state = containerStates.get(containerKey);
 
-					let stateIcon: React.ReactElement | undefined;
+					let stateIcons: React.ReactElement[] = [];
 
 					if (state) {
-						// Check disposed state first - highest priority
+						// Check disposed state first - if closed, only show dispose icon
 						if (state.closed) {
-							stateIcon = (
-								<Tooltip content="Container is disposed" relationship="label">
+							stateIcons = [
+								<Tooltip content="Container is disposed" relationship="label" key="disposed">
 									<Delete16Regular />
-								</Tooltip>
-							);
-						}
-						// Check readonly state - high priority
-						else if (state.isReadOnly === true) {
-							stateIcon = (
-								<Tooltip content="Container is in read-only mode" relationship="label">
-									<LockClosed16Regular />
-								</Tooltip>
-							);
-						} else if (state.connectionState !== undefined) {
-							switch (state.connectionState) {
-								case ConnectionState.Connected: {
-									stateIcon = (
-										<Tooltip content="Container is connected" relationship="label">
-											<PlugConnected16Regular />
-										</Tooltip>
-									);
-									break;
-								}
-								case ConnectionState.Disconnected: {
-									stateIcon = (
-										<Tooltip content="Container is disconnected" relationship="label">
-											<PlugDisconnected16Regular />
-										</Tooltip>
-									);
-									break;
-								}
-								case ConnectionState.EstablishingConnection: {
-									stateIcon = (
-										<Tooltip
-											content="Container is establishing connection"
-											relationship="label"
-										>
-											<Run16Regular />
-										</Tooltip>
-									);
-									break;
-								}
-								case ConnectionState.CatchingUp: {
-									stateIcon = (
-										<Tooltip content="Container is catching up" relationship="label">
-											<CatchUp16Regular />
-										</Tooltip>
-									);
-									break;
-								}
-								default: {
-									// No icon for unknown connection state
-									break;
+								</Tooltip>,
+							];
+						} else {
+							// Collect all applicable state icons for non-closed containers
+							const statusMessages: string[] = [];
+
+							// Add readonly state icon
+							if (state.isReadOnly === true) {
+								stateIcons.push(
+									<Tooltip
+										content="Container is in read-only mode"
+										relationship="label"
+										key="readonly"
+									>
+										<LockClosed16Regular />
+									</Tooltip>,
+								);
+								statusMessages.push("read-only");
+							}
+
+							// Add connection state icon
+							if (state.connectionState !== undefined) {
+								switch (state.connectionState) {
+									case ConnectionState.Connected: {
+										stateIcons.push(
+											<Tooltip
+												content="Container is connected"
+												relationship="label"
+												key="connected"
+											>
+												<PlugConnected16Regular />
+											</Tooltip>,
+										);
+										statusMessages.push("connected");
+										break;
+									}
+									case ConnectionState.Disconnected: {
+										stateIcons.push(
+											<Tooltip
+												content="Container is disconnected"
+												relationship="label"
+												key="disconnected"
+											>
+												<PlugDisconnected16Regular />
+											</Tooltip>,
+										);
+										statusMessages.push("disconnected");
+										break;
+									}
+									case ConnectionState.EstablishingConnection: {
+										stateIcons.push(
+											<Tooltip
+												content="Container is establishing connection"
+												relationship="label"
+												key="establishing"
+											>
+												<Run16Regular />
+											</Tooltip>,
+										);
+										statusMessages.push("establishing connection");
+										break;
+									}
+									case ConnectionState.CatchingUp: {
+										stateIcons.push(
+											<Tooltip
+												content="Container is catching up"
+												relationship="label"
+												key="catching-up"
+											>
+												<CatchUp16Regular />
+											</Tooltip>,
+										);
+										statusMessages.push("catching up");
+										break;
+									}
+									default: {
+										// No icon for unknown connection state
+										break;
+									}
 								}
 							}
-						}
 
-						// If no icon set yet, check attach state
-						if (stateIcon === undefined && state.attachState !== undefined) {
-							switch (state.attachState) {
-								case "Detached": {
-									stateIcon = (
-										<Tooltip content="Container is detached" relationship="label">
-											<DocumentDismiss16Regular />
-										</Tooltip>
-									);
-									break;
-								}
-								case "Attaching": {
-									stateIcon = (
-										<Tooltip content="Container is attaching" relationship="label">
-											<DocumentDataLink16Regular />
-										</Tooltip>
-									);
-									break;
-								}
-								case "Attached": {
-									stateIcon = (
-										<Tooltip content="Container is attached" relationship="label">
-											<Attach16Regular />
-										</Tooltip>
-									);
-									break;
-								}
-								default: {
-									// No icon for unknown attach state
-									break;
+							// Add attach state icon
+							if (state.attachState !== undefined) {
+								switch (state.attachState) {
+									case "Detached": {
+										stateIcons.push(
+											<Tooltip
+												content="Container is detached"
+												relationship="label"
+												key="detached"
+											>
+												<DocumentDismiss16Regular />
+											</Tooltip>,
+										);
+										statusMessages.push("detached");
+										break;
+									}
+									case "Attaching": {
+										stateIcons.push(
+											<Tooltip
+												content="Container is attaching"
+												relationship="label"
+												key="attaching"
+											>
+												<DocumentDataLink16Regular />
+											</Tooltip>,
+										);
+										statusMessages.push("attaching");
+										break;
+									}
+									case "Attached": {
+										stateIcons.push(
+											<Tooltip
+												content="Container is attached"
+												relationship="label"
+												key="attached"
+											>
+												<Attach16Regular />
+											</Tooltip>,
+										);
+										statusMessages.push("attached");
+										break;
+									}
+									default: {
+										// No icon for unknown attach state
+										break;
+									}
 								}
 							}
 						}
 					} else {
 						// No state information available (container still loading)
-						stateIcon = (
-							<Tooltip content="Container state unknown" relationship="label">
+						stateIcons = [
+							<Tooltip content="Container state unknown" relationship="label" key="unknown">
 								<QuestionCircle16Regular />
-							</Tooltip>
-						);
+							</Tooltip>,
+						];
 					}
+
+					// Wrap multiple icons in a container
+					const stateIcon =
+						stateIcons.length > 0 ? (
+							<div className={styles.multipleStateIcons}>{stateIcons}</div>
+						) : undefined;
 
 					return (
 						<MenuItem
