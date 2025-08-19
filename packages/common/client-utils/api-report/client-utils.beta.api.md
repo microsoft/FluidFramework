@@ -6,6 +6,31 @@
 
 export { EventEmitter }
 
+// @beta @legacy
+export type EventEmitterEventType = string;
+
+// @beta @legacy
+export class TypedEventEmitter<TEvent> extends EventEmitter implements IEventProvider<TEvent & IEvent> {
+    constructor();
+    // (undocumented)
+    readonly addListener: TypedEventTransform<this, TEvent>;
+    // (undocumented)
+    readonly off: TypedEventTransform<this, TEvent>;
+    // (undocumented)
+    readonly on: TypedEventTransform<this, TEvent>;
+    // (undocumented)
+    readonly once: TypedEventTransform<this, TEvent>;
+    // (undocumented)
+    readonly prependListener: TypedEventTransform<this, TEvent>;
+    // (undocumented)
+    readonly prependOnceListener: TypedEventTransform<this, TEvent>;
+    // (undocumented)
+    readonly removeListener: TypedEventTransform<this, TEvent>;
+}
+
+// @beta @legacy (undocumented)
+export type TypedEventTransform<TThis, TEvent> = TransformedEvent<TThis, "newListener" | "removeListener", Parameters<(event: string, listener: (...args: any[]) => void) => void>> & IEventTransformer<TThis, TEvent & IEvent> & TransformedEvent<TThis, EventEmitterEventType, any[]>;
+
 // (No @packageDocumentation comment for this package)
 
 ```

@@ -146,7 +146,7 @@ export type FluidObject<T = unknown> = {
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
-// @alpha @legacy
+// @beta @legacy
 export interface IBranchOrigin {
     id: string;
     minimumSequenceNumber: number;
@@ -539,7 +539,7 @@ export interface IProvideFluidLoadable {
     readonly IFluidLoadable: IFluidLoadable;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISequencedDocumentMessage {
     clientId: string | null;
     clientSequenceNumber: number;
@@ -780,7 +780,7 @@ export class IterableTreeArrayContent<T> implements Iterable<T> {
     [Symbol.iterator](): Iterator<T>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ITrace {
     action: string;
     service: string;
