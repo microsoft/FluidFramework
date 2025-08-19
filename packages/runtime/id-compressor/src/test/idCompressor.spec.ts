@@ -16,6 +16,7 @@ import {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
+	type SerializedIdCompressorWithOngoingSession,
 } from "../index.js";
 import { createSessionId } from "../utilities.js";
 
@@ -975,6 +976,19 @@ describe("IdCompressor", () => {
 				(e: Error) => e.message === "IdCompressor version 1.0 is no longer supported.",
 			);
 		});
+
+		it("throws for unknown serialized version", () => {
+			const invalidVersion = -1;
+			// Version number is the very first float
+			const serializedWithUnknownVersion = bufferToString(
+				new Float64Array([invalidVersion]).buffer,
+				"base64",
+			) as SerializedIdCompressorWithOngoingSession;
+			assert.throws(
+				() => deserializeIdCompressor(serializedWithUnknownVersion),
+				(e: Error) => e.message === "Unknown IdCompressor serialized version.",
+			);
+		});
 	});
 
 	describe("Deserialize overloads", () => {
@@ -1046,29 +1060,6 @@ describe("IdCompressor", () => {
 				{ eventName: "RuntimeIdCompressor:SerializedIdCompressorSize" },
 			]);
 		});
-
-		//* Come back to these
-		// it("deserializeIdCompressor rejects 3rd-arg logger for withSession", () => {
-		// 	const mockLogger = new MockLogger();
-		// 	const compressor = CompressorFactory.createCompressor(Client.Client1);
-		// 	const serializedWithSession = compressor.serialize(true);
-		// 	// Passing logger in the 3rd arg when no sessionId is supplied is invalid
-		// 	assert.throws(
-		// 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		// 		() =>
-		// 			deserializeIdCompressor(serializedWithSession as any, undefined as any, mockLogger),
-		// 		(e: Error) => e.message === "logger would be in sessionIdOrLogger in this codepath",
-		// 	);
-		// });
-
-		// it("throws for unknown serialized version", () => {
-		// 	// Version number is the very first float; 999 ensures the switch default path
-		// 	const unknownVersion = bufferToString(new Float64Array([999]).buffer, "base64");
-		// 	assert.throws(
-		// 		() => deserializeIdCompressor(unknownVersion as any, createSessionId()),
-		// 		(e: Error) => e.message === "Unknown IdCompressor serialized version.",
-		// 	);
-		// });
 	});
 
 	describe("Collision detection", () => {

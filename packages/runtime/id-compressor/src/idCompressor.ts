@@ -805,8 +805,8 @@ export function deserializeIdCompressor(
 ): IIdCompressor & IIdCompressorCore;
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressor | SerializedIdCompressorWithNoSession,
-	sessionIdOrLogger?: SessionId | ITelemetryLoggerExt,
-	loggerOrUndefined?: ITelemetryLoggerExt | undefined,
+	sessionIdOrLogger: SessionId | ITelemetryLoggerExt | undefined,
+	loggerOrUndefined?: ITelemetryLoggerExt,
 ): IIdCompressor & IIdCompressorCore {
 	if (typeof sessionIdOrLogger === "string") {
 		return IdCompressor.deserialize({
