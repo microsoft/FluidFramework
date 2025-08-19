@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import { AttachState } from "@fluidframework/container-definitions/internal";
+import { MergeTreeDeltaType } from "@fluidframework/merge-tree/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -550,5 +551,76 @@ describe("SharedString annotate with rollback", () => {
 		for (let i = 0; i < text.length; i++) {
 			assert.deepEqual({ ...client2.getPropertiesAtPosition(i) }, {}, "Could not add props");
 		}
+	});
+});
+
+describe("SharedString rollback triggers correct sequenceDelta events with text", () => {
+	it("insert, remove, annotate, and replaceText rollback trigger correct sequenceDelta events", () => {
+		const { sharedString, containerRuntimeFactory, containerRuntime } =
+			setupSharedStringRollbackTest();
+
+		const events: { op: string; text: string }[] = [];
+		sharedString.on("sequenceDelta", ({ deltaOperation, ranges, isLocal }) => {
+			if (!isLocal) return;
+			switch (deltaOperation) {
+				case MergeTreeDeltaType.INSERT:
+					events.push({ op: "insert", text: sharedString.getText() });
+					break;
+				case MergeTreeDeltaType.REMOVE:
+					events.push({ op: "remove", text: sharedString.getText() });
+					break;
+				case MergeTreeDeltaType.ANNOTATE:
+					events.push({ op: "annotate", text: sharedString.getText() });
+					break;
+				default:
+					throw new Error(`Unexpected deltaOperation: ${deltaOperation}`);
+			}
+		});
+
+		// --- Insert and rollback ---
+		sharedString.insertText(0, "hello");
+		containerRuntimeFactory.processAllMessages();
+		assert.equal(sharedString.getText(), "hello");
+		containerRuntime.rollback?.();
+		assert(
+			events.some((e) => e.op === "remove" && e.text === ""),
+			"Rollback of insert should trigger remove of correct text",
+		);
+
+		events.length = 0;
+
+		// --- Remove and rollback ---
+		sharedString.insertText(0, "world");
+		containerRuntimeFactory.processAllMessages();
+		sharedString.removeText(0, 5);
+		assert.equal(sharedString.getText(), "");
+		containerRuntime.rollback?.();
+		assert(
+			events.some((e) => e.op === "insert" && e.text === "world"),
+			"Rollback of remove should trigger insert of correct text",
+		);
+
+		events.length = 0;
+
+		// --- Annotate and rollback ---
+		sharedString.insertText(0, "abc");
+		containerRuntimeFactory.processAllMessages();
+		const styleProps = { style: "bold" };
+		sharedString.annotateRange(0, 3, styleProps);
+		Array.from({ length: 3 }).forEach((_, i) =>
+			assert.deepEqual({ ...sharedString.getPropertiesAtPosition(i) }, { ...styleProps }),
+		);
+		containerRuntime.rollback?.();
+		Array.from({ length: 3 }).forEach((_, i) =>
+			assert.deepEqual(
+				{ ...sharedString.getPropertiesAtPosition(i) },
+				{},
+				"Rollback of annotate should clear properties",
+			),
+		);
+		assert(
+			events.some((e) => e.op === "annotate" && e.text === "abc"),
+			"Rollback of annotate should trigger annotate event with correct text",
+		);
 	});
 });
