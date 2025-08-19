@@ -17,6 +17,9 @@ When updating your schema, it's important to understand the difference between t
 - **View Schema**: The schema defined in your application code using [`SchemaFactory`](../../../api/fluid-framework/schemafactory-class)
 - **Stored Schema**: The schema persisted with each document, it describes the tree it is stored alongside
 
+When a document is first created, its stored schema is set using the given view schema.
+Afterwards, it is immutable until explicitly [upgraded](./index.mdx#schema-upgrade-process).
+
 ### Stored Schema Invariants
 
 The stored schema follows additional constraints that don't apply to view schemas:
@@ -54,9 +57,10 @@ This separation allows multiple application versions with different schemas to c
 
 ### Understanding Compatibility
 
-**Backward compatibility** means old clients can still read documents created with new schemas (not breaking older app versions).
-**Forward compatibility** means new clients can read documents created with old schemas (not breaking existing data).
-SharedTree supports both to ensure seamless collaboration between different application versions as you evolve your schema.
+When talking about compatibility, we're mainly concerned with:
+
+- the ability of an app to load documents created or edited by earlier versions of the app
+- the ability of an app to load documents created or edited by later versions of the app
 
 ### Checking Compatibility
 
@@ -98,7 +102,7 @@ view.events.on("schemaChanged", () => {
 
 ## Schema Upgrade Process
 
-When you make backward-compatible changes to your schema, you can upgrade existing documents to use the new schema using [`view.upgradeSchema()`](../../../api/fluid-framework/treeview-interface#upgradeschema-method):
+When you make changes to your schema, you can upgrade existing documents to use the new schema using [`view.upgradeSchema()`](../../../api/fluid-framework/treeview-interface#upgradeschema-method):
 
 ```typescript
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
