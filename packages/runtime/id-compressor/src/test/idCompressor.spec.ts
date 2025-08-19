@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { take } from "@fluid-private/stochastic-test-utils";
-import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor.js";
 import {
@@ -976,6 +976,100 @@ describe("IdCompressor", () => {
 				(e: Error) => e.message === "IdCompressor version 1.0 is no longer supported.",
 			);
 		});
+	});
+
+	describe("Deserialize overloads", () => {
+		it("deserializeIdCompressor(withSession, logger) wires logger", () => {
+			const mockLogger = new MockLogger();
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			// Create some state and serialize with session
+			compressor.generateCompressedId();
+			const serializedWithSession = compressor.serialize(true);
+			// Resume with logger and ensure telemetry emits on serialize
+			const resumed = deserializeIdCompressor(
+				serializedWithSession,
+				createChildLogger({ logger: mockLogger }),
+			);
+			resumed.serialize(false);
+			mockLogger.assertMatchAny([
+				{ eventName: "RuntimeIdCompressor:SerializedIdCompressorSize" },
+			]);
+		});
+
+		it("deserializeIdCompressor(noSession, newSessionId, logger) wires logger", () => {
+			const mockLogger = new MockLogger();
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			// Serialize without local session
+			compressor.generateCompressedId();
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+			const serializedNoSession = compressor.serialize(false);
+			const newSessionId = createSessionId();
+			const resumed = deserializeIdCompressor(
+				serializedNoSession,
+				newSessionId,
+				createChildLogger({ logger: mockLogger }),
+			);
+			resumed.serialize(false);
+			mockLogger.assertMatchAny([
+				{ eventName: "RuntimeIdCompressor:SerializedIdCompressorSize" },
+			]);
+		});
+
+		it("IdCompressor.deserialize(withSession, logger) wires logger", () => {
+			const mockLogger = new MockLogger();
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			compressor.generateCompressedId();
+			const serializedWithSession = compressor.serialize(true);
+			const resumed = IdCompressor.deserialize(
+				serializedWithSession,
+				createChildLogger({ logger: mockLogger }),
+			);
+			resumed.serialize(false);
+			mockLogger.assertMatchAny([
+				{ eventName: "RuntimeIdCompressor:SerializedIdCompressorSize" },
+			]);
+		});
+
+		it("IdCompressor.deserialize(noSession, logger, newSessionId) wires logger", () => {
+			const mockLogger = new MockLogger();
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			compressor.generateCompressedId();
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+			const serializedNoSession = compressor.serialize(false);
+			const newSessionId = createSessionId();
+			const resumed = IdCompressor.deserialize(
+				serializedNoSession,
+				createChildLogger({ logger: mockLogger }),
+				newSessionId,
+			);
+			resumed.serialize(false);
+			mockLogger.assertMatchAny([
+				{ eventName: "RuntimeIdCompressor:SerializedIdCompressorSize" },
+			]);
+		});
+
+		//* Come back to these
+		// it("deserializeIdCompressor rejects 3rd-arg logger for withSession", () => {
+		// 	const mockLogger = new MockLogger();
+		// 	const compressor = CompressorFactory.createCompressor(Client.Client1);
+		// 	const serializedWithSession = compressor.serialize(true);
+		// 	// Passing logger in the 3rd arg when no sessionId is supplied is invalid
+		// 	assert.throws(
+		// 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		// 		() =>
+		// 			deserializeIdCompressor(serializedWithSession as any, undefined as any, mockLogger),
+		// 		(e: Error) => e.message === "logger would be in sessionIdOrLogger in this codepath",
+		// 	);
+		// });
+
+		// it("throws for unknown serialized version", () => {
+		// 	// Version number is the very first float; 999 ensures the switch default path
+		// 	const unknownVersion = bufferToString(new Float64Array([999]).buffer, "base64");
+		// 	assert.throws(
+		// 		() => deserializeIdCompressor(unknownVersion as any, createSessionId()),
+		// 		(e: Error) => e.message === "Unknown IdCompressor serialized version.",
+		// 	);
+		// });
 	});
 
 	describe("Collision detection", () => {
