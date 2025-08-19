@@ -326,7 +326,10 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		}
 
 		// Show connection state if applicable (regardless of readonly state)
-		if (containerState.attachState === AttachState.Attached && containerState.connectionState !== undefined) {
+		if (
+			containerState.attachState === AttachState.Attached &&
+			containerState.connectionState !== undefined
+		) {
 			statusComponents.push(connectionStateToString(containerState.connectionState));
 		} else if (containerState.attachState !== AttachState.Attached) {
 			// If not attached, show disconnected state
