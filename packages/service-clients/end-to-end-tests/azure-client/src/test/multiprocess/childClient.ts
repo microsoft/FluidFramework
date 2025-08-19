@@ -194,6 +194,11 @@ class MessageHandler {
 
 	public async onMessage(msg: MessageFromParent): Promise<void> {
 		switch (msg.command) {
+			case "ping": {
+				send({ event: "ack" });
+				break;
+			}
+
 			// Respond to connect command by connecting to Fluid container with the provided user information.
 			case "connect": {
 				// Check if valid user information has been provided by parent/orchestrator
@@ -234,7 +239,7 @@ class MessageHandler {
 				this.connectSetup();
 
 				send({
-					event: "ready",
+					event: "connected",
 					containerId,
 					attendeeId: presence.attendees.getMyself().attendeeId,
 				});

@@ -10,27 +10,57 @@ import type { AttendeeId } from "@fluidframework/presence/beta";
 export type MessageToChild =
 	| ConnectCommand
 	| DisconnectSelfCommand
+	| GetLatestValueCommand
+	| GetLatestMapValueCommand
 	| SetLatestValueCommand
 	| SetLatestMapValueCommand
-	| GetLatestValueCommand
-	| GetLatestMapValueCommand;
+	| PingCommand;
 
-interface ConnectCommand {
+/**
+ * Can be sent to check child responsiveness.
+ * An {@link AcknowledgeEvent} should be expected in response.
+ */
+interface PingCommand {
+	command: "ping";
+}
+
+/**
+ * Instructs a child process to connect to a Fluid container.
+ * A {@link ConnectedEvent} should be expected in response.
+ */
+export interface ConnectCommand {
 	command: "connect";
 	user: AzureUser;
+	/**
+	 * The ID of the Fluid container to connect to.
+	 * If not provided, a new Fluid container will be created.
+	 */
+
 	containerId?: string;
 }
 
+/**
+ * Instructs a child process to disconnect from a Fluid container.
+ * A {@link DisconnectedSelfEvent} should be expected in response.
+ */
 interface DisconnectSelfCommand {
 	command: "disconnectSelf";
 }
 
+/**
+ * Instructs a child process to set the latest value.
+ * We then can wait for {@link LatestValueUpdatedEvent} from other clients to know when the latest value is updated.
+ */
 interface SetLatestValueCommand {
 	command: "setLatestValue";
 	workspaceId: string;
 	value: unknown;
 }
 
+/**
+ * Instructs a child process to set the latest map value.
+ * We then can wait for {@link LatestMapValueUpdatedEvent} from other clients to know when the latest map value is updated.
+ */
 interface SetLatestMapValueCommand {
 	command: "setLatestMapValue";
 	workspaceId: string;
@@ -38,12 +68,20 @@ interface SetLatestMapValueCommand {
 	value: unknown;
 }
 
+/**
+ * Instructs a child process to get the latest value.
+ * A {@link LatestValueGetResponseEvent} should be expected in response.
+ */
 interface GetLatestValueCommand {
 	command: "getLatestValue";
 	workspaceId: string;
 	attendeeId?: AttendeeId;
 }
 
+/**
+ * Instructs a child process to get the latest map value.
+ * A {@link LatestMapValueGetResponseEvent} should be expected in response.
+ */
 interface GetLatestMapValueCommand {
 	command: "getLatestMapValue";
 	workspaceId: string;
@@ -51,10 +89,14 @@ interface GetLatestMapValueCommand {
 	attendeeId?: AttendeeId;
 }
 
+/**
+ * Message types sent from the child processes to the orchestrator
+ */
 export type MessageFromChild =
+	| AcknowledgeEvent
 	| AttendeeDisconnectedEvent
 	| AttendeeConnectedEvent
-	| ReadyEvent
+	| ConnectedEvent
 	| DisconnectedSelfEvent
 	| LatestValueUpdatedEvent
 	| LatestMapValueUpdatedEvent
@@ -62,27 +104,50 @@ export type MessageFromChild =
 	| LatestMapValueGetResponseEvent
 	| ErrorEvent;
 
-interface AttendeeDisconnectedEvent {
-	event: "attendeeDisconnected";
-	attendeeId: AttendeeId;
+/**
+ * Sent from the child processes to the orchestrator in response to a {@link PingCommand}.
+ */
+interface AcknowledgeEvent {
+	event: "ack";
 }
 
+/**
+ * Sent arbitrarily to indicate a new attendee has connected.
+ */
 interface AttendeeConnectedEvent {
 	event: "attendeeConnected";
 	attendeeId: AttendeeId;
 }
 
-interface ReadyEvent {
-	event: "ready";
+/**
+ * Sent arbitrarily to indicate an attendee has disconnected.
+ */
+
+interface AttendeeDisconnectedEvent {
+	event: "attendeeDisconnected";
+	attendeeId: AttendeeId;
+}
+
+/**
+ * Sent from the child processes to the orchestrator in response to a {@link ConnectCommand}.
+ */
+interface ConnectedEvent {
+	event: "connected";
 	containerId: string;
 	attendeeId: AttendeeId;
 }
 
+/**
+ * Sent from the child processes to the orchestrator in response to a {@link DisconnectSelfCommand}.
+ */
 interface DisconnectedSelfEvent {
 	event: "disconnectedSelf";
 	attendeeId: AttendeeId;
 }
 
+/**
+ * Sent from the child processes to the orchestrator in response to latest value update.
+ */
 export interface LatestValueUpdatedEvent {
 	event: "latestValueUpdated";
 	workspaceId: string;
@@ -90,6 +155,9 @@ export interface LatestValueUpdatedEvent {
 	value: unknown;
 }
 
+/**
+ * Sent from the child processes to the orchestrator in response to latest map value update.
+ */
 export interface LatestMapValueUpdatedEvent {
 	event: "latestMapValueUpdated";
 	workspaceId: string;
@@ -98,6 +166,9 @@ export interface LatestMapValueUpdatedEvent {
 	value: unknown;
 }
 
+/**
+ * Sent from the child processes to the orchestrator in response to a {@link GetLatestValueCommand}.
+ */
 export interface LatestValueGetResponseEvent {
 	event: "latestValueGetResponse";
 	workspaceId: string;
@@ -105,6 +176,9 @@ export interface LatestValueGetResponseEvent {
 	value: unknown;
 }
 
+/**
+ * Sent from the child processes to the orchestrator in response to a {@link GetLatestMapValueCommand}.
+ */
 export interface LatestMapValueGetResponseEvent {
 	event: "latestMapValueGetResponse";
 	workspaceId: string;
@@ -112,6 +186,10 @@ export interface LatestMapValueGetResponseEvent {
 	key: string;
 	value: unknown;
 }
+
+/**
+ * Sent at any time to indicate an error.
+ */
 
 interface ErrorEvent {
 	event: "error";
