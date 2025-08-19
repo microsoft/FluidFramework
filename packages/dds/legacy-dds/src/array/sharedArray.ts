@@ -429,7 +429,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			case OperationType.moveEntry:
 			case OperationType.toggle:
 			case OperationType.toggleMove: {
-				break;
+				throw new Error(`Rollback not implemented for ${arrayOp.type} operations`);
 			}
 			default: {
 				unreachableCase(arrayOp);
