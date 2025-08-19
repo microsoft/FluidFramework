@@ -50,12 +50,14 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 /**
  * The key for the tree that contains the overall forest's summary tree.
  * This tree is added by the parent of the forest summarizer.
+ * See {@link ForestIncrementalSummaryBuilder} for details on the summary structure.
  */
 export const forestSummaryKey = "Forest";
 
 /**
  * The key for the blob under ForestSummarizer's root.
  * This blob contains the ForestCodec's output.
+ * See {@link ForestIncrementalSummaryBuilder} for details on the summary structure.
  */
 export const forestSummaryContentKey = "ForestTree";
 
@@ -161,6 +163,8 @@ export class ForestSummarizer implements Summarizable {
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
+		// TODO: AB#46751
+		// The forest summary should always exist so this should be an assert instead of conditional.
 		if (await services.contains(forestSummaryContentKey)) {
 			const readAndParseBlob = async <T extends JsonCompatible<IFluidHandle>>(
 				id: string,

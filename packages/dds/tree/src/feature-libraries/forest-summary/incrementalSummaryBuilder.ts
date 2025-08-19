@@ -108,7 +108,7 @@ export enum ForestIncrementalSummaryBehavior {
 	/**
 	 * The forest can encode chunks incrementally, i.e., chunks that support incremental encoding will be encoded
 	 * separately - they will be added to a separate tree.
-	 * The incremental summary format is described zin {@link ForestIncrementalSummaryBuilder}.
+	 * The incremental summary format is described in {@link ForestIncrementalSummaryBuilder}.
 	 */
 	Incremental,
 	/**
@@ -187,6 +187,17 @@ function validateReadyToTrackSummary(
  *     It also contains the {@link ChunkReferenceId}s of the incremental chunks under it.
  *   - The summary for each incremental chunk under it is stored against its {@link ChunkReferenceId}.
  * - Chunks that do not change between summaries are summarized as handles in the summary tree.
+ * @remarks
+ * It may seem inconsistent that although the structure for the top-level forest tree is similar to that of
+ * an incremental chunk, its content is stored in a summary blob called "ForestTree" while the content for
+ * the incremental chunks are stored in a summary blob called "contents".
+ * This is to keep this summary backwards compatible with old format (before incremental summaries were added)
+ * where the entire forest content was in a summary blob called "ForestTree". So, if incremental summaries were
+ * disabled, the forest content will be fully backwards compatible.
+ *
+ * TODO: AB#46752
+ * Add strong types for the summary structure to document it better. It will help make it super clear what the actual
+ * format is in a way that can easily be linked to, documented and inspected.
  */
 /* eslint-enable jsdoc/check-indentation */
 export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecoder {
