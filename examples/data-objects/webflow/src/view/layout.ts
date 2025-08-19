@@ -4,7 +4,7 @@
  */
 
 // eslint-disable-next-line import/no-nodejs-modules
-import assert from "assert";
+import { strict as assert } from "assert";
 
 import { EventEmitter } from "@fluid-example/example-utils";
 import { MergeTreeMaintenanceType, segmentIsRemoved } from "@fluidframework/merge-tree/legacy";

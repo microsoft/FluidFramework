@@ -780,7 +780,7 @@ export namespace System_TableSchema {
 						`Specified column with ID "${columnId}" does not exist in the table.`,
 					);
 				}
-				assert(column !== undefined, "column should not be undefined");
+				assert(column !== undefined, 0xc10 /* column should not be undefined */);
 
 				Tree.runTransaction(this, () => {
 					// Remove the corresponding cell from all rows.

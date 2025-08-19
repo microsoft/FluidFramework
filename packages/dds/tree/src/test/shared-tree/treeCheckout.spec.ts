@@ -45,19 +45,17 @@ import {
 	viewCheckout,
 } from "../utils.js";
 import { brand } from "../../util/index.js";
-import {
-	SchemaFactory,
-	TreeViewConfiguration,
-	type ImplicitFieldSchema,
-	type InsertableTreeFieldFromImplicitField,
-} from "../../index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import {
 	asTreeViewAlpha,
 	getOrCreateInnerNode,
+	SchemaFactory,
 	toUpgradeSchema,
+	TreeViewConfiguration,
+	type ImplicitFieldSchema,
 	type InsertableField,
+	type InsertableTreeFieldFromImplicitField,
 	type TreeBranch,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules

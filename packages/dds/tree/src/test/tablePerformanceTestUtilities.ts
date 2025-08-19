@@ -16,7 +16,7 @@ import { DefaultTestSharedTreeKind } from "./utils.js";
 import { AttachState } from "@fluidframework/container-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { CommitKind, type Revertible } from "../core/index.js";
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 
 /**
  * Define a return type for table tree creation.
