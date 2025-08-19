@@ -561,9 +561,9 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 	const [containersWithChanges, setContainersWithChanges] = React.useState<Set<string>>(
 		new Set(),
 	);
-	const [changeIndicatorTimers, setChangeIndicatorTimers] = React.useState<Map<string, ReturnType<typeof setTimeout>>>(
-		new Map(),
-	);
+	const [changeIndicatorTimers, setChangeIndicatorTimers] = React.useState<
+		Map<string, ReturnType<typeof setTimeout>>
+	>(new Map());
 
 	React.useEffect(() => {
 		if (containers === undefined) {
@@ -591,11 +591,15 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 					setContainersWithChanges(new Set([containerKey]));
 
 					const timer = setTimeout(() => {
-						setContainersWithChanges(prev => new Set([...prev].filter(key => key !== containerKey)));
-						setChangeIndicatorTimers(prev => new Map([...prev].filter(([key]) => key !== containerKey)));
+						setContainersWithChanges(
+							(prev) => new Set([...prev].filter((key) => key !== containerKey)),
+						);
+						setChangeIndicatorTimers(
+							(prev) => new Map([...prev].filter(([key]) => key !== containerKey)),
+						);
 					}, 1000);
 
-					setChangeIndicatorTimers(prev => new Map(prev).set(containerKey, timer));
+					setChangeIndicatorTimers((prev) => new Map(prev).set(containerKey, timer));
 				}
 
 				return true;
@@ -642,7 +646,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 							);
 						}
 						// Check readonly state - high priority
-						else if (state.readonly === true) {
+						else if (state.isReadOnly === true) {
 							stateIcon = (
 								<Tooltip content="Container is in read-only mode" relationship="label">
 									<LockClosed24Regular />

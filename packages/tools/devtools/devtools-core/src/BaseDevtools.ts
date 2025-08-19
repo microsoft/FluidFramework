@@ -124,7 +124,7 @@ export abstract class BaseDevtools<TContainer extends DecomposedContainer>
 		return {
 			containerKey: this.containerKey,
 			attachState: this.container.attachState,
-			readonly: this.container.readOnlyInfo?.readonly,
+			isReadOnly: this.container.readOnlyInfo?.readonly,
 			connectionState: this.container.connectionState,
 			closed: this.container.closed,
 			clientId: this.container.clientId,

@@ -315,7 +315,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		statusComponents.push(containerState.attachState);
 		if (containerState.attachState === AttachState.Attached) {
 			// Check if container is readonly first
-			if (containerState.readonly === true) {
+			if (containerState.isReadOnly === true) {
 				statusComponents.push("Read-only");
 			} else {
 				statusComponents.push(connectionStateToString(containerState.connectionState));
@@ -419,7 +419,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 	const styles = useActionBarStyles();
 
 	// Check if container is in readonly mode
-	const isReadOnly = containerState.readonly === true;
+	const isReadOnly = containerState.isReadOnly === true;
 
 	const changeConnectionStateButton = isReadOnly ? (
 		// Show readonly indicator when container is readonly

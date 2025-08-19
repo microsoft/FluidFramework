@@ -34,7 +34,7 @@ export interface ContainerStateMetadata extends HasContainerKey {
 	 *
 	 * @remarks Will be undefined if the readonly state is not yet known.
 	 */
-	readonly?: boolean;
+	isReadOnly?: boolean;
 
 	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.clientId}
