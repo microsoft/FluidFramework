@@ -21,7 +21,8 @@ import {
 	getExecutableFromCommand,
 } from "../../../common/utils";
 import type { BuildContext } from "../../buildContext";
-import { type BuildPackage, BuildResult, summarizeBuildResult } from "../../buildGraph";
+import { type BuildPackage } from "../../buildGraph";
+import { BuildResult, summarizeBuildResult } from "../../buildResult";
 import {
 	type GitIgnoreSetting,
 	type GitIgnoreSettingValue,
