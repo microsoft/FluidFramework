@@ -55,6 +55,7 @@ import {
 	FieldSchemaAlpha,
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
+	toUpgradeSchema,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -63,7 +64,7 @@ import {
 	type WithBreakable,
 } from "../util/index.js";
 
-import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
+import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
 
 /**
@@ -184,10 +185,19 @@ export class SchematizingSimpleTreeView<
 				schema.rootFieldSchema,
 			);
 
-			initialize(this.checkout, {
+			this.checkout.transaction.start();
+
+			initialize(
+				this.checkout,
 				schema,
-				initialTree: cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
-			});
+				initializerFromChunk(this.checkout, () => {
+					// This must be done after initial schema is set!
+					return this.checkout.forest.chunkField(
+						cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
+					);
+				}),
+			);
+			this.checkout.transaction.commit();
 		});
 	}
 
@@ -206,10 +216,8 @@ export class SchematizingSimpleTreeView<
 			);
 		}
 
-		this.runSchemaEdit(() => {
-			const result = ensureSchema(this.viewSchema, this.checkout);
-			assert(result, 0x8bf /* Schema upgrade should always work if canUpgrade is set. */);
-		});
+		const newSchema = toUpgradeSchema(this.viewSchema.viewSchema.root);
+		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
 	}
 
 	/**

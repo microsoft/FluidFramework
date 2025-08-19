@@ -16,7 +16,7 @@ import {
 	type NormalizedUpPath,
 	type TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
-import type { ITreeCheckout, TreeStoredContentStrict } from "../../shared-tree/index.js";
+import type { ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand, makeArray } from "../../util/index.js";
 import {
 	checkoutWithContent,
@@ -28,6 +28,7 @@ import {
 	makeTreeFromJson,
 	moveWithin,
 	validateUsageError,
+	type TreeStoredContentStrict,
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
 import { numberSchema, SchemaFactory, toInitialSchema } from "../../simple-tree/index.js";

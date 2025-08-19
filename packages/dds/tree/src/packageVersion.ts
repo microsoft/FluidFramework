@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/tree";
-export const pkgVersion = "2.53.0";
+export const pkgVersion = "2.60.0";

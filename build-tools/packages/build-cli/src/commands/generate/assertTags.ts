@@ -9,7 +9,7 @@ import type { Package } from "@fluidframework/build-tools";
 import { PackageCommand } from "../../BasePackageCommand.js";
 import type { PackageKind, PackageWithKind } from "../../filter.js";
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 import { Flags } from "@oclif/core";
 import { cosmiconfig } from "cosmiconfig";
 import {

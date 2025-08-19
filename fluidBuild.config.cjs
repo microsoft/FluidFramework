@@ -430,10 +430,6 @@ module.exports = {
 				"packages/tools/devtools/devtools-view/package.json",
 			],
 			"npm-package-exports-apis-linted": [
-				// Rollout suppressions - enable only after tools are updated to support policy
-				// as new build-tools will have the concurrently fluid-build support it uses.
-				"^common/",
-
 				// Packages that violate the API linting rules
 				// ae-missing-release-tags, ae-incompatible-release-tags
 				"^examples/data-objects/table-document/",

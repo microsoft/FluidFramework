@@ -46,7 +46,7 @@ import React from "react";
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 
-import { Waiting } from "./index.js";
+import { Waiting } from "./Waiting.js";
 
 const useMenuStyles = makeStyles({
 	root: {

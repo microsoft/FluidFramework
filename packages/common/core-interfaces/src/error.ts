@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseProperties } from "./index.js";
+import type { ITelemetryBaseProperties } from "./logger.js";
 
 /**
  * Error types the Fluid Framework may report.

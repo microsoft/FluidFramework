@@ -6,7 +6,7 @@
 import { TestRedisClientConnectionManagerWithInvalidation } from "./testRedisClientConnectionManagerWithInvalidation";
 import { RedisCache, RedisTenantCache } from "../services";
 import { RedisOptions } from "ioredis-mock";
-import assert from "assert";
+import { strict as assert } from "assert";
 
 type GitRedisFileSystem = "redisCache" | "redisTenantCache";
 
