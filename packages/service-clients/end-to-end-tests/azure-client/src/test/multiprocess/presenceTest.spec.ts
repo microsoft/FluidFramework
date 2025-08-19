@@ -146,6 +146,148 @@ describe(`Presence Multi-Process E2E Tests`, () => {
 		);
 	}
 
+	/**
+	 * Helper function to wait for Latest value update events from multiple clients
+	 */
+	async function waitForLatestValueUpdates(
+		clients: ChildProcess[],
+		workspaceId: string,
+	): Promise<LatestValueUpdatedEvent[]> {
+		const updatePromises = clients.map(async (child, index) =>
+			waitForEvent(
+				child,
+				"latestValueUpdated",
+				(msg) => isLatestValueUpdated(msg) && msg.workspaceId === workspaceId,
+				`Client ${index} did not receive latest value update`,
+			),
+		);
+		const responses = await Promise.race([Promise.all(updatePromises), childErrorPromise]);
+
+		// Type narrow the responses to ensure they are the correct type
+		if (!Array.isArray(responses)) {
+			throw new TypeError("Expected array of responses");
+		}
+
+		const latestValueUpdatedEvents: LatestValueUpdatedEvent[] = [];
+		for (const response of responses) {
+			if (isLatestValueUpdated(response)) {
+				latestValueUpdatedEvents.push(response);
+			} else {
+				throw new TypeError(`Expected LatestValueUpdated but got ${response.event}`);
+			}
+		}
+
+		return latestValueUpdatedEvents;
+	}
+
+	/**
+	 * Helper function to wait for LatestMap value update events from multiple clients
+	 */
+	async function waitForLatestMapValueUpdates(
+		clients: ChildProcess[],
+		workspaceId: string,
+		key: string,
+	): Promise<LatestMapValueUpdatedEvent[]> {
+		const updatePromises = clients.map(async (child, index) =>
+			waitForEvent(
+				child,
+				"latestMapValueUpdated",
+				(msg) =>
+					isLatestMapValueUpdated(msg) && msg.workspaceId === workspaceId && msg.key === key,
+				`Client ${index} did not receive latest map value update`,
+			),
+		);
+		const responses = await Promise.race([Promise.all(updatePromises), childErrorPromise]);
+
+		// Type narrow the responses to ensure they are the correct type
+		if (!Array.isArray(responses)) {
+			throw new TypeError("Expected array of responses");
+		}
+
+		const latestMapValueUpdatedEvents: LatestMapValueUpdatedEvent[] = [];
+		for (const response of responses) {
+			if (isLatestMapValueUpdated(response)) {
+				latestMapValueUpdatedEvents.push(response);
+			} else {
+				throw new TypeError(`Expected LatestMapValueUpdated but got ${response.event}`);
+			}
+		}
+
+		return latestMapValueUpdatedEvents;
+	}
+
+	/**
+	 * Helper function to get Latest value responses from multiple clients
+	 */
+	async function getLatestValueResponses(
+		clients: ChildProcess[],
+		workspaceId: string,
+	): Promise<LatestValueGetResponseEvent[]> {
+		const responsePromises = clients.map(async (child, index) =>
+			waitForEvent(
+				child,
+				"latestValueGetResponse",
+				(msg) => isLatestValueGetResponse(msg) && msg.workspaceId === workspaceId,
+				`Client ${index} did not respond with latest value`,
+			),
+		);
+		const responses = await Promise.race([Promise.all(responsePromises), childErrorPromise]);
+
+		// Type narrow the responses to ensure they are the correct type
+		if (!Array.isArray(responses)) {
+			throw new TypeError("Expected array of responses");
+		}
+
+		const lastestValueGetResponses: LatestValueGetResponseEvent[] = [];
+		for (const response of responses) {
+			if (isLatestValueGetResponse(response)) {
+				lastestValueGetResponses.push(response);
+			} else {
+				throw new TypeError(`Expected LatestValueGetResponse but got ${response.event}`);
+			}
+		}
+
+		return lastestValueGetResponses;
+	}
+
+	/**
+	 * Helper function to get LatestMap value responses from multiple clients
+	 */
+	async function getLatestMapValueResponses(
+		clients: ChildProcess[],
+		workspaceId: string,
+		key: string,
+	): Promise<LatestMapValueGetResponseEvent[]> {
+		const responsePromises = clients.map(async (child, index) =>
+			waitForEvent(
+				child,
+				"latestMapValueGetResponse",
+				(msg) =>
+					isLatestMapValueGetResponse(msg) &&
+					msg.workspaceId === workspaceId &&
+					msg.key === key,
+				`Client ${index} did not respond with latest map value`,
+			),
+		);
+		const responses = await Promise.race([Promise.all(responsePromises), childErrorPromise]);
+
+		// Type narrow the responses to ensure they are the correct type
+		if (!Array.isArray(responses)) {
+			throw new TypeError("Expected array of responses");
+		}
+
+		const latestMapValueGetResponses: LatestMapValueGetResponseEvent[] = [];
+		for (const response of responses) {
+			if (isLatestMapValueGetResponse(response)) {
+				latestMapValueGetResponses.push(response);
+			} else {
+				throw new TypeError(`Expected LatestMapValueGetResponse but got ${response.event}`);
+			}
+		}
+
+		return latestMapValueGetResponses;
+	}
+
 	beforeEach("setup", async () => {
 		// Collect all child process error promises into this array
 		const childErrorPromises: Promise<void>[] = [];
@@ -248,20 +390,7 @@ describe(`Presence Multi-Process E2E Tests`, () => {
 
 			const workspaceId = "testLatestWorkspace";
 			const testValue = { message: "Hello from client 0", timestamp: Date.now() };
-
 			const remoteClients = children.filter((_, index) => index !== 0);
-			const updateEventPromises: Promise<MessageFromChild>[] = [];
-
-			for (let i = 0; i < remoteClients.length; i++) {
-				const child = remoteClients[i];
-				const promise = waitForEvent(
-					child,
-					"latestValueUpdated",
-					(msg) => isLatestValueUpdated(msg) && msg.workspaceId === workspaceId,
-					`Client ${i + 1} did not receive latest value update`,
-				);
-				updateEventPromises.push(promise);
-			}
 
 			// Act
 			children[0].send({
@@ -270,15 +399,10 @@ describe(`Presence Multi-Process E2E Tests`, () => {
 				value: testValue,
 			});
 
-			// Verify
-			const updateEvents = await Promise.race([
-				Promise.all(updateEventPromises),
-				childErrorPromise,
-			]);
-			assert(Array.isArray(updateEvents), "Expected array of update events but got error");
+			// Verify - wait for updates and check the values from the update events
+			const updateEvents = await waitForLatestValueUpdates(remoteClients, workspaceId);
 
 			for (const updateEvent of updateEvents) {
-				assert(isLatestValueUpdated(updateEvent), "Expected LatestValueUpdated event");
 				assert.deepStrictEqual(updateEvent.value, testValue);
 			}
 		});
@@ -290,7 +414,6 @@ describe(`Presence Multi-Process E2E Tests`, () => {
 			const workspaceId = "testLatestWorkspace";
 			const testValue = { message: "Hello from client 0", counter: 42 };
 			const remoteClients = children.filter((_, index) => index !== 0);
-			const getResponsePromises: Promise<MessageFromChild>[] = [];
 
 			// Act
 			children[0].send({
@@ -299,38 +422,21 @@ describe(`Presence Multi-Process E2E Tests`, () => {
 				value: testValue,
 			});
 
-			await new Promise((resolve) => setTimeout(resolve, 100));
+			// Wait for all remote clients to receive the update
+			await waitForLatestValueUpdates(remoteClients, workspaceId);
 
-			for (let i = 0; i < remoteClients.length; i++) {
-				const child = remoteClients[i];
-				const responsePromise = waitForEvent(
-					child,
-					"latestValueGetResponse",
-					(msg) =>
-						isLatestValueGetResponse(msg) &&
-						msg.workspaceId === workspaceId &&
-						msg.attendeeId === creatorSessionId,
-					`Client ${i + 1} did not receive latest value response`,
-				);
-
-				// Send the request
+			// Now request the values from all remote clients
+			for (const child of remoteClients) {
 				child.send({
 					command: "getLatestValue",
 					workspaceId,
 					attendeeId: creatorSessionId,
 				});
-
-				getResponsePromises.push(responsePromise);
 			}
 
 			// Verify
-			const getResponses = await Promise.race([
-				Promise.all(getResponsePromises),
-				childErrorPromise,
-			]);
-			assert(Array.isArray(getResponses), "Expected array of response events but got error");
+			const getResponses = await getLatestValueResponses(remoteClients, workspaceId);
 			for (const getResponse of getResponses) {
-				assert(isLatestValueGetResponse(getResponse), "Expected LatestValueGetResponse event");
 				assert.deepStrictEqual(getResponse.value, testValue);
 			}
 		});
@@ -345,21 +451,6 @@ describe(`Presence Multi-Process E2E Tests`, () => {
 			const testKey = "player1";
 			const testValue = { x: 100, y: 200, color: "red" };
 			const remoteClients = children.filter((_, index) => index !== 0);
-			const updateEventPromises: Promise<MessageFromChild>[] = [];
-
-			for (let i = 0; i < remoteClients.length; i++) {
-				const child = remoteClients[i];
-				const promise = waitForEvent(
-					child,
-					"latestMapValueUpdated",
-					(msg) =>
-						isLatestMapValueUpdated(msg) &&
-						msg.workspaceId === workspaceId &&
-						msg.key === testKey,
-					`Client ${i + 1} did not receive latest map value update`,
-				);
-				updateEventPromises.push(promise);
-			}
 
 			// Act
 			children[0].send({
@@ -369,16 +460,14 @@ describe(`Presence Multi-Process E2E Tests`, () => {
 				value: testValue,
 			});
 
-			// Verify
-			const updateEvents = await Promise.race([
-				Promise.all(updateEventPromises),
-				childErrorPromise,
-			]);
-			assert(Array.isArray(updateEvents), "Expected array of update events but got error");
+			// Verify - wait for updates and check the values from the update events
+			const updateEvents = await waitForLatestMapValueUpdates(
+				remoteClients,
+				workspaceId,
+				testKey,
+			);
 
-			// Verify
 			for (const updateEvent of updateEvents) {
-				assert(isLatestMapValueUpdated(updateEvent), "Expected LatestMapValueUpdated event");
 				assert.deepStrictEqual(updateEvent.value, testValue);
 			}
 		});
@@ -391,7 +480,6 @@ describe(`Presence Multi-Process E2E Tests`, () => {
 			const testKey = "cursor";
 			const testValue = { x: 150, y: 300, visible: true };
 			const remoteClients = children.filter((_, index) => index !== 0);
-			const getResponsePromises: Promise<MessageFromChild>[] = [];
 
 			// Act
 			children[0].send({
@@ -401,50 +489,33 @@ describe(`Presence Multi-Process E2E Tests`, () => {
 				value: testValue,
 			});
 
-			await new Promise((resolve) => setTimeout(resolve, 100));
+			// Wait for all remote clients to receive the update
+			await waitForLatestMapValueUpdates(remoteClients, workspaceId, testKey);
 
-			for (let i = 0; i < remoteClients.length; i++) {
-				const child = remoteClients[i];
-				const responsePromise = waitForEvent(
-					child,
-					"latestMapValueGetResponse",
-					(msg) =>
-						isLatestMapValueGetResponse(msg) &&
-						msg.workspaceId === workspaceId &&
-						msg.key === testKey &&
-						msg.attendeeId === creatorSessionId,
-					`Client ${i + 1} did not receive latest map value response`,
-				);
-
-				// Send the request
+			// Now request the values from all remote clients
+			for (const child of remoteClients) {
 				child.send({
 					command: "getLatestMapValue",
 					workspaceId,
 					key: testKey,
 					attendeeId: creatorSessionId,
 				});
-
-				getResponsePromises.push(responsePromise);
 			}
 
 			// Verify
-			const getResponses = await Promise.race([
-				Promise.all(getResponsePromises),
-				childErrorPromise,
-			]);
-			assert(Array.isArray(getResponses), "Expected array of response events but got error");
+			const getResponses = await getLatestMapValueResponses(
+				remoteClients,
+				workspaceId,
+				testKey,
+			);
 			for (const getResponse of getResponses) {
-				assert(
-					isLatestMapValueGetResponse(getResponse),
-					"Expected LatestMapValueGetResponse event",
-				);
 				assert.deepStrictEqual(getResponse.value, testValue);
 			}
 		});
 
 		it("handles multiple keys in LatestMap independently", async () => {
 			// Setup
-			await connectChildProcesses(children);
+			const { creatorSessionId } = await connectChildProcesses(children);
 
 			const workspaceId = "testMultiKeyMap";
 			const key1 = "player1";
@@ -452,41 +523,21 @@ describe(`Presence Multi-Process E2E Tests`, () => {
 			const value1 = { name: "Alice", score: 100 };
 			const value2 = { name: "Bob", score: 200 };
 
-			const allUpdatePromises: Promise<MessageFromChild>[] = [];
-			for (let i = 1; i < children.length; i++) {
-				const promise = waitForEvent(
-					children[i],
-					"latestMapValueUpdated",
-					(msg) =>
-						isLatestMapValueUpdated(msg) &&
-						msg.workspaceId === workspaceId &&
-						msg.key === key1,
-					`Client ${i} did not receive key1 update`,
-				);
-				allUpdatePromises.push(promise);
-			}
-			for (let i = 0; i < children.length; i++) {
-				if (i === 1) continue; // Skip the sender
-				const promise = waitForEvent(
-					children[i],
-					"latestMapValueUpdated",
-					(msg) =>
-						isLatestMapValueUpdated(msg) &&
-						msg.workspaceId === workspaceId &&
-						msg.key === key2,
-					`Client ${i} did not receive key2 update`,
-				);
-				allUpdatePromises.push(promise);
-			}
-			await new Promise((resolve) => setTimeout(resolve, 100));
-
-			// Act
+			// Act - Set values for both keys from different clients
 			children[0].send({
 				command: "setLatestMapValue",
 				workspaceId,
 				key: key1,
 				value: value1,
 			});
+
+			// Verify key1 updates are received by clients that didn't send it (excluding children[0])
+			const key1Recipients = children.filter((_, index) => index !== 0);
+			const key1UpdateEvents = await waitForLatestMapValueUpdates(
+				key1Recipients,
+				workspaceId,
+				key1,
+			);
 
 			children[1].send({
 				command: "setLatestMapValue",
@@ -495,27 +546,66 @@ describe(`Presence Multi-Process E2E Tests`, () => {
 				value: value2,
 			});
 
-			// Verify
-			const updateEvents = await Promise.race([
-				Promise.all(allUpdatePromises),
-				childErrorPromise,
-			]);
-			assert(Array.isArray(updateEvents), "Expected array of update events but got error");
-			const key1Updates = updateEvents.filter(
-				(event) => isLatestMapValueUpdated(event) && event.key === key1,
+			// Verify key2 updates are received by clients that didn't send it (excluding children[1])
+			const key2Recipients = children.filter((_, index) => index !== 1);
+			const key2UpdateEvents = await waitForLatestMapValueUpdates(
+				key2Recipients,
+				workspaceId,
+				key2,
 			);
-			const key2Updates = updateEvents.filter(
-				(event) => isLatestMapValueUpdated(event) && event.key === key2,
-			);
-			assert.strictEqual(key1Updates.length, 2, "Expected 2 key1 updates");
-			assert.strictEqual(key2Updates.length, 2, "Expected 2 key2 updates");
-			for (const updateEvent of key1Updates) {
-				assert(isLatestMapValueUpdated(updateEvent), "Expected LatestMapValueUpdated event");
+
+			// Verify the update events contain the correct values
+			for (const updateEvent of key1UpdateEvents) {
 				assert.deepStrictEqual(updateEvent.value, value1);
 			}
-			for (const updateEvent of key2Updates) {
-				assert(isLatestMapValueUpdated(updateEvent), "Expected LatestMapValueUpdated event");
+			for (const updateEvent of key2UpdateEvents) {
 				assert.deepStrictEqual(updateEvent.value, value2);
+			}
+
+			// Get attendee IDs from the update events
+			const attendee0Id = creatorSessionId; // We know children[0] is the creator
+			const attendee1Id = key2UpdateEvents[0].attendeeId; // Get children[1]'s ID from the key2 update event
+
+			// Additional verification: check that each client can read both keys independently
+			for (const child of children) {
+				child.send({
+					command: "getLatestMapValue",
+					workspaceId,
+					key: key1,
+					attendeeId: attendee0Id, // Get key1 value from children[0]
+				});
+			}
+
+			const key1Responses = await getLatestMapValueResponses(children, workspaceId, key1);
+
+			for (const child of children) {
+				child.send({
+					command: "getLatestMapValue",
+					workspaceId,
+					key: key2,
+					attendeeId: attendee1Id, // Get key2 value from children[1]
+				});
+			}
+			const key2Responses = await getLatestMapValueResponses(children, workspaceId, key2);
+
+			// Verify all clients have the correct values for both keys
+			assert.strictEqual(
+				key1Responses.length,
+				numClients,
+				"Expected responses from all clients for key1",
+			);
+			assert.strictEqual(
+				key2Responses.length,
+				numClients,
+				"Expected responses from all clients for key2",
+			);
+
+			for (const response of key1Responses) {
+				assert.deepStrictEqual(response.value, value1, "Key1 value should match");
+			}
+
+			for (const response of key2Responses) {
+				assert.deepStrictEqual(response.value, value2, "Key2 value should match");
 			}
 		});
 	});
