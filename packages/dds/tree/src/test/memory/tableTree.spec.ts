@@ -120,7 +120,6 @@ function createBenchmark({
 			assert(this.cleanUp !== undefined, "cleanUp is not initialized");
 
 			this.cleanUp();
-			this.table = undefined;
 			this.cleanUp = undefined;
 		}
 	})();
@@ -180,7 +179,6 @@ function createUndoRedoBenchmark({
 			assert(this.cleanUp !== undefined, "cleanUp is not initialized");
 
 			this.cleanUp();
-			this.table = undefined;
 			this.undoRedoStack = undefined;
 			this.cleanUp = undefined;
 		}
