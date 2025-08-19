@@ -1,5 +1,9 @@
 # @fluid-experimental/sharejs-json1
 
+## 2.53.0
+
+Dependency updates only.
+
 ## 2.52.0
 
 Dependency updates only.
