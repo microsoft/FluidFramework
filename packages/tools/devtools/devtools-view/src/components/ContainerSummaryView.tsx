@@ -140,54 +140,60 @@ function DataRow(props: DataRowProps): React.ReactElement {
 }
 
 function containerStatusValueCell(statusComponents: string[]): React.ReactElement {
-	// Should render a single box without other container states such as "Attached" or "Connected"
-	if (statusComponents[0] === "Closed") {
+	// Show all states simultaneously in a single container
+	if (statusComponents.length === 0) {
 		return (
 			<TableCellLayout>
-				<Badge shape="rounded" color="danger">
-					Closed
+				<Badge shape="rounded" color="subtle">
+					Unknown
 				</Badge>
 			</TableCellLayout>
 		);
 	}
 
+	// Create a flex container to show all status badges side by side
 	return (
-		<TableCellLayout
-			media={((): JSX.Element => {
-				switch (statusComponents[0]) {
-					case AttachState.Attaching: {
-						return (
-							<Badge shape="rounded" color="warning">
-								{statusComponents[0]}
-							</Badge>
-						);
+		<TableCellLayout>
+			<div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+				{statusComponents.map((status, index) => {
+					let color: "success" | "warning" | "danger" | "subtle" = "subtle";
+
+					// Determine badge color based on status
+					switch (status) {
+						case "Closed":
+						case "Detached":
+						case "Disconnected": {
+							color = "danger";
+							break;
+						}
+						case "Attaching":
+						case "Establishing connection":
+						case "Catching up": {
+							color = "warning";
+							break;
+						}
+						case "Connected":
+						case "Attached": {
+							color = "success";
+							break;
+						}
+						case "Read-only": {
+							color = "subtle";
+							break;
+						}
+						default: {
+							color = "subtle";
+							break;
+						}
 					}
-					case AttachState.Detached: {
-						return (
-							<Badge shape="rounded" color="danger">
-								{statusComponents[0]}
-							</Badge>
-						);
-					}
-					default: {
-						return (
-							<Badge shape="rounded" color="success">
-								{statusComponents[0]}
-							</Badge>
-						);
-					}
-				}
-			})()}
-		>
-			{statusComponents[1] === "Connected" ? (
-				<Badge shape="rounded" color="success">
-					{statusComponents[1]}
-				</Badge>
-			) : (
-				<Badge shape="rounded" color="danger">
-					{statusComponents[1]}
-				</Badge>
-			)}
+
+					return (
+						<Badge key={index} shape="rounded" color={color}>
+							{status}
+						</Badge>
+					);
+				})}
+			</div>
 		</TableCellLayout>
 	);
 }
@@ -306,25 +312,24 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		usageLogger?.sendTelemetryEvent({ eventName: "CloseContainerButtonClicked" });
 	}
 
-	// Build up status string
+	// Build up status string - show all states simultaneously
 	const statusComponents: string[] = [];
 	if (containerState.closed) {
 		statusComponents.push("Closed");
 	} else {
+		// Always show attach state
 		statusComponents.push(containerState.attachState);
-		if (containerState.attachState === AttachState.Attached) {
-			// Check if container is readonly first
-			if (containerState.isReadOnly === true) {
-				statusComponents.push("Read-only");
-			} else {
-				statusComponents.push(connectionStateToString(containerState.connectionState));
-			}
-		} else {
-			/*
-			 * If the container is not attached, it is not connected
-			 * TODO: If the container is detached, it is advisable to disable the action buttons
-			 * since Fluid will consistently fail to establish a connection with a detached container.
-			 */
+
+		// Show readonly state if applicable (regardless of other states)
+		if (containerState.isReadOnly === true) {
+			statusComponents.push("Read-only");
+		}
+
+		// Show connection state if applicable (regardless of readonly state)
+		if (containerState.attachState === AttachState.Attached && containerState.connectionState !== undefined) {
+			statusComponents.push(connectionStateToString(containerState.connectionState));
+		} else if (containerState.attachState !== AttachState.Attached) {
+			// If not attached, show disconnected state
 			statusComponents.push(connectionStateToString(ConnectionState.Disconnected));
 		}
 	}
