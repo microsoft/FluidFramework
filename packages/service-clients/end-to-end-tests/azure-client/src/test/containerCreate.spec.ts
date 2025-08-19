@@ -13,18 +13,19 @@ import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-inte
 import {
 	MessageType,
 	type ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+} from "@fluidframework/driver-definitions/legacy";
+// eslint-disable-next-line import/no-internal-modules -- TODO consider a test exposure to avoid /internal
+import { isTreeContainerSchema } from "@fluidframework/fluid-static/internal";
 import {
 	type ContainerSchema,
 	createTreeContainerRuntimeFactory,
-	isTreeContainerSchema,
 	type IFluidContainer,
-} from "@fluidframework/fluid-static/internal";
-import { SharedMap } from "@fluidframework/map/internal";
+} from "@fluidframework/fluid-static/legacy";
+import { SharedMap } from "@fluidframework/map/legacy";
 import { SharedMap as SharedMapLegacy } from "@fluidframework/map-legacy";
 import { MockLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import { SharedTree } from "@fluidframework/tree/internal";
+import { SharedTree } from "@fluidframework/tree/legacy";
 import type { AxiosResponse } from "axios";
 import type { SinonSandbox } from "sinon";
 import { createSandbox } from "sinon";
