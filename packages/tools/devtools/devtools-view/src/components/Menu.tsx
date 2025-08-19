@@ -351,24 +351,18 @@ export interface MenuItemProps {
 	isActive: boolean;
 	/**
 	 * Icon to display next to the container name based on its state.
-	 *
-	 * @defaultValue `undefined` - No state icon is displayed when not provided.
 	 */
-	readonly stateIcon?: React.ReactElement;
+	readonly stateIcon: React.ReactElement;
 
 	/**
 	 * Whether the container or container runtime has recent changes.
-	 *
-	 * @defaultValue `false` - No change indicator is shown when not provided.
 	 */
-	readonly hasChanges?: boolean;
+	readonly hasChanges: boolean;
 
 	/**
 	 * Callback function when the remove button is clicked.
-	 *
-	 * @defaultValue `undefined` - No remove button is displayed when not provided.
 	 */
-	readonly onRemove?: () => void;
+	readonly onRemove: () => void;
 }
 
 const useMenuItemStyles = makeStyles({
@@ -447,7 +441,7 @@ const useMenuItemStyles = makeStyles({
  * Generic component for a menu item (under a section).
  */
 export function MenuItem(props: MenuItemProps): React.ReactElement {
-	const { isActive, onClick, text, stateIcon, hasChanges = false, onRemove } = props;
+	const { isActive, onClick, text, stateIcon, hasChanges, onRemove } = props;
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
 		if (event.key === "Enter" || event.key === " ") {
@@ -475,19 +469,17 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 				/>
 				<span className={styles.textSpan}>{text}</span>
 				<div className={styles.stateIconContainer}>{stateIcon}</div>
-				{onRemove && (
-					<Tooltip content="Remove container" relationship="label">
-						<Button
-							icon={<Dismiss24Regular />}
-							className={styles.deleteButton}
-							onClick={(e) => {
-								e.stopPropagation();
-								onRemove();
-							}}
-							aria-label="Remove container"
-						/>
-					</Tooltip>
-				)}
+				<Tooltip content="Remove container" relationship="label">
+					<Button
+						icon={<Dismiss24Regular />}
+						className={styles.deleteButton}
+						onClick={(e) => {
+							e.stopPropagation();
+							onRemove();
+						}}
+						aria-label="Remove container"
+					/>
+				</Tooltip>
 			</div>
 		</div>
 	);
@@ -793,10 +785,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 					}
 
 					// Wrap multiple icons in a container
-					const stateIcon =
-						stateIcons.length > 0 ? (
-							<div className={styles.multipleStateIcons}>{stateIcons}</div>
-						) : undefined;
+					const stateIcon = <div className={styles.multipleStateIcons}>{stateIcons}</div>;
 
 					return (
 						<MenuItem
@@ -808,7 +797,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 								selectContainer(`${containerKey}`);
 							}}
 							hasChanges={containersWithChanges.has(containerKey)}
-							onRemove={onRemoveContainer ? () => onRemoveContainer(containerKey) : undefined}
+							onRemove={onRemoveContainer ? () => onRemoveContainer(containerKey) : () => {}}
 						/>
 					);
 				})}
@@ -914,6 +903,9 @@ export function Menu(props: MenuProps): React.ReactElement {
 					isActive={currentSelection?.type === "telemetryMenuSelection"}
 					text="Events"
 					onClick={onTelemetryClicked}
+					stateIcon={<QuestionCircle16Regular />}
+					hasChanges={false}
+					onRemove={() => {}}
 				/>
 			</MenuSection>,
 		);
