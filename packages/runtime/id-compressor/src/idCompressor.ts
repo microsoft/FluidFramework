@@ -625,19 +625,19 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	}
 
 	public static deserialize(
-		serialized: SerializedIdCompressorWithOngoingSession,
-		logger: ITelemetryLoggerExt | undefined,
-	): IdCompressor;
-	public static deserialize(
-		serialized: SerializedIdCompressorWithNoSession,
-		logger: ITelemetryLoggerExt | undefined,
-		newSessionId: SessionId,
-	): IdCompressor;
-	public static deserialize(
-		serialized: SerializedIdCompressor,
-		logger: ITelemetryLoggerExt | undefined,
-		newSessionId?: SessionId,
+		params:
+			| {
+					serialized: SerializedIdCompressorWithOngoingSession;
+					logger?: ITelemetryLoggerExt | undefined;
+					newSessionId?: never;
+			  }
+			| {
+					serialized: SerializedIdCompressorWithNoSession;
+					newSessionId: SessionId;
+					logger?: ITelemetryLoggerExt | undefined;
+			  },
 	): IdCompressor {
+		const { serialized, newSessionId, logger } = params;
 		const buffer = stringToBuffer(serialized, "base64");
 		const index: Index = {
 			index: 0,
@@ -809,19 +809,19 @@ export function deserializeIdCompressor(
 	loggerOrUndefined?: ITelemetryLoggerExt | undefined,
 ): IIdCompressor & IIdCompressorCore {
 	if (typeof sessionIdOrLogger === "string") {
-		return IdCompressor.deserialize(
-			serialized as SerializedIdCompressorWithNoSession,
-			loggerOrUndefined,
-			sessionIdOrLogger,
-		);
+		return IdCompressor.deserialize({
+			serialized: serialized as SerializedIdCompressorWithNoSession,
+			logger: loggerOrUndefined,
+			newSessionId: sessionIdOrLogger,
+		});
 	}
 
 	assert(
 		loggerOrUndefined === undefined,
 		"logger would be in sessionIdOrLogger in this codepath",
 	);
-	return IdCompressor.deserialize(
-		serialized as SerializedIdCompressorWithOngoingSession,
-		sessionIdOrLogger,
-	);
+	return IdCompressor.deserialize({
+		serialized: serialized as SerializedIdCompressorWithOngoingSession,
+		logger: sessionIdOrLogger,
+	});
 }

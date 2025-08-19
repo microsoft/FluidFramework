@@ -943,10 +943,9 @@ describe("IdCompressor", () => {
 			compressor1.finalizeCreationRange(creationRange);
 			compressor2.finalizeCreationRange(creationRange);
 			const [_, serializedWithSession] = expectSerializes(compressor1);
-			const compressorResumed = IdCompressor.deserialize(
-				serializedWithSession,
-				undefined /* logger */,
-			);
+			const compressorResumed = IdCompressor.deserialize({
+				serialized: serializedWithSession,
+			});
 			compressorResumed.generateCompressedId();
 			const range2 = compressorResumed.takeNextCreationRange();
 			compressorResumed.finalizeCreationRange(range2);
@@ -1020,10 +1019,10 @@ describe("IdCompressor", () => {
 			const compressor = CompressorFactory.createCompressor(Client.Client1);
 			compressor.generateCompressedId();
 			const serializedWithSession = compressor.serialize(true);
-			const resumed = IdCompressor.deserialize(
-				serializedWithSession,
-				createChildLogger({ logger: mockLogger }),
-			);
+			const resumed = IdCompressor.deserialize({
+				serialized: serializedWithSession,
+				logger: createChildLogger({ logger: mockLogger }),
+			});
 			resumed.serialize(false);
 			mockLogger.assertMatchAny([
 				{ eventName: "RuntimeIdCompressor:SerializedIdCompressorSize" },
@@ -1037,11 +1036,11 @@ describe("IdCompressor", () => {
 			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 			const serializedNoSession = compressor.serialize(false);
 			const newSessionId = createSessionId();
-			const resumed = IdCompressor.deserialize(
-				serializedNoSession,
-				createChildLogger({ logger: mockLogger }),
+			const resumed = IdCompressor.deserialize({
+				serialized: serializedNoSession,
 				newSessionId,
-			);
+				logger: createChildLogger({ logger: mockLogger }),
+			});
 			resumed.serialize(false);
 			mockLogger.assertMatchAny([
 				{ eventName: "RuntimeIdCompressor:SerializedIdCompressorSize" },
@@ -1345,11 +1344,10 @@ describe("IdCompressor", () => {
 					const serializedWithoutLocalState = compressor.serialize(false);
 					assert.throws(
 						() =>
-							IdCompressor.deserialize(
-								serializedWithoutLocalState,
-								undefined /* logger */,
-								sessionIds.get(Client.Client2),
-							),
+							IdCompressor.deserialize({
+								serialized: serializedWithoutLocalState,
+								newSessionId: sessionIds.get(Client.Client2),
+							}),
 						(e: Error) => e.message === "Cannot resume existing session.",
 					);
 				},

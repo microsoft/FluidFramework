@@ -730,16 +730,15 @@ export function roundtrip(
 	const capacity: number = getClusterSize(compressor);
 	if (withSession) {
 		const serialized = compressor.serialize(withSession);
-		const roundtripped = IdCompressor.deserialize(serialized, undefined /* logger */);
+		const roundtripped = IdCompressor.deserialize({ serialized });
 		modifyClusterSize(roundtripped, capacity);
 		return [serialized, roundtripped];
 	} else {
 		const nonLocalSerialized = compressor.serialize(withSession);
-		const roundtripped = IdCompressor.deserialize(
-			nonLocalSerialized,
-			undefined /* logger */,
-			createSessionId(),
-		);
+		const roundtripped = IdCompressor.deserialize({
+			serialized: nonLocalSerialized,
+			newSessionId: createSessionId(),
+		});
 		modifyClusterSize(roundtripped, capacity);
 		return [nonLocalSerialized, roundtripped];
 	}
