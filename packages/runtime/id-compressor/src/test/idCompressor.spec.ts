@@ -943,7 +943,10 @@ describe("IdCompressor", () => {
 			compressor1.finalizeCreationRange(creationRange);
 			compressor2.finalizeCreationRange(creationRange);
 			const [_, serializedWithSession] = expectSerializes(compressor1);
-			const compressorResumed = IdCompressor.deserialize(serializedWithSession);
+			const compressorResumed = IdCompressor.deserialize(
+				serializedWithSession,
+				undefined /* logger */,
+			);
 			compressorResumed.generateCompressedId();
 			const range2 = compressorResumed.takeNextCreationRange();
 			compressorResumed.finalizeCreationRange(range2);
@@ -1250,6 +1253,7 @@ describe("IdCompressor", () => {
 						() =>
 							IdCompressor.deserialize(
 								serializedWithoutLocalState,
+								undefined /* logger */,
 								sessionIds.get(Client.Client2),
 							),
 						(e: Error) => e.message === "Cannot resume existing session.",
