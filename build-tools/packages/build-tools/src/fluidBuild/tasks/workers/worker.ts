@@ -5,9 +5,9 @@
 
 import { parentPort } from "worker_threads";
 
+import { apiExtractor } from "./apiExtractorWorker";
 import { lint } from "./eslintWorker";
 import { compile, fluidCompile } from "./tscWorker";
-import { apiExtractor } from "./apiExtractorWorker";
 
 export interface WorkerMessage {
 	workerName: string;

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type * as ApiExtractorModule from "@microsoft/api-extractor";
-import type { WorkerExecResult, WorkerMessage } from "./worker.js";
-import { getApiExtractorConfigFilePath } from "../taskUtils.js";
 import * as path from "path";
+import type * as ApiExtractorModule from "@microsoft/api-extractor";
+import { getApiExtractorConfigFilePath } from "../taskUtils.js";
+import type { WorkerExecResult, WorkerMessage } from "./worker.js";
 
 export async function apiExtractor(message: WorkerMessage): Promise<WorkerExecResult> {
 	// Load the api-extractor version that is in the cwd scope
