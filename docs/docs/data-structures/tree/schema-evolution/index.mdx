@@ -15,7 +15,7 @@ SharedTree makes it possible to update your [schemas](../schema-definition.mdx) 
 When updating your schema, it's important to understand the difference between the two types of schemas:
 
 - **View Schema**: The schema defined in your application code using [`SchemaFactory`](../../../api/fluid-framework/schemafactory-class)
-- **Stored Schema**: The schema persisted with each document, it describes the tree it is stored alongside
+- **Stored Schema**: The schema persisted with each document. It describes what type of tree can be stored in the document.
 
 When a document is first created, its stored schema is set using the given view schema.
 Afterwards, it is immutable until explicitly [upgraded](./index.mdx#schema-upgrade-process).
