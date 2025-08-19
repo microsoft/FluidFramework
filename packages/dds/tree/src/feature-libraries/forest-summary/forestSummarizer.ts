@@ -12,7 +12,6 @@ import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import type { CodecWriteOptions } from "../../codec/index.js";
 import {
@@ -135,28 +134,27 @@ export class ForestSummarizer implements Summarizable {
 			fieldMap.set(key, innerCursor as ITreeCursorSynchronous & ITreeSubscriptionCursor);
 		});
 
-		const forestSummaryBuilder = new SummaryTreeBuilder();
 		// Let the incremental summary builder know that we are starting a new summary.
 		// It returns whether incremental encoding is enabled.
-		const shouldEncodeIncrementally = this.incrementalSummaryBuilder.startingSummary(
-			forestSummaryBuilder,
+		const incrementalSummaryBehavior = this.incrementalSummaryBuilder.startSummary({
 			fullTree,
 			incrementalSummaryContext,
-		);
+			stringify,
+		});
 		const encoderContext: FieldBatchEncodingContext = {
 			...this.encoderContext,
 			incrementalEncoderDecoder:
-				shouldEncodeIncrementally === ForestIncrementalSummaryBehavior.Incremental
+				incrementalSummaryBehavior === ForestIncrementalSummaryBehavior.Incremental
 					? this.incrementalSummaryBuilder
 					: undefined,
 		};
 		const encoded = this.codec.encode(fieldMap, encoderContext);
 		fieldMap.forEach((value) => value.free());
 
-		forestSummaryBuilder.addBlob(forestSummaryContentKey, stringify(encoded));
-		// Let the incremental summary builder know that we are done with this summary.
-		this.incrementalSummaryBuilder.completedSummary(incrementalSummaryContext);
-		return forestSummaryBuilder.getSummaryTree();
+		return this.incrementalSummaryBuilder.completeSummary({
+			incrementalSummaryContext,
+			forestSummaryContent: stringify(encoded),
+		});
 	}
 
 	public async load(

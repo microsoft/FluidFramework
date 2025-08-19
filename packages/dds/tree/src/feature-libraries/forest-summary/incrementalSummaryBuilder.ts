@@ -4,7 +4,10 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IExperimentalIncrementalSummaryContext,
+	ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import {
 	brand,
@@ -29,6 +32,8 @@ import type { IChannelStorageService } from "@fluidframework/datastore-definitio
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { SummaryElementStringifier } from "../../shared-tree-core/index.js";
+import { forestSummaryContentKey } from "./forestSummarizer.js";
 
 /**
  * The contents of an incremental chunk is under a summary tree node with its {@link ChunkReferenceId} as the key.
@@ -99,6 +104,10 @@ interface TrackedSummaryProperties {
 	 * When a chunk is being summarized, it will add its summary to this builder against its reference ID.
 	 */
 	parentSummaryBuilder: SummaryTreeBuilder;
+	/**
+	 * Serializes content (including {@link (IFluidHandle:interface)}s) for adding to a summary blob.
+	 */
+	stringify: SummaryElementStringifier;
 }
 
 /**
@@ -194,6 +203,9 @@ function validateReadyToTrackSummary(
  * This is to keep this summary backwards compatible with old format (before incremental summaries were added)
  * where the entire forest content was in a summary blob called "ForestTree". So, if incremental summaries were
  * disabled, the forest content will be fully backwards compatible.
+ * Note that this limits reusing the root node in a location other than root and a non-root node in the root.
+ * We could phase this out by switching to write the top-level contents under "contents" if we want to support
+ * the above. However, there is no plan to do that for now.
  *
  * TODO: AB#46752
  * Add strong types for the summary structure to document it better. It will help make it super clear what the actual
@@ -296,18 +308,19 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 
 	/**
 	 * Must be called when starting a new forest summary to track it.
-	 * @param summaryBuilder - The summary builder to use to build the incremental summary tree.
 	 * @param fullTree - Whether the summary is a full tree summary. If true, the summary will not contain
 	 * any summary handles. All chunks must be summarized in full.
 	 * @param incrementalSummaryContext - The context for the incremental summary that contains the sequence numbers
 	 * for the current and latest summaries.
+	 * @param stringify - Serializes content (including {@link (IFluidHandle:interface)}s) for adding to a summary blob.
 	 * @returns the behavior of the forest's incremental summary.
 	 */
-	public startingSummary(
-		summaryBuilder: SummaryTreeBuilder,
-		fullTree: boolean,
-		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined,
-	): ForestIncrementalSummaryBehavior {
+	public startSummary(args: {
+		fullTree: boolean;
+		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined;
+		stringify: SummaryElementStringifier;
+	}): ForestIncrementalSummaryBehavior {
+		const { fullTree, incrementalSummaryContext, stringify } = args;
 		// If there is no incremental summary context, do not summarize incrementally. This happens in two scenarios:
 		// 1. When summarizing a detached container, i.e., the first ever summary.
 		// 2. When running GC, the default behavior is to call summarize on DDS without incrementalSummaryContext.
@@ -323,8 +336,9 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			summarySequenceNumber: incrementalSummaryContext.summarySequenceNumber,
 			latestSummaryBasePath: incrementalSummaryContext.summaryPath,
 			chunkSummaryPath: [],
-			parentSummaryBuilder: summaryBuilder,
+			parentSummaryBuilder: new SummaryTreeBuilder(),
 			fullTree,
+			stringify,
 		};
 		return ForestIncrementalSummaryBehavior.Incremental;
 	}
@@ -386,7 +400,10 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			// any incremental chunks in the subtree of this chunk will use that as their parent summary builder.
 			const chunkSummaryBuilder = new SummaryTreeBuilder();
 			this.trackedSummaryProperties.parentSummaryBuilder = chunkSummaryBuilder;
-			chunkSummaryBuilder.addBlob(chunkContentsBlobKey, JSON.stringify(chunkEncoder(chunk)));
+			chunkSummaryBuilder.addBlob(
+				chunkContentsBlobKey,
+				this.trackedSummaryProperties.stringify(chunkEncoder(chunk)),
+			);
 
 			// Add this chunk's summary tree to the parent's summary tree. The summary tree contains its encoded
 			// contents and the summary trees of any incremental chunks under it.
@@ -413,17 +430,28 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 * Must be called after summary generation is complete to finish tracking the summary.
 	 * It clears any tracking state and deletes the tracking properties for summaries that are older than the
 	 * latest successful summary.
-	 * @param incrementalSummaryContext - The context for the incremental summary that contains the sequence numbers
-	 * for the current and latest summaries.
+	 * @param incrementalSummaryContext - The context for the incremental summary that contains the sequence numbers.
+	 * If this is undefined, the summary tree will only contain a summary blob for `forestSummaryContent`.
+	 * @param forestSummaryContent - The stringified ForestCodec output of top-level Forest content.
+	 * @returns the Forest's summary tree.
 	 */
-	public completedSummary(
-		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined,
-	): void {
+	public completeSummary(args: {
+		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined;
+		forestSummaryContent: string;
+	}): ISummaryTreeWithStats {
+		const { incrementalSummaryContext, forestSummaryContent } = args;
 		if (!this.enableIncrementalSummary || incrementalSummaryContext === undefined) {
-			return;
+			const summaryBuilder = new SummaryTreeBuilder();
+			summaryBuilder.addBlob(forestSummaryContentKey, forestSummaryContent);
+			return summaryBuilder.getSummaryTree();
 		}
 
 		validateTrackingSummary(this.forestSummaryState, this.trackedSummaryProperties);
+
+		this.trackedSummaryProperties.parentSummaryBuilder.addBlob(
+			forestSummaryContentKey,
+			forestSummaryContent,
+		);
 
 		// Copy over the entries from the latest summary to the current summary.
 		// In the current summary, there can be fields that haven't changed since the latest summary and the chunks
@@ -452,7 +480,9 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		}
 
 		this.forestSummaryState = ForestSummaryTrackingState.ReadyToTrack;
+		const summaryTree = this.trackedSummaryProperties.parentSummaryBuilder.getSummaryTree();
 		this.trackedSummaryProperties = undefined;
+		return summaryTree;
 	}
 
 	/**
