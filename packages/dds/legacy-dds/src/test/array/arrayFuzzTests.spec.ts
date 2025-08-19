@@ -47,7 +47,7 @@ describe("SharedArray fuzz", () => {
 						insert: 5,
 						delete: 3,
 						move: 0,
-						insertBulkAfter: 0,
+						insertBulkAfter: 1,
 						toggle: 0,
 						toggleMove: 0,
 					}),
