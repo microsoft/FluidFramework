@@ -12,15 +12,13 @@ import type {
  * Describes the event listener format for {@link ITaskManagerEvents} events.
  *
  * @param taskId - The unique identifier of the related task.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type TaskEventListener = (taskId: string) => void;
 
 /**
  * Events emitted by {@link ITaskManager}.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ITaskManagerEvents extends ISharedObjectEvents {
 	/**
@@ -138,8 +136,7 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
  * when using {@link ITaskManager.subscribeToTask}.
  *
  * See {@link ITaskManagerEvents} for more details.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
 	/**

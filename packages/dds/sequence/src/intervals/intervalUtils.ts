@@ -9,8 +9,7 @@ import { PropertySet, SlidingPreference, Side } from "@fluidframework/merge-tree
 
 /**
  * Basic interval abstraction
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IInterval {
 	/**
@@ -55,8 +54,7 @@ export type IntervalDeltaOpType =
 
 /**
  * Values are used in revertibles.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const IntervalOpType = {
 	...IntervalDeltaOpType,
@@ -64,14 +62,12 @@ export const IntervalOpType = {
 	POSITION_REMOVE: "positionRemove",
 } as const;
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum IntervalType {
 	Simple = 0x0,
@@ -94,8 +90,7 @@ export enum IntervalType {
 /**
  * Serialized object representation of an interval.
  * This representation is used for ops that create or change intervals.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISerializedInterval {
 	/**
@@ -192,8 +187,7 @@ export type CompressedSerializedInterval =
  * Note that interval stickiness is currently an experimental feature and must
  * be explicitly enabled with the `intervalStickinessEnabled` flag
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const IntervalStickiness = {
 	/**
@@ -225,8 +219,7 @@ export const IntervalStickiness = {
  *
  * Note that interval stickiness is currently an experimental feature and must
  * be explicitly enabled with the `intervalStickinessEnabled` flag
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof IntervalStickiness];
 
