@@ -68,7 +68,12 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 */
 	private readonly idToEntryMap: Map<string, SharedArrayEntry<T>>;
 
-	private readonly remoteWithLocalPendingDelete: Set<string> = new Set<string>();
+	/**
+	 * Set of entry IDs that are marked for deletion by remote clients, but have local pending deletes.
+	 * Used to prevent resuscitating entries while rolling back a delete operation.
+	 * We should not rollback to life an entry that was deleted by remote clients.
+	 */
+	private readonly remoteDeleteWithLocalPendingDelete: Set<string> = new Set<string>();
 
 	/**
 	 * Create a new shared array
@@ -328,18 +333,6 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 * @param entryId - Entry Id for which the the undo/redo operation is to be applied
 	 */
 	public toggle(entryId: string): void {
-		const op = this.toggleCore(entryId);
-		this.emitRevertibleEvent(op);
-
-		// If we are not attached, don't submit the op.
-		if (!this.isAttached()) {
-			return;
-		}
-
-		this.submitLocalMessage(op);
-	}
-
-	private toggleCore(entryId: string): IToggleOperation {
 		const liveEntry = this.getLiveEntry(entryId);
 		const isDeleted = !liveEntry.isDeleted;
 
@@ -355,7 +348,14 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			isDeleted,
 		};
 		this.emitValueChangedEvent(op, true /* isLocal */);
-		return op;
+		this.emitRevertibleEvent(op);
+
+		// If we are not attached, don't submit the op.
+		if (!this.isAttached()) {
+			return;
+		}
+
+		this.submitLocalMessage(op);
 	}
 	/**
 	 * Method to do undo/redo of move operation. All entries of the same payload/value are stored
@@ -406,8 +406,10 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				break;
 			}
 			case OperationType.deleteEntry: {
-				if (this.remoteWithLocalPendingDelete.has(arrayOp.entryId)) {
-					this.remoteWithLocalPendingDelete.delete(arrayOp.entryId);
+				if (this.remoteDeleteWithLocalPendingDelete.has(arrayOp.entryId)) {
+					// If remote already deleted the entry, we should not resurrect it.
+					// Just remove the local pending delete.
+					this.remoteDeleteWithLocalPendingDelete.delete(arrayOp.entryId);
 				} else {
 					const liveEntry = this.getLiveEntry(arrayOp.entryId);
 					liveEntry.isDeleted = false;
@@ -587,10 +589,10 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		if (local) {
 			// Decrementing local pending counter as op is already applied to local state
 			opEntry.isLocalPendingDelete -= 1;
+			this.remoteDeleteWithLocalPendingDelete.delete(op.entryId);
 		} else {
-			// If local pending, then ignore else apply the remote op
 			if (this.isLocalPending(op.entryId, "isLocalPendingDelete")) {
-				this.remoteWithLocalPendingDelete.add(op.entryId);
+				this.remoteDeleteWithLocalPendingDelete.add(op.entryId);
 			} else {
 				// last element in skip list is the most recent and live entry, so marking it deleted
 				this.getLiveEntry(op.entryId).isDeleted = true;

@@ -142,96 +142,61 @@ describe("SharedArray rollback", () => {
 		assert.strictEqual(valueChanges.length, 4, "Should have four value change events");
 	});
 
-	it.skip("should rollback move operation", () => {
-		const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
-		sharedArray.insert(0, 0);
-		sharedArray.insert(1, 1);
-		sharedArray.insert(2, 2);
-		sharedArray.insert(3, 3);
-		containerRuntime.flush();
-		containerRuntimeFactory.processAllMessages();
-		const valueChanges: {
-			op: ISharedArrayOperation;
-			isLocal: boolean;
-			target: ISharedArray<number>;
-		}[] = [];
-		sharedArray.on("valueChanged", (op, isLocal, target) => {
-			valueChanges.push({ op, isLocal, target });
-		});
-		sharedArray.move(1, 3);
-		assert.deepStrictEqual(
-			sharedArray.get(),
-			[0, 2, 1, 3],
-			"Pending value should reflect the move",
-		);
-		assert.strictEqual(valueChanges.length, 1, "Should have one value change event");
-		containerRuntime.rollback?.();
-		assert.deepStrictEqual(
-			sharedArray.get(),
-			[0, 1, 2, 3],
-			"Value should be restored by rollback",
-		);
-		assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
-		assert.strictEqual(
-			valueChanges[1].op.type,
-			OperationType.toggleMove,
-			"Second event should be for toggleMove",
-		);
-	});
-
-	it.skip("should rollback toggle operation", () => {
-		const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
-		sharedArray.insert(0, 0);
-		sharedArray.insert(1, 1);
-		containerRuntime.flush();
-		containerRuntimeFactory.processAllMessages();
-		const valueChanges: {
-			op: ISharedArrayOperation;
-			isLocal: boolean;
-			target: ISharedArray<number>;
-		}[] = [];
-		sharedArray.on("valueChanged", (op, isLocal, target) => {
-			valueChanges.push({ op, isLocal, target });
-		});
-		sharedArray.insert(2, 2);
-		containerRuntime.flush();
-		containerRuntimeFactory.processAllMessages();
-		assert.strictEqual(sharedArray.get()[2], 2, "Failed getting pending value");
-		sharedArray.toggle(valueChanges[0].op.entryId);
-		assert.strictEqual(sharedArray.get()[2], undefined, "Value should be toggled");
-		assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
-		containerRuntime.rollback?.();
-		assert.strictEqual(sharedArray.get()[2], 2, "Value should be restored by rollback");
-		assert.strictEqual(valueChanges.length, 3, "Should have three value change events");
-	});
-
-	it("should rollback local changes in presence of remote changes from another client", () => {
+	it("should not resuscitate deleted entry by remote", () => {
 		const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
 		// Create a second client
 		const { sharedArray: sharedArray2, containerRuntime: containerRuntime2 } =
 			createAdditionalClient(containerRuntimeFactory);
-		sharedArray.insert(0, 0);
-		sharedArray.insert(1, 1);
+		sharedArray.insert(0, 0); // [0]
 		containerRuntime.flush();
 		containerRuntimeFactory.processAllMessages();
-		sharedArray.insert(2, 2);
-		sharedArray.delete(0);
+		sharedArray.delete(0); // this will be rolled back but remote will delete it so it should not have any effect.
+		sharedArray2.delete(0); // [] - remote delete
+		containerRuntime2.flush();
+		containerRuntimeFactory.processAllMessages();
+		assert.deepStrictEqual(
+			sharedArray.get(),
+			[],
+			"Array should have expected entries pre-rollback",
+		);
+		containerRuntime.rollback?.();
+		assert.deepStrictEqual(
+			sharedArray.get(),
+			[],
+			"Array should have expected entries post-rollback",
+		);
+	});
+
+	it("should rollback insert and delete ops in presence of remote changes", () => {
+		const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+		// Create a second client
+		const { sharedArray: sharedArray2, containerRuntime: containerRuntime2 } =
+			createAdditionalClient(containerRuntimeFactory);
+		sharedArray.insert(0, 0); // [0]
+		sharedArray.insert(1, 1); // [0,1]
+		containerRuntime.flush();
+		containerRuntimeFactory.processAllMessages();
+		sharedArray.insert(2, 2); // this will be rolled back
+		sharedArray.delete(0); // this will be rolled back
 		sharedArray2.insert(2, 3); // [0,1,3]
 		sharedArray2.delete(0); // [1,3]
 		sharedArray2.insert(1, 12); // [1,12,3]
 		sharedArray2.insert(0, 10); // [10,1,12,3]
 		containerRuntime2.flush();
 		containerRuntimeFactory.processAllMessages();
-		let curArray = sharedArray.get();
 		assert.deepStrictEqual(
-			curArray,
+			sharedArray.get(),
 			[10, 1, 2, 12, 3],
 			"Array should have expected entries pre-rollback",
 		);
 		containerRuntime.rollback?.();
-		curArray = sharedArray.get();
 		assert.deepStrictEqual(
-			curArray,
+			sharedArray.get(),
+			[10, 1, 12, 3],
+			"Array should have expected entries post-rollback",
+		);
+		assert.deepStrictEqual(
+			sharedArray2.get(),
 			[10, 1, 12, 3],
 			"Array should have expected entries post-rollback",
 		);
