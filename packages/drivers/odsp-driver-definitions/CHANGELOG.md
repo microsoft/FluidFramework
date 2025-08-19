@@ -1,5 +1,13 @@
 # @fluidframework/odsp-driver-definitions
 
+## 2.53.0
+
+### Minor Changes
+
+- Fixed bug in parsing sensitivity label information from the ODSP join session response ([#25186](https://github.com/microsoft/FluidFramework/pull/25186)) [b74508fd4c9](https://github.com/microsoft/FluidFramework/commit/b74508fd4c9e5414cf457595e6c803e84d715b54)
+
+  Fixes parsing of sensitivity label information in the ODSP join session response. If there had been sensitivity label data present in the ODSP response, this data would have been double-parsed, leading to runtime errors. This issue was so far not hit in practice, because ODSP did not roll out sensitivity labels in the response yet. This bug fix gets odsp-driver ready for that rollout, which is planned to happen soon.
+
 ## 2.52.0
 
 Dependency updates only.

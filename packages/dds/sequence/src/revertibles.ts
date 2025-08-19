@@ -13,7 +13,7 @@ import {
 	MergeTreeDeltaType,
 	PropertySet,
 	ReferenceType,
-	SlidingPreference, // eslint-disable-next-line import/no-deprecated
+	SlidingPreference,
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
 	getSlideToSegoff,
@@ -585,7 +585,6 @@ interface RangeInfo {
 	segment: ISegment;
 }
 
-// eslint-disable-next-line import/no-deprecated
 class SortedRangeSet extends SortedSegmentSet<RangeInfo> {}
 
 function revertLocalSequenceRemove(

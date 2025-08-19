@@ -36,7 +36,6 @@ import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/intern
 import { v4 as uuid } from "uuid";
 
 import {
-	// eslint-disable-next-line import/no-deprecated
 	ISerializableInterval,
 	ISerializedInterval,
 	IntervalStickiness,
@@ -44,6 +43,7 @@ import {
 	computeStickinessFromSide,
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
+	type IInterval,
 	type SerializedIntervalDelta,
 } from "./intervalUtils.js";
 
@@ -128,8 +128,7 @@ export function getSerializedProperties(
  * @alpha
  * @legacy
  */
-// eslint-disable-next-line import/no-deprecated
-export interface SequenceInterval extends ISerializableInterval {
+export interface SequenceInterval extends IInterval {
 	readonly start: LocalReferencePosition;
 	/**
 	 * End endpoint of this interval.
@@ -144,11 +143,6 @@ export interface SequenceInterval extends ISerializableInterval {
 	/** Serializable bag of properties associated with the interval. */
 	properties: PropertySet;
 
-	/**
-	 * @returns a new interval object with identical semantics.
-	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
-	 */
-	clone(): SequenceInterval;
 	/**
 	 * Compares this interval to `b` with standard comparator semantics:
 	 * - returns -1 if this is less than `b`
@@ -169,45 +163,12 @@ export interface SequenceInterval extends ISerializableInterval {
 	 * @param b - Interval to compare against
 	 */
 	compareEnd(b: SequenceInterval): number;
-	/**
-	 * Modifies one or more of the endpoints of this interval, returning a new interval representing the result.
-	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
-	 */
-	modify(
-		label: string,
-		start: SequencePlace | undefined,
-		end: SequencePlace | undefined,
-		op?: ISequencedDocumentMessage,
-		localSeq?: number,
-		canSlideToEndpoint?: boolean,
-	): SequenceInterval | undefined;
+
 	/**
 	 * @returns whether this interval overlaps with `b`.
 	 * Intervals are considered to overlap if their intersection is non-empty.
 	 */
 	overlaps(b: SequenceInterval): boolean;
-	/**
-	 * Unions this interval with `b`, returning a new interval.
-	 * The union operates as a convex hull, i.e. if the two intervals are disjoint, the return value includes
-	 * intermediate values between the two intervals.
-	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
-	 */
-	union(b: SequenceInterval): SequenceInterval;
-
-	/**
-	 * Subscribes to position change events on this interval if there are no current listeners.
-	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
-	 */
-	addPositionChangeListeners(
-		beforePositionChange: () => void,
-		afterPositionChange: () => void,
-	): void;
-
-	/**
-	 * Removes the currently subscribed position change listeners.
-	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
-	 */
-	removePositionChangeListeners(): void;
 
 	/**
 	 * @returns whether this interval overlaps two numerical positions.
@@ -223,7 +184,6 @@ export interface SequenceInterval extends ISerializableInterval {
 }
 
 export class SequenceIntervalClass
-	// eslint-disable-next-line import/no-deprecated
 	implements SequenceInterval, ISerializableInterval, IDisposable
 {
 	readonly #props: {

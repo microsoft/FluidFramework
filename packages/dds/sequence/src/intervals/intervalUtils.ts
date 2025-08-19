@@ -5,13 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import {
-	PropertySet,
-	SlidingPreference,
-	SequencePlace,
-	Side,
-} from "@fluidframework/merge-tree/internal";
+import { PropertySet, SlidingPreference, Side } from "@fluidframework/merge-tree/internal";
 
 /**
  * Basic interval abstraction
@@ -19,13 +13,6 @@ import {
  * @alpha
  */
 export interface IInterval {
-	/**
-	 * @returns a new interval object with identical semantics.
-	 *
-	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
-	 * @privateRemarks Move to ISerializableInterval after deprecation period
-	 */
-	clone(): IInterval;
 	/**
 	 * Compares this interval to `b` with standard comparator semantics:
 	 * - returns -1 if this is less than `b`
@@ -47,31 +34,10 @@ export interface IInterval {
 	 */
 	compareEnd(b: IInterval): number;
 	/**
-	 * Modifies one or more of the endpoints of this interval, returning a new interval representing the result.
-	 *
-	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
-	 */
-	modify(
-		label: string,
-		start: SequencePlace | undefined,
-		end: SequencePlace | undefined,
-		op?: ISequencedDocumentMessage,
-		localSeq?: number,
-		canSlideToEndpoint?: boolean,
-	): IInterval | undefined;
-	/**
 	 * @returns whether this interval overlaps with `b`.
 	 * Intervals are considered to overlap if their intersection is non-empty.
 	 */
 	overlaps(b: IInterval): boolean;
-	/**
-	 * Unions this interval with `b`, returning a new interval.
-	 * The union operates as a convex hull, i.e. if the two intervals are disjoint, the return value includes
-	 * intermediate values between the two intervals.
-	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
-	 * @privateRemarks Move to ISerializableInterval after deprecation period
-	 */
-	union(b: IInterval): IInterval;
 }
 
 /**
@@ -156,20 +122,9 @@ export interface ISerializedInterval {
 	properties?: PropertySet;
 }
 
-/**
- * @legacy
- * @alpha
- * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
- * @privateRemarks Remove from external exports, and replace usages of IInterval with this interface after deprecation period
- */
 export interface ISerializableInterval extends IInterval {
 	/** Serializable bag of properties associated with the interval. */
 	properties: PropertySet;
-
-	/**
-	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
-	 */
-	serialize(): ISerializedInterval;
 
 	/**
 	 * Gets the id associated with this interval.
@@ -177,6 +132,18 @@ export interface ISerializableInterval extends IInterval {
 	 * interval.
 	 */
 	getIntervalId(): string;
+
+	/**
+	 * @returns a new interval object with identical semantics.
+	 */
+	clone(): ISerializableInterval;
+
+	/**
+	 * Unions this interval with `b`, returning a new interval.
+	 * The union operates as a convex hull, i.e. if the two intervals are disjoint, the return value includes
+	 * intermediate values between the two intervals.
+	 */
+	union(b: IInterval): ISerializableInterval;
 }
 
 /**

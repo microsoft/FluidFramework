@@ -7,6 +7,9 @@ import type { AzureUser } from "@fluidframework/azure-client/internal";
 // eslint-disable-next-line import/no-internal-modules
 import type { AttendeeId } from "@fluidframework/presence/beta";
 
+/**
+ * Message types sent from the orchestrator to the child processes
+ */
 export type MessageToChild =
 	| ConnectCommand
 	| DisconnectSelfCommand
@@ -23,14 +26,13 @@ export type MessageToChild =
 interface PingCommand {
 	command: "ping";
 }
-
-/**
- * Instructs a child process to connect to a Fluid container.
- * A {@link ConnectedEvent} should be expected in response.
- */
 export interface ConnectCommand {
 	command: "connect";
 	user: AzureUser;
+	/**
+	 * The ID of the Fluid container to connect to.
+	 * If not provided, a new Fluid container will be created.
+	 */
 	/**
 	 * The ID of the Fluid container to connect to.
 	 * If not provided, a new Fluid container will be created.
@@ -47,6 +49,9 @@ interface DisconnectSelfCommand {
 	command: "disconnectSelf";
 }
 
+/**
+ * Message types sent from the child processes to the orchestrator
+ */
 /**
  * Instructs a child process to set the latest value.
  * We then can wait for {@link LatestValueUpdatedEvent} from other clients to know when the latest value is updated.
@@ -94,8 +99,8 @@ interface GetLatestMapValueCommand {
  */
 export type MessageFromChild =
 	| AcknowledgeEvent
-	| AttendeeDisconnectedEvent
 	| AttendeeConnectedEvent
+	| AttendeeDisconnectedEvent
 	| ConnectedEvent
 	| DisconnectedSelfEvent
 	| LatestValueUpdatedEvent

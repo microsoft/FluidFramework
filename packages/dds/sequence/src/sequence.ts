@@ -37,7 +37,6 @@ import {
 	ReferenceType,
 	SlidingPreference,
 	createAnnotateRangeOp,
-	// eslint-disable-next-line import/no-deprecated
 	createGroupOp,
 	createInsertOp,
 	createObliterateRangeOp,
@@ -973,7 +972,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				stashMessage = {
 					...message,
 					referenceSequenceNumber: stashMessage.sequenceNumber - 1,
-					// eslint-disable-next-line import/no-deprecated
 					contents: ops.length !== 1 ? createGroupOp(...ops) : ops[0],
 				};
 			}
