@@ -120,14 +120,14 @@ async function main() {
 			// is about to die.
 			flush()
 				.then(() => {
-					// Using exit code 2 to denote this "handled" unhandled exception exit, which
+					// Using exit code -2 to denote this "handled" unhandled exception exit, which
 					// can later be detected via "Runner Exited" telemetry in stressTest.ts.
 					// This sets it apart from a truly unhandled exception, which exits with code 1.
-					process.exit(2);
+					process.exit(-2);
 				})
 				.catch(() => {
-					// If flush errors, exit with code 3.
-					process.exit(3);
+					// If flush errors, exit with code -3.
+					process.exit(-3);
 				});
 		} catch (e) {
 			console.error("Error during logging unhandled exception: ", e);
