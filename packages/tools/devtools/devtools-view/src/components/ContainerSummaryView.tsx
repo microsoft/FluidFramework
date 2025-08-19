@@ -24,7 +24,6 @@ import {
 	Delete20Regular,
 	PlugConnected20Regular,
 	PlugDisconnected20Regular,
-	LockClosed24Regular,
 } from "@fluentui/react-icons";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -418,15 +417,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 		props;
 	const styles = useActionBarStyles();
 
-	// Check if container is in readonly mode
-	const isReadOnly = containerState.isReadOnly === true;
-
-	const changeConnectionStateButton = isReadOnly ? (
-		// Show readonly indicator when container is readonly
-		<Button size="small" icon={<LockClosed24Regular />} disabled={true}>
-			Read-only Mode
-		</Button>
-	) : isContainerConnected ? (
+	const changeConnectionStateButton = isContainerConnected ? (
 		<Button
 			size="small"
 			icon={<PlugDisconnected20Regular />}
