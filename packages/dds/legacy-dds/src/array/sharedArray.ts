@@ -419,7 +419,10 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 						value: liveEntry.value,
 					};
 					this.emitValueChangedEvent(insertOp, true /* isLocal */);
-					this.getEntryForId(arrayOp.entryId).isLocalPendingDelete -= 1;
+					const entry = this.getEntryForId(arrayOp.entryId);
+					if (entry !== undefined && entry.isLocalPendingDelete > 0) {
+						entry.isLocalPendingDelete -= 1;
+					}
 				}
 				break;
 			}
