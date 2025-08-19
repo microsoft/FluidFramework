@@ -561,6 +561,9 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 	const [containersWithChanges, setContainersWithChanges] = React.useState<Set<string>>(
 		new Set(),
 	);
+	const [changeIndicatorTimers, setChangeIndicatorTimers] = React.useState<Map<string, ReturnType<typeof setTimeout>>>(
+		new Map(),
+	);
 
 	React.useEffect(() => {
 		if (containers === undefined) {
@@ -581,11 +584,18 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 				const message = untypedMessage as DataVisualization.Message;
 				const containerKey = message.data.containerKey;
 
-				// Show change indicator only for the most recent change
 				if (message.data.reason === DataVisualization.UpdateReason.DataChanged) {
-					setContainersWithChanges(() => {
-						return new Set([containerKey]);
-					});
+					const existingTimer = changeIndicatorTimers.get(containerKey);
+					if (existingTimer !== undefined) clearTimeout(existingTimer);
+
+					setContainersWithChanges(new Set([containerKey]));
+
+					const timer = setTimeout(() => {
+						setContainersWithChanges(prev => new Set([...prev].filter(key => key !== containerKey)));
+						setChangeIndicatorTimers(prev => new Map([...prev].filter(([key]) => key !== containerKey)));
+					}, 1000);
+
+					setChangeIndicatorTimers(prev => new Map(prev).set(containerKey, timer));
 				}
 
 				return true;
@@ -602,8 +612,11 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 		}
 		return (): void => {
 			messageRelay.off("message", messageHandler);
+			for (const timer of changeIndicatorTimers.values()) {
+				clearTimeout(timer);
+			}
 		};
-	}, [containers, messageRelay]);
+	}, [changeIndicatorTimers, containers, messageRelay]);
 
 	let containerSectionInnerView: React.ReactElement;
 	if (containers === undefined) {
