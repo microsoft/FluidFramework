@@ -113,8 +113,7 @@ const contentPath = "content";
  * - `event` - Various information on the segments that were modified.
  *
  * - `target` - The sequence itself.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	(
@@ -132,8 +131,7 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedSegmentSequence<T extends ISegment>
 	extends ISharedObject<ISharedSegmentSequenceEvents>,

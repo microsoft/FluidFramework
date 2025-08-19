@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha @sealed @legacy
+// @beta @sealed @legacy
 export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
     static readonly Attributes: IChannelAttributes;
     get attributes(): IChannelAttributes;
@@ -14,7 +14,7 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
     get type(): string;
 }
 
-// @alpha @deprecated @legacy
+// @beta @deprecated @legacy
 export interface ICreateInfo {
     ccIds: string[];
     csn: number;
@@ -34,7 +34,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     subdirectories(): IterableIterator<[string, IDirectory]>;
 }
 
-// @alpha @deprecated @legacy
+// @beta @deprecated @legacy
 export interface IDirectoryDataObject {
     ci?: ICreateInfo;
     storage?: Record<string, ISerializableValue>;
@@ -50,7 +50,7 @@ export interface IDirectoryEvents extends IEvent {
     (event: "undisposed", listener: (target: IEventThisPlaceHolder) => void): any;
 }
 
-// @alpha @deprecated @legacy
+// @beta @deprecated @legacy
 export interface IDirectoryNewStorageFormat {
     blobs: string[];
     content: IDirectoryDataObject;
@@ -61,13 +61,13 @@ export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
 }
 
-// @alpha @deprecated @legacy
+// @beta @deprecated @legacy
 export interface ISerializableValue {
     type: string;
     value: any;
 }
 
-// @alpha @sealed @legacy
+// @beta @sealed @legacy
 export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>, Omit<IDirectory, "on" | "once" | "off"> {
     // (undocumented)
     [Symbol.iterator](): IterableIterator<[string, any]>;
@@ -75,7 +75,7 @@ export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents &
     readonly [Symbol.toStringTag]: string;
 }
 
-// @alpha @sealed @legacy
+// @beta @sealed @legacy
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IDirectoryValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -83,13 +83,13 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
-// @alpha @sealed @legacy
+// @beta @sealed @legacy
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
 }
 
-// @alpha @sealed @legacy
+// @beta @sealed @legacy
 export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
@@ -101,7 +101,7 @@ export interface IValueChanged {
     readonly previousValue: any;
 }
 
-// @alpha @sealed @legacy
+// @beta @sealed @legacy
 export class MapFactory implements IChannelFactory<ISharedMap> {
     static readonly Attributes: IChannelAttributes;
     get attributes(): IChannelAttributes;
@@ -111,16 +111,16 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
     get type(): string;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export const SharedDirectory: ISharedObjectKind<ISharedDirectory> & SharedObjectKind<ISharedDirectory>;
 
-// @alpha @legacy
+// @beta @legacy
 export type SharedDirectory = ISharedDirectory;
 
-// @alpha @legacy
+// @beta @legacy
 export const SharedMap: ISharedObjectKind<ISharedMap> & SharedObjectKind<ISharedMap>;
 
-// @alpha @legacy
+// @beta @legacy
 export type SharedMap = ISharedMap;
 
 ```

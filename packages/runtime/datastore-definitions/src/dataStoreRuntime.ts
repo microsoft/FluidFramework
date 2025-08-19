@@ -23,8 +23,7 @@ import type { IChannel } from "./channel.js";
 
 /**
  * Events emitted by {@link IFluidDataStoreRuntime}.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
 	(event: "disconnected", listener: () => void);
@@ -43,8 +42,7 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
 
 /**
  * Manages the transmission of ops between the runtime and storage.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type IDeltaManagerErased =
 	ErasedType<"@fluidframework/container-definitions.IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>">;
@@ -52,8 +50,7 @@ export type IDeltaManagerErased =
 /**
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
  * @sealed
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidDataStoreRuntime
 	extends IEventProvider<IFluidDataStoreRuntimeEvents>,
