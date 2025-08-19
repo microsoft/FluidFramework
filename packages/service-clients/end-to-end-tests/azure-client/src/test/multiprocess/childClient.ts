@@ -14,14 +14,13 @@ import {
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-// eslint-disable-next-line import/no-internal-modules
-import { ExperimentalPresenceManager } from "@fluidframework/presence/alpha";
 import {
 	getPresence,
 	type Attendee,
+	ExperimentalPresenceManager,
 	type Presence,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/presence/beta";
+} from "@fluidframework/presence/alpha";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
@@ -137,11 +136,6 @@ class MessageHandler {
 
 	public async onMessage(msg: MessageFromParent): Promise<void> {
 		switch (msg.command) {
-			case "ping": {
-				send({ event: "ack" });
-				break;
-			}
-
 			// Respond to connect command by connecting to Fluid container with the provided user information.
 			case "connect": {
 				// Check if valid user information has been provided by parent/orchestrator
@@ -178,7 +172,7 @@ class MessageHandler {
 					send(m);
 				});
 				send({
-					event: "connected",
+					event: "ready",
 					containerId,
 					attendeeId: presence.attendees.getMyself().attendeeId,
 				});
