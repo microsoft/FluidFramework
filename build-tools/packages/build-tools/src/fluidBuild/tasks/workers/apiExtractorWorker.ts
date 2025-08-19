@@ -39,7 +39,9 @@ export async function apiExtractorWorker(message: WorkerMessage): Promise<Worker
 		code: result.succeeded ? 0 : 1,
 		error: result.succeeded
 			? undefined
-			: new Error(
+			: // This error does not appear to be used in fluid-build's output,
+				// but populate it with useful information anyway.
+				new Error(
 					`Number of Errors: ${result.errorCount}. Messages: ${JSON.stringify(messages.map((m) => m.text))}`,
 				),
 	};
