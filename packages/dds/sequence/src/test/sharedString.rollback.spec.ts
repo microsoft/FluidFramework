@@ -14,7 +14,7 @@ import {
 	type MockContainerRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
 
 function setupSharedStringRollbackTest() {
@@ -64,41 +64,6 @@ function createAdditionalClient(
 	});
 	return { sharedString, dataStoreRuntime, containerRuntime };
 }
-
-describe("SharedString rollback change events", () => {
-	it("rollback insert emits remove", () => {
-		const { sharedString, containerRuntimeFactory, containerRuntime } =
-			setupSharedStringRollbackTest();
-
-		// Apply insert we will rollback
-		sharedString.insertText(0, "abc");
-		containerRuntimeFactory.processAllMessages();
-		assert.equal(sharedString.getText(), "abc", "text after insert");
-
-		containerRuntime.rollback?.();
-
-		// Expect rollback event to be a remove
-		assert.equal(sharedString.getText(), "", "text reverted after rollback");
-	});
-
-	it("rollback remove emits insert", () => {
-		const { sharedString, containerRuntimeFactory, containerRuntime } =
-			setupSharedStringRollbackTest();
-		sharedString.insertText(0, "hello");
-		containerRuntimeFactory.processAllMessages();
-		containerRuntime.flush();
-		assert.equal(sharedString.getText(), "hello");
-
-		// Apply remove we will rollback
-		sharedString.removeText(0, 5);
-		assert.equal(sharedString.getText(), "", "text after remove");
-
-		containerRuntime.rollback?.();
-
-		// Expect rollback event to be an insert
-		assert.equal(sharedString.getText(), "hello", "rollback discards remove");
-	});
-});
 
 describe("SharedString rollback with multiple clients (insert/remove)", () => {
 	it("Client1 insert + Client2 insert + rollback on Client1", () => {
@@ -555,12 +520,13 @@ describe("SharedString annotate with rollback", () => {
 });
 
 describe("SharedString rollback triggers correct sequenceDelta events with text", () => {
-	it("insert, remove, annotate, and replaceText rollback trigger correct sequenceDelta events", () => {
-		const { sharedString, containerRuntimeFactory, containerRuntime } =
-			setupSharedStringRollbackTest();
+	interface Event {
+		op: string;
+		text: string;
+	}
 
-		const events: { op: string; text: string }[] = [];
-		sharedString.on("sequenceDelta", ({ deltaOperation, ranges, isLocal }) => {
+	function setupDeltaListener(sharedString: SharedString, events: Event[]) {
+		sharedString.on("sequenceDelta", ({ deltaOperation, isLocal }) => {
 			if (!isLocal) return;
 			switch (deltaOperation) {
 				case MergeTreeDeltaType.INSERT:
@@ -576,50 +542,167 @@ describe("SharedString rollback triggers correct sequenceDelta events with text"
 					throw new Error(`Unexpected deltaOperation: ${deltaOperation}`);
 			}
 		});
+	}
 
-		// --- Insert and rollback ---
+	it("rollback of insert triggers remove", () => {
+		const { sharedString, containerRuntimeFactory, containerRuntime } =
+			setupSharedStringRollbackTest();
+		const events: Event[] = [];
+		setupDeltaListener(sharedString, events);
+
 		sharedString.insertText(0, "hello");
 		containerRuntimeFactory.processAllMessages();
 		assert.equal(sharedString.getText(), "hello");
+
 		containerRuntime.rollback?.();
+
 		assert(
 			events.some((e) => e.op === "remove" && e.text === ""),
 			"Rollback of insert should trigger remove of correct text",
 		);
+	});
 
-		events.length = 0;
+	it("rollback of remove triggers insert", () => {
+		const { sharedString, containerRuntimeFactory, containerRuntime } =
+			setupSharedStringRollbackTest();
+		const events: Event[] = [];
+		setupDeltaListener(sharedString, events);
 
-		// --- Remove and rollback ---
 		sharedString.insertText(0, "world");
 		containerRuntimeFactory.processAllMessages();
 		sharedString.removeText(0, 5);
 		assert.equal(sharedString.getText(), "");
+
 		containerRuntime.rollback?.();
+
 		assert(
 			events.some((e) => e.op === "insert" && e.text === "world"),
 			"Rollback of remove should trigger insert of correct text",
 		);
+	});
 
-		events.length = 0;
+	it("rollback of annotate clears properties", () => {
+		const { sharedString, containerRuntimeFactory, containerRuntime } =
+			setupSharedStringRollbackTest();
+		const events: Event[] = [];
+		setupDeltaListener(sharedString, events);
 
-		// --- Annotate and rollback ---
 		sharedString.insertText(0, "abc");
 		containerRuntimeFactory.processAllMessages();
+
 		const styleProps = { style: "bold" };
 		sharedString.annotateRange(0, 3, styleProps);
-		Array.from({ length: 3 }).forEach((_, i) =>
-			assert.deepEqual({ ...sharedString.getPropertiesAtPosition(i) }, { ...styleProps }),
-		);
+		for (let i = 0; i < 3; i++) {
+			assert.deepEqual({ ...sharedString.getPropertiesAtPosition(i) }, styleProps);
+		}
+
 		containerRuntime.rollback?.();
-		Array.from({ length: 3 }).forEach((_, i) =>
+
+		for (let i = 0; i < 3; i++) {
 			assert.deepEqual(
 				{ ...sharedString.getPropertiesAtPosition(i) },
 				{},
 				"Rollback of annotate should clear properties",
-			),
-		);
+			);
+		}
+
 		assert(
 			events.some((e) => e.op === "annotate" && e.text === "abc"),
+			"Rollback of annotate should trigger annotate event with correct text",
+		);
+	});
+
+	it("multi-client: rollback of insert triggers remove", () => {
+		const {
+			sharedString: client1,
+			containerRuntimeFactory,
+			containerRuntime: cr1,
+		} = setupSharedStringRollbackTest();
+		const { sharedString: client2 } = createAdditionalClient(containerRuntimeFactory, "2");
+
+		const eventsClient1: Event[] = [];
+		setupDeltaListener(client1, eventsClient1);
+
+		client1.insertText(0, "hello");
+		cr1.flush();
+		containerRuntimeFactory.processAllMessages();
+		assert.equal(client1.getText(), "hello");
+		assert.equal(client2.getText(), "hello");
+
+		client1.insertText(5, "world");
+		cr1.rollback?.();
+
+		assert(
+			eventsClient1.some((e) => e.op === "remove" && e.text === "hello"),
+			"Rollback of insert should trigger remove of correct text on client1",
+		);
+		assert.equal(client1.getText(), "hello");
+		assert.equal(client2.getText(), "hello");
+	});
+
+	it("multi-client: rollback of remove triggers insert", () => {
+		const {
+			sharedString: client1,
+			containerRuntimeFactory,
+			containerRuntime: cr1,
+		} = setupSharedStringRollbackTest();
+		const { sharedString: client2 } = createAdditionalClient(containerRuntimeFactory, "2");
+
+		const eventsClient1: Event[] = [];
+		setupDeltaListener(client1, eventsClient1);
+
+		client1.insertText(0, "world");
+		cr1.flush();
+		containerRuntimeFactory.processAllMessages();
+
+		client1.removeText(0, 5);
+		assert.equal(client1.getText(), "");
+		assert.equal(client2.getText(), "world");
+
+		cr1.rollback?.();
+
+		assert(
+			eventsClient1.some((e) => e.op === "insert" && e.text === "world"),
+			"Rollback of remove should trigger insert of correct text on client1",
+		);
+		assert.equal(client1.getText(), "world");
+		assert.equal(client2.getText(), "world");
+	});
+
+	it("multi-client: rollback of annotate clears properties", () => {
+		const {
+			sharedString: client1,
+			containerRuntimeFactory,
+			containerRuntime: cr1,
+		} = setupSharedStringRollbackTest();
+		createAdditionalClient(containerRuntimeFactory, "2");
+
+		const eventsClient1: Event[] = [];
+		setupDeltaListener(client1, eventsClient1);
+
+		client1.insertText(0, "abc");
+		cr1.flush();
+		containerRuntimeFactory.processAllMessages();
+
+		const styleProps = { style: "bold" };
+		client1.annotateRange(0, 3, styleProps);
+
+		for (let i = 0; i < 3; i++) {
+			assert.deepEqual({ ...client1.getPropertiesAtPosition(i) }, styleProps);
+		}
+
+		cr1.rollback?.();
+
+		for (let i = 0; i < 3; i++) {
+			assert.deepEqual(
+				{ ...client1.getPropertiesAtPosition(i) },
+				{},
+				"Rollback of annotate should clear properties",
+			);
+		}
+
+		assert(
+			eventsClient1.some((e) => e.op === "annotate" && e.text === "abc"),
 			"Rollback of annotate should trigger annotate event with correct text",
 		);
 	});
