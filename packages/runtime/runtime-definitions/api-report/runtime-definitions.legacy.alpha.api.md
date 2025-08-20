@@ -7,13 +7,13 @@
 // @alpha @legacy
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
-// @alpha @legacy
+// @beta @legacy
 export interface AttributionInfo {
     timestamp: number;
     user: IUser;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
 // @alpha @sealed @deprecated @legacy (undocumented)
@@ -46,7 +46,7 @@ export enum CreateSummarizerNodeSource {
     Local = 2
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface DetachedAttributionKey {
     id: 0;
     // (undocumented)
@@ -126,7 +126,7 @@ export interface IEnvelope {
     contents: any;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IExperimentalIncrementalSummaryContext {
     readonly latestSummarySequenceNumber: number;
     readonly summaryPath: string;
@@ -249,7 +249,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IGarbageCollectionData {
     gcNodes: {
         [id: string]: string[];
@@ -262,7 +262,7 @@ export interface IGarbageCollectionDetailsBase {
     usedRoutes?: string[];
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IInboundSignalMessage<TMessage extends TypedMessage = TypedMessage> extends ISignalMessage<TMessage> {
     // (undocumented)
     readonly type: TMessage["type"];
@@ -285,14 +285,14 @@ export interface IProvideFluidDataStoreRegistry {
     readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
 }
 
-// @alpha @sealed @legacy
+// @beta @sealed @legacy
 export interface IRuntimeMessageCollection {
     readonly envelope: ISequencedMessageEnvelope;
     readonly local: boolean;
     readonly messagesContent: readonly IRuntimeMessagesContent[];
 }
 
-// @alpha @sealed @legacy
+// @beta @sealed @legacy
 export interface IRuntimeMessagesContent {
     readonly clientSequenceNumber: number;
     readonly contents: unknown;
@@ -322,7 +322,7 @@ export interface IRuntimeStorageService {
     uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export type ISequencedMessageEnvelope = Omit<ISequencedDocumentMessage, "contents" | "clientSequenceNumber">;
 
 // @alpha @legacy
@@ -386,7 +386,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     updateUsedRoutes(usedRoutes: string[]): void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISummaryStats {
     // (undocumented)
     blobNodeCount: number;
@@ -400,19 +400,19 @@ export interface ISummaryStats {
     unreferencedBlobSize: number;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISummaryTreeWithStats {
     stats: ISummaryStats;
     summary: ISummaryTree;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ITelemetryContext {
     set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void;
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryBaseEventPropertyType>): void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface LocalAttributionKey {
     // (undocumented)
     type: "local";
@@ -433,7 +433,7 @@ string,
 Promise<FluidDataStoreRegistryEntry> | FluidDataStoreRegistryEntry
 ];
 
-// @alpha @legacy
+// @beta @legacy
 export interface OpAttributionKey {
     seq: number;
     type: "op";

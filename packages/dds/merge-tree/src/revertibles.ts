@@ -29,8 +29,7 @@ import { DetachedReferencePosition } from "./referencePositions.js";
 import { toRemovalInfo } from "./segmentInfos.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type MergeTreeDeltaRevertible =
 	| {
@@ -72,8 +71,7 @@ interface RemoveSegmentRefProperties {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface MergeTreeRevertibleDriver {
 	insertFromSpec(pos: number, spec: IJSONSegment): void;
@@ -203,8 +201,7 @@ function appendLocalAnnotateToRevertibles(
 /**
  * Appends a merge tree delta to the list of revertibles.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function appendToMergeTreeDeltaRevertibles(
 	deltaArgs: IMergeTreeDeltaCallbackArgs,
@@ -240,8 +237,7 @@ export function appendToMergeTreeDeltaRevertibles(
 /**
  * Removes all revertibles from the list of revertibles.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function discardMergeTreeDeltaRevertible(
 	revertibles: MergeTreeDeltaRevertible[],
@@ -403,8 +399,7 @@ function getPosition(mergeTreeWithRevert: MergeTreeWithRevert, segment: ISegment
 /**
  * Reverts all operations in the list of revertibles.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function revertMergeTreeDeltaRevertibles(
 	driver: MergeTreeRevertibleDriver,

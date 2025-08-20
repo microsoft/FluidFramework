@@ -35,6 +35,7 @@ import {
 	SchemaVersion,
 	type TaggedChange,
 	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
@@ -56,6 +57,7 @@ import {
 	makeMitigatedChangeFamily,
 	makeSchemaCodec,
 	makeTreeChunker,
+	type TreeCompressionStrategyPrivate,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { FormatV1 } from "../feature-libraries/schema-index/index.js";
@@ -271,6 +273,7 @@ export class SharedTreeKernel
 			encoderContext,
 			options,
 			idCompressor,
+			options.shouldEncodeFieldIncrementally,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
 		const innerChangeFamily = new SharedTreeChangeFamily(
@@ -582,8 +585,21 @@ export type SharedTreeOptions = Partial<CodecWriteOptions> &
 	Partial<SharedTreeFormatOptions> &
 	ForestOptions;
 
-export interface SharedTreeOptionsInternal extends SharedTreeOptions {
+export interface SharedTreeOptionsInternal
+	extends Omit<SharedTreeOptions, "treeEncodeType">,
+		Partial<SharedTreeFormatOptionsInternal> {
 	disposeForksAfterTransaction?: boolean;
+	/**
+	 * Returns whether a field should be incrementally encoded.
+	 * @param nodeIdentifier - The identifier of the node containing the field.
+	 * @param fieldKey - The key of the field to check.
+	 * @remarks
+	 * The policy for which fields should get incremental encoding should eventually be specified some other way.
+	 */
+	shouldEncodeFieldIncrementally?(
+		nodeIdentifier: TreeNodeSchemaIdentifier,
+		fieldKey: FieldKey,
+	): boolean;
 }
 /**
  * Configuration options for SharedTree's internal tree storage.
@@ -618,6 +634,11 @@ export interface SharedTreeFormatOptions {
 	 * This option defaults to SharedTreeFormatVersion.v2.
 	 */
 	formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
+}
+
+export interface SharedTreeFormatOptionsInternal
+	extends Omit<SharedTreeFormatOptions, "treeEncodeType"> {
+	treeEncodeType: TreeCompressionStrategyPrivate;
 }
 
 /**
@@ -698,6 +719,12 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	formatVersion: SharedTreeFormatVersion.v3,
 	disposeForksAfterTransaction: true,
+	shouldEncodeFieldIncrementally: (
+		nodeIdentifier: TreeNodeSchemaIdentifier,
+		fieldKey: FieldKey,
+	): boolean => {
+		return false;
+	},
 };
 
 function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFieldSchema {
