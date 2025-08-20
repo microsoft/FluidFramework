@@ -132,10 +132,6 @@ function isConnected(container: IFluidContainer | undefined): boolean {
 	return container !== undefined && container.connectionState === ConnectionState.Connected;
 }
 
-function isString(value: unknown): value is string {
-	return typeof value === "string";
-}
-
 function isStringOrNumberRecord(value: unknown): value is Record<string, string | number> {
 	if (value === null || typeof value !== "object" || Array.isArray(value)) {
 		return false;
@@ -317,7 +313,7 @@ class MessageHandler {
 					break;
 				}
 
-				if (!isString(msg.value)) {
+				if (typeof msg.value !== "string") {
 					break;
 				}
 
