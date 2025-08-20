@@ -94,6 +94,7 @@ export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersio
 	const defaultConfigs: Partial<T> = {};
 	// Iterate over configMap to get default values for each option.
 	for (const key of Object.keys(configMap)) {
+		// Type assertion is safe as key comes from Object.keys(configMap)
 		const config = configMap[key as keyof T];
 		// Sort the versions in ascending order so we can short circuit the loop.
 		const versions = Object.keys(config).sort(compare);
@@ -102,6 +103,7 @@ export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersio
 		// value that is compatible with the version specified as the minVersionForCollab.
 		for (const version of versions) {
 			if (gte(minVersionForCollab, version)) {
+				// Type assertion is safe as version is a key from the config object
 				defaultConfigs[key] = config[version as MinimumMinorSemanticVersion];
 			} else {
 				// If the minVersionForCollab is less than the version, we break out of the loop since we don't need to check
@@ -145,6 +147,7 @@ export function getValidationForRuntimeOptions<T extends Record<string, unknown>
 		return;
 	}
 	// Iterate through each runtime option passed in by the user
+	// Type assertion is safe as entries come from runtimeOptions object
 	for (const [passedRuntimeOption, passedRuntimeOptionValue] of Object.entries(
 		runtimeOptions,
 	) as [keyof T & string, T[keyof T & string]][]) {
