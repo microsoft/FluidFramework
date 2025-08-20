@@ -11,7 +11,11 @@
 
 "use client";
 
-import { type PublicClientApplication, InteractionType, type AccountInfo } from "@azure/msal-browser";
+import {
+	type PublicClientApplication,
+	InteractionType,
+	type AccountInfo,
+} from "@azure/msal-browser";
 import { Client } from "@microsoft/microsoft-graph-client";
 import {
 	AuthCodeMSALBrowserAuthenticationProvider,

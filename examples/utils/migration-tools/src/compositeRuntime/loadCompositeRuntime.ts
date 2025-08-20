@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainerContext, IRuntime } from "@fluidframework/container-definitions/legacy";
+import type {
+	IContainerContext,
+	IRuntime,
+} from "@fluidframework/container-definitions/legacy";
 import {
 	type IContainerRuntimeOptions,
 	loadContainerRuntime,

@@ -10,7 +10,10 @@ import {
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 
-import { ContactCollectionInstantiationFactory, type IContactCollection } from "./dataObject.js";
+import {
+	ContactCollectionInstantiationFactory,
+	type IContactCollection,
+} from "./dataObject.js";
 
 const contactCollectionId = "contactCollection";
 

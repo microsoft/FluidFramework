@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate-interface";
+import type {
+	IConstellation,
+	ICoordinate,
+} from "@fluid-example/multiview-coordinate-interface";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
