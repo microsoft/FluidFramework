@@ -17,9 +17,9 @@ import { Changeset as ChangesetSchema, type Encoded } from "./formatV3.js";
 import type { Changeset, Mark, MarkEffect, Rename } from "./types.js";
 import { isNoopMark } from "./utils.js";
 import type { FieldChangeEncodingContext } from "../index.js";
-import { EncodedNodeChangeset } from "../modular-schema/index.js";
+import { EncodedNodeChangeset, type EncodedChangeAtomId } from "../modular-schema/index.js";
 import { makeV2CodecHelpers } from "./sequenceFieldCodecV2.js";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 export function makeV3Codec(
 	revisionTagCodec: IJsonCodec<
@@ -36,44 +36,58 @@ export function makeV3Codec(
 > {
 	const {
 		changeAtomIdCodec: atomIdCodec,
-		markEffectCodec: markEffectV2Codec,
+		encodeMarkEffect: encodeV2MarkEffect,
 		decoderLibrary: decoderLibraryV2,
 	} = makeV2CodecHelpers(revisionTagCodec);
 
-	const markEffectCodec: IJsonCodec<
-		MarkEffect,
-		Encoded.MarkEffect,
-		Encoded.MarkEffect,
-		FieldChangeEncodingContext
-	> = {
-		encode(effect: MarkEffect, context: FieldChangeEncodingContext): Encoded.MarkEffect {
-			const type = effect.type;
-			switch (type) {
-				case "Rename":
-					return {
-						rename: {
-							idOverride: atomIdCodec.encode(effect.idOverride, context.baseContext),
-						},
-					};
-				default:
-					return markEffectV2Codec.encode(effect, context);
-			}
-		},
-		decode(encoded: Encoded.MarkEffect, context: FieldChangeEncodingContext): MarkEffect {
-			return decoderLibrary.dispatch(encoded, context.baseContext);
-		},
-	};
+	function encodeMarkEffect(
+		mark: Mark,
+		context: FieldChangeEncodingContext,
+	): Encoded.MarkEffect {
+		const type = mark.type;
+		switch (type) {
+			case "Rename":
+				return {
+					rename: {
+						idOverride: atomIdCodec.encode(mark.idOverride, context.baseContext),
+					},
+				};
+			default:
+				return encodeV2MarkEffect(mark, context);
+		}
+	}
+
+	function decodeMarkEffect(
+		encoded: Encoded.Mark<TAnySchema>,
+		context: FieldChangeEncodingContext,
+	): MarkEffect {
+		return decoderLibrary.dispatch(
+			encoded.effect ?? fail("Cannot decode effect for noop mark"),
+			encoded.count,
+			encoded.cellId,
+			context,
+		);
+	}
 
 	const decoderLibrary = new DiscriminatedUnionDispatcher<
 		Encoded.MarkEffect,
-		/* args */ [context: ChangeEncodingContext],
+		/* args */ [
+			count: number,
+			cellId: EncodedChangeAtomId | undefined,
+			context: FieldChangeEncodingContext,
+		],
 		MarkEffect
 	>({
 		...decoderLibraryV2,
-		rename(encoded: Encoded.Rename, context: ChangeEncodingContext): Rename {
+		rename(
+			encoded: Encoded.Rename,
+			count: number,
+			cellId: EncodedChangeAtomId | undefined,
+			context: FieldChangeEncodingContext,
+		): Rename {
 			return {
 				type: "Rename",
-				idOverride: atomIdCodec.decode(encoded.idOverride, context),
+				idOverride: atomIdCodec.decode(encoded.idOverride, context.baseContext),
 			};
 		},
 	});
@@ -100,7 +114,7 @@ export function makeV3Codec(
 					count: mark.count,
 				};
 				if (!isNoopMark(mark)) {
-					encodedMark.effect = markEffectCodec.encode(mark, context);
+					encodedMark.effect = encodeMarkEffect(mark, context);
 				}
 				if (mark.cellId !== undefined) {
 					encodedMark.cellId = atomIdCodec.encode(mark.cellId, context.baseContext);
@@ -123,7 +137,7 @@ export function makeV3Codec(
 				};
 
 				if (mark.effect !== undefined) {
-					Object.assign(decodedMark, markEffectCodec.decode(mark.effect, context));
+					Object.assign(decodedMark, decodeMarkEffect(mark, context));
 					assert(mark.effect.rename === undefined, "XXX");
 					assert(mark.effect.attachAndDetach === undefined, "XXX");
 				}

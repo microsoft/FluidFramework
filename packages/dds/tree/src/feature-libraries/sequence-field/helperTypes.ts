@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { TAnySchema } from "@sinclair/typebox";
 import type { DiscriminatedUnionLibrary, IJsonCodec } from "../../codec/index.js";
 import type {
 	ChangeAtomId,
@@ -14,8 +15,17 @@ import type {
 	EncodedChangeAtomId,
 	FieldChangeEncodingContext,
 } from "../modular-schema/index.js";
+import type { Encoded } from "./formatV2.js";
 
-import type { Attach, CellId, CellMark, Detach, HasMarkFields, Mark } from "./types.js";
+import type {
+	Attach,
+	CellId,
+	CellMark,
+	Detach,
+	HasMarkFields,
+	Mark,
+	MarkEffect,
+} from "./types.js";
 
 export type EmptyInputCellMark = Mark & DetachedCellMark;
 
@@ -29,26 +39,36 @@ export type MoveMarkEffect = Attach | Detach;
 export type DetachOfRemovedNodes = Detach & { cellId: CellId };
 export type CellRename = DetachOfRemovedNodes;
 
-export interface SequenceCodecHelpers<TDecodedMarkEffect, TEncodedMarkEffect extends object> {
+export interface SequenceCodecHelpers {
 	readonly changeAtomIdCodec: IJsonCodec<
 		ChangeAtomId,
 		EncodedChangeAtomId,
 		EncodedChangeAtomId,
 		ChangeEncodingContext
 	>;
-	readonly markEffectCodec: IJsonCodec<
-		TDecodedMarkEffect,
-		TEncodedMarkEffect,
-		TEncodedMarkEffect,
-		FieldChangeEncodingContext
-	>;
-	readonly decoderLibrary: DiscriminatedUnionLibrary<
-		TEncodedMarkEffect,
-		/* args */ [context: ChangeEncodingContext],
-		TDecodedMarkEffect
-	>;
+
+	readonly encodeMarkEffect: (
+		mark: Mark,
+		context: FieldChangeEncodingContext,
+	) => Encoded.MarkEffect;
+
+	readonly decodeMarkEffect: (
+		encoded: Encoded.Mark<TAnySchema>,
+		context: FieldChangeEncodingContext,
+	) => MarkEffect;
+
 	readonly decodeRevision: (
 		encodedRevision: EncodedRevisionTag | undefined,
 		context: ChangeEncodingContext,
 	) => RevisionTag;
+
+	readonly decoderLibrary: DiscriminatedUnionLibrary<
+		Encoded.MarkEffect,
+		/* args */ [
+			count: number,
+			cellId: EncodedChangeAtomId | undefined,
+			context: FieldChangeEncodingContext,
+		],
+		MarkEffect
+	>;
 }

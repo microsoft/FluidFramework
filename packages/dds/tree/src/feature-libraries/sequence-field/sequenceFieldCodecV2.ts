@@ -26,6 +26,7 @@ import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import { Changeset as ChangesetSchema, type Encoded } from "./formatV2.js";
 import {
 	type Attach,
+	type CellMark,
 	type Changeset,
 	type Detach,
 	type Mark,
@@ -36,7 +37,6 @@ import {
 import {
 	getAttachedNodeId,
 	getDetachedNodeId,
-	getDetachOutputCellId,
 	getMovedNodeId,
 	isNoopMark,
 	splitMark,
@@ -54,77 +54,8 @@ export function makeV2CodecHelpers(
 		EncodedRevisionTag,
 		ChangeEncodingContext
 	>,
-): SequenceCodecHelpers<MarkEffect, Encoded.MarkEffect> {
+): SequenceCodecHelpers {
 	const changeAtomIdCodec = makeChangeAtomIdCodec(revisionTagCodec);
-	const markEffectCodec: IJsonCodec<
-		MarkEffect,
-		Encoded.MarkEffect,
-		Encoded.MarkEffect,
-		FieldChangeEncodingContext
-	> = {
-		encode(effect: MarkEffect, context: FieldChangeEncodingContext): Encoded.MarkEffect {
-			function encodeRevision(
-				revision: RevisionTag | undefined,
-			): EncodedRevisionTag | undefined {
-				if (revision === undefined || revision === context.baseContext.revision) {
-					return undefined;
-				}
-
-				return revisionTagCodec.encode(revision, context.baseContext);
-			}
-
-			const type = effect.type;
-			switch (type) {
-				case "Insert":
-					return context.isMoveId(getAttachedNodeId(effect), 1).value
-						? {
-								moveIn: { revision: encodeRevision(effect.revision), id: effect.id },
-							}
-						: {
-								insert: {
-									revision: encodeRevision(effect.revision),
-									id: effect.id,
-								},
-							};
-				case "Remove": {
-					const encodedIdOverride =
-						effect.idOverride === undefined
-							? undefined
-							: changeAtomIdCodec.encode(effect.idOverride, context.baseContext);
-
-					// Having an idOverride means that this is not the final detach location, and should be encoded as a move.
-					return context.isMoveId(getDetachedNodeId(effect), 1).value ||
-						!areEqualChangeAtomIdOpts(effect.idOverride, {
-							revision: effect.revision,
-							localId: effect.id,
-						})
-						? {
-								moveOut: {
-									revision: encodeRevision(effect.revision),
-									id: effect.id,
-									idOverride: encodedIdOverride,
-								},
-							}
-						: {
-								remove: {
-									revision: encodeRevision(effect.revision),
-									idOverride: encodedIdOverride,
-									id: effect.id,
-								},
-							};
-				}
-				case "Rename":
-					return encodeRename(effect, context, changeAtomIdCodec, revisionTagCodec);
-				case NoopMarkType:
-					fail(0xb2c /* Mark type: NoopMarkType should not be encoded. */);
-				default:
-					unreachableCase(type);
-			}
-		},
-		decode(encoded: Encoded.MarkEffect, context: FieldChangeEncodingContext): MarkEffect {
-			return decoderDispatcher.dispatch(encoded, context.baseContext);
-		},
-	};
 
 	function decodeRevision(
 		encodedRevision: EncodedRevisionTag | undefined,
@@ -138,98 +69,193 @@ export function makeV2CodecHelpers(
 		return revisionTagCodec.decode(encodedRevision, context);
 	}
 
+	const decoderLibrary = makeMarkEffectDecoder(changeAtomIdCodec, decodeRevision);
+
+	const decoderDispatcher = new DiscriminatedUnionDispatcher<
+		Encoded.MarkEffect,
+		/* args */ [
+			count: number,
+			cellId: EncodedChangeAtomId | undefined,
+			context: FieldChangeEncodingContext,
+		],
+		MarkEffect
+	>(decoderLibrary);
+
+	return {
+		changeAtomIdCodec,
+		decoderLibrary,
+
+		encodeMarkEffect(mark: Mark, context: FieldChangeEncodingContext): Encoded.MarkEffect {
+			throw new Error("Function not implemented.");
+		},
+
+		decodeRevision: (
+			encoded: EncodedRevisionTag | undefined,
+			context: ChangeEncodingContext,
+		): RevisionTag =>
+			encoded !== undefined
+				? revisionTagCodec.decode(encoded, context)
+				: (context.revision ?? fail("Expected a default revision")),
+
+		decodeMarkEffect: (
+			encoded: Encoded.Mark<TAnySchema>,
+			context: FieldChangeEncodingContext,
+		): MarkEffect => {
+			return decoderDispatcher.dispatch(
+				encoded.effect ?? fail("Should not be called on noop marks"),
+				encoded.count,
+				encoded.cellId,
+				context,
+			);
+		},
+	};
+}
+
+function makeMarkEffectDecoder(
+	changeAtomIdCodec: IJsonCodec<
+		ChangeAtomId,
+		EncodedChangeAtomId,
+		EncodedChangeAtomId,
+		ChangeEncodingContext
+	>,
+	decodeRevision: (
+		revision: EncodedRevisionTag | undefined,
+		context: ChangeEncodingContext,
+	) => RevisionTag,
+): DiscriminatedUnionLibrary<
+	Encoded.MarkEffect,
+	/* args */ [
+		count: number,
+		cellId: EncodedChangeAtomId | undefined,
+		context: FieldChangeEncodingContext,
+	],
+	MarkEffect
+> {
 	const decoderLibrary: DiscriminatedUnionLibrary<
 		Encoded.MarkEffect,
-		/* args */ [context: ChangeEncodingContext],
+		/* args */ [
+			count: number,
+			cellId: EncodedChangeAtomId | undefined,
+			context: FieldChangeEncodingContext,
+		],
 		MarkEffect
 	> = {
-		moveIn(encoded: Encoded.MoveIn, context: ChangeEncodingContext): Attach {
+		moveIn(
+			encoded: Encoded.MoveIn,
+			count: number,
+			cellId: EncodedChangeAtomId | undefined,
+			context: FieldChangeEncodingContext,
+		): Attach {
 			const { id, revision } = encoded;
 			const endpoint =
 				encoded.finalEndpoint !== undefined
-					? changeAtomIdCodec.decode(encoded.finalEndpoint, context)
+					? changeAtomIdCodec.decode(encoded.finalEndpoint, context.baseContext)
 					: undefined;
 
 			const mark: Attach = {
 				type: "Insert",
 				id: endpoint?.localId ?? id,
-				revision: endpoint?.revision ?? decodeRevision(revision, context),
+				revision: endpoint?.revision ?? decodeRevision(revision, context.baseContext),
 			};
 
 			return mark;
 		},
-		insert(encoded: Encoded.Insert, context: ChangeEncodingContext): Attach {
+		insert(
+			encoded: Encoded.Insert,
+			count: number,
+			cellId: EncodedChangeAtomId | undefined,
+			context: FieldChangeEncodingContext,
+		): Attach {
 			const { id, revision } = encoded;
 			const mark: Attach = {
 				type: "Insert",
 				id,
 			};
 
-			mark.revision = decodeRevision(revision, context);
+			mark.revision = decodeRevision(revision, context.baseContext);
 			return mark;
 		},
-		remove(encoded: Encoded.Remove, context: ChangeEncodingContext): Detach {
+		remove(
+			encoded: Encoded.Remove,
+			count: number,
+			cellId: EncodedChangeAtomId | undefined,
+			context: FieldChangeEncodingContext,
+		): Detach {
 			const { id, revision, idOverride } = encoded;
 			const mark: Mutable<Detach> = {
 				type: "Remove",
 				id,
 			};
 
-			mark.revision = decodeRevision(revision, context);
+			mark.revision = decodeRevision(revision, context.baseContext);
 			if (idOverride !== undefined) {
-				mark.idOverride = changeAtomIdCodec.decode(idOverride, context);
+				mark.idOverride = changeAtomIdCodec.decode(idOverride, context.baseContext);
 			}
 			return mark;
 		},
-		moveOut(encoded: Encoded.MoveOut, context: ChangeEncodingContext): Detach {
+		moveOut(
+			encoded: Encoded.MoveOut,
+			count: number,
+			cellId: EncodedChangeAtomId | undefined,
+			context: FieldChangeEncodingContext,
+		): Detach {
 			const { id, idOverride, revision } = encoded;
 			const mark: Mutable<Detach> = {
 				type: "Remove",
 				id,
 			};
 
-			// XXX: Final endpoint
-			mark.revision = decodeRevision(revision, context);
+			mark.revision = decodeRevision(revision, context.baseContext);
 			if (idOverride !== undefined) {
-				mark.idOverride = changeAtomIdCodec.decode(idOverride, context);
+				mark.idOverride = changeAtomIdCodec.decode(idOverride, context.baseContext);
 			}
 
 			return mark;
 		},
-		attachAndDetach(encoded: Encoded.AttachAndDetach, context: ChangeEncodingContext): Rename {
-			const attach = decoderDispatcher.dispatch(encoded.attach, context) as Attach;
-			const detach = decoderDispatcher.dispatch(encoded.detach, context) as Detach;
-
+		attachAndDetach(
+			encoded: Encoded.AttachAndDetach,
+			count: number,
+			cellId: EncodedChangeAtomId | undefined,
+			context: FieldChangeEncodingContext,
+		): Rename {
 			// In documents generated by clients on release >=2.2 (i.e., running the code from the PR that added this comment),
 			// renames are encoded as AttachAndDetach with a special id.
 			// This ensures forward-compatibility of clients on release <=2.1 with documents/ops generated by clients on release >=2.2.
-			if (attach.id === renameLocalId) {
-				assert(detach.idOverride !== undefined, 0x9f8 /* Rename must have idOverride */);
+			if (encoded.attach.insert !== undefined && encoded.attach.insert.id === renameLocalId) {
+				assert(
+					encoded.detach.remove?.idOverride !== undefined,
+					0x9f8 /* Rename must have idOverride */,
+				);
 				return {
 					type: "Rename",
-					idOverride: detach.idOverride,
+					idOverride: changeAtomIdCodec.decode(
+						encoded.detach.remove.idOverride,
+						context.baseContext,
+					),
 				};
 			}
 
+			assert(
+				encoded.detach.remove !== undefined,
+				"Attach and detach should always contains a remove",
+			);
+
+			const detachId: ChangeAtomId =
+				encoded.detach.remove.idOverride !== undefined
+					? changeAtomIdCodec.decode(encoded.detach.remove.idOverride, context.baseContext)
+					: {
+							revision: decodeRevision(encoded.detach.remove.revision, context.baseContext),
+							localId: encoded.detach.remove.id,
+						};
+
 			return {
 				type: "Rename",
-				idOverride: getDetachOutputCellId(detach),
+				idOverride: detachId,
 			};
 		},
 	};
 
-	const decoderDispatcher = new DiscriminatedUnionDispatcher<
-		Encoded.MarkEffect,
-		/* args */ [context: ChangeEncodingContext],
-		MarkEffect
-	>(decoderLibrary);
-
-	return {
-		changeAtomIdCodec,
-		markEffectCodec,
-		decoderLibrary,
-		decodeRevision,
-	};
+	return decoderLibrary;
 }
 
 export function makeV2Codec(
@@ -245,7 +271,7 @@ export function makeV2Codec(
 	JsonCompatibleReadOnly,
 	FieldChangeEncodingContext
 > {
-	const { markEffectCodec, changeAtomIdCodec } = makeV2CodecHelpers(revisionTagCodec);
+	const { decodeMarkEffect, changeAtomIdCodec } = makeV2CodecHelpers(revisionTagCodec);
 	/**
 	 * If we want to make the node change aspect of this codec more type-safe, we could adjust generics
 	 * to be in terms of the schema rather than the concrete type of the node change.
@@ -257,9 +283,19 @@ export function makeV2Codec(
 			changeset: Changeset,
 			context: FieldChangeEncodingContext,
 		): JsonCompatibleReadOnly & Encoded.Changeset<NodeChangeSchema> => {
+			function encodeRevision(
+				revision: RevisionTag | undefined,
+			): EncodedRevisionTag | undefined {
+				if (revision === undefined || revision === context.baseContext.revision) {
+					return undefined;
+				}
+
+				return revisionTagCodec.encode(revision, context.baseContext);
+			}
+
 			const jsonMarks: Encoded.Changeset<NodeChangeSchema> = [];
 			for (const mark of changeset) {
-				jsonMarks.push(...encodeMark(mark, context, markEffectCodec, changeAtomIdCodec));
+				jsonMarks.push(...encodeMark(mark, context, encodeRevision, changeAtomIdCodec));
 			}
 			return jsonMarks;
 		},
@@ -278,7 +314,7 @@ export function makeV2Codec(
 				}
 
 				if (mark.effect !== undefined) {
-					Object.assign(decodedMark, markEffectCodec.decode(mark.effect, context));
+					Object.assign(decodedMark, decodeMarkEffect(mark, context));
 				}
 
 				if (mark.changes !== undefined) {
@@ -298,12 +334,7 @@ export function makeV2Codec(
 function encodeMark(
 	mark: Mark,
 	context: FieldChangeEncodingContext,
-	markEffectCodec: IJsonCodec<
-		MarkEffect,
-		Encoded.MarkEffect,
-		Encoded.MarkEffect,
-		FieldChangeEncodingContext
-	>,
+	encodeRevision: (revision: RevisionTag | undefined) => EncodedRevisionTag | undefined,
 	changeAtomIdCodec: IJsonCodec<
 		ChangeAtomId,
 		EncodedChangeAtomId,
@@ -315,16 +346,16 @@ function encodeMark(
 	if (splitLength < mark.count) {
 		const [mark1, mark2] = splitMark(mark, splitLength);
 		return [
-			encodeSplitMark(mark1, context, markEffectCodec, changeAtomIdCodec),
-			...encodeMark(mark2, context, markEffectCodec, changeAtomIdCodec),
+			encodeSplitMark(mark1, context, encodeRevision, changeAtomIdCodec),
+			...encodeMark(mark2, context, encodeRevision, changeAtomIdCodec),
 		];
 	}
 
-	return [encodeSplitMark(mark, context, markEffectCodec, changeAtomIdCodec)];
+	return [encodeSplitMark(mark, context, encodeRevision, changeAtomIdCodec)];
 }
 
 function encodeRename(
-	effect: Rename,
+	mark: CellMark<Rename>,
 	context: FieldChangeEncodingContext,
 	changeAtomIdCodec: IJsonCodec<
 		ChangeAtomId,
@@ -332,32 +363,37 @@ function encodeRename(
 		EncodedChangeAtomId,
 		ChangeEncodingContext
 	>,
-	revisionCodec: IJsonCodec<
-		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
-		ChangeEncodingContext
-	>,
+	encodeRevision: (revision: RevisionTag | undefined) => EncodedRevisionTag | undefined,
 ): Encoded.MarkEffect {
-	if (context.isDetachId(effect.idOverride, 1).value) {
-		// This is the final detach location of moved nodes.
-		const encodedRevision =
-			effect.idOverride.revision !== undefined
-				? revisionCodec.encode(effect.idOverride.revision, context.baseContext)
-				: undefined;
+	assert(mark.cellId !== undefined, "Rename should target empty cell");
+	const renamedNodeId = context.rootRenames.getFirst(mark.cellId, mark.count).value;
+	if (renamedNodeId !== undefined && !areEqualChangeAtomIds(renamedNodeId, mark.idOverride)) {
+		// Detached nodes which were last at this cell location have been moved.
+		return {
+			moveOut: {
+				revision: encodeRevision(renamedNodeId.revision),
+				id: renamedNodeId.localId,
+				idOverride: changeAtomIdCodec.encode(mark.idOverride, context.baseContext),
+			},
+		};
+	}
+
+	if (context.isDetachId(mark.idOverride, 1).value) {
+		// These cells are the final detach location of moved nodes.
+		const encodedRevision = encodeRevision(mark.idOverride.revision);
 
 		return {
 			attachAndDetach: {
 				attach: {
 					moveIn: {
 						revision: encodedRevision,
-						id: effect.idOverride.localId,
+						id: mark.idOverride.localId,
 					},
 				},
 				detach: {
 					remove: {
 						revision: encodedRevision,
-						id: effect.idOverride.localId,
+						id: mark.idOverride.localId,
 					},
 				},
 			},
@@ -373,7 +409,7 @@ function encodeRename(
 			detach: {
 				remove: {
 					id: renameLocalId,
-					idOverride: changeAtomIdCodec.encode(effect.idOverride, context.baseContext),
+					idOverride: changeAtomIdCodec.encode(mark.idOverride, context.baseContext),
 				},
 			},
 		},
@@ -395,12 +431,7 @@ function getLengthToSplitMark(mark: Mark, context: FieldChangeEncodingContext): 
 function encodeSplitMark(
 	mark: Mark,
 	context: FieldChangeEncodingContext,
-	markEffectCodec: IJsonCodec<
-		MarkEffect,
-		Encoded.MarkEffect,
-		Encoded.MarkEffect,
-		FieldChangeEncodingContext
-	>,
+	encodeRevision: (revision: RevisionTag | undefined) => EncodedRevisionTag | undefined,
 	changeAtomIdCodec: IJsonCodec<
 		ChangeAtomId,
 		EncodedChangeAtomId,
@@ -412,7 +443,7 @@ function encodeSplitMark(
 		count: mark.count,
 	};
 	if (!isNoopMark(mark)) {
-		encodedMark.effect = markEffectCodec.encode(mark, context);
+		encodedMark.effect = encodeMarkEffect(mark, context, encodeRevision, changeAtomIdCodec);
 	}
 	if (mark.cellId !== undefined) {
 		encodedMark.cellId = changeAtomIdCodec.encode(mark.cellId, context.baseContext);
@@ -422,6 +453,66 @@ function encodeSplitMark(
 	}
 
 	return encodedMark;
+}
+
+function encodeMarkEffect(
+	mark: Mark,
+	context: FieldChangeEncodingContext,
+	encodeRevision: (revision: RevisionTag | undefined) => EncodedRevisionTag | undefined,
+	changeAtomIdCodec: IJsonCodec<
+		ChangeAtomId,
+		EncodedChangeAtomId,
+		EncodedChangeAtomId,
+		ChangeEncodingContext
+	>,
+): Encoded.MarkEffect {
+	const type = mark.type;
+	switch (type) {
+		case "Insert":
+			return context.isMoveId(getAttachedNodeId(mark), 1).value
+				? {
+						moveIn: { revision: encodeRevision(mark.revision), id: mark.id },
+					}
+				: {
+						insert: {
+							revision: encodeRevision(mark.revision),
+							id: mark.id,
+						},
+					};
+		case "Remove": {
+			const encodedIdOverride =
+				mark.idOverride === undefined
+					? undefined
+					: changeAtomIdCodec.encode(mark.idOverride, context.baseContext);
+
+			// Having an idOverride means that this is not the final detach location, and should be encoded as a move.
+			return context.isMoveId(getDetachedNodeId(mark), 1).value ||
+				!areEqualChangeAtomIdOpts(mark.idOverride, {
+					revision: mark.revision,
+					localId: mark.id,
+				})
+				? {
+						moveOut: {
+							revision: encodeRevision(mark.revision),
+							id: mark.id,
+							idOverride: encodedIdOverride,
+						},
+					}
+				: {
+						remove: {
+							revision: encodeRevision(mark.revision),
+							idOverride: encodedIdOverride,
+							id: mark.id,
+						},
+					};
+		}
+		case "Rename":
+			return encodeRename(mark, context, changeAtomIdCodec, encodeRevision);
+		case NoopMarkType:
+			fail(0xb2c /* Mark type: NoopMarkType should not be encoded. */);
+		default:
+			unreachableCase(type);
+	}
 }
 
 function reportRootChangesForMark(
