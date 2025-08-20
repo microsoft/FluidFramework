@@ -222,7 +222,7 @@ export class BlobManager {
 		readonly routeContext: IFluidHandleContext;
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo;
-		readonly storage: Pick<IContainerStorageService, "createBlob" | "readBlob">;
+		readonly storage: Pick<IContainerStorageService, "createBlob" | "readBlob" | "buildBlobUrl">;
 		/**
 		 * Submit a BlobAttach op. When a blob is uploaded, there is a short grace period before which the blob is
 		 * deleted. The BlobAttach op notifies the server that blob is in use. The server will then not delete the
@@ -336,23 +336,32 @@ export class BlobManager {
 	}
 
 	/**
-	 * Lookup the storage ID associated with a given local blob ID.
+	 * Lookup the blob URL for a given local blob id.
 	 * @param localId - The local blob id. Likely coming from a handle.
-	 * @returns The storage ID if found and the blob is not pending, undefined otherwise.
+	 * @returns The blob URL if found and the blob is not pending, undefined otherwise.
 	 * @remarks
-	 * This is a synchronous lookup against the redirectTable. For blobs with pending payloads
-	 * (localId exists but upload hasn't finished), this returns undefined. Consumers should
-	 * use the observability APIs on the handle (handle.payloadState, payloadShared event) to
-	 * understand/wait for storageId availability.
+	 * This leverages the driver's URL building logic to create a direct access URL for the blob.
+	 * For blobs with pending payloads (localId exists but upload hasn't finished), this returns undefined. 
+	 * Consumers should use the observability APIs on the handle (handle.payloadState, payloadShared event) 
+	 * to understand/wait for URL availability.
+	 * 
+	 * **WARNING**: The returned URL may expire and does not support permalinks.
+	 * This is intended for temporary integration scenarios only.
 	 */
-	public lookupStorageId(localId: string): string | undefined {
+	public lookupBlobURL(localId: string): string | undefined {
 		// Check if this is a pending blob (upload not yet complete)
 		if (this.pendingBlobs.has(localId)) {
 			return undefined;
 		}
 
-		// Return the storage ID from the redirect table
-		return this.redirectTable.get(localId);
+		// Get the storage ID from the redirect table
+		const storageId = this.redirectTable.get(localId);
+		if (storageId === undefined) {
+			return undefined;
+		}
+
+		// Use the storage service to build the URL if available
+		return this.storage.buildBlobUrl?.(storageId);
 	}
 
 	/**

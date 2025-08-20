@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 
-import { isFluidHandle, lookupBlobStorageId } from "../handles.js";
+import { isFluidHandle, lookupBlobURL } from "../handles.js";
 
 describe("Handles", () => {
 	it("isFluidHandle", () => {
@@ -32,7 +32,7 @@ describe("Handles", () => {
 		assert(isFluidHandle({ [fluidHandleSymbol]: {} }));
 	});
 
-	describe("lookupBlobStorageId", () => {
+	describe("lookupBlobURL", () => {
 		// Helper to create a mock handle
 		const createMockHandle = (absolutePath: string) => {
 			const mockHandleInternal = { absolutePath, [fluidHandleSymbol]: {} };
@@ -43,51 +43,51 @@ describe("Handles", () => {
 
 		it("throws error for non-blob handles", () => {
 			const mockRuntime = {
-				lookupBlobStorageId: () => "storage-id"
+				lookupBlobURL: () => "https://example.com/blob/url"
 			} as unknown as IContainerRuntime;
 
 			const nonBlobHandle = createMockHandle("/non-blob/path");
 
 			assert.throws(() => {
-				lookupBlobStorageId(mockRuntime, nonBlobHandle);
+				lookupBlobURL(mockRuntime, nonBlobHandle);
 			}, /Handle does not point to a blob/);
 		});
 
 		it("throws error for invalid blob handle path", () => {
 			const mockRuntime = {
-				lookupBlobStorageId: () => "storage-id"
+				lookupBlobURL: () => "https://example.com/blob/url"
 			} as unknown as IContainerRuntime;
 
 			const invalidHandle = createMockHandle("/_blobs/");
 
 			assert.throws(() => {
-				lookupBlobStorageId(mockRuntime, invalidHandle);
+				lookupBlobURL(mockRuntime, invalidHandle);
 			}, /Invalid blob handle path format/);
 		});
 
-		it("returns storage ID for valid blob handle", () => {
-			const expectedStorageId = "test-storage-id";
+		it("returns blob URL for valid blob handle", () => {
+			const expectedUrl = "https://example.com/blobs/test-storage-id/content";
 			const mockRuntime = {
-				lookupBlobStorageId: (localId: string) => {
+				lookupBlobURL: (localId: string) => {
 					assert.strictEqual(localId, "test-local-id");
-					return expectedStorageId;
+					return expectedUrl;
 				}
 			} as unknown as IContainerRuntime;
 
 			const blobHandle = createMockHandle("/_blobs/test-local-id");
 
-			const result = lookupBlobStorageId(mockRuntime, blobHandle);
-			assert.strictEqual(result, expectedStorageId);
+			const result = lookupBlobURL(mockRuntime, blobHandle);
+			assert.strictEqual(result, expectedUrl);
 		});
 
 		it("returns undefined when runtime returns undefined", () => {
 			const mockRuntime = {
-				lookupBlobStorageId: () => undefined
+				lookupBlobURL: () => undefined
 			} as unknown as IContainerRuntime;
 
 			const blobHandle = createMockHandle("/_blobs/pending-blob-id");
 
-			const result = lookupBlobStorageId(mockRuntime, blobHandle);
+			const result = lookupBlobURL(mockRuntime, blobHandle);
 			assert.strictEqual(result, undefined);
 		});
 	});

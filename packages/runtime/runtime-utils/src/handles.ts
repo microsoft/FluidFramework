@@ -197,23 +197,23 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
 }
 
 /**
- * Lookup the temporary storage ID for a blob handle.
+ * Lookup the blob URL for a blob handle.
  * @param containerRuntime - The container runtime instance
- * @param handle - The blob handle to lookup the storage ID for
- * @returns The storage ID if found and the blob is not pending, undefined otherwise
+ * @param handle - The blob handle to lookup the URL for
+ * @returns The blob URL if found and the blob is not pending, undefined otherwise
  * @remarks
- * This is a legacy+alpha helper function that provides access to blob storage IDs.
- * The storage ID may expire pending GC and does not support permalinks.
+ * This is a legacy+alpha helper function that provides access to blob URLs.
+ * The URL may expire and does not support permalinks.
  * For blobs with pending payloads, this returns undefined. Consumers should use
  * the observability APIs on the handle (handle.payloadState, payloadShared event)
- * to understand/wait for storageId availability.
+ * to understand/wait for URL availability.
  * 
- * **WARNING**: This API comes with strong warnings that the storageId may expire 
- * pending GC and does not support permalinks.
+ * **WARNING**: This API comes with strong warnings that the URL may expire 
+ * and does not support permalinks.
  * @legacy
  * @alpha
  */
-export function lookupBlobStorageId(
+export function lookupBlobURL(
 	containerRuntime: IContainerRuntime, 
 	handle: IFluidHandle
 ): string | undefined {
@@ -235,5 +235,5 @@ export function lookupBlobStorageId(
 	
 	// Cast the runtime to the internal interface and call the lookup method
 	const internalRuntime = containerRuntime as IContainerRuntimeInternal;
-	return internalRuntime.lookupBlobStorageId(localId);
+	return internalRuntime.lookupBlobURL(localId);
 }

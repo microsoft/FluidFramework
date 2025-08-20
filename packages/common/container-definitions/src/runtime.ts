@@ -224,6 +224,17 @@ export interface IContainerStorageService {
 	readBlob(id: string): Promise<ArrayBufferLike>;
 
 	/**
+	 * Builds a URL for accessing a blob by its storage ID.
+	 * @param storageId - The storage ID of the blob
+	 * @returns The URL to access the blob, or undefined if URL cannot be built
+	 * @remarks
+	 * This method leverages the driver's internal URL building logic to create
+	 * a direct access URL for the blob. The URL may expire and does not support
+	 * permalinks. This is intended for temporary integration scenarios only.
+	 */
+	buildBlobUrl?(storageId: string): string | undefined;
+
+	/**
 	 * Uploads a summary tree to storage using the given context for reference of previous summary handle.
 	 * The ISummaryHandles in the uploaded tree should have paths to indicate which summary object they are
 	 * referencing from the previously acked summary.

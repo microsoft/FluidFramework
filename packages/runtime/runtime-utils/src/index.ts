@@ -20,7 +20,7 @@ export {
 	isFluidHandlePayloadPending,
 	isLocalFluidHandle,
 	isSerializedHandle,
-	lookupBlobStorageId,
+	lookupBlobURL,
 	toFluidHandleErased,
 	toFluidHandleInternal,
 } from "./handles.js";

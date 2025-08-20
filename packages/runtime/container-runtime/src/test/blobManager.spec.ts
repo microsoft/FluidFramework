@@ -51,7 +51,7 @@ import {
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP
 abstract class BaseMockBlobStorage
-	implements Pick<IRuntimeStorageService, "readBlob" | "createBlob">
+	implements Pick<IRuntimeStorageService, "readBlob" | "createBlob"> & { buildBlobUrl?: (storageId: string) => string | undefined }
 {
 	public blobs: Map<string, ArrayBufferLike> = new Map();
 	public abstract createBlob(blob: ArrayBufferLike);
@@ -59,6 +59,13 @@ abstract class BaseMockBlobStorage
 		const blob = this.blobs.get(id);
 		assert(!!blob);
 		return blob;
+	}
+	public buildBlobUrl(storageId: string): string | undefined {
+		// Mock implementation - just return a mock URL for testing
+		if (this.blobs.has(storageId)) {
+			return `https://mock-storage.example.com/blobs/${encodeURIComponent(storageId)}/content`;
+		}
+		return undefined;
 	}
 }
 
@@ -1270,20 +1277,21 @@ for (const createBlobPayloadPending of [false, true]) {
 				);
 			});
 
-			it("lookupStorageId returns correct storage ID for attached blobs", async () => {
+			it("lookupBlobURL returns correct URL for attached blobs", async () => {
 				await runtime.attach();
 				await runtime.connect();
 
 				// Create a blob using the helper function
 				const blob = await createBlobAndGetIds("test blob content");
 
-				// The blob should now have a storage ID in the redirect table
-				const storageId = runtime.blobManager.lookupStorageId(blob.localId);
-				assert(storageId !== undefined, "Storage ID should be found for attached blob");
-				assert.strictEqual(storageId, blob.storageId, "Returned storage ID should match");
+				// The blob should now have a URL available
+				const blobUrl = runtime.blobManager.lookupBlobURL(blob.localId);
+				assert(blobUrl !== undefined, "Blob URL should be found for attached blob");
+				assert(blobUrl.includes(blob.storageId), "URL should contain the storage ID");
+				assert(blobUrl.includes("mock-storage.example.com"), "URL should be from mock storage");
 			});
 
-			it("lookupStorageId returns undefined for pending blobs", async () => {
+			it("lookupBlobURL returns undefined for pending blobs", async () => {
 				if (!createBlobPayloadPending) {
 					// This test only applies when payload pending is enabled
 					return;
@@ -1304,20 +1312,20 @@ for (const createBlobPayloadPending of [false, true]) {
 				};
 				const localId = getBlobIdFromGCNodeId(blobHandle.absolutePath);
 
-				// The blob should be pending, so lookupStorageId should return undefined
-				const storageId = runtime.blobManager.lookupStorageId(localId);
-				assert.strictEqual(storageId, undefined, "Storage ID should be undefined for pending blob");
+				// The blob should be pending, so lookupBlobURL should return undefined
+				const blobUrl = runtime.blobManager.lookupBlobURL(localId);
+				assert.strictEqual(blobUrl, undefined, "Blob URL should be undefined for pending blob");
 
-				// After processing, it should return the storage ID
+				// After processing, it should return the URL
 				await runtime.processAll();
-				const storageIdAfterProcessing = runtime.blobManager.lookupStorageId(localId);
-				assert(storageIdAfterProcessing !== undefined, "Storage ID should be found after processing");
+				const blobUrlAfterProcessing = runtime.blobManager.lookupBlobURL(localId);
+				assert(blobUrlAfterProcessing !== undefined, "Blob URL should be found after processing");
 			});
 
-			it("lookupStorageId returns undefined for unknown blob ID", () => {
+			it("lookupBlobURL returns undefined for unknown blob ID", () => {
 				const unknownId = "unknown-blob-id";
-				const storageId = runtime.blobManager.lookupStorageId(unknownId);
-				assert.strictEqual(storageId, undefined, "Storage ID should be undefined for unknown blob ID");
+				const blobUrl = runtime.blobManager.lookupBlobURL(unknownId);
+				assert.strictEqual(blobUrl, undefined, "Blob URL should be undefined for unknown blob ID");
 			});
 		});
 	});

@@ -90,20 +90,20 @@ export interface OdspContainerServices {
 	audience: IOdspAudience;
 
 	/**
-	 * Lookup the temporary storage ID for a blob handle.
-	 * @param handle - The blob handle to lookup the storage ID for
-	 * @returns The storage ID if found and the blob is not pending, undefined otherwise
+	 * Lookup the blob URL for a blob handle.
+	 * @param handle - The blob handle to lookup the URL for
+	 * @returns The blob URL if found and the blob is not pending, undefined otherwise
 	 * @remarks
-	 * This function provides access to blob storage IDs for handles.
-	 * The storage ID may expire pending GC and does not support permalinks.
+	 * This function provides access to blob URLs for handles.
+	 * The URL may expire and does not support permalinks.
 	 * For blobs with pending payloads, this returns undefined. Consumers should use
 	 * the observability APIs on the handle (handle.payloadState, payloadShared event)
-	 * to understand/wait for storageId availability.
+	 * to understand/wait for URL availability.
 	 *
-	 * **WARNING**: This API comes with strong warnings that the storageId may expire
-	 * pending GC and does not support permalinks.
+	 * **WARNING**: This API comes with strong warnings that the URL may expire
+	 * and does not support permalinks.
 	 */
-	lookupBlobStorageId: (handle: IFluidHandle) => string | undefined;
+	lookupBlobURL: (handle: IFluidHandle) => string | undefined;
 }
 
 /**
