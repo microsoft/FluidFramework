@@ -5,8 +5,7 @@
 
 /**
  * Specifies an environment on Fluid property of a IFluidPackage.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidPackageEnvironment {
 	/**
@@ -37,8 +36,7 @@ export interface IFluidPackageEnvironment {
  * While compatible with the npm package format it is not necessary that that package is an
  * npm package:
  * {@link https://stackoverflow.com/questions/10065564/add-custom-metadata-or-config-to-package-json-is-it-valid}
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidPackage {
 	/**
@@ -66,8 +64,7 @@ export interface IFluidPackage {
 /**
  * Check if the package.json defines a Fluid package
  * @param pkg - the package json data to check if it is a Fluid package.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const isFluidPackage = (pkg: unknown): pkg is Readonly<IFluidPackage> =>
 	typeof pkg === "object" &&
@@ -76,8 +73,7 @@ export const isFluidPackage = (pkg: unknown): pkg is Readonly<IFluidPackage> =>
 
 /**
  * Package manager configuration. Provides a key value mapping of config values
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidCodeDetailsConfig {
 	readonly [key: string]: string;
@@ -85,8 +81,7 @@ export interface IFluidCodeDetailsConfig {
 
 /**
  * Data structure used to describe the code to load on the Fluid document
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidCodeDetails {
 	/**
@@ -121,15 +116,13 @@ export const isFluidCodeDetails = (
 };
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const IFluidCodeDetailsComparer: keyof IProvideFluidCodeDetailsComparer =
 	"IFluidCodeDetailsComparer";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IProvideFluidCodeDetailsComparer {
 	readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
@@ -137,8 +130,7 @@ export interface IProvideFluidCodeDetailsComparer {
 
 /**
  * Provides capability to compare Fluid code details.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsComparer {
 	/**

@@ -10,8 +10,7 @@
  * This type is meant to be used indirectly. Most commonly as a constraint
  * for generics of message structures.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface TypedMessage {
 	/**

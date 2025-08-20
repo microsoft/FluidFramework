@@ -62,15 +62,13 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
 
 /**
  * {@inheritDoc ConsensusQueueClass}
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const ConsensusQueue = createSharedObjectKind(ConsensusQueueFactory);
 
 /**
  * {@inheritDoc ConsensusQueueClass}
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 // TODO: #22835 Use undefined instead of any (breaking change)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
