@@ -6,6 +6,7 @@
 import type {
 	IConfigProviderBase,
 	ITelemetryBaseLogger,
+	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 
@@ -87,6 +88,22 @@ export interface OdspContainerServices {
 	 * Provides an object that facilitates obtaining information about users present in the Fluid session, as well as listeners for roster changes triggered by users joining or leaving the session.
 	 */
 	audience: IOdspAudience;
+
+	/**
+	 * Lookup the temporary storage ID for a blob handle.
+	 * @param handle - The blob handle to lookup the storage ID for
+	 * @returns The storage ID if found and the blob is not pending, undefined otherwise
+	 * @remarks
+	 * This function provides access to blob storage IDs for handles.
+	 * The storage ID may expire pending GC and does not support permalinks.
+	 * For blobs with pending payloads, this returns undefined. Consumers should use
+	 * the observability APIs on the handle (handle.payloadState, payloadShared event)
+	 * to understand/wait for storageId availability.
+	 *
+	 * **WARNING**: This API comes with strong warnings that the storageId may expire
+	 * pending GC and does not support permalinks.
+	 */
+	lookupBlobStorageId: (handle: IFluidHandle) => string | undefined;
 }
 
 /**

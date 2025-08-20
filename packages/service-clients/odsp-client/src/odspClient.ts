@@ -38,11 +38,12 @@ import {
 	isOdspResolvedUrl,
 } from "@fluidframework/odsp-driver/internal";
 import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
+import { lookupBlobStorageId } from "@fluidframework/runtime-utils/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import type { TokenResponse } from "./interfaces.js";
 import type {
+	TokenResponse,
 	OdspClientProps,
 	OdspConnectionConfig,
 	OdspContainerAttachProps,
@@ -233,11 +234,35 @@ export class OdspClient {
 	}
 
 	private async getContainerServices(container: IContainer): Promise<OdspContainerServices> {
+		// Get the runtime access upfront
+		let runtimeInternal: unknown;
+		try {
+			const entryPoint = await container.getEntryPoint();
+			runtimeInternal = (entryPoint as { IStaticEntryPoint?: { extensionStore?: unknown } })
+				?.IStaticEntryPoint?.extensionStore;
+		} catch {
+			// If we can't access the runtime, runtimeInternal will remain undefined
+		}
+
 		return {
 			audience: createServiceAudience({
 				container,
 				createServiceMember: createOdspAudienceMember,
 			}),
+			lookupBlobStorageId: (handle) => {
+				try {
+					if (
+						runtimeInternal !== undefined &&
+						typeof (runtimeInternal as { lookupBlobStorageId?: unknown })
+							.lookupBlobStorageId === "function"
+					) {
+						return lookupBlobStorageId(runtimeInternal as never, handle);
+					}
+					return undefined;
+				} catch {
+					return undefined;
+				}
+			},
 		};
 	}
 }

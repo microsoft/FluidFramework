@@ -1269,6 +1269,56 @@ for (const createBlobPayloadPending of [false, true]) {
 					"blob2 storageId should have been deleted",
 				);
 			});
+
+			it("lookupStorageId returns correct storage ID for attached blobs", async () => {
+				await runtime.attach();
+				await runtime.connect();
+
+				// Create a blob using the helper function
+				const blob = await createBlobAndGetIds("test blob content");
+
+				// The blob should now have a storage ID in the redirect table
+				const storageId = runtime.blobManager.lookupStorageId(blob.localId);
+				assert(storageId !== undefined, "Storage ID should be found for attached blob");
+				assert.strictEqual(storageId, blob.storageId, "Returned storage ID should match");
+			});
+
+			it("lookupStorageId returns undefined for pending blobs", async () => {
+				if (!createBlobPayloadPending) {
+					// This test only applies when payload pending is enabled
+					return;
+				}
+
+				await runtime.attach();
+				await runtime.connect();
+
+				// Create a blob but don't process it (keep it pending) 
+				const blobContents = IsoBuffer.from("pending blob content", "utf8");
+				const handleP = runtime.createBlob(blobContents);
+				const blobHandle = await handleP;
+				
+				// Extract localId from the handle path
+				const getBlobIdFromGCNodeId = (gcNodeId: string) => {
+					const pathParts = gcNodeId.split("/");
+					return pathParts[2];
+				};
+				const localId = getBlobIdFromGCNodeId(blobHandle.absolutePath);
+
+				// The blob should be pending, so lookupStorageId should return undefined
+				const storageId = runtime.blobManager.lookupStorageId(localId);
+				assert.strictEqual(storageId, undefined, "Storage ID should be undefined for pending blob");
+
+				// After processing, it should return the storage ID
+				await runtime.processAll();
+				const storageIdAfterProcessing = runtime.blobManager.lookupStorageId(localId);
+				assert(storageIdAfterProcessing !== undefined, "Storage ID should be found after processing");
+			});
+
+			it("lookupStorageId returns undefined for unknown blob ID", () => {
+				const unknownId = "unknown-blob-id";
+				const storageId = runtime.blobManager.lookupStorageId(unknownId);
+				assert.strictEqual(storageId, undefined, "Storage ID should be undefined for unknown blob ID");
+			});
 		});
 	});
 }
