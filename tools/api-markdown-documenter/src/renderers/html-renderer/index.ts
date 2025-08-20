@@ -4,7 +4,7 @@
  */
 
 /**
- * Library for rendering {@link DocumentationNode} trees as `HTML`.
+ * Library for rendering documentation node trees as `HTML`.
  */
 
 export {

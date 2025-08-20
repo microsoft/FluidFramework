@@ -2,7 +2,7 @@
 
 Test package
 
-### Remarks {#test-suite-a-remarks}
+<h3 id="test-suite-a-remarks">Remarks</h3>
 
 This remarks block includes a bulleted list!
 
@@ -22,7 +22,7 @@ Also, here is a link test, including a bad link, because we should have some rea
 - Bad link (no alias): _InvalidItem_
 - Bad link (with alias): _even though I link to an invalid item, I would still like this text to be rendered_
 
-### Example {#test-suite-a-example}
+<h3 id="test-suite-a-example">Example</h3>
 
 A test example
 

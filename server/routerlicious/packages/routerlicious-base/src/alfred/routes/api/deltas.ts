@@ -4,9 +4,13 @@
  */
 
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
-import type { IAlfredTenant } from "@fluidframework/server-services-client";
-import type {
+import {
+	validateRequestParams,
+	handleResponse,
+	validatePrivateLink,
+} from "@fluidframework/server-services";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
+import {
 	ICache,
 	IDeltaService,
 	IRevokedTokenChecker,
@@ -60,6 +64,9 @@ export function create(
 		throttleIdPrefix: Constants.getDeltasThrottleIdPrefix,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
+
+	const enablePrivateLinkNetworkCheck: boolean =
+		config.get("alfred:enablePrivateLinkNetworkCheck") ?? false;
 
 	// Jwt token cache
 	const enableJwtTokenCache: boolean = getBooleanFromConfig(
@@ -149,6 +156,7 @@ export function create(
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
+		validatePrivateLink(tenantManager, enablePrivateLinkNetworkCheck),
 		throttle(
 			clusterThrottlers.get(Constants.getDeltasThrottleIdPrefix),
 			winston,

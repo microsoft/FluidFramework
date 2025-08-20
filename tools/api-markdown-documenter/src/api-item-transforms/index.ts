@@ -4,7 +4,7 @@
  */
 
 /**
- * Library containing functionality to transform `ApiItem`s to {@link DocumentationNode}s.
+ * Library containing functionality to transform `ApiItem`s to Markdown.
  */
 
 export {

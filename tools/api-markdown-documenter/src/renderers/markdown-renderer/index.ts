@@ -4,7 +4,7 @@
  */
 
 /**
- * Library for rendering {@link DocumentationNode} trees as `Markdown`.
+ * Library for rendering documentation node trees as `Markdown`.
  */
 
 export {

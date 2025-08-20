@@ -56,7 +56,7 @@ import {
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
-	toStoredSchema,
+	toInitialSchema,
 } from "../simple-tree/index.js";
 import { jsonSequenceRootSchema } from "./sequenceRootUtils.js";
 import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
@@ -85,7 +85,7 @@ const buildId = { minor: 42 };
 const buildId2 = { minor: 442 };
 const detachId = { minor: 43 };
 
-const optionalArraySchema = toStoredSchema(SchemaFactory.optional(JsonAsTree.Array));
+const optionalArraySchema = toInitialSchema(SchemaFactory.optional(JsonAsTree.Array));
 
 /**
  * Generic forest test suite
@@ -115,7 +115,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				const schemaFactory = new SchemaFactory("forest test suite");
 
 				const rootSchema = schemaFactory.optional([JsonAsTree.Array]);
-				const schema = new TreeStoredSchemaRepository(toStoredSchema(rootSchema));
+				const schema = new TreeStoredSchemaRepository(toInitialSchema(rootSchema));
 
 				const forest = factory(schema);
 
@@ -1083,7 +1083,7 @@ export function testForest(config: ForestTestConfiguration): void {
 	testGeneralPurposeTreeCursor(
 		"forest cursor",
 		(data): ITreeCursor => {
-			const forest = factory(new TreeStoredSchemaRepository(toStoredSchema(testTreeSchema)));
+			const forest = factory(new TreeStoredSchemaRepository(toInitialSchema(testTreeSchema)));
 			initializeForest(
 				forest,
 				cursorForJsonableTreeField([data]),
