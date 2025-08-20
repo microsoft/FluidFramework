@@ -172,44 +172,10 @@ export function customFromCursor<TChild>(
 				forEachField(reader, () => {
 					assert(reader.getFieldLength() === 1, 0xa19 /* invalid children number */);
 					const storedKey = reader.getFieldKey();
-					let key: string;
-
-					switch (options.keys) {
-						case KeyEncodingOptions.allStoredKeys:
-							// Since this case might be inside of an unknown optional field,
-							// it must not depend on there being a view schema.
-							// Fortunately, its possible to implement this case without one.
-							key = storedKey;
-							break;
-						case KeyEncodingOptions.usePropertyKeys:
-						case KeyEncodingOptions.knownStoredKeys:
-							{
-								// Both these cases avoid traversing into unknown optional fields,
-								// so a view schema should be available.
-								const viewSchema =
-									schema.get(type) ?? fail(0xbff /* missing schema for type in cursor */);
-								if (isObjectNodeSchema(viewSchema)) {
-									const propertyKey = viewSchema.storedKeyToPropertyKey.get(storedKey);
-									if (propertyKey === undefined) {
-										assert(
-											viewSchema.allowUnknownOptionalFields,
-											0xc00 /* found unknown field where not allowed */,
-										);
-										// Skip unknown optional fields when using property keys or only known stored keys.
-										return;
-									} else {
-										key =
-											options.keys === KeyEncodingOptions.usePropertyKeys
-												? propertyKey
-												: storedKey;
-									}
-								} else {
-									key = storedKey;
-								}
-							}
-							break;
-						default:
-							unreachableCase(options.keys);
+					const key = getKeyFromOptions(options.keys, type, storedKey, schema);
+					if (key === undefined) {
+						// Skip unknown optional fields when using property keys or only known stored keys.
+						return;
 					}
 
 					reader.enterNode(0);
@@ -219,6 +185,59 @@ export function customFromCursor<TChild>(
 				return fields;
 			}
 		}
+	}
+}
+
+/**
+ * Returns the key if one should be used, and undefined if the field should be omitted/skipped.
+ *
+ * @param schema - Collection of known view schema.
+ * If `options` is not `KeyEncodingOptions.allStoredKeys`, this must provide the schema for the `type`.
+ * Note that if using this to perform a recursive walk, and `schema` has all view schema reachable from the starting type,
+ * then it should be safe to use the same schema map on every invocation since types missing from it will only be
+ * encountered after traversing unknown optional fields which for which this will return undefined.
+ *
+ * @remarks
+ * Asserts that if encountering an unknown optional field, the schema allows them.
+ * This is not robustly validated in all cases: when in allStoredKeys, it is not checked
+ * (since the view schema might not even be available).
+ */
+function getKeyFromOptions(
+	options: KeyEncodingOptions,
+	type: TreeNodeSchemaIdentifier,
+	storedKey: FieldKey,
+	schema: ReadonlyMap<string, TreeNodeSchema>,
+): string | undefined {
+	switch (options) {
+		case KeyEncodingOptions.allStoredKeys:
+			// Since this case might be inside of an unknown optional field,
+			// it must not depend on there being a view schema.
+			// Fortunately, its possible to implement this case without one.
+			return storedKey;
+		case KeyEncodingOptions.usePropertyKeys:
+		case KeyEncodingOptions.knownStoredKeys: {
+			// Both these cases avoid traversing into unknown optional fields,
+			// so a view schema should be available.
+			const viewSchema =
+				schema.get(type) ?? fail(0xbff /* missing schema for type in cursor */);
+			if (isObjectNodeSchema(viewSchema)) {
+				const propertyKey = viewSchema.storedKeyToPropertyKey.get(storedKey);
+				if (propertyKey === undefined) {
+					assert(
+						viewSchema.allowUnknownOptionalFields,
+						0xc00 /* found unknown field where not allowed */,
+					);
+					// Skip unknown optional fields when using property keys or only known stored keys.
+					return undefined;
+				} else {
+					return options === KeyEncodingOptions.usePropertyKeys ? propertyKey : storedKey;
+				}
+			} else {
+				return storedKey;
+			}
+		}
+		default:
+			unreachableCase(options);
 	}
 }
 
