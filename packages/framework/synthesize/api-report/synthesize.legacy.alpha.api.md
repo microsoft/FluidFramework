@@ -4,15 +4,15 @@
 
 ```ts
 
-// @alpha @legacy
+// @beta @legacy
 export type AsyncFluidObjectProvider<O, R = undefined> = AsyncOptionalFluidObjectProvider<O> & AsyncRequiredFluidObjectProvider<R>;
 
-// @alpha @legacy
+// @beta @legacy
 export type AsyncOptionalFluidObjectProvider<T> = T extends undefined ? Record<string, never> : {
     [P in keyof T]?: Promise<T[P] | undefined>;
 };
 
-// @alpha @legacy
+// @beta @legacy
 export type AsyncRequiredFluidObjectProvider<T> = T extends undefined ? Record<string, never> : {
     [P in keyof T]: Promise<NonNullable<Exclude<T[P], undefined | null>>>;
 };
@@ -28,10 +28,10 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     unregister(type: keyof TMap): void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export type FluidObjectProvider<T> = NonNullable<T> | Promise<NonNullable<T>> | ((dependencyContainer: IFluidDependencySynthesizer) => NonNullable<T>) | ((dependencyContainer: IFluidDependencySynthesizer) => Promise<NonNullable<T>>);
 
-// @alpha @legacy
+// @beta @legacy
 export type FluidObjectSymbolProvider<T> = {
     [P in keyof T]?: P;
 };

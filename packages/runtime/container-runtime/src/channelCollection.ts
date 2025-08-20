@@ -108,8 +108,7 @@ import {
 
 /**
  * True if a tombstoned object should be returned without erroring
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
 

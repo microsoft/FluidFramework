@@ -126,8 +126,7 @@ function contextSupportsFeature<K extends keyof IFluidDataStoreContextFeaturesTo
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum DataStoreMessageType {
 	// Creates a new channel
@@ -136,8 +135,7 @@ export enum DataStoreMessageType {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedObjectRegistry {
 	// TODO consider making this async. A consequence is that either the creation of a distributed data type
@@ -167,8 +165,7 @@ function initializePendingOpCount(): { value: number } {
 
 /**
  * Base data store class
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class FluidDataStoreRuntime
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
@@ -1511,8 +1508,7 @@ export class FluidDataStoreRuntime
  * Request handler is only called when data store can't resolve request, i.e. for custom requests.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @param requestHandler - request handler to mix in
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const mixinRequestHandler = (
 	requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>,
@@ -1533,8 +1529,7 @@ export const mixinRequestHandler = (
  * @param handler - handler that returns info about blob to be added to summary.
  * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const mixinSummaryHandler = (
 	handler: (
