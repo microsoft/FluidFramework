@@ -126,8 +126,7 @@ function contextSupportsFeature<K extends keyof IFluidDataStoreContextFeaturesTo
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum DataStoreMessageType {
 	// Creates a new channel
@@ -136,8 +135,7 @@ export enum DataStoreMessageType {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedObjectRegistry {
 	// TODO consider making this async. A consequence is that either the creation of a distributed data type
@@ -167,8 +165,7 @@ function initializePendingOpCount(): { value: number } {
 
 /**
  * Base data store class
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class FluidDataStoreRuntime
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>

@@ -675,8 +675,7 @@ export interface ISummarizeRunnerTelemetry extends ITelemetryLoggerPropertyBag {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryBaseConfiguration {
 	/**
@@ -698,8 +697,7 @@ export interface ISummaryBaseConfiguration {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
 	state: "enabled";
@@ -762,24 +760,21 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryConfigurationDisableSummarizer {
 	state: "disabled";
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
 	state: "disableHeuristics";
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type ISummaryConfiguration =
 	| ISummaryConfigurationDisableSummarizer

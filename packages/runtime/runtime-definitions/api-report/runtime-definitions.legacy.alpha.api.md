@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha @legacy
+// @beta @legacy
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
 // @beta @legacy
@@ -21,11 +21,11 @@ export interface CommitStagedChangesOptionsExperimental {
     squash?: boolean;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export type CreateChildSummarizerNodeParam = {
     type: CreateSummarizerNodeSource.FromSummary;
 } | {
@@ -36,7 +36,7 @@ export type CreateChildSummarizerNodeParam = {
     type: CreateSummarizerNodeSource.Local;
 };
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export enum CreateSummarizerNodeSource {
     // (undocumented)
     FromAttach = 1,
@@ -53,10 +53,10 @@ export interface DetachedAttributionKey {
     type: "detached";
 }
 
-// @alpha @legacy
+// @beta @legacy
 export type FluidDataStoreRegistryEntry = Readonly<Partial<IProvideFluidDataStoreRegistry & IProvideFluidDataStoreFactory>>;
 
-// @alpha @legacy
+// @beta @legacy
 export enum FlushMode {
     // @deprecated
     Immediate = 0,
@@ -70,7 +70,7 @@ export interface IAttachMessage {
     type: string;
 }
 
-// @alpha @sealed @legacy
+// @beta @sealed @legacy
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
     // (undocumented)
     readonly baseLogger: ITelemetryBaseLogger;
@@ -95,7 +95,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
-// @alpha @sealed @legacy (undocumented)
+// @beta @sealed @legacy (undocumented)
 export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "batchBegin", listener: (op: Omit<ISequencedDocumentMessage, "contents">) => void): any;
     (event: "batchEnd", listener: (error: unknown, op: Omit<ISequencedDocumentMessage, "contents">) => void): any;
@@ -114,7 +114,7 @@ export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase
     readonly inStagingMode?: boolean;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IDataStore {
     readonly entryPoint: IFluidHandleInternal<FluidObject>;
     trySetAlias(alias: string): Promise<AliasResult>;
@@ -133,7 +133,7 @@ export interface IExperimentalIncrementalSummaryContext {
     readonly summarySequenceNumber: number;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IFluidDataStoreChannel extends IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
@@ -157,7 +157,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     updateUsedRoutes(usedRoutes: string[]): void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IFluidDataStoreContext extends IFluidParentContext {
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
@@ -172,15 +172,15 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
     readonly packagePath: PackagePath;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
     attachRuntime(factory: IProvideFluidDataStoreFactory, dataStoreRuntime: IFluidDataStoreChannel): Promise<IDataStore>;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory;
 
-// @alpha @legacy
+// @beta @legacy
 export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
     createDataStore?(context: IFluidDataStoreContext): {
         readonly runtime: IFluidDataStoreChannel;
@@ -189,21 +189,21 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
     type: string;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IFluidDataStorePolicies {
     readonly readonlyInStagingMode: boolean;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export const IFluidDataStoreRegistry: keyof IProvideFluidDataStoreRegistry;
 
-// @alpha @legacy
+// @beta @legacy
 export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
     get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;
     getSync?(name: string): FluidDataStoreRegistryEntry | undefined;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IFluidParentContext extends IProvideFluidHandleContext, Partial<IProvideFluidDataStoreRegistry> {
     addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number): void;
     readonly attachState: AttachState;
@@ -256,7 +256,7 @@ export interface IGarbageCollectionData {
     };
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IGarbageCollectionDetailsBase {
     gcData?: IGarbageCollectionData;
     usedRoutes?: string[];
@@ -273,13 +273,13 @@ export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
     snapshot: IAttachMessage["snapshot"] | null;
 };
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IProvideFluidDataStoreFactory {
     // (undocumented)
     readonly IFluidDataStoreFactory: IFluidDataStoreFactory;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IProvideFluidDataStoreRegistry {
     // (undocumented)
     readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
@@ -299,7 +299,7 @@ export interface IRuntimeMessagesContent {
     readonly localOpMetadata: unknown;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IRuntimeStorageService {
     // @deprecated (undocumented)
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
@@ -325,14 +325,14 @@ export interface IRuntimeStorageService {
 // @beta @legacy
 export type ISequencedMessageEnvelope = Omit<ISequencedDocumentMessage, "contents" | "clientSequenceNumber">;
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISummarizeInternalResult extends ISummarizeResult {
     // (undocumented)
     id: string;
     pathPartsForChildren?: string[];
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISummarizeResult {
     // (undocumented)
     stats: ISummaryStats;
@@ -340,7 +340,7 @@ export interface ISummarizeResult {
     summary: SummaryTree;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface ISummarizerNode {
     // (undocumented)
     createChild(
@@ -359,17 +359,17 @@ export interface ISummarizerNode {
     updateBaseSummaryState(snapshot: ISnapshotTree): void;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface ISummarizerNodeConfig {
     readonly canReuseHandle?: boolean;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
     readonly gcDisabled?: boolean;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
     // (undocumented)
     createChild(
@@ -418,16 +418,16 @@ export interface LocalAttributionKey {
     type: "local";
 }
 
-// @alpha @legacy
+// @beta @legacy
 export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
-// @alpha @legacy
+// @beta @legacy
 export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry2>;
 
-// @alpha @legacy
+// @beta @legacy
 export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
 
-// @alpha @legacy
+// @beta @legacy
 export type NamedFluidDataStoreRegistryEntry2 = [
 string,
 Promise<FluidDataStoreRegistryEntry> | FluidDataStoreRegistryEntry
@@ -439,7 +439,7 @@ export interface OpAttributionKey {
     type: "op";
 }
 
-// @alpha @legacy
+// @beta @legacy
 export type PackagePath = readonly string[];
 
 // @alpha @sealed @deprecated @legacy (undocumented)
@@ -448,17 +448,17 @@ export interface StageControlsExperimental {
     readonly discardChanges: () => void;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;
 
-// @alpha @legacy
+// @beta @legacy
 export const VisibilityState: {
     NotVisible: string;
     LocallyVisible: string;
     GloballyVisible: string;
 };
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilityState];
 
 // (No @packageDocumentation comment for this package)

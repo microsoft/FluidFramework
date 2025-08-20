@@ -48,8 +48,7 @@ export interface IGarbageCollectionData {
 
 /**
  * GC details provided to each node during creation.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IGarbageCollectionDetailsBase {
 	/**

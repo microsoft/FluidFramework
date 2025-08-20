@@ -348,8 +348,7 @@ function getUnknownMessageTypeError(
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryRuntimeOptions {
 	/**
@@ -382,8 +381,7 @@ export interface ISummaryRuntimeOptions {
  * compat configuration info.
  * If neither of the above is done, then the build will fail to compile.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ContainerRuntimeOptions {
 	readonly summaryOptions: ISummaryRuntimeOptions;
@@ -463,8 +461,7 @@ export interface ContainerRuntimeOptions {
 /**
  * Options for container runtime.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type IContainerRuntimeOptions = Partial<ContainerRuntimeOptions>;
 
@@ -512,14 +509,12 @@ export type IContainerRuntimeOptionsInternal = Partial<ContainerRuntimeOptionsIn
 export const DeletedResponseHeaderKey = "wasDeleted";
 /**
  * Tombstone error responses will have this header set to true
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const TombstoneResponseHeaderKey = "isTombstoned";
 /**
  * Inactive error responses will have this header set to true
- * @legacy
- * @alpha
+ * @legacy @beta
  *
  * @deprecated this header is deprecated and will be removed in the future. The functionality corresponding
  * to this was experimental and is no longer supported.
@@ -727,8 +722,7 @@ type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSeq
 
 /**
  * This object holds the parameters necessary for the {@link loadContainerRuntime} function.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface LoadContainerRuntimeParams {
 	/**
@@ -788,8 +782,7 @@ export interface LoadContainerRuntimeParams {
  * This is meant to be used by a {@link @fluidframework/container-definitions#IRuntimeFactory} to instantiate a container runtime.
  * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
  * @returns A runtime which provides all the functionality necessary to bind with the loader layer via the {@link @fluidframework/container-definitions#IRuntime} interface and provide a runtime environment via the {@link @fluidframework/container-runtime-definitions#IContainerRuntime} interface.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export async function loadContainerRuntime(
 	params: LoadContainerRuntimeParams,

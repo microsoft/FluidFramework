@@ -510,8 +510,7 @@ export interface IGarbageCollectorCreateParams {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IGCRuntimeOptions {
 	/**
