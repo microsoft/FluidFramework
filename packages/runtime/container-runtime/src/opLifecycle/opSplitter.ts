@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IBatchMessage } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	DataCorruptionError,
 	createChildLogger,
@@ -14,12 +14,12 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
+import { ContainerMessageType, type ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
 
-import {
+import type {
 	IChunkedOp,
-	type OutboundBatchMessage,
-	type OutboundSingletonBatch,
+	OutboundBatchMessage,
+	OutboundSingletonBatch,
 } from "./definitions.js";
 import { estimateSocketSize } from "./outbox.js";
 

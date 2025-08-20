@@ -98,6 +98,12 @@ import {
 	createSessionId,
 	deserializeIdCompressor,
 } from "@fluidframework/id-compressor/internal";
+import {
+
+	FlushMode,
+	FlushModeExperimental,
+	channelsTreeName,
+	gcTreeKey} from "@fluidframework/runtime-definitions/internal";
 import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -119,14 +125,7 @@ import type {
 	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeBaseExperimental,
 	IFluidParentContext,
-} from "@fluidframework/runtime-definitions/internal";
-import {
-	FlushMode,
-	FlushModeExperimental,
-	channelsTreeName,
-	gcTreeKey,
-	type MinimumVersionForCollab,
-} from "@fluidframework/runtime-definitions/internal";
+	type MinimumVersionForCollab} from "@fluidframework/runtime-definitions/internal";
 import {
 	defaultMinVersionForCollab,
 	isValidMinVersionForCollab,
@@ -176,7 +175,7 @@ import { v4 as uuid } from "uuid";
 import { BindBatchTracker } from "./batchTracker.js";
 import {
 	BlobManager,
-	IPendingBlobs,
+	type IPendingBlobs,
 	blobManagerBasePath,
 	blobsTreeName,
 	isBlobPath,
@@ -208,9 +207,9 @@ import { DeltaScheduler } from "./deltaScheduler.js";
 import {
 	GCNodeType,
 	GarbageCollector,
-	IGCRuntimeOptions,
-	IGCStats,
-	IGarbageCollector,
+	type IGCRuntimeOptions,
+	type IGCStats,
+	type IGarbageCollector,
 	gcGenerationOptionName,
 	type GarbageCollectionMessage,
 	type IGarbageCollectionRuntime,
@@ -219,19 +218,19 @@ import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
 import {
 	ContainerMessageType,
 	type OutboundContainerRuntimeDocumentSchemaMessage,
-	ContainerRuntimeGCMessage,
+	type ContainerRuntimeGCMessage,
 	type ContainerRuntimeIdAllocationMessage,
 	type InboundSequencedContainerRuntimeMessage,
 	type LocalContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
-import { ISavedOpMetadata } from "./metadata.js";
+import type { ISavedOpMetadata } from "./metadata.js";
 import {
-	LocalBatchMessage,
-	BatchStartInfo,
+	type LocalBatchMessage,
+	type BatchStartInfo,
 	DuplicateBatchDetector,
 	ensureContentsDeserialized,
-	IBatchCheckpoint,
+	type IBatchCheckpoint,
 	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
@@ -243,8 +242,8 @@ import {
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
-	PendingMessageResubmitData,
-	IPendingLocalState,
+	type PendingMessageResubmitData,
+	type IPendingLocalState,
 	PendingStateManager,
 	type PendingBatchResubmitMetadata,
 } from "./pendingStateManager.js";
@@ -266,24 +265,24 @@ import type {
 } from "./summary/index.js";
 import {
 	DocumentsSchemaController,
-	IBaseSummarizeResult,
-	IConnectableRuntime,
-	IContainerRuntimeMetadata,
-	ICreateContainerMetadata,
-	IEnqueueSummarizeOptions,
-	IGenerateSummaryTreeResult,
-	IGeneratedSummaryStats,
-	IOnDemandSummarizeOptions,
-	IRefreshSummaryAckOptions,
-	IRootSummarizerNodeWithGC,
-	ISubmitSummaryOptions,
-	ISummarizerInternalsProvider,
-	ISummarizerRuntime,
-	ISummaryMetadataMessage,
-	IdCompressorMode,
+	type IBaseSummarizeResult,
+	type IConnectableRuntime,
+	type IContainerRuntimeMetadata,
+	type ICreateContainerMetadata,
+	type IEnqueueSummarizeOptions,
+	type IGenerateSummaryTreeResult,
+	type IGeneratedSummaryStats,
+	type IOnDemandSummarizeOptions,
+	type IRefreshSummaryAckOptions,
+	type IRootSummarizerNodeWithGC,
+	type ISubmitSummaryOptions,
+	type ISummarizerInternalsProvider,
+	type ISummarizerRuntime,
+	type ISummaryMetadataMessage,
+	type IdCompressorMode,
 	OrderedClientElection,
 	RetriableSummaryError,
-	SubmitSummaryResult,
+	type SubmitSummaryResult,
 	aliasBlobName,
 	chunksBlobName,
 	recentBatchInfoBlobName,
@@ -301,7 +300,7 @@ import {
 	SummaryCollection,
 	OrderedClientCollection,
 	validateSummaryHeuristicConfiguration,
-	ISummaryConfiguration,
+	type ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 	isSummariesDisabled,
 	summarizerClientType,

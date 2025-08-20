@@ -12,14 +12,14 @@ import {
 	gitHashFile,
 } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
-import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
-import {
-	type IFluidHandleContext,
-	type IFluidHandleInternal,
+import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
+import type { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
+import type {
+	IFluidHandleContext,
+	IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
+import { type IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	IRuntimeStorageService,
 	ISequencedMessageEnvelope,
@@ -32,7 +32,7 @@ import {
 import {
 	LoggingError,
 	MockLogger,
-	MonitoringContext,
+	type MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
 	type ITelemetryLoggerExt,
@@ -42,8 +42,8 @@ import { v4 as uuid } from "uuid";
 
 import {
 	BlobManager,
-	IBlobManagerLoadInfo,
-	IBlobManagerRuntime,
+	type IBlobManagerLoadInfo,
+	type IBlobManagerRuntime,
 	blobManagerBasePath,
 	redirectTableBlobName,
 	type IPendingBlobs,
