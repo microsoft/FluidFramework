@@ -131,6 +131,23 @@ function isConnected(container: IFluidContainer | undefined): boolean {
 	return container !== undefined && container.connectionState === ConnectionState.Connected;
 }
 
+function isString(value: unknown): value is string {
+	return typeof value === "string";
+}
+
+function isStringOrNumberRecord(value: unknown): value is Record<string, string | number> {
+	if (value === null || typeof value !== "object" || Array.isArray(value)) {
+		return false;
+	}
+	for (const key of Object.keys(value)) {
+		const prop = (value as Record<string, unknown>)[key];
+		if (!(typeof prop === "string" || typeof prop === "number")) {
+			return false;
+		}
+	}
+	return true;
+}
+
 class MessageHandler {
 	public presence: Presence | undefined;
 	public container: IFluidContainer | undefined;
@@ -138,7 +155,7 @@ class MessageHandler {
 	private readonly latestStates = new Map<string, LatestRaw<{ value: string }>>();
 	private readonly latestMapStates = new Map<
 		string,
-		LatestMapRaw<{ value: string }, string>
+		LatestMapRaw<{ value: Record<string, string | number> }, string>
 	>();
 
 	private connectSetup(): void {
@@ -173,7 +190,10 @@ class MessageHandler {
 			const latestMapWorkspace = this.presence.states.getWorkspace(
 				`test:${workspaceId}` as const,
 				{
-					latestMap: StateFactory.latestMap<{ value: string }, string>({ local: {} }),
+					latestMap: StateFactory.latestMap<
+						{ value: Record<string, string | number> },
+						string
+					>({ local: {} }),
 				},
 			);
 			const latestMapState = latestMapWorkspace.states.latestMap;
@@ -281,7 +301,12 @@ class MessageHandler {
 					});
 					break;
 				}
-				latestState.local = { value: msg.value as string };
+
+				if (!isString(msg.value)) {
+					break;
+				}
+
+				latestState.local = { value: msg.value };
 				break;
 			}
 
@@ -299,7 +324,12 @@ class MessageHandler {
 					});
 					break;
 				}
-				latestMapState.local.set(msg.key, { value: msg.value as string });
+
+				if (!isStringOrNumberRecord(msg.value)) {
+					break;
+				}
+
+				latestMapState.local.set(msg.key, { value: msg.value });
 				break;
 			}
 
@@ -352,7 +382,7 @@ class MessageHandler {
 					break;
 				}
 
-				let value: { value: string } | undefined;
+				let value: { value: Record<string, string | number> } | undefined;
 				if (msg.attendeeId) {
 					const attendee = this.presence.attendees.getAttendee(msg.attendeeId);
 					const remoteData = latestMapState.getRemote(attendee);
