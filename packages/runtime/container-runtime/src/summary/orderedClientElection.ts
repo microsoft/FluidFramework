@@ -6,12 +6,20 @@
 /* eslint-disable @rushstack/no-new-null */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { IEvent, IEventProvider, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type {
+	IEvent,
+	IEventProvider,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IClient, IQuorumClients, ISequencedClient } from "@fluidframework/driver-definitions";
+import type {
+	IClient,
+	IQuorumClients,
+	ISequencedClient,
+} from "@fluidframework/driver-definitions";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	UsageError,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";

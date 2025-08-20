@@ -16,7 +16,7 @@ import type {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-	type SerializedIdCompressorWithOngoingSession,
+	SerializedIdCompressorWithOngoingSession,
 } from "../index.js";
 import { createSessionId } from "../utilities.js";
 

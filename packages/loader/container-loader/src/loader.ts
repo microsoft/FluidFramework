@@ -94,8 +94,7 @@ export class RelativeLoader implements ILoader {
  * {@link @fluidframework/container-definitions#IFluidModuleWithDetails}
  * to have all the code loading modules in one package. #8193
  * Encapsulates a module entry point with corresponding code details.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidModuleWithDetails {
 	/**
@@ -115,8 +114,7 @@ export interface IFluidModuleWithDetails {
  * to have code loading modules in one package. #8193
  * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
  * a package name and package version range.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
 	/**
@@ -130,8 +128,7 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 
 /**
  * Services and properties necessary for creating a loader
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ILoaderProps {
 	/**
@@ -183,8 +180,7 @@ export interface ILoaderProps {
 
 /**
  * Services and properties used by and exposed by the loader
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ILoaderServices {
 	/**
@@ -231,8 +227,7 @@ export interface ILoaderServices {
 
 /**
  * Manages Fluid resource loading
- * @legacy
- * @alpha
+ * @legacy @beta
  *
  * @remarks The Loader class is deprecated and will be removed in a future release. Use the free-form functions instead (See issue #24450 for more details).
  */

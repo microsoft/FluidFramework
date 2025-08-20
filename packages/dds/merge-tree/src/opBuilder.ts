@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment, Marker } from "./mergeTreeNodes.js";
+import type { ISegment, Marker } from "./mergeTreeNodes.js";
 import {
-	IMergeTreeAnnotateMsg,
-	IMergeTreeDeltaOp,
+	type IMergeTreeAnnotateMsg,
+	type IMergeTreeDeltaOp,
 	// eslint-disable-next-line import/no-deprecated
-	IMergeTreeGroupMsg,
-	IMergeTreeInsertMsg,
+	type IMergeTreeGroupMsg,
+	type IMergeTreeInsertMsg,
 	// eslint-disable-next-line import/no-deprecated
-	IMergeTreeObliterateMsg,
-	IMergeTreeRemoveMsg,
+	type IMergeTreeObliterateMsg,
+	type IMergeTreeRemoveMsg,
 	MergeTreeDeltaType,
 	type AdjustParams,
 	type IMergeTreeAnnotateAdjustMsg,
 	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
-import { PropertySet, type MapLike } from "./properties.js";
+import type { PropertySet, MapLike } from "./properties.js";
 import { normalizePlace, Side, type SequencePlace } from "./sequencePlace.js";
 
 /**
