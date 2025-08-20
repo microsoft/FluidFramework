@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line no-restricted-syntax
+// eslint-disable-next-line no-restricted-syntax, @typescript-eslint/no-restricted-imports
 export * from "./index.js";
 
 // Important: all other exports must be type only exports. In package.json exports,

@@ -10,7 +10,7 @@ import { take } from "@fluid-private/stochastic-test-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor.js";
-import {
+import type {
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
 	SessionId,
@@ -33,7 +33,7 @@ import {
 	sessionIds,
 } from "./idCompressorTestUtilities.js";
 import {
-	LocalCompressedId,
+	type LocalCompressedId,
 	fail,
 	incrementStableId,
 	isFinalId,
