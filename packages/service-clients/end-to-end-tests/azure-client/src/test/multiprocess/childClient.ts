@@ -21,6 +21,7 @@ import {
 	StateFactory,
 	type LatestRaw,
 	type LatestMapRaw,
+	type StatesWorkspace,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/presence/beta";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
@@ -148,15 +149,19 @@ function isStringOrNumberRecord(value: unknown): value is Record<string, string 
 	return true;
 }
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+type WorkspaceSchema = {
+	latest?: ReturnType<typeof StateFactory.latest<{ value: string }>>;
+	latestMap?: ReturnType<
+		typeof StateFactory.latestMap<{ value: Record<string, string | number> }, string>
+	>;
+};
+
 class MessageHandler {
 	public presence: Presence | undefined;
 	public container: IFluidContainer | undefined;
 	public containerId: string | undefined;
-	private readonly latestStates = new Map<string, LatestRaw<{ value: string }>>();
-	private readonly latestMapStates = new Map<
-		string,
-		LatestMapRaw<{ value: Record<string, string | number> }, string>
-	>();
+	private readonly workspaces = new Map<string, StatesWorkspace<WorkspaceSchema>>();
 
 	private registerWorkspace(
 		workspaceId: string,
@@ -167,16 +172,17 @@ class MessageHandler {
 			return;
 		}
 		const { latest, latestMap } = options;
-		// Only register what's requested and not already present
-		if (latest && !this.latestStates.has(workspaceId)) {
-			const latestWorkspace = this.presence.states.getWorkspace(
-				`test:${workspaceId}` as const,
-				{
-					latestValue: StateFactory.latest<{ value: string }>({ local: { value: "initial" } }),
-				},
+		const existingWorkspace = this.workspaces.get(workspaceId);
+		const workspace: StatesWorkspace<WorkspaceSchema> =
+			existingWorkspace ??
+			this.presence.states.getWorkspace(`test:${workspaceId}` as const, {});
+
+		if (latest && !workspace.states.latest) {
+			workspace.add(
+				"latest",
+				StateFactory.latest<{ value: string }>({ local: { value: "initial" } }),
 			);
-			const latestState = latestWorkspace.states.latestValue;
-			this.latestStates.set(workspaceId, latestState);
+			const latestState = workspace.states.latest as LatestRaw<{ value: string }>;
 			latestState.events.on("remoteUpdated", (update) => {
 				if (update.value.value !== "initial") {
 					send({
@@ -188,18 +194,18 @@ class MessageHandler {
 				}
 			});
 		}
-		if (latestMap && !this.latestMapStates.has(workspaceId)) {
-			const latestMapWorkspace = this.presence.states.getWorkspace(
-				`test:${workspaceId}` as const,
-				{
-					latestMap: StateFactory.latestMap<
-						{ value: Record<string, string | number> },
-						string
-					>({ local: {} }),
-				},
+
+		if (latestMap && !workspace.states.latestMap) {
+			workspace.add(
+				"latestMap",
+				StateFactory.latestMap<{ value: Record<string, string | number> }, string>({
+					local: {},
+				}),
 			);
-			const latestMapState = latestMapWorkspace.states.latestMap;
-			this.latestMapStates.set(workspaceId, latestMapState);
+			const latestMapState = workspace.states.latestMap as LatestMapRaw<
+				{ value: Record<string, string | number> },
+				string
+			>;
 			latestMapState.events.on("remoteUpdated", (update) => {
 				for (const [key, valueWithMetadata] of update.items) {
 					send({
@@ -212,11 +218,12 @@ class MessageHandler {
 				}
 			});
 		}
+		this.workspaces.set(workspaceId, workspace);
 		send({
 			event: "workspaceRegistered",
 			workspaceId,
-			latest: !!(latest && this.latestStates.has(workspaceId)),
-			latestMap: !!(latestMap && this.latestMapStates.has(workspaceId)),
+			latest: latest ?? false,
+			latestMap: latestMap ?? false,
 		});
 	}
 
@@ -294,13 +301,14 @@ class MessageHandler {
 				break;
 			}
 
+			// Set the Latest value for the given workspace
 			case "setLatestValue": {
 				if (!this.presence) {
 					send({ event: "error", error: `${process_id} is not connected to presence` });
 					break;
 				}
-
-				const latestState = this.latestStates.get(msg.workspaceId);
+				const workspace = this.workspaces.get(msg.workspaceId);
+				const latestState = workspace?.states.latest as LatestRaw<{ value: string }>;
 				if (latestState === undefined) {
 					send({
 						event: "error",
@@ -317,13 +325,17 @@ class MessageHandler {
 				break;
 			}
 
+			// Set the Latest Map value for the given workspace
 			case "setLatestMapValue": {
 				if (!this.presence) {
 					send({ event: "error", error: `${process_id} is not connected to presence` });
 					break;
 				}
-
-				const latestMapState = this.latestMapStates.get(msg.workspaceId);
+				const workspace = this.workspaces.get(msg.workspaceId);
+				const latestMapState = workspace?.states.latestMap as LatestMapRaw<
+					{ value: Record<string, string | number> },
+					string
+				>;
 				if (latestMapState === undefined) {
 					send({
 						event: "error",
@@ -340,13 +352,14 @@ class MessageHandler {
 				break;
 			}
 
+			// Get the Latest value for the given workspace and attendee
 			case "getLatestValue": {
 				if (!this.presence) {
 					send({ event: "error", error: `${process_id} is not connected to presence` });
 					break;
 				}
-
-				const latestState = this.latestStates.get(msg.workspaceId);
+				const workspace = this.workspaces.get(msg.workspaceId);
+				const latestState = workspace?.states.latest as LatestRaw<{ value: string }>;
 				if (latestState === undefined) {
 					send({
 						event: "error",
@@ -374,6 +387,7 @@ class MessageHandler {
 				break;
 			}
 
+			// Register a new workspace
 			case "registerWorkspace": {
 				this.registerWorkspace(msg.workspaceId, {
 					latest: msg.latest,
@@ -381,13 +395,18 @@ class MessageHandler {
 				});
 				break;
 			}
+
+			// Get the Latest Map value for the given workspace and attendee
 			case "getLatestMapValue": {
 				if (!this.presence) {
 					send({ event: "error", error: `${process_id} is not connected to presence` });
 					break;
 				}
-
-				const latestMapState = this.latestMapStates.get(msg.workspaceId);
+				const workspace = this.workspaces.get(msg.workspaceId);
+				const latestMapState = workspace?.states.latestMap as LatestMapRaw<
+					{ value: Record<string, string | number> },
+					string
+				>;
 				if (latestMapState === undefined) {
 					send({
 						event: "error",

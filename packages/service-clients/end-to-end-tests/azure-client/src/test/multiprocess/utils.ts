@@ -209,7 +209,7 @@ export async function registerWorkspaceOnChildren(
 		const ackPromise = waitForEvent(
 			child,
 			"workspaceRegistered",
-			(m) => m.event === "workspaceRegistered" && m.workspaceId === workspaceId,
+			(msg) => msg.event === "workspaceRegistered" && msg.workspaceId === workspaceId,
 			{
 				durationMs: timeoutMs,
 				errorMsg: `Child ${index} did not acknowledge workspace registration ${workspaceId}`,
@@ -226,7 +226,7 @@ export async function registerWorkspaceOnChildren(
 	await Promise.all(promises);
 }
 
-// Type guards (internal)
+// Basic command type guards
 function isLatestValueGetResponse(msg: MessageFromChild): msg is LatestValueGetResponseEvent {
 	return msg.event === "latestValueGetResponse";
 }
