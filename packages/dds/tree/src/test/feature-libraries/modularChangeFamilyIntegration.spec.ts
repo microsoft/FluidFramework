@@ -1596,6 +1596,29 @@ describe("ModularChangeFamily integration", () => {
 			editor.sequenceField(fieldAPath).remove(0, 1);
 		}, tag1).change;
 
+		const oldId: ChangeAtomId = { revision: tag2, localId: brand(0) };
+		const moveOutId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+		const moveInId: ChangeAtomId = { revision: tag1, localId: brand(1) };
+		const reviveAndMove = Change.build(
+			{
+				family,
+				maxId: 0,
+				renames: [
+					{
+						oldId,
+						newId: moveInId,
+						count: 1,
+						detachLocation: { nodeId: undefined, field: fieldA },
+					},
+				],
+				revisions: [{ revision: tag1 }],
+			},
+			Change.field(fieldA, sequence.identifier, [
+				MarkMaker.rename(1, oldId, moveOutId),
+				MarkMaker.revive(1, moveInId, { revision: tag1 }),
+			]),
+		);
+
 		const encodingTestData: EncodingTestData<
 			ModularChangeset,
 			EncodedModularChangeset,
@@ -1604,6 +1627,7 @@ describe("ModularChangeFamily integration", () => {
 			successes: [
 				["move", move, context],
 				["move and remove", moveAndRemove, context],
+				["revive and move", reviveAndMove, context],
 			],
 		};
 
