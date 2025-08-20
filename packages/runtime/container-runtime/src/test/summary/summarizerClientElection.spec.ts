@@ -11,16 +11,16 @@ import type {
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { ISequencedClient } from "@fluidframework/driver-definitions";
+import type { ISequencedClient } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	IConnectedEvents,
-	IConnectedState,
-	ISerializedElection,
-	ISummarizer,
-	ISummaryCollectionOpEvents,
+	type IConnectedEvents,
+	type IConnectedState,
+	type ISerializedElection,
+	type ISummarizer,
+	type ISummaryCollectionOpEvents,
 	OrderedClientCollection,
 	OrderedClientElection,
 	SummarizerClientElection,
