@@ -4,7 +4,7 @@
  */
 
 import { PublicClientApplication } from "@azure/msal-browser";
-import { IOdspTokenProvider, TokenResponse } from "@fluidframework/odsp-client/beta";
+import type { IOdspTokenProvider, TokenResponse } from "@fluidframework/odsp-client/beta";
 
 // Helper function to authenticate the user
 export async function createMsalInstance(): Promise<PublicClientApplication> {
