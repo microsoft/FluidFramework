@@ -173,18 +173,21 @@ class MessageHandler {
 			const latestWorkspace = this.presence.states.getWorkspace(
 				`test:${workspaceId}` as const,
 				{
-					latestValue: StateFactory.latest<{ value: string }>({ local: { value: "" } }),
+					latestValue: StateFactory.latest<{ value: string }>({ local: { value: "initial" } }),
 				},
 			);
 			const latestState = latestWorkspace.states.latestValue;
 			this.latestStates.set(workspaceId, latestState);
 			latestState.events.on("remoteUpdated", (update) => {
-				send({
-					event: "latestValueUpdated",
-					workspaceId,
-					attendeeId: update.attendee.attendeeId,
-					value: update.value.value,
-				});
+				// Ignore initial update
+				if (update.value.value !== "initial") {
+					send({
+						event: "latestValueUpdated",
+						workspaceId,
+						attendeeId: update.attendee.attendeeId,
+						value: update.value.value,
+					});
+				}
 			});
 
 			const latestMapWorkspace = this.presence.states.getWorkspace(
