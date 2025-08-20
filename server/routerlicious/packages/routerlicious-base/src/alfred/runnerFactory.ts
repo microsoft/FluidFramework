@@ -38,7 +38,7 @@ export class AlfredResources implements core.IResources {
 
 	constructor(
 		public config: Provider,
-		public producer: core.IProducer,
+		public producer: core.IProducer | undefined,
 		public redisConfig: any,
 		public tenantManager: core.ITenantManager,
 		public restTenantThrottlers: Map<string, core.IThrottler>,
@@ -76,7 +76,7 @@ export class AlfredResources implements core.IResources {
 	}
 
 	public async dispose(): Promise<void> {
-		const producerClosedP = this.producer.close();
+		const producerClosedP = this.producer ? this.producer.close() : Promise.resolve();
 		const mongoClosedP = this.mongoManager.close();
 		const tokenRevocationManagerP = this.tokenRevocationManager
 			? this.tokenRevocationManager.close()
@@ -105,39 +105,46 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		config: Provider,
 		customizations?: IAlfredResourcesCustomizations,
 	): Promise<AlfredResources> {
-		// Producer used to publish messages
-		const kafkaEndpoint = config.get("kafka:lib:endpoint");
-		const kafkaLibrary = config.get("kafka:lib:name");
-		const kafkaClientId = config.get("alfred:kafkaClientId");
-		const topic = config.get("alfred:topic");
-		const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
-		const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
-		const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
-		const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
-		const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
-		const kafkaProducerGlobalAdditionalConfig = config.get(
-			"kafka:lib:producerGlobalAdditionalConfig",
-		);
-		const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
-		const oauthBearerConfig = config.get("kafka:lib:oauthBearerConfig");
+		// Check if patchRoot API is enabled to determine if we need a producer
+		const patchRootEnabled = config.get("alfred:api:patchRoot") ?? true;
+		
+		let producer: core.IProducer | undefined;
+		if (patchRootEnabled) {
+			// Producer used to publish messages
+			const kafkaEndpoint = config.get("kafka:lib:endpoint");
+			const kafkaLibrary = config.get("kafka:lib:name");
+			const kafkaClientId = config.get("alfred:kafkaClientId");
+			const topic = config.get("alfred:topic");
+			const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
+			const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
+			const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
+			const kafkaMaxBatchSize = config.get("kafka:lib:maxBatchSize");
+			const kafkaSslCACertFilePath: string = config.get("kafka:lib:sslCACertFilePath");
+			const kafkaProducerGlobalAdditionalConfig = config.get(
+				"kafka:lib:producerGlobalAdditionalConfig",
+			);
+			const eventHubConnString: string = config.get("kafka:lib:eventHubConnString");
+			const oauthBearerConfig = config.get("kafka:lib:oauthBearerConfig");
+
+			producer = services.createProducer(
+				kafkaLibrary,
+				kafkaEndpoint,
+				kafkaClientId,
+				topic,
+				false,
+				kafkaProducerPollIntervalMs,
+				kafkaNumberOfPartitions,
+				kafkaReplicationFactor,
+				kafkaMaxBatchSize,
+				kafkaSslCACertFilePath,
+				eventHubConnString,
+				kafkaProducerGlobalAdditionalConfig,
+				oauthBearerConfig,
+			);
+		}
+
 		// List of Redis client connection managers that need to be closed on dispose
 		const redisClientConnectionManagers: utils.IRedisClientConnectionManager[] = [];
-
-		const producer = services.createProducer(
-			kafkaLibrary,
-			kafkaEndpoint,
-			kafkaClientId,
-			topic,
-			false,
-			kafkaProducerPollIntervalMs,
-			kafkaNumberOfPartitions,
-			kafkaReplicationFactor,
-			kafkaMaxBatchSize,
-			kafkaSslCACertFilePath,
-			eventHubConnString,
-			kafkaProducerGlobalAdditionalConfig,
-			oauthBearerConfig,
-		);
 
 		const redisConfig = config.get("redis");
 		const authEndpoint = config.get("auth:endpoint");

@@ -113,6 +113,9 @@ data:
             "enablePrivateLinkNetworkCheck": {{ .Values.alfred.enablePrivateLinkNetworkCheck }},
             "sessionStickinessDurationMs": {{ .Values.alfred.sessionStickinessDurationMs }},
             "ignoreEphemeralFlag": {{ .Values.alfred.ignoreEphemeralFlag }},
+            "api": {
+                "patchRoot": {{ .Values.alfred.api.patchRoot | default true }}
+            },
             "throttling": {
                 "restCallsPerTenant": {
                     "generalRestCall": {{ toJson .Values.alfred.throttling.restCallsPerTenant.generalRestCall }},
