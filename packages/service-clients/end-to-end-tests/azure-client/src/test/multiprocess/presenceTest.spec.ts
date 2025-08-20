@@ -251,7 +251,7 @@ async function connectAndWaitForAttendees(
 }
 
 /**
- * Additional helpers for Latest/LatestMap tests (added on top of main without modifying existing helpers)
+ * Helpers for Latest/LatestMap tests
  */
 function isLatestValueGetResponse(msg: MessageFromChild): msg is LatestValueGetResponseEvent {
 	return msg.event === "latestValueGetResponse";
@@ -367,15 +367,12 @@ async function getLatestValueResponses(
 	if (!Array.isArray(responses)) {
 		throw new TypeError("Expected array of responses");
 	}
-	const latestValueGetResponses: LatestValueGetResponseEvent[] = [];
-	for (const response of responses) {
-		if (isLatestValueGetResponse(response)) {
-			latestValueGetResponses.push(response);
-		} else {
+	return responses.map((response) => {
+		if (!isLatestValueGetResponse(response)) {
 			throw new TypeError(`Expected LatestValueGetResponse but got ${response.event}`);
 		}
-	}
-	return latestValueGetResponses;
+		return response;
+	});
 }
 
 async function getLatestMapValueResponses(
@@ -398,15 +395,12 @@ async function getLatestMapValueResponses(
 	if (!Array.isArray(responses)) {
 		throw new TypeError("Expected array of responses");
 	}
-	const latestMapValueGetResponses: LatestMapValueGetResponseEvent[] = [];
-	for (const response of responses) {
-		if (isLatestMapValueGetResponse(response)) {
-			latestMapValueGetResponses.push(response);
-		} else {
+	return responses.map((response) => {
+		if (!isLatestMapValueGetResponse(response)) {
 			throw new TypeError(`Expected LatestMapValueGetResponse but got ${response.event}`);
 		}
-	}
-	return latestMapValueGetResponses;
+		return response;
+	});
 }
 
 /**
