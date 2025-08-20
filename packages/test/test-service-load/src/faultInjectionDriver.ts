@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { createEmitter, TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IClient, ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentDeltaConnection,
@@ -63,6 +63,11 @@ export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFac
 	}
 }
 
+interface FaultInjectionDocumentServiceInternalEvents {
+	online: () => void;
+	disposed: (error?: any) => void;
+}
+
 export class FaultInjectionDocumentService
 	extends TypedEventEmitter<IDocumentServiceEvents>
 	implements IDocumentService
@@ -71,14 +76,13 @@ export class FaultInjectionDocumentService
 	private _currentDeltaStorage?: FaultInjectionDocumentDeltaStorageService;
 	private _currentStorage?: FaultInjectionDocumentStorageService;
 
-	private onlineP = new Deferred<void>();
-	public get online() {
-		return this.onlineP.isCompleted;
-	}
+	private online: boolean = true;
+	private readonly internalEvents =
+		createEmitter<FaultInjectionDocumentServiceInternalEvents>();
 
 	public goOffline() {
 		assert(this.online, "must only go offline while online");
-		this.onlineP = new Deferred();
+		this.online = false;
 		assert(!!this._currentDeltaStream, "no delta stream");
 		assert(!!this._currentStorage, "no storage");
 		this._currentDeltaStream.goOffline();
@@ -88,7 +92,8 @@ export class FaultInjectionDocumentService
 
 	public goOnline() {
 		assert(!this.online, "must only go online while offline");
-		this.onlineP.resolve();
+		this.online = true;
+		this.internalEvents.emit("online");
 		assert(!!this._currentDeltaStream, "no delta stream");
 		assert(!!this._currentStorage, "no storage");
 		this._currentDeltaStream.goOnline();
@@ -98,7 +103,6 @@ export class FaultInjectionDocumentService
 
 	constructor(private readonly internal: IDocumentService) {
 		super();
-		this.onlineP.resolve();
 	}
 
 	public get resolvedUrl() {
@@ -118,19 +122,40 @@ export class FaultInjectionDocumentService
 	}
 
 	public dispose(error?: any) {
-		this.onlineP.reject(
-			wrapError(error, (message) => new FaultInjectionError(`disposed: ${message}`, false)),
-		);
+		this.online = false;
+		this.internalEvents.emit("disposed");
 		this.internal.dispose(error);
 	}
+
+	private readonly waitForOnline = async (): Promise<void> =>
+		new Promise<void>((resolve, reject) => {
+			const onOnline = () => {
+				resolve();
+				this.internalEvents.off("online", onOnline);
+				this.internalEvents.off("disposed", onDisposed);
+			};
+			const onDisposed = (error?: any) => {
+				reject(
+					wrapError(
+						error,
+						(message) => new FaultInjectionError(`disposed: ${message}`, false),
+					),
+				);
+				this.internalEvents.off("online", onOnline);
+				this.internalEvents.off("disposed", onDisposed);
+			};
+			this.internalEvents.on("online", onOnline);
+			this.internalEvents.on("disposed", onDisposed);
+		});
 
 	async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
 		assert(
 			this._currentDeltaStream?.disposed !== false,
 			"Document service factory should only have one open connection",
 		);
-		// this method is not expected to resolve until connected
-		await this.onlineP.promise;
+		if (!this.online) {
+			await this.waitForOnline();
+		}
 		this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(
 			await this.internal.connectToDeltaStream(client),
 			this.online,
