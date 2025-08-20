@@ -44,7 +44,7 @@ export const isSerializedHandle = (value: unknown): value is ISerializedHandle =
 	(value as { type?: string } | undefined)?.type === "__fluid_handle__";
 
 /**
- * Checks if a fluid handle's internal payload is pending.
+ * Checks if a Fluid handle's internal payload is pending.
  * @internal
  */
 export const isFluidHandleInternalPayloadPending = (
