@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidTelemetry } from "../telemetry/index.js";
+import type { IFluidTelemetry } from "../index.js";
 
 /**
  * Base interface for all telemetry consumers.
