@@ -14,7 +14,8 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
 import type { IClientDetails } from "@fluidframework/driver-definitions";
-import type { IAnyDriverError ,
+import type {
+	IAnyDriverError,
 	IClientConfiguration,
 	IDocumentMessage,
 	ISequencedDocumentMessage,

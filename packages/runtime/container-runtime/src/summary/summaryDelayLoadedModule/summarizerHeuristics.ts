@@ -6,7 +6,8 @@
 import { Timer } from "@fluidframework/core-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import type { ISummaryConfigurationHeuristics ,
+import type {
+	ISummaryConfigurationHeuristics,
 	ISummarizeAttempt,
 	ISummarizeHeuristicData,
 	ISummarizeHeuristicRunner,

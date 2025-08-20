@@ -14,7 +14,8 @@ import type {
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
-import type { ISnapshot ,
+import type {
+	ISnapshot,
 	type ISnapshotTree,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";

@@ -7,7 +7,10 @@ import { performanceNow, type TypedEventEmitter } from "@fluid-internal/client-u
 import type { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IContainerRuntimeBaseEvents } from "@fluidframework/runtime-definitions/internal";
-import { type ITelemetryLoggerExt, formatTick } from "@fluidframework/telemetry-utils/internal";
+import {
+	type ITelemetryLoggerExt,
+	formatTick,
+} from "@fluidframework/telemetry-utils/internal";
 
 /**
  * DeltaScheduler is responsible for the scheduling of inbound delta queue in cases where there

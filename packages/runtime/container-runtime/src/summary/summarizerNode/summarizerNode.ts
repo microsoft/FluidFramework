@@ -27,9 +27,11 @@ import {
 	PerformanceEvent,
 	TelemetryDataTag,
 	createChildLogger,
-	tagCodeArtifacts} from "@fluidframework/telemetry-utils/internal";
-import type { ITelemetryErrorEventExt ,
- ITelemetryLoggerExt
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils/internal";
+import type {
+	ITelemetryErrorEventExt,
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type {

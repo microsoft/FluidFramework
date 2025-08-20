@@ -9,7 +9,10 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 import { encodeHandleForSerialization } from "@fluidframework/runtime-utils/internal";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import { ContainerMessageType, type LocalContainerRuntimeMessage } from "../../messageTypes.js";
+import {
+	ContainerMessageType,
+	type LocalContainerRuntimeMessage,
+} from "../../messageTypes.js";
 import { ensureContentsDeserialized, serializeOp } from "../../opLifecycle/index.js";
 
 describe("opSerialization", () => {

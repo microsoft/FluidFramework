@@ -12,7 +12,10 @@ import type {
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import type { IFluidHandleContext , IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type {
+	IFluidHandleContext,
+	IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
 	debugAssert,

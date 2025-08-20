@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { AttachState, type ICriticalContainerError } from "@fluidframework/container-definitions";
+import {
+	AttachState,
+	type ICriticalContainerError,
+} from "@fluidframework/container-definitions";
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import {

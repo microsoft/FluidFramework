@@ -14,7 +14,10 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ContainerMessageType, type ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
+import {
+	ContainerMessageType,
+	type ContainerRuntimeChunkedOpMessage,
+} from "../messageTypes.js";
 
 import type {
 	IChunkedOp,

@@ -18,7 +18,10 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
-import type { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
+import type {
+	PendingMessageResubmitData,
+	PendingStateManager,
+} from "../pendingStateManager.js";
 
 import {
 	BatchManager,

@@ -6,7 +6,10 @@
 import { performanceNow } from "@fluid-internal/client-utils";
 import type { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
-import type { ITelemetryBaseLogger , type IEventProvider } from "@fluidframework/core-interfaces";
+import type {
+	ITelemetryBaseLogger,
+	type IEventProvider,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentMessage,

@@ -10,7 +10,10 @@ import {
 	type ILayerCompatDetails,
 	type IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
-import { AttachState, type ICriticalContainerError } from "@fluidframework/container-definitions";
+import {
+	AttachState,
+	type ICriticalContainerError,
+} from "@fluidframework/container-definitions";
 import {
 	ContainerErrorTypes,
 	type IContainerContext,

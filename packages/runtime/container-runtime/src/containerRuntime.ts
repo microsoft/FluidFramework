@@ -99,11 +99,11 @@ import {
 	deserializeIdCompressor,
 } from "@fluidframework/id-compressor/internal";
 import {
-
 	FlushMode,
 	FlushModeExperimental,
 	channelsTreeName,
-	gcTreeKey} from "@fluidframework/runtime-definitions/internal";
+	gcTreeKey,
+} from "@fluidframework/runtime-definitions/internal";
 import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -125,7 +125,8 @@ import type {
 	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeBaseExperimental,
 	IFluidParentContext,
-	type MinimumVersionForCollab} from "@fluidframework/runtime-definitions/internal";
+	type MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	defaultMinVersionForCollab,
 	isValidMinVersionForCollab,

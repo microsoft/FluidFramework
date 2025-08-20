@@ -13,7 +13,11 @@ import {
 } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
-import type { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
+import type {
+	ConfigTypes,
+	IConfigProviderBase,
+	IErrorBase,
+} from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleContext,
 	IFluidHandleInternal,

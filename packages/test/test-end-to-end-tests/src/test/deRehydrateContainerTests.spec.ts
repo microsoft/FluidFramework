@@ -23,7 +23,8 @@ import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collect
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import type { SequenceInterval, SharedString } from "@fluidframework/sequence/internal";
-import { createDataStoreFactory ,
+import {
+	createDataStoreFactory,
 	ITestFluidObject,
 	ITestObjectProvider,
 	LoaderContainerTracker,
