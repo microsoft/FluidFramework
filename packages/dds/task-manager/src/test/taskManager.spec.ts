@@ -156,7 +156,7 @@ describe("TaskManager", () => {
 				const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
 				const volunteerTaskP2 = taskManager2.volunteerForTask(taskId);
 
-				assert.ok(!taskManager1.queued(taskId), "Task manager 1 not be queued");
+				assert.ok(!taskManager1.queued(taskId), "Task manager 1 should not be queued");
 				assert.ok(!taskManager1.assigned(taskId), "Task manager 1 should not be assigned");
 				assert.ok(!taskManager2.queued(taskId), "Task manager 2 not be queued");
 				assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
