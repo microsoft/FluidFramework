@@ -73,8 +73,7 @@ interface ISetOpMetadata {
 
 /**
  * Events emitted by Shared Matrix.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedMatrixEvents<T> extends IEvent {
 	/**
@@ -117,8 +116,7 @@ interface CellLastWriteTrackerItem {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 // Changing this to `unknown` would be a breaking change.
 // TODO: if possible, transition ISharedMatrix to not use `any`.
@@ -240,8 +238,7 @@ interface PendingCellChanges<T> {
  * matrix data and physically stores data in Z-order to leverage CPU caches and
  * prefetching when reading in either row or column major order.  (See README.md
  * for more details.)
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 // Changing this to `unknown` would be a breaking change.
 // TODO: if possible, transition SharedMatrix to not use `any`.

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Deferred } from "@fluidframework/common-utils";
 import type { Response, Request } from "express";

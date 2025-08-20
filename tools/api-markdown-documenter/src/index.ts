@@ -37,37 +37,20 @@ export {
 	transformApiModel,
 	transformTsdoc,
 } from "./api-item-transforms/index.js";
-export type { ApiDocument } from "./ApiDocument.js";
+export type { ApiDocument, RenderedDocument } from "./ApiDocument.js";
 export type {
+	NormalizedRootContent,
+	NormalizedTree,
 	Section,
+	SectionContent,
 	SectionHeading,
 } from "./mdast/index.js";
 export {
-	documentToHtml,
-	documentationNodeToHtml,
-	documentationNodesToHtml,
-	type Transformation as ToHtmlTransformation,
-	type Transformations as ToHtmlTransformations,
-	type TransformationConfiguration as ToHtmlConfiguration,
-	type TransformationContext as ToHtmlContext,
-} from "./documentation-domain-to-html/index.js";
-export {
-	documentToMarkdown,
-	sectionContentToMarkdown,
-	type Transformation as ToMarkdownTransformation,
-	type TransformationConfiguration as ToMarkdownConfiguration,
-	type TransformationContext as ToMarkdownContext,
-	type Transformations as ToMarkdownTransformations,
-} from "./documentation-domain-to-markdown/index.js";
-export {
 	DocumentWriter,
-	type RenderDocumentAsHtmlConfiguration,
-	type RenderHtmlConfiguration,
-	type RenderDocumentAsMarkdownConfiguration,
 	type RenderMarkdownConfiguration,
 } from "./renderers/index.js";
 export type { LoggingConfiguration } from "./LoggingConfiguration.js";
-export type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
+export { type SaveDocumentsOptions, saveDocuments } from "./FileSystem.js";
 export {
 	lintApiModel,
 	type LintApiModelConfiguration,
@@ -87,6 +70,7 @@ export type {
 	ApiModifier,
 	ApiModuleLike,
 	ApiSignatureLike,
+	ApiTypeLike,
 	ReleaseLevel,
 	ValidApiItemKind,
 } from "./utilities/index.js";
@@ -103,7 +87,6 @@ import * as ApiItemUtilities from "./ApiItemUtilitiesModule.js";
 import * as LayoutUtilities from "./LayoutUtilitiesModule.js";
 
 // Export renderers
-import * as HtmlRenderer from "./HtmlRendererModule.js";
 import * as MarkdownRenderer from "./MarkdownRendererModule.js";
 
 export {
@@ -127,12 +110,6 @@ export {
 	 * @public
 	 */
 	LayoutUtilities,
-	/**
-	 * Functionality for rendering documentation as HTML.
-	 *
-	 * @alpha
-	 */
-	HtmlRenderer,
 	/**
 	 * Functionality for rendering documentation as Markdown.
 	 *

@@ -4,13 +4,13 @@
 
 ```ts
 
-// @alpha @legacy
+// @beta @legacy
 export const ConsensusRegisterCollection: ISharedObjectKind<IConsensusRegisterCollection<any>> & SharedObjectKind<IConsensusRegisterCollection<any>>;
 
-// @alpha @legacy
+// @beta @legacy
 export type ConsensusRegisterCollection<T> = IConsensusRegisterCollection<T>;
 
-// @alpha @legacy
+// @beta @legacy
 export class ConsensusRegisterCollectionClass<T> extends SharedObject<IConsensusRegisterCollectionEvents> implements IConsensusRegisterCollection<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
@@ -25,12 +25,14 @@ export class ConsensusRegisterCollectionClass<T> extends SharedObject<IConsensus
     read(key: string, readPolicy?: ReadPolicy): T | undefined;
     // (undocumented)
     readVersions(key: string): T[] | undefined;
+    // @sealed
+    protected rollback(content: unknown, localOpMetadata: unknown): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     write(key: string, value: T): Promise<boolean>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export class ConsensusRegisterCollectionFactory implements IChannelFactory<IConsensusRegisterCollection> {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
@@ -45,7 +47,7 @@ export class ConsensusRegisterCollectionFactory implements IChannelFactory<ICons
     get type(): string;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IConsensusRegisterCollection<T = any> extends ISharedObject<IConsensusRegisterCollectionEvents> {
     keys(): string[];
     read(key: string, policy?: ReadPolicy): T | undefined;
@@ -53,16 +55,16 @@ export interface IConsensusRegisterCollection<T = any> extends ISharedObject<ICo
     write(key: string, value: T): Promise<boolean>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IConsensusRegisterCollectionEvents extends ISharedObjectEvents {
     // (undocumented)
     (event: "atomicChanged" | "versionChanged", listener: (key: string, value: any, local: boolean) => void): any;
 }
 
-// @alpha @deprecated @legacy
+// @beta @deprecated @legacy
 export type IConsensusRegisterCollectionFactory = IChannelFactory<IConsensusRegisterCollection>;
 
-// @alpha @legacy
+// @beta @legacy
 export enum ReadPolicy {
     // (undocumented)
     Atomic = 0,

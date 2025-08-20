@@ -69,6 +69,13 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	private readonly idToEntryMap: Map<string, SharedArrayEntry<T>>;
 
 	/**
+	 * Set of entry IDs that are marked for deletion by remote clients, but have local pending deletes.
+	 * Used to prevent resuscitating entries while rolling back a delete operation.
+	 * We should not rollback to life an entry that was deleted by remote clients.
+	 */
+	private readonly remoteDeleteWithLocalPendingDelete: Set<string> = new Set<string>();
+
+	/**
 	 * Create a new shared array
 	 *
 	 * @param runtime - data store runtime the new shared array belongs to
@@ -350,7 +357,6 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 
 		this.submitLocalMessage(op);
 	}
-
 	/**
 	 * Method to do undo/redo of move operation. All entries of the same payload/value are stored
 	 * in the same doubly linked skip list. This skip list is updated upon every move by adding the
@@ -384,6 +390,51 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		}
 
 		this.submitLocalMessage(op);
+	}
+
+	public rollback(op: unknown, _localOpMetadata: unknown): void {
+		const arrayOp = op as ISharedArrayOperation<T>;
+		switch (arrayOp.type) {
+			case OperationType.insertEntry: {
+				const liveEntry = this.getLiveEntry(arrayOp.entryId);
+				liveEntry.isDeleted = true;
+				const deleteOp: IDeleteOperation = {
+					type: OperationType.deleteEntry,
+					entryId: arrayOp.entryId,
+				};
+				this.emitValueChangedEvent(deleteOp, true /* isLocal */);
+				break;
+			}
+			case OperationType.deleteEntry: {
+				if (this.remoteDeleteWithLocalPendingDelete.has(arrayOp.entryId)) {
+					// If remote already deleted the entry, we should not resurrect it.
+					// Just remove the local pending delete.
+					this.remoteDeleteWithLocalPendingDelete.delete(arrayOp.entryId);
+				} else {
+					const liveEntry = this.getLiveEntry(arrayOp.entryId);
+					liveEntry.isDeleted = false;
+					const insertOp = {
+						type: OperationType.insertEntry,
+						entryId: arrayOp.entryId,
+						value: liveEntry.value,
+					};
+					this.emitValueChangedEvent(insertOp, true /* isLocal */);
+					const entry = this.getEntryForId(arrayOp.entryId);
+					if (entry !== undefined && entry.isLocalPendingDelete > 0) {
+						entry.isLocalPendingDelete -= 1;
+					}
+				}
+				break;
+			}
+			case OperationType.moveEntry:
+			case OperationType.toggle:
+			case OperationType.toggleMove: {
+				throw new Error(`Rollback not implemented for ${arrayOp.type} operations`);
+			}
+			default: {
+				unreachableCase(arrayOp);
+			}
+		}
 	}
 
 	/**
@@ -480,8 +531,6 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
 			const op = message.contents as ISharedArrayOperation<T>;
-			const opEntry = this.getEntryForId(op.entryId);
-
 			switch (op.type) {
 				case OperationType.insertEntry: {
 					this.handleInsertOp<SerializableTypeForSharedArray>(
@@ -490,84 +539,22 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 						local,
 						op.value,
 					);
-
 					break;
 				}
-
 				case OperationType.deleteEntry: {
-					if (local) {
-						// Decrementing local pending counter as op is already applied to local state
-						opEntry.isLocalPendingDelete -= 1;
-					} else {
-						// If local pending, then ignore else apply the remote op
-						if (!this.isLocalPending(op.entryId, "isLocalPendingDelete")) {
-							// last element in skip list is the most recent and live entry, so marking it deleted
-							this.getLiveEntry(op.entryId).isDeleted = true;
-						}
-					}
-
+					this.handleDeleteOp(op, local);
 					break;
 				}
-
 				case OperationType.moveEntry: {
-					this.handleInsertOp<SerializableTypeForSharedArray>(
-						op.changedToEntryId,
-						op.insertAfterEntryId,
-						local,
-						opEntry.value,
-					);
-					if (local) {
-						// decrement the local pending move op as its already applied to local state
-						opEntry.isLocalPendingMove -= 1;
-					} else {
-						const newElementEntryId = op.changedToEntryId;
-						const newElement = this.getEntryForId(newElementEntryId);
-						// If local pending then simply mark the new location dead as finally the local op will win
-						if (
-							this.isLocalPending(op.entryId, "isLocalPendingDelete") ||
-							this.isLocalPending(op.entryId, "isLocalPendingMove")
-						) {
-							this.updateDeadEntry(op.entryId, newElementEntryId);
-						} else {
-							// move the element
-							const liveEntry = this.getLiveEntry(op.entryId);
-							const isDeleted = liveEntry.isDeleted;
-							this.updateLiveEntry(liveEntry.entryId, newElementEntryId);
-							// mark newly added element as deleted if existing live element was already deleted
-							if (isDeleted) {
-								newElement.isDeleted = isDeleted;
-							}
-						}
-					}
+					this.handleMoveOp(op, local);
 					break;
 				}
-
 				case OperationType.toggle: {
-					if (local) {
-						// decrement the local pending delete op as its already applied to local state
-						if (opEntry.isLocalPendingDelete) {
-							opEntry.isLocalPendingDelete -= 1;
-						}
-					} else {
-						if (!this.isLocalPending(op.entryId, "isLocalPendingDelete")) {
-							this.getLiveEntry(op.entryId).isDeleted = op.isDeleted;
-						}
-					}
+					this.handleToggleOp(op, local);
 					break;
 				}
-
 				case OperationType.toggleMove: {
-					if (local) {
-						// decrement the local pending move op as its already applied to local state
-						if (opEntry.isLocalPendingMove) {
-							opEntry.isLocalPendingMove -= 1;
-						}
-					} else if (
-						!this.isLocalPending(op.entryId, "isLocalPendingDelete") &&
-						!this.isLocalPending(op.entryId, "isLocalPendingMove")
-					) {
-						this.updateLiveEntry(this.getLiveEntry(op.entryId).entryId, op.entryId);
-					}
+					this.handleToggleMoveOp(op, local);
 					break;
 				}
 
@@ -578,6 +565,103 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			if (!local) {
 				this.emitValueChangedEvent(op, local);
 			}
+		}
+	}
+
+	private handleInsertOp<TWrite>(
+		entryId: string,
+		insertAfterEntryId: string | undefined,
+		local: boolean,
+		value: Serializable<TWrite> & T,
+	): void {
+		let index = 0;
+		if (local) {
+			this.getEntryForId(entryId).isAckPending = false;
+		} else {
+			if (insertAfterEntryId !== undefined) {
+				index = this.findIndexOfEntryId(insertAfterEntryId) + 1;
+			}
+			const newEntry = this.createNewEntry(entryId, value);
+			newEntry.isAckPending = false;
+			this.addEntry(this.getInternalInsertIndexByIgnoringLocalPendingInserts(index), newEntry);
+		}
+	}
+
+	private handleDeleteOp(op: IDeleteOperation, local: boolean): void {
+		const opEntry = this.getEntryForId(op.entryId);
+		if (local) {
+			// Decrementing local pending counter as op is already applied to local state
+			opEntry.isLocalPendingDelete -= 1;
+			this.remoteDeleteWithLocalPendingDelete.delete(op.entryId);
+		} else {
+			if (this.isLocalPending(op.entryId, "isLocalPendingDelete")) {
+				this.remoteDeleteWithLocalPendingDelete.add(op.entryId);
+			} else {
+				// last element in skip list is the most recent and live entry, so marking it deleted
+				this.getLiveEntry(op.entryId).isDeleted = true;
+			}
+		}
+	}
+
+	private handleMoveOp(op: IMoveOperation, local: boolean): void {
+		const opEntry = this.getEntryForId(op.entryId);
+		this.handleInsertOp<SerializableTypeForSharedArray>(
+			op.changedToEntryId,
+			op.insertAfterEntryId,
+			local,
+			opEntry.value,
+		);
+		if (local) {
+			// decrement the local pending move op as its already applied to local state
+			opEntry.isLocalPendingMove -= 1;
+		} else {
+			const newElementEntryId = op.changedToEntryId;
+			const newElement = this.getEntryForId(newElementEntryId);
+			// If local pending then simply mark the new location dead as finally the local op will win
+			if (
+				this.isLocalPending(op.entryId, "isLocalPendingDelete") ||
+				this.isLocalPending(op.entryId, "isLocalPendingMove")
+			) {
+				this.updateDeadEntry(op.entryId, newElementEntryId);
+			} else {
+				// move the element
+				const liveEntry = this.getLiveEntry(op.entryId);
+				const isDeleted = liveEntry.isDeleted;
+				this.updateLiveEntry(liveEntry.entryId, newElementEntryId);
+				// mark newly added element as deleted if existing live element was already deleted
+				if (isDeleted) {
+					newElement.isDeleted = isDeleted;
+				}
+			}
+		}
+	}
+
+	private handleToggleOp(op: IToggleOperation, local: boolean): void {
+		const opEntry = this.getEntryForId(op.entryId);
+		if (local) {
+			// decrement the local pending delete op as its already applied to local state
+			if (opEntry.isLocalPendingDelete) {
+				opEntry.isLocalPendingDelete -= 1;
+			}
+		} else {
+			if (!this.isLocalPending(op.entryId, "isLocalPendingDelete")) {
+				this.getLiveEntry(op.entryId).isDeleted = op.isDeleted;
+			}
+		}
+	}
+
+	private handleToggleMoveOp(op: IToggleMoveOperation, local: boolean): void {
+		const opEntry = this.getEntryForId(op.entryId);
+		if (local) {
+			// decrement the local pending move op as its already applied to local state
+			if (opEntry.isLocalPendingMove) {
+				opEntry.isLocalPendingMove -= 1;
+			}
+		} else if (
+			!this.isLocalPending(op.entryId, "isLocalPendingDelete") &&
+			!this.isLocalPending(op.entryId, "isLocalPendingMove")
+		) {
+			this.updateLiveEntry(this.getLiveEntry(op.entryId).entryId, op.entryId);
 		}
 	}
 
@@ -723,25 +807,6 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		return localOpsIterator;
 	}
 
-	private handleInsertOp<TWrite>(
-		entryId: string,
-		insertAfterEntryId: string | undefined,
-		local: boolean,
-		value: Serializable<TWrite> & T,
-	): void {
-		let index = 0;
-		if (local) {
-			this.getEntryForId(entryId).isAckPending = false;
-		} else {
-			if (insertAfterEntryId !== undefined) {
-				index = this.findIndexOfEntryId(insertAfterEntryId) + 1;
-			}
-			const newEntry = this.createNewEntry(entryId, value);
-			newEntry.isAckPending = false;
-			this.addEntry(this.getInternalInsertIndexByIgnoringLocalPendingInserts(index), newEntry);
-		}
-	}
-
 	private findIndexOfEntryId(entryId: string | undefined): number {
 		for (let index = 0; index < this.sharedArray.length; index = index + 1) {
 			if (this.sharedArray[index]?.entryId === entryId) {
@@ -843,53 +908,19 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				break;
 			}
 			case OperationType.deleteEntry: {
-				if (!this.isLocalPending(op.entryId, "isLocalPendingDelete")) {
-					// last element in skip list is the most recent and live entry, so marking it deleted
-					this.getLiveEntry(op.entryId).isDeleted = true;
-				}
+				this.handleDeleteOp(op, false /* local - treat as remote op */);
 				break;
 			}
 			case OperationType.moveEntry: {
-				const opEntry = this.getEntryForId(op.entryId);
-				this.handleInsertOp<SerializableTypeForSharedArray>(
-					op.changedToEntryId,
-					op.insertAfterEntryId,
-					false, // treat it as remote op
-					opEntry.value,
-				);
-				const newElementEntryId = op.changedToEntryId;
-				const newElement = this.getEntryForId(newElementEntryId);
-				if (
-					this.isLocalPending(op.entryId, "isLocalPendingDelete") ||
-					this.isLocalPending(op.entryId, "isLocalPendingMove")
-				) {
-					// If local pending then simply mark the new location dead as finally the local op will win
-					this.updateDeadEntry(op.entryId, newElementEntryId);
-				} else {
-					// move the element
-					const liveEntry = this.getLiveEntry(op.entryId);
-					const isDeleted = liveEntry.isDeleted;
-					this.updateLiveEntry(liveEntry.entryId, newElementEntryId);
-					// mark newly added element as deleted if existing live element was already deleted
-					if (isDeleted) {
-						newElement.isDeleted = isDeleted;
-					}
-				}
+				this.handleMoveOp(op, false /* local - treat as remote op */);
 				break;
 			}
 			case OperationType.toggle: {
-				if (!this.isLocalPending(op.entryId, "isLocalPendingDelete")) {
-					this.getLiveEntry(op.entryId).isDeleted = op.isDeleted;
-				}
+				this.handleToggleOp(op, false /* local - treat as remote op */);
 				break;
 			}
 			case OperationType.toggleMove: {
-				if (
-					!this.isLocalPending(op.entryId, "isLocalPendingDelete") &&
-					!this.isLocalPending(op.entryId, "isLocalPendingMove")
-				) {
-					this.updateLiveEntry(this.getLiveEntry(op.entryId).entryId, op.entryId);
-				}
+				this.handleToggleMoveOp(op, false /* local - treat as remote op */);
 				break;
 			}
 			default: {

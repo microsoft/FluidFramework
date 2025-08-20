@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 
 import { booleanCases, generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import {

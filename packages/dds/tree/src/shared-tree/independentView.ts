@@ -42,7 +42,7 @@ import {
 } from "./sharedTree.js";
 import { createTreeCheckout } from "./treeCheckout.js";
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-import { initialize } from "./schematizeTree.js";
+import { initialize, initializerFromChunk } from "./schematizeTree.js";
 
 /**
  * Create an uninitialized {@link TreeView} that is not tied to any {@link ITree} instance.
@@ -152,7 +152,11 @@ export function independentInitializedViewInternal<const TSchema extends Implici
 		breaker,
 	});
 
-	initialize(checkout, { schema, initialTree: rootFieldCursor });
+	initialize(
+		checkout,
+		schema,
+		initializerFromChunk(checkout, () => checkout.forest.chunkField(rootFieldCursor)),
+	);
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,

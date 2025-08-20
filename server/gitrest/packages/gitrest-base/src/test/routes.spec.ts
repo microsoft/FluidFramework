@@ -14,7 +14,7 @@ import {
 	ICreateRefParamsExternal,
 	IGetRefParamsExternal,
 } from "@fluidframework/server-services-client";
-import assert from "assert";
+import { strict as assert } from "assert";
 import * as async from "async";
 import lorem from "lorem-ipsum";
 import sillyname from "sillyname";
