@@ -72,7 +72,8 @@ export function exceptionToResponse(error: unknown): IResponse {
  * @internal
  */
 export function responseToException(response: IResponse, request: IRequest): Error {
-	// IResponse.value is typed as 'any', but we expect it to be a string error message
+	// As of 2025-08-20 the code seems to assume `response.value` is always a string.
+	// This type assertion just encodes that assumption as we move to stricter linting rules, but it might need to be revisited.
 	const message = response.value as string;
 	const errWithStack = generateErrorWithStack();
 	const responseErr: Error & IResponseException = {
