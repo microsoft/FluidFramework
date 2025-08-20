@@ -336,32 +336,22 @@ export class BlobManager {
 	}
 
 	/**
-	 * Lookup the blob URL for a given local blob id.
+	 * Lookup the blob storage ID for a given local blob id.
 	 * @param localId - The local blob id. Likely coming from a handle.
-	 * @returns The blob URL if found and the blob is not pending, undefined otherwise.
+	 * @returns The storage ID if found and the blob is not pending, undefined otherwise.
 	 * @remarks
-	 * This leverages the driver's URL building logic to create a direct access URL for the blob.
 	 * For blobs with pending payloads (localId exists but upload hasn't finished), this returns undefined. 
 	 * Consumers should use the observability APIs on the handle (handle.payloadState, payloadShared event) 
-	 * to understand/wait for URL availability.
-	 * 
-	 * **WARNING**: The returned URL may expire and does not support permalinks.
-	 * This is intended for temporary integration scenarios only.
+	 * to understand/wait for storage ID availability.
 	 */
-	public lookupBlobURL(localId: string): string | undefined {
+	public lookupBlobStorageId(localId: string): string | undefined {
 		// Check if this is a pending blob (upload not yet complete)
 		if (this.pendingBlobs.has(localId)) {
 			return undefined;
 		}
 
 		// Get the storage ID from the redirect table
-		const storageId = this.redirectTable.get(localId);
-		if (storageId === undefined) {
-			return undefined;
-		}
-
-		// Use the storage service to build the URL if available
-		return this.storage.buildBlobUrl?.(storageId);
+		return this.redirectTable.get(localId);
 	}
 
 	/**

@@ -224,21 +224,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		return blob;
 	}
 
-	/**
-	 * Builds a URL for accessing a blob by its storage ID.
-	 * @param storageId - The storage ID of the blob
-	 * @returns The URL to access the blob, or undefined if URL cannot be built
-	 */
-	public buildBlobUrl(storageId: string): string | undefined {
-		try {
-			this.checkAttachmentGETUrl();
-			return `${this.attachmentGETUrl}/${encodeURIComponent(storageId)}/content`;
-		} catch {
-			// If we can't build the URL (e.g., no attachmentGETUrl), return undefined
-			return undefined;
-		}
-	}
-
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
