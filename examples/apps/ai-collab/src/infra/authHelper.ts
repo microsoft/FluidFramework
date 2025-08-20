@@ -6,7 +6,7 @@
 "use client";
 
 import {
-	AccountInfo,
+	type AccountInfo,
 	PublicClientApplication,
 	type AuthenticationResult,
 } from "@azure/msal-browser";

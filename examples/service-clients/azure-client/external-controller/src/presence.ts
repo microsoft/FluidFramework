@@ -4,7 +4,7 @@
  */
 
 import {
-	Presence,
+	type Presence,
 	StateFactory,
 	type StatesWorkspace,
 	type StatesWorkspaceSchema,
