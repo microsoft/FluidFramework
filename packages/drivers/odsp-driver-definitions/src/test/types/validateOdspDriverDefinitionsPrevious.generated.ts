@@ -290,6 +290,42 @@ declare type current_as_old_for_Interface_IRelaySessionAwareDriverFactory = requ
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Interface_ISensitivityLabel": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_ISensitivityLabel = requireAssignableTo<TypeOnly<old.ISensitivityLabel>, TypeOnly<current.ISensitivityLabel>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ISensitivityLabel": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ISensitivityLabel = requireAssignableTo<TypeOnly<current.ISensitivityLabel>, TypeOnly<old.ISensitivityLabel>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ISensitivityLabelsInfo": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_ISensitivityLabelsInfo = requireAssignableTo<TypeOnly<old.ISensitivityLabelsInfo>, TypeOnly<current.ISensitivityLabelsInfo>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ISensitivityLabelsInfo": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ISensitivityLabelsInfo = requireAssignableTo<TypeOnly<current.ISensitivityLabelsInfo>, TypeOnly<old.ISensitivityLabelsInfo>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_ISharingLink": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_ISharingLink = requireAssignableTo<TypeOnly<old.ISharingLink>, TypeOnly<current.ISharingLink>>
@@ -346,7 +382,6 @@ declare type current_as_old_for_Interface_ISnapshotOptions = requireAssignableTo
  * typeValidation.broken:
  * "Interface_ISocketStorageDiscovery": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ISocketStorageDiscovery = requireAssignableTo<TypeOnly<old.ISocketStorageDiscovery>, TypeOnly<current.ISocketStorageDiscovery>>
 
 /*
@@ -356,7 +391,6 @@ declare type old_as_current_for_Interface_ISocketStorageDiscovery = requireAssig
  * typeValidation.broken:
  * "Interface_ISocketStorageDiscovery": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ISocketStorageDiscovery = requireAssignableTo<TypeOnly<current.ISocketStorageDiscovery>, TypeOnly<old.ISocketStorageDiscovery>>
 
 /*
