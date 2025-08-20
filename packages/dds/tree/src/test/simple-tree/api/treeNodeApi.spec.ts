@@ -21,6 +21,7 @@ import {
 	type InsertableField,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	isTreeNode,
+	KeyEncodingOptions,
 	type NodeFromSchema,
 	permissiveStoredSchemaGenerationOptions,
 	SchemaFactory,
@@ -2824,15 +2825,34 @@ describe("treeNodeApi", () => {
 			for (const testCase of testDocuments) {
 				it(testCase.name, () => {
 					const view = testDocumentIndependentView(testCase);
-					const exported = TreeAlpha.exportConcise(view.root, { useStoredKeys: true });
+					const exported = TreeAlpha.exportConcise(view.root, {
+						keys: KeyEncodingOptions.allStoredKeys,
+					});
 					// We have nothing that imports concise trees with stored keys, so no validation here.
 
 					// Test exporting unhydrated nodes.
 					// For nodes with unknown optional fields and thus are picky about the context, this can catch issues with the context.
 					const clone = TreeBeta.clone(view.root);
-					const exported2 = TreeAlpha.exportConcise(clone, { useStoredKeys: true });
+					const exportedClone = TreeAlpha.exportConcise(clone, {
+						keys: KeyEncodingOptions.allStoredKeys,
+					});
 
-					assert.deepEqual(exported, exported2);
+					assert.deepEqual(exported, exportedClone);
+
+					const exportedKnown = TreeAlpha.exportConcise(view.root, {
+						keys: KeyEncodingOptions.knownStoredKeys,
+					});
+					const exportedCloneKnown = TreeAlpha.exportConcise(clone, {
+						keys: KeyEncodingOptions.knownStoredKeys,
+					});
+
+					assert.deepEqual(exportedKnown, exportedCloneKnown);
+
+					if (testCase.hasUnknownOptionalFields) {
+						assert.notDeepEqual(exported, exportedKnown);
+					} else {
+						assert.deepEqual(exported, exportedKnown);
+					}
 				});
 			}
 		});
@@ -2923,7 +2943,10 @@ describe("treeNodeApi", () => {
 				};
 
 				assert.throws(
-					() => TreeAlpha.importVerbose(Point, exported, { useStoredKeys: true }),
+					() =>
+						TreeAlpha.importVerbose(Point, exported, {
+							keys: KeyEncodingOptions.knownStoredKeys,
+						}),
 					validateUsageError('Field "x" is not defined in the schema "com.example.Point".'),
 				);
 				assert.throws(
@@ -2964,17 +2987,29 @@ describe("treeNodeApi", () => {
 				);
 				const node = createTreeNodeFromInner(flex);
 
-				assert.deepEqual(TreeAlpha.exportVerbose(node, { useStoredKeys: true }), {
-					type: PointUnknown.identifier,
-					fields: { x: 1 },
-				});
+				assert.deepEqual(
+					TreeAlpha.exportVerbose(node, { keys: KeyEncodingOptions.allStoredKeys }),
+					{
+						type: PointUnknown.identifier,
+						fields: { x: 1 },
+					},
+				);
 
-				// TODO AB#43548: provide and test a way to export with stored keys without unknown optional fields.
+				assert.deepEqual(
+					TreeAlpha.exportVerbose(node, { keys: KeyEncodingOptions.knownStoredKeys }),
+					{
+						type: PointUnknown.identifier,
+						fields: {},
+					},
+				);
 
-				assert.deepEqual(TreeAlpha.exportVerbose(node, { useStoredKeys: false }), {
-					type: PointUnknown.identifier,
-					fields: {},
-				});
+				assert.deepEqual(
+					TreeAlpha.exportVerbose(node, { keys: KeyEncodingOptions.usePropertyKeys }),
+					{
+						type: PointUnknown.identifier,
+						fields: {},
+					},
+				);
 			});
 
 			describe("test-documents", () => {
@@ -2984,7 +3019,9 @@ describe("treeNodeApi", () => {
 						const exported =
 							view.root === undefined
 								? undefined
-								: TreeAlpha.exportVerbose(view.root, { useStoredKeys: true });
+								: TreeAlpha.exportVerbose(view.root, {
+										keys: KeyEncodingOptions.allStoredKeys,
+									});
 						const fromView = view.checkout.exportVerbose();
 
 						assert.deepEqual(exported, fromView);
@@ -3016,9 +3053,11 @@ describe("treeNodeApi", () => {
 							const imported = TreeAlpha.importVerbose(testCase.schema, exported);
 							expectTreesEqual(tree, imported);
 
-							const exportedStored = TreeAlpha.exportVerbose(tree, { useStoredKeys: true });
+							const exportedStored = TreeAlpha.exportVerbose(tree, {
+								keys: KeyEncodingOptions.knownStoredKeys,
+							});
 							const importedStored = TreeAlpha.importVerbose(testCase.schema, exportedStored, {
-								useStoredKeys: true,
+								keys: KeyEncodingOptions.knownStoredKeys,
 							});
 							expectTreesEqual(tree, importedStored);
 							expectTreesEqual(imported, importedStored);
@@ -3039,22 +3078,32 @@ describe("treeNodeApi", () => {
 									// Stored keys
 									{
 										const exported = TreeAlpha.exportVerbose(root, {
-											useStoredKeys: true,
+											keys: KeyEncodingOptions.allStoredKeys,
 										});
 										if (testCase.hasUnknownOptionalFields) {
 											// is not defined in the schema
 											assert.throws(
 												() =>
 													TreeAlpha.importVerbose(view.schema, exported, {
-														useStoredKeys: true,
+														keys: KeyEncodingOptions.knownStoredKeys,
 													}),
 												validateUsageError(/is not defined in the schema/),
 											);
 										} else {
 											const imported = TreeAlpha.importVerbose(view.schema, exported, {
-												useStoredKeys: true,
+												keys: KeyEncodingOptions.knownStoredKeys,
 											});
 											expectTreesEqual(root, imported);
+										}
+
+										const exportedKnown = TreeAlpha.exportVerbose(root, {
+											keys: KeyEncodingOptions.knownStoredKeys,
+										});
+										const importedKnown = TreeAlpha.importVerbose(view.schema, exportedKnown, {
+											keys: KeyEncodingOptions.knownStoredKeys,
+										});
+										if (!testCase.hasUnknownOptionalFields) {
+											expectTreesEqual(root, importedKnown);
 										}
 									}
 
@@ -3165,8 +3214,12 @@ function expectTreesEqual(
 	// This should catch all cases, assuming exportVerbose works correctly.
 	// Use stored keys so unknown optional fields can be included.
 	assert.deepEqual(
-		TreeAlpha.exportVerbose(a, { useStoredKeys: true }),
-		TreeAlpha.exportVerbose(b, { useStoredKeys: true }),
+		TreeAlpha.exportVerbose(a, {
+			keys: KeyEncodingOptions.allStoredKeys,
+		}),
+		TreeAlpha.exportVerbose(b, {
+			keys: KeyEncodingOptions.allStoredKeys,
+		}),
 	);
 
 	// Since this uses some of the tools to compare trees that this is testing for, perform the comparison in a few ways to reduce risk of a bug making this pass when it shouldn't:

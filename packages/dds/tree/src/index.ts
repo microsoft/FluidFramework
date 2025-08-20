@@ -264,6 +264,8 @@ export {
 	type RecordNodeInsertableData,
 	type RecordNodePojoEmulationSchema,
 	type TreeRecordNode,
+	KeyEncodingOptions,
+	type TreeParsingOptions,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
