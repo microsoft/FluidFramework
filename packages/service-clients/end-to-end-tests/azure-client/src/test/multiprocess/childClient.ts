@@ -158,18 +158,17 @@ class MessageHandler {
 		LatestMapRaw<{ value: Record<string, string | number> }, string>
 	>();
 
-	private connectSetup(): void {
+	private registerWorkspace(
+		workspaceId: string,
+		options: { latest?: boolean; latestMap?: boolean },
+	): void {
 		if (!this.presence) {
+			send({ event: "error", error: `${process_id} is not connected to presence` });
 			return;
 		}
-
-		const testWorkspaces = [
-			"testLatestWorkspace",
-			"testLatestMapWorkspace",
-			"testMultiKeyMap",
-		];
-
-		for (const workspaceId of testWorkspaces) {
+		const { latest, latestMap } = options;
+		// Only register what's requested and not already present
+		if (latest && !this.latestStates.has(workspaceId)) {
 			const latestWorkspace = this.presence.states.getWorkspace(
 				`test:${workspaceId}` as const,
 				{
@@ -179,7 +178,6 @@ class MessageHandler {
 			const latestState = latestWorkspace.states.latestValue;
 			this.latestStates.set(workspaceId, latestState);
 			latestState.events.on("remoteUpdated", (update) => {
-				// Ignore initial update
 				if (update.value.value !== "initial") {
 					send({
 						event: "latestValueUpdated",
@@ -189,7 +187,8 @@ class MessageHandler {
 					});
 				}
 			});
-
+		}
+		if (latestMap && !this.latestMapStates.has(workspaceId)) {
 			const latestMapWorkspace = this.presence.states.getWorkspace(
 				`test:${workspaceId}` as const,
 				{
@@ -208,11 +207,17 @@ class MessageHandler {
 						workspaceId,
 						attendeeId: update.attendee.attendeeId,
 						key: String(key),
-						value: valueWithMetadata.value.value, // Extract just the value, not metadata
+						value: valueWithMetadata.value.value,
 					});
 				}
 			});
 		}
+		send({
+			event: "workspaceRegistered",
+			workspaceId,
+			latest: !!(latest && this.latestStates.has(workspaceId)),
+			latestMap: !!(latestMap && this.latestMapStates.has(workspaceId)),
+		});
 	}
 
 	public async onMessage(msg: MessageFromParent): Promise<void> {
@@ -258,8 +263,7 @@ class MessageHandler {
 					send(m);
 				});
 
-				// Get test workspaces and set up event listeners
-				this.connectSetup();
+				// Workspaces are now registered on-demand via registerWorkspace command
 
 				send({
 					event: "connected",
@@ -370,6 +374,13 @@ class MessageHandler {
 				break;
 			}
 
+			case "registerWorkspace": {
+				this.registerWorkspace(msg.workspaceId, {
+					latest: msg.latest,
+					latestMap: msg.latestMap,
+				});
+				break;
+			}
 			case "getLatestMapValue": {
 				if (!this.presence) {
 					send({ event: "error", error: `${process_id} is not connected to presence` });

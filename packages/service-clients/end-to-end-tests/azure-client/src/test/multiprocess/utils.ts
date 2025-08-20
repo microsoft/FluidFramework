@@ -188,6 +188,44 @@ export async function connectAndWaitForAttendees(
 	return connectResult;
 }
 
+/**
+ * Registers a workspace (latest and/or latestMap) on all provided child processes and waits for acknowledgement.
+ *
+ * @remarks
+ * The listener for the acknowledgement event is attached before sending the command to avoid a race where the
+ * child responds faster than the parent attaches the handler.
+ *
+ * @param children - Child processes representing Fluid clients.
+ * @param workspaceId - Logical (unprefixed) workspace id used in tests.
+ * @param options - Which state types to register plus optional timeout.
+ */
+export async function registerWorkspaceOnChildren(
+	children: ChildProcess[],
+	workspaceId: string,
+	options: { latest?: boolean; latestMap?: boolean; timeoutMs?: number },
+): Promise<void> {
+	const { latest, latestMap, timeoutMs = 10_000 } = options;
+	const promises = children.map(async (child, index) => {
+		const ackPromise = waitForEvent(
+			child,
+			"workspaceRegistered",
+			(m) => m.event === "workspaceRegistered" && m.workspaceId === workspaceId,
+			{
+				durationMs: timeoutMs,
+				errorMsg: `Child ${index} did not acknowledge workspace registration ${workspaceId}`,
+			},
+		);
+		child.send({
+			command: "registerWorkspace",
+			workspaceId,
+			latest,
+			latestMap,
+		});
+		await ackPromise;
+	});
+	await Promise.all(promises);
+}
+
 // Type guards (internal)
 function isLatestValueGetResponse(msg: MessageFromChild): msg is LatestValueGetResponseEvent {
 	return msg.event === "latestValueGetResponse";

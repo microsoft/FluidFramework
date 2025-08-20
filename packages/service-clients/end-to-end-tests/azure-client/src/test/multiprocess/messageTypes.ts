@@ -13,6 +13,7 @@ import type { AttendeeId } from "@fluidframework/presence/beta";
 export type MessageToChild =
 	| ConnectCommand
 	| DisconnectSelfCommand
+	| RegisterWorkspaceCommand
 	| GetLatestValueCommand
 	| GetLatestMapValueCommand
 	| SetLatestValueCommand
@@ -47,6 +48,24 @@ export interface ConnectCommand {
  */
 interface DisconnectSelfCommand {
 	command: "disconnectSelf";
+}
+
+/**
+ * Instructs a child process to register (create + subscribe) to states for a workspace on demand.
+ * Only the requested state types (latest / latestMap) will be instantiated and listened to.
+ * A {@link WorkspaceRegisteredEvent} should be expected in response.
+ */
+interface RegisterWorkspaceCommand {
+	command: "registerWorkspace";
+	workspaceId: string;
+	/**
+	 * Register a Latest state for this workspace.
+	 */
+	latest?: boolean;
+	/**
+	 * Register a LatestMap state for this workspace.
+	 */
+	latestMap?: boolean;
 }
 
 /**
@@ -107,6 +126,7 @@ export type MessageFromChild =
 	| LatestMapValueUpdatedEvent
 	| LatestValueGetResponseEvent
 	| LatestMapValueGetResponseEvent
+	| WorkspaceRegisteredEvent
 	| ErrorEvent;
 
 /**
@@ -190,6 +210,16 @@ export interface LatestMapValueGetResponseEvent {
 	attendeeId: AttendeeId | undefined;
 	key: string;
 	value: unknown;
+}
+
+/**
+ * Sent from the child process to acknowledge workspace registration.
+ */
+interface WorkspaceRegisteredEvent {
+	event: "workspaceRegistered";
+	workspaceId: string;
+	latest?: boolean;
+	latestMap?: boolean;
 }
 
 /**

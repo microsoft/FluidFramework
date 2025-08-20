@@ -15,6 +15,7 @@ import {
 	forkChildProcesses,
 	connectChildProcesses,
 	connectAndWaitForAttendees,
+	registerWorkspaceOnChildren,
 	waitForLatestValueUpdates,
 	waitForLatestMapValueUpdates,
 	getLatestValueResponses,
@@ -75,10 +76,13 @@ describe(`Presence with AzureClient`, () => {
 			const durationMs = 10_000;
 
 			it("announces 'attendeeConnected' when remote client joins session", async () => {
+				// Setup
 				const { children, childErrorPromise } = await forkChildProcesses(
 					numClients,
 					afterCleanUp,
 				);
+
+				// Act + Verify
 				await connectAndWaitForAttendees(
 					children,
 					numClients - 1,
@@ -89,6 +93,7 @@ describe(`Presence with AzureClient`, () => {
 			});
 
 			it("announces 'attendeeDisconnected' when remote client disconnects", async () => {
+				// Setup
 				const { children, childErrorPromise } = await forkChildProcesses(
 					numClients,
 					afterCleanUp,
@@ -103,6 +108,7 @@ describe(`Presence with AzureClient`, () => {
 				);
 
 				const childDisconnectTimeoutMs = 10_000;
+
 				const waitForDisconnected = children.map(async (child, index) =>
 					index === 0
 						? Promise.resolve()
@@ -125,7 +131,10 @@ describe(`Presence with AzureClient`, () => {
 							),
 				);
 
+				// Act
 				children[0].send({ command: "disconnectSelf" });
+
+				// Verify
 				await Promise.race([Promise.all(waitForDisconnected), childErrorPromise]);
 			});
 
@@ -133,23 +142,27 @@ describe(`Presence with AzureClient`, () => {
 				let children: ChildProcess[];
 				let childErrorPromise: Promise<void>;
 				let containerCreatorAttendeeId: AttendeeId;
+				let attendeeIdPromises: Promise<AttendeeId>[];
 				let remoteClients: ChildProcess[];
 				const testValue = "testValue";
-				const workspaceId = "testLatestWorkspace";
+				const workspaceId = "presenceTestWorkspace";
 
 				beforeEach(async () => {
 					({ children, childErrorPromise } = await forkChildProcesses(
 						numClients,
 						afterCleanUp,
 					));
-					({ containerCreatorAttendeeId } = await connectChildProcesses(
+					({ containerCreatorAttendeeId, attendeeIdPromises } = await connectChildProcesses(
 						children,
 						childConnectTimeoutMs,
 					));
+					await Promise.all(attendeeIdPromises);
 					remoteClients = children.filter((_, index) => index !== 0);
+					await registerWorkspaceOnChildren(children, workspaceId, { latest: true });
 				});
 
 				it("synchronizes Latest state updates between clients", async () => {
+					// Act
 					children[0].send({
 						command: "setLatestValue",
 						workspaceId,
@@ -163,18 +176,21 @@ describe(`Presence with AzureClient`, () => {
 						durationMs,
 					);
 
+					// Verify
 					for (const updateEvent of updateEvents) {
 						assert.deepStrictEqual(updateEvent.value, testValue);
 					}
 				});
 
 				it("allows clients to read Latest state from other clients", async () => {
+					// Act
 					children[0].send({
 						command: "setLatestValue",
 						workspaceId,
 						value: testValue,
 					});
 
+					// Wait for remote clients to acknowledge the receipt of latest value update
 					await waitForLatestValueUpdates(
 						remoteClients,
 						workspaceId,
@@ -182,6 +198,7 @@ describe(`Presence with AzureClient`, () => {
 						durationMs,
 					);
 
+					// Act - Request each remote client to read latest state from container creator
 					for (const child of remoteClients) {
 						child.send({
 							command: "getLatestValue",
@@ -196,6 +213,8 @@ describe(`Presence with AzureClient`, () => {
 						childErrorPromise,
 						durationMs,
 					);
+
+					// Verify
 					for (const getResponse of getResponses) {
 						assert.deepStrictEqual(getResponse.value, testValue);
 					}
@@ -208,6 +227,7 @@ describe(`Presence with AzureClient`, () => {
 				let containerCreatorAttendeeId: AttendeeId;
 				let attendeeIdPromises: Promise<AttendeeId>[];
 				let remoteClients: ChildProcess[];
+				const workspaceId = "presenceTestWorkspace";
 
 				beforeEach(async () => {
 					({ children, childErrorPromise } = await forkChildProcesses(
@@ -218,14 +238,16 @@ describe(`Presence with AzureClient`, () => {
 						children,
 						childConnectTimeoutMs,
 					));
+					await Promise.all(attendeeIdPromises);
 					remoteClients = children.filter((_, index) => index !== 0);
+					await registerWorkspaceOnChildren(children, workspaceId, { latestMap: true });
 				});
 
 				it("synchronizes LatestMap state updates between clients", async () => {
-					const workspaceId = "testLatestMapWorkspace";
 					const testKey = "player1";
 					const testValue = { x: 100, y: 200, color: "red" };
 
+					// Act
 					children[0].send({
 						command: "setLatestMapValue",
 						workspaceId,
@@ -241,13 +263,13 @@ describe(`Presence with AzureClient`, () => {
 						durationMs,
 					);
 
+					// Verify
 					for (const updateEvent of updateEvents) {
 						assert.deepStrictEqual(updateEvent.value, testValue);
 					}
 				});
 
 				it("allows clients to read LatestMap values from other clients", async () => {
-					const workspaceId = "testLatestMapWorkspace";
 					const testKey = "cursor";
 					const testValue = { x: 150, y: 300 };
 
@@ -258,6 +280,7 @@ describe(`Presence with AzureClient`, () => {
 						value: testValue,
 					});
 
+					// Wait for remote clients to acknowledge the receipt of latest map value update
 					await waitForLatestMapValueUpdates(
 						remoteClients,
 						workspaceId,
@@ -266,6 +289,7 @@ describe(`Presence with AzureClient`, () => {
 						durationMs,
 					);
 
+					// Act - Request each remote client to read latest map value from container creator
 					for (const child of remoteClients) {
 						child.send({
 							command: "getLatestMapValue",
@@ -282,18 +306,20 @@ describe(`Presence with AzureClient`, () => {
 						childErrorPromise,
 						durationMs,
 					);
+
+					// Verify
 					for (const getResponse of getResponses) {
 						assert.deepStrictEqual(getResponse.value, testValue);
 					}
 				});
 
 				it("handles multiple keys in LatestMap independently", async () => {
-					const workspaceId = "testMultiKeyMap";
 					const key1 = "player1";
 					const key2 = "player2";
 					const value1 = { name: "Alice", score: 100 };
 					const value2 = { name: "Bob", score: 200 };
 
+					// Act
 					children[0].send({
 						command: "setLatestMapValue",
 						workspaceId,
@@ -302,6 +328,8 @@ describe(`Presence with AzureClient`, () => {
 					});
 
 					const key1Recipients = children.filter((_, index) => index !== 0);
+
+					// Wait for latest map value updates to be received
 					const key1UpdateEvents = await waitForLatestMapValueUpdates(
 						key1Recipients,
 						workspaceId,
@@ -310,6 +338,7 @@ describe(`Presence with AzureClient`, () => {
 						durationMs,
 					);
 
+					// Act
 					children[1].send({
 						command: "setLatestMapValue",
 						workspaceId,
@@ -318,6 +347,8 @@ describe(`Presence with AzureClient`, () => {
 					});
 
 					const key2Recipients = children.filter((_, index) => index !== 1);
+
+					// Wait for latest map value updates to be received
 					const key2UpdateEvents = await waitForLatestMapValueUpdates(
 						key2Recipients,
 						workspaceId,
@@ -326,6 +357,7 @@ describe(`Presence with AzureClient`, () => {
 						durationMs,
 					);
 
+					// Verify receipt of correct latest map value updates
 					for (const updateEvent of key1UpdateEvents) {
 						assert.deepStrictEqual(updateEvent.value, value1);
 					}
@@ -337,6 +369,7 @@ describe(`Presence with AzureClient`, () => {
 					const attendee0Id = containerCreatorAttendeeId;
 					const attendee1Id = allAttendeeIds[1];
 
+					// Act - Request each child to get the latest map value for key1
 					for (const child of children) {
 						child.send({
 							command: "getLatestMapValue",
@@ -345,6 +378,7 @@ describe(`Presence with AzureClient`, () => {
 							attendeeId: attendee0Id,
 						});
 					}
+					// Wait for latest map value responses to be received and collect responses
 					const key1Responses = await getLatestMapValueResponses(
 						children,
 						workspaceId,
@@ -352,7 +386,7 @@ describe(`Presence with AzureClient`, () => {
 						childErrorPromise,
 						durationMs,
 					);
-
+					// Act - Request each child to get the latest map value for key2
 					for (const child of children) {
 						child.send({
 							command: "getLatestMapValue",
@@ -361,6 +395,7 @@ describe(`Presence with AzureClient`, () => {
 							attendeeId: attendee1Id,
 						});
 					}
+					// Wait for latest map value responses to be received and collect responses
 					const key2Responses = await getLatestMapValueResponses(
 						children,
 						workspaceId,
@@ -369,6 +404,7 @@ describe(`Presence with AzureClient`, () => {
 						durationMs,
 					);
 
+					// Verify get responses are returning latest state
 					assert.strictEqual(
 						key1Responses.length,
 						numClients,
