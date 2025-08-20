@@ -4,13 +4,13 @@
  */
 
 export {
-	IProtocolHandler as IBaseProtocolHandler,
+	type IProtocolHandler as IBaseProtocolHandler,
 	ProtocolOpHandler,
-	IScribeProtocolState,
+	type IScribeProtocolState,
 } from "./protocol.js";
 export {
-	IQuorumSnapshot,
+	type IQuorumSnapshot,
 	Quorum,
-	QuorumClientsSnapshot,
-	QuorumProposalsSnapshot,
+	type QuorumClientsSnapshot,
+	type QuorumProposalsSnapshot,
 } from "./quorum.js";

@@ -15,7 +15,7 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import {
 	SummaryType,
-	IDocumentServiceFactory,
+	type IDocumentServiceFactory,
 	type IDocumentService,
 	type IDocumentStorageService,
 	type IResolvedUrl,
