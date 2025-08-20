@@ -7,7 +7,7 @@ import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example
 
 import {
 	ContactCollectionContainerRuntimeFactory,
-	IContactCollectionAppModel,
+	type IContactCollectionAppModel,
 } from "./containerCode.js";
 import { renderContact, renderContactCollection } from "./view.js";
 
