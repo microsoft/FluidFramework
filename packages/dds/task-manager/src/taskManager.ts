@@ -97,11 +97,6 @@ export class TaskManagerClass
 	private readonly subscribedTasks = new Set<string>();
 
 	/**
-	 * Map to track tasks that have pending complete ops.
-	 */
-	private readonly pendingCompletedTasks = new Map<string, number[]>();
-
-	/**
 	 * Returns the clientId. Will return a placeholder if the runtime is detached and not yet assigned a clientId.
 	 */
 	private get clientId(): string | undefined {
@@ -180,15 +175,6 @@ export class TaskManagerClass
 						// Delete the pending, because we no longer have an outstanding op
 						this.latestPendingOps.delete(taskId);
 					}
-
-					// Remove complete op from this.pendingCompletedTasks
-					const pendingIds = this.pendingCompletedTasks.get(taskId);
-					assert(
-						pendingIds !== undefined && pendingIds.length > 0,
-						0x402 /* pendingIds is empty */,
-					);
-					const removed = pendingIds.shift();
-					assert(removed === messageId, 0x403 /* Removed complete op id does not match */);
 				}
 
 				this.taskQueues.delete(taskId);
@@ -277,12 +263,6 @@ export class TaskManagerClass
 			messageId: ++this.messageId,
 		};
 
-		if (this.pendingCompletedTasks.has(taskId)) {
-			this.pendingCompletedTasks.get(taskId)?.push(pendingOp.messageId);
-		} else {
-			this.pendingCompletedTasks.set(taskId, [pendingOp.messageId]);
-		}
-
 		this.submitLocalMessage(op, pendingOp.messageId);
 		this.latestPendingOps.set(taskId, pendingOp);
 	}
@@ -294,7 +274,7 @@ export class TaskManagerClass
 		// If we are both queued and assigned, then we have the lock and do not
 		// have any pending abandon/complete ops. In this case we can resolve
 		// true immediately.
-		if (this.queued(taskId) && this.assigned(taskId)) {
+		if (this.queuedOptimistically(taskId) && this.assigned(taskId)) {
 			return true;
 		}
 
@@ -369,7 +349,7 @@ export class TaskManagerClass
 			setupListeners();
 		});
 
-		if (!this.queued(taskId)) {
+		if (!this.queuedOptimistically(taskId)) {
 			// Only send the volunteer op if we are not already queued.
 			this.submitVolunteerOp(taskId);
 		}
@@ -435,7 +415,7 @@ export class TaskManagerClass
 			// a real clientId. At that point we should re-enter the queue with a real volunteer op (assuming we are
 			// connected).
 			this.runtime.once("attached", () => {
-				if (this.queued(taskId)) {
+				if (this.queuedOptimistically(taskId)) {
 					// If we are already queued, then we were able to replace the placeholderClientId with our real
 					// clientId and no action is required.
 					return;
@@ -450,7 +430,7 @@ export class TaskManagerClass
 		} else if (!this.connected) {
 			// If we are disconnected (and attached), wait to be connected and submit volunteer op
 			disconnectHandler();
-		} else if (!this.assigned(taskId) && !this.queued(taskId)) {
+		} else if (!this.assigned(taskId) && !this.queuedOptimistically(taskId)) {
 			const latestPendingOp = this.latestPendingOps.get(taskId);
 			if (latestPendingOp === undefined || latestPendingOp.type === "volunteer") {
 				// We don't need to send a volunteer op unless this task is not already a volunteer op.
@@ -467,7 +447,7 @@ export class TaskManagerClass
 		// Always allow abandon if the client is subscribed to allow clients to unsubscribe while disconnected.
 		// Otherwise, we should check to make sure the client is both connected queued for the task before sending an
 		// abandon op.
-		if (!this.queued(taskId) && !this.subscribed(taskId) && !this.connected) {
+		if (!this.queuedOptimistically(taskId) && !this.subscribed(taskId) && !this.connected) {
 			// Nothing to do
 			return;
 		}
@@ -480,7 +460,7 @@ export class TaskManagerClass
 			return;
 		}
 
-		if (this.queued(taskId)) {
+		if (this.queuedOptimistically(taskId)) {
 			if (!this.assigned(taskId)) {
 				// If we try to abandon when queued but not assigned  then we should emit to the abandonWatcher as this is
 				// not allowed and will throw an error in the volunteer promise.
@@ -516,15 +496,7 @@ export class TaskManagerClass
 		}
 
 		assert(this.clientId !== undefined, 0x07f /* "clientId undefined" */);
-
-		const inQueue = this.taskQueues.get(taskId)?.includes(this.clientId) ?? false;
-		const latestPendingOp = this.latestPendingOps.get(taskId);
-		const isPendingVolunteer = latestPendingOp?.type === "volunteer";
-		const isPendingAbandonOrComplete =
-			latestPendingOp?.type === "abandon" || latestPendingOp?.type === "complete";
-		// We return true if the client is either in queue already or the latest pending op for this task is a volunteer op.
-		// But we should always return false if the latest pending op is an abandon or complete op.
-		return (inQueue || isPendingVolunteer) && !isPendingAbandonOrComplete;
+		return this.taskQueues.get(taskId)?.includes(this.clientId) ?? false;
 	}
 
 	/**
@@ -673,12 +645,6 @@ export class TaskManagerClass
 	}
 
 	private addClientToQueue(taskId: string, clientId: string): void {
-		const pendingIds = this.pendingCompletedTasks.get(taskId);
-		if (pendingIds !== undefined && pendingIds.length > 0) {
-			// Ignore the volunteer op if we know this task is about to be completed
-			return;
-		}
-
 		// Ensure that the clientId exists in the quorum, or it is placeholderClientId (detached scenario)
 		if (
 			this.runtime.getQuorum().getMembers().has(clientId) ||
@@ -769,6 +735,27 @@ export class TaskManagerClass
 				this.queueWatcher.emit("queueChange", taskId);
 			}
 		}
+	}
+
+	/**
+	 * Checks whether this client is currently assigned or in queue to become assigned, while also accounting
+	 * for the latest pending ops.
+	 */
+	private queuedOptimistically(taskId: string): boolean {
+		if (this.isAttached() && !this.connected) {
+			return false;
+		}
+
+		assert(this.clientId !== undefined, 0x07f /* "clientId undefined" */);
+
+		const inQueue = this.taskQueues.get(taskId)?.includes(this.clientId) ?? false;
+		const latestPendingOp = this.latestPendingOps.get(taskId);
+		const isPendingVolunteer = latestPendingOp?.type === "volunteer";
+		const isPendingAbandonOrComplete =
+			latestPendingOp?.type === "abandon" || latestPendingOp?.type === "complete";
+		// We return true if the client is either in queue already or the latest pending op for this task is a volunteer op.
+		// But we should always return false if the latest pending op is an abandon or complete op.
+		return (inQueue || isPendingVolunteer) && !isPendingAbandonOrComplete;
 	}
 
 	protected applyStashedOp(content: unknown): void {

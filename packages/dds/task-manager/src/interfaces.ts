@@ -167,8 +167,7 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
 	assigned(taskId: string): boolean;
 
 	/**
-	 * Check whether this client is either the current assignee, in queue, or we expect they will be in queue after
-	 * outstanding ops have been ack'd.
+	 * Check whether this client is either the current assignee or in queue to become the assignee.
 	 * @param taskId - Identifier for the task
 	 */
 	queued(taskId: string): boolean;
