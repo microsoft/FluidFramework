@@ -4,6 +4,7 @@
  */
 
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
@@ -31,8 +32,7 @@ import type { IChannelAttributes } from "./storage.js";
  * TODO:
  * Either Channels should become a useful well documented abstraction of which there could be another implementation, or it should be better integrated with SharedObject to reduce concept count.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IChannel extends IFluidLoadable {
 	/**
@@ -135,8 +135,7 @@ export interface IChannel extends IFluidLoadable {
 
 /**
  * Handler provided by shared data structure to process requests from the runtime.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDeltaHandler {
 	/**
@@ -199,8 +198,7 @@ export interface IDeltaHandler {
 
 /**
  * Interface to represent a connection to a delta notification stream.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDeltaConnection {
 	connected: boolean;
@@ -230,8 +228,7 @@ export interface IDeltaConnection {
 
 /**
  * Storage services to read the objects at a given path.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IChannelStorageService {
 	/**
@@ -248,12 +245,17 @@ export interface IChannelStorageService {
 	 * Lists the blobs that exist at a specific path.
 	 */
 	list(path: string): Promise<string[]>;
+
+	/**
+	 * Returns the snapshot tree for the channel. This will help channels examine their snapshot when it consists
+	 * of dynamic trees and blobs, i.e., the number of tree and blobs and / or their keys are not known in advance.
+	 */
+	getSnapshotTree?(): ISnapshotTree | undefined;
 }
 
 /**
  * Storage services to read the objects at a given path using the given delta connection.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IChannelServices {
 	deltaConnection: IDeltaConnection;
@@ -287,8 +289,7 @@ export interface IChannelServices {
  * This approach (not requiring TChannel to extend IChannel) also makes it possible for SharedObject's public interfaces to not include IChannel if desired
  * (while still requiring the implementation to implement it).
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IChannelFactory<out TChannel = unknown> {
 	/**

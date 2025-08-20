@@ -29,6 +29,14 @@ import {
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import {
+	OperationType,
+	SharedArray,
+	SharedArrayRevertible,
+	type IRevertible,
+	type ISharedArray,
+	type IToggleOperation,
+} from "@fluidframework/legacy-dds/internal";
 import type {
 	ISharedDirectory,
 	SharedDirectory,
@@ -71,6 +79,7 @@ const counterId = "counterKey";
 const directoryId = "directoryKey";
 const collectionId = "collectionKey";
 const treeId = "treeKey";
+const arrayId = "arrayKey";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -126,6 +135,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[counterId, SharedCounter.getFactory()],
 		[directoryId, SharedDirectory.getFactory()],
 		[treeId, SharedTree.getFactory()],
+		[arrayId, SharedArray.getFactory()],
 	];
 
 	const testContainerConfig: ITestContainerConfig = {
@@ -194,6 +204,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	let map1: ISharedMap;
 	let string1: SharedString;
 	let cell1: ISharedCell;
+	let array1: ISharedArray<string>;
 	let counter1: SharedCounter;
 	let directory1: ISharedDirectory;
 	let collection1: ISequenceIntervalCollection;
@@ -211,6 +222,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 		cell1 = await dataStore1.getSharedObject<ISharedCell>(cellId);
+		array1 = await dataStore1.getSharedObject<ISharedArray<string>>(arrayId);
 		counter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
 		directory1 = await dataStore1.getSharedObject<SharedDirectory>(directoryId);
 		string1 = await dataStore1.getSharedObject<SharedString>(stringId);
@@ -235,6 +247,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				const string = await d.getSharedObject<SharedString>(stringId);
 				const collection = string.getIntervalCollection(collectionId);
 				collection.add({ start: testStart, end: testEnd });
+				const array = await d.getSharedObject<ISharedArray<string>>(arrayId);
+				array.insert(0, "test");
 			},
 		);
 
@@ -243,6 +257,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		const cell2 = await dataStore2.getSharedObject<ISharedCell>(cellId);
+		const array2 = await dataStore2.getSharedObject<ISharedArray<string>>(arrayId);
 		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
 		const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
@@ -253,6 +268,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(map2.get(testKey), testValue);
 		assert.strictEqual(cell1.get(), testValue);
 		assert.strictEqual(cell2.get(), testValue);
+		assert.strictEqual(array1.get()[0], "test");
+		assert.strictEqual(array2.get()[0], "test");
 		assert.strictEqual(counter1.value, testIncrementValue);
 		assert.strictEqual(counter2.value, testIncrementValue);
 		assert.strictEqual(directory1.get(testKey), testValue);
@@ -515,6 +532,119 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				assert.strictEqual(map2.get(i.toString()), testValue),
 			);
 		});
+	});
+
+	it("resends insert, delete and move shared array ops", async function () {
+		const pendingOps = await generatePendingState(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (c, d) => {
+				const array = await d.getSharedObject<ISharedArray<string>>(arrayId);
+				array.insert(0, "test");
+				array.insert(1, "test2");
+				array.insert(2, "test3");
+				array.delete(0);
+				array.insert(0, "test4");
+				array.insert(1, "test5");
+				array.insert(2, "test6");
+				array.insertBulkAfter("test6", ["test7", "test8"]);
+				array.move(0, 3);
+				array.move(1, 4);
+				array.delete(5);
+				array.insert(5, "test9");
+			},
+		);
+
+		// load container with pending ops, which should resend the op not sent by previous container
+		const container2 = await loader.resolve({ url }, pendingOps);
+		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const array2 = await dataStore2.getSharedObject<ISharedArray<string>>(arrayId);
+		await waitForContainerConnection(container2);
+		await provider.ensureSynchronized();
+		assert.deepEqual(array1.get(), array2.get());
+	});
+
+	it("resends toggle shared array op", async function () {
+		const pendingOps = await generatePendingState(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (c, d) => {
+				const array = await d.getSharedObject<ISharedArray<string>>(arrayId);
+				let revertible: IRevertible = new SharedArrayRevertible(array, {
+					entryId: "dummy",
+					type: OperationType.toggle,
+					isDeleted: false,
+				} satisfies IToggleOperation);
+				// Attach the revertible event listener.
+				array.on("revertible", (revertibleItem: IRevertible) => {
+					revertible = revertibleItem;
+				});
+				array.insert(0, "test");
+				array.insert(1, "test2");
+				// Reverting the revertible generates a toggle op
+				// which reverts the last insert op and should be resent
+				// by the next container
+				revertible.revert();
+			},
+		);
+
+		// load container with pending ops, which should resend the op not sent by previous container
+		const container2 = await loader.resolve({ url }, pendingOps);
+		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const array2 = await dataStore2.getSharedObject<ISharedArray<string>>(arrayId);
+		await waitForContainerConnection(container2);
+		await provider.ensureSynchronized();
+		const realArray2 = array2.get();
+		const realArray = array1.get();
+		assert.strictEqual(realArray2.length, 1, "Array should have one element after revert");
+		assert.strictEqual(realArray.length, 1, "Array should have one element after revert");
+		assert.strictEqual(realArray2[0], "test", "Wrong element after revert");
+		assert.strictEqual(realArray[0], "test", "Wrong element after revert");
+	});
+
+	it("resends toggle move shared array op", async function () {
+		const pendingOps = await generatePendingState(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (c, d) => {
+				const array = await d.getSharedObject<ISharedArray<string>>(arrayId);
+				let revertible: IRevertible = new SharedArrayRevertible(array, {
+					entryId: "dummy",
+					type: OperationType.toggleMove,
+					changedToEntryId: "dummy2",
+				});
+				// Attach the revertible event listener.
+				array.on("revertible", (revertibleItem: IRevertible) => {
+					revertible = revertibleItem;
+				});
+				array.insert(0, "test");
+				array.insert(1, "test2");
+				array.insert(2, "test3");
+				array.move(0, 2);
+				// Revert the move operation.
+				revertible.revert();
+			},
+		);
+
+		// load container with pending ops, which should resend the op not sent by previous container
+		const container2 = await loader.resolve({ url }, pendingOps);
+		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const array2 = await dataStore2.getSharedObject<ISharedArray<string>>(arrayId);
+		await waitForContainerConnection(container2);
+		await provider.ensureSynchronized();
+		const realArray2 = array2.get();
+		const realArray = array1.get();
+		assert.strictEqual(realArray2.length, 3, "Array should have three elements after revert");
+		assert.strictEqual(realArray.length, 3, "Array should have three elements after revert");
+		assert.strictEqual(realArray2[0], "test", "Wrong element after revert");
+		assert.strictEqual(realArray[0], "test", "Wrong element after revert");
+		assert.strictEqual(realArray2[1], "test2", "Wrong element after revert");
+		assert.strictEqual(realArray[1], "test2", "Wrong element after revert");
+		assert.strictEqual(realArray2[2], "test3", "Wrong element after revert");
+		assert.strictEqual(realArray[2], "test3", "Wrong element after revert");
 	});
 
 	it("resends all shared directory ops", async function () {
@@ -1053,7 +1183,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				// of how small this window is.
 				if (JSON.stringify(op).includes("attach")) {
 					(container as any).processRemoteMessage = (message) => null;
-					const pendingStateP = container.closeAndGetPendingLocalState?.();
+					const pendingStateP = container.getPendingLocalState?.();
+					container.close();
 					assert.ok(pendingStateP);
 					resolve(pendingStateP);
 				}
@@ -1096,7 +1227,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				if (op.clientId === container.clientId) {
 					// hacky; but we need to make sure we don't process further ops
 					(container as any).processRemoteMessage = (message) => null;
-					const pendingStateP = container.closeAndGetPendingLocalState?.();
+					const pendingStateP = container.getPendingLocalState?.();
+					container.close();
 					assert.ok(pendingStateP);
 					resolve(pendingStateP);
 				}
@@ -1274,7 +1406,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
 		// get stashed ops from this container without connecting.  Superset of pendingOps
-		const morePendingOps = await container2.closeAndGetPendingLocalState?.();
+		const morePendingOps = await container2.getPendingLocalState?.();
+		container2.close();
 
 		const { container: container3, connect: connect3 } = await loadContainerOffline(
 			testContainerConfig,
@@ -1439,13 +1572,19 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(bufferToString(handleGet2, "utf8"), "blob contents");
 	});
 
-	it("close while uploading blob", async function () {
+	// ADO#44999: The following scenarios are possible with payload pending, but will function differently.
+	// The in-flight blob upload will need to be completable after loading with the pending state, but
+	// we will expect the customer to have already stored the blob handle prior to calling getPendingState.
+
+	it.skip("close while uploading blob", async function () {
 		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
 
 		const blobP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
-		const pendingOpsP = container1.closeAndGetPendingLocalState?.();
+		// TODO: This portion was using closeAndGetPendingLocalState - using getPendingLocalState instead to allow compilation
+		// const pendingOpsP = container1.closeAndGetPendingLocalState?.();
+		const pendingOpsP = container1.getPendingLocalState?.();
 		const handle = await blobP;
 		map.set("blob handle", handle);
 		const pendingOps = await pendingOpsP;
@@ -1465,25 +1604,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
-	it("abort while stashing blobs", async function () {
-		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
-		const ac = new AbortController();
-		await provider.ensureSynchronized();
-
-		const blobP1 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
-		const blobP2 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
-		assert(container1.closeAndGetPendingLocalState);
-		const pendingOpsP = container1.closeAndGetPendingLocalState(ac.signal);
-		map.set("blob handle", await blobP1);
-		ac.abort();
-		const pendingOps = await pendingOpsP;
-
-		// we are able to load from the pending ops even though we abort
-		await loadContainerOffline(testContainerConfig, provider, { url }, pendingOps);
-	});
-
-	it("close while uploading multiple blob", async function () {
+	it.skip("close while uploading multiple blob", async function () {
 		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		await provider.ensureSynchronized();
@@ -1491,7 +1612,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const blobP1 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
 		const blobP2 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 2", "utf8"));
 		const blobP3 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 3", "utf8"));
-		const pendingOpsP = container1.closeAndGetPendingLocalState?.();
+		// TODO: This portion was using closeAndGetPendingLocalState - using getPendingLocalState instead to allow compilation
+		// const pendingOpsP = container1.closeAndGetPendingLocalState?.();
+		const pendingOpsP = container1.getPendingLocalState?.();
 		map.set("blob handle 1", await blobP1);
 		map.set("blob handle 2", await blobP2);
 		map.set("blob handle 3", await blobP3);
@@ -1513,14 +1636,16 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 	});
 
-	it("load offline from stashed ops with pending blob", async function () {
+	it.skip("load offline from stashed ops with pending blob", async function () {
 		const container = await loadContainerOffline(testContainerConfig, provider, { url });
 		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
 		// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
 		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
-		const stashedChangesP = container.container.closeAndGetPendingLocalState?.();
+		// TODO: This portion was using closeAndGetPendingLocalState - using getPendingLocalState instead to allow compilation
+		// const stashedChangesP = container.container.closeAndGetPendingLocalState?.();
+		const stashedChangesP = container.container.getPendingLocalState?.();
 		const handle = await handleP;
 		map.set("blob handle 1", handle);
 
@@ -1554,14 +1679,16 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
-	it("stashed changes with blobs", async function () {
+	it.skip("stashed changes with blobs", async function () {
 		const container = await loadContainerOffline(testContainerConfig, provider, { url });
 		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
 		// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
 		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
-		const stashedChangesP = container.container.closeAndGetPendingLocalState?.();
+		// TODO: This portion was using closeAndGetPendingLocalState - using getPendingLocalState instead to allow compilation
+		// const stashedChangesP = container.container.closeAndGetPendingLocalState?.();
+		const stashedChangesP = container.container.getPendingLocalState?.();
 		const handle = await handleP;
 		map.set("blob handle 1", handle);
 
@@ -1659,7 +1786,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await detachedContainer.attach(
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		const pendingOps = await detachedContainer.closeAndGetPendingLocalState?.();
+		const pendingOps = await detachedContainer.getPendingLocalState?.();
+		detachedContainer.close();
 
 		const url2 = await detachedContainer.getAbsoluteUrl("");
 		assert.ok(url2);
@@ -1689,7 +1817,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await rehydratedContainer.attach(
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		const pendingOps = await rehydratedContainer.closeAndGetPendingLocalState?.();
+		const pendingOps = await rehydratedContainer.getPendingLocalState?.();
+		rehydratedContainer.close();
 
 		const url2 = await rehydratedContainer.getAbsoluteUrl("");
 		assert.ok(url2);
@@ -2170,7 +2299,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
-		const pendingOps = await container.closeAndGetPendingLocalState?.();
+		const pendingOps = await container.getPendingLocalState?.();
+		container.close();
 		assert.ok(pendingOps);
 		// make sure we got stashed ops with refseqnum === 0, otherwise we are not testing the scenario we want to
 		assert(/referenceSequenceNumber[^\w,}]*0/.test(pendingOps));

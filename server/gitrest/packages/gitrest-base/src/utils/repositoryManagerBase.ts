@@ -9,7 +9,7 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { executeApiWithMetric } from "@fluidframework/server-services-utils";
 import sizeof from "object-sizeof";
 
-import { IExternalWriterConfig, IRepositoryManager } from "./definitions";
+import type { IExternalWriterConfig, IRepositoryManager } from "./definitions";
 import {
 	BaseGitRestTelemetryProperties,
 	GitRestLumberEventName,

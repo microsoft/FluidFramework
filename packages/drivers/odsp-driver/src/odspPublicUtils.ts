@@ -4,7 +4,7 @@
  */
 
 import { IsoBuffer, hashFile } from "@fluid-internal/client-utils";
-import {
+import type {
 	ISnapshotTree,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";

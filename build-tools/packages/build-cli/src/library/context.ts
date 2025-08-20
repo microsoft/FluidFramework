@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ReleaseVersion } from "@fluid-tools/version-tools";
+import type { ReleaseVersion } from "@fluid-tools/version-tools";
 import {
 	FluidRepo,
 	type IFluidBuildConfig,

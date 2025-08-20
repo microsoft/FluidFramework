@@ -16,6 +16,8 @@ import { unauthPostAsync } from "./odspRequest.js";
 export interface IOdspTokens {
 	readonly accessToken: string;
 	readonly refreshToken: string;
+	readonly receivedAt?: number; // Unix timestamp in seconds
+	readonly expiresIn?: number; // Seconds from reception until the token expires
 }
 
 /**
@@ -59,11 +61,12 @@ type TokenRequestBody = TokenRequestCredentials & {
 	scope: string;
 };
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @legacy
  * @alpha
  */
-export const getOdspScope = (server: string) =>
+export const getOdspScope = (server: string): string =>
 	`offline_access ${getSiteUrl(server)}/AllSites.Write`;
 /**
  * @legacy
@@ -72,6 +75,7 @@ export const getOdspScope = (server: string) =>
 export const pushScope =
 	"offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
@@ -79,6 +83,7 @@ export function getFetchTokenUrl(server: string): string {
 	return `${getAadUrl(server)}/${getAadTenant(server)}/oauth2/v2.0/token`;
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
@@ -87,7 +92,7 @@ export function getLoginPageUrl(
 	clientConfig: IPublicClientConfig,
 	scope: string,
 	odspAuthRedirectUri: string,
-) {
+): string {
 	return (
 		`${getAadUrl(server)}/${getAadTenant(server)}/oauth2/v2.0/authorize?` +
 		`client_id=${clientConfig.clientId}` +
@@ -97,6 +102,7 @@ export function getLoginPageUrl(
 	);
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
@@ -104,7 +110,10 @@ export const getOdspRefreshTokenFn = (
 	server: string,
 	clientConfig: IPublicClientConfig,
 	tokens: IOdspTokens,
-) => getRefreshTokenFn(getOdspScope(server), server, clientConfig, tokens);
+): (() => Promise<string>) =>
+	getRefreshTokenFn(getOdspScope(server), server, clientConfig, tokens);
+
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
@@ -112,13 +121,20 @@ export const getPushRefreshTokenFn = (
 	server: string,
 	clientConfig: IPublicClientConfig,
 	tokens: IOdspTokens,
-) => getRefreshTokenFn(pushScope, server, clientConfig, tokens);
+): (() => Promise<string>) => getRefreshTokenFn(pushScope, server, clientConfig, tokens);
+
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
 export const getRefreshTokenFn =
-	(scope: string, server: string, clientConfig: IPublicClientConfig, tokens: IOdspTokens) =>
-	async () => {
+	(
+		scope: string,
+		server: string,
+		clientConfig: IPublicClientConfig,
+		tokens: IOdspTokens,
+	): (() => Promise<string>) =>
+	async (): Promise<string> => {
 		const newTokens = await refreshTokens(server, scope, clientConfig, tokens);
 		return newTokens.accessToken;
 	};
@@ -147,8 +163,11 @@ export async function fetchTokens(
 		new URLSearchParams(body), // This formats the body like a query string which is the expected format
 	);
 
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: use stronger typing here.
 	const parsedResponse = await response.json();
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 	const accessToken = parsedResponse.access_token;
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 	const refreshToken = parsedResponse.refresh_token;
 
 	if (accessToken === undefined || refreshToken === undefined) {
@@ -156,6 +175,7 @@ export async function fetchTokens(
 			throwOdspNetworkError(
 				// pre-0.58 error message: unableToGetAccessToken
 				"Unable to get access token.",
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				parsedResponse.error === "invalid_grant" ? 401 : response.status,
 				response,
 			);
@@ -173,7 +193,13 @@ export async function fetchTokens(
 			throw error;
 		}
 	}
-	return { accessToken, refreshToken };
+
+	const receivedAt = Math.floor(Date.now() / 1000); // Convert milliseconds to seconds
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+	const expiresIn = parsedResponse.expires_in ?? 3600; // Default to 1 hour (3600 seconds) if not provided
+
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	return { accessToken, refreshToken, receivedAt, expiresIn };
 }
 
 /**
@@ -191,9 +217,10 @@ interface AadOauth2TokenError {
 	correlation_id: string;
 }
 
-function isAccessTokenError(parsedResponse: any): parsedResponse is AadOauth2TokenError {
+function isAccessTokenError(parsedResponse: unknown): parsedResponse is AadOauth2TokenError {
 	return (
-		typeof parsedResponse?.error === "string" && Array.isArray(parsedResponse?.error_codes)
+		typeof (parsedResponse as Partial<AadOauth2TokenError>).error === "string" &&
+		Array.isArray((parsedResponse as Partial<AadOauth2TokenError>).error_codes)
 	);
 }
 
@@ -221,11 +248,12 @@ export async function refreshTokens(
 		grant_type: "refresh_token",
 		refresh_token,
 	};
-	const newTokens = await fetchTokens(server, scope, clientConfig, credentials);
-
-	// Instead of returning, update the passed in tokens object
-	return { accessToken: newTokens.accessToken, refreshToken: newTokens.refreshToken };
+	return fetchTokens(server, scope, clientConfig, credentials);
 }
+
+const createConfig = (token: string): RequestInit => ({
+	headers: { Authorization: `Bearer ${token}` },
+});
 
 /**
  * Issue the requestCallback, providing the proper auth header based on authRequestInfo,
@@ -236,8 +264,6 @@ export async function authRequestWithRetry(
 	authRequestInfo: IOdspAuthRequestInfo,
 	requestCallback: (config: RequestInit) => Promise<Response>,
 ): Promise<Response> {
-	const createConfig = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
-
 	const result = await requestCallback(createConfig(authRequestInfo.accessToken));
 
 	if (authRequestInfo.refreshTokenFn && (result.status === 401 || result.status === 403)) {

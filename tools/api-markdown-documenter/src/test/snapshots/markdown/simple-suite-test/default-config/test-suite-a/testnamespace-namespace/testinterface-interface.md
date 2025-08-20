@@ -6,13 +6,13 @@ Test interface
 
 **WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
-## Signature {#testinterface-signature}
+<h2 id="testinterface-signature">Signature</h2>
 
 ```typescript
 interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum>
 ```
 
-**Extends**: [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)\<[TestEnum](/test-suite-a/testnamespace-namespace/testenum-enum)>
+**Extends**: [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)<[TestEnum](/test-suite-a/testnamespace-namespace/testenum-enum)>
 
 ## Properties
 
@@ -28,13 +28,13 @@ interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum>
 
 ## Property Details
 
-### testInterfaceProperty {#testinterfaceproperty-propertysignature}
+<h3 id="testinterfaceproperty-propertysignature">testInterfaceProperty</h3>
 
 Test interface property
 
 **WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
-#### Signature {#testinterfaceproperty-signature}
+<h4 id="testinterfaceproperty-signature">Signature</h4>
 
 ```typescript
 testInterfaceProperty: boolean;
@@ -44,13 +44,13 @@ testInterfaceProperty: boolean;
 
 ## Method Details
 
-### testInterfaceMethod {#testinterfacemethod-methodsignature}
+<h3 id="testinterfacemethod-methodsignature">testInterfaceMethod</h3>
 
 Test interface method
 
 **WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
-#### Signature {#testinterfacemethod-signature}
+<h4 id="testinterfacemethod-signature">Signature</h4>
 
 ```typescript
 testInterfaceMethod(): void;

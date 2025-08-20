@@ -8,6 +8,7 @@ import {
 	FieldKind,
 	generateSchemaFromSimpleSchema,
 	getJsonSchema,
+	KeyEncodingOptions,
 	NodeKind,
 	normalizeFieldSchema,
 	numberSchema,
@@ -37,7 +38,7 @@ function simpleToJsonSchema(simpleSchema: SimpleTreeSchema): JsonTreeSchema {
 	const schema = generateSchemaFromSimpleSchema(simpleSchema);
 	return toJsonSchema(schema, {
 		requireFieldsWithDefaults: false,
-		useStoredKeys: false,
+		keys: KeyEncodingOptions.usePropertyKeys,
 	});
 }
 
@@ -219,13 +220,78 @@ describe("simpleSchemaToJsonSchema", () => {
 		);
 	});
 
+	it("Record schema", () => {
+		const input: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				allowedTypesIdentifiers: new Set<string>(["test.record"]),
+				metadata: {},
+			},
+			definitions: new Map<string, SimpleNodeSchema>([
+				[
+					"test.record",
+					{
+						kind: NodeKind.Record,
+						metadata: {},
+						persistedMetadata: undefined,
+						allowedTypesIdentifiers: new Set<string>([stringSchema.identifier]),
+					},
+				],
+				[stringSchema.identifier, stringSchema],
+			]),
+		};
+
+		const actual = simpleToJsonSchema(input);
+
+		const expected: JsonTreeSchema = {
+			$defs: {
+				"test.record": {
+					type: "object",
+					_treeNodeSchemaKind: NodeKind.Record,
+					patternProperties: {
+						"^.*$": { $ref: "#/$defs/com.fluidframework.leaf.string" },
+					},
+				},
+				[stringSchema.identifier]: {
+					type: "string",
+					_treeNodeSchemaKind: NodeKind.Leaf,
+				},
+			},
+			$ref: "#/$defs/test.record",
+		};
+		assert.deepEqual(actual, expected);
+
+		// Verify that the generated schema is valid.
+		const validator = getJsonValidator(actual);
+
+		// Verify expected data validation behavior.
+		validator("Hello world", false);
+		validator([], false);
+		validator({}, true);
+		validator(
+			{
+				foo: "Hello",
+				bar: "World",
+			},
+			true,
+		);
+		validator(
+			{
+				foo: "Hello",
+				bar: "World",
+				baz: 42,
+			},
+			false,
+		);
+	});
+
 	describe("convertObjectNodeSchema", () => {
 		it("empty", () => {
 			const schemaFactory = new SchemaFactoryAlpha("test");
 			const empty = schemaFactory.objectAlpha("empty", {});
 			const emptyJson = convertObjectNodeSchema(empty, {
 				requireFieldsWithDefaults: false,
-				useStoredKeys: false,
+				keys: KeyEncodingOptions.usePropertyKeys,
 			});
 			const expectedEmpty: JsonObjectNodeSchema = {
 				type: "object",
@@ -247,7 +313,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			}) {}
 			const withFieldJson = convertObjectNodeSchema(WithField, {
 				requireFieldsWithDefaults: false,
-				useStoredKeys: false,
+				keys: KeyEncodingOptions.usePropertyKeys,
 			});
 			const expectedWithField: JsonObjectNodeSchema = {
 				type: "object",
@@ -617,40 +683,48 @@ describe("simpleSchemaToJsonSchema", () => {
 				const testSchema = normalizeFieldSchema(testTree.schema).allowedTypes;
 
 				{
-					const withPropertyKeys = TreeAlpha.exportConcise(tree, { useStoredKeys: false });
+					const withPropertyKeys = TreeAlpha.exportConcise(tree, {
+						keys: KeyEncodingOptions.usePropertyKeys,
+					});
 					const jsonSchema = getJsonSchema(testSchema, {
 						requireFieldsWithDefaults: true,
-						useStoredKeys: false,
+						keys: KeyEncodingOptions.usePropertyKeys,
 					});
 					const validator = getJsonValidator(jsonSchema);
 					validator(withPropertyKeys, true);
 				}
 
 				{
-					const withStoredKeys = TreeAlpha.exportConcise(tree, { useStoredKeys: true });
+					const withStoredKeys = TreeAlpha.exportConcise(tree, {
+						keys: KeyEncodingOptions.knownStoredKeys,
+					});
 					const jsonSchema = getJsonSchema(testSchema, {
 						requireFieldsWithDefaults: true,
-						useStoredKeys: true,
+						keys: KeyEncodingOptions.knownStoredKeys,
 					});
 					const validator = getJsonValidator(jsonSchema);
 					validator(withStoredKeys, true);
 				}
 
 				{
-					const withPropertyKeys = TreeAlpha.exportConcise(tree, { useStoredKeys: false });
+					const withPropertyKeys = TreeAlpha.exportConcise(tree, {
+						keys: KeyEncodingOptions.usePropertyKeys,
+					});
 					const jsonSchema = getJsonSchema(testSchema, {
 						requireFieldsWithDefaults: false,
-						useStoredKeys: false,
+						keys: KeyEncodingOptions.usePropertyKeys,
 					});
 					const validator = getJsonValidator(jsonSchema);
 					validator(withPropertyKeys, true);
 				}
 
 				{
-					const withStoredKeys = TreeAlpha.exportConcise(tree, { useStoredKeys: true });
+					const withStoredKeys = TreeAlpha.exportConcise(tree, {
+						keys: KeyEncodingOptions.knownStoredKeys,
+					});
 					const jsonSchema = getJsonSchema(testSchema, {
 						requireFieldsWithDefaults: false,
-						useStoredKeys: true,
+						keys: KeyEncodingOptions.knownStoredKeys,
 					});
 					const validator = getJsonValidator(jsonSchema);
 					validator(withStoredKeys, true);

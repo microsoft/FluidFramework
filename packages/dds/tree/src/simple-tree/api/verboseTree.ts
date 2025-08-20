@@ -12,17 +12,15 @@ import {
 	aboveRootPlaceholder,
 	EmptyKey,
 	keyAsDetachedField,
+	LeafNodeStoredSchema,
 	type FieldKey,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
+	type TreeNodeStoredSchema,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
-import type {
-	TreeLeafValue,
-	ImplicitFieldSchema,
-	ImplicitAllowedTypes,
-} from "../schemaTypes.js";
-import { NodeKind, type TreeNodeSchema } from "../core/index.js";
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
+import type { Context, TreeLeafValue, TreeNodeSchema } from "../core/index.js";
 import {
 	isTreeValue,
 	stackTreeFieldCursor,
@@ -39,6 +37,7 @@ import {
 import { isObjectNodeSchema } from "../node-kinds/index.js";
 import {
 	customFromCursor,
+	KeyEncodingOptions,
 	replaceHandles,
 	unknownTypeError,
 	type CustomTreeNode,
@@ -120,53 +119,55 @@ export function applySchemaToParserOptions(
 	options: TreeEncodingOptions,
 ): SchemalessParseOptions {
 	const config: Required<TreeEncodingOptions> = {
-		useStoredKeys: false,
+		keys: KeyEncodingOptions.usePropertyKeys,
 		...options,
 	};
 
 	const context = getUnhydratedContext(schema);
 
 	return {
-		keyConverter: config.useStoredKeys
-			? undefined
-			: {
-					encode: (type, key: FieldKey): string => {
-						// translate stored key into property key.
-						const simpleNodeSchema =
-							context.schema.get(brand(type)) ?? fail(0xb39 /* missing schema */);
-						if (isObjectNodeSchema(simpleNodeSchema)) {
-							const propertyKey = simpleNodeSchema.storedKeyToPropertyKey.get(key);
-							if (propertyKey !== undefined) {
-								return propertyKey;
-							}
-							// Looking up an out of schema key.
-							// This must point to a non-existent field.
-							// It's possible that the key, if we returned it unmodified, could point to some data
-							// (for example if looking up a key which is a stored key already when using property keys).
-							// Thus return an arbitrary key that was selected randomly, so should not exist on non-adversarial data:
-							const arbitrary = "arbitrary unused key: fe71614a-bf3e-43b3-b7b0-4cef39538e90";
-							assert(
-								!simpleNodeSchema.storedKeyToPropertyKey.has(brand(arbitrary)),
-								0xa13 /* arbitrarily selected unused key was actually used */,
-							);
-							return arbitrary;
-						}
-						return key;
-					},
-					parse: (type, inputKey): FieldKey => {
-						const simpleNodeSchema = context.schema.get(brand(type)) ?? unknownTypeError(type);
-						if (isObjectNodeSchema(simpleNodeSchema)) {
-							const info = simpleNodeSchema.flexKeyMap.get(inputKey);
-							if (info === undefined) {
-								throw new UsageError(
-									`Failed to parse VerboseTree due to unexpected key ${JSON.stringify(inputKey)} on type ${JSON.stringify(type)}.`,
+		keyConverter:
+			config.keys !== KeyEncodingOptions.usePropertyKeys
+				? undefined
+				: {
+						encode: (type, key: FieldKey): string => {
+							// translate stored key into property key.
+							const simpleNodeSchema =
+								context.schema.get(brand(type)) ?? fail(0xb39 /* missing schema */);
+							if (isObjectNodeSchema(simpleNodeSchema)) {
+								const propertyKey = simpleNodeSchema.storedKeyToPropertyKey.get(key);
+								if (propertyKey !== undefined) {
+									return propertyKey;
+								}
+								// Looking up an out of schema key.
+								// This must point to a non-existent field.
+								// It's possible that the key, if we returned it unmodified, could point to some data
+								// (for example if looking up a key which is a stored key already when using property keys).
+								// Thus return an arbitrary key that was selected randomly, so should not exist on non-adversarial data:
+								const arbitrary = "arbitrary unused key: fe71614a-bf3e-43b3-b7b0-4cef39538e90";
+								assert(
+									!simpleNodeSchema.storedKeyToPropertyKey.has(brand(arbitrary)),
+									0xa13 /* arbitrarily selected unused key was actually used */,
 								);
+								return arbitrary;
 							}
-							return info.storedKey;
-						}
-						return brand(inputKey);
+							return key;
+						},
+						parse: (type, inputKey): FieldKey => {
+							const simpleNodeSchema =
+								context.schema.get(brand(type)) ?? unknownTypeError(type);
+							if (isObjectNodeSchema(simpleNodeSchema)) {
+								const info = simpleNodeSchema.flexKeyMap.get(inputKey);
+								if (info === undefined) {
+									throw new UsageError(
+										`Failed to parse VerboseTree due to unexpected key ${JSON.stringify(inputKey)} on type ${JSON.stringify(type)}.`,
+									);
+								}
+								return info.storedKey;
+							}
+							return brand(inputKey);
+						},
 					},
-				},
 	};
 }
 
@@ -282,28 +283,36 @@ function verboseTreeAdapter(options: SchemalessParseOptions): CursorAdapter<Verb
  */
 export function verboseFromCursor(
 	reader: ITreeCursor,
-	rootSchema: ImplicitAllowedTypes,
+	context: Context,
 	options: TreeEncodingOptions,
 ): VerboseTree {
 	const config: Required<TreeEncodingOptions> = {
-		useStoredKeys: false,
+		keys: KeyEncodingOptions.usePropertyKeys,
 		...options,
 	};
 
-	const schemaMap = getUnhydratedContext(rootSchema).schema;
+	const storedSchemaMap = context.flexContext.schema.nodeSchema;
+	const schemaMap = context.schema;
 
-	return verboseFromCursorInner(reader, config, schemaMap);
+	return verboseFromCursorInner(reader, config, storedSchemaMap, schemaMap);
 }
 
 function verboseFromCursorInner(
 	reader: ITreeCursor,
 	options: Required<TreeEncodingOptions>,
+	storedSchema: ReadonlyMap<string, TreeNodeStoredSchema>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
 ): VerboseTree {
-	const fields = customFromCursor(reader, options, schema, verboseFromCursorInner);
+	const fields = customFromCursor(
+		reader,
+		options,
+		storedSchema,
+		schema,
+		verboseFromCursorInner,
+	);
 	const nodeSchema =
-		schema.get(reader.type) ?? fail(0xb3c /* missing schema for type in cursor */);
-	if (nodeSchema.kind === NodeKind.Leaf) {
+		storedSchema.get(reader.type) ?? fail(0xb3c /* missing schema for type in cursor */);
+	if (nodeSchema instanceof LeafNodeStoredSchema) {
 		return fields as TreeLeafValue;
 	}
 

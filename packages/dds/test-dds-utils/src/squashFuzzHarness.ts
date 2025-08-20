@@ -17,7 +17,7 @@ import { done } from "@fluid-private/stochastic-test-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
-import { type Client } from "./clientLoading.js";
+import type { Client } from "./clientLoading.js";
 import { PoisonedDDSFuzzHandle } from "./ddsFuzzHandle.js";
 import {
 	setupClientContext,

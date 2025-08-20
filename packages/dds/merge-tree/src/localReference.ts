@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import { DoublyLinkedList, ListNode, walkList } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	DoublyLinkedList,
+	ListNode,
+	walkList,
+} from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type ISegmentInternal } from "./mergeTreeNodes.js";
@@ -16,8 +20,7 @@ import { ReferencePosition, refTypeIncludesFlag } from "./referencePositions.js"
 /**
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
  * in a merge-tree
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const SlidingPreference = {
 	/**
@@ -33,8 +36,7 @@ export const SlidingPreference = {
 /**
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
  * in a merge-tree
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
 
@@ -57,8 +59,7 @@ function _validateReferenceType(refType: ReferenceType): void {
 }
 /**
  * @sealed
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface LocalReferencePosition extends ReferencePosition {
 	callbacks?: Partial<

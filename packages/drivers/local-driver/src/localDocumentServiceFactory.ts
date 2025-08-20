@@ -18,11 +18,11 @@ import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server
 import { createDocument } from "./localCreateDocument.js";
 import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js";
 import { createLocalDocumentService } from "./localDocumentService.js";
+import { localDriverCompatDetailsForLoader } from "./localLayerCompatState.js";
 
 /**
  * Implementation of document service factory for local use.
- * @legacy
- * @alpha
+ * @legacy @alpha
  */
 export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 	// A map of clientId to LocalDocumentService.
@@ -37,6 +37,15 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 		private readonly policies?: IDocumentServicePolicies,
 		private readonly innerDocumentService?: IDocumentService,
 	) {}
+
+	/**
+	 * The compatibility details of the Local Driver layer that is exposed to the Loader layer
+	 * for validating Loader-Driver compatibility.
+	 * @remarks This is for internal use only.
+	 * The type of this should be ILayerCompatDetails. However, ILayerCompatDetails is internal and this class
+	 * is currently marked as legacy alpha. So, using unknown here.
+	 */
+	public readonly ILayerCompatDetails?: unknown = localDriverCompatDetailsForLoader;
 
 	public async createContainer(
 		createNewSummary: ISummaryTree | undefined,

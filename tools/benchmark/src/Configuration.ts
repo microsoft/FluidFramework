@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "chai";
-
-import { Phase } from "./runBenchmark";
-import { Timer } from "./timer";
+import { assert, fail } from "./assert.js";
+import type { Phase } from "./runBenchmark";
+import type { Timer } from "./timer";
 
 /**
  * Kinds of benchmarks.
@@ -483,12 +482,10 @@ export function qualifiedTitle(
 	args: BenchmarkDescription & Titled & { testType?: TestType | undefined },
 ): string {
 	const benchmarkTypeTag =
-		BenchmarkType[args.type ?? BenchmarkType.Measurement] ??
-		assert.fail("Invalid BenchmarkType");
+		BenchmarkType[args.type ?? BenchmarkType.Measurement] ?? fail("Invalid BenchmarkType");
 	const tags = [performanceTestSuiteTag, `@${benchmarkTypeTag}`];
 	if (args.testType !== undefined) {
-		const testTypeTag =
-			TestType[args.testType] ?? assert.fail(`Invalid TestType: ${args.testType}`);
+		const testTypeTag = TestType[args.testType] ?? fail(`Invalid TestType: ${args.testType}`);
 		tags.push(`@${testTypeTag}`);
 	}
 

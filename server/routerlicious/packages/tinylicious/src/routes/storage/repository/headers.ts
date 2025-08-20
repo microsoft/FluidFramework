@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IHeader } from "@fluidframework/gitresources";
+import type { IHeader } from "@fluidframework/gitresources";
 import { Router } from "express";
-import nconf from "nconf";
+import type nconf from "nconf";
 
 import * as utils from "../utils";
 

@@ -7,13 +7,13 @@
 // @alpha @legacy
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
-// @alpha @legacy
+// @beta @legacy
 export interface AttributionInfo {
     timestamp: number;
     user: IUser;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
 // @alpha @sealed @deprecated @legacy (undocumented)
@@ -46,7 +46,7 @@ export enum CreateSummarizerNodeSource {
     Local = 2
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface DetachedAttributionKey {
     id: 0;
     // (undocumented)
@@ -76,7 +76,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     readonly baseLogger: ITelemetryBaseLogger;
     // (undocumented)
     readonly clientDetails: IClientDetails;
-    createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
+    createDataStore(pkg: string | PackagePath, loadingGroupId?: string): Promise<IDataStore>;
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
     // (undocumented)
     readonly disposed: boolean;
@@ -126,7 +126,7 @@ export interface IEnvelope {
     contents: any;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IExperimentalIncrementalSummaryContext {
     readonly latestSummarySequenceNumber: number;
     readonly summaryPath: string;
@@ -169,7 +169,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
     // (undocumented)
     readonly id: string;
     readonly isLocalDataStore: boolean;
-    readonly packagePath: readonly string[];
+    readonly packagePath: PackagePath;
 }
 
 // @alpha @legacy (undocumented)
@@ -242,14 +242,14 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     readonly scope: FluidObject;
     setChannelDirty(address: string): void;
     // (undocumented)
-    readonly storage: IDocumentStorageService;
+    readonly storage: IRuntimeStorageService;
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IGarbageCollectionData {
     gcNodes: {
         [id: string]: string[];
@@ -262,7 +262,7 @@ export interface IGarbageCollectionDetailsBase {
     usedRoutes?: string[];
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IInboundSignalMessage<TMessage extends TypedMessage = TypedMessage> extends ISignalMessage<TMessage> {
     // (undocumented)
     readonly type: TMessage["type"];
@@ -285,14 +285,14 @@ export interface IProvideFluidDataStoreRegistry {
     readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
 }
 
-// @alpha @sealed @legacy
+// @beta @sealed @legacy
 export interface IRuntimeMessageCollection {
     readonly envelope: ISequencedMessageEnvelope;
     readonly local: boolean;
     readonly messagesContent: readonly IRuntimeMessagesContent[];
 }
 
-// @alpha @sealed @legacy
+// @beta @sealed @legacy
 export interface IRuntimeMessagesContent {
     readonly clientSequenceNumber: number;
     readonly contents: unknown;
@@ -300,6 +300,29 @@ export interface IRuntimeMessagesContent {
 }
 
 // @alpha @legacy
+export interface IRuntimeStorageService {
+    // @deprecated (undocumented)
+    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
+    // @deprecated
+    dispose?(error?: Error): void;
+    // @deprecated
+    readonly disposed?: boolean;
+    // @deprecated (undocumented)
+    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+    // @deprecated (undocumented)
+    getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
+    // @deprecated (undocumented)
+    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
+    // @deprecated (undocumented)
+    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
+    // @deprecated (undocumented)
+    readonly policies?: IDocumentStorageServicePolicies | undefined;
+    readBlob(id: string): Promise<ArrayBufferLike>;
+    // @deprecated (undocumented)
+    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
+}
+
+// @beta @legacy
 export type ISequencedMessageEnvelope = Omit<ISequencedDocumentMessage, "contents" | "clientSequenceNumber">;
 
 // @alpha @legacy
@@ -363,7 +386,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     updateUsedRoutes(usedRoutes: string[]): void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISummaryStats {
     // (undocumented)
     blobNodeCount: number;
@@ -377,23 +400,26 @@ export interface ISummaryStats {
     unreferencedBlobSize: number;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISummaryTreeWithStats {
     stats: ISummaryStats;
     summary: ISummaryTree;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ITelemetryContext {
     set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void;
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryBaseEventPropertyType>): void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface LocalAttributionKey {
     // (undocumented)
     type: "local";
 }
+
+// @alpha @legacy
+export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 // @alpha @legacy
 export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry2>;
@@ -407,11 +433,14 @@ string,
 Promise<FluidDataStoreRegistryEntry> | FluidDataStoreRegistryEntry
 ];
 
-// @alpha @legacy
+// @beta @legacy
 export interface OpAttributionKey {
     seq: number;
     type: "op";
 }
+
+// @alpha @legacy
+export type PackagePath = readonly string[];
 
 // @alpha @sealed @deprecated @legacy (undocumented)
 export interface StageControlsExperimental {

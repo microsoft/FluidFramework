@@ -5,20 +5,21 @@
 
 import type { FluidClientVersion, ICodecOptions } from "../../codec/index.js";
 import { SchemaVersion } from "../../core/index.js";
-import {
-	defaultSchemaPolicy,
-	encodeTreeSchema,
-	makeSchemaCodec,
-} from "../../feature-libraries/index.js";
+import { encodeTreeSchema, makeSchemaCodec } from "../../feature-libraries/index.js";
 import {
 	clientVersionToSchemaVersion,
 	type FormatV1,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
-import { normalizeFieldSchema, type ImplicitFieldSchema } from "../schemaTypes.js";
-import type { SimpleTreeSchema } from "../simpleSchema.js";
-import { simpleToStoredSchema } from "../toStoredSchema.js";
+import type { SchemaUpgrade } from "../core/index.js";
+import {
+	normalizeFieldSchema,
+	type ImplicitAnnotatedFieldSchema,
+	type ImplicitFieldSchema,
+} from "../fieldSchema.js";
+import { toStoredSchema } from "../toStoredSchema.js";
+import { TreeViewConfigurationAlpha } from "./configuration.js";
 
 import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
@@ -27,6 +28,8 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable format.
  *
  * @param schema - The schema to dump.
+ * @param oldestCompatibleClient - The oldest client version which can read the schema: impacts the format used.
+ * @param includeStaged - filter for selecting which staged allowed types to include in the output.
  *
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
@@ -54,10 +57,11 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * @alpha
  */
 export function extractPersistedSchema(
-	schema: SimpleTreeSchema,
+	schema: ImplicitAnnotatedFieldSchema,
 	oldestCompatibleClient: FluidClientVersion,
+	includeStaged: (upgrade: SchemaUpgrade) => boolean,
 ): JsonCompatible {
-	const stored = simpleToStoredSchema(schema);
+	const stored = toStoredSchema(schema, { includeStaged });
 	const schemaWriteVersion = clientVersionToSchemaVersion(oldestCompatibleClient);
 	return encodeTreeSchema(stored, schemaWriteVersion);
 }
@@ -101,10 +105,9 @@ export function comparePersistedSchema(
 	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
 	const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
 	const stored = schemaCodec.decode(persisted as FormatV1);
-	const viewSchema = new SchemaCompatibilityTester(
-		defaultSchemaPolicy,
-		{},
-		normalizeFieldSchema(view),
-	);
+	const config = new TreeViewConfigurationAlpha({
+		schema: normalizeFieldSchema(view),
+	});
+	const viewSchema = new SchemaCompatibilityTester(config);
 	return viewSchema.checkCompatibility(stored);
 }

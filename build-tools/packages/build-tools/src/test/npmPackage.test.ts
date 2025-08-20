@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import * as path from "node:path";
 
-import { PackageJson, readPackageJsonAndIndent } from "../common/npmPackage";
+import { type PackageJson, readPackageJsonAndIndent } from "../common/npmPackage";
 import { testDataPath } from "./init";
 
 /**

@@ -10,8 +10,7 @@ import type { ITokenClaims } from "./tokens.js";
 
 /**
  * Message sent to connect to the given document.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IConnect {
 	/**
@@ -80,8 +79,7 @@ export interface IConnect {
 
 /**
  * Message sent to indicate a client has connected to the server.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IConnected {
 	/**

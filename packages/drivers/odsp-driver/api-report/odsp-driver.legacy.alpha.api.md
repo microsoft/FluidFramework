@@ -157,6 +157,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory, 
     // (undocumented)
     protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: ITelemetryBaseLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
+    readonly ILayerCompatDetails?: unknown;
     // (undocumented)
     get IRelaySessionAwareDriverFactory(): this;
     // (undocumented)

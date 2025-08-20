@@ -84,10 +84,10 @@ variables:
     value: 'PerformanceBenchmark'
     readonly: true
   # This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
-  - name: DisableCodeQL
+  # Note that using this variable only works for non-1ES-template pipelines.
+  - name: Codeql.SkipTaskAutoInjection
     value: true
 
-lockBehavior: sequential
 stages:
   # Performance unit tests - runtime
   - stage: perf_unit_tests_runtime
@@ -101,6 +101,7 @@ stages:
     - job: perf_unit_tests_runtime
       displayName: Perf unit tests - runtime
       pool: ${{ parameters.poolBuild }}
+      timeoutInMinutes: 90
       steps:
       - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
         parameters:
@@ -189,25 +190,11 @@ stages:
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
             npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
 
-      - task: Bash@3
-        displayName: Send Execution Time Performance Benchmark Measurments to Azure App Insights
-        inputs:
-          targetType: 'inline'
-          workingDirectory: $(pathToTelemetryGenerator)
-          script: |
-            set -eu -o pipefail
-            echo "Writing performance benchmark output to Azure App Insights..."
-            ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            npx telemetry-generator appInsights --handlerModule $(pathToTelemetryGeneratorHandlers)/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
-        env:
-          BUILD_ID: $(Build.BuildId)
-          BRANCH_NAME: $(Build.SourceBranchName)
-
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifact - Perf tests output - execution time
         inputs:
           targetPath: '${{ variables.consolidatedTestsOutputFolder }}'
-          artifactName: 'perf-test-outputs_execution-time'
+          artifactName: 'perf-test-outputs_execution-time_attempt-$(System.JobAttempt)'
         condition: succeededOrFailed()
 
       - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
@@ -230,6 +217,7 @@ stages:
     - job: perf_unit_tests_memory
       displayName: Perf unit tests - memory
       pool: ${{ parameters.poolBuild }}
+      timeoutInMinutes: 90
       steps:
       - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
         parameters:
@@ -318,25 +306,11 @@ stages:
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
             npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/memoryUsageTestHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
 
-      - task: Bash@3
-        displayName: Send Memory Usage Performance Benchmark Measurments to Azure App Insights
-        inputs:
-          targetType: 'inline'
-          workingDirectory: $(pathToTelemetryGenerator)
-          script: |
-            set -eu -o pipefail
-            echo "Writing performance benchmark output to Azure App Insights..."
-            ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            npx telemetry-generator appInsights --handlerModule $(pathToTelemetryGeneratorHandlers)/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
-        env:
-          BUILD_ID: $(Build.BuildId)
-          BRANCH_NAME: $(Build.SourceBranchName)
-
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifact - Perf tests output - memory usage
         inputs:
           targetPath: '${{ variables.consolidatedTestsOutputFolder }}'
-          artifactName: 'perf-test-outputs_memory-usage'
+          artifactName: 'perf-test-outputs_memory-usage_attempt-$(System.JobAttempt)'
         condition: succeededOrFailed()
 
       - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
@@ -446,25 +420,11 @@ stages:
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
             npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/customBenchmarkHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
 
-      - task: Bash@3
-        displayName: Send Custom Data Performance Benchmark Measurments to Azure App Insights
-        inputs:
-          targetType: 'inline'
-          workingDirectory: $(pathToTelemetryGenerator)
-          script: |
-            set -eu -o pipefail
-            echo "Writing performance benchmark output to Azure App Insights..."
-            ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            npx telemetry-generator appInsights --handlerModule $(pathToTelemetryGeneratorHandlers)/appInsightsCustomBenchmarkHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
-        env:
-          BUILD_ID: $(Build.BuildId)
-          BRANCH_NAME: $(Build.SourceBranchName)
-
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifact - Perf tests output - custom data usage
         inputs:
           targetPath: '${{ variables.consolidatedTestsOutputFolder }}'
-          artifactName: 'perf-test-outputs_custom-data'
+          artifactName: 'perf-test-outputs_custom-data_attempt-$(System.JobAttempt)'
         condition: succeededOrFailed()
 
       - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
@@ -480,6 +440,9 @@ stages:
     - stage: perf_e2e_tests_${{ endpointObject.endpointName }}
       displayName: Perf e2e tests - ${{ endpointObject.endpointName }}
       dependsOn: []
+      # If the stage needs locking, configure the lock behavior. Note that null gets coalesced into an empty string.
+      ${{ if ne(endpointObject.lockVariableGroupName, '') }}:
+        lockBehavior: sequential
       variables:
         # Use contention-lock variable groups when appropriate. Note that null gets coalesced into an empty string.
         - ${{ if ne(endpointObject.lockVariableGroupName, '') }}:
@@ -571,7 +534,7 @@ stages:
                 exit 1;
               fi
           env:
-            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+            FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
             FLUID_BUILD_ID: $(Build.BuildId)
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
             FLUID_LOGGER_PROPS: '{ "hostName": "Benchmark", "displayName": "${{variables.pipelineIdentifierForTelemetry}}" }'
@@ -609,52 +572,20 @@ stages:
           env:
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
 
-        - task: Bash@3
-          displayName: Send Execution Time Perf Benchmark Measurements to Azure App Insights
-          condition: eq('${{ endpointObject.endpointName }}', 'local')
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(pathToTelemetryGenerator)
-            script: |
-              set -eu -o pipefail
-              echo "Writing execution time performance benchmark output to Azure App Insights..."
-              ls -laR ${{ variables.executionTimeTestOutputFolder }};
-              npx telemetry-generator appInsights --handlerModule $(pathToTelemetryGeneratorHandlers)/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.executionTimeTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
-          env:
-            BUILD_ID: $(Build.BuildId)
-            BRANCH_NAME: $(Build.SourceBranchName)
-            FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
-
-        - task: Bash@3
-          displayName: Send Memory Usage Perf Benchmark Measurements to Azure App Insights
-          condition: eq('${{ endpointObject.endpointName }}', 'local')
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(pathToTelemetryGenerator)
-            script: |
-              set -eu -o pipefail
-              echo "Writing memory usage performance benchmark output to Azure App Insights..."
-              ls -laR ${{ variables.memoryUsageTestOutputFolder }};
-              npx telemetry-generator appInsights --handlerModule $(pathToTelemetryGeneratorHandlers)/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.memoryUsageTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
-          env:
-            BUILD_ID: $(Build.BuildId)
-            BRANCH_NAME: $(Build.SourceBranchName)
-            FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
-
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - E2E perf tests output - execution time {{ $stage }}
           condition: succeededOrFailed()
 
           inputs:
             targetPath: '${{ variables.executionTimeTestOutputFolder }}'
-            artifactName: 'perf-test-outputs-e2e_execution-time-${{ endpointObject.endpointName }}'
+            artifactName: 'perf-test-outputs-e2e_execution-time-${{ endpointObject.endpointName }}_attempt-$(System.JobAttempt)'
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - E2E perf tests output - memory usage {{ $stage }}
           condition: succeededOrFailed()
           inputs:
             targetPath: '${{ variables.memoryUsageTestOutputFolder }}'
-            artifactName: 'perf-test-outputs-e2e_memory-usage-${{ endpointObject.endpointName }}'
+            artifactName: 'perf-test-outputs-e2e_memory-usage-${{ endpointObject.endpointName }}_attempt-$(System.JobAttempt)'
 
         - task: Bash@3
           displayName: Remove Output Folders from local server run ${{ endpointObject.endpointName }}

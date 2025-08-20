@@ -95,9 +95,13 @@ import {
 	type ExclusiveMapTree,
 	type MapTree,
 	SchemaVersion,
+	type FieldKindIdentifier,
+	type TreeNodeSchemaIdentifier,
+	type TreeFieldStoredSchema,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
+	Context,
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
@@ -117,10 +121,10 @@ import {
 	type MinimalMapTreeNodeView,
 	jsonableTreeFromCursor,
 	cursorForMapTreeNode,
+	type FullSchemaPolicy,
 } from "../feature-libraries/index.js";
 import {
 	type CheckoutEvents,
-	CheckoutFlexTreeView,
 	type ITreePrivate,
 	type ITreeCheckout,
 	type SharedTreeContentSnapshot,
@@ -129,29 +133,29 @@ import {
 	type ISharedTreeEditor,
 	type ITreeCheckoutFork,
 	independentView,
-} from "../shared-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { TreeStoredContent } from "../shared-tree/schematizeTree.js";
-import {
 	SchematizingSimpleTreeView,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../shared-tree/schematizingTreeView.js";
-import type {
-	ForestOptions,
-	SharedTreeOptionsInternal,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../shared-tree/sharedTree.js";
+	type ForestOptions,
+	type SharedTreeOptionsInternal,
+	type SharedTreeOptions,
+	buildConfiguredForest,
+	type ForestType,
+	ForestTypeReference,
+} from "../shared-tree/index.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeViewConfiguration,
 	SchemaFactory,
-	toStoredSchema,
 	type TreeView,
 	type TreeBranchEvents,
 	type ITree,
 	type UnsafeUnknownSchema,
 	type InsertableField,
 	unhydratedFlexTreeFromInsertable,
+	type SimpleNodeSchema,
+	type TreeNodeSchema,
+	getStoredSchema,
+	restrictiveStoredSchemaGenerationOptions,
+	toInitialSchema,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -161,6 +165,7 @@ import {
 	forEachInNestedMap,
 	tryGetFromNestedMap,
 	isReadonlyArray,
+	brand,
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
@@ -169,7 +174,7 @@ import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/in
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
+import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
 import { configuredSharedTree, type ISharedTree } from "../treeFactory.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
@@ -184,6 +189,12 @@ import type {
 } from "@fluidframework/shared-object-base/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
+import {
+	allowsFieldSuperset,
+	allowsTreeSuperset,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../feature-libraries/modular-schema/index.js";
+import { initializeForest } from "./feature-libraries/index.js";
 
 // Testing utilities
 
@@ -602,10 +613,13 @@ export class SharedTreeTestFactory implements IChannelFactory<ISharedTree> {
 		protected readonly onLoad?: (tree: ISharedTree) => void,
 		options: SharedTreeOptionsInternal = {},
 	) {
-		this.inner = configuredSharedTree({
+		const optionsUpdated: SharedTreeOptionsInternal = {
 			...options,
 			jsonValidator: typeboxValidator,
-		}).getFactory() as IChannelFactory<ISharedTree>;
+		};
+		this.inner = configuredSharedTree(
+			optionsUpdated as SharedTreeOptions,
+		).getFactory() as IChannelFactory<ISharedTree>;
 	}
 
 	public get type(): string {
@@ -678,23 +692,12 @@ export function validateFuzzTreeConsistency(
 	);
 }
 
-function contentToJsonableTree(content: TreeStoredContent): JsonableTree[] {
-	return jsonableTreeFromFieldCursor(normalizeNewFieldContent(content.initialTree));
-}
-
 export function validateTreeContent(tree: ITreeCheckout, content: TreeSimpleContent): void {
 	const contentReference = jsonableTreeFromFieldCursor(
 		fieldCursorFromInsertable<UnsafeUnknownSchema>(content.schema, content.initialTree),
 	);
 	assert.deepEqual(toJsonableTree(tree), contentReference);
-	expectSchemaEqual(tree.storedSchema, toStoredSchema(content.schema));
-}
-export function validateTreeStoredContent(
-	tree: ITreeCheckout,
-	content: TreeStoredContent,
-): void {
-	assert.deepEqual(toJsonableTree(tree), contentToJsonableTree(content));
-	expectSchemaEqual(tree.storedSchema, content.schema);
+	expectSchemaEqual(tree.storedSchema, toInitialSchema(content.schema));
 }
 
 export function expectSchemaEqual(
@@ -802,7 +805,7 @@ export function checkoutWithContent(
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
-		additionalAsserts?: boolean;
+		forestType?: ForestType;
 	},
 ): TreeCheckout {
 	const { checkout } = createCheckoutWithContent(content, args);
@@ -815,17 +818,19 @@ function createCheckoutWithContent(
 		events?: Listenable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
-		additionalAsserts?: boolean;
+		forestType?: ForestType;
 	},
 ): { checkout: TreeCheckout; logger: IMockLoggerExt } {
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
-	const roots: MapTree = mapTreeWithField(mapTreeFieldFromCursor(fieldCursor));
 	const schema = new TreeStoredSchemaRepository(content.schema);
-	const forest = buildTestForest({
-		additionalAsserts: args?.additionalAsserts ?? true,
+
+	const forest = buildConfiguredForest(
+		new Breakable("buildTestForest"),
+		args?.forestType ?? ForestTypeReference,
 		schema,
-		roots,
-	});
+		testIdCompressor,
+	);
+	initializeForest(forest, fieldCursor, testRevisionTagCodec, testIdCompressor);
 
 	const logger = createMockLoggerExt();
 	const checkout = createTreeCheckout(
@@ -850,20 +855,20 @@ export function flexTreeViewWithContent(
 			HasListeners<CheckoutEvents>;
 		nodeKeyManager?: NodeIdentifierManager;
 	},
-): CheckoutFlexTreeView {
+): Context {
 	const view = checkoutWithContent(
 		{
 			initialTree: fieldCursorFromInsertable<UnsafeUnknownSchema>(
 				content.schema,
 				content.initialTree,
 			),
-			schema: toStoredSchema(content.schema),
+			schema: toInitialSchema(content.schema),
 		},
 		args,
 	);
-	return new CheckoutFlexTreeView(
-		view,
+	return new Context(
 		defaultSchemaPolicy,
+		view,
 		args?.nodeKeyManager ?? new MockNodeIdentifierManager(),
 	);
 }
@@ -914,7 +919,7 @@ export const IdentifierSchema = sf.object("identifier-object", {
  */
 export function makeTreeFromJson(json: JsonCompatible, optionalRoot = false): ITreeCheckout {
 	return checkoutWithContent({
-		schema: toStoredSchema(
+		schema: toInitialSchema(
 			optionalRoot ? SchemaFactory.optional(JsonAsTree.Tree) : JsonAsTree.Tree,
 		),
 		initialTree: singleJsonCursor(json),
@@ -1386,7 +1391,7 @@ export function validateUsageError(expectedErrorMsg: string | RegExp): (error: E
 				: !expectedErrorMsg.test(error.message)
 		) {
 			throw new Error(
-				`Unexpected assertion thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
+				`Unexpected UsageError thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
 			);
 		}
 		return true;
@@ -1484,4 +1489,96 @@ export function fieldCursorFromInsertable<
 		schema,
 	);
 	return cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]);
+}
+
+/**
+ * Helper for building {@link TreeFieldStoredSchema}.
+ */
+export function fieldSchema(
+	kind: { identifier: FieldKindIdentifier },
+	types: Iterable<TreeNodeSchemaIdentifier>,
+): TreeFieldStoredSchema {
+	return {
+		kind: kind.identifier,
+		types: new Set(types),
+		persistedMetadata: undefined,
+	};
+}
+
+export class TestSchemaRepository extends TreeStoredSchemaRepository {
+	public constructor(
+		public readonly policy: FullSchemaPolicy,
+		data?: TreeStoredSchema,
+	) {
+		super(data);
+	}
+
+	/**
+	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
+	 * @returns true iff update was performed.
+	 */
+	public tryUpdateRootFieldSchema(schema: TreeFieldStoredSchema): boolean {
+		if (allowsFieldSuperset(this.policy, this, this.rootFieldSchema, schema)) {
+			this.rootFieldSchemaData = schema;
+			this._events.emit("afterSchemaChange", this);
+			return true;
+		}
+		return false;
+	}
+	/**
+	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
+	 * @returns true iff update was performed.
+	 */
+	public tryUpdateTreeSchema(schema: SimpleNodeSchema & TreeNodeSchema): boolean {
+		const storedSchema = getStoredSchema(schema, restrictiveStoredSchemaGenerationOptions);
+		const name: TreeNodeSchemaIdentifier = brand(schema.identifier);
+		const original = this.nodeSchema.get(name);
+		if (allowsTreeSuperset(this.policy, this, original, storedSchema)) {
+			this.nodeSchemaData.set(name, storedSchema);
+			this._events.emit("afterSchemaChange", this);
+			return true;
+		}
+		return false;
+	}
+}
+
+/**
+ * Content that can populate a `SharedTree`.
+ * @remarks
+ * Consider using TreeStoredContentStrict instead which has more specific typing.
+ */
+interface TreeStoredContent {
+	readonly schema: TreeStoredSchema;
+
+	/**
+	 * Default tree content to initialize the tree with iff the tree is uninitialized
+	 * (meaning it does not even have any schema set at all).
+	 *
+	 * Can be a single field cursor, array of nodes cursors, or undefined, or a single node cursor (in which case the root is assumed to have a single child).
+	 *
+	 * This cannot encode the dummy "above root" node and thus can not specify additional detached fields.
+	 */
+	readonly initialTree: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined;
+}
+
+/**
+ * Content that can populate a `SharedTree`.
+ */
+export interface TreeStoredContentStrict {
+	/**
+	 * The stored schema.
+	 */
+	readonly schema: TreeStoredSchema;
+
+	/**
+	 * Field cursor with the initial tree content for the {@link rootField}.
+	 */
+	readonly initialTree: ITreeCursorSynchronous;
+}
+
+export function treeChunkFromCursor(fieldCursor: ITreeCursorSynchronous): TreeChunk {
+	return chunkFieldSingle(fieldCursor, {
+		policy: defaultChunkPolicy,
+		idCompressor: testIdCompressor,
+	});
 }

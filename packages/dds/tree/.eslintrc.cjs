@@ -24,9 +24,10 @@ module.exports = {
 			},
 		],
 
-		// #region TODO: Remove these overrides once this config has been updated to extend the "strict" base config.
-
+		// TODO: Remove this override once this config has been updated to extend the "strict" base config.
 		"@typescript-eslint/explicit-member-accessibility": "error",
+
+		// #region TODO: remove these once eslint-config-fluid has been updated to 5.8.0
 		"@typescript-eslint/consistent-type-exports": [
 			"error",
 			{ fixMixedExportsWithInlineTypeSpecifier: true },
@@ -88,6 +89,19 @@ module.exports = {
 		"unicorn/switch-case-braces": "off",
 		"unicorn/text-encoding-identifier-case": "off",
 
+		"@typescript-eslint/no-restricted-imports": [
+			"error",
+			{
+				"patterns": [
+					{
+						"group": ["./index.js", "**/../index.js"],
+						"message":
+							"Importing from a parent index file tends to cause cyclic dependencies. Import from a more specific sibling file instead.",
+					},
+				],
+			},
+		],
+
 		// #endregion
 	},
 	overrides: [
@@ -101,11 +115,10 @@ module.exports = {
 				"@typescript-eslint/explicit-function-return-type": "off",
 			},
 		},
-		// TODO: Remove this override once this config has been updated to extend at least the "recommended" base config.
 		{
 			files: ["src/test/**/*.generated.ts*"],
 			rules: {
-				"@typescript-eslint/no-explicit-any": ["off"],
+				"@typescript-eslint/no-restricted-imports": ["off"],
 			},
 		},
 	],

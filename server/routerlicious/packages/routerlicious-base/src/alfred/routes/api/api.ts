@@ -4,16 +4,16 @@
  */
 
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import * as git from "@fluidframework/gitresources";
-import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
+import type * as git from "@fluidframework/gitresources";
+import { type IClient, type IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
 import {
-	IRoom,
-	IRuntimeSignalEnvelope,
+	type IRoom,
+	type IRuntimeSignalEnvelope,
 	createRuntimeMessage,
 } from "@fluidframework/server-lambdas";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { BasicRestWrapper, NetworkError } from "@fluidframework/server-services-client";
-import * as core from "@fluidframework/server-services-core";
+import type * as core from "@fluidframework/server-services-core";
 import {
 	Lumberjack,
 	getLumberBaseProperties,
@@ -21,7 +21,7 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import {
 	throttle,
-	IThrottleMiddlewareOptions,
+	type IThrottleMiddlewareOptions,
 	getParam,
 	getBooleanFromConfig,
 	verifyToken,
@@ -30,8 +30,8 @@ import {
 	denyListMiddleware,
 } from "@fluidframework/server-services-utils";
 import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
-import { Request, Router, Response } from "express";
-import { Provider } from "nconf";
+import { type Request, Router, type Response } from "express";
+import type { Provider } from "nconf";
 import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
 import winston from "winston";
@@ -43,8 +43,8 @@ import {
 	craftClientLeaveMessage,
 	craftMapSet,
 	craftOpMessage,
-	IBlobData,
-	IMapSetOperation,
+	type IBlobData,
+	type IMapSetOperation,
 } from "./restHelper";
 
 export function create(

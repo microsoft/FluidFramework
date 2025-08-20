@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 
+import type { IProvideLayerCompatDetails } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { FluidErrorTypes, type ConfigTypes } from "@fluidframework/core-interfaces/internal";
 import {
+	type IDocumentServiceFactory,
 	type IResolvedUrl,
 	type IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
@@ -30,11 +32,17 @@ import {
 	createTestDocumentServiceFactoryProxy,
 } from "./testProxies.js";
 
+const documentServiceFactoryFailProxy = failSometimeProxy<
+	IDocumentServiceFactory & IProvideLayerCompatDetails
+>({
+	ILayerCompatDetails: undefined,
+});
+
 describe("loader unit test", () => {
 	it("rehydrateDetachedContainerFromSnapshot with invalid format", async () => {
 		const loader = new Loader({
 			codeLoader: failProxy(),
-			documentServiceFactory: failProxy(),
+			documentServiceFactory: documentServiceFactoryFailProxy,
 			urlResolver: failProxy(),
 		});
 
@@ -54,7 +62,7 @@ describe("loader unit test", () => {
 	it("rehydrateDetachedContainerFromSnapshot with valid format", async () => {
 		const loader = new Loader({
 			codeLoader: createTestCodeLoaderProxy(),
-			documentServiceFactory: failProxy(),
+			documentServiceFactory: documentServiceFactoryFailProxy,
 			urlResolver: failProxy(),
 		});
 		const detached = await loader.createDetachedContainer({ package: "none" });
@@ -70,7 +78,7 @@ describe("loader unit test", () => {
 	it("rehydrateDetachedContainerFromSnapshot with valid format and attachment blobs", async () => {
 		const loader = new Loader({
 			codeLoader: createTestCodeLoaderProxy({ createDetachedBlob: true }),
-			documentServiceFactory: failProxy(),
+			documentServiceFactory: documentServiceFactoryFailProxy,
 			urlResolver: failProxy(),
 		});
 		const detached = await loader.createDetachedContainer({ package: "none" });
@@ -86,7 +94,7 @@ describe("loader unit test", () => {
 	it("serialize and rehydrateDetachedContainerFromSnapshot while attaching", async () => {
 		const loader = new Loader({
 			codeLoader: createTestCodeLoaderProxy(),
-			documentServiceFactory: failProxy(),
+			documentServiceFactory: documentServiceFactoryFailProxy,
 			urlResolver: failProxy(),
 			configProvider: {
 				getRawConfig: (name): ConfigTypes =>
@@ -175,7 +183,7 @@ describe("loader unit test", () => {
 		// - Container.connectionStateHandler.connectionState - crash, as Container.connectionStateHandler is undefined (not setup yet).
 		new Container({
 			urlResolver: failProxy(),
-			documentServiceFactory: failProxy(),
+			documentServiceFactory: documentServiceFactoryFailProxy,
 			codeLoader: createTestCodeLoaderProxy(),
 			options: {},
 			scope: {},

@@ -8,27 +8,28 @@ import { strict as assert } from "node:assert";
 import {
 	AzureClient,
 	type AzureContainerServices,
-	AzureLocalConnectionConfig,
-	AzureRemoteConnectionConfig,
+	type AzureLocalConnectionConfig,
+	type AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+// eslint-disable-next-line import/no-internal-modules
+import { ExperimentalPresenceManager } from "@fluidframework/presence/alpha";
 import {
 	getPresence,
 	type Attendee,
-	ExperimentalPresenceManager,
 	type Presence,
 	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/presence/alpha";
+} from "@fluidframework/presence/beta";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { ScopeType } from "../AzureClientFactory.js";
+import type { ScopeType } from "../AzureClientFactory.js";
 import { createAzureTokenProvider } from "../AzureTokenFactory.js";
-import { configProvider } from "../utils.js";
+import type { configProvider } from "../utils.js";
 
-import { MessageFromChild, MessageToChild } from "./messageTypes.js";
+import type { MessageFromChild, MessageToChild } from "./messageTypes.js";
 
 type MessageFromParent = MessageToChild;
 type MessageToParent = Required<MessageFromChild>;
@@ -136,6 +137,11 @@ class MessageHandler {
 
 	public async onMessage(msg: MessageFromParent): Promise<void> {
 		switch (msg.command) {
+			case "ping": {
+				send({ event: "ack" });
+				break;
+			}
+
 			// Respond to connect command by connecting to Fluid container with the provided user information.
 			case "connect": {
 				// Check if valid user information has been provided by parent/orchestrator
@@ -172,7 +178,7 @@ class MessageHandler {
 					send(m);
 				});
 				send({
-					event: "ready",
+					event: "connected",
 					containerId,
 					attendeeId: presence.attendees.getMyself().attendeeId,
 				});

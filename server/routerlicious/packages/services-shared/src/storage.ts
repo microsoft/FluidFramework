@@ -4,32 +4,32 @@
  */
 
 import { toUtf8 } from "@fluidframework/common-utils";
-import { ICommit, ICommitDetails, ICreateCommitParams } from "@fluidframework/gitresources";
+import type { ICommit, ICommitDetails, ICreateCommitParams } from "@fluidframework/gitresources";
 import {
-	IDocumentAttributes,
-	ICommittedProposal,
-	ISequencedDocumentMessage,
-	ISummaryTree,
+	type IDocumentAttributes,
+	type ICommittedProposal,
+	type ISequencedDocumentMessage,
+	type ISummaryTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
-	IGitCache,
+	type IGitCache,
 	SummaryTreeUploadManager,
 	WholeSummaryUploadManager,
-	ISession,
+	type ISession,
 	getGlobalTimeoutContext,
 } from "@fluidframework/server-services-client";
 import {
-	ICollection,
-	IDeliState,
-	IDocument,
-	IDocumentDetails,
-	IDocumentRepository,
-	IDocumentStorage,
-	IScribe,
-	ISequencedOperationMessage,
-	IStorageNameAllocator,
-	ITenantManager,
+	type ICollection,
+	type IDeliState,
+	type IDocument,
+	type IDocumentDetails,
+	type IDocumentRepository,
+	type IDocumentStorage,
+	type IScribe,
+	type ISequencedOperationMessage,
+	type IStorageNameAllocator,
+	type ITenantManager,
 	SequencedOperationType,
 } from "@fluidframework/server-services-core";
 import {

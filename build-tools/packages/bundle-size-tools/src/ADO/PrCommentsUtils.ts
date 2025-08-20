@@ -4,8 +4,8 @@
  */
 
 import { WebApi, getBearerHandler } from "azure-devops-node-api";
-import { IGitApi } from "azure-devops-node-api/GitApi";
-import { CommentThreadStatus } from "azure-devops-node-api/interfaces/GitInterfaces";
+import type { IGitApi } from "azure-devops-node-api/GitApi";
+import type { CommentThreadStatus } from "azure-devops-node-api/interfaces/GitInterfaces";
 
 export class prCommentsUtils {
 	private gitApi: Promise<IGitApi>;

@@ -30,7 +30,7 @@ export {
 	SchemaValidationError,
 	isNodeInSchema,
 	isFieldInSchema,
-	inSchemaOrThrow,
+	throwOutOfSchema,
 } from "./schemaChecker.js";
 
 export { defaultSchemaPolicy } from "./defaultSchema.js";

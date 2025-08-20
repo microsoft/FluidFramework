@@ -3,106 +3,46 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 
 import {
 	benchmark,
 	BenchmarkType,
 	isInPerformanceTestingMode,
 	type BenchmarkTimer,
+	type BenchmarkTimingOptions,
 } from "@fluid-tools/benchmark";
+import type { Test } from "mocha";
 
-import { SharedMatrix } from "../../index.js";
-import { UndoRedoStackManager } from "../undoRedoStackManager.js";
-import { createLocalMatrix } from "../utils.js";
+import { createTestMatrix, type MatrixBenchmarkOptions } from "../performanceTestUtilities.js";
 
 /**
- * This file contains benchmarks for measuring the execution time of operations on SharedMatrix.
+ * Note: These benchmarks are designed to closely match the benchmarks in SharedTree.
+ * If you modify or add tests here, consider updating the corresponding SharedTree benchmarks as well
+ * to ensure consistency and comparability between the two implementations.
  */
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function runBenchmark({
-	title,
-	matrixSize,
-	cellValue,
-	setup,
-	operation,
-	minBatchDurationSeconds = 0,
-	maxBenchmarkDurationSeconds,
-}: {
-	title: string;
-	matrixSize: number;
-	cellValue: string;
-	setup?: (matrix: SharedMatrix) => void;
-	/**
-	 * The operation to perform on the matrix. This should be a function that takes a SharedMatrix
-	 * and performs the desired operation.
-	 */
-	operation: (matrix: SharedMatrix) => void;
-	minBatchDurationSeconds?: number;
-	maxBenchmarkDurationSeconds: number;
-}) {
-	benchmark({
-		type: BenchmarkType.Measurement,
-		title,
-		benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-			let duration: number;
-			do {
-				assert.equal(state.iterationsPerBatch, 1, "Expected exactly one iteration per batch");
 
-				// Setup
-				const localMatrix = createLocalMatrix({
-					id: "testLocalMatrix",
-					size: matrixSize,
-					initialValue: cellValue,
-				});
-
-				if (setup) {
-					setup(localMatrix);
-				}
-
-				// Operation
-				const before = state.timer.now();
-				operation(localMatrix);
-				const after = state.timer.now();
-
-				// Measure
-				duration = state.timer.toSeconds(before, after);
-			} while (state.recordBatch(duration));
-		},
-		minBatchDurationSeconds,
-		maxBenchmarkDurationSeconds,
-	});
+/**
+ * {@link runBenchmark} configuration.
+ */
+interface BenchmarkConfig extends BenchmarkTimingOptions, MatrixBenchmarkOptions {
+	readonly maxBenchmarkDurationSeconds: number;
 }
 
 /**
- * This function runs a benchmark for undo/redo operations on a SharedMatrix.
+ * Runs a benchmark for measuring the execution time of operations on a SharedMatrix.
  */
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function runUndoRedoBenchmark({
+function runBenchmark({
 	title,
 	matrixSize,
-	cellValue,
-	setupOperation,
-	stackOperation,
+	initialCellValue,
+	beforeOperation,
+	operation,
+	afterOperation,
 	minBatchDurationSeconds = 0,
 	maxBenchmarkDurationSeconds,
-}: {
-	title: string;
-	matrixSize: number;
-	cellValue: string;
-	/**
-	 * A function that sets up the operation to be performed on the matrix and stack.
-	 */
-	setupOperation: (matrix: SharedMatrix, stack: UndoRedoStackManager) => void;
-	/**
-	 * The operation to perform on the stack. This should be a function that takes an UndoRedoStackManager
-	 * and performs the desired operation.
-	 */
-	stackOperation: (stack: UndoRedoStackManager) => void;
-	minBatchDurationSeconds?: number;
-	maxBenchmarkDurationSeconds: number;
-}) {
-	benchmark({
+}: BenchmarkConfig): Test {
+	return benchmark({
 		type: BenchmarkType.Measurement,
 		title,
 		benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
@@ -110,23 +50,26 @@ function runUndoRedoBenchmark({
 			do {
 				assert.equal(state.iterationsPerBatch, 1, "Expected exactly one iteration per batch");
 
-				// Setup
-				const localMatrix = createLocalMatrix({
-					id: "testLocalMatrix",
-					size: matrixSize,
-					initialValue: cellValue,
+				// Create matrix
+				const { matrix, undoRedoStack, cleanUp } = createTestMatrix({
+					matrixSize,
+					initialCellValue,
 				});
-				const stack = new UndoRedoStackManager();
-				localMatrix.openUndo(stack);
-				setupOperation(localMatrix, stack);
+
+				beforeOperation?.(matrix, undoRedoStack);
 
 				// Operation
 				const before = state.timer.now();
-				stackOperation(stack);
+				operation(matrix, undoRedoStack);
 				const after = state.timer.now();
 
 				// Measure
 				duration = state.timer.toSeconds(before, after);
+
+				afterOperation?.(matrix, undoRedoStack);
+
+				// Cleanup
+				cleanUp();
 			} while (state.recordBatch(duration));
 		},
 		minBatchDurationSeconds,
@@ -136,7 +79,8 @@ function runUndoRedoBenchmark({
 
 describe("SharedMatrix execution time", () => {
 	// The value to be set in the cells of the matrix.
-	const matrixValue = "cellValue";
+	const initialCellValue = "cellValue";
+
 	// The test matrix's size will be 10*10, 100*100.
 	// Matrix size 1000 benchmarks removed due to high overhead and unreliable results.
 	const matrixSizes = isInPerformanceTestingMode
@@ -165,7 +109,7 @@ describe("SharedMatrix execution time", () => {
 					runBenchmark({
 						title: `Insert a column in the middle ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
+						initialCellValue,
 						operation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
@@ -175,43 +119,50 @@ describe("SharedMatrix execution time", () => {
 					});
 
 					// Test the execute time of the SharedMatrix for inserting a column in the middle for a given number of times.
-					runUndoRedoBenchmark({
+					runBenchmark({
 						title: `Undo insert the middle column ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
-						setupOperation: (matrix) => {
+						initialCellValue,
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 							}
+							assert.equal(undoRedoStack.undoStackLength, count);
 						},
-						stackOperation: (stack) => {
-							assert.equal(stack.undoStackLength, count);
+						operation: (_matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
 
 					// Test the execute time of the SharedMatrix for inserting a column in the middle for a given number of times.
-					runUndoRedoBenchmark({
+					runBenchmark({
 						title: `Redo insert the middle column ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
-						setupOperation: (matrix, stack) => {
+						initialCellValue,
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 							}
-							assert.equal(stack.undoStackLength, count);
+							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
+							}
+							assert.equal(undoRedoStack.undoStackLength, 0);
+							assert.equal(undoRedoStack.redoStackLength, count);
+						},
+						operation: (_matrix, undoRedoStack) => {
+							for (let i = 0; i < count; i++) {
+								undoRedoStack.redoOperation();
 							}
 						},
-						stackOperation: (stack) => {
-							assert.equal(stack.redoStackLength, count);
-							for (let i = 0; i < count; i++) {
-								stack.redoOperation();
-							}
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -222,7 +173,7 @@ describe("SharedMatrix execution time", () => {
 					runBenchmark({
 						title: `Insert a row in the middle ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
+						initialCellValue,
 						operation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
@@ -232,43 +183,50 @@ describe("SharedMatrix execution time", () => {
 					});
 
 					// Test the execute time of the SharedMatrix for inserting a row in the middle for a given number of times.
-					runUndoRedoBenchmark({
+					runBenchmark({
 						title: `Undo insert the middle row ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
-						setupOperation: (matrix) => {
+						initialCellValue,
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 							}
+							assert.equal(undoRedoStack.undoStackLength, count);
 						},
-						stackOperation: (stack) => {
-							assert.equal(stack.undoStackLength, count);
+						operation: (_matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
 
 					// Test the execute time of the SharedMatrix for inserting a row in the middle for a given number of times.
-					runUndoRedoBenchmark({
+					runBenchmark({
 						title: `Redo insert the middle row ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
-						setupOperation: (matrix, stack) => {
+						initialCellValue,
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 							}
-							assert.equal(stack.undoStackLength, count);
+							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
+							}
+							assert.equal(undoRedoStack.undoStackLength, 0);
+							assert.equal(undoRedoStack.redoStackLength, count);
+						},
+						operation: (_matrix, undoRedoStack) => {
+							for (let i = 0; i < count; i++) {
+								undoRedoStack.redoOperation();
 							}
 						},
-						stackOperation: (stack) => {
-							assert.equal(stack.redoStackLength, count);
-							for (let i = 0; i < count; i++) {
-								stack.redoOperation();
-							}
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -279,7 +237,7 @@ describe("SharedMatrix execution time", () => {
 					runBenchmark({
 						title: `Insert a row and a column in the middle ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
+						initialCellValue,
 						operation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
@@ -290,44 +248,51 @@ describe("SharedMatrix execution time", () => {
 					});
 
 					// Test the execute time of the SharedMatrix for inserting a row and a column in the middle for a given number of times.
-					runUndoRedoBenchmark({
+					runBenchmark({
 						title: `Undo insert the middle a row and a column ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
-						setupOperation: (matrix) => {
+						initialCellValue,
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 							}
+							assert.equal(undoRedoStack.undoStackLength, 2 * count);
 						},
-						stackOperation: (stack) => {
-							assert.equal(stack.undoStackLength, 2 * count);
+						operation: (_matrix, undoRedoStack) => {
 							for (let i = 0; i < 2 * count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
 
 					// Test the execute time of the SharedMatrix for inserting a row and a column in the middle for a given number of times.
-					runUndoRedoBenchmark({
+					runBenchmark({
 						title: `Redo insert the middle a row and a column ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
-						setupOperation: (matrix, stack) => {
+						initialCellValue,
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 							}
 							for (let i = 0; i < 2 * count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
+							}
+							assert.equal(undoRedoStack.undoStackLength, 0);
+							assert.equal(undoRedoStack.redoStackLength, 2 * count);
+						},
+						operation: (_matrix, undoRedoStack) => {
+							for (let i = 0; i < 2 * count; i++) {
+								undoRedoStack.redoOperation();
 							}
 						},
-						stackOperation: (stack) => {
-							assert.equal(stack.redoStackLength, 2 * count);
-							for (let i = 0; i < 2 * count; i++) {
-								stack.redoOperation();
-							}
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -341,7 +306,7 @@ describe("SharedMatrix execution time", () => {
 					runBenchmark({
 						title: `Remove the middle column ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
+						initialCellValue,
 						operation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
@@ -351,43 +316,50 @@ describe("SharedMatrix execution time", () => {
 					});
 
 					// Test the execute time of the SharedMatrix for removing a column in the middle for a given number of times.
-					runUndoRedoBenchmark({
+					runBenchmark({
 						title: `Undo remove the middle column ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
-						setupOperation: (matrix, stack) => {
+						initialCellValue,
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 							}
+							assert.equal(undoRedoStack.undoStackLength, count);
 						},
-						stackOperation: (stack) => {
-							assert.equal(stack.undoStackLength, count);
+						operation: (_matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
 
 					// Test the execute time of the SharedMatrix for removing a column in the middle for a given number of times.
-					runUndoRedoBenchmark({
+					runBenchmark({
 						title: `Redo remove the middle column ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
-						setupOperation: (matrix, stack) => {
+						initialCellValue,
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 							}
-							assert.equal(stack.undoStackLength, count);
+							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
+							}
+							assert.equal(undoRedoStack.undoStackLength, 0);
+							assert.equal(undoRedoStack.redoStackLength, count);
+						},
+						operation: (_matrix, undoRedoStack) => {
+							for (let i = 0; i < count; i++) {
+								undoRedoStack.redoOperation();
 							}
 						},
-						stackOperation: (stack) => {
-							assert.equal(stack.redoStackLength, count);
-							for (let i = 0; i < count; i++) {
-								stack.redoOperation();
-							}
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -398,7 +370,7 @@ describe("SharedMatrix execution time", () => {
 					runBenchmark({
 						title: `Remove the middle row ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
+						initialCellValue,
 						operation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
@@ -408,43 +380,50 @@ describe("SharedMatrix execution time", () => {
 					});
 
 					// Test the execute time of the SharedMatrix for removing a row in the middle for a given number of times.
-					runUndoRedoBenchmark({
+					runBenchmark({
 						title: `Undo remove the middle row ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
-						setupOperation: (matrix, stack) => {
+						initialCellValue,
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 							}
+							assert.equal(undoRedoStack.undoStackLength, count);
 						},
-						stackOperation: (stack) => {
-							assert.equal(stack.undoStackLength, count);
+						operation: (_matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
 
 					// Test the execute time of the SharedMatrix for removing a row in the middle for a given number of times.
-					runUndoRedoBenchmark({
+					runBenchmark({
 						title: `Redo remove the middle row ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
-						setupOperation: (matrix, stack) => {
+						initialCellValue,
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 							}
-							assert.equal(stack.undoStackLength, count);
+							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
+							}
+							assert.equal(undoRedoStack.undoStackLength, 0);
+							assert.equal(undoRedoStack.redoStackLength, count);
+						},
+						operation: (_matrix, undoRedoStack) => {
+							for (let i = 0; i < count; i++) {
+								undoRedoStack.redoOperation();
 							}
 						},
-						stackOperation: (stack) => {
-							assert.equal(stack.redoStackLength, count);
-							for (let i = 0; i < count; i++) {
-								stack.redoOperation();
-							}
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -455,7 +434,7 @@ describe("SharedMatrix execution time", () => {
 					runBenchmark({
 						title: `Remove the middle row and column ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
+						initialCellValue,
 						operation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
@@ -466,45 +445,52 @@ describe("SharedMatrix execution time", () => {
 					});
 
 					// Test the execute time of the SharedMatrix for removing a row and a column in the middle for a given number of times.
-					runUndoRedoBenchmark({
+					runBenchmark({
 						title: `Undo remove the middle row and column ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
-						setupOperation: (matrix, stack) => {
+						initialCellValue,
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 							}
+							assert.equal(undoRedoStack.undoStackLength, 2 * count);
 						},
-						stackOperation: (stack) => {
-							assert.equal(stack.undoStackLength, 2 * count);
+						operation: (_matrix, undoRedoStack) => {
 							for (let i = 0; i < 2 * count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
 
 					// Test the execute time of the SharedMatrix for removing a row and a column in the middle for a given number of times.
-					runUndoRedoBenchmark({
+					runBenchmark({
 						title: `Redo remove the middle row and column ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
-						setupOperation: (matrix, stack) => {
+						initialCellValue,
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 							}
-							assert.equal(stack.undoStackLength, 2 * count);
+							assert.equal(undoRedoStack.undoStackLength, 2 * count);
 							for (let i = 0; i < 2 * count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
+							}
+							assert.equal(undoRedoStack.undoStackLength, 0);
+							assert.equal(undoRedoStack.redoStackLength, 2 * count);
+						},
+						operation: (_matrix, undoRedoStack) => {
+							for (let i = 0; i < 2 * count; i++) {
+								undoRedoStack.redoOperation();
 							}
 						},
-						stackOperation: (stack) => {
-							assert.equal(stack.redoStackLength, 2 * count);
-							for (let i = 0; i < 2 * count; i++) {
-								stack.redoOperation();
-							}
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -515,7 +501,7 @@ describe("SharedMatrix execution time", () => {
 					runBenchmark({
 						title: `Insert a row and a column and remove them right away ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
+						initialCellValue,
 						operation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
@@ -528,49 +514,56 @@ describe("SharedMatrix execution time", () => {
 					});
 
 					// Test the execute time of the SharedMatrix for inserting a row and a column and removing them right away for a given number of times.
-					runUndoRedoBenchmark({
+					runBenchmark({
 						title: `Undo insert a row and a column and remove them right away ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
-						setupOperation: (matrix) => {
+						initialCellValue,
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 							}
+							assert.equal(undoRedoStack.undoStackLength, 4 * count);
 						},
-						stackOperation: (stack) => {
-							assert.equal(stack.undoStackLength, 4 * count);
+						operation: (_matrix, undoRedoStack) => {
 							for (let i = 0; i < 4 * count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
 
 					// Test the execute time of the SharedMatrix for inserting a row and a column and removing them right away for a given number of times.
-					runUndoRedoBenchmark({
+					runBenchmark({
 						title: `Redo insert a row and a column and remove them right away ${count} times`,
 						matrixSize,
-						cellValue: matrixValue,
-						setupOperation: (matrix, stack) => {
+						initialCellValue,
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 							}
-							assert.equal(stack.undoStackLength, 4 * count);
+							assert.equal(undoRedoStack.undoStackLength, 4 * count);
 							for (let i = 0; i < 4 * count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
+							}
+							assert.equal(undoRedoStack.undoStackLength, 0);
+							assert.equal(undoRedoStack.redoStackLength, 4 * count);
+						},
+						operation: (_matrix, undoRedoStack) => {
+							for (let i = 0; i < 4 * count; i++) {
+								undoRedoStack.redoOperation();
 							}
 						},
-						stackOperation: (stack) => {
-							assert.equal(stack.redoStackLength, 4 * count);
-							for (let i = 0; i < 4 * count; i++) {
-								stack.redoOperation();
-							}
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -581,7 +574,7 @@ describe("SharedMatrix execution time", () => {
 					runBenchmark({
 						title: `Set a 3-character string in ${count} cells`,
 						matrixSize,
-						cellValue: matrixValue,
+						initialCellValue,
 						operation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.setCell(i, i, "abc");
@@ -591,43 +584,50 @@ describe("SharedMatrix execution time", () => {
 					});
 
 					// Test the execute time of the SharedMatrix for setting a string in a cell for a given number of times.
-					runUndoRedoBenchmark({
+					runBenchmark({
 						title: `Undo set a 3-character string in ${count} cells`,
 						matrixSize,
-						cellValue: matrixValue,
-						setupOperation: (matrix, stack) => {
+						initialCellValue,
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.setCell(i, i, "abc");
 							}
+							assert.equal(undoRedoStack.undoStackLength, count);
 						},
-						stackOperation: (stack) => {
-							assert.equal(stack.undoStackLength, count);
+						operation: (_matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
 
 					// Test the execute time of the SharedMatrix for setting a string in a cell for a given number of times.
-					runUndoRedoBenchmark({
+					runBenchmark({
 						title: `Redo set a 3-character string in ${count} cells`,
 						matrixSize,
-						cellValue: matrixValue,
-						setupOperation: (matrix, stack) => {
+						initialCellValue,
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.setCell(i, i, "abc");
 							}
-							assert.equal(stack.undoStackLength, count);
+							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
+							}
+							assert.equal(undoRedoStack.undoStackLength, 0);
+							assert.equal(undoRedoStack.redoStackLength, count);
+						},
+						operation: (_matrix, undoRedoStack) => {
+							for (let i = 0; i < count; i++) {
+								undoRedoStack.redoOperation();
 							}
 						},
-						stackOperation: (stack) => {
-							assert.equal(stack.redoStackLength, count);
-							for (let i = 0; i < count; i++) {
-								stack.redoOperation();
-							}
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});

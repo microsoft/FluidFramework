@@ -7,7 +7,7 @@ import { inspect } from "util";
 
 import { Deferred } from "@fluidframework/common-utils";
 import { promiseTimeout } from "@fluidframework/server-services-client";
-import {
+import type {
 	IConsumer,
 	IContextErrorData,
 	ILogger,
@@ -19,7 +19,7 @@ import {
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import { serializeError } from "serialize-error";
 
 import { PartitionManager } from "./partitionManager";

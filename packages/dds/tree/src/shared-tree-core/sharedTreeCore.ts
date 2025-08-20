@@ -6,6 +6,7 @@
 import type { IFluidLoadable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import type {
 	IExperimentalIncrementalSummaryContext,
@@ -397,14 +398,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		} = this.messageCodec.decode(this.serializer.decode(content), {
 			idCompressor: this.idCompressor,
 		});
-		const [commit] = this.editManager.findLocalCommit(revision);
 		// If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
 		if (this.resubmitMachine.isInResubmitPhase === false) {
-			const toResubmit = this.editManager.getLocalCommits();
-			assert(
-				commit === toResubmit[0],
-				0x95d /* Resubmit phase should start with the oldest local commit */,
-			);
+			const localCommits = this.editManager.getLocalCommits();
+			const revisionIndex = localCommits.findIndex((c) => c.revision === revision);
+			assert(revisionIndex >= 0, 0xbdb /* revision must exist in local commits */);
+			const toResubmit = localCommits.slice(revisionIndex);
 			this.resubmitMachine.prepareForResubmit(toResubmit);
 		}
 		assert(
@@ -417,6 +416,20 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		);
 		const enrichedCommit = this.resubmitMachine.peekNextCommit();
 		this.submitCommit(enrichedCommit, localOpMetadata, true);
+	}
+	public rollback(content: JsonCompatibleReadOnly, localOpMetadata: unknown): void {
+		// Empty context object is passed in, as our decode function is schema-agnostic.
+		const {
+			commit: { revision },
+		} = this.messageCodec.decode(this.serializer.decode(content), {
+			idCompressor: this.idCompressor,
+		});
+		const [commit] = this.editManager.findLocalCommit(revision);
+		const { parent } = commit;
+		assert(parent !== undefined, 0xbdc /* must have parent */);
+		const [precedingCommit] = this.editManager.findLocalCommit(parent.revision);
+		this.editManager.localBranch.removeAfter(precedingCommit);
+		this.resubmitMachine.onCommitRollback(commit);
 	}
 
 	public applyStashedOp(content: JsonCompatibleReadOnly): void {
@@ -504,6 +517,19 @@ function scopeStorageService(
 		},
 		async list(path) {
 			return service.list(`${scope}${path}`);
+		},
+		getSnapshotTree(): ISnapshotTree | undefined {
+			const snapshotTree = service.getSnapshotTree?.();
+			if (snapshotTree === undefined) {
+				return undefined;
+			}
+			let scopedTree = snapshotTree;
+			for (const element of pathElements) {
+				const tree = scopedTree.trees[element];
+				assert(tree !== undefined, "snapshot tree not found for one of tree's summarizables");
+				scopedTree = tree;
+			}
+			return scopedTree;
 		},
 	};
 }

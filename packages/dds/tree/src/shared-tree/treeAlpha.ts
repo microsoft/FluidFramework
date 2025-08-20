@@ -36,7 +36,6 @@ import {
 	verboseFromCursor,
 	type TreeEncodingOptions,
 	type VerboseTree,
-	toStoredSchema,
 	extractPersistedSchema,
 	type TreeBranch,
 	TreeViewConfigurationAlpha,
@@ -51,6 +50,11 @@ import {
 	NodeKind,
 	tryGetTreeNodeForField,
 	isObjectNodeSchema,
+	isTreeNode,
+	toInitialSchema,
+	convertField,
+	toUnhydratedSchema,
+	type TreeParsingOptions,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
@@ -191,6 +195,20 @@ export interface TreeIdentifierUtils {
  * Extensions to {@link (Tree:interface)} and {@link (TreeBeta:interface)} which are not yet stable.
  * @remarks
  * Use via the {@link (TreeAlpha:variable)} singleton.
+ *
+ * The unhydrated node creation APIs in this interface do not support {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | unknown optional fields}.
+ * This is because unknown optional fields still must have a schema: its just that the schema may come from the document's stored schema.
+ * Unhydrated nodes created via this interface are not associated with any document, so there is nowhere for them to get schema for unknown optional fields.
+ * Note that {@link (TreeBeta:interface).clone} can create an unhydrated node with unknown optional fields, as it uses the source node's stored schema (if any).
+ *
+ * Export APIs in this interface include {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | unknown optional fields}
+ * if they are using {@link KeyEncodingOptions.allStoredKeys}.
+ *
+ * @privateRemarks
+ * TODO:
+ * There should be a way to provide a source for defaulted identifiers for unhydrated node creation, either via these APIs or some way to add them to its output later.
+ * If an option were added to these APIs, it could also be used to enable unknown optional fields.
+ *
  * @system @sealed @alpha
  */
 export interface TreeAlpha {
@@ -213,8 +231,6 @@ export interface TreeAlpha {
 	 * When providing a {@link TreeNodeSchemaClass}, this is the same as invoking its constructor except that an unhydrated node can also be provided.
 	 * This function exists as a generalization that can be used in other cases as well,
 	 * such as when `undefined` might be allowed (for an optional field), or when the type should be inferred from the data when more than one type is possible.
-	 * @privateRemarks
-	 * There should be a way to provide a source for defaulted identifiers, either via this API or some way to add them to its output later.
 	 */
 	create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema
@@ -257,11 +273,17 @@ export interface TreeAlpha {
 	 * Construct tree content compatible with a field defined by the provided `schema`.
 	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
 	 * @param data - The data used to construct the field content. See {@link (TreeAlpha:interface).(exportVerbose:1)}.
+	 * @remarks
+	 * This currently does not support input containing
+	 * {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields| unknown optional fields} but does support
+	 * {@link SchemaStaticsAlpha.staged | staged} allowed types.
+	 * Non-empty default values for fields are currently not supported (must be provided in the input).
+	 * The content will be validated against the schema and an error will be thrown if out of schema.
 	 */
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		data: VerboseTree | undefined,
-		options?: Partial<TreeEncodingOptions>,
+		options?: TreeParsingOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 	/**
@@ -299,7 +321,7 @@ export interface TreeAlpha {
 	 * If an `idCompressor` is provided, it will be used to compress identifiers and thus will be needed to decompress the data.
 	 *
 	 * Always uses "stored" keys.
-	 * See {@link TreeEncodingOptions.useStoredKeys} for details.
+	 * See {@link KeyEncodingOptions.allStoredKeys} for details.
 	 * @privateRemarks
 	 * TODO: It is currently not clear how to work with the idCompressors correctly in the package API.
 	 * Better APIs should probably be provided as there is currently no way to associate an un-hydrated tree with an idCompressor,
@@ -459,7 +481,7 @@ export const TreeAlpha: TreeAlpha = {
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		data: VerboseTree | undefined,
-		options?: TreeEncodingOptions,
+		options?: TreeParsingOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 		const config: TreeEncodingOptions = { ...options };
 		// Create a config which is standalone, and thus can be used without having to refer back to the schema.
@@ -472,20 +494,24 @@ export const TreeAlpha: TreeAlpha = {
 			return undefined as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 		}
 		const cursor = cursorFromVerbose(data, schemalessConfig);
-		return createFromCursor(schema, cursor);
+		return createFromCursor(
+			schema,
+			cursor,
+			convertField(normalizeFieldSchema(schema), toUnhydratedSchema),
+		);
 	},
 
 	exportConcise,
 
 	exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree {
+		if (isTreeValue(node)) {
+			return node;
+		}
 		const config: TreeEncodingOptions = { ...options };
 
 		const cursor = borrowCursorFromTreeNodeOrValue(node);
-		return verboseFromCursor(
-			cursor,
-			tryGetSchema(node) ?? fail(0xace /* invalid input */),
-			config,
-		);
+		const kernel = getKernel(node);
+		return verboseFromCursor(cursor, kernel.context, config);
 	},
 
 	exportCompressed(
@@ -502,11 +528,18 @@ export const TreeAlpha: TreeAlpha = {
 		const batch: FieldBatch = [cursor];
 		// If none provided, create a compressor which will not compress anything.
 		const idCompressor = options.idCompressor ?? createIdCompressor();
+
+		// Grabbing an existing stored schema from the node is important to ensure that unknown optional fields can be preserved.
+		// Note that if the node is unhydrated, this can result in all staged allowed types being included in the schema, which might be undesired.
+		const storedSchema = isTreeNode(node)
+			? getKernel(node).context.flexContext.schema
+			: toInitialSchema(schema);
+
 		const context: FieldBatchEncodingContext = {
 			encodeType: TreeCompressionStrategy.Compressed,
 			idCompressor,
 			originatorId: idCompressor.localSessionId, // TODO: Why is this needed?
-			schema: { schema: toStoredSchema(schema), policy: defaultSchemaPolicy },
+			schema: { schema: storedSchema, policy: defaultSchemaPolicy },
 		};
 		const result = codec.encode(batch, context);
 		return result;
@@ -522,7 +555,8 @@ export const TreeAlpha: TreeAlpha = {
 		const config = new TreeViewConfigurationAlpha({ schema });
 		const content: ViewContent = {
 			// Always use a v1 schema codec for consistency.
-			schema: extractPersistedSchema(config, FluidClientVersion.v2_0),
+			// TODO: reevaluate how staged schema should behave in schema import/export APIs before stabilizing this.
+			schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true),
 			tree: compressedData,
 			idCompressor: options.idCompressor ?? createIdCompressor(),
 		};
@@ -592,6 +626,7 @@ export const TreeAlpha: TreeAlpha = {
 					return undefined;
 				}
 			// Fall through
+			case NodeKind.Record:
 			case NodeKind.Object: {
 				let storedKey: string | number = propertyKey;
 				if (isObjectNodeSchema(schema)) {
@@ -643,7 +678,8 @@ export const TreeAlpha: TreeAlpha = {
 				}
 				break;
 			}
-			case NodeKind.Map: {
+			case NodeKind.Map:
+			case NodeKind.Record: {
 				for (const [key, flexField] of flexNode.fields) {
 					const childTreeNode = tryGetTreeNodeForField(flexField);
 					if (childTreeNode !== undefined) {
@@ -693,17 +729,14 @@ function exportConcise(
 	node: TreeNode | TreeLeafValue | undefined,
 	options?: TreeEncodingOptions,
 ): ConciseTree | undefined {
-	if (node === undefined) {
-		return undefined;
+	if (!isTreeNode(node)) {
+		return node;
 	}
 	const config: TreeEncodingOptions = { ...options };
 
+	const kernel = getKernel(node);
 	const cursor = borrowCursorFromTreeNodeOrValue(node);
-	return conciseFromCursor(
-		cursor,
-		tryGetSchema(node) ?? fail(0xacd /* invalid input */),
-		config,
-	);
+	return conciseFromCursor(cursor, kernel.context, config);
 }
 
 /**

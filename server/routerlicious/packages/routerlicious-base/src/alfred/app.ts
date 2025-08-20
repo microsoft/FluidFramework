@@ -5,13 +5,13 @@
 
 import { isIPv4, isIPv6 } from "net";
 
-import { RestLessServer, IHttpServerConfig } from "@fluidframework/server-services";
+import { RestLessServer, type IHttpServerConfig } from "@fluidframework/server-services";
 import {
 	CallingServiceHeaderName,
 	DriverVersionHeaderName,
-	IAlfredTenant,
+	type IAlfredTenant,
 } from "@fluidframework/server-services-client";
-import {
+import type {
 	IDeltaService,
 	IDocumentStorage,
 	IProducer,
@@ -24,7 +24,7 @@ import {
 	IClusterDrainingChecker,
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
 import {
 	BaseTelemetryProperties,
@@ -43,13 +43,13 @@ import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import express from "express";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import shajs from "sha.js";
 
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 
 import * as alfredRoutes from "./routes";
-import { IDocumentDeleteService } from "./services";
+import type { IDocumentDeleteService } from "./services";
 
 export function create(
 	config: Provider,
@@ -114,24 +114,29 @@ export function create(
 			jsonMorganLoggerMiddleware(
 				"alfred",
 				(tokens, req, res) => {
+					const tenantId = getTenantIdFromRequest(req.params);
+					const documentId = getIdFromRequest(req.params);
 					const additionalProperties: Record<string, any> = {
 						[HttpProperties.driverVersion]: tokens.req(
 							req,
 							res,
 							DriverVersionHeaderName,
 						),
-						[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
-						[BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
+						[BaseTelemetryProperties.tenantId]: tenantId,
+						[BaseTelemetryProperties.documentId]: documentId,
 						[CommonProperties.callingServiceName]:
 							req.headers[CallingServiceHeaderName] ?? "",
 					};
+
+					res.locals.tenantId = tenantId;
+					res.locals.documentId = documentId;
 					if (enableClientIPLogging === true) {
 						const hashedClientIP = req.ip
 							? shajs("sha256").update(`${req.ip}`).digest("hex")
 							: "";
 						additionalProperties.hashedClientIPAddress = hashedClientIP;
 
-						const clientIPAddress = req.ip ? req.ip : "";
+						const clientIPAddress = req.ip ?? "";
 						if (isIPv4(clientIPAddress)) {
 							additionalProperties.clientIPType = "IPv4";
 						} else if (isIPv6(clientIPAddress)) {

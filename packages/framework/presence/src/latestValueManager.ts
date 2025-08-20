@@ -16,12 +16,14 @@ import type { BroadcastControls, BroadcastControlSettings } from "./broadcastCon
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
+import type { FlattenUnionWithOptionals } from "./internalUtils.js";
 import {
 	asDeeplyReadonly,
 	asDeeplyReadonlyDeserializedJson,
 	objectEntries,
 	toOpaqueJson,
 } from "./internalUtils.js";
+import { createValidatedGetter } from "./latestValueTypes.js";
 import type {
 	LatestClientData,
 	LatestData,
@@ -147,6 +149,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		private readonly datastore: StateDatastore<Key, InternalTypes.ValueRequiredState<T>>,
 		public readonly value: InternalTypes.ValueRequiredState<T>,
 		controlSettings: BroadcastControlSettings | undefined,
+		private readonly validator: StateSchemaValidator<T> | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
 	}
@@ -172,12 +175,15 @@ class LatestValueManagerImpl<T, Key extends string>
 
 	public *getRemotes(): IterableIterator<LatestClientData<T, ValueAccessor<T>>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		for (const [attendeeId, value] of objectEntries(allKnownStates.states)) {
+		for (const [attendeeId, clientState] of objectEntries(allKnownStates.states)) {
 			if (attendeeId !== allKnownStates.self) {
 				yield {
 					attendee: this.datastore.presence.attendees.getAttendee(attendeeId),
-					value: asDeeplyReadonlyDeserializedJson(value.value),
-					metadata: { revision: value.rev, timestamp: value.timestamp },
+					value: createValidatedGetter(clientState, this.validator),
+					metadata: {
+						revision: clientState.rev,
+						timestamp: clientState.timestamp,
+					},
 				};
 			}
 		}
@@ -194,10 +200,10 @@ class LatestValueManagerImpl<T, Key extends string>
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientState = allKnownStates.states[attendee.attendeeId];
 		if (clientState === undefined) {
-			throw new Error("No entry for clientId");
+			throw new Error("No entry for attendee");
 		}
 		return {
-			value: asDeeplyReadonlyDeserializedJson(clientState.value),
+			value: createValidatedGetter(clientState, this.validator),
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
 	}
@@ -218,7 +224,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			() =>
 				this.events.emit("remoteUpdated", {
 					attendee,
-					value: asDeeplyReadonlyDeserializedJson(value.value),
+					value: createValidatedGetter(value, this.validator),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				}),
 		];
@@ -274,38 +280,33 @@ export interface LatestArguments<T extends object | null> extends LatestArgument
 // Overloads should be ordered from most specific to least specific when combined.
 
 /**
- * Factory for creating a {@link LatestRaw} State object.
+ * Factory for creating a {@link Latest} or {@link LatestRaw} State object.
  *
  * @beta
  * @sealed
  */
 export interface LatestFactory {
 	/**
-	 * Factory for creating a {@link LatestRaw} State object.
-	 *
-	 * @privateRemarks (change to `remarks` when adding signature overload)
-	 * This overload is used when called with {@link LatestArgumentsRaw}.
-	 * That is, if a validator function is _not_ provided.
-	 */
-	// eslint-disable-next-line @typescript-eslint/prefer-function-type -- interface to allow for clean overload evolution
-	<T extends object | null, Key extends string = string>(
-		args: LatestArgumentsRaw<T>,
-	): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
-}
-
-/**
- * Factory for creating a {@link Latest} or {@link LatestRaw} State object.
- */
-export interface LatestFactoryInternal extends LatestFactory {
-	/**
 	 * Factory for creating a {@link Latest} State object.
 	 *
 	 * @remarks
-	 * This overload is used when called with {@link LatestArguments}. That is, if a validator function is provided.
+	 * This overload is used when called with {@link LatestArguments}.
+	 * That is, if a validator function is provided.
 	 */
 	<T extends object | null, Key extends string = string>(
 		args: LatestArguments<T>,
 	): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+
+	/**
+	 * Factory for creating a {@link LatestRaw} State object.
+	 *
+	 * @remarks
+	 * This overload is used when called with {@link LatestArgumentsRaw}.
+	 * That is, if a validator function is _not_ provided.
+	 */
+	<T extends object | null, Key extends string = string>(
+		args: LatestArgumentsRaw<T>,
+	): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
 }
 
 // #endregion
@@ -313,21 +314,14 @@ export interface LatestFactoryInternal extends LatestFactory {
 /**
  * Factory for creating a {@link Latest} or {@link LatestRaw} State object.
  */
-export const latest: LatestFactoryInternal = <
-	T extends object | null,
-	Key extends string = string,
->(
-	args: LatestArguments<T> | LatestArgumentsRaw<T>,
+export const latest: LatestFactory = <T extends object | null, Key extends string = string>(
+	args: FlattenUnionWithOptionals<LatestArguments<T> | LatestArgumentsRaw<T>>,
 ): InternalTypes.ManagerFactory<
 	Key,
 	InternalTypes.ValueRequiredState<T>,
 	LatestRaw<T> & Latest<T>
 > => {
-	const { local, settings } = args;
-	if ("validator" in args) {
-		throw new Error(`Validators are not yet implemented.`);
-	}
-
+	const { local, settings, validator } = args;
 	// Latest takes ownership of the initial local value but makes a shallow
 	// copy for basic protection.
 	const opaqueLocal = toOpaqueJson<T>(local);
@@ -348,7 +342,13 @@ export const latest: LatestFactoryInternal = <
 	} => ({
 		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
-			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, settings),
+			new LatestValueManagerImpl(
+				key,
+				datastoreFromHandle(datastoreHandle),
+				value,
+				settings,
+				validator,
+			),
 		),
 	});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });

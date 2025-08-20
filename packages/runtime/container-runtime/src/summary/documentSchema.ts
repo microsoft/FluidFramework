@@ -4,11 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import type { SemanticVersion } from "@fluidframework/runtime-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 import { gt, lt, parse } from "semver-ts";
 
-import type { SemanticVersion } from "../compatUtils.js";
 import { pkgVersion } from "../packageVersion.js";
 
 /**

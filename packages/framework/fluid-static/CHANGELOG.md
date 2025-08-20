@@ -1,5 +1,25 @@
 # @fluidframework/fluid-static
 
+## 2.53.0
+
+Dependency updates only.
+
+## 2.52.0
+
+Dependency updates only.
+
+## 2.51.0
+
+### Minor Changes
+
+- Add API for tree-based root data object ([#25030](https://github.com/microsoft/FluidFramework/pull/25030)) [30a0d7ef7b6](https://github.com/microsoft/FluidFramework/commit/30a0d7ef7b6678e5a5aef45bcebcd5c98471a389)
+
+  Adds `createTreeContainerRuntimeFactory` which can be used to create runtime factories which construct containers with an entry point containing a single tree-based root data object.
+
+## 2.50.0
+
+Dependency updates only.
+
 ## 2.43.0
 
 Dependency updates only.

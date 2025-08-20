@@ -4,14 +4,14 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
-import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import type { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentDeltaConnection,
 	IDocumentServicePolicies,
 	IResolvedUrl,
-	type IAnyDriverError,
+	IAnyDriverError,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
@@ -21,27 +21,28 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils/internal";
 import {
-	HostStoragePolicy,
+	type HostStoragePolicy,
 	type IOdspError,
-	IOdspResolvedUrl,
-	ISocketStorageDiscovery,
-	InstrumentedStorageTokenFetcher,
+	type IOdspResolvedUrl,
+	type ISocketStorageDiscovery,
+	type ISensitivityLabelsInfo,
+	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
-	TokenFetchOptions,
+	type TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	IFluidErrorBase,
-	MonitoringContext,
+	type IFluidErrorBase,
+	type MonitoringContext,
 	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { policyLabelsUpdatesSignalType } from "./contracts.js";
-import { EpochTracker } from "./epochTracker.js";
-import { IOdspCache } from "./odspCache.js";
+import type { EpochTracker } from "./epochTracker.js";
+import type { IOdspCache } from "./odspCache.js";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection.js";
 import {
-	TokenFetchOptionsEx,
+	type TokenFetchOptionsEx,
 	getJoinSessionCacheKey,
 	getWithRetryForTokenRefresh,
 } from "./odspUtils.js";
@@ -155,6 +156,16 @@ export class OdspDelayLoadedDeltaStream {
 				throw this.annotateConnectionError(error, step, !requestWebsocketTokenFromJoinSession);
 			};
 
+			// Log telemetry for join session attempt
+			if (this.firstConnectionAttempt) {
+				this.mc.logger.sendTelemetryEvent({
+					eventName: "FirstJoinSessionAttemptDetails",
+					details: {
+						requestWebsocketToken: requestWebsocketTokenFromJoinSession,
+					},
+				});
+			}
+
 			const joinSessionPromise = this.joinSession(
 				requestWebsocketTokenFromJoinSession,
 				options,
@@ -179,9 +190,7 @@ export class OdspDelayLoadedDeltaStream {
 				);
 			}
 			if (websocketEndpoint.sensitivityLabelsInfo !== undefined) {
-				this.emitMetaDataUpdateEvent({
-					sensitivityLabelsInfo: websocketEndpoint.sensitivityLabelsInfo,
-				});
+				this.emitSensitivityLabelUpdateEvent(websocketEndpoint.sensitivityLabelsInfo);
 			}
 
 			const connectionId = uuid();
@@ -273,9 +282,9 @@ export class OdspDelayLoadedDeltaStream {
 					// Drop error
 				}
 				if (envelope?.contents?.type === policyLabelsUpdatesSignalType) {
-					this.emitMetaDataUpdateEvent({
-						sensitivityLabelsInfo: JSON.stringify(envelope.contents.content),
-					});
+					this.emitSensitivityLabelUpdateEvent(
+						envelope.contents.content as ISensitivityLabelsInfo,
+					);
 				}
 			}
 		}
@@ -406,6 +415,9 @@ export class OdspDelayLoadedDeltaStream {
 		const disableJoinSessionRefresh = this.mc.config.getBoolean(
 			"Fluid.Driver.Odsp.disableJoinSessionRefresh",
 		);
+		const setSensitivityLabelHeader = this.mc.config.getBoolean(
+			"Fluid.Driver.Odsp.setSensitivityLabelHeader",
+		);
 		const executeFetch = async (): Promise<{
 			entryTime: number;
 			joinSessionResponse: ISocketStorageDiscovery;
@@ -420,14 +432,13 @@ export class OdspDelayLoadedDeltaStream {
 				requestSocketToken,
 				options,
 				disableJoinSessionRefresh,
+				setSensitivityLabelHeader,
 				isRefreshingJoinSession,
 				displayName,
 			);
 			// Emit event only in case it is fetched from the network.
 			if (joinSessionResponse.sensitivityLabelsInfo !== undefined) {
-				this.emitMetaDataUpdateEvent({
-					sensitivityLabelsInfo: joinSessionResponse.sensitivityLabelsInfo,
-				});
+				this.emitSensitivityLabelUpdateEvent(joinSessionResponse.sensitivityLabelsInfo);
 			}
 			return {
 				entryTime: Date.now(),
@@ -497,17 +508,15 @@ export class OdspDelayLoadedDeltaStream {
 		return response.joinSessionResponse;
 	}
 
-	private emitMetaDataUpdateEvent(metadata: Record<string, string>): void {
-		const label = JSON.parse(metadata.sensitivityLabelsInfo) as {
-			labels: unknown;
-			timestamp: number;
-		};
-		const time = label.timestamp;
-		assert(time > 0, 0x8e0 /* time should be positive */);
-		if (time > this.labelUpdateTimestamp) {
-			this.labelUpdateTimestamp = time;
+	private emitSensitivityLabelUpdateEvent(
+		sensitivityLabelsInfo: ISensitivityLabelsInfo,
+	): void {
+		const createdTimestamp = Date.parse(sensitivityLabelsInfo.timestamp);
+		assert(createdTimestamp > 0, 0x8e0 /* time should be positive */);
+		if (createdTimestamp > this.labelUpdateTimestamp) {
+			this.labelUpdateTimestamp = createdTimestamp;
 			this.metadataUpdateHandler({
-				sensitivityLabelsInfo: metadata.sensitivityLabelsInfo,
+				sensitivityLabelsInfo: JSON.stringify(sensitivityLabelsInfo),
 			});
 		}
 	}

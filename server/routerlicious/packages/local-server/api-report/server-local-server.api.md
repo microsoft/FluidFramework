@@ -5,8 +5,8 @@
 ```ts
 
 import { ICheckpointRepository } from '@fluidframework/server-services-core';
-import { IClient } from '@fluidframework/protocol-definitions';
-import { IConnected } from '@fluidframework/protocol-definitions';
+import type { IClient } from '@fluidframework/protocol-definitions';
+import type { IConnected } from '@fluidframework/protocol-definitions';
 import { IDatabaseManager } from '@fluidframework/server-services-core';
 import { IDocumentRepository } from '@fluidframework/server-services-core';
 import { IDocumentStorage } from '@fluidframework/server-services-core';
@@ -77,6 +77,8 @@ export class LocalWebSocket implements IWebSocket {
     // (undocumented)
     emitToRoom(roomId: string, event: string, ...args: any[]): void;
     // (undocumented)
+    get handshake(): any;
+    // (undocumented)
     readonly id: string;
     // (undocumented)
     join(roomId: string): Promise<void>;
@@ -97,6 +99,8 @@ export class LocalWebSocketServer implements IWebSocketServer {
     close(): Promise<void>;
     // (undocumented)
     createConnection(): LocalWebSocket;
+    // (undocumented)
+    get handshake(): any;
     // (undocumented)
     on(event: string, listener: (...args: any[]) => void): void;
     // (undocumented)

@@ -8,7 +8,7 @@ import sha1 from "sha.js/sha1";
 // eslint-disable-next-line import/no-internal-modules
 import sha256 from "sha.js/sha256";
 
-import { IsoBuffer } from "./bufferNode";
+import type { IsoBuffer } from "./bufferNode";
 
 /**
  * Hash a file. Consistent within a session, but should not be persisted and

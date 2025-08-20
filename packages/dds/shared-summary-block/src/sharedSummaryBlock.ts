@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	Jsonable,
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
-	IFluidSerializer,
+	type IFluidSerializer,
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
 
-import { ISharedSummaryBlock } from "./interfaces.js";
+import type { ISharedSummaryBlock } from "./interfaces.js";
 
 const snapshotFileName = "header";
 
@@ -33,8 +33,7 @@ interface ISharedSummaryBlockDataSerializable {
 /**
  * Implementation of a shared summary block. It does not generate any ops. It is only part of the summary.
  * Data should be set in this object in response to a remote op.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class SharedSummaryBlockClass extends SharedObject implements ISharedSummaryBlock {
 	/**

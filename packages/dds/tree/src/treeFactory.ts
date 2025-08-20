@@ -84,8 +84,7 @@ function treeKernelFactory(
 /**
  * SharedTree is a hierarchical data structure for collaboratively editing strongly typed JSON-like trees
  * of objects, arrays, and other data types.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const SharedTree = configuredSharedTree({});
 
@@ -100,7 +99,6 @@ export const SharedTree = configuredSharedTree({});
  * 	TreeCompressionStrategy,
  * 	configuredSharedTree,
  * 	typeboxValidator,
- * 	// eslint-disable-next-line import/no-internal-modules
  * } from "@fluidframework/tree/internal";
  * const SharedTree = configuredSharedTree({
  * 	forest: ForestTypeReference,

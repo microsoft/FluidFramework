@@ -4,7 +4,7 @@
 
 A test protected property.
 
-## Signature {#protectedproperty-signature}
+<h2 id="protectedproperty-signature">Signature</h2>
 
 ```typescript
 protected readonly protectedProperty: TestEnum;

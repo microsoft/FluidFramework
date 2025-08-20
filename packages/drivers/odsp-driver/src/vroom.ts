@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import {
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type {
 	IOdspUrlParts,
 	ISocketStorageDiscovery,
 	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { EpochTracker } from "./epochTracker.js";
+import type { EpochTracker } from "./epochTracker.js";
 import { mockify } from "./mockify.js";
 import { getApiRoot } from "./odspUrlHelper.js";
-import { TokenFetchOptionsEx } from "./odspUtils.js";
+import type { TokenFetchOptionsEx } from "./odspUtils.js";
 import { runWithRetry } from "./retryUtils.js";
 
 interface IJoinSessionBody {
@@ -38,6 +38,7 @@ interface IJoinSessionBody {
  * which is used when establishing websocket connection with collab session backend service.
  * @param options - Options to fetch the token.
  * @param disableJoinSessionRefresh - Whether the caller wants to disable refreshing join session periodically.
+ * @param setSensitivityLabelHeader - Whether the caller wants to set the Return-Sensitivity-Labels Prefer header in the join session request.
  * @param isRefreshingJoinSession - whether call is to refresh the session before expiry.
  * @param displayName - display name used to identify client joining a session.
  * This is optional and used only when collab session is being joined by client acting in app-only mode (i.e. without user context).
@@ -54,6 +55,7 @@ export const fetchJoinSession = mockify(
 		requestSocketToken: boolean,
 		options: TokenFetchOptionsEx,
 		disableJoinSessionRefresh: boolean | undefined,
+		setSensitivityLabelHeader: boolean | undefined,
 		isRefreshingJoinSession: boolean,
 		displayName: string | undefined,
 	): Promise<ISocketStorageDiscovery> => {
@@ -89,7 +91,10 @@ export const fetchJoinSession = mockify(
 				postBody += `X-HTTP-Method-Override: POST\r\n`;
 				postBody += `Content-Type: application/json\r\n`;
 				if (!disableJoinSessionRefresh) {
-					postBody += `prefer: FluidRemoveCheckAccess\r\n`;
+					postBody += `Prefer: FluidRemoveCheckAccess\r\n`;
+				}
+				if (setSensitivityLabelHeader) {
+					postBody += `Prefer: Return-Sensitivity-Labels\r\n`;
 				}
 				postBody += `_post: 1\r\n`;
 

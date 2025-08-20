@@ -2,33 +2,27 @@
 
 Test package
 
-# Remarks {#test-suite-a-remarks}
+<h1 id="test-suite-a-remarks">Remarks</h1>
 
 This remarks block includes a bulleted list!
 
 - Bullet 1
-
 - Bullet 2
 
 And an ordered list for good measure!
 
 1. List item 1
-
-2. List item 2
-
-3. List item 3
+1. List item 2
+1. List item 3
 
 Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:
 
 - Good link (no alias): [TestClass](docs/test-suite-a#testclass-class)
-
 - Good link (with alias): _function alias text_
-
 - Bad link (no alias): _InvalidItem_
-
 - Bad link (with alias): _even though I link to an invalid item, I would still like this text to be rendered_
 
-# Example {#test-suite-a-example}
+<h1 id="test-suite-a-example">Example</h1>
 
 A test example
 
@@ -71,7 +65,7 @@ const foo = bar;
 | Function | Alerts | Return Type | Description |
 | - | - | - | - |
 | [testFunctionReturningInlineType()](docs/test-suite-a#testfunctionreturninginlinetype-function) | | {     foo: number;     bar: [TestEnum](docs/test-suite-a#testenum-enum); } | Test function that returns an inline type |
-| [testFunctionReturningIntersectionType()](docs/test-suite-a#testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) \& [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)\<number> | Test function that returns an inline type |
+| [testFunctionReturningIntersectionType()](docs/test-suite-a#testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) & [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)\<number> | Test function that returns an inline type |
 | [testFunctionReturningUnionType()](docs/test-suite-a#testfunctionreturninguniontype-function) | | string \| [TestInterface](docs/test-suite-a#testinterface-interface) | Test function that returns an inline type |
 
 # Variables
@@ -91,27 +85,27 @@ const foo = bar;
 
 # Interface Details
 
-## TestEmptyInterface {#testemptyinterface-interface}
+<h2 id="testemptyinterface-interface">TestEmptyInterface</h2>
 
 An empty interface
 
-### Signature {#testemptyinterface-signature}
+<h3 id="testemptyinterface-signature">Signature</h3>
 
 ```typescript
 export interface TestEmptyInterface
 ```
 
-## TestInterface {#testinterface-interface}
+<h2 id="testinterface-interface">TestInterface</h2>
 
 Test interface
 
-### Signature {#testinterface-signature}
+<h3 id="testinterface-signature">Signature</h3>
 
 ```typescript
 export interface TestInterface
 ```
 
-### Remarks {#testinterface-remarks}
+<h3 id="testinterface-remarks">Remarks</h3>
 
 Here are some remarks about the interface
 
@@ -152,27 +146,27 @@ Here are some remarks about the interface
 
 ### Constructor Details
 
-#### new (): TestInterface {#testinterface-\_new\_-constructsignature}
+<h4 id="testinterface-_new_-constructsignature">new (): TestInterface</h4>
 
 Test construct signature.
 
-##### Signature {#\_new\_-signature}
+<h5 id="_new_-signature">Signature</h5>
 
 ```typescript
 new (): TestInterface;
 ```
 
-##### Returns {#\_new\_-returns}
+<h5 id="_new_-returns">Returns</h5>
 
 **Return type**: [TestInterface](docs/test-suite-a#testinterface-interface)
 
 ### Event Details
 
-#### testClassEventProperty {#testinterface-testclasseventproperty-propertysignature}
+<h4 id="testinterface-testclasseventproperty-propertysignature">testClassEventProperty</h4>
 
 Test interface event property
 
-##### Signature {#testclasseventproperty-signature}
+<h5 id="testclasseventproperty-signature">Signature</h5>
 
 ```typescript
 readonly testClassEventProperty: () => void;
@@ -180,17 +174,17 @@ readonly testClassEventProperty: () => void;
 
 **Type**: () => void
 
-##### Remarks {#testclasseventproperty-remarks}
+<h5 id="testclasseventproperty-remarks">Remarks</h5>
 
 Here are some remarks about the event property
 
 ### Property Details
 
-#### getterProperty {#testinterface-getterproperty-property}
+<h4 id="testinterface-getterproperty-property">getterProperty</h4>
 
 A test getter-only interface property.
 
-##### Signature {#getterproperty-signature}
+<h5 id="getterproperty-signature">Signature</h5>
 
 ```typescript
 get getterProperty(): boolean;
@@ -198,9 +192,9 @@ get getterProperty(): boolean;
 
 **Type**: boolean
 
-#### propertyWithBadInheritDocTarget {#testinterface-propertywithbadinheritdoctarget-propertysignature}
+<h4 id="testinterface-propertywithbadinheritdoctarget-propertysignature">propertyWithBadInheritDocTarget</h4>
 
-##### Signature {#propertywithbadinheritdoctarget-signature}
+<h5 id="propertywithbadinheritdoctarget-signature">Signature</h5>
 
 ```typescript
 propertyWithBadInheritDocTarget: boolean;
@@ -208,24 +202,25 @@ propertyWithBadInheritDocTarget: boolean;
 
 **Type**: boolean
 
-#### setterProperty {#testinterface-setterproperty-property}
+<h4 id="testinterface-setterproperty-property">setterProperty</h4>
 
 A test property with a getter and a setter.
 
-##### Signature {#setterproperty-signature}
+<h5 id="setterproperty-signature">Signature</h5>
 
 ```typescript
 get setterProperty(): boolean;
+
 set setterProperty(newValue: boolean);
 ```
 
 **Type**: boolean
 
-#### testInterfaceProperty {#testinterface-testinterfaceproperty-propertysignature}
+<h4 id="testinterface-testinterfaceproperty-propertysignature">testInterfaceProperty</h4>
 
 Test interface property
 
-##### Signature {#testinterfaceproperty-signature}
+<h5 id="testinterfaceproperty-signature">Signature</h5>
 
 ```typescript
 testInterfaceProperty: number;
@@ -233,15 +228,15 @@ testInterfaceProperty: number;
 
 **Type**: number
 
-##### Remarks {#testinterfaceproperty-remarks}
+<h5 id="testinterfaceproperty-remarks">Remarks</h5>
 
 Here are some remarks about the property
 
-#### testOptionalInterfaceProperty {#testinterface-testoptionalinterfaceproperty-propertysignature}
+<h4 id="testinterface-testoptionalinterfaceproperty-propertysignature">testOptionalInterfaceProperty</h4>
 
 Test optional property
 
-##### Signature {#testoptionalinterfaceproperty-signature}
+<h5 id="testoptionalinterfaceproperty-signature">Signature</h5>
 
 ```typescript
 testOptionalInterfaceProperty?: number;
@@ -251,51 +246,51 @@ testOptionalInterfaceProperty?: number;
 
 ### Method Details
 
-#### testInterfaceMethod {#testinterface-testinterfacemethod-methodsignature}
+<h4 id="testinterface-testinterfacemethod-methodsignature">testInterfaceMethod</h4>
 
 Test interface method
 
-##### Signature {#testinterfacemethod-signature}
+<h5 id="testinterfacemethod-signature">Signature</h5>
 
 ```typescript
 testInterfaceMethod(): void;
 ```
 
-##### Remarks {#testinterfacemethod-remarks}
+<h5 id="testinterfacemethod-remarks">Remarks</h5>
 
 Here are some remarks about the method
 
 ### Call Signature Details
 
-#### (event: 'testCallSignature', listener: (input: unknown) => void): any {#testinterface-\_call\_-callsignature}
+<h4 id="testinterface-_call_-callsignature">(event: 'testCallSignature', listener: (input: unknown) => void): any</h4>
 
 Test interface event call signature
 
-##### Signature {#\_call\_-signature}
+<h5 id="_call_-signature">Signature</h5>
 
 ```typescript
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
 ```
 
-##### Remarks {#\_call\_-remarks}
+<h5 id="_call_-remarks">Remarks</h5>
 
 Here are some remarks about the event call signature
 
-#### (event: 'anotherTestCallSignature', listener: (input: number) => string): number {#testinterface-\_call\_\_1-callsignature}
+<h4 id="testinterface-_call__1-callsignature">(event: 'anotherTestCallSignature', listener: (input: number) => string): number</h4>
 
 Another example call signature
 
-##### Signature {#\_call\_\_1-signature}
+<h5 id="_call__1-signature">Signature</h5>
 
 ```typescript
 (event: 'anotherTestCallSignature', listener: (input: number) => string): number;
 ```
 
-##### Remarks {#\_call\_\_1-remarks}
+<h5 id="_call__1-remarks">Remarks</h5>
 
 Here are some remarks about the event call signature
 
-### See Also {#testinterface-see-also}
+<h3 id="testinterface-see-also">See Also</h3>
 
 [testInterfaceMethod()](docs/test-suite-a#testinterface-testinterfacemethod-methodsignature)
 
@@ -305,11 +300,11 @@ Here are some remarks about the event call signature
 
 [testClassEventProperty](docs/test-suite-a#testinterface-testclasseventproperty-propertysignature)
 
-## TestInterfaceExtendingOtherInterfaces {#testinterfaceextendingotherinterfaces-interface}
+<h2 id="testinterfaceextendingotherinterfaces-interface">TestInterfaceExtendingOtherInterfaces</h2>
 
 Test interface that extends other interfaces
 
-### Signature {#testinterfaceextendingotherinterfaces-signature}
+<h3 id="testinterfaceextendingotherinterfaces-signature">Signature</h3>
 
 ```typescript
 export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter<number>
@@ -317,7 +312,7 @@ export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, Te
 
 **Extends**: [TestInterface](docs/test-suite-a#testinterface-interface), [TestMappedType](docs/test-suite-a#testmappedtype-typealias), [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)\<number>
 
-### Remarks {#testinterfaceextendingotherinterfaces-remarks}
+<h3 id="testinterfaceextendingotherinterfaces-remarks">Remarks</h3>
 
 Here are some remarks about the interface
 
@@ -329,45 +324,43 @@ Here are some remarks about the interface
 
 ### Method Details
 
-#### testMethod {#testinterfaceextendingotherinterfaces-testmethod-methodsignature}
+<h4 id="testinterfaceextendingotherinterfaces-testmethod-methodsignature">testMethod</h4>
 
 Test interface method accepting a string and returning a number.
 
-##### Signature {#testmethod-signature}
+<h5 id="testmethod-signature">Signature</h5>
 
 ```typescript
 testMethod(input: string): number;
 ```
 
-##### Remarks {#testmethod-remarks}
+<h5 id="testmethod-remarks">Remarks</h5>
 
 Here are some remarks about the method
 
-##### Parameters {#testmethod-parameters}
+<h5 id="testmethod-parameters">Parameters</h5>
 
 | Parameter | Type | Description |
 | - | - | - |
 | input | string | A string |
 
-##### Returns {#testmethod-returns}
+<h5 id="testmethod-returns">Returns</h5>
 
 A number
 
 **Return type**: number
 
-### See Also {#testinterfaceextendingotherinterfaces-see-also}
+<h3 id="testinterfaceextendingotherinterfaces-see-also">See Also</h3>
 
 - [TestInterface](docs/test-suite-a#testinterface-interface)
-
 - [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)
-
 - [TestMappedType](docs/test-suite-a#testmappedtype-typealias)
 
-## TestInterfaceWithIndexSignature {#testinterfacewithindexsignature-interface}
+<h2 id="testinterfacewithindexsignature-interface">TestInterfaceWithIndexSignature</h2>
 
 An interface with an index signature.
 
-### Signature {#testinterfacewithindexsignature-signature}
+<h3 id="testinterfacewithindexsignature-signature">Signature</h3>
 
 ```typescript
 export interface TestInterfaceWithIndexSignature
@@ -381,11 +374,11 @@ export interface TestInterfaceWithIndexSignature
 
 ### Index Signature Details
 
-#### \[foo: number\]: { bar: string; } {#testinterfacewithindexsignature-\_indexer\_-indexsignature}
+<h4 id="testinterfacewithindexsignature-_indexer_-indexsignature">[foo: number]: { bar: string; }</h4>
 
 Test index signature.
 
-##### Signature {#\_indexer\_-signature}
+<h5 id="_indexer_-signature">Signature</h5>
 
 ```typescript
 [foo: number]: {
@@ -393,11 +386,11 @@ Test index signature.
     };
 ```
 
-## TestInterfaceWithTypeParameter {#testinterfacewithtypeparameter-interface}
+<h2 id="testinterfacewithtypeparameter-interface">TestInterfaceWithTypeParameter</h2>
 
 Test interface with generic type parameter
 
-### Signature {#testinterfacewithtypeparameter-signature}
+<h3 id="testinterfacewithtypeparameter-signature">Signature</h3>
 
 ```typescript
 export interface TestInterfaceWithTypeParameter<T>
@@ -409,7 +402,7 @@ export interface TestInterfaceWithTypeParameter<T>
 | - | - |
 | T | A type parameter |
 
-### Remarks {#testinterfacewithtypeparameter-remarks}
+<h3 id="testinterfacewithtypeparameter-remarks">Remarks</h3>
 
 Here are some remarks about the interface
 
@@ -421,11 +414,11 @@ Here are some remarks about the interface
 
 ### Property Details
 
-#### testProperty {#testinterfacewithtypeparameter-testproperty-propertysignature}
+<h4 id="testinterfacewithtypeparameter-testproperty-propertysignature">testProperty</h4>
 
 A test interface property using generic type parameter
 
-##### Signature {#testproperty-signature}
+<h5 id="testproperty-signature">Signature</h5>
 
 ```typescript
 testProperty: T;
@@ -433,17 +426,17 @@ testProperty: T;
 
 **Type**: T
 
-##### Remarks {#testproperty-remarks}
+<h5 id="testproperty-remarks">Remarks</h5>
 
 Here are some remarks about the property
 
 # Class Details
 
-## TestAbstractClass {#testabstractclass-class}
+<h2 id="testabstractclass-class">TestAbstractClass</h2>
 
 A test abstract class.
 
-### Signature {#testabstractclass-signature}
+<h3 id="testabstractclass-signature">Signature</h3>
 
 ```typescript
 export declare abstract class TestAbstractClass
@@ -459,7 +452,7 @@ export declare abstract class TestAbstractClass
 
 | Property | Modifiers | Type | Description |
 | - | - | - | - |
-| [abstractPropertyGetter](docs/test-suite-a#testabstractclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/test-suite-a#testmappedtype-typealias) | A test abstract getter property. |
+| [abstractPropertyGetter](docs/test-suite-a#testabstractclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/test-suite-a#testmappedtype-typealias) | <p>A test abstract getter property.</p><p>@escapedTag</p> |
 | [protectedProperty](docs/test-suite-a#testabstractclass-protectedproperty-property) | `readonly` | [TestEnum](docs/test-suite-a#testenum-enum) | A test protected property. |
 
 ### Methods
@@ -472,17 +465,17 @@ export declare abstract class TestAbstractClass
 
 ### Constructor Details
 
-#### (constructor) {#testabstractclass-\_constructor\_-constructor}
+<h4 id="testabstractclass-_constructor_-constructor">(constructor)</h4>
 
 This is a _{@customTag constructor}_.
 
-##### Signature {#\_constructor\_-signature}
+<h5 id="_constructor_-signature">Signature</h5>
 
 ```typescript
 protected constructor(privateProperty: number, protectedProperty: TestEnum);
 ```
 
-##### Parameters {#\_constructor\_-parameters}
+<h5 id="_constructor_-parameters">Parameters</h5>
 
 | Parameter | Type | Description |
 | - | - | - |
@@ -491,11 +484,13 @@ protected constructor(privateProperty: number, protectedProperty: TestEnum);
 
 ### Property Details
 
-#### abstractPropertyGetter {#testabstractclass-abstractpropertygetter-property}
+<h4 id="testabstractclass-abstractpropertygetter-property">abstractPropertyGetter</h4>
 
 A test abstract getter property.
 
-##### Signature {#abstractpropertygetter-signature}
+@escapedTag
+
+<h5 id="abstractpropertygetter-signature">Signature</h5>
 
 ```typescript
 abstract get abstractPropertyGetter(): TestMappedType;
@@ -503,11 +498,11 @@ abstract get abstractPropertyGetter(): TestMappedType;
 
 **Type**: [TestMappedType](docs/test-suite-a#testmappedtype-typealias)
 
-#### protectedProperty {#testabstractclass-protectedproperty-property}
+<h4 id="testabstractclass-protectedproperty-property">protectedProperty</h4>
 
 A test protected property.
 
-##### Signature {#protectedproperty-signature}
+<h5 id="protectedproperty-signature">Signature</h5>
 
 ```typescript
 protected readonly protectedProperty: TestEnum;
@@ -517,55 +512,55 @@ protected readonly protectedProperty: TestEnum;
 
 ### Method Details
 
-#### publicAbstractMethod {#testabstractclass-publicabstractmethod-method}
+<h4 id="testabstractclass-publicabstractmethod-method">publicAbstractMethod</h4>
 
 A test public abstract method.
 
-##### Signature {#publicabstractmethod-signature}
+<h5 id="publicabstractmethod-signature">Signature</h5>
 
 ```typescript
 abstract publicAbstractMethod(): void;
 ```
 
-#### sealedMethod {#testabstractclass-sealedmethod-method}
+<h4 id="testabstractclass-sealedmethod-method">sealedMethod</h4>
 
 A test `@sealed` method.
 
-##### Signature {#sealedmethod-signature}
+<h5 id="sealedmethod-signature">Signature</h5>
 
 ```typescript
 /** @sealed */
 protected sealedMethod(): string;
 ```
 
-##### Returns {#sealedmethod-returns}
+<h5 id="sealedmethod-returns">Returns</h5>
 
 A string!
 
 **Return type**: string
 
-#### virtualMethod {#testabstractclass-virtualmethod-method}
+<h4 id="testabstractclass-virtualmethod-method">virtualMethod</h4>
 
 A test `@virtual` method.
 
-##### Signature {#virtualmethod-signature}
+<h5 id="virtualmethod-signature">Signature</h5>
 
 ```typescript
 /** @virtual */
 protected virtualMethod(): number;
 ```
 
-##### Returns {#virtualmethod-returns}
+<h5 id="virtualmethod-returns">Returns</h5>
 
 A number!
 
 **Return type**: number
 
-## TestClass {#testclass-class}
+<h2 id="testclass-class">TestClass</h2>
 
 Test class
 
-### Signature {#testclass-signature}
+<h3 id="testclass-signature">Signature</h3>
 
 ```typescript
 export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass
@@ -580,7 +575,7 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 | TTypeParameterA | A type parameter |
 | TTypeParameterB | Another type parameter |
 
-### Remarks {#testclass-remarks}
+<h3 id="testclass-remarks">Remarks</h3>
 
 Here are some remarks about the class
 
@@ -626,21 +621,21 @@ Here are some remarks about the class
 
 ### Constructor Details
 
-#### (constructor) {#testclass-\_constructor\_-constructor}
+<h4 id="testclass-_constructor_-constructor">(constructor)</h4>
 
 Test class constructor
 
-##### Signature {#\_constructor\_-signature}
+<h5 id="_constructor_-signature">Signature</h5>
 
 ```typescript
 constructor(privateProperty: number, protectedProperty: TestEnum, testClassProperty: TTypeParameterB, testClassEventProperty: () => void);
 ```
 
-##### Remarks {#\_constructor\_-remarks}
+<h5 id="_constructor_-remarks">Remarks</h5>
 
 Here are some remarks about the constructor
 
-##### Parameters {#\_constructor\_-parameters}
+<h5 id="_constructor_-parameters">Parameters</h5>
 
 | Parameter | Type | Description |
 | - | - | - |
@@ -651,11 +646,11 @@ Here are some remarks about the constructor
 
 ### Event Details
 
-#### testClassEventProperty {#testclass-testclasseventproperty-property}
+<h4 id="testclass-testclasseventproperty-property">testClassEventProperty</h4>
 
 Test class event property
 
-##### Signature {#testclasseventproperty-signature}
+<h5 id="testclasseventproperty-signature">Signature</h5>
 
 ```typescript
 readonly testClassEventProperty: () => void;
@@ -663,17 +658,17 @@ readonly testClassEventProperty: () => void;
 
 **Type**: () => void
 
-##### Remarks {#testclasseventproperty-remarks}
+<h5 id="testclasseventproperty-remarks">Remarks</h5>
 
 Here are some remarks about the property
 
 ### Property Details
 
-#### abstractPropertyGetter {#testclass-abstractpropertygetter-property}
+<h4 id="testclass-abstractpropertygetter-property">abstractPropertyGetter</h4>
 
 A test abstract getter property.
 
-##### Signature {#abstractpropertygetter-signature}
+<h5 id="abstractpropertygetter-signature">Signature</h5>
 
 ```typescript
 get abstractPropertyGetter(): TestMappedType;
@@ -681,29 +676,30 @@ get abstractPropertyGetter(): TestMappedType;
 
 **Type**: [TestMappedType](docs/test-suite-a#testmappedtype-typealias)
 
-#### testClassGetterProperty {#testclass-testclassgetterproperty-property}
+<h4 id="testclass-testclassgetterproperty-property">testClassGetterProperty</h4>
 
 Test class property with both a getter and a setter.
 
-##### Signature {#testclassgetterproperty-signature}
+<h5 id="testclassgetterproperty-signature">Signature</h5>
 
 ```typescript
 /** @virtual */
 get testClassGetterProperty(): number;
+
 set testClassGetterProperty(newValue: number);
 ```
 
 **Type**: number
 
-##### Remarks {#testclassgetterproperty-remarks}
+<h5 id="testclassgetterproperty-remarks">Remarks</h5>
 
 Here are some remarks about the getter-only property
 
-#### testClassProperty {#testclass-testclassproperty-property}
+<h4 id="testclass-testclassproperty-property">testClassProperty</h4>
 
 Test class property
 
-##### Signature {#testclassproperty-signature}
+<h5 id="testclassproperty-signature">Signature</h5>
 
 ```typescript
 readonly testClassProperty: TTypeParameterB;
@@ -711,15 +707,15 @@ readonly testClassProperty: TTypeParameterB;
 
 **Type**: TTypeParameterB
 
-##### Remarks {#testclassproperty-remarks}
+<h5 id="testclassproperty-remarks">Remarks</h5>
 
 Here are some remarks about the property
 
-#### testClassStaticProperty {#testclass-testclassstaticproperty-property}
+<h4 id="testclass-testclassstaticproperty-property">testClassStaticProperty</h4>
 
 Test static class property
 
-##### Signature {#testclassstaticproperty-signature}
+<h5 id="testclassstaticproperty-signature">Signature</h5>
 
 ```typescript
 static testClassStaticProperty: (foo: number) => string;
@@ -729,107 +725,107 @@ static testClassStaticProperty: (foo: number) => string;
 
 ### Method Details
 
-#### publicAbstractMethod {#testclass-publicabstractmethod-method}
+<h4 id="testclass-publicabstractmethod-method">publicAbstractMethod</h4>
 
 A test public abstract method.
 
-##### Signature {#publicabstractmethod-signature}
+<h5 id="publicabstractmethod-signature">Signature</h5>
 
 ```typescript
 publicAbstractMethod(): void;
 ```
 
-#### testClassMethod {#testclass-testclassmethod-method}
+<h4 id="testclass-testclassmethod-method">testClassMethod</h4>
 
 Test class method
 
-##### Signature {#testclassmethod-signature}
+<h5 id="testclassmethod-signature">Signature</h5>
 
 ```typescript
 /** @sealed */
 testClassMethod(input: TTypeParameterA): TTypeParameterA;
 ```
 
-##### Remarks {#testclassmethod-remarks}
+<h5 id="testclassmethod-remarks">Remarks</h5>
 
 Here are some remarks about the method
 
-##### Parameters {#testclassmethod-parameters}
+<h5 id="testclassmethod-parameters">Parameters</h5>
 
 | Parameter | Type | Description |
 | - | - | - |
 | input | TTypeParameterA | |
 
-##### Returns {#testclassmethod-returns}
+<h5 id="testclassmethod-returns">Returns</h5>
 
 **Return type**: TTypeParameterA
 
-##### Throws {#testclassmethod-throws}
+<h5 id="testclassmethod-throws">Throws</h5>
 
 Some sort of error in 1 case.
 
 Some other sort of error in another case. For example, a case where some thing happens.
 
-#### testClassStaticMethod {#testclass-testclassstaticmethod-method}
+<h4 id="testclass-testclassstaticmethod-method">testClassStaticMethod</h4>
 
 Test class static method
 
-##### Signature {#testclassstaticmethod-signature}
+<h5 id="testclassstaticmethod-signature">Signature</h5>
 
 ```typescript
 static testClassStaticMethod(foo: number): string;
 ```
 
-##### Parameters {#testclassstaticmethod-parameters}
+<h5 id="testclassstaticmethod-parameters">Parameters</h5>
 
 | Parameter | Type | Description |
 | - | - | - |
 | foo | number | Some number |
 
-##### Returns {#testclassstaticmethod-returns}
+<h5 id="testclassstaticmethod-returns">Returns</h5>
 
 - Some string
 
 **Return type**: string
 
-#### virtualMethod {#testclass-virtualmethod-method}
+<h4 id="testclass-virtualmethod-method">virtualMethod</h4>
 
 Overrides [virtualMethod()](docs/test-suite-a#testabstractclass-virtualmethod-method).
 
-##### Signature {#virtualmethod-signature}
+<h5 id="virtualmethod-signature">Signature</h5>
 
 ```typescript
 /** @override */
 protected virtualMethod(): number;
 ```
 
-##### Returns {#virtualmethod-returns}
+<h5 id="virtualmethod-returns">Returns</h5>
 
 **Return type**: number
 
-### See Also {#testclass-see-also}
+<h3 id="testclass-see-also">See Also</h3>
 
 [TestAbstractClass](docs/test-suite-a#testabstractclass-class)
 
 # Enumeration Details
 
-## TestEnum {#testenum-enum}
+<h2 id="testenum-enum">TestEnum</h2>
 
 Test Enum
 
-### Signature {#testenum-signature}
+<h3 id="testenum-signature">Signature</h3>
 
 ```typescript
 export declare enum TestEnum
 ```
 
-### Remarks {#testenum-remarks}
+<h3 id="testenum-remarks">Remarks</h3>
 
 Here are some remarks about the enum
 
-### Examples {#testenum-examples}
+<h3 id="testenum-examples">Examples</h3>
 
-#### Example 1 {#testenum-example1}
+<h4 id="testenum-example1">Example 1</h4>
 
 Some example
 
@@ -837,7 +833,7 @@ Some example
 const foo = TestEnum.TestEnumValue1
 ```
 
-#### Example 2 {#testenum-example2}
+<h4 id="testenum-example2">Example 2</h4>
 
 Another example
 
@@ -853,55 +849,55 @@ const bar = TestEnum.TestEnumValue2
 | [TestEnumValue2](docs/test-suite-a#testenum-testenumvalue2-enummember) | Test enum value 2 (number) |
 | [TestEnumValue3](docs/test-suite-a#testenum-testenumvalue3-enummember) | Test enum value 3 (default) |
 
-#### TestEnumValue1 {#testenum-testenumvalue1-enummember}
+<h4 id="testenum-testenumvalue1-enummember">TestEnumValue1</h4>
 
 Test enum value 1 (string)
 
-##### Signature {#testenumvalue1-signature}
+<h5 id="testenumvalue1-signature">Signature</h5>
 
 ```typescript
 TestEnumValue1 = "test-enum-value-1"
 ```
 
-##### Remarks {#testenumvalue1-remarks}
+<h5 id="testenumvalue1-remarks">Remarks</h5>
 
 Here are some remarks about the enum value
 
-#### TestEnumValue2 {#testenum-testenumvalue2-enummember}
+<h4 id="testenum-testenumvalue2-enummember">TestEnumValue2</h4>
 
 Test enum value 2 (number)
 
-##### Signature {#testenumvalue2-signature}
+<h5 id="testenumvalue2-signature">Signature</h5>
 
 ```typescript
 TestEnumValue2 = 3
 ```
 
-##### Remarks {#testenumvalue2-remarks}
+<h5 id="testenumvalue2-remarks">Remarks</h5>
 
 Here are some remarks about the enum value
 
-#### TestEnumValue3 {#testenum-testenumvalue3-enummember}
+<h4 id="testenum-testenumvalue3-enummember">TestEnumValue3</h4>
 
 Test enum value 3 (default)
 
-##### Signature {#testenumvalue3-signature}
+<h5 id="testenumvalue3-signature">Signature</h5>
 
 ```typescript
 TestEnumValue3 = 4
 ```
 
-##### Remarks {#testenumvalue3-remarks}
+<h5 id="testenumvalue3-remarks">Remarks</h5>
 
 Here are some remarks about the enum value
 
 # Type Details
 
-## TestMappedType {#testmappedtype-typealias}
+<h2 id="testmappedtype-typealias">TestMappedType</h2>
 
 Test Mapped Type, using [TestEnum](docs/test-suite-a#testenum-enum)
 
-### Signature {#testmappedtype-signature}
+<h3 id="testmappedtype-signature">Signature</h3>
 
 ```typescript
 export type TestMappedType = {
@@ -909,31 +905,31 @@ export type TestMappedType = {
 };
 ```
 
-### Remarks {#testmappedtype-remarks}
+<h3 id="testmappedtype-remarks">Remarks</h3>
 
 Here are some remarks about the mapped type
 
-## TypeAlias {#typealias-typealias}
+<h2 id="typealias-typealias">TypeAlias</h2>
 
 Test Type-Alias
 
-### Signature {#typealias-signature}
+<h3 id="typealias-signature">Signature</h3>
 
 ```typescript
 export type TypeAlias = string;
 ```
 
-### Remarks {#typealias-remarks}
+<h3 id="typealias-remarks">Remarks</h3>
 
 Here are some remarks about the type alias
 
 # Function Details
 
-## testFunctionReturningInlineType {#testfunctionreturninginlinetype-function}
+<h2 id="testfunctionreturninginlinetype-function">testFunctionReturningInlineType</h2>
 
 Test function that returns an inline type
 
-### Signature {#testfunctionreturninginlinetype-signature}
+<h3 id="testfunctionreturninginlinetype-signature">Signature</h3>
 
 ```typescript
 export declare function testFunctionReturningInlineType(): {
@@ -942,13 +938,13 @@ export declare function testFunctionReturningInlineType(): {
 };
 ```
 
-### Returns {#testfunctionreturninginlinetype-returns}
+<h3 id="testfunctionreturninginlinetype-returns">Returns</h3>
 
 An inline type
 
 **Return type**: {     foo: number;     bar: [TestEnum](docs/test-suite-a#testenum-enum); }
 
-## testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
+<h2 id="testfunctionreturningintersectiontype-function">testFunctionReturningIntersectionType</h2>
 
 Test function that returns an inline type
 
@@ -956,59 +952,59 @@ Test function that returns an inline type
 
 This is a test deprecation notice. Here is a [link](docs/test-suite-a#testfunctionreturninguniontype-function) to something else!
 
-### Signature {#testfunctionreturningintersectiontype-signature}
+<h3 id="testfunctionreturningintersectiontype-signature">Signature</h3>
 
 ```typescript
 export declare function testFunctionReturningIntersectionType(): TestEmptyInterface & TestInterfaceWithTypeParameter<number>;
 ```
 
-### Returns {#testfunctionreturningintersectiontype-returns}
+<h3 id="testfunctionreturningintersectiontype-returns">Returns</h3>
 
 an intersection type
 
-**Return type**: [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) \& [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)\<number>
+**Return type**: [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) & [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)\<number>
 
-## testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
+<h2 id="testfunctionreturninguniontype-function">testFunctionReturningUnionType</h2>
 
 Test function that returns an inline type
 
-### Signature {#testfunctionreturninguniontype-signature}
+<h3 id="testfunctionreturninguniontype-signature">Signature</h3>
 
 ```typescript
 export declare function testFunctionReturningUnionType(): string | TestInterface;
 ```
 
-### Returns {#testfunctionreturninguniontype-returns}
+<h3 id="testfunctionreturninguniontype-returns">Returns</h3>
 
 A union type
 
-**Return type**: string \| [TestInterface](docs/test-suite-a#testinterface-interface)
+**Return type**: string | [TestInterface](docs/test-suite-a#testinterface-interface)
 
 # Variable Details
 
-## testConst {#testconst-variable}
+<h2 id="testconst-variable">testConst</h2>
 
 Test Constant
 
 **WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
-### Signature {#testconst-signature}
+<h3 id="testconst-signature">Signature</h3>
 
 ```typescript
 testConst = 42
 ```
 
-### Remarks {#testconst-remarks}
+<h3 id="testconst-remarks">Remarks</h3>
 
 Here are some remarks about the variable
 
-## testConstWithEmptyDeprecatedBlock {#testconstwithemptydeprecatedblock-variable}
+<h2 id="testconstwithemptydeprecatedblock-variable">testConstWithEmptyDeprecatedBlock</h2>
 
 I have a `@deprecated` tag with an empty comment block.
 
 **WARNING: This API is deprecated and will be removed in a future release.**
 
-### Signature {#testconstwithemptydeprecatedblock-signature}
+<h3 id="testconstwithemptydeprecatedblock-signature">Signature</h3>
 
 ```typescript
 testConstWithEmptyDeprecatedBlock: string
@@ -1018,19 +1014,19 @@ testConstWithEmptyDeprecatedBlock: string
 
 # Namespace Details
 
-## TestBetaNamespace {#testbetanamespace-namespace}
+<h2 id="testbetanamespace-namespace">TestBetaNamespace</h2>
 
 A namespace tagged as `@beta`.
 
 **WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
-### Signature {#testbetanamespace-signature}
+<h3 id="testbetanamespace-signature">Signature</h3>
 
 ```typescript
 export declare namespace TestBetaNamespace
 ```
 
-### Remarks {#testbetanamespace-remarks}
+<h3 id="testbetanamespace-remarks">Remarks</h3>
 
 Tests release level inheritance.
 
@@ -1043,27 +1039,27 @@ Tests release level inheritance.
 
 ### Variable Details
 
-#### betaMember {#testbetanamespace-betamember-variable}
+<h4 id="testbetanamespace-betamember-variable">betaMember</h4>
 
 **WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
-##### Signature {#betamember-signature}
+<h5 id="betamember-signature">Signature</h5>
 
 ```typescript
 betaMember = "beta"
 ```
 
-#### publicMember {#testbetanamespace-publicmember-variable}
+<h4 id="testbetanamespace-publicmember-variable">publicMember</h4>
 
 **WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
-##### Signature {#publicmember-signature}
+<h5 id="publicmember-signature">Signature</h5>
 
 ```typescript
 publicMember = "public"
 ```
 
-## TestModule {#testmodule-namespace}
+<h2 id="testmodule-namespace">TestModule</h2>
 
 ### Variables
 
@@ -1073,33 +1069,33 @@ publicMember = "public"
 
 ### Variable Details
 
-#### foo {#testmodule-foo-variable}
+<h4 id="testmodule-foo-variable">foo</h4>
 
 Test constant in module.
 
-##### Signature {#foo-signature}
+<h5 id="foo-signature">Signature</h5>
 
 ```typescript
 foo = 2
 ```
 
-## TestNamespace {#testnamespace-namespace}
+<h2 id="testnamespace-namespace">TestNamespace</h2>
 
 Test Namespace
 
-### Signature {#testnamespace-signature}
+<h3 id="testnamespace-signature">Signature</h3>
 
 ```typescript
 export declare namespace TestNamespace
 ```
 
-### Remarks {#testnamespace-remarks}
+<h3 id="testnamespace-remarks">Remarks</h3>
 
 Here are some remarks about the namespace
 
-### Examples {#testnamespace-examples}
+<h3 id="testnamespace-examples">Examples</h3>
 
-#### Example: TypeScript Example {#testnamespace-example1}
+<h4 id="testnamespace-example1">Example: TypeScript Example</h4>
 
 ```typescript
 const foo: Foo = {
@@ -1108,7 +1104,7 @@ const foo: Foo = {
 };
 ```
 
-#### Example: JavaScript Example {#testnamespace-example2}
+<h4 id="testnamespace-example2">Example: JavaScript Example</h4>
 
 ```javascript
 const foo = {
@@ -1155,11 +1151,11 @@ const foo = {
 
 ### Class Details
 
-#### TestClass {#testnamespace-testclass-class}
+<h4 id="testnamespace-testclass-class">TestClass</h4>
 
 Test class
 
-##### Signature {#testclass-signature}
+<h5 id="testclass-signature">Signature</h5>
 
 ```typescript
 class TestClass
@@ -1185,18 +1181,18 @@ class TestClass
 
 ##### Constructor Details
 
-###### (constructor) {#testnamespace-testclass-\_constructor\_-constructor}
+<h6 id="testnamespace-testclass-_constructor_-constructor">(constructor)</h6>
 
 Test class constructor
 
-<a id="_constructor_-signature"></a>
+<a id="_constructor_-signature"></a>\
 **Signature**
 
 ```typescript
 constructor(testClassProperty: string);
 ```
 
-<a id="_constructor_-parameters"></a>
+<a id="_constructor_-parameters"></a>\
 **Parameters**
 
 | Parameter | Type | Description |
@@ -1205,11 +1201,11 @@ constructor(testClassProperty: string);
 
 ##### Property Details
 
-###### testClassProperty {#testnamespace-testclass-testclassproperty-property}
+<h6 id="testnamespace-testclass-testclassproperty-property">testClassProperty</h6>
 
 Test interface property
 
-<a id="testclassproperty-signature"></a>
+<a id="testclassproperty-signature"></a>\
 **Signature**
 
 ```typescript
@@ -1220,32 +1216,32 @@ readonly testClassProperty: string;
 
 ##### Method Details
 
-###### testClassMethod {#testnamespace-testclass-testclassmethod-method}
+<h6 id="testnamespace-testclass-testclassmethod-method">testClassMethod</h6>
 
 Test class method
 
-<a id="testclassmethod-signature"></a>
+<a id="testclassmethod-signature"></a>\
 **Signature**
 
 ```typescript
 testClassMethod(testParameter: string): Promise<string>;
 ```
 
-<a id="testclassmethod-parameters"></a>
+<a id="testclassmethod-parameters"></a>\
 **Parameters**
 
 | Parameter | Type | Description |
 | - | - | - |
 | testParameter | string | A string |
 
-<a id="testclassmethod-returns"></a>
+<a id="testclassmethod-returns"></a>\
 **Returns**
 
 A Promise
 
 **Return type**: Promise\<string>
 
-<a id="testclassmethod-throws"></a>
+<a id="testclassmethod-throws"></a>\
 **Throws**
 
 An Error when something happens for which an error should be thrown. Except in the cases where another kind of error is thrown. We don't throw this error in those cases.
@@ -1256,11 +1252,11 @@ A different kind of error when a thing happens, but not when the first kind of e
 
 ### Enumeration Details
 
-#### TestEnum {#testnamespace-testenum-enum}
+<h4 id="testnamespace-testenum-enum">TestEnum</h4>
 
 Test Enum
 
-##### Signature {#testenum-signature}
+<h5 id="testenum-signature">Signature</h5>
 
 ```typescript
 enum TestEnum
@@ -1273,22 +1269,22 @@ enum TestEnum
 | [TestEnumValue1](docs/test-suite-a#testnamespace-testenum-testenumvalue1-enummember) | Test enum value 1 |
 | [TestEnumValue2](docs/test-suite-a#testnamespace-testenum-testenumvalue2-enummember) | Test enum value 2 |
 
-###### TestEnumValue1 {#testnamespace-testenum-testenumvalue1-enummember}
+<h6 id="testnamespace-testenum-testenumvalue1-enummember">TestEnumValue1</h6>
 
 Test enum value 1
 
-<a id="testenumvalue1-signature"></a>
+<a id="testenumvalue1-signature"></a>\
 **Signature**
 
 ```typescript
 TestEnumValue1 = 0
 ```
 
-###### TestEnumValue2 {#testnamespace-testenum-testenumvalue2-enummember}
+<h6 id="testnamespace-testenum-testenumvalue2-enummember">TestEnumValue2</h6>
 
 Test enum value 2
 
-<a id="testenumvalue2-signature"></a>
+<a id="testenumvalue2-signature"></a>\
 **Signature**
 
 ```typescript
@@ -1297,11 +1293,11 @@ TestEnumValue2 = 1
 
 ### Type Details
 
-#### TestTypeAlias {#testnamespace-testtypealias-typealias}
+<h4 id="testnamespace-testtypealias-typealias">TestTypeAlias</h4>
 
 Test Type-Alias
 
-##### Signature {#testtypealias-signature}
+<h5 id="testtypealias-signature">Signature</h5>
 
 ```typescript
 type TestTypeAlias = boolean;
@@ -1309,41 +1305,41 @@ type TestTypeAlias = boolean;
 
 ### Function Details
 
-#### testFunction {#testnamespace-testfunction-function}
+<h4 id="testnamespace-testfunction-function">testFunction</h4>
 
 Test function
 
-##### Signature {#testfunction-signature}
+<h5 id="testfunction-signature">Signature</h5>
 
 ```typescript
 function testFunction(testParameter: number): number;
 ```
 
-##### Parameters {#testfunction-parameters}
+<h5 id="testfunction-parameters">Parameters</h5>
 
 | Parameter | Type | Description |
 | - | - | - |
 | testParameter | number | |
 
-##### Returns {#testfunction-returns}
+<h5 id="testfunction-returns">Returns</h5>
 
 A number
 
 **Return type**: number
 
-##### Throws {#testfunction-throws}
+<h5 id="testfunction-throws">Throws</h5>
 
 An Error
 
 ### Variable Details
 
-#### TestConst {#testnamespace-testconst-variable}
+<h4 id="testnamespace-testconst-variable">TestConst</h4>
 
 Test Constant
 
 **WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
-##### Signature {#testconst-signature}
+<h5 id="testconst-signature">Signature</h5>
 
 ```typescript
 TestConst = "Hello world!"
@@ -1351,11 +1347,11 @@ TestConst = "Hello world!"
 
 ### Namespace Details
 
-#### TestSubNamespace {#testnamespace-testsubnamespace-namespace}
+<h4 id="testnamespace-testsubnamespace-namespace">TestSubNamespace</h4>
 
 Test sub-namespace
 
-##### Signature {#testsubnamespace-signature}
+<h5 id="testsubnamespace-signature">Signature</h5>
 
 ```typescript
 namespace TestSubNamespace

@@ -4,13 +4,13 @@
 
 ```ts
 
-// @alpha @legacy
+// @beta @legacy
 export function assert(condition: boolean, message: string | number): asserts condition;
 
-// @alpha @legacy
+// @beta @legacy
 export const compareArrays: <T>(left: readonly T[], right: readonly T[], comparator?: (leftItem: T, rightItem: T, index: number) => boolean) => boolean;
 
-// @alpha @legacy
+// @beta @legacy
 export class Deferred<T> {
     constructor();
     get isCompleted(): boolean;
@@ -19,7 +19,7 @@ export class Deferred<T> {
     resolve(value: T | PromiseLike<T>): void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export class LazyPromise<T> implements Promise<T> {
     // (undocumented)
     get [Symbol.toStringTag](): string;
@@ -32,7 +32,7 @@ export class LazyPromise<T> implements Promise<T> {
     then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined): Promise<TResult1 | TResult2>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export class PromiseCache<TKey, TResult> {
     constructor({ expiry, removeOnError, }?: PromiseCacheOptions);
     add(key: TKey, asyncFn: () => Promise<TResult>): boolean;
@@ -44,7 +44,7 @@ export class PromiseCache<TKey, TResult> {
     remove(key: TKey): boolean;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export type PromiseCacheExpiry = {
     policy: "indefinite";
 } | {
@@ -52,7 +52,7 @@ export type PromiseCacheExpiry = {
     durationMs: number;
 };
 
-// @alpha @legacy
+// @beta @legacy
 export interface PromiseCacheOptions {
     expiry?: PromiseCacheExpiry;
     removeOnError?: (error: any) => boolean;

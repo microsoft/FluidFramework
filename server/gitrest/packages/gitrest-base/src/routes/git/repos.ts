@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ICreateRepoParams } from "@fluidframework/gitresources";
+import type { ICreateRepoParams } from "@fluidframework/gitresources";
 import { handleResponse } from "@fluidframework/server-services-shared";
 import { Router } from "express";
-import nconf from "nconf";
+import type nconf from "nconf";
 
 import {
 	getRepoManagerParamsFromRequest,
-	IRepositoryManagerFactory,
+	type IRepositoryManagerFactory,
 	logAndThrowApiError,
 } from "../../utils";
 

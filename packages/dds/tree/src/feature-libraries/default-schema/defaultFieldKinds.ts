@@ -41,6 +41,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 		compose: (change1: 0, change2: 0) => 0,
 		invert: (changes: 0) => 0,
 		rebase: (change: 0, over: 0) => 0,
+		mute: (changes: 0) => 0,
 	}),
 	codecsFactory: () => noChangeCodecFamily,
 	editor: { buildChildChanges: () => fail(0xb0d /* Child changes not supported */) },
@@ -97,6 +98,11 @@ export const required = new FieldKindWithEditor(
 	Multiplicity.Single,
 	valueChangeHandler,
 	(types, other) =>
+		// By omitting Identifier here,
+		// this is making a policy choice that a schema upgrade cannot be done from required to identifier.
+		// Since an identifier can be upgraded into a required field,
+		// preventing the inverse helps ensure that schema upgrades are monotonic.
+		// Which direction is allowed is a subjective policy choice.
 		(other.kind === sequence.identifier ||
 			other.kind === requiredIdentifier ||
 			other.kind === optional.identifier ||
@@ -125,6 +131,10 @@ const nodeKeyIdentifier = "NodeKey";
 
 /**
  * Exactly one identifier.
+ *
+ * TODO: this is almost the same as identifier, but apparently unused.
+ * Confirm if this is truly unused since before the document format was stabilized, and remove if possible.
+ * @deprecated Superseded by {@link identifier}.
  */
 export const nodeKey = new FieldKindWithEditor(
 	nodeKeyIdentifier,
@@ -149,6 +159,7 @@ export const identifier = new FieldKindWithEditor(
 	Multiplicity.Single,
 	noChangeHandler,
 	(types, other) =>
+		// Allows upgrading from identifier to required: which way this upgrade is allowed to go is a subjective policy choice.
 		(other.kind === sequence.identifier ||
 			other.kind === requiredIdentifier ||
 			other.kind === optional.identifier ||

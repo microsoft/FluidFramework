@@ -1,8 +1,8 @@
-## \[foo: number\]: { bar: string; }
+## \[foo: number]: { bar: string; }
 
 Test index signature.
 
-### Signature {#\_indexer\_-signature}
+<h3 id="_indexer_-signature">Signature</h3>
 
 ```typescript
 [foo: number]: {

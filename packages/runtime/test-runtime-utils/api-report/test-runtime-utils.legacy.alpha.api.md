@@ -99,6 +99,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     rollback?(): void;
     protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
     // (undocumented)
+    runWithManualFlush(act: () => void | Promise<void>): Promise<void>;
+    // (undocumented)
     submit(messageContent: any, localOpMetadata?: unknown): number;
 }
 
@@ -363,7 +365,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     setChannelDirty(address: string): void;
     // (undocumented)
-    storage: IDocumentStorageService;
+    storage: IRuntimeStorageService;
     // (undocumented)
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
     // (undocumented)
@@ -519,8 +521,6 @@ export class MockHandle<T> extends FluidHandleBase<T> {
     readonly absolutePath: string;
     // (undocumented)
     attachGraph(): void;
-    // @deprecated (undocumented)
-    bind(): void;
     // (undocumented)
     get(): Promise<T>;
     // (undocumented)
@@ -611,6 +611,8 @@ export class MockStorage implements IChannelStorageService {
     contains(path: string): Promise<boolean>;
     // (undocumented)
     static createFromSummary(summaryTree: ISummaryTree): MockStorage;
+    // (undocumented)
+    getSnapshotTree(): ISnapshotTree | undefined;
     // (undocumented)
     list(path: string): Promise<string[]>;
     // (undocumented)

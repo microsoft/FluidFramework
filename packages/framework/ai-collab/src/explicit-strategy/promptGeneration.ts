@@ -16,6 +16,7 @@ import {
 	getSimpleSchema,
 	Tree,
 	type TreeNode,
+	KeyEncodingOptions,
 } from "@fluidframework/tree/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { createZodJsonValidator } from "typechat/zod";
@@ -75,7 +76,10 @@ export function getPlanningSystemPrompt(
 	const schema = Tree.schema(treeNode);
 
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(
-		getJsonSchema(schema, { requireFieldsWithDefaults: false, useStoredKeys: false }),
+		getJsonSchema(schema, {
+			requireFieldsWithDefaults: false,
+			keys: KeyEncodingOptions.usePropertyKeys,
+		}),
 	);
 	const role = `I'm an agent who makes plans for another agent to achieve a user-specified goal to update the state of an application.${
 		systemRoleContext === undefined
@@ -129,7 +133,10 @@ export function getEditingSystemPrompt(
 ): string {
 	const schema = Tree.schema(treeNode);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(
-		getJsonSchema(schema, { useStoredKeys: false, requireFieldsWithDefaults: false }),
+		getJsonSchema(schema, {
+			keys: KeyEncodingOptions.usePropertyKeys,
+			requireFieldsWithDefaults: false,
+		}),
 	);
 	const decoratedTreeJson = toDecoratedJson(idGenerator, treeNode);
 
@@ -181,7 +188,10 @@ export function getReviewSystemPrompt(
 ): string {
 	const schema = Tree.schema(treeNode);
 	const promptFriendlySchema = getPromptFriendlyTreeSchema(
-		getJsonSchema(schema, { useStoredKeys: false, requireFieldsWithDefaults: false }),
+		getJsonSchema(schema, {
+			keys: KeyEncodingOptions.usePropertyKeys,
+			requireFieldsWithDefaults: false,
+		}),
 	);
 	const decoratedTreeJson = toDecoratedJson(idGenerator, treeNode);
 
@@ -220,7 +230,7 @@ export function getReviewSystemPrompt(
 export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string {
 	let stringifiedSchema = "";
 	for (const [name, def] of Object.entries(jsonSchema.$defs)) {
-		if (def.type !== "object" || def._treeNodeSchemaKind === NodeKind.Map) {
+		if (def._treeNodeSchemaKind !== NodeKind.Object) {
 			continue;
 		}
 

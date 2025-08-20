@@ -236,6 +236,36 @@
         "@typescript-eslint/no-require-imports": [
             "error"
         ],
+        "@typescript-eslint/no-restricted-imports": [
+            "error",
+            {
+                "paths": [
+                    {
+                        "name": "assert",
+                        "importNames": [
+                            "default"
+                        ],
+                        "message": "Use `strict` instead. E.g. `import { strict as assert } from \"node:assert\";`"
+                    },
+                    {
+                        "name": "node:assert",
+                        "importNames": [
+                            "default"
+                        ],
+                        "message": "Use `strict` instead. E.g. `import { strict as assert } from \"node:assert\";`"
+                    }
+                ],
+                "patterns": [
+                    {
+                        "group": [
+                            "./index.js",
+                            "**/../index.js"
+                        ],
+                        "message": "Importing from a parent index file tends to cause cyclic dependencies. Import from a more specific sibling file instead."
+                    }
+                ]
+            }
+        ],
         "@typescript-eslint/no-shadow": [
             "error",
             {

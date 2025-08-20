@@ -14,7 +14,7 @@ import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunk
 import { updateShapesAndIdentifiersEncoding } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import type {
 	BufferFormat,
-	EncoderCache,
+	EncoderContext,
 	FieldEncoder,
 	NodeEncoder,
 	// eslint-disable-next-line import/no-internal-modules
@@ -24,6 +24,8 @@ import {
 	version,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { IncrementalDecoder } from "../../../../feature-libraries/chunked-forest/codec/index.js";
 import {
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
@@ -34,32 +36,34 @@ import { testIdCompressor } from "../../../utils.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export function checkNodeEncode(
-	shape: NodeEncoder,
-	cache: EncoderCache,
+	nodeEncoder: NodeEncoder,
+	context: EncoderContext,
 	tree: JsonableTree,
+	incrementalDecoder?: IncrementalDecoder,
 ): BufferFormat {
-	const buffer: BufferFormat = [shape.shape];
+	const buffer: BufferFormat = [nodeEncoder.shape];
 	const cursor = cursorForJsonableTreeNode(tree);
-	shape.encodeNode(cursor, cache, buffer);
+	nodeEncoder.encodeNode(cursor, context, buffer);
 
 	// Check round-trip
-	checkDecode([buffer], [[tree]]);
+	checkDecode([buffer], [[tree]], undefined, incrementalDecoder);
 
 	return buffer.slice(1);
 }
 
 export function checkFieldEncode(
-	shape: FieldEncoder,
-	cache: EncoderCache,
+	fieldEncoder: FieldEncoder,
+	context: EncoderContext,
 	tree: JsonableTree[],
 	idCompressor?: IIdCompressor,
+	incrementalDecoder?: IncrementalDecoder,
 ): BufferFormat {
-	const buffer: BufferFormat = [shape.shape];
+	const buffer: BufferFormat = [fieldEncoder.shape];
 	const cursor = cursorForJsonableTreeField(tree);
-	shape.encodeField(cursor, cache, buffer);
+	fieldEncoder.encodeField(cursor, context, buffer);
 
 	// Check round-trip
-	checkDecode([buffer], [tree], idCompressor);
+	checkDecode([buffer], [tree], idCompressor, incrementalDecoder);
 
 	return buffer.slice(1);
 }
@@ -68,10 +72,11 @@ function checkDecode(
 	buffer: BufferFormat[],
 	tree: JsonableTree[][],
 	idCompressor?: IIdCompressor,
+	incrementalDecoder?: IncrementalDecoder,
 ): void {
 	// Check round-trips with identifiers inline and out of line
-	testDecode(buffer, tree, () => false, idCompressor);
-	testDecode(buffer, tree, () => true, idCompressor);
+	testDecode(buffer, tree, () => false, idCompressor, incrementalDecoder);
+	testDecode(buffer, tree, () => true, idCompressor, incrementalDecoder);
 }
 
 /**
@@ -86,6 +91,7 @@ function testDecode(
 	expectedTree: JsonableTree[][],
 	identifierFilter: CounterFilter<string>,
 	idCompressor?: IIdCompressor,
+	incrementalDecoder?: IncrementalDecoder,
 ): EncodedFieldBatch {
 	const chunk = updateShapesAndIdentifiersEncoding(
 		version,
@@ -107,6 +113,7 @@ function testDecode(
 					idCompressor: testIdCompressor,
 					originatorId: testIdCompressor.localSessionId,
 				},
+		incrementalDecoder,
 	);
 	assertChunkCursorBatchEquals(result, expectedTree);
 
@@ -143,6 +150,7 @@ function testDecode(
 						idCompressor: testIdCompressor,
 						originatorId: testIdCompressor.localSessionId,
 					},
+			incrementalDecoder,
 		);
 		assert.deepEqual(parsedResult, result);
 	}

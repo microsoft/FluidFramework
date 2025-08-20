@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { Package } from "@fluidframework/build-tools";
+import type { Package } from "@fluidframework/build-tools";
 import { readJsonSync } from "fs-extra/esm";
 
 import registerDebug from "debug";

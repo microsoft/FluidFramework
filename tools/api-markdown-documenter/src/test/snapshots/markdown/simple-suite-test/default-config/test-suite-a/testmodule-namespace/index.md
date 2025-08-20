@@ -10,11 +10,11 @@
 
 ## Variable Details
 
-### foo {#foo-variable}
+<h3 id="foo-variable">foo</h3>
 
 Test constant in module.
 
-#### Signature {#foo-signature}
+<h4 id="foo-signature">Signature</h4>
 
 ```typescript
 foo = 2

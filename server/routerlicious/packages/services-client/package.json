@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-client",
-	"version": "7.0.0",
+	"version": "8.0.0",
 	"description": "Fluid server isomorphic services for communicating with Fluid",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -66,6 +66,7 @@
 		"axios": "^1.8.4",
 		"crc-32": "1.2.0",
 		"debug": "^4.3.4",
+		"ipaddr.js": "^2.2.0",
 		"json-stringify-safe": "^5.0.1",
 		"jsrsasign": "^11.0.0",
 		"jwt-decode": "^4.0.0",
@@ -73,11 +74,11 @@
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.56.0",
+		"@fluid-tools/build-cli": "^0.57.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.56.0",
-		"@fluidframework/eslint-config-fluid": "^5.7.4",
-		"@fluidframework/server-services-client-previous": "npm:@fluidframework/server-services-client@5.0.0",
+		"@fluidframework/build-tools": "^0.57.0",
+		"@fluidframework/eslint-config-fluid": "^6.0.0",
+		"@fluidframework/server-services-client-previous": "npm:@fluidframework/server-services-client@7.0.0",
 		"@microsoft/api-extractor": "^7.45.1",
 		"@types/debug": "^4.1.5",
 		"@types/jsrsasign": "^10.5.12",
@@ -94,23 +95,7 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {
-			"Class_NetworkError": {
-				"backCompat": false
-			},
-			"ClassStatics_NetworkError": {
-				"backCompat": false
-			},
-			"Enum_InternalErrorCode": {
-				"backCompat": false
-			},
-			"Interface_INetworkErrorDetails": {
-				"backCompat": false
-			},
-			"Interface_ITimeoutContext": {
-				"forwardCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "public"
 	}
 }

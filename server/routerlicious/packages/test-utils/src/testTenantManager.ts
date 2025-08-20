@@ -5,7 +5,7 @@
 
 import type { IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import { GitManager } from "@fluidframework/server-services-client";
-import {
+import type {
 	ITenant,
 	ITenantManager,
 	ITenantOrderer,
@@ -78,6 +78,17 @@ export class TestTenantManager implements ITenantManager {
 			key: "test-tenant-key",
 			customData: {},
 			enableSharedKeyAccess: true,
+			enablePrivateKeyAccess: false,
+		};
+	}
+
+	public async getTenantfromRiddler(id?: string): Promise<ITenantConfig> {
+		return {
+			id: "test-tenant",
+			storage: this.tenant.storage,
+			orderer: this.tenant.orderer,
+			customData: {},
+			enableSharedKeyAccess: false,
 			enablePrivateKeyAccess: false,
 		};
 	}

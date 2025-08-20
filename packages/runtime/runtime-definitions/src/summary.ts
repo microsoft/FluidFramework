@@ -4,9 +4,9 @@
  */
 
 import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
-import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	ISnapshotTree,
+	ISummaryTree,
 	ITree,
 	SummaryTree,
 	ISequencedDocumentMessage,
@@ -20,8 +20,7 @@ import type {
 
 /**
  * Contains the aggregation data from a Tree/Subtree.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryStats {
 	treeNodeCount: number;
@@ -37,8 +36,7 @@ export interface ISummaryStats {
  * each of its DDS.
  * Any component that implements IChannelContext, IFluidDataStoreChannel or extends SharedObject
  * will be taking part of the summarization process.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryTreeWithStats {
 	/**
@@ -90,8 +88,7 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
 /**
  * @experimental - Can be deleted/changed at any time
  * Contains the necessary information to allow DDSes to do incremental summaries
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IExperimentalIncrementalSummaryContext {
 	/**
@@ -366,8 +363,7 @@ export interface ITelemetryContextExt {
 /**
  * Contains telemetry data relevant to summarization workflows.
  * This object is expected to be modified directly by various summarize methods.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ITelemetryContext {
 	/**

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Package } from "@fluidframework/build-tools";
+import type { Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
 import execa from "execa";
 
