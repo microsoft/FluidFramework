@@ -25,8 +25,7 @@ export enum SignalType {
 
 /**
  * Function to be used for creating a protocol handler.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type ProtocolHandlerBuilder = (
 	attributes: IDocumentAttributes,
@@ -37,8 +36,7 @@ export type ProtocolHandlerBuilder = (
 ) => IProtocolHandler;
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IProtocolHandler extends IBaseProtocolHandler {
 	readonly audience: IAudienceOwner;

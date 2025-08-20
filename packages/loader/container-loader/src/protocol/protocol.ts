@@ -20,8 +20,7 @@ import {
 import { IQuorumSnapshot, Quorum } from "./quorum.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IScribeProtocolState {
 	sequenceNumber: number;
@@ -32,8 +31,7 @@ export interface IScribeProtocolState {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IProtocolHandler {
 	readonly quorum: IQuorum;
