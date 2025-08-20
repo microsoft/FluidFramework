@@ -12,6 +12,7 @@ import { isStableId } from "@fluidframework/id-compressor/internal";
 
 import { type NormalizedUpPath, rootFieldKey } from "../../../core/index.js";
 import {
+	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	MockNodeIdentifierManager,
 	TreeStatus,
@@ -75,9 +76,10 @@ import {
 } from "../../../shared-tree/index.js";
 import { FieldKinds } from "../../../feature-libraries/index.js";
 import {
+	Context,
 	createField,
+	UnhydratedContext,
 	UnhydratedFlexTreeNode,
-	type Context,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -2968,18 +2970,26 @@ describe("treeNodeApi", () => {
 					{ allowUnknownOptionalFields: true },
 				) {}
 
-				// TODO AB#43548: Provide a utility (test or production) for easily building TreeNodes from content which has unknown optional fields or other schema evolution features.
-				// Due to current limitation on unknown types, the utility might need to explicitly take in all referenced types and use a custom context if the node built is unhydrated.
-				// Use such a utility here to build such a node instead of this:
-				// Construct an A node from a flex node which has an extra unknown optional field.
-				const field = createField(
-					getUnhydratedContext(PointUnknown).flexContext,
-					FieldKinds.optional.identifier,
-					brand("x"),
-					[unhydratedFlexTreeFromInsertable(1, SchemaFactory.number)],
-				);
+				// Similar pattern to what TreeBeta.clone uses.
 
-				const context: Context = getUnhydratedContext([PointUnknown, SchemaFactory.number]);
+				// Context that doesn't know about the unknown field's type
+				const dummyContextLimited = getUnhydratedContext(PointUnknown);
+
+				// Context that does know about the unknown field's type
+				const dummyContextFull = getUnhydratedContext([PointUnknown, SchemaFactory.number]);
+
+				// Use limited context for view part and full context for flex-tree parts, so that unknown optional fields are unknown in the view schema, but allowed in the flex tree.
+				const flexContext = new UnhydratedContext(
+					defaultSchemaPolicy,
+					dummyContextFull.flexContext.schema,
+				);
+				const context: Context = new Context(flexContext, dummyContextLimited.schema);
+
+				// Construct an A node from a flex node which has an extra unknown optional field.
+				const field = createField(flexContext, FieldKinds.optional.identifier, brand("x"), [
+					unhydratedFlexTreeFromInsertable(1, SchemaFactory.number),
+				]);
+
 				const flex = new UnhydratedFlexTreeNode(
 					{ type: brand(PointUnknown.identifier) },
 					new Map([[brand("x"), field]]),
