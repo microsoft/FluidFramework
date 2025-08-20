@@ -138,6 +138,8 @@ describe(`Presence with AzureClient`, () => {
 				await Promise.race([Promise.all(waitForDisconnected), childErrorPromise]);
 			});
 
+			// This test suite focuses on the synchronization of Latest state between clients.
+			// NOTE: For testing purposes child clients will expect a Latest value of type string.
 			describe("Latest State Synchronization", () => {
 				let children: ChildProcess[];
 				let childErrorPromise: Promise<void>;
@@ -158,6 +160,7 @@ describe(`Presence with AzureClient`, () => {
 					));
 					await Promise.all(attendeeIdPromises);
 					remoteClients = children.filter((_, index) => index !== 0);
+					// NOTE: For testing purposes child clients will expect a Latest value of type string (StateFactory.latest<{ value: string }>).
 					await registerWorkspaceOnChildren(children, workspaceId, { latest: true });
 				});
 
@@ -221,6 +224,8 @@ describe(`Presence with AzureClient`, () => {
 				});
 			});
 
+			// This test suite focuses on the synchronization of LatestMap state between clients.
+			// NOTE: For testing purposes child clients will expect a LatestMap value of type Record<string, string | number>.
 			describe("LatestMap State Synchronization", () => {
 				let children: ChildProcess[];
 				let childErrorPromise: Promise<void>;
@@ -240,6 +245,7 @@ describe(`Presence with AzureClient`, () => {
 					));
 					await Promise.all(attendeeIdPromises);
 					remoteClients = children.filter((_, index) => index !== 0);
+					// NOTE: For testing purposes child clients will expect a LatestMap value of type Record<string, string | number> (StateFactory.latestMap<{ value: Record<string, string | number> }, string>).
 					await registerWorkspaceOnChildren(children, workspaceId, { latestMap: true });
 				});
 
