@@ -250,8 +250,7 @@ type PendingStorageEntry = PendingKeyLifetime | PendingKeyDelete | PendingClear;
  *
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ICreateInfo {
 	/**
@@ -275,8 +274,7 @@ export interface ICreateInfo {
  *
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDirectoryDataObject {
 	/**
@@ -305,8 +303,7 @@ export interface IDirectoryDataObject {
  *
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDirectoryNewStorageFormat {
 	/**

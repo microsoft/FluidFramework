@@ -215,8 +215,7 @@ function ackSegment(
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IMergeTreeOptions {
 	catchUpBlobName?: string;

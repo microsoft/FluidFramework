@@ -74,7 +74,6 @@ function runBenchmark({
 				afterOperation?.(this.table, this.undoRedoStack);
 
 				this.cleanUp();
-				this.table = undefined;
 				this.undoRedoStack = undefined;
 				this.cleanUp = undefined;
 			}

@@ -15,8 +15,7 @@ import {
 import { generateToken } from "./auth.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function createLocalResolverCreateNewRequest(documentId: string): IRequest {
 	const createNewRequest: IRequest = {
@@ -31,8 +30,7 @@ export function createLocalResolverCreateNewRequest(documentId: string): IReques
 /**
  * Resolves URLs by providing fake URLs which succeed with the other
  * related local classes.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class LocalResolver implements IUrlResolver {
 	private readonly tenantId = "tenantId";

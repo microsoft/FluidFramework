@@ -35,8 +35,7 @@ import type { AttachState } from "./runtime.js";
 
 /**
  * Encapsulates a module entry point with corresponding code details.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidModuleWithDetails {
 	/**
@@ -56,8 +55,7 @@ export interface IFluidModuleWithDetails {
 /**
  * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
  * a package name and package version range.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
 	/**
@@ -105,8 +103,7 @@ export interface IFluidCodeResolver {
 
 /**
  * Events emitted by the {@link IContainer} "upwards" to the Loader and Host.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IContainerEvents extends IEvent {
 	/**
@@ -333,8 +330,7 @@ export type ConnectionState =
 
 /**
  * The Host's view of a Container and its connection to storage
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IContainer extends IEventProvider<IContainerEvents> {
 	/**
@@ -545,8 +541,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 
 /**
  * The Runtime's view of the Loader, used for loading Containers
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ILoader extends Partial<IProvideLoader> {
 	/**
@@ -563,8 +558,7 @@ export interface ILoader extends Partial<IProvideLoader> {
 
 /**
  * The Host's view of the Loader, used for loading Containers
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IHostLoader extends ILoader {
 	/**
@@ -594,8 +588,7 @@ export interface IHostLoader extends ILoader {
 
 /**
  * Options to configure various behaviors of the ILoader.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type ILoaderOptions = {
@@ -637,8 +630,7 @@ export type ILoaderOptions = {
 
 /**
  * Policies to have various behaviors during container create and load.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type IContainerPolicies = {
@@ -650,8 +642,7 @@ export type IContainerPolicies = {
 
 /**
  * Accepted header keys for requests coming to the Loader
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum LoaderHeader {
 	/**
@@ -683,8 +674,7 @@ export enum LoaderHeader {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IContainerLoadMode {
 	opsBeforeReturn?: /*
@@ -741,8 +731,7 @@ export interface ILoaderHeader {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IProvideLoader {
 	readonly ILoader: ILoader;
@@ -753,8 +742,7 @@ export interface IProvideLoader {
  * in separate property: {@link ISnapshotTreeWithBlobContents.blobsContents}.
  *
  * @remarks This is used as the `ContainerContext`'s base snapshot when attaching.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
 	blobsContents?: { [path: string]: ArrayBufferLike };

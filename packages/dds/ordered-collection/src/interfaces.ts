@@ -15,8 +15,7 @@ import {
 } from "@fluidframework/shared-object-base/internal";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum ConsensusResult {
 	Release,
@@ -26,8 +25,7 @@ export enum ConsensusResult {
 /**
  * Callback provided to acquire() and waitAndAcquire() methods.
  * @returns ConsensusResult indicating whether item was completed, or releases back to the queue.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type ConsensusCallback<T> = (value: T) => Promise<ConsensusResult>;
 
@@ -51,8 +49,7 @@ export interface IConsensusOrderedCollectionFactory extends IChannelFactory {
 
 /**
  * Events notifying about addition, acquisition, release and completion of items
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvents {
 	/**
@@ -105,8 +102,7 @@ export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvent
  * All objects added to the collection will be cloned (via JSON).
  * They will not be references to the original input object.  Thus changed to
  * the input object will not reflect the object in the collection.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 // TODO: #22835 Use undefined instead of any (breaking change)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -136,8 +132,7 @@ export interface IConsensusOrderedCollection<T = any>
  *
  * TODO: move this to be use in other place
  * TODO: currently input and output is not symmetrical, can they become symmetrical?
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISnapshotable<T> {
 	asArray(): T[];
@@ -151,8 +146,7 @@ export interface ISnapshotable<T> {
  * Collection of objects that has deterministic add and remove ordering.
  * Object implementing this interface can be used as the data backing
  * for the ConsensusOrderedCollection
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 // TODO: #22835 Use undefined instead of any (breaking change)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export function createLocalResolverCreateNewRequest(documentId: string): IRequest;
 
 // @alpha @legacy
@@ -18,7 +18,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     nackClient(clientId: string, code?: number, type?: NackErrorType, message?: any): void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export class LocalResolver implements IUrlResolver {
     constructor();
     // (undocumented)

@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha @legacy
+// @beta @legacy
 export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
     abandon(taskId: string): void;
     assigned(taskId: string): boolean;
@@ -16,7 +16,7 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
     volunteerForTask(taskId: string): Promise<boolean>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ITaskManagerEvents extends ISharedObjectEvents {
     // @eventProperty
     (event: "assigned", listener: TaskEventListener): any;
@@ -26,13 +26,13 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
     (event: "lost", listener: TaskEventListener): any;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export type TaskEventListener = (taskId: string) => void;
 
-// @alpha @legacy
+// @beta @legacy
 export const TaskManager: ISharedObjectKind<ITaskManager> & SharedObjectKind<ITaskManager>;
 
-// @alpha @legacy
+// @beta @legacy
 export type TaskManager = ITaskManager;
 
 ```

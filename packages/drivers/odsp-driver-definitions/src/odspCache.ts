@@ -29,7 +29,7 @@ export const snapshotWithLoadingGroupIdKey = "snapshotWithLoadingGroupId";
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export type CacheContentType = "snapshot" | "ops" | "snapshotWithLoadingGroupId";
 
@@ -40,7 +40,7 @@ export type CacheContentType = "snapshot" | "ops" | "snapshotWithLoadingGroupId"
  */
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IFileEntry {
 	/**
@@ -60,7 +60,7 @@ export interface IFileEntry {
 /**
  * Cache entry. Identifies file that this entry belongs to, and type of content stored in it.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IEntry {
 	/**
@@ -84,7 +84,7 @@ export interface IEntry {
 /**
  * Cache entry. Identifies file that this entry belongs to, and type of content stored in it.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ICacheEntry extends IEntry {
 	/**
@@ -100,7 +100,7 @@ export interface ICacheEntry extends IEntry {
  * IPersistedCache will be considered stale and removed after 2 days. Read the README for more
  * information.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IPersistedCache {
 	/**

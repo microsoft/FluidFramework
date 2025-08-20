@@ -7,8 +7,7 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Socket storage discovery api response
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISocketStorageDiscovery {
 	// The id of the web socket
@@ -50,8 +49,7 @@ export interface ISocketStorageDiscovery {
 
 /**
  * Sensitivity labels information for a file, part of the socket storage discovery response.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISensitivityLabelsInfo {
 	/** ISO format timestamp when the label info snapshot was generated. */
@@ -62,8 +60,7 @@ export interface ISensitivityLabelsInfo {
 
 /**
  * A single sensitivity label applied to a document, part of the socket storage discovery response.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISensitivityLabel {
 	/** Unique identifier of the sensitivity label. */
@@ -80,7 +77,7 @@ export interface ISensitivityLabel {
  * An interface that allows a concrete instance of a driver factory to interrogate itself
  * to find out if it is session aware.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IProvideSessionAwareDriverFactory {
 	readonly IRelaySessionAwareDriverFactory: IRelaySessionAwareDriverFactory;
@@ -90,7 +87,7 @@ export interface IProvideSessionAwareDriverFactory {
  * An interface that allows a concrete instance of a driver factory to call the `getRelayServiceSessionInfo`
  * function if it session aware.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IRelaySessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
 	getRelayServiceSessionInfo(
