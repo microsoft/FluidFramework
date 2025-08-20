@@ -9,7 +9,7 @@ import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import { MergeTreeDeltaType } from "../ops.js";
 import { PriorPerspective } from "../perspective.js";
 import {
-	MergeTreeDeltaRevertible,
+	type MergeTreeDeltaRevertible,
 	appendToMergeTreeDeltaRevertibles,
 } from "../revertibles.js";
 
