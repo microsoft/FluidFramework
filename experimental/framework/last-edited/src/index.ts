@@ -5,8 +5,8 @@
 
 export {
 	IFluidLastEditedTracker,
-	ILastEditDetails,
-	IProvideFluidLastEditedTracker,
+	type ILastEditDetails,
+	type IProvideFluidLastEditedTracker,
 } from "./interfaces.js";
 export { LastEditedTracker } from "./lastEditedTracker.js";
 export { LastEditedTrackerDataObject } from "./lastEditedTrackerDataObject.js";
