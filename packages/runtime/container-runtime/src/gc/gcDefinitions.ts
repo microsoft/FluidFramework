@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import {
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
+import type { IRequest } from "@fluidframework/core-interfaces";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
 	ITelemetryContext,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
 } from "@fluidframework/runtime-definitions/internal";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
-import {
+import type { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
+import type {
 	ITelemetryLoggerExt,
-	type ITelemetryPropertiesExt,
+	ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { RuntimeHeaderData } from "../containerRuntime.js";
-import { ContainerRuntimeGCMessage } from "../messageTypes.js";
-import {
+import type { RuntimeHeaderData } from "../containerRuntime.js";
+import type { ContainerRuntimeGCMessage } from "../messageTypes.js";
+import type {
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
 	IRefreshSummaryResult,
