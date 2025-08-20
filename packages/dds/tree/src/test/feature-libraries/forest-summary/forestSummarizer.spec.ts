@@ -45,7 +45,7 @@ import {
 } from "../../../simple-tree/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { forestSummaryContentKey } from "../../../feature-libraries/forest-summary/forestSummarizer.js";
+import { forestSummaryContentKey } from "../../../feature-libraries/forest-summary/incrementalSummaryBuilder.js";
 import type { FieldKey, TreeNodeSchemaIdentifier } from "../../../core/index.js";
 import {
 	brand,

@@ -42,6 +42,7 @@ import { type ForestCodec, makeForestSummarizerCodec } from "./codec.js";
 import {
 	ForestIncrementalSummaryBehavior,
 	ForestIncrementalSummaryBuilder,
+	forestSummaryContentKey,
 } from "./incrementalSummaryBuilder.js";
 import { TreeCompressionStrategyExtended } from "../treeCompressionUtils.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -52,13 +53,6 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
  * See {@link ForestIncrementalSummaryBuilder} for details on the summary structure.
  */
 export const forestSummaryKey = "Forest";
-
-/**
- * The key for the blob under ForestSummarizer's root.
- * This blob contains the ForestCodec's output.
- * See {@link ForestIncrementalSummaryBuilder} for details on the summary structure.
- */
-export const forestSummaryContentKey = "ForestTree";
 
 /**
  * Provides methods for summarizing and loading a forest.

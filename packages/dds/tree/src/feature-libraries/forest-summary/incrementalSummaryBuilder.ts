@@ -33,7 +33,13 @@ import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal"
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SummaryElementStringifier } from "../../shared-tree-core/index.js";
-import { forestSummaryContentKey } from "./forestSummarizer.js";
+
+/**
+ * The key for the blob under ForestSummarizer's root.
+ * This blob contains the ForestCodec's output.
+ * See {@link ForestIncrementalSummaryBuilder} for details on the summary structure.
+ */
+export const forestSummaryContentKey = "ForestTree";
 
 /**
  * The contents of an incremental chunk is under a summary tree node with its {@link ChunkReferenceId} as the key.
