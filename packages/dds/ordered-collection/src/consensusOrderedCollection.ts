@@ -16,7 +16,10 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { type IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base/internal";
+import {
+	type IFluidSerializer,
+	SharedObject,
+} from "@fluidframework/shared-object-base/internal";
 import { v4 as uuid } from "uuid";
 
 import {
