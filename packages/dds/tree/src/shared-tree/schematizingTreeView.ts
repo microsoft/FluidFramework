@@ -79,7 +79,7 @@ export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
 @breakingClass
 export class SchematizingSimpleTreeView<
 	in out TRootSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
-> implements TreeBranch, TreeViewAlpha<TRootSchema>, WithBreakable
+> implements TreeViewAlpha<TRootSchema>, WithBreakable
 {
 	/**
 	 * This is set to undefined when this object is disposed or the view schema does not support viewing the document's stored schema.
