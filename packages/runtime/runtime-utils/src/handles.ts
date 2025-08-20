@@ -11,6 +11,7 @@ import type {
 	IFluidHandlePayloadPending,
 	ILocalFluidHandle,
 } from "@fluidframework/core-interfaces/internal";
+import type { IContainerRuntime, IContainerRuntimeInternal } from "@fluidframework/container-runtime-definitions/internal";
 
 /**
  * JSON serialized form of an IFluidHandle
@@ -193,4 +194,46 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
 	public get [fluidHandleSymbol](): IFluidHandleErased<T> {
 		return toFluidHandleErased(this);
 	}
+}
+
+/**
+ * Lookup the temporary storage ID for a blob handle.
+ * @param containerRuntime - The container runtime instance
+ * @param handle - The blob handle to lookup the storage ID for
+ * @returns The storage ID if found and the blob is not pending, undefined otherwise
+ * @remarks
+ * This is a legacy+alpha helper function that provides access to blob storage IDs.
+ * The storage ID may expire pending GC and does not support permalinks.
+ * For blobs with pending payloads, this returns undefined. Consumers should use
+ * the observability APIs on the handle (handle.payloadState, payloadShared event)
+ * to understand/wait for storageId availability.
+ * 
+ * **WARNING**: This API comes with strong warnings that the storageId may expire 
+ * pending GC and does not support permalinks.
+ * @legacy
+ * @alpha
+ */
+export function lookupBlobStorageId(
+	containerRuntime: IContainerRuntime, 
+	handle: IFluidHandle
+): string | undefined {
+	// Verify that the handle points to a blob by checking its path format
+	const absolutePath = toFluidHandleInternal(handle).absolutePath;
+	
+	// Blob handles have paths in the format "/_blobs/{localId}"
+	if (!absolutePath.startsWith("/_blobs/")) {
+		throw new Error("Handle does not point to a blob - expected path to start with '/_blobs/'");
+	}
+	
+	// Extract the local ID from the path
+	const pathParts = absolutePath.split("/");
+	if (pathParts.length !== 3 || pathParts[1] !== "_blobs" || !pathParts[2]) {
+		throw new Error("Invalid blob handle path format");
+	}
+	
+	const localId = pathParts[2];
+	
+	// Cast the runtime to the internal interface and call the lookup method
+	const internalRuntime = containerRuntime as IContainerRuntimeInternal;
+	return internalRuntime.lookupBlobStorageId(localId);
 }

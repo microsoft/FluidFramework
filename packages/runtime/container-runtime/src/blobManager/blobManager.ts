@@ -336,6 +336,26 @@ export class BlobManager {
 	}
 
 	/**
+	 * Lookup the storage ID associated with a given local blob ID.
+	 * @param localId - The local blob id. Likely coming from a handle.
+	 * @returns The storage ID if found and the blob is not pending, undefined otherwise.
+	 * @remarks
+	 * This is a synchronous lookup against the redirectTable. For blobs with pending payloads
+	 * (localId exists but upload hasn't finished), this returns undefined. Consumers should
+	 * use the observability APIs on the handle (handle.payloadState, payloadShared event) to
+	 * understand/wait for storageId availability.
+	 */
+	public lookupStorageId(localId: string): string | undefined {
+		// Check if this is a pending blob (upload not yet complete)
+		if (this.pendingBlobs.has(localId)) {
+			return undefined;
+		}
+
+		// Return the storage ID from the redirect table
+		return this.redirectTable.get(localId);
+	}
+
+	/**
 	 * Retrieve the blob with the given local blob id.
 	 * @param blobId - The local blob id.  Likely coming from a handle.
 	 * @param payloadPending - Whether we suspect the payload may be pending and not available yet.

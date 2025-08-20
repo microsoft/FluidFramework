@@ -210,4 +210,15 @@ export interface IContainerRuntime
  */
 export interface IContainerRuntimeInternal
 	extends IContainerRuntime,
-		ContainerExtensionStore {}
+		ContainerExtensionStore {
+	/**
+	 * Lookup the storage ID associated with a given local blob ID.
+	 * @param localId - The local blob id. Likely coming from a handle.
+	 * @returns The storage ID if found and the blob is not pending, undefined otherwise.
+	 * @remarks
+	 * This method provides access to the BlobManager's redirect table for looking up storage IDs.
+	 * For blobs with pending payloads (localId exists but upload hasn't finished), this returns undefined.
+	 * Consumers should use the observability APIs on the handle to understand/wait for storageId availability.
+	 */
+	lookupBlobStorageId(localId: string): string | undefined;
+}
