@@ -45,7 +45,7 @@ It's assumed that a Fluid application developer does not have absolute control o
 Documents can persist for an unbounded length of time before they are re-opened by an application.
 Therefore, a Fluid application should be prepared to encounter any version of a document, even a very old one, and handle it appropriately.
 
-## Monitoring Schema Compatibility
+## Schema Compatibility
 
 When you open a document, SharedTree compares your application's view schema with the document's stored schema to determine compatibility:
 
@@ -53,14 +53,59 @@ When you open a document, SharedTree compares your application's view schema wit
 - **Upgradeable**: Document can be upgraded to match your view schema using [`view.upgradeSchema()`](../../../api/fluid-framework/treeview-interface#upgradeschema-method)
 - **Incompatible**: Document cannot be opened with your current view schema
 
-This separation allows multiple application versions with different schemas to collaborate on the same document safely.
+They must be compatible or upgradeable in order for the application to work - otherwise, it cannot read or write data from/to the document.
+SharedTree will throw an assert if the application attempts to access the document's data with an incompatible view schema.
+
+Initially, a document is always compatible with the application that created it (i.e. the view schema is compatible with the stored schema).
+However, later on the application might change the view schema.
+Such a change might be backwards compatible, forwards compatible, or neither or both.
 
 ### Understanding Compatibility
 
-When talking about compatibility, we're mainly concerned with:
+#### Backwards Compatibility
 
-- the ability of an app to load documents created or edited by earlier versions of the app
-- the ability of an app to load documents created or edited by later versions of the app
+A change to the view schema is **backwards compatible** if the *new view schema* is compatible with the *old stored schema*.
+In practice, this means that the new version of the application will be able to [upgrade](./index.mdx#schema-upgrade-process) documents to the new schema (note that the process of upgrading might affect forwards compatibility - see below).
+
+If a change is made that is not backwards compatible, then existing documents will "break", that is, they can no longer be loaded by the application.
+
+#### Forwards Compatibility
+
+A change to the view schema is **forwards compatible** if an *old view schema* is compatible with the *new stored schema* that results from the upgrade.
+In practice, the older version of the application must be able to "view" the new document after it has been upgraded.
+
+If a change is made that is backwards compatible, but not forwards compatible, then old versions of the application will "break" when trying to load newer/upgraded documents.
+To prevent this, the application can employ a [staged rollout](./index.mdx#staged-rollouts).
+
+### Schema Change Examples
+
+#### 😎 Chill
+| Backwards Compatible | Forwards Compatible | Rollout Process |
+|-----------------------|----------------------|-----------------|
+| ✅                    | ✅                   | Normal          |
+
+**Examples:**
+- Adding an optional field when compatibility flag is enabled
+
+#### 🌶️ Spicy
+| Backwards Compatible | Forwards Compatible | Rollout Process |
+|-----------------------|----------------------|-----------------|
+| ✅                    | ❌                   | ⚠️ Staged       |
+
+**Examples:**
+- Adding a staged allowed type
+- This feature is not yet available but will be soon.
+
+#### 👮 Go to Jail
+| Backwards Compatible | Forwards Compatible | Rollout Process |
+|-----------------------|----------------------|-----------------|
+| ❌                    | ❌                   | 🚫 Forbidden    |
+
+**Examples:**
+- Adding/removing a required field
+- Removing an allowed type from a field
+- Renaming a node identifier
+
 
 ### Checking Compatibility
 
@@ -102,7 +147,7 @@ view.events.on("schemaChanged", () => {
 
 ## Schema Upgrade Process
 
-When you make changes to your schema, you can upgrade existing documents to use the new schema using [`view.upgradeSchema()`](../../../api/fluid-framework/treeview-interface#upgradeschema-method):
+When you make [backwards compatible](./index.mdx#understanding-compatibility) changes to your schema, you can upgrade existing documents to use the new schema using [`view.upgradeSchema()`](../../../api/fluid-framework/treeview-interface#upgradeschema-method):
 
 ```typescript
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
@@ -150,7 +195,7 @@ If a client upgrades a document to a new schema that older clients cannot read, 
 
 **Phase 1: Deploy Schema Reading Support**
 - Deploy application versions that can read the new schema without upgrading documents
-- Wait until all (or "tolerably most") users have updated to the new application version. This is called client saturation.
+- Wait until all (or "tolerably most") users have updated to the new application version. This is called **client saturation**.
 - Monitor deployment metrics to ensure coverage
 
 **Phase 2: Enable Document Upgrades**

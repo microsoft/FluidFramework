@@ -9,13 +9,12 @@ Understanding which types of schema changes are safe versus breaking is crucial 
 
 ## Compatible Changes
 
-The following changes are backwards compatible at a data level.
-However, it's important that applications carefully consider the application-level consequences of clients running older code collaborating with clients using the new schema.
-For example, [adding allowed types] is a case in which [staged rollouts](./index.mdx#staged-rollouts) are required so that new clients writing the new allowed types do not break older clients that don't know about that type.
+The following changes are [backwards compatible](index.mdx#backwards-compatibility).
+However, it's important that applications carefully whether the change is [forwards compatible](./index.mdx#forwards-compatibility) inherently or if a [staged rollout](./index.mdx#staged-rollouts) is necessary.
 
 ### Adding Optional Fields
 
-Adding optional fields to existing node types is always safe:
+Adding optional fields to existing node types is always [backwards compatible](./index.mdx#understanding-compatibility):
 
 ```typescript
 // Before
@@ -32,7 +31,8 @@ class Note extends factory.object("Note", {
 }) {}
 ```
 
-For forwards compatibility, use [`allowUnknownOptionalFields`](../../../api/fluid-framework/objectnodeschema-interface#allowunknownoptionalfields-property) to handle new optional fields added by newer clients:
+However, older clients that don't know about this new field will not be able to read it.
+To ensure [forwards compatibility](./index.mdx#understanding-compatibility), use [`allowUnknownOptionalFields`](../../../api/fluid-framework/objectnodeschema-interface#allowunknownoptionalfields-property) to handle new optional fields added by newer clients:
 
 ```typescript
 class Note extends factory.object("Note", {
@@ -44,7 +44,7 @@ class Note extends factory.object("Note", {
 
 ### Making Required Fields Optional
 
-Converting a required field to optional is always safe:
+Converting a required field to optional is always [backwards compatible](./index.mdx#backwards-compatibility):
 
 ```typescript
 // Before
@@ -62,7 +62,7 @@ class Circle extends factory.object("Circle", {
 
 ### Adding New Allowed Types
 
-Adding new allowed types to existing fields is compatible, but may require a [staged rollout](./index.mdx#staged-rollouts) for cross-client collaboration:
+Adding new allowed types to existing fields is [backwards compatible](./index.mdx#backwards-compatibility), but not [forwards compatible](./index.mdx#forwards-compatibility):
 
 ```typescript
 // Before
@@ -76,7 +76,7 @@ class Whiteboard extends factory.object("Whiteboard", {
 }) {}
 ```
 
-To maintain backwards compatibility, staged allowed types can be used to roll out support for reading before writing, allowing older clients to read data created with new types.
+To achieve [forwards compatibility](./index.mdx#forwards-compatibility), staged allowed types can be used to [roll out](./index.mdx#staged-rollouts) support for reading before writing, allowing older clients to read data created with new types (TODO add a guide on this process).
 
 ## Incompatible Changes
 
@@ -129,6 +129,82 @@ class Whiteboard extends factory.object("Whiteboard", {
     elements: factory.array([TextElement]), // ImageElement removed - BREAKING!
 }) {}
 ```
+
+## Best Practices
+
+### Avoid Optional Maps and Arrays
+
+In many cases, optional maps and optional arrays are an anti-pattern.
+This is because maps and arrays already have an empty state (e.g. a map with no entries, or an empty array []).
+For most applications, there is no meaningful difference between an empty map and a lack of a map, or between an empty array and a lack of an array.
+Unless you have a good reason (for example, when adding a map or array to an existing type), make maps and arrays required.
+
+When maps and arrays are optional, the application must check if the the map or array is undefined at all read sites.
+Even worse, the application must do extra work when writing.
+If the map/array is not present, then the application must first create the map/array, and only then may populate it.
+
+```typescript
+const map = myNode.myMap;
+if (map === undefined) {
+  myNode.myMap = new MyMap({});
+}
+
+myNode.myMap.set("key", "value");
+```
+
+Not only does this incur an extra write, but it is also lossy in the face of concurrent edits.
+If two users each create the map concurrently, then only one of their maps will end up in the document.
+The other map, and subsequent concurrent edits made to that map, will be lost.
+
+### Avoid Redundant Data
+
+It's undesirable to have the same data stored twice in multiple places in the document.
+This is because it requires multiple edits (or larger edits) to update the data rather than a single, scoped edit.
+Not only is this inefficient but it increases the chance of merge conflicts and it introduces an additional invariant into the document data: these two pieces of data must "stay in sync".
+
+The following is an example of redundant data in the schema.
+Users are looked up in a map via their ID, but each user also contains its ID as a property.
+This is redundant.
+It's not necessary for the user to have the ID field, because to look up the user in the first place, you must already know that user's ID.
+
+```typescript
+class User extends sf.object("User", {
+  id: sf.string,
+}) {}
+
+/** A map from ID to user */
+class Users extends sf.map("Users", sf.string, User) {}
+```
+
+Data redundancy also applies to derived data.
+For example, suppose the document has a list of users, where each user has a score property.
+It might also be tempting to store a global "total score" property at the root of the document which is the sum of the scores of all users.
+However, this data is completely derived - it is fully computable from other data that is already in the document.
+Therefore (if not prohibitively expensive), it should be computed at runtime by the client - and possibly cached in memory if desired - but not cached in the document.
+
+### Factor Out Map and Array Value Types
+
+It is good practice to create named classes for the types that are stored in maps and arrays.
+
+```typescript
+class MyFoo extends sf.object("MyFoo", { foo: sf.string }) {}
+
+class MyObject extends sf.object("MyObject", {
+  listA: sf.array(MyFoo), // Named (preferred)
+  listB: sf.array(sf.object({ foo: sf.string })) // Inlined/unnamed
+}) {}
+```
+
+Note that the two objects in the example above are structurally equivalent, but only one of them is given a name.
+In actuality, both have names, but the inlined one is given a name automatically generated by the system.
+Factoring out your type into a class with an explicit name has a few benefits:
+
+- You have more control over what kind of elements are allowed in your structures.
+For example, when moving elements between lists, the lists must contain elements with the same type name.
+By controlling the type name, you can control which elements can be moved across which lists, even when they are structurally equivalent.
+- It reduces the size of the generated .d.ts file.
+Because of the way that SharedTree schema types expand in the compiler, output files can grow to very large sizes if too many types are inlined.
+By giving the types names, the compiler can reference them via their name string rather than as the composition of all their inner data types.
 
 ## See Also
 
