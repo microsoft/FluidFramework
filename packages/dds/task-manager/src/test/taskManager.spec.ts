@@ -158,7 +158,7 @@ describe("TaskManager", () => {
 
 				assert.ok(!taskManager1.queued(taskId), "Task manager 1 should not be queued");
 				assert.ok(!taskManager1.assigned(taskId), "Task manager 1 should not be assigned");
-				assert.ok(!taskManager2.queued(taskId), "Task manager 2 not be queued");
+				assert.ok(!taskManager2.queued(taskId), "Task manager 2 should not be queued");
 				assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
 
 				containerRuntimeFactory.processAllMessages();
