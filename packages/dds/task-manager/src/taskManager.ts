@@ -160,6 +160,7 @@ export class TaskManagerClass
 						assert(pendingOp.type === "abandon", 0x07e /* "Unexpected op type" */);
 						// Delete the pending, because we no longer have an outstanding op
 						this.latestPendingOps.delete(taskId);
+						this.abandonWatcher.emit("abandon", taskId);
 					}
 				}
 
@@ -190,12 +191,9 @@ export class TaskManagerClass
 					assert(removed === messageId, 0x403 /* Removed complete op id does not match */);
 				}
 
-				// For clients in queue, we need to remove them from the queue and raise the proper events.
-				if (!local) {
-					this.taskQueues.delete(taskId);
-					this.completedWatcher.emit("completed", taskId);
-					this.emit("completed", taskId);
-				}
+				this.taskQueues.delete(taskId);
+				this.completedWatcher.emit("completed", taskId);
+				this.emit("completed", taskId);
 			},
 		);
 
@@ -293,8 +291,10 @@ export class TaskManagerClass
 	 * {@inheritDoc ITaskManager.volunteerForTask}
 	 */
 	public async volunteerForTask(taskId: string): Promise<boolean> {
-		// If we have the lock, resolve immediately
-		if (this.assigned(taskId)) {
+		// If we are both queued and assigned, then we have the lock and do not
+		// have any pending abandon/complete ops. In this case we can resolve
+		// true immediately.
+		if (this.queued(taskId) && this.assigned(taskId)) {
 			return true;
 		}
 
@@ -319,19 +319,28 @@ export class TaskManagerClass
 
 		// This promise works even if we already have an outstanding volunteer op.
 		const lockAcquireP = new Promise<boolean>((resolve, reject) => {
+			const setupListeners = (): void => {
+				this.queueWatcher.on("queueChange", checkIfAcquiredLock);
+				this.abandonWatcher.on("abandon", checkIfAbandoned);
+				this.connectionWatcher.on("disconnect", rejectOnDisconnect);
+				this.completedWatcher.on("completed", checkIfCompleted);
+			};
+			const removeListeners = (): void => {
+				this.queueWatcher.off("queueChange", checkIfAcquiredLock);
+				this.abandonWatcher.off("abandon", checkIfAbandoned);
+				this.connectionWatcher.off("disconnect", rejectOnDisconnect);
+				this.completedWatcher.off("completed", checkIfCompleted);
+			};
+
 			const checkIfAcquiredLock = (eventTaskId: string): void => {
 				if (eventTaskId !== taskId) {
 					return;
 				}
-
 				// Also check pending ops here because it's possible we are currently in the queue from a previous
 				// lock attempt, but have an outstanding abandon AND the outstanding volunteer for this lock attempt.
 				// If we reach the head of the queue based on the previous lock attempt, we don't want to resolve.
-				if (this.assigned(taskId) && !this.latestPendingOps.has(taskId)) {
-					this.queueWatcher.off("queueChange", checkIfAcquiredLock);
-					this.abandonWatcher.off("abandon", checkIfAbandoned);
-					this.connectionWatcher.off("disconnect", rejectOnDisconnect);
-					this.completedWatcher.off("completed", checkIfCompleted);
+				if (this.assigned(taskId)) {
+					removeListeners();
 					resolve(true);
 				}
 			};
@@ -340,19 +349,12 @@ export class TaskManagerClass
 				if (eventTaskId !== taskId) {
 					return;
 				}
-
-				this.queueWatcher.off("queueChange", checkIfAcquiredLock);
-				this.abandonWatcher.off("abandon", checkIfAbandoned);
-				this.connectionWatcher.off("disconnect", rejectOnDisconnect);
-				this.completedWatcher.off("completed", checkIfCompleted);
+				removeListeners();
 				reject(new Error("Abandoned before acquiring task assignment"));
 			};
 
 			const rejectOnDisconnect = (): void => {
-				this.queueWatcher.off("queueChange", checkIfAcquiredLock);
-				this.abandonWatcher.off("abandon", checkIfAbandoned);
-				this.connectionWatcher.off("disconnect", rejectOnDisconnect);
-				this.completedWatcher.off("completed", checkIfCompleted);
+				removeListeners();
 				reject(new Error("Disconnected before acquiring task assignment"));
 			};
 
@@ -360,21 +362,15 @@ export class TaskManagerClass
 				if (eventTaskId !== taskId) {
 					return;
 				}
-
-				this.queueWatcher.off("queueChange", checkIfAcquiredLock);
-				this.abandonWatcher.off("abandon", checkIfAbandoned);
-				this.connectionWatcher.off("disconnect", rejectOnDisconnect);
-				this.completedWatcher.off("completed", checkIfCompleted);
+				removeListeners();
 				resolve(false);
 			};
 
-			this.queueWatcher.on("queueChange", checkIfAcquiredLock);
-			this.abandonWatcher.on("abandon", checkIfAbandoned);
-			this.connectionWatcher.on("disconnect", rejectOnDisconnect);
-			this.completedWatcher.on("completed", checkIfCompleted);
+			setupListeners();
 		});
 
 		if (!this.queued(taskId)) {
+			// Only send the volunteer op if we are not already queued.
 			this.submitVolunteerOp(taskId);
 		}
 		return lockAcquireP;
@@ -396,6 +392,18 @@ export class TaskManagerClass
 			this.submitVolunteerOp(taskId);
 		};
 
+		const setupListeners = (): void => {
+			this.abandonWatcher.on("abandon", checkIfAbandoned);
+			this.connectionWatcher.on("disconnect", disconnectHandler);
+			this.completedWatcher.on("completed", checkIfCompleted);
+		};
+		const removeListeners = (): void => {
+			this.abandonWatcher.off("abandon", checkIfAbandoned);
+			this.connectionWatcher.off("disconnect", disconnectHandler);
+			this.connectionWatcher.off("connect", submitVolunteerOp);
+			this.completedWatcher.off("completed", checkIfCompleted);
+		};
+
 		const disconnectHandler = (): void => {
 			// Wait to be connected again and then re-submit volunteer op
 			this.connectionWatcher.once("connect", submitVolunteerOp);
@@ -405,12 +413,7 @@ export class TaskManagerClass
 			if (eventTaskId !== taskId) {
 				return;
 			}
-
-			this.abandonWatcher.off("abandon", checkIfAbandoned);
-			this.connectionWatcher.off("disconnect", disconnectHandler);
-			this.connectionWatcher.off("connect", submitVolunteerOp);
-			this.completedWatcher.off("completed", checkIfCompleted);
-
+			removeListeners();
 			this.subscribedTasks.delete(taskId);
 		};
 
@@ -418,18 +421,11 @@ export class TaskManagerClass
 			if (eventTaskId !== taskId) {
 				return;
 			}
-
-			this.abandonWatcher.off("abandon", checkIfAbandoned);
-			this.connectionWatcher.off("disconnect", disconnectHandler);
-			this.connectionWatcher.off("connect", submitVolunteerOp);
-			this.completedWatcher.off("completed", checkIfCompleted);
-
+			removeListeners();
 			this.subscribedTasks.delete(taskId);
 		};
 
-		this.abandonWatcher.on("abandon", checkIfAbandoned);
-		this.connectionWatcher.on("disconnect", disconnectHandler);
-		this.completedWatcher.on("completed", checkIfCompleted);
+		setupListeners();
 
 		if (!this.isAttached()) {
 			// Simulate auto-ack in detached scenario
@@ -455,7 +451,11 @@ export class TaskManagerClass
 			// If we are disconnected (and attached), wait to be connected and submit volunteer op
 			disconnectHandler();
 		} else if (!this.assigned(taskId) && !this.queued(taskId)) {
-			submitVolunteerOp();
+			const latestPendingOp = this.latestPendingOps.get(taskId);
+			if (latestPendingOp === undefined || latestPendingOp.type === "volunteer") {
+				// We don't need to send a volunteer op unless this task is not already a volunteer op.
+				submitVolunteerOp();
+			}
 		}
 		this.subscribedTasks.add(taskId);
 	}
@@ -467,7 +467,7 @@ export class TaskManagerClass
 		// Always allow abandon if the client is subscribed to allow clients to unsubscribe while disconnected.
 		// Otherwise, we should check to make sure the client is both connected queued for the task before sending an
 		// abandon op.
-		if (!this.subscribed(taskId) && !this.queued(taskId)) {
+		if (!this.queued(taskId) && !this.subscribed(taskId) && !this.connected) {
 			// Nothing to do
 			return;
 		}
@@ -480,11 +480,19 @@ export class TaskManagerClass
 			return;
 		}
 
-		// If we're subscribed but not queued, we don't need to submit an abandon op (probably offline)
 		if (this.queued(taskId)) {
+			if (!this.assigned(taskId)) {
+				// If we try to abandon when queued but not assigned  then we should emit to the abandonWatcher as this is
+				// not allowed and will throw an error in the volunteer promise.
+				this.abandonWatcher.emit("abandon", taskId);
+			}
+			this.submitAbandonOp(taskId);
+		} else if (this.subscribed(taskId) && !this.connected) {
+			// If we are subscribed, not queued, and offline, then we should still submit the
+			// abandon op/event to ensure we abandon the subscription when reconnecting.
+			this.abandonWatcher.emit("abandon", taskId);
 			this.submitAbandonOp(taskId);
 		}
-		this.abandonWatcher.emit("abandon", taskId);
 	}
 
 	/**
@@ -496,11 +504,7 @@ export class TaskManagerClass
 		}
 
 		const currentAssignee = this.taskQueues.get(taskId)?.[0];
-		return (
-			currentAssignee !== undefined &&
-			currentAssignee === this.clientId &&
-			!this.latestPendingOps.has(taskId)
-		);
+		return currentAssignee !== undefined && currentAssignee === this.clientId;
 	}
 
 	/**
@@ -513,13 +517,14 @@ export class TaskManagerClass
 
 		assert(this.clientId !== undefined, 0x07f /* "clientId undefined" */);
 
-		const clientQueue = this.taskQueues.get(taskId);
-		// If we have no queue for the taskId, then no one has signed up for it.
-		return (
-			((clientQueue?.includes(this.clientId) ?? false) &&
-				!this.latestPendingOps.has(taskId)) ||
-			this.latestPendingOps.get(taskId)?.type === "volunteer"
-		);
+		const inQueue = this.taskQueues.get(taskId)?.includes(this.clientId) ?? false;
+		const latestPendingOp = this.latestPendingOps.get(taskId);
+		const isPendingVolunteer = latestPendingOp?.type === "volunteer";
+		const isPendingAbandonOrComplete =
+			latestPendingOp?.type === "abandon" || latestPendingOp?.type === "complete";
+		// We return true if the client is either in queue already or the latest pending op for this task is a volunteer op.
+		// But we should always return false if the latest pending op is an abandon or complete op.
+		return (inQueue || isPendingVolunteer) && !isPendingAbandonOrComplete;
 	}
 
 	/**
@@ -539,16 +544,17 @@ export class TaskManagerClass
 
 		// If we are detached we will simulate auto-ack for the complete op. Therefore we only need to send the op if
 		// we are attached. Additionally, we don't need to check if we are connected while detached.
-		if (this.isAttached()) {
-			if (!this.connected) {
-				throw new Error("Attempted to complete task in disconnected state");
-			}
-			this.submitCompleteOp(taskId);
+		if (!this.isAttached()) {
+			this.taskQueues.delete(taskId);
+			this.completedWatcher.emit("completed", taskId);
+			this.emit("completed", taskId);
+			return;
 		}
 
-		this.taskQueues.delete(taskId);
-		this.completedWatcher.emit("completed", taskId);
-		this.emit("completed", taskId);
+		if (!this.connected) {
+			throw new Error("Attempted to complete task in disconnected state");
+		}
+		this.submitCompleteOp(taskId);
 	}
 
 	/**
@@ -683,6 +689,13 @@ export class TaskManagerClass
 			if (clientQueue === undefined) {
 				clientQueue = [];
 				this.taskQueues.set(taskId, clientQueue);
+			}
+
+			if (clientQueue.includes(clientId)) {
+				// We shouldn't re-add the client if it's already in the queue.
+				// This may be possible in scenarios where a client was added in
+				// while detached.
+				return;
 			}
 
 			const oldLockHolder = clientQueue[0];

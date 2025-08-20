@@ -24,7 +24,7 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
 	/**
 	 * Fires when a task has been exclusively assigned to the client.
 	 *
-	 * @remarks Does not account for known pending ops, but instead only reflects the current state.
+	 * @remarks Does not account for known pending ops, but instead only reflects the current consensus state.
 	 *
 	 * @eventProperty
 	 */
@@ -161,8 +161,7 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
 	abandon(taskId: string): void;
 
 	/**
-	 * Check whether this client is the current assignee for the task and there is no outstanding abandon op that
-	 * would abandon the assignment.
+	 * Check whether this client is the current assignee for the task based on the consensus state.
 	 * @param taskId - Identifier for the task
 	 */
 	assigned(taskId: string): boolean;

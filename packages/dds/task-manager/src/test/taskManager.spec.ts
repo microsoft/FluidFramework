@@ -192,10 +192,10 @@ describe("TaskManager", () => {
 
 				taskManager1.abandon(taskId);
 				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+				assert.ok(taskManager1.assigned(taskId), "Should still be assigned (pending abandon)");
 				const revolunteerTaskP = taskManager1.volunteerForTask(taskId);
 				assert.ok(taskManager1.queued(taskId), "Should be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+				assert.ok(taskManager1.assigned(taskId), "Should still be assigned (pending abandon)");
 				containerRuntimeFactory.processAllMessages();
 				const isAssigned2 = await revolunteerTaskP;
 				assert.ok(isAssigned2, "Should resolve true");
@@ -225,7 +225,7 @@ describe("TaskManager", () => {
 
 				taskManager1.abandon(taskId);
 				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+				assert.ok(taskManager1.assigned(taskId), "Should still be assigned (pending abandon)");
 				containerRuntimeFactory.processAllMessages();
 				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
 				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
@@ -257,10 +257,10 @@ describe("TaskManager", () => {
 
 				taskManager1.abandon(taskId);
 				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+				assert.ok(taskManager1.assigned(taskId), "Should still be assigned (pending abandon)");
 				taskManager1.abandon(taskId);
 				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+				assert.ok(taskManager1.assigned(taskId), "Should still be assigned (pending abandon)");
 				containerRuntimeFactory.processAllMessages();
 				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
 				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
@@ -812,8 +812,7 @@ describe("TaskManager", () => {
 					);
 				});
 
-				// todo AB#7310
-				it.skip("Can abandon a subscribed task after attach", async () => {
+				it("Can abandon a subscribed task after attach", async () => {
 					const taskId = "taskId";
 					taskManager1.subscribeToTask(taskId);
 					containerRuntimeFactory.processAllMessages();
