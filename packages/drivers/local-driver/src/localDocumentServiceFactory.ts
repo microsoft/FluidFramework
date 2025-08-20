@@ -22,8 +22,7 @@ import { localDriverCompatDetailsForLoader } from "./localLayerCompatState.js";
 
 /**
  * Implementation of document service factory for local use.
- * @legacy
- * @alpha
+ * @legacy @alpha
  */
 export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 	// A map of clientId to LocalDocumentService.

@@ -95,7 +95,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.57.0",
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
-		"@fluidframework/odsp-driver-definitions-previous": "npm:@fluidframework/odsp-driver-definitions@2.52.0",
+		"@fluidframework/odsp-driver-definitions-previous": "npm:@fluidframework/odsp-driver-definitions@2.53.0",
 		"@microsoft/api-extractor": "7.52.8",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
@@ -105,12 +105,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"Interface_ISocketStorageDiscovery": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "legacy"
 	}
 }
