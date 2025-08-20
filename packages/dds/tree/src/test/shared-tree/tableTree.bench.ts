@@ -15,9 +15,14 @@ import {
 import {
 	Column,
 	Row,
+	UndoRedoManager,
 	createTableTree,
-	type TableBenchmarkOptions,
+	type Table,
+	type TableTreeDefinition,
+	type TableTreeOptions,
 } from "../tablePerformanceTestUtilities.js";
+import type { TreeNodeFromImplicitAllowedTypes } from "../../simple-tree/index.js";
+import { Tree } from "../../shared-tree/index.js";
 
 /**
  * Note: These benchmarks are designed to closely match the benchmarks in SharedMatrix.
@@ -25,13 +30,39 @@ import {
  * to ensure consistency and comparability between the two implementations.
  */
 
-// TODOs (AB#46340):
-// - unify with memory measurement tests (in terms of API)
-
 /**
  * {@link runBenchmark} configuration.
  */
-interface BenchmarkConfig extends BenchmarkTimingOptions, TableBenchmarkOptions {
+interface BenchmarkConfig extends BenchmarkTimingOptions, TableTreeOptions {
+	/**
+	 * The title of the benchmark test.
+	 */
+	readonly title: string;
+
+	/**
+	 * Optional action to perform on the matrix before the operation being measured.
+	 */
+	readonly beforeOperation?: (
+		table: TreeNodeFromImplicitAllowedTypes<typeof Table>,
+		undoRedoStack: UndoRedoManager,
+	) => void;
+
+	/**
+	 * The operation to be measured.
+	 */
+	readonly operation: (
+		table: TreeNodeFromImplicitAllowedTypes<typeof Table>,
+		undoRedoStack: UndoRedoManager,
+	) => void;
+
+	/**
+	 * Optional action to perform on the matrix after the operation being measured.
+	 */
+	readonly afterOperation?: (
+		table: TreeNodeFromImplicitAllowedTypes<typeof Table>,
+		undoRedoStack: UndoRedoManager,
+	) => void;
+
 	/**
 	 * {@inheritDoc @fluid-tools/benchmark#BenchmarkTimingOptions.maxBenchmarkDurationSeconds}
 	 */
@@ -61,10 +92,16 @@ function runBenchmark({
 				assert.equal(state.iterationsPerBatch, 1, "Expected exactly one iteration per batch");
 
 				// Create table tree
-				const { table, undoRedoStack, cleanUp } = createTableTree({
+				const { table, treeView }: TableTreeDefinition = createTableTree({
 					tableSize,
 					initialCellValue,
 				});
+
+				// Configure event listeners
+				const clearEventListener = Tree.on(table, "treeChanged", () => {});
+
+				// Configure undo/redo
+				const undoRedoStack = new UndoRedoManager(treeView);
 
 				beforeOperation?.(table, undoRedoStack);
 
@@ -79,7 +116,9 @@ function runBenchmark({
 				afterOperation?.(table, undoRedoStack);
 
 				// Clean up
-				cleanUp();
+				clearEventListener();
+				undoRedoStack.dispose();
+				treeView.dispose();
 			} while (state.recordBatch(duration));
 		},
 		minBatchDurationSeconds,
