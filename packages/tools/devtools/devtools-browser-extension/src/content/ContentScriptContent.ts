@@ -51,7 +51,7 @@ export function runContentScript(
 		throw new Error("Window object is not defined.");
 	}
 
-	/* eslint-disable @typescript-eslint/no-non-null-assertion */
+	 
 
 	// Only establish messaging when activated by the Background Worker.
 	browser.runtime.onConnect.addListener((backgroundPort: Port) => {
@@ -107,5 +107,5 @@ export function runContentScript(
 		});
 	});
 
-	/* eslint-enable @typescript-eslint/no-non-null-assertion */
+	 
 }
