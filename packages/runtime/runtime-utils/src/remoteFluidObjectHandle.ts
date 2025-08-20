@@ -54,6 +54,7 @@ export class RemoteFluidObjectHandle extends FluidHandleBase<FluidObject> {
 			};
 			this.objectP = this.routeContext.resolveHandle(request).then<FluidObject>((response) => {
 				if (response.mimeType === "fluid/object") {
+					// Type assertion is safe due to mimeType check ensuring value is a FluidObject
 					const fluidObject: FluidObject = response.value as FluidObject;
 					return fluidObject;
 				}

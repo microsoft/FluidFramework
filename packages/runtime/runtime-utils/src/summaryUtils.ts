@@ -484,6 +484,7 @@ export function processAttachMessageGCData(
 		0x8ff /* GC data should be a utf-8-encoded blob */,
 	);
 
+	// Type assertion is safe as we expect the GC data to conform to IGarbageCollectionData schema
 	const gcData = JSON.parse(gcDataEntry.value.contents) as IGarbageCollectionData;
 	for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
 		for (const toPath of outboundRoutes) {
