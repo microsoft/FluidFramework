@@ -8,7 +8,7 @@ import type { IDeltaManagerFull } from "@fluidframework/container-definitions/in
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	ITelemetryBaseLogger,
-	type IEventProvider,
+	IEventProvider,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
