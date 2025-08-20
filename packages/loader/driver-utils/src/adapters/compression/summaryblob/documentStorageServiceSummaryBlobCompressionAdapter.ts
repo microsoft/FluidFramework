@@ -21,7 +21,10 @@ import {
 import { compress, decompress } from "lz4js";
 
 import { DocumentStorageServiceProxy } from "../../../documentStorageServiceProxy.js";
-import { SummaryCompressionAlgorithm, type ICompressionStorageConfig } from "../compressionTypes.js";
+import {
+	SummaryCompressionAlgorithm,
+	type ICompressionStorageConfig,
+} from "../compressionTypes.js";
 
 /**
  * @internal
