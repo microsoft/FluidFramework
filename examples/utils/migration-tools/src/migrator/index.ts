@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
+export type {
 	ExportDataCallback,
 	IMigrator,
 	IMigratorEntryPoint,
@@ -14,9 +14,9 @@ export {
 export { makeMigratorEntryPointPiece } from "./makeMigratorEntryPointPiece.js";
 export { Migrator } from "./migrator.js";
 export {
-	CreateDetachedContainerCallback,
-	ImportDataCallback,
+	type CreateDetachedContainerCallback,
+	type ImportDataCallback,
 	makeCreateDetachedContainerCallback,
 	makeSeparateContainerMigrationCallback,
-	SeparateContainerMigrationResult,
+	type SeparateContainerMigrationResult,
 } from "./separateContainerCallbackHelpers.js";
