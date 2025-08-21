@@ -212,13 +212,43 @@ describe("SharedArray rollback", () => {
 		sharedArray.insert(2, 2); // [0,1,2]
 		containerRuntime.flush();
 		containerRuntimeFactory.processAllMessages();
+		const valueChanges: {
+			op: ISharedArrayOperation;
+			isLocal: boolean;
+			target: ISharedArray<number>;
+		}[] = [];
+		sharedArray.on("valueChanged", (op, isLocal, target) => {
+			valueChanges.push({ op, isLocal, target });
+		});
 		sharedArray.move(0, 2); // this will be rolled back, expected [1, 0, 2]
 		assert.deepStrictEqual(
 			sharedArray.get(),
 			[1, 0, 2],
 			"Array should have expected entries pre-rollback",
 		);
+
 		containerRuntime.rollback?.();
+		assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
+		assert.strictEqual(
+			valueChanges[0].op.type,
+			OperationType.moveEntry,
+			"First event should be for move",
+		);
+		assert.strictEqual(
+			valueChanges[1].op.type,
+			OperationType.moveEntry,
+			"Second event should be for move",
+		);
+		assert.strictEqual(
+			valueChanges[0].op.entryId,
+			valueChanges[1].op.changedToEntryId,
+			"Second event should be local",
+		);
+		assert.strictEqual(
+			valueChanges[0].op.changedToEntryId,
+			valueChanges[1].op.entryId,
+			"Second event should be local",
+		);
 		assert.deepStrictEqual(
 			sharedArray.get(),
 			[0, 1, 2],
