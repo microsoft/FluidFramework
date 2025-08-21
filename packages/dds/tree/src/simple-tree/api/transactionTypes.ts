@@ -125,9 +125,9 @@ export interface RunTransactionParams {
 	readonly preconditions?: readonly TransactionConstraint[];
 
 	/**
-	 * Set to defer all event notifications until completion of the transaction.
+	 * Set to defer all tree event notifications until completion of the transaction.
 	 * @remarks TODO: note benefits and note potential pitfalls
 	 * @defaultValue `false`
 	 */
-	readonly deferEvents?: boolean;
+	readonly deferTreeEvents?: boolean;
 }
