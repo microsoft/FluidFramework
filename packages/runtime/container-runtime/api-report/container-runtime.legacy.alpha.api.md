@@ -7,7 +7,7 @@
 // @alpha @legacy
 export const AllowTombstoneRequestHeaderKey = "allowTombstone";
 
-// @alpha @legacy
+// @beta @legacy
 export enum CompressionAlgorithms {
     // (undocumented)
     lz4 = "lz4"
@@ -32,7 +32,7 @@ export enum ContainerMessageType {
     Rejoin = "rejoin"
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ContainerRuntimeOptions {
     readonly chunkSizeInBytes: number;
     readonly compressionOptions: ICompressionRuntimeOptions;
@@ -108,16 +108,16 @@ export interface IClientSummaryWatcher extends IDisposable {
     watchSummary(clientSequenceNumber: number): ISummary;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ICompressionRuntimeOptions {
     readonly compressionAlgorithm: CompressionAlgorithms;
     readonly minimumBatchSizeInBytes: number;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export type IContainerRuntimeOptions = Partial<ContainerRuntimeOptions>;
 
-// @alpha @legacy
+// @beta @legacy
 export type IdCompressorMode = "on" | "delayed" | undefined;
 
 // @alpha @legacy
@@ -153,7 +153,7 @@ export interface IFluidDataStoreAttributes2 extends OmitAttributesVersions<IFlui
     readonly summaryFormatVersion: 2;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IGCRuntimeOptions {
     [key: string]: any;
     enableGCSweep?: true;
@@ -189,7 +189,7 @@ export interface INackSummaryResult {
     readonly summaryNackOp: ISummaryNackMessage;
 }
 
-// @alpha @deprecated @legacy
+// @beta @deprecated @legacy
 export const InactiveResponseHeaderKey = "isInactive";
 
 // @alpha @legacy (undocumented)
@@ -257,7 +257,7 @@ export interface ISummaryAckMessage extends ISequencedDocumentMessage {
     type: MessageType.SummaryAck;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface ISummaryBaseConfiguration {
     initialSummarizerDelayMs: number;
     maxAckWaitTime: number;
@@ -270,22 +270,22 @@ export interface ISummaryCollectionOpEvents extends IEvent {
     (event: OpActionEventName, listener: OpActionEventListener): any;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export type ISummaryConfiguration = ISummaryConfigurationDisableSummarizer | ISummaryConfigurationDisableHeuristics | ISummaryConfigurationHeuristics;
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
     // (undocumented)
     state: "disableHeuristics";
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface ISummaryConfigurationDisableSummarizer {
     // (undocumented)
     state: "disabled";
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
     maxIdleTime: number;
     maxOps: number;
@@ -315,7 +315,7 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
     type: MessageType.Summarize;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface ISummaryRuntimeOptions {
     // @deprecated
     initialSummarizerDelayMs?: number;
@@ -330,10 +330,10 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
     readonly uploadDuration: number;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export function loadContainerRuntime(params: LoadContainerRuntimeParams): Promise<IContainerRuntime & IRuntime>;
 
-// @alpha @legacy
+// @beta @legacy
 export interface LoadContainerRuntimeParams {
     containerScope?: FluidObject;
     context: IContainerContext;
@@ -407,7 +407,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 // @alpha @legacy
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 
-// @alpha @legacy
+// @beta @legacy
 export const TombstoneResponseHeaderKey = "isTombstoned";
 
 // (No @packageDocumentation comment for this package)

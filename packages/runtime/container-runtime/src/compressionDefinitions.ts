@@ -5,8 +5,7 @@
 
 /**
  * Available compression algorithms for op compression.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum CompressionAlgorithms {
 	lz4 = "lz4",
@@ -14,8 +13,7 @@ export enum CompressionAlgorithms {
 
 /**
  * Options for op compression.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ICompressionRuntimeOptions {
 	/**

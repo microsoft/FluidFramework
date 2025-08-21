@@ -138,8 +138,7 @@ export interface IRuntimeMessageCollection {
 /**
  * Interface to provide access to snapshot blobs to DataStore layer.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IRuntimeStorageService {
 	/**
