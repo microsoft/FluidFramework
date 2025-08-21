@@ -224,7 +224,6 @@ interface WorkspaceRegisteredEvent {
 /**
  * Sent at any time to indicate an error.
  */
-
 interface ErrorEvent {
 	event: "error";
 	error: string;
