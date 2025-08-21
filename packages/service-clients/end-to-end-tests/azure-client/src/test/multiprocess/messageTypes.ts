@@ -46,8 +46,7 @@ interface DisconnectSelfCommand {
 }
 
 /**
- * Instructs a child process to register (create + subscribe) to states for a workspace on demand.
- * Only the requested state types (latest / latestMap) will be instantiated and listened to.
+ * Instructs a child process to register for state objects in a workspace given a workspaceId
  * A {@link WorkspaceRegisteredEvent} should be expected in response.
  */
 interface RegisterWorkspaceCommand {
