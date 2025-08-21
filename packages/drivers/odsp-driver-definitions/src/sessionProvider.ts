@@ -76,8 +76,7 @@ export interface ISensitivityLabel {
 /**
  * An interface that allows a concrete instance of a driver factory to interrogate itself
  * to find out if it is session aware.
- * @legacy
- * @beta
+ * @legacy @beta
  */
 export interface IProvideSessionAwareDriverFactory {
 	readonly IRelaySessionAwareDriverFactory: IRelaySessionAwareDriverFactory;
@@ -86,8 +85,7 @@ export interface IProvideSessionAwareDriverFactory {
 /**
  * An interface that allows a concrete instance of a driver factory to call the `getRelayServiceSessionInfo`
  * function if it session aware.
- * @legacy
- * @beta
+ * @legacy @beta
  */
 export interface IRelaySessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
 	getRelayServiceSessionInfo(

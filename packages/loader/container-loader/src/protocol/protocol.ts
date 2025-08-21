@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedClient } from "@fluidframework/driver-definitions";
+import type { ISequencedClient } from "@fluidframework/driver-definitions";
 import {
-	ISequencedDocumentMessage,
-	IDocumentAttributes,
-	IClientJoin,
-	ICommittedProposal,
-	IProcessMessageResult,
-	IProposal,
-	IQuorum,
-	ISequencedDocumentSystemMessage,
-	ISequencedProposal,
+	type ISequencedDocumentMessage,
+	type IDocumentAttributes,
+	type IClientJoin,
+	type ICommittedProposal,
+	type IProcessMessageResult,
+	type IProposal,
+	type IQuorum,
+	type ISequencedDocumentSystemMessage,
+	type ISequencedProposal,
 	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 
-import { IQuorumSnapshot, Quorum } from "./quorum.js";
+import { type IQuorumSnapshot, Quorum } from "./quorum.js";
 
 /**
  * @legacy @beta

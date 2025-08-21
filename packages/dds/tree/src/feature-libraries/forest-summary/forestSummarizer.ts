@@ -155,50 +155,57 @@ export class ForestSummarizer implements Summarizable {
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
-		// TODO: AB#46751
-		// The forest summary should always exist so this should be an assert instead of conditional.
-		if (await services.contains(forestSummaryContentKey)) {
-			const readAndParseBlob = async <T extends JsonCompatible<IFluidHandle>>(
-				id: string,
-			): Promise<T> => {
-				const treeBuffer = await services.readBlob(id);
-				const treeBufferString = bufferToString(treeBuffer, "utf8");
-				return parse(treeBufferString) as T;
-			};
+		// The contents of the top-level forest must be present under a summary blob named `forestSummaryContentKey`.
+		// If the summary was generated as `ForestIncrementalSummaryBehavior.SingleBlob`, this blob will contain all
+		// of forest's contents.
+		// If the summary was generated as `ForestIncrementalSummaryBehavior.Incremental`, this blob will contain only
+		// the top-level forest node's contents.
+		// The contents of the incremental chunks will be in separate tree nodes and will be read later during decoding.
+		assert(
+			await services.contains(forestSummaryContentKey),
+			"Forest summary content missing in snapshot",
+		);
 
-			// Load the incremental summary builder so that it can download any incremental chunks in the
-			// snapshot.
-			await this.incrementalSummaryBuilder.load(services, readAndParseBlob);
+		const readAndParseBlob = async <T extends JsonCompatible<IFluidHandle>>(
+			id: string,
+		): Promise<T> => {
+			const treeBuffer = await services.readBlob(id);
+			const treeBufferString = bufferToString(treeBuffer, "utf8");
+			return parse(treeBufferString) as T;
+		};
 
-			// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
-			// forest summary format.
-			const fields = this.codec.decode(await readAndParseBlob(forestSummaryContentKey), {
-				...this.encoderContext,
-				incrementalEncoderDecoder: this.incrementalSummaryBuilder,
+		// Load the incremental summary builder so that it can download any incremental chunks in the
+		// snapshot.
+		await this.incrementalSummaryBuilder.load(services, readAndParseBlob);
+
+		// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
+		// forest summary format.
+		const fields = this.codec.decode(await readAndParseBlob(forestSummaryContentKey), {
+			...this.encoderContext,
+			incrementalEncoderDecoder: this.incrementalSummaryBuilder,
+		});
+		const allocator = idAllocatorFromMaxId();
+		const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
+		const build: DeltaDetachedNodeBuild[] = [];
+		for (const [fieldKey, field] of fields) {
+			const chunked = chunkFieldSingle(field, {
+				policy: defaultChunkPolicy,
+				idCompressor: this.idCompressor,
 			});
-			const allocator = idAllocatorFromMaxId();
-			const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
-			const build: DeltaDetachedNodeBuild[] = [];
-			for (const [fieldKey, field] of fields) {
-				const chunked = chunkFieldSingle(field, {
-					policy: defaultChunkPolicy,
-					idCompressor: this.idCompressor,
-				});
-				const buildId = { minor: allocator.allocate(chunked.topLevelLength) };
-				build.push({
-					id: buildId,
-					trees: chunked,
-				});
-				fieldChanges.push([fieldKey, [{ count: chunked.topLevelLength, attach: buildId }]]);
-			}
-
-			assert(this.forest.isEmpty, 0x797 /* forest must be empty */);
-			applyDelta(
-				{ build, fields: new Map(fieldChanges) },
-				undefined,
-				this.forest,
-				makeDetachedFieldIndex("init", this.revisionTagCodec, this.idCompressor),
-			);
+			const buildId = { minor: allocator.allocate(chunked.topLevelLength) };
+			build.push({
+				id: buildId,
+				trees: chunked,
+			});
+			fieldChanges.push([fieldKey, [{ count: chunked.topLevelLength, attach: buildId }]]);
 		}
+
+		assert(this.forest.isEmpty, 0x797 /* forest must be empty */);
+		applyDelta(
+			{ build, fields: new Map(fieldChanges) },
+			undefined,
+			this.forest,
+			makeDetachedFieldIndex("init", this.revisionTagCodec, this.idCompressor),
+		);
 	}
 }

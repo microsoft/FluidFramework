@@ -20,8 +20,7 @@ import type {
 } from "./summary/index.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum ContainerMessageType {
 	// An op to be delivered to store
