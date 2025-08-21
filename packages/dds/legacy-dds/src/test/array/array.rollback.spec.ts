@@ -201,4 +201,33 @@ describe("SharedArray rollback", () => {
 			"Array should have expected entries post-rollback",
 		);
 	});
+
+	it("should rollback move operation", () => {
+		const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+		// Create a second client
+		const { sharedArray: sharedArray2, containerRuntime: containerRuntime2 } =
+			createAdditionalClient(containerRuntimeFactory);
+		sharedArray.insert(0, 0); // [0]
+		sharedArray.insert(1, 1); // [0,1]
+		sharedArray.insert(2, 2); // [0,1,2]
+		containerRuntime.flush();
+		containerRuntimeFactory.processAllMessages();
+		sharedArray.move(0, 2); // this will be rolled back, expected [1,2,0]
+		assert.deepStrictEqual(
+			sharedArray.get(),
+			[1, 0, 2],
+			"Array should have expected entries pre-rollback",
+		);
+		containerRuntime.rollback?.();
+		assert.deepStrictEqual(
+			sharedArray.get(),
+			[0, 1, 2],
+			"Array should have expected entries post-rollback",
+		);
+		assert.deepStrictEqual(
+			sharedArray2.get(),
+			[0, 1, 2],
+			"Array should have expected entries post-rollback",
+		);
+	});
 });

@@ -426,7 +426,25 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				}
 				break;
 			}
-			case OperationType.moveEntry:
+			case OperationType.moveEntry: {
+				const { entryId: oldEntryId, changedToEntryId: newEntryId } = arrayOp;
+				if (this.getEntryForId(newEntryId).isDeleted) {
+					return;
+				}
+				this.updateLiveEntry(newEntryId, oldEntryId);
+				this.deleteInternalEntry(newEntryId);
+				const inputEntry = this.getEntryForId(oldEntryId);
+				inputEntry.prevEntryId = undefined;
+				inputEntry.nextEntryId = undefined;
+				inputEntry.isLocalPendingMove = 0;
+				const moveOp: IMoveOperation = {
+					type: OperationType.moveEntry,
+					entryId: oldEntryId,
+					changedToEntryId: newEntryId,
+				};
+				this.emitValueChangedEvent(moveOp, true /* isLocal */);
+				break;
+			}
 			case OperationType.toggle:
 			case OperationType.toggleMove: {
 				throw new Error(`Rollback not implemented for ${arrayOp.type} operations`);
@@ -437,6 +455,16 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		}
 	}
 
+	private deleteInternalEntry(entryId: string): void {
+		// hard delete from the shared array
+		for (let i = 0; i < this.sharedArray.length; i++) {
+			if (this.sharedArray[i]?.entryId === entryId) {
+				this.sharedArray.splice(i, 1);
+				this.idToEntryMap.delete(entryId);
+				break;
+			}
+		}
+	}
 	/**
 	 * Load share array from snapshot
 	 *
