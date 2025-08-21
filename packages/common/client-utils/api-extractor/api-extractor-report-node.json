@@ -1,5 +1,9 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 	"extends": "../../../../common/build/build-common/api-extractor-report.esm.current.json",
-	"mainEntryPointFilePath": "<projectFolder>/lib/<unscopedPackageName>.node.beta.d.ts"
+	"mainEntryPointFilePath": "<projectFolder>/lib/<unscopedPackageName>.node.beta.d.ts",
+	"apiReport": {
+		"enabled": true,
+		"reportVariants": ["alpha", "beta", "public"]
+	}
 }
