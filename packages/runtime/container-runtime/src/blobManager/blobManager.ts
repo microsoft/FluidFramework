@@ -42,7 +42,6 @@ import {
 	PerformanceEvent,
 	UsageError,
 	createChildMonitoringContext,
-	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -538,41 +537,28 @@ export class BlobManager {
 		localId: string,
 		blob: ArrayBufferLike,
 	): Promise<ICreateBlobResponse | void> {
-		let response: ICreateBlobResponse;
 		try {
-			try {
-				response = await this.storage.createBlob(blob);
-			} catch (error) {
-				const entry = this.pendingBlobs.get(localId);
-				assert(
-					!!entry,
-					0x387 /* Must have pending blob entry for blob which failed to upload */,
-				);
-				if (entry.opsent) {
-					throw wrapError(
-						error,
-						() => new LoggingError(`uploadBlob error`, { canRetry: true }),
-					);
-				}
-				throw error;
-			}
+			const response = await this.storage.createBlob(blob);
+			return this.onUploadResolve(localId, response);
 		} catch (error) {
+			const entry = this.pendingBlobs.get(localId);
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "UploadBlobReject",
 				// TODO: better typing
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
 				error: error as any,
+				message: entry === undefined ? "Missing pendingBlob" : undefined,
 				localId,
 			});
-			// it will only reject if we haven't sent an op
-			// and is a non-retriable error. It will only reject
-			// the promise but not throw any error outside.
-			this.pendingBlobs.get(localId)?.handleP.reject(error);
-			this.deletePendingBlob(localId);
+			// We probably should assert the pendingBlobs entry here, but we don't currently have any error handling
+			// for the uploadP - a promise rejection would be unhandled anyway. For now we can detect this with the
+			// message on the UploadBlobReject telemetry.
+			if (entry !== undefined) {
+				entry.handleP.reject(error);
+				this.deletePendingBlob(localId);
+			}
 			this.internalEvents.emit("uploadFailed", localId, error);
-			return;
 		}
-		return this.onUploadResolve(localId, response);
 	}
 
 	/**
