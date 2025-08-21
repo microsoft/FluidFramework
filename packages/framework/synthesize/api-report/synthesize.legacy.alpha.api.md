@@ -36,16 +36,16 @@ export type FluidObjectSymbolProvider<T> = {
     [P in keyof T]?: P;
 };
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export const IFluidDependencySynthesizer: keyof IProvideFluidDependencySynthesizer;
 
-// @alpha @legacy
+// @beta @legacy
 export interface IFluidDependencySynthesizer extends IProvideFluidDependencySynthesizer {
     has(type: string): boolean;
     synthesize<O, R = undefined | Record<string, never>>(optionalTypes: FluidObjectSymbolProvider<O>, requiredTypes: Required<FluidObjectSymbolProvider<R>>): AsyncFluidObjectProvider<O, R>;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IProvideFluidDependencySynthesizer {
     // (undocumented)
     IFluidDependencySynthesizer: IFluidDependencySynthesizer;
