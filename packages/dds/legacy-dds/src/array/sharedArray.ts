@@ -911,18 +911,30 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		deadEntry.isDeleted = true;
 	}
 
+	private handleStashedInsert(
+		entryId: string,
+		insertAfterEntryId: string | undefined,
+		value: Serializable<SerializableTypeForSharedArray> & T,
+	): void {
+		let index = 0;
+		if (insertAfterEntryId !== undefined) {
+			index = this.findIndexOfEntryId(insertAfterEntryId) + 1;
+		}
+		const newEntry = this.createNewEntry<SerializableTypeForSharedArray>(entryId, value);
+		newEntry.isAckPending = true;
+		this.addEntry(index, newEntry);
+	}
+
 	protected applyStashedOp(content: unknown): void {
 		const op = content as ISharedArrayOperation<T>;
 
 		switch (op.type) {
 			case OperationType.insertEntry: {
-				this.handleInsertOp<SerializableTypeForSharedArray>(
+				this.handleStashedInsert(
 					op.entryId,
 					op.insertAfterEntryId,
-					false, // treat it as remote op
-					op.value,
+					op.value as Serializable<SerializableTypeForSharedArray> & T,
 				);
-				this.getEntryForId(op.entryId).isAckPending = true;
 				break;
 			}
 			case OperationType.deleteEntry: {
@@ -930,7 +942,31 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				break;
 			}
 			case OperationType.moveEntry: {
-				this.handleMoveOp(op, false /* local - treat as remote op */);
+				const opEntry = this.getEntryForId(op.entryId);
+				this.handleStashedInsert(
+					op.changedToEntryId,
+					op.insertAfterEntryId,
+					opEntry.value as Serializable<SerializableTypeForSharedArray> & T,
+				);
+
+				const newElementEntryId = op.changedToEntryId;
+				const newElement = this.getEntryForId(newElementEntryId);
+				if (
+					this.isLocalPending(op.entryId, "isLocalPendingDelete") ||
+					this.isLocalPending(op.entryId, "isLocalPendingMove")
+				) {
+					this.updateDeadEntry(op.entryId, newElementEntryId);
+				} else {
+					// move the element
+					const liveEntry = this.getLiveEntry(op.entryId);
+					const isDeleted = liveEntry.isDeleted;
+					this.updateLiveEntry(liveEntry.entryId, newElementEntryId);
+					// mark newly added element as deleted if existing live element was already deleted
+					if (isDeleted) {
+						newElement.isDeleted = isDeleted;
+					}
+				}
+				newElement.isLocalPendingMove += 1;
 				break;
 			}
 			case OperationType.toggle: {
