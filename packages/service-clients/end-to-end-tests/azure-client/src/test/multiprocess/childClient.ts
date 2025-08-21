@@ -137,8 +137,7 @@ function isStringOrNumberRecord(value: unknown): value is Record<string, string 
 		return false;
 	}
 	for (const key of Object.keys(value)) {
-		const prop = (value as Record<string, unknown>)[key];
-		if (!(typeof prop === "string" || typeof prop === "number")) {
+		if (!(typeof value[key] === "string" || typeof value[key] === "number")) {
 			return false;
 		}
 	}

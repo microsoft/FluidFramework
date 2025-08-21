@@ -140,7 +140,7 @@ describe(`Presence with AzureClient`, () => {
 
 			// This test suite focuses on the synchronization of Latest state between clients.
 			// NOTE: For testing purposes child clients will expect a Latest value of type string.
-			describe("Latest State Synchronization", () => {
+			describe("using Latest state object", () => {
 				let children: ChildProcess[];
 				let childErrorPromise: Promise<void>;
 				let containerCreatorAttendeeId: AttendeeId;
@@ -226,7 +226,7 @@ describe(`Presence with AzureClient`, () => {
 
 			// This test suite focuses on the synchronization of LatestMap state between clients.
 			// NOTE: For testing purposes child clients will expect a LatestMap value of type Record<string, string | number>.
-			describe("LatestMap State Synchronization", () => {
+			describe("using LatestMap state object", () => {
 				let children: ChildProcess[];
 				let childErrorPromise: Promise<void>;
 				let containerCreatorAttendeeId: AttendeeId;
