@@ -432,7 +432,6 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 					return;
 				}
 				this.updateLiveEntry(newEntryId, oldEntryId);
-				this.deleteInternalEntry(newEntryId);
 				const inputEntry = this.getEntryForId(oldEntryId);
 				inputEntry.prevEntryId = undefined;
 				inputEntry.nextEntryId = undefined;
@@ -455,16 +454,6 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		}
 	}
 
-	private deleteInternalEntry(entryId: string): void {
-		// hard delete from the shared array
-		for (let i = 0; i < this.sharedArray.length; i++) {
-			if (this.sharedArray[i]?.entryId === entryId) {
-				this.sharedArray.splice(i, 1);
-				this.idToEntryMap.delete(entryId);
-				break;
-			}
-		}
-	}
 	/**
 	 * Load share array from snapshot
 	 *
