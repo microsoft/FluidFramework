@@ -8,7 +8,7 @@ import {
 	AttachState,
 	type IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions/internal";
@@ -23,13 +23,13 @@ import type {
 	PayloadState,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
+import type { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
-import {
+import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	type ISequencedMessageEnvelope,
+	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	FluidHandleBase,
@@ -39,7 +39,7 @@ import {
 } from "@fluidframework/runtime-utils/internal";
 import {
 	LoggingError,
-	MonitoringContext,
+	type MonitoringContext,
 	PerformanceEvent,
 	UsageError,
 	createChildMonitoringContext,

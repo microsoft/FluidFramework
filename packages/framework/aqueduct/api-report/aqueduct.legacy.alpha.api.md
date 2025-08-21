@@ -63,7 +63,7 @@ export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectT
     constructor(props: DataObjectFactoryProps<TObj, I>);
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface DataObjectFactoryProps<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> {
     readonly ctor: new (props: IDataObjectProps<I>) => TObj;
     readonly optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>;
@@ -74,14 +74,14 @@ export interface DataObjectFactoryProps<TObj extends PureDataObject<I>, I extend
     readonly type: string;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface DataObjectTypes {
     Events?: IEvent;
     InitialState?: any;
     OptionalProviders?: FluidObject;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
     // (undocumented)
     readonly context: IFluidDataStoreContext;
@@ -93,7 +93,7 @@ export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
     readonly runtime: IFluidDataStoreRuntime;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes> extends TypedEventEmitter<I["Events"] & IEvent> implements IFluidLoadable, IProvideFluidHandle {
     constructor(props: IDataObjectProps<I>);
     protected readonly context: IFluidDataStoreContext;
@@ -118,7 +118,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     protected readonly runtime: IFluidDataStoreRuntime;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry> {
     constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects?: readonly IChannelFactory[], optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeClass?: typeof FluidDataStoreRuntime);
     constructor(props: DataObjectFactoryProps<TObj, I>);
@@ -139,14 +139,14 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     readonly type: string;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export abstract class TreeDataObject<TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObject<TDataObjectTypes> {
     // (undocumented)
     initializeInternal(existing: boolean): Promise<void>;
     protected get tree(): ITree;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export class TreeDataObjectFactory<TDataObject extends TreeDataObject<TDataObjectTypes>, TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TDataObject, TDataObjectTypes> {
     constructor(props: DataObjectFactoryProps<TDataObject, TDataObjectTypes>);
 }

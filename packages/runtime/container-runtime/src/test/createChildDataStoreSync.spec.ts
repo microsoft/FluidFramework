@@ -7,14 +7,14 @@ import { strict as assert } from "node:assert";
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { isPromiseLike, LazyPromise } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
-	type NamedFluidDataStoreRegistryEntries,
-	type IContainerRuntimeBase,
-	type ISummarizerNodeWithGC,
-	type IRuntimeStorageService,
+	NamedFluidDataStoreRegistryEntries,
+	IContainerRuntimeBase,
+	ISummarizerNodeWithGC,
+	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 import {

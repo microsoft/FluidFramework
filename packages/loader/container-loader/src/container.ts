@@ -12,8 +12,8 @@ import {
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
-	IAudience,
-	ICriticalContainerError,
+	type IAudience,
+	type ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import type {
 	ContainerWarning,
@@ -35,41 +35,41 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import { isFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
-	FluidObject,
-	IEvent,
-	IRequest,
-	ITelemetryBaseProperties,
+	type FluidObject,
+	type IEvent,
+	type IRequest,
+	type ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import type { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	IClient,
-	IClientDetails,
-	IQuorumClients,
-	ISequencedClient,
-	ISummaryTree,
+	type IClient,
+	type IClientDetails,
+	type IQuorumClients,
+	type ISequencedClient,
+	type ISummaryTree,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 import {
-	IDocumentService,
-	IDocumentServiceFactory,
-	IDocumentStorageService,
-	IResolvedUrl,
-	ISnapshot,
-	IThrottlingWarning,
-	IUrlResolver,
-	ICommittedProposal,
-	IDocumentAttributes,
-	IDocumentMessage,
-	IQuorumProposals,
-	ISequencedProposal,
-	ISnapshotTree,
-	ISummaryContent,
-	IVersion,
+	type IDocumentService,
+	type IDocumentServiceFactory,
+	type IDocumentStorageService,
+	type IResolvedUrl,
+	type ISnapshot,
+	type IThrottlingWarning,
+	type IUrlResolver,
+	type ICommittedProposal,
+	type IDocumentAttributes,
+	type IDocumentMessage,
+	type IQuorumProposals,
+	type ISequencedProposal,
+	type ISnapshotTree,
+	type ISummaryContent,
+	type IVersion,
 	MessageType,
-	ISequencedDocumentMessage,
-	ISignalMessage,
+	type ISequencedDocumentMessage,
+	type ISignalMessage,
 	type ConnectionMode,
 } from "@fluidframework/driver-definitions/internal";
 import {
@@ -84,11 +84,11 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import {
 	type TelemetryEventCategory,
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
 	GenericError,
-	IFluidErrorBase,
-	MonitoringContext,
+	type IFluidErrorBase,
+	type MonitoringContext,
 	PerformanceEvent,
 	UsageError,
 	connectedEventName,
@@ -105,27 +105,27 @@ import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
 
 import {
-	AttachProcessProps,
-	AttachmentData,
+	type AttachProcessProps,
+	type AttachmentData,
 	runRetriableAttachProcess,
 } from "./attachment.js";
 import { Audience } from "./audience.js";
 import { ConnectionManager } from "./connectionManager.js";
 import { ConnectionState } from "./connectionState.js";
 import {
-	IConnectionStateHandler,
+	type IConnectionStateHandler,
 	createConnectionStateHandler,
 } from "./connectionStateHandler.js";
 import { ContainerContext } from "./containerContext.js";
 import { ContainerStorageAdapter } from "./containerStorageAdapter.js";
 import {
-	IConnectionDetailsInternal,
-	IConnectionManagerFactoryArgs,
-	IConnectionStateChangeReason,
+	type IConnectionDetailsInternal,
+	type IConnectionManagerFactoryArgs,
+	type IConnectionStateChangeReason,
 	ReconnectMode,
 	getPackageName,
 } from "./contracts.js";
-import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
+import { DeltaManager, type IConnectionArgs } from "./deltaManager.js";
 import { RelativeLoader } from "./loader.js";
 import {
 	validateDriverCompatibility,
@@ -138,11 +138,11 @@ import {
 } from "./memoryBlobStorage.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
 import { pkgVersion } from "./packageVersion.js";
-import { IQuorumSnapshot } from "./protocol/index.js";
+import type { IQuorumSnapshot } from "./protocol/index.js";
 import {
-	IProtocolHandler,
+	type IProtocolHandler,
 	ProtocolHandler,
-	ProtocolHandlerBuilder,
+	type ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
 } from "./protocol.js";
 import { initQuorumValuesFromCodeDetails } from "./quorum.js";
@@ -152,7 +152,7 @@ import {
 	SerializedStateManager,
 } from "./serializedStateManager.js";
 import {
-	ISnapshotTreeWithBlobContents,
+	type ISnapshotTreeWithBlobContents,
 	combineAppAndProtocolSummary,
 	combineSnapshotTreeAndSnapshotBlobs,
 	getDetachedContainerStateFromSerializedContainer,

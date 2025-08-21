@@ -13,9 +13,9 @@ import type {
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
-import { IClientDetails } from "@fluidframework/driver-definitions";
-import type { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
-import {
+import type { IClientDetails } from "@fluidframework/driver-definitions";
+import type {
+	IAnyDriverError,
 	IClientConfiguration,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
