@@ -177,7 +177,7 @@ export interface TreeBranch extends IDisposable {
 	 * @returns A result object of {@link TransactionResultExt | TransactionResultExt} type. It includes the following:
 	 *
 	 * - A "success" flag indicating whether the transaction was successful or not.
-	 * - The success of failure value as returned by the transaction function.
+	 * - The success or failure value as returned by the transaction function.
 	 *
 	 * @remarks
 	 * This API will throw an error if the constraints are not met or something unexpected happens.
