@@ -35,6 +35,20 @@
 				}
 			}
 		},
+		"./internal-api-report/alpha": {
+			"import": {
+				"types": {
+					"browser alpha": "./lib/client-utils.browser.alpha.d.ts",
+					"node alpha": "./lib/client-utils.node.alpha.d.ts"
+				}
+			},
+			"require": {
+				"types": {
+					"browser alpha": "./dist/client-utils.browser.alpha.d.ts",
+					"node alpha": "./dist/client-utils.node.alpha.d.ts"
+				}
+			}
+		},
 		"./internal-api-report/beta": {
 			"import": {
 				"types": {
@@ -65,8 +79,12 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model-browser.json",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"build:exports:browser": "flub generate entrypoints --outFilePrefix {@unscopedPackageName}.browser. --mainEntrypoint ./src/indexBrowser.ts --outDir ./lib",
-		"build:exports:node": "flub generate entrypoints --outFilePrefix {@unscopedPackageName}.node. --mainEntrypoint ./src/indexNode.ts --outDir ./lib",
+		"build:exports:browser": "concurrently \"npm:build:exports:browser:*\"",
+		"build:exports:browser:commonjs": "flub generate entrypoints --outFilePrefix {@unscopedPackageName}.browser. --mainEntrypoint ./src/indexBrowser.ts --outDir ./dist",
+		"build:exports:browser:esnext": "flub generate entrypoints --outFilePrefix {@unscopedPackageName}.browser. --mainEntrypoint ./src/indexBrowser.ts --outDir ./lib",
+		"build:exports:node": "concurrently \"npm:build:exports:node:*\"",
+		"build:exports:node:commonjs": "flub generate entrypoints --outFilePrefix {@unscopedPackageName}.node. --mainEntrypoint ./src/indexNode.ts --outDir ./dist",
+		"build:exports:node:esnext": "flub generate entrypoints --outFilePrefix {@unscopedPackageName}.node. --mainEntrypoint ./src/indexNode.ts --outDir ./lib",
 		"build:test": "concurrently npm:build:test:mocha npm:build:test:jest npm:build:test:types",
 		"build:test:jest": "fluid-tsc commonjs --project ./src/test/jest/tsconfig.cjs.json",
 		"build:test:mocha": "concurrently npm:build:test:mocha:esm npm:build:test:mocha:cjs",
@@ -197,29 +215,35 @@
 			"build:api-reports:node:legacy": [
 				"build:api-reports:browser:legacy"
 			],
-			"build:exports:browser": [
+			"build:exports:browser:commonjs": [
 				"build:esnext"
 			],
-			"build:exports:node": [
+			"build:exports:browser:esnext": [
 				"build:esnext"
+			],
+			"build:exports:node:commonjs": [
+				"tsc"
+			],
+			"build:exports:node:esnext": [
+				"tsc"
 			],
 			"check:exports:cjs:indexBrowser": [
-				"tsc"
+				"build:exports:browser:commonjs"
 			],
 			"check:exports:cjs:indexNode": [
-				"tsc"
+				"build:exports:node:commonjs"
 			],
 			"check:exports:esm:indexBrowser": [
-				"build:esnext"
+				"build:exports:browser:esnext"
 			],
 			"check:exports:esm:indexBrowser:legacy": [
-				"build:exports:browser"
+				"build:exports:browser:esnext"
 			],
 			"check:exports:esm:indexNode": [
-				"build:exports:node"
+				"build:exports:node:esnext"
 			],
 			"check:exports:esm:indexNode:legacy": [
-				"build:exports:node"
+				"build:exports:node:esnext"
 			],
 			"build:test:jest": [
 				"tsc"
