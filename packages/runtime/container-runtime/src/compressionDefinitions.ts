@@ -30,8 +30,7 @@ export interface ICompressionRuntimeOptions {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const disabledCompressionConfig: ICompressionRuntimeOptions = {
 	minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,

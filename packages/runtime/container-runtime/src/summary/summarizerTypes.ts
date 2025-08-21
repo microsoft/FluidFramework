@@ -138,8 +138,7 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 
 /**
  * Options affecting summarize behavior.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummarizeOptions {
 	/**
@@ -171,8 +170,7 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
 	/**
@@ -187,8 +185,7 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
 
 /**
  * Options to use when enqueueing a summarize attempt.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 	/**
@@ -208,8 +205,7 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 /**
  * In addition to the normal summary tree + stats, this contains additional stats
  * only relevant at the root of the tree.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IGeneratedSummaryStats extends ISummaryStats {
 	/**
@@ -240,8 +236,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
 
 /**
  * Type for summarization failures that are retriable.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IRetriableFailureError extends Error {
 	readonly retryAfterSeconds?: number;
@@ -249,8 +244,7 @@ export interface IRetriableFailureError extends Error {
 
 /**
  * Base results for all submitSummary attempts.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IBaseSummarizeResult {
 	readonly stage: "base";
@@ -267,8 +261,7 @@ export interface IBaseSummarizeResult {
 
 /**
  * Results of submitSummary after generating the summary tree.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
 	readonly stage: "generate";
@@ -288,8 +281,7 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
 
 /**
  * Results of submitSummary after uploading the tree to storage.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "stage"> {
 	readonly stage: "upload";
@@ -305,8 +297,7 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
 
 /**
  * Results of submitSummary after submitting the summarize op.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
 	readonly stage: "submit";
@@ -335,8 +326,7 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
  * 3. "upload" - the summary was uploaded to storage, and the result contains the server-provided handle
  *
  * 4. "submit" - the summarize op was submitted, and the result contains the op client sequence number.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SubmitSummaryResult =
 	| IBaseSummarizeResult
@@ -346,23 +336,20 @@ export type SubmitSummaryResult =
 
 /**
  * The stages of Summarize, used to describe how far progress succeeded in case of a failure at a later stage.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 
 /**
  * The data in summarizer result when submit summary stage fails.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface SubmitSummaryFailureData {
 	stage: SummaryStage;
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 	| {
@@ -377,8 +364,7 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 	  };
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 	/**

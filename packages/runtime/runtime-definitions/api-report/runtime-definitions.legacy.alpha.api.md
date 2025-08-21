@@ -16,7 +16,7 @@ export interface AttributionInfo {
 // @beta @legacy
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
-// @alpha @sealed @deprecated @legacy (undocumented)
+// @beta @sealed @deprecated @legacy (undocumented)
 export interface CommitStagedChangesOptionsExperimental {
     squash?: boolean;
 }
@@ -63,7 +63,7 @@ export enum FlushMode {
     TurnBased = 1
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IAttachMessage {
     id: string;
     snapshot: ITree;
@@ -106,7 +106,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "dispose", listener: () => void): any;
 }
 
-// @alpha @sealed @deprecated @legacy (undocumented)
+// @beta @sealed @deprecated @legacy (undocumented)
 export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
     // (undocumented)
     enterStagingMode?(): StageControlsExperimental;
@@ -120,7 +120,7 @@ export interface IDataStore {
     trySetAlias(alias: string): Promise<AliasResult>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IEnvelope {
     address: string;
     contents: any;
@@ -268,7 +268,7 @@ export interface IInboundSignalMessage<TMessage extends TypedMessage = TypedMess
     readonly type: TMessage["type"];
 }
 
-// @alpha @legacy
+// @beta @legacy
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
     snapshot: IAttachMessage["snapshot"] | null;
 };
@@ -442,7 +442,7 @@ export interface OpAttributionKey {
 // @beta @legacy
 export type PackagePath = readonly string[];
 
-// @alpha @sealed @deprecated @legacy (undocumented)
+// @beta @sealed @deprecated @legacy (undocumented)
 export interface StageControlsExperimental {
     readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsExperimental>) => void;
     readonly discardChanges: () => void;
