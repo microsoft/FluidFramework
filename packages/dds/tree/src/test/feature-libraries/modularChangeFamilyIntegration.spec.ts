@@ -1597,6 +1597,7 @@ describe("ModularChangeFamily integration", () => {
 				roots: [
 					{
 						detachId: { revision: tag2, localId: brand(0) },
+						detachLocation: { nodeId: undefined, field: fieldA },
 						change: Change.nodeWithId(
 							0,
 							{ revision: tag1, localId: brand(1) },
@@ -1604,13 +1605,6 @@ describe("ModularChangeFamily integration", () => {
 								MarkMaker.remove(1, { revision: tag1, localId: brand(0) }),
 							]),
 						),
-					},
-				],
-				detachedLocations: [
-					{
-						detachId: { revision: tag2, localId: brand(0) },
-						count: 1,
-						fieldId: { nodeId: undefined, field: fieldA },
 					},
 				],
 				revisions: [{ revision: tag1 }],
@@ -1646,6 +1640,27 @@ describe("ModularChangeFamily integration", () => {
 			]),
 		);
 
+		const removeId: ChangeAtomId = { revision: tag1, localId: brand(2) };
+		const reviveMoveAndRemove = Change.build(
+			{
+				family,
+				maxId: 2,
+				renames: [
+					{
+						oldId,
+						newId: removeId,
+						count: 1,
+						detachLocation: { nodeId: undefined, field: fieldA },
+					},
+				],
+				revisions: [{ revision: tag1 }],
+			},
+			Change.field(fieldA, sequence.identifier, [
+				MarkMaker.rename(1, oldId, moveOutId),
+				MarkMaker.rename(1, moveInId, removeId),
+			]),
+		);
+
 		const encodingTestData: EncodingTestData<
 			ModularChangeset,
 			EncodedModularChangeset,
@@ -1655,6 +1670,7 @@ describe("ModularChangeFamily integration", () => {
 				["move", move, context],
 				["move and remove", moveAndRemove, context],
 				["revive and move", reviveAndMove, context],
+				["revive, move, and remove", reviveMoveAndRemove, context],
 				["edit detached", editDetached, context],
 			],
 		};

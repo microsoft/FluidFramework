@@ -497,8 +497,11 @@ interface BuildArgs {
 	maxId?: number;
 	revisions?: RevisionInfo[];
 	renames?: RenameDescription[];
-	roots?: { detachId: ChangeAtomId; change: NodeChangesetDescription }[];
-	detachedLocations?: { detachId: ChangeAtomId; count: number; fieldId: FieldId }[];
+	roots?: {
+		detachId: ChangeAtomId;
+		detachLocation?: FieldId;
+		change: NodeChangesetDescription;
+	}[];
 }
 
 function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): ModularChangeset {
@@ -520,7 +523,7 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 	const rootNodes = newRootTable();
 
 	if (args.roots !== undefined) {
-		for (const { detachId, change } of args.roots) {
+		for (const { detachId, change, detachLocation } of args.roots) {
 			rootNodes.nodeChanges.set(
 				[detachId.revision, detachId.localId],
 				addNodeToChangeset(
@@ -533,6 +536,10 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 					idAllocator,
 				),
 			);
+
+			if (detachLocation !== undefined) {
+				rootNodes.detachLocations.set(detachId, 1, detachLocation);
+			}
 		}
 	}
 
@@ -560,12 +567,6 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 				rename.count,
 				rename.detachLocation,
 			);
-		}
-	}
-
-	if (args.detachedLocations !== undefined) {
-		for (const { detachId, count, fieldId } of args.detachedLocations) {
-			rootNodes.detachLocations.set(detachId, count, fieldId);
 		}
 	}
 
