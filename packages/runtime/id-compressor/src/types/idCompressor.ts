@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	OpSpaceCompressedId,
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
 } from "./identifiers.js";
-import {
+import type {
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
@@ -75,8 +75,7 @@ import {
  *
  * These two spaces naturally define a rule: consumers of compressed IDs should use session-space IDs, but serialized forms such as ops
  * should use op-space IDs.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IIdCompressorCore {
 	/**

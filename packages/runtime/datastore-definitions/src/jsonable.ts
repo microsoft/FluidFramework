@@ -16,8 +16,7 @@
  *
  * @privateRemarks
  * Prefer using `Jsonable<unknown>` over this type that is an implementation detail.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type JsonableTypeWith<T> =
 	| undefined
@@ -38,8 +37,7 @@ export type JsonableTypeWith<T> =
  * This interface along with ArrayLike above avoids pure type recursion issues, but introduces a limitation on
  * the ability of {@link Jsonable} to detect array-like types that are not handled naively ({@link JSON.stringify}).
  * The TypeOnly filter is not useful for {@link JsonableTypeWith}; so, if type testing improves, this can be removed.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style -- Use of mapped type required to prevent circular reference issue
 export interface Internal_InterfaceOfJsonableTypesWith<T> {
@@ -84,8 +82,7 @@ export interface Internal_InterfaceOfJsonableTypesWith<T> {
  * ```typescript
  * function foo<T>(value: Jsonable<T>) { ... }
  * ```
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type Jsonable<T, TReplaced = never> = /* test for 'any' */ boolean extends (
 	T extends never

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeNode, Definition, NodeIdContext } from "@fluid-experimental/tree";
-import { Serializable } from "@fluidframework/datastore-definitions/legacy";
+import type { ChangeNode, Definition, NodeIdContext } from "@fluid-experimental/tree";
+import type { Serializable } from "@fluidframework/datastore-definitions/legacy";
 
 export const enum NodeKind {
 	scalar = "s",

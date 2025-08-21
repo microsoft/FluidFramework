@@ -9,19 +9,17 @@ import {
 	stringToBuffer,
 } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	DriverErrorTypes,
-	IDocumentAttributes,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
-import {
-	IDocumentStorageService,
+	type IDocumentAttributes,
+	type ISnapshotTree,
+	type IDocumentStorageService,
 	type ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	CombinedAppAndProtocolSummary,
-	DeltaStreamConnectionForbiddenError,
+	type CombinedAppAndProtocolSummary,
+	type DeltaStreamConnectionForbiddenError,
 	isCombinedAppAndProtocolSummary,
 	readAndParse,
 } from "@fluidframework/driver-utils/internal";
@@ -32,7 +30,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { ISerializableBlobContents } from "./containerStorageAdapter.js";
+import type { ISerializableBlobContents } from "./containerStorageAdapter.js";
 import type {
 	IPendingContainerState,
 	IPendingDetachedContainerState,
@@ -51,8 +49,7 @@ export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
  * Interface to represent the parsed parts of IResolvedUrl.url to help
  * in getting info about different parts of the url.
  * May not be compatible or relevant for any Url Resolver
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IParsedUrl {
 	/**
@@ -81,8 +78,7 @@ export interface IParsedUrl {
  * with urls of type: protocol://<string>/.../..?<querystring>
  * @param url - This is the IResolvedUrl.url part of the resolved url.
  * @returns The IParsedUrl representing the input URL, or undefined if the format was not supported
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined {
 	const parsed = new URL(url);

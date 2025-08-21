@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type FetchSource,
-	type ICreateBlobResponse,
-	type IDocumentStorageServicePolicies,
-	type ISnapshot,
-	type ISnapshotFetchOptions,
-	type ISnapshotTree,
-	type ISummaryContext,
-	type ISummaryHandle,
-	type ISummaryTree,
-	type IVersion,
+import type {
+	FetchSource,
+	ICreateBlobResponse,
+	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
+	ISnapshotTree,
+	ISummaryContext,
+	ISummaryHandle,
+	ISummaryTree,
+	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import type { IRuntimeStorageService } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";

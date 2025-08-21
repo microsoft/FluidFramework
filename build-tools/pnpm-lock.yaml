@@ -279,8 +279,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.57.0)(typescript@5.4.5)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.57.0)(typescript@5.4.5)
       '@oclif/test':
         specifier: ^4.1.0
         version: 4.1.0(@oclif/core@4.0.30)
@@ -448,8 +448,8 @@ importers:
         specifier: npm:@fluidframework/build-tools@~0.49.0
         version: '@fluidframework/build-tools@0.49.0(@types/node@18.19.60)'
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.57.0)(typescript@5.4.5)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.57.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.50.1
         version: 7.52.2(@types/node@18.19.60)
@@ -602,8 +602,8 @@ importers:
         specifier: npm:@fluidframework/build-tools@~0.49.0
         version: '@fluidframework/build-tools@0.49.0(@types/node@18.19.60)'
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.57.0)(typescript@5.4.5)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.57.0)(typescript@5.4.5)
       '@types/async':
         specifier: ^3.2.24
         version: 3.2.24
@@ -669,8 +669,8 @@ importers:
         specifier: npm:@fluidframework/build-tools@~0.49.0
         version: '@fluidframework/build-tools@0.49.0(@types/node@18.19.60)'
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.57.0)(typescript@5.4.5)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.57.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.50.1
         version: 7.52.2(@types/node@18.19.60)
@@ -727,8 +727,8 @@ importers:
         specifier: npm:@fluidframework/build-tools@~0.49.0
         version: '@fluidframework/build-tools@0.49.0(@types/node@18.19.60)'
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.57.0)(typescript@5.4.5)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.57.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.50.1
         version: 7.52.2(@types/node@18.19.60)
@@ -1053,8 +1053,8 @@ packages:
   '@fluidframework/bundle-size-tools@0.57.0':
     resolution: {integrity: sha512-kPKm02xhVgwXX7X+UbvhsX3N/QO4Tc88fr7Xe6suXyzP3MCovFRkaktVM8i684g83oi9cL51fnTYES5q8r99sg==}
 
-  '@fluidframework/eslint-config-fluid@5.8.0':
-    resolution: {integrity: sha512-MH0phD6UXLI1HGr9L8IDEYhv1UfnT55PeENu63mz7m/fNsawDQr/MI7OopIFKcW99vDtnMOEy5WHQk+hUFCkrw==}
+  '@fluidframework/eslint-config-fluid@6.0.0':
+    resolution: {integrity: sha512-RdbEYUQmLkW8zQ6GZXx1T/t5g9k7iA5K6vPZdvsIK4keb5VXcVCHDluvc7AtOXEVOb5Bt2XyM16NWz2Rlho5NA==}
 
   '@gar/promisify@1.1.3':
     resolution: {integrity: sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==}
@@ -7421,7 +7421,7 @@ snapshots:
       - uglify-js
       - webpack-cli
 
-  '@fluidframework/eslint-config-fluid@5.8.0(eslint@8.57.0)(typescript@5.4.5)':
+  '@fluidframework/eslint-config-fluid@6.0.0(eslint@8.57.0)(typescript@5.4.5)':
     dependencies:
       '@fluid-internal/eslint-plugin-fluid': 0.1.5(eslint@8.57.0)(typescript@5.4.5)
       '@microsoft/tsdoc': 0.14.2

@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	IDeltaQueue,
-	ReadOnlyInfo,
-	IFluidCodeDetails,
+	type IDeltaQueue,
+	type ReadOnlyInfo,
+	type IFluidCodeDetails,
 	isFluidPackage,
-	IConnectionDetails,
+	type IConnectionDetails,
 } from "@fluidframework/container-definitions/internal";
-import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { ConnectionMode, IClientDetails } from "@fluidframework/driver-definitions";
-import {
+import type { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { ConnectionMode, IClientDetails } from "@fluidframework/driver-definitions";
+import type {
 	IContainerPackageInfo,
 	IClientConfiguration,
 	IDocumentMessage,

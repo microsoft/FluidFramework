@@ -22,8 +22,7 @@ import {
 import { isISharedObjectHandle, type ISharedObjectHandle } from "./handle.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidSerializer {
 	/**

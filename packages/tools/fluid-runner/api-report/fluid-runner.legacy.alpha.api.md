@@ -4,10 +4,10 @@
 
 ```ts
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IExportFileResponseFailure {
     // (undocumented)
     error?: any;
@@ -19,20 +19,20 @@ export interface IExportFileResponseFailure {
     success: false;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IExportFileResponseSuccess {
     // (undocumented)
     success: true;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IFluidFileConverter {
     execute(container: IContainer, options?: string): Promise<string>;
     getCodeLoader(logger: ITelemetryBaseLogger): Promise<ICodeDetailsLoader>;
     getScope?(logger: ITelemetryBaseLogger): Promise<FluidObject>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export enum OutputFormat {
     // (undocumented)
     CSV = 1,

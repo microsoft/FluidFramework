@@ -89,7 +89,7 @@
 		"@fluid-tools/build-cli": "^0.58.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.58.0",
-		"@fluidframework/eslint-config-fluid": "^5.8.0",
+		"@fluidframework/eslint-config-fluid": "^6.0.0",
 		"@fluidframework/protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@3.2.0",
 		"@microsoft/api-extractor": "7.52.8",
 		"concurrently": "^6.2.0",

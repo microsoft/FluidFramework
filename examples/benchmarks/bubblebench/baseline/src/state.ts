@@ -4,9 +4,9 @@
  */
 
 import {
-	IAppState,
-	IBubble,
-	SimpleClient,
+	type IAppState,
+	type IBubble,
+	type SimpleClient,
 	makeBubble,
 	makeClient,
 } from "@fluid-example/bubblebench-common";

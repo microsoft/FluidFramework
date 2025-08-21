@@ -58,14 +58,12 @@ export class TaskManagerFactory implements IChannelFactory<ITaskManager> {
 
 /**
  * {@inheritDoc ITaskManager}
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const TaskManager = createSharedObjectKind(TaskManagerFactory);
 
 /**
  * {@inheritDoc ITaskManager}
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type TaskManager = ITaskManager;

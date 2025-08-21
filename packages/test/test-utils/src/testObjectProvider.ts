@@ -57,8 +57,7 @@ const defaultCodeDetails: IFluidCodeDetails = {
 /**
  * Exposes fine-grained control over the Container's inbound and outbound op queues
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IOpProcessingController {
 	/**
