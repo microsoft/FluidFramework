@@ -70,6 +70,7 @@ import { strict as assert } from "node:assert";
 import { assertStructuralEquality } from "../../objMerge.js";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 import { testIdCompressor } from "../../utils.js";
+// eslint-disable-next-line import/no-internal-modules
 import type { DetachedNodeEntry } from "../../../feature-libraries/modular-schema/crossFieldQueries.js";
 
 export const Change = {

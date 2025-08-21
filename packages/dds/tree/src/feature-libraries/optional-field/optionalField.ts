@@ -36,7 +36,6 @@ import {
 
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
-import { invert } from "../sequence-field/invert.js";
 
 export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose,

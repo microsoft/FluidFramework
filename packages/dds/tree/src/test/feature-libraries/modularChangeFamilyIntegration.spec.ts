@@ -20,10 +20,10 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
 import {
 	fieldKindConfigurations,
 	sequence,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
@@ -46,7 +46,6 @@ import {
 	assertDeltaEqual,
 	chunkFromJsonTrees,
 	defaultRevisionMetadataFromChanges,
-	failCodecFamily,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	moveWithin,
