@@ -147,7 +147,6 @@ interface AttendeeConnectedEvent {
 /**
  * Sent arbitrarily to indicate an attendee has disconnected.
  */
-
 interface AttendeeDisconnectedEvent {
 	event: "attendeeDisconnected";
 	attendeeId: AttendeeId;
