@@ -142,7 +142,6 @@ interface AttendeeConnectedEvent {
 /**
  * Sent arbitrarily to indicate an attendee has disconnected.
  */
-
 interface AttendeeDisconnectedEvent {
 	event: "attendeeDisconnected";
 	attendeeId: AttendeeId;
@@ -220,7 +219,6 @@ interface WorkspaceRegisteredEvent {
 /**
  * Sent at any time to indicate an error.
  */
-
 interface ErrorEvent {
 	event: "error";
 	error: string;
