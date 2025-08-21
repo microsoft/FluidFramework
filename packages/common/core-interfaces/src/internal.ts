@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// The "internal" exports are a superset of the standard ones. So, we want to export everything from the standard barrel file.
 // eslint-disable-next-line no-restricted-syntax, @typescript-eslint/no-restricted-imports
 export * from "./index.js";
 
