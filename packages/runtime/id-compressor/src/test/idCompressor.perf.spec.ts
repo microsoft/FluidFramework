@@ -10,7 +10,7 @@ import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { IdCompressor } from "../idCompressor.js";
-import {
+import type {
 	IdCreationRange,
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
@@ -30,8 +30,8 @@ import {
 	sessionIds,
 } from "./idCompressorTestUtilities.js";
 import {
-	FinalCompressedId,
-	LocalCompressedId,
+	type FinalCompressedId,
+	type LocalCompressedId,
 	fail,
 	isFinalId,
 	isLocalId,

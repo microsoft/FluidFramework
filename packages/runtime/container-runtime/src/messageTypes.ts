@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IdCreationRange } from "@fluidframework/id-compressor/internal";
-import {
+import type {
 	IAttachMessage,
 	IEnvelope,
 	InboundAttachMessage,
 } from "@fluidframework/runtime-definitions/internal";
 
-import { IDataStoreAliasMessage } from "./dataStore.js";
-import { GarbageCollectionMessage } from "./gc/index.js";
-import { IChunkedOp } from "./opLifecycle/index.js";
-import {
-	type IDocumentSchemaChangeMessageIncoming,
-	type IDocumentSchemaChangeMessageOutgoing,
+import type { IDataStoreAliasMessage } from "./dataStore.js";
+import type { GarbageCollectionMessage } from "./gc/index.js";
+import type { IChunkedOp } from "./opLifecycle/index.js";
+import type {
+	IDocumentSchemaChangeMessageIncoming,
+	IDocumentSchemaChangeMessageOutgoing,
 } from "./summary/index.js";
 
 /**

@@ -7,8 +7,8 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { v4 } from "uuid";
 
-import { LocalCompressedId, NumericUuid } from "./identifiers.js";
-import { SessionId, StableId } from "./types/index.js";
+import type { LocalCompressedId, NumericUuid } from "./identifiers.js";
+import type { SessionId, StableId } from "./types/index.js";
 
 const hexadecimalCharCodes = [..."09afAF"].map((c) => c.codePointAt(0)) as [
 	zero: number,

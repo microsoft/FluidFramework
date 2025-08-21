@@ -4,24 +4,24 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import {
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type {
 	IDisposable,
 	IEvent,
-	type ITelemetryBaseLogger,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
-	IDocumentMessage,
-	ISummaryAck,
-	ISummaryContent,
-	ISummaryNack,
+	type IDocumentMessage,
+	type ISummaryAck,
+	type ISummaryContent,
+	type ISummaryNack,
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 /**

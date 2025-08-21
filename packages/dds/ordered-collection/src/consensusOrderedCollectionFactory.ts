@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelServices,
@@ -11,7 +11,7 @@ import {
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { ConsensusQueueClass } from "./consensusQueue.js";
-import {
+import type {
 	IConsensusOrderedCollection,
 	IConsensusOrderedCollectionFactory,
 } from "./interfaces.js";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IDeltaManager,
 	ContainerWarning,
 } from "@fluidframework/container-definitions/internal";
@@ -11,18 +11,18 @@ import type {
 	ISummarizerEvents,
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
-import {
+import type {
 	IEventProvider,
 	ITelemetryBaseProperties,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
-import {
+import type { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
+import type {
 	ITelemetryLoggerExt,
 	ITelemetryLoggerPropertyBag,
 } from "@fluidframework/telemetry-utils/internal";
