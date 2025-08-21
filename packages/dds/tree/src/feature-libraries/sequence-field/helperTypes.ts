@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { TAnySchema } from "@sinclair/typebox";
 import type { DiscriminatedUnionLibrary, IJsonCodec } from "../../codec/index.js";
 import type {
 	ChangeAtomId,
@@ -53,7 +52,9 @@ export interface SequenceCodecHelpers {
 	) => Encoded.MarkEffect;
 
 	readonly decodeMarkEffect: (
-		encoded: Encoded.Mark<TAnySchema>,
+		encoded: Encoded.MarkEffect,
+		count: number,
+		cellId: ChangeAtomId | undefined,
 		context: FieldChangeEncodingContext,
 	) => MarkEffect;
 
@@ -66,7 +67,7 @@ export interface SequenceCodecHelpers {
 		Encoded.MarkEffect,
 		/* args */ [
 			count: number,
-			cellId: EncodedChangeAtomId | undefined,
+			cellId: ChangeAtomId | undefined,
 			context: FieldChangeEncodingContext,
 		],
 		MarkEffect

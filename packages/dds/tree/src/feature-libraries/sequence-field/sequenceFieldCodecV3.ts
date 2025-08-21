@@ -7,6 +7,7 @@ import type { TAnySchema } from "@sinclair/typebox";
 
 import { DiscriminatedUnionDispatcher, type IJsonCodec } from "../../codec/index.js";
 import type {
+	ChangeAtomId,
 	ChangeEncodingContext,
 	EncodedRevisionTag,
 	RevisionTag,
@@ -17,9 +18,9 @@ import { Changeset as ChangesetSchema, type Encoded } from "./formatV3.js";
 import type { Changeset, Mark, MarkEffect, Rename } from "./types.js";
 import { isNoopMark } from "./utils.js";
 import type { FieldChangeEncodingContext } from "../index.js";
-import { EncodedNodeChangeset, type EncodedChangeAtomId } from "../modular-schema/index.js";
+import { EncodedNodeChangeset } from "../modular-schema/index.js";
 import { makeV2CodecHelpers } from "./sequenceFieldCodecV2.js";
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 export function makeV3Codec(
 	revisionTagCodec: IJsonCodec<
@@ -58,22 +59,19 @@ export function makeV3Codec(
 	}
 
 	function decodeMarkEffect(
-		encoded: Encoded.Mark<TAnySchema>,
+		encoded: Encoded.MarkEffect,
+		count: number,
+		cellId: ChangeAtomId | undefined,
 		context: FieldChangeEncodingContext,
 	): MarkEffect {
-		return decoderLibrary.dispatch(
-			encoded.effect ?? fail("Cannot decode effect for noop mark"),
-			encoded.count,
-			encoded.cellId,
-			context,
-		);
+		return decoderLibrary.dispatch(encoded, count, cellId, context);
 	}
 
 	const decoderLibrary = new DiscriminatedUnionDispatcher<
 		Encoded.MarkEffect,
 		/* args */ [
 			count: number,
-			cellId: EncodedChangeAtomId | undefined,
+			cellId: ChangeAtomId | undefined,
 			context: FieldChangeEncodingContext,
 		],
 		MarkEffect
@@ -82,7 +80,7 @@ export function makeV3Codec(
 		rename(
 			encoded: Encoded.Rename,
 			count: number,
-			cellId: EncodedChangeAtomId | undefined,
+			cellId: ChangeAtomId | undefined,
 			context: FieldChangeEncodingContext,
 		): Rename {
 			return {
@@ -136,14 +134,19 @@ export function makeV3Codec(
 					count: mark.count,
 				};
 
-				if (mark.effect !== undefined) {
-					Object.assign(decodedMark, decodeMarkEffect(mark, context));
-					assert(mark.effect.rename === undefined, "XXX");
-					assert(mark.effect.attachAndDetach === undefined, "XXX");
-				}
 				if (mark.cellId !== undefined) {
 					decodedMark.cellId = atomIdCodec.decode(mark.cellId, context.baseContext);
 				}
+
+				if (mark.effect !== undefined) {
+					Object.assign(
+						decodedMark,
+						decodeMarkEffect(mark.effect, mark.count, decodedMark.cellId, context),
+					);
+					assert(mark.effect.rename === undefined, "XXX");
+					assert(mark.effect.attachAndDetach === undefined, "XXX");
+				}
+
 				if (mark.changes !== undefined) {
 					assert(mark.cellId === undefined, "XXX");
 					decodedMark.changes = context.decodeNode(mark.changes);
