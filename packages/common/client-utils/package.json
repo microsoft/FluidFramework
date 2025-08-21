@@ -216,7 +216,7 @@
 				"build:api-reports:browser:legacy"
 			],
 			"build:exports:browser:commonjs": [
-				"build:esnext"
+				"tsc"
 			],
 			"build:exports:browser:esnext": [
 				"build:esnext"
@@ -225,7 +225,10 @@
 				"tsc"
 			],
 			"build:exports:node:esnext": [
-				"tsc"
+				"build:esnext"
+			],
+			"check:exports:bundle-release-tags": [
+				"build:exports:browser:esnext"
 			],
 			"check:exports:cjs:indexBrowser": [
 				"build:exports:browser:commonjs"
