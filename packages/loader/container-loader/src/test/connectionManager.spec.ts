@@ -102,7 +102,10 @@ describe("connectionManager", () => {
 			() => mockDocumentService,
 			() => false,
 			client as IClient,
-			true /* reconnectAllowed */,
+			{
+				reconnectAllowed: true,
+				connectRetriesTimeoutMs: undefined /* no time limit */,
+			},
 			mockLogger.toTelemetryLogger(),
 			customProps ?? props,
 		);
@@ -387,17 +390,19 @@ describe("connectionManager", () => {
 		});
 	});
 
-	it("Connection retry timeout - throws error when delay exceeds remaining timeout", async () => {
+	it("Connect retries timeout - throws error when delay exceeds remaining timeout", async () => {
 		// Arrange
-		const timeoutMs = 5000; // 5 second timeout
+		const connectRetriesTimeoutMs = 5000; // 5 second timeout
 		const connectionManager = new ConnectionManager(
 			() => mockDocumentService,
 			() => false,
 			client as IClient,
-			true /* reconnectAllowed */,
+			{
+				reconnectAllowed: true,
+				connectRetriesTimeoutMs,
+			},
 			mockLogger.toTelemetryLogger(),
 			props,
-			timeoutMs, // Set the retry connection timeout
 		);
 
 		// Mock connectToDeltaStream to throw retryable errors that cause delays
@@ -422,7 +427,7 @@ describe("connectionManager", () => {
 				attempts: 2,
 				calculatedDelayMs: 6000, // The calculated delay that exceeded timeout
 				remainingTimeMs: 2000, // Should be positive but less than calculatedDelayMs
-				timeoutMs,
+				timeoutMs: connectRetriesTimeoutMs,
 			},
 		]);
 
@@ -432,17 +437,19 @@ describe("connectionManager", () => {
 		stubbedConnectToDeltaStream.restore();
 	});
 
-	it("Connection retry timeout - continues retrying when delay is within timeout", async () => {
+	it("Connect retries timeout - continues retrying when delay is within timeout", async () => {
 		// Arrange
-		const timeoutMs = 20000; // 20 second timeout (longer than test duration)
+		const connectRetriesTimeoutMs = 20000; // 20 second timeout (longer than test duration)
 		const connectionManager = new ConnectionManager(
 			() => mockDocumentService,
 			() => false,
 			client as IClient,
-			true /* reconnectAllowed */,
+			{
+				reconnectAllowed: true,
+				connectRetriesTimeoutMs,
+			},
 			mockLogger.toTelemetryLogger(),
 			props,
-			timeoutMs, // Set the retry connection timeout
 		);
 
 		// Mock connectToDeltaStream to throw retryable errors with short delays
@@ -464,7 +471,7 @@ describe("connectionManager", () => {
 		assert(!closed, "Connection manager should not close when retries are within timeout");
 		assert(
 			stubbedConnectToDeltaStream.callCount > 1,
-			"Should have made multiple connection attempts",
+			`Should have made multiple connection attempts (actual: ${stubbedConnectToDeltaStream.callCount})`,
 		);
 
 		// Verify no timeout telemetry was logged
@@ -476,16 +483,19 @@ describe("connectionManager", () => {
 		stubbedConnectToDeltaStream.restore();
 	});
 
-	it("Connection retry timeout - no timeout when retryConnectionTimeoutMs is undefined", async () => {
+	it("Connect retries timeout - no timeout when connectRetriesTimeoutMs is undefined", async () => {
 		// Arrange - Create connection manager without timeout
 		const connectionManager = new ConnectionManager(
 			() => mockDocumentService,
 			() => false,
 			client as IClient,
-			true /* reconnectAllowed */,
+			{
+				reconnectAllowed: true,
+				// No retries timeout
+				connectRetriesTimeoutMs: undefined,
+			},
 			mockLogger.toTelemetryLogger(),
 			props,
-			undefined, // No retry timeout
 		);
 
 		// Mock connectToDeltaStream to throw retryable errors
@@ -507,7 +517,7 @@ describe("connectionManager", () => {
 		assert(!closed, "Connection manager should not close when no timeout is set");
 		assert(
 			stubbedConnectToDeltaStream.callCount > 1,
-			"Should have made multiple connection attempts",
+			`Should have made multiple connection attempts (actual: ${stubbedConnectToDeltaStream.callCount})`,
 		);
 
 		// Verify no timeout telemetry was logged
