@@ -61,6 +61,7 @@ import {
 } from "./modularChangeFormat.js";
 import {
 	newCrossFieldRangeTable,
+	setInChangeAtomIdMap,
 	type ChangeAtomIdBTree,
 	type CrossFieldKeyTable,
 	type FieldChangeMap,
@@ -78,7 +79,6 @@ import {
 	getFirstAttachField,
 	getFirstDetachField,
 	newRootTable,
-	setInChangeAtomIdMap,
 	type FieldIdKey,
 } from "./modularChangeFamily.js";
 
@@ -286,8 +286,12 @@ function makeModularChangeCodec(
 					return decodeNode(encodedNode, { field: fieldId });
 				},
 
-				decodeRootNodeChange: (detachId, nodeId): void => {
-					setInChangeAtomIdMap(decodedRootTable.nodeChanges, detachId, nodeId);
+				decodeRootNodeChange: (detachId, encodedNode): void => {
+					setInChangeAtomIdMap(
+						decodedRootTable.nodeChanges,
+						detachId,
+						decodeNode(encodedNode, { root: detachId }),
+					);
 					decodedRootTable.detachLocations.set(detachId, 1, fieldId);
 				},
 

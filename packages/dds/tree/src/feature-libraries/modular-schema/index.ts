@@ -45,16 +45,20 @@ export {
 	type NestedChangesIndices,
 	type RootsInfo,
 } from "./fieldChangeHandler.js";
-export type {
-	CrossFieldKey,
-	CrossFieldKeyRange,
-	FieldChange,
-	FieldChangeMap,
-	FieldChangeset,
-	HasFieldChanges,
-	ModularChangeset,
-	NodeExistsConstraint,
-	NodeId,
+export {
+	type CrossFieldKey,
+	type CrossFieldKeyRange,
+	type FieldChange,
+	type FieldChangeMap,
+	type FieldChangeset,
+	type HasFieldChanges,
+	type ModularChangeset,
+	type NodeExistsConstraint,
+	type NodeId,
+	type ChangeAtomIdBTree,
+	getFromChangeAtomIdMap,
+	setInChangeAtomIdMap,
+	rangeQueryChangeAtomIdMap,
 } from "./modularChangeTypes.js";
 export {
 	convertGenericChange,

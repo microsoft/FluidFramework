@@ -1590,6 +1590,34 @@ describe("ModularChangeFamily integration", () => {
 			editor.move(fieldAPath, 1, 1, fieldAPath, 0);
 		}, tag1).change;
 
+		const editDetached = Change.build(
+			{
+				family,
+				maxId: 1,
+				roots: [
+					{
+						detachId: { revision: tag2, localId: brand(0) },
+						change: Change.nodeWithId(
+							0,
+							{ revision: tag1, localId: brand(1) },
+							Change.field(fieldB, sequence.identifier, [
+								MarkMaker.remove(1, { revision: tag1, localId: brand(0) }),
+							]),
+						),
+					},
+				],
+				detachedLocations: [
+					{
+						detachId: { revision: tag2, localId: brand(0) },
+						count: 1,
+						fieldId: { nodeId: undefined, field: fieldA },
+					},
+				],
+				revisions: [{ revision: tag1 }],
+			},
+			Change.field(fieldA, sequence.identifier, [MarkMaker.tomb(tag2, brand(0))]),
+		);
+
 		const moveAndRemove = buildTransaction((editor) => {
 			editor.move(fieldAPath, 1, 1, fieldAPath, 0);
 			editor.sequenceField(fieldAPath).remove(0, 1);
@@ -1601,7 +1629,7 @@ describe("ModularChangeFamily integration", () => {
 		const reviveAndMove = Change.build(
 			{
 				family,
-				maxId: 0,
+				maxId: 1,
 				renames: [
 					{
 						oldId,
@@ -1627,6 +1655,7 @@ describe("ModularChangeFamily integration", () => {
 				["move", move, context],
 				["move and remove", moveAndRemove, context],
 				["revive and move", reviveAndMove, context],
+				["edit detached", editDetached, context],
 			],
 		};
 

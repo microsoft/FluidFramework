@@ -236,6 +236,6 @@ export interface FieldChangeEncodingContext {
 	isDetachId(id: ChangeAtomId, count: number): RangeQueryEntry<ChangeAtomId, boolean>;
 
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
-	decodeRootNodeChange(detachId: ChangeAtomId, nodeId: NodeId): void;
+	decodeRootNodeChange(detachId: ChangeAtomId, encodedNode: EncodedNodeChangeset): void;
 	decodeRootRename(oldId: ChangeAtomId, newId: ChangeAtomId, count: number): void;
 }

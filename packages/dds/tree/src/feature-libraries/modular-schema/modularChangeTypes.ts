@@ -13,7 +13,13 @@ import {
 	type RevisionInfo,
 	type RevisionTag,
 } from "../../core/index.js";
-import { brand, RangeMap, type Brand, type TupleBTree } from "../../util/index.js";
+import {
+	brand,
+	RangeMap,
+	type Brand,
+	type RangeQueryResult,
+	type TupleBTree,
+} from "../../util/index.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
 
@@ -97,6 +103,40 @@ export interface RootNodeTable {
 }
 
 export type ChangeAtomIdBTree<V> = TupleBTree<[RevisionTag | undefined, ChangesetLocalId], V>;
+
+export function getFromChangeAtomIdMap<T>(
+	map: ChangeAtomIdBTree<T>,
+	id: ChangeAtomId,
+): T | undefined {
+	return map.get([id.revision, id.localId]);
+}
+
+export function rangeQueryChangeAtomIdMap<T>(
+	map: ChangeAtomIdBTree<T>,
+	id: ChangeAtomId,
+	count: number,
+): RangeQueryResult<ChangeAtomId, T> {
+	const pair = map.getPairOrNextHigher([id.revision, id.localId]);
+	if (pair === undefined) {
+		return { start: id, value: undefined, length: count };
+	}
+
+	const [[revision, localId], value] = pair;
+	const lengthBefore = subtractChangeAtomIds({ revision, localId }, id);
+	if (lengthBefore === 0) {
+		return { start: id, value, length: 1 };
+	}
+
+	return { start: id, value: undefined, length: Math.min(lengthBefore, count) };
+}
+
+export function setInChangeAtomIdMap<T>(
+	map: ChangeAtomIdBTree<T>,
+	id: ChangeAtomId,
+	value: T,
+): boolean {
+	return map.set([id.revision, id.localId], value);
+}
 
 export type CrossFieldRangeTable<T> = RangeMap<CrossFieldKey, T>;
 export type CrossFieldKeyTable = CrossFieldRangeTable<FieldId>;

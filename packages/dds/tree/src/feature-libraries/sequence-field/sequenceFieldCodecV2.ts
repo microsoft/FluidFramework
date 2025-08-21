@@ -42,9 +42,13 @@ import {
 	splitMark,
 } from "./utils.js";
 import type { FieldChangeEncodingContext } from "../index.js";
-import { EncodedNodeChangeset, type EncodedChangeAtomId } from "../modular-schema/index.js";
+import {
+	EncodedNodeChangeset,
+	getFromChangeAtomIdMap,
+	rangeQueryChangeAtomIdMap,
+	type EncodedChangeAtomId,
+} from "../modular-schema/index.js";
 import type { SequenceCodecHelpers } from "./helperTypes.js";
-import { rangeQueryChangeAtomIdMap } from "../modular-schema/modularChangeFamily.js";
 import { isMoveMark } from "./moveEffectTable.js";
 
 export function makeV2CodecHelpers(
@@ -170,6 +174,12 @@ function makeMarkEffectDecoder(
 			};
 
 			mark.revision = decodeRevision(revision, context.baseContext);
+
+			const attachId = getAttachedNodeId(mark);
+			if (cellId !== undefined && !areEqualChangeAtomIds(cellId, attachId)) {
+				context.decodeRootRename(cellId, attachId, count);
+			}
+
 			return mark;
 		},
 		remove(
@@ -254,6 +264,12 @@ function makeMarkEffectDecoder(
 							localId: encoded.detach.remove.id,
 						};
 
+			assert(cellId !== undefined, "Attach and detach should target an empty cell");
+			const isNodeMove = encoded.attach.moveIn !== undefined;
+			if (!isNodeMove) {
+				context.decodeRootRename(cellId, detachId, count);
+			}
+
 			return {
 				type: "Rename",
 				idOverride: detachId,
@@ -327,12 +343,14 @@ export function makeV2Codec(
 				}
 
 				if (mark.changes !== undefined) {
-					assert(mark.cellId === undefined, "XXX");
-					decodedMark.changes = context.decodeNode(mark.changes);
+					if (decodedMark.cellId !== undefined) {
+						context.decodeRootNodeChange(decodedMark.cellId, mark.changes);
+					} else {
+						decodedMark.changes = context.decodeNode(mark.changes);
+					}
 				}
 
 				marks.push(decodedMark);
-				reportRootChangesForMark(mark, decodedMark, context);
 			}
 			return marks;
 		},
@@ -455,9 +473,13 @@ function encodeSplitMark(
 		encodedMark.effect = encodeMarkEffect(mark, context, encodeRevision, changeAtomIdCodec);
 	}
 	if (mark.cellId !== undefined) {
+		assert(mark.changes === undefined, "Empty cells should not have node changes");
 		encodedMark.cellId = changeAtomIdCodec.encode(mark.cellId, context.baseContext);
-	}
-	if (mark.changes !== undefined) {
+		const nodeId = getFromChangeAtomIdMap(context.rootNodeChanges, mark.cellId);
+		if (nodeId !== undefined) {
+			encodedMark.changes = context.encodeNode(nodeId);
+		}
+	} else if (mark.changes !== undefined) {
 		encodedMark.changes = context.encodeNode(mark.changes);
 	}
 
@@ -521,35 +543,6 @@ function encodeMarkEffect(
 			fail(0xb2c /* Mark type: NoopMarkType should not be encoded. */);
 		default:
 			unreachableCase(type);
-	}
-}
-
-function reportRootChangesForMark(
-	encodedMark: Encoded.Mark<TAnySchema>,
-	mark: Mark,
-	context: FieldChangeEncodingContext,
-): void {
-	if (mark.cellId !== undefined && mark.changes !== undefined) {
-		context.decodeRootNodeChange(mark.cellId, mark.changes);
-	}
-
-	// Note that if the mark was encoded as a move-in, we do not report a rename.
-	if (encodedMark.effect?.insert !== undefined) {
-		assert(mark.type === "Insert", "Expected mark to have decoded to an insert.");
-		const attachId = getAttachedNodeId(mark);
-		if (mark.cellId !== undefined && !areEqualChangeAtomIds(mark.cellId, attachId)) {
-			context.decodeRootRename(mark.cellId, attachId, mark.count);
-		}
-	} else if (encodedMark.effect?.attachAndDetach !== undefined) {
-		assert(mark.cellId !== undefined, "Attach and detach should target an empty cell");
-		assert(mark.type === "Rename", "Expected attach and detach to decode to a rename");
-		const isNodeMove = encodedMark.effect.attachAndDetach.attach.moveIn !== undefined;
-		if (
-			!isNodeMove &&
-			encodedMark.effect.attachAndDetach.detach.remove?.id !== renameLocalId
-		) {
-			context.decodeRootRename(mark.cellId, mark.idOverride, mark.count);
-		}
 	}
 }
 

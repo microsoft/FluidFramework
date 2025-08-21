@@ -92,12 +92,15 @@ import {
 	type FieldChangeMap,
 	type FieldChangeset,
 	type FieldId,
+	getFromChangeAtomIdMap,
 	type ModularChangeset,
 	newCrossFieldRangeTable,
 	type NodeChangeset,
 	type NodeId,
 	type NodeLocation,
+	rangeQueryChangeAtomIdMap,
 	type RootNodeTable,
+	setInChangeAtomIdMap,
 } from "./modularChangeTypes.js";
 
 /**
@@ -3912,40 +3915,6 @@ interface ModularChangesetContent {
 	crossFieldKeys: CrossFieldKeyTable;
 }
 
-function getFromChangeAtomIdMap<T>(
-	map: ChangeAtomIdBTree<T>,
-	id: ChangeAtomId,
-): T | undefined {
-	return map.get([id.revision, id.localId]);
-}
-
-export function rangeQueryChangeAtomIdMap<T>(
-	map: ChangeAtomIdBTree<T>,
-	id: ChangeAtomId,
-	count: number,
-): RangeQueryResult<ChangeAtomId, T> {
-	const pair = map.getPairOrNextHigher([id.revision, id.localId]);
-	if (pair === undefined) {
-		return { start: id, value: undefined, length: count };
-	}
-
-	const [[revision, localId], value] = pair;
-	const lengthBefore = subtractChangeAtomIds({ revision, localId }, id);
-	if (lengthBefore === 0) {
-		return { start: id, value, length: 1 };
-	}
-
-	return { start: id, value: undefined, length: Math.min(lengthBefore, count) };
-}
-
-export function setInChangeAtomIdMap<T>(
-	map: ChangeAtomIdBTree<T>,
-	id: ChangeAtomId,
-	value: T,
-): boolean {
-	return map.set([id.revision, id.localId], value);
-}
-
 function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
 	return areEqualChangeAtomIdOpts(a.nodeId, b.nodeId) && a.field === b.field;
 }
@@ -4257,7 +4226,7 @@ function composeRename(
 	}
 }
 
-function cloneRootTable(table: RootNodeTable): RootNodeTable {
+export function cloneRootTable(table: RootNodeTable): RootNodeTable {
 	return {
 		oldToNewId: table.oldToNewId.clone(),
 		newToOldId: table.newToOldId.clone(),

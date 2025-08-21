@@ -41,6 +41,7 @@ import {
 	type FieldId,
 	type NodeChangeset,
 	type NodeLocation,
+	type RootNodeTable,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
@@ -58,6 +59,7 @@ import {
 } from "../../../util/index.js";
 import {
 	addNodeRename,
+	cloneRootTable,
 	getChangeHandler,
 	getFieldKind,
 	getNodeParent,
@@ -201,12 +203,21 @@ function normalizeNodeIds(change: ModularChangeset): ModularChangeset {
 		return normalizedFieldChanges;
 	}
 
-	// TODO: Normalize IDs for detached roots
+	function normalizeRootNodeIds(roots: RootNodeTable): RootNodeTable {
+		const normalizedRoots: RootNodeTable = cloneRootTable(roots);
+		for (const [detachId, nodeId] of roots.nodeChanges.entries()) {
+			normalizedRoots.nodeChanges.set(detachId, normalizeNodeChanges(nodeId));
+		}
+		return normalizedRoots;
+	}
+
 	const fieldChanges = normalizeNodeIdsInFields(change.fieldChanges);
-	assert(nodeChanges.size + change.rootNodes.nodeChanges.size === change.nodeChanges.size);
+	const rootNodes = normalizeRootNodeIds(change.rootNodes);
+	assert(nodeChanges.size === change.nodeChanges.size);
 
 	const normal: Mutable<ModularChangeset> = {
 		...change,
+		rootNodes,
 		nodeChanges,
 		fieldChanges,
 		nodeToParent,
@@ -487,6 +498,7 @@ interface BuildArgs {
 	revisions?: RevisionInfo[];
 	renames?: RenameDescription[];
 	roots?: { detachId: ChangeAtomId; change: NodeChangesetDescription }[];
+	detachedLocations?: { detachId: ChangeAtomId; count: number; fieldId: FieldId }[];
 }
 
 function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): ModularChangeset {
@@ -548,6 +560,12 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 				rename.count,
 				rename.detachLocation,
 			);
+		}
+	}
+
+	if (args.detachedLocations !== undefined) {
+		for (const { detachId, count, fieldId } of args.detachedLocations) {
+			rootNodes.detachLocations.set(detachId, count, fieldId);
 		}
 	}
 
