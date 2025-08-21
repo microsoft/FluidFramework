@@ -229,16 +229,10 @@ export class SchematizingSimpleTreeView<
 		return this.flexTreeContext;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
-	 */
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
-	/**
-	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
-	 */
 	public runTransaction(
 		transaction: () => VoidTransactionCallbackStatus | void,
 		params?: RunTransactionParams,
@@ -250,6 +244,8 @@ export class SchematizingSimpleTreeView<
 			| void,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
+		const {preconditions, deferEvents} = params ?? {};
+
 		const addConstraints = (
 			constraintsOnRevert: boolean,
 			constraints: readonly TransactionConstraint[] = [],
@@ -259,8 +255,10 @@ export class SchematizingSimpleTreeView<
 
 		this.checkout.transaction.start();
 
+		// TODO: defer events if set
+
 		// Validate preconditions before running the transaction callback.
-		addConstraints(false /* constraintsOnRevert */, params?.preconditions);
+		addConstraints(false /* constraintsOnRevert */, preconditions);
 		const transactionCallbackStatus = transaction();
 		const rollback = transactionCallbackStatus?.rollback;
 		const value = (
@@ -279,6 +277,8 @@ export class SchematizingSimpleTreeView<
 			true /* constraintsOnRevert */,
 			transactionCallbackStatus?.preconditionsOnRevert,
 		);
+
+		// TODO: flush events (if deferEvents)
 
 		this.checkout.transaction.commit();
 		return value !== undefined
