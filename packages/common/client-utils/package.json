@@ -35,7 +35,15 @@
 				}
 			}
 		},
-		"./internal-api-report": {
+		"./internal-api-report/beta": {
+			"import": {
+				"types": {
+					"browser beta": "./lib/client-utils.browser.beta.d.ts",
+					"node beta": "./lib/client-utils.node.beta.d.ts"
+				}
+			}
+		},
+		"./internal-api-report/legacy": {
 			"import": {
 				"types": {
 					"browser legacy": "./lib/client-utils.browser.legacy.d.ts",
