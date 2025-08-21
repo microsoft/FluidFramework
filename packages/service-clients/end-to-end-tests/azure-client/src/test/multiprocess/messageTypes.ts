@@ -63,9 +63,6 @@ interface RegisterWorkspaceCommand {
 }
 
 /**
- * Message types sent from the child processes to the orchestrator
- */
-/**
  * Instructs a child process to set the latest value.
  * We then can wait for {@link LatestValueUpdatedEvent} from other clients to know when the latest value is updated.
  */
