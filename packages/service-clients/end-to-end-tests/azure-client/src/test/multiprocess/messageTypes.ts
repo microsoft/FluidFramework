@@ -34,11 +34,6 @@ export interface ConnectCommand {
 	 * The ID of the Fluid container to connect to.
 	 * If not provided, a new Fluid container will be created.
 	 */
-	/**
-	 * The ID of the Fluid container to connect to.
-	 * If not provided, a new Fluid container will be created.
-	 */
-
 	containerId?: string;
 }
 
