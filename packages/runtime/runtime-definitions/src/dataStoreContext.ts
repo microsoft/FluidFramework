@@ -51,8 +51,7 @@ import type {
 
 /**
  * Runtime flush mode handling
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum FlushMode {
 	/**
@@ -89,8 +88,7 @@ export enum FlushModeExperimental {
 /**
  * This tells the visibility state of a Fluid object. It basically tracks whether the object is not visible, visible
  * locally within the container only or visible globally to all clients.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const VisibilityState = {
 	/**
@@ -117,14 +115,12 @@ export const VisibilityState = {
 	GloballyVisible: "GloballyVisible",
 };
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilityState];
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  * @sealed
  */
 export interface IContainerRuntimeBaseEvents extends IEvent {
@@ -162,8 +158,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
  * and will be garbage collected. The current datastore cannot be aliased to a different value.
  *
  * 'AlreadyAliased' - the datastore has already been previously bound to another alias name.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
@@ -179,8 +174,7 @@ export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
  * @privateRemarks
  * TODO: These docs should define what a "data store" is, and not do so by just referencing "data store".
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDataStore {
 	/**
@@ -204,8 +198,7 @@ export interface IDataStore {
  * A reduced set of functionality of {@link @fluidframework/container-runtime-definitions#IContainerRuntime} that a data store context/data store runtime will need.
  * @privateRemarks
  * TODO: this should be merged into IFluidDataStoreContext
- * @legacy
- * @alpha
+ * @legacy @beta
  * @sealed
  */
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
@@ -377,8 +370,7 @@ export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase
  * Policies allow data store authors to define specific behaviors or constraints for their data stores.
  * These settings can impact how the data store interacts with the runtime and other components.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidDataStorePolicies {
 	/**
@@ -396,8 +388,7 @@ export interface IFluidDataStorePolicies {
  *
  * Functionality include attach, snapshot, op/signal processing, request routes, expose an entryPoint,
  * and connection state notifications
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidDataStoreChannel extends IDisposable {
 	/**
@@ -517,8 +508,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type CreateChildSummarizerNodeFn = (
 	summarizeInternal: SummarizeInternalFn,
@@ -550,8 +540,7 @@ export interface IPendingMessagesState {
  * @privateRemarks
  * In addition to the use for datastores via IFluidDataStoreContext, this is implemented by ContainerRuntime to provide context to the ChannelCollection.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidParentContext
 	extends IProvideFluidHandleContext,
@@ -683,8 +672,7 @@ export interface IFluidParentContext
  * Each string in the array is the "identifier" to pick a specific {@link NamedFluidDataStoreRegistryEntry2} within a {@link NamedFluidDataStoreRegistryEntries}.
  *
  * Due to some usages joining this array with "/", it is recommended to avoid using "/" in the strings.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type PackagePath = readonly string[];
 
@@ -694,8 +682,7 @@ export type PackagePath = readonly string[];
  * @remarks
  * This context is provided to the implementation of {@link IFluidDataStoreChannel} which powers the datastore.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidDataStoreContext extends IFluidParentContext {
 	readonly id: string;
@@ -756,8 +743,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
 	/**
