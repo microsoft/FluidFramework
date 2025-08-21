@@ -432,8 +432,8 @@ export class TaskManagerClass
 			disconnectHandler();
 		} else if (!this.assigned(taskId) && !this.queuedOptimistically(taskId)) {
 			const latestPendingOp = this.latestPendingOps.get(taskId);
-			if (latestPendingOp === undefined || latestPendingOp.type === "volunteer") {
-				// We don't need to send a volunteer op unless this task is not already a volunteer op.
+			if (latestPendingOp?.type !== "volunteer") {
+				// We don't need to send a second volunteer op if we just sent one.
 				submitVolunteerOp();
 			}
 		}
