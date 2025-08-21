@@ -1,281 +1,109 @@
 ---
 title: Rolling Out New Allowed Types
-sidebar_position: 1
+sidebar_position: 2
 ---
 
 # Rolling Out New Allowed Types
 
-This guide shows you how to safely add new allowed types to existing fields in your [SharedTree](../../index.mdx) schema without breaking compatibility with existing applications.
+This guide shows you how to safely add new allowed types to existing fields in your [SharedTree](../index.mdx) schema without breaking forwards compatibility with existing applications.
 
-## The Challenge
-
-When you want to add a new node type to an existing field, you face a deployment challenge:
-
-- **Old clients** can't read documents with the new type
-- **New clients** need to support both old and new document formats
-- **Mixed deployments** mean some users have old versions, some have new
-
-Direct addition of new types would break old clients immediately.
-
-## The Solution: Staged Rollout
-
-Use the [`staged()`](../../../api/fluid-framework/schemastaticsalpha-interface#staged-method) method to roll out new types in two phases:
-
-1. **Phase 1: Reading support** - Deploy ability to read the new type 
-2. **Phase 2: Creation support** - Deploy ability to create the new type
+If you directly add a new node type to an existing field, old clients won't be able to load documents that contain the new type, breaking them immediately.
+The following process stages changes to introduce new allowed types in a non-breaking way.
 
 ## Step-by-Step Guide
 
-### Step 1: Define Your New Type
+The example below walks through the process of adding string support to a field that previously only supported numbers.
+The full code can be found in our [tests](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts).
+There are some differences because this guide describes the example as a real scenario involving code deployments while the full code example uses test utilities to emulate this.
 
-Create the new node type you want to add:
-
+We start with a schema that only supports numbers and initialize the tree with it:
 ```typescript
-import { SchemaFactory } from "@fluidframework/tree";
+// Schema A: only number allowed
+const schemaA = SchemaFactoryAlpha.optional([SchemaFactoryAlpha.number]);
 
-const factory = new SchemaFactory("MyApp");
-
-// Existing content types
-class TextContent extends factory.object("TextContent", {
-    text: factory.string,
-}) {}
-
-class ImageContent extends factory.object("ImageContent", {
-    url: factory.string,
-    alt: factory.string,
-}) {}
-
-// New type to add
-class VideoContent extends factory.object("VideoContent", {
-    url: factory.string,
-    duration: factory.optional(factory.number),
-}) {}
+// initialize with schema A
+const configA = new TreeViewConfiguration({
+    schema: schemaA,
+});
+const viewA = treeA.viewWith(configA);
+viewA.initialize(5);
+synchronizeTrees();
 ```
 
-### Step 2: Stage the New Type
+### Step 1: Define and Stage the New Allowed Type
 
-Import the alpha APIs and use [`staged()`](../../../api/fluid-framework/schemastaticsalpha-interface#staged-method) to mark the new type:
+To add support for reading strings, we import the alpha APIs and use [`staged`](../../../api/fluid-framework/schemastaticsalpha-interface#staged-method) to mark the new allowed type:
 
 ```typescript
-import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
-
-class Document extends factory.object("Document", {
-    title: factory.string,
-    content: factory.array([
-        TextContent,
-        ImageContent,
-        SchemaFactoryAlpha.staged(VideoContent), // Staged for reading only
-    ]),
-}) {}
+// Schema B: number or string (string is staged)
+const schemaB = SchemaFactoryAlpha.optional([
+    SchemaFactoryAlpha.number,
+    SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+]);
 ```
 
-### Step 3: Deploy Reading Support
+### Step 2: Upgrade the Schema to Deploy Reading Support
 
-Deploy this version to all clients.
+We can now deploy `schemaB` to clients as a complete replacement to `schemaA`.
+At this point, new clients will be able to read documents containing strings and old documents will not.
+This is safe because no clients have the ability to insert strings into the document.
 
-**What happens now:**
-- ✅ **All clients can read** documents containing VideoContent
-- ❌ **No clients can create** new VideoContent yet
-- ✅ **Old clients without VideoContent** continue working normally
+```typescript
+// view second tree with schema B
+const configB = new TreeViewConfiguration({
+    schema: schemaB,
+});
+const viewB = treeB.viewWith(configB);
+// check that we can read the tree
+assert.deepEqual(viewB.root, 5);
+// upgrade to schema B: this is a no-op
+viewB.upgradeSchema();
+synchronizeTrees();
 
-### Step 4: Wait for Full Deployment
+// check view A can read the document
+assert.deepEqual(viewA.root, 5);
+// check view B cannot write strings to the root
+assert.throws(() => {
+    viewB.root = "test";
+});
+```
+
+For this schema change, `upgradeSchema` does not need to be called because [`staged`](../../../api/fluid-framework/schemastaticsalpha-interface#staged-method) allowed types are removed from stored schemas.
+Upgrading the schema would result in a noop.
+
+### Step 3: Wait for Client Saturation
 
 Ensure all clients in your deployment have the staged support before proceeding.
 Monitor your deployment to confirm coverage.
 
-### Step 5: Promote to Full Support
+TODO link staged rollouts page
 
-Once all clients have reading support, remove the [`staged()`](../../../api/fluid-framework/schemastaticsalpha-interface#staged-method) wrapper:
+### Step 4: Upgrade to Allow Inserting the New Allowed Type
 
-```typescript
-class Document extends factory.object("Document", {
-    title: factory.string,
-    content: factory.array([
-        TextContent,
-        ImageContent,
-        VideoContent, // Now fully supported - can read AND create
-    ]),
-}) {}
-```
-
-### Step 6: Deploy Creation Support
-
-Deploy this final version.
-
-**What happens now:**
-- ✅ **All clients can read** documents with VideoContent
-- ✅ **All clients can create** new VideoContent
-- ✅ **Full feature rollout** is complete
-
-## Rollout Timeline Example
-
-Here's a practical timeline for rolling out video support in a document editor:
+Once client saturation has been reached, remove the [`staged()`](../../../api/fluid-framework/schemastaticsalpha-interface#staged-method) wrapper from the new allowed type and call `upgradeSchema` to make a change to the stored schema:
 
 ```typescript
-// Week 1: Deploy staged support everywhere
-class Document extends factory.object("Document", {
-    title: factory.string,
-    content: factory.array([
-        TextContent,
-        ImageContent,
-        SchemaFactoryAlpha.staged(VideoContent),
-    ]),
-}) {}
+// Schema C: number or string, both fully allowed
+const schemaC = SchemaFactoryAlpha.optional([
+    SchemaFactoryAlpha.number,
+    SchemaFactoryAlpha.string,
+]);
 
-// Week 3: Promote to full support (after confirming deployment)
-class Document extends factory.object("Document", {
-    title: factory.string,
-    content: factory.array([
-        TextContent,
-        ImageContent,
-        VideoContent, // No longer staged
-    ]),
-}) {}
+// view third tree with schema C
+const configC = new TreeViewConfiguration({
+    schema: schemaC,
+});
+const viewC = treeC.viewWith(configC);
+// upgrade to schema C and change the root to a string
+viewC.upgradeSchema();
+viewC.root = "test";
+synchronizeTrees();
 ```
 
-## Advanced Rollout Strategies
-
-### Feature Flag Integration
-
-Combine [`staged()`](../../../api/fluid-framework/schemastaticsalpha-interface#staged-method) with feature flags for safer roll-outs:
-
-```typescript
-const enableVideoContent = featureFlags.videoSupport;
-
-const contentTypes = [
-    TextContent,
-    ImageContent,
-    ...(enableVideoContent ? [SchemaFactoryAlpha.staged(VideoContent)] : []),
-];
-
-class Document extends factory.object("Document", {
-    title: factory.string,
-    content: factory.array(contentTypes),
-}) {}
-```
-
-### Multiple Type Staging
-
-Stage multiple new types simultaneously:
-
-```typescript
-class Document extends factory.object("Document", {
-    title: factory.string,
-    content: factory.array([
-        TextContent,
-        ImageContent,
-        // Stage multiple types together
-        SchemaFactoryAlpha.staged(VideoContent),
-        SchemaFactoryAlpha.staged(AudioContent),
-        SchemaFactoryAlpha.staged(EmbedContent),
-    ]),
-}) {}
-```
-
-### Gradual Promotion
-
-Promote types individually based on adoption metrics:
-
-```typescript
-// Week 1: Stage all types
-content: factory.array([
-    TextContent,
-    ImageContent,
-    SchemaFactoryAlpha.staged(VideoContent),
-    SchemaFactoryAlpha.staged(AudioContent),
-])
-
-// Week 3: Promote video, keep audio staged
-content: factory.array([
-    TextContent,
-    ImageContent,
-    VideoContent, // Promoted
-    SchemaFactoryAlpha.staged(AudioContent), // Still staged
-])
-
-// Week 5: Promote audio
-content: factory.array([
-    TextContent,
-    ImageContent,
-    VideoContent,
-    AudioContent, // Now promoted
-])
-```
-
-## Common Mistakes to Avoid
-
-### ❌ Skipping the Staged Phase
-
-```typescript
-// DON'T: Jump directly to full support
-content: factory.array([
-    TextContent,
-    ImageContent,
-    VideoContent, // ❌ Old clients will break
-])
-```
-
-### ❌ Promoting Too Quickly
-
-```typescript
-// DON'T: Promote before all clients have staged support
-// Week 1: Deploy staged
-// Week 1.5: Promote (❌ Too fast! Some clients still don't have staging)
-```
-
-### ❌ Using [`staged()`](../../../api/fluid-framework/schemastaticsalpha-interface#staged-method) for Required Fields
-
-```typescript
-// DON'T: Stage required fields in objects
-class User extends factory.object("User", {
-    name: factory.string,
-    email: SchemaFactoryAlpha.staged(factory.string), // ❌ Breaks existing users
-}) {}
-```
-
-## Monitoring Your Rollout
-
-### Track Deployment Progress
-
-Monitor which clients have the staged support:
-
-```typescript
-// Add telemetry to track staged support
-const hasVideoSupport = 'VideoContent' in factory;
-telemetry.track('clientCapabilities', { hasVideoSupport });
-```
-
-### Validate Mixed Environments
-
-Test scenarios with mixed client versions:
-
-1. **Old client** opens document with new content
-2. **New client with staging** opens old document
-3. **New client with staging** opens document with new content
-4. **Fully updated client** creates and edits new content
-
-### Monitor Error Rates
-
-Watch for schema validation errors during rollout phases:
-
-- Spikes during initial staged deployment
-- Issues when promoting staged types
-- Problems with mixed-version collaboration
-
-## When Not to Use This Guide
-
-This staged rollout approach is **not needed** for:
-
-- **Adding optional fields** to existing node types (safe by default)
-- **Single-deployment scenarios** where all clients update simultaneously  
-- **Breaking changes** (require different migration strategies)
-- **Development/testing environments** with controlled client versions
-
-For these cases, direct schema updates are simpler and appropriate.
+Any client code changes to add functionality for inserting the new allowed type can also be deployed in this step.
 
 ## See Also
 
-- [Schema Evolution](./index.mdx) - Overview of schema evolution strategies
 - [`SchemaStaticsAlpha.staged()` API](../../../api/fluid-framework/schemastaticsalpha-interface#staged-method) - API documentation
-- [Schema Definition](../../schema-definition.mdx) - How to define schemas
-- [Node Types](../../node-types.mdx) - Understanding different node types
+- [Schema Definition](../schema-definition.mdx) - How to define schemas
+- [Node Types](../node-types.mdx) - Understanding different node types

@@ -72,8 +72,9 @@ export interface SchemaStaticsAlpha {
 	 * Declares a staged type in a set of {@link AllowedTypes}.
 	 *
 	 * @remarks
-	 * Staged allowed types add support for loading documents which may or may not permit an allowed type in a location in a schema.
+	 * Staged allowed types add support for loading documents which may contain that type at the declared location.
 	 * This allows for an incremental rollout of a schema change to add a {@link TreeNodeSchema} to an {@link AllowedTypes} without breaking cross version collaboration.
+	 * A guide on this process can be found here: https://fluidframework.com/docs/data-structures/tree//schema-evolution/allowed-types-rollout
 	 *
 	 * Once enough clients have the type staged (and thus can read documents which allow it), documents can start being created and upgraded to allow the staged type.
 	 * This is done by deploying a new version of the app which removes the `staged` wrapper around the allowed type in the the schema definition.
@@ -84,7 +85,7 @@ export interface SchemaStaticsAlpha {
 	 * 1. {@link TreeView.initialize} will omit the staged allowed type from the newly created stored schema.
 	 * 2. {@link TreeView.upgradeSchema} will omit the staged allowed type from the the upgraded stored schema.
 	 * 3. When evaluating {@link TreeView.compatibility}, it will be viewable even if the staged allowed type is not present in the stored schema's corresponding allowed types.
-	 * 4. Because of the above, it is possible to get errors when inserting content which uses the staged allowed type when inserting the content into a tree who's stored schema does not permit it.
+	 * 4. Because of the above, it is possible to get errors when inserting content which uses the staged allowed type into a tree whose stored schema does not permit it.
 	 *
 	 * Currently, `staged` is not supported in the recursive type APIs: this is a known limitation which future versions of the API will address.
 	 *
@@ -120,64 +121,6 @@ export interface SchemaStaticsAlpha {
 	 * const configAfter = new TreeViewConfigurationAlpha({
 	 * 	schema: [A, B],
 	 * });
-	 * ```
-	 * @example
-	 * Below is a full example of how the schema migration process works.
-	 * This can also be found in our {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts | tests}.
-	 * ```typescript
-	 * // Schema A: only number allowed
-	 * const schemaA = SchemaFactoryAlpha.optional([SchemaFactoryAlpha.number]);
-	 *
-	 * // Schema B: number or string (string is staged)
-	 * const schemaB = SchemaFactoryAlpha.optional([
-	 * 	SchemaFactoryAlpha.number,
-	 * 	SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-	 * ]);
-	 *
-	 * // Schema C: number or string, both fully allowed
-	 * const schemaC = SchemaFactoryAlpha.optional([
-	 * 	SchemaFactoryAlpha.number,
-	 * 	SchemaFactoryAlpha.string,
-	 * ]);
-	 *
-	 * // Initialize with schema A.
-	 * const configA = new TreeViewConfiguration({
-	 * 	schema: schemaA,
-	 * });
-	 * const viewA = treeA.viewWith(configA);
-	 * viewA.initialize(5);
-	 *
-	 * // Since we are running all the different versions of the app in the same process making changes synchronously,
-	 * // an explicit flush is needed to make them available to each other.
-	 * synchronizeTrees();
-	 *
-	 * assert.deepEqual(viewA.root, 5);
-	 *
-	 * // View the same document with a second tree using schema B.
-	 * const configB = new TreeViewConfiguration({
-	 * 	schema: schemaB,
-	 * });
-	 * const viewB = treeB.viewWith(configB);
-	 * // B cannot write strings to the root.
-	 * assert.throws(() => (viewB.root = "test"));
-	 *
-	 * // View the same document with a third tree using schema C.
-	 * const configC = new TreeViewConfiguration({
-	 * 	schema: schemaC,
-	 * });
-	 * const viewC = treeC.viewWith(configC);
-	 * // Upgrade to schema C
-	 * viewC.upgradeSchema();
-	 * // Use the newly enabled schema.
-	 * viewC.root = "test";
-	 *
-	 * synchronizeTrees();
-	 *
-	 * // View A is now incompatible with the stored schema:
-	 * assert.equal(viewA.compatibility.canView, false);
-	 *
-	 * // View B can still read the document, and now sees the string root which relies on the staged schema.
-	 * assert.deepEqual(viewB.root, "test");
 	 * ```
 	 * @privateRemarks
 	 * TODO:#44317 staged allowed types rely on schema validation of stored schema to output errors, these errors are not very
