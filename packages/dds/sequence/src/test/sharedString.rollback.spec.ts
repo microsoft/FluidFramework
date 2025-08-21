@@ -365,7 +365,7 @@ describe("SharedString replaceText with rollback and two clients", () => {
 		cr1.rollback?.();
 		assert.equal(client1.getText(), "abcdef", "rollback restores original text on Client1");
 
-		// Rollback Client1 before flushing
+		// Rollback Client2 before flushing
 		cr2.rollback?.();
 		assert.equal(client2.getText(), "abcdef", "rollback restores original text on Client2");
 
