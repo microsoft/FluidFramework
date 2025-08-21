@@ -445,9 +445,8 @@ export class TaskManagerClass
 	 */
 	public abandon(taskId: string): void {
 		// Always allow abandon if the client is subscribed to allow clients to unsubscribe while disconnected.
-		// Otherwise, we should check to make sure the client is both connected queued for the task before sending an
-		// abandon op.
-		if (!this.queuedOptimistically(taskId) && !this.subscribed(taskId) && !this.connected) {
+		// Otherwise, we should check to make sure the client is optimistically queued for the task before trying to abandon.
+		if (!this.queuedOptimistically(taskId) && !this.subscribed(taskId)) {
 			// Nothing to do
 			return;
 		}
@@ -461,17 +460,17 @@ export class TaskManagerClass
 		}
 
 		if (this.queuedOptimistically(taskId)) {
+			this.submitAbandonOp(taskId);
 			if (!this.assigned(taskId)) {
-				// If we try to abandon when queued but not assigned  then we should emit to the abandonWatcher as this is
-				// not allowed and will throw an error in the volunteer promise.
+				// If we try to abandon when queued but not assigned then we should emit to the abandonWatcher
+				// to ensure that the volunteer promise is rejected.
 				this.abandonWatcher.emit("abandon", taskId);
 			}
-			this.submitAbandonOp(taskId);
 		} else if (this.subscribed(taskId) && !this.connected) {
 			// If we are subscribed, not queued, and offline, then we should still submit the
 			// abandon op/event to ensure we abandon the subscription when reconnecting.
-			this.abandonWatcher.emit("abandon", taskId);
 			this.submitAbandonOp(taskId);
+			this.abandonWatcher.emit("abandon", taskId);
 		}
 	}
 
