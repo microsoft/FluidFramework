@@ -13,18 +13,18 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { Trace } from "@fluid-internal/client-utils";
-import { IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { type IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import JsDiff from "diff";
 
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import {
-	KeyComparer,
-	Property,
-	PropertyAction,
+	type KeyComparer,
+	type Property,
+	type PropertyAction,
 	RedBlackTree,
-	SortedDictionary,
+	type SortedDictionary,
 } from "../collections/index.js";
 import {
 	LocalClientId,
@@ -32,21 +32,21 @@ import {
 	UniversalSequenceNumber,
 } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
-import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
+import type { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import {
-	IJSONMarkerSegment,
+	type IJSONMarkerSegment,
 	compareNumbers,
 	compareStrings,
 	reservedMarkerIdKey,
 	type ISegmentPrivate,
 } from "../mergeTreeNodes.js";
 import { createRemoveRangeOp } from "../opBuilder.js";
-import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { type IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { LocalDefaultPerspective } from "../perspective.js";
 import { reservedRangeLabelsKey, reservedTileLabelsKey } from "../referencePositions.js";
-import { JsonSegmentSpecs } from "../snapshotChunks.js";
+import type { JsonSegmentSpecs } from "../snapshotChunks.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
-import { IJSONTextSegment, TextSegment } from "../textSegment.js";
+import { type IJSONTextSegment, TextSegment } from "../textSegment.js";
 
 import { _dirname } from "./dirname.cjs";
 import { TestClient, getStats, specToSegment } from "./testClient.js";

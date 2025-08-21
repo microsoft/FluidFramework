@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { MergeBlock } from "../mergeTreeNodes.js";
+import type { MergeBlock } from "../mergeTreeNodes.js";
 import { packParent, zamboniSegments } from "../zamboni.js";
 
 import { TestClient } from "./testClient.js";

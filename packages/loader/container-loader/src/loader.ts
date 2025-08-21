@@ -4,30 +4,30 @@
  */
 
 import {
-	IContainer,
-	IFluidCodeDetails,
-	IFluidModule,
-	IHostLoader,
-	ILoader,
-	ILoaderOptions,
-	IProvideFluidCodeDetailsComparer,
+	type IContainer,
+	type IFluidCodeDetails,
+	type IFluidModule,
+	type IHostLoader,
+	type ILoader,
+	type ILoaderOptions,
+	type IProvideFluidCodeDetailsComparer,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	FluidObject,
 	IConfigProviderBase,
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { IClientDetails } from "@fluidframework/driver-definitions";
-import {
+import type { IClientDetails } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
-	MonitoringContext,
+	type ITelemetryLoggerExt,
+	type MonitoringContext,
 	PerformanceEvent,
 	createChildMonitoringContext,
 	mixinMonitoringContext,
@@ -38,7 +38,7 @@ import { v4 as uuid } from "uuid";
 import { Container } from "./container.js";
 import { DebugLogger } from "./debugLogger.js";
 import { pkgVersion } from "./packageVersion.js";
-import { ProtocolHandlerBuilder } from "./protocol.js";
+import type { ProtocolHandlerBuilder } from "./protocol.js";
 import type { IPendingContainerState } from "./serializedStateManager.js";
 import {
 	getAttachedContainerStateFromSerializedContainer,
