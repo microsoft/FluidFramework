@@ -4,8 +4,6 @@
 
 ```ts
 
-export { EventEmitter }
-
 // @beta @legacy
 export type EventEmitterEventType = string;
 

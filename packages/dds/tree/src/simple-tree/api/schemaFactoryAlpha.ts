@@ -56,9 +56,6 @@ import type {
 	FieldKind,
 } from "../fieldSchema.js";
 import type { LeafSchema } from "../leafNodeSchema.js";
-import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
-import type { UnannotateImplicitAllowedTypes } from "../core/index.js";
-import type { FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 /* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import/no-duplicates */
 
 /**

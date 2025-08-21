@@ -170,7 +170,6 @@ declare namespace InternalTypes {
         ExtractItemType
     }
 }
-export { InternalTypes }
 
 // @public @deprecated
 export type IsListener<T> = IsListener_2<T>;

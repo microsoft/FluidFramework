@@ -69,7 +69,7 @@ import type {
  * });
  * ```
  * @legacy
- * @alpha
+ * @beta
  */
 export class OldestClientObserver
 	extends TypedEventEmitter<IOldestClientObserverEvents>

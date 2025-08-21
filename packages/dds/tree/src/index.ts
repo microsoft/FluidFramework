@@ -308,14 +308,13 @@ export type {
 } from "./util/index.js";
 export { cloneWithReplacements } from "./util/index.js";
 
-import * as InternalTypes from "./internalTypes.js";
-export {
-	/**
-	 * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
-	 * They are used internally to implement API aspects, but are not intended for use by external consumers.
-	 */
-	InternalTypes,
-};
+/**
+ * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
+ * They are used internally to implement API aspects, but are not intended for use by external consumers.
+ * @public
+ */
+// eslint-disable-next-line no-restricted-syntax
+export * as InternalTypes from "./internalTypes.js";
 
 // Internal/System types:
 // These would be put in `internalTypes` except doing so tents to cause errors like:

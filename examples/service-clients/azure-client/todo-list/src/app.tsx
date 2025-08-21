@@ -14,7 +14,8 @@ import {
 	// TODO: Fix this once the tree-only mode API has been stabilized.
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/fluid-static/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
+// eslint-disable-next-line import/no-internal-modules
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidContainer } from "fluid-framework";
 import React from "react";
 // eslint-disable-next-line import/no-internal-modules -- This is the pattern prescribed by React
