@@ -4,6 +4,6 @@
 	"mainEntryPointFilePath": "<projectFolder>/lib/<unscopedPackageName>.browser.legacy.d.ts",
 	"apiReport": {
 		"enabled": true,
-		"reportVariants": ["beta", "public"]
+		"reportVariants": ["alpha", "beta", "public"]
 	}
 }
