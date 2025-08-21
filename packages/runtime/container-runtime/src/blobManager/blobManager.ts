@@ -141,7 +141,7 @@ interface PendingBlob {
 	opsent?: boolean;
 	storageId?: string;
 	handleP: Deferred<BlobHandle>;
-	uploadP?: Promise<ICreateBlobResponse | void>;
+	uploadP?: Promise<void>;
 	uploadTime?: number;
 	minTTLInSeconds?: number;
 	attached?: boolean;
@@ -533,13 +533,16 @@ export class BlobManager {
 		return blobHandle;
 	}
 
-	private async uploadBlob(
-		localId: string,
-		blob: ArrayBufferLike,
-	): Promise<ICreateBlobResponse | void> {
+	/**
+	 * Upload a blob to the storage service.
+	 * @returns A promise that resolves when the upload is complete and a blob attach op has been sent (but not ack'd).
+	 *
+	 * @privateRemarks This method must not reject, as there is no error handling for it in current tracking.
+	 */
+	private async uploadBlob(localId: string, blob: ArrayBufferLike): Promise<void> {
+		let response: ICreateBlobResponseWithTTL;
 		try {
-			const response = await this.storage.createBlob(blob);
-			return this.onUploadResolve(localId, response);
+			response = await this.storage.createBlob(blob);
 		} catch (error) {
 			const entry = this.pendingBlobs.get(localId);
 			this.mc.logger.sendTelemetryEvent({
@@ -558,6 +561,19 @@ export class BlobManager {
 				this.deletePendingBlob(localId);
 			}
 			this.internalEvents.emit("uploadFailed", localId, error);
+			return;
+		}
+
+		try {
+			this.onUploadResolve(localId, response);
+		} catch (error) {
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "OnUploadResolveError",
+				// TODO: better typing
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+				error: error as any,
+				localId,
+			});
 		}
 	}
 
