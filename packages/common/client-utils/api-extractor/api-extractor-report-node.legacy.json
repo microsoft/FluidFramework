@@ -4,6 +4,6 @@
 	"mainEntryPointFilePath": "<projectFolder>/lib/<unscopedPackageName>.node.legacy.d.ts",
 	"apiReport": {
 		"enabled": true,
-		"reportVariants": ["beta"]
+		"reportVariants": ["beta", "public"]
 	}
 }
