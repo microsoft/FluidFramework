@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { baseSharedArrayModel } from "./fuzzUtils.js";
+export { baseSharedArrayModel, makeSharedArrayOperationGenerator } from "./fuzzUtils.js";

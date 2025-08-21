@@ -933,6 +933,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 					false, // treat it as remote op
 					op.value,
 				);
+				this.getEntryForId(op.entryId).isAckPending = true;
 				break;
 			}
 			case OperationType.deleteEntry: {

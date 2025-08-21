@@ -263,7 +263,7 @@ export function makeSharedArrayOperationGenerator(weights: {
 			DDSFuzzTestState<SharedArrayFactory<SerializableTypeForSharedArray>>
 		> =>
 		({ client }) =>
-			criteria((client.channel as TrackableSharedArray).moveIds.size);
+			criteria((client.channel as TrackableSharedArray).moveIds?.size ?? 0);
 	const insertLengthSatisfies =
 		(
 			criteria: (length: number) => boolean,
@@ -271,7 +271,7 @@ export function makeSharedArrayOperationGenerator(weights: {
 			DDSFuzzTestState<SharedArrayFactory<SerializableTypeForSharedArray>>
 		> =>
 		({ client }) =>
-			criteria((client.channel as TrackableSharedArray).insertIds.size);
+			criteria((client.channel as TrackableSharedArray).insertIds?.size ?? 0);
 	const hasNonzeroLength = lengthSatisfies((length) => length > 0);
 	const hasEnoughMoveLength = moveLengthSatisfies((length) => length > 2);
 	const hasEnoughInsertLength = insertLengthSatisfies((length) => length > 0);
