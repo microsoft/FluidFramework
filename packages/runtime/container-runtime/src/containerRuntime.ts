@@ -458,12 +458,6 @@ export interface ContainerRuntimeOptions {
 	 * When enabled (`true`), createBlob will return a handle before the blob upload completes.
 	 */
 	readonly createBlobPayloadPending: true | undefined;
-
-	/**
-	 * When enabled, allow the incorrect behavior of resolving handles before a container is attached.
-	 * AB#47081: This is a precaution and will be removed once the behavior is validated.
-	 */
-	readonly allowDetachedResolve: boolean;
 }
 
 /**
@@ -598,8 +592,6 @@ const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconn
 const defaultMaxBatchSizeInBytes = 700 * 1024;
 
 const defaultChunkSizeInBytes = 204800;
-
-const defaultAllowDetachedResolve = false;
 
 /**
  * The default time to wait for pending ops to be processed during summarization
@@ -935,7 +927,6 @@ export class ContainerRuntime
 			loadSequenceNumberVerification: "close",
 			maxBatchSizeInBytes: defaultMaxBatchSizeInBytes,
 			chunkSizeInBytes: defaultChunkSizeInBytes,
-			allowDetachedResolve: defaultAllowDetachedResolve,
 		};
 
 		const defaultConfigs = {
@@ -961,7 +952,6 @@ export class ContainerRuntime
 				? disabledCompressionConfig
 				: defaultConfigs.compressionOptions,
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
-			allowDetachedResolve = defaultConfigs.allowDetachedResolve,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		// The logic for enableRuntimeIdCompressor is a bit different. Since `undefined` represents a logical state (off)
@@ -1179,7 +1169,6 @@ export class ContainerRuntime
 			enableGroupedBatching,
 			explicitSchemaControl,
 			createBlobPayloadPending,
-			allowDetachedResolve,
 		};
 
 		const runtime = new containerRuntimeCtor(

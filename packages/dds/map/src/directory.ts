@@ -30,6 +30,8 @@ import {
 } from "@fluidframework/shared-object-base/internal";
 import {
 	type ITelemetryLoggerExt,
+	loggerToMonitoringContext,
+	type MonitoringContext,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 import path from "path-browserify";
@@ -1182,6 +1184,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public readonly localCreationSeqTracker: DirectoryCreationTracker;
 
+	private readonly mc: MonitoringContext;
+
 	/**
 	 * Constructor.
 	 * @param sequenceNumber - Message seq number at which this was created.
@@ -1203,6 +1207,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		super();
 		this.localCreationSeqTracker = new DirectoryCreationTracker();
 		this.ackedCreationSeqTracker = new DirectoryCreationTracker();
+		this.mc = loggerToMonitoringContext(this.logger);
 	}
 
 	public dispose(error?: Error): void {
@@ -1257,7 +1262,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		const previousOptimisticLocalValue = this.getOptimisticValue(key);
 
-		if (this.runtime.options.allowDetachedResolve) {
+		const detachedBind =
+			this.mc.config.getBoolean("Fluid.Directory.AllowDetachedResolve") ?? false;
+		if (detachedBind) {
 			// Create a local value and serialize it.
 			// AB#47081: This will be removed once we can validate that it is no longer needed.
 			bindHandles(value, this.serializer, this.directory.handle);

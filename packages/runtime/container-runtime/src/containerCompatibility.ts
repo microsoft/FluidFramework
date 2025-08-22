@@ -43,7 +43,6 @@ export type RuntimeOptionsAffectingDocSchema = Omit<
 	| "maxBatchSizeInBytes"
 	| "loadSequenceNumberVerification"
 	| "summaryOptions"
-	| "allowDetachedResolve"
 >;
 
 /**
