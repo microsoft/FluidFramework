@@ -971,10 +971,12 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			}
 			case OperationType.toggle: {
 				this.handleToggleOp(op, false /* local - treat as remote op */);
+				this.getEntryForId(op.entryId).isLocalPendingDelete += 1;
 				break;
 			}
 			case OperationType.toggleMove: {
-				this.handleToggleMoveOp(op, false /* local - treat as remote op */);
+				this.updateLiveEntry(this.getLiveEntry(op.entryId).entryId, op.entryId);
+				this.getEntryForId(op.entryId).isLocalPendingMove += 1;
 				break;
 			}
 			default: {

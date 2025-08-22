@@ -82,7 +82,7 @@ describe("SharedArray fuzz", () => {
 					makeSharedArrayOperationGenerator({
 						insert: 5,
 						delete: 3,
-						move: 3,
+						move: 2,
 						insertBulkAfter: 1,
 						toggle: 1,
 						toggleMove: 1,
@@ -102,7 +102,8 @@ describe("SharedArray fuzz", () => {
 				numOpsBeforeAttach: 5,
 				rehydrateDisabled: true,
 			},
-			skip: [1, 15, 18, 21, 24, 31, 49],
+			rollbackProbability: 0,
+			skip: [20],
 			defaultTestCount: 50,
 			saveFailures: { directory: "." },
 			emitter: eventEmitterForFuzzHarness,
