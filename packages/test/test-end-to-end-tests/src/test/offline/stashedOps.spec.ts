@@ -660,6 +660,22 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			false, // Don't send ops from first container instance before closing
 			async (c, d) => {
 				const signal = await d.getSharedObject<ISharedSignal<string>>(signalId);
+				// signal.notify should not have any side effects when loading stashed container
+				signal.notify("test");
+			},
+		);
+		const container2 = await loader.resolve({ url }, pendingOps);
+		await waitForContainerConnection(container2);
+		await provider.ensureSynchronized();
+	});
+
+	it("resends signal notify op in the presence of other stashed ops", async function () {
+		const pendingOps = await generatePendingState(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (c, d) => {
+				const signal = await d.getSharedObject<ISharedSignal<string>>(signalId);
 				const array = await d.getSharedObject<ISharedArray<string>>(arrayId);
 				array.insert(0, "test");
 				// signal should not have any effect on array
