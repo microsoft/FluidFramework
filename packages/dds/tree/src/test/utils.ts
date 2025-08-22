@@ -1383,15 +1383,26 @@ export class MockTreeCheckout implements ITreeCheckout {
 }
 
 export function validateUsageError(expectedErrorMsg: string | RegExp): (error: Error) => true {
+	return validateError(expectedErrorMsg, UsageError);
+}
+
+export function validateTypeError(expectedErrorMsg: string | RegExp): (error: Error) => true {
+	return validateError(expectedErrorMsg, TypeError);
+}
+
+export function validateError(
+	expectedErrorMsg: string | RegExp,
+	errorType: new (...args: any[]) => Error = Error,
+): (error: Error) => true {
 	return (error: Error) => {
-		assert(error instanceof UsageError, `Expected UsageError, got ${error}`);
+		assert(error instanceof errorType, `Expected ${errorType.name}, got ${error}`);
 		if (
 			typeof expectedErrorMsg === "string"
 				? error.message !== expectedErrorMsg
 				: !expectedErrorMsg.test(error.message)
 		) {
 			throw new Error(
-				`Unexpected UsageError thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
+				`Unexpected TypeError thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
 			);
 		}
 		return true;

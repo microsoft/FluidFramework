@@ -54,6 +54,9 @@ import { getView, TestTreeProviderLite, validateUsageError } from "../../utils.j
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
 import { EmptyKey } from "../../../core/index.js";
 
+// Tests for the non-recursive API subset of SchemaFactory and SchemaFactoryAlpha.
+// Recursive APIs are tested in schemaFactoryRecursive.spec.ts
+
 {
 	const schema = new SchemaFactory("Blah");
 
@@ -389,6 +392,8 @@ describe("schemaFactory", () => {
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 
 		it("Field schema metadata", () => {
@@ -623,6 +628,8 @@ describe("schemaFactory", () => {
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 	});
 
@@ -692,6 +699,8 @@ describe("schemaFactory", () => {
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 	});
 
@@ -738,6 +747,15 @@ describe("schemaFactory", () => {
 			const factory = new SchemaFactoryAlpha("test");
 			class NamedRecord extends factory.record("name", factory.number) {}
 			const namedInstance = new NamedRecord({ x: 5 });
+			const x: number = namedInstance.x;
+			// TODO: this should not compile as the typing is incorrect (y is undefined, not number)
+			const y: number = namedInstance.y;
+			delete namedInstance.x;
+
+			// TODO: this should throw a nicer error, which should be validated here.
+			assert.throws(() => {
+				delete namedInstance.z;
+			});
 		});
 
 		it("Node schema metadata", () => {
@@ -759,6 +777,8 @@ describe("schemaFactory", () => {
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 	});
 

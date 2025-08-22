@@ -42,6 +42,9 @@ import type {
 } from "../../../util/index.js";
 
 import { hydrate } from "../utils.js";
+import { validateTypeError } from "../../utils.js";
+
+// Tests for SchemaFactoryRecursive.ts and the recursive API subset of SchemaFactory and SchemaFactoryAlpha.
 
 // TODO:
 // Ensure the following have tests:
@@ -460,24 +463,13 @@ describe("SchemaFactory Recursive methods", () => {
 
 		it("Node schema metadata", () => {
 			const factory = new SchemaFactoryAlpha("");
-
 			class Foo extends factory.objectRecursive(
 				"Foo",
-				{ bar: [() => Bar] },
+				{ bar: [() => Foo] },
 				{
 					metadata: {
 						description: "A recursive object called Foo",
 						custom: { baz: true },
-					},
-				},
-			) {}
-			class Bar extends factory.objectRecursive(
-				"Bar",
-				{ foo: [() => Foo] },
-				{
-					metadata: {
-						description: "A recursive object called Bar",
-						custom: { baz: false },
 					},
 				},
 			) {}
@@ -486,10 +478,10 @@ describe("SchemaFactory Recursive methods", () => {
 				description: "A recursive object called Foo",
 				custom: { baz: true },
 			});
-			assert.deepEqual(Bar.metadata, {
-				description: "A recursive object called Bar",
-				custom: { baz: false },
-			});
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof baz, true>>;
 		});
 	});
 	describe("ValidateRecursiveSchema", () => {
@@ -683,30 +675,24 @@ describe("SchemaFactory Recursive methods", () => {
 		it("Node schema metadata", () => {
 			const factory = new SchemaFactoryAlpha("");
 
-			class Foos extends sf.arrayRecursive("FooList", [() => Foo]) {}
-			{
-				type _check = ValidateRecursiveSchema<typeof Foos>;
-			}
-			class Foo extends factory.objectRecursive("Foo", {
-				fooList: Foos,
-			}) {}
-			{
-				type _check = ValidateRecursiveSchema<typeof Foo>;
-			}
-			class FooList extends factory.arrayRecursive("FooList", [() => Foo], {
+			class Foo extends factory.arrayRecursive("FooList", [() => Foo], {
 				metadata: {
 					description: "A recursive list",
 					custom: { baz: true },
 				},
 			}) {}
 			{
-				type _check = ValidateRecursiveSchema<typeof FooList>;
+				type _check = ValidateRecursiveSchema<typeof Foo>;
 			}
 
-			assert.deepEqual(FooList.metadata, {
+			assert.deepEqual(Foo.metadata, {
 				description: "A recursive list",
 				custom: { baz: true },
 			});
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof baz, true>>;
 		});
 	});
 
@@ -759,31 +745,98 @@ describe("SchemaFactory Recursive methods", () => {
 		it("Node schema metadata", () => {
 			const factory = new SchemaFactoryAlpha("");
 
-			class Foos extends sf.arrayRecursive("FooList", [() => Foo]) {}
-			{
-				type _check = ValidateRecursiveSchema<typeof Foos>;
-			}
-			class Foo extends factory.objectRecursive("Foo", {
-				fooList: Foos,
-			}) {}
-			{
-				type _check = ValidateRecursiveSchema<typeof Foo>;
-			}
-
-			class FooList extends factory.mapRecursive("FooList", [() => Foo], {
+			class Foo extends factory.mapRecursive("Foo", [() => Foo], {
 				metadata: {
 					description: "A recursive map",
 					custom: { baz: true },
 				},
 			}) {}
 			{
-				type _check = ValidateRecursiveSchema<typeof FooList>;
+				type _check = ValidateRecursiveSchema<typeof Foo>;
 			}
 
-			assert.deepEqual(FooList.metadata, {
+			assert.deepEqual(Foo.metadata, {
 				description: "A recursive map",
 				custom: { baz: true },
 			});
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof baz, true>>;
+		});
+	});
+
+	describe("recordRecursive", () => {
+		const sfAlpha = new SchemaFactoryAlpha("recursive");
+		class RecordRecursive extends sfAlpha.recordRecursive("Record", [() => RecordRecursive]) {}
+		{
+			type _check = ValidateRecursiveSchema<typeof RecordRecursive>;
+		}
+
+		it("basic use", () => {
+			const node = hydrate(RecordRecursive, new RecordRecursive({}));
+			const data = [...node];
+			assert.deepEqual(data, []);
+
+			// Nested
+			{
+				type TInsert = InsertableTreeNodeFromImplicitAllowedTypes<typeof RecordRecursive>;
+				const _check: TInsert = new RecordRecursive({});
+
+				// Only explicitly constructed recursive maps are currently allowed:
+				type _check1 = requireTrue<areSafelyAssignable<TInsert, RecordRecursive>>;
+
+				// Check constructor
+				type TBuild = NodeBuilderData<typeof RecordRecursive>;
+				type _check2 = requireAssignableTo<RecordRecursive, TBuild>;
+				// eslint-disable-next-line @typescript-eslint/ban-types
+				type _check3 = requireAssignableTo<{}, TBuild>;
+				type _check4 = requireAssignableTo<{ a: RecordRecursive }, TBuild>;
+				type _check5 = requireAssignableTo<Record<string, TInsert>, TBuild>;
+			}
+
+			node.x = new RecordRecursive();
+			node.x.x = new RecordRecursive({});
+
+			// This should not build, but it does.
+			assert.throws(() => {
+				node.y.x.z.q = new RecordRecursive({});
+			}, validateTypeError("Cannot read properties of undefined (reading 'x')"));
+		});
+
+		it("constructors", () => {
+			const fromObject = new RecordRecursive({ x: new RecordRecursive() });
+			const fromNothing = new RecordRecursive();
+			const fromUndefined = new RecordRecursive(undefined);
+
+			// If supporting implicit construction, these would typ check:
+			// @ts-expect-error Implicit construction disabled
+			const fromNestedNeverArray = new RecordRecursive({ x: {} });
+			// @ts-expect-error Implicit construction disabled
+			const fromNestedObject = new RecordRecursive({ x: { x: {} } });
+		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactoryAlpha("");
+
+			class Foo extends factory.recordRecursive("Foo", [() => Foo], {
+				metadata: {
+					description: "A recursive record",
+					custom: { baz: true },
+				},
+			}) {}
+			{
+				type _check = ValidateRecursiveSchema<typeof Foo>;
+			}
+
+			assert.deepEqual(Foo.metadata, {
+				description: "A recursive record",
+				custom: { baz: true },
+			});
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof baz, true>>;
 		});
 	});
 
@@ -799,7 +852,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 		// Test adding persistedMetadata to a recursive array schema
 		const factory = new SchemaFactoryAlpha("");
-		class Foos extends factory.arrayRecursive("FooList", [() => Foo], { persistedMetadata }) {}
+		class Foos extends factory.arrayRecursive("Foos", [() => Foos], { persistedMetadata }) {}
 		{
 			type _check = ValidateRecursiveSchema<typeof Foos>;
 		}
@@ -808,7 +861,7 @@ describe("SchemaFactory Recursive methods", () => {
 		// Test adding persistedMetadata to a recursive object schema
 		class Foo extends factory.objectRecursive(
 			"Foo",
-			{ fooList: Foos },
+			{ fooList: [() => Foo] },
 			{ persistedMetadata },
 		) {}
 		{
@@ -817,7 +870,9 @@ describe("SchemaFactory Recursive methods", () => {
 		assert.deepEqual(Foo.persistedMetadata, persistedMetadata);
 
 		// Test adding persistedMetadata to a recursive map schema
-		class FooMap extends factory.mapRecursive("FooMap", [() => Foo], { persistedMetadata }) {}
+		class FooMap extends factory.mapRecursive("FooMap", [() => FooMap], {
+			persistedMetadata,
+		}) {}
 		{
 			type _check = ValidateRecursiveSchema<typeof FooMap>;
 		}
