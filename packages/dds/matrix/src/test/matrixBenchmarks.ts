@@ -266,7 +266,7 @@ function runBenchmark(options: BenchmarkOptions): Test {
  * to ensure consistency and comparability between the two implementations.
  */
 export function runBenchmarkTestSuite(mode: "memory" | "execution-time"): Suite {
-	return describe("SharedMatrix execution time", () => {
+	return describe(`SharedMatrix ${mode} benchmark`, () => {
 		// The value to be set in the cells of the matrix.
 		const initialCellValue = "cellValue";
 
