@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { Tree, TreeAlpha } from "./shared-tree/index.js";
@@ -727,6 +726,7 @@ export namespace System_TableSchema {
 				count: number | undefined = undefined,
 			): ColumnValueType[] {
 				if (typeof indexOrColumns === "number" || indexOrColumns === undefined) {
+					// TODO: this is wrong - doesn't remove cells!
 					const startIndex = indexOrColumns ?? 0;
 					return Table._removeRange(
 						{
@@ -737,48 +737,66 @@ export namespace System_TableSchema {
 					);
 				}
 
-				const columnsToRemove = indexOrColumns;
-
 				// If there are no columns to remove, do nothing
-				if (columnsToRemove.length === 0) {
+				if (indexOrColumns.length === 0) {
 					return [];
 				}
 
-				const removedColumns: ColumnValueType[] = [];
-				Tree.runTransaction(this, () => {
-					// Note, throwing an error within a transaction will abort the entire transaction.
-					// So if we throw an error here for any column, no columns will be removed.
-					for (const columnToRemove of columnsToRemove) {
-						const removedColumn = this.removeColumn(columnToRemove);
-						removedColumns.push(removedColumn);
-					}
-				});
-				return removedColumns;
-			}
+				// Ensure all of the specified rows are valid
+				const columnsToRemove: ColumnValueType[] = [];
+				for (const columnOrIdToRemove of indexOrColumns) {
+					const columnToRemove = this._getColumn(columnOrIdToRemove);
+					const index =
+						columnToRemove === undefined ? -1 : this.columns.indexOf(columnToRemove);
 
-			public removeColumn(columnOrId: string | ColumnValueType): ColumnValueType {
-				const column = this._getColumn(columnOrId);
-				const index = column === undefined ? -1 : this.columns.indexOf(column);
-				if (index === -1) {
-					const columnId = this._getColumnId(columnOrId);
-					throw new UsageError(
-						`Specified column with ID "${columnId}" does not exist in the table.`,
+					// If the column does not exist in the table, throw an error.
+					if (columnToRemove === undefined || index < 0) {
+						const columnId = this._getColumnId(columnOrIdToRemove);
+						throw new UsageError(
+							`Specified column with ID "${columnId}" does not exist in the table.`,
+						);
+					}
+
+					columnsToRemove.push(columnToRemove);
+				}
+
+				// TODO: extract this "maybe-transaction" pattern for shared use
+				const applyEdits = (): void => {
+					for (const column of columnsToRemove) {
+						// First, remove all cells that correspond to the column from each row:
+						for (const row of this.rows) {
+							// TypeScript is unable to narrow the row type correctly here, hence the cast.
+							// See: https://github.com/microsoft/TypeScript/issues/52144
+							(row as RowValueType).removeCell(column);
+						}
+
+						// Second, remove the column node:
+						this.columns.removeAt(this.columns.indexOf(column));
+					}
+				};
+
+				const branch = TreeAlpha.branch(this);
+
+				// If the node has been inserted into a tree, then we can run apply all of the necessary edits as
+				// a transaction to ensure that all removals are performed atomically.
+				// If the node has not yet been inserted into the tree, then the data is local only (not yet
+				// collaborative), and we can just apply the removals sequentially.
+				if (branch === undefined) {
+					applyEdits();
+				} else {
+					branch.runTransaction(
+						() => {
+							applyEdits();
+						},
+						{
+							// Defer events such that the user only gets a single set of updates at the end of the transaction,
+							// rather than being spammed with them per individual edit.
+							deferTreeEvents: true,
+						},
 					);
 				}
-				assert(column !== undefined, 0xc10 /* column should not be undefined */);
 
-				Tree.runTransaction(this, () => {
-					// Remove the corresponding cell from all rows.
-					for (const row of this.rows) {
-						// TypeScript is unable to narrow the row type correctly here, hence the cast.
-						// See: https://github.com/microsoft/TypeScript/issues/52144
-						(row as RowValueType).removeCell(column);
-					}
-
-					this.columns.removeAt(index);
-				});
-
-				return column;
+				return columnsToRemove;
 			}
 
 			public removeRows(
@@ -796,39 +814,56 @@ export namespace System_TableSchema {
 					);
 				}
 
-				const rowsToRemove = indexOrRows;
-
 				// If there are no rows to remove, do nothing
-				if (rowsToRemove.length === 0) {
+				if (indexOrRows.length === 0) {
 					return [];
 				}
 
-				const removedRows: RowValueType[] = [];
-				Tree.runTransaction(this, () => {
-					// Note, throwing an error within a transaction will abort the entire transaction.
-					// So if we throw an error here for any row, no rows will be removed.
-					for (const rowToRemove of rowsToRemove) {
-						const removedRow = this.removeRow(rowToRemove);
-						removedRows.push(removedRow);
+				// Ensure all of the specified rows are valid
+				const rowsToRemove: RowValueType[] = [];
+				for (const rowOrIdToRemove of indexOrRows) {
+					const rowToRemove = this._getRow(rowOrIdToRemove);
+
+					// If the row does not exist in the table, throw an error.
+					if (rowToRemove === undefined || !this.rows.includes(rowToRemove)) {
+						const rowId = this._getRowId(rowOrIdToRemove);
+						throw new UsageError(
+							`Specified row with ID "${rowId}" does not exist in the table.`,
+						);
 					}
-				});
-				return removedRows;
-			}
 
-			public removeRow(rowOrId: string | RowValueType): RowValueType {
-				const rowToRemove = this._getRow(rowOrId);
-				const index = rowToRemove === undefined ? -1 : this.rows.indexOf(rowToRemove);
+					rowsToRemove.push(rowToRemove);
+				}
 
-				// If the row does not exist in the table, throw an error.
-				if (index === -1) {
-					const rowId = this._getRowId(rowOrId);
-					throw new UsageError(
-						`Specified row with ID "${rowId}" does not exist in the table.`,
+				// TODO: extract this "maybe-transaction" pattern for shared use
+				const applyEdits = (): void => {
+					for (const row of rowsToRemove) {
+						this.rows.removeAt(this.rows.indexOf(row));
+					}
+				};
+
+				const branch = TreeAlpha.branch(this);
+
+				// If the node has been inserted into a tree, then we can run apply all of the necessary edits as
+				// a transaction to ensure that all removals are performed atomically.
+				// If the node has not yet been inserted into the tree, then the data is local only (not yet
+				// collaborative), and we can just apply the removals sequentially.
+				if (branch === undefined) {
+					applyEdits();
+				} else {
+					branch.runTransaction(
+						() => {
+							applyEdits();
+						},
+						{
+							// Defer events such that the user only gets a single set of updates at the end of the transaction,
+							// rather than being spammed with them per individual edit.
+							deferTreeEvents: true,
+						},
 					);
 				}
 
-				this.rows.removeAt(index);
-				return rowToRemove as RowValueType;
+				return rowsToRemove;
 			}
 
 			public removeCell(
