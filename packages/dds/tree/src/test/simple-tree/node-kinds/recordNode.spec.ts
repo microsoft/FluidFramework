@@ -31,7 +31,7 @@ function assertEqualTrees(actual: TreeNode, expected: ConciseTree): void {
 	assert.deepEqual(actualVerbose, expected);
 }
 
-describe.only("RecordNode", () => {
+describe("RecordNode", () => {
 	{
 		// Assignable to TypeScript record
 		const _record1: Record<string, number> = PojoEmulationNumberRecord.create({});
