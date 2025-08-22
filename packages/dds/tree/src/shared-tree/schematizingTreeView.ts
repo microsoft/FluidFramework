@@ -244,7 +244,7 @@ export class SchematizingSimpleTreeView<
 			| void,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
-		const {preconditions, deferTreeEvents} = params ?? {};
+		const { preconditions, deferTreeEvents } = params ?? {};
 
 		const addConstraints = (
 			constraintsOnRevert: boolean,
@@ -255,7 +255,9 @@ export class SchematizingSimpleTreeView<
 
 		this.checkout.transaction.start();
 
-		// TODO: defer events (if deferTreeEvents)
+		if (deferTreeEvents === true) {
+			this.checkout.forest.anchors.pauseEvents();
+		}
 
 		// Validate preconditions before running the transaction callback.
 		addConstraints(false /* constraintsOnRevert */, preconditions);
@@ -278,7 +280,9 @@ export class SchematizingSimpleTreeView<
 			transactionCallbackStatus?.preconditionsOnRevert,
 		);
 
-		// TODO: flush events (if deferTreeEvents)
+		if (deferTreeEvents === true) {
+			this.checkout.forest.anchors.resumeAndFlushEvents();
+		}
 
 		this.checkout.transaction.commit();
 		return value !== undefined
