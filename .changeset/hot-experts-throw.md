@@ -5,4 +5,4 @@
 ---
 SchemaFactoryAlpha.recordRecursive now supports metadata
 
-`SchemaFactoryAlpha.recordRecursive` now support metadata like `SchemaFactoryAlpha.recordAlpha` and the other TreeNodeSchema creation methods on `SchemaFactoryAlpha`.
+`SchemaFactoryAlpha.recordRecursive` now support metadata like `SchemaFactoryAlpha.recordAlpha` and the other `TreeNodeSchema` creation methods on `SchemaFactoryAlpha` (except for `SchemaFactoryAlpha.record` which does not support metadata).
