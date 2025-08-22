@@ -878,13 +878,7 @@ export class SharedDirectory
 				const subdir = this.getWorkingDirectoryForOpProcessing(op.path) as
 					| SubDirectory
 					| undefined;
-				if (
-					// We allow processing **remote** messages of subdirectories that are not disposed
-					// and not pending a delete. This is because if we rollback the pending delete, we
-					// want to make sure we still processed the messages that would later become visible.
-					subdir?.disposed === false &&
-					(!local || !this.isSubDirectoryDeletePending(op.path))
-				) {
+				if (subdir !== undefined && this.shouldProcessOp(subdir, local, op.path)) {
 					subdir.processClearMessage(msg, op, local, localOpMetadata);
 				}
 			},
@@ -905,13 +899,7 @@ export class SharedDirectory
 				const subdir = this.getWorkingDirectoryForOpProcessing(op.path) as
 					| SubDirectory
 					| undefined;
-				if (
-					// We allow processing **remote** messages of subdirectories that are not disposed
-					// and not pending a delete. This is because if we rollback the pending delete, we
-					// want to make sure we still processed the messages that would later become visible.
-					subdir?.disposed === false &&
-					(!local || !this.isSubDirectoryDeletePending(op.path))
-				) {
+				if (subdir !== undefined && this.shouldProcessOp(subdir, local, op.path)) {
 					subdir.processDeleteMessage(msg, op, local, localOpMetadata);
 				}
 			},
@@ -932,13 +920,7 @@ export class SharedDirectory
 				const subdir = this.getWorkingDirectoryForOpProcessing(op.path) as
 					| SubDirectory
 					| undefined;
-				if (
-					// We allow processing **remote** messages of subdirectories that are not disposed
-					// and not pending a delete. This is because if we rollback the pending delete, we
-					// want to make sure we still processed the messages that would later become visible.
-					subdir?.disposed === false &&
-					(!local || !this.isSubDirectoryDeletePending(op.path))
-				) {
+				if (subdir !== undefined && this.shouldProcessOp(subdir, local, op.path)) {
 					migrateIfSharedSerializable(op.value, this.serializer, this.handle);
 					const localValue: unknown = local ? undefined : op.value.value;
 					subdir.processSetMessage(msg, op, localValue, local, localOpMetadata);
@@ -962,13 +944,7 @@ export class SharedDirectory
 				const parentSubdir = this.getWorkingDirectoryForOpProcessing(op.path) as
 					| SubDirectory
 					| undefined;
-				if (
-					// We allow processing **remote** messages of subdirectories that are not disposed
-					// and not pending a delete. This is because if we rollback the pending delete, we
-					// want to make sure we still processed the messages that would later become visible.
-					parentSubdir?.disposed === false &&
-					(!local || !this.isSubDirectoryDeletePending(op.path))
-				) {
+				if (parentSubdir !== undefined && this.shouldProcessOp(parentSubdir, local, op.path)) {
 					parentSubdir.processCreateSubDirectoryMessage(msg, op, local, localOpMetadata);
 				}
 			},
@@ -996,13 +972,7 @@ export class SharedDirectory
 				const parentSubdir = this.getWorkingDirectoryForOpProcessing(op.path) as
 					| SubDirectory
 					| undefined;
-				if (
-					// We allow processing **remote** messages of subdirectories that are not disposed
-					// and not pending a delete. This is because if we rollback the pending delete, we
-					// want to make sure we still processed the messages that would later become visible.
-					parentSubdir?.disposed === false &&
-					(!local || !this.isSubDirectoryDeletePending(op.path))
-				) {
+				if (parentSubdir !== undefined && this.shouldProcessOp(parentSubdir, local, op.path)) {
 					parentSubdir.processDeleteSubDirectoryMessage(msg, op, local, localOpMetadata);
 				}
 			},
@@ -1019,6 +989,24 @@ export class SharedDirectory
 				}
 			},
 		});
+	}
+
+	/**
+	 * Checks if we should process an op targeting a particular subdirectory.
+	 * We allow processing of messages that are:
+	 * 1. Not disposed
+	 * 2. Not pending to be deleted OR the message is from a remote client
+	 * This is because if we rollback the pending delete, we want to make sure we still
+	 * process the messages that would later become visible
+	 */
+	private shouldProcessOp(
+		subdir: SubDirectory | undefined,
+		local: boolean,
+		subdirPath: string,
+	): boolean {
+		return (
+			subdir?.disposed === false && (!this.isSubDirectoryDeletePending(subdirPath) || !local)
+		);
 	}
 
 	/**
