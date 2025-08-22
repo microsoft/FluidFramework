@@ -1402,7 +1402,7 @@ export function validateError(
 				: !expectedErrorMsg.test(error.message)
 		) {
 			throw new Error(
-				`Unexpected TypeError thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
+				`Unexpected ${errorType.name} thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
 			);
 		}
 		return true;
