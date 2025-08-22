@@ -5,6 +5,7 @@
 
 // eslint-disable-next-line import/no-internal-modules
 import type { JsonSerializable } from "@fluidframework/core-interfaces/internal";
+import type { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { AttendeeId } from "@fluidframework/presence/beta";
 
 export interface UserIdAndName {
@@ -40,6 +41,8 @@ interface PingCommand {
 export interface ConnectCommand {
 	command: "connect";
 	user: UserIdAndName;
+	scopes: ScopeType[];
+	createScopes?: ScopeType[];
 	/**
 	 * The ID of the Fluid container to connect to.
 	 * If not provided, a new Fluid container will be created.
