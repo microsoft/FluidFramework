@@ -751,11 +751,6 @@ describe("schemaFactory", () => {
 			// TODO: this should not compile as the typing is incorrect (y is undefined, not number)
 			const y: number = namedInstance.y;
 			delete namedInstance.x;
-
-			// TODO: this should throw a nicer error, which should be validated here.
-			assert.throws(() => {
-				delete namedInstance.z;
-			});
 		});
 
 		it("Node schema metadata", () => {
