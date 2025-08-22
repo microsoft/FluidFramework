@@ -31,7 +31,7 @@ function assertEqualTrees(actual: TreeNode, expected: ConciseTree): void {
 	assert.deepEqual(actualVerbose, expected);
 }
 
-describe("RecordNode", () => {
+describe.only("RecordNode", () => {
 	{
 		// Assignable to TypeScript record
 		const _record1: Record<string, number> = PojoEmulationNumberRecord.create({});
@@ -227,9 +227,19 @@ describe("RecordNode", () => {
 
 				record.baz = 4;
 				assert.equal(record.baz, 4);
+			});
+
+			it("can delete values", () => {
+				const record = init(schemaType, { foo: 1, bar: 2 });
+				assert.equal(record.foo, 1);
+				assert.equal(record.bar, 2);
+				assert.equal(record.baz, undefined);
 
 				delete record.bar;
 				assert.equal(record.bar, undefined);
+
+				delete record.baz; // Deleting a non-existent property should be a no-op
+				assert.equal(record.baz, undefined);
 			});
 
 			it("cannot set values of wrong type", () => {
@@ -386,9 +396,23 @@ describe("RecordNode", () => {
 
 			record.baz = 4;
 			assert.equal(record.baz, 4);
+		});
+
+		it("can delete values", () => {
+			const record = new RecursiveRecordSchema({
+				foo: 1,
+				bar: new RecursiveRecordSchema({ x: 42 }),
+			});
+			assert.equal(record.foo, 1);
+			assert(record.bar instanceof RecursiveRecordSchema);
+			assert.equal(record.bar.x, 42);
+			assert.equal(record.baz, undefined);
 
 			delete record.bar;
 			assert.equal(record.bar, undefined);
+
+			delete record.baz; // Deleting a non-existent property should be a no-op
+			assert.equal(record.baz, undefined);
 		});
 
 		it("cannot set values of wrong type", () => {
