@@ -212,15 +212,16 @@ export class TaskManagerClass
 		this.connectionWatcher.on("disconnect", () => {
 			assert(this.clientId !== undefined, 0x1d3 /* "Missing client id on disconnect" */);
 
-			// We don't modify the taskQueues on disconnect (they still reflect the latest known consensus state).
-			// After reconnect these will get cleaned up by observing the clientLeaves.
-			// However we do need to recognize that we lost the lock if we had it.  Calls to .queued() and
-			// .assigned() are also connection-state-aware to be consistent.
+			// Emit "lost" for any tasks we were assigned to.
 			for (const [taskId, clientQueue] of this.taskQueues.entries()) {
 				if (this.isAttached() && clientQueue[0] === this.clientId) {
 					this.emit("lost", taskId);
 				}
 			}
+
+			// Remove this client from all queues to reflect the new state, since being disconnected automatically removes
+			// this client from all queues.
+			this.removeClientFromAllQueues(this.clientId);
 
 			// All of our outstanding ops will be for the old clientId even if they get ack'd
 			this.latestPendingOps.clear();
@@ -664,7 +665,10 @@ export class TaskManagerClass
 			}
 
 			const oldLockHolder = clientQueue[0];
-			clientQueue.push(clientId);
+			if (!clientQueue.includes(clientId)) {
+				// Ensure a client is not in the queue twice.
+				clientQueue.push(clientId);
+			}
 			const newLockHolder = clientQueue[0];
 			if (newLockHolder !== oldLockHolder) {
 				this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
@@ -712,7 +716,12 @@ export class TaskManagerClass
 		for (const clientQueue of this.taskQueues.values()) {
 			const clientIdIndex = clientQueue.indexOf(placeholderClientId);
 			if (clientIdIndex !== -1) {
-				clientQueue[clientIdIndex] = this.runtime.clientId;
+				if (clientQueue.includes(this.runtime.clientId)) {
+					// If the real clientId is already in the queue, just remove the placeholder.
+					clientQueue.splice(clientIdIndex, 1);
+				} else {
+					clientQueue[clientIdIndex] = this.runtime.clientId;
+				}
 			}
 		}
 	}
