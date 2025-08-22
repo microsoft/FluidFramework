@@ -11,6 +11,7 @@ import { independentView, Tree, TreeAlpha } from "../shared-tree/index.js";
 import {
 	allowUnused,
 	getJsonSchema,
+	KeyEncodingOptions,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	type ConciseTree,
@@ -1469,7 +1470,7 @@ describe("TableFactory unit tests", () => {
 			takeJsonSnapshot(
 				getJsonSchema(Table, {
 					requireFieldsWithDefaults: false,
-					useStoredKeys: false,
+					keys: KeyEncodingOptions.usePropertyKeys,
 				}) as unknown as JsonCompatibleReadOnly,
 			);
 		});

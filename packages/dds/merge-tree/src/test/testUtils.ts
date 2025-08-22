@@ -6,14 +6,14 @@
 import { strict as assert } from "node:assert";
 import fs from "node:fs";
 
-import { LocalReferenceCollection } from "../localReference.js";
-import { MergeTree } from "../mergeTree.js";
+import type { LocalReferenceCollection } from "../localReference.js";
+import type { MergeTree } from "../mergeTree.js";
 import type {
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeMaintenanceCallbackArgs,
 } from "../mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { MergeBlock } from "../mergeTreeNodes.js";
+import type { MergeBlock } from "../mergeTreeNodes.js";
 import {
 	PartialSequenceLengths,
 	verifyExpectedPartialLengths,

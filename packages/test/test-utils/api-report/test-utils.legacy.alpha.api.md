@@ -4,10 +4,10 @@
 
 ```ts
 
-// @alpha @legacy
+// @beta @legacy
 export function createAndAttachContainer(source: IFluidCodeDetails, loader: IHostLoader, attachRequest: IRequest): Promise<IContainer>;
 
-// @alpha @legacy
+// @beta @legacy
 export interface IOpProcessingController {
     pauseProcessing(...containers: IContainer[]): Promise<void>;
     processIncoming(...containers: IContainer[]): Promise<void>;
@@ -15,13 +15,13 @@ export interface IOpProcessingController {
     resumeProcessing(...containers: IContainer[]): void;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IProvideTestFluidObject {
     // (undocumented)
     readonly ITestFluidObject: ITestFluidObject;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadable {
     // (undocumented)
     readonly channel: IFluidDataStoreChannel;
@@ -35,7 +35,7 @@ export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadabl
     readonly runtime: IFluidDataStoreRuntime;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export class LoaderContainerTracker implements IOpProcessingController {
     constructor(syncSummarizerClients?: boolean);
     add<LoaderType extends IHostLoader>(loader: LoaderType): void;

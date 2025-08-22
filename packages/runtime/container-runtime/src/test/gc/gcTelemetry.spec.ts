@@ -5,23 +5,23 @@
 
 import { strict as assert } from "node:assert";
 
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
-	MonitoringContext,
+	type MonitoringContext,
 	TelemetryDataTag,
 	createChildLogger,
 	mixinMonitoringContext,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
-import { SinonFakeTimers, useFakeTimers } from "sinon";
+import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { blobManagerBasePath } from "../../blobManager/index.js";
 import {
 	GCNodeType,
 	GCTelemetryTracker,
-	IGarbageCollectorConfigs,
+	type IGarbageCollectorConfigs,
 	UnreferencedStateTracker,
 	cloneGCData,
 	defaultSessionExpiryDurationMs,

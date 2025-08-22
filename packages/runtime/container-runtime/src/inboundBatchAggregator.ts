@@ -4,18 +4,18 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
-import { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
+import type { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { IBatchMetadata } from "./metadata.js";
+import type { IBatchMetadata } from "./metadata.js";
 import { pkgVersion } from "./packageVersion.js";
 
 type IRuntimeMessageMetadata =

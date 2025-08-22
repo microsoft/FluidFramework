@@ -4,13 +4,13 @@
  */
 
 export {
-	ConsensusCallback,
+	type ConsensusCallback,
 	ConsensusResult,
-	IConsensusOrderedCollection,
-	IConsensusOrderedCollectionEvents,
-	IConsensusOrderedCollectionFactory,
-	IOrderedCollection,
-	ISnapshotable,
+	type IConsensusOrderedCollection,
+	type IConsensusOrderedCollectionEvents,
+	type IConsensusOrderedCollectionFactory,
+	type IOrderedCollection,
+	type ISnapshotable,
 } from "./interfaces.js";
 export { ConsensusQueueFactory, ConsensusQueue } from "./consensusOrderedCollectionFactory.js";
 export { ConsensusOrderedCollection } from "./consensusOrderedCollection.js";

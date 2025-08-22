@@ -89,19 +89,6 @@ module.exports = {
 		"unicorn/switch-case-braces": "off",
 		"unicorn/text-encoding-identifier-case": "off",
 
-		"@typescript-eslint/no-restricted-imports": [
-			"error",
-			{
-				"patterns": [
-					{
-						"group": ["./index.js", "**/../index.js"],
-						"message":
-							"Importing from a parent index file tends to cause cyclic dependencies. Import from a more specific sibling file instead.",
-					},
-				],
-			},
-		],
-
 		// #endregion
 	},
 	overrides: [
@@ -113,12 +100,6 @@ module.exports = {
 			rules: {
 				"@typescript-eslint/no-unused-vars": ["off"],
 				"@typescript-eslint/explicit-function-return-type": "off",
-			},
-		},
-		{
-			files: ["src/test/**/*.generated.ts*"],
-			rules: {
-				"@typescript-eslint/no-restricted-imports": ["off"],
 			},
 		},
 	],

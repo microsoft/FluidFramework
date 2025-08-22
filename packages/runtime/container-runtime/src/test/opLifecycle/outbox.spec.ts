@@ -5,13 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
-import {
+import type {
 	IDeltaManager,
 	IBatchMessage,
 	IContainerContext,
 } from "@fluidframework/container-definitions/internal";
 import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import {
+import type {
 	IDocumentMessage,
 	MessageType,
 	ISequencedDocumentMessage,
@@ -27,12 +27,12 @@ import {
 } from "../../messageTypes.js";
 import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "../../metadata.js";
 import {
-	OutboundBatchMessage,
-	BatchSequenceNumbers,
-	OpCompressor,
+	type OutboundBatchMessage,
+	type BatchSequenceNumbers,
+	type OpCompressor,
 	OpGroupingManager,
 	type OpGroupingManagerConfig,
-	OpSplitter,
+	type OpSplitter,
 	type OutboundSingletonBatch,
 	Outbox,
 	type LocalBatchMessage,
@@ -41,10 +41,10 @@ import {
 	serializeOp,
 	type LocalEmptyBatchPlaceholder,
 } from "../../opLifecycle/index.js";
-import {
+import type {
 	PendingMessageResubmitData,
 	PendingStateManager,
-	type IPendingMessage,
+	IPendingMessage,
 } from "../../pendingStateManager.js";
 
 function typeFromBatchedOp(message: LocalBatchMessage): string {
