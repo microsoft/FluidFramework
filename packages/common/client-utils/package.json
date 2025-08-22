@@ -49,14 +49,6 @@
 				}
 			}
 		},
-		"./internal-api-report/beta": {
-			"import": {
-				"types": {
-					"browser beta": "./lib/client-utils.browser.beta.d.ts",
-					"node beta": "./lib/client-utils.node.beta.d.ts"
-				}
-			}
-		},
 		"./internal-api-report/legacy": {
 			"import": {
 				"types": {
