@@ -8,6 +8,23 @@
 const { existsSync } = require("fs");
 const path = require("path");
 
+/**
+ * Get the mocha configuration for running tests using the conventions followed in the Fluid Framework repository.
+ *
+ * @param {string} packageDir - the directory of the package, typically set using `__dirname`
+ * @param {string[]} additionalRequiredModules - modules to require in addition to the standard set.
+ * @param {string} testReportPrefix - prefix for the test output report file names.
+ * @remarks
+ * Additional configuration can be provided via environment variables:
+ * - `FLUID_TEST_LOGGER_PKG_SPECIFIER`: Inject implementation of createTestLogger
+ * - `FLUID_TEST_TIMEOUT`: Specifies a custom timeout, see https://mochajs.org/api/mocha#timeout.
+ * - `MOCHA_SPEC`: Select the "spec". Note that unlike Mocha's built in MOCHA_OPTIONS environment variable,
+ * 		this will replace instead of add to the spec (See https://mochajs.org/next/running/configuring/#merging).
+ *      Also unlike Mocha's default behavior (see https://mochajs.org/next/running/cli/),
+ * 		this configuration defaults spec to `lib/test` (where we place our esm tests) instead of `test`.
+ *
+ * In package.json scripts, environment variables can be set using cross-env, like "cross-env MOCHA_SPEC=dist/test mocha".
+ */
 function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testReportPrefix) {
 	const moduleDir = `${packageDir}/node_modules`;
 
@@ -62,6 +79,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 			// these must be provided here and not via mocha's --v8-expose-gc.
 			"expose-gc",
 		],
+		"spec": process.env.MOCHA_SPEC ?? "lib/test",
 	};
 
 	if (process.env.FLUID_TEST_TIMEOUT !== undefined) {
