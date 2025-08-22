@@ -40,7 +40,8 @@ import { LocalWebSocketServer } from "./localWebSocketServer";
 
 /**
  * Items needed for handling deltas.
- * @alpha
+ * @legacy
+ * @beta
  */
 export interface ILocalDeltaConnectionServer {
 	webSocketServer: IWebSocketServer;

@@ -9,15 +9,15 @@ import { pkgVersion } from "./packageVersion.js";
 
 /**
  * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
- * @alpha
  * @legacy
+ * @beta
  */
 export const SharedTreeFactoryType = "https://graph.microsoft.com/types/tree";
 
 /**
  * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
- * @alpha
  * @legacy
+ * @beta
  */
 export const SharedTreeAttributes: IChannelAttributes = {
 	type: SharedTreeFactoryType,

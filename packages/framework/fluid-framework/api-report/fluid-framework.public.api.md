@@ -458,7 +458,6 @@ declare namespace InternalTypes {
         ExtractItemType
     }
 }
-export { InternalTypes }
 
 // @public (undocumented)
 export interface IProvideFluidLoadable {

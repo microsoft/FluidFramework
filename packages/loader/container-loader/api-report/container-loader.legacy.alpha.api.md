@@ -174,9 +174,6 @@ export type QuorumProposalsSnapshot = {
 // @beta @legacy
 export function rehydrateDetachedContainer(rehydrateDetachedContainerProps: IRehydrateDetachedContainerProps): Promise<IContainer>;
 
-// @alpha @legacy
-export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
-
 // @beta @legacy
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined;
 

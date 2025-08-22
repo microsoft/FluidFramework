@@ -10,7 +10,7 @@ import type { IQuorumClients } from "@fluidframework/driver-definitions";
 /**
  * Events emitted by {@link IOldestClientObservable}.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IOldestClientObservableEvents extends IEvent {
 	(event: "connected", listener: () => void);
@@ -23,7 +23,7 @@ export interface IOldestClientObservableEvents extends IEvent {
  * since neither is really the source of truth (they are just the only currently-available plumbing options).
  * It's information about the connection, so the real source of truth is lower (at the connection layer).
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IOldestClientObservable
 	extends IEventProvider<IOldestClientObservableEvents> {
@@ -41,7 +41,7 @@ export interface IOldestClientObservable
 /**
  * Events emitted by {@link IOldestClientObservable}.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IOldestClientObserverEvents extends IEvent {
 	(event: "becameOldest" | "lostOldest", listener: () => void);
@@ -49,7 +49,7 @@ export interface IOldestClientObserverEvents extends IEvent {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IOldestClientObserver extends IEventProvider<IOldestClientObserverEvents> {
 	isOldest(): boolean;
