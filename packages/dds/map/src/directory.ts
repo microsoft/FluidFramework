@@ -1259,7 +1259,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (key === undefined || key === null) {
 			throw new Error("Undefined and null keys are not supported");
 		}
-
 		const previousOptimisticLocalValue = this.getOptimisticValue(key);
 
 		const detachedBind =
