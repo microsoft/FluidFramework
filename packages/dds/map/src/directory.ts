@@ -30,6 +30,7 @@ import {
 } from "@fluidframework/shared-object-base/internal";
 import {
 	createChildMonitoringContext,
+	type ITelemetryLoggerExt,
 	type MonitoringContext,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
@@ -470,6 +471,7 @@ export class SharedDirectory
 		this.runtime,
 		this.serializer,
 		posix.sep,
+		this.logger,
 	);
 
 	/**
@@ -785,6 +787,7 @@ export class SharedDirectory
 							this.runtime,
 							this.serializer,
 							posix.join(currentSubDir.absolutePath, subdirName),
+							this.logger,
 						);
 						currentSubDir.populateSubDirectory(subdirName, newSubDir);
 						// Record the newly inserted subdirectory to the creation tracker
@@ -1199,11 +1202,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly serializer: IFluidSerializer,
 		public readonly absolutePath: string,
+		logger: ITelemetryLoggerExt,
 	) {
 		super();
 		this.localCreationSeqTracker = new DirectoryCreationTracker();
 		this.ackedCreationSeqTracker = new DirectoryCreationTracker();
-		this.mc = createChildMonitoringContext({ namespace: "Directory" });
+		this.mc = createChildMonitoringContext({ logger, namespace: "Directory" });
 	}
 
 	public dispose(error?: Error): void {
@@ -2558,6 +2562,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				this.runtime,
 				this.serializer,
 				absolutePath,
+				this.mc.logger,
 			);
 			/**
 			 * Store the sequence numbers of newly created subdirectory to the proper creation tracker, based
