@@ -38,43 +38,39 @@ export class InsecureTokenProvider implements ITokenProvider {
 		 * @defaultValue [ ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite ]
 		 */
 		private readonly scopes?: ScopeType[],
+
+		/**
+		 * Optional. Override of attach container scopes. If a param is not provided,
+		 * InsecureTokenProvider will use the value of {@link scopes}.
+		 *
+		 * @remarks Common use of this parameter is to allow write for container
+		 * attach and just read for all other access. Effectively can create a
+		 * create and then read-only client.
+		 *
+		 * @param attachContainerScopes - See {@link @fluidframework/protocol-definitions#ITokenClaims.scopes}
+		 *
+		 * @defaultValue {@link scopes}
+		 */
+		private readonly attachContainerScopes?: ScopeType[],
 	) {}
 
-	/**
-	 * {@inheritDoc @fluidframework/routerlicious-driver#ITokenProvider.fetchOrdererToken}
-	 */
-	public async fetchOrdererToken(
+	private readonly fetchToken = async (
 		tenantId: string,
 		documentId?: string,
-	): Promise<ITokenResponse> {
+	): Promise<ITokenResponse> => {
+		const generalScopes = this.scopes ?? [
+			ScopeType.DocRead,
+			ScopeType.DocWrite,
+			ScopeType.SummaryWrite,
+		];
+		const scopes = (documentId ? undefined : this.attachContainerScopes) ?? generalScopes;
 		return {
 			fromCache: true,
-			jwt: generateToken(
-				tenantId,
-				this.tenantKey,
-				this.scopes ?? [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-				documentId,
-				this.user,
-			),
+			jwt: generateToken(tenantId, this.tenantKey, scopes, documentId, this.user),
 		};
-	}
+	};
 
-	/**
-	 * {@inheritDoc @fluidframework/routerlicious-driver#ITokenProvider.fetchStorageToken}
-	 */
-	public async fetchStorageToken(
-		tenantId: string,
-		documentId: string,
-	): Promise<ITokenResponse> {
-		return {
-			fromCache: true,
-			jwt: generateToken(
-				tenantId,
-				this.tenantKey,
-				this.scopes ?? [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
-				documentId,
-				this.user,
-			),
-		};
-	}
+	public readonly fetchOrdererToken = this.fetchToken;
+
+	public readonly fetchStorageToken = this.fetchToken;
 }

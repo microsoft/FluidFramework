@@ -5,6 +5,7 @@
 
 import { fork, type ChildProcess } from "node:child_process";
 
+import { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { AttendeeId } from "@fluidframework/presence/beta";
 import { timeoutAwait, timeoutPromise } from "@fluidframework/test-utils/internal";
 
@@ -80,13 +81,18 @@ export async function forkChildProcesses(
  *
  * @param id - Suffix used to construct stable test user identity.
  */
-export function composeConnectMessage(id: string | number): ConnectCommand {
+function composeConnectMessage(
+	id: string | number,
+	scopes: ScopeType[] = [ScopeType.DocRead],
+): ConnectCommand {
 	return {
 		command: "connect",
 		user: {
 			id: `test-user-id-${id}`,
 			name: `test-user-name-${id}`,
 		},
+		scopes,
+		createScopes: [ScopeType.DocWrite],
 	};
 }
 
@@ -122,7 +128,13 @@ export async function connectChildProcesses(
 			}
 		});
 	});
-	firstChild.send(composeConnectMessage(0));
+	{
+		// Note that DocWrite is used to have this attendee be the "leader".
+		// DocRead would also be valid as DocWrite is specified for attach when there
+		// is no document id (container id).
+		const connectContainerCreator = composeConnectMessage(0, [ScopeType.DocWrite]);
+		firstChild.send(connectContainerCreator);
+	}
 	const { containerCreatorAttendeeId, containerId } = await timeoutAwait(
 		containerReadyPromise,
 		{

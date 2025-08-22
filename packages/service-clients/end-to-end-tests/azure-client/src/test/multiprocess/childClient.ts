@@ -13,6 +13,7 @@ import {
 } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
+import type { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
 	getPresence,
@@ -26,10 +27,8 @@ import {
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import type { ScopeType } from "../AzureClientFactory.js";
 import { createAzureTokenProvider } from "../AzureTokenFactory.js";
 import { TestDataObject } from "../TestDataObject.js";
-import type { configProvider } from "../utils.js";
 
 import type { MessageFromChild, MessageToChild, UserIdAndName } from "./messageTypes.js";
 
@@ -54,8 +53,8 @@ if (useAzure && endPoint === undefined) {
 const getOrCreatePresenceContainer = async (
 	id: string | undefined,
 	user: UserIdAndName,
-	config?: ReturnType<typeof configProvider>,
 	scopes?: ScopeType[],
+	createScopes?: ScopeType[],
 ): Promise<{
 	container: IFluidContainer;
 	presence: Presence;
@@ -68,12 +67,17 @@ const getOrCreatePresenceContainer = async (
 	const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
 		? {
 				tenantId,
-				tokenProvider: createAzureTokenProvider(user.id ?? "foo", user.name ?? "bar", scopes),
+				tokenProvider: createAzureTokenProvider(
+					user.id ?? "foo",
+					user.name ?? "bar",
+					scopes,
+					createScopes,
+				),
 				endpoint: endPoint,
 				type: "remote",
 			}
 		: {
-				tokenProvider: new InsecureTokenProvider("fooBar", user, scopes),
+				tokenProvider: new InsecureTokenProvider("fooBar", user, scopes, createScopes),
 				endpoint: "http://localhost:7071",
 				type: "local",
 			};
@@ -319,6 +323,8 @@ class MessageHandler {
 		const { container, presence, containerId } = await getOrCreatePresenceContainer(
 			msg.containerId,
 			msg.user,
+			msg.scopes,
+			msg.createScopes,
 		);
 		this.container = container;
 		this.presence = presence;
