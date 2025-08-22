@@ -4,22 +4,22 @@
 
 ```ts
 
-// @alpha @legacy
+// @beta @legacy
 export function createIdCompressor(logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
 
-// @alpha @legacy
+// @beta @legacy
 export function createIdCompressor(sessionId: SessionId, logger?: ITelemetryBaseLogger): IIdCompressor & IIdCompressorCore;
 
-// @alpha @legacy
+// @beta @legacy
 export function createSessionId(): SessionId;
 
-// @alpha @legacy
+// @beta @legacy
 export function deserializeIdCompressor(serialized: SerializedIdCompressorWithOngoingSession, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
 
-// @alpha @legacy
+// @beta @legacy
 export function deserializeIdCompressor(serialized: SerializedIdCompressorWithNoSession, newSessionId: SessionId, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
 
-// @alpha @legacy
+// @beta @legacy
 export interface IdCreationRange {
     // (undocumented)
     readonly ids?: {
@@ -44,7 +44,7 @@ export interface IIdCompressor {
     tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IIdCompressorCore {
     beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void;
     finalizeCreationRange(range: IdCreationRange): void;
@@ -59,17 +59,17 @@ export type OpSpaceCompressedId = number & {
     readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
 };
 
-// @alpha @legacy
+// @beta @legacy
 export type SerializedIdCompressor = string & {
     readonly _serializedIdCompressor: "8c73c57c-1cf4-4278-8915-6444cb4f6af5";
 };
 
-// @alpha @legacy
+// @beta @legacy
 export type SerializedIdCompressorWithNoSession = SerializedIdCompressor & {
     readonly _noLocalState: "3aa2e1e8-cc28-4ea7-bc1a-a11dc3f26dfb";
 };
 
-// @alpha @legacy
+// @beta @legacy
 export type SerializedIdCompressorWithOngoingSession = SerializedIdCompressor & {
     readonly _hasLocalState: "1281acae-6d14-47e7-bc92-71c8ee0819cb";
 };

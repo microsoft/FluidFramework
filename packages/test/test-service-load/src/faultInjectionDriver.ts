@@ -415,7 +415,7 @@ export class FaultInjectionDocumentStorageService implements IDocumentStorageSer
 function throwOfflineError(): never {
 	throw new FaultInjectionError(
 		"simulated offline error",
-		false,
+		true,
 		DriverErrorTypes.offlineError,
 	);
 }

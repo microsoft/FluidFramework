@@ -5,9 +5,9 @@
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import type { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
 
 import type { MemoryDetachedBlobStorage } from "./memoryBlobStorage.js";
 import type { SnapshotWithBlobs } from "./serializedStateManager.js";

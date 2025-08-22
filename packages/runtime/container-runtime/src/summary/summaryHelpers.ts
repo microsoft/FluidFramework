@@ -26,8 +26,7 @@ export function isSummariesDisabled(
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 	state: "enabled",

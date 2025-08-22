@@ -39,7 +39,7 @@ describe("SharedArray fuzz", () => {
 	createDDSFuzzSuite(
 		{
 			...baseSharedArrayModel,
-			workloadName: "insert, delete and move rollback",
+			workloadName: "insert, move and delete rollback",
 			generatorFactory: () =>
 				takeAsync(
 					100,

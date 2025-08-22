@@ -438,8 +438,8 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				inputEntry.isLocalPendingMove = 0;
 				const moveOp: IMoveOperation = {
 					type: OperationType.moveEntry,
-					entryId: oldEntryId,
-					changedToEntryId: newEntryId,
+					entryId: newEntryId,
+					changedToEntryId: oldEntryId,
 				};
 				this.emitValueChangedEvent(moveOp, true /* isLocal */);
 				break;

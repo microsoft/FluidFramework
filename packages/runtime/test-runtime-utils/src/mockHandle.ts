@@ -8,8 +8,7 @@ import { FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 
 /**
  * Mock implementation of IFluidHandle.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockHandle<T> extends FluidHandleBase<T> {
 	private graphAttachState: AttachState = AttachState.Detached;

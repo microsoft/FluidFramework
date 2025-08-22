@@ -72,7 +72,7 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.7.4",
+		"@fluidframework/eslint-config-fluid": "^6.0.0",
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/legacy-dds": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
