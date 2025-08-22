@@ -45,6 +45,9 @@ import { hydrate } from "../utils.js";
 import { validateTypeError } from "../../utils.js";
 
 // Tests for SchemaFactoryRecursive.ts and the recursive API subset of SchemaFactory and SchemaFactoryAlpha.
+// It is a bit odd/non-conventional to put the tests for the recursive methods of SchemaFactory here:
+// while they could be combined, keeping them separated like this is somewhat nice due to the size of these test suites,
+// and how annoying the recursive ones are with intelliSense errors.
 
 // TODO:
 // Ensure the following have tests:
