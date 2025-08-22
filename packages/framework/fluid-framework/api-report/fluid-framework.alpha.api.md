@@ -1119,7 +1119,7 @@ export interface RunTransaction {
     readonly rollback: typeof rollback;
 }
 
-// @alpha
+// @alpha @input
 export interface RunTransactionParams {
     readonly preconditions?: readonly TransactionConstraint[];
 }
@@ -1715,6 +1715,8 @@ export interface TreeBranch extends IDisposable {
     hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
     merge(branch: TreeBranch, disposeMerged?: boolean): void;
     rebaseOnto(branch: TreeBranch): void;
+    runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>, params?: RunTransactionParams): TransactionResultExt<TSuccessValue, TFailureValue>;
+    runTransaction(transaction: () => VoidTransactionCallbackStatus | void, params?: RunTransactionParams): TransactionResult;
 }
 
 // @alpha @sealed
@@ -1902,8 +1904,6 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     // (undocumented)
     get root(): ReadableField<TSchema>;
     set root(newRoot: InsertableField<TSchema>);
-    runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>, params?: RunTransactionParams): TransactionResultExt<TSuccessValue, TFailureValue>;
-    runTransaction(transaction: () => VoidTransactionCallbackStatus | void, params?: RunTransactionParams): TransactionResult;
 }
 
 // @public @sealed

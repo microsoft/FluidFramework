@@ -45,7 +45,7 @@ stages:
     parameters:
       stageId: e2e_azure_client_frs
       stageDisplayName: e2e - azure-client with AFR
-      poolBuild: Small-eastus2
+      poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       testCommand: test:realsvc:azure
@@ -62,7 +62,7 @@ stages:
     parameters:
       stageId: e2e_azure_client_local_server
       stageDisplayName: e2e - azure-client with Azure local service
-      poolBuild: Small-eastus2
+      poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       testCommand: test:realsvc:tinylicious
