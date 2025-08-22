@@ -916,12 +916,10 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		insertAfterEntryId: string | undefined,
 		value: Serializable<SerializableTypeForSharedArray> & T,
 	): void {
-		assert(
-			insertAfterEntryId !== undefined || this.sharedArray.length === 0,
-			"insertAfterEntryId can only be undefined if the shared array is empty",
-		);
-		const index =
-			insertAfterEntryId === undefined ? 0 : this.findIndexOfEntryId(insertAfterEntryId) + 1;
+		let index = 0;
+		if (insertAfterEntryId !== undefined) {
+			index = this.findIndexOfEntryId(insertAfterEntryId) + 1;
+		}
 		const newEntry = this.createNewEntry<SerializableTypeForSharedArray>(entryId, value);
 		newEntry.isAckPending = true;
 		this.addEntry(index, newEntry);
@@ -940,7 +938,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				break;
 			}
 			case OperationType.deleteEntry: {
-				this.handleDeleteOp(op, false /* local - treat as remote op */);
+				this.getLiveEntry(op.entryId).isDeleted = true;
 				this.getEntryForId(op.entryId).isLocalPendingDelete += 1;
 				break;
 			}
@@ -973,7 +971,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				break;
 			}
 			case OperationType.toggle: {
-				this.handleToggleOp(op, false /* local - treat as remote op */);
+				this.getLiveEntry(op.entryId).isDeleted = op.isDeleted;
 				this.getEntryForId(op.entryId).isLocalPendingDelete += 1;
 				break;
 			}
