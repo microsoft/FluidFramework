@@ -216,7 +216,7 @@ const schemaStaticsAlpha: SchemaStaticsAlpha = {
  * Some private methods on `SchemaFactory` are intentionally duplicated here to avoid increasing their exposure to `protected`.
  * If we were to do so, they would be exposed on the public API surface of `SchemaFactory`.
  *
- * When building schema, when `options` is not provided, `TCustomMetadata` infers to `unknown`.
+ * When building schema, when `options` is not provided, `TCustomMetadata` is inferred as `unknown`.
  * If desired, this could be made to infer `undefined` instead by adding overloads for everything,
  * but currently it is not worth the maintenance overhead as there is no use case which this is known to be helpful for.
  */
