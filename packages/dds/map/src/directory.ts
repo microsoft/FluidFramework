@@ -246,14 +246,12 @@ type PendingStorageEntry = PendingKeyLifetime | PendingKeyDelete | PendingClear;
 
 interface PendingSubDirectoryCreate {
 	type: "createSubDirectory";
-	path: string;
 	subdirName: string;
 	subdir: SubDirectory;
 }
 
 interface PendingSubDirectoryDelete {
 	type: "deleteSubDirectory";
-	path: string;
 	subdirName: string;
 }
 
@@ -1366,34 +1364,28 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		this.registerEventsOnSubDirectory(subDir, subdirName);
 
-		// If we are not attached, don't submit the op and directory commit
-		// the subdir to _sequencedSubdirectories.
-		if (!this.directory.isAttached()) {
-			if (isNewSubDirectory) {
-				this._sequencedSubdirectories.set(subdirName, subDir);
-				this.emit("subDirectoryCreated", subdirName, true, this);
-			}
-			return subDir;
-		}
-
 		// Only submit the op/emit event if we actually created a new subdir.
 		if (isNewSubDirectory) {
-			const pendingSubDirectoryCreate: PendingSubDirectoryCreate = {
-				type: "createSubDirectory",
-				path: this.absolutePath,
-				subdirName,
-				subdir: subDir,
-			};
-			this.pendingSubDirectoryData.push(pendingSubDirectoryCreate);
-			const op: IDirectoryCreateSubDirectoryOperation = {
-				subdirName,
-				path: this.absolutePath,
-				type: "createSubDirectory",
-			};
-			this.submitCreateSubDirectoryMessage(op);
+			if (this.directory.isAttached()) {
+				const pendingSubDirectoryCreate: PendingSubDirectoryCreate = {
+					type: "createSubDirectory",
+					subdirName,
+					subdir: subDir,
+				};
+				this.pendingSubDirectoryData.push(pendingSubDirectoryCreate);
+				const op: IDirectoryCreateSubDirectoryOperation = {
+					subdirName,
+					path: this.absolutePath,
+					type: "createSubDirectory",
+				};
+				this.submitCreateSubDirectoryMessage(op);
+			} else {
+				// If we are detached, don't submit the op and directory commit
+				// the subdir to _sequencedSubdirectories.
+				this._sequencedSubdirectories.set(subdirName, subDir);
+			}
 			this.emit("subDirectoryCreated", subdirName, true, this);
 		}
-
 		return subDir;
 	}
 
@@ -1453,7 +1445,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 		const pendingSubdirDelete: PendingSubDirectoryDelete = {
 			type: "deleteSubDirectory",
-			path: this.absolutePath,
 			subdirName,
 		};
 		this.pendingSubDirectoryData.push(pendingSubdirDelete);
@@ -2621,9 +2612,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// initialize again when we will receive op for the create again.
 		directory.clearSubDirectorySequencedData();
 
-		if (typeof directory.dispose === "function") {
-			directory.dispose();
-		}
+		directory.dispose();
 	}
 
 	private emitDisposeForSubdirTree(directory: SubDirectory): void {
