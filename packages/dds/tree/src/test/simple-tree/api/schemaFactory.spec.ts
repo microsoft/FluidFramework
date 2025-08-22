@@ -748,7 +748,7 @@ describe("schemaFactory", () => {
 			class NamedRecord extends factory.record("name", factory.number) {}
 			const namedInstance = new NamedRecord({ x: 5 });
 			const x: number = namedInstance.x;
-			// TODO: this should not compile as the typing is incorrect (y is undefined, not number)
+			// TODO: AB#47136: this (and likely the line above as well) should not compile as the typing is incorrect (y is undefined, not number)
 			const y: number = namedInstance.y;
 			delete namedInstance.x;
 		});
