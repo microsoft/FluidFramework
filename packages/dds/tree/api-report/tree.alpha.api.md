@@ -617,12 +617,12 @@ export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
     readonly description?: string | undefined;
 }
 
-// @public @sealed
+// @public @input
 export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
     readonly metadata?: NodeSchemaMetadata<TCustomMetadata> | undefined;
 }
 
-// @alpha
+// @alpha @input
 export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown> extends NodeSchemaOptions<TCustomMetadata> {
     readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }
@@ -858,9 +858,9 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
 }
 
-// @alpha
+// @alpha @input
 export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown> extends NodeSchemaOptionsAlpha<TCustomMetadata> {
-    allowUnknownOptionalFields?: boolean;
+    readonly allowUnknownOptionalFields?: boolean;
 }
 
 // @public @sealed @system
