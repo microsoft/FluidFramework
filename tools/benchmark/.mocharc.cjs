@@ -7,8 +7,7 @@
 
 const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
 
-const packageDir = __dirname;
-const config = getFluidTestMochaConfig(packageDir);
+const config = getFluidTestMochaConfig(__dirname);
 // Setting node options prevents mocha's node options from getting use (like --v8-expose-gc)
 // This is done (instead of the workaround by adding stuff to "node-option")
 // so --v8-expose-gc can be tested as that is the documented (in the readme) approach.
