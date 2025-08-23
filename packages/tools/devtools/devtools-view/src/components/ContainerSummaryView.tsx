@@ -320,11 +320,6 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		// Always show attach state
 		statusComponents.push(containerState.attachState);
 
-		// Show readonly state if applicable (regardless of other states)
-		if (containerState.isReadOnly === true) {
-			statusComponents.push("Read-only");
-		}
-
 		// Show connection state if applicable (regardless of readonly state)
 		if (
 			containerState.attachState === AttachState.Attached &&
@@ -334,6 +329,10 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		} else if (containerState.attachState !== AttachState.Attached) {
 			// If not attached, show disconnected state
 			statusComponents.push(connectionStateToString(ConnectionState.Disconnected));
+		}
+
+		if (containerState.isReadOnly === true) {
+			statusComponents.push("Read-only");
 		}
 	}
 

@@ -63,6 +63,9 @@ const useMenuStyles = makeStyles({
 			marginTop: "auto",
 			marginBottom: "15px",
 		},
+		"> div > div": {
+			marginBottom: "4px",
+		},
 	},
 
 	// TODO: dedupe with MenuItem
@@ -352,7 +355,7 @@ export interface MenuItemProps {
 	/**
 	 * Icon to display next to the container name based on its state.
 	 */
-	readonly stateIcon: React.ReactElement;
+	readonly stateIcon: React.ReactElement | undefined;
 
 	/**
 	 * Whether the container or container runtime has recent changes.
@@ -362,21 +365,34 @@ export interface MenuItemProps {
 	/**
 	 * Callback function when the remove button is clicked.
 	 */
-	readonly onRemove: () => void;
+	readonly onRemove: (() => void) | undefined;
 }
 
 const useMenuItemStyles = makeStyles({
 	root: {
-		"alignItems": "center",
+		"alignItems": "stretch",
 		"cursor": "pointer",
 		"display": "flex",
-		"flexDirection": "row",
-		"paddingLeft": "15px",
+		"flexDirection": "column",
+		"padding": "3px 6px",
+		"margin": "1px 4px",
+		"borderRadius": "4px",
+		"border": `1px solid ${tokens.colorNeutralStroke2}`,
+		"backgroundColor": tokens.colorNeutralBackground1,
+		"transition": "all 0.15s ease-in-out",
 		"&:hover": {
 			color: tokens.colorNeutralForeground1Hover,
 			backgroundColor: tokens.colorNeutralBackground1Hover,
+			border: `1px solid ${tokens.colorNeutralStroke1}`,
+			transform: "translateY(-1px)",
+			boxShadow: `0 2px 8px ${tokens.colorNeutralShadowAmbient}`,
+		},
+		"&:active": {
+			transform: "translateY(0px)",
+			boxShadow: `0 1px 4px ${tokens.colorNeutralShadowAmbient}`,
 		},
 	},
+
 	active: {
 		color: tokens.colorNeutralForeground1Selected,
 		backgroundColor: tokens.colorNeutralBackground1Selected,
@@ -387,53 +403,67 @@ const useMenuItemStyles = makeStyles({
 	},
 	itemContent: {
 		display: "flex",
-		alignItems: "center",
+		flexDirection: "column",
 		flex: 1,
-		gap: "8px",
-		minWidth: 0, // Allow flex item to shrink below content size
+		gap: "2px",
+		minWidth: 0,
 		overflow: "visible",
 	},
-	changeIndicator: {
-		width: "6px",
-		height: "6px",
-		borderRadius: "50%",
-		backgroundColor: tokens.colorPaletteRedBackground3,
-		marginRight: "1px",
-		flexShrink: 0,
+	headerRow: {
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "space-between",
+		minWidth: 0,
 	},
+
 	textSpan: {
 		whiteSpace: "normal",
 		overflowWrap: "anywhere",
 		flex: 1,
 		minWidth: 0,
-		marginRight: "2px",
+		fontWeight: "500",
+		fontSize: "13px",
 	},
-	stateIconContainer: {
-		flexShrink: 0,
-		minWidth: "12px",
-		width: "16px",
-		display: "flex",
-		alignItems: "center",
-		justifyContent: "center",
-		marginRight: "0px",
-		overflow: "visible",
-	},
+
 	multipleStateIcons: {
 		display: "flex",
 		alignItems: "center",
-		gap: "0px",
+		justifyContent: "center",
+		gap: "4px",
 		flexWrap: "nowrap",
+		padding: "2px 0",
+	},
+	iconsRow: {
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "flex-start",
+		gap: "4px",
+		minHeight: "14px",
+	},
+	bottomRow: {
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "space-between",
+		minHeight: "14px",
+	},
+	simpleContent: {
+		display: "flex",
+		minHeight: "14px",
 	},
 	deleteButton: {
 		backgroundColor: "transparent",
 		border: "none",
 		cursor: "pointer",
-		padding: "0px",
-		marginLeft: "5px",
+		padding: "2px",
+		borderRadius: "4px",
 		"&:hover": {
 			color: tokens.colorPaletteRedForeground1,
 			backgroundColor: tokens.colorPaletteRedBackground1,
 		},
+	},
+	hasChanges: {
+		backgroundColor: tokens.colorPaletteYellowBackground1,
+		boxShadow: `0 0 10px ${tokens.colorPaletteYellowForeground1}`,
 	},
 });
 
@@ -452,7 +482,11 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 	const styles = useMenuItemStyles();
 	const baseStyle = isActive ? styles.active : styles.inactive;
 
-	const style = mergeClasses(styles.root, baseStyle);
+	const style = mergeClasses(
+		styles.root,
+		baseStyle,
+		hasChanges ? styles.hasChanges : undefined,
+	);
 
 	return (
 		<div
@@ -463,23 +497,33 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 			tabIndex={0}
 		>
 			<div className={styles.itemContent}>
-				<div
-					className={styles.changeIndicator}
-					style={{ visibility: hasChanges ? "visible" : "hidden" }}
-				/>
-				<span className={styles.textSpan}>{text}</span>
-				<div className={styles.stateIconContainer}>{stateIcon}</div>
-				<Tooltip content="Remove container" relationship="label">
-					<Button
-						icon={<Dismiss24Regular />}
-						className={styles.deleteButton}
-						onClick={(e) => {
-							e.stopPropagation();
-							onRemove();
-						}}
-						aria-label="Remove container"
-					/>
-				</Tooltip>
+				{stateIcon === undefined && onRemove === undefined ? (
+					<div className={styles.simpleContent}>
+						<span className={styles.textSpan}>{text}</span>
+					</div>
+				) : (
+					<>
+						<div className={styles.headerRow}>
+							<span className={styles.textSpan}>{text}</span>
+						</div>
+						<div className={styles.bottomRow}>
+							{stateIcon && <div className={styles.iconsRow}>{stateIcon}</div>}
+							{onRemove && (
+								<Tooltip content="Remove container" relationship="label">
+									<Button
+										icon={<Dismiss24Regular />}
+										className={styles.deleteButton}
+										onClick={(e) => {
+											e.stopPropagation();
+											onRemove();
+										}}
+										aria-label="Remove container"
+									/>
+								</Tooltip>
+							)}
+						</div>
+					</>
+				)}
 			</div>
 		</div>
 	);
@@ -647,23 +691,6 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 								</Tooltip>,
 							];
 						} else {
-							// Collect all applicable state icons for non-closed containers
-							const statusMessages: string[] = [];
-
-							// Add readonly state icon
-							if (state.isReadOnly === true) {
-								stateIcons.push(
-									<Tooltip
-										content="Container is in read-only mode"
-										relationship="label"
-										key="readonly"
-									>
-										<LockClosed16Regular />
-									</Tooltip>,
-								);
-								statusMessages.push("read-only");
-							}
-
 							// Add connection state icon
 							if (state.connectionState !== undefined) {
 								switch (state.connectionState) {
@@ -677,7 +704,6 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 												<PlugConnected16Regular />
 											</Tooltip>,
 										);
-										statusMessages.push("connected");
 										break;
 									}
 									case ConnectionState.Disconnected: {
@@ -690,7 +716,6 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 												<PlugDisconnected16Regular />
 											</Tooltip>,
 										);
-										statusMessages.push("disconnected");
 										break;
 									}
 									case ConnectionState.EstablishingConnection: {
@@ -703,7 +728,6 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 												<Run16Regular />
 											</Tooltip>,
 										);
-										statusMessages.push("establishing connection");
 										break;
 									}
 									case ConnectionState.CatchingUp: {
@@ -716,7 +740,6 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 												<CatchUp16Regular />
 											</Tooltip>,
 										);
-										statusMessages.push("catching up");
 										break;
 									}
 									default: {
@@ -739,7 +762,6 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 												<DocumentDismiss16Regular />
 											</Tooltip>,
 										);
-										statusMessages.push("detached");
 										break;
 									}
 									case "Attaching": {
@@ -752,7 +774,6 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 												<DocumentDataLink16Regular />
 											</Tooltip>,
 										);
-										statusMessages.push("attaching");
 										break;
 									}
 									case "Attached": {
@@ -765,7 +786,6 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 												<Attach16Regular />
 											</Tooltip>,
 										);
-										statusMessages.push("attached");
 										break;
 									}
 									default: {
@@ -773,6 +793,17 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 										break;
 									}
 								}
+							}
+							if (state.isReadOnly === true) {
+								stateIcons.push(
+									<Tooltip
+										content="Container is in read-only mode"
+										relationship="label"
+										key="readonly"
+									>
+										<LockClosed16Regular />
+									</Tooltip>,
+								);
 							}
 						}
 					} else {
@@ -903,9 +934,9 @@ export function Menu(props: MenuProps): React.ReactElement {
 					isActive={currentSelection?.type === "telemetryMenuSelection"}
 					text="Events"
 					onClick={onTelemetryClicked}
-					stateIcon={<QuestionCircle16Regular />}
+					stateIcon={undefined}
 					hasChanges={false}
-					onRemove={() => {}}
+					onRemove={undefined}
 				/>
 			</MenuSection>,
 		);
