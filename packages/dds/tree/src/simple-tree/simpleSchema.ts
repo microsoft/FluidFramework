@@ -26,6 +26,10 @@ export interface SimpleNodeSchemaBaseAlpha<
 > extends SimpleNodeSchemaBase<TNodeKind, TCustomMetadata> {
 	/**
 	 * Persisted metadata for this node schema.
+	 * @remarks
+	 * While this can be stored in the document, not all versions / configurations will do so.
+	 * Additionally this is not part of schema compatibility so collaborative session may see different persistedMetadata for the same node.
+	 * Specified using {@link NodeSchemaOptionsAlpha.persistedMetadata}.
 	 */
 	readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
 }
