@@ -6,7 +6,6 @@
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	FileMode,
 	IGitTree,
 	IGitTreeEntry,
 	ISnapshotTree,
@@ -33,7 +32,7 @@ function flattenCore(
 			blobMap.set(id, buffer);
 
 			const entry: IGitTreeEntry = {
-				mode: FileMode[treeEntry.mode],
+				mode: treeEntry.mode,
 				path: subPath,
 				sha: id,
 				size: 0,
@@ -48,7 +47,7 @@ function flattenCore(
 			);
 			const t = treeEntry.value;
 			const entry: IGitTreeEntry = {
-				mode: FileMode[treeEntry.mode],
+				mode: treeEntry.mode,
 				path: subPath,
 				sha: "",
 				size: -1,
