@@ -4,6 +4,8 @@
 
 ```ts
 
+export { MinimumVersionForCollab }
+
 // (No @packageDocumentation comment for this package)
 
 ```

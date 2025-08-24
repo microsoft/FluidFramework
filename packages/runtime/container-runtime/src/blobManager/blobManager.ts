@@ -220,7 +220,7 @@ export class BlobManager {
 		readonly routeContext: IFluidHandleContext;
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo;
-		readonly storage: Pick<IContainerStorageService, "createBlob" | "readBlob">;
+		readonly storage: Pick<IContainerStorageService, "createBlob" | "readBlob" | "buildBlobUrl">;
 		/**
 		 * Submit a BlobAttach op. When a blob is uploaded, there is a short grace period before which the blob is
 		 * deleted. The BlobAttach op notifies the server that blob is in use. The server will then not delete the
@@ -331,6 +331,25 @@ export class BlobManager {
 
 	public hasBlob(blobId: string): boolean {
 		return this.redirectTable.get(blobId) !== undefined;
+	}
+
+	/**
+	 * Lookup the blob storage ID for a given local blob id.
+	 * @param localId - The local blob id. Likely coming from a handle.
+	 * @returns The storage ID if found and the blob is not pending, undefined otherwise.
+	 * @remarks
+	 * For blobs with pending payloads (localId exists but upload hasn't finished), this returns undefined. 
+	 * Consumers should use the observability APIs on the handle (handle.payloadState, payloadShared event) 
+	 * to understand/wait for storage ID availability.
+	 */
+	public lookupBlobStorageId(localId: string): string | undefined {
+		// Check if this is a pending blob (upload not yet complete)
+		if (this.pendingBlobs.has(localId)) {
+			return undefined;
+		}
+
+		// Get the storage ID from the redirect table
+		return this.redirectTable.get(localId);
 	}
 
 	/**
