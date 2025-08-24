@@ -15,6 +15,7 @@ import {
 import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 /**
+ * Factory helpers for driver/network errors.
  * @internal
  */
 export enum OnlineStatus {
@@ -226,12 +227,18 @@ export class ThrottlingError
 }
 
 /**
+ * Helper factory to wrap a message into a write error that is non-retryable by storage.
+ * Create a non-retryable write error for storage operations.
  * @internal
  */
-export const createWriteError = (message: string, props: DriverErrorTelemetryProps) =>
+export const createWriteError = (
+	message: string,
+	props: DriverErrorTelemetryProps,
+): NonRetryableError<string> =>
 	new NonRetryableError(message, DriverErrorTypes.writeError, props);
 
 /**
+ * Create a generic network error or throttling error based on retry info.
  * @internal
  */
 export function createGenericNetworkError(
@@ -251,18 +258,21 @@ export function createGenericNetworkError(
  * @param error - The error to inspect for ability to retry
  * @internal
  */
-export const canRetryOnError = (error: any): boolean => error?.canRetry === true;
+export const canRetryOnError = (error: unknown): boolean =>
+	(error as { canRetry?: boolean } | undefined)?.canRetry === true;
 
 /**
  * Check retryAfterSeconds property on error
  * @internal
  */
-export const getRetryDelaySecondsFromError = (error: any): number | undefined =>
-	error?.retryAfterSeconds as number | undefined;
+export const getRetryDelaySecondsFromError = (error: unknown): number | undefined =>
+	(error as { retryAfterSeconds?: number } | undefined)?.retryAfterSeconds;
 
 /**
  * Check retryAfterSeconds property on error and convert to ms
  * @internal
  */
-export const getRetryDelayFromError = (error: any): number | undefined =>
-	error?.retryAfterSeconds !== undefined ? error.retryAfterSeconds * 1000 : undefined;
+export const getRetryDelayFromError = (error: unknown): number | undefined => {
+	const sec = (error as { retryAfterSeconds?: number } | undefined)?.retryAfterSeconds;
+	return sec === undefined ? undefined : sec * 1000;
+};

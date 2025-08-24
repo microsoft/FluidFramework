@@ -67,9 +67,10 @@ function applyStorageCompressionInternal(
  * This method checks whether given objects contains
  * a properties expected for the interface ICompressionStorageConfig.
  */
-export function isCompressionConfig(config: any): config is ICompressionStorageConfig {
-	return (
-		config !== undefined &&
-		(config.algorithm !== undefined || config.minSizeToCompress !== undefined)
-	);
+export function isCompressionConfig(config: unknown): config is ICompressionStorageConfig {
+	if (config === undefined || config === null || typeof config !== "object") {
+		return false;
+	}
+	const maybe = config as Partial<ICompressionStorageConfig>;
+	return maybe.algorithm !== undefined || maybe.minSizeToCompress !== undefined;
 }
