@@ -310,7 +310,7 @@ describe("SharedMatrix memory usage", () => {
 				});
 
 				/**
-				 * Test the memory usage of the SharedMatrix for inserting a column and a row
+				 * Test the memory usage of inserting a single column and a row
 				 * and then removing them right away to see if the memory is released.
 				 * Memory usage should be very low for these test cases.
 				 */

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { Heap, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { Tree, TreeAlpha } from "./shared-tree/index.js";
@@ -551,6 +551,21 @@ export namespace System_TableSchema {
 	> = OptionsWithSchemaFactory<TSchemaFactory> & OptionsWithCellSchema<TCell>;
 
 	/**
+	 * An index range.
+	 */
+	interface IndexRange {
+		/**
+		 * Start of the range (inclusive).
+		 */
+		start: number;
+
+		/**
+		 * The number of items.
+		 */
+		count: number;
+	}
+
+	/**
 	 * Factory for creating table schema.
 	 * @system @alpha
 	 */
@@ -730,7 +745,7 @@ export namespace System_TableSchema {
 					const startIndex = indexOrColumns ?? 0;
 					return Table._removeRange(
 						{
-							index: startIndex,
+							start: startIndex,
 							count: count ?? this.columns.length - startIndex,
 						},
 						this.columns,
@@ -744,41 +759,57 @@ export namespace System_TableSchema {
 					return [];
 				}
 
+				// To reduce the number of operations in the transaction, we will build up a series of
+				// contiguous ranges to be removed from the input list and remove each range as a single operation.
+				const columnIndicesToRemove: number[] = [];
+				for (const column of columnsToRemove) {
+					const columnIndex = this._getColumnIndex(column);
+					if (columnIndex === undefined) {
+						const columnId = this._getColumnId(column);
+						throw new UsageError(
+							`Specified column with ID "${columnId}" does not exist in the table.`,
+						);
+					}
+					columnIndicesToRemove.push(columnIndex);
+				}
+
+				const rangesToRemove = Table._groupIndicesIntoRanges(columnIndicesToRemove);
+
 				const removedColumns: ColumnValueType[] = [];
 				Tree.runTransaction(this, () => {
-					// Note, throwing an error within a transaction will abort the entire transaction.
-					// So if we throw an error here for any column, no columns will be removed.
-					for (const columnToRemove of columnsToRemove) {
-						const removedColumn = this.removeColumn(columnToRemove);
-						removedColumns.push(removedColumn);
+					// #region Remove columns in batches of contiguous ranges
+
+					// Note: Each range we remove from the list impacts the indices of the remaining items.
+					// As a result, we need to adjust each subsequent range we remove to account for the changes.
+					// `rangesToRemove` is sorted in ascending order, so it is sufficient to just track and modify based on a single offset.
+					let offset = 0;
+					for (const range of rangesToRemove) {
+						const removed = Table._removeRange(
+							{
+								start: range.start - offset,
+								count: range.count,
+							},
+							this.columns,
+						);
+						removedColumns.push(...removed);
+						offset = offset + range.count;
 					}
+
+					// #endregion
+
+					// #region Remove cells corresponding with removed columns from each row
+
+					for (const row of this.rows) {
+						for (const column of removedColumns) {
+							// TypeScript is unable to narrow the row type correctly here, hence the cast.
+							// See: https://github.com/microsoft/TypeScript/issues/52144
+							(row as RowValueType).removeCell(column);
+						}
+					}
+
+					// #endregion
 				});
 				return removedColumns;
-			}
-
-			public removeColumn(columnOrId: string | ColumnValueType): ColumnValueType {
-				const column = this._getColumn(columnOrId);
-				const index = column === undefined ? -1 : this.columns.indexOf(column);
-				if (index === -1) {
-					const columnId = this._getColumnId(columnOrId);
-					throw new UsageError(
-						`Specified column with ID "${columnId}" does not exist in the table.`,
-					);
-				}
-				assert(column !== undefined, 0xc10 /* column should not be undefined */);
-
-				Tree.runTransaction(this, () => {
-					// Remove the corresponding cell from all rows.
-					for (const row of this.rows) {
-						// TypeScript is unable to narrow the row type correctly here, hence the cast.
-						// See: https://github.com/microsoft/TypeScript/issues/52144
-						(row as RowValueType).removeCell(column);
-					}
-
-					this.columns.removeAt(index);
-				});
-
-				return column;
 			}
 
 			public removeRows(
@@ -789,7 +820,7 @@ export namespace System_TableSchema {
 					const startIndex = indexOrRows ?? 0;
 					return Table._removeRange(
 						{
-							index: startIndex,
+							start: startIndex,
 							count: count ?? this.rows.length - startIndex,
 						},
 						this.rows,
@@ -803,32 +834,61 @@ export namespace System_TableSchema {
 					return [];
 				}
 
+				// If there is only one row to remove, remove it (and don't incur cost of transaction)
+				if (rowsToRemove.length === 1) {
+					const rowOrIdToRemove = rowsToRemove[0] ?? oob();
+					const index = this._getRowIndex(rowOrIdToRemove);
+
+					if (index === undefined) {
+						const rowId = this._getRowId(rowOrIdToRemove);
+						throw new UsageError(
+							`Specified row with ID "${rowId}" does not exist in the table.`,
+						);
+					}
+					const removedRow = this.rows[index] as RowValueType;
+					this.rows.removeAt(index);
+					return [removedRow];
+				}
+
+				// If there are multiple rows to remove, remove them in a transaction.
+
+				// To reduce the number of operations in the transaction, we will build up a series of
+				// contiguous ranges to be removed from the input list and remove each range as a single operation.
+				const rowIndicesToRemove: number[] = [];
+				for (const row of rowsToRemove) {
+					const rowIndex = this._getRowIndex(row);
+					if (rowIndex === undefined) {
+						const rowId = this._getRowId(row);
+						throw new UsageError(
+							`Specified row with ID "${rowId}" does not exist in the table.`,
+						);
+					}
+					rowIndicesToRemove.push(rowIndex);
+				}
+
+				const rangesToRemove = Table._groupIndicesIntoRanges(rowIndicesToRemove);
+
 				const removedRows: RowValueType[] = [];
 				Tree.runTransaction(this, () => {
-					// Note, throwing an error within a transaction will abort the entire transaction.
-					// So if we throw an error here for any row, no rows will be removed.
-					for (const rowToRemove of rowsToRemove) {
-						const removedRow = this.removeRow(rowToRemove);
-						removedRows.push(removedRow);
+					// Note: Each range we remove from the list impacts the indices of the remaining items.
+					// As a result, we need to adjust each subsequent range we remove to account for the changes.
+					// `rangesToRemove` is sorted in ascending order, so it is sufficient to just track and modify based on a single offset.
+					let offset = 0;
+					for (const range of rangesToRemove) {
+						// Note, throwing an error within a transaction will abort the entire transaction.
+						// So if we throw an error here for any column, no columns will be removed.
+						const removed = Table._removeRange(
+							{
+								start: range.start - offset,
+								count: range.count,
+							},
+							this.rows,
+						);
+						removedRows.push(...removed);
+						offset = offset + range.count;
 					}
 				});
 				return removedRows;
-			}
-
-			public removeRow(rowOrId: string | RowValueType): RowValueType {
-				const rowToRemove = this._getRow(rowOrId);
-				const index = rowToRemove === undefined ? -1 : this.rows.indexOf(rowToRemove);
-
-				// If the row does not exist in the table, throw an error.
-				if (index === -1) {
-					const rowId = this._getRowId(rowOrId);
-					throw new UsageError(
-						`Specified row with ID "${rowId}" does not exist in the table.`,
-					);
-				}
-
-				this.rows.removeAt(index);
-				return rowToRemove as RowValueType;
 			}
 
 			public removeCell(
@@ -904,36 +964,91 @@ export namespace System_TableSchema {
 			}
 
 			private static _removeRange<TNodeSchema extends ImplicitAllowedTypes>(
-				range: { index: number; count: number },
+				range: IndexRange,
 				array: TreeArrayNode<TNodeSchema>,
 			): TreeNodeFromImplicitAllowedTypes<TNodeSchema>[] {
-				const { index, count } = range;
+				const { start, count } = range;
 
-				if (index < 0 || index >= array.length) {
+				if (start < 0 || start >= array.length) {
 					throw new UsageError(
-						`Start index out of bounds. Expected index to be on [0, ${array.length - 1}], but got ${index}.`,
+						`Start index out of bounds. Expected index to be on [0, ${array.length - 1}], but got ${start}.`,
 					);
 				}
 				if (count < 0) {
 					throw new UsageError(`Expected non-negative count. Got ${count}.`);
 				}
 
-				const end = index + count; // exclusive
+				const end = start + count; // exclusive
 				if (end > array.length) {
 					throw new UsageError(
-						`End index out of bounds. Expected end to be on [${index}, ${array.length}], but got ${end}.`,
+						`End index out of bounds. Expected end to be on [${start}, ${array.length}], but got ${end}.`,
 					);
 				}
 
-				// TypeScript is unable to narrow the array element type correctly here, hence the cast.
+				// TypeScript is unable to narrow the row type correctly here, hence the cast.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
 				const removedRows = array.slice(
-					index,
+					start,
 					end,
 				) as TreeNodeFromImplicitAllowedTypes<TNodeSchema>[];
-				array.removeRange(index, end);
+				array.removeRange(start, end);
 
 				return removedRows;
+			}
+
+			/**
+			 * Groups the provided list of indices into a list of ordered, contiguous ranges.
+			 */
+			private static _groupIndicesIntoRanges(indices: readonly number[]): IndexRange[] {
+				// We will leverage a set for unique index lookup.
+				const indexSet = new Set(indices);
+
+				// Tracks which indices have already been visited by the walk to ensure
+				// indices are not double-counted, and to ensure the algorithm remains O(n).
+				const visited = new Set<number>();
+
+				// Tracks the set of disjoint index ranges, sorted in ascending order.
+				const sortedRanges = new Heap<IndexRange>({
+					compare: (a, b) => a.start - b.start,
+					min: {
+						start: Number.MIN_VALUE,
+						// Note: the count here is arbitrary - it isn't used by the comparison function,
+						// but the Heap type requires that "min" be of the same type as the elements being inserted.
+						count: Number.NaN,
+					},
+				});
+
+				for (const index of indices) {
+					if (visited.has(index)) {
+						continue;
+					}
+
+					let start = index; // inclusive
+					let end = index; // inclusive
+
+					// Expand backward
+					while (indexSet.has(start - 1)) {
+						start--;
+					}
+
+					// Expand forward
+					while (indexSet.has(end + 1)) {
+						end++;
+					}
+
+					// Mark all indices in this range as visited so we don't consider them again.
+					for (let i = start; i <= end; i++) {
+						visited.add(i);
+					}
+
+					sortedRanges.add({ start, count: end - start + 1 });
+				}
+
+				const result: IndexRange[] = [];
+				while (sortedRanges.peek() !== undefined) {
+					result.push(sortedRanges.get() ?? oob());
+				}
+				return result;
 			}
 
 			/**
