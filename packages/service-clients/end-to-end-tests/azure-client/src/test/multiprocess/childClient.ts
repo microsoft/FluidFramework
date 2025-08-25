@@ -327,6 +327,10 @@ class MessageHandler {
 					send({ event: "error", error: `${process_id} is not connected to presence` });
 					break;
 				}
+				if (typeof msg.key !== "string") {
+					send({ event: "error", error: `${process_id} invalid key type` });
+					break;
+				}
 				const workspace = this.workspaces.get(msg.workspaceId);
 				const latestMapState = workspace?.states.latestMap as LatestMapRaw<
 					{ value: Record<string, string | number> },
@@ -396,6 +400,10 @@ class MessageHandler {
 			case "getLatestMapValue": {
 				if (!this.presence) {
 					send({ event: "error", error: `${process_id} is not connected to presence` });
+					break;
+				}
+				if (typeof msg.key !== "string") {
+					send({ event: "error", error: `${process_id} invalid key type` });
 					break;
 				}
 				const workspace = this.workspaces.get(msg.workspaceId);
