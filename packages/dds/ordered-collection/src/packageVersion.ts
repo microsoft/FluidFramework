@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/ordered-collection";
-export const pkgVersion = "2.53.1";
+export const pkgVersion = "2.53.2";
