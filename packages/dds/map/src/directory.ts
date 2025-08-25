@@ -1600,7 +1600,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	): void {
 		this.throwIfDisposed();
 		for (const [key, localValue] of this.internalIterator()) {
-			callback((localValue as { value: unknown }).value, key, this);
+			callback(localValue, key, this);
 		}
 	}
 
