@@ -73,15 +73,6 @@ export function create(
 		config,
 	);
 
-	function handlePatchRootSuccess(request: Request, opBuilder: (request: Request) => any[], producer: core.IProducer) {
-		const tenantId = request.params.tenantId;
-		const documentId = request.params.id;
-		const clientId = (sillyname() as string).toLowerCase().split(" ").join("-");
-		sendJoin(tenantId, documentId, clientId, producer);
-		sendOp(request, tenantId, documentId, clientId, producer, opBuilder);
-		sendLeave(tenantId, documentId, clientId, producer);
-	}
-
 	router.get(
 		"/ping",
 		throttle(generalTenantThrottler, winston, {
@@ -130,7 +121,7 @@ export function create(
 			if (!patchRootEnabled) {
 				response.status(501).json({
 					error: "patchRoot API is not implemented",
-					message: "The PATCH /root endpoint is disabled on this server"
+					message: "The PATCH /root endpoint is disabled on this server",
 				});
 				return;
 			}
@@ -139,7 +130,7 @@ export function create(
 			if (!producer) {
 				response.status(501).json({
 					error: "patchRoot API is not implemented",
-					message: "Producer not available for patchRoot operations"
+					message: "Producer not available for patchRoot operations",
 				});
 				return;
 			}
@@ -275,6 +266,19 @@ function isValidSignalEnvelope(
 	input: Partial<IRuntimeSignalEnvelope>,
 ): input is IRuntimeSignalEnvelope {
 	return typeof input?.contents?.type === "string" && input?.contents?.content !== undefined;
+}
+
+function handlePatchRootSuccess(
+	request: Request,
+	opBuilder: (request: Request) => any[],
+	producer: core.IProducer,
+) {
+	const tenantId = request.params.tenantId;
+	const documentId = request.params.id;
+	const clientId = (sillyname() as string).toLowerCase().split(" ").join("-");
+	sendJoin(tenantId, documentId, clientId, producer);
+	sendOp(request, tenantId, documentId, clientId, producer, opBuilder);
+	sendLeave(tenantId, documentId, clientId, producer);
 }
 
 function sendLeave(

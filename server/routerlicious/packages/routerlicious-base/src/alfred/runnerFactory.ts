@@ -107,7 +107,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 	): Promise<AlfredResources> {
 		// Check if patchRoot API is enabled to determine if we need a producer
 		const patchRootEnabled = config.get("alfred:api:patchRoot") ?? true;
-		
+
 		let producer: core.IProducer | undefined;
 		if (patchRootEnabled) {
 			// Producer used to publish messages

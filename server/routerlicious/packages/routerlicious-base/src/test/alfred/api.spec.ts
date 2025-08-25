@@ -1275,11 +1275,11 @@ describe("Routerlicious", () => {
 
 			describe("patchRoot feature flag", () => {
 				let spyProducerSend;
-				
+
 				beforeEach(() => {
 					spyProducerSend = Sinon.spy(defaultProducer, "send");
 				});
-				
+
 				afterEach(() => {
 					Sinon.restore();
 				});
@@ -1322,6 +1322,18 @@ describe("Routerlicious", () => {
 
 					const restClusterThrottler = new TestThrottler(maxThrottlerLimit);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
+					restClusterThrottlers.set(
+						Constants.createDocThrottleIdPrefix,
+						restClusterThrottler,
+					);
+					restClusterThrottlers.set(
+						Constants.getDeltasThrottleIdPrefix,
+						restClusterThrottler,
+					);
+					restClusterThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restClusterThrottler,
+					);
 
 					const startupCheck = new StartupCheck();
 					testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
@@ -1359,9 +1371,15 @@ describe("Routerlicious", () => {
 						.expect(501)
 						.expect((res) => {
 							assert.strictEqual(res.body.error, "patchRoot API is not implemented");
-							assert.strictEqual(res.body.message, "The PATCH /root endpoint is disabled on this server");
+							assert.strictEqual(
+								res.body.message,
+								"The PATCH /root endpoint is disabled on this server",
+							);
 							// Verify that producer.send was never called
-							assert(spyProducerSend.notCalled, "Producer should not be called when patchRoot is disabled");
+							assert(
+								spyProducerSend.notCalled,
+								"Producer should not be called when patchRoot is disabled",
+							);
 						});
 				});
 
@@ -1376,7 +1394,10 @@ describe("Routerlicious", () => {
 						.expect(200)
 						.expect(() => {
 							// Verify that producer.send was called (3 times: join, op, leave)
-							assert(spyProducerSend.calledThrice, "Producer should be called three times for join-op-leave sequence");
+							assert(
+								spyProducerSend.calledThrice,
+								"Producer should be called three times for join-op-leave sequence",
+							);
 						});
 				});
 
@@ -1391,7 +1412,10 @@ describe("Routerlicious", () => {
 						.expect(200)
 						.expect(() => {
 							// Verify that producer.send was called (default behavior)
-							assert(spyProducerSend.calledThrice, "Producer should be called by default when flag is not set");
+							assert(
+								spyProducerSend.calledThrice,
+								"Producer should be called by default when flag is not set",
+							);
 						});
 				});
 			});
