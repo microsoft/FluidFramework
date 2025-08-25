@@ -101,6 +101,8 @@ export {
 	tryStoredSchemaAsArray,
 	replaceHandles,
 	type HandleConverter,
+	KeyEncodingOptions,
+	type TreeParsingOptions,
 } from "./customTree.js";
 
 export {

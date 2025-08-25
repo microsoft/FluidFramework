@@ -6,9 +6,9 @@
 import { describeFuzz, makeRandom, StressMode } from "@fluid-private/stochastic-test-utils";
 
 import {
-	IConfigRange,
-	IMergeTreeOperationRunnerConfig,
-	TestOperation,
+	type IConfigRange,
+	type IMergeTreeOperationRunnerConfig,
+	type TestOperation,
 	annotateRange,
 	doOverRange,
 	generateClientNames,

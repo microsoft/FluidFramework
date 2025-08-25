@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { AzureMember } from "@fluidframework/azure-client";
-import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
+import type { AzureMember } from "@fluidframework/azure-client";
+import type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 import axios from "axios";
 
 /**
