@@ -69,438 +69,430 @@ describe(`Presence with AzureClient`, () => {
 	// TODO: AB#45620: "Presence: perf: update Join pattern for scale" may help, then remove .slice.
 	// TODO: 20 clients is too many on ADO pipeline agents and times out waiting for attendees.
 	for (const numClients of numClientsForAttendeeTests.slice(0, 2)) {
-		describe(`[${numClients} clients]`, () => {
-			assert(numClients > 1, "Must have at least two clients");
-			const childConnectTimeoutMs = 1000 * numClients;
-			const allConnectedTimeoutMs = 2000;
-			const durationMs = 10_000;
+		assert(numClients > 1, "Must have at least two clients");
+		const childConnectTimeoutMs = 1000 * numClients;
+		const allConnectedTimeoutMs = 2000;
+		const durationMs = 10_000;
 
-			it("announces 'attendeeConnected' when remote client joins session", async () => {
-				// Setup
-				const { children, childErrorPromise } = await forkChildProcesses(
-					numClients,
-					afterCleanUp,
-				);
+		it(`announces 'attendeeConnected' when remote client joins session [${numClients} clients]`, async () => {
+			// Setup
+			const { children, childErrorPromise } = await forkChildProcesses(
+				numClients,
+				afterCleanUp,
+			);
 
-				// Act + Verify
-				await connectAndWaitForAttendees(
+			// Act + Verify
+			await connectAndWaitForAttendees(
+				children,
+				numClients - 1,
+				childConnectTimeoutMs,
+				allConnectedTimeoutMs,
+				childErrorPromise,
+			);
+		});
+
+		it(`announces 'attendeeDisconnected' when remote client disconnects [${numClients} clients]`, async () => {
+			// Setup
+			const { children, childErrorPromise } = await forkChildProcesses(
+				numClients,
+				afterCleanUp,
+			);
+
+			const connectResult = await connectAndWaitForAttendees(
+				children,
+				numClients - 1,
+				childConnectTimeoutMs,
+				allConnectedTimeoutMs,
+				childErrorPromise,
+			);
+
+			const childDisconnectTimeoutMs = 10_000;
+
+			const waitForDisconnected = children.map(async (child, index) =>
+				index === 0
+					? Promise.resolve()
+					: timeoutPromise(
+							(resolve) => {
+								child.on("message", (msg: MessageFromChild) => {
+									if (
+										msg.event === "attendeeDisconnected" &&
+										msg.attendeeId === connectResult.containerCreatorAttendeeId
+									) {
+										console.log(`Child[${index}] saw creator disconnect`);
+										resolve();
+									}
+								});
+							},
+							{
+								durationMs: childDisconnectTimeoutMs,
+								errorMsg: `Attendee[${index}] Disconnected Timeout`,
+							},
+						),
+			);
+
+			// Act
+			children[0].send({ command: "disconnectSelf" });
+
+			// Verify
+			await Promise.race([Promise.all(waitForDisconnected), childErrorPromise]);
+		});
+
+		// This test suite focuses on the synchronization of Latest state between clients.
+		// NOTE: For testing purposes child clients will expect a Latest value of type string.
+		describe("using Latest state object", () => {
+			let children: ChildProcess[];
+			let childErrorPromise: Promise<void>;
+			let containerCreatorAttendeeId: AttendeeId;
+			let attendeeIdPromises: Promise<AttendeeId>[];
+			let remoteClients: ChildProcess[];
+			const testValue = "testValue";
+			const workspaceId = "presenceTestWorkspace";
+
+			beforeEach(async () => {
+				({ children, childErrorPromise } = await forkChildProcesses(numClients, afterCleanUp));
+				({ containerCreatorAttendeeId, attendeeIdPromises } = await connectChildProcesses(
 					children,
-					numClients - 1,
 					childConnectTimeoutMs,
-					allConnectedTimeoutMs,
-					childErrorPromise,
-				);
+				));
+				await Promise.all(attendeeIdPromises);
+				remoteClients = children.filter((_, index) => index !== 0);
+				// NOTE: For testing purposes child clients will expect a Latest value of type string (StateFactory.latest<{ value: string }>).
+				await registerWorkspaceOnChildren(children, workspaceId, { latest: true });
 			});
 
-			it("announces 'attendeeDisconnected' when remote client disconnects", async () => {
+			it(`synchronizes Latest state updates between clients [${numClients} clients]`, async () => {
 				// Setup
-				const { children, childErrorPromise } = await forkChildProcesses(
-					numClients,
-					afterCleanUp,
-				);
-
-				const connectResult = await connectAndWaitForAttendees(
-					children,
-					numClients - 1,
-					childConnectTimeoutMs,
-					allConnectedTimeoutMs,
+				const updateEventsPromise = waitForLatestValueUpdates(
+					remoteClients,
+					workspaceId,
 					childErrorPromise,
-				);
-
-				const childDisconnectTimeoutMs = 10_000;
-
-				const waitForDisconnected = children.map(async (child, index) =>
-					index === 0
-						? Promise.resolve()
-						: timeoutPromise(
-								(resolve) => {
-									child.on("message", (msg: MessageFromChild) => {
-										if (
-											msg.event === "attendeeDisconnected" &&
-											msg.attendeeId === connectResult.containerCreatorAttendeeId
-										) {
-											console.log(`Child[${index}] saw creator disconnect`);
-											resolve();
-										}
-									});
-								},
-								{
-									durationMs: childDisconnectTimeoutMs,
-									errorMsg: `Attendee[${index}] Disconnected Timeout`,
-								},
-							),
+					durationMs,
+					{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
 				);
 
 				// Act
-				children[0].send({ command: "disconnectSelf" });
+				children[0].send({
+					command: "setLatestValue",
+					workspaceId,
+					value: testValue,
+				});
+				const updateEvents = await updateEventsPromise;
 
 				// Verify
-				await Promise.race([Promise.all(waitForDisconnected), childErrorPromise]);
+				for (const updateEvent of updateEvents) {
+					assert.strictEqual(updateEvent.attendeeId, containerCreatorAttendeeId);
+					assert.deepStrictEqual(updateEvent.value, testValue);
+				}
 			});
 
-			// This test suite focuses on the synchronization of Latest state between clients.
-			// NOTE: For testing purposes child clients will expect a Latest value of type string.
-			describe("using Latest state object", () => {
-				let children: ChildProcess[];
-				let childErrorPromise: Promise<void>;
-				let containerCreatorAttendeeId: AttendeeId;
-				let attendeeIdPromises: Promise<AttendeeId>[];
-				let remoteClients: ChildProcess[];
-				const testValue = "testValue";
-				const workspaceId = "presenceTestWorkspace";
+			it(`allows clients to read Latest state from other clients [${numClients} clients]`, async () => {
+				// Setup
+				const updateEventsPromise = waitForLatestValueUpdates(
+					remoteClients,
+					workspaceId,
+					childErrorPromise,
+					durationMs,
+					{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
+				);
 
-				beforeEach(async () => {
-					({ children, childErrorPromise } = await forkChildProcesses(
-						numClients,
-						afterCleanUp,
-					));
-					({ containerCreatorAttendeeId, attendeeIdPromises } = await connectChildProcesses(
-						children,
-						childConnectTimeoutMs,
-					));
-					await Promise.all(attendeeIdPromises);
-					remoteClients = children.filter((_, index) => index !== 0);
-					// NOTE: For testing purposes child clients will expect a Latest value of type string (StateFactory.latest<{ value: string }>).
-					await registerWorkspaceOnChildren(children, workspaceId, { latest: true });
+				// Act - Trigger the update
+				children[0].send({
+					command: "setLatestValue",
+					workspaceId,
+					value: testValue,
 				});
+				const updateEvents = await updateEventsPromise;
 
-				it("synchronizes Latest state updates between clients", async () => {
-					// Setup
-					const updateEventsPromise = waitForLatestValueUpdates(
-						remoteClients,
-						workspaceId,
-						childErrorPromise,
-						durationMs,
-						{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
-					);
+				// Verify all events are from the expected attendee
+				for (const updateEvent of updateEvents) {
+					assert.strictEqual(updateEvent.attendeeId, containerCreatorAttendeeId);
+				}
 
-					// Act
-					children[0].send({
-						command: "setLatestValue",
+				// Act - Request each remote client to read latest state from container creator
+				for (const child of remoteClients) {
+					child.send({
+						command: "getLatestValue",
 						workspaceId,
-						value: testValue,
+						attendeeId: containerCreatorAttendeeId,
 					});
-					const updateEvents = await updateEventsPromise;
+				}
 
-					// Verify
-					for (const updateEvent of updateEvents) {
-						assert.strictEqual(updateEvent.attendeeId, containerCreatorAttendeeId);
-						assert.deepStrictEqual(updateEvent.value, testValue);
-					}
-				});
+				const getResponses = await getLatestValueResponses(
+					remoteClients,
+					workspaceId,
+					childErrorPromise,
+					durationMs,
+				);
 
-				it("allows clients to read Latest state from other clients", async () => {
-					// Setup
-					const updateEventsPromise = waitForLatestValueUpdates(
-						remoteClients,
-						workspaceId,
-						childErrorPromise,
-						durationMs,
-						{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
-					);
+				// Verify - all responses should contain the expected value
+				for (const getResponse of getResponses) {
+					assert.deepStrictEqual(getResponse.value, testValue);
+				}
+			});
+		});
 
-					// Act - Trigger the update
-					children[0].send({
-						command: "setLatestValue",
-						workspaceId,
-						value: testValue,
-					});
-					const updateEvents = await updateEventsPromise;
+		// This test suite focuses on the synchronization of LatestMap state between clients.
+		// NOTE: For testing purposes child clients will expect a LatestMap value of type Record<string, string | number>.
+		describe("using LatestMap state object", () => {
+			let children: ChildProcess[];
+			let childErrorPromise: Promise<void>;
+			let containerCreatorAttendeeId: AttendeeId;
+			let attendeeIdPromises: Promise<AttendeeId>[];
+			let remoteClients: ChildProcess[];
+			const workspaceId = "presenceTestWorkspace";
+			const key1 = "player1";
+			const key2 = "player2";
+			const value1 = { name: "Alice", score: 100 };
+			const value2 = { name: "Bob", score: 200 };
 
-					// Verify all events are from the expected attendee
-					for (const updateEvent of updateEvents) {
-						assert.strictEqual(updateEvent.attendeeId, containerCreatorAttendeeId);
-					}
-
-					// Act - Request each remote client to read latest state from container creator
-					for (const child of remoteClients) {
-						child.send({
-							command: "getLatestValue",
-							workspaceId,
-							attendeeId: containerCreatorAttendeeId,
-						});
-					}
-
-					const getResponses = await getLatestValueResponses(
-						remoteClients,
-						workspaceId,
-						childErrorPromise,
-						durationMs,
-					);
-
-					// Verify - all responses should contain the expected value
-					for (const getResponse of getResponses) {
-						assert.deepStrictEqual(getResponse.value, testValue);
-					}
-				});
+			beforeEach(async () => {
+				({ children, childErrorPromise } = await forkChildProcesses(numClients, afterCleanUp));
+				({ containerCreatorAttendeeId, attendeeIdPromises } = await connectChildProcesses(
+					children,
+					childConnectTimeoutMs,
+				));
+				await Promise.all(attendeeIdPromises);
+				remoteClients = children.filter((_, index) => index !== 0);
+				// NOTE: For testing purposes child clients will expect a LatestMap value of type Record<string, string | number> (StateFactory.latestMap<{ value: Record<string, string | number> }, string>).
+				await registerWorkspaceOnChildren(children, workspaceId, { latestMap: true });
 			});
 
-			// This test suite focuses on the synchronization of LatestMap state between clients.
-			// NOTE: For testing purposes child clients will expect a LatestMap value of type Record<string, string | number>.
-			describe("using LatestMap state object", () => {
-				let children: ChildProcess[];
-				let childErrorPromise: Promise<void>;
-				let containerCreatorAttendeeId: AttendeeId;
-				let attendeeIdPromises: Promise<AttendeeId>[];
-				let remoteClients: ChildProcess[];
-				const workspaceId = "presenceTestWorkspace";
-				const key1 = "player1";
-				const key2 = "player2";
-				const value1 = { name: "Alice", score: 100 };
-				const value2 = { name: "Bob", score: 200 };
+			it(`synchronizes LatestMap state updates between clients [${numClients} clients]`, async () => {
+				// Setup
+				const testKey = "player1";
+				const testValue = { x: 100, y: 200, color: "red" };
+				const updateEventsPromise = waitForLatestMapValueUpdates(
+					remoteClients,
+					workspaceId,
+					testKey,
+					childErrorPromise,
+					durationMs,
+					{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
+				);
 
-				beforeEach(async () => {
-					({ children, childErrorPromise } = await forkChildProcesses(
-						numClients,
-						afterCleanUp,
-					));
-					({ containerCreatorAttendeeId, attendeeIdPromises } = await connectChildProcesses(
-						children,
-						childConnectTimeoutMs,
-					));
-					await Promise.all(attendeeIdPromises);
-					remoteClients = children.filter((_, index) => index !== 0);
-					// NOTE: For testing purposes child clients will expect a LatestMap value of type Record<string, string | number> (StateFactory.latestMap<{ value: Record<string, string | number> }, string>).
-					await registerWorkspaceOnChildren(children, workspaceId, { latestMap: true });
+				// Act
+				children[0].send({
+					command: "setLatestMapValue",
+					workspaceId,
+					key: testKey,
+					value: testValue,
 				});
+				const updateEvents = await updateEventsPromise;
 
-				it("synchronizes LatestMap state updates between clients", async () => {
-					// Setup
-					const testKey = "player1";
-					const testValue = { x: 100, y: 200, color: "red" };
-					const updateEventsPromise = waitForLatestMapValueUpdates(
-						remoteClients,
-						workspaceId,
-						testKey,
-						childErrorPromise,
-						durationMs,
-						{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
-					);
+				// Verify
+				for (const updateEvent of updateEvents) {
+					assert.strictEqual(updateEvent.attendeeId, containerCreatorAttendeeId);
+					assert.strictEqual(updateEvent.key, testKey);
+					assert.deepStrictEqual(updateEvent.value, testValue);
+				}
+			});
 
-					// Act
-					children[0].send({
-						command: "setLatestMapValue",
+			it(`allows clients to read LatestMap values from other clients [${numClients} clients]`, async () => {
+				// Setup
+				const testKey = "cursor";
+				const testValue = { x: 150, y: 300 };
+				const updateEventsPromise = waitForLatestMapValueUpdates(
+					remoteClients,
+					workspaceId,
+					testKey,
+					childErrorPromise,
+					durationMs,
+					{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
+				);
+
+				// Act
+				children[0].send({
+					command: "setLatestMapValue",
+					workspaceId,
+					key: testKey,
+					value: testValue,
+				});
+				const updateEvents = await updateEventsPromise;
+
+				// Verify all events are from the expected attendee
+				for (const updateEvent of updateEvents) {
+					assert.strictEqual(updateEvent.attendeeId, containerCreatorAttendeeId);
+					assert.strictEqual(updateEvent.key, testKey);
+				}
+
+				for (const child of remoteClients) {
+					child.send({
+						command: "getLatestMapValue",
 						workspaceId,
 						key: testKey,
-						value: testValue,
+						attendeeId: containerCreatorAttendeeId,
 					});
-					const updateEvents = await updateEventsPromise;
+				}
+				const getResponses = await getLatestMapValueResponses(
+					remoteClients,
+					workspaceId,
+					testKey,
+					childErrorPromise,
+					durationMs,
+				);
 
-					// Verify
-					for (const updateEvent of updateEvents) {
-						assert.strictEqual(updateEvent.attendeeId, containerCreatorAttendeeId);
-						assert.strictEqual(updateEvent.key, testKey);
-						assert.deepStrictEqual(updateEvent.value, testValue);
-					}
+				// Verify
+				for (const getResponse of getResponses) {
+					assert.deepStrictEqual(getResponse.value, testValue);
+				}
+			});
+
+			it(`emits per-key update events [${numClients} clients]`, async () => {
+				// Setup
+				const allAttendeeIds = await Promise.all(attendeeIdPromises);
+				const attendee0Id = containerCreatorAttendeeId;
+				const attendee1Id = allAttendeeIds[1];
+
+				const key1Recipients = children.filter((_, index) => index !== 0);
+				const key2Recipients = children.filter((_, index) => index !== 1);
+				const key1UpdateEventsPromise = waitForLatestMapValueUpdates(
+					key1Recipients,
+					workspaceId,
+					key1,
+					childErrorPromise,
+					durationMs,
+					{ fromAttendeeId: attendee0Id, expectedValue: value1 },
+				);
+				const key2UpdateEventsPromise = waitForLatestMapValueUpdates(
+					key2Recipients,
+					workspaceId,
+					key2,
+					childErrorPromise,
+					durationMs,
+					{ fromAttendeeId: attendee1Id, expectedValue: value2 },
+				);
+				// Act
+				children[0].send({
+					command: "setLatestMapValue",
+					workspaceId,
+					key: key1,
+					value: value1,
 				});
-
-				it("allows clients to read LatestMap values from other clients", async () => {
-					// Setup
-					const testKey = "cursor";
-					const testValue = { x: 150, y: 300 };
-					const updateEventsPromise = waitForLatestMapValueUpdates(
-						remoteClients,
-						workspaceId,
-						testKey,
-						childErrorPromise,
-						durationMs,
-						{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
-					);
-
-					// Act
-					children[0].send({
-						command: "setLatestMapValue",
-						workspaceId,
-						key: testKey,
-						value: testValue,
-					});
-					const updateEvents = await updateEventsPromise;
-
-					// Verify all events are from the expected attendee
-					for (const updateEvent of updateEvents) {
-						assert.strictEqual(updateEvent.attendeeId, containerCreatorAttendeeId);
-						assert.strictEqual(updateEvent.key, testKey);
-					}
-
-					for (const child of remoteClients) {
-						child.send({
-							command: "getLatestMapValue",
-							workspaceId,
-							key: testKey,
-							attendeeId: containerCreatorAttendeeId,
-						});
-					}
-					const getResponses = await getLatestMapValueResponses(
-						remoteClients,
-						workspaceId,
-						testKey,
-						childErrorPromise,
-						durationMs,
-					);
-
-					// Verify
-					for (const getResponse of getResponses) {
-						assert.deepStrictEqual(getResponse.value, testValue);
-					}
+				const key1UpdateEvents = await key1UpdateEventsPromise;
+				children[1].send({
+					command: "setLatestMapValue",
+					workspaceId,
+					key: key2,
+					value: value2,
 				});
+				const key2UpdateEvents = await key2UpdateEventsPromise;
 
-				it("emits per-key update events", async () => {
-					// Setup
-					const allAttendeeIds = await Promise.all(attendeeIdPromises);
-					const attendee0Id = containerCreatorAttendeeId;
-					const attendee1Id = allAttendeeIds[1];
+				// Verify
+				for (const updateEvent of key1UpdateEvents) {
+					assert.strictEqual(updateEvent.attendeeId, attendee0Id);
+					assert.strictEqual(updateEvent.key, key1);
+					assert.deepStrictEqual(updateEvent.value, value1);
+				}
+				for (const updateEvent of key2UpdateEvents) {
+					assert.strictEqual(updateEvent.attendeeId, attendee1Id);
+					assert.strictEqual(updateEvent.key, key2);
+					assert.deepStrictEqual(updateEvent.value, value2);
+				}
+			});
 
-					const key1Recipients = children.filter((_, index) => index !== 0);
-					const key2Recipients = children.filter((_, index) => index !== 1);
-					const key1UpdateEventsPromise = waitForLatestMapValueUpdates(
-						key1Recipients,
-						workspaceId,
-						key1,
-						childErrorPromise,
-						durationMs,
-						{ fromAttendeeId: attendee0Id, expectedValue: value1 },
-					);
-					const key2UpdateEventsPromise = waitForLatestMapValueUpdates(
-						key2Recipients,
-						workspaceId,
-						key2,
-						childErrorPromise,
-						durationMs,
-						{ fromAttendeeId: attendee1Id, expectedValue: value2 },
-					);
-					// Act
-					children[0].send({
-						command: "setLatestMapValue",
+			it(`returns per-key values on read [${numClients} clients]`, async () => {
+				// Setup
+				const allAttendeeIds = await Promise.all(attendeeIdPromises);
+				const attendee0Id = containerCreatorAttendeeId;
+				const attendee1Id = allAttendeeIds[1];
+
+				const key1Recipients = children.filter((_, index) => index !== 0);
+				const key2Recipients = children.filter((_, index) => index !== 1);
+				const key1UpdateEventsPromise = waitForLatestMapValueUpdates(
+					key1Recipients,
+					workspaceId,
+					key1,
+					childErrorPromise,
+					durationMs,
+					{ fromAttendeeId: attendee0Id, expectedValue: value1 },
+				);
+				const key2UpdateEventsPromise = waitForLatestMapValueUpdates(
+					key2Recipients,
+					workspaceId,
+					key2,
+					childErrorPromise,
+					durationMs,
+					{ fromAttendeeId: attendee1Id, expectedValue: value2 },
+				);
+
+				// Act
+				children[0].send({
+					command: "setLatestMapValue",
+					workspaceId,
+					key: key1,
+					value: value1,
+				});
+				const key1UpdateEvents = await key1UpdateEventsPromise;
+				children[1].send({
+					command: "setLatestMapValue",
+					workspaceId,
+					key: key2,
+					value: value2,
+				});
+				const key2UpdateEvents = await key2UpdateEventsPromise;
+
+				// Verify all events are from the expected attendees
+				for (const updateEvent of key1UpdateEvents) {
+					assert.strictEqual(updateEvent.attendeeId, attendee0Id);
+					assert.strictEqual(updateEvent.key, key1);
+				}
+				for (const updateEvent of key2UpdateEvents) {
+					assert.strictEqual(updateEvent.attendeeId, attendee1Id);
+					assert.strictEqual(updateEvent.key, key2);
+				}
+
+				// Read key1 of attendee0 from all children
+				for (const child of children) {
+					child.send({
+						command: "getLatestMapValue",
 						workspaceId,
 						key: key1,
-						value: value1,
+						attendeeId: attendee0Id,
 					});
-					const key1UpdateEvents = await key1UpdateEventsPromise;
-					children[1].send({
-						command: "setLatestMapValue",
+				}
+				const key1Responses = await getLatestMapValueResponses(
+					children,
+					workspaceId,
+					key1,
+					childErrorPromise,
+					durationMs,
+				);
+
+				// Read key2 of attendee1 from all children
+				for (const child of children) {
+					child.send({
+						command: "getLatestMapValue",
 						workspaceId,
 						key: key2,
-						value: value2,
+						attendeeId: attendee1Id,
 					});
-					const key2UpdateEvents = await key2UpdateEventsPromise;
+				}
+				const key2Responses = await getLatestMapValueResponses(
+					children,
+					workspaceId,
+					key2,
+					childErrorPromise,
+					durationMs,
+				);
 
-					// Verify
-					for (const updateEvent of key1UpdateEvents) {
-						assert.strictEqual(updateEvent.attendeeId, attendee0Id);
-						assert.strictEqual(updateEvent.key, key1);
-						assert.deepStrictEqual(updateEvent.value, value1);
-					}
-					for (const updateEvent of key2UpdateEvents) {
-						assert.strictEqual(updateEvent.attendeeId, attendee1Id);
-						assert.strictEqual(updateEvent.key, key2);
-						assert.deepStrictEqual(updateEvent.value, value2);
-					}
-				});
+				// Verify
+				assert.strictEqual(
+					key1Responses.length,
+					numClients,
+					"Expected responses from all clients for key1",
+				);
+				assert.strictEqual(
+					key2Responses.length,
+					numClients,
+					"Expected responses from all clients for key2",
+				);
 
-				it("returns per-key values on read", async () => {
-					// Setup
-					const allAttendeeIds = await Promise.all(attendeeIdPromises);
-					const attendee0Id = containerCreatorAttendeeId;
-					const attendee1Id = allAttendeeIds[1];
-
-					const key1Recipients = children.filter((_, index) => index !== 0);
-					const key2Recipients = children.filter((_, index) => index !== 1);
-					const key1UpdateEventsPromise = waitForLatestMapValueUpdates(
-						key1Recipients,
-						workspaceId,
-						key1,
-						childErrorPromise,
-						durationMs,
-						{ fromAttendeeId: attendee0Id, expectedValue: value1 },
-					);
-					const key2UpdateEventsPromise = waitForLatestMapValueUpdates(
-						key2Recipients,
-						workspaceId,
-						key2,
-						childErrorPromise,
-						durationMs,
-						{ fromAttendeeId: attendee1Id, expectedValue: value2 },
-					);
-
-					// Act
-					children[0].send({
-						command: "setLatestMapValue",
-						workspaceId,
-						key: key1,
-						value: value1,
-					});
-					const key1UpdateEvents = await key1UpdateEventsPromise;
-					children[1].send({
-						command: "setLatestMapValue",
-						workspaceId,
-						key: key2,
-						value: value2,
-					});
-					const key2UpdateEvents = await key2UpdateEventsPromise;
-
-					// Verify all events are from the expected attendees
-					for (const updateEvent of key1UpdateEvents) {
-						assert.strictEqual(updateEvent.attendeeId, attendee0Id);
-						assert.strictEqual(updateEvent.key, key1);
-					}
-					for (const updateEvent of key2UpdateEvents) {
-						assert.strictEqual(updateEvent.attendeeId, attendee1Id);
-						assert.strictEqual(updateEvent.key, key2);
-					}
-
-					// Read key1 of attendee0 from all children
-					for (const child of children) {
-						child.send({
-							command: "getLatestMapValue",
-							workspaceId,
-							key: key1,
-							attendeeId: attendee0Id,
-						});
-					}
-					const key1Responses = await getLatestMapValueResponses(
-						children,
-						workspaceId,
-						key1,
-						childErrorPromise,
-						durationMs,
-					);
-
-					// Read key2 of attendee1 from all children
-					for (const child of children) {
-						child.send({
-							command: "getLatestMapValue",
-							workspaceId,
-							key: key2,
-							attendeeId: attendee1Id,
-						});
-					}
-					const key2Responses = await getLatestMapValueResponses(
-						children,
-						workspaceId,
-						key2,
-						childErrorPromise,
-						durationMs,
-					);
-
-					// Verify
-					assert.strictEqual(
-						key1Responses.length,
-						numClients,
-						"Expected responses from all clients for key1",
-					);
-					assert.strictEqual(
-						key2Responses.length,
-						numClients,
-						"Expected responses from all clients for key2",
-					);
-
-					for (const response of key1Responses) {
-						assert.deepStrictEqual(response.value, value1, "Key1 value should match");
-					}
-					for (const response of key2Responses) {
-						assert.deepStrictEqual(response.value, value2, "Key2 value should match");
-					}
-				});
+				for (const response of key1Responses) {
+					assert.deepStrictEqual(response.value, value1, "Key1 value should match");
+				}
+				for (const response of key2Responses) {
+					assert.deepStrictEqual(response.value, value2, "Key2 value should match");
+				}
 			});
 		});
 	}
