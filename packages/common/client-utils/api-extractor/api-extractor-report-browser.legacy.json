@@ -3,9 +3,8 @@
 	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-report.esm.legacy.json",
 	"mainEntryPointFilePath": "<projectFolder>/lib/<unscopedPackageName>.browser.legacy.d.ts",
 	"apiReport": {
-		// This is an internal package and should have no public API surface,
-		// but it does have a legacy API. Since there should be none, report all
-		// variants and expect no content (apart from the EventEmitter forward).
+		// This is an internal package and should have no public API surface, but it does have legacy APIs.
+		// We will report all, and expect non-legacy exports to be empty (apart from the EventEmitter forward).
 		"enabled": true,
 		"reportVariants": ["public", "beta", "alpha"]
 	}

@@ -2,5 +2,11 @@
 	// This node report is always meant to be identical to the browser report. Do not use with --local.
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-report.esm.legacy.json",
-	"mainEntryPointFilePath": "<projectFolder>/lib/<unscopedPackageName>.node.legacy.d.ts"
+	"mainEntryPointFilePath": "<projectFolder>/lib/<unscopedPackageName>.node.legacy.d.ts",
+	"apiReport": {
+		// This is an internal package and should have no public API surface, but it does have legacy APIs.
+		// We will report all, and expect non-legacy exports to be empty (apart from the EventEmitter forward).
+		"enabled": true,
+		"reportVariants": ["public", "beta", "alpha"]
+	}
 }
