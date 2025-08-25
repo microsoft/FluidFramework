@@ -760,7 +760,7 @@ export namespace System_TableSchema {
 					columnsToRemove.push(columnToRemove);
 				}
 
-				this.applyEditsInTransaction( (): void => {
+				this.applyEditsInTransaction((): void => {
 					for (const column of columnsToRemove) {
 						// First, remove all cells that correspond to the column from each row:
 						for (const row of this.rows) {
