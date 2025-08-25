@@ -257,37 +257,77 @@ export async function waitForEvent(
 	options: { timeoutMs?: number; errorMsg?: string } = {},
 ): Promise<MessageFromChild> {
 	const { timeoutMs = 10_000, errorMsg = `did not receive '${eventType}' event` } = options;
-	return timeoutPromise<MessageFromChild>(
-		(resolve) => {
-			const handler = (msg: MessageFromChild): void => {
-				if (msg.event === eventType && (!predicate || predicate(msg))) {
-					child.off("message", handler);
-					resolve(msg);
-				}
-			};
-			child.on("message", handler);
-		},
-		{ durationMs: timeoutMs, errorMsg },
-	);
+
+	let handler: ((msg: MessageFromChild) => void) | undefined;
+
+	const cleanup = (): void => {
+		if (handler) {
+			child.off("message", handler);
+			handler = undefined;
+		}
+	};
+
+	try {
+		return await timeoutPromise<MessageFromChild>(
+			(resolve) => {
+				handler = (msg: MessageFromChild): void => {
+					if (msg.event === eventType && (!predicate || predicate(msg))) {
+						cleanup();
+						resolve(msg);
+					}
+				};
+				child.on("message", handler);
+			},
+			{ durationMs: timeoutMs, errorMsg },
+		);
+	} catch (error) {
+		cleanup();
+		throw error;
+	}
 }
 
 /**
  * Waits for latest value updates for the provided workspace from all clients.
+ *
+ * @param clients - Child processes to wait for updates from
+ * @param workspaceId - Workspace ID to filter updates
+ * @param earlyExitPromise - Promise that rejects early on error
+ * @param timeoutMs - Timeout in milliseconds
+ * @param options - Optional filtering criteria with fromAttendeeId and expectedValue properties
  */
 export async function waitForLatestValueUpdates(
 	clients: ChildProcess[],
 	workspaceId: string,
 	earlyExitPromise: Promise<void>,
 	timeoutMs = 10_000,
+	options: { fromAttendeeId?: AttendeeId; expectedValue?: unknown } = {},
 ): Promise<LatestValueUpdatedEvent[]> {
-	const updatePromises = clients.map(async (child, index) =>
-		waitForEvent(
-			child,
-			"latestValueUpdated",
-			(msg) => isLatestValueUpdated(msg) && msg.workspaceId === workspaceId,
-			{ timeoutMs, errorMsg: `Client ${index} did not receive latest value update` },
-		),
-	);
+	const { fromAttendeeId, expectedValue } = options;
+	const updatePromises = clients.map(async (child, index) => {
+		const filterMsg = (msg: MessageFromChild): boolean => {
+			if (!isLatestValueUpdated(msg) || msg.workspaceId !== workspaceId) {
+				return false;
+			}
+			if (fromAttendeeId !== undefined && msg.attendeeId !== fromAttendeeId) {
+				return false;
+			}
+			if (expectedValue !== undefined) {
+				return JSON.stringify(msg.value) === JSON.stringify(expectedValue);
+			}
+			return true;
+		};
+
+		let filterDescription = "update";
+		if (fromAttendeeId) filterDescription += ` from attendee ${fromAttendeeId}`;
+		if (expectedValue !== undefined)
+			filterDescription += ` with specific value ${JSON.stringify(expectedValue)}`;
+		if (filterDescription === "update") filterDescription = "any update";
+
+		return waitForEvent(child, "latestValueUpdated", filterMsg, {
+			timeoutMs,
+			errorMsg: `Client ${index} did not receive latest value ${filterDescription}`,
+		});
+	});
 	const responses = await Promise.race([Promise.all(updatePromises), earlyExitPromise]);
 	if (!Array.isArray(responses)) {
 		throw new TypeError("Expected array of responses");
@@ -305,6 +345,13 @@ export async function waitForLatestValueUpdates(
 
 /**
  * Waits for latest map value updates (specific key) from all clients.
+ *
+ * @param clients - Child processes to wait for updates from
+ * @param workspaceId - Workspace ID to filter updates
+ * @param key - Map key to filter updates
+ * @param earlyExitPromise - Promise that rejects early on error
+ * @param timeoutMs - Timeout in milliseconds
+ * @param options - Optional filtering criteria with fromAttendeeId and expectedValue properties
  */
 export async function waitForLatestMapValueUpdates(
 	clients: ChildProcess[],
@@ -312,16 +359,37 @@ export async function waitForLatestMapValueUpdates(
 	key: string,
 	earlyExitPromise: Promise<void>,
 	timeoutMs = 10_000,
+	options: { fromAttendeeId?: AttendeeId; expectedValue?: unknown } = {},
 ): Promise<LatestMapValueUpdatedEvent[]> {
-	const updatePromises = clients.map(async (child, index) =>
-		waitForEvent(
-			child,
-			"latestMapValueUpdated",
-			(msg) =>
-				isLatestMapValueUpdated(msg) && msg.workspaceId === workspaceId && msg.key === key,
-			{ timeoutMs, errorMsg: `Client ${index} did not receive latest map value update` },
-		),
-	);
+	const { fromAttendeeId, expectedValue } = options;
+	const updatePromises = clients.map(async (child, index) => {
+		const filterMsg = (msg: MessageFromChild): boolean => {
+			if (
+				!isLatestMapValueUpdated(msg) ||
+				msg.workspaceId !== workspaceId ||
+				msg.key !== key
+			) {
+				return false;
+			}
+			if (fromAttendeeId !== undefined && msg.attendeeId !== fromAttendeeId) {
+				return false;
+			}
+			if (expectedValue !== undefined) {
+				return JSON.stringify(msg.value) === JSON.stringify(expectedValue);
+			}
+			return true;
+		};
+
+		let filterDescription = `update for key "${key}"`;
+		if (fromAttendeeId) filterDescription += ` from attendee ${fromAttendeeId}`;
+		if (expectedValue !== undefined)
+			filterDescription += ` with specific value ${JSON.stringify(expectedValue)}`;
+
+		return waitForEvent(child, "latestMapValueUpdated", filterMsg, {
+			timeoutMs,
+			errorMsg: `Client ${index} did not receive latest map value ${filterDescription}`,
+		});
+	});
 	const responses = await Promise.race([Promise.all(updatePromises), earlyExitPromise]);
 	if (!Array.isArray(responses)) {
 		throw new TypeError("Expected array of responses");

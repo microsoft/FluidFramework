@@ -4,6 +4,7 @@
  */
 
 import type { AzureUser } from "@fluidframework/azure-client/internal";
+import type { JsonSerializable } from "@fluidframework/core-interfaces/internal";
 // eslint-disable-next-line import/no-internal-modules
 import type { AttendeeId } from "@fluidframework/presence/beta";
 
@@ -69,23 +70,25 @@ interface RegisterWorkspaceCommand {
 
 /**
  * Instructs a child process to set the latest value.
- * We then can wait for {@link LatestValueUpdatedEvent} from other clients to know when the latest value is updated.
+ * We then can wait for {@link LatestValueUpdatedEvent} from other clients to know when an update occurs that represents this change.
+ * Note: The client doesn't guarantee that the update message is directly related to this set command.
  */
 interface SetLatestValueCommand {
 	command: "setLatestValue";
 	workspaceId: string;
-	value: unknown;
+	value: JsonSerializable<unknown>;
 }
 
 /**
  * Instructs a child process to set the latest map value.
- * We then can wait for {@link LatestMapValueUpdatedEvent} from other clients to know when the latest map value is updated.
+ * We then can wait for {@link LatestMapValueUpdatedEvent} from other clients to know when an update occurs that represents this change.
+ * Note: The client doesn't guarantee that the update message is directly related to this set command.
  */
 interface SetLatestMapValueCommand {
 	command: "setLatestMapValue";
 	workspaceId: string;
 	key: string;
-	value: unknown;
+	value: JsonSerializable<unknown>;
 }
 
 /**

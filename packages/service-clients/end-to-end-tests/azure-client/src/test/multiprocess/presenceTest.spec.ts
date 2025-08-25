@@ -20,7 +20,7 @@ import {
 	waitForLatestMapValueUpdates,
 	getLatestValueResponses,
 	getLatestMapValueResponses,
-} from "./utils.js";
+} from "./orchestratorUtils.js";
 
 /**
  * This test suite is a prototype for a multi-process end to end test for Fluid using the new Presence API on AzureClient.
@@ -165,48 +165,52 @@ describe(`Presence with AzureClient`, () => {
 				});
 
 				it("synchronizes Latest state updates between clients", async () => {
-					// Register: Set up listeners for update events
+					// Setup
 					const updateEventsPromise = waitForLatestValueUpdates(
 						remoteClients,
 						workspaceId,
 						childErrorPromise,
 						durationMs,
+						{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
 					);
 
-					// Trigger: Send the command
+					// Act
 					children[0].send({
 						command: "setLatestValue",
 						workspaceId,
 						value: testValue,
 					});
-
-					// Set limits: Wait for the events
 					const updateEvents = await updateEventsPromise;
 
 					// Verify
 					for (const updateEvent of updateEvents) {
+						assert.strictEqual(updateEvent.attendeeId, containerCreatorAttendeeId);
 						assert.deepStrictEqual(updateEvent.value, testValue);
 					}
 				});
 
 				it("allows clients to read Latest state from other clients", async () => {
-					// Register: Set up listeners for update events first
+					// Setup
 					const updateEventsPromise = waitForLatestValueUpdates(
 						remoteClients,
 						workspaceId,
 						childErrorPromise,
 						durationMs,
+						{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
 					);
 
-					// Trigger: Send the set command
+					// Act - Trigger the update
 					children[0].send({
 						command: "setLatestValue",
 						workspaceId,
 						value: testValue,
 					});
+					const updateEvents = await updateEventsPromise;
 
-					// Set limits: Wait for remote clients to acknowledge the receipt of latest value update
-					await updateEventsPromise;
+					// Verify all events are from the expected attendee
+					for (const updateEvent of updateEvents) {
+						assert.strictEqual(updateEvent.attendeeId, containerCreatorAttendeeId);
+					}
 
 					// Act - Request each remote client to read latest state from container creator
 					for (const child of remoteClients) {
@@ -224,7 +228,7 @@ describe(`Presence with AzureClient`, () => {
 						durationMs,
 					);
 
-					// Verify
+					// Verify - all responses should contain the expected value
 					for (const getResponse of getResponses) {
 						assert.deepStrictEqual(getResponse.value, testValue);
 					}
@@ -240,11 +244,10 @@ describe(`Presence with AzureClient`, () => {
 				let attendeeIdPromises: Promise<AttendeeId>[];
 				let remoteClients: ChildProcess[];
 				const workspaceId = "presenceTestWorkspace";
-				// Shared test data for multi-key scenarios
 				const key1 = "player1";
 				const key2 = "player2";
-				const value1 = { name: "Alice", score: 100 } as const;
-				const value2 = { name: "Bob", score: 200 } as const;
+				const value1 = { name: "Alice", score: 100 };
+				const value2 = { name: "Bob", score: 200 };
 
 				beforeEach(async () => {
 					({ children, childErrorPromise } = await forkChildProcesses(
@@ -271,6 +274,7 @@ describe(`Presence with AzureClient`, () => {
 						testKey,
 						childErrorPromise,
 						durationMs,
+						{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
 					);
 
 					// Act
@@ -284,6 +288,8 @@ describe(`Presence with AzureClient`, () => {
 
 					// Verify
 					for (const updateEvent of updateEvents) {
+						assert.strictEqual(updateEvent.attendeeId, containerCreatorAttendeeId);
+						assert.strictEqual(updateEvent.key, testKey);
 						assert.deepStrictEqual(updateEvent.value, testValue);
 					}
 				});
@@ -298,6 +304,7 @@ describe(`Presence with AzureClient`, () => {
 						testKey,
 						childErrorPromise,
 						durationMs,
+						{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
 					);
 
 					// Act
@@ -307,7 +314,14 @@ describe(`Presence with AzureClient`, () => {
 						key: testKey,
 						value: testValue,
 					});
-					await updateEventsPromise;
+					const updateEvents = await updateEventsPromise;
+
+					// Verify all events are from the expected attendee
+					for (const updateEvent of updateEvents) {
+						assert.strictEqual(updateEvent.attendeeId, containerCreatorAttendeeId);
+						assert.strictEqual(updateEvent.key, testKey);
+					}
+
 					for (const child of remoteClients) {
 						child.send({
 							command: "getLatestMapValue",
@@ -332,6 +346,10 @@ describe(`Presence with AzureClient`, () => {
 
 				it("emits per-key update events", async () => {
 					// Setup
+					const allAttendeeIds = await Promise.all(attendeeIdPromises);
+					const attendee0Id = containerCreatorAttendeeId;
+					const attendee1Id = allAttendeeIds[1];
+
 					const key1Recipients = children.filter((_, index) => index !== 0);
 					const key2Recipients = children.filter((_, index) => index !== 1);
 					const key1UpdateEventsPromise = waitForLatestMapValueUpdates(
@@ -340,6 +358,7 @@ describe(`Presence with AzureClient`, () => {
 						key1,
 						childErrorPromise,
 						durationMs,
+						{ fromAttendeeId: attendee0Id, expectedValue: value1 },
 					);
 					const key2UpdateEventsPromise = waitForLatestMapValueUpdates(
 						key2Recipients,
@@ -347,6 +366,7 @@ describe(`Presence with AzureClient`, () => {
 						key2,
 						childErrorPromise,
 						durationMs,
+						{ fromAttendeeId: attendee1Id, expectedValue: value2 },
 					);
 					// Act
 					children[0].send({
@@ -366,15 +386,23 @@ describe(`Presence with AzureClient`, () => {
 
 					// Verify
 					for (const updateEvent of key1UpdateEvents) {
+						assert.strictEqual(updateEvent.attendeeId, attendee0Id);
+						assert.strictEqual(updateEvent.key, key1);
 						assert.deepStrictEqual(updateEvent.value, value1);
 					}
 					for (const updateEvent of key2UpdateEvents) {
+						assert.strictEqual(updateEvent.attendeeId, attendee1Id);
+						assert.strictEqual(updateEvent.key, key2);
 						assert.deepStrictEqual(updateEvent.value, value2);
 					}
 				});
 
 				it("returns per-key values on read", async () => {
 					// Setup
+					const allAttendeeIds = await Promise.all(attendeeIdPromises);
+					const attendee0Id = containerCreatorAttendeeId;
+					const attendee1Id = allAttendeeIds[1];
+
 					const key1Recipients = children.filter((_, index) => index !== 0);
 					const key2Recipients = children.filter((_, index) => index !== 1);
 					const key1UpdateEventsPromise = waitForLatestMapValueUpdates(
@@ -383,6 +411,7 @@ describe(`Presence with AzureClient`, () => {
 						key1,
 						childErrorPromise,
 						durationMs,
+						{ fromAttendeeId: attendee0Id, expectedValue: value1 },
 					);
 					const key2UpdateEventsPromise = waitForLatestMapValueUpdates(
 						key2Recipients,
@@ -390,6 +419,7 @@ describe(`Presence with AzureClient`, () => {
 						key2,
 						childErrorPromise,
 						durationMs,
+						{ fromAttendeeId: attendee1Id, expectedValue: value2 },
 					);
 
 					// Act
@@ -399,18 +429,24 @@ describe(`Presence with AzureClient`, () => {
 						key: key1,
 						value: value1,
 					});
-					await key1UpdateEventsPromise;
+					const key1UpdateEvents = await key1UpdateEventsPromise;
 					children[1].send({
 						command: "setLatestMapValue",
 						workspaceId,
 						key: key2,
 						value: value2,
 					});
-					await key2UpdateEventsPromise;
+					const key2UpdateEvents = await key2UpdateEventsPromise;
 
-					const allAttendeeIds = await Promise.all(attendeeIdPromises);
-					const attendee0Id = containerCreatorAttendeeId;
-					const attendee1Id = allAttendeeIds[1];
+					// Verify all events are from the expected attendees
+					for (const updateEvent of key1UpdateEvents) {
+						assert.strictEqual(updateEvent.attendeeId, attendee0Id);
+						assert.strictEqual(updateEvent.key, key1);
+					}
+					for (const updateEvent of key2UpdateEvents) {
+						assert.strictEqual(updateEvent.attendeeId, attendee1Id);
+						assert.strictEqual(updateEvent.key, key2);
+					}
 
 					// Read key1 of attendee0 from all children
 					for (const child of children) {
