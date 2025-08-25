@@ -51,7 +51,7 @@ When you open a document, SharedTree compares your application's view schema wit
 
 - **Compatible**: Document can be opened and used normally
 - **Upgradeable**: Document can be upgraded to match your view schema using [`view.upgradeSchema()`](../../../api/fluid-framework/treeview-interface#upgradeschema-method)
-- **Incompatible**: Document cannot be opened with your current view schema
+- **Incompatible**: Document cannot be opened with or upgraded to match your current view schema
 
 They must be compatible or upgradeable in order for the application to work - otherwise, it cannot read or write data from/to the document.
 SharedTree will throw an assert if the application attempts to access the document's data with an incompatible view schema.
