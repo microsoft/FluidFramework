@@ -36,7 +36,7 @@ The stored schema can grow over time but cannot shrink:
 - Node types cannot be completely removed
 
 **3. Field Key Stability**
-Field keys are permanent once introduced.
+Field keys on object nodes are permanent once introduced.
 If a field is removed and later reintroduced with a different type, SharedTree cannot distinguish between old and new data without inspecting values.
 
 ### Why These Constraints?
