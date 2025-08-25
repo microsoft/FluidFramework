@@ -69,4 +69,5 @@ export {
 	isValidMinVersionForCollab,
 	MinimumMinorSemanticVersion,
 	SemanticVersion,
+	semanticVersionToMinimumVersionForCollab,
 } from "./compatibilityBase.js";
