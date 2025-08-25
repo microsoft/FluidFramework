@@ -4,11 +4,11 @@
  */
 
 import { externalDataServicePort } from "../mock-external-data-service-interface/index.js";
-import { ITaskData } from "../model-interface/index.js";
+import type { ITaskData } from "../model-interface/index.js";
 
 import { ExternalDataSource } from "./externalDataSource.js";
 import { initializeExternalDataService } from "./service.js";
-import { MockWebhook } from "./webhook.js";
+import type { MockWebhook } from "./webhook.js";
 
 /**
  * Initializes the mock external data service on its {@link externalDataServicePort | default port}.

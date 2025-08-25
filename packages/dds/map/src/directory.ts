@@ -28,7 +28,9 @@ import {
 	parseHandles,
 } from "@fluidframework/shared-object-base/internal";
 import {
+	createChildMonitoringContext,
 	type ITelemetryLoggerExt,
+	type MonitoringContext,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 import path from "path-browserify";
@@ -262,8 +264,7 @@ type PendingSubDirectoryEntry = PendingSubDirectoryCreate | PendingSubDirectoryD
  *
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ICreateInfo {
 	/**
@@ -287,8 +288,7 @@ export interface ICreateInfo {
  *
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDirectoryDataObject {
 	/**
@@ -317,8 +317,7 @@ export interface IDirectoryDataObject {
  *
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDirectoryNewStorageFormat {
 	/**
@@ -1165,6 +1164,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public localCreationSeq: number = 0;
 
+	private readonly mc: MonitoringContext;
+
 	/**
 	 * Constructor.
 	 * @param sequenceNumber - Message seq number at which this was created.
@@ -1181,9 +1182,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly serializer: IFluidSerializer,
 		public readonly absolutePath: string,
-		private readonly logger: ITelemetryLoggerExt,
+		logger: ITelemetryLoggerExt,
 	) {
 		super();
+		this.mc = createChildMonitoringContext({ logger, namespace: "Directory" });
 	}
 
 	public dispose(error?: Error): void {
@@ -1237,8 +1239,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 		const previousOptimisticLocalValue = this.getOptimisticValue(key);
 
-		// Create a local value and serialize it.
-		bindHandles(value, this.serializer, this.directory.handle);
+		const detachedBind =
+			this.mc.config.getBoolean("Fluid.Directory.AllowDetachedResolve") ?? false;
+		if (detachedBind) {
+			// Create a local value and serialize it.
+			// AB#47081: This will be removed once we can validate that it is no longer needed.
+			bindHandles(value, this.serializer, this.directory.handle);
+		}
 
 		// If we are not attached, don't submit the op.
 		if (!this.directory.isAttached()) {
@@ -1338,7 +1345,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				this.runtime,
 				this.serializer,
 				absolutePath,
-				this.logger,
+				this.mc.logger,
 			);
 		} else {
 			if (subDir.disposed) {
@@ -2123,7 +2130,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					this.runtime,
 					this.serializer,
 					absolutePath,
-					this.logger,
+					this.mc.logger,
 				);
 			} else {
 				// If the subdirectory already optimistically exists, we don't need to create it again.

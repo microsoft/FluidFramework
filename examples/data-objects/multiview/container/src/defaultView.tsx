@@ -4,7 +4,10 @@
  */
 
 import { ConstellationView } from "@fluid-example/multiview-constellation-view";
-import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate-interface";
+import type {
+	IConstellation,
+	ICoordinate,
+} from "@fluid-example/multiview-coordinate-interface";
 import { PlotCoordinateView } from "@fluid-example/multiview-plot-coordinate-view";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import { TriangleView } from "@fluid-example/multiview-triangle-view";

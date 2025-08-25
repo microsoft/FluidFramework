@@ -72,7 +72,7 @@
 		"@fluid-tools/api-markdown-documenter": "^0.21.0",
 		"@fluid-tools/markdown-magic": "file:../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^5.5.1",
+		"@fluidframework/eslint-config-fluid": "^6.0.0",
 		"@microsoft/applicationinsights-react-js": "^17.3.4",
 		"@microsoft/applicationinsights-web": "^3.3.4",
 		"@playwright/test": "^1.49.0",

@@ -4,7 +4,7 @@
  */
 
 import { isPromiseLike } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	FluidDataStoreRegistryEntry,
 	IFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,

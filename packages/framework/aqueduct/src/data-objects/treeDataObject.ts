@@ -57,7 +57,7 @@ const uninitializedErrorString =
  * }
  * ```
  *
- * @legacy @alpha
+ * @legacy @beta
  */
 export abstract class TreeDataObject<
 	TDataObjectTypes extends DataObjectTypes = DataObjectTypes,

@@ -45,8 +45,7 @@ const snapshotFileName = "header";
 
 /**
  * {@inheritDoc ISharedCounter}
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class SharedCounter
 	extends SharedObject<ISharedCounterEvents>

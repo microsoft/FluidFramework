@@ -26,6 +26,9 @@ export function makeForestSummarizerCodec(
 	fieldBatchCodec: FieldBatchCodec,
 ): ForestCodec {
 	const inner = fieldBatchCodec;
+	// TODO: AB#41865
+	// This needs to be updated to support multiple versions.
+	// The second version will be used to enable incremental summarization.
 	return makeVersionedValidatedCodec(options, new Set([1]), Format, {
 		encode: (data: FieldSet, context: FieldBatchEncodingContext): Format => {
 			const keys: FieldKey[] = [];

@@ -16,8 +16,7 @@ import {
 
 /**
  * Mock implementation of IChannelStorageService based on ITree input.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockStorage implements IChannelStorageService {
 	public static createFromSummary(summaryTree: ISummaryTree) {

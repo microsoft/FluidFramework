@@ -42,7 +42,7 @@ import {
 	Tooltip,
 	Typography,
 } from "@mui/material";
-import { type TreeView } from "fluid-framework";
+import type { TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
 import React, { useEffect, useState } from "react";
 
@@ -52,7 +52,7 @@ import { getOpenAiClient } from "@/infra/openAiClient";
 import {
 	aiCollabLlmTreeNodeValidator,
 	SharedTreeAppState,
-	SharedTreeTaskGroup,
+	type SharedTreeTaskGroup,
 } from "@/types/sharedTreeAppSchema";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 

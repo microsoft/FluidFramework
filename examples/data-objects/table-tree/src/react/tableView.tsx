@@ -5,10 +5,10 @@
 
 import { Table, TableBody, Button } from "@fluentui/react-components";
 import { Add24Regular } from "@fluentui/react-icons";
-import React, { useState, DragEvent } from "react";
+import React, { useState, type DragEvent } from "react";
 
-import { TableDataObject } from "../dataObject.js";
-import { Column, Row } from "../schema.js";
+import type { TableDataObject } from "../dataObject.js";
+import { type Column, Row } from "../schema.js";
 
 import { TableHeaderView } from "./tableHeaderView.js";
 import { TableRowView } from "./tableRowView.js";
@@ -54,8 +54,7 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 
 	const handleRemoveRow = (index: number): void => {
 		if (index >= 0 && index < rows.length) {
-			// TODO: use index-based removal API once that has been added.
-			table.removeRows([table.rows[index]]);
+			table.removeRows(index, 1);
 		}
 	};
 
@@ -67,8 +66,7 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 
 	const handleRemoveColumn = (index: number): void => {
 		if (index >= 0 && index < columns.length) {
-			// TODO: use index-based removal API once that has been added.
-			table.removeColumns([table.columns[index]]);
+			table.removeColumns(index, 1);
 		}
 	};
 

@@ -17,6 +17,7 @@ import {
 } from "./chunkCodecUtilities.js";
 import type { IdDecodingContext } from "./chunkDecoding.js";
 import type { EncodedFieldBatchGeneric, IdentifierOrIndex } from "./formatGeneric.js";
+import type { IncrementalDecoder } from "./codecs.js";
 
 /**
  * General purpose shape based tree decoder which gets its support for specific shapes from the caller.
@@ -50,13 +51,19 @@ export function decode<TEncodedShape extends object, TContext>(
  * Shared data for use in constructing decoders.
  */
 export class DecoderContext<TEncodedShape = unknown> {
-	/**
-	 * @param identifiers - identifier substitution table (use to replace numeric identifier indexes with the actual identifiers from this table).
-	 */
 	public constructor(
+		/**
+		 * Identifier substitution table (use to replace numeric identifier indexes with the actual identifiers from this table).
+		 */
 		public readonly identifiers: readonly string[],
 		public readonly shapes: readonly TEncodedShape[],
 		public readonly idDecodingContext: IdDecodingContext,
+		/**
+		 * To be used to decode incremental chunks, if any.
+		 * @remarks
+		 * See {@link IncrementalDecoder} for more information.
+		 */
+		public readonly incrementalDecoder: IncrementalDecoder | undefined,
 	) {}
 
 	public identifier<T extends string & BrandedType<string, string>>(
