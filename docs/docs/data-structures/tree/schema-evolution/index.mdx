@@ -56,7 +56,7 @@ When you open a document, SharedTree compares your application's view schema wit
 They must be compatible or upgradeable in order for the application to work - otherwise, it cannot read or write data from/to the document.
 SharedTree will throw an assert if the application attempts to access the document's data with an incompatible view schema.
 
-Initially, a document is always compatible with the application that created it (i.e. the view schema is compatible with the stored schema).
+Initially, a document's stored schema is created to match the view schema at the time of creation, and therefore the view schema is compatible with the stored schema.
 However, later on the application might change the view schema.
 Such a change might be backwards compatible, forwards compatible, or neither or both.
 
