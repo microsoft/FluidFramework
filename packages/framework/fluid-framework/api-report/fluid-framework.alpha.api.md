@@ -264,6 +264,7 @@ export class FieldSchemaAlpha<Kind extends FieldKind = FieldKind, Types extends 
     // (undocumented)
     readonly annotatedAllowedTypes: ImplicitAnnotatedAllowedTypes;
     get annotatedAllowedTypesNormalized(): NormalizedAnnotatedAllowedTypes;
+    // (undocumented)
     get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined;
 }
 
