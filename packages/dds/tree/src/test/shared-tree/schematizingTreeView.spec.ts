@@ -40,6 +40,7 @@ import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
 import {
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
+	Tree,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import type { Mutable } from "../../util/index.js";
@@ -75,8 +76,6 @@ function checkoutWithInitialTree(
 
 // Schema for tree that must always be empty.
 const emptySchema = toInitialSchema(schema.optional([]));
-
-// TODO: event deferral tests
 
 describe("SchematizingSimpleTreeView", () => {
 	describe("initialize", () => {
@@ -1067,6 +1066,69 @@ describe("SchematizingSimpleTreeView", () => {
 				assert.equal(view.root.content, 43, "The revert should have been ignored");
 
 				stack.unsubscribe();
+			});
+
+			describe.only("eventing", () => {
+				it("events are emitted during transaction by default", () => {
+					const view = getTestObjectView(new ChildObject({ content: 1 }));
+					const tree = view.root;
+
+					let eventCount = 0;
+					const onTreeChange = () => {
+						eventCount++;
+					};
+
+					const unsubscribe = Tree.on(tree, "treeChanged", onTreeChange);
+
+					view.runTransaction(() => {
+						tree.content = 42;
+						assert.equal(eventCount, 1);
+
+						tree.content = 37;
+						assert.equal(eventCount, 2);
+
+						assert(tree.child !== undefined);
+						tree.child.content = 2;
+						assert.equal(eventCount, 3);
+					});
+					assert.equal(view.root.content, 37);
+					assert.equal(eventCount, 3);
+
+					unsubscribe();
+				});
+
+				it("events can be deferred", () => {
+					const view = getTestObjectView(new ChildObject({ content: 1 }));
+					const tree = view.root;
+
+					let eventCount = 0;
+					const onTreeChange = () => {
+						eventCount++;
+					};
+
+					const unsubscribe = Tree.on(tree, "treeChanged", onTreeChange);
+
+					view.runTransaction(
+						() => {
+							tree.content = 42;
+							assert.equal(eventCount, 0);
+
+							tree.content = 37;
+							assert.equal(eventCount, 0);
+
+							assert(tree.child !== undefined);
+							tree.child.content = 2;
+							assert.equal(eventCount, 0);
+						},
+						{
+							deferTreeEvents: true,
+						},
+					);
+					assert.equal(view.root.content, 37);
+					assert.equal(eventCount, 1);
+
+					unsubscribe();
+				});
 			});
 		});
 	});
