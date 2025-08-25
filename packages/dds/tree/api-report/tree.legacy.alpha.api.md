@@ -371,10 +371,10 @@ type ScopedSchemaName<TScope extends string | undefined, TName extends number | 
 // @beta @legacy
 export const SharedTree: ISharedObjectKind<ITree> & SharedObjectKind<ITree>;
 
-// @alpha @legacy
+// @beta @legacy
 export const SharedTreeAttributes: IChannelAttributes;
 
-// @alpha @legacy
+// @beta @legacy
 export const SharedTreeFactoryType = "https://graph.microsoft.com/types/tree";
 
 // @public @sealed @system

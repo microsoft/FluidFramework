@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export class AgentSchedulerFactory implements IFluidDataStoreFactory {
     // (undocumented)
     static createChildInstance(parentContext: IFluidDataStoreContext): Promise<IAgentScheduler>;
@@ -20,10 +20,10 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
     readonly type = "_scheduler";
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export const IAgentScheduler: keyof IProvideAgentScheduler;
 
-// @alpha @legacy
+// @beta @legacy
 export interface IAgentScheduler extends IProvideAgentScheduler, IEventProvider<IAgentSchedulerEvents>, IFluidLoadable {
     pick(taskId: string, worker: () => Promise<void>): Promise<void>;
     pickedTasks(): string[];
@@ -31,24 +31,24 @@ export interface IAgentScheduler extends IProvideAgentScheduler, IEventProvider<
     release(...taskUrls: string[]): Promise<void>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IAgentSchedulerEvents extends IEvent {
     (event: "picked" | "released" | "lost", listener: (taskId: string) => void): any;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IProvideAgentScheduler {
     // (undocumented)
     readonly IAgentScheduler: IAgentScheduler;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ITaskSubscriptionEvents extends IEvent {
     // (undocumented)
     (event: "gotTask" | "lostTask", listener: () => void): any;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export class TaskSubscription extends TypedEventEmitter<ITaskSubscriptionEvents> {
     constructor(agentScheduler: IAgentScheduler, taskId: string);
     haveTask(): boolean;
