@@ -168,14 +168,15 @@ export interface TreeBranch extends IDisposable {
 
 	/**
 	 * Run a transaction which applies one or more edits to the tree as a single atomic unit.
+	 *
 	 * @param transaction - The function to run as the body of the transaction.
 	 * It should return a status object of {@link TransactionCallbackStatus | TransactionCallbackStatus } type.
 	 * It includes a "rollback" property which may be returned as true at any point during the transaction. This will
 	 * abort the transaction and discard any changes it made so far.
 	 * "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
 	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
-	 * @returns A result object of {@link TransactionResultExt | TransactionResultExt} type. It includes the following:
 	 *
+	 * @returns A result object of {@link TransactionResultExt | TransactionResultExt} type. It includes the following:
 	 * - A "success" flag indicating whether the transaction was successful or not.
 	 * - The success of failure value as returned by the transaction function.
 	 *
@@ -205,16 +206,17 @@ export interface TreeBranch extends IDisposable {
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
 	/**
 	 * Run a transaction which applies one or more edits to the tree as a single atomic unit.
-	 * @param transaction - The function to run as the body of the transaction. It may return the following:
 	 *
+	 * @param transaction - The function to run as the body of the transaction. It may return the following:
 	 * - Nothing to indicate that the body of the transaction has successfully run.
 	 * - A status object of {@link VoidTransactionCallbackStatus | VoidTransactionCallbackStatus } type. It includes a "rollback" property which
 	 * may be returned as true at any point during the transaction. This will abort the transaction and discard any changes it made so
 	 * far. "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
 	 *
 	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
-	 * @returns A result object of {@link TransactionResult | TransactionResult} type. It includes a "success" flag indicating whether the
-	 * transaction was successful or not.
+	 *
+	 * @returns A result object of {@link TransactionResult | TransactionResult} type.
+	 * It includes a "success" flag indicating whether the transaction was successful or not.
 	 *
 	 * @remarks
 	 * This API will throw an error if the constraints are not met or something unexpected happens.
