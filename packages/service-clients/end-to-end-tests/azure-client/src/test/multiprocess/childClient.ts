@@ -256,7 +256,10 @@ class MessageHandler {
 				break;
 			}
 			case "registerWorkspace": {
-				this.registerWorkspace(msg.workspaceId, { latest: msg.latest, latestMap: msg.latestMap });
+				this.registerWorkspace(msg.workspaceId, {
+					latest: msg.latest,
+					latestMap: msg.latestMap,
+				});
 				break;
 			}
 			default: {
@@ -295,7 +298,11 @@ class MessageHandler {
 		presence.attendees.events.on("attendeeDisconnected", (attendee: Attendee) => {
 			send({ event: "attendeeDisconnected", attendeeId: attendee.attendeeId });
 		});
-		send({ event: "connected", containerId, attendeeId: presence.attendees.getMyself().attendeeId });
+		send({
+			event: "connected",
+			containerId,
+			attendeeId: presence.attendees.getMyself().attendeeId,
+		});
 	}
 
 	private handleDisconnectSelf(): void {
@@ -308,7 +315,10 @@ class MessageHandler {
 			return;
 		}
 		this.container.disconnect();
-		send({ event: "disconnectedSelf", attendeeId: this.presence.attendees.getMyself().attendeeId });
+		send({
+			event: "disconnectedSelf",
+			attendeeId: this.presence.attendees.getMyself().attendeeId,
+		});
 	}
 
 	private handleSetLatestValue(
@@ -353,10 +363,9 @@ class MessageHandler {
 			send({ event: "error", error: `${process_id} workspace ${msg.workspaceId} not found` });
 			return;
 		}
-		const latestMapState = workspace.states.latestMap as LatestMapRaw<
-			{ value: Record<string, string | number> },
-			string
-		> | undefined;
+		const latestMapState = workspace.states.latestMap as
+			| LatestMapRaw<{ value: Record<string, string | number> }, string>
+			| undefined;
 		if (!latestMapState) {
 			send({
 				event: "error",
@@ -422,10 +431,9 @@ class MessageHandler {
 			send({ event: "error", error: `${process_id} workspace ${msg.workspaceId} not found` });
 			return;
 		}
-		const latestMapState = workspace.states.latestMap as LatestMapRaw<
-			{ value: Record<string, string | number> },
-			string
-		> | undefined;
+		const latestMapState = workspace.states.latestMap as
+			| LatestMapRaw<{ value: Record<string, string | number> }, string>
+			| undefined;
 		if (!latestMapState) {
 			send({
 				event: "error",

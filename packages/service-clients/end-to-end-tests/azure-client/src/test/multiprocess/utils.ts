@@ -35,14 +35,14 @@ export async function forkChildProcesses(
 ): Promise<{
 	children: ChildProcess[];
 	/**
-	* A Promise that never fulfills successfully; it rejects if any child process emits an error.
-	* Deprecated: use earlyExitPromise instead.
+	 * A Promise that never fulfills successfully; it rejects if any child process emits an error.
+	 * Deprecated: use earlyExitPromise instead.
 	 */
-    childErrorPromise: Promise<void>;
-    /**
-	* Preferred name: rejects early if any child errors; pass to wait helpers to cancel on first failure.
-	*/
-    earlyExitPromise: Promise<void>;
+	childErrorPromise: Promise<void>;
+	/**
+	 * Preferred name: rejects early if any child errors; pass to wait helpers to cancel on first failure.
+	 */
+	earlyExitPromise: Promise<void>;
 }> {
 	const children: ChildProcess[] = [];
 	const childReadyPromises: Promise<void>[] = [];
