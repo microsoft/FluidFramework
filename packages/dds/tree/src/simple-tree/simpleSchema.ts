@@ -28,8 +28,8 @@ export interface SimpleNodeSchemaBaseAlpha<
 	 * Persisted metadata for this node schema.
 	 * @remarks
 	 * While this can be stored in the document, not all versions / configurations will do so.
-	 * Additionally this is not part of {@link TreeView.compatibility|schema compatibility} so different clients,
-	 * even within the same collaborative session, may see different persistedMetadata for the same node.
+	 * Additionally, this is not part of {@link TreeView.compatibility|schema compatibility}, so different clients
+	 * (even within the same collaborative session) may see different `persistedMetadata` for the same node.
 	 * Specified using {@link NodeSchemaOptionsAlpha.persistedMetadata}.
 	 * @privateRemarks
 	 * How/when this gets updated in documents,
