@@ -251,12 +251,12 @@ class MessageHandler {
 				this.handleGetLatestValue(msg);
 				break;
 			}
-			case "registerWorkspace": {
-				this.registerWorkspace(msg.workspaceId, { latest: msg.latest, latestMap: msg.latestMap });
-				break;
-			}
 			case "getLatestMapValue": {
 				this.handleGetLatestMapValue(msg);
+				break;
+			}
+			case "registerWorkspace": {
+				this.registerWorkspace(msg.workspaceId, { latest: msg.latest, latestMap: msg.latestMap });
 				break;
 			}
 			default: {

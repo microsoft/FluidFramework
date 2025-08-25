@@ -27,6 +27,11 @@ export type MessageToChild =
 interface PingCommand {
 	command: "ping";
 }
+
+/**
+ * Instructs a child process to connect to a Fluid container.
+ * A {@link ConnectedEvent} should be expected in response.
+ */
 export interface ConnectCommand {
 	command: "connect";
 	user: AzureUser;
@@ -55,11 +60,11 @@ interface RegisterWorkspaceCommand {
 	/**
 	 * Register a Latest state for this workspace.
 	 */
-	latest?: boolean;
+	latest?: true;
 	/**
 	 * Register a LatestMap state for this workspace.
 	 */
-	latestMap?: boolean;
+	latestMap?: true;
 }
 
 /**
@@ -113,12 +118,12 @@ export type MessageFromChild =
 	| AttendeeDisconnectedEvent
 	| ConnectedEvent
 	| DisconnectedSelfEvent
-	| LatestValueUpdatedEvent
+	| ErrorEvent
+	| LatestMapValueGetResponseEvent
 	| LatestMapValueUpdatedEvent
 	| LatestValueGetResponseEvent
-	| LatestMapValueGetResponseEvent
-	| WorkspaceRegisteredEvent
-	| ErrorEvent;
+	| LatestValueUpdatedEvent
+	| WorkspaceRegisteredEvent;
 
 /**
  * Sent from the child processes to the orchestrator in response to a {@link PingCommand}.
