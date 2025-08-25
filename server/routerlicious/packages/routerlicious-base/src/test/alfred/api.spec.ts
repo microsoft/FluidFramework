@@ -1312,28 +1312,11 @@ describe("Routerlicious", () => {
 						},
 					});
 
-					const maxThrottlerLimit = 1000000;
-					const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
-					const restTenantThrottlers = new Map<string, TestThrottler>();
-					restTenantThrottlers.set(
-						Constants.generalRestCallThrottleIdPrefix,
-						restTenantThrottler,
-					);
+					Sinon.stub(defaultStorage, "getDocument").resolves({} as IDocument);
 
-					const restClusterThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantThrottlers = new Map<string, TestThrottler>();
+
 					const restClusterThrottlers = new Map<string, TestThrottler>();
-					restClusterThrottlers.set(
-						Constants.createDocThrottleIdPrefix,
-						restClusterThrottler,
-					);
-					restClusterThrottlers.set(
-						Constants.getDeltasThrottleIdPrefix,
-						restClusterThrottler,
-					);
-					restClusterThrottlers.set(
-						Constants.getSessionThrottleIdPrefix,
-						restClusterThrottler,
-					);
 
 					const startupCheck = new StartupCheck();
 					testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
@@ -1366,8 +1349,10 @@ describe("Routerlicious", () => {
 
 					await testSupertest
 						.patch(`/api/v1/${appTenant1.id}/${document1._id}/root`)
-						.set("access-token", tenantToken1)
-						.send([{ key: "testKey", value: "testValue", type: "set" }])
+						// This is a legacy API that checks for access-token also
+						.set("Authorization", tenantToken1)
+						.set("access-token", tenantToken1.split(" ")[1])
+						.send([{ op: "testOp", path: "/testPath", value: "testValue" }])
 						.expect(501)
 						.expect((res) => {
 							assert.strictEqual(res.body.error, "patchRoot API is not implemented");
@@ -1389,8 +1374,10 @@ describe("Routerlicious", () => {
 
 					await testSupertest
 						.patch(`/api/v1/${appTenant1.id}/${document1._id}/root`)
-						.set("access-token", tenantToken1)
-						.send([{ key: "testKey", value: "testValue", type: "set" }])
+						// This is a legacy API that checks for access-token also
+						.set("Authorization", tenantToken1)
+						.set("access-token", tenantToken1.split(" ")[1])
+						.send([{ op: "testOp", path: "/testPath", value: "testValue" }])
 						.expect(200)
 						.expect(() => {
 							// Verify that producer.send was called (3 times: join, op, leave)
@@ -1407,8 +1394,10 @@ describe("Routerlicious", () => {
 
 					await testSupertest
 						.patch(`/api/v1/${appTenant1.id}/${document1._id}/root`)
-						.set("access-token", tenantToken1)
-						.send([{ key: "testKey", value: "testValue", type: "set" }])
+						// This is a legacy API that checks for access-token also
+						.set("Authorization", tenantToken1)
+						.set("access-token", tenantToken1.split(" ")[1])
+						.send([{ op: "testOp", path: "/testPath", value: "testValue" }])
 						.expect(200)
 						.expect(() => {
 							// Verify that producer.send was called (default behavior)

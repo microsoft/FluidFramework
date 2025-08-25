@@ -233,6 +233,19 @@ function mapSetBuilder(request: Request): any[] {
 	return ops;
 }
 
+function handlePatchRootSuccess(
+	request: Request,
+	opBuilder: (request: Request) => any[],
+	producer: core.IProducer,
+) {
+	const tenantId = request.params.tenantId;
+	const documentId = request.params.id;
+	const clientId = (sillyname() as string).toLowerCase().split(" ").join("-");
+	sendJoin(tenantId, documentId, clientId, producer);
+	sendOp(request, tenantId, documentId, clientId, producer, opBuilder);
+	sendLeave(tenantId, documentId, clientId, producer);
+}
+
 function sendJoin(
 	tenantId: string,
 	documentId: string,
@@ -266,19 +279,6 @@ function isValidSignalEnvelope(
 	input: Partial<IRuntimeSignalEnvelope>,
 ): input is IRuntimeSignalEnvelope {
 	return typeof input?.contents?.type === "string" && input?.contents?.content !== undefined;
-}
-
-function handlePatchRootSuccess(
-	request: Request,
-	opBuilder: (request: Request) => any[],
-	producer: core.IProducer,
-) {
-	const tenantId = request.params.tenantId;
-	const documentId = request.params.id;
-	const clientId = (sillyname() as string).toLowerCase().split(" ").join("-");
-	sendJoin(tenantId, documentId, clientId, producer);
-	sendOp(request, tenantId, documentId, clientId, producer, opBuilder);
-	sendLeave(tenantId, documentId, clientId, producer);
 }
 
 function sendLeave(
