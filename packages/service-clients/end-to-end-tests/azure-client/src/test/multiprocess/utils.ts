@@ -35,9 +35,14 @@ export async function forkChildProcesses(
 ): Promise<{
 	children: ChildProcess[];
 	/**
-	 * A Promise that never fulfills successfully; it rejects if any child process emits an error.
+	* A Promise that never fulfills successfully; it rejects if any child process emits an error.
+	* Deprecated: use earlyExitPromise instead.
 	 */
-	childErrorPromise: Promise<void>;
+    childErrorPromise: Promise<void>;
+    /**
+	* Preferred name: rejects early if any child errors; pass to wait helpers to cancel on first failure.
+	*/
+    earlyExitPromise: Promise<void>;
 }> {
 	const children: ChildProcess[] = [];
 	const childReadyPromises: Promise<void>[] = [];
@@ -73,7 +78,7 @@ export async function forkChildProcesses(
 	}
 	const childErrorPromise = Promise.race(childErrorPromises);
 	await Promise.race([Promise.all(childReadyPromises), childErrorPromise]);
-	return { children, childErrorPromise };
+	return { children, childErrorPromise, earlyExitPromise: childErrorPromise };
 }
 
 /**
@@ -211,7 +216,7 @@ export async function registerWorkspaceOnChildren(
 			"workspaceRegistered",
 			(msg) => msg.event === "workspaceRegistered" && msg.workspaceId === workspaceId,
 			{
-				durationMs: timeoutMs,
+				timeoutMs,
 				errorMsg: `Child ${index} did not acknowledge workspace registration ${workspaceId}`,
 			},
 		);
@@ -249,9 +254,9 @@ export async function waitForEvent(
 	child: ChildProcess,
 	eventType: MessageFromChild["event"],
 	predicate?: (msg: MessageFromChild) => boolean,
-	options: { durationMs?: number; errorMsg?: string } = {},
+	options: { timeoutMs?: number; errorMsg?: string } = {},
 ): Promise<MessageFromChild> {
-	const { durationMs = 10_000, errorMsg = `did not receive '${eventType}' event` } = options;
+	const { timeoutMs = 10_000, errorMsg = `did not receive '${eventType}' event` } = options;
 	return timeoutPromise<MessageFromChild>(
 		(resolve) => {
 			const handler = (msg: MessageFromChild): void => {
@@ -262,7 +267,7 @@ export async function waitForEvent(
 			};
 			child.on("message", handler);
 		},
-		{ durationMs, errorMsg },
+		{ durationMs: timeoutMs, errorMsg },
 	);
 }
 
@@ -272,18 +277,18 @@ export async function waitForEvent(
 export async function waitForLatestValueUpdates(
 	clients: ChildProcess[],
 	workspaceId: string,
-	childErrorPromise: Promise<void>,
-	durationMs = 10_000,
+	earlyExitPromise: Promise<void>,
+	timeoutMs = 10_000,
 ): Promise<LatestValueUpdatedEvent[]> {
 	const updatePromises = clients.map(async (child, index) =>
 		waitForEvent(
 			child,
 			"latestValueUpdated",
 			(msg) => isLatestValueUpdated(msg) && msg.workspaceId === workspaceId,
-			{ durationMs, errorMsg: `Client ${index} did not receive latest value update` },
+			{ timeoutMs, errorMsg: `Client ${index} did not receive latest value update` },
 		),
 	);
-	const responses = await Promise.race([Promise.all(updatePromises), childErrorPromise]);
+	const responses = await Promise.race([Promise.all(updatePromises), earlyExitPromise]);
 	if (!Array.isArray(responses)) {
 		throw new TypeError("Expected array of responses");
 	}
@@ -305,8 +310,8 @@ export async function waitForLatestMapValueUpdates(
 	clients: ChildProcess[],
 	workspaceId: string,
 	key: string,
-	childErrorPromise: Promise<void>,
-	durationMs = 10_000,
+	earlyExitPromise: Promise<void>,
+	timeoutMs = 10_000,
 ): Promise<LatestMapValueUpdatedEvent[]> {
 	const updatePromises = clients.map(async (child, index) =>
 		waitForEvent(
@@ -314,10 +319,10 @@ export async function waitForLatestMapValueUpdates(
 			"latestMapValueUpdated",
 			(msg) =>
 				isLatestMapValueUpdated(msg) && msg.workspaceId === workspaceId && msg.key === key,
-			{ durationMs, errorMsg: `Client ${index} did not receive latest map value update` },
+			{ timeoutMs, errorMsg: `Client ${index} did not receive latest map value update` },
 		),
 	);
-	const responses = await Promise.race([Promise.all(updatePromises), childErrorPromise]);
+	const responses = await Promise.race([Promise.all(updatePromises), earlyExitPromise]);
 	if (!Array.isArray(responses)) {
 		throw new TypeError("Expected array of responses");
 	}
@@ -338,18 +343,18 @@ export async function waitForLatestMapValueUpdates(
 export async function getLatestValueResponses(
 	clients: ChildProcess[],
 	workspaceId: string,
-	childErrorPromise: Promise<void>,
-	durationMs = 10_000,
+	earlyExitPromise: Promise<void>,
+	timeoutMs = 10_000,
 ): Promise<LatestValueGetResponseEvent[]> {
 	const responsePromises = clients.map(async (child, index) =>
 		waitForEvent(
 			child,
 			"latestValueGetResponse",
 			(msg) => isLatestValueGetResponse(msg) && msg.workspaceId === workspaceId,
-			{ durationMs, errorMsg: `Client ${index} did not respond with latest value` },
+			{ timeoutMs, errorMsg: `Client ${index} did not respond with latest value` },
 		),
 	);
-	const responses = await Promise.race([Promise.all(responsePromises), childErrorPromise]);
+	const responses = await Promise.race([Promise.all(responsePromises), earlyExitPromise]);
 	if (!Array.isArray(responses)) {
 		throw new TypeError("Expected array of responses");
 	}
@@ -368,8 +373,8 @@ export async function getLatestMapValueResponses(
 	clients: ChildProcess[],
 	workspaceId: string,
 	key: string,
-	childErrorPromise: Promise<void>,
-	durationMs = 10_000,
+	earlyExitPromise: Promise<void>,
+	timeoutMs = 10_000,
 ): Promise<LatestMapValueGetResponseEvent[]> {
 	const responsePromises = clients.map(async (child, index) =>
 		waitForEvent(
@@ -377,10 +382,10 @@ export async function getLatestMapValueResponses(
 			"latestMapValueGetResponse",
 			(msg) =>
 				isLatestMapValueGetResponse(msg) && msg.workspaceId === workspaceId && msg.key === key,
-			{ durationMs, errorMsg: `Client ${index} did not respond with latest map value` },
+			{ timeoutMs, errorMsg: `Client ${index} did not respond with latest map value` },
 		),
 	);
-	const responses = await Promise.race([Promise.all(responsePromises), childErrorPromise]);
+	const responses = await Promise.race([Promise.all(responsePromises), earlyExitPromise]);
 	if (!Array.isArray(responses)) {
 		throw new TypeError("Expected array of responses");
 	}
