@@ -187,7 +187,9 @@ export interface FieldProps<TCustomMetadata = unknown> {
 export interface FieldPropsAlpha<TCustomMetadata = unknown>
 	extends FieldProps<TCustomMetadata> {
 	/**
-	 * The persisted metadata for this schema element.
+	 * The persisted metadata for a field schema.
+	 * @remarks
+	 * Sets {@link SimpleFieldSchema.persistedMetadata}.
 	 */
 	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }
@@ -428,9 +430,6 @@ export class FieldSchemaAlpha<
 	 */
 	public readonly allowedTypesMetadata: AllowedTypesMetadata;
 
-	/**
-	 * Persisted metadata for this field schema.
-	 */
 	public get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined {
 		return this.propsAlpha?.persistedMetadata;
 	}
