@@ -26,7 +26,7 @@ import type { ITree } from "@fluidframework/tree";
 import type { IDelayLoadChannelFactory } from "../channel-factories/index.js";
 import {
 	type DataObjectTypes,
-	type MigratorDataObject,
+	type MigrationDataObject,
 	dataObjectRootDirectoryId,
 	treeChannelId,
 } from "../data-objects/index.js";
@@ -37,13 +37,13 @@ import {
 } from "./pureDataObjectFactory.js";
 
 /**
- * Represents the properties required to create a MigratorDataObjectFactory.
+ * Represents the properties required to create a MigrationDataObjectFactory.
  * @experimental
  * @legacy
  * @alpha
  */
-export interface MigratorDataObjectFactoryProps<
-	TObj extends MigratorDataObject<I>,
+export interface MigrationDataObjectFactoryProps<
+	TObj extends MigrationDataObject<I>,
 	TMigrationData,
 	I extends DataObjectTypes = DataObjectTypes,
 > extends DataObjectFactoryProps<TObj, I> {
@@ -111,15 +111,15 @@ export interface MigratorDataObjectFactoryProps<
 }
 
 /**
- * MigratorDataObjectFactory is the IFluidDataStoreFactory for migrating DataObjects.
- * See MigratorDataObjectFactoryProps for more information on how to utilize this factory.
+ * MigrationDataObjectFactory is the IFluidDataStoreFactory for migrating DataObjects.
+ * See MigrationDataObjectFactoryProps for more information on how to utilize this factory.
  *
  * @experimental
  * @legacy
  * @alpha
  */
-export class MigratorDataObjectFactory<
-	TObj extends MigratorDataObject<I>,
+export class MigrationDataObjectFactory<
+	TObj extends MigrationDataObject<I>,
 	TMigrationData,
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObjectFactory<TObj, I> {
@@ -129,12 +129,12 @@ export class MigratorDataObjectFactory<
 	private static readonly conversionContent = "conversion";
 
 	public constructor(
-		private readonly props: MigratorDataObjectFactoryProps<TObj, TMigrationData, I>,
+		private readonly props: MigrationDataObjectFactoryProps<TObj, TMigrationData, I>,
 	) {
 		const submitConversionOp = (runtime: FluidDataStoreRuntime): void => {
 			runtime.submitMessage(
 				DataStoreMessageType.ChannelOp,
-				MigratorDataObjectFactory.conversionContent,
+				MigrationDataObjectFactory.conversionContent,
 				undefined,
 			);
 		};
@@ -189,7 +189,7 @@ export class MigratorDataObjectFactory<
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 						messageCollection.envelope.type === DataStoreMessageType.ChannelOp &&
 						messageCollection.messagesContent.some(
-							(val) => val.contents === MigratorDataObjectFactory.conversionContent,
+							(val) => val.contents === MigrationDataObjectFactory.conversionContent,
 						)
 					) {
 						if (this.migrationOpSeqNum === -1) {
@@ -202,7 +202,7 @@ export class MigratorDataObjectFactory<
 					}
 
 					contents = messageCollection.messagesContent.filter(
-						(val) => val.contents !== MigratorDataObjectFactory.conversionContent,
+						(val) => val.contents !== MigrationDataObjectFactory.conversionContent,
 					);
 
 					if (this.seqNumsToSkip.has(sequenceNumber) || contents.length === 0) {
@@ -224,7 +224,7 @@ export class MigratorDataObjectFactory<
 					if (
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 						type2 === DataStoreMessageType.ChannelOp &&
-						content === MigratorDataObjectFactory.conversionContent
+						content === MigrationDataObjectFactory.conversionContent
 					) {
 						submitConversionOp(this);
 						return;
@@ -243,7 +243,7 @@ export class MigratorDataObjectFactory<
 
 	/**
 	 * ! TODO
-	 * @remarks Assumption is that the IFluidDataStoreContext will remain constant for the lifetime of a given MigratorDataObjectFactory instance
+	 * @remarks Assumption is that the IFluidDataStoreContext will remain constant for the lifetime of a given MigrationDataObjectFactory instance
 	 */
 	protected override async observeCreateDataObject(createProps: {
 		context: IFluidDataStoreContext;

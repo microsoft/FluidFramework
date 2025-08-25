@@ -23,8 +23,8 @@ export {
 	type DataObjectFactoryProps,
 	PureDataObjectFactory,
 	TreeDataObjectFactory,
-	MigratorDataObjectFactory,
-	type MigratorDataObjectFactoryProps,
+	MigrationDataObjectFactory,
+	type MigrationDataObjectFactoryProps,
 	type CreateDataObjectProps,
 } from "./data-object-factories/index.js";
 export {
@@ -35,7 +35,7 @@ export {
 	PureDataObject,
 	TreeDataObject,
 	createDataObjectKind,
-	MigratorDataObject,
+	MigrationDataObject,
 } from "./data-objects/index.js";
 export {
 	BaseContainerRuntimeFactory,

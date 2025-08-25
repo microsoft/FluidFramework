@@ -22,7 +22,7 @@ import type { DataObjectTypes } from "./types.js";
  * @legacy
  * @alpha
  */
-export abstract class MigratorDataObject<
+export abstract class MigrationDataObject<
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObject<I> {
 	#tree: ITree | undefined;

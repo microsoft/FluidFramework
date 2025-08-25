@@ -123,7 +123,7 @@ export interface IDelayLoadChannelFactory<T> extends IChannelFactory<T> {
 }
 
 // @alpha @legacy
-export abstract class MigratorDataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
+export abstract class MigrationDataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
     // (undocumented)
     protected abstract get createUsingSharedTree(): boolean;
     // (undocumented)
@@ -141,8 +141,8 @@ export abstract class MigratorDataObject<I extends DataObjectTypes = DataObjectT
 }
 
 // @alpha @legacy
-export class MigratorDataObjectFactory<TObj extends MigratorDataObject<I>, TMigrationData, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
-    constructor(props: MigratorDataObjectFactoryProps<TObj, TMigrationData, I>);
+export class MigrationDataObjectFactory<TObj extends MigrationDataObject<I>, TMigrationData, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
+    constructor(props: MigrationDataObjectFactoryProps<TObj, TMigrationData, I>);
     protected observeCreateDataObject(createProps: {
         context: IFluidDataStoreContext;
         optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>;
@@ -150,7 +150,7 @@ export class MigratorDataObjectFactory<TObj extends MigratorDataObject<I>, TMigr
 }
 
 // @alpha @legacy
-export interface MigratorDataObjectFactoryProps<TObj extends MigratorDataObject<I>, TMigrationData, I extends DataObjectTypes = DataObjectTypes> extends DataObjectFactoryProps<TObj, I> {
+export interface MigrationDataObjectFactoryProps<TObj extends MigrationDataObject<I>, TMigrationData, I extends DataObjectTypes = DataObjectTypes> extends DataObjectFactoryProps<TObj, I> {
     asyncGetDataForMigration: (root: ISharedDirectory) => Promise<TMigrationData>;
     canPerformMigration: (providers: AsyncFluidObjectProvider<I["OptionalProviders"]>) => Promise<boolean>;
     migrateDataObject: (runtime: FluidDataStoreRuntime, treeRoot: ITree_2, data: TMigrationData) => void;

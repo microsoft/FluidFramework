@@ -8,4 +8,4 @@ export { DataObject, dataObjectRootDirectoryId } from "./dataObject.js";
 export { PureDataObject } from "./pureDataObject.js";
 export { TreeDataObject, treeChannelId } from "./treeDataObject.js";
 export type { DataObjectKind, DataObjectTypes, IDataObjectProps } from "./types.js";
-export { MigratorDataObject } from "./migratorDataObject.js";
+export { MigrationDataObject } from "./migrationDataObject.js";

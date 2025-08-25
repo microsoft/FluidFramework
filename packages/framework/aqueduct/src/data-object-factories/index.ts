@@ -11,6 +11,6 @@ export {
 } from "./pureDataObjectFactory.js";
 export { TreeDataObjectFactory } from "./treeDataObjectFactory.js";
 export {
-	MigratorDataObjectFactory,
-	type MigratorDataObjectFactoryProps,
-} from "./migratorDataObjectFactory.js";
+	MigrationDataObjectFactory,
+	type MigrationDataObjectFactoryProps,
+} from "./migrationDataObjectFactory.js";
