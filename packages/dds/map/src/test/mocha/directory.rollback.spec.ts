@@ -769,7 +769,6 @@ describe("SharedDirectory rollback", () => {
 		it("should rollback local delete/recreation with remote create", async () => {
 			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
 				setupRollbackTest();
-			// Create a second client
 			const { sharedDirectory: sharedDirectory2, containerRuntime: containerRuntime2 } =
 				createAdditionalClient(containerRuntimeFactory);
 
@@ -801,6 +800,35 @@ describe("SharedDirectory rollback", () => {
 					undefined,
 			);
 			await assertEquivalentDirectories(sharedDirectory, sharedDirectory2);
+		});
+
+		it("should rollback local delete/recreation with remote storage op", () => {
+			const {
+				sharedDirectory: sharedDirectory1,
+				containerRuntimeFactory,
+				containerRuntime: containerRuntime1,
+			} = setupRollbackTest();
+			const { sharedDirectory: sharedDirectory2, containerRuntime: containerRuntime2 } =
+				createAdditionalClient(containerRuntimeFactory);
+
+			sharedDirectory1.createSubDirectory("subdirX");
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			// Local delete/recreate
+			sharedDirectory1.deleteSubDirectory("subdirX");
+			sharedDirectory1.createSubDirectory("subdirX");
+
+			sharedDirectory2.getSubDirectory("subdirX")?.set("valueY", "foo");
+			containerRuntime2.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			containerRuntime1.rollback?.();
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			assert.strictEqual(sharedDirectory1.getSubDirectory("subdirX")?.get("valueY"), "foo");
+			assert.strictEqual(sharedDirectory2.getSubDirectory("subdirX")?.get("valueY"), "foo");
 		});
 
 		it("should rollback local subdirectory changes with remote changes and storage operations", () => {

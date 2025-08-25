@@ -623,42 +623,48 @@ export class SharedDirectory
 	}
 
 	/**
-	 * Similar to `getWorkingDirectory`, but returns the directory to use for op processing.
-	 * This differs as it may include directories that are pending deletion.
+	 * Similar to `getWorkingDirectory`, but also considers directories that are marked for deletion.
+	 * This is useful in reconnect/resubmit scenarios where we want to resubmit ops on directories
+	 * that have unprocessed deletes.
 	 */
-	private getWorkingDirectoryForOpProcessing(relativePath: string): IDirectory | undefined {
+	private getWorkingDirectoryEvenIfPendingDelete(
+		relativePath: string,
+	): IDirectory | undefined {
 		const absolutePath = this.makeAbsolute(relativePath);
 		if (absolutePath === posix.sep) {
 			return this.root;
 		}
 
+		let currentSubDir = this.root;
 		const subdirs = absolutePath.slice(1).split(posix.sep);
-		let currentOptimistic: SubDirectory | undefined = this.root;
-		let currentSequencedOnly: SubDirectory | undefined = this.root;
-
 		for (const subdir of subdirs) {
-			// Try optimistic view first (includes pending data)
-			if (currentOptimistic !== undefined) {
-				currentOptimistic = currentOptimistic.getSubDirectoryEvenIfPendingDelete(subdir);
-			}
-
-			// Also try sequenced view in parallel
-			if (currentSequencedOnly !== undefined) {
-				currentSequencedOnly = currentSequencedOnly.sequencedSubdirectories.get(subdir);
-			}
-
-			// If both paths fail, we can't continue
-			if (currentOptimistic === undefined && currentSequencedOnly === undefined) {
+			currentSubDir = currentSubDir.getSubDirectoryEvenIfPendingDelete(subdir) as SubDirectory;
+			if (!currentSubDir) {
 				return undefined;
 			}
 		}
+		return currentSubDir;
+	}
 
-		// Prefer optimistic view if available, otherwise fall back to sequenced view.
-		// If we can't find the desired subdirectory within the pending data, we should try
-		// to find it in the ack'd subdirectories. We do this because it's possible that
-		// the pending data deletes the ack'd subdirectory. In this case we should use the
-		// ack'd subdirectory that is pending delete in case the pending delete is rolled back.
-		return currentOptimistic ?? currentSequencedOnly;
+	/**
+	 * Similar to `getWorkingDirectory`, but only returns directories that are sequenced.
+	 * This can be useful for op processing since we only process ops on sequenced directories.
+	 */
+	private getSequencedWorkingDirectory(relativePath: string): IDirectory | undefined {
+		const absolutePath = this.makeAbsolute(relativePath);
+		if (absolutePath === posix.sep) {
+			return this.root;
+		}
+
+		let currentSubDir: SubDirectory | undefined = this.root;
+		const subdirs = absolutePath.slice(1).split(posix.sep);
+		for (const subdir of subdirs) {
+			currentSubDir = currentSubDir.sequencedSubdirectories.get(subdir);
+			if (!currentSubDir) {
+				return undefined;
+			}
+		}
+		return currentSubDir;
 	}
 
 	/**
@@ -874,15 +880,15 @@ export class SharedDirectory
 				local: boolean,
 				localOpMetadata: ClearLocalOpMetadata | undefined,
 			) => {
-				const subdir = this.getWorkingDirectoryForOpProcessing(op.path) as
-					| SubDirectory
-					| undefined;
+				const subdir = this.getSequencedWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir !== undefined && this.shouldProcessOp(subdir, local, op.path)) {
 					subdir.processClearMessage(msg, op, local, localOpMetadata);
 				}
 			},
 			resubmit: (op: IDirectoryClearOperation, localOpMetadata: ClearLocalOpMetadata) => {
-				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
+				const subdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
+					| SubDirectory
+					| undefined;
 				if (subdir) {
 					subdir.resubmitClearMessage(op, localOpMetadata);
 				}
@@ -895,15 +901,15 @@ export class SharedDirectory
 				local: boolean,
 				localOpMetadata: EditLocalOpMetadata | undefined,
 			) => {
-				const subdir = this.getWorkingDirectoryForOpProcessing(op.path) as
-					| SubDirectory
-					| undefined;
+				const subdir = this.getSequencedWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir !== undefined && this.shouldProcessOp(subdir, local, op.path)) {
 					subdir.processDeleteMessage(msg, op, local, localOpMetadata);
 				}
 			},
 			resubmit: (op: IDirectoryDeleteOperation, localOpMetadata: EditLocalOpMetadata) => {
-				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
+				const subdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
+					| SubDirectory
+					| undefined;
 				if (subdir) {
 					subdir.resubmitKeyMessage(op, localOpMetadata);
 				}
@@ -916,9 +922,7 @@ export class SharedDirectory
 				local: boolean,
 				localOpMetadata: EditLocalOpMetadata | undefined,
 			) => {
-				const subdir = this.getWorkingDirectoryForOpProcessing(op.path) as
-					| SubDirectory
-					| undefined;
+				const subdir = this.getSequencedWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir !== undefined && this.shouldProcessOp(subdir, local, op.path)) {
 					migrateIfSharedSerializable(op.value, this.serializer, this.handle);
 					const localValue: unknown = local ? undefined : op.value.value;
@@ -926,7 +930,9 @@ export class SharedDirectory
 				}
 			},
 			resubmit: (op: IDirectorySetOperation, localOpMetadata: EditLocalOpMetadata) => {
-				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
+				const subdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
+					| SubDirectory
+					| undefined;
 				if (subdir) {
 					subdir.resubmitKeyMessage(op, localOpMetadata);
 				}
@@ -940,7 +946,7 @@ export class SharedDirectory
 				local: boolean,
 				localOpMetadata: SubDirLocalOpMetadata | undefined,
 			) => {
-				const parentSubdir = this.getWorkingDirectoryForOpProcessing(op.path) as
+				const parentSubdir = this.getSequencedWorkingDirectory(op.path) as
 					| SubDirectory
 					| undefined;
 				if (parentSubdir !== undefined && this.shouldProcessOp(parentSubdir, local, op.path)) {
@@ -951,7 +957,7 @@ export class SharedDirectory
 				op: IDirectoryCreateSubDirectoryOperation,
 				localOpMetadata: SubDirLocalOpMetadata,
 			) => {
-				const parentSubdir = this.getWorkingDirectoryForOpProcessing(op.path) as
+				const parentSubdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
 					| SubDirectory
 					| undefined;
 				if (parentSubdir) {
@@ -968,7 +974,7 @@ export class SharedDirectory
 				local: boolean,
 				localOpMetadata: SubDirLocalOpMetadata | undefined,
 			) => {
-				const parentSubdir = this.getWorkingDirectoryForOpProcessing(op.path) as
+				const parentSubdir = this.getSequencedWorkingDirectory(op.path) as
 					| SubDirectory
 					| undefined;
 				if (parentSubdir !== undefined && this.shouldProcessOp(parentSubdir, local, op.path)) {
@@ -979,7 +985,7 @@ export class SharedDirectory
 				op: IDirectoryDeleteSubDirectoryOperation,
 				localOpMetadata: SubDirLocalOpMetadata,
 			) => {
-				const parentSubdir = this.getWorkingDirectoryForOpProcessing(op.path) as
+				const parentSubdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
 					| SubDirectory
 					| undefined;
 				if (parentSubdir) {
