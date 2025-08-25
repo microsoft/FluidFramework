@@ -96,7 +96,7 @@ class Note extends factory.object("Note", {
 
 ### Making Optional Fields Required
 
-Making an optional field required breaks documents that don't have that field:
+Making an optional field required breaks documents whose stored schema does not know about that field:
 
 ```typescript
 // Breaking: Making optional field required
