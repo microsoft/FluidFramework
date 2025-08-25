@@ -103,7 +103,6 @@ describe("Local Server Stress with rollback", () => {
 			"Fluid.Container.enableOfflineLoad": true,
 		},
 		skip: [
-			...[83], // Number of subDirectories not same
 			...[97], // channel maps should be the same size
 		],
 	});
