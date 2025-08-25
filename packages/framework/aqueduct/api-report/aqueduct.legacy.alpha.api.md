@@ -51,6 +51,26 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 }
 
 // @alpha @legacy
+export interface CreateDataObjectProps<TObj extends PureDataObject, I extends DataObjectTypes> {
+    // (undocumented)
+    context: IFluidDataStoreContext;
+    // (undocumented)
+    ctor: new (props: IDataObjectProps<I>) => TObj;
+    // (undocumented)
+    existing: boolean;
+    // (undocumented)
+    initialState?: I["InitialState"];
+    // (undocumented)
+    optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>;
+    // (undocumented)
+    policies?: Partial<IFluidDataStorePolicies>;
+    // (undocumented)
+    runtimeClassArg: typeof FluidDataStoreRuntime;
+    // (undocumented)
+    sharedObjectRegistry: ISharedObjectRegistry;
+}
+
+// @alpha @legacy
 export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
     protected getUninitializedErrorString(item: string): string;
     initializeInternal(existing: boolean): Promise<void>;
@@ -92,6 +112,50 @@ export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
     readonly providers: AsyncFluidObjectProvider<I["OptionalProviders"]>;
     // (undocumented)
     readonly runtime: IFluidDataStoreRuntime;
+}
+
+// @alpha @legacy
+export interface IDelayLoadChannelFactory<T> extends IChannelFactory<T> {
+    // (undocumented)
+    createAsync(runtime: IFluidDataStoreRuntime, id?: string): Promise<T>;
+    // (undocumented)
+    loadObjectKindAsync(): Promise<T>;
+}
+
+// @alpha @legacy
+export abstract class MigrationDataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
+    // (undocumented)
+    protected abstract get createUsingSharedTree(): boolean;
+    // (undocumented)
+    getRoot(): {
+        isDirectory: true;
+        root: ISharedDirectory;
+    } | {
+        isDirectory: false;
+        root: ITree;
+    };
+    // (undocumented)
+    initializeInternal(existing: boolean): Promise<void>;
+    // (undocumented)
+    protected abstract get treeDelayLoadFactory(): IDelayLoadChannelFactory<ITree>;
+}
+
+// @alpha @legacy
+export class MigrationDataObjectFactory<TObj extends MigrationDataObject<I>, TMigrationData, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
+    constructor(props: MigrationDataObjectFactoryProps<TObj, TMigrationData, I>);
+    protected observeCreateDataObject(createProps: {
+        context: IFluidDataStoreContext;
+        optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>;
+    }): Promise<void>;
+}
+
+// @alpha @legacy
+export interface MigrationDataObjectFactoryProps<TObj extends MigrationDataObject<I>, TMigrationData, I extends DataObjectTypes = DataObjectTypes> extends DataObjectFactoryProps<TObj, I> {
+    asyncGetDataForMigration: (root: ISharedDirectory) => Promise<TMigrationData>;
+    canPerformMigration: (providers: AsyncFluidObjectProvider<I["OptionalProviders"]>) => Promise<boolean>;
+    migrateDataObject: (runtime: FluidDataStoreRuntime, treeRoot: ITree_2, data: TMigrationData) => void;
+    refreshDataObject?: () => Promise<void>;
+    treeDelayLoadFactory: IDelayLoadChannelFactory<ITree_2>;
 }
 
 // @alpha @legacy
@@ -137,6 +201,8 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     get IFluidDataStoreFactory(): this;
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined;
     instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
+    // (undocumented)
+    protected observeCreateDataObject(createProps: CreateDataObjectProps<TObj, I>): Promise<void>;
     get registryEntry(): NamedFluidDataStoreRegistryEntry;
     readonly type: string;
 }

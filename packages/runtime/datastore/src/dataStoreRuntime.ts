@@ -240,7 +240,7 @@ export class FluidDataStoreRuntime
 		return this._disposed;
 	}
 
-	private readonly contexts = new Map<string, IChannelContext>();
+	protected readonly contexts = new Map<string, IChannelContext>();
 	private readonly pendingAttach = new Set<string>();
 
 	private readonly deferredAttached = new Deferred<void>();

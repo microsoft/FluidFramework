@@ -41,7 +41,15 @@ import type {
 	PureDataObject,
 } from "../data-objects/index.js";
 
-interface CreateDataObjectProps<TObj extends PureDataObject, I extends DataObjectTypes> {
+/**
+ * ! TODO
+ * @legacy
+ * @alpha
+ */
+export interface CreateDataObjectProps<
+	TObj extends PureDataObject,
+	I extends DataObjectTypes,
+> {
 	ctor: new (props: IDataObjectProps<I>) => TObj;
 	context: IFluidDataStoreContext;
 	sharedObjectRegistry: ISharedObjectRegistry;
@@ -311,7 +319,9 @@ export class PureDataObjectFactory<
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
-		const { runtime } = await createDataObject({ ...this.createProps, context, existing });
+		const props = { ...this.createProps, context, existing };
+		await this.observeCreateDataObject(props);
+		const { runtime } = await createDataObject(props);
 
 		return runtime;
 	}
@@ -406,12 +416,14 @@ export class PureDataObjectFactory<
 			packagePath ?? [this.type],
 			loadingGroupId,
 		);
-		const { instance, runtime } = await createDataObject({
+		const props = {
 			...this.createProps,
 			context,
 			existing: false,
 			initialState,
-		});
+		};
+		await this.observeCreateDataObject(props);
+		const { instance, runtime } = await createDataObject(props);
 		const dataStore = await context.attachRuntime(this, runtime);
 
 		return [instance, dataStore];
@@ -436,12 +448,14 @@ export class PureDataObjectFactory<
 		initialState?: I["InitialState"],
 	): Promise<TObj> {
 		const context = runtime.createDetachedDataStore([this.type]);
-		const { instance, runtime: dataStoreRuntime } = await createDataObject({
+		const props = {
 			...this.createProps,
 			context,
 			existing: false,
 			initialState,
-		});
+		};
+		await this.observeCreateDataObject(props);
+		const { instance, runtime: dataStoreRuntime } = await createDataObject(props);
 		const dataStore = await context.attachRuntime(this, dataStoreRuntime);
 		const result = await dataStore.trySetAlias(rootDataStoreId);
 		if (result !== "Success") {
@@ -466,15 +480,21 @@ export class PureDataObjectFactory<
 		context: IFluidDataStoreContextDetached,
 		initialState?: I["InitialState"],
 	): Promise<TObj> {
-		const { instance, runtime } = await createDataObject({
+		const props = {
 			...this.createProps,
 			context,
 			existing: false,
 			initialState,
-		});
+		};
+		await this.observeCreateDataObject(props);
+		const { instance, runtime } = await createDataObject(props);
 
 		await context.attachRuntime(this, runtime);
 
 		return instance;
 	}
+
+	protected async observeCreateDataObject(
+		createProps: CreateDataObjectProps<TObj, I>,
+	): Promise<void> {}
 }

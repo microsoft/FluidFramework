@@ -14,7 +14,7 @@ import type { DataObjectTypes } from "./types.js";
  * Channel ID of {@link TreeDataObject}'s root {@link @fluidframework/tree#SharedTree}.
  * @privateRemarks This key is persisted and should not be changed without a migration strategy.
  */
-const treeChannelId = "root-tree";
+export const treeChannelId = "root-tree";
 
 const uninitializedErrorString =
 	"The tree has not yet been initialized. The data object must be initialized before accessing.";
