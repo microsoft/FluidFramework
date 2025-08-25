@@ -624,12 +624,10 @@ export class SharedDirectory
 
 	/**
 	 * Similar to `getWorkingDirectory`, but also considers directories that are marked for deletion.
-	 * This is useful in reconnect/resubmit scenarios where we want to resubmit ops on directories
-	 * that have unprocessed deletes.
+	 * This is useful in reconnect/resubmit scenarios where we want to resubmit ops on the most "recent"
+	 * directory, even if it's pending a deletion.
 	 */
-	private getWorkingDirectoryEvenIfPendingDelete(
-		relativePath: string,
-	): IDirectory | undefined {
+	private getMostRecentWorkingDirectory(relativePath: string): IDirectory | undefined {
 		const absolutePath = this.makeAbsolute(relativePath);
 		if (absolutePath === posix.sep) {
 			return this.root;
@@ -638,7 +636,7 @@ export class SharedDirectory
 		let currentSubDir = this.root;
 		const subdirs = absolutePath.slice(1).split(posix.sep);
 		for (const subdir of subdirs) {
-			currentSubDir = currentSubDir.getSubDirectoryEvenIfPendingDelete(subdir) as SubDirectory;
+			currentSubDir = currentSubDir.getMostRecentSubDirectory(subdir) as SubDirectory;
 			if (!currentSubDir) {
 				return undefined;
 			}
@@ -873,6 +871,14 @@ export class SharedDirectory
 	 * Set the message handlers for the directory.
 	 */
 	private setMessageHandlers(): void {
+		// Notes about messageHandlers and why we use `getSequencedWorkingDirectory` and
+		// `getMostRecentWorkingDirectory` for `process` and `resubmit` respectively:
+		// 1. When processing ops, we only ever want to process ops on sequenced directories. This prevents
+		// scenarios where ops could be processed on a pending directory instead of a sequenced directory,
+		// leading to ops effectively being processed out of order.
+		// 2. When resubmitting ops, we always want to target the most "recent" version of the subdirectory,
+		// since any op to be resubmitted is a local op. This means that we will use a local pending directory
+		// instead of a sequenced directory, even if that local pending directory is also pending deletion.
 		this.messageHandlers.set("clear", {
 			process: (
 				msg: ISequencedDocumentMessage,
@@ -886,9 +892,7 @@ export class SharedDirectory
 				}
 			},
 			resubmit: (op: IDirectoryClearOperation, localOpMetadata: ClearLocalOpMetadata) => {
-				const subdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
-					| SubDirectory
-					| undefined;
+				const subdir = this.getMostRecentWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir) {
 					subdir.resubmitClearMessage(op, localOpMetadata);
 				}
@@ -907,9 +911,7 @@ export class SharedDirectory
 				}
 			},
 			resubmit: (op: IDirectoryDeleteOperation, localOpMetadata: EditLocalOpMetadata) => {
-				const subdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
-					| SubDirectory
-					| undefined;
+				const subdir = this.getMostRecentWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir) {
 					subdir.resubmitKeyMessage(op, localOpMetadata);
 				}
@@ -930,9 +932,7 @@ export class SharedDirectory
 				}
 			},
 			resubmit: (op: IDirectorySetOperation, localOpMetadata: EditLocalOpMetadata) => {
-				const subdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
-					| SubDirectory
-					| undefined;
+				const subdir = this.getMostRecentWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir) {
 					subdir.resubmitKeyMessage(op, localOpMetadata);
 				}
@@ -957,7 +957,7 @@ export class SharedDirectory
 				op: IDirectoryCreateSubDirectoryOperation,
 				localOpMetadata: SubDirLocalOpMetadata,
 			) => {
-				const parentSubdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
+				const parentSubdir = this.getMostRecentWorkingDirectory(op.path) as
 					| SubDirectory
 					| undefined;
 				if (parentSubdir) {
@@ -985,7 +985,7 @@ export class SharedDirectory
 				op: IDirectoryDeleteSubDirectoryOperation,
 				localOpMetadata: SubDirLocalOpMetadata,
 			) => {
-				const parentSubdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
+				const parentSubdir = this.getMostRecentWorkingDirectory(op.path) as
 					| SubDirectory
 					| undefined;
 				if (parentSubdir) {
@@ -1881,10 +1881,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	};
 
 	/**
-	 * Gets the most "recent" subdirectory even if it has pending delete operations. This includes
-	 * pending subdirectories when there is also a pending delete op after the pending create op.
+	 * Gets the most "recent" subdirectory. This includes pending subdirectories even if there
+	 * is also a pending delete op after the pending create op.
 	 */
-	public readonly getSubDirectoryEvenIfPendingDelete = (
+	public readonly getMostRecentSubDirectory = (
 		subdirName: string,
 	): SubDirectory | undefined => {
 		const latestPendingEntry = findLast(
