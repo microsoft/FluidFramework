@@ -137,7 +137,15 @@ function isStringOrNumberRecord(value: unknown): value is Record<string, string 
 	if (value === null || typeof value !== "object" || Array.isArray(value)) {
 		return false;
 	}
-	for (const key of Object.keys(value)) {
+
+	const stringKeys = Object.keys(value);
+	const allKeys = Reflect.ownKeys(value);
+
+	if (stringKeys.length !== allKeys.length) {
+		// If there are non-string/symbol keys, return false
+		return false;
+	}
+	for (const key of stringKeys) {
 		if (!(typeof value[key] === "string" || typeof value[key] === "number")) {
 			return false;
 		}
