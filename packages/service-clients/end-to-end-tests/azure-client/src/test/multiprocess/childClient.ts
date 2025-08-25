@@ -171,7 +171,7 @@ class MessageHandler {
 		const existingWorkspace = this.workspaces.get(workspaceId);
 		const workspace: StatesWorkspace<WorkspaceSchema> =
 			existingWorkspace ??
-			this.presence.states.getWorkspace(`test:${workspaceId}` as const, {});
+			this.presence.states.getWorkspace(`test:${workspaceId}`, {});
 
 		if (latest && !workspace.states.latest) {
 			workspace.add(
