@@ -152,6 +152,7 @@ type WorkspaceSchema = {
 		typeof StateFactory.latestMap<{ value: Record<string, string | number> }, string>
 	>;
 };
+const WorkspaceSchema: WorkspaceSchema = {};
 
 class MessageHandler {
 	public presence: Presence | undefined;
@@ -170,7 +171,7 @@ class MessageHandler {
 		const { latest, latestMap } = options;
 		const workspace: StatesWorkspace<WorkspaceSchema> = this.presence.states.getWorkspace(
 			`test:${workspaceId}`,
-			{},
+			WorkspaceSchema,
 		);
 
 		if (latest && !workspace.states.latest) {
@@ -227,226 +228,199 @@ class MessageHandler {
 	public async onMessage(msg: MessageFromParent): Promise<void> {
 		switch (msg.command) {
 			case "ping": {
-				send({ event: "ack" });
+				this.handlePing();
 				break;
 			}
-
-			// Respond to connect command by connecting to Fluid container with the provided user information.
 			case "connect": {
-				// Check if valid user information has been provided by parent/orchestrator
-				if (!msg.user) {
-					send({ event: "error", error: `${process_id}: No azure user information given` });
-					break;
-				}
-				// Check if already connected to container
-				if (isConnected(this.container)) {
-					send({ event: "error", error: `${process_id}: Already connected to container` });
-					break;
-				}
-				const { container, presence, containerId } = await getOrCreatePresenceContainer(
-					msg.containerId,
-					msg.user,
-				);
-				this.container = container;
-				this.presence = presence;
-				this.containerId = containerId;
-
-				// Listen for presence events to notify parent/orchestrator when a new attendee joins or leaves the session.
-				presence.attendees.events.on("attendeeConnected", (attendee: Attendee) => {
-					const m: MessageToParent = {
-						event: "attendeeConnected",
-						attendeeId: attendee.attendeeId,
-					};
-					send(m);
-				});
-				presence.attendees.events.on("attendeeDisconnected", (attendee: Attendee) => {
-					const m: MessageToParent = {
-						event: "attendeeDisconnected",
-						attendeeId: attendee.attendeeId,
-					};
-					send(m);
-				});
-
-				// Workspaces are now registered on-demand via registerWorkspace command
-
-				send({
-					event: "connected",
-					containerId,
-					attendeeId: presence.attendees.getMyself().attendeeId,
-				});
-
+				await this.handleConnect(msg);
 				break;
 			}
-
-			// Respond to disconnect command by disconnecting self from Fluid container.
 			case "disconnectSelf": {
-				if (!this.container) {
-					send({ event: "error", error: `${process_id} is not connected to container` });
-					break;
-				}
-				if (!this.presence) {
-					send({ event: "error", error: `${process_id} is not connected to presence` });
-					break;
-				}
-
-				this.container.disconnect();
-				send({
-					event: "disconnectedSelf",
-					attendeeId: this.presence.attendees.getMyself().attendeeId,
-				});
-
+				this.handleDisconnectSelf();
 				break;
 			}
-
-			// Set the Latest value for the given workspace
 			case "setLatestValue": {
-				if (!this.presence) {
-					send({ event: "error", error: `${process_id} is not connected to presence` });
-					break;
-				}
-				const workspace = this.workspaces.get(msg.workspaceId);
-				const latestState = workspace?.states.latest as LatestRaw<{ value: string }>;
-				if (latestState === undefined) {
-					send({
-						event: "error",
-						error: `${process_id} workspace ${msg.workspaceId} not found`,
-					});
-					break;
-				}
-
-				if (typeof msg.value !== "string") {
-					break;
-				}
-
-				latestState.local = { value: msg.value };
+				this.handleSetLatestValue(msg);
 				break;
 			}
-
-			// Set the Latest Map value for the given workspace
 			case "setLatestMapValue": {
-				if (!this.presence) {
-					send({ event: "error", error: `${process_id} is not connected to presence` });
-					break;
-				}
-				if (typeof msg.key !== "string") {
-					send({ event: "error", error: `${process_id} invalid key type` });
-					break;
-				}
-				const workspace = this.workspaces.get(msg.workspaceId);
-				const latestMapState = workspace?.states.latestMap as LatestMapRaw<
-					{ value: Record<string, string | number> },
-					string
-				>;
-				if (latestMapState === undefined) {
-					send({
-						event: "error",
-						error: `${process_id} map workspace ${msg.workspaceId} not found`,
-					});
-					break;
-				}
-
-				if (!isStringOrNumberRecord(msg.value)) {
-					break;
-				}
-
-				latestMapState.local.set(msg.key, { value: msg.value });
+				this.handleSetLatestMapValue(msg);
 				break;
 			}
-
-			// Get the Latest value for the given workspace and attendee
 			case "getLatestValue": {
-				if (!this.presence) {
-					send({ event: "error", error: `${process_id} is not connected to presence` });
-					break;
-				}
-				const workspace = this.workspaces.get(msg.workspaceId);
-				const latestState = workspace?.states.latest as LatestRaw<{ value: string }>;
-				if (latestState === undefined) {
-					send({
-						event: "error",
-						error: `${process_id} workspace ${msg.workspaceId} not found`,
-					});
-					break;
-				}
-
-				let value: { value: string };
-				if (msg.attendeeId) {
-					const attendee = this.presence.attendees.getAttendee(msg.attendeeId);
-					const remoteData = latestState.getRemote(attendee);
-					value = remoteData.value;
-				} else {
-					value = latestState.local;
-				}
-
-				send({
-					event: "latestValueGetResponse",
-					workspaceId: msg.workspaceId,
-					attendeeId: msg.attendeeId,
-					value: value.value,
-				});
-
+				this.handleGetLatestValue(msg);
 				break;
 			}
-
-			// Register a new workspace
 			case "registerWorkspace": {
-				this.registerWorkspace(msg.workspaceId, {
-					latest: msg.latest,
-					latestMap: msg.latestMap,
-				});
+				this.registerWorkspace(msg.workspaceId, { latest: msg.latest, latestMap: msg.latestMap });
 				break;
 			}
-
-			// Get the Latest Map value for the given workspace and attendee
 			case "getLatestMapValue": {
-				if (!this.presence) {
-					send({ event: "error", error: `${process_id} is not connected to presence` });
-					break;
-				}
-				if (typeof msg.key !== "string") {
-					send({ event: "error", error: `${process_id} invalid key type` });
-					break;
-				}
-				const workspace = this.workspaces.get(msg.workspaceId);
-				const latestMapState = workspace?.states.latestMap as LatestMapRaw<
-					{ value: Record<string, string | number> },
-					string
-				>;
-				if (latestMapState === undefined) {
-					send({
-						event: "error",
-						error: `${process_id} workspace ${msg.workspaceId} not found`,
-					});
-					break;
-				}
-
-				let value: { value: Record<string, string | number> } | undefined;
-				if (msg.attendeeId) {
-					const attendee = this.presence.attendees.getAttendee(msg.attendeeId);
-					const remoteData = latestMapState.getRemote(attendee);
-					const keyData = remoteData.get(msg.key);
-					value = keyData?.value;
-				} else {
-					value = latestMapState.local.get(msg.key);
-				}
-
-				send({
-					event: "latestMapValueGetResponse",
-					workspaceId: msg.workspaceId,
-					attendeeId: msg.attendeeId,
-					key: msg.key,
-					value: value?.value,
-				});
-
+				this.handleGetLatestMapValue(msg);
 				break;
 			}
-
 			default: {
 				console.error(`${process_id}: Unknown command`);
 				send({ event: "error", error: `${process_id} Unknown command` });
-				break;
 			}
 		}
+	}
+
+	// --- Handlers split from onMessage for readability ---
+	private handlePing(): void {
+		send({ event: "ack" });
+	}
+
+	private async handleConnect(
+		msg: Extract<MessageFromParent, { command: "connect" }>,
+	): Promise<void> {
+		if (!msg.user) {
+			send({ event: "error", error: `${process_id}: No azure user information given` });
+			return;
+		}
+		if (isConnected(this.container)) {
+			send({ event: "error", error: `${process_id}: Already connected to container` });
+			return;
+		}
+		const { container, presence, containerId } = await getOrCreatePresenceContainer(
+			msg.containerId,
+			msg.user,
+		);
+		this.container = container;
+		this.presence = presence;
+		this.containerId = containerId;
+		presence.attendees.events.on("attendeeConnected", (attendee: Attendee) => {
+			send({ event: "attendeeConnected", attendeeId: attendee.attendeeId });
+		});
+		presence.attendees.events.on("attendeeDisconnected", (attendee: Attendee) => {
+			send({ event: "attendeeDisconnected", attendeeId: attendee.attendeeId });
+		});
+		send({ event: "connected", containerId, attendeeId: presence.attendees.getMyself().attendeeId });
+	}
+
+	private handleDisconnectSelf(): void {
+		if (!this.container) {
+			send({ event: "error", error: `${process_id} is not connected to container` });
+			return;
+		}
+		if (!this.presence) {
+			send({ event: "error", error: `${process_id} is not connected to presence` });
+			return;
+		}
+		this.container.disconnect();
+		send({ event: "disconnectedSelf", attendeeId: this.presence.attendees.getMyself().attendeeId });
+	}
+
+	private handleSetLatestValue(
+		msg: Extract<MessageFromParent, { command: "setLatestValue" }>,
+	): void {
+		if (!this.presence) {
+			send({ event: "error", error: `${process_id} is not connected to presence` });
+			return;
+		}
+		const workspace = this.workspaces.get(msg.workspaceId);
+		const latestState = workspace?.states.latest as LatestRaw<{ value: string }>;
+		if (latestState === undefined) {
+			send({ event: "error", error: `${process_id} workspace ${msg.workspaceId} not found` });
+			return;
+		}
+		if (typeof msg.value !== "string") {
+			return;
+		}
+		latestState.local = { value: msg.value };
+	}
+
+	private handleSetLatestMapValue(
+		msg: Extract<MessageFromParent, { command: "setLatestMapValue" }>,
+	): void {
+		if (!this.presence) {
+			send({ event: "error", error: `${process_id} is not connected to presence` });
+			return;
+		}
+		if (typeof msg.key !== "string") {
+			send({ event: "error", error: `${process_id} invalid key type` });
+			return;
+		}
+		const workspace = this.workspaces.get(msg.workspaceId);
+		const latestMapState = workspace?.states.latestMap as LatestMapRaw<
+			{ value: Record<string, string | number> },
+			string
+		>;
+		if (latestMapState === undefined) {
+			send({ event: "error", error: `${process_id} map workspace ${msg.workspaceId} not found` });
+			return;
+		}
+		if (!isStringOrNumberRecord(msg.value)) {
+			return;
+		}
+		latestMapState.local.set(msg.key, { value: msg.value });
+	}
+
+	private handleGetLatestValue(
+		msg: Extract<MessageFromParent, { command: "getLatestValue" }>,
+	): void {
+		if (!this.presence) {
+			send({ event: "error", error: `${process_id} is not connected to presence` });
+			return;
+		}
+		const workspace = this.workspaces.get(msg.workspaceId);
+		const latestState = workspace?.states.latest as LatestRaw<{ value: string }>;
+		if (latestState === undefined) {
+			send({ event: "error", error: `${process_id} workspace ${msg.workspaceId} not found` });
+			return;
+		}
+		let value: { value: string };
+		if (msg.attendeeId) {
+			const attendee = this.presence.attendees.getAttendee(msg.attendeeId);
+			const remoteData = latestState.getRemote(attendee);
+			value = remoteData.value;
+		} else {
+			value = latestState.local;
+		}
+		send({
+			event: "latestValueGetResponse",
+			workspaceId: msg.workspaceId,
+			attendeeId: msg.attendeeId,
+			value: value.value,
+		});
+	}
+
+	private handleGetLatestMapValue(
+		msg: Extract<MessageFromParent, { command: "getLatestMapValue" }>,
+	): void {
+		if (!this.presence) {
+			send({ event: "error", error: `${process_id} is not connected to presence` });
+			return;
+		}
+		if (typeof msg.key !== "string") {
+			send({ event: "error", error: `${process_id} invalid key type` });
+			return;
+		}
+		const workspace = this.workspaces.get(msg.workspaceId);
+		const latestMapState = workspace?.states.latestMap as LatestMapRaw<
+			{ value: Record<string, string | number> },
+			string
+		>;
+		if (latestMapState === undefined) {
+			send({ event: "error", error: `${process_id} workspace ${msg.workspaceId} not found` });
+			return;
+		}
+		let value: { value: Record<string, string | number> } | undefined;
+		if (msg.attendeeId) {
+			const attendee = this.presence.attendees.getAttendee(msg.attendeeId);
+			const remoteData = latestMapState.getRemote(attendee);
+			const keyData = remoteData.get(msg.key);
+			value = keyData?.value;
+		} else {
+			value = latestMapState.local.get(msg.key);
+		}
+		send({
+			event: "latestMapValueGetResponse",
+			workspaceId: msg.workspaceId,
+			attendeeId: msg.attendeeId,
+			key: msg.key,
+			value: value?.value,
+		});
 	}
 }
 
