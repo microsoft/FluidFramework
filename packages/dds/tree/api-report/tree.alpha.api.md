@@ -758,6 +758,7 @@ export interface RunTransaction {
 
 // @alpha @input
 export interface RunTransactionParams {
+    readonly deferTreeEvents?: boolean;
     readonly preconditions?: readonly TransactionConstraint[];
 }
 

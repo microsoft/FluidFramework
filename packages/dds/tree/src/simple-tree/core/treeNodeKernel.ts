@@ -219,9 +219,7 @@ export class TreeNodeKernel {
 			for (const eventName of kernelEvents) {
 				if (events.hasListeners(eventName)) {
 					this.#hydrationState.offAnchorNode.add(
-						// Argument is forwarded between matching events, so the type should be correct.
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						anchorNode.events.on(eventName, (arg: any) => events.emit(eventName, arg)),
+						anchorNode.events.on(eventName, (arg) => events.emit(eventName, arg)),
 					);
 				}
 			}
