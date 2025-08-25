@@ -154,12 +154,6 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"Class_MockContainerRuntime": {
-				"forwardCompat": false
-			},
-			"Class_MockContainerRuntimeForReconnection": {
-				"forwardCompat": false
-			},
 			"Class_MockFluidDataStoreRuntime": {
 				"forwardCompat": false
 			},
