@@ -52,8 +52,7 @@ export interface ISummaryTreeWithStats {
 
 /**
  * Represents a summary at a current sequence number.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummarizeResult {
 	stats: ISummaryStats;
@@ -74,8 +73,7 @@ export interface ISummarizeResult {
  *   ...
  *     "path1":
  * ```
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummarizeInternalResult extends ISummarizeResult {
 	id: string;
@@ -114,8 +112,7 @@ export interface IExperimentalIncrementalSummaryContext {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SummarizeInternalFn = (
 	fullTree: boolean,
@@ -125,8 +122,7 @@ export type SummarizeInternalFn = (
 ) => Promise<ISummarizeInternalResult>;
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummarizerNodeConfig {
 	/**
@@ -137,8 +133,7 @@ export interface ISummarizerNodeConfig {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
 	/**
@@ -149,8 +144,7 @@ export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum CreateSummarizerNodeSource {
 	FromSummary,
@@ -158,8 +152,7 @@ export enum CreateSummarizerNodeSource {
 	Local,
 }
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type CreateChildSummarizerNodeParam =
 	| {
@@ -175,8 +168,7 @@ export type CreateChildSummarizerNodeParam =
 	  };
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummarizerNode {
 	/**
@@ -268,8 +260,7 @@ export interface ISummarizerNode {
  * `isReferenced`: This tells whether this node is referenced in the document or not.
  *
  * `updateUsedRoutes`: Used to notify this node of routes that are currently in use in it.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
 	createChild(

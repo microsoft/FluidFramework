@@ -184,11 +184,10 @@ function createRecordNodeProxy(
 
 			const innerNode = getOrCreateInnerNode(proxy);
 			const field = innerNode.tryGetField(brand(key)) as FlexTreeOptionalField | undefined;
-			if (field === undefined) {
-				return false;
+			if (field !== undefined) {
+				field.editor.set(undefined, field.length === 0);
 			}
 
-			field.editor.set(undefined, field.length === 0);
 			return true;
 		},
 	});

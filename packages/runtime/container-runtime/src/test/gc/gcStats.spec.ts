@@ -5,30 +5,30 @@
 
 import { strict as assert } from "node:assert";
 
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
+import type { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
-	MonitoringContext,
+	type MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-import { SinonFakeTimers, useFakeTimers } from "sinon";
+import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import {
 	GCNodeType,
 	GarbageCollector,
-	IGCMetadata,
-	IGCStats,
-	IGarbageCollectionRuntime,
-	IGarbageCollector,
-	IGarbageCollectorCreateParams,
+	type IGCMetadata,
+	type IGCStats,
+	type IGarbageCollectionRuntime,
+	type IGarbageCollector,
+	type IGarbageCollectorCreateParams,
 	defaultSessionExpiryDurationMs,
 	defaultSweepGracePeriodMs,
 	oneDayMs,
 	stableGCVersion,
 } from "../../gc/index.js";
-import { ContainerRuntimeGCMessage } from "../../messageTypes.js";
+import type { ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";
 
 describe("Garbage Collection Stats", () => {

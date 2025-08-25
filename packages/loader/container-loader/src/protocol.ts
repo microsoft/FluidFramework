@@ -3,18 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { IAudienceOwner } from "@fluidframework/container-definitions/internal";
+import type { IAudienceOwner } from "@fluidframework/container-definitions/internal";
 import {
-	IDocumentAttributes,
-	IProcessMessageResult,
-	ISignalClient,
+	type IDocumentAttributes,
+	type IProcessMessageResult,
+	type ISignalClient,
 	MessageType,
-	ISequencedDocumentMessage,
-	ISignalMessage,
+	type ISequencedDocumentMessage,
+	type ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
 
-import { IBaseProtocolHandler, IQuorumSnapshot, ProtocolOpHandler } from "./protocol/index.js";
+import {
+	type IBaseProtocolHandler,
+	type IQuorumSnapshot,
+	ProtocolOpHandler,
+} from "./protocol/index.js";
 
 // ADO: #1986: Start using enum from protocol-base.
 export enum SignalType {
@@ -25,8 +29,7 @@ export enum SignalType {
 
 /**
  * Function to be used for creating a protocol handler.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type ProtocolHandlerBuilder = (
 	attributes: IDocumentAttributes,
@@ -37,8 +40,7 @@ export type ProtocolHandlerBuilder = (
 ) => IProtocolHandler;
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IProtocolHandler extends IBaseProtocolHandler {
 	readonly audience: IAudienceOwner;

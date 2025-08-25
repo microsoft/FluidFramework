@@ -448,14 +448,11 @@ async function handleBroadcastSignal(
 	}
 
 	const serverUrl: string = config.get("worker:serverUrl");
-	const document = await storage?.getDocument(tenantId, documentId);
-	if (!document?.session?.isSessionAlive) {
+	const document = await storage.getDocument(tenantId, documentId);
+
+	if (!document?.session?.isSessionAlive || document?.scheduledDeletionTime) {
 		Lumberjack.error("Document not found", { tenantId, documentId });
 		throw new NetworkError(404, "Document not found");
-	}
-	if (!document.session.isSessionActive) {
-		Lumberjack.warning("Document session not active", { tenantId, documentId });
-		throw new NetworkError(410, "Document session not active");
 	}
 	if (document.session.ordererUrl !== serverUrl) {
 		Lumberjack.info("Redirecting broadcast-signal to correct cluster", {

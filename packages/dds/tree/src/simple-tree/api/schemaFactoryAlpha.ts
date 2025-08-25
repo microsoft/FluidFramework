@@ -215,6 +215,10 @@ const schemaStaticsAlpha: SchemaStaticsAlpha = {
  *
  * Some private methods on `SchemaFactory` are intentionally duplicated here to avoid increasing their exposure to `protected`.
  * If we were to do so, they would be exposed on the public API surface of `SchemaFactory`.
+ *
+ * When building schema, when `options` is not provided, `TCustomMetadata` is inferred as `unknown`.
+ * If desired, this could be made to infer `undefined` instead by adding overloads for everything,
+ * but currently it is not worth the maintenance overhead as there is no use case which this is known to be helpful for.
  */
 export class SchemaFactoryAlpha<
 	out TScope extends string | undefined = string | undefined,
@@ -440,7 +444,7 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * Define (and add to this library) a {@link TreeNodeSchemaClass} for a {@link (TreeArrayNode:interface)}.
+	 * Define a {@link TreeNodeSchemaClass} for a {@link (TreeArrayNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param allowedTypes - The types that may appear in the array.
@@ -628,23 +632,24 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * Define a {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
+	 * Define a {@link TreeNodeSchema} for a {@link (TreeRecordNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 *
 	 * @remarks
-	 * This is not intended to be used directly, use the overload of `array` which takes a name instead.
-	 * This is only public to work around a compiler limitation.
+	 * This is not intended to be used directly, use the overload of `record` which takes a name instead.
 	 */
 	private namedRecord<
 		Name extends TName | string,
 		const T extends ImplicitAllowedTypes,
 		const ImplicitlyConstructable extends boolean,
+		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
+		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
 	): TreeNodeSchemaBoth<
 		/* Name */ ScopedSchemaName<TScope, Name>,
 		/* Kind */ NodeKind.Record,
@@ -660,6 +665,8 @@ export class SchemaFactoryAlpha<
 			info: allowedTypes,
 			customizable,
 			implicitlyConstructable,
+			metadata: options?.metadata,
+			persistedMetadata: options?.persistedMetadata,
 		});
 
 		return record as TreeNodeSchemaBoth<
@@ -716,7 +723,8 @@ export class SchemaFactoryAlpha<
 	public recordRecursive<
 		Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
-	>(name: Name, allowedTypes: T) {
+		const TCustomMetadata = unknown,
+	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
 		const RecordSchema = this.namedRecord(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
@@ -724,6 +732,7 @@ export class SchemaFactoryAlpha<
 			// Setting this to true seems to work ok currently, but not for other node kinds.
 			// Supporting this could be fragile and might break other future changes, so it's being kept as false for now.
 			/* implicitlyConstructable */ false,
+			options,
 		);
 
 		return RecordSchema as TreeNodeSchemaClass<
@@ -740,7 +749,8 @@ export class SchemaFactoryAlpha<
 			},
 			/* ImplicitlyConstructable */ false,
 			/* Info */ T,
-			/* TConstructorExtra */ undefined
+			/* TConstructorExtra */ undefined,
+			/* TCustomMetadata */ TCustomMetadata
 		>;
 	}
 

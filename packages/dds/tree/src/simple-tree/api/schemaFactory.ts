@@ -669,7 +669,7 @@ export class SchemaFactory<
 	>;
 
 	/**
-	 * Define (and add to this library) a {@link TreeNodeSchemaClass} for a {@link (TreeArrayNode:interface)}.
+	 * Define a {@link TreeNodeSchemaClass} for a {@link (TreeArrayNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param allowedTypes - The types that may appear in the array.
