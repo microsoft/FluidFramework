@@ -168,10 +168,10 @@ class MessageHandler {
 			return;
 		}
 		const { latest, latestMap } = options;
-		const existingWorkspace = this.workspaces.get(workspaceId);
-		const workspace: StatesWorkspace<WorkspaceSchema> =
-			existingWorkspace ??
-			this.presence.states.getWorkspace(`test:${workspaceId}`, {});
+		const workspace: StatesWorkspace<WorkspaceSchema> = this.presence.states.getWorkspace(
+			`test:${workspaceId}`,
+			{},
+		);
 
 		if (latest && !workspace.states.latest) {
 			workspace.add(
@@ -214,6 +214,7 @@ class MessageHandler {
 				}
 			});
 		}
+
 		this.workspaces.set(workspaceId, workspace);
 		send({
 			event: "workspaceRegistered",
