@@ -4,14 +4,14 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
-import {
+import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import {
-	ITelemetryLoggerExt,
-	ITelemetryLoggerPropertyBags,
+	type ITelemetryLoggerExt,
+	type ITelemetryLoggerPropertyBags,
 	createMultiSinkLogger,
 	eventNamespaceSeparator,
 	formatTick,

@@ -68,7 +68,7 @@ describe(`Presence with AzureClient`, () => {
 	const numClientsForAttendeeTests = [5, 20, 50, 100];
 	// TODO: AB#45620: "Presence: perf: update Join pattern for scale" may help, then remove .slice.
 	// TODO: 20 clients is too many on ADO pipeline agents and times out waiting for attendees.
-	for (const numClients of numClientsForAttendeeTests.slice(0, 1)) {
+	for (const numClients of numClientsForAttendeeTests.slice(0, 2)) {
 		describe(`[${numClients} clients]`, () => {
 			assert(numClients > 1, "Must have at least two clients");
 			const childConnectTimeoutMs = 1000 * numClients;

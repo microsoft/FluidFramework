@@ -98,6 +98,7 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 /**
  * Options when declaring an {@link SchemaFactory.object|object node}'s schema
  *
+ * @input
  * @alpha
  */
 export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
@@ -147,7 +148,7 @@ export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
 	 * It's only when application code reaches into a node
 	 * (either by accessing its fields, spreading it, or some other means) that this problem arises.
 	 */
-	allowUnknownOptionalFields?: boolean;
+	readonly allowUnknownOptionalFields?: boolean;
 }
 
 /**
@@ -669,7 +670,7 @@ export class SchemaFactory<
 	>;
 
 	/**
-	 * Define (and add to this library) a {@link TreeNodeSchemaClass} for a {@link (TreeArrayNode:interface)}.
+	 * Define a {@link TreeNodeSchemaClass} for a {@link (TreeArrayNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param allowedTypes - The types that may appear in the array.
@@ -1077,7 +1078,7 @@ const globalIdentifierAllocator: IIdCompressor = createIdCompressor();
  * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
  * See {@link NodeSchemaMetadata.custom}.
  *
- * @sealed
+ * @input
  * @public
  */
 export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
@@ -1085,8 +1086,7 @@ export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
 	 * Optional metadata to associate with the Node Schema.
 	 *
 	 * @remarks
-	 * Note: this metadata is not persisted nor made part of the collaborative state; it is strictly client-local.
-	 * Different clients in the same collaborative session may see different metadata for the same field.
+	 * This specifies {@link SimpleNodeSchemaBase.metadata} which has more details about its use.
 	 */
 	readonly metadata?: NodeSchemaMetadata<TCustomMetadata> | undefined;
 }
@@ -1097,12 +1097,15 @@ export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
  * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
  * See {@link NodeSchemaMetadata.custom}.
  *
+ * @input
  * @alpha
  */
 export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown>
 	extends NodeSchemaOptions<TCustomMetadata> {
 	/**
 	 * The persisted metadata for this schema element.
+	 * @remarks
+	 * This gets exposed via {@link SimpleNodeSchemaBaseAlpha.persistedMetadata}.
 	 */
 	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }

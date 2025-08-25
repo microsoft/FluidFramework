@@ -15,6 +15,7 @@ import { defaultLogger } from "../common/logging";
 import type { Package } from "../common/npmPackage";
 import type { Timer } from "../common/timer";
 import type { BuildContext } from "./buildContext";
+import { BuildResult, summarizeBuildResult } from "./buildResult";
 import { FileHashCache } from "./fileHashCache";
 import type { IFluidBuildConfig } from "./fluidBuildConfig";
 import {
@@ -36,26 +37,6 @@ const traceTaskDepTask = registerDebug("fluid-build:task:init:dep:task");
 const traceGraph = registerDebug("fluid-build:graph");
 
 const { log } = defaultLogger;
-
-export enum BuildResult {
-	Success,
-	UpToDate,
-	Failed,
-}
-
-export function summarizeBuildResult(results: BuildResult[]) {
-	let retResult = BuildResult.UpToDate;
-	for (const result of results) {
-		if (result === BuildResult.Failed) {
-			return BuildResult.Failed;
-		}
-
-		if (result === BuildResult.Success) {
-			retResult = BuildResult.Success;
-		}
-	}
-	return retResult;
-}
 
 class TaskStats {
 	public leafTotalCount = 0;

@@ -16,8 +16,8 @@ importers:
         version: 0.35.6
     devDependencies:
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@4.5.5)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@4.5.5)
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -86,8 +86,8 @@ packages:
   '@fluidframework/driver-utils@0.35.6':
     resolution: {integrity: sha512-ckIDWMAb+uj0VzjOAojQV4mX83kCZlA3GhlmU7cFKdiwzD0nptWEA+VcHun644c23QzUWp5xlkxdAqHlPOLIfQ==}
 
-  '@fluidframework/eslint-config-fluid@5.8.0':
-    resolution: {integrity: sha512-MH0phD6UXLI1HGr9L8IDEYhv1UfnT55PeENu63mz7m/fNsawDQr/MI7OopIFKcW99vDtnMOEy5WHQk+hUFCkrw==}
+  '@fluidframework/eslint-config-fluid@6.0.0':
+    resolution: {integrity: sha512-RdbEYUQmLkW8zQ6GZXx1T/t5g9k7iA5K6vPZdvsIK4keb5VXcVCHDluvc7AtOXEVOb5Bt2XyM16NWz2Rlho5NA==}
 
   '@fluidframework/gitresources@0.1019.0':
     resolution: {integrity: sha512-29wAJDIRmCwkcCtxTnX9jl5lcrdN7CKIjn3kzRVL76V5S71nJnJkmdV4p8Zh0d+Bkoal47r4HF8kmDKVrB8jOw==}
@@ -1559,7 +1559,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/eslint-config-fluid@5.8.0(eslint@8.55.0)(typescript@4.5.5)':
+  '@fluidframework/eslint-config-fluid@6.0.0(eslint@8.55.0)(typescript@4.5.5)':
     dependencies:
       '@fluid-internal/eslint-plugin-fluid': 0.1.5(eslint@8.55.0)(typescript@4.5.5)
       '@microsoft/tsdoc': 0.14.2

@@ -8,26 +8,26 @@ import { strict as assert } from "node:assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	FluidObject,
 	Tagged,
 	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore/internal";
-import { ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
-import { IBlob, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { type ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
+import type { IBlob, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
-	IGarbageCollectionData,
-	CreateChildSummarizerNodeFn,
+	type IGarbageCollectionData,
+	type CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,
-	IFluidDataStoreChannel,
-	IFluidDataStoreContext,
-	IFluidDataStoreFactory,
-	IFluidDataStoreRegistry,
-	IGarbageCollectionDetailsBase,
-	SummarizeInternalFn,
+	type IFluidDataStoreChannel,
+	type IFluidDataStoreContext,
+	type IFluidDataStoreFactory,
+	type IFluidDataStoreRegistry,
+	type IGarbageCollectionDetailsBase,
+	type SummarizeInternalFn,
 	channelsTreeName,
 	type IContainerRuntimeBase,
 	type IRuntimeStorageService,
@@ -61,9 +61,9 @@ import {
 } from "../dataStoreContext.js";
 import { StorageServiceWithAttachBlobs } from "../storageServiceWithAttachBlobs.js";
 import {
-	IRootSummarizerNodeWithGC,
-	ReadFluidDataStoreAttributes,
-	WriteFluidDataStoreAttributes,
+	type IRootSummarizerNodeWithGC,
+	type ReadFluidDataStoreAttributes,
+	type WriteFluidDataStoreAttributes,
 	createRootSummarizerNodeWithGC,
 	dataStoreAttributesBlobName,
 	summarizerClientType,

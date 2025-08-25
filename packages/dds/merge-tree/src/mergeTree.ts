@@ -9,14 +9,14 @@
 import {
 	assert,
 	Heap,
-	IComparer,
+	type IComparer,
 	DoublyLinkedList,
-	ListNode,
+	type ListNode,
 } from "@fluidframework/core-utils/internal";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { IAttributionCollectionSerializer } from "./attributionCollection.js";
-import { Client } from "./client.js";
+import type { IAttributionCollectionSerializer } from "./attributionCollection.js";
+import type { Client } from "./client.js";
 import {
 	NonCollabClient,
 	TreeMaintenanceSequenceNumber,
@@ -25,16 +25,16 @@ import {
 import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment.js";
 import {
 	LocalReferenceCollection,
-	LocalReferencePosition,
+	type LocalReferencePosition,
 	SlidingPreference,
 	anyLocalReferencePosition,
 	filterLocalReferencePositions,
 } from "./localReference.js";
 import {
-	IMergeTreeDeltaOpArgs,
-	IMergeTreeSegmentDelta,
-	MergeTreeDeltaCallback,
-	MergeTreeMaintenanceCallback,
+	type IMergeTreeDeltaOpArgs,
+	type IMergeTreeSegmentDelta,
+	type MergeTreeDeltaCallback,
+	type MergeTreeMaintenanceCallback,
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback.js";
 import {
@@ -47,14 +47,14 @@ import {
 } from "./mergeTreeNodeWalk.js";
 import {
 	CollaborationWindow,
-	IMergeNode,
-	ISegmentAction,
-	ISegmentChanges,
-	InsertContext,
+	type IMergeNode,
+	type ISegmentAction,
+	type ISegmentChanges,
+	type InsertContext,
 	Marker,
 	MaxNodesInBlock,
 	MergeBlock,
-	SegmentGroup,
+	type SegmentGroup,
 	assertSegmentLeaf,
 	assignChild,
 	getMinSeqPerspective,
@@ -74,7 +74,7 @@ import {
 	createRemoveRangeOp,
 } from "./opBuilder.js";
 import {
-	IRelativePosition,
+	type IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
 	type IMergeTreeOp,
@@ -88,10 +88,10 @@ import {
 	RemoteObliteratePerspective,
 	allAckedChangesPerspective,
 } from "./perspective.js";
-import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
+import { type PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
 	DetachedReferencePosition,
-	ReferencePosition,
+	type ReferencePosition,
 	refGetTileLabels,
 	refHasTileLabel,
 	refTypeIncludesFlag,
@@ -99,7 +99,7 @@ import {
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
 	assertRemoved,
-	ISegmentInsideObliterateInfo,
+	type ISegmentInsideObliterateInfo,
 	isInsideObliterate,
 	isMergeNodeInfo,
 	isRemoved,
@@ -215,8 +215,7 @@ function ackSegment(
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IMergeTreeOptions {
 	catchUpBlobName?: string;

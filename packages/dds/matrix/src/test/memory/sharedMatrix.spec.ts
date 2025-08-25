@@ -70,7 +70,6 @@ function runBenchmark({
 				afterOperation?.(this.matrix, this.undoRedoStack);
 
 				this.cleanUp();
-				this.matrix = undefined;
 				this.undoRedoStack = undefined;
 				this.cleanUp = undefined;
 			}

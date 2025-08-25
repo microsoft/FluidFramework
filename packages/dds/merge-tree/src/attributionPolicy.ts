@@ -4,17 +4,17 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import { AttributionCollection } from "./attributionCollection.js";
-import { Client } from "./client.js";
-import { AttributionPolicy } from "./mergeTree.js";
+import type { Client } from "./client.js";
+import type { AttributionPolicy } from "./mergeTree.js";
 import {
-	IMergeTreeDeltaCallbackArgs,
-	IMergeTreeDeltaOpArgs,
-	IMergeTreeMaintenanceCallbackArgs,
-	IMergeTreeSegmentDelta,
+	type IMergeTreeDeltaCallbackArgs,
+	type IMergeTreeDeltaOpArgs,
+	type IMergeTreeMaintenanceCallbackArgs,
+	type IMergeTreeSegmentDelta,
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback.js";
 import { MergeTreeDeltaType } from "./ops.js";

@@ -161,6 +161,8 @@ export {
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type SchemaStaticsAlpha,
+	KeyEncodingOptions,
+	type TreeParsingOptions,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
