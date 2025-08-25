@@ -260,6 +260,22 @@ describe("Matrix1", () => {
 
 					matrix.insertCols(1, 1);
 					await expect([[0, undefined, 1]]);
+
+					assert.throws(() => matrix.insertCols(-1, 1), /insertCols: out of bounds/);
+					assert.throws(() => matrix.insertCols(5, 1), /insertCols: out of bounds/);
+				});
+
+				it("column removal", () => {
+					matrix.insertCols(0, 3);
+					assert.equal(matrix.colCount, 3);
+
+					assert.throws(() => matrix.removeCols(-1, 1), /removeCols: out of bounds/);
+					assert.throws(() => matrix.removeCols(5, 1), /removeCols: out of bounds/);
+					assert.throws(() => matrix.removeCols(2, 5), /removeCols: out of bounds/);
+					assert.equal(matrix.colCount, 3);
+
+					matrix.removeCols(1, 1);
+					assert.equal(matrix.colCount, 2);
 				});
 
 				// Vet that we can insert a row in a 2x1 matrix.
@@ -274,6 +290,22 @@ describe("Matrix1", () => {
 
 					matrix.insertRows(1, 1);
 					await expect([[0], [undefined], [1]]);
+
+					assert.throws(() => matrix.insertRows(-1, 1), /insertRows: out of bounds/);
+					assert.throws(() => matrix.insertRows(5, 1), /insertRows: out of bounds/);
+				});
+
+				it("row removal", () => {
+					matrix.insertRows(0, 3);
+					assert.equal(matrix.rowCount, 3);
+
+					assert.throws(() => matrix.removeRows(-1, 1), /removeRows: out of bounds/);
+					assert.throws(() => matrix.removeRows(5, 1), /removeRows: out of bounds/);
+					assert.throws(() => matrix.removeRows(2, 5), /removeRows: out of bounds/);
+					assert.equal(matrix.rowCount, 3);
+
+					matrix.removeRows(1, 1);
+					assert.equal(matrix.rowCount, 2);
 				});
 
 				// Vets that the matrix correctly handles noncontiguous handles when allocating a range
