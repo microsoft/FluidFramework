@@ -273,6 +273,11 @@ export interface ITestContainerConfig {
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details on this property.
 	 */
 	minVersionForCollab?: MinimumVersionForCollab | undefined;
+
+	/**
+	 * For Cross-client compat testing, skips the automatic loading of a second container.
+	 */
+	skipSecondContainerLoad?: boolean;
 }
 
 /**
@@ -1054,6 +1059,12 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		// r11s driver will generate a new ID for the new container.
 		// update the document ID with the actual ID of the attached container.
 		this.updateDocumentId(container.resolvedUrl);
+
+		// Load an extra container
+		if (testContainerConfig?.skipSecondContainerLoad !== true) {
+			await this.loadTestContainer(testContainerConfig);
+		}
+
 		return container;
 	}
 
