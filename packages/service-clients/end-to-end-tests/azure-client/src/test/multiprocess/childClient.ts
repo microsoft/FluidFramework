@@ -86,6 +86,7 @@ const getOrCreatePresenceContainer = async (
 	const client = new AzureClient({ connection: connectionProps });
 	const schema: ContainerSchema = {
 		initialObjects: {
+			// A DataObject is added as otherwise fluid-static complains "Container cannot be initialized without any DataTypes"
 			_unused: TestDataObject,
 		},
 	};
