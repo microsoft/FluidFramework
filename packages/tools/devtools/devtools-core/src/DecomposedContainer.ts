@@ -56,4 +56,9 @@ export interface DecomposedContainer extends IEventProvider<IContainerEvents> {
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.close}
 	 */
 	close?(error?: ICriticalContainerError): void;
+
+	/**
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.readOnlyInfo}
+	 */
+	readonly readOnlyInfo?: { readonly readonly?: boolean };
 }
