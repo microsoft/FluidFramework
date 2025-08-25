@@ -24,7 +24,10 @@ import type {
 	ILoader,
 	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
-import { isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
+import {
+	ConnectionState,
+	isIDeltaManagerFull,
+} from "@fluidframework/container-definitions/internal";
 import type {
 	ContainerExtensionFactory,
 	ContainerExtensionId,
@@ -36,6 +39,7 @@ import type {
 	IContainerRuntimeInternal,
 	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeWithResolveHandle_Deprecated,
+	JoinedStatus,
 	OutboundExtensionMessage,
 	UnverifiedBrand,
 } from "@fluidframework/container-runtime-definitions/internal";
@@ -94,6 +98,12 @@ import {
 	createSessionId,
 	deserializeIdCompressor,
 } from "@fluidframework/id-compressor/internal";
+import {
+	FlushMode,
+	FlushModeExperimental,
+	channelsTreeName,
+	gcTreeKey,
+} from "@fluidframework/runtime-definitions/internal";
 import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -115,13 +125,7 @@ import type {
 	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeBaseExperimental,
 	IFluidParentContext,
-} from "@fluidframework/runtime-definitions/internal";
-import {
-	FlushMode,
-	FlushModeExperimental,
-	channelsTreeName,
-	gcTreeKey,
-	type MinimumVersionForCollab,
+	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	defaultMinVersionForCollab,
@@ -173,7 +177,7 @@ import { v4 as uuid } from "uuid";
 import { BindBatchTracker } from "./batchTracker.js";
 import {
 	BlobManager,
-	IPendingBlobs,
+	type IPendingBlobs,
 	blobManagerBasePath,
 	blobsTreeName,
 	isBlobPath,
@@ -205,9 +209,9 @@ import { DeltaScheduler } from "./deltaScheduler.js";
 import {
 	GCNodeType,
 	GarbageCollector,
-	IGCRuntimeOptions,
-	IGCStats,
-	IGarbageCollector,
+	type IGCRuntimeOptions,
+	type IGCStats,
+	type IGarbageCollector,
 	gcGenerationOptionName,
 	type GarbageCollectionMessage,
 	type IGarbageCollectionRuntime,
@@ -216,19 +220,19 @@ import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
 import {
 	ContainerMessageType,
 	type OutboundContainerRuntimeDocumentSchemaMessage,
-	ContainerRuntimeGCMessage,
+	type ContainerRuntimeGCMessage,
 	type ContainerRuntimeIdAllocationMessage,
 	type InboundSequencedContainerRuntimeMessage,
 	type LocalContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
-import { ISavedOpMetadata } from "./metadata.js";
+import type { ISavedOpMetadata } from "./metadata.js";
 import {
-	LocalBatchMessage,
-	BatchStartInfo,
+	type LocalBatchMessage,
+	type BatchStartInfo,
 	DuplicateBatchDetector,
 	ensureContentsDeserialized,
-	IBatchCheckpoint,
+	type IBatchCheckpoint,
 	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
@@ -240,8 +244,8 @@ import {
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
-	PendingMessageResubmitData,
-	IPendingLocalState,
+	type PendingMessageResubmitData,
+	type IPendingLocalState,
 	PendingStateManager,
 	type PendingBatchResubmitMetadata,
 } from "./pendingStateManager.js";
@@ -263,24 +267,24 @@ import type {
 } from "./summary/index.js";
 import {
 	DocumentsSchemaController,
-	IBaseSummarizeResult,
-	IConnectableRuntime,
-	IContainerRuntimeMetadata,
-	ICreateContainerMetadata,
-	IEnqueueSummarizeOptions,
-	IGenerateSummaryTreeResult,
-	IGeneratedSummaryStats,
-	IOnDemandSummarizeOptions,
-	IRefreshSummaryAckOptions,
-	IRootSummarizerNodeWithGC,
-	ISubmitSummaryOptions,
-	ISummarizerInternalsProvider,
-	ISummarizerRuntime,
-	ISummaryMetadataMessage,
-	IdCompressorMode,
+	type IBaseSummarizeResult,
+	type IConnectableRuntime,
+	type IContainerRuntimeMetadata,
+	type ICreateContainerMetadata,
+	type IEnqueueSummarizeOptions,
+	type IGenerateSummaryTreeResult,
+	type IGeneratedSummaryStats,
+	type IOnDemandSummarizeOptions,
+	type IRefreshSummaryAckOptions,
+	type IRootSummarizerNodeWithGC,
+	type ISubmitSummaryOptions,
+	type ISummarizerInternalsProvider,
+	type ISummarizerRuntime,
+	type ISummaryMetadataMessage,
+	type IdCompressorMode,
 	OrderedClientElection,
 	RetriableSummaryError,
-	SubmitSummaryResult,
+	type SubmitSummaryResult,
 	aliasBlobName,
 	chunksBlobName,
 	recentBatchInfoBlobName,
@@ -298,7 +302,7 @@ import {
 	SummaryCollection,
 	OrderedClientCollection,
 	validateSummaryHeuristicConfiguration,
-	ISummaryConfiguration,
+	type ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 	isSummariesDisabled,
 	summarizerClientType,
@@ -345,8 +349,7 @@ function getUnknownMessageTypeError(
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryRuntimeOptions {
 	/**
@@ -379,8 +382,7 @@ export interface ISummaryRuntimeOptions {
  * compat configuration info.
  * If neither of the above is done, then the build will fail to compile.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ContainerRuntimeOptions {
 	readonly summaryOptions: ISummaryRuntimeOptions;
@@ -460,8 +462,7 @@ export interface ContainerRuntimeOptions {
 /**
  * Options for container runtime.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type IContainerRuntimeOptions = Partial<ContainerRuntimeOptions>;
 
@@ -509,14 +510,12 @@ export type IContainerRuntimeOptionsInternal = Partial<ContainerRuntimeOptionsIn
 export const DeletedResponseHeaderKey = "wasDeleted";
 /**
  * Tombstone error responses will have this header set to true
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const TombstoneResponseHeaderKey = "isTombstoned";
 /**
  * Inactive error responses will have this header set to true
- * @legacy
- * @alpha
+ * @legacy @beta
  *
  * @deprecated this header is deprecated and will be removed in the future. The functionality corresponding
  * to this was experimental and is no longer supported.
@@ -724,8 +723,7 @@ type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSeq
 
 /**
  * This object holds the parameters necessary for the {@link loadContainerRuntime} function.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface LoadContainerRuntimeParams {
 	/**
@@ -785,8 +783,7 @@ export interface LoadContainerRuntimeParams {
  * This is meant to be used by a {@link @fluidframework/container-definitions#IRuntimeFactory} to instantiate a container runtime.
  * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
  * @returns A runtime which provides all the functionality necessary to bind with the loader layer via the {@link @fluidframework/container-definitions#IRuntime} interface and provide a runtime environment via the {@link @fluidframework/container-runtime-definitions#IContainerRuntime} interface.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export async function loadContainerRuntime(
 	params: LoadContainerRuntimeParams,
@@ -1345,6 +1342,9 @@ export class ContainerRuntime
 	private flushScheduled = false;
 
 	private canSendOps: boolean;
+	private canSendSignals: boolean | undefined;
+
+	private readonly getConnectionState?: () => ConnectionState;
 
 	private consecutiveReconnects = 0;
 
@@ -1537,7 +1537,10 @@ export class ContainerRuntime
 			pendingLocalState,
 			supportedFeatures,
 			snapshotWithContents,
+			getConnectionState,
 		} = context;
+
+		this.getConnectionState = getConnectionState;
 
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
@@ -1681,6 +1684,9 @@ export class ContainerRuntime
 		// Note that we only need to pull the *initial* connected state from the context.
 		// Later updates come through calls to setConnectionState.
 		this.canSendOps = connected;
+		this.canSendSignals = this.getConnectionState
+			? this.getConnectionState() === ConnectionState.Connected
+			: undefined;
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
@@ -2838,7 +2844,44 @@ export class ContainerRuntime
 		this.channelCollection.setConnectionState(canSendOps, clientId);
 		this.garbageCollector.setConnectionState(canSendOps, clientId);
 
+		// Emit "connected" and "disconnected" events based on ability to send ops
 		raiseConnectedEvent(this.mc.logger, this, this.connected /* canSendOps */, clientId);
+		// Emit "connectedToService" and "disconnectedFromService" events based on service connection status
+		this.emitServiceConnectionEvents(canSendOpsChanged, canSendOps, clientId);
+	}
+
+	/**
+	 * Emits service connection events based on connection state changes.
+	 *
+	 * @remarks
+	 * "connectedToService" is emitted when container connection state transitions to 'Connected' regardless of connection mode.
+	 * "disconnectedFromService" excludes false "disconnected" events that happen when readonly client transitions to 'Connected'.
+	 */
+	private emitServiceConnectionEvents(
+		canSendOpsChanged: boolean,
+		canSendOps: boolean,
+		clientId?: string,
+	): void {
+		if (!this.getConnectionState) {
+			return;
+		}
+
+		const canSendSignals = this.getConnectionState() === ConnectionState.Connected;
+		const canSendSignalsChanged = this.canSendSignals !== canSendSignals;
+		this.canSendSignals = canSendSignals;
+		if (canSendSignalsChanged) {
+			// If canSendSignals changed, we either transitioned from Connected to Disconnected or CatchingUp to Connected
+			if (canSendSignals) {
+				// Emit for CatchingUp to Connected transition
+				this.emit("connectedToService", clientId, canSendOps);
+			} else {
+				// Emit for Connected to Disconnected transition
+				this.emit("disconnectedFromService");
+			}
+		} else if (canSendOpsChanged) {
+			// If canSendSignals did not change but canSendOps did, then connection type has changed.
+			this.emit("connectionTypeChanged", canSendOps);
+		}
 	}
 
 	public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {
@@ -4991,6 +5034,11 @@ export class ContainerRuntime
 	}
 
 	public getPendingLocalState(props?: IGetPendingLocalStateProps): unknown {
+		// AB#46464 - Add support for serializing pending state while in staging mode
+		if (this.inStagingMode) {
+			throw new UsageError("getPendingLocalState is not yet supported in staging mode");
+		}
+
 		this.verifyNotClosed();
 		if (props?.notifyImminentClosure) {
 			throw new UsageError("notifyImminentClosure is no longer supported in ContainerRuntime");
@@ -5064,10 +5112,35 @@ export class ContainerRuntime
 	// It is lazily create to avoid listeners (old events) that ultimately go nowhere.
 	private readonly lazyEventsForExtensions = new Lazy<Listenable<ExtensionHostEvents>>(() => {
 		const eventEmitter = createEmitter<ExtensionHostEvents>();
-		this.on("connected", (clientId) => eventEmitter.emit("connected", clientId));
-		this.on("disconnected", () => eventEmitter.emit("disconnected"));
+		if (this.getConnectionState) {
+			this.on("connectedToService", (clientId: string, canWrite: boolean) => {
+				eventEmitter.emit("joined", { clientId, canWrite });
+			});
+			this.on("disconnectedFromService", () => eventEmitter.emit("disconnected"));
+			this.on("connectionTypeChanged", (canWrite: boolean) =>
+				eventEmitter.emit("connectionTypeChanged", canWrite),
+			);
+		} else {
+			this.on("connected", (clientId: string) => {
+				eventEmitter.emit("joined", { clientId, canWrite: true });
+			});
+			this.on("disconnected", () => eventEmitter.emit("disconnected"));
+		}
 		return eventEmitter;
 	});
+
+	private getJoinedStatus(): JoinedStatus {
+		const getConnectionState = this.getConnectionState;
+		if (getConnectionState) {
+			const connectionState = getConnectionState();
+			if (connectionState === ConnectionState.Connected) {
+				return this.canSendOps ? "joinedForWriting" : "joinedForReading";
+			}
+		} else if (this.canSendOps) {
+			return "joinedForWriting";
+		}
+		return "disconnected";
+	}
 
 	private readonly submitExtensionSignal: <TMessage extends TypedMessage>(
 		id: string,
@@ -5087,7 +5160,7 @@ export class ContainerRuntime
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
 			const runtime = {
-				isConnected: () => this.connected,
+				getJoinedStatus: this.getJoinedStatus.bind(this),
 				getClientId: () => this.clientId,
 				events: this.lazyEventsForExtensions.value,
 				logger: this.baseLogger,

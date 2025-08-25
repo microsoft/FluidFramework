@@ -5,7 +5,7 @@
 
 import { expect } from "chai";
 
-import type { DocumentNode } from "../../index.js";
+import type { ApiDocument } from "../../ApiDocument.js";
 import { checkForDuplicateDocumentPaths } from "../Utilities.js";
 
 describe("ApiItem to Documentation transformation utilities tests", () => {
@@ -15,19 +15,19 @@ describe("ApiItem to Documentation transformation utilities tests", () => {
 		});
 
 		it("No duplicates", () => {
-			const documents: DocumentNode[] = [
-				{ documentPath: "foo" } as unknown as DocumentNode,
-				{ documentPath: "bar" } as unknown as DocumentNode,
-				{ documentPath: "baz" } as unknown as DocumentNode,
+			const documents: ApiDocument[] = [
+				{ documentPath: "foo" } as unknown as ApiDocument,
+				{ documentPath: "bar" } as unknown as ApiDocument,
+				{ documentPath: "baz" } as unknown as ApiDocument,
 			];
 			expect(() => checkForDuplicateDocumentPaths(documents)).to.not.throw();
 		});
 
 		it("Contains duplicates", () => {
-			const documents: DocumentNode[] = [
-				{ documentPath: "foo" } as unknown as DocumentNode,
-				{ documentPath: "bar" } as unknown as DocumentNode,
-				{ documentPath: "foo" } as unknown as DocumentNode,
+			const documents: ApiDocument[] = [
+				{ documentPath: "foo" } as unknown as ApiDocument,
+				{ documentPath: "bar" } as unknown as ApiDocument,
+				{ documentPath: "foo" } as unknown as ApiDocument,
 			];
 			expect(() => checkForDuplicateDocumentPaths(documents)).to.throw();
 		});

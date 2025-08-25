@@ -26,7 +26,7 @@ import {
 	TestTenantManager,
 	TestThrottler,
 } from "@fluidframework/server-test-utils";
-import assert from "assert";
+import { strict as assert } from "assert";
 import express from "express";
 import nconf from "nconf";
 import Sinon from "sinon";
@@ -1243,47 +1243,6 @@ describe("Routerlicious", () => {
 							.set("Authorization", tenantToken1)
 							.set("Content-Type", "application/json")
 							.expect(404);
-					});
-
-					it("Document session not active", async () => {
-						const body = {
-							signalContent: {
-								contents: {
-									type: "ExternalDataChanged_V1.0.0",
-									content: { taskListId: "task-list-1" },
-								},
-							},
-						};
-						const documentNoActiveSession = {
-							_id: "doc-1",
-							tenantId: appTenant1.id,
-							version: "1.0",
-							documentId: "doc-1",
-							content: "Hello, World!",
-							session: {
-								ordererUrl: defaultProvider.get("worker:serverUrl"),
-								deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
-								historianUrl: defaultProvider.get("worker:blobStorageUrl"),
-								isSessionAlive: true,
-								isSessionActive: false,
-							},
-							createTime: Date.now(),
-							scribe: "",
-							deli: "",
-						};
-
-						Sinon.stub(defaultStorage, "getDocument").returns(
-							Promise.resolve(documentNoActiveSession),
-						);
-
-						await supertest
-							.post(
-								`/api/v1/${appTenant1.id}/${documentNoActiveSession._id}/broadcast-signal`,
-							)
-							.send(body)
-							.set("Authorization", tenantToken1)
-							.set("Content-Type", "application/json")
-							.expect(410);
 					});
 				});
 

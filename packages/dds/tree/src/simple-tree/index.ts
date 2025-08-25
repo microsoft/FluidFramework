@@ -14,9 +14,7 @@ export {
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
 	type TreeNodeSchemaCore,
-	// TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instanceof.
-	// See docs on TreeNode for more details.
-	type TreeNode,
+	TreeNode,
 	type Unhydrated,
 	type InternalTreeNode,
 	isTreeNode,
@@ -47,9 +45,9 @@ export {
 	type UnannotateAllowedTypes,
 	type UnannotateAllowedType,
 	type UnannotateAllowedTypesList,
-	type UnannotateAllowedTypeOrLazyItem,
 	type AllowedTypeMetadata,
 	type AnnotatedAllowedTypes,
+	type SchemaUpgrade,
 	type LazyItem,
 	type FlexList,
 	type FlexListToUnion,
@@ -57,6 +55,7 @@ export {
 	walkNodeSchema,
 	walkAllowedTypes,
 	type SchemaVisitor,
+	type SimpleNodeSchemaBase,
 } from "./core/index.js";
 export { walkFieldSchema } from "./walkFieldSchema.js";
 export type { UnsafeUnknownSchema, Insertable } from "./unsafeUnknownSchema.js";
@@ -161,6 +160,9 @@ export {
 	type TreeChangeEvents,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
+	type SchemaStaticsAlpha,
+	KeyEncodingOptions,
+	type TreeParsingOptions,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
@@ -170,7 +172,6 @@ export type {
 	SimpleMapNodeSchema,
 	SimpleArrayNodeSchema,
 	SimpleObjectNodeSchema,
-	SimpleNodeSchemaBase,
 	SimpleNodeSchemaBaseAlpha,
 	SimpleObjectFieldSchema,
 	SimpleRecordNodeSchema,
@@ -240,7 +241,17 @@ export {
 	prepareForInsertion,
 	prepareForInsertionContextless,
 } from "./prepareForInsertion.js";
-export { toStoredSchema, getStoredSchema, convertFieldKind } from "./toStoredSchema.js";
+export {
+	toStoredSchema,
+	getStoredSchema,
+	convertFieldKind,
+	toUpgradeSchema,
+	toInitialSchema,
+	convertField,
+	toUnhydratedSchema,
+	restrictiveStoredSchemaGenerationOptions,
+	permissiveStoredSchemaGenerationOptions,
+} from "./toStoredSchema.js";
 export {
 	numberSchema,
 	stringSchema,

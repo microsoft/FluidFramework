@@ -38,8 +38,7 @@ import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public isLocalDataStore: boolean = true;

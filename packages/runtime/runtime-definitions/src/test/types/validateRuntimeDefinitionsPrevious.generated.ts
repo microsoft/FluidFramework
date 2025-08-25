@@ -437,6 +437,24 @@ declare type current_as_old_for_Interface_IRuntimeMessagesContent = requireAssig
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Interface_IRuntimeStorageService": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IRuntimeStorageService = requireAssignableTo<TypeOnly<old.IRuntimeStorageService>, TypeOnly<current.IRuntimeStorageService>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IRuntimeStorageService": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IRuntimeStorageService = requireAssignableTo<TypeOnly<current.IRuntimeStorageService>, TypeOnly<old.IRuntimeStorageService>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_ISummarizeInternalResult": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_ISummarizeInternalResult = requireAssignableTo<TypeOnly<old.ISummarizeInternalResult>, TypeOnly<current.ISummarizeInternalResult>>
@@ -764,6 +782,24 @@ declare type old_as_current_for_TypeAlias_ISequencedMessageEnvelope = requireAss
  * "TypeAlias_ISequencedMessageEnvelope": {"backCompat": false}
  */
 declare type current_as_old_for_TypeAlias_ISequencedMessageEnvelope = requireAssignableTo<TypeOnly<current.ISequencedMessageEnvelope>, TypeOnly<old.ISequencedMessageEnvelope>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_MinimumVersionForCollab": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_MinimumVersionForCollab = requireAssignableTo<TypeOnly<old.MinimumVersionForCollab>, TypeOnly<current.MinimumVersionForCollab>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_MinimumVersionForCollab": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_MinimumVersionForCollab = requireAssignableTo<TypeOnly<current.MinimumVersionForCollab>, TypeOnly<old.MinimumVersionForCollab>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

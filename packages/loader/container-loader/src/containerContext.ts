@@ -7,23 +7,23 @@ import type {
 	ILayerCompatDetails,
 	IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
-import {
+import type {
 	AttachState,
 	IAudience,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import {
+import type {
 	IBatchMessage,
 	IContainerContext,
 	ILoader,
 	ILoaderOptions,
 	IDeltaManager,
-	type IContainerStorageService,
+	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
-import { type FluidObject } from "@fluidframework/core-interfaces";
-import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
-import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
-import {
+import type { FluidObject } from "@fluidframework/core-interfaces";
+import type { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
+import type {
 	ISnapshot,
 	IDocumentMessage,
 	ISnapshotTree,
@@ -32,9 +32,54 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
+import type { ConnectionState } from "./connectionState.js";
 import { loaderCompatDetailsForRuntime } from "./loaderLayerCompatState.js";
+
+/**
+ * Configuration object for ContainerContext constructor.
+ */
+export interface IContainerContextConfig {
+	readonly options: ILoaderOptions;
+	readonly scope: FluidObject;
+	readonly baseSnapshot: ISnapshotTree | undefined;
+	readonly version: IVersion | undefined;
+	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	readonly storage: IContainerStorageService;
+	readonly quorum: IQuorumClients;
+	readonly audience: IAudience;
+	readonly loader: ILoader;
+	readonly submitFn: (
+		type: MessageType,
+		contents: unknown,
+		batch: boolean,
+		appData: unknown,
+	) => number;
+	readonly submitSummaryFn: (
+		summaryOp: ISummaryContent,
+		referenceSequenceNumber?: number,
+	) => number;
+	readonly submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
+	readonly submitSignalFn: (
+		content: unknown | ISignalEnvelope,
+		targetClientId?: string,
+	) => void;
+	readonly disposeFn: (error?: ICriticalContainerError) => void;
+	readonly closeFn: (error?: ICriticalContainerError) => void;
+	readonly updateDirtyContainerState: (dirty: boolean) => void;
+	readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
+	readonly getContainerDiagnosticId: () => string | undefined;
+	readonly getClientId: () => string | undefined;
+	readonly getAttachState: () => AttachState;
+	readonly getConnected: () => boolean;
+	readonly getConnectionState: () => ConnectionState;
+	readonly clientDetails: IClientDetails;
+	readonly existing: boolean;
+	readonly taggedLogger: ITelemetryLoggerExt;
+	readonly pendingLocalState?: unknown;
+	readonly snapshotWithContents?: ISnapshot;
+}
 
 /**
  * {@inheritDoc @fluidframework/container-definitions#IContainerContext}
@@ -51,6 +96,58 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		 */
 		["referenceSequenceNumbers", true],
 	]);
+
+	public readonly options: ILoaderOptions;
+	public readonly scope: FluidObject;
+	public readonly baseSnapshot: ISnapshotTree | undefined;
+	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	public readonly storage: IContainerStorageService;
+	public readonly quorum: IQuorumClients;
+	public readonly audience: IAudience;
+	public readonly loader: ILoader;
+	public readonly submitFn: (
+		type: MessageType,
+		contents: unknown,
+		batch: boolean,
+		appData: unknown,
+	) => number;
+	public readonly submitSummaryFn: (
+		summaryOp: ISummaryContent,
+		referenceSequenceNumber?: number,
+	) => number;
+	/**
+	 * @returns clientSequenceNumber of last message in a batch
+	 */
+	public readonly submitBatchFn: (
+		batch: IBatchMessage[],
+		referenceSequenceNumber?: number,
+	) => number;
+	/**
+	 * `unknown` should be removed once `@alpha` tag is removed from IContainerContext
+	 * @see {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
+	 * Any changes to submitSignalFn `content` should be checked internally by temporarily changing IContainerContext and removing all `unknown`s
+	 */
+	public readonly submitSignalFn: (
+		content: unknown | ISignalEnvelope,
+		targetClientId?: string,
+	) => void;
+	public readonly disposeFn: (error?: ICriticalContainerError) => void;
+	public readonly closeFn: (error?: ICriticalContainerError) => void;
+	public readonly updateDirtyContainerState: (dirty: boolean) => void;
+	public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
+	public readonly clientDetails: IClientDetails;
+	public readonly existing: boolean;
+	public readonly taggedLogger: ITelemetryLoggerExt;
+	public readonly pendingLocalState: unknown;
+	public readonly snapshotWithContents: ISnapshot | undefined;
+
+	public readonly getConnectionState: () => ConnectionState;
+
+	private readonly _getClientId: () => string | undefined;
+	private readonly _getContainerDiagnosticId: () => string | undefined;
+	private readonly _getConnected: () => boolean;
+	private readonly _getAttachState: () => AttachState;
+	private readonly version: IVersion | undefined;
 
 	public get clientId(): string | undefined {
 		return this._getClientId();
@@ -79,60 +176,39 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		return loaderCompatDetailsForRuntime;
 	}
 
-	constructor(
-		public readonly options: ILoaderOptions,
-		public readonly scope: FluidObject,
-		public readonly baseSnapshot: ISnapshotTree | undefined,
-		private readonly _version: IVersion | undefined,
-		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		public readonly storage: IContainerStorageService,
-		public readonly quorum: IQuorumClients,
-		public readonly audience: IAudience,
-		public readonly loader: ILoader,
-		public readonly submitFn: (
-			type: MessageType,
-			contents: unknown,
-			batch: boolean,
-			appData: unknown,
-		) => number,
-		public readonly submitSummaryFn: (
-			summaryOp: ISummaryContent,
-			referenceSequenceNumber?: number,
-		) => number,
-		/**
-		 * @returns clientSequenceNumber of last message in a batch
-		 */
-		public readonly submitBatchFn: (
-			batch: IBatchMessage[],
-			referenceSequenceNumber?: number,
-		) => number,
+	constructor(config: IContainerContextConfig) {
+		this.options = config.options;
+		this.scope = config.scope;
+		this.baseSnapshot = config.baseSnapshot;
+		this.deltaManager = config.deltaManager;
+		this.storage = config.storage;
+		this.quorum = config.quorum;
+		this.audience = config.audience;
+		this.loader = config.loader;
+		this.submitFn = config.submitFn;
+		this.submitSummaryFn = config.submitSummaryFn;
+		this.submitBatchFn = config.submitBatchFn;
+		this.submitSignalFn = config.submitSignalFn;
+		this.disposeFn = config.disposeFn;
+		this.closeFn = config.closeFn;
+		this.updateDirtyContainerState = config.updateDirtyContainerState;
+		this.getAbsoluteUrl = config.getAbsoluteUrl;
+		this.clientDetails = config.clientDetails;
+		this.existing = config.existing;
+		this.taggedLogger = config.taggedLogger;
+		this.pendingLocalState = config.pendingLocalState;
+		this.snapshotWithContents = config.snapshotWithContents;
 
-		/**
-		 * `unknown` should be removed once `@alpha` tag is removed from IContainerContext
-		 * @see {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
-		 * Any changes to submitSignalFn `content` should be checked internally by temporarily changing IContainerContext and removing all `unknown`s
-		 */
-		public readonly submitSignalFn: (
-			content: unknown | ISignalEnvelope,
-			targetClientId?: string,
-		) => void,
-		public readonly disposeFn: (error?: ICriticalContainerError) => void,
-		public readonly closeFn: (error?: ICriticalContainerError) => void,
-		public readonly updateDirtyContainerState: (dirty: boolean) => void,
-		public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>,
-		private readonly _getContainerDiagnosticId: () => string | undefined,
-		private readonly _getClientId: () => string | undefined,
-		private readonly _getAttachState: () => AttachState,
-		private readonly _getConnected: () => boolean,
-		public readonly clientDetails: IClientDetails,
-		public readonly existing: boolean,
-		public readonly taggedLogger: ITelemetryLoggerExt,
-		public readonly pendingLocalState?: unknown,
-		public readonly snapshotWithContents?: ISnapshot,
-	) {}
+		this.getConnectionState = config.getConnectionState;
+		this._getClientId = config.getClientId;
+		this._getContainerDiagnosticId = config.getContainerDiagnosticId;
+		this._getConnected = config.getConnected;
+		this._getAttachState = config.getAttachState;
+		this.version = config.version;
+	}
 
 	public getLoadedFromVersion(): IVersion | undefined {
-		return this._version;
+		return this.version;
 	}
 
 	public get attachState(): AttachState {

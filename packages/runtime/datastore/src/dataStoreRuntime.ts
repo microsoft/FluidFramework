@@ -4,16 +4,18 @@
  */
 
 import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
-import { AttachState, IAudience } from "@fluidframework/container-definitions";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import {
+import { AttachState, type IAudience } from "@fluidframework/container-definitions";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type {
 	FluidObject,
 	IFluidHandle,
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type {
+	IFluidHandleContext,
+	IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
 	debugAssert,
@@ -21,42 +23,42 @@ import {
 	LazyPromise,
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannel,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
-	type IDeltaManagerErased,
+	IDeltaManagerErased,
 	// eslint-disable-next-line import/no-deprecated
-	type IFluidDataStoreRuntimeExperimental,
+	IFluidDataStoreRuntimeExperimental,
 } from "@fluidframework/datastore-definitions/internal";
 import {
-	IClientDetails,
-	IQuorumClients,
-	ISummaryBlob,
-	ISummaryTree,
+	type IClientDetails,
+	type IQuorumClients,
+	type ISummaryBlob,
+	type ISummaryTree,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
-import {
+import type {
 	IDocumentMessage,
-	type ISnapshotTree,
+	ISnapshotTree,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
-	ISummaryTreeWithStats,
-	ITelemetryContext,
-	IGarbageCollectionData,
-	CreateChildSummarizerNodeParam,
+	type ISummaryTreeWithStats,
+	type ITelemetryContext,
+	type IGarbageCollectionData,
+	type CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
-	IAttachMessage,
-	IEnvelope,
-	IFluidDataStoreChannel,
-	IFluidDataStoreContext,
+	type IAttachMessage,
+	type IEnvelope,
+	type IFluidDataStoreChannel,
+	type IFluidDataStoreContext,
 	VisibilityState,
 	gcDataBlobKey,
-	IInboundSignalMessage,
+	type IInboundSignalMessage,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
 	// eslint-disable-next-line import/no-deprecated
@@ -84,10 +86,10 @@ import {
 	encodeCompactIdToString,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	DataProcessingError,
 	LoggingError,
-	MonitoringContext,
+	type MonitoringContext,
 	UsageError,
 	createChildMonitoringContext,
 	generateStack,
@@ -96,7 +98,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { IChannelContext, summarizeChannel } from "./channelContext.js";
+import { type IChannelContext, summarizeChannel } from "./channelContext.js";
 import {
 	dataStoreCompatDetailsForRuntime,
 	validateRuntimeCompatibility,
@@ -127,8 +129,7 @@ function contextSupportsFeature<K extends keyof IFluidDataStoreContextFeaturesTo
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum DataStoreMessageType {
 	// Creates a new channel
@@ -137,8 +138,7 @@ export enum DataStoreMessageType {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedObjectRegistry {
 	// TODO consider making this async. A consequence is that either the creation of a distributed data type
@@ -168,8 +168,7 @@ function initializePendingOpCount(): { value: number } {
 
 /**
  * Base data store class
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class FluidDataStoreRuntime
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
@@ -1519,8 +1518,7 @@ export class FluidDataStoreRuntime
  * Request handler is only called when data store can't resolve request, i.e. for custom requests.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @param requestHandler - request handler to mix in
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const mixinRequestHandler = (
 	requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>,
@@ -1541,8 +1539,7 @@ export const mixinRequestHandler = (
  * @param handler - handler that returns info about blob to be added to summary.
  * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const mixinSummaryHandler = (
 	handler: (

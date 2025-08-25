@@ -81,8 +81,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@22.10.7)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/gitresources-previous':
         specifier: npm:@fluidframework/gitresources@7.0.0
         version: '@fluidframework/gitresources@7.0.0'
@@ -127,8 +127,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-kafka-orderer-previous':
         specifier: npm:@fluidframework/server-kafka-orderer@7.0.0
         version: '@fluidframework/server-kafka-orderer@7.0.0'
@@ -233,8 +233,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-lambdas-previous':
         specifier: npm:@fluidframework/server-lambdas@7.0.0
         version: '@fluidframework/server-lambdas@7.0.0'
@@ -339,8 +339,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-lambdas-driver-previous':
         specifier: npm:@fluidframework/server-lambdas-driver@7.0.0
         version: '@fluidframework/server-lambdas-driver@7.0.0'
@@ -430,8 +430,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-local-server-previous':
         specifier: npm:@fluidframework/server-local-server@7.0.0
         version: '@fluidframework/server-local-server@7.0.0'
@@ -566,8 +566,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-memory-orderer-previous':
         specifier: npm:@fluidframework/server-memory-orderer@7.0.0
         version: '@fluidframework/server-memory-orderer@7.0.0'
@@ -624,8 +624,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/protocol-base-previous':
         specifier: npm:@fluidframework/protocol-base@7.0.0
         version: '@fluidframework/protocol-base@7.0.0'
@@ -736,8 +736,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-local-server':
         specifier: workspace:~
         version: link:../local-server
@@ -881,8 +881,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-local-server':
         specifier: workspace:~
         version: link:../local-server
@@ -1056,8 +1056,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-previous':
         specifier: npm:@fluidframework/server-services@7.0.0
         version: '@fluidframework/server-services@7.0.0'
@@ -1133,6 +1133,9 @@ importers:
       debug:
         specifier: ^4.3.4
         version: 4.3.4
+      ipaddr.js:
+        specifier: ^2.2.0
+        version: 2.2.0
       json-stringify-safe:
         specifier: ^5.0.1
         version: 5.0.1
@@ -1159,8 +1162,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-client-previous':
         specifier: npm:@fluidframework/server-services-client@7.0.0
         version: '@fluidframework/server-services-client@7.0.0'
@@ -1250,8 +1253,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-core-previous':
         specifier: npm:@fluidframework/server-services-core@7.0.0
         version: '@fluidframework/server-services-core@7.0.0'
@@ -1323,8 +1326,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-ordering-kafkanode-previous':
         specifier: npm:@fluidframework/server-services-ordering-kafkanode@7.0.0
         version: '@fluidframework/server-services-ordering-kafkanode@7.0.0'
@@ -1402,8 +1405,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-ordering-rdkafka-previous':
         specifier: npm:@fluidframework/server-services-ordering-rdkafka@7.0.0
         version: '@fluidframework/server-services-ordering-rdkafka@7.0.0'
@@ -1463,8 +1466,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-ordering-zookeeper-previous':
         specifier: npm:@fluidframework/server-services-ordering-zookeeper@7.0.0
         version: '@fluidframework/server-services-ordering-zookeeper@7.0.0'
@@ -1590,8 +1593,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-shared-previous':
         specifier: npm:@fluidframework/server-services-shared@7.0.0
         version: '@fluidframework/server-services-shared@7.0.0'
@@ -1675,8 +1678,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-telemetry-previous':
         specifier: npm:@fluidframework/server-services-telemetry@7.0.0
         version: '@fluidframework/server-services-telemetry@7.0.0'
@@ -1781,8 +1784,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-utils-previous':
         specifier: npm:@fluidframework/server-services-utils@7.0.0
         version: '@fluidframework/server-services-utils@7.0.0'
@@ -1905,8 +1908,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-test-utils-previous':
         specifier: npm:@fluidframework/server-test-utils@7.0.0
         version: '@fluidframework/server-test-utils@7.0.0'
@@ -2059,8 +2062,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.39)
@@ -2445,8 +2448,8 @@ packages:
   '@fluidframework/driver-definitions@2.0.5':
     resolution: {integrity: sha512-1jdEGpWg73ow3g7wEv/YnIKa5NzRqsOAbqsUQj6v3QCK6lDhwbUNibctyKSdhRaE18s42s06Ip5n15fqbeq76Q==}
 
-  '@fluidframework/eslint-config-fluid@5.8.0':
-    resolution: {integrity: sha512-MH0phD6UXLI1HGr9L8IDEYhv1UfnT55PeENu63mz7m/fNsawDQr/MI7OopIFKcW99vDtnMOEy5WHQk+hUFCkrw==}
+  '@fluidframework/eslint-config-fluid@6.0.0':
+    resolution: {integrity: sha512-RdbEYUQmLkW8zQ6GZXx1T/t5g9k7iA5K6vPZdvsIK4keb5VXcVCHDluvc7AtOXEVOb5Bt2XyM16NWz2Rlho5NA==}
 
   '@fluidframework/gitresources@7.0.0':
     resolution: {integrity: sha512-APAxqCF/+2ljC8th0PoXzdUAo2EJapdTk9KNm6dp7dFD5hxYWoscFqdyu5K+bvMxmhrIpGd0f//nbb7rZq7bog==}
@@ -4839,10 +4842,6 @@ packages:
     resolution: {integrity: sha512-FGgH2h8zKNim9ljj7dankFPcICIK9Cp5bm+c2gQSYePhpaG5+esrLODihIorn+Pe6FGJzWhXQotPv73jTaldXA==}
     engines: {node: '>= 0.4'}
 
-  es-set-tostringtag@2.0.3:
-    resolution: {integrity: sha512-3T8uNMC3OQTHkFUsFq8r/BwAXLHvU/9O9mE0fBc/MY5iq/8H7ncvO947LmYA6ldWw9Uh8Yhf25zu6n7nML5QWQ==}
-    engines: {node: '>= 0.4'}
-
   es-set-tostringtag@2.1.0:
     resolution: {integrity: sha512-j6vWzfrGVfyXxge+O0x5sh6cvxAog0a/4Rdd2K36zCMV5eJ+/+tOAngRO8cODMNWbVRdVlmGZQL2YS3yR8bIUA==}
     engines: {node: '>= 0.4'}
@@ -5253,8 +5252,8 @@ packages:
     resolution: {integrity: sha512-yDYSgNMraqvnxiEXO4hi88+YZxaHC6QKzb5N84iRCTDeRO7ZALpir/lVmf/uXUhnwUr2O4HU8s/n6x+yNjQkHw==}
     engines: {node: '>= 14.17'}
 
-  form-data@2.5.1:
-    resolution: {integrity: sha512-m21N3WOmEEURgk6B9GLOE4RuWOFf28Lhh9qGYeNlGq4VDXUlJy2th2slBNU8Gp8EzloYZOibZJ7t5ecIrFSjVA==}
+  form-data@2.5.5:
+    resolution: {integrity: sha512-jqdObeR2rxZZbPSGL+3VckHMYtu+f9//KXBsVny6JSX/pa38Fy+bGjuG8eW/H6USNQWhLi8Num++cU2yOCNz4A==}
     engines: {node: '>= 0.12'}
 
   form-data@4.0.4:
@@ -5531,10 +5530,6 @@ packages:
     resolution: {integrity: sha512-IrsVwUHhEULx3R8f/aA8AHuEzAorplsab/v8HBzEiIukwq5i/EC+xmOW+HfP1OaDP+2JkgT1yILHN2O3UFIbcA==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  hasown@2.0.1:
-    resolution: {integrity: sha512-1/th4MHjnwncwXsIW6QMzlvYL9kG5e/CpVvLRZe4XPa8TOUNbCELqmvhDmnkNsAjwaG4+I8gJJL0JBvTTLO9qA==}
-    engines: {node: '>= 0.4'}
-
   hasown@2.0.2:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
@@ -5735,6 +5730,10 @@ packages:
   ipaddr.js@1.9.1:
     resolution: {integrity: sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==}
     engines: {node: '>= 0.10'}
+
+  ipaddr.js@2.2.0:
+    resolution: {integrity: sha512-Ag3wB2o37wslZS19hZqorUnrnzSkpOVy+IiiDEiTqNubEYpYuHWIf6K4psgN2ZWKExS4xhVCrRVfb/wfW8fWJA==}
+    engines: {node: '>= 10'}
 
   is-arguments@1.1.1:
     resolution: {integrity: sha512-8Q7EARjzEnKpt/PCD7e1cgUS0a6X8u5tdSiMqXhojOdoV9TsMsiO+9VLC5vAmO8N7/GmXn7yjR8qnA6bVAEzfA==}
@@ -8843,7 +8842,7 @@ snapshots:
   '@acuminous/bitsyntax@0.1.2':
     dependencies:
       buffer-more-ints: 1.0.0
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.1(supports-color@8.1.1)
       safe-buffer: 5.1.2
     transitivePeerDependencies:
       - supports-color
@@ -9961,7 +9960,7 @@ snapshots:
     dependencies:
       '@fluidframework/core-interfaces': 2.0.5
 
-  '@fluidframework/eslint-config-fluid@5.8.0(eslint@8.55.0)(typescript@5.1.6)':
+  '@fluidframework/eslint-config-fluid@6.0.0(eslint@8.55.0)(typescript@5.1.6)':
     dependencies:
       '@fluid-internal/eslint-plugin-fluid': 0.1.5(eslint@8.55.0)(typescript@5.1.6)
       '@microsoft/tsdoc': 0.14.2
@@ -12482,7 +12481,7 @@ snapshots:
       call-bind: 1.0.7
       define-properties: 1.2.1
       es-abstract: 1.22.4
-      get-intrinsic: 1.2.4
+      get-intrinsic: 1.3.0
       is-string: 1.0.7
 
   array-union@2.1.0: {}
@@ -12509,7 +12508,7 @@ snapshots:
       define-properties: 1.2.1
       es-abstract: 1.22.4
       es-errors: 1.3.0
-      get-intrinsic: 1.2.4
+      get-intrinsic: 1.3.0
       is-array-buffer: 3.0.4
       is-shared-array-buffer: 1.0.2
 
@@ -12558,7 +12557,7 @@ snapshots:
 
   asynciterator.prototype@1.0.0:
     dependencies:
-      has-symbols: 1.0.3
+      has-symbols: 1.1.0
 
   asynckit@0.4.0: {}
 
@@ -13555,18 +13554,18 @@ snapshots:
       arraybuffer.prototype.slice: 1.0.3
       available-typed-arrays: 1.0.7
       call-bind: 1.0.7
-      es-define-property: 1.0.0
+      es-define-property: 1.0.1
       es-errors: 1.3.0
-      es-set-tostringtag: 2.0.3
+      es-set-tostringtag: 2.1.0
       es-to-primitive: 1.2.1
       function.prototype.name: 1.1.6
-      get-intrinsic: 1.2.4
+      get-intrinsic: 1.3.0
       get-symbol-description: 1.0.2
       globalthis: 1.0.3
-      gopd: 1.0.1
+      gopd: 1.2.0
       has-property-descriptors: 1.0.2
       has-proto: 1.0.3
-      has-symbols: 1.0.3
+      has-symbols: 1.1.0
       hasown: 2.0.2
       internal-slot: 1.0.7
       is-array-buffer: 3.0.4
@@ -13595,7 +13594,7 @@ snapshots:
 
   es-define-property@1.0.0:
     dependencies:
-      get-intrinsic: 1.2.4
+      get-intrinsic: 1.3.0
 
   es-define-property@1.0.1: {}
 
@@ -13608,13 +13607,13 @@ snapshots:
       define-properties: 1.2.1
       es-abstract: 1.22.4
       es-errors: 1.3.0
-      es-set-tostringtag: 2.0.3
+      es-set-tostringtag: 2.1.0
       function-bind: 1.1.2
-      get-intrinsic: 1.2.4
+      get-intrinsic: 1.3.0
       globalthis: 1.0.3
       has-property-descriptors: 1.0.2
       has-proto: 1.0.3
-      has-symbols: 1.0.3
+      has-symbols: 1.1.0
       internal-slot: 1.0.7
       iterator.prototype: 1.1.2
       safe-array-concat: 1.1.0
@@ -13624,12 +13623,6 @@ snapshots:
   es-object-atoms@1.1.1:
     dependencies:
       es-errors: 1.3.0
-
-  es-set-tostringtag@2.0.3:
-    dependencies:
-      get-intrinsic: 1.2.4
-      has-tostringtag: 1.0.2
-      hasown: 2.0.2
 
   es-set-tostringtag@2.1.0:
     dependencies:
@@ -14129,11 +14122,14 @@ snapshots:
 
   form-data-encoder@2.1.4: {}
 
-  form-data@2.5.1:
+  form-data@2.5.5:
     dependencies:
       asynckit: 0.4.0
       combined-stream: 1.0.8
+      es-set-tostringtag: 2.1.0
+      hasown: 2.0.2
       mime-types: 2.1.35
+      safe-buffer: 5.2.1
 
   form-data@4.0.4:
     dependencies:
@@ -14227,7 +14223,7 @@ snapshots:
       es-errors: 1.3.0
       function-bind: 1.1.2
       has-proto: 1.0.3
-      has-symbols: 1.0.3
+      has-symbols: 1.1.0
       hasown: 2.0.2
 
   get-intrinsic@1.3.0:
@@ -14269,7 +14265,7 @@ snapshots:
     dependencies:
       call-bind: 1.0.7
       es-errors: 1.3.0
-      get-intrinsic: 1.2.4
+      get-intrinsic: 1.3.0
 
   get-tsconfig@4.10.1:
     dependencies:
@@ -14382,7 +14378,7 @@ snapshots:
 
   gopd@1.0.1:
     dependencies:
-      get-intrinsic: 1.2.4
+      get-intrinsic: 1.3.0
 
   gopd@1.2.0: {}
 
@@ -14437,7 +14433,7 @@ snapshots:
 
   has-property-descriptors@1.0.2:
     dependencies:
-      es-define-property: 1.0.0
+      es-define-property: 1.0.1
 
   has-proto@1.0.3: {}
 
@@ -14447,15 +14443,11 @@ snapshots:
 
   has-tostringtag@1.0.2:
     dependencies:
-      has-symbols: 1.0.3
+      has-symbols: 1.1.0
 
   has-unicode@2.0.1: {}
 
   has-yarn@3.0.0: {}
-
-  hasown@2.0.1:
-    dependencies:
-      function-bind: 1.1.2
 
   hasown@2.0.2:
     dependencies:
@@ -14685,6 +14677,8 @@ snapshots:
 
   ipaddr.js@1.9.1: {}
 
+  ipaddr.js@2.2.0: {}
+
   is-arguments@1.1.1:
     dependencies:
       call-bind: 1.0.7
@@ -14693,7 +14687,7 @@ snapshots:
   is-array-buffer@3.0.4:
     dependencies:
       call-bind: 1.0.7
-      get-intrinsic: 1.2.4
+      get-intrinsic: 1.3.0
 
   is-arrayish@0.2.1: {}
 
@@ -14734,7 +14728,7 @@ snapshots:
 
   is-core-module@2.13.1:
     dependencies:
-      hasown: 2.0.1
+      hasown: 2.0.2
 
   is-core-module@2.16.1:
     dependencies:
@@ -14846,7 +14840,7 @@ snapshots:
 
   is-symbol@1.0.4:
     dependencies:
-      has-symbols: 1.0.3
+      has-symbols: 1.1.0
 
   is-typed-array@1.1.13:
     dependencies:
@@ -14869,7 +14863,7 @@ snapshots:
   is-weakset@2.0.2:
     dependencies:
       call-bind: 1.0.7
-      get-intrinsic: 1.2.4
+      get-intrinsic: 1.3.0
 
   is-windows@1.0.2: {}
 
@@ -14927,8 +14921,8 @@ snapshots:
   iterator.prototype@1.1.2:
     dependencies:
       define-properties: 1.2.1
-      get-intrinsic: 1.2.4
-      has-symbols: 1.0.3
+      get-intrinsic: 1.3.0
+      has-symbols: 1.1.0
       reflect.getprototypeof: 1.0.5
       set-function-name: 2.0.2
 
@@ -16839,7 +16833,7 @@ snapshots:
 
   rechoir@0.8.0:
     dependencies:
-      resolve: 1.22.8
+      resolve: 1.22.10
 
   redis-commands@1.7.0: {}
 
@@ -16857,7 +16851,7 @@ snapshots:
       define-properties: 1.2.1
       es-abstract: 1.22.4
       es-errors: 1.3.0
-      get-intrinsic: 1.2.4
+      get-intrinsic: 1.3.0
       globalthis: 1.0.3
       which-builtin-type: 1.1.3
 
@@ -16977,7 +16971,7 @@ snapshots:
 
   resolve@1.19.0:
     dependencies:
-      is-core-module: 2.13.1
+      is-core-module: 2.16.1
       path-parse: 1.0.7
 
   resolve@1.22.10:
@@ -17052,8 +17046,8 @@ snapshots:
   safe-array-concat@1.1.0:
     dependencies:
       call-bind: 1.0.7
-      get-intrinsic: 1.2.4
-      has-symbols: 1.0.3
+      get-intrinsic: 1.3.0
+      has-symbols: 1.1.0
       isarray: 2.0.5
 
   safe-buffer@5.1.2: {}
@@ -17172,7 +17166,7 @@ snapshots:
       define-data-property: 1.1.4
       es-errors: 1.3.0
       function-bind: 1.1.2
-      get-intrinsic: 1.2.4
+      get-intrinsic: 1.3.0
       gopd: 1.0.1
       has-property-descriptors: 1.0.2
 
@@ -17502,8 +17496,8 @@ snapshots:
       call-bind: 1.0.7
       define-properties: 1.2.1
       es-abstract: 1.22.4
-      get-intrinsic: 1.2.4
-      has-symbols: 1.0.3
+      get-intrinsic: 1.3.0
+      has-symbols: 1.1.0
       internal-slot: 1.0.7
       regexp.prototype.flags: 1.5.2
       side-channel: 1.0.4
@@ -17578,7 +17572,7 @@ snapshots:
       cookiejar: 2.1.4
       debug: 3.2.7
       extend: 3.0.2
-      form-data: 2.5.1
+      form-data: 2.5.5
       formidable: 1.2.6
       methods: 1.1.2
       mime: 1.6.0
@@ -17856,7 +17850,7 @@ snapshots:
     dependencies:
       call-bind: 1.0.7
       for-each: 0.3.3
-      gopd: 1.0.1
+      gopd: 1.2.0
       has-proto: 1.0.3
       is-typed-array: 1.1.13
 
@@ -17865,7 +17859,7 @@ snapshots:
       available-typed-arrays: 1.0.7
       call-bind: 1.0.7
       for-each: 0.3.3
-      gopd: 1.0.1
+      gopd: 1.2.0
       has-proto: 1.0.3
       is-typed-array: 1.1.13
 
@@ -17907,7 +17901,7 @@ snapshots:
     dependencies:
       call-bind: 1.0.7
       has-bigints: 1.0.2
-      has-symbols: 1.0.3
+      has-symbols: 1.1.0
       which-boxed-primitive: 1.0.2
 
   unbzip2-stream@1.4.3:

@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import type {
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
 } from "../mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { SegmentGroup, type ISegmentPrivate } from "../mergeTreeNodes.js";
+import type { SegmentGroup, ISegmentPrivate } from "../mergeTreeNodes.js";
 import {
-	MergeTreeDeltaRevertible,
-	MergeTreeWithRevert,
+	type MergeTreeDeltaRevertible,
+	type MergeTreeWithRevert,
 	appendToMergeTreeDeltaRevertibles,
 	revertMergeTreeDeltaRevertibles,
 } from "../revertibles.js";

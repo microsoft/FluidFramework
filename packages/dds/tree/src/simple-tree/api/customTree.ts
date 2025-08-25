@@ -4,7 +4,7 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -36,24 +36,56 @@ import { isObjectNodeSchema } from "../node-kinds/index.js";
 /**
  * Options for how to interpret or encode a tree when schema information is available.
  * @alpha
+ * @input
  */
-export interface TreeEncodingOptions {
+export interface TreeEncodingOptions<TKeyOptions = KeyEncodingOptions> {
 	/**
-	 * If true, use the stored keys of object nodes.
-	 * If false, use the property keys.
+	 * How to handle field keys.
 	 * @remarks
 	 * Has no effect on {@link NodeKind}s other than {@link NodeKind.Object}.
 	 *
 	 * {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields|Unknown optional field} will be omitted when using property keys.
-	 * @defaultValue false.
-	 * @privateRemarks
-	 * TODO AB#43548:
-	 * Replace this with an enum that provides three options:
-	 * - `usePropertyKeys`: use property keys. Supported for import and export.
-	 * - `allStoredKeys`: use stored keys, and include unknown optional fields. Supported for export only, at least for the short term.
-	 * - `knownStoredKeys`: use stored keys but do not include unknown optional fields. Supported for import and export.
+	 * @defaultValue {@link KeyEncodingOptions.usePropertyKeys}.
 	 */
-	readonly useStoredKeys?: boolean;
+	readonly keys?: TKeyOptions;
+}
+
+/**
+ * Options for how to interpret a tree when schema information is available.
+ * @alpha
+ * @input
+ */
+export type TreeParsingOptions = TreeEncodingOptions<
+	KeyEncodingOptions.usePropertyKeys | KeyEncodingOptions.knownStoredKeys
+>;
+
+/**
+ * Options for how to encode keys in a tree.
+ * @alpha
+ * @input
+ */
+export enum KeyEncodingOptions {
+	/**
+	 * Use property keys.
+	 * @remarks
+	 * Supported for import and export.
+	 * {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields|Unknown optional fields} will be omitted when using property keys.
+	 */
+	usePropertyKeys = "usePropertyKeys",
+	/**
+	 * Use stored keys, and include {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields|Unknown optional fields}.
+	 * @remarks
+	 * Currently only supported for export.
+	 */
+	allStoredKeys = "allStoredKeys",
+	/**
+	 * Use stored keys but do not include {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields|Unknown optional fields}.
+	 * @remarks
+	 * Supported for import and export.
+	 * For export, this omits unknown optional fields.
+	 * For import, any unexpected fields are errors, regardless of {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields}.
+	 */
+	knownStoredKeys = "knownStoredKeys",
 }
 
 /**
@@ -140,26 +172,12 @@ export function customFromCursor<TChild>(
 				forEachField(reader, () => {
 					assert(reader.getFieldLength() === 1, 0xa19 /* invalid children number */);
 					const storedKey = reader.getFieldKey();
-					let key: string;
-					if (!options.useStoredKeys) {
-						const viewSchema = schema.get(type) ?? fail("missing schema for type in cursor");
-						if (isObjectNodeSchema(viewSchema)) {
-							const propertyKey = viewSchema.storedKeyToPropertyKey.get(storedKey);
-							if (propertyKey === undefined) {
-								assert(
-									viewSchema.allowUnknownOptionalFields,
-									"found unknown field where not allowed",
-								);
-								// Skip unknown optional fields when using property keys.
-								return;
-							}
-							key = propertyKey;
-						} else {
-							key = storedKey;
-						}
-					} else {
-						key = storedKey;
+					const key = getKeyFromOptions(options.keys, type, storedKey, schema);
+					if (key === undefined) {
+						// Skip unknown optional fields when using property keys or only known stored keys.
+						return;
 					}
+
 					reader.enterNode(0);
 					fields[key] = childHandler(reader, options, storedSchema, schema);
 					reader.exitNode();
@@ -167,6 +185,59 @@ export function customFromCursor<TChild>(
 				return fields;
 			}
 		}
+	}
+}
+
+/**
+ * Returns the key if one should be used, and undefined if the field should be omitted/skipped.
+ *
+ * @param schema - Collection of known view schema.
+ * If `options` is not `KeyEncodingOptions.allStoredKeys`, this must provide the schema for the `type`.
+ * Note that if using this to perform a recursive walk, and `schema` has all view schema reachable from the starting type,
+ * then it should be safe to use the same schema map on every invocation since types missing from it will only be
+ * encountered after traversing unknown optional fields which for which this will return undefined.
+ *
+ * @remarks
+ * Asserts that if encountering an unknown optional field, the schema allows them.
+ * This is not robustly validated in all cases: when in allStoredKeys, it is not checked
+ * (since the view schema might not even be available).
+ */
+function getKeyFromOptions(
+	options: KeyEncodingOptions,
+	type: TreeNodeSchemaIdentifier,
+	storedKey: FieldKey,
+	schema: ReadonlyMap<string, TreeNodeSchema>,
+): string | undefined {
+	switch (options) {
+		case KeyEncodingOptions.allStoredKeys:
+			// Since this case might be inside of an unknown optional field,
+			// it must not depend on there being a view schema.
+			// Fortunately, its possible to implement this case without one.
+			return storedKey;
+		case KeyEncodingOptions.usePropertyKeys:
+		case KeyEncodingOptions.knownStoredKeys: {
+			// Both these cases avoid traversing into unknown optional fields,
+			// so a view schema should be available.
+			const viewSchema =
+				schema.get(type) ?? fail(0xbff /* missing schema for type in cursor */);
+			if (isObjectNodeSchema(viewSchema)) {
+				const propertyKey = viewSchema.storedKeyToPropertyKey.get(storedKey);
+				if (propertyKey === undefined) {
+					assert(
+						viewSchema.allowUnknownOptionalFields,
+						0xc00 /* found unknown field where not allowed */,
+					);
+					// Skip unknown optional fields when using property keys or only known stored keys.
+					return undefined;
+				} else {
+					return options === KeyEncodingOptions.usePropertyKeys ? propertyKey : storedKey;
+				}
+			} else {
+				return storedKey;
+			}
+		}
+		default:
+			unreachableCase(options);
 	}
 }
 

@@ -12,8 +12,8 @@ import {
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
-	IAudience,
-	ICriticalContainerError,
+	type IAudience,
+	type ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import type {
 	ContainerWarning,
@@ -35,41 +35,41 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import { isFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
-	FluidObject,
-	IEvent,
-	IRequest,
-	ITelemetryBaseProperties,
+	type FluidObject,
+	type IEvent,
+	type IRequest,
+	type ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import type { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	IClient,
-	IClientDetails,
-	IQuorumClients,
-	ISequencedClient,
-	ISummaryTree,
+	type IClient,
+	type IClientDetails,
+	type IQuorumClients,
+	type ISequencedClient,
+	type ISummaryTree,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 import {
-	IDocumentService,
-	IDocumentServiceFactory,
-	IDocumentStorageService,
-	IResolvedUrl,
-	ISnapshot,
-	IThrottlingWarning,
-	IUrlResolver,
-	ICommittedProposal,
-	IDocumentAttributes,
-	IDocumentMessage,
-	IQuorumProposals,
-	ISequencedProposal,
-	ISnapshotTree,
-	ISummaryContent,
-	IVersion,
+	type IDocumentService,
+	type IDocumentServiceFactory,
+	type IDocumentStorageService,
+	type IResolvedUrl,
+	type ISnapshot,
+	type IThrottlingWarning,
+	type IUrlResolver,
+	type ICommittedProposal,
+	type IDocumentAttributes,
+	type IDocumentMessage,
+	type IQuorumProposals,
+	type ISequencedProposal,
+	type ISnapshotTree,
+	type ISummaryContent,
+	type IVersion,
 	MessageType,
-	ISequencedDocumentMessage,
-	ISignalMessage,
+	type ISequencedDocumentMessage,
+	type ISignalMessage,
 	type ConnectionMode,
 } from "@fluidframework/driver-definitions/internal";
 import {
@@ -84,11 +84,11 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import {
 	type TelemetryEventCategory,
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
 	GenericError,
-	IFluidErrorBase,
-	MonitoringContext,
+	type IFluidErrorBase,
+	type MonitoringContext,
 	PerformanceEvent,
 	UsageError,
 	connectedEventName,
@@ -105,27 +105,27 @@ import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
 
 import {
-	AttachProcessProps,
-	AttachmentData,
+	type AttachProcessProps,
+	type AttachmentData,
 	runRetriableAttachProcess,
 } from "./attachment.js";
 import { Audience } from "./audience.js";
 import { ConnectionManager } from "./connectionManager.js";
 import { ConnectionState } from "./connectionState.js";
 import {
-	IConnectionStateHandler,
+	type IConnectionStateHandler,
 	createConnectionStateHandler,
 } from "./connectionStateHandler.js";
 import { ContainerContext } from "./containerContext.js";
 import { ContainerStorageAdapter } from "./containerStorageAdapter.js";
 import {
-	IConnectionDetailsInternal,
-	IConnectionManagerFactoryArgs,
-	IConnectionStateChangeReason,
+	type IConnectionDetailsInternal,
+	type IConnectionManagerFactoryArgs,
+	type IConnectionStateChangeReason,
 	ReconnectMode,
 	getPackageName,
 } from "./contracts.js";
-import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
+import { DeltaManager, type IConnectionArgs } from "./deltaManager.js";
 import { RelativeLoader } from "./loader.js";
 import {
 	validateDriverCompatibility,
@@ -138,11 +138,11 @@ import {
 } from "./memoryBlobStorage.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
 import { pkgVersion } from "./packageVersion.js";
-import { IQuorumSnapshot } from "./protocol/index.js";
+import type { IQuorumSnapshot } from "./protocol/index.js";
 import {
-	IProtocolHandler,
+	type IProtocolHandler,
 	ProtocolHandler,
-	ProtocolHandlerBuilder,
+	type ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
 } from "./protocol.js";
 import { initQuorumValuesFromCodeDetails } from "./quorum.js";
@@ -152,7 +152,7 @@ import {
 	SerializedStateManager,
 } from "./serializedStateManager.js";
 import {
-	ISnapshotTreeWithBlobContents,
+	type ISnapshotTreeWithBlobContents,
 	combineAppAndProtocolSummary,
 	combineSnapshotTreeAndSnapshotBlobs,
 	getDetachedContainerStateFromSerializedContainer,
@@ -272,8 +272,7 @@ export interface IContainerCreateProps {
  * but it maybe still behind.
  *
  * @throws an error beginning with `"Container closed"` if the container is closed before it catches up.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export async function waitContainerToCatchUp(container: IContainer): Promise<boolean> {
 	// Make sure we stop waiting if container is closed.
@@ -2439,37 +2438,39 @@ export class Container
 
 			const existing = snapshotTree !== undefined;
 
-			const context = new ContainerContext(
-				this.options,
-				this.scope,
-				snapshotTree,
-				this._loadedFromVersion,
-				this._deltaManager,
-				this.storageAdapter,
-				this.protocolHandler.quorum,
-				this.protocolHandler.audience,
+			const context = new ContainerContext({
+				options: this.options,
+				scope: this.scope,
+				baseSnapshot: snapshotTree,
+				version: this._loadedFromVersion,
+				deltaManager: this._deltaManager,
+				storage: this.storageAdapter,
+				quorum: this.protocolHandler.quorum,
+				audience: this.protocolHandler.audience,
 				loader,
-				(type, contents, batch, metadata) =>
+				submitFn: (type, contents, batch, metadata) =>
 					this.submitContainerMessage(type, contents, batch, metadata),
-				(summaryOp: ISummaryContent, referenceSequenceNumber?: number) =>
+				submitSummaryFn: (summaryOp: ISummaryContent, referenceSequenceNumber?: number) =>
 					this.submitSummaryMessage(summaryOp, referenceSequenceNumber),
-				(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
+				submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) =>
 					this.submitBatch(batch, referenceSequenceNumber),
-				(content, targetClientId) => this.submitSignal(content, targetClientId),
-				(error?: ICriticalContainerError) => this.dispose(error),
-				(error?: ICriticalContainerError) => this.close(error),
-				this.updateDirtyContainerState,
-				this.getAbsoluteUrl,
-				() => this.resolvedUrl?.id,
-				() => this.clientId,
-				() => this.attachState,
-				() => this.connected,
-				this._deltaManager.clientDetails,
+				submitSignalFn: (content, targetClientId) =>
+					this.submitSignal(content, targetClientId),
+				disposeFn: (error?: ICriticalContainerError) => this.dispose(error),
+				closeFn: (error?: ICriticalContainerError) => this.close(error),
+				updateDirtyContainerState: this.updateDirtyContainerState,
+				getAbsoluteUrl: this.getAbsoluteUrl,
+				getContainerDiagnosticId: () => this.resolvedUrl?.id,
+				getClientId: () => this.clientId,
+				getAttachState: () => this.attachState,
+				getConnected: () => this.connected,
+				getConnectionState: () => this.connectionState,
+				clientDetails: this._deltaManager.clientDetails,
 				existing,
-				this.subLogger,
+				taggedLogger: this.subLogger,
 				pendingLocalState,
-				snapshot,
-			);
+				snapshotWithContents: snapshot,
+			});
 
 			const runtime = await PerformanceEvent.timedExecAsync(
 				this.subLogger,

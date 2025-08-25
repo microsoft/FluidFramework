@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy } from "@fluidframework/core-utils/internal";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type JsonCompatibleReadOnlyObject, brand } from "../../../util/index.js";
@@ -34,6 +34,7 @@ import {
 	type FlexContent,
 	CompatibilityLevel,
 	type TreeNodeSchemaPrivateData,
+	convertAllowedTypes,
 } from "../../core/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
@@ -51,12 +52,14 @@ import type {
 	TreeRecordNode,
 } from "./recordNodeTypes.js";
 import {
+	FieldKinds,
 	isTreeValue,
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
 } from "../../../feature-libraries/index.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import { recordLikeDataToFlexContent } from "../common.js";
+import { MapNodeStoredSchema } from "../../../core/index.js";
 
 /**
  * Create a proxy which implements the {@link TreeRecordNode} API.
@@ -122,11 +125,17 @@ function createRecordNodeProxy(
 			const innerNode = getOrCreateInnerNode(receiver);
 			const field = innerNode.getBoxed(brand(key)) as FlexTreeOptionalField;
 			const kernel = getKernel(receiver);
+			const innerSchema = innerNode.context.schema.nodeSchema.get(brand(schema.identifier));
+			assert(
+				innerSchema instanceof MapNodeStoredSchema,
+				0xc1a /* Expected MapNodeStoredSchema */,
+			);
 
 			const mapTree = prepareForInsertion(
 				value,
 				createFieldSchema(FieldKind.Optional, kernel.schema.info as ImplicitAllowedTypes),
 				innerNode.context,
+				innerSchema.mapFields,
 			);
 
 			field.editor.set(mapTree, field.length === 0);
@@ -175,11 +184,10 @@ function createRecordNodeProxy(
 
 			const innerNode = getOrCreateInnerNode(proxy);
 			const field = innerNode.tryGetField(brand(key)) as FlexTreeOptionalField | undefined;
-			if (field === undefined) {
-				return false;
+			if (field !== undefined) {
+				field.editor.set(undefined, field.length === 0);
 			}
 
-			field.editor.set(undefined, field.length === 0);
 			return true;
 		},
 	});
@@ -390,7 +398,19 @@ export function recordSchema<
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(this, [info]));
+			return (privateData ??= createTreeNodeSchemaPrivateData(
+				this,
+				[info],
+				(storedOptions) =>
+					new MapNodeStoredSchema(
+						{
+							kind: FieldKinds.optional.identifier,
+							types: convertAllowedTypes(info, storedOptions),
+							persistedMetadata,
+						},
+						persistedMetadata,
+					),
+			));
 		}
 	}
 

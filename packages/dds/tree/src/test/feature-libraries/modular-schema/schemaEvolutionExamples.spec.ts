@@ -8,11 +8,11 @@ import { strict as assert } from "node:assert";
 import { EmptyKey, storedEmptyFieldSchema } from "../../../core/index.js";
 import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {
-	toStoredSchema,
 	SchemaCompatibilityTester,
 	SchemaFactoryAlpha,
 	TreeViewConfigurationAlpha,
 	schemaStatics,
+	toUpgradeSchema,
 } from "../../../simple-tree/index.js";
 import { TestSchemaRepository } from "../../utils.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -133,7 +133,7 @@ describe("Schema Evolution Examples", () => {
 			assert(stored.tryUpdateTreeSchema(positionedCanvasItem));
 			assert(stored.tryUpdateTreeSchema(text));
 			assert(stored.tryUpdateTreeSchema(codePoint));
-			assert(stored.tryUpdateRootFieldSchema(toStoredSchema(tolerantRoot).rootFieldSchema));
+			assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(tolerantRoot).rootFieldSchema));
 			// That will cause the document stored schema to change,
 			// which will notify and applications with the document open.
 			// They can recheck their compatibility:

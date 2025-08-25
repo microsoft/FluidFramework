@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export type CacheContentType = "snapshot" | "ops" | "snapshotWithLoadingGroupId";
 
 // @alpha @legacy (undocumented)
@@ -30,7 +30,7 @@ export interface HostStoragePolicy {
     snapshotOptions?: ISnapshotOptions;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ICacheEntry extends IEntry {
     file: IFileEntry;
 }
@@ -47,13 +47,13 @@ export interface ICollabSessionOptions {
 // @alpha @legacy
 export type IdentityType = "Consumer" | "Enterprise";
 
-// @alpha @legacy
+// @beta @legacy
 export interface IEntry {
     key: string;
     type: CacheContentType;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IFileEntry {
     docId: string;
     resolvedUrl: IResolvedUrl;
@@ -131,23 +131,37 @@ export interface IOpsCachingPolicy {
     totalOpsToCache?: number;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IPersistedCache {
     get(entry: ICacheEntry): Promise<any>;
     put(entry: ICacheEntry, value: any): Promise<void>;
     removeEntries(file: IFileEntry): Promise<void>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IProvideSessionAwareDriverFactory {
     // (undocumented)
     readonly IRelaySessionAwareDriverFactory: IRelaySessionAwareDriverFactory;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IRelaySessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
     // (undocumented)
     getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
+}
+
+// @beta @legacy
+export interface ISensitivityLabel {
+    appliedByUserEmail: string;
+    assignmentMethod: string;
+    sensitivityLabelId: string;
+    tenantId: string;
+}
+
+// @beta @legacy
+export interface ISensitivityLabelsInfo {
+    labels: ISensitivityLabel[];
+    timestamp: string;
 }
 
 // @alpha @legacy
@@ -177,7 +191,7 @@ export interface ISnapshotOptions {
     timeout?: number;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISocketStorageDiscovery {
     // (undocumented)
     deltaStorageUrl: string;
@@ -187,7 +201,7 @@ export interface ISocketStorageDiscovery {
     refreshSessionDurationSeconds?: number;
     // (undocumented)
     runtimeTenantId?: string;
-    sensitivityLabelsInfo?: string;
+    sensitivityLabelsInfo?: ISensitivityLabelsInfo;
     // (undocumented)
     snapshotStorageUrl: string;
     socketToken?: string;

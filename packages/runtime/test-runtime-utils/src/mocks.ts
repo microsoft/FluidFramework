@@ -78,8 +78,7 @@ import { MockHandle } from "./mockHandle.js";
 
 /**
  * Mock implementation of IDeltaConnection for testing
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockDeltaConnection implements IDeltaConnection {
 	public get connected(): boolean {
@@ -131,8 +130,7 @@ export class MockDeltaConnection implements IDeltaConnection {
 
 // Represents the structure of a pending message stored by the MockContainerRuntime.
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IMockContainerRuntimePendingMessage {
 	content: any;
@@ -148,8 +146,7 @@ export interface IMockContainerRuntimeIdAllocationMessage {
 
 /**
  * Options for the container runtime mock.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IMockContainerRuntimeOptions {
 	/**
@@ -182,8 +179,7 @@ const makeContainerRuntimeOptions = (
 });
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IInternalMockRuntimeMessage {
 	content: any;
@@ -195,8 +191,7 @@ export interface IInternalMockRuntimeMessage {
  * Mock implementation of IContainerRuntime for testing basic submitting and processing of messages.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeForReconnection.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
 	public clientId: string;
@@ -526,8 +521,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
  * processes them when asked.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeFactoryForReconnection.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockContainerRuntimeFactory {
 	public sequenceNumber = 0;
@@ -680,8 +674,7 @@ export class MockContainerRuntimeFactory {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	private readonly members: Map<string, ISequencedClient>;
@@ -776,8 +769,7 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockAudience
 	extends TypedEventEmitter<IAudienceEvents>
@@ -839,8 +831,7 @@ const attachStatesToComparableNumbers = {
 
 /**
  * Mock implementation of IRuntime for testing that does nothing
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockFluidDataStoreRuntime
 	extends EventEmitter
@@ -1219,8 +1210,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 
 /**
  * Mock implementation of IChannelStorageService
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockObjectStorageService implements IChannelStorageService {
 	public constructor(private readonly contents: { [key: string]: string }) {}
@@ -1243,8 +1233,7 @@ export class MockObjectStorageService implements IChannelStorageService {
 
 /**
  * Mock implementation of IChannelServices
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockSharedObjectServices implements IChannelServices {
 	public static createFromSummary(summaryTree: ISummaryTree) {

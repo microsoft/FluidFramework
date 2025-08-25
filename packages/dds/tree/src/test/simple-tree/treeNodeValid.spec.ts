@@ -38,6 +38,7 @@ import {
 	type TreeNodeSchemaPrivateData,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/core/index.js";
+import { LeafNodeStoredSchema, ValueSchema } from "../../core/index.js";
 
 describe("TreeNodeValid", () => {
 	class MockFlexNode extends UnhydratedFlexTreeNode {
@@ -104,7 +105,11 @@ describe("TreeNodeValid", () => {
 			}
 
 			public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-				return (privateData ??= createTreeNodeSchemaPrivateData(this, []));
+				return (privateData ??= createTreeNodeSchemaPrivateData(
+					this,
+					[],
+					() => new LeafNodeStoredSchema(ValueSchema.Null),
+				));
 			}
 
 			public constructor(input: number | InternalTreeNode) {
@@ -193,7 +198,11 @@ describe("TreeNodeValid", () => {
 			}
 
 			public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-				return (privateData ??= createTreeNodeSchemaPrivateData(this, []));
+				return (privateData ??= createTreeNodeSchemaPrivateData(
+					this,
+					[],
+					() => new LeafNodeStoredSchema(ValueSchema.Null),
+				));
 			}
 		}
 
@@ -264,7 +273,11 @@ describe("TreeNodeValid", () => {
 				return getTreeNodeSchemaInitializedData(this, handler);
 			}
 			public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-				return (privateData ??= createTreeNodeSchemaPrivateData(this, []));
+				return (privateData ??= createTreeNodeSchemaPrivateData(
+					this,
+					[],
+					() => new LeafNodeStoredSchema(ValueSchema.Null),
+				));
 			}
 		}
 

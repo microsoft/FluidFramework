@@ -3,6 +3,6 @@
 	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-report.esm.legacy.json",
 	"apiReport": {
 		"enabled": true,
-		"reportVariants": ["alpha"]
+		"reportVariants": ["alpha", "beta"]
 	}
 }

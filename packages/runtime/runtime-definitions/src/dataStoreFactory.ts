@@ -6,15 +6,13 @@
 import type { IFluidDataStoreChannel, IFluidDataStoreContext } from "./dataStoreContext.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory =
 	"IFluidDataStoreFactory";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IProvideFluidDataStoreFactory {
 	readonly IFluidDataStoreFactory: IFluidDataStoreFactory;
@@ -34,8 +32,7 @@ export interface IProvideFluidDataStoreFactory {
  * The factory is responsible for creating new instances of data stores and loading existing ones.
  * The factory ensures that the data store is correctly initialized.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
 	/**
