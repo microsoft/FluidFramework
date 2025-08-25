@@ -22,8 +22,11 @@ const path = require("path");
  * 		this will replace instead of add to the spec (See https://mochajs.org/next/running/configuring/#merging).
  *      Also unlike Mocha's default behavior (see https://mochajs.org/next/running/cli/),
  * 		this configuration defaults spec to `lib/test` (where we place our esm tests) instead of `test`.
+ * - `npm_lifecycle_event`: If this ends in `:cjs`, the `spec` will be modified to start with `dist/` instead of `lib/` (if it starts with `lib/`).
  *
  * In package.json scripts, environment variables can be set using cross-env, like "cross-env MOCHA_SPEC=dist/test mocha".
+ *
+ * Users desiring exact control over the `spec` from the CLI should delete or replace the spec from the returned config.
  */
 function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testReportPrefix) {
 	const moduleDir = `${packageDir}/node_modules`;
@@ -66,6 +69,11 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		}
 	}
 
+	const configuredSpec = process.env.MOCHA_SPEC ?? "lib/test";
+	const spec = process.env.npm_lifecycle_event.endsWith(":cjs")
+		? configuredSpec.replace(/^lib\//, "dist/")
+		: configuredSpec;
+
 	const config = {
 		"recursive": true,
 		"require": requiredModulePaths,
@@ -79,7 +87,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 			// these must be provided here and not via mocha's --v8-expose-gc.
 			"expose-gc",
 		],
-		"spec": process.env.MOCHA_SPEC ?? "lib/test",
+		spec,
 	};
 
 	if (process.env.FLUID_TEST_TIMEOUT !== undefined) {
