@@ -28,8 +28,13 @@ export interface SimpleNodeSchemaBaseAlpha<
 	 * Persisted metadata for this node schema.
 	 * @remarks
 	 * While this can be stored in the document, not all versions / configurations will do so.
-	 * Additionally this is not part of schema compatibility so collaborative session may see different persistedMetadata for the same node.
+	 * Additionally this is not part of {@link TreeView.compatibility|schema compatibility} so different clients,
+	 * even within the same collaborative session, may see different persistedMetadata for the same node.
 	 * Specified using {@link NodeSchemaOptionsAlpha.persistedMetadata}.
+	 * @privateRemarks
+	 * How/when this gets updated in documents,
+	 * and how to read it from documents should be documented here when this feature is more mature and these questions have good answers.
+	 * If this does end up getting reflected in some compatibility value, that should also be documented.
 	 */
 	readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
 }
@@ -188,6 +193,9 @@ export interface SimpleFieldSchema {
 
 	/**
 	 * Persisted metadata for this field schema.
+	 * @remarks
+	 * Like {@link SimpleNodeSchemaBaseAlpha.persistedMetadata} but for fields.
+	 * Set via {@link FieldPropsAlpha.persistedMetadata}.
 	 */
 	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }
