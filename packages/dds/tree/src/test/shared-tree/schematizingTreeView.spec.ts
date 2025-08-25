@@ -1068,7 +1068,7 @@ describe("SchematizingSimpleTreeView", () => {
 				stack.unsubscribe();
 			});
 
-			describe.only("eventing", () => {
+			describe("eventing", () => {
 				it("events are emitted during transaction by default", () => {
 					const view = getTestObjectView(new ChildObject({ content: 1 }));
 					const tree = view.root;
