@@ -76,6 +76,8 @@ function checkoutWithInitialTree(
 // Schema for tree that must always be empty.
 const emptySchema = toInitialSchema(schema.optional([]));
 
+// TODO: event deferral tests
+
 describe("SchematizingSimpleTreeView", () => {
 	describe("initialize", () => {
 		it("Initialize document", () => {
