@@ -760,8 +760,7 @@ export namespace System_TableSchema {
 					columnsToRemove.push(columnToRemove);
 				}
 
-				// TODO: extract this "maybe-transaction" pattern for shared use
-				const applyEdits = (): void => {
+				this.applyEditsInTransaction( (): void => {
 					for (const column of columnsToRemove) {
 						// First, remove all cells that correspond to the column from each row:
 						for (const row of this.rows) {
@@ -773,28 +772,7 @@ export namespace System_TableSchema {
 						// Second, remove the column node:
 						this.columns.removeAt(this.columns.indexOf(column));
 					}
-				};
-
-				const branch = TreeAlpha.branch(this);
-
-				// If the node has been inserted into a tree, then we can run apply all of the necessary edits as
-				// a transaction to ensure that all removals are performed atomically.
-				// If the node has not yet been inserted into the tree, then the data is local only (not yet
-				// collaborative), and we can just apply the removals sequentially.
-				if (branch === undefined) {
-					applyEdits();
-				} else {
-					branch.runTransaction(
-						() => {
-							applyEdits();
-						},
-						{
-							// Defer events such that the user only gets a single set of updates at the end of the transaction,
-							// rather than being spammed with them per individual edit.
-							deferTreeEvents: true,
-						},
-					);
-				}
+				});
 
 				return columnsToRemove;
 			}
@@ -835,33 +813,11 @@ export namespace System_TableSchema {
 					rowsToRemove.push(rowToRemove);
 				}
 
-				// TODO: extract this "maybe-transaction" pattern for shared use
-				const applyEdits = (): void => {
+				this.applyEditsInTransaction((): void => {
 					for (const row of rowsToRemove) {
 						this.rows.removeAt(this.rows.indexOf(row));
 					}
-				};
-
-				const branch = TreeAlpha.branch(this);
-
-				// If the node has been inserted into a tree, then we can run apply all of the necessary edits as
-				// a transaction to ensure that all removals are performed atomically.
-				// If the node has not yet been inserted into the tree, then the data is local only (not yet
-				// collaborative), and we can just apply the removals sequentially.
-				if (branch === undefined) {
-					applyEdits();
-				} else {
-					branch.runTransaction(
-						() => {
-							applyEdits();
-						},
-						{
-							// Defer events such that the user only gets a single set of updates at the end of the transaction,
-							// rather than being spammed with them per individual edit.
-							deferTreeEvents: true,
-						},
-					);
-				}
+				});
 
 				return rowsToRemove;
 			}
@@ -893,6 +849,27 @@ export namespace System_TableSchema {
 
 				row.removeCell(column.id);
 				return cell;
+			}
+
+			private applyEditsInTransaction(applyEdits: () => void): void {
+				const branch = TreeAlpha.branch(this);
+
+				// TODO: what to do if we are not in a branch?
+				// We still need to defer events in this case for performance reasons.
+				if (branch === undefined) {
+					applyEdits();
+				} else {
+					branch.runTransaction(
+						() => {
+							applyEdits();
+						},
+						{
+							// Defer events such that the user only gets a single set of updates at the end of the transaction,
+							// rather than being spammed with them per individual edit.
+							deferTreeEvents: true,
+						},
+					);
+				}
 			}
 
 			private _getColumn(columnOrId: string | ColumnValueType): ColumnValueType | undefined {
