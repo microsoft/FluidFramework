@@ -5,78 +5,47 @@
 
 import { strict as assert } from "assert";
 
-import { AttachState } from "@fluidframework/container-definitions/internal";
+import { setupRollbackTest, createAdditionalClient } from "@fluid-private/test-dds-utils";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree/internal";
-import {
+import type {
+	MockContainerRuntime,
 	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-	type MockContainerRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
 
-function setupSharedStringRollbackTest() {
-	const containerRuntimeFactory = new MockContainerRuntimeFactory({ flushMode: 1 });
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const sharedString = new SharedStringClass(
-		dataStoreRuntime,
-		"shared-string-1",
-		SharedStringFactory.Attributes,
-	);
-	dataStoreRuntime.setAttachState(AttachState.Attached);
-	sharedString.initializeLocal();
-	sharedString.connect({
-		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: new MockStorage(),
-	});
-	return {
-		sharedString,
-		dataStoreRuntime,
-		containerRuntimeFactory,
-		containerRuntime,
-	};
-}
-
-// Helper to create another client attached to the same containerRuntimeFactory
-function createAdditionalClient(
-	containerRuntimeFactory: MockContainerRuntimeFactory,
-	id: string = "client-2",
-): {
-	sharedString: SharedStringClass;
-	dataStoreRuntime: MockFluidDataStoreRuntime;
-	containerRuntime: MockContainerRuntime;
-} {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: id });
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const sharedString = new SharedStringClass(
-		dataStoreRuntime,
-		`shared-string-${id}`,
-		SharedStringFactory.Attributes,
-	);
-	dataStoreRuntime.setAttachState(AttachState.Attached);
-	sharedString.initializeLocal();
-	sharedString.connect({
-		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: new MockStorage(),
-	});
-	return { sharedString, dataStoreRuntime, containerRuntime };
-}
-
 describe("SharedString rollback with multiple clients (insert/remove)", () => {
-	it("Client1 insert + Client2 insert + rollback on Client1", () => {
-		const {
-			sharedString: client1,
-			containerRuntimeFactory,
-			containerRuntime: cr1,
-		} = setupSharedStringRollbackTest();
-		const { sharedString: client2, containerRuntime: cr2 } = createAdditionalClient(
+	let client1: SharedStringClass;
+	let client2: SharedStringClass;
+	let cr1: MockContainerRuntime;
+	let cr2: MockContainerRuntime;
+	let containerRuntimeFactory: MockContainerRuntimeFactory;
+
+	beforeEach(() => {
+		// First client
+		const setup = setupRollbackTest<SharedStringClass>(
+			"shared-string-1",
+			(rt, id) => new SharedStringClass(rt, id, SharedStringFactory.Attributes),
+			{ initialize: (dds) => dds.initializeLocal() },
+		);
+		client1 = setup.dds;
+		containerRuntimeFactory = setup.containerRuntimeFactory;
+		cr1 = setup.containerRuntime;
+
+		// Second client
+		const additional = createAdditionalClient<SharedStringClass>(
 			containerRuntimeFactory,
 			"2",
+			(rt, id) =>
+				new SharedStringClass(rt, `shared-string-${id}`, SharedStringFactory.Attributes),
+			{ initialize: (dds) => dds.initializeLocal() },
 		);
+		client2 = additional.dds;
+		cr2 = additional.containerRuntime;
+	});
 
+	it("Client1 insert + Client2 insert + rollback on Client1", () => {
 		// Baseline text
 		client1.insertText(0, "hello");
 		cr1.flush();
@@ -117,16 +86,6 @@ describe("SharedString rollback with multiple clients (insert/remove)", () => {
 	});
 
 	it("Client1 remove + Client2 insert + rollback on Client1", () => {
-		const {
-			sharedString: client1,
-			containerRuntimeFactory,
-			containerRuntime: cr1,
-		} = setupSharedStringRollbackTest();
-		const { sharedString: client2, containerRuntime: cr2 } = createAdditionalClient(
-			containerRuntimeFactory,
-			"2",
-		);
-
 		// Baseline text
 		client1.insertText(0, "abcdef");
 		cr1.flush();
@@ -160,16 +119,6 @@ describe("SharedString rollback with multiple clients (insert/remove)", () => {
 	});
 
 	it("Client1 insert + Client2 remove + rollback on Client1", () => {
-		const {
-			sharedString: client1,
-			containerRuntimeFactory,
-			containerRuntime: cr1,
-		} = setupSharedStringRollbackTest();
-		const { sharedString: client2, containerRuntime: cr2 } = createAdditionalClient(
-			containerRuntimeFactory,
-			"2",
-		);
-
 		// Baseline text
 		client1.insertText(0, "123456");
 		cr1.flush();
@@ -199,16 +148,6 @@ describe("SharedString rollback with multiple clients (insert/remove)", () => {
 	});
 
 	it("Client1 insert + Client2 insert + rollback on Client2", () => {
-		const {
-			sharedString: client1,
-			containerRuntimeFactory,
-			containerRuntime: cr1,
-		} = setupSharedStringRollbackTest();
-		const { sharedString: client2, containerRuntime: cr2 } = createAdditionalClient(
-			containerRuntimeFactory,
-			"2",
-		);
-
 		// Baseline text
 		client1.insertText(0, "hello");
 		cr1.flush();
@@ -250,14 +189,35 @@ describe("SharedString rollback with multiple clients (insert/remove)", () => {
 });
 
 describe("SharedString replaceText with rollback and two clients", () => {
-	it("Client1 replaceText + rollback without remote changes", () => {
-		const {
-			sharedString: client1,
-			containerRuntimeFactory,
-			containerRuntime: cr1,
-		} = setupSharedStringRollbackTest();
-		const { sharedString: client2 } = createAdditionalClient(containerRuntimeFactory, "2");
+	let client1: SharedStringClass;
+	let client2: SharedStringClass;
+	let cr1: MockContainerRuntime;
+	let cr2: MockContainerRuntime;
+	let containerRuntimeFactory: MockContainerRuntimeFactory;
 
+	beforeEach(() => {
+		// First client
+		const setup = setupRollbackTest<SharedStringClass>(
+			"shared-string-1",
+			(rt, id) => new SharedStringClass(rt, id, SharedStringFactory.Attributes),
+			{ initialize: (dds) => dds.initializeLocal() },
+		);
+		client1 = setup.dds;
+		containerRuntimeFactory = setup.containerRuntimeFactory;
+		cr1 = setup.containerRuntime;
+
+		// Second client
+		const additional = createAdditionalClient<SharedStringClass>(
+			containerRuntimeFactory,
+			"2",
+			(rt, id) =>
+				new SharedStringClass(rt, `shared-string-${id}`, SharedStringFactory.Attributes),
+			{ initialize: (dds) => dds.initializeLocal() },
+		);
+		client2 = additional.dds;
+		cr2 = additional.containerRuntime;
+	});
+	it("Client1 replaceText + rollback without remote changes", () => {
 		// Baseline text
 		client1.insertText(0, "hello world");
 		cr1.flush();
@@ -276,13 +236,6 @@ describe("SharedString replaceText with rollback and two clients", () => {
 	});
 
 	it("Client1 multiple replaceText + rollback", () => {
-		const {
-			sharedString: client1,
-			containerRuntimeFactory,
-			containerRuntime: cr1,
-		} = setupSharedStringRollbackTest();
-		const { sharedString: client2 } = createAdditionalClient(containerRuntimeFactory, "2");
-
 		client1.insertText(0, "hello world");
 		cr1.flush();
 		containerRuntimeFactory.processAllMessages();
@@ -300,16 +253,6 @@ describe("SharedString replaceText with rollback and two clients", () => {
 	});
 
 	it("Client1 replaceText with concurrent remote remove", () => {
-		const {
-			sharedString: client1,
-			containerRuntimeFactory,
-			containerRuntime: cr1,
-		} = setupSharedStringRollbackTest();
-		const { sharedString: client2, containerRuntime: cr2 } = createAdditionalClient(
-			containerRuntimeFactory,
-			"2",
-		);
-
 		// Baseline text
 		client1.insertText(0, "abcdef");
 		cr1.flush();
@@ -338,16 +281,6 @@ describe("SharedString replaceText with rollback and two clients", () => {
 	});
 
 	it("replaceText: Rollback on both clients", () => {
-		const {
-			sharedString: client1,
-			containerRuntimeFactory,
-			containerRuntime: cr1,
-		} = setupSharedStringRollbackTest();
-		const { sharedString: client2, containerRuntime: cr2 } = createAdditionalClient(
-			containerRuntimeFactory,
-			"2",
-		);
-
 		// Baseline text
 		client1.insertText(0, "abcdef");
 		cr1.flush();
@@ -381,14 +314,34 @@ describe("SharedString replaceText with rollback and two clients", () => {
 });
 
 describe("SharedString annotate with rollback", () => {
-	it("can annotate text and rollback without remote changes", () => {
-		const {
-			sharedString: client1,
-			containerRuntimeFactory,
-			containerRuntime: cr1,
-		} = setupSharedStringRollbackTest();
-		const { sharedString: client2 } = createAdditionalClient(containerRuntimeFactory, "2");
+	let client1: SharedStringClass;
+	let client2: SharedStringClass;
+	let cr1: MockContainerRuntime;
+	let containerRuntimeFactory: MockContainerRuntimeFactory;
 
+	beforeEach(() => {
+		// First client
+		const setup = setupRollbackTest<SharedStringClass>(
+			"shared-string-1",
+			(rt, id) => new SharedStringClass(rt, id, SharedStringFactory.Attributes),
+			{ initialize: (dds) => dds.initializeLocal() },
+		);
+		client1 = setup.dds;
+		containerRuntimeFactory = setup.containerRuntimeFactory;
+		cr1 = setup.containerRuntime;
+
+		// Second client
+		const additional = createAdditionalClient<SharedStringClass>(
+			containerRuntimeFactory,
+			"2",
+			(rt, id) =>
+				new SharedStringClass(rt, `shared-string-${id}`, SharedStringFactory.Attributes),
+			{ initialize: (dds) => dds.initializeLocal() },
+		);
+		client2 = additional.dds;
+	});
+
+	it("can annotate text and rollback without remote changes", () => {
 		const text = "hello world";
 		const styleProps = { style: "bold" };
 		client1.insertText(0, text, styleProps);
@@ -430,13 +383,6 @@ describe("SharedString annotate with rollback", () => {
 	});
 
 	it("can handle null annotations with rollback", () => {
-		const {
-			sharedString: client1,
-			containerRuntimeFactory,
-			containerRuntime: cr1,
-		} = setupSharedStringRollbackTest();
-		const { sharedString: client2 } = createAdditionalClient(containerRuntimeFactory, "2");
-
 		const text = "hello world";
 		const startingProps = { style: "bold", color: null };
 		client1.insertText(0, text, startingProps);
@@ -469,13 +415,6 @@ describe("SharedString annotate with rollback", () => {
 	});
 
 	it("handles multiple annotations with rollback", () => {
-		const {
-			sharedString: client1,
-			containerRuntimeFactory,
-			containerRuntime: cr1,
-		} = setupSharedStringRollbackTest();
-		const { sharedString: client2 } = createAdditionalClient(containerRuntimeFactory, "2");
-
 		const text = "hello world";
 		client1.insertText(0, text);
 		cr1.flush();
@@ -519,42 +458,67 @@ describe("SharedString annotate with rollback", () => {
 	});
 });
 
-describe("SharedString rollback triggers correct sequenceDelta events with text", () => {
-	interface Event {
-		op: string;
-		text: string;
-	}
+interface Event {
+	op: string;
+	text: string;
+}
 
-	function setupDeltaListener(sharedString: SharedString, events: Event[]) {
-		sharedString.on("sequenceDelta", ({ deltaOperation, isLocal }) => {
-			if (!isLocal) return;
-			switch (deltaOperation) {
-				case MergeTreeDeltaType.INSERT:
-					events.push({ op: "insert", text: sharedString.getText() });
-					break;
-				case MergeTreeDeltaType.REMOVE:
-					events.push({ op: "remove", text: sharedString.getText() });
-					break;
-				case MergeTreeDeltaType.ANNOTATE:
-					events.push({ op: "annotate", text: sharedString.getText() });
-					break;
-				default:
-					throw new Error(`Unexpected deltaOperation: ${deltaOperation}`);
-			}
-		});
-	}
+function setupDeltaListener(sharedString: SharedString, events: Event[]) {
+	sharedString.on("sequenceDelta", ({ deltaOperation, isLocal }) => {
+		if (!isLocal) return;
+		switch (deltaOperation) {
+			case MergeTreeDeltaType.INSERT:
+				events.push({ op: "insert", text: sharedString.getText() });
+				break;
+			case MergeTreeDeltaType.REMOVE:
+				events.push({ op: "remove", text: sharedString.getText() });
+				break;
+			case MergeTreeDeltaType.ANNOTATE:
+				events.push({ op: "annotate", text: sharedString.getText() });
+				break;
+			default:
+				throw new Error(`Unexpected deltaOperation: ${deltaOperation}`);
+		}
+	});
+}
+
+describe("SharedString rollback triggers correct sequenceDelta events with text", () => {
+	let client1: SharedStringClass;
+	let client2: SharedStringClass;
+	let containerRuntimeFactory: MockContainerRuntimeFactory;
+	let cr1: MockContainerRuntime;
+
+	beforeEach(() => {
+		// First client
+		const setup = setupRollbackTest<SharedStringClass>(
+			"shared-string-1",
+			(rt, id) => new SharedStringClass(rt, id, SharedStringFactory.Attributes),
+			{ initialize: (dds) => dds.initializeLocal() },
+		);
+		client1 = setup.dds;
+		containerRuntimeFactory = setup.containerRuntimeFactory;
+		cr1 = setup.containerRuntime;
+
+		// Second client
+		const additional = createAdditionalClient<SharedStringClass>(
+			containerRuntimeFactory,
+			"2",
+			(rt, id) =>
+				new SharedStringClass(rt, `shared-string-${id}`, SharedStringFactory.Attributes),
+			{ initialize: (dds) => dds.initializeLocal() },
+		);
+		client2 = additional.dds;
+	});
 
 	it("rollback of insert triggers remove", () => {
-		const { sharedString, containerRuntimeFactory, containerRuntime } =
-			setupSharedStringRollbackTest();
 		const events: Event[] = [];
-		setupDeltaListener(sharedString, events);
+		setupDeltaListener(client1, events);
 
-		sharedString.insertText(0, "hello");
+		client1.insertText(0, "hello");
 		containerRuntimeFactory.processAllMessages();
-		assert.equal(sharedString.getText(), "hello");
+		assert.equal(client1.getText(), "hello");
 
-		containerRuntime.rollback?.();
+		cr1.rollback?.();
 
 		assert(
 			events.some((e) => e.op === "remove" && e.text === ""),
@@ -563,17 +527,15 @@ describe("SharedString rollback triggers correct sequenceDelta events with text"
 	});
 
 	it("rollback of remove triggers insert", () => {
-		const { sharedString, containerRuntimeFactory, containerRuntime } =
-			setupSharedStringRollbackTest();
 		const events: Event[] = [];
-		setupDeltaListener(sharedString, events);
+		setupDeltaListener(client1, events);
 
-		sharedString.insertText(0, "world");
+		client1.insertText(0, "world");
 		containerRuntimeFactory.processAllMessages();
-		sharedString.removeText(0, 5);
-		assert.equal(sharedString.getText(), "");
+		client1.removeText(0, 5);
+		assert.equal(client1.getText(), "");
 
-		containerRuntime.rollback?.();
+		cr1.rollback?.();
 
 		assert(
 			events.some((e) => e.op === "insert" && e.text === "world"),
@@ -582,25 +544,23 @@ describe("SharedString rollback triggers correct sequenceDelta events with text"
 	});
 
 	it("rollback of annotate clears properties", () => {
-		const { sharedString, containerRuntimeFactory, containerRuntime } =
-			setupSharedStringRollbackTest();
 		const events: Event[] = [];
-		setupDeltaListener(sharedString, events);
+		setupDeltaListener(client1, events);
 
-		sharedString.insertText(0, "abc");
+		client1.insertText(0, "abc");
 		containerRuntimeFactory.processAllMessages();
 
 		const styleProps = { style: "bold" };
-		sharedString.annotateRange(0, 3, styleProps);
+		client1.annotateRange(0, 3, styleProps);
 		for (let i = 0; i < 3; i++) {
-			assert.deepEqual({ ...sharedString.getPropertiesAtPosition(i) }, styleProps);
+			assert.deepEqual({ ...client1.getPropertiesAtPosition(i) }, styleProps);
 		}
 
-		containerRuntime.rollback?.();
+		cr1.rollback?.();
 
 		for (let i = 0; i < 3; i++) {
 			assert.deepEqual(
-				{ ...sharedString.getPropertiesAtPosition(i) },
+				{ ...client1.getPropertiesAtPosition(i) },
 				{},
 				"Rollback of annotate should clear properties",
 			);
@@ -613,13 +573,6 @@ describe("SharedString rollback triggers correct sequenceDelta events with text"
 	});
 
 	it("multi-client: rollback of insert triggers remove", () => {
-		const {
-			sharedString: client1,
-			containerRuntimeFactory,
-			containerRuntime: cr1,
-		} = setupSharedStringRollbackTest();
-		const { sharedString: client2 } = createAdditionalClient(containerRuntimeFactory, "2");
-
 		const eventsClient1: Event[] = [];
 		setupDeltaListener(client1, eventsClient1);
 
@@ -641,13 +594,6 @@ describe("SharedString rollback triggers correct sequenceDelta events with text"
 	});
 
 	it("multi-client: rollback of remove triggers insert", () => {
-		const {
-			sharedString: client1,
-			containerRuntimeFactory,
-			containerRuntime: cr1,
-		} = setupSharedStringRollbackTest();
-		const { sharedString: client2 } = createAdditionalClient(containerRuntimeFactory, "2");
-
 		const eventsClient1: Event[] = [];
 		setupDeltaListener(client1, eventsClient1);
 
@@ -670,13 +616,6 @@ describe("SharedString rollback triggers correct sequenceDelta events with text"
 	});
 
 	it("multi-client: rollback of annotate clears properties", () => {
-		const {
-			sharedString: client1,
-			containerRuntimeFactory,
-			containerRuntime: cr1,
-		} = setupSharedStringRollbackTest();
-		createAdditionalClient(containerRuntimeFactory, "2");
-
 		const eventsClient1: Event[] = [];
 		setupDeltaListener(client1, eventsClient1);
 

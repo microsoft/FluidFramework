@@ -5,67 +5,19 @@
 
 import { strict as assert } from "node:assert";
 
-import { AttachState } from "@fluidframework/container-definitions";
-import {
-	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-	type MockContainerRuntime,
-} from "@fluidframework/test-runtime-utils/internal";
+import { setupRollbackTest, createAdditionalClient } from "@fluid-private/test-dds-utils";
 
 import { CellFactory } from "../cellFactory.js";
 import type { ISharedCell } from "../interfaces.js";
 
-interface RollbackTestSetup {
-	cell: ISharedCell;
-	dataStoreRuntime: MockFluidDataStoreRuntime;
-	containerRuntimeFactory: MockContainerRuntimeFactory;
-	containerRuntime: MockContainerRuntime;
-}
-
-const mapFactory = new CellFactory();
-
-function setupRollbackTest(id: string): RollbackTestSetup {
-	const containerRuntimeFactory = new MockContainerRuntimeFactory({ flushMode: 1 });
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const cell = mapFactory.create(dataStoreRuntime, id);
-	dataStoreRuntime.setAttachState(AttachState.Attached);
-	cell.connect({
-		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: new MockStorage(),
-	});
-	return {
-		cell,
-		dataStoreRuntime,
-		containerRuntimeFactory,
-		containerRuntime,
-	};
-}
-
-// Helper to create another client attached to the same containerRuntimeFactory
-function createAdditionalClient(
-	containerRuntimeFactory: MockContainerRuntimeFactory,
-	id: string = "client-2",
-): {
-	cell: ISharedCell;
-	dataStoreRuntime: MockFluidDataStoreRuntime;
-	containerRuntime: MockContainerRuntime;
-} {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: id });
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const cell = mapFactory.create(dataStoreRuntime, `cell-${id}`);
-	dataStoreRuntime.setAttachState(AttachState.Attached);
-	cell.connect({
-		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: new MockStorage(),
-	});
-	return { cell, dataStoreRuntime, containerRuntime };
-}
+const cellFactory = new CellFactory();
 
 describe("Cell with rollback", () => {
 	it("should emit valueChanged on set and rollback should re-emit previous value", async () => {
-		const { cell, containerRuntime } = setupRollbackTest("client-1");
+		const { dds: cell, containerRuntime } = setupRollbackTest<ISharedCell>(
+			"cell-1",
+			(rt, id): ISharedCell => cellFactory.create(rt, id),
+		);
 
 		const events: (string | undefined)[] = [];
 
@@ -82,7 +34,14 @@ describe("Cell with rollback", () => {
 	});
 
 	it("should emit delete on delete, and rollback should re-emit last valueChanged", async () => {
-		const { cell, containerRuntimeFactory, containerRuntime } = setupRollbackTest("client-1");
+		const {
+			dds: cell,
+			containerRuntimeFactory,
+			containerRuntime,
+		} = setupRollbackTest<ISharedCell>(
+			"cell-1",
+			(rt, id): ISharedCell => cellFactory.create(rt, id),
+		);
 
 		const events: (string | undefined)[] = [];
 
@@ -109,11 +68,18 @@ describe("SharedCell rollback events with multiple clients", () => {
 	it("should emit valueChanged on set and rollback should re-emit previous value across clients", async () => {
 		// Setup two clients
 		const {
-			cell: cell1,
+			dds: cell1,
 			containerRuntimeFactory,
 			containerRuntime: runtime1,
-		} = setupRollbackTest("client-1");
-		const { cell: cell2 } = createAdditionalClient(containerRuntimeFactory);
+		} = setupRollbackTest<ISharedCell>(
+			"client-1",
+			(rt, id): ISharedCell => cellFactory.create(rt, id),
+		);
+		const { dds: cell2 } = createAdditionalClient(
+			containerRuntimeFactory,
+			"client-2",
+			(rt, id): ISharedCell => cellFactory.create(rt, `cell-${id}`),
+		);
 
 		const events1: string[] = [];
 		const events2: string[] = [];
@@ -150,11 +116,18 @@ describe("SharedCell rollback events with multiple clients", () => {
 	it("should emit delete on delete, and rollback should re-emit last valueChanged across clients", async () => {
 		// Setup two clients
 		const {
-			cell: cell1,
+			dds: cell1,
 			containerRuntimeFactory,
 			containerRuntime: runtime1,
-		} = setupRollbackTest("client-1");
-		const { cell: cell2 } = createAdditionalClient(containerRuntimeFactory);
+		} = setupRollbackTest<ISharedCell>(
+			"client-1",
+			(rt, id): ISharedCell => cellFactory.create(rt, id),
+		);
+		const { dds: cell2 } = createAdditionalClient(
+			containerRuntimeFactory,
+			"client-2",
+			(rt, id): ISharedCell => cellFactory.create(rt, `cell-${id}`),
+		);
 
 		const events1: string[] = [];
 		const events2: string[] = [];
