@@ -297,8 +297,7 @@ describe("TaskManager fuzz testing with rebasing", () => {
 
 	createDDSFuzzSuite(model, {
 		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
-		// AB#5185: enabling rebasing indicates some unknown eventual consistency issue
-		skip: [0, 4, 6, 7],
+		skip: [],
 		rebaseProbability: 0.15,
 		containerRuntimeOptions: {
 			flushMode: FlushMode.TurnBased,
