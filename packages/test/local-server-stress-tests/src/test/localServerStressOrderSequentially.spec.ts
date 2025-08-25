@@ -103,9 +103,7 @@ describe("Local Server Stress with rollback", () => {
 			"Fluid.Container.enableOfflineLoad": true,
 		},
 		skip: [
-			...[20], // 0xa21
 			...[97], // channel maps should be the same size
-			...[54, 92], // timeout
 		],
 	});
 });

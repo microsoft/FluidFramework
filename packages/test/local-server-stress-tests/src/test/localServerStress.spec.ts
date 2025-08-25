@@ -36,12 +36,10 @@ describe("Local Server Stress", () => {
 		// skipMinimization: true,
 		// Uncomment to replay a particular seed.
 		// replay: 93,
-		// only: [9],
+		// only: [30, 69],
 		saveFailures,
 		// saveSuccesses,
 		configurations: { "Fluid.Container.enableOfflineLoad": true },
-		skip: [
-			...[30, 69], // timeout
-		],
+		skip: [],
 	});
 });
