@@ -1,9 +1,6 @@
 {
+	// This node report is always meant to be identical to the browser report. Do not use with --local.
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-report.esm.legacy.json",
-	"mainEntryPointFilePath": "<projectFolder>/lib/<unscopedPackageName>.node.legacy.d.ts",
-	"apiReport": {
-		"enabled": true,
-		"reportVariants": ["alpha", "beta", "public"]
-	}
+	"mainEntryPointFilePath": "<projectFolder>/lib/<unscopedPackageName>.node.legacy.d.ts"
 }
