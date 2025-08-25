@@ -319,9 +319,16 @@ class MessageHandler {
 			return;
 		}
 		const workspace = this.workspaces.get(msg.workspaceId);
-		const latestState = workspace?.states.latest as LatestRaw<{ value: string }>;
-		if (latestState === undefined) {
+		if (!workspace) {
 			send({ event: "error", error: `${process_id} workspace ${msg.workspaceId} not found` });
+			return;
+		}
+		const latestState = workspace.states.latest as LatestRaw<{ value: string }> | undefined;
+		if (!latestState) {
+			send({
+				event: "error",
+				error: `${process_id} latest state not registered for workspace ${msg.workspaceId}`,
+			});
 			return;
 		}
 		if (typeof msg.value !== "string") {
@@ -342,12 +349,19 @@ class MessageHandler {
 			return;
 		}
 		const workspace = this.workspaces.get(msg.workspaceId);
-		const latestMapState = workspace?.states.latestMap as LatestMapRaw<
+		if (!workspace) {
+			send({ event: "error", error: `${process_id} workspace ${msg.workspaceId} not found` });
+			return;
+		}
+		const latestMapState = workspace.states.latestMap as LatestMapRaw<
 			{ value: Record<string, string | number> },
 			string
-		>;
-		if (latestMapState === undefined) {
-			send({ event: "error", error: `${process_id} map workspace ${msg.workspaceId} not found` });
+		> | undefined;
+		if (!latestMapState) {
+			send({
+				event: "error",
+				error: `${process_id} latestMap state not registered for workspace ${msg.workspaceId}`,
+			});
 			return;
 		}
 		if (!isStringOrNumberRecord(msg.value)) {
@@ -364,9 +378,16 @@ class MessageHandler {
 			return;
 		}
 		const workspace = this.workspaces.get(msg.workspaceId);
-		const latestState = workspace?.states.latest as LatestRaw<{ value: string }>;
-		if (latestState === undefined) {
+		if (!workspace) {
 			send({ event: "error", error: `${process_id} workspace ${msg.workspaceId} not found` });
+			return;
+		}
+		const latestState = workspace.states.latest as LatestRaw<{ value: string }> | undefined;
+		if (!latestState) {
+			send({
+				event: "error",
+				error: `${process_id} latest state not registered for workspace ${msg.workspaceId}`,
+			});
 			return;
 		}
 		let value: { value: string };
@@ -397,12 +418,19 @@ class MessageHandler {
 			return;
 		}
 		const workspace = this.workspaces.get(msg.workspaceId);
-		const latestMapState = workspace?.states.latestMap as LatestMapRaw<
+		if (!workspace) {
+			send({ event: "error", error: `${process_id} workspace ${msg.workspaceId} not found` });
+			return;
+		}
+		const latestMapState = workspace.states.latestMap as LatestMapRaw<
 			{ value: Record<string, string | number> },
 			string
-		>;
-		if (latestMapState === undefined) {
-			send({ event: "error", error: `${process_id} workspace ${msg.workspaceId} not found` });
+		> | undefined;
+		if (!latestMapState) {
+			send({
+				event: "error",
+				error: `${process_id} latestMap state not registered for workspace ${msg.workspaceId}`,
+			});
 			return;
 		}
 		let value: { value: Record<string, string | number> } | undefined;
