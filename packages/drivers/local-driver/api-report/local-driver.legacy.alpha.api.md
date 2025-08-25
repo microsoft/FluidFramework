@@ -7,7 +7,7 @@
 // @beta @legacy (undocumented)
 export function createLocalResolverCreateNewRequest(documentId: string): IRequest;
 
-// @alpha @legacy
+// @beta @legacy
 export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(localDeltaConnectionServer: ILocalDeltaConnectionServer, policies?: IDocumentServicePolicies | undefined, innerDocumentService?: IDocumentService | undefined);
     // (undocumented)
