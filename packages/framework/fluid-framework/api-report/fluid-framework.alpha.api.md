@@ -308,12 +308,12 @@ export type FluidObject<T = unknown> = {
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
-// @alpha
+// @beta @input
 export interface ForestOptions {
     readonly forest?: ForestType;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface ForestType extends ErasedType<"ForestType"> {
 }
 
@@ -1275,7 +1275,7 @@ export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedTyp
 // @public
 export const SharedTree: SharedObjectKind<ITree>;
 
-// @alpha
+// @alpha @input
 export interface SharedTreeFormatOptions {
     formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
     treeEncodeType: TreeCompressionStrategy;
