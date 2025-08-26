@@ -1428,11 +1428,6 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 			assert(sourceClientIndex !== -1, `Client ${op.sourceClientTag} not found`);
 			const sourceClient = state.clients[sourceClientIndex];
 
-			// AB#46464: Add support for serializing pending state while in staging mode
-			if (sourceClient.entryPoint.inStagingMode()) {
-				sourceClient.entryPoint.exitStagingMode(true);
-			}
-
 			assert(
 				typeof sourceClient.container.getPendingLocalState === "function",
 				`Client ${op.sourceClientTag} does not support getPendingLocalState`,

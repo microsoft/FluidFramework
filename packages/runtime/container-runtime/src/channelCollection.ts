@@ -10,6 +10,7 @@ import type {
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
+	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
@@ -61,6 +62,7 @@ import {
 	isSerializedHandle,
 	processAttachMessageGCData,
 	responseToException,
+	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils/internal";
 import {
@@ -97,6 +99,7 @@ import {
 } from "./dataStoreContext.js";
 import { DataStoreContexts } from "./dataStoreContexts.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
+import { findAllHandlePaths } from "./findHandles.js";
 import { GCNodeType, type IGCNodeUpdatedProps, urlToGCNodePath } from "./gc/index.js";
 import { ContainerMessageType, type LocalContainerRuntimeMessage } from "./messageTypes.js";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
@@ -118,7 +121,6 @@ interface FluidDataStoreMessage {
 	content: unknown;
 	type: string;
 }
-
 /**
  * This version of the interface is private to this the package. It should never be exported under any tag.
  * It is used to manage interactions within the container-runtime package. If something is needed
@@ -1592,6 +1594,37 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		);
 
 		return dataStore.request(subRequest);
+	}
+
+	/**
+	 * Recursively collects summaries for all referenced but not-yet-attached datastores.
+	 * Returns a map of datastore id to its summary.
+	 * This is used for pending local state serialization.
+	 */
+	public getPendingLocalState(
+		input: Set<IFluidHandle>,
+	): Record<string, ISummaryTreeWithStats> | undefined {
+		const paths: string[] = [...input].map((h) => toFluidHandleInternal(h).absolutePath);
+		const visited: Set<string> = new Set();
+
+		let summaries: Record<string, ISummaryTreeWithStats> | undefined;
+
+		while (paths.length > 0) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const path = paths.shift()!;
+			// Path is expected to be "/datastoreId" or similar
+			const id = path.startsWith("/") ? path.slice(1) : path;
+			if (visited.has(id)) continue;
+			visited.add(id);
+			const context = this.contexts.get(id);
+			if (context && this.contexts.isNotBound(id)) {
+				const summary = context.getAttachSummary();
+				summaries ??= {};
+				summaries[id] = summary;
+				paths.push(...findAllHandlePaths(summary));
+			}
+		}
+		return summaries;
 	}
 }
 

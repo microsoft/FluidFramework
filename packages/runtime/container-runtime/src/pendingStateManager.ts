@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import {
+	IDisposable,
+	IFluidHandle,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
 	type ITelemetryLoggerExt,
@@ -46,6 +50,7 @@ export interface IPendingMessage {
 	 * Serialized copy of runtimeOp
 	 */
 	content: string;
+	handleCache: ReadonlySet<IFluidHandle> | undefined;
 	/**
 	 * The original runtime op that was submitted to the ContainerRuntime
 	 * Unless this pending message came from stashed content, in which case this is undefined at first and then deserialized from the contents string
@@ -222,13 +227,20 @@ export function findFirstCharacterMismatched(
  * Returns a shallow copy of the given message with the non-serializable properties removed.
  * Note that the runtimeOp's data has already been serialized in the content property.
  */
-function toSerializableForm(
-	message: IPendingMessage,
-): IPendingMessage & { runtimeOp: undefined; localOpMetadata: undefined } {
+function toSerializableForm(message: IPendingMessage): IPendingMessage & {
+	runtimeOp: undefined;
+	localOpMetadata: undefined;
+	handleCache: undefined;
+} {
 	return {
 		...message,
 		localOpMetadata: undefined,
 		runtimeOp: undefined,
+		handleCache: undefined,
+		batchInfo: {
+			...message.batchInfo,
+			staged: false,
+		},
 	};
 }
 
@@ -330,7 +342,10 @@ export class PendingStateManager implements IDisposable {
 		return this.pendingMessagesCount !== 0;
 	}
 
-	public getLocalState(snapshotSequenceNumber?: number): IPendingLocalState {
+	public getLocalState(snapshotSequenceNumber?: number): {
+		pending: IPendingLocalState;
+		handleCache: Set<IFluidHandle>;
+	} {
 		assert(
 			this.initialMessages.isEmpty(),
 			0x2e9 /* "Must call getLocalState() after applying initial states" */,
@@ -353,11 +368,18 @@ export class PendingStateManager implements IDisposable {
 				throw new LoggingError("trying to stash ops older than our latest snapshot");
 			}
 		}
+		const handleCache = new Set<IFluidHandle>();
 		return {
-			pendingStates: [
-				...newSavedOps,
-				...this.pendingMessages.toArray().map((message) => toSerializableForm(message)),
-			],
+			pending: {
+				pendingStates: [
+					...newSavedOps,
+					...this.pendingMessages.toArray().map((message) => {
+						if (message.handleCache) for (const h of message.handleCache) handleCache.add(h);
+						return toSerializableForm(message);
+					}),
+				],
+			},
+			handleCache,
 		};
 	}
 
@@ -433,7 +455,7 @@ export class PendingStateManager implements IDisposable {
 			const pendingMessage: IPendingMessage = {
 				type: "message",
 				referenceSequenceNumber,
-				content: serializeOp(runtimeOp),
+				...serializeOp(runtimeOp),
 				runtimeOp,
 				localOpMetadata,
 				opMetadata,

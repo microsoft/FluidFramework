@@ -576,6 +576,10 @@ export interface IPendingRuntimeState {
 	 * Time at which session expiry timer started.
 	 */
 	sessionExpiryTimerStarted?: number | undefined;
+	/**
+	 * Attachment summaries for all datastores that have yet to be attached
+	 */
+	pendingAttachmentSummaries?: Record<string, ISummaryTreeWithStats>;
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
@@ -5033,11 +5037,6 @@ export class ContainerRuntime
 	}
 
 	public getPendingLocalState(props?: IGetPendingLocalStateProps): unknown {
-		// AB#46464 - Add support for serializing pending state while in staging mode
-		if (this.inStagingMode) {
-			throw new UsageError("getPendingLocalState is not yet supported in staging mode");
-		}
-
 		this.verifyNotClosed();
 		if (props?.notifyImminentClosure) {
 			throw new UsageError("notifyImminentClosure is no longer supported in ContainerRuntime");
@@ -5058,22 +5057,30 @@ export class ContainerRuntime
 				eventName: "getPendingLocalState",
 			},
 			(event) => {
-				const pending = this.pendingStateManager.getLocalState(props?.snapshotSequenceNumber);
+				const { pending, handleCache } = this.pendingStateManager.getLocalState(
+					props?.snapshotSequenceNumber,
+				);
 				const sessionExpiryTimerStarted =
 					props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
 
 				const pendingIdCompressorState = this._idCompressor?.serialize(true);
 				const pendingAttachmentBlobs = this.blobManager.getPendingBlobs();
 
+				// Use channelCollection to collect summaries for all referenced but not-yet-attached datastores
+				const pendingAttachmentSummaries =
+					this.channelCollection.getPendingLocalState(handleCache);
+
 				const pendingRuntimeState: IPendingRuntimeState = {
 					pending,
 					pendingIdCompressorState,
 					pendingAttachmentBlobs,
 					sessionExpiryTimerStarted,
+					pendingAttachmentSummaries,
 				};
 				event.end({
 					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,
 					pendingOpsSize: pendingRuntimeState?.pending?.pendingStates.length,
+					pendingAttachmentSummariesSize: Object.keys(pendingAttachmentSummaries ?? {}).length,
 				});
 				return pendingRuntimeState;
 			},
