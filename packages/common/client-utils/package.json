@@ -35,7 +35,15 @@
 				}
 			}
 		},
-		"./internal-api-report": {
+		"./internal-api-report/current": {
+			"import": {
+				"types": {
+					"browser current": "./lib/client-utils.browser.alpha.d.ts",
+					"node current": "./lib/client-utils.node.alpha.d.ts"
+				}
+			}
+		},
+		"./internal-api-report/legacy": {
 			"import": {
 				"types": {
 					"browser legacy": "./lib/client-utils.browser.legacy.d.ts",
@@ -49,7 +57,7 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:browser:*\" && concurrently \"npm:build:api-reports:node:*\"",
-		"build:api-reports:browser:current": "api-extractor run --local --config api-extractor/api-extractor-report-browser.json",
+		"build:api-reports:browser:current": "api-extractor run --local --config api-extractor/api-extractor-report-browser.current.json",
 		"build:api-reports:browser:legacy": "api-extractor run --local --config api-extractor/api-extractor-report-browser.legacy.json",
 		"build:api-reports:node:current": "npm run ci:build:api-reports:node:current",
 		"build:api-reports:node:legacy": "npm run ci:build:api-reports:node:legacy",
@@ -65,21 +73,23 @@
 		"build:test:mocha:cjs": "fluid-tsc commonjs --project ./src/test/mocha/tsconfig.cjs.json",
 		"build:test:mocha:esm": "tsc --project ./src/test/mocha/tsconfig.json",
 		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints internal-api-report",
+		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./internal-api-report/current ./internal-api-report/legacy",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
 		"check:exports:cjs:indexBrowser": "api-extractor run --config api-extractor/api-extractor-lint-indexBrowser.cjs.json",
 		"check:exports:cjs:indexNode": "api-extractor run --config api-extractor/api-extractor-lint-indexNode.cjs.json",
+		"check:exports:esm:browser:current": "api-extractor run --config api-extractor/api-extractor-lint-browser.current.esm.json",
+		"check:exports:esm:browser:legacy": "api-extractor run --config api-extractor/api-extractor-lint-browser.legacy.esm.json",
 		"check:exports:esm:indexBrowser": "api-extractor run --config api-extractor/api-extractor-lint-indexBrowser.esm.json",
-		"check:exports:esm:indexBrowser:legacy": "api-extractor run --config api-extractor/api-extractor-lint-indexBrowser.legacy.esm.json",
 		"check:exports:esm:indexNode": "api-extractor run --config api-extractor/api-extractor-lint-indexNode.esm.json",
-		"check:exports:esm:indexNode:legacy": "api-extractor run --config api-extractor/api-extractor-lint-indexNode.legacy.esm.json",
+		"check:exports:esm:node:current": "api-extractor run --config api-extractor/api-extractor-lint-node.current.esm.json",
+		"check:exports:esm:node:legacy": "api-extractor run --config api-extractor/api-extractor-lint-node.legacy.esm.json",
 		"check:format": "npm run check:biome",
 		"ci:build:api-reports": "concurrently \"npm:ci:build:api-reports:*\"",
-		"ci:build:api-reports:browser:current": "api-extractor run --config api-extractor/api-extractor-report-browser.json",
+		"ci:build:api-reports:browser:current": "api-extractor run --config api-extractor/api-extractor-report-browser.current.json",
 		"ci:build:api-reports:browser:legacy": "api-extractor run --config api-extractor/api-extractor-report-browser.legacy.json",
-		"ci:build:api-reports:node:current": "api-extractor run --config api-extractor/api-extractor-report-node.json",
+		"ci:build:api-reports:node:current": "api-extractor run --config api-extractor/api-extractor-report-node.current.json",
 		"ci:build:api-reports:node:legacy": "api-extractor run --config api-extractor/api-extractor-report-node.legacy.json",
 		"ci:build:docs": "api-extractor run --config api-extractor/api-extractor-model-browser.json",
 		"clean": "rimraf --glob _api-extractor-temp dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -195,22 +205,31 @@
 			"build:exports:node": [
 				"build:esnext"
 			],
+			"check:exports:bundle-release-tags": [
+				"build:exports:browser"
+			],
 			"check:exports:cjs:indexBrowser": [
 				"tsc"
 			],
 			"check:exports:cjs:indexNode": [
 				"tsc"
 			],
+			"check:exports:esm:browser:current": [
+				"build:exports:browser"
+			],
+			"check:exports:esm:browser:legacy": [
+				"build:exports:browser"
+			],
 			"check:exports:esm:indexBrowser": [
 				"build:esnext"
-			],
-			"check:exports:esm:indexBrowser:legacy": [
-				"build:exports:browser"
 			],
 			"check:exports:esm:indexNode": [
 				"build:exports:node"
 			],
-			"check:exports:esm:indexNode:legacy": [
+			"check:exports:esm:node:current": [
+				"build:exports:node"
+			],
+			"check:exports:esm:node:legacy": [
 				"build:exports:node"
 			],
 			"build:test:jest": [
