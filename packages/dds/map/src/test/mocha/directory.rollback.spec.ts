@@ -6,46 +6,23 @@
 import { strict as assert } from "node:assert";
 
 import { setupRollbackTest, createAdditionalClient } from "@fluid-private/test-dds-utils";
-import type {
-	MockContainerRuntimeFactory,
-	MockContainerRuntime,
-} from "@fluidframework/test-runtime-utils/internal";
 
 import { DirectoryFactory } from "../../directoryFactory.js";
 import type { ISharedDirectory, IValueChanged } from "../../interfaces.js";
 
 const directoryFactory = new DirectoryFactory();
 
-interface Event {
-	event: string;
-	path: string;
-	local: boolean;
-	target: ISharedDirectory;
-}
-
 describe("SharedDirectory rollback", () => {
 	describe("Storage operations (root subdirectory)", () => {
-		let sharedDirectory: ISharedDirectory;
-		let containerRuntime: MockContainerRuntime;
-		let containerRuntimeFactory: MockContainerRuntimeFactory;
-		let sharedDirectory2: ISharedDirectory;
-		let containerRuntime2: MockContainerRuntime;
-
-		beforeEach(() => {
-			({
-				dds: sharedDirectory,
-				containerRuntimeFactory,
-				containerRuntime,
-			} = setupRollbackTest<ISharedDirectory>(
-				"client-1",
-				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
-			));
-		});
-
 		it("should rollback set operation", () => {
+			const { dds: sharedDirectory, containerRuntime } = setupRollbackTest<ISharedDirectory>(
+				"shared-map",
+				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
+			);
 			const valueChanges: IValueChanged[] = [];
-			sharedDirectory.on("valueChanged", (event: IValueChanged) => valueChanges.push(event));
-
+			sharedDirectory.on("valueChanged", (event: IValueChanged) => {
+				valueChanges.push(event);
+			});
 			sharedDirectory.set("key1", "value1");
 			assert.strictEqual(
 				sharedDirectory.get("key1"),
@@ -53,76 +30,142 @@ describe("SharedDirectory rollback", () => {
 				"Failed getting pending value",
 			);
 			assert.strictEqual(valueChanges.length, 1, "Should have one value change event");
-
 			containerRuntime.rollback?.();
-
 			assert.strictEqual(
 				sharedDirectory.get("key1"),
 				undefined,
 				"Value should be rolled back",
 			);
 			assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
-			assert.strictEqual(valueChanges[1].key, "key1");
-			assert.strictEqual(valueChanges[1].previousValue, "value1");
+			assert.strictEqual(valueChanges[1].key, "key1", "Second event should be for key1");
+			assert.strictEqual(
+				valueChanges[1].previousValue,
+				"value1",
+				"Second event previousValue should be pre-rollback value",
+			);
 		});
 
 		it("should rollback delete operation", () => {
+			const {
+				dds: sharedDirectory,
+				containerRuntime,
+				containerRuntimeFactory,
+			} = setupRollbackTest<ISharedDirectory>(
+				"shared-map",
+				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
+			);
 			sharedDirectory.set("key1", "value1");
 			containerRuntime.flush();
 			containerRuntimeFactory.processAllMessages();
-
 			const valueChanges: IValueChanged[] = [];
-			sharedDirectory.on("valueChanged", (event: IValueChanged) => valueChanges.push(event));
-
+			sharedDirectory.on("valueChanged", (event: IValueChanged) => {
+				valueChanges.push(event);
+			});
 			sharedDirectory.delete("key1");
-			assert.strictEqual(sharedDirectory.get("key1"), undefined);
-			assert.strictEqual(valueChanges.length, 1);
-
+			assert.strictEqual(
+				sharedDirectory.get("key1"),
+				undefined,
+				"Pending value should reflect the delete",
+			);
+			assert.strictEqual(valueChanges.length, 1, "Should have one value change event");
 			containerRuntime.rollback?.();
-
-			assert.strictEqual(sharedDirectory.get("key1"), "value1");
-			assert.strictEqual(valueChanges.length, 2);
-			assert.strictEqual(valueChanges[1].key, "key1");
-			assert.strictEqual(valueChanges[1].previousValue, undefined);
+			assert.strictEqual(
+				sharedDirectory.get("key1"),
+				"value1",
+				"Value should be restored by rollback",
+			);
+			assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
+			assert.strictEqual(valueChanges[1].key, "key1", "Second event should be for key1");
+			assert.strictEqual(
+				valueChanges[1].previousValue,
+				undefined,
+				"Second event previousValue should be pre-rollback value",
+			);
 		});
 
 		it("should rollback clear operation", () => {
+			const {
+				dds: sharedDirectory,
+				containerRuntime,
+				containerRuntimeFactory,
+			} = setupRollbackTest<ISharedDirectory>(
+				"shared-map",
+				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
+			);
 			sharedDirectory.set("key1", "value1");
 			sharedDirectory.set("key2", "value2");
 			containerRuntime.flush();
 			containerRuntimeFactory.processAllMessages();
-
 			const valueChanges: IValueChanged[] = [];
-			let clears = 0;
-			sharedDirectory.on("valueChanged", (e) => valueChanges.push(e));
-			sharedDirectory.on("clear", () => clears++);
+			let clears: number = 0;
+			sharedDirectory.on("valueChanged", (event: IValueChanged) => {
+				valueChanges.push(event);
+			});
+			sharedDirectory.on("clear", () => {
+				clears++;
+			});
 
 			sharedDirectory.clear();
 
-			assert.strictEqual(sharedDirectory.get("key1"), undefined);
-			assert.strictEqual(sharedDirectory.get("key2"), undefined);
-			assert.strictEqual(valueChanges.length, 0);
-			assert.strictEqual(clears, 1);
-
+			assert.strictEqual(
+				sharedDirectory.get("key1"),
+				undefined,
+				"Pending value for key1 should reflect the clear",
+			);
+			assert.strictEqual(
+				sharedDirectory.get("key2"),
+				undefined,
+				"Pending value for key2 should reflect the clear",
+			);
+			assert.strictEqual(valueChanges.length, 0, "Should have no value change events");
+			assert.strictEqual(clears, 1, "Should have one clear event");
 			containerRuntime.rollback?.();
-
-			assert.strictEqual(sharedDirectory.get("key1"), "value1");
-			assert.strictEqual(sharedDirectory.get("key2"), "value2");
-			assert.strictEqual(valueChanges.length, 2);
-			assert.strictEqual(valueChanges[0].key, "key1");
-			assert.strictEqual(valueChanges[1].key, "key2");
+			assert.strictEqual(
+				sharedDirectory.get("key1"),
+				"value1",
+				"Value should be restored by rollback",
+			);
+			assert.strictEqual(
+				sharedDirectory.get("key2"),
+				"value2",
+				"Value should be restored by rollback",
+			);
+			assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
+			assert.strictEqual(valueChanges[0].key, "key1", "First event should be for key1");
+			assert.strictEqual(
+				valueChanges[0].previousValue,
+				undefined,
+				"First event previousValue should be pre-rollback value",
+			);
+			assert.strictEqual(valueChanges[1].key, "key2", "Second event should be for key2");
+			assert.strictEqual(
+				valueChanges[1].previousValue,
+				undefined,
+				"Second event previousValue should be pre-rollback value",
+			);
 		});
 
 		it("should rollback multiple operations in sequence", () => {
+			const {
+				dds: sharedDirectory,
+				containerRuntime,
+				containerRuntimeFactory,
+			} = setupRollbackTest<ISharedDirectory>(
+				"shared-map",
+				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
+			);
 			sharedDirectory.set("key1", "value1");
 			sharedDirectory.set("key2", "value2");
 			containerRuntime.flush();
 			containerRuntimeFactory.processAllMessages();
-
 			let valueChanges: IValueChanged[] = [];
-			let clears = 0;
-			sharedDirectory.on("valueChanged", (e) => valueChanges.push(e));
-			sharedDirectory.on("clear", () => clears++);
+			let clears: number = 0;
+			sharedDirectory.on("valueChanged", (event: IValueChanged) => {
+				valueChanges.push(event);
+			});
+			sharedDirectory.on("clear", () => {
+				clears++;
+			});
 
 			sharedDirectory.set("key3", "value3");
 			sharedDirectory.delete("key1");
@@ -130,10 +173,29 @@ describe("SharedDirectory rollback", () => {
 			sharedDirectory.clear();
 			sharedDirectory.set("key4", "value4");
 
-			assert.deepStrictEqual([...sharedDirectory.entries()], [["key4", "value4"]]);
-			assert.strictEqual(clears, 1);
+			assert.deepStrictEqual(
+				[...sharedDirectory.entries()],
+				[["key4", "value4"]],
+				"Directory should have expected entries pre-rollback",
+			);
+			assert.deepStrictEqual(
+				valueChanges,
+				[
+					// Set key3
+					{ key: "key3", path: "/", previousValue: undefined },
+					// Delete key1
+					{ key: "key1", path: "/", previousValue: "value1" },
+					// Set key2 to a new value
+					{ key: "key2", path: "/", previousValue: "value2" },
+					// Clear happens here, no valueChange event for clear
+					// Set key4
+					{ key: "key4", path: "/", previousValue: undefined },
+				],
+				"Value changes should match expected pre-rollback",
+			);
+			assert.strictEqual(clears, 1, "Should have one clear event");
 
-			// Reset events and rollback
+			// Reset event monitoring and roll back.
 			valueChanges = [];
 			clears = 0;
 			containerRuntime.rollback?.();
@@ -144,16 +206,45 @@ describe("SharedDirectory rollback", () => {
 					["key1", "value1"],
 					["key2", "value2"],
 				],
+				"Directory should have expected entries post-rollback",
 			);
-			assert.strictEqual(clears, 0);
+			assert.deepStrictEqual(
+				valueChanges,
+				[
+					// Roll back the final key4 set
+					{ key: "key4", path: "/", previousValue: "value4" },
+					// Roll back the clear
+					{ key: "key2", path: "/", previousValue: undefined },
+					{ key: "key3", path: "/", previousValue: undefined },
+					// Roll back the key2 set
+					{ key: "key2", path: "/", previousValue: "newValue2" },
+					// Roll back the key1 delete
+					{ key: "key1", path: "/", previousValue: undefined },
+					// Roll back the key3 set
+					{ key: "key3", path: "/", previousValue: "value3" },
+				],
+				"Value changes should match expected post-rollback",
+			);
+			assert.strictEqual(clears, 0, "Should have no clear events");
 		});
 
 		it("should rollback local changes in presence of remote changes from another client", () => {
-			({ dds: sharedDirectory2, containerRuntime: containerRuntime2 } = createAdditionalClient(
+			const {
+				dds: sharedDirectory,
+				containerRuntime,
 				containerRuntimeFactory,
-				"client-2",
-				(rt, id): ISharedDirectory => directoryFactory.create(rt, `cell-${id}`),
-			));
+			} = setupRollbackTest<ISharedDirectory>(
+				"shared-map",
+				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
+			);
+			// Create a second client
+
+			const { dds: sharedDirectory2, containerRuntime: containerRuntime2 } =
+				createAdditionalClient(
+					containerRuntimeFactory,
+					"client-2",
+					(rt, id): ISharedDirectory => directoryFactory.create(rt, `directory-${id}`),
+				);
 
 			sharedDirectory.set("key1", "value1");
 			sharedDirectory.set("key2", "value2");
@@ -173,9 +264,12 @@ describe("SharedDirectory rollback", () => {
 			assert.deepStrictEqual(
 				[...sharedDirectory.entries()],
 				[
+					// Note key4 comes before key3 even though we have an optimistic value for it,
+					// because sharedDirectory2 set them in that order. Iteration order matches the sequenced perspective.
 					["key4", "value4"],
 					["key3", "value3"],
 				],
+				"Directory should have expected entries pre-rollback",
 			);
 
 			containerRuntime.rollback?.();
@@ -187,28 +281,22 @@ describe("SharedDirectory rollback", () => {
 					["key4", "value4"],
 					["key3", "otherValue3"],
 				],
+				"Directory should have expected entries post-rollback",
 			);
 		});
 	});
 
 	describe("Storage operations (nested subdirectories)", () => {
-		let sharedDirectory: ISharedDirectory;
-		let containerRuntime: MockContainerRuntime;
-		let containerRuntimeFactory: MockContainerRuntimeFactory;
-		let sharedDirectory2: ISharedDirectory;
-		let containerRuntime2: MockContainerRuntime;
-
-		beforeEach(() => {
-			({
-				dds: sharedDirectory,
-				containerRuntimeFactory,
-				containerRuntime,
-			} = setupRollbackTest<ISharedDirectory>(
-				"client-1",
-				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
-			));
-		});
 		it("should rollback all basic operations (set, delete, clear) in subdirectories and nested subdirectories", () => {
+			const {
+				dds: sharedDirectory,
+				containerRuntime,
+				containerRuntimeFactory,
+			} = setupRollbackTest<ISharedDirectory>(
+				"shared-map",
+				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
+			);
+
 			const subDir = sharedDirectory.createSubDirectory("subdir");
 			const level1 = sharedDirectory.createSubDirectory("level1");
 			const level3 = level1.createSubDirectory("level2").createSubDirectory("level3");
@@ -282,11 +370,21 @@ describe("SharedDirectory rollback", () => {
 		});
 
 		it("should rollback subdirectory operations with concurrent remote changes", () => {
-			({ dds: sharedDirectory2, containerRuntime: containerRuntime2 } = createAdditionalClient(
+			const {
+				dds: sharedDirectory,
+				containerRuntime,
 				containerRuntimeFactory,
-				"client-2",
-				(rt, id): ISharedDirectory => directoryFactory.create(rt, `cell-${id}`),
-			));
+			} = setupRollbackTest<ISharedDirectory>(
+				"shared-map",
+				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
+			);
+
+			const { dds: sharedDirectory2, containerRuntime: containerRuntime2 } =
+				createAdditionalClient(
+					containerRuntimeFactory,
+					"client-2",
+					(rt, id): ISharedDirectory => directoryFactory.create(rt, `directory-${id}`),
+				);
 
 			const subDir1 = sharedDirectory.createSubDirectory("shared");
 			const nestedDir1 = subDir1.createSubDirectory("nested");
@@ -343,6 +441,15 @@ describe("SharedDirectory rollback", () => {
 		});
 
 		it("should rollback complex mixed operations across multiple subdirectory levels", () => {
+			const {
+				dds: sharedDirectory,
+				containerRuntime,
+				containerRuntimeFactory,
+			} = setupRollbackTest<ISharedDirectory>(
+				"shared-map",
+				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
+			);
+
 			const dirA = sharedDirectory.createSubDirectory("dirA");
 			const dirB = sharedDirectory.createSubDirectory("dirB");
 			const nestedDir = dirA.createSubDirectory("nested");
@@ -418,255 +525,5 @@ describe("SharedDirectory rollback", () => {
 			assert.strictEqual(clearEvents, 1);
 			assert.strictEqual(allValueChanges.length, 11);
 		});
-	});
-});
-
-describe("SharedDirectory rollback events", () => {
-	let sharedDirectory: ISharedDirectory;
-	let containerRuntime: MockContainerRuntime;
-	let containerRuntimeFactory: MockContainerRuntimeFactory;
-
-	beforeEach(() => {
-		({
-			dds: sharedDirectory,
-			containerRuntime,
-			containerRuntimeFactory,
-		} = setupRollbackTest<ISharedDirectory>(
-			"shared-map",
-			(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
-		));
-	});
-
-	it("should trigger subDirectoryDeleted event on rollback of subDirectoryCreated", () => {
-		const events: Event[] = [];
-
-		sharedDirectory.on("subDirectoryDeleted", (path, local, target) => {
-			events.push({ event: "subDirectoryDeleted", path, local, target });
-		});
-
-		// Create a subdirectory
-		sharedDirectory.createSubDirectory("subDir1");
-		assert(
-			sharedDirectory.getWorkingDirectory("subDir1") !== undefined,
-			"subdirectory should exist after creation",
-		);
-
-		// Rollback
-		containerRuntime.rollback?.();
-
-		// The subdirectory should be removed
-		assert.strictEqual(
-			sharedDirectory.getWorkingDirectory("subDir1"),
-			undefined,
-			"subdirectory should be removed after rollback",
-		);
-
-		// The subDirectoryDeleted event should be triggered
-		assert.strictEqual(
-			events.length,
-			1,
-			"one subDirectoryDeleted event should have been emitted",
-		);
-		assert.strictEqual(events[0].path, "subDir1");
-		assert.strictEqual(events[0].local, true);
-		assert.strictEqual(events[0].target, sharedDirectory);
-	});
-
-	it("should trigger subDirectoryCreated event on rollback of subDirectoryDeleted", () => {
-		const events: Event[] = [];
-
-		sharedDirectory.createSubDirectory("subDir2");
-
-		containerRuntime.flush();
-		containerRuntimeFactory.processAllMessages();
-
-		sharedDirectory.on("subDirectoryCreated", (path, local, target) => {
-			events.push({ event: "subDirectoryCreated", path, local, target });
-		});
-
-		// Delete the subdirectory
-		sharedDirectory.deleteSubDirectory("subDir2");
-		assert.strictEqual(
-			sharedDirectory.getWorkingDirectory("subDir2"),
-			undefined,
-			"subdirectory should be deleted",
-		);
-
-		// Rollback
-		containerRuntime.rollback?.();
-
-		// The subdirectory should be restored
-		assert(
-			sharedDirectory.getWorkingDirectory("subDir2") !== undefined,
-			"subdirectory should exist after rollback",
-		);
-
-		// The subDirectoryCreated event should be triggered
-		assert.strictEqual(
-			events.length,
-			1,
-			"one subDirectoryCreated event should have been emitted",
-		);
-		assert.strictEqual(events[0].path, "subDir2");
-		assert.strictEqual(events[0].local, true);
-		assert.strictEqual(events[0].target, sharedDirectory);
-	});
-});
-
-describe("SharedDirectory rollback with multiple clients", () => {
-	let client1: ISharedDirectory;
-	let client2: ISharedDirectory;
-	let containerRuntime1: MockContainerRuntime;
-	let containerRuntime2: MockContainerRuntime;
-	let containerRuntimeFactory: MockContainerRuntimeFactory;
-
-	beforeEach(() => {
-		({
-			dds: client1,
-			containerRuntime: containerRuntime1,
-			containerRuntimeFactory,
-		} = setupRollbackTest<ISharedDirectory>(
-			"client-1",
-			(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
-		));
-
-		({ dds: client2, containerRuntime: containerRuntime2 } = createAdditionalClient(
-			containerRuntimeFactory,
-			"client-2",
-			(rt, id): ISharedDirectory => directoryFactory.create(rt, `directory-${id}`),
-		));
-	});
-
-	it("should only rollback local subDirectoryCreated changes for one client", () => {
-		const eventsClient1: Event[] = [];
-		const eventsClient2: Event[] = [];
-
-		client1.on("subDirectoryDeleted", (path, local, target) =>
-			eventsClient1.push({ event: "subDirectoryDeleted", path, local, target }),
-		);
-		client2.on("subDirectoryDeleted", (path, local, target) =>
-			eventsClient2.push({ event: "subDirectoryDeleted", path, local, target }),
-		);
-
-		// Client1 creates a subdirectory
-		client1.createSubDirectory("sharedDir");
-
-		// Client2 creates a subdirectory
-		client2.createSubDirectory("sharedDir2");
-
-		containerRuntime1.flush();
-		containerRuntime2.flush();
-		containerRuntimeFactory.processAllMessages();
-
-		// Check that directories exist
-		assert(client2.getWorkingDirectory("/sharedDir") !== undefined);
-		assert(client1.getWorkingDirectory("/sharedDir2") !== undefined);
-
-		client1.createSubDirectory("foo");
-
-		// Rollback only affects client1's local changes
-		containerRuntime1.rollback?.();
-
-		// Client1's local subdirectory should be gone
-		assert.strictEqual(client1.getSubDirectory("foo"), undefined);
-
-		// Client2's subdirectory remains
-		assert(client1.getWorkingDirectory("/sharedDir2") !== undefined);
-
-		// Events triggered
-		assert.strictEqual(eventsClient1.length, 1);
-		assert.strictEqual(eventsClient1[0].path, "foo");
-		assert(eventsClient1[0].local);
-
-		// Client2 did not get any subDirectoryDeleted events for client1's rollback
-		assert.strictEqual(eventsClient2.length, 0);
-	});
-
-	it("should rollback local subDirectoryDeleted changes for one client", () => {
-		const eventsClient1: Event[] = [];
-		const eventsClient2: Event[] = [];
-
-		client1.on("subDirectoryCreated", (path, local, target) =>
-			eventsClient1.push({ event: "subDirectoryCreated", path, local, target }),
-		);
-		client2.on("subDirectoryCreated", (path, local, target) =>
-			eventsClient2.push({ event: "subDirectoryCreated", path, local, target }),
-		);
-
-		client1.on("subDirectoryDeleted", (path, local, target) =>
-			eventsClient1.push({ event: "subDirectoryDeleted", path, local, target }),
-		);
-		client2.on("subDirectoryDeleted", (path, local, target) =>
-			eventsClient2.push({ event: "subDirectoryDeleted", path, local, target }),
-		);
-
-		// Create initial directories
-		client1.createSubDirectory("dir1");
-		client2.createSubDirectory("dir2");
-
-		containerRuntime1.flush();
-		containerRuntimeFactory.processAllMessages();
-
-		// Client1 deletes its own directory
-		client1.deleteSubDirectory("dir1");
-
-		// Client2 deletes its own directory
-		client2.deleteSubDirectory("dir2");
-
-		// Rollback client1
-		containerRuntime1.rollback?.();
-
-		// Client1's directory should be restored
-		assert(client1.getWorkingDirectory("/dir1") !== undefined);
-
-		// Client2's directory remains deleted
-		assert.strictEqual(client1.getWorkingDirectory("/dir2"), undefined);
-
-		assert.strictEqual(eventsClient1.length, 3);
-		assert.strictEqual(eventsClient1[0].path, "dir1");
-		assert(eventsClient1[0].local);
-
-		assert.strictEqual(eventsClient2.length, 3);
-	});
-
-	it("should handle simultaneous directory deletions and rollback for one client", () => {
-		const eventsClient1: Event[] = [];
-		const eventsClient2: Event[] = [];
-
-		client1.on("subDirectoryCreated", (path, local, target) =>
-			eventsClient1.push({ event: "subDirectoryCreated", path, local, target }),
-		);
-		client2.on("subDirectoryCreated", (path, local, target) =>
-			eventsClient2.push({ event: "subDirectoryCreated", path, local, target }),
-		);
-
-		client2.on("subDirectoryDeleted", (path, local, target) => {
-			eventsClient2.push({ event: "subDirectoryDeleted", path, local, target });
-		});
-
-		// Initial directories created independently
-		client1.createSubDirectory("dir1").createSubDirectory("foo");
-		client2.createSubDirectory("dir2");
-
-		containerRuntime1.flush();
-		containerRuntime2.flush();
-		containerRuntimeFactory.processAllMessages();
-
-		client2.deleteSubDirectory("dir1");
-
-		// Rollback client1 deletion
-		containerRuntime2.rollback?.();
-
-		assert.strictEqual(eventsClient1.length, 3);
-		assert.strictEqual(eventsClient1[0].path, "dir1");
-		assert(eventsClient1[0].local);
-		assert.strictEqual(eventsClient1[1].path, "dir1/foo");
-		assert(eventsClient1[1].local);
-
-		assert.strictEqual(eventsClient2.length, 5);
-		assert.strictEqual(eventsClient2[0].path, "dir2");
-		assert.strictEqual(eventsClient2[0].event, "subDirectoryCreated");
-		assert.strictEqual(eventsClient2[3].path, "dir1");
-		assert.strictEqual(eventsClient2[3].event, "subDirectoryDeleted");
 	});
 });
