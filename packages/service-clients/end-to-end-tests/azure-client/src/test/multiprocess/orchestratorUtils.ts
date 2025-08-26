@@ -19,6 +19,27 @@ import type {
 } from "./messageTypes.js";
 
 /**
+ * Child process to console logging verbosity
+ *
+ * @remarks
+ * Meaningful substrings:
+ * - "msgs"
+ * - "telem"
+ *
+ * @example "msgs+telem"
+ */
+const childLoggingVerbosity = process.env.FLUID_TEST_VERBOSE ?? "none";
+
+/**
+ * Capture console./warn/error before test infrastructure alters it.
+ */
+const testConsole = {
+	log: console.log,
+	warn: console.warn,
+	error: console.error,
+};
+
+/**
  * Fork child processes to simulate multiple Fluid clients.
  *
  * @remarks
@@ -44,7 +65,8 @@ export async function forkChildProcesses(
 	const childErrorPromises: Promise<never>[] = [];
 	for (let i = 0; i < numProcesses; i++) {
 		const child = fork("./lib/test/multiprocess/childClient.js", [
-			`child${i}` /* identifier passed to child process */,
+			`child ${i}` /* identifier passed to child process */,
+			childLoggingVerbosity /* console logging verbosity */,
 		]);
 		cleanUpAccumulator.push(() => {
 			child.kill();
@@ -204,12 +226,14 @@ export async function connectAndWaitForAttendees(
 		writeClients,
 		readyTimeoutMs: childConnectTimeoutMs,
 	});
-	Promise.all(connectResult.attendeeIdPromises).catch((error) => {
-		console.error("Error connecting children:", error);
-	});
+	Promise.all(connectResult.attendeeIdPromises)
+		.then(() => console.log("All attendees connected."))
+		.catch((error) => {
+			testConsole.error("Error connecting children:", error);
+		});
 	await timeoutAwait(Promise.race([attendeeConnectedPromise, earlyExitPromise]), {
 		durationMs: attendeesJoinedTimeoutMs,
-		errorMsg: "did not receive all 'attendeeConnected' events",
+		errorMsg: "child 0 did not receive all 'attendeeConnected' events",
 	});
 	return connectResult;
 }
