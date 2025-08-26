@@ -376,13 +376,18 @@ const eventDeferralEmitter = createEmitter<{
 
 let pauseEvents: boolean = false;
 
-export function pauseTreeEvents(): void {
+/**
+ * Pause events emitted by {@link TreeNode}s.
+ * @remarks Events that would otherwise have been emitted are buffered until the returned function is called.
+ * @returns A function that, when called, resumes event emission and flushes any buffered events.
+ */
+export function pauseTreeEvents(): () => void {
 	pauseEvents = true;
-}
 
-export function resumeTreeEvents(): void {
-	eventDeferralEmitter.emit("flush");
-	pauseEvents = false;
+	return () => {
+		eventDeferralEmitter.emit("flush");
+		pauseEvents = false;
+	};
 }
 
 // TODO: better name

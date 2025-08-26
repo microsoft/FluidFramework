@@ -66,6 +66,7 @@ import {
 
 import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
+import { pauseTreeEvents } from "../simple-tree/index.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -255,39 +256,37 @@ export class SchematizingSimpleTreeView<
 
 		this.checkout.transaction.start();
 
-		if (deferTreeEvents === true) {
-			this.checkout.forest.anchors.pauseEvents();
-		}
+		const resumeAndFlushTreeEvents = deferTreeEvents === true ? pauseTreeEvents() : undefined;
 
-		// Validate preconditions before running the transaction callback.
-		addConstraints(false /* constraintsOnRevert */, preconditions);
-		const transactionCallbackStatus = transaction();
-		const rollback = transactionCallbackStatus?.rollback;
-		const value = (
-			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
-		)?.value;
+		try {
+			// Validate preconditions before running the transaction callback.
+			addConstraints(false /* constraintsOnRevert */, preconditions);
+			const transactionCallbackStatus = transaction();
+			const rollback = transactionCallbackStatus?.rollback;
+			const value = (
+				transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			)?.value;
 
-		if (rollback === true) {
-			this.checkout.transaction.abort();
+			if (rollback === true) {
+				this.checkout.transaction.abort();
+				return value !== undefined
+					? { success: false, value: value as TFailureValue }
+					: { success: false };
+			}
+
+			// Validate preconditions on revert after running the transaction callback and was successful.
+			addConstraints(
+				true /* constraintsOnRevert */,
+				transactionCallbackStatus?.preconditionsOnRevert,
+			);
+
+			this.checkout.transaction.commit();
 			return value !== undefined
-				? { success: false, value: value as TFailureValue }
-				: { success: false };
+				? { success: true, value: value as TSuccessValue }
+				: { success: true };
+		} finally {
+			resumeAndFlushTreeEvents?.();
 		}
-
-		// Validate preconditions on revert after running the transaction callback and was successful.
-		addConstraints(
-			true /* constraintsOnRevert */,
-			transactionCallbackStatus?.preconditionsOnRevert,
-		);
-
-		if (deferTreeEvents === true) {
-			this.checkout.forest.anchors.resumeAndFlushEvents();
-		}
-
-		this.checkout.transaction.commit();
-		return value !== undefined
-			? { success: true, value: value as TSuccessValue }
-			: { success: true };
 	}
 
 	private ensureUndisposed(): void {

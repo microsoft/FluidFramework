@@ -28,6 +28,7 @@ import {
 	type UnannotateImplicitFieldSchema,
 	isArrayNodeSchema,
 	type InsertableField,
+	pauseTreeEvents,
 } from "./simple-tree/index.js";
 
 // Future improvement TODOs:
@@ -857,7 +858,16 @@ export namespace System_TableSchema {
 				// TODO: what to do if we are not in a branch?
 				// We still need to defer events in this case for performance reasons.
 				if (branch === undefined) {
-					applyEdits();
+					// If this node does not have a corresponding branch, then it is unhydrated.
+					// I.e., it is not part of a collaborative session yet.
+					// Therefore, we don't need to run the edits as a transaction,
+					// but we do still need to ensure the events are batched.
+					const resumeAndFlushTreeEvents = pauseTreeEvents();
+					try {
+						applyEdits();
+					} finally {
+						resumeAndFlushTreeEvents();
+					}
 				} else {
 					branch.runTransaction(
 						() => {

@@ -684,24 +684,6 @@ export class AnchorSet implements AnchorLocator {
 		}
 	}
 
-	// #region TODO: document all of this
-
-	private eventsPaused: boolean = false;
-	private bufferedEvents: BufferedEvent[] = [];
-
-	public pauseEvents(): void {
-		this.eventsPaused = true;
-		this.bufferedEvents = [];
-	}
-
-	public resumeAndFlushEvents(): void {
-		this.eventsPaused = false;
-		flushBufferedEvents(this.bufferedEvents);
-		this.bufferedEvents = [];
-	}
-
-	// #endregion
-
 	/**
 	 * Provides a visitor that can be used to mutate this {@link AnchorSet}.
 	 *
@@ -786,10 +768,33 @@ export class AnchorSet implements AnchorLocator {
 				}
 				this.anchorSet.activeVisitor = undefined;
 
-				if (this.anchorSet.eventsPaused) {
-					this.anchorSet.bufferedEvents.push(...this.bufferedEvents);
-				} else {
-					flushBufferedEvents(this.bufferedEvents);
+				// Aggregate changedFields by node.
+				const eventsByNode: Map<PathNode, Set<FieldKey>> = new Map();
+				for (const { node, event, changedField } of this.bufferedEvents) {
+					if (event === "childrenChangedAfterBatch") {
+						const keys = getOrCreate(eventsByNode, node, () => new Set());
+						keys.add(
+							changedField ??
+								fail(0xb57 /* childrenChangedAfterBatch events should have a changedField */),
+						);
+					}
+				}
+
+				const alreadyEmitted = new Map<PathNode, (keyof AnchorEvents)[]>();
+				for (const { node, event } of this.bufferedEvents) {
+					const emittedEvents = getOrAddEmptyToMap(alreadyEmitted, node);
+					if (emittedEvents.includes(event)) {
+						continue;
+					}
+					emittedEvents.push(event);
+					if (event === "childrenChangedAfterBatch") {
+						const changedFields =
+							eventsByNode.get(node) ??
+							fail(0xaeb /* childrenChangedAfterBatch events should have changedFields */);
+						node.events.emit(event, { changedFields });
+					} else {
+						node.events.emit(event);
+					}
 				}
 			},
 			notifyChildrenChanging(): void {
@@ -937,40 +942,6 @@ export class AnchorSet implements AnchorLocator {
 		this.#events.emit("treeChanging", this);
 		this.activeVisitor = visitor;
 		return visitor;
-	}
-}
-
-/**
- * Flushes and emits any buffered events.
- */
-function flushBufferedEvents(bufferedEvents: readonly BufferedEvent[]): void {
-	// Aggregate changedFields by node.
-	const eventsByNode: Map<PathNode, Set<FieldKey>> = new Map();
-	for (const { node, event, changedField } of bufferedEvents) {
-		if (event === "childrenChangedAfterBatch") {
-			const keys = getOrCreate(eventsByNode, node, () => new Set());
-			keys.add(
-				changedField ??
-					fail(0xb57 /* childrenChangedAfterBatch events should have a changedField */),
-			);
-		}
-	}
-
-	const alreadyEmitted = new Map<PathNode, (keyof AnchorEvents)[]>();
-	for (const { node, event } of bufferedEvents) {
-		const emittedEvents = getOrAddEmptyToMap(alreadyEmitted, node);
-		if (emittedEvents.includes(event)) {
-			continue;
-		}
-		emittedEvents.push(event);
-		if (event === "childrenChangedAfterBatch") {
-			const changedFields =
-				eventsByNode.get(node) ??
-				fail(0xaeb /* childrenChangedAfterBatch events should have changedFields */);
-			node.events.emit(event, { changedFields });
-		} else {
-			node.events.emit(event);
-		}
 	}
 }
 
