@@ -1128,6 +1128,11 @@ export class FluidDataStoreRuntime
 	private visitLocalBoundContextsDuringAttach(
 		visitor: (contextId: string, context: LocalChannelContextBase) => void,
 	): void {
+		assert(
+			this.visibilityState === VisibilityState.LocallyVisible,
+			"The data store should be locally visible when generating attach summary",
+		);
+
 		const visitedContexts = new Set<string>();
 		let visitedLength = -1;
 		while (visitedLength !== visitedContexts.size) {
