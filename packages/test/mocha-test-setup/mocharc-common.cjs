@@ -15,16 +15,7 @@ const path = require("path");
  * @param {string[]} additionalRequiredModules - modules to require in addition to the standard set.
  * @param {string} testReportPrefix - prefix for the test output report file names.
  * @remarks
- * Additional configuration can be provided via environment variables:
- * - `FLUID_TEST_LOGGER_PKG_SPECIFIER`: Inject implementation of createTestLogger
- * - `FLUID_TEST_TIMEOUT`: Specifies a custom timeout, see https://mochajs.org/api/mocha#timeout.
- * - `MOCHA_SPEC`: Select the "spec". Note that unlike Mocha's built in MOCHA_OPTIONS environment variable,
- * 		this will replace instead of add to the spec (See https://mochajs.org/next/running/configuring/#merging).
- *      Also unlike Mocha's default behavior (see https://mochajs.org/next/running/cli/),
- * 		this configuration defaults spec to `lib/test` (where we place our esm tests) instead of `test`.
- * - `npm_lifecycle_event`: If this ends in `:cjs`, the `spec` will be modified to start with `dist/` instead of `lib/` (if it starts with `lib/`).
- *
- * In package.json scripts, environment variables can be set using cross-env, like "cross-env MOCHA_SPEC=dist/test mocha".
+ * Additional configuration can be provided via environment variables: see {@link file://./README.md}.
  *
  * Users desiring exact control over the `spec` from the CLI should delete or replace the spec from the returned config.
  */
@@ -70,7 +61,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 	}
 
 	const configuredSpec = process.env.MOCHA_SPEC ?? "lib/test";
-	const spec = process.env.npm_lifecycle_event.endsWith(":cjs")
+	const spec = process.env.npm_lifecycle_event?.endsWith(":cjs")
 		? configuredSpec.replace(/^lib\//, "dist/")
 		: configuredSpec;
 
