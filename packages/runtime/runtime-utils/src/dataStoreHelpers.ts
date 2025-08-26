@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse } from "@fluidframework/core-interfaces";
+import type { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { generateErrorWithStack } from "@fluidframework/telemetry-utils/internal";
 
@@ -12,7 +12,7 @@ interface IResponseException extends Error {
 	message: string;
 	code: number;
 	stack?: string;
-	underlyingResponseHeaders?: { [key: string]: unknown };
+	underlyingResponseHeaders?: Record<string, unknown>;
 }
 
 /**
@@ -113,7 +113,7 @@ export function createResponseError(
 	status: number,
 	value: string,
 	request: IRequest,
-	headers?: { [key: string]: unknown },
+	headers?: Record<string, unknown>,
 ): IResponse {
 	assert(status !== 200, 0x19b /* "Cannot not create response error on 200 status" */);
 	// Omit query string which could contain personal data unfit for logging

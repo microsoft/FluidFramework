@@ -17,21 +17,22 @@ import type {
 	SummaryObject,
 } from "@fluidframework/driver-definitions";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import { ITree, ITreeEntry, TreeEntry } from "@fluidframework/driver-definitions/internal";
+import type { ITree, ITreeEntry } from "@fluidframework/driver-definitions/internal";
+import { TreeEntry } from "@fluidframework/driver-definitions/internal";
 import {
 	AttachmentTreeEntry,
 	BlobTreeEntry,
 	TreeTreeEntry,
 } from "@fluidframework/driver-utils/internal";
-import {
+import type {
 	ISummaryStats,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IGarbageCollectionData,
 	ISummarizeResult,
 	ITelemetryContextExt,
-	gcDataBlobKey,
 } from "@fluidframework/runtime-definitions/internal";
+import { gcDataBlobKey } from "@fluidframework/runtime-definitions/internal";
 import type { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -201,13 +202,13 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 		return { ...this.summaryStats };
 	}
 
-	constructor(params?: { groupId?: string }) {
+	public constructor(params?: { groupId?: string }) {
 		this.summaryStats = mergeStats();
 		this.summaryStats.treeNodeCount++;
 		this.groupId = params?.groupId;
 	}
 
-	private readonly summaryTree: { [path: string]: SummaryObject } = {};
+	private readonly summaryTree: Record<string, SummaryObject> = {};
 	private summaryStats: ISummaryStats;
 
 	/**
@@ -500,14 +501,14 @@ export class TelemetryContext implements ITelemetryContext, ITelemetryContextExt
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.set}
 	 */
-	set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void {
+	public set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void {
 		this.telemetry.set(`${prefix}${property}`, value);
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.setMultiple}
 	 */
-	setMultiple(
+	public setMultiple(
 		prefix: string,
 		property: string,
 		values: Record<string, TelemetryEventPropertyTypeExt>,
@@ -521,14 +522,14 @@ export class TelemetryContext implements ITelemetryContext, ITelemetryContextExt
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.get}
 	 */
-	get(prefix: string, property: string): TelemetryEventPropertyTypeExt {
+	public get(prefix: string, property: string): TelemetryEventPropertyTypeExt {
 		return this.telemetry.get(`${prefix}${property}`);
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.serialize}
 	 */
-	serialize(): string {
+	public serialize(): string {
 		const jsonObject = {};
 		for (const [key, value] of this.telemetry.entries()) {
 			jsonObject[key] = value;
@@ -560,8 +561,8 @@ function trimTrailingSlashes(str: string): string {
  * @internal
  */
 export class GCDataBuilder implements IGarbageCollectionData {
-	private readonly gcNodesSet: { [id: string]: Set<string> } = {};
-	public get gcNodes(): { [id: string]: string[] } {
+	private readonly gcNodesSet: Record<string, Set<string>> = {};
+	public get gcNodes(): Record<string, string[]> {
 		const gcNodes = {};
 		for (const [nodeId, outboundRoutes] of Object.entries(this.gcNodesSet)) {
 			gcNodes[nodeId] = [...outboundRoutes];
@@ -579,7 +580,7 @@ export class GCDataBuilder implements IGarbageCollectionData {
 	 * - Prefixes the given `prefixId` to the given nodes' ids.
 	 * - Adds the outbound routes of the nodes against the normalized and prefixed id.
 	 */
-	public prefixAndAddNodes(prefixId: string, gcNodes: { [id: string]: string[] }): void {
+	public prefixAndAddNodes(prefixId: string, gcNodes: Record<string, string[]>): void {
 		for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
 			// Remove any leading slashes from the id.
 			let normalizedId = trimLeadingSlashes(id);
@@ -594,7 +595,7 @@ export class GCDataBuilder implements IGarbageCollectionData {
 		}
 	}
 
-	public addNodes(gcNodes: { [id: string]: string[] }): void {
+	public addNodes(gcNodes: Record<string, string[]>): void {
 		for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
 			this.gcNodesSet[id] = new Set(outboundRoutes);
 		}

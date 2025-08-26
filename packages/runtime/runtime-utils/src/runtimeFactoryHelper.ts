@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IContainerContext,
 	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 
 /**
  * @legacy @beta

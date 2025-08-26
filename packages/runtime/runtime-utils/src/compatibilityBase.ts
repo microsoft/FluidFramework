@@ -68,9 +68,7 @@ export type SemanticVersion =
  * @internal
  */
 export type ConfigMap<T extends Record<string, unknown>> = {
-	[K in keyof T]-?: {
-		[version: MinimumMinorSemanticVersion]: T[K];
-	};
+	[K in keyof T]-?: Record<MinimumMinorSemanticVersion, T[K]>;
 };
 
 /**
