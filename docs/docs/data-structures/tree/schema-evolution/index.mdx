@@ -29,11 +29,8 @@ The stored schema completely describes all data in the tree.
 Every node and field in the document is known to the stored schema.
 
 **2. Additive Only**
-The stored schema can grow over time but cannot shrink:
-- New allowed types can be added to fields
-- Existing types cannot be removed from fields
-- Fields cannot be removed from node types
-- Node types cannot be completely removed
+The stored schema can grow over time but cannot shrink.
+All nodes types present in the stored schema will exist forever, even if they stop being used by the view schema.
 
 **3. Field Key Stability**
 Field keys are permanent once introduced.
@@ -108,21 +105,10 @@ To prevent this, the application can employ a [staged rollout](./index.mdx#stage
 
 ### Checking Compatibility
 
-Use [`TreeView.compatibility`](../../../api/fluid-framework/treeview-interface#compatibility-property) to check if your schema changes are compatible with existing documents:
+Use [`TreeView.compatibility`](../../../api/fluid-framework/treeview-interface#compatibility-property) to check if your schema changes are compatible with existing documents.
 
-```typescript
-const view = tree.viewWith(configuration);
-const { compatibility } = view;
-
-if (!compatibility.isEquivalent) {
-    if (compatibility.canUpgrade) {
-        view.upgradeSchema(); // Safe to upgrade
-    } else {
-        // Handle incompatible schema
-        throw new Error("Cannot open document with current schema");
-    }
-}
-```
+Generally, the most important properties of the `compatibility` object to monitor are [`canView`](../../../api/fluid-framework/schemacompatibilitystatus-interface#canview-propertysignature) and [`canUpgrade`](../../../api/fluid-framework/schemacompatibilitystatus-interface#canupgrade-propertysignature).
+`canView` indicates that the view schema is [compatible](./index.mdx#schema-compatibility) with the stored schema while `canUpgrade` indicates that it is valid to [upgrade the schema](./index.mdx#schema-upgrade-process).
 
 ### Monitoring Remote Schema Changes
 
@@ -132,15 +118,7 @@ Listen for the `schemaChanged` event to handle these remote upgrades:
 ```typescript
 // Monitor for remote schema changes
 view.events.on("schemaChanged", () => {
-    if (!view.compatibility.canView) {
-        // Document was upgraded to an incompatible schema
-        // Handle gracefully - perhaps reload or notify user
-        throw new Error("Document was upgraded and is no longer compatible");
-    }
-
-    // Schema changed but is still compatible
-    // You may need to refresh UI or handle new data structures
-    console.log("Document schema was updated by another client");
+    // Check view.compatibility here and handle accordingly
 });
 ```
 
@@ -166,7 +144,7 @@ const config = new TreeViewConfiguration({ schema: Note });
 const view = tree.viewWith(config);
 
 // Check compatibility and upgrade if needed
-if (!view.compatibility.isEquivalent) {
+if (!view.compatibility.canView) {
     if (view.compatibility.canUpgrade) {
         view.upgradeSchema(); // Upgrade document to new schema
         console.log("Document upgraded successfully");
@@ -184,6 +162,7 @@ For detailed information about which types of changes are safe versus breaking, 
 ### Staged Rollouts
 
 When deploying schema changes in production, use staged rollouts to ensure compatibility between clients running different application versions.
+Specifically, staged rollouts allow you to handle changes that are [backwards compatible](./index.mdx#backwards-compatibility) but not [forwards compatible](./index.mdx#forwards-compatibility).
 
 **Why Staged Rollouts Are Necessary**
 
@@ -202,15 +181,15 @@ If a client upgrades a document to a new schema that older clients cannot read, 
 - All clients can now collaborate since they support reading the upgraded schema
 - Monitor for any compatibility issues
 
-Theoretically, some changes don't require a staged rollout and are therefore capable of cross-version collaboration.
+Changes that are both [backwards compatible](./index.mdx#backwards-compatibility) and [forwards compatible](./index.mdx#forwards-compatibility) are capable of cross-version collaboration without requiring a staged rollout.
 In that case, new clients can read and write to the same document as old clients without either one being fundamentally incompatible.
-However, staged rollouts are not easily avoidable. Even seemingly simple schema changes, like adding a single required field to a node, cannot support cross-version collaboration and require a staged rollout.
+However, staged rollouts are not easily avoidable.
+Even seemingly simple schema changes (for example, adding a new type of node to a field) may not be forwards-compatible, cannot support cross-version collaboration and therefore require a staged rollout.
 
 **Best Practices:**
 - Allow appropriate amount of time between release cycles to ensure client version adoption
 - Monitor client version distribution before enabling upgrades
 - Test compatibility scenarios with mixed client versions
-
 
 ## See Also
 

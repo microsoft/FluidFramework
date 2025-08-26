@@ -32,7 +32,9 @@ class Note extends factory.object("Note", {
 ```
 
 However, older clients that don't know about this new field will not be able to read it.
-To ensure [forwards compatibility](./index.mdx#understanding-compatibility), use [`allowUnknownOptionalFields`](../../../api/fluid-framework/objectnodeschema-interface#allowunknownoptionalfields-property) to handle new optional fields added by newer clients:
+To ensure [forwards compatibility](./index.mdx#understanding-compatibility), use [`allowUnknownOptionalFields`](../../../api/fluid-framework/objectnodeschema-interface#allowunknownoptionalfields-property) to handle new optional fields added by newer clients.
+Note that this needs to already be set on the old clients before the field is added.
+If it's not already set, then this degenerates into an un-forwards compatible change and requires a [staged rollout](./index.mdx#staged-rollouts) - because the app has to stage the enabling of allowUnknownOptionalFields.
 
 ```typescript
 class Note extends factory.object("Note", {
