@@ -225,11 +225,11 @@ export class OdspDocumentService
 			async (from, to, telemetryProps, fetchReason) =>
 				service.get(from, to, telemetryProps, fetchReason),
 			// Get cachedOps Callback.
-			// TODO AB#44882: This condition will be removed when file version can be read from the cache entry for an op.
-			this.odspResolvedUrl.fileVersion !== undefined
-				? async () => []
-				: async (from, to) =>
-						((await this.opsCache?.get(from, to)) as ISequencedDocumentMessage[]) ?? [],
+			// TODO AB#47218: This condition will be removed when file version can be read from the cache entry for an op.
+			this.odspResolvedUrl.fileVersion === undefined
+				? async (from, to) =>
+						((await this.opsCache?.get(from, to)) as ISequencedDocumentMessage[]) ?? []
+				: async () => [],
 			// Ops requestFromSocket Callback.
 			(from, to) => {
 				const currentConnection = this.odspDelayLoadedDeltaStream?.currentDeltaConnection;
