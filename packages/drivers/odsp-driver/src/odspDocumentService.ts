@@ -226,8 +226,10 @@ export class OdspDocumentService
 				service.get(from, to, telemetryProps, fetchReason),
 			// Get cachedOps Callback.
 			async (from, to) => {
-				const res = await this.opsCache?.get(from, to);
-				return (res as ISequencedDocumentMessage[]) ?? [];
+				if (this.odspResolvedUrl.fileVersion !== undefined) {
+					return [];
+				}
+				return ((await this.opsCache?.get(from, to)) as ISequencedDocumentMessage[]) ?? [];
 			},
 			// Ops requestFromSocket Callback.
 			(from, to) => {
