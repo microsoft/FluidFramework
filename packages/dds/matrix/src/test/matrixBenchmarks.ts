@@ -260,7 +260,7 @@ function runBenchmark(options: BenchmarkOptions): Test {
 }
 
 /**
- * Shared test suite for matrix exeution time and memory benchmarks
+ * Shared test suite for matrix execution time and memory benchmarks
  * Note: These benchmarks are designed to closely match the benchmarks in SharedTree.
  * If you modify or add tests here, consider updating the corresponding SharedTree benchmarks as well
  * to ensure consistency and comparability between the two implementations.
