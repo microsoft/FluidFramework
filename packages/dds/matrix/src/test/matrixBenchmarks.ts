@@ -121,6 +121,14 @@ interface MatrixBenchmarkOptions extends TestMatrixOptions {
 
 	/**
 	 * Optional action to perform on the matrix after the operation being measured.
+	 *
+	 * @remarks Note: in memory benchmarking tests, this currently gets executed after
+	 * {@link MatrixBenchmarkOptions.operation} but *before* the memory is measured.
+	 * This is an issue and makes it difficult to do proper cleanup without impacting the memory measurement.
+	 *
+	 * AB#46769 tracks adding a hook to the benchmark infrastructure to allow post-measurement cleanup steps.
+	 * Once that has been completed, this code should be updated to leverage it to perform the necessary
+	 * post-measurement cleanup steps.
 	 */
 	readonly afterOperation?: (
 		matrix: ISharedMatrix,
@@ -234,6 +242,8 @@ function runMemoryBenchmark({
 
 				this.cleanUp();
 				this.undoRedoStack = undefined;
+
+				// TODO: AB#46769: this.matrix = undefined;'
 				this.cleanUp = undefined;
 			}
 		})(),
