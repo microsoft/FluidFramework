@@ -10,7 +10,6 @@ import {
 	type RouterliciousEndpoint,
 } from "@fluid-internal/test-driver-definitions";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
-import type { MinimumVersionForCollab } from "@fluidframework/container-runtime/internal";
 import { FluidObject, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
@@ -23,6 +22,7 @@ import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
