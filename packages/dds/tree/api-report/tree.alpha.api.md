@@ -270,6 +270,16 @@ export const ForestTypeOptimized: ForestType;
 // @alpha
 export const ForestTypeReference: ForestType;
 
+// @alpha @sealed
+export interface FormatValidator extends ErasedType_2<"FormatValidator"> {
+}
+
+// @alpha
+export const FormatValidatorBasic: FormatValidator_2;
+
+// @alpha
+export const FormatValidatorNoOp: FormatValidator;
+
 // @alpha
 export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSchema;
 
@@ -290,7 +300,7 @@ export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
 
 // @alpha @input
 export interface ICodecOptions {
-    readonly jsonValidator: JsonValidator;
+    readonly jsonValidator: JsonValidator | FormatValidator;
 }
 
 // @alpha
