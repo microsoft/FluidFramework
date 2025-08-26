@@ -981,14 +981,22 @@ describe("TableFactory unit tests", () => {
 		});
 
 		it("Remove by index range", () => {
-			const { treeView, Column } = createTableTree();
+			const { treeView, Column, Row } = createTableTree();
 			const column0 = new Column({ id: "column-0", props: {} });
 			const column1 = new Column({ id: "column-1", props: {} });
 			const column2 = new Column({ id: "column-2", props: {} });
 			const column3 = new Column({ id: "column-3", props: {} });
 			treeView.initialize({
 				columns: [column0, column1, column2, column3],
-				rows: [],
+				rows: [
+					new Row({
+						id: "row-0",
+						cells: {
+							"column-0": { value: "Hello" },
+							"column-2": { value: "world" },
+						},
+					}),
+				],
 			});
 
 			// Remove columns 1-2
@@ -998,7 +1006,14 @@ describe("TableFactory unit tests", () => {
 					{ id: "column-0", props: {} },
 					{ id: "column-3", props: {} },
 				],
-				rows: [],
+				rows: [
+					{
+						id: "row-0",
+						cells: {
+							"column-0": { value: "Hello" },
+						},
+					},
+				],
 			});
 		});
 

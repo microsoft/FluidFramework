@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { Tree, TreeAlpha } from "./shared-tree/index.js";
@@ -727,55 +728,70 @@ export namespace System_TableSchema {
 				count: number | undefined = undefined,
 			): ColumnValueType[] {
 				if (typeof indexOrColumns === "number" || indexOrColumns === undefined) {
-					// TODO: this is wrong - doesn't remove cells!
+					let removedColumns: ColumnValueType[] | undefined;
 					const startIndex = indexOrColumns ?? 0;
-					return Table._removeRange(
-						{
-							index: startIndex,
-							count: count ?? this.columns.length - startIndex,
-						},
-						this.columns,
-					);
-				}
+					const _count = count ?? this.columns.length - startIndex;
 
-				// If there are no columns to remove, do nothing
-				if (indexOrColumns.length === 0) {
-					return [];
-				}
+					Table.assertValidRange({ index: startIndex, count: _count }, this.columns);
 
-				// Ensure all of the specified rows are valid
-				const columnsToRemove: ColumnValueType[] = [];
-				for (const columnOrIdToRemove of indexOrColumns) {
-					const columnToRemove = this._getColumn(columnOrIdToRemove);
-					const index =
-						columnToRemove === undefined ? -1 : this.columns.indexOf(columnToRemove);
+					this.applyEditsInTransaction(() => {
+						const columnsToRemove = this.columns.slice(
+							startIndex,
+							startIndex + _count,
+						) as ColumnValueType[];
 
-					// If the column does not exist in the table, throw an error.
-					if (columnToRemove === undefined || index < 0) {
-						const columnId = this._getColumnId(columnOrIdToRemove);
-						throw new UsageError(
-							`Specified column with ID "${columnId}" does not exist in the table.`,
-						);
-					}
-
-					columnsToRemove.push(columnToRemove);
-				}
-
-				this.applyEditsInTransaction((): void => {
-					for (const column of columnsToRemove) {
-						// First, remove all cells that correspond to the column from each row:
-						for (const row of this.rows) {
-							// TypeScript is unable to narrow the row type correctly here, hence the cast.
-							// See: https://github.com/microsoft/TypeScript/issues/52144
-							(row as RowValueType).removeCell(column);
+						// First, remove all cells that correspond to each column from each row:
+						for (const column of columnsToRemove) {
+							this.removeCells(column);
 						}
 
-						// Second, remove the column node:
-						this.columns.removeAt(this.columns.indexOf(column));
+						// Second, remove the column nodes:
+						Table._removeRange(
+							{
+								index: startIndex,
+								count: _count,
+							},
+							this.columns,
+						);
+						removedColumns = columnsToRemove;
+					});
+					return removedColumns ?? fail("Transaction did not complete.");
+				} else {
+					// If there are no columns to remove, do nothing
+					if (indexOrColumns.length === 0) {
+						return [];
 					}
-				});
 
-				return columnsToRemove;
+					// Ensure all of the specified rows are valid
+					const columnsToRemove: ColumnValueType[] = [];
+					for (const columnOrIdToRemove of indexOrColumns) {
+						const columnToRemove = this._getColumn(columnOrIdToRemove);
+						const index =
+							columnToRemove === undefined ? -1 : this.columns.indexOf(columnToRemove);
+
+						// If the column does not exist in the table, throw an error.
+						if (columnToRemove === undefined || index < 0) {
+							const columnId = this._getColumnId(columnOrIdToRemove);
+							throw new UsageError(
+								`Specified column with ID "${columnId}" does not exist in the table.`,
+							);
+						}
+
+						columnsToRemove.push(columnToRemove);
+					}
+
+					this.applyEditsInTransaction((): void => {
+						for (const column of columnsToRemove) {
+							// First, remove all cells that correspond to the column from each row:
+							this.removeCells(column);
+
+							// Second, remove the column node:
+							this.columns.removeAt(this.columns.indexOf(column));
+						}
+					});
+
+					return columnsToRemove;
+				}
 			}
 
 			public removeRows(
@@ -852,33 +868,59 @@ export namespace System_TableSchema {
 				return cell;
 			}
 
+			private removeCells(column: ColumnValueType): void {
+				for (const row of this.rows) {
+					// TypeScript is unable to narrow the row type correctly here, hence the cast.
+					// See: https://github.com/microsoft/TypeScript/issues/52144
+					(row as RowValueType).removeCell(column);
+				}
+			}
+
+			private static assertValidRange<T>(
+				range: { index: number; count: number },
+				array: readonly T[],
+			): void {
+				const { index, count } = range;
+				if (index < 0 || index >= array.length) {
+					throw new UsageError(
+						`Start index out of bounds. Expected index to be on [0, ${array.length - 1}], but got ${index}.`,
+					);
+				}
+				if (count < 0) {
+					throw new UsageError(`Expected non-negative count. Got ${count}.`);
+				}
+
+				const end = index + count; // exclusive
+				if (end > array.length) {
+					throw new UsageError(
+						`End index out of bounds. Expected end to be on [${index}, ${array.length}], but got ${end}.`,
+					);
+				}
+			}
+
 			private applyEditsInTransaction(applyEdits: () => void): void {
 				const branch = TreeAlpha.branch(this);
 
-				// TODO: what to do if we are not in a branch?
-				// We still need to defer events in this case for performance reasons.
-				if (branch === undefined) {
-					// If this node does not have a corresponding branch, then it is unhydrated.
-					// I.e., it is not part of a collaborative session yet.
-					// Therefore, we don't need to run the edits as a transaction,
-					// but we do still need to ensure the events are batched.
-					const resumeAndFlushTreeEvents = pauseTreeEvents();
-					try {
+				// To ensure the user is not spammed with events during the transaction,
+				// we will pause events for the duration.
+				// If this node is part of a collaborative session ("hydrated"),
+				// we will also batch the edits in a transaction to ensure the larger edit is atomic.
+
+				const resumeAndFlushTreeEvents = pauseTreeEvents();
+				try {
+					if (branch === undefined) {
+						// If this node does not have a corresponding branch, then it is unhydrated.
+						// I.e., it is not part of a collaborative session yet.
+						// Therefore, we don't need to run the edits as a transaction,
+						// but we do still need to ensure the events are batched.
 						applyEdits();
-					} finally {
-						resumeAndFlushTreeEvents();
-					}
-				} else {
-					branch.runTransaction(
-						() => {
+					} else {
+						branch.runTransaction(() => {
 							applyEdits();
-						},
-						{
-							// Defer events such that the user only gets a single set of updates at the end of the transaction,
-							// rather than being spammed with them per individual edit.
-							deferTreeEvents: true,
-						},
-					);
+						});
+					}
+				} finally {
+					resumeAndFlushTreeEvents();
 				}
 			}
 
@@ -930,22 +972,9 @@ export namespace System_TableSchema {
 				array: TreeArrayNode<TNodeSchema>,
 			): TreeNodeFromImplicitAllowedTypes<TNodeSchema>[] {
 				const { index, count } = range;
-
-				if (index < 0 || index >= array.length) {
-					throw new UsageError(
-						`Start index out of bounds. Expected index to be on [0, ${array.length - 1}], but got ${index}.`,
-					);
-				}
-				if (count < 0) {
-					throw new UsageError(`Expected non-negative count. Got ${count}.`);
-				}
+				Table.assertValidRange(range, array);
 
 				const end = index + count; // exclusive
-				if (end > array.length) {
-					throw new UsageError(
-						`End index out of bounds. Expected end to be on [${index}, ${array.length}], but got ${end}.`,
-					);
-				}
 
 				// TypeScript is unable to narrow the array element type correctly here, hence the cast.
 				// See: https://github.com/microsoft/TypeScript/issues/52144

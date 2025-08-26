@@ -123,11 +123,4 @@ export interface RunTransactionParams {
 	 * this client and ignored by all other clients.
 	 */
 	readonly preconditions?: readonly TransactionConstraint[];
-
-	/**
-	 * Set to defer all tree event notifications until completion of the transaction.
-	 * @remarks TODO: note benefits and note potential pitfalls
-	 * @defaultValue `false`
-	 */
-	readonly deferTreeEvents?: boolean;
 }

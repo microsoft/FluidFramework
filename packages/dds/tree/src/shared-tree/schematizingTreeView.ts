@@ -245,7 +245,7 @@ export class SchematizingSimpleTreeView<
 			| void,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
-		const { preconditions, deferTreeEvents } = params ?? {};
+		const { preconditions } = params ?? {};
 
 		const addConstraints = (
 			constraintsOnRevert: boolean,
@@ -256,37 +256,31 @@ export class SchematizingSimpleTreeView<
 
 		this.checkout.transaction.start();
 
-		const resumeAndFlushTreeEvents = deferTreeEvents === true ? pauseTreeEvents() : undefined;
+		// Validate preconditions before running the transaction callback.
+		addConstraints(false /* constraintsOnRevert */, preconditions);
+		const transactionCallbackStatus = transaction();
+		const rollback = transactionCallbackStatus?.rollback;
+		const value = (
+			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
+		)?.value;
 
-		try {
-			// Validate preconditions before running the transaction callback.
-			addConstraints(false /* constraintsOnRevert */, preconditions);
-			const transactionCallbackStatus = transaction();
-			const rollback = transactionCallbackStatus?.rollback;
-			const value = (
-				transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			)?.value;
-
-			if (rollback === true) {
-				this.checkout.transaction.abort();
-				return value !== undefined
-					? { success: false, value: value as TFailureValue }
-					: { success: false };
-			}
-
-			// Validate preconditions on revert after running the transaction callback and was successful.
-			addConstraints(
-				true /* constraintsOnRevert */,
-				transactionCallbackStatus?.preconditionsOnRevert,
-			);
-
-			this.checkout.transaction.commit();
+		if (rollback === true) {
+			this.checkout.transaction.abort();
 			return value !== undefined
-				? { success: true, value: value as TSuccessValue }
-				: { success: true };
-		} finally {
-			resumeAndFlushTreeEvents?.();
+				? { success: false, value: value as TFailureValue }
+				: { success: false };
 		}
+
+		// Validate preconditions on revert after running the transaction callback and was successful.
+		addConstraints(
+			true /* constraintsOnRevert */,
+			transactionCallbackStatus?.preconditionsOnRevert,
+		);
+
+		this.checkout.transaction.commit();
+		return value !== undefined
+			? { success: true, value: value as TSuccessValue }
+			: { success: true };
 	}
 
 	private ensureUndisposed(): void {
