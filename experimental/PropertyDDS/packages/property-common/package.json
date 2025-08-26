@@ -31,7 +31,7 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha --recursive dist/test -r node_modules/@fluid-internal/mocha-test-setup",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 mocha",
 		"tsc": "tsc"
 	},
 	"c8": {
