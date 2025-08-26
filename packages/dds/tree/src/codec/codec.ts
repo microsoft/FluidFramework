@@ -49,7 +49,8 @@ export interface SchemaValidationFunction<Schema extends TSchema> {
 /**
  * A kind of validator for SharedTree's internal data formats.
  * @remarks
- * Assuming not data corruption or type confusion, such validation should never fail due to careful format versioning.
+ * Assuming no data corruption or type confusion, such validation should never fail.
+ * Any client version compatibility issues should instead be detected by the data format versioning which Shared Tree does internally independent of data format validation.
  * However, persisted data can sometimes be corrupted, bugs can produce invalid data, or users can mix up which data is compatible with which APIs.
  * In such cases, a format validator can help catch issues.
  *
