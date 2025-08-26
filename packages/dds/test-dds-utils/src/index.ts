@@ -34,3 +34,9 @@ export {
 export type { ISnapshotSuite } from "./ddsSnapshotHarness.js";
 export { createSnapshotSuite } from "./ddsSnapshotHarness.js";
 export type { Client, FuzzSerializedIdCompressor } from "./clientLoading.js";
+export {
+	setupRollbackTest,
+	createAdditionalClient,
+	type RollbackTestSetup,
+	type DDSCreator,
+} from "./ddsTestUtils.js";
