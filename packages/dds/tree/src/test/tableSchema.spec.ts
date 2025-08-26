@@ -28,6 +28,8 @@ import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshots/index.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
 
+// TODO: Update tests to run in hydrated and unhydrated modes
+
 describe("TableFactory unit tests", () => {
 	function createTableSchema() {
 		class Cell extends schemaFactory.object("table-cell", {
