@@ -8,13 +8,14 @@ import type { ChildProcess } from "node:child_process";
 import inspector from "node:inspector";
 
 import type { AttendeeId } from "@fluidframework/presence/beta";
-import { timeoutPromise } from "@fluidframework/test-utils/internal";
+import { timeoutAwait, timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import type { MessageFromChild } from "./messageTypes.js";
 import {
-	forkChildProcesses,
-	connectChildProcesses,
+	connectAndListenForAttendees,
 	connectAndWaitForAttendees,
+	connectChildProcesses,
+	forkChildProcesses,
 	getLatestMapValueResponses,
 	getLatestValueResponses,
 	registerWorkspaceOnChildren,
@@ -108,7 +109,7 @@ describe(`Presence with AzureClient`, () => {
 		/**
 		 * Timeout for presence attendees to connect {@link AttendeeConnectedEvent}
 		 */
-		const attendeesJoinedTimeoutMs = (1000 + 200 * numClients) * timeoutMultiplier;
+		const allAttendeesJoinedTimeoutMs = (1000 + 200 * numClients) * timeoutMultiplier;
 		/**
 		 * Timeout for workspace registration {@link WorkspaceRegisteredEvent}
 		 */
@@ -124,7 +125,7 @@ describe(`Presence with AzureClient`, () => {
 
 		for (const writeClients of [numClients, 1]) {
 			it(`announces 'attendeeConnected' when remote client joins session [${numClients} clients, ${writeClients} writers]`, async function () {
-				setTimeout(this, childConnectTimeoutMs + attendeesJoinedTimeoutMs + 1000);
+				setTimeout(this, childConnectTimeoutMs + allAttendeesJoinedTimeoutMs + 1000);
 
 				// Setup
 				const { children, childErrorPromise } = await forkChildProcesses(
@@ -139,7 +140,7 @@ describe(`Presence with AzureClient`, () => {
 						writeClients,
 						attendeeCountRequired: numClients - 1,
 						childConnectTimeoutMs,
-						attendeesJoinedTimeoutMs,
+						allAttendeesJoinedTimeoutMs,
 					},
 					childErrorPromise,
 				);
@@ -157,7 +158,10 @@ describe(`Presence with AzureClient`, () => {
 
 				setTimeout(
 					this,
-					childConnectTimeoutMs + attendeesJoinedTimeoutMs + childDisconnectTimeoutMs + 1000,
+					childConnectTimeoutMs +
+						allAttendeesJoinedTimeoutMs +
+						childDisconnectTimeoutMs +
+						1000,
 				);
 
 				// Setup
@@ -166,16 +170,30 @@ describe(`Presence with AzureClient`, () => {
 					afterCleanUp,
 				);
 
-				const connectResult = await connectAndWaitForAttendees(
-					children,
-					{
-						writeClients,
-						attendeeCountRequired: numClients - 1,
-						childConnectTimeoutMs,
-						attendeesJoinedTimeoutMs,
-					},
-					childErrorPromise,
+				const connectResult = await connectAndListenForAttendees(children, {
+					writeClients,
+					attendeeCountRequired: numClients - 1,
+					childConnectTimeoutMs,
+				});
+
+				// Wait for all attendees to be fully joined
+				// Keep a tally for debuggability
+				let childrenFullyJoined = 0;
+				const allAttendeesFullyJoined = Promise.all(
+					// eslint-disable-next-line @typescript-eslint/promise-function-async
+					connectResult.attendeeCountRequiredPromises.map((attendeeFullyJoinedPromise) =>
+						attendeeFullyJoinedPromise.then(() => childrenFullyJoined++),
+					),
 				);
+				await timeoutAwait(allAttendeesFullyJoined, {
+					durationMs: allAttendeesJoinedTimeoutMs,
+					errorMsg: "Not all attendees fully joined",
+				}).catch((error) => {
+					// Ideally this information would just be in the timeout error message, but that
+					// must be a resolved string (not dynamic). So, just log it separately.
+					testConsole.log(`${childrenFullyJoined} attendees fully joined before error...`);
+					throw error;
+				});
 
 				const waitForDisconnected = children.map(async (child, index) =>
 					index === 0
