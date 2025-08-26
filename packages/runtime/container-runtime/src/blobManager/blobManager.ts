@@ -181,11 +181,10 @@ export class BlobManager {
 	private readonly internalEvents = createEmitter<IBlobManagerInternalEvents>();
 
 	/**
-	 * Map of local IDs to storage IDs. All requested IDs should be a key in this map. Blobs created while the
-	 * container is detached are stored in IDetachedBlobStorage which gives pseudo storage IDs; the real storage
-	 * IDs are filled in at attach time via setRedirectTable().
-	 * Note: It contains mappings from all clients, i.e., from remote clients as well. local ID comes from the client
-	 * that uploaded the blob but its mapping to storage ID is needed in all clients in order to retrieve the blob.
+	 * Map of local IDs to storage IDs. Also includes identity mappings of storage ID -> storage ID for all known
+	 * storage IDs. All requested IDs must be a key in this map. Blobs created while the container is detached are
+	 * stored in IDetachedBlobStorage which gives pseudo storage IDs; the real storage IDs are filled in at attach
+	 * time via setRedirectTable().
 	 */
 	private readonly redirectTable: Map<string, string>;
 
@@ -752,14 +751,20 @@ export class BlobManager {
 	 *
 	 * @remarks
 	 * The routes are GC nodes paths of format -`/<blobManagerBasePath>/<blobId>`. The blob ids are all local ids.
+	 * Deleting the blobs involves 2 steps:
+	 *
+	 * 1. The redirect table entry for the local ids are deleted.
+	 *
+	 * 2. If the storage ids corresponding to the deleted local ids are not referenced by any further local ids, the
+	 * identity mappings in the redirect table are deleted as well.
 	 *
 	 * Note that this does not delete the blobs from storage service immediately. Deleting the blobs from redirect table
-	 * will ensure we don't create an attachment blob for them at the next summary. The service would them delete them
+	 * will ensure we don't create an attachment blob for them at the next summary. The service would then delete them
 	 * some time in the future.
 	 */
 	private deleteBlobsFromRedirectTable(blobRoutes: readonly string[]): void {
-		// maybeUnusedStorageIds is used to compute the set of storage IDs that *used to have a local ID* (not
-		// just the identity mapping), but that local ID is being deleted.
+		// maybeUnusedStorageIds is used to compute the set of storage IDs that *used to have a local ID*, but that
+		// local ID is being deleted.
 		const maybeUnusedStorageIds: Set<string> = new Set();
 		for (const route of blobRoutes) {
 			const blobId = getBlobIdFromGCNodePath(route);
@@ -781,7 +786,7 @@ export class BlobManager {
 			this.redirectTable.delete(blobId);
 		}
 
-		// Remove any storage IDs that still have local IDs referring to them besides the identity mapping.
+		// Remove any storage IDs that still have local IDs referring to them (excluding the identity mapping).
 		for (const [localId, storageId] of this.redirectTable) {
 			if (localId !== storageId) {
 				maybeUnusedStorageIds.delete(storageId);
@@ -791,7 +796,7 @@ export class BlobManager {
 		// Now delete any identity mappings (storage ID -> storage ID) from the redirect table that used to be
 		// referenced by a distinct local ID. This way they'll be absent from the next summary, and the service
 		// is free to delete them from storage.
-		// NOTE: This can potentially delete identity mappings that are still referenced, if storage deduping
+		// WARNING: This can potentially delete identity mappings that are still referenced, if storage deduping
 		// has let us add a local ID -> storage ID mapping that is later deleted.
 		for (const storageId of maybeUnusedStorageIds) {
 			this.redirectTable.delete(storageId);
