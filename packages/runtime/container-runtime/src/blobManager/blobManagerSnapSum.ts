@@ -64,13 +64,13 @@ export const toRedirectTable = (
 	});
 	const redirectTable = new Map<string, string>(blobManagerLoadInfo.redirectTable);
 	if (blobManagerLoadInfo.ids !== undefined) {
-		for (const id of blobManagerLoadInfo.ids) {
+		for (const storageId of blobManagerLoadInfo.ids) {
 			// Older versions of the runtime used the storage ID directly in the handle,
 			// rather than routing through the redirectTable. To support old handles that
 			// were created in this way but unify handling through the redirectTable, we
 			// add identity mappings to the redirect table at load. These identity entries
 			// will be excluded during summarization.
-			redirectTable.set(id, id);
+			redirectTable.set(storageId, storageId);
 		}
 	}
 	return redirectTable;
@@ -84,13 +84,13 @@ const summarizeV1 = (redirectTable: Map<string, string>): ISummaryTreeWithStats 
 	const builder = new SummaryTreeBuilder();
 	const storageIds = getStorageIds(redirectTable);
 	for (const storageId of storageIds) {
-		// The attachment is inspectable by storage, which lets it detect that the blob is referenced
+		// The Attachment is inspectable by storage, which lets it detect that the blob is referenced
 		// and therefore should not be GC'd.
 		builder.addAttachment(storageId);
 	}
 
 	// Exclude identity mappings from the redirectTable summary. Note that
-	// the storageIds of the identity mappings are still included in the attachments
+	// the storageIds of the identity mappings are still included in the Attachments
 	// above, so we expect these identity mappings will be recreated at load
 	// time in toRedirectTable even if there is no non-identity mapping in
 	// the redirectTable.
