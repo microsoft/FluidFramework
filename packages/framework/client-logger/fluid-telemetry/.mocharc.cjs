@@ -8,8 +8,6 @@
 const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
 
 const config = getFluidTestMochaConfig(__dirname);
-// Skip default policy: use paths from package.json scripts.
-delete config.spec;
 // TODO: figure out why this package needs the --exit flag, tests might not be cleaning up correctly after themselves
 // AB#7856
 config.exit = true;

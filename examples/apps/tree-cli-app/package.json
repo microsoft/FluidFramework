@@ -30,8 +30,8 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
 		"test:mocha": "npm run test:mocha:esm",
-		"test:mocha:esm": "mocha",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 mocha"
+		"test:mocha:esm": "mocha lib/test",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"dependencies": {
 		"@fluidframework/core-interfaces": "workspace:~",

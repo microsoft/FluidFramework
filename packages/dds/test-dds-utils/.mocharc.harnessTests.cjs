@@ -12,7 +12,6 @@
 
 const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
 const config = getFluidTestMochaConfig(__dirname);
-delete config.spec;
 config["reporter"] = "json";
 config["forbid-only"] = false;
 delete config["reporter-options"];

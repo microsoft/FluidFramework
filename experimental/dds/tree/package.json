@@ -54,9 +54,9 @@
 		"test": "npm run test:mocha",
 		"test:benchmark:report": "mocha --perfMode --fgrep @Benchmark --fgrep @ExecutionTime --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "cross-env MOCHA_SPEC=dist/test mocha",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 mocha",
-		"test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=normal \"MOCHA_SPEC=dist/test/**/*.fuzz.tests.js\" mocha",
+		"test:mocha": "mocha dist/test",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=normal mocha \"dist/test/**/*.fuzz.tests.js\"",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
