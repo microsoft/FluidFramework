@@ -10,9 +10,11 @@ import {
 	type AzureContainerServices,
 	type AzureLocalConnectionConfig,
 	type AzureRemoteConnectionConfig,
+	type ITelemetryBaseEvent,
 } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import type { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
@@ -37,6 +39,7 @@ type MessageToParent = Required<MessageFromChild>;
 const connectTimeoutMs = 10_000;
 // Identifier given to child process
 const process_id = process.argv[2];
+const verbosity = process.argv[3] ?? "";
 
 const useAzure = process.env.FLUID_CLIENT === "azure";
 const tenantId = useAzure
@@ -45,6 +48,24 @@ const tenantId = useAzure
 const endPoint = process.env.azure__fluid__relay__service__endpoint as string;
 if (useAzure && endPoint === undefined) {
 	throw new Error("Azure Fluid Relay service endpoint is missing");
+}
+
+function selectiveVerboseLog(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+	if (event.eventName.includes(":Signal") || event.eventName.includes(":Join")) {
+		console.log(`[${process_id}] [${logLevel ?? LogLevel.default}]`, {
+			eventName: event.eventName,
+			details: event.details,
+			containerConnectionState: event.containerConnectionState,
+		});
+	} else if (
+		event.eventName.includes(":Container:") ||
+		event.eventName.includes(":Presence:")
+	) {
+		console.log(`[${process_id}] [${logLevel ?? LogLevel.default}]`, {
+			eventName: event.eventName,
+			containerConnectionState: event.containerConnectionState,
+		});
+	}
 }
 
 /**
@@ -81,7 +102,12 @@ const getOrCreatePresenceContainer = async (
 				endpoint: "http://localhost:7071",
 				type: "local",
 			};
-	const client = new AzureClient({ connection: connectionProps });
+	const client = new AzureClient({
+		connection: connectionProps,
+		logger: {
+			send: verbosity.includes("telem") ? selectiveVerboseLog : () => {},
+		},
+	});
 	const schema: ContainerSchema = {
 		initialObjects: {
 			// A DataObject is added as otherwise fluid-static complains "Container cannot be initialized without any DataTypes"
@@ -120,7 +146,14 @@ const getOrCreatePresenceContainer = async (
 };
 function createSendFunction(): (msg: MessageToParent) => void {
 	if (process.send) {
-		return process.send.bind(process);
+		const sendFn = process.send.bind(process);
+		if (verbosity.includes("msgs")) {
+			return (msg: MessageToParent) => {
+				console.log(`[${process_id}] Sending`, msg);
+				sendFn(msg);
+			};
+		}
+		return sendFn;
 	}
 	throw new Error("process.send is not defined");
 }
@@ -262,6 +295,9 @@ class MessageHandler {
 	}
 
 	public async onMessage(msg: MessageFromParent): Promise<void> {
+		if (verbosity.includes("msgs")) {
+			console.log(`[${process_id}] Received`, msg);
+		}
 		switch (msg.command) {
 			case "ping": {
 				this.handlePing();
