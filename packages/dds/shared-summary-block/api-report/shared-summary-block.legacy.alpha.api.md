@@ -4,16 +4,16 @@
 
 ```ts
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISharedSummaryBlock extends ISharedObject {
     get<T>(key: string): Jsonable<T>;
     set<T>(key: string, value: Jsonable<T>): void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export const SharedSummaryBlock: ISharedObjectKind<ISharedSummaryBlock> & SharedObjectKind<ISharedSummaryBlock>;
 
-// @alpha @legacy
+// @beta @legacy
 export type SharedSummaryBlock = ISharedSummaryBlock;
 
 // (No @packageDocumentation comment for this package)

@@ -16,22 +16,8 @@ import { DefaultTestSharedTreeKind } from "./utils.js";
 import { AttachState } from "@fluidframework/container-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { CommitKind, type Revertible } from "../core/index.js";
+import { strict as assert } from "node:assert";
 import { Tree } from "../shared-tree/index.js";
-import assert from "node:assert";
-
-/**
- * Define a return type for table tree creation.
- */
-export interface TableTreeDefinition {
-	/**
-	 * The table tree instance.
-	 */
-	table: TreeNodeFromImplicitAllowedTypes<typeof Table>;
-	/**
-	 * The tree view associated with the table.
-	 */
-	treeView: TreeView<typeof Table>;
-}
 
 /**
  * Factory for creating a table tree schema.
@@ -73,16 +59,44 @@ export class Table extends TableSchema.table({
 }) {}
 
 /**
+ * {@link createTableTree} options.
+ */
+export interface TableTreeOptions {
+	/**
+	 * The number of rows and columns that will be in the table.
+	 */
+	readonly tableSize: number;
+	/**
+	 * The initial value of each cell in the dense table.
+	 * @remarks If not specified, no cell values will be inserted into the table, leaving it sparse.
+	 */
+	readonly initialCellValue?: string | undefined;
+}
+
+/**
  * Provides a simple table tree initialized with the specified size and cell value.
  * This helper function creates a table schema, initializes a SharedTree instance,
  * and populates it with the specified number of rows and columns.
  * Each cell is initialized with the provided cell value.
  *
- * @param tableSize - The number of rows and columns to create in the table.
- * @param cellValue - The initial value to set in each cell of the table.
  * @returns A fully initialized table tree definition, including table instance, undo/redo stacks, and a cleanup function.
  */
-export function createTableTree(tableSize: number, cellValue: string): TableTreeDefinition {
+export function createTableTree({ tableSize, initialCellValue }: TableTreeOptions): {
+	/**
+	 * The initialized table tree.
+	 */
+	table: TreeNodeFromImplicitAllowedTypes<typeof Table>;
+
+	/**
+	 * The undo/redo stack manager for the table.
+	 */
+	undoRedoStack: UndoRedoManager;
+
+	/**
+	 * Cleanup function to run after the test to close the table and release resources.
+	 */
+	cleanUp: () => void;
+} {
 	const sharedTreeFactory = DefaultTestSharedTreeKind.getFactory();
 	const runtime = new MockFluidDataStoreRuntime({
 		idCompressor: createIdCompressor(),
@@ -98,44 +112,50 @@ export function createTableTree(tableSize: number, cellValue: string): TableTree
 
 	treeView.initialize(Table.empty());
 	const table = treeView.root;
-	for (let i = 0; i < tableSize; i++) {
-		const column = new Column({});
-		table.insertColumn({ index: i, column });
-	}
-	for (let i = 0; i < tableSize; i++) {
-		const row = new Row({ cells: {} });
-		table.insertRow({ index: i, row });
-	}
-	for (const row of table.rows) {
-		for (const column of table.columns) {
-			table.setCell({
-				key: {
-					column,
-					row,
-				},
-				cell: cellValue,
-			});
+
+	const columns = Array.from({ length: tableSize }, () => new Column({}));
+	table.insertColumns({ index: 0, columns });
+
+	const rows = Array.from(
+		{ length: tableSize },
+		() =>
+			new Row({
+				cells: {},
+			}),
+	);
+	table.insertRows({ index: 0, rows });
+
+	if (initialCellValue !== undefined) {
+		for (const row of table.rows) {
+			for (const column of table.columns) {
+				table.setCell({
+					key: {
+						column,
+						row,
+					},
+					cell: initialCellValue,
+				});
+			}
 		}
 	}
+
+	// Configure event listeners
+	const cleanUpEventHandler = Tree.on(table, "treeChanged", () => {});
+
+	// Configure undo/redo
+	const undoRedoStack = new UndoRedoManager(treeView);
+
+	const cleanUp = (): void => {
+		cleanUpEventHandler();
+		undoRedoStack.dispose();
+		treeView.dispose();
+	};
 
 	return {
 		table,
-		treeView,
+		undoRedoStack,
+		cleanUp,
 	};
-}
-
-/**
- * Currently table schema does not support removing cells when a column is removed.
- * This function provides a way to remove a column and its associated cells from the table. Might remove in the future
- * if the table schema is updated to handle this automatically.
- */
-export function removeColumnAndCells(table: InstanceType<typeof Table>, column: Column): void {
-	Tree.runTransaction(table, () => {
-		table.removeColumn(column);
-		for (const row of table.rows) {
-			table.removeCell({ column, row });
-		}
-	});
 }
 
 /**
@@ -208,4 +228,29 @@ export class UndoRedoManager {
 		// Unsubscribe from tree events
 		this.unsubscribeFromTreeEvents();
 	}
+}
+
+/**
+ * Benchmark test options.
+ */
+export interface TableBenchmarkOptions extends TableTreeOptions {
+	/**
+	 * The title of the benchmark test.
+	 */
+	readonly title: string;
+
+	/**
+	 * Optional action to perform on the matrix before the operation being measured.
+	 */
+	readonly beforeOperation?: (table: Table, undoRedoStack: UndoRedoManager) => void;
+
+	/**
+	 * The operation to be measured.
+	 */
+	readonly operation: (table: Table, undoRedo: UndoRedoManager) => void;
+
+	/**
+	 * Optional action to perform on the matrix after the operation being measured.
+	 */
+	readonly afterOperation?: (table: Table, undoRedoStack: UndoRedoManager) => void;
 }

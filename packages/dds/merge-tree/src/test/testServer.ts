@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { Heap, IComparer } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { Heap, type IComparer } from "@fluidframework/core-utils/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { RedBlackTree } from "../collections/index.js";
 import { compareNumbers } from "../mergeTreeNodes.js";
 import { PriorPerspective } from "../perspective.js";
-import { PropertySet } from "../properties.js";
+import type { PropertySet } from "../properties.js";
 
 import { TestClient } from "./testClient.js";
 

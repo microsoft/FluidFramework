@@ -24,12 +24,11 @@ export type {
 	ITreeAlpha,
 } from "./tree.js";
 export { asTreeViewAlpha } from "./tree.js";
+export { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 export {
 	SchemaFactory,
 	type ScopedSchemaName,
 	type SchemaFactoryObjectOptions,
-	type SchemaStatics,
-	schemaStatics,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 } from "./schemaFactory.js";
@@ -102,6 +101,8 @@ export {
 	tryStoredSchemaAsArray,
 	replaceHandles,
 	type HandleConverter,
+	KeyEncodingOptions,
+	type TreeParsingOptions,
 } from "./customTree.js";
 
 export {

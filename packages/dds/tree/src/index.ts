@@ -169,7 +169,6 @@ export {
 	type UnannotateAllowedTypes,
 	type UnannotateAllowedType,
 	type UnannotateAllowedTypesList,
-	type UnannotateAllowedTypeOrLazyItem,
 	type UnannotateImplicitFieldSchema,
 	type UnannotateSchemaRecord,
 	type SchemaStaticsAlpha,
@@ -265,6 +264,8 @@ export {
 	type RecordNodeInsertableData,
 	type RecordNodePojoEmulationSchema,
 	type TreeRecordNode,
+	KeyEncodingOptions,
+	type TreeParsingOptions,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

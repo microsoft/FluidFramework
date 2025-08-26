@@ -14,10 +14,7 @@ import {
 	FluidErrorTypes,
 	type ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces/internal";
-import {
-	type IResolvedUrl,
-	type IUrlResolver,
-} from "@fluidframework/driver-definitions/internal";
+import type { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 import Sinon from "sinon";
 

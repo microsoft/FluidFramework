@@ -34,4 +34,5 @@ export {
 	isOptional,
 	isReadonly,
 	isStatic,
+	isTypeLike,
 } from "./utilities/index.js";

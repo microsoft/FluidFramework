@@ -998,7 +998,10 @@ describeHydration(
 				const schemaRecord = {
 					bar: {
 						metadata: {},
-						types: [{ metadata: {}, type: stringSchema }, numberSchema],
+						types: [
+							{ metadata: {}, type: stringSchema },
+							{ metadata: {}, type: numberSchema },
+						],
 					},
 				};
 				const result = unannotateSchemaRecord(schemaRecord);

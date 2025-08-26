@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IDeleteOperation {
     // (undocumented)
     entryId: string;
@@ -12,7 +12,7 @@ export interface IDeleteOperation {
     type: typeof OperationType.deleteEntry;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IInsertOperation<T = unknown> {
     // (undocumented)
     entryId: string;
@@ -24,7 +24,7 @@ export interface IInsertOperation<T = unknown> {
     value: T;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IMoveOperation {
     // (undocumented)
     changedToEntryId: string;
@@ -36,7 +36,7 @@ export interface IMoveOperation {
     type: typeof OperationType.moveEntry;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IRevertible {
     // (undocumented)
     dispose(): void;
@@ -44,7 +44,7 @@ export interface IRevertible {
     revert(): void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISharedArray<T extends SerializableTypeForSharedArray> extends ISharedObject<ISharedArrayEvents> {
     // (undocumented)
     delete(index: number): void;
@@ -62,7 +62,7 @@ export interface ISharedArray<T extends SerializableTypeForSharedArray> extends 
     toggleMove(oldEntryId: string, newEntryId: string): void;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISharedArrayEvents extends ISharedObjectEvents {
     // @eventProperty (undocumented)
     (event: "valueChanged", listener: (op: ISharedArrayOperation, isLocal: boolean, target: IEventThisPlaceHolder) => void): void;
@@ -70,25 +70,25 @@ export interface ISharedArrayEvents extends ISharedObjectEvents {
     (event: "revertible", listener: (revertible: IRevertible) => void): void;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export type ISharedArrayOperation<T = unknown> = IInsertOperation<T> | IDeleteOperation | IMoveOperation | ISharedArrayRevertibleOperation;
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export type ISharedArrayRevertibleOperation = IToggleOperation | IToggleMoveOperation;
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface ISharedSignal<T extends SerializableTypeForSharedSignal = any> extends ISharedObject<ISharedSignalEvents<T>> {
     // (undocumented)
     notify(metadata?: T): void;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface ISharedSignalEvents<T extends SerializableTypeForSharedSignal> extends ISharedObjectEvents {
     // (undocumented)
     (event: "notify", listener: (value: T, isLocal: boolean) => void): any;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IToggleMoveOperation {
     // (undocumented)
     changedToEntryId: string;
@@ -98,7 +98,7 @@ export interface IToggleMoveOperation {
     type: typeof OperationType.toggleMove;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IToggleOperation {
     // (undocumented)
     entryId: string;
@@ -108,7 +108,7 @@ export interface IToggleOperation {
     type: typeof OperationType.toggle;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export const OperationType: {
     readonly insertEntry: 0;
     readonly deleteEntry: 1;
@@ -117,22 +117,22 @@ export const OperationType: {
     readonly toggleMove: 4;
 };
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export type OperationType = (typeof OperationType)[keyof typeof OperationType];
 
-// @alpha @legacy
+// @beta @legacy
 export type SerializableTypeForSharedArray = boolean | number | string | object | IFluidHandle;
 
-// @alpha @legacy
+// @beta @legacy
 export type SerializableTypeForSharedSignal = boolean | number | string | IFluidHandle | object;
 
-// @alpha @legacy
+// @beta @legacy
 export const SharedArray: ISharedObjectKind<ISharedArray<SerializableTypeForSharedArray>> & SharedObjectKind<ISharedArray<SerializableTypeForSharedArray>>;
 
-// @alpha @legacy
+// @beta @legacy
 export const SharedArrayBuilder: <T extends SerializableTypeForSharedArray>() => ISharedObjectKind<ISharedArray<T>> & SharedObjectKind<ISharedArray<T>>;
 
-// @alpha @legacy
+// @beta @legacy
 export const SharedSignal: ISharedObjectKind<ISharedSignal<any>> & SharedObjectKind<ISharedSignal<any>>;
 
 // (No @packageDocumentation comment for this package)

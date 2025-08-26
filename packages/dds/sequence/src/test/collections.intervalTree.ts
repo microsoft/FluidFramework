@@ -5,14 +5,21 @@
 
 import { strict as assert } from "assert";
 
-import { IntervalTree } from "../intervalTree.js";
-import { IInterval } from "../intervals/index.js";
+import type { PropertySet } from "@fluidframework/merge-tree/internal";
 
-class TestInterval implements IInterval {
+import { IntervalTree } from "../intervalTree.js";
+import { ISerializableInterval } from "../intervals/index.js";
+
+class TestInterval implements ISerializableInterval {
 	constructor(
 		public start: number,
 		public end: number,
 	) {}
+
+	getIntervalId(): string {
+		return "";
+	}
+	properties: PropertySet = {};
 
 	public clone() {
 		return new TestInterval(this.start, this.end);

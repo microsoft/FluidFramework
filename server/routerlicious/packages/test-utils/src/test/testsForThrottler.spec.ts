@@ -4,7 +4,7 @@
  */
 
 import { ThrottlingError } from "@fluidframework/server-services-core";
-import assert from "assert";
+import { strict as assert } from "assert";
 import { TestThrottler } from "../testThrottler";
 
 describe("Test for Test Utils", () => {

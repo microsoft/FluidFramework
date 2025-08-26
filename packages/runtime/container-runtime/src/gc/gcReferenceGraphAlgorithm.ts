@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IGCResult } from "./gcDefinitions.js";
+import type { IGCResult } from "./gcDefinitions.js";
 
 /**
  * Runs garbage collection on the given reference graph.

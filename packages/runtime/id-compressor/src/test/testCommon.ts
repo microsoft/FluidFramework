@@ -5,8 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { IdCompressor } from "../idCompressor.js";
-import { OpSpaceCompressedId, SessionSpaceCompressedId, StableId } from "../index.js";
+import type { IdCompressor } from "../idCompressor.js";
+import type { OpSpaceCompressedId, SessionSpaceCompressedId, StableId } from "../index.js";
 import {
 	numericUuidFromStableId,
 	offsetNumericUuid,

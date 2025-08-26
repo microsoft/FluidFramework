@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { IMergeTreeOp } from "../ops.js";
+import type { IMergeTreeOp } from "../ops.js";
 
 import { TestClient } from "./testClient.js";
 
