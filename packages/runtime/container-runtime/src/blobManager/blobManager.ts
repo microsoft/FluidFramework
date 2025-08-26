@@ -797,7 +797,8 @@ export class BlobManager {
 		// referenced by a distinct local ID. This way they'll be absent from the next summary, and the service
 		// is free to delete them from storage.
 		// WARNING: This can potentially delete identity mappings that are still referenced, if storage deduping
-		// has let us add a local ID -> storage ID mapping that is later deleted.
+		// has let us add a local ID -> storage ID mapping that is later deleted.  AB#47337 tracks this issue
+		// and possible solutions.
 		for (const storageId of maybeUnusedStorageIds) {
 			this.redirectTable.delete(storageId);
 		}
