@@ -648,6 +648,9 @@ export interface SharedTreeFormatOptionsInternal
  * They should all have the same behavior, but may differ in performance and debuggability.
  *
  * Current options are {@link ForestTypeReference}, {@link ForestTypeOptimized} and {@link ForestTypeExpensiveDebug}.
+ * @privateRemarks
+ * Implement using {@link toForestType}.
+ * Consume using {@link buildConfiguredForest}.
  * @sealed @beta
  */
 export interface ForestType extends ErasedType<"ForestType"> {}
