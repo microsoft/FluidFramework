@@ -16,9 +16,12 @@ import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
 
 describe("SharedString rollback with multiple clients (insert/remove)", () => {
-
 	it("Client1 insert + Client2 insert + rollback on Client1", () => {
-		const { dds: client1, containerRuntimeFactory, containerRuntime: cr1 } = setupRollbackTest<SharedStringClass>(
+		const {
+			dds: client1,
+			containerRuntimeFactory,
+			containerRuntime: cr1,
+		} = setupRollbackTest<SharedStringClass>(
 			"shared-string-1",
 			(rt, id) => new SharedStringClass(rt, id, SharedStringFactory.Attributes),
 			{ initialize: (dds) => dds.initializeLocal() },
@@ -71,7 +74,11 @@ describe("SharedString rollback with multiple clients (insert/remove)", () => {
 	});
 
 	it("Client1 remove + Client2 insert + rollback on Client1", () => {
-		const { dds: client1, containerRuntimeFactory, containerRuntime: cr1 } = setupRollbackTest<SharedStringClass>(
+		const {
+			dds: client1,
+			containerRuntimeFactory,
+			containerRuntime: cr1,
+		} = setupRollbackTest<SharedStringClass>(
 			"shared-string-1",
 			(rt, id) => new SharedStringClass(rt, id, SharedStringFactory.Attributes),
 			{ initialize: (dds) => dds.initializeLocal() },
@@ -117,7 +124,11 @@ describe("SharedString rollback with multiple clients (insert/remove)", () => {
 	});
 
 	it("Client1 insert + Client2 remove + rollback on Client1", () => {
-		const { dds: client1, containerRuntimeFactory, containerRuntime: cr1 } = setupRollbackTest<SharedStringClass>(
+		const {
+			dds: client1,
+			containerRuntimeFactory,
+			containerRuntime: cr1,
+		} = setupRollbackTest<SharedStringClass>(
 			"shared-string-1",
 			(rt, id) => new SharedStringClass(rt, id, SharedStringFactory.Attributes),
 			{ initialize: (dds) => dds.initializeLocal() },
@@ -159,7 +170,11 @@ describe("SharedString rollback with multiple clients (insert/remove)", () => {
 	});
 
 	it("Client1 insert + Client2 insert + rollback on Client2", () => {
-		const { dds: client1, containerRuntimeFactory, containerRuntime: cr1 } = setupRollbackTest<SharedStringClass>(
+		const {
+			dds: client1,
+			containerRuntimeFactory,
+			containerRuntime: cr1,
+		} = setupRollbackTest<SharedStringClass>(
 			"shared-string-1",
 			(rt, id) => new SharedStringClass(rt, id, SharedStringFactory.Attributes),
 			{ initialize: (dds) => dds.initializeLocal() },
@@ -213,42 +228,18 @@ describe("SharedString rollback with multiple clients (insert/remove)", () => {
 });
 
 describe("SharedString replaceText with rollback and two clients", () => {
-	// let client1: SharedStringClass;
-	// let client2: SharedStringClass;
-	// let cr1: MockContainerRuntime;
-	// let cr2: MockContainerRuntime;
-	// let containerRuntimeFactory: MockContainerRuntimeFactory;
-
-	// beforeEach(() => {
-	// 	// First client
-	// 	const setup = setupRollbackTest<SharedStringClass>(
-	// 		"shared-string-1",
-	// 		(rt, id) => new SharedStringClass(rt, id, SharedStringFactory.Attributes),
-	// 		{ initialize: (dds) => dds.initializeLocal() },
-	// 	);
-	// 	client1 = setup.dds;
-	// 	containerRuntimeFactory = setup.containerRuntimeFactory;
-	// 	cr1 = setup.containerRuntime;
-
-	// 	// Second client
-	// 	const additional = createAdditionalClient<SharedStringClass>(
-	// 		containerRuntimeFactory,
-	// 		"2",
-	// 		(rt, id) =>
-	// 			new SharedStringClass(rt, `shared-string-${id}`, SharedStringFactory.Attributes),
-	// 		{ initialize: (dds) => dds.initializeLocal() },
-	// 	);
-	// 	client2 = additional.dds;
-	// 	cr2 = additional.containerRuntime;
-	// });
 	it("Client1 replaceText + rollback without remote changes", () => {
-		const { dds: client1, containerRuntimeFactory, containerRuntime: cr1 } = setupRollbackTest<SharedStringClass>(
+		const {
+			dds: client1,
+			containerRuntimeFactory,
+			containerRuntime: cr1,
+		} = setupRollbackTest<SharedStringClass>(
 			"shared-string-1",
 			(rt, id) => new SharedStringClass(rt, id, SharedStringFactory.Attributes),
 			{ initialize: (dds) => dds.initializeLocal() },
 		);
 
-		const { dds: client2, containerRuntime: cr2 } = createAdditionalClient<SharedStringClass>(
+		const { dds: client2 } = createAdditionalClient<SharedStringClass>(
 			containerRuntimeFactory,
 			"2",
 			(rt, id) =>
@@ -273,13 +264,17 @@ describe("SharedString replaceText with rollback and two clients", () => {
 	});
 
 	it("Client1 multiple replaceText + rollback", () => {
-		const { dds: client1, containerRuntimeFactory, containerRuntime: cr1 } = setupRollbackTest<SharedStringClass>(
+		const {
+			dds: client1,
+			containerRuntimeFactory,
+			containerRuntime: cr1,
+		} = setupRollbackTest<SharedStringClass>(
 			"shared-string-1",
 			(rt, id) => new SharedStringClass(rt, id, SharedStringFactory.Attributes),
 			{ initialize: (dds) => dds.initializeLocal() },
 		);
 
-		const { dds: client2, containerRuntime: cr2 } = createAdditionalClient<SharedStringClass>(
+		const { dds: client2 } = createAdditionalClient<SharedStringClass>(
 			containerRuntimeFactory,
 			"2",
 			(rt, id) =>
@@ -303,7 +298,11 @@ describe("SharedString replaceText with rollback and two clients", () => {
 	});
 
 	it("Client1 replaceText with concurrent remote remove", () => {
-		const { dds: client1, containerRuntimeFactory, containerRuntime: cr1 } = setupRollbackTest<SharedStringClass>(
+		const {
+			dds: client1,
+			containerRuntimeFactory,
+			containerRuntime: cr1,
+		} = setupRollbackTest<SharedStringClass>(
 			"shared-string-1",
 			(rt, id) => new SharedStringClass(rt, id, SharedStringFactory.Attributes),
 			{ initialize: (dds) => dds.initializeLocal() },
@@ -344,7 +343,11 @@ describe("SharedString replaceText with rollback and two clients", () => {
 	});
 
 	it("replaceText: Rollback on both clients", () => {
-		const { dds: client1, containerRuntimeFactory, containerRuntime: cr1 } = setupRollbackTest<SharedStringClass>(
+		const {
+			dds: client1,
+			containerRuntimeFactory,
+			containerRuntime: cr1,
+		} = setupRollbackTest<SharedStringClass>(
 			"shared-string-1",
 			(rt, id) => new SharedStringClass(rt, id, SharedStringFactory.Attributes),
 			{ initialize: (dds) => dds.initializeLocal() },
@@ -390,9 +393,12 @@ describe("SharedString replaceText with rollback and two clients", () => {
 });
 
 describe("SharedString annotate with rollback", () => {
-
 	it("can annotate text and rollback without remote changes", () => {
-		const { dds: client1, containerRuntimeFactory, containerRuntime: cr1 } = setupRollbackTest<SharedStringClass>(
+		const {
+			dds: client1,
+			containerRuntimeFactory,
+			containerRuntime: cr1,
+		} = setupRollbackTest<SharedStringClass>(
 			"shared-string-1",
 			(rt, id) => new SharedStringClass(rt, id, SharedStringFactory.Attributes),
 			{ initialize: (dds) => dds.initializeLocal() },
@@ -446,13 +452,17 @@ describe("SharedString annotate with rollback", () => {
 	});
 
 	it("can handle null annotations with rollback", () => {
-		const { dds: client1, containerRuntimeFactory, containerRuntime: cr1 } = setupRollbackTest<SharedStringClass>(
+		const {
+			dds: client1,
+			containerRuntimeFactory,
+			containerRuntime: cr1,
+		} = setupRollbackTest<SharedStringClass>(
 			"shared-string-1",
 			(rt, id) => new SharedStringClass(rt, id, SharedStringFactory.Attributes),
 			{ initialize: (dds) => dds.initializeLocal() },
 		);
 
-		const { dds: client2, containerRuntime: cr2 } = createAdditionalClient<SharedStringClass>(
+		const { dds: client2 } = createAdditionalClient<SharedStringClass>(
 			containerRuntimeFactory,
 			"2",
 			(rt, id) =>
@@ -491,13 +501,17 @@ describe("SharedString annotate with rollback", () => {
 	});
 
 	it("handles multiple annotations with rollback", () => {
-		const { dds: client1, containerRuntimeFactory, containerRuntime: cr1 } = setupRollbackTest<SharedStringClass>(
+		const {
+			dds: client1,
+			containerRuntimeFactory,
+			containerRuntime: cr1,
+		} = setupRollbackTest<SharedStringClass>(
 			"shared-string-1",
 			(rt, id) => new SharedStringClass(rt, id, SharedStringFactory.Attributes),
 			{ initialize: (dds) => dds.initializeLocal() },
 		);
 
-		const { dds: client2, containerRuntime: cr2 } = createAdditionalClient<SharedStringClass>(
+		const { dds: client2 } = createAdditionalClient<SharedStringClass>(
 			containerRuntimeFactory,
 			"2",
 			(rt, id) =>
