@@ -189,15 +189,21 @@ class MessageHandler {
 			);
 			const latestState = workspace.states.latest as LatestRaw<{ value: string }>;
 			latestState.events.on("remoteUpdated", (update) => {
-				if (update.value.value !== "initial") {
-					send({
-						event: "latestValueUpdated",
-						workspaceId,
-						attendeeId: update.attendee.attendeeId,
-						value: update.value.value,
-					});
-				}
+				send({
+					event: "latestValueUpdated",
+					workspaceId,
+					attendeeId: update.attendee.attendeeId,
+					value: update.value.value,
+				});
 			});
+			for (const remote of latestState.getRemotes()) {
+				send({
+					event: "latestValueUpdated",
+					workspaceId,
+					attendeeId: remote.attendee.attendeeId,
+					value: remote.value.value,
+				});
+			}
 		}
 
 		if (latestMap && !workspace.states.latestMap) {
@@ -222,6 +228,17 @@ class MessageHandler {
 					});
 				}
 			});
+			for (const remote of latestMapState.getRemotes()) {
+				for (const [key, valueWithMetadata] of remote.items) {
+					send({
+						event: "latestMapValueUpdated",
+						workspaceId,
+						attendeeId: remote.attendee.attendeeId,
+						key: String(key),
+						value: valueWithMetadata.value.value,
+					});
+				}
+			}
 		}
 
 		this.workspaces.set(workspaceId, workspace);
