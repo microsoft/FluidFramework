@@ -14,7 +14,11 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { DirectoryFactory } from "../../directoryFactory.js";
-import type { ISharedDirectory, IValueChanged } from "../../interfaces.js";
+import type {
+	IDirectoryValueChanged,
+	ISharedDirectory,
+	IValueChanged,
+} from "../../interfaces.js";
 
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 
@@ -932,7 +936,87 @@ describe("SharedDirectory rollback", () => {
 	});
 
 	describe("Events", () => {
+		it("should fire correct events for rollback of local set", () => {
+			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
+				setupRollbackTest();
+
+			let valueChangeCount = 0;
+			sharedDirectory.on("valueChanged", (changed: IDirectoryValueChanged) => {
+				if (valueChangeCount === 0) {
+					assert.deepEqual(changed, { key: "a", previousValue: undefined, path: "/" });
+					assert.equal(sharedDirectory.get("a"), "b");
+				} else if (valueChangeCount === 1) {
+					assert.deepEqual(changed, { key: "a", previousValue: "b", path: "/" });
+					assert.equal(sharedDirectory.get("a"), undefined);
+				} else {
+					assert.fail("Too many value change events");
+				}
+				valueChangeCount++;
+			});
+			sharedDirectory.set("a", "b");
+
+			assert.equal(valueChangeCount, 1, "should have 1 value change event pre-rollback");
+			containerRuntime.rollback?.();
+			assert.equal(valueChangeCount, 2, "should have 2 value change events post-rollback");
+		});
+
 		it("should fire correct events for rollback of local delete", () => {
+			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
+				setupRollbackTest();
+
+			sharedDirectory.set("a", "b");
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			let valueChangeCount = 0;
+			sharedDirectory.on("valueChanged", (changed: IDirectoryValueChanged) => {
+				if (valueChangeCount === 0) {
+					assert.deepEqual(changed, { key: "a", previousValue: "b", path: "/" });
+					assert.equal(sharedDirectory.get("a"), undefined);
+				} else if (valueChangeCount === 1) {
+					assert.deepEqual(changed, { key: "a", previousValue: undefined, path: "/" });
+					assert.equal(sharedDirectory.get("a"), "b");
+				} else {
+					assert.fail("Too many value change events");
+				}
+				valueChangeCount++;
+			});
+			sharedDirectory.delete("a");
+
+			assert.equal(valueChangeCount, 1, "should have 1 value change event pre-rollback");
+			containerRuntime.rollback?.();
+			assert.equal(valueChangeCount, 2, "should have 2 value change events post-rollback");
+		});
+
+		it("should fire correct events for rollback of local clear", () => {
+			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
+				setupRollbackTest();
+
+			sharedDirectory.set("a", "b");
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			let clearCount = 0;
+			let valueChangeCount = 0;
+			sharedDirectory.on("clear", () => {
+				clearCount++;
+			});
+			sharedDirectory.on("valueChanged", (changed: IDirectoryValueChanged) => {
+				assert.deepEqual(changed, { key: "a", previousValue: undefined, path: "/" });
+				assert.equal(sharedDirectory.get("a"), "b");
+				valueChangeCount++;
+			});
+
+			sharedDirectory.clear();
+			assert.equal(clearCount, 1, "should have 1 clear event pre-rollback");
+			assert.equal(valueChangeCount, 0, "should have 0 value change events pre-rollback");
+
+			containerRuntime.rollback?.();
+			assert.equal(clearCount, 1, "should have 1 clear event post-rollback");
+			assert.equal(valueChangeCount, 1, "should have 1 value change event post-rollback");
+		});
+
+		it("should fire correct events for rollback of local subdir delete", () => {
 			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
 				setupRollbackTest();
 
@@ -978,7 +1062,7 @@ describe("SharedDirectory rollback", () => {
 			assert.strictEqual(subdirCreatedCount, 1, "subdirCreated should fire once on rollback");
 		});
 
-		it("should fire correct events for rollback of local delete across nested subdirectories", () => {
+		it("should fire correct events for rollback of local subdir delete across nested subdirectories", () => {
 			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
 				setupRollbackTest();
 
