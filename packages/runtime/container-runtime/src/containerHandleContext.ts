@@ -4,8 +4,8 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IRequest, IResponse } from "@fluidframework/core-interfaces";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import type { IRequest, IResponse } from "@fluidframework/core-interfaces";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils/internal";
 
 export interface IContainerHandleContextRuntime {

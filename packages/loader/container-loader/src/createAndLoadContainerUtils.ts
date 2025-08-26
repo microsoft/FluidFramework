@@ -3,31 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IContainer,
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
-	type IContainerPolicies,
+	IContainerPolicies,
 } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	FluidObject,
 	IConfigProviderBase,
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { IClientDetails } from "@fluidframework/driver-definitions";
-import {
+import type { IClientDetails } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentServiceFactory,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 
 import { Loader } from "./loader.js";
-import { ProtocolHandlerBuilder } from "./protocol.js";
+import type { ProtocolHandlerBuilder } from "./protocol.js";
 
 /**
  * Properties necessary for creating and loading a container.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ICreateAndLoadContainerProps {
 	/**
@@ -89,8 +88,7 @@ export interface ICreateAndLoadContainerProps {
 
 /**
  * Props used to load a container.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProps {
 	/**
@@ -106,8 +104,7 @@ export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProp
 
 /**
  * Props used to create a detached container.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerProps {
 	/**
@@ -118,8 +115,7 @@ export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerPr
 
 /**
  * Props used to rehydrate a detached container.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IRehydrateDetachedContainerProps extends ICreateAndLoadContainerProps {
 	/**
@@ -132,8 +128,7 @@ export interface IRehydrateDetachedContainerProps extends ICreateAndLoadContaine
  * Creates a new container using the specified code details but in an unattached state. While unattached, all
  * updates will only be local until the user explicitly attaches the container to a service provider.
  * @param createDetachedContainerProps - Services and properties necessary for creating detached container.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export async function createDetachedContainer(
 	createDetachedContainerProps: ICreateDetachedContainerProps,
@@ -149,8 +144,7 @@ export async function createDetachedContainer(
  * Creates a new container using the specified snapshot but in an unattached state. While unattached, all
  * updates will only be local until the user explicitly attaches the container to a service provider.
  * @param rehydrateDetachedContainerProps - Services and properties necessary for rehydrating detached container from a previously serialized container's state.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export async function rehydrateDetachedContainer(
 	rehydrateDetachedContainerProps: IRehydrateDetachedContainerProps,
@@ -168,8 +162,7 @@ export async function rehydrateDetachedContainer(
 /**
  * Loads a container with an existing snapshot from the service.
  * @param loadExistingContainerProps - Services and properties necessary for loading an existing container.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export async function loadExistingContainer(
 	loadExistingContainerProps: ILoadExistingContainerProps,

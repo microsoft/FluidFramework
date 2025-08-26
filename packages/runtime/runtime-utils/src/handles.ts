@@ -57,8 +57,7 @@ export const isFluidHandleInternalPayloadPending = (
  * @privateRemarks
  * This should be true for locally-created BlobHandles currently. When IFluidHandlePayloadPending is merged
  * to IFluidHandle, this type guard will no longer be necessary.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const isFluidHandlePayloadPending = <T>(
 	handle: IFluidHandle<T>,
@@ -68,8 +67,7 @@ export const isFluidHandlePayloadPending = <T>(
 
 /**
  * Check if the handle is an ILocalFluidHandle.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const isLocalFluidHandle = <T>(
 	handle: IFluidHandle<T>,
@@ -148,8 +146,7 @@ export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean {
 
 /**
  * Downcast an IFluidHandle to an IFluidHandleInternal.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T> {
 	if (!(fluidHandleSymbol in handle) || !(fluidHandleSymbol in handle[fluidHandleSymbol])) {
@@ -168,8 +165,7 @@ export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleI
 
 /**
  * Type erase IFluidHandleInternal for use with {@link @fluidframework/core-interfaces#fluidHandleSymbol}.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function toFluidHandleErased<T>(
 	handle: IFluidHandleInternal<T>,
@@ -180,8 +176,7 @@ export function toFluidHandleErased<T>(
 
 /**
  * Base class which can be uses to assist implementing IFluidHandleInternal.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
 	public abstract absolutePath: string;

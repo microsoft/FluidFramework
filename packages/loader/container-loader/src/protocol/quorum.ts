@@ -5,8 +5,8 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IQuorumClients, ISequencedClient } from "@fluidframework/driver-definitions";
-import {
+import type { IQuorumClients, ISequencedClient } from "@fluidframework/driver-definitions";
+import type {
 	ISequencedDocumentMessage,
 	ICommittedProposal,
 	IQuorum,
@@ -30,15 +30,13 @@ class PendingProposal implements ISequencedProposal {
 
 /**
  * Snapshot format for a QuorumClients
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type QuorumClientsSnapshot = [string, ISequencedClient][];
 
 /**
  * Snapshot format for a QuorumProposals
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type QuorumProposalsSnapshot = {
@@ -48,8 +46,7 @@ export type QuorumProposalsSnapshot = {
 
 /**
  * Snapshot format for a Quorum
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IQuorumSnapshot {
 	members: QuorumClientsSnapshot;

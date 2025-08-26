@@ -9,7 +9,7 @@ import {
 	createInsertOnlyAttributionPolicy,
 	createPropertyTrackingAttributionPolicyFactory,
 } from "../attributionPolicy.js";
-import { IMergeTreeOptionsInternal } from "../mergeTree.js";
+import type { IMergeTreeOptionsInternal } from "../mergeTree.js";
 import { SnapshotV1 } from "../snapshotV1.js";
 
 import { TestString, loadSnapshot } from "./snapshot.utils.js";

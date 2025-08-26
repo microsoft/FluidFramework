@@ -5,14 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
-import { ISequencedClient } from "@fluidframework/driver-definitions";
+import type { ISequencedClient } from "@fluidframework/driver-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	IOrderedClientCollection,
-	IOrderedClientElection,
-	ISerializedElection,
-	ITrackedClient,
+	type IOrderedClientCollection,
+	type IOrderedClientElection,
+	type ISerializedElection,
+	type ITrackedClient,
 	OrderedClientCollection,
 	OrderedClientElection,
 } from "../../summary/index.js";

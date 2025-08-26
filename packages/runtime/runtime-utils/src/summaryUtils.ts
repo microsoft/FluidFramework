@@ -168,8 +168,7 @@ export function addSummarizeResultToSummary(
 
 /**
  * An object who's properties are used to initialize a {@link SummaryTreeBuilder}
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface SummaryTreeBuilderParams {
 	/**
@@ -181,8 +180,7 @@ export interface SummaryTreeBuilderParams {
 /**
  * A helper class for building summary trees.
  * @remarks Uses the builder pattern.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 	private attachmentCounter: number = 0;
@@ -287,8 +285,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
  * Converts snapshot ITree to ISummaryTree format and tracks stats.
  * @param snapshot - snapshot in ITree format
  * @param fullTree - true to never use handles, even if id is specified
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function convertToSummaryTreeWithStats(
 	snapshot: ITree,

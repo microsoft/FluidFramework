@@ -4,30 +4,29 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import {
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type {
 	IDisposable,
 	IEvent,
-	type ITelemetryBaseLogger,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
-	IDocumentMessage,
-	ISummaryAck,
-	ISummaryContent,
-	ISummaryNack,
+	type IDocumentMessage,
+	type ISummaryAck,
+	type ISummaryContent,
+	type ISummaryNack,
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Interface for summary op messages with typed contents.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 	type: MessageType.Summarize;
@@ -36,8 +35,7 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 
 /**
  * Interface for summary ack messages with typed contents.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryAckMessage extends ISequencedDocumentMessage {
 	type: MessageType.SummaryAck;
@@ -46,8 +44,7 @@ export interface ISummaryAckMessage extends ISequencedDocumentMessage {
 
 /**
  * Interface for summary nack messages with typed contents.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {
 	type: MessageType.SummaryNack;
@@ -57,8 +54,7 @@ export interface ISummaryNackMessage extends ISequencedDocumentMessage {
 /**
  * A single summary which can be tracked as it goes through its life cycle.
  * The life cycle is: Local to Broadcast to Acked/Nacked.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummary {
 	readonly clientId: string;
@@ -69,8 +65,7 @@ export interface ISummary {
 
 /**
  * A single summary which has already been acked by the server.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IAckedSummary {
 	readonly summaryOp: ISummaryOpMessage;
@@ -157,8 +152,7 @@ class Summary implements ISummary {
 
 /**
  * Watches summaries created by a specific client.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IClientSummaryWatcher extends IDisposable {
 	watchSummary(clientSequenceNumber: number): ISummary;
@@ -226,8 +220,7 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
 	}
 }
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type OpActionEventName =
 	| MessageType.Summarize
@@ -236,14 +229,12 @@ export type OpActionEventName =
 	| "default";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryCollectionOpEvents extends IEvent {
 	(event: OpActionEventName, listener: OpActionEventListener);
@@ -253,8 +244,7 @@ export interface ISummaryCollectionOpEvents extends IEvent {
  * Data structure that looks at the op stream to track summaries as they
  * are broadcast, acked and nacked.
  * It provides functionality for watching specific summaries.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
 	// key: clientId

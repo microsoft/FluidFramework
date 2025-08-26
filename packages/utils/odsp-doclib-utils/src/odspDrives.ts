@@ -211,8 +211,7 @@ async function getDriveItem(
 
 // eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export async function getDriveId(
 	server: string,

@@ -29,7 +29,9 @@ import {
 	parseHandles,
 } from "@fluidframework/shared-object-base/internal";
 import {
+	createChildMonitoringContext,
 	type ITelemetryLoggerExt,
+	type MonitoringContext,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 import path from "path-browserify";
@@ -1182,6 +1184,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public readonly localCreationSeqTracker: DirectoryCreationTracker;
 
+	private readonly mc: MonitoringContext;
+
 	/**
 	 * Constructor.
 	 * @param sequenceNumber - Message seq number at which this was created.
@@ -1198,11 +1202,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly serializer: IFluidSerializer,
 		public readonly absolutePath: string,
-		private readonly logger: ITelemetryLoggerExt,
+		logger: ITelemetryLoggerExt,
 	) {
 		super();
 		this.localCreationSeqTracker = new DirectoryCreationTracker();
 		this.ackedCreationSeqTracker = new DirectoryCreationTracker();
+		this.mc = createChildMonitoringContext({ logger, namespace: "Directory" });
 	}
 
 	public dispose(error?: Error): void {
@@ -1256,8 +1261,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 		const previousOptimisticLocalValue = this.getOptimisticValue(key);
 
-		// Create a local value and serialize it.
-		bindHandles(value, this.serializer, this.directory.handle);
+		const detachedBind =
+			this.mc.config.getBoolean("Fluid.Directory.AllowDetachedResolve") ?? false;
+		if (detachedBind) {
+			// Create a local value and serialize it.
+			// AB#47081: This will be removed once we can validate that it is no longer needed.
+			bindHandles(value, this.serializer, this.directory.handle);
+		}
 
 		// If we are not attached, don't submit the op.
 		if (!this.directory.isAttached()) {
@@ -1447,7 +1457,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// It's not currently clear how to reach this state, so log some diagnostics to help understand the issue.
 			// This whole block should eventually be replaced by an assert that the two sizes align.
 			if (!hasLoggedDirectoryInconsistency) {
-				this.logger.sendTelemetryEvent({
+				this.mc.logger.sendTelemetryEvent({
 					eventName: "inconsistentSubdirectoryOrdering",
 					localKeyCount: this.localCreationSeqTracker.size,
 					ackedKeyCount: this.ackedCreationSeqTracker.size,
@@ -1597,7 +1607,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	): void {
 		this.throwIfDisposed();
 		for (const [key, localValue] of this.internalIterator()) {
-			callback((localValue as { value: unknown }).value, key, this);
+			callback(localValue, key, this);
 		}
 	}
 
@@ -2552,7 +2562,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				this.runtime,
 				this.serializer,
 				absolutePath,
-				this.logger,
+				this.mc.logger,
 			);
 			/**
 			 * Store the sequence numbers of newly created subdirectory to the proper creation tracker, based

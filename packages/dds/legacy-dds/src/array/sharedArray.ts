@@ -426,7 +426,24 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				}
 				break;
 			}
-			case OperationType.moveEntry:
+			case OperationType.moveEntry: {
+				const { entryId: oldEntryId, changedToEntryId: newEntryId } = arrayOp;
+				if (this.getEntryForId(newEntryId).isDeleted) {
+					return;
+				}
+				this.updateLiveEntry(newEntryId, oldEntryId);
+				const inputEntry = this.getEntryForId(oldEntryId);
+				inputEntry.prevEntryId = undefined;
+				inputEntry.nextEntryId = undefined;
+				inputEntry.isLocalPendingMove = 0;
+				const moveOp: IMoveOperation = {
+					type: OperationType.moveEntry,
+					entryId: newEntryId,
+					changedToEntryId: oldEntryId,
+				};
+				this.emitValueChangedEvent(moveOp, true /* isLocal */);
+				break;
+			}
 			case OperationType.toggle:
 			case OperationType.toggleMove: {
 				throw new Error(`Rollback not implemented for ${arrayOp.type} operations`);

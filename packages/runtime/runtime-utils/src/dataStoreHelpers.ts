@@ -95,7 +95,7 @@ export function responseToException(response: IResponse, request: IRequest): Err
  * @param request - The request that resulted in the 404 response
  * @returns An {@link @fluidframework/core-interfaces#IResponse} with 404 status code.
  * @legacy
- * @alpha
+ * @beta
  */
 export const create404Response = (request: IRequest): IResponse =>
 	createResponseError(404, "not found", request);
