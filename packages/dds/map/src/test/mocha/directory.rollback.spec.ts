@@ -933,6 +933,74 @@ describe("SharedDirectory rollback", () => {
 				"Subdirectory entries on remote client should match expected values post-rollback",
 			);
 		});
+
+		it("should maintain correct subdirectory iteration order after rollback", () => {
+			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
+				setupRollbackTest();
+			const { sharedDirectory: sharedDirectory2, containerRuntime: containerRuntime2 } =
+				createAdditionalClient(containerRuntimeFactory);
+
+			sharedDirectory.createSubDirectory("subdir1");
+			sharedDirectory.createSubDirectory("subdir2");
+			sharedDirectory.createSubDirectory("subdir3");
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			const initialOrder = [...sharedDirectory.subdirectories()].map(([name]) => name);
+			assert.deepStrictEqual(
+				initialOrder,
+				["subdir1", "subdir2", "subdir3"],
+				"Initial order should be preserved",
+			);
+
+			sharedDirectory.deleteSubDirectory("subdir2");
+			sharedDirectory.createSubDirectory("subdir4");
+			sharedDirectory.createSubDirectory("subdir5");
+
+			// Remote subdir create
+			sharedDirectory2.createSubDirectory("subdir6");
+			containerRuntime2.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			const preRollbackOrderLocal = [...sharedDirectory.subdirectories()].map(
+				([name]) => name,
+			);
+			const preRollbackOrderRemote = [...sharedDirectory2.subdirectories()].map(
+				([name]) => name,
+			);
+			assert.deepStrictEqual(
+				preRollbackOrderLocal,
+				["subdir1", "subdir3", "subdir6", "subdir4", "subdir5"],
+				"Pre-rollback order should have remote (ack'd) subdir ordered before local pending subdirs",
+			);
+			assert.deepStrictEqual(
+				preRollbackOrderRemote,
+				["subdir1", "subdir2", "subdir3", "subdir6"],
+				"Pre-rollback order for remote should not have other client's local subdirs",
+			);
+
+			containerRuntime.rollback?.();
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			const postRollbackOrderLocal = [...sharedDirectory.subdirectories()].map(
+				([name]) => name,
+			);
+			const postRollbackOrderRemote = [...sharedDirectory2.subdirectories()].map(
+				([name]) => name,
+			);
+			assert.deepStrictEqual(
+				postRollbackOrderLocal,
+				["subdir1", "subdir2", "subdir3", "subdir6"],
+				"Post-rollback order should not have rolled back subdirs (local)",
+			);
+
+			assert.deepStrictEqual(
+				postRollbackOrderRemote,
+				["subdir1", "subdir2", "subdir3", "subdir6"],
+				"Post-rollback order should not have rolled back subdirs (remote)",
+			);
+		});
 	});
 
 	describe("Events", () => {
