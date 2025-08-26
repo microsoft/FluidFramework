@@ -88,18 +88,17 @@ const summarizeV1 = (redirectTable: Map<string, string>): ISummaryTreeWithStats 
 		// and therefore should not be GC'd.
 		builder.addAttachment(storageId);
 	}
-	if (redirectTable.size > 0) {
-		builder.addBlob(
-			redirectTableBlobName,
-			JSON.stringify(
-				// Exclude identity mappings from the redirectTable summary. Note that
-				// the storageIds of the identity mappings are still included in the attachments
-				// above, so we expect these identity mappings will be recreated at load
-				// time in toRedirectTable even if there is no non-identity mapping in
-				// the redirectTable.
-				[...redirectTable.entries()].filter(([localId, storageId]) => localId !== storageId),
-			),
-		);
+
+	// Exclude identity mappings from the redirectTable summary. Note that
+	// the storageIds of the identity mappings are still included in the attachments
+	// above, so we expect these identity mappings will be recreated at load
+	// time in toRedirectTable even if there is no non-identity mapping in
+	// the redirectTable.
+	const nonIdentityRedirectTableEntries = [...redirectTable.entries()].filter(
+		([localId, storageId]) => localId !== storageId,
+	);
+	if (nonIdentityRedirectTableEntries.length > 0) {
+		builder.addBlob(redirectTableBlobName, JSON.stringify(nonIdentityRedirectTableEntries));
 	}
 
 	return builder.getSummaryTree();

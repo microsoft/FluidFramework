@@ -756,6 +756,45 @@ for (const createBlobPayloadPending of [false, true]) {
 			assert.strictEqual(summaryData2.redirectTable?.length, 3);
 		});
 
+		it("can get blobs by requesting their storage ID", async () => {
+			await runtime.attach();
+			await runtime.connect();
+
+			const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+			await runtime.processAll();
+
+			await assert.doesNotReject(handle);
+
+			// Using the summary as a simple way to grab the storage ID of the blob we just created
+			const {
+				redirectTable,
+				ids: [storageId],
+			} = validateSummary(runtime);
+			assert.strictEqual(redirectTable?.length, 1);
+			assert.strictEqual(typeof storageId, "string", "Expect storage ID to be in the summary");
+
+			const blob = await runtime.blobManager.getBlob(storageId, createBlobPayloadPending);
+
+			const runtime2 = new MockRuntime(
+				mc,
+				createBlobPayloadPending,
+				// Loading a second runtime with just the blob attachments and no redirect table
+				// lets us verify that we still correctly reconstruct the identity mapping during load.
+				{ ids: [storageId] },
+				true,
+			);
+			(runtime2.storage as unknown as BaseMockBlobStorage).blobs.set(storageId, blob);
+			await assert.doesNotReject(
+				runtime2.blobManager.getBlob(storageId, createBlobPayloadPending),
+			);
+			const {
+				redirectTable: redirectTable2,
+				ids: [storageId2],
+			} = validateSummary(runtime2);
+			assert.strictEqual(redirectTable2, undefined);
+			assert.strictEqual(storageId2, storageId, "Expect storage ID to be in the summary");
+		});
+
 		it("handles duplicate remote upload", async () => {
 			await runtime.attach();
 			await runtime.connect();

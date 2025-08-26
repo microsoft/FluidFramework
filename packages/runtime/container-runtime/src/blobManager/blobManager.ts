@@ -676,6 +676,8 @@ export class BlobManager {
 		}
 
 		this.setRedirection(localId, blobId);
+		// set identity (id -> id) entry
+		this.setRedirection(blobId, blobId);
 
 		if (local) {
 			const waitingBlobs = this.opsInFlight.get(blobId);
@@ -722,10 +724,14 @@ export class BlobManager {
 	 */
 	public getGCData(fullGC: boolean = false): IGarbageCollectionData {
 		const gcData: IGarbageCollectionData = { gcNodes: {} };
-		for (const localId of this.redirectTable.keys()) {
-			// The outbound routes are empty because a blob node cannot reference other nodes. It can only be referenced
-			// by adding its handle to a referenced DDS.
-			gcData.gcNodes[getGCNodePathFromBlobId(localId)] = [];
+		for (const [localId, storageId] of this.redirectTable) {
+			// Don't report the identity mappings to GC - these exist to service old handles that referenced the storage
+			// IDs directly. We'll implicitly clean them up if all of their localId references get GC'd first.
+			if (localId !== storageId) {
+				// The outbound routes are empty because a blob node cannot reference other nodes. It can only be referenced
+				// by adding its handle to a referenced DDS.
+				gcData.gcNodes[getGCNodePathFromBlobId(localId)] = [];
+			}
 		}
 		return gcData;
 	}
@@ -752,13 +758,17 @@ export class BlobManager {
 	 * some time in the future.
 	 */
 	private deleteBlobsFromRedirectTable(blobRoutes: readonly string[]): void {
+		// maybeUnusedStorageIds is used to compute the set of storage IDs that *used to have a local ID* (not
+		// just the identity mapping), but that local ID is being deleted.
+		const maybeUnusedStorageIds: Set<string> = new Set();
 		for (const route of blobRoutes) {
 			const blobId = getBlobIdFromGCNodePath(route);
 			// If the blob hasn't already been deleted, log an error because this should never happen.
 			// If the blob has already been deleted, log a telemetry event. This can happen because multiple GC
 			// sweep ops can contain the same data store. It would be interesting to track how often this happens.
 			const alreadyDeleted = this.isBlobDeleted(route);
-			if (!this.redirectTable.has(blobId)) {
+			const storageId = this.redirectTable.get(blobId);
+			if (storageId === undefined) {
 				this.mc.logger.sendTelemetryEvent({
 					eventName: "DeletedAttachmentBlobNotFound",
 					category: alreadyDeleted ? "generic" : "error",
@@ -767,7 +777,24 @@ export class BlobManager {
 				});
 				continue;
 			}
+			maybeUnusedStorageIds.add(storageId);
 			this.redirectTable.delete(blobId);
+		}
+
+		// Remove any storage IDs that still have local IDs referring to them besides the identity mapping.
+		for (const [localId, storageId] of this.redirectTable) {
+			if (localId !== storageId) {
+				maybeUnusedStorageIds.delete(storageId);
+			}
+		}
+
+		// Now delete any identity mappings (storage ID -> storage ID) from the redirect table that used to be
+		// referenced by a distinct local ID. This way they'll be absent from the next summary, and the service
+		// is free to delete them from storage.
+		// NOTE: This can potentially delete identity mappings that are still referenced, if storage deduping
+		// has let us add a local ID -> storage ID mapping that is later deleted.
+		for (const storageId of maybeUnusedStorageIds) {
+			this.redirectTable.delete(storageId);
 		}
 	}
 
@@ -814,10 +841,16 @@ export class BlobManager {
 			new Set(this.redirectTable.values()).size === detachedStorageTable.size,
 			0x391 /* Redirect table size must match BlobManager's local ID count */,
 		);
-		for (const [localId, detachedStorageId] of this.redirectTable) {
+		// Taking a snapshot of the redirect table entries before iterating, because
+		// we will be adding identity mappings to the the redirect table as we iterate
+		// and we don't want to include those in the iteration.
+		const redirectTableEntries = [...this.redirectTable.entries()];
+		for (const [localId, detachedStorageId] of redirectTableEntries) {
 			const newStorageId = detachedStorageTable.get(detachedStorageId);
 			assert(newStorageId !== undefined, "Couldn't find a matching storage ID");
-			this.redirectTable.set(localId, newStorageId);
+			this.setRedirection(localId, newStorageId);
+			// set identity (id -> id) entry
+			this.setRedirection(newStorageId, newStorageId);
 		}
 	}
 
