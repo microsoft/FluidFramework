@@ -5186,7 +5186,7 @@ export class ContainerRuntime
 		return entry.interface as T;
 	}
 
-	public getMinVersionForCollab(): MinimumVersionForCollab {
+	public getMinVersionForCollab?(): MinimumVersionForCollab {
 		return semanticVersionToMinimumVersionForCollab(this.minVersionForCollab);
 	}
 

@@ -309,7 +309,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	/**
 	 * Gets the minVersionForCollab passed into the ContainerRuntime.
 	 */
-	getMinVersionForCollab(): MinimumVersionForCollab;
+	getMinVersionForCollab?(): MinimumVersionForCollab;
 }
 
 /**
@@ -747,7 +747,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	/**
 	 * Gets the minVersionForCollab passed into the ContainerRuntime.
 	 */
-	getMinVersionForCollab(): MinimumVersionForCollab;
+	getMinVersionForCollab?(): MinimumVersionForCollab | undefined;
 }
 
 /**

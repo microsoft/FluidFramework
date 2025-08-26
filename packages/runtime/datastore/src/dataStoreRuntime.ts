@@ -296,7 +296,7 @@ export class FluidDataStoreRuntime
 	/**
 	 * @see IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
 	 */
-	public readonly minVersionForCollab: MinimumVersionForCollab;
+	public readonly minVersionForCollab: MinimumVersionForCollab | undefined;
 
 	/**
 	 * Create an instance of a DataStore runtime.
@@ -448,7 +448,7 @@ export class FluidDataStoreRuntime
 		// eslint-disable-next-line no-void
 		void [this.inStagingMode, this.isDirty];
 
-		this.minVersionForCollab = this.dataStoreContext.getMinVersionForCollab();
+		this.minVersionForCollab = this.dataStoreContext.getMinVersionForCollab?.();
 	}
 
 	/**

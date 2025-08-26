@@ -294,7 +294,7 @@ export interface KernelArgs {
 	/**
 	 * The minVersionForCollab specified when instantiating the ContainerRuntime.
 	 */
-	readonly minVersionForCollab: MinimumVersionForCollab;
+	readonly minVersionForCollab: MinimumVersionForCollab | undefined;
 }
 
 /**

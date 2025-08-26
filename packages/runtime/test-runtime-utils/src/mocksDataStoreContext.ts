@@ -161,7 +161,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
-	public getMinVersionForCollab(): MinimumVersionForCollab {
+	public getMinVersionForCollab?(): MinimumVersionForCollab {
 		return this.minVersionForCollab;
 	}
 }

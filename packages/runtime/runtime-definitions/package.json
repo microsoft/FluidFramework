@@ -107,17 +107,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"Interface_IFluidDataStoreContext": {
-				"forwardCompat": false
-			},
-			"Interface_IFluidDataStoreContextDetached": {
-				"forwardCompat": false
-			},
-			"Interface_IFluidParentContext": {
-				"forwardCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "legacy"
 	}
 }
