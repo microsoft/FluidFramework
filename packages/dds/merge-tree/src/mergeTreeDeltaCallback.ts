@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import { ISegment } from "./mergeTreeNodes.js";
+import type { ISegment } from "./mergeTreeNodes.js";
 // eslint-disable-next-line import/no-deprecated
-import { IMergeTreeGroupMsg, IMergeTreeOp, MergeTreeDeltaType } from "./ops.js";
-import { PropertySet } from "./properties.js";
+import type { IMergeTreeGroupMsg, IMergeTreeOp, MergeTreeDeltaType } from "./ops.js";
+import type { PropertySet } from "./properties.js";
 
 /**
  * @legacy @beta

@@ -6,12 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import {
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type {
 	IContainerRuntimeEvents,
-	type ISummarizeEventProps,
+	ISummarizeEventProps,
 } from "@fluidframework/container-runtime-definitions/internal";
-import {
+import type {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryBaseEvent,
@@ -19,12 +19,12 @@ import {
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
-	IDocumentMessage,
-	ISummaryAck,
-	ISummaryNack,
-	ISummaryProposal,
+	type IDocumentMessage,
+	type ISummaryAck,
+	type ISummaryNack,
+	type ISummaryProposal,
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
@@ -32,12 +32,12 @@ import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
 import {
-	IGeneratedSummaryStats,
-	ISummarizeHeuristicData,
-	ISummarizerRuntime,
-	ISummaryCancellationToken,
+	type IGeneratedSummaryStats,
+	type ISummarizeHeuristicData,
+	type ISummarizerRuntime,
+	type ISummaryCancellationToken,
 	RetriableSummaryError,
-	SubmitSummaryResult,
+	type SubmitSummaryResult,
 	SummarizeHeuristicData,
 	SummaryCollection,
 	getFailMessage,

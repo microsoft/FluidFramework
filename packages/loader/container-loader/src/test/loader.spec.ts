@@ -8,10 +8,10 @@ import { strict as assert } from "node:assert";
 import type { IProvideLayerCompatDetails } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { FluidErrorTypes, type ConfigTypes } from "@fluidframework/core-interfaces/internal";
-import {
-	type IDocumentServiceFactory,
-	type IResolvedUrl,
-	type IUrlResolver,
+import type {
+	IDocumentServiceFactory,
+	IResolvedUrl,
+	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	isFluidError,

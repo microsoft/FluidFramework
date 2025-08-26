@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { LocalReferencePosition } from "./localReference.js";
-import { ISegment } from "./mergeTreeNodes.js";
+import type { LocalReferencePosition } from "./localReference.js";
+import type { ISegment } from "./mergeTreeNodes.js";
 import { SortedSegmentSet } from "./sortedSegmentSet.js";
 
 /**

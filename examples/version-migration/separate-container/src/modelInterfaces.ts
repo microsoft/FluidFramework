@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "@fluid-example/example-utils";
-import { SharedString } from "@fluidframework/sequence/legacy";
+import type { EventEmitter } from "@fluid-example/example-utils";
+import type { SharedString } from "@fluidframework/sequence/legacy";
 
 /**
  * For demo purposes this is a super-simple interface, but in a real scenario this should have all relevant surface

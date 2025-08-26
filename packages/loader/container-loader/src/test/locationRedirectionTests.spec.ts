@@ -5,10 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import type { IRequest } from "@fluidframework/core-interfaces";
 import {
-	IResolvedUrl,
-	IUrlResolver,
+	type IResolvedUrl,
+	type IUrlResolver,
 	DriverErrorTypes,
 } from "@fluidframework/driver-definitions/internal";
 

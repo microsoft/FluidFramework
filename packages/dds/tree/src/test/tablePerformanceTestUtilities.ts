@@ -17,20 +17,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { CommitKind, type Revertible } from "../core/index.js";
 import { strict as assert } from "node:assert";
-
-/**
- * Define a return type for table tree creation.
- */
-export interface TableTreeDefinition {
-	/**
-	 * The table tree instance.
-	 */
-	table: TreeNodeFromImplicitAllowedTypes<typeof Table>;
-	/**
-	 * The tree view associated with the table.
-	 */
-	treeView: TreeView<typeof Table>;
-}
+import { Tree } from "../shared-tree/index.js";
 
 /**
  * Factory for creating a table tree schema.
@@ -94,10 +81,22 @@ export interface TableTreeOptions {
  *
  * @returns A fully initialized table tree definition, including table instance, undo/redo stacks, and a cleanup function.
  */
-export function createTableTree({
-	tableSize,
-	initialCellValue,
-}: TableTreeOptions): TableTreeDefinition {
+export function createTableTree({ tableSize, initialCellValue }: TableTreeOptions): {
+	/**
+	 * The initialized table tree.
+	 */
+	table: TreeNodeFromImplicitAllowedTypes<typeof Table>;
+
+	/**
+	 * The undo/redo stack manager for the table.
+	 */
+	undoRedoStack: UndoRedoManager;
+
+	/**
+	 * Cleanup function to run after the test to close the table and release resources.
+	 */
+	cleanUp: () => void;
+} {
 	const sharedTreeFactory = DefaultTestSharedTreeKind.getFactory();
 	const runtime = new MockFluidDataStoreRuntime({
 		idCompressor: createIdCompressor(),
@@ -140,9 +139,22 @@ export function createTableTree({
 		}
 	}
 
+	// Configure event listeners
+	const cleanUpEventHandler = Tree.on(table, "treeChanged", () => {});
+
+	// Configure undo/redo
+	const undoRedoStack = new UndoRedoManager(treeView);
+
+	const cleanUp = (): void => {
+		cleanUpEventHandler();
+		undoRedoStack.dispose();
+		treeView.dispose();
+	};
+
 	return {
 		table,
-		treeView,
+		undoRedoStack,
+		cleanUp,
 	};
 }
 
@@ -216,4 +228,29 @@ export class UndoRedoManager {
 		// Unsubscribe from tree events
 		this.unsubscribeFromTreeEvents();
 	}
+}
+
+/**
+ * Benchmark test options.
+ */
+export interface TableBenchmarkOptions extends TableTreeOptions {
+	/**
+	 * The title of the benchmark test.
+	 */
+	readonly title: string;
+
+	/**
+	 * Optional action to perform on the matrix before the operation being measured.
+	 */
+	readonly beforeOperation?: (table: Table, undoRedoStack: UndoRedoManager) => void;
+
+	/**
+	 * The operation to be measured.
+	 */
+	readonly operation: (table: Table, undoRedo: UndoRedoManager) => void;
+
+	/**
+	 * Optional action to perform on the matrix after the operation being measured.
+	 */
+	readonly afterOperation?: (table: Table, undoRedoStack: UndoRedoManager) => void;
 }
