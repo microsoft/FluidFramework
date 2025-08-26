@@ -309,7 +309,7 @@ describe(`Presence with AzureClient`, () => {
 				});
 				const updateEvents = await updateEventsPromise;
 
-				// Verify all events are from the expected attendee
+				// Check all events are from the expected attendee
 				for (const updateEvent of updateEvents) {
 					assert.strictEqual(updateEvent.attendeeId, containerCreatorAttendeeId);
 					assert.strictEqual(updateEvent.key, testKey);
