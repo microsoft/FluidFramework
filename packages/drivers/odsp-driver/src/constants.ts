@@ -5,12 +5,12 @@
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export const OdcApiSiteOrigin = "https://my.microsoftpersonalcontent.com";
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export const OdcFileSiteOrigin = "https://1drv.ms";

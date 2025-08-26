@@ -24,7 +24,7 @@ const additionalContextParamName = "x";
  * @param locator - describes Fluid data store locator info to be encoded
  * @returns string representing encoded Fluid data store locator info
  * @legacy
- * @alpha
+ * @beta
  */
 export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocator): string {
 	const siteUrl = new URL(locator.siteUrl);
@@ -115,7 +115,7 @@ function decodeOdspFluidDataStoreLocator(
  * This parameter is provided by host in the resolve request and it contains information about the file
  * like driveId, itemId, siteUrl, datastorePath, packageName etc.
  * @legacy
- * @alpha
+ * @beta
  */
 export const locatorQueryParamName = "nav";
 
@@ -124,7 +124,7 @@ export const locatorQueryParamName = "nav";
  * @param url - file url in ODSP format (can be either canonical or share link)
  * @param locator - object representing Fluid data store location in ODSP terms
  * @legacy
- * @alpha
+ * @beta
  */
 export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocator): void {
 	const encodedLocatorValue = encodeOdspFluidDataStoreLocator(locator);
@@ -140,7 +140,7 @@ export function storeLocatorInOdspUrl(url: URL, locator: OdspFluidDataStoreLocat
  * @param requireFluidSignature - flag representing if the Fluid signature is expected in the url, default true
  * @returns object representing Fluid data store location in ODSP terms
  * @legacy
- * @alpha
+ * @beta
  */
 export function getLocatorFromOdspUrl(
 	url: URL,

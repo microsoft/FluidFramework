@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha @legacy
+// @beta @legacy
 export function createChildLogger(props?: {
     logger?: ITelemetryBaseLogger;
     namespace?: string;
@@ -36,10 +36,10 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
     sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export type ITelemetryLoggerPropertyBag = Record<string, TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes)>;
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface ITelemetryLoggerPropertyBags {
     // (undocumented)
     all?: ITelemetryLoggerPropertyBag;
@@ -61,7 +61,7 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
 // @beta @legacy
 export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean)[] | Record<string, string | number | boolean | undefined | (string | number | boolean)[]>;
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export type TelemetryEventPropertyTypes = ITelemetryPropertiesExt[string];
 
 // (No @packageDocumentation comment for this package)

@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha @legacy
+// @beta @legacy
 export function generateToken(tenantId: string, key: string, scopes: ScopeType[], documentId?: string, user?: IUser, lifetime?: number, ver?: string): string;
 
 export { IUser }

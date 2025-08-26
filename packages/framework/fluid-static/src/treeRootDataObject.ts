@@ -200,7 +200,7 @@ class TreeRootDataObjectFactory extends TreeDataObjectFactory<TreeRootDataObject
  * The root data object's registry and shared objects are configured based on the provided
  * SharedTree and optionally data store registry.
  *
- * @legacy @alpha
+ * @legacy @beta
  */
 export function createTreeContainerRuntimeFactory(props: {
 	/**
