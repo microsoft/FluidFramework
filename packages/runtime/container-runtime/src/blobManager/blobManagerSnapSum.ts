@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IContainerContext } from "@fluidframework/container-definitions/internal";
+import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
@@ -62,7 +62,18 @@ export const toRedirectTable = (
 		count: blobManagerLoadInfo.ids?.length ?? 0,
 		redirectTable: blobManagerLoadInfo.redirectTable?.length,
 	});
-	return new Map<string, string>(blobManagerLoadInfo.redirectTable);
+	const redirectTable = new Map<string, string>(blobManagerLoadInfo.redirectTable);
+	if (blobManagerLoadInfo.ids !== undefined) {
+		for (const id of blobManagerLoadInfo.ids) {
+			// Older versions of the runtime used the storage ID directly in the handle,
+			// rather than routing through the redirectTable. To support old handles that
+			// were created in this way but unify handling through the redirectTable, we
+			// add identity mappings to the redirect table at load. These identity entries
+			// will be excluded during summarization.
+			redirectTable.set(id, id);
+		}
+	}
+	return redirectTable;
 };
 
 export const summarizeBlobManagerState = (
@@ -78,7 +89,17 @@ const summarizeV1 = (redirectTable: Map<string, string>): ISummaryTreeWithStats 
 		builder.addAttachment(storageId);
 	}
 	if (redirectTable.size > 0) {
-		builder.addBlob(redirectTableBlobName, JSON.stringify([...redirectTable.entries()]));
+		builder.addBlob(
+			redirectTableBlobName,
+			JSON.stringify(
+				// Exclude identity mappings from the redirectTable summary. Note that
+				// the storageIds of the identity mappings are still included in the attachments
+				// above, so we expect these identity mappings will be recreated at load
+				// time in toRedirectTable even if there is no non-identity mapping in
+				// the redirectTable.
+				[...redirectTable.entries()].filter(([localId, storageId]) => localId !== storageId),
+			),
+		);
 	}
 
 	return builder.getSummaryTree();
