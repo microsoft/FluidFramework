@@ -373,7 +373,7 @@ export function convertSnapshotTreeToSummaryTree(
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const content: ArrayBufferLike = snapshot.blobsContents[id]!;
 			if (content !== undefined) {
-				// The snapshot format historically uses the literal "utf-8" identifier. Keep it for backward-compatibility with older clients.
+				// Cannot change "utf-8" to "utf8" as this encoding value is stored in summaries and would be a breaking change which needs to be done first before changing to utf8.
 				// eslint-disable-next-line unicorn/text-encoding-identifier-case -- External on-disk format is 'utf-8'.
 				decoded = bufferToString(content, "utf-8");
 			}
@@ -411,7 +411,7 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
 		switch (value.type) {
 			case SummaryType.Blob: {
 				let parsedContent: string;
-				// The encoding identifier is part of the on-disk summary format and cannot be changed.
+				// Cannot change "utf-8" to "utf8" as this encoding value is stored in summaries and would be a breaking change which needs to be done first before changing to utf8.
 				// eslint-disable-next-line unicorn/text-encoding-identifier-case -- external contract uses 'utf-8'.
 				let encoding: "utf-8" | "base64" = "utf-8";
 				if (typeof value.content === "string") {
@@ -476,7 +476,7 @@ export function processAttachMessageGCData(
 	}
 
 	assert(
-		// The GC blob encoding is always persisted with the literal 'utf-8'.
+		// Cannot change "utf-8" to "utf8" as this encoding value is stored in summaries and would be a breaking change which needs to be done first before changing to utf8.
 		// eslint-disable-next-line unicorn/text-encoding-identifier-case  -- external contract uses 'utf-8'.
 		gcDataEntry.type === TreeEntry.Blob && gcDataEntry.value.encoding === "utf-8",
 		0x8ff /* GC data should be a utf-8-encoded blob */,
