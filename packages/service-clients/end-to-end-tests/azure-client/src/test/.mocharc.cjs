@@ -8,4 +8,5 @@
 const packageDir = `${__dirname}/../..`;
 const getFluidTestMochaConfig = require("@fluid-private/test-version-utils/mocharc-common");
 const config = getFluidTestMochaConfig(packageDir);
+config.spec = "lib/test/**/*.spec.*js";
 module.exports = config;
