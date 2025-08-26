@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IDocumentAttributes,
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";

@@ -9,14 +9,14 @@ import {
 	bufferToString,
 	fromBase64ToUtf8,
 } from "@fluid-internal/client-utils";
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
+import type { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	ISummaryBlob,
 	ISummaryTree,
 	SummaryObject,
-	SummaryType,
 } from "@fluidframework/driver-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
 import { ITree, ITreeEntry, TreeEntry } from "@fluidframework/driver-definitions/internal";
 import {
 	AttachmentTreeEntry,
