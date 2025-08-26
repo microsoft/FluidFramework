@@ -644,7 +644,7 @@ export interface SharedTreeFormatOptionsInternal
 /**
  * Used to distinguish between different forest types.
  * @remarks
- * The "Forest" is the internal data structure use to store all the tree (the main tree and any removed ones) for a given view or branch.
+ * The "Forest" is the internal data structure used to store all the trees (the main tree and any removed ones) for a given view or branch.
  * They should all have the same behavior, but may differ in performance and debuggability.
  *
  * Current options are {@link ForestTypeReference}, {@link ForestTypeOptimized} and {@link ForestTypeExpensiveDebug}.
