@@ -43,7 +43,7 @@
 		"moment": "^2.30.1"
 	},
 	"devDependencies": {
-		"@fluid-internal/mocha-test-setup": "^2.51.0",
+		"@fluid-internal/mocha-test-setup": "~2.51.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
 		"@microsoft/api-extractor": "^7.52.9",

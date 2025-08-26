@@ -28,7 +28,7 @@ importers:
         version: 2.30.1
     devDependencies:
       '@fluid-internal/mocha-test-setup':
-        specifier: ^2.51.0
+        specifier: ~2.51.0
         version: 2.51.0
       '@fluidframework/build-common':
         specifier: ^2.0.3
