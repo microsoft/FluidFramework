@@ -112,6 +112,15 @@ type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 // @public @system
 type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
+// @beta @input
+export interface ForestOptions {
+    readonly forest?: ForestType;
+}
+
+// @beta @sealed
+export interface ForestType extends ErasedType_2<"ForestType"> {
+}
+
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
