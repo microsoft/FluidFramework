@@ -116,7 +116,7 @@
 		"test:mocha:cjs": "cross-env MOCHA_SPEC=dist/test mocha",
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 mocha",
-		"test:newsnapfiles": "node --conditions=allow-ff-test-exports lib/test/createSnapshotFiles.js",
+		"test:newsnapfiles": "node --conditions=allow-ff-test-exports lib/test/createSnapshotFiles.js -- createSnapshotFiles",
 		"test:stress": "cross-env FUZZ_TEST_COUNT=100 FUZZ_STRESS_RUN=normal mocha --ignore \"lib/test/memory/**/*\" --recursive \"lib/test/**/*.fuzz.spec.*js\" -r @fluid-internal/mocha-test-setup",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v",
