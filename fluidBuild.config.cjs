@@ -24,7 +24,6 @@ module.exports = {
 		"ci:build": {
 			dependsOn: [
 				"compile",
-				"lint",
 				"ci:build:api-reports",
 				"ci:build:docs",
 				"build:manifest",

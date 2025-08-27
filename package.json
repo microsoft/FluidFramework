@@ -47,7 +47,7 @@
 		"check:versions:fix": "flub check buildVersion -g client --path . --fix",
 		"checks": "fluid-build --task checks",
 		"checks:fix": "fluid-build --task checks:fix",
-		"ci:build": "fluid-build --task ci:build",
+		"ci:build": "fluid-build --worker --task ci:build",
 		"ci:build:docs": "fluid-build --task ci:build:docs",
 		"ci:check:are-the-types-wrong": "pnpm run -r --parallel --no-bail --color check:are-the-types-wrong",
 		"ci:test:jest": "npm run test:jest:report",
