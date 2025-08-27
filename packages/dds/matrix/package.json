@@ -103,7 +103,7 @@
 		"test:memory": "mocha --config src/test/memory/.mocharc.cjs",
 		"test:memory-profiling:report": "mocha --config src/test/memory/.mocharc.cjs",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
-		"test:mocha:cjs": "mocha",
+		"test:mocha:cjs": "cross-env MOCHA_SPEC=dist/test mocha",
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 mocha",
 		"test:stress": "cross-env FUZZ_TEST_COUNT=100 FUZZ_STRESS_RUN=normal mocha --ignore \"lib/test/memory/**/*\" --recursive \"lib/test/**/*.spec.js\"",

@@ -101,7 +101,7 @@
 		"test:benchmark:report": "mocha \"dist/test/*.perf.spec.*js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark --fgrep @ExecutionTime -r @fluid-internal/mocha-test-setup --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
-		"test:mocha:cjs": "mocha",
+		"test:mocha:cjs": "cross-env MOCHA_SPEC=dist/test mocha",
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 mocha",
 		"test:stress": "cross-env FUZZ_STRESS_RUN=1 FUZZ_TEST_COUNT=normal npm run test:mocha",
