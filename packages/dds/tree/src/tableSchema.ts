@@ -871,7 +871,7 @@ export namespace System_TableSchema {
 			}
 
 			/**
-			 * Removes the cell coresponding with the specified column from reach row in the table.
+			 * Removes the cell corresponding with the specified column from each row in the table.
 			 */
 			private removeCells(column: ColumnValueType): void {
 				for (const row of this.rows) {
