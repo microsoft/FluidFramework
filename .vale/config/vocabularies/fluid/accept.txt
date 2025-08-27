@@ -11,3 +11,5 @@ UUIDs
 enum
 Enum
 openable
+Datastore
+DDSes
