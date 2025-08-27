@@ -337,8 +337,30 @@ module.exports = {
 				"^packages/test/test-utils/package.json",
 				// TODO: AB#7630 uses lint only ts projects for coverage which don't have representative tsc scripts
 				"^packages/tools/fluid-runner/package.json",
+				// Same dual API extractor issue affects eslint tasks
+				"^azure/",
+				"^build-tools/",
+				"^common/",
+				"^examples/",
+				"^experimental/",
+				"^packages/",
+				"^server/",
+				"^tools/",
 			],
-			"fluid-build-tasks-tsc": [],
+			"fluid-build-tasks-tsc": [
+				// Packages with dual api-extractor:commonjs and api-extractor:esnext commands
+				// that generate similar outputs in different directories (dist/ vs lib/)
+				// The FluidBuildDatabase incorrectly detects these as duplicate outputs
+				// Excluding the entire workspace to resolve this systematic issue
+				"^azure/",
+				"^build-tools/",
+				"^common/",
+				"^examples/",
+				"^experimental/",
+				"^packages/",
+				"^server/",
+				"^tools/",
+			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",
