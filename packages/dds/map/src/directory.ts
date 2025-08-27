@@ -1381,7 +1381,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				};
 				this.submitCreateSubDirectoryMessage(op);
 			} else {
-				// If we are detached, don't submit the op and directory commit
+				// If we are detached, don't submit the op and directly commit
 				// the subdir to _sequencedSubdirectories.
 				this._sequencedSubdirectories.set(subdirName, subDir);
 			}
