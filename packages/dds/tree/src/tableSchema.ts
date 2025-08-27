@@ -727,7 +727,7 @@ export namespace System_TableSchema {
 						return [];
 					}
 
-					Table.assertValidRange({ index: startIndex, count: _count }, this.columns);
+					Table._assertValidRange({ index: startIndex, count: _count }, this.columns);
 
 					this._applyEditsInBatch(() => {
 						const columnsToRemove = this.columns.slice(
@@ -737,7 +737,7 @@ export namespace System_TableSchema {
 
 						// First, remove all cells that correspond to each column from each row:
 						for (const column of columnsToRemove) {
-							this.removeCells(column);
+							this._removeCells(column);
 						}
 
 						// Second, remove the column nodes:
@@ -770,7 +770,7 @@ export namespace System_TableSchema {
 						// Note, throwing an error within a transaction will abort the entire transaction.
 						// So if we throw an error here for any column, no columns will be removed.
 						for (const columnToRemove of columnsToRemove) {
-							const removedColumn = this.removeColumn(columnToRemove);
+							const removedColumn = this._removeColumn(columnToRemove);
 							removedColumns.push(removedColumn);
 						}
 					});
@@ -778,7 +778,7 @@ export namespace System_TableSchema {
 				}
 			}
 
-			private removeColumn(columnOrId: string | ColumnValueType): ColumnValueType {
+			private _removeColumn(columnOrId: string | ColumnValueType): ColumnValueType {
 				const column = this._getColumn(columnOrId);
 				const index = this.columns.indexOf(column);
 				assert(index !== -1, "Column should exist");
@@ -837,14 +837,14 @@ export namespace System_TableSchema {
 					// Note, throwing an error within a transaction will abort the entire transaction.
 					// So if we throw an error here for any row, no rows will be removed.
 					for (const rowToRemove of rowsToRemove) {
-						const removedRow = this.removeRow(rowToRemove);
+						const removedRow = this._removeRow(rowToRemove);
 						removedRows.push(removedRow);
 					}
 				});
 				return removedRows;
 			}
 
-			private removeRow(rowOrId: string | RowValueType): RowValueType {
+			private _removeRow(rowOrId: string | RowValueType): RowValueType {
 				const rowToRemove = this._getRow(rowOrId);
 
 				const index = this.rows.indexOf(rowToRemove);
@@ -873,7 +873,7 @@ export namespace System_TableSchema {
 			/**
 			 * Removes the cell corresponding with the specified column from each row in the table.
 			 */
-			private removeCells(column: ColumnValueType): void {
+			private _removeCells(column: ColumnValueType): void {
 				for (const row of this.rows) {
 					// TypeScript is unable to narrow the row type correctly here, hence the cast.
 					// See: https://github.com/microsoft/TypeScript/issues/52144
@@ -881,7 +881,7 @@ export namespace System_TableSchema {
 				}
 			}
 
-			private static assertValidRange<T>(
+			private static _assertValidRange<T>(
 				range: { index: number; count: number },
 				array: readonly T[],
 			): void {
@@ -952,10 +952,19 @@ export namespace System_TableSchema {
 				return column;
 			}
 
+			/**
+			 * Resolves a Column node or ID to its ID.
+			 * If an ID is provided, it is returned as-is.
+			 * If a node is provided, its ID is returned.
+			 */
 			private _getColumnId(columnOrId: string | ColumnValueType): string {
 				return typeof columnOrId === "string" ? columnOrId : columnOrId.id;
 			}
 
+			/**
+			 * Attempts to resolve a Column node or ID to its index in the table.
+			 * Returns undefined if the Column does not exist in the table.
+			 */
 			private _getColumnIndex(columnOrId: string | ColumnValueType): number | undefined {
 				const column = this._tryGetColumn(columnOrId);
 				if (column === undefined) {
@@ -966,10 +975,17 @@ export namespace System_TableSchema {
 				return index === -1 ? undefined : index;
 			}
 
+			/**
+			 * Checks if a Column with the specified ID exists in the table.
+			 */
 			private _containsColumnWithId(columnId: string): boolean {
 				return this._getColumnIndex(columnId) !== undefined;
 			}
 
+			/**
+			 * Assert that the provided Column exists in the table.
+			 * @throws Throws a `UsageError` if the Column does not exist.
+			 */
 			private _assertContainsColumn(columnOrId: ColumnValueType | string): void {
 				const columnId = this._getColumnId(columnOrId);
 				if (!this._containsColumnWithId(columnId)) {
@@ -977,6 +993,9 @@ export namespace System_TableSchema {
 				}
 			}
 
+			/**
+			 * Throw a `UsageError` for a missing Column by its ID.
+			 */
 			private _throwMissingColumnError(columnId: string): never {
 				throw new UsageError(`No column with ID "${columnId}" exists in the table.`);
 			}
@@ -1003,10 +1022,19 @@ export namespace System_TableSchema {
 				return row;
 			}
 
+			/**
+			 * Resolves a Row node or ID to its ID.
+			 * If an ID is provided, it is returned as-is.
+			 * If a node is provided, its ID is returned.
+			 */
 			private _getRowId(rowOrId: string | RowValueType): string {
 				return typeof rowOrId === "string" ? rowOrId : rowOrId.id;
 			}
 
+			/**
+			 * Attempts to resolve a Row node or ID to its index in the table.
+			 * Returns undefined if the Row does not exist in the table.
+			 */
 			private _getRowIndex(rowOrId: string | RowValueType): number | undefined {
 				const row = this._tryGetRow(rowOrId);
 				if (row === undefined) {
@@ -1016,10 +1044,17 @@ export namespace System_TableSchema {
 				return index === -1 ? undefined : index;
 			}
 
+			/**
+			 * Checks if a Column with the specified ID exists in the table.
+			 */
 			private _containsRowWithId(rowId: string): boolean {
 				return this._getRowIndex(rowId) !== undefined;
 			}
 
+			/**
+			 * Assert that the provided Row exists in the table.
+			 * @throws Throws a `UsageError` if the Row does not exist.
+			 */
 			private _assertContainsRow(rowOrId: RowValueType | string): void {
 				const rowId = this._getRowId(rowOrId);
 				if (!this._containsRowWithId(rowId)) {
@@ -1027,6 +1062,9 @@ export namespace System_TableSchema {
 				}
 			}
 
+			/**
+			 * Throw a `UsageError` for a missing Row by its ID.
+			 */
 			private _throwMissingRowError(rowId: string): never {
 				throw new UsageError(`No row with ID "${rowId}" exists in the table.`);
 			}
@@ -1035,7 +1073,7 @@ export namespace System_TableSchema {
 				range: { index: number; count: number },
 				array: TreeArrayNode<TNodeSchema>,
 			): TreeNodeFromImplicitAllowedTypes<TNodeSchema>[] {
-				Table.assertValidRange(range, array);
+				Table._assertValidRange(range, array);
 
 				const { index, count } = range;
 				const end = index + count; // exclusive
