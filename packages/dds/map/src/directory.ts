@@ -854,14 +854,12 @@ export class SharedDirectory
 	 * Set the message handlers for the directory.
 	 */
 	private setMessageHandlers(): void {
-		// Notes about messageHandlers and why we use `getSequencedWorkingDirectory` and
-		// `getMostRecentWorkingDirectory` for `process` and `resubmit` respectively:
-		// 1. When processing ops, we only ever want to process ops on sequenced directories. This prevents
+		// Notes on how we target the correct subdirectory:
+		// `process`: When processing ops, we only ever want to process ops on sequenced directories. This prevents
 		// scenarios where ops could be processed on a pending directory instead of a sequenced directory,
 		// leading to ops effectively being processed out of order.
-		// 2. When resubmitting ops, we always want to target the most "recent" version of the subdirectory,
-		// since any op to be resubmitted is a local op. This means that we will use a local pending directory
-		// instead of a sequenced directory, even if that local pending directory is also pending deletion.
+		// `resubmit`: When resubmitting ops, we use `localOpMetadata` to get a reference to the subdirectory that
+		// the op was originally targeting.
 		this.messageHandlers.set("clear", {
 			process: (
 				msg: ISequencedDocumentMessage,
