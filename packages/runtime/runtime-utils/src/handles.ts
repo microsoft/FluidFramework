@@ -36,13 +36,15 @@ export interface ISerializedHandle {
 }
 
 /**
- * Is the input object a @see ISerializedHandle?
+ * Narrow a value to {@link ISerializedHandle} by checking its type property.
  * @internal
  */
-export const isSerializedHandle = (value: any): value is ISerializedHandle =>
-	value?.type === "__fluid_handle__";
+export const isSerializedHandle = (value: unknown): value is ISerializedHandle =>
+	// Type assertion is safe as we're only checking for the existence of the type property
+	(value as { type?: string } | undefined)?.type === "__fluid_handle__";
 
 /**
+ * Checks if a Fluid handle's internal payload is pending.
  * @internal
  */
 export const isFluidHandleInternalPayloadPending = (
@@ -55,8 +57,7 @@ export const isFluidHandleInternalPayloadPending = (
  * @privateRemarks
  * This should be true for locally-created BlobHandles currently. When IFluidHandlePayloadPending is merged
  * to IFluidHandle, this type guard will no longer be necessary.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const isFluidHandlePayloadPending = <T>(
 	handle: IFluidHandle<T>,
@@ -66,8 +67,7 @@ export const isFluidHandlePayloadPending = <T>(
 
 /**
  * Check if the handle is an ILocalFluidHandle.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const isLocalFluidHandle = <T>(
 	handle: IFluidHandle<T>,
@@ -122,6 +122,7 @@ export function isFluidHandle(value: unknown): value is IFluidHandle {
 	// If enableBackwardsCompatibility, run check for FluidHandles predating use of fluidHandleSymbol.
 	if (enableBackwardsCompatibility && IFluidHandle in value) {
 		// Since this check can have false positives, make it a bit more robust by checking value[IFluidHandle][IFluidHandle]
+		// Type assertion is needed for backward compatibility with old FluidHandle format
 		const inner = value[IFluidHandle] as IFluidHandle;
 		if (typeof inner !== "object" || inner === null) {
 			return false;
@@ -145,12 +146,12 @@ export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean {
 
 /**
  * Downcast an IFluidHandle to an IFluidHandleInternal.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T> {
 	if (!(fluidHandleSymbol in handle) || !(fluidHandleSymbol in handle[fluidHandleSymbol])) {
 		if (enableBackwardsCompatibility && IFluidHandle in handle) {
+			// Type assertion needed for backward compatibility with old handle format
 			return handle[IFluidHandle] as IFluidHandleInternal<T>;
 		}
 		throw new TypeError("Invalid IFluidHandle");
@@ -158,24 +159,24 @@ export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleI
 
 	// This casts the IFluidHandleErased from the symbol instead of `handle` to ensure that if someone
 	// implements their own IFluidHandle in terms of an existing handle, it won't break anything.
+	// Type assertion is safe as fluidHandleSymbol is guaranteed to contain an IFluidHandleInternal
 	return handle[fluidHandleSymbol] as unknown as IFluidHandleInternal<T>;
 }
 
 /**
  * Type erase IFluidHandleInternal for use with {@link @fluidframework/core-interfaces#fluidHandleSymbol}.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function toFluidHandleErased<T>(
 	handle: IFluidHandleInternal<T>,
 ): IFluidHandleErased<T> {
+	// Type assertion is safe as we're intentionally erasing internal type information
 	return handle as unknown as IFluidHandleErased<T>;
 }
 
 /**
  * Base class which can be uses to assist implementing IFluidHandleInternal.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
 	public abstract absolutePath: string;

@@ -225,7 +225,7 @@ export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
     readonly description?: string | undefined;
 }
 
-// @public @sealed
+// @public @input
 export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
     readonly metadata?: NodeSchemaMetadata<TCustomMetadata> | undefined;
 }
@@ -368,13 +368,13 @@ export interface SchemaStatics {
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
-// @alpha @legacy
+// @beta @legacy
 export const SharedTree: ISharedObjectKind<ITree> & SharedObjectKind<ITree>;
 
-// @alpha @legacy
+// @beta @legacy
 export const SharedTreeAttributes: IChannelAttributes;
 
-// @alpha @legacy
+// @beta @legacy
 export const SharedTreeFactoryType = "https://graph.microsoft.com/types/tree";
 
 // @public @sealed @system

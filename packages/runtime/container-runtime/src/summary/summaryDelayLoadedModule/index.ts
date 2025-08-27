@@ -9,12 +9,12 @@ export {
 	Summarizer,
 } from "./summarizer.js";
 export {
-	ICancellableSummarizerController,
+	type ICancellableSummarizerController,
 	neverCancelledSummaryToken,
 	RunWhileConnectedCoordinator,
 } from "./runWhileConnectedCoordinator.js";
 
-export {
+export type {
 	EnqueueSummarizeResult,
 	IAckSummaryResult,
 	INackSummaryResult,

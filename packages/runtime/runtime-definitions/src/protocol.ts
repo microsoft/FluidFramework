@@ -22,8 +22,7 @@ import type {
 
 /**
  * An envelope wraps the contents with the intended target
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IEnvelope {
 	/**
@@ -40,8 +39,7 @@ export interface IEnvelope {
 
 /**
  * Represents ISignalMessage with its type.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IInboundSignalMessage<TMessage extends TypedMessage = TypedMessage>
 	extends ISignalMessage<TMessage> {
@@ -51,8 +49,7 @@ export interface IInboundSignalMessage<TMessage extends TypedMessage = TypedMess
 /**
  * Message send by client attaching local data structure.
  * Contains snapshot of data structure which is the current state of this data structure.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IAttachMessage {
 	/**
@@ -76,8 +73,7 @@ export interface IAttachMessage {
  * but it should not be used when creating a new attach op.
  * Older versions of attach messages could have null snapshots,
  * so this gives correct typings for writing backward compatible code.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
 	// eslint-disable-next-line @rushstack/no-new-null -- TODO: breaking change; protocol might even explicitly use null
@@ -89,8 +85,7 @@ export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
  * It is the same as ISequencedDocumentMessage, but without the contents and clientSequenceNumbers
  * which are sent separately. The contents are modified at multiple layers in the stack so having it
  * separate doesn't require packing and unpacking the entire message.
- * @alpha
- * @legacy
+ * @legacy @beta
  */
 export type ISequencedMessageEnvelope = Omit<
 	ISequencedDocumentMessage,
@@ -99,8 +94,7 @@ export type ISequencedMessageEnvelope = Omit<
 
 /**
  * These are the contents of a runtime message as it is processed throughout the stack.
- * @alpha
- * @legacy
+ * @legacy @beta
  * @sealed
  */
 export interface IRuntimeMessagesContent {
@@ -120,8 +114,7 @@ export interface IRuntimeMessagesContent {
 
 /**
  * A collection of messages that are processed by the runtime.
- * @alpha
- * @legacy
+ * @legacy @beta
  * @sealed
  */
 export interface IRuntimeMessageCollection {
@@ -142,8 +135,7 @@ export interface IRuntimeMessageCollection {
 /**
  * Interface to provide access to snapshot blobs to DataStore layer.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IRuntimeStorageService {
 	/**

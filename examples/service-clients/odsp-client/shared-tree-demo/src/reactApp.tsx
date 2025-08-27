@@ -6,9 +6,9 @@
 /* eslint-disable prefer-template */
 
 import { Tree, type TreeView } from "fluid-framework";
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { type ReactNode, useEffect, useState } from "react";
 
-import { App, Letter } from "./schema.js";
+import type { App, Letter } from "./schema.js";
 
 export function Explanation(): JSX.Element {
 	return (

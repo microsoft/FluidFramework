@@ -4,21 +4,21 @@
  */
 
 export { ConnectionState } from "./connectionState.js";
-export { IContainerExperimental, waitContainerToCatchUp } from "./container.js";
+export { type IContainerExperimental, waitContainerToCatchUp } from "./container.js";
 export {
 	createDetachedContainer,
 	loadExistingContainer,
 	rehydrateDetachedContainer,
-	ICreateAndLoadContainerProps,
-	ICreateDetachedContainerProps,
-	ILoadExistingContainerProps,
-	IRehydrateDetachedContainerProps,
+	type ICreateAndLoadContainerProps,
+	type ICreateDetachedContainerProps,
+	type ILoadExistingContainerProps,
+	type IRehydrateDetachedContainerProps,
 } from "./createAndLoadContainerUtils.js";
 export {
-	ICodeDetailsLoader,
-	IFluidModuleWithDetails,
-	ILoaderProps,
-	ILoaderServices,
+	type ICodeDetailsLoader,
+	type IFluidModuleWithDetails,
+	type ILoaderProps,
+	type ILoaderServices,
 	Loader,
 } from "./loader.js";
 export {
@@ -32,12 +32,12 @@ export {
 	isLocationRedirectionError,
 	resolveWithLocationRedirectionHandling,
 } from "./location-redirection-utilities/index.js";
-export { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol.js";
+export type { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol.js";
 export {
 	tryParseCompatibleResolvedUrl,
-	IParsedUrl,
+	type IParsedUrl,
 } from "./utils.js";
-export {
+export type {
 	IBaseProtocolHandler,
 	IScribeProtocolState,
 	IQuorumSnapshot,

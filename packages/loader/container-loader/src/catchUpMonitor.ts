@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { IDisposable } from "@fluidframework/core-interfaces";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 /**
  * @see {@link CatchUpMonitor} for usage.

@@ -70,6 +70,7 @@ export {
 	type SchemaCompatibilityStatus,
 	type ITreeConfigurationOptions,
 	SchemaFactory,
+	SchemaFactoryBeta,
 	SchemaFactoryAlpha,
 	type SchemaFactoryObjectOptions,
 	type ScopedSchemaName,
@@ -161,6 +162,8 @@ export {
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type SchemaStaticsAlpha,
+	KeyEncodingOptions,
+	type TreeParsingOptions,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,

@@ -5,7 +5,7 @@
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ISnapshotOptions {
 	blobs?: number;
@@ -31,7 +31,7 @@ export interface ISnapshotOptions {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IOpsCachingPolicy {
 	/**
@@ -63,7 +63,7 @@ export interface IOpsCachingPolicy {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ICollabSessionOptions {
 	/**
@@ -94,7 +94,7 @@ export interface ICollabSessionOptions {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface HostStoragePolicy {
 	snapshotOptions?: ISnapshotOptions;

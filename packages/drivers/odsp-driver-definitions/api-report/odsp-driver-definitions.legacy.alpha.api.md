@@ -4,10 +4,10 @@
 
 ```ts
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export type CacheContentType = "snapshot" | "ops" | "snapshotWithLoadingGroupId";
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface HostStoragePolicy {
     avoidPrefetchSnapshotCache?: boolean;
     cacheCreateNewSummary?: boolean;
@@ -30,12 +30,12 @@ export interface HostStoragePolicy {
     snapshotOptions?: ISnapshotOptions;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ICacheEntry extends IEntry {
     file: IFileEntry;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface ICollabSessionOptions {
     displayName?: string;
     // @deprecated
@@ -44,35 +44,35 @@ export interface ICollabSessionOptions {
     unauthenticatedUserDisplayName?: string;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export type IdentityType = "Consumer" | "Enterprise";
 
-// @alpha @legacy
+// @beta @legacy
 export interface IEntry {
     key: string;
     type: CacheContentType;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IFileEntry {
     docId: string;
     resolvedUrl: IResolvedUrl;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
     // (undocumented)
     readonly errorType: OdspErrorTypes;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IOdspErrorAugmentations {
     facetCodes?: string[];
     redirectLocation?: string;
     serverEpoch?: string;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
     appName?: string;
     // (undocumented)
@@ -114,7 +114,7 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
     url: string;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IOdspUrlParts {
     // (undocumented)
     driveId: string;
@@ -124,33 +124,33 @@ export interface IOdspUrlParts {
     siteUrl: string;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IOpsCachingPolicy {
     batchSize?: number;
     timerGranularity?: number;
     totalOpsToCache?: number;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IPersistedCache {
     get(entry: ICacheEntry): Promise<any>;
     put(entry: ICacheEntry, value: any): Promise<void>;
     removeEntries(file: IFileEntry): Promise<void>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IProvideSessionAwareDriverFactory {
     // (undocumented)
     readonly IRelaySessionAwareDriverFactory: IRelaySessionAwareDriverFactory;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IRelaySessionAwareDriverFactory extends IProvideSessionAwareDriverFactory {
     // (undocumented)
     getRelayServiceSessionInfo(resolvedUrl: IResolvedUrl): Promise<ISocketStorageDiscovery | undefined>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISensitivityLabel {
     appliedByUserEmail: string;
     assignmentMethod: string;
@@ -158,19 +158,19 @@ export interface ISensitivityLabel {
     tenantId: string;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISensitivityLabelsInfo {
     labels: ISensitivityLabel[];
     timestamp: string;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISharingLink extends ISharingLinkKind {
     // (undocumented)
     webUrl: string;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISharingLinkKind {
     // (undocumented)
     role?: SharingLinkRole;
@@ -178,7 +178,7 @@ export interface ISharingLinkKind {
     scope: SharingLinkScope;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface ISnapshotOptions {
     // (undocumented)
     blobs?: number;
@@ -191,7 +191,7 @@ export interface ISnapshotOptions {
     timeout?: number;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ISocketStorageDiscovery {
     // (undocumented)
     deltaStorageUrl: string;
@@ -209,10 +209,10 @@ export interface ISocketStorageDiscovery {
     tenantId: string;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
 
-// @alpha @legacy
+// @beta @legacy
 export const OdspErrorTypes: {
     readonly invalidFileNameError: "invalidFileNameError";
     readonly snapshotTooBig: "snapshotTooBig";
@@ -241,17 +241,17 @@ export const OdspErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export type OdspErrorTypes = (typeof OdspErrorTypes)[keyof typeof OdspErrorTypes];
 
-// @alpha @legacy
+// @beta @legacy
 export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
     driveId?: string;
     itemId?: string;
     siteUrl: string;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ShareLinkInfoType {
     createLink?: {
         link?: ISharingLink;
@@ -262,7 +262,7 @@ export interface ShareLinkInfoType {
     sharingLinkToRedeem?: string;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export enum SharingLinkRole {
     // (undocumented)
     edit = "edit",
@@ -270,7 +270,7 @@ export enum SharingLinkRole {
     view = "view"
 }
 
-// @alpha @legacy
+// @beta @legacy
 export enum SharingLinkScope {
     // (undocumented)
     anonymous = "anonymous",
@@ -282,10 +282,10 @@ export enum SharingLinkScope {
     users = "users"
 }
 
-// @alpha @legacy
+// @beta @legacy
 export type TokenFetcher<T> = (options: T) => Promise<string | TokenResponse | null>;
 
-// @alpha @legacy
+// @beta @legacy
 export interface TokenFetchOptions {
     claims?: string;
     refresh: boolean;
@@ -296,7 +296,7 @@ export interface TokenFetchOptions {
     tenantId?: string;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface TokenResponse {
     readonly authorizationHeader?: string;
     fromCache?: boolean;
