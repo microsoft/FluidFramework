@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha @legacy
+// @beta @legacy
 export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements IProvideFluidDataStoreRegistry {
     constructor(props: BaseContainerRuntimeFactoryProps);
     protected containerHasInitialized(runtime: IContainerRuntime): Promise<void>;
@@ -15,7 +15,7 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
     preInitialize(context: IContainerContext, existing: boolean): Promise<IContainerRuntime & IRuntime>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface BaseContainerRuntimeFactoryProps {
     // @deprecated (undocumented)
     dependencyContainer?: IFluidDependencySynthesizer;
@@ -27,7 +27,7 @@ export interface BaseContainerRuntimeFactoryProps {
     runtimeOptions?: IContainerRuntimeOptions;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
     constructor(props: ContainerRuntimeFactoryWithDefaultDataStoreProps);
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
@@ -37,7 +37,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
     protected readonly defaultFactory: IFluidDataStoreFactory;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
     // (undocumented)
     defaultFactory: IFluidDataStoreFactory;
@@ -50,14 +50,14 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
     runtimeOptions?: IContainerRuntimeOptions;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
     protected getUninitializedErrorString(item: string): string;
     initializeInternal(existing: boolean): Promise<void>;
     protected get root(): ISharedDirectory;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
     constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects?: readonly IChannelFactory[], optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeFactory?: typeof FluidDataStoreRuntime);
     constructor(props: DataObjectFactoryProps<TObj, I>);

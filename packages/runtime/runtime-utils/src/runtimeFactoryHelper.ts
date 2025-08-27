@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IContainerContext,
 	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 
 /**
  * @legacy @beta
  */
 export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRuntimeFactory {
-	public get IRuntimeFactory() {
+	public get IRuntimeFactory(): this {
 		return this;
 	}
 
