@@ -856,13 +856,6 @@ function newRebaseManager(): TestRebaseManager {
 		): void {
 			this.isInvalidated = true;
 		},
-		areSameRenamedNodes(
-			baseDetachId: ChangeAtomId,
-			newAttachId: ChangeAtomId,
-			count: number,
-		): boolean {
-			return areEqualChangeAtomIds(baseDetachId, newAttachId);
-		},
 
 		addDetach(id: ChangeAtomId, count: number): void {
 			throw new Error("Function not implemented.");

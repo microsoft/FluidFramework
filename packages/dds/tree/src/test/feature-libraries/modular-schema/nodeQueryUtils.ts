@@ -15,7 +15,6 @@ export const failInvertManager: InvertNodeManager = {
 export const failRebaseManager: RebaseNodeManager = {
 	getNewChangesForBaseAttach: failingDelegate,
 	rebaseOverDetach: failingDelegate,
-	areSameRenamedNodes: failingDelegate,
 	addDetach: failingDelegate,
 	removeDetach: failingDelegate,
 };

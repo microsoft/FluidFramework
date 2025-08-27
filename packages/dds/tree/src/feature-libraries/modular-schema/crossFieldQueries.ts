@@ -149,15 +149,6 @@ export interface RebaseNodeManager {
 		nodeChange: NodeId | undefined,
 	): void;
 
-	/**
-	 * Can be used to determine whether the base and new changes are referring to the same nodes through different IDs.
-	 * @param baseId - The ID of the node in the base changeset, after being renamed.
-	 * @param newId - The ID of the node in the new changeset, after being renamed.
-	 * @param count - The number of nodes to check for. Defaults to 1.
-	 * @returns `true` if both blocks of IDs refer the same nodes.
-	 */
-	areSameRenamedNodes(baseId: ChangeAtomId, newId: ChangeAtomId, count?: number): boolean;
-
 	addDetach(id: ChangeAtomId, count: number): void;
 	removeDetach(id: ChangeAtomId, count: number): void;
 }
