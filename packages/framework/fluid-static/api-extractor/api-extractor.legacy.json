@@ -1,13 +1,4 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-report-base.esm.json",
-	"mainEntryPointFilePath": "<projectFolder>/lib/legacy.d.ts",
-	"apiReport": {
-		"enabled": true,
-		"reportFileName": "<unscopedPackageName>.legacy",
-		"reportVariants": ["beta", "public"]
-	},
-	"tsdocMetadata": {
-		"enabled": false
-	}
+	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-report.esm.legacy.json"
 }
