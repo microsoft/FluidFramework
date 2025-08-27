@@ -1652,79 +1652,82 @@ describe("treeNodeApi", () => {
 				rootObject: MyObject,
 			}) {}
 
-			function check(
-				eventName: keyof TreeChangeEvents,
-				mutate: (root: NodeFromSchema<typeof TreeSchema>) => void,
-				expectedFirings: number = 1,
-			) {
-				it(`.on('${eventName}') subscribes and unsubscribes correctly`, () => {
-					const root = hydrate(TreeSchema, {
+			// Leave test name empty so we just get "hydrated" and "unhydrated" from `describeHydration`
+			describeHydration("", (initializeTree) => {
+				function check(
+					eventName: keyof TreeChangeEvents,
+					mutate: (root: NodeFromSchema<typeof TreeSchema>) => void,
+					expectedFirings: number = 1,
+				) {
+					it(`.on('${eventName}') subscribes and unsubscribes correctly`, () => {
+						const root = initializeTree(TreeSchema, {
+							rootObject: {
+								myNumber: 1,
+							},
+						});
+						const log: unknown[][] = [];
+
+						const unsubscribe = Tree.on(root, eventName, (...args: unknown[]) => {
+							log.push(args);
+						});
+
+						mutate(root);
+
+						assert.equal(log.length, expectedFirings, `'${eventName}' should fire.`);
+
+						unsubscribe();
+						mutate(root);
+
+						assert.equal(log.length, expectedFirings, `'${eventName}' should NOT fire.`);
+					});
+				}
+
+				check(
+					"nodeChanged",
+					(root) =>
+						(root.rootObject = new MyObject({
+							myNumber: 2,
+						})),
+				);
+				check("treeChanged", (root) => root.rootObject.myNumber++, 1);
+
+				it(`change to direct fields triggers both 'nodeChanged' and 'treeChanged'`, () => {
+					const root = initializeTree(TreeSchema, {
 						rootObject: {
 							myNumber: 1,
 						},
 					});
-					const log: unknown[][] = [];
 
-					const unsubscribe = Tree.on(root, eventName, (...args: unknown[]) => {
-						log.push(args);
+					let shallowChanges = 0;
+					let deepChanges = 0;
+					Tree.on(root, "nodeChanged", () => shallowChanges++);
+					Tree.on(root, "treeChanged", () => deepChanges++);
+
+					root.rootObject = new MyObject({
+						myNumber: 2,
 					});
 
-					mutate(root);
-
-					assert.equal(log.length, expectedFirings, `'${eventName}' should fire.`);
-
-					unsubscribe();
-					mutate(root);
-
-					assert.equal(log.length, expectedFirings, `'${eventName}' should NOT fire.`);
-				});
-			}
-
-			check(
-				"nodeChanged",
-				(root) =>
-					(root.rootObject = new MyObject({
-						myNumber: 2,
-					})),
-			);
-			check("treeChanged", (root) => root.rootObject.myNumber++, 1);
-
-			it(`change to direct fields triggers both 'nodeChanged' and 'treeChanged'`, () => {
-				const root = hydrate(TreeSchema, {
-					rootObject: {
-						myNumber: 1,
-					},
+					assert.equal(shallowChanges, 1, `nodeChanged should fire.`);
+					assert.equal(deepChanges, 1, `treeChanged should fire.`);
 				});
 
-				let shallowChanges = 0;
-				let deepChanges = 0;
-				Tree.on(root, "nodeChanged", () => shallowChanges++);
-				Tree.on(root, "treeChanged", () => deepChanges++);
+				it(`change to descendant fields only triggers 'treeChanged'`, () => {
+					const root = initializeTree(TreeSchema, {
+						rootObject: {
+							myNumber: 1,
+						},
+					});
 
-				root.rootObject = new MyObject({
-					myNumber: 2,
+					let shallowChanges = 0;
+					let deepChanges = 0;
+					Tree.on(root, "nodeChanged", () => shallowChanges++);
+					Tree.on(root, "treeChanged", () => deepChanges++);
+
+					root.rootObject.myNumber++;
+
+					assert.equal(shallowChanges, 0, `nodeChanged should NOT fire.`);
+					assert.equal(deepChanges, 1, `treeChanged should fire.`);
 				});
-
-				assert.equal(shallowChanges, 1, `nodeChanged should fire.`);
-				assert.equal(deepChanges, 1, `treeChanged should fire.`);
-			});
-
-			it(`change to descendant fields only triggers 'treeChanged'`, () => {
-				const root = hydrate(TreeSchema, {
-					rootObject: {
-						myNumber: 1,
-					},
-				});
-
-				let shallowChanges = 0;
-				let deepChanges = 0;
-				Tree.on(root, "nodeChanged", () => shallowChanges++);
-				Tree.on(root, "treeChanged", () => deepChanges++);
-
-				root.rootObject.myNumber++;
-
-				assert.equal(shallowChanges, 0, `nodeChanged should NOT fire.`);
-				assert.equal(deepChanges, 1, `treeChanged should fire.`);
 			});
 
 			it(`changing optional field triggers 'nodeChanged' and 'treeChanged'`, () => {
@@ -1786,7 +1789,7 @@ describe("treeNodeApi", () => {
 			});
 		});
 
-		describe("array node", () => {
+		describeHydration("array node", (initializeTree, hydrated) => {
 			const sb = new SchemaFactory("array-node-tests");
 			class myObject extends sb.object("object", {
 				myNumber: sb.number,
@@ -1799,7 +1802,7 @@ describe("treeNodeApi", () => {
 				expectedFirings: number = 1,
 			) {
 				it(`.on('${eventName}') subscribes and unsubscribes correctly`, () => {
-					const root = hydrate(treeSchema, [
+					const root = initializeTree(treeSchema, [
 						{
 							myNumber: 1,
 						},
@@ -1825,7 +1828,7 @@ describe("treeNodeApi", () => {
 			check("treeChanged", (root) => root[0].myNumber++, 1);
 
 			it(`change to descendant fields only triggers 'treeChanged'`, () => {
-				const root = hydrate(treeSchema, [
+				const root = initializeTree(treeSchema, [
 					{
 						myNumber: 1,
 					},
@@ -1847,7 +1850,7 @@ describe("treeNodeApi", () => {
 					array1: sb.array(sb.number),
 					array2: sb.array(sb.number),
 				});
-				const root = hydrate(testSchema, {
+				const root = initializeTree(testSchema, {
 					array1: [1],
 					array2: [2],
 				});
@@ -1871,52 +1874,54 @@ describe("treeNodeApi", () => {
 				assert.equal(a2DeepChanges, 1, `treeChanged should fire once.`);
 			});
 
-			it(`all operations on the node trigger 'nodeChanged' and 'treeChanged' the correct number of times`, () => {
-				const testSchema = sb.array("listRoot", sb.number);
-				const root = hydrate(testSchema, []);
+			if (hydrated) {
+				it(`all operations on the node trigger 'nodeChanged' and 'treeChanged' the correct number of times`, () => {
+					const testSchema = sb.array("listRoot", sb.number);
+					const root = initializeTree(testSchema, []);
 
-				let shallowChanges = 0;
-				let deepChanges = 0;
-				Tree.on(root, "treeChanged", () => {
-					deepChanges++;
+					let shallowChanges = 0;
+					let deepChanges = 0;
+					Tree.on(root, "treeChanged", () => {
+						deepChanges++;
+					});
+					Tree.on(root, "nodeChanged", () => {
+						shallowChanges++;
+					});
+
+					// Insert single item
+					root.insertAtStart(1);
+					assert.equal(shallowChanges, 1);
+					assert.equal(deepChanges, 1);
+
+					// Insert multiple items
+					root.insertAtEnd(2, 3);
+					assert.equal(shallowChanges, 2);
+					assert.equal(deepChanges, 2);
+
+					// Move one item within the same node
+					root.moveToEnd(0);
+					assert.equal(shallowChanges, 3);
+					assert.equal(deepChanges, 3);
+
+					// Move multiple items within the same node
+					root.moveRangeToEnd(0, 2);
+					assert.equal(shallowChanges, 4);
+					assert.equal(deepChanges, 4);
+
+					// Remove single item
+					root.removeAt(0);
+					assert.equal(shallowChanges, 5);
+					assert.equal(deepChanges, 5);
+
+					// Remove multiple items
+					root.removeRange(0, 2);
+					assert.equal(shallowChanges, 6);
+					assert.equal(deepChanges, 6);
 				});
-				Tree.on(root, "nodeChanged", () => {
-					shallowChanges++;
-				});
-
-				// Insert single item
-				root.insertAtStart(1);
-				assert.equal(shallowChanges, 1);
-				assert.equal(deepChanges, 1);
-
-				// Insert multiple items
-				root.insertAtEnd(2, 3);
-				assert.equal(shallowChanges, 2);
-				assert.equal(deepChanges, 2);
-
-				// Move one item within the same node
-				root.moveToEnd(0);
-				assert.equal(shallowChanges, 3);
-				assert.equal(deepChanges, 3);
-
-				// Move multiple items within the same node
-				root.moveRangeToEnd(0, 2);
-				assert.equal(shallowChanges, 4);
-				assert.equal(deepChanges, 4);
-
-				// Remove single item
-				root.removeAt(0);
-				assert.equal(shallowChanges, 5);
-				assert.equal(deepChanges, 5);
-
-				// Remove multiple items
-				root.removeRange(0, 2);
-				assert.equal(shallowChanges, 6);
-				assert.equal(deepChanges, 6);
-			});
+			}
 		});
 
-		describe("map node", () => {
+		describeHydration("map node", (initializeTree) => {
 			const sb = new SchemaFactory("map-node-in-root");
 			class myObject extends sb.object("object", {
 				myNumber: sb.number,
@@ -1929,7 +1934,7 @@ describe("treeNodeApi", () => {
 				expectedFirings: number = 1,
 			) {
 				it(`.on('${eventName}') subscribes and unsubscribes correctly`, () => {
-					const root = hydrate(
+					const root = initializeTree(
 						treeSchema,
 						new Map([
 							[
@@ -1971,7 +1976,7 @@ describe("treeNodeApi", () => {
 			);
 
 			it(`change to direct fields triggers both 'nodeChanged' and 'treeChanged'`, () => {
-				const root = hydrate(
+				const root = initializeTree(
 					treeSchema,
 					new Map([
 						[
@@ -1995,7 +2000,7 @@ describe("treeNodeApi", () => {
 			});
 
 			it(`change to descendant fields only triggers 'treeChanged'`, () => {
-				const root = hydrate(
+				const root = initializeTree(
 					treeSchema,
 					new Map([
 						[
