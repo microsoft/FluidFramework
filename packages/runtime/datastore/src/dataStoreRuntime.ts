@@ -1128,8 +1128,12 @@ export class FluidDataStoreRuntime
 	private visitLocalBoundContextsDuringAttach(
 		visitor: (contextId: string, context: LocalChannelContextBase) => void,
 	): void {
+		// eslint-disable-next-line import/no-deprecated
+		const runtimeExp: IContainerRuntimeBaseExperimental =
+			this.dataStoreContext.containerRuntime;
 		assert(
-			this.visibilityState === VisibilityState.LocallyVisible,
+			runtimeExp.inStagingMode === true ||
+				this.visibilityState === VisibilityState.LocallyVisible,
 			"The data store should be locally visible when generating attach summary",
 		);
 
