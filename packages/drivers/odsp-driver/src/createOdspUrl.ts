@@ -13,7 +13,7 @@ import type { OdspFluidDataStoreLocator } from "./contractsPublic.js";
  * Encodes ODC/SPO information into a URL format that can be handled by the Loader
  * @param l -The property bag of necessary properties to locate a Fluid data store and craft a url for it
  * @legacy
- * @alpha
+ * @beta
  */
 export function createOdspUrl(l: OdspFluidDataStoreLocator): string {
 	let odspUrl = `${l.siteUrl}?driveId=${encodeURIComponent(

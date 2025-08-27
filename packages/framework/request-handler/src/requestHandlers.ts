@@ -15,7 +15,7 @@ import type { RequestParser } from "@fluidframework/runtime-utils/internal";
  * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  *
  * @legacy
- * @alpha
+ * @beta
  */
 export type RuntimeRequestHandler = (
 	request: RequestParser,
