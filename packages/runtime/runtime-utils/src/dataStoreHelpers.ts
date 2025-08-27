@@ -4,8 +4,8 @@
  */
 
 import type { IRequest, IResponse } from "@fluidframework/core-interfaces";
-import { assert, isObject } from "@fluidframework/core-utils/internal";
-import { generateStack } from "@fluidframework/telemetry-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { generateErrorWithStack } from "@fluidframework/telemetry-utils/internal";
 
 interface IResponseException extends Error {
 	errorFromRequestFluidObject: true;
@@ -46,14 +46,19 @@ export function exceptionToResponse(error: unknown): IResponse {
 		};
 	}
 
+	// Capture error objects, not stack itself, as stack retrieval is very expensive operation
+	const errWithStack =
+		(typeof error === "object" && error !== null && "stack" in error
+			? (error as { stack: string })
+			: undefined) ?? generateErrorWithStack();
+
 	return {
 		mimeType: "text/plain",
 		status,
 		value: `${error}`,
-		stack:
-			isObject(error) && "stack" in error && typeof error.stack === "string"
-				? error.stack
-				: generateStack(),
+		get stack() {
+			return errWithStack.stack;
+		},
 	};
 }
 
@@ -68,12 +73,15 @@ export function responseToException(response: IResponse, request: IRequest): Err
 	// As of 2025-08-20 the code seems to assume `response.value` is always a string.
 	// This type assertion just encodes that assumption as we move to stricter linting rules, but it might need to be revisited.
 	const message = response.value as string;
+	const errWithStack = "stack" in response ? response : generateErrorWithStack();
 	const responseErr: Error & IResponseException = {
 		errorFromRequestFluidObject: true,
 		message,
 		name: "Error",
 		code: response.status,
-		stack: response.stack ?? generateStack(),
+		get stack() {
+			return errWithStack.stack;
+		},
 		underlyingResponseHeaders: response.headers,
 	};
 
@@ -109,11 +117,16 @@ export function createResponseError(
 	// Omit query string which could contain personal data unfit for logging
 	const urlNoQuery = request.url?.split("?")[0];
 
+	// Capture error objects, not stack itself, as stack retrieval is very expensive operation, so we delay it
+	const errWithStack = generateErrorWithStack();
+
 	return {
 		mimeType: "text/plain",
 		status,
 		value: urlNoQuery === undefined ? value : `${value}: ${urlNoQuery}`,
-		stack: generateStack(),
+		get stack() {
+			return errWithStack.stack;
+		},
 		headers,
 	};
 }
