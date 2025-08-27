@@ -252,12 +252,12 @@ export enum FluidClientVersion {
     v2_52 = 2.052
 }
 
-// @beta @input
+// @alpha
 export interface ForestOptions {
     readonly forest?: ForestType;
 }
 
-// @beta @sealed
+// @alpha @sealed
 export interface ForestType extends ErasedType_2<"ForestType"> {
 }
 
@@ -918,7 +918,7 @@ export interface SchemaValidationFunction<Schema extends TSchema> {
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
-// @alpha @input
+// @alpha
 export interface SharedTreeFormatOptions {
     formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
     treeEncodeType: TreeCompressionStrategy;
