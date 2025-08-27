@@ -874,7 +874,7 @@ export class SharedDirectory
 			},
 			resubmit: (op: IDirectoryClearOperation, localOpMetadata: ClearLocalOpMetadata) => {
 				const targetSubdir = localOpMetadata.subdir;
-				if (targetSubdir && !targetSubdir.disposed) {
+				if (!targetSubdir.disposed) {
 					targetSubdir.resubmitClearMessage(op, localOpMetadata);
 				}
 			},
@@ -893,7 +893,7 @@ export class SharedDirectory
 			},
 			resubmit: (op: IDirectoryDeleteOperation, localOpMetadata: EditLocalOpMetadata) => {
 				const targetSubdir = localOpMetadata.subdir;
-				if (targetSubdir && !targetSubdir.disposed) {
+				if (!targetSubdir.disposed) {
 					targetSubdir.resubmitKeyMessage(op, localOpMetadata);
 				}
 			},
@@ -914,7 +914,7 @@ export class SharedDirectory
 			},
 			resubmit: (op: IDirectorySetOperation, localOpMetadata: EditLocalOpMetadata) => {
 				const targetSubdir = localOpMetadata.subdir;
-				if (targetSubdir && !targetSubdir.disposed) {
+				if (!targetSubdir.disposed) {
 					targetSubdir.resubmitKeyMessage(op, localOpMetadata);
 				}
 			},
@@ -939,7 +939,7 @@ export class SharedDirectory
 				localOpMetadata: SubDirLocalOpMetadata,
 			) => {
 				const targetSubdir = localOpMetadata.parentSubdir;
-				if (targetSubdir && !targetSubdir.disposed) {
+				if (!targetSubdir.disposed) {
 					// We don't reuse the metadata but send a new one on each submit.
 					targetSubdir.resubmitSubDirectoryMessage(op, localOpMetadata);
 				}
@@ -965,7 +965,7 @@ export class SharedDirectory
 				localOpMetadata: SubDirLocalOpMetadata,
 			) => {
 				const targetSubdir = localOpMetadata.parentSubdir;
-				if (targetSubdir && !targetSubdir.disposed) {
+				if (!targetSubdir.disposed) {
 					// We don't reuse the metadata but send a new one on each submit.
 					targetSubdir.resubmitSubDirectoryMessage(op, localOpMetadata);
 				}
@@ -2312,11 +2312,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// is already deleted, in which case we don't need to submit the op.
 		if (localOpMetadata.type === "createSubDir") {
 			// For create operations, look specifically for createSubDirectory entries
-			const pendingEntryIndex = findLastIndex(
+			const pendingEntry = findLast(
 				this.pendingSubDirectoryData,
 				(entry) => entry.subdirName === op.subdirName && entry.type === "createSubDirectory",
 			);
-			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
 			if (pendingEntry !== undefined) {
 				assert(
 					pendingEntry.type === "createSubDirectory",
