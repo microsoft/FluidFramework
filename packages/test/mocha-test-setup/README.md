@@ -103,7 +103,7 @@ Injects implementation of `createTestLogger`.
 
 Select the "spec".
 Note that unlike Mocha's built in MOCHA_OPTIONS environment variable,
-this will replace our default spec instead of add to the spec (See https://mochajs.org/next/running/configuring/#merging).
+this will replace our default spec instead of adding to the spec (See https://mochajs.org/next/running/configuring/#merging).
 Also unlike Mocha's default behavior (see https://mochajs.org/next/running/cli/),
 this configuration defaults spec to `lib/test` (where we place our esm tests) instead of `test`.
 
