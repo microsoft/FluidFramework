@@ -93,6 +93,9 @@
 		"sessionStickinessDurationMs": 3600000,
 		"ignoreEphemeralFlag": true,
 		"enableClientIPLogging": false,
+		"api": {
+			"patchRoot": true
+		},
 		"throttling": {
 			"restCallsPerTenant": {
 				"generalRestCall": "disabled",

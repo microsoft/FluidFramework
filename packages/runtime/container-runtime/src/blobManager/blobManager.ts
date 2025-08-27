@@ -24,7 +24,6 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import type { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
-import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
 import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
@@ -43,7 +42,6 @@ import {
 	PerformanceEvent,
 	UsageError,
 	createChildMonitoringContext,
-	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -143,7 +141,7 @@ interface PendingBlob {
 	opsent?: boolean;
 	storageId?: string;
 	handleP: Deferred<BlobHandle>;
-	uploadP?: Promise<ICreateBlobResponse | void>;
+	uploadP?: Promise<void>;
 	uploadTime?: number;
 	minTTLInSeconds?: number;
 	attached?: boolean;
@@ -535,52 +533,48 @@ export class BlobManager {
 		return blobHandle;
 	}
 
-	private async uploadBlob(
-		localId: string,
-		blob: ArrayBufferLike,
-	): Promise<ICreateBlobResponse | void> {
-		return runWithRetry(
-			async () => {
-				try {
-					return await this.storage.createBlob(blob);
-				} catch (error) {
-					const entry = this.pendingBlobs.get(localId);
-					assert(
-						!!entry,
-						0x387 /* Must have pending blob entry for blob which failed to upload */,
-					);
-					if (entry.opsent && !canRetryOnError(error)) {
-						throw wrapError(
-							error,
-							() => new LoggingError(`uploadBlob error`, { canRetry: true }),
-						);
-					}
-					throw error;
-				}
-			},
-			"createBlob",
-			this.mc.logger,
-			{
-				cancel: this.pendingBlobs.get(localId)?.abortSignal,
-			},
-		).then(
-			(response) => this.onUploadResolve(localId, response),
-			(error) => {
-				this.mc.logger.sendTelemetryEvent({
-					eventName: "UploadBlobReject",
-					// TODO: better typing
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-					error,
-					localId,
-				});
-				// it will only reject if we haven't sent an op
-				// and is a non-retriable error. It will only reject
-				// the promise but not throw any error outside.
-				this.pendingBlobs.get(localId)?.handleP.reject(error);
+	/**
+	 * Upload a blob to the storage service.
+	 * @returns A promise that resolves when the upload is complete and a blob attach op has been sent (but not ack'd).
+	 *
+	 * @privateRemarks This method must not reject, as there is no error handling for it in current tracking.
+	 */
+	private async uploadBlob(localId: string, blob: ArrayBufferLike): Promise<void> {
+		let response: ICreateBlobResponseWithTTL;
+		try {
+			response = await this.storage.createBlob(blob);
+		} catch (error) {
+			const entry = this.pendingBlobs.get(localId);
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "UploadBlobReject",
+				// TODO: better typing
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+				error: error as any,
+				message: entry === undefined ? "Missing pendingBlob" : undefined,
+				localId,
+			});
+			// We probably should assert the pendingBlobs entry here, but we don't currently have any error handling
+			// for the uploadP - a promise rejection would be unhandled anyway. For now we can detect this with the
+			// message on the UploadBlobReject telemetry.
+			if (entry !== undefined) {
+				entry.handleP.reject(error);
 				this.deletePendingBlob(localId);
-				this.internalEvents.emit("uploadFailed", localId, error);
-			},
-		);
+			}
+			this.internalEvents.emit("uploadFailed", localId, error);
+			return;
+		}
+
+		try {
+			this.onUploadResolve(localId, response);
+		} catch (error) {
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "OnUploadResolveError",
+				// TODO: better typing
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+				error: error as any,
+				localId,
+			});
+		}
 	}
 
 	/**

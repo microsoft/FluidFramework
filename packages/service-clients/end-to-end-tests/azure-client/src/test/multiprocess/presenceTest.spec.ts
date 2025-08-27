@@ -262,8 +262,7 @@ describe(`Presence with AzureClient`, () => {
 	// Note that on slower systems 50+ clients may take too long to join.
 	const numClientsForAttendeeTests = [5, 20, 50, 100];
 	// TODO: AB#45620: "Presence: perf: update Join pattern for scale" may help, then remove .slice.
-	// TODO: 20 clients is too many on ADO pipeline agents and times out waiting for attendees.
-	for (const numClients of numClientsForAttendeeTests.slice(0, 1)) {
+	for (const numClients of numClientsForAttendeeTests.slice(0, 2)) {
 		assert(numClients > 1, "Must have at least two clients");
 
 		// Timeout duration used when waiting for response messages from child processes.
