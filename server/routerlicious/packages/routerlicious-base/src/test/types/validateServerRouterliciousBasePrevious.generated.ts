@@ -32,6 +32,7 @@ declare type old_as_current_for_Class_AlfredResources = requireAssignableTo<Type
  * typeValidation.broken:
  * "Class_AlfredResources": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_AlfredResources = requireAssignableTo<TypeOnly<current.AlfredResources>, TypeOnly<old.AlfredResources>>
 
 /*
@@ -330,6 +331,7 @@ declare type current_as_old_for_Class_TenantManager = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "ClassStatics_AlfredResources": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_AlfredResources = requireAssignableTo<TypeOnly<typeof current.AlfredResources>, TypeOnly<typeof old.AlfredResources>>
 
 /*

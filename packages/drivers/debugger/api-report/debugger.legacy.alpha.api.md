@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export namespace FluidDebugger {
     // @legacy (undocumented)
     export function createFromServiceFactory(documentServiceFactory: IDocumentServiceFactory): Promise<IDocumentServiceFactory>;
