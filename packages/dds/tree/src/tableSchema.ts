@@ -928,8 +928,8 @@ export namespace System_TableSchema {
 			}
 
 			/**
-			 * Attempts to resolve a Column node or Column ID to a Column node.
-			 * If a Column node is provided, it is returned as-is.
+			 * Attempts to resolve a Column node or ID to a Column node.
+			 * If a node is provided, it is returned as-is.
 			 * If an ID is provided, we check the table for the corresponding Column node and return it if it exists, otherwise undefined.
 			 */
 			private _tryGetColumn(
@@ -939,8 +939,8 @@ export namespace System_TableSchema {
 			}
 
 			/**
-			 * Attempts to resolve a Column node or Column ID to a Column node.
-			 * If a Column node is provided, it is returned as-is.
+			 * Attempts to resolve a Column node or ID to a Column node.
+			 * If a node is provided, it is returned as-is.
 			 * If an ID is provided, we check the table for the corresponding Column node and return it if it exists, otherwise we throw an exception.
 			 */
 			private _getColumn(columnOrId: string | ColumnValueType): ColumnValueType {
@@ -982,8 +982,8 @@ export namespace System_TableSchema {
 			}
 
 			/**
-			 * Attempts to resolve a Row node or Row ID to a Row node.
-			 * If a Row node is provided, it is returned as-is.
+			 * Attempts to resolve a Row node or ID to a Row node.
+			 * If a node is provided, it is returned as-is.
 			 * If an ID is provided, we check the table for the corresponding Row node and return it if it exists, otherwise undefined.
 			 */
 			private _tryGetRow(rowOrId: string | RowValueType): RowValueType | undefined {
@@ -991,8 +991,8 @@ export namespace System_TableSchema {
 			}
 
 			/**
-			 * Attempts to resolve a Row node or Row ID to a Row node.
-			 * If a Row node is provided, it is returned as-is.
+			 * Attempts to resolve a Row node or ID to a Row node.
+			 * If a node is provided, it is returned as-is.
 			 * If an ID is provided, we check the table for the corresponding Row node and return it if it exists, otherwise we throw an exception.
 			 */
 			private _getRow(rowOrId: string | RowValueType): RowValueType {
