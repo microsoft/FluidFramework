@@ -792,6 +792,19 @@ describe("TableFactory unit tests", () => {
 			});
 		});
 
+		it("Remove empty range", () => {
+			const table = initializeTree(Table, {
+				columns: [new Column({ id: "column-0", props: {} })],
+				rows: [],
+			});
+
+			table.removeColumns(0, 0);
+			assertEqualTrees(table, {
+				columns: [{ id: "column-0", props: {} }],
+				rows: [],
+			});
+		});
+
 		// TODO:AB#47404: Fix column removal for unhydrated table trees and re-enable in unhydrated mode.
 		if (hydrated) {
 			it("Remove single column", () => {
@@ -887,6 +900,42 @@ describe("TableFactory unit tests", () => {
 				});
 			});
 
+			it("Remove columns by index range", () => {
+				const column0 = new Column({ id: "column-0", props: {} });
+				const column1 = new Column({ id: "column-1", props: {} });
+				const column2 = new Column({ id: "column-2", props: {} });
+				const column3 = new Column({ id: "column-3", props: {} });
+				const table = initializeTree(Table, {
+					columns: [column0, column1, column2, column3],
+					rows: [
+						new Row({
+							id: "row-0",
+							cells: {
+								"column-0": { value: "Hello" },
+								"column-2": { value: "world" },
+							},
+						}),
+					],
+				});
+
+				// Remove columns 1-2
+				table.removeColumns(1, 2);
+				assertEqualTrees(table, {
+					columns: [
+						{ id: "column-0", props: {} },
+						{ id: "column-3", props: {} },
+					],
+					rows: [
+						{
+							id: "row-0",
+							cells: {
+								"column-0": { value: "Hello" },
+							},
+						},
+					],
+				});
+			});
+
 			it("Removing a single column that doesn't exist on table errors", () => {
 				const table = initializeTree(Table, {
 					columns: [],
@@ -919,42 +968,6 @@ describe("TableFactory unit tests", () => {
 				assert(table.columns.length === 1);
 			});
 		}
-	});
-
-	describeHydration("removeColumns", (initializeTree) => {
-		it("Remove empty range", () => {
-			const table = initializeTree(Table, {
-				columns: [new Column({ id: "column-0", props: {} })],
-				rows: [],
-			});
-
-			table.removeColumns(0, 0);
-			assertEqualTrees(table, {
-				columns: [{ id: "column-0", props: {} }],
-				rows: [],
-			});
-		});
-
-		it("Remove by index range", () => {
-			const column0 = new Column({ id: "column-0", props: {} });
-			const column1 = new Column({ id: "column-1", props: {} });
-			const column2 = new Column({ id: "column-2", props: {} });
-			const column3 = new Column({ id: "column-3", props: {} });
-			const table = initializeTree(Table, {
-				columns: [column0, column1, column2, column3],
-				rows: [],
-			});
-
-			// Remove columns 1-2
-			table.removeColumns(1, 2);
-			assertEqualTrees(table, {
-				columns: [
-					{ id: "column-0", props: {} },
-					{ id: "column-3", props: {} },
-				],
-				rows: [],
-			});
-		});
 
 		it("Removing by range fails for invalid ranges", () => {
 			const column0 = new Column({ id: "column-0", props: {} });
