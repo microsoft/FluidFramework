@@ -341,12 +341,6 @@ export class SchemaFactory<
 		public readonly scope: TScope,
 	) {}
 
-	private scoped<Name extends TName | string>(name: Name): ScopedSchemaName<TScope, Name> {
-		return (
-			this.scope === undefined ? `${name}` : `${this.scope}.${name}`
-		) as ScopedSchemaName<TScope, Name>;
-	}
-
 	/**
 	 * {@inheritDoc SchemaStatics.string}
 	 */
@@ -436,7 +430,7 @@ export class SchemaFactory<
 			true,
 			T
 		> = objectSchema(
-			this.scoped(name),
+			scoped(this, name),
 			fields,
 			true,
 			defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
@@ -594,7 +588,7 @@ export class SchemaFactory<
 			T,
 			undefined
 		> = mapSchema(
-			this.scoped(name),
+			scoped(this, name),
 			allowedTypes,
 			implicitlyConstructable,
 			// The current policy is customizable nodes don't get fake prototypes.
@@ -796,7 +790,7 @@ export class SchemaFactory<
 		undefined
 	> {
 		const array = arraySchema(
-			this.scoped(name),
+			scoped(this, name),
 			allowedTypes,
 			implicitlyConstructable,
 			customizable,
@@ -1062,6 +1056,16 @@ export function structuralName<const T extends string>(
 		inner = JSON.stringify(names);
 	}
 	return `${collectionName}<${inner}>`;
+}
+
+export function scoped<
+	TScope extends string | undefined,
+	TName extends number | string,
+	Name extends TName | string,
+>(factory: SchemaFactory<TScope, TName>, name: Name): ScopedSchemaName<TScope, Name> {
+	return (
+		factory.scope === undefined ? `${name}` : `${factory.scope}.${name}`
+	) as ScopedSchemaName<TScope, Name>;
 }
 
 /**

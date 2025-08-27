@@ -252,12 +252,12 @@ export enum FluidClientVersion {
     v2_52 = 2.052
 }
 
-// @alpha
+// @beta @input
 export interface ForestOptions {
     readonly forest?: ForestType;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface ForestType extends ErasedType_2<"ForestType"> {
 }
 
@@ -269,6 +269,16 @@ export const ForestTypeOptimized: ForestType;
 
 // @alpha
 export const ForestTypeReference: ForestType;
+
+// @alpha @sealed
+export interface FormatValidator extends ErasedType_2<"FormatValidator"> {
+}
+
+// @alpha
+export const FormatValidatorBasic: FormatValidator_2;
+
+// @alpha
+export const FormatValidatorNoOp: FormatValidator;
 
 // @alpha
 export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSchema;
@@ -290,7 +300,7 @@ export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
 
 // @alpha @input
 export interface ICodecOptions {
-    readonly jsonValidator: JsonValidator;
+    readonly jsonValidator: JsonValidator | FormatValidator;
 }
 
 // @alpha
@@ -816,7 +826,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 }
 
 // @alpha
-export class SchemaFactoryAlpha<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory<TScope, TName> {
+export class SchemaFactoryAlpha<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactoryBeta<TScope, TName> {
     arrayAlpha<const Name extends TName, const T extends ImplicitAnnotatedAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>): ArrayNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
     arrayRecursive<const Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>): ArrayNodeCustomizableSchemaUnsafe<ScopedSchemaName<TScope, Name>, T, TCustomMetadata>;
     static readonly identifier: <const TCustomMetadata = unknown>(props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlpha<FieldKind.Identifier, LeafSchema<"string", string> & SimpleLeafNodeSchema, TCustomMetadata>;
@@ -854,9 +864,14 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     };
     static readonly requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlphaUnsafe<FieldKind.Required, T, TCustomMetadata>;
     readonly requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlphaUnsafe<FieldKind.Required, T, TCustomMetadata>;
-    scopedFactory<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner>;
+    scopedFactoryAlpha<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner>;
     static staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
     staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
+}
+
+// @beta
+export class SchemaFactoryBeta<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory<TScope, TName> {
+    scopedFactory<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner>;
 }
 
 // @alpha @input
@@ -903,7 +918,7 @@ export interface SchemaValidationFunction<Schema extends TSchema> {
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
-// @alpha
+// @alpha @input
 export interface SharedTreeFormatOptions {
     formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
     treeEncodeType: TreeCompressionStrategy;

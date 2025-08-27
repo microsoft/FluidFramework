@@ -10,7 +10,7 @@ export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean;
 // @beta @legacy
 export function convertToSummaryTreeWithStats(snapshot: ITree, fullTree?: boolean): ISummaryTreeWithStats;
 
-// @beta @legacy (undocumented)
+// @beta @legacy
 export const create404Response: (request: IRequest) => IResponse;
 
 // @beta @legacy
