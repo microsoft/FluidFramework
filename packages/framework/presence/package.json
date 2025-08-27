@@ -76,7 +76,7 @@
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
 		"test:mocha:cjs": "cross-env MOCHA_SPEC=dist/test mocha",
 		"test:mocha:esm": "mocha",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 mocha",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "npm run tsc:main && npm run tsc:experimental",
 		"tsc:experimental": "fluid-tsc commonjs --project ./tsconfig.cjs.json",
 		"tsc:main": "fluid-tsc commonjs --project ./tsconfig.main.cjs.json && copyfiles -f ./src/cjs/package.json ./dist",
