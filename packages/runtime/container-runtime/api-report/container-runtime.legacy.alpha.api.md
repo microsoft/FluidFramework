@@ -346,8 +346,6 @@ export interface LoadContainerRuntimeParams {
     runtimeOptions?: IContainerRuntimeOptions;
 }
 
-export { MinimumVersionForCollab }
-
 // @beta @deprecated @legacy (undocumented)
 export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 

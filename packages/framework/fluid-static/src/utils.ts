@@ -4,7 +4,6 @@
  */
 
 import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/container-runtime/internal";
 import type { FluidObjectKeys, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { oob } from "@fluidframework/core-utils/internal";
 import type {
@@ -13,6 +12,7 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IFluidDataStoreContext,
+	MinimumVersionForCollab,
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
