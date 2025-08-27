@@ -1340,7 +1340,8 @@ describe("TableFactory unit tests", () => {
 			assert.equal(eventCount, 4);
 		});
 
-		// TODO:AB#47404: Fix column removal for unhydrated table trees and re-enable in unhydrated mode.
+		// Extra events are fired for move operation within unhydrated array nodes.
+		// TODO:AB#47457: Fix and re-enable this test in unhydrated mode.
 		if (hydrated) {
 			it("Responding to column list changes", () => {
 				const table = initializeTree(Table, Table.empty());

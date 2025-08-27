@@ -1874,6 +1874,8 @@ describe("treeNodeApi", () => {
 				assert.equal(a2DeepChanges, 1, `treeChanged should fire once.`);
 			});
 
+			// Extra events are fired for move operation within unhydrated array nodes.
+			// TODO:AB#47457: Fix and re-enable this test in unhydrated mode.
 			if (hydrated) {
 				it(`all operations on the node trigger 'nodeChanged' and 'treeChanged' the correct number of times`, () => {
 					const testSchema = sb.array("listRoot", sb.number);
