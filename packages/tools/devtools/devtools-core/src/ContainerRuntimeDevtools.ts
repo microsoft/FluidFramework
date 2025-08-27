@@ -165,7 +165,7 @@ export class DecomposedContainerForContainerRuntime
 
 	public get readOnlyInfo(): { readonly readonly?: boolean } {
 		// IContainerRuntime doesn't expose readonly in its interface, but the implementation has isReadOnly()
-		const runtimeWithReadOnly = this.runtime as { isReadOnly?: () => boolean };
-		return { readonly: runtimeWithReadOnly.isReadOnly?.() };
+		assert(this.runtime instanceof ContainerRuntime);
+		return { readonly: this.runtime.isReadOnly() };
 	}
 }
