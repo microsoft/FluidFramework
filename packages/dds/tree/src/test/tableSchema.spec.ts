@@ -836,10 +836,7 @@ describe("TableFactory unit tests", () => {
 					],
 				});
 			});
-		}
 
-		// TODO:AB#47404: Fix column removal for unhydrated table trees and re-enable in unhydrated mode.
-		if (hydrated) {
 			it("Remove multiple columns", () => {
 				const column0 = new Column({ id: "column-0", props: {} });
 				const column1 = new Column({ id: "column-1", props: {} });
