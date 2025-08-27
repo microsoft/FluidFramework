@@ -211,17 +211,20 @@ interface PendingKeySet {
 	type: "set";
 	path: string;
 	value: unknown;
+	subdir: SubDirectory;
 }
 
 interface PendingKeyDelete {
 	type: "delete";
 	path: string;
 	key: string;
+	subdir: SubDirectory;
 }
 
 interface PendingClear {
 	type: "clear";
 	path: string;
+	subdir: SubDirectory;
 }
 
 /**
@@ -238,6 +241,7 @@ interface PendingKeyLifetime {
 	 * must be removed from the pending data.
 	 */
 	keySets: PendingKeySet[];
+	subdir: SubDirectory;
 }
 
 /**
@@ -255,6 +259,7 @@ interface PendingSubDirectoryCreate {
 interface PendingSubDirectoryDelete {
 	type: "deleteSubDirectory";
 	subdirName: string;
+	subdir: SubDirectory;
 }
 
 type PendingSubDirectoryEntry = PendingSubDirectoryCreate | PendingSubDirectoryDelete;
@@ -623,28 +628,6 @@ export class SharedDirectory
 	}
 
 	/**
-	 * Similar to `getWorkingDirectory`, but also considers directories that are marked for deletion.
-	 * This is useful in reconnect/resubmit scenarios where we want to resubmit ops on the most "recent"
-	 * directory, even if it's pending a deletion.
-	 */
-	private getMostRecentWorkingDirectory(relativePath: string): IDirectory | undefined {
-		const absolutePath = this.makeAbsolute(relativePath);
-		if (absolutePath === posix.sep) {
-			return this.root;
-		}
-
-		let currentSubDir = this.root;
-		const subdirs = absolutePath.slice(1).split(posix.sep);
-		for (const subdir of subdirs) {
-			currentSubDir = currentSubDir.getMostRecentSubDirectory(subdir) as SubDirectory;
-			if (!currentSubDir) {
-				return undefined;
-			}
-		}
-		return currentSubDir;
-	}
-
-	/**
 	 * Similar to `getWorkingDirectory`, but only returns directories that are sequenced.
 	 * This can be useful for op processing since we only process ops on sequenced directories.
 	 */
@@ -892,9 +875,9 @@ export class SharedDirectory
 				}
 			},
 			resubmit: (op: IDirectoryClearOperation, localOpMetadata: ClearLocalOpMetadata) => {
-				const subdir = this.getMostRecentWorkingDirectory(op.path) as SubDirectory | undefined;
-				if (subdir) {
-					subdir.resubmitClearMessage(op, localOpMetadata);
+				const targetSubdir = localOpMetadata.subdir;
+				if (targetSubdir && !targetSubdir.disposed) {
+					targetSubdir.resubmitClearMessage(op, localOpMetadata);
 				}
 			},
 		});
@@ -911,9 +894,9 @@ export class SharedDirectory
 				}
 			},
 			resubmit: (op: IDirectoryDeleteOperation, localOpMetadata: EditLocalOpMetadata) => {
-				const subdir = this.getMostRecentWorkingDirectory(op.path) as SubDirectory | undefined;
-				if (subdir) {
-					subdir.resubmitKeyMessage(op, localOpMetadata);
+				const targetSubdir = localOpMetadata.subdir;
+				if (targetSubdir && !targetSubdir.disposed) {
+					targetSubdir.resubmitKeyMessage(op, localOpMetadata);
 				}
 			},
 		});
@@ -932,9 +915,9 @@ export class SharedDirectory
 				}
 			},
 			resubmit: (op: IDirectorySetOperation, localOpMetadata: EditLocalOpMetadata) => {
-				const subdir = this.getMostRecentWorkingDirectory(op.path) as SubDirectory | undefined;
-				if (subdir) {
-					subdir.resubmitKeyMessage(op, localOpMetadata);
+				const targetSubdir = localOpMetadata.subdir;
+				if (targetSubdir && !targetSubdir.disposed) {
+					targetSubdir.resubmitKeyMessage(op, localOpMetadata);
 				}
 			},
 		});
@@ -957,12 +940,10 @@ export class SharedDirectory
 				op: IDirectoryCreateSubDirectoryOperation,
 				localOpMetadata: SubDirLocalOpMetadata,
 			) => {
-				const parentSubdir = this.getMostRecentWorkingDirectory(op.path) as
-					| SubDirectory
-					| undefined;
-				if (parentSubdir) {
+				const targetSubdir = localOpMetadata.parentSubdir;
+				if (targetSubdir && !targetSubdir.disposed) {
 					// We don't reuse the metadata but send a new one on each submit.
-					parentSubdir.resubmitSubDirectoryMessage(op, localOpMetadata);
+					targetSubdir.resubmitSubDirectoryMessage(op, localOpMetadata);
 				}
 			},
 		});
@@ -985,12 +966,10 @@ export class SharedDirectory
 				op: IDirectoryDeleteSubDirectoryOperation,
 				localOpMetadata: SubDirLocalOpMetadata,
 			) => {
-				const parentSubdir = this.getMostRecentWorkingDirectory(op.path) as
-					| SubDirectory
-					| undefined;
-				if (parentSubdir) {
+				const targetSubdir = localOpMetadata.parentSubdir;
+				if (targetSubdir && !targetSubdir.disposed) {
 					// We don't reuse the metadata but send a new one on each submit.
-					parentSubdir.resubmitSubDirectoryMessage(op, localOpMetadata);
+					targetSubdir.resubmitSubDirectoryMessage(op, localOpMetadata);
 				}
 			},
 		});
@@ -1118,11 +1097,13 @@ export class SharedDirectory
 
 interface ICreateSubDirLocalOpMetadata {
 	type: "createSubDir";
+	parentSubdir: SubDirectory;
 }
 
 interface IDeleteSubDirLocalOpMetadata {
 	type: "deleteSubDir";
 	subDirectory: SubDirectory | undefined;
+	parentSubdir: SubDirectory;
 }
 
 type SubDirLocalOpMetadata = ICreateSubDirLocalOpMetadata | IDeleteSubDirLocalOpMetadata;
@@ -1283,13 +1264,20 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			latestPendingEntry.type === "delete" ||
 			latestPendingEntry.type === "clear"
 		) {
-			latestPendingEntry = { type: "lifetime", path: this.absolutePath, key, keySets: [] };
+			latestPendingEntry = {
+				type: "lifetime",
+				path: this.absolutePath,
+				key,
+				keySets: [],
+				subdir: this,
+			};
 			this.pendingStorageData.push(latestPendingEntry);
 		}
 		const pendingKeySet: PendingKeySet = {
 			type: "set",
 			path: this.absolutePath,
 			value,
+			subdir: this,
 		};
 		latestPendingEntry.keySets.push(pendingKeySet);
 
@@ -1447,6 +1435,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const pendingSubdirDelete: PendingSubDirectoryDelete = {
 			type: "deleteSubDirectory",
 			subdirName,
+			subdir: this,
 		};
 		this.pendingSubDirectoryData.push(pendingSubdirDelete);
 
@@ -1557,6 +1546,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			type: "delete",
 			path: this.absolutePath,
 			key,
+			subdir: this,
 		};
 		this.pendingStorageData.push(pendingKeyDelete);
 
@@ -1600,6 +1590,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const pendingClear: PendingClear = {
 			type: "clear",
 			path: this.absolutePath,
+			subdir: this,
 		};
 		this.pendingStorageData.push(pendingClear);
 
@@ -1878,30 +1869,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 
 		return subdir;
-	};
-
-	/**
-	 * Gets the most "recent" subdirectory. This includes pending subdirectories even if there
-	 * is also a pending delete op after the pending create op.
-	 */
-	public readonly getMostRecentSubDirectory = (
-		subdirName: string,
-	): SubDirectory | undefined => {
-		const latestPendingEntry = findLast(
-			this.pendingSubDirectoryData,
-			(entry) => entry.subdirName === subdirName && entry.type === "createSubDirectory",
-		);
-		if (latestPendingEntry === undefined) {
-			return this._sequencedSubdirectories.get(subdirName);
-		} else {
-			assert(
-				latestPendingEntry.type === "createSubDirectory",
-				"Expected pending entry to be a create subdirectory",
-			);
-			const latestPendingSubdirCreate = latestPendingEntry.subdir;
-			assert(latestPendingSubdirCreate !== undefined, "Subdirectory should exist");
-			return latestPendingSubdirCreate;
-		}
 	};
 
 	public get sequencedSubdirectories(): ReadonlyMap<string, SubDirectory> {
@@ -2312,6 +2279,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	private submitCreateSubDirectoryMessage(op: IDirectorySubDirectoryOperation): void {
 		const localOpMetadata: ICreateSubDirLocalOpMetadata = {
 			type: "createSubDir",
+			parentSubdir: this,
 		};
 		this.directory.submitDirectoryMessage(op, localOpMetadata);
 	}
@@ -2328,6 +2296,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const localOpMetadata: IDeleteSubDirLocalOpMetadata = {
 			type: "deleteSubDir",
 			subDirectory: subDir,
+			parentSubdir: this,
 		};
 		this.directory.submitDirectoryMessage(op, localOpMetadata);
 	}
@@ -2345,7 +2314,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// is already deleted, in which case we don't need to submit the op.
 		if (localOpMetadata.type === "createSubDir") {
 			// For create operations, look specifically for createSubDirectory entries
-			const pendingEntryIndex = this.pendingSubDirectoryData.findIndex(
+			const pendingEntryIndex = findLastIndex(
+				this.pendingSubDirectoryData,
 				(entry) => entry.subdirName === op.subdirName && entry.type === "createSubDirectory",
 			);
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
