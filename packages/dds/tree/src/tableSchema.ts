@@ -731,6 +731,11 @@ export namespace System_TableSchema {
 					const startIndex = indexOrColumns ?? 0;
 					const _count = count ?? this.columns.length - startIndex;
 
+					// If there are no columns to remove, do nothing
+					if (_count === 0) {
+						return [];
+					}
+
 					Table.assertValidRange({ index: startIndex, count: _count }, this.columns);
 
 					Tree.runTransaction(this, () => {
@@ -807,10 +812,17 @@ export namespace System_TableSchema {
 			): RowValueType[] {
 				if (typeof indexOrRows === "number" || indexOrRows === undefined) {
 					const startIndex = indexOrRows ?? 0;
+					const _count = count ?? this.columns.length - startIndex;
+
+					// If there are no rows to remove, do nothing
+					if (_count === 0) {
+						return [];
+					}
+
 					return Table._removeRange(
 						{
 							index: startIndex,
-							count: count ?? this.rows.length - startIndex,
+							count: _count,
 						},
 						this.rows,
 					);
