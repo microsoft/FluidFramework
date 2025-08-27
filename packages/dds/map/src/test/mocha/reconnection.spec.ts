@@ -271,6 +271,25 @@ describe("Reconnection", () => {
 			);
 		});
 
+		it("avoids resending set ops on subdirectories pending deletion", () => {
+			directory1.createSubDirectory("a");
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			containerRuntime1.connected = false;
+			directory1.getSubDirectory("a")?.set("x", "y");
+			directory1.deleteSubDirectory("a");
+			directory1.createSubDirectory("a");
+
+			containerRuntime1.connected = true;
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			const subdir = directory1.getSubDirectory("a");
+			assert(subdir !== undefined, "subdir a should exist");
+			assert.equal(subdir.get("x"), undefined, "key x should be undefined");
+		});
+
 		it("avoids resending createSubDirectory ops on recreated directories", async () => {
 			const subDirName = "subDir";
 
