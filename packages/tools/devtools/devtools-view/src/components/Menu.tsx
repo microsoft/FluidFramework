@@ -555,7 +555,7 @@ export interface MenuProps {
 	containers?: ContainerKey[];
 
 	/**
-	 * Callback function when a container should be removed from the list.
+	 * Callback function when a container should be deregistered from the devtools.
 	 *
 	 * @defaultValue `undefined` - No remove functionality is available when not provided.
 	 */
