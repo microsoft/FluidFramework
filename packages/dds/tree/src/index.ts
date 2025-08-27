@@ -90,6 +90,7 @@ export {
 	type TreeView,
 	type TreeViewEvents,
 	SchemaFactory,
+	SchemaFactoryBeta,
 	SchemaFactoryAlpha,
 	type SchemaFactoryObjectOptions,
 	type ImplicitFieldSchema,
