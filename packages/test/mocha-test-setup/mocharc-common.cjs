@@ -60,6 +60,11 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		}
 	}
 
+	const configuredSpec = process.env.MOCHA_SPEC ?? "lib/test";
+	const spec = process.env.npm_lifecycle_event?.endsWith(":cjs")
+		? configuredSpec.replace(/^lib\//, "dist/")
+		: configuredSpec;
+
 	const config = {
 		"recursive": true,
 		"require": requiredModulePaths,
@@ -73,6 +78,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 			// these must be provided here and not via mocha's --v8-expose-gc.
 			"expose-gc",
 		],
+		spec,
 	};
 
 	if (process.env.FLUID_TEST_TIMEOUT !== undefined) {

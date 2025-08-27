@@ -93,8 +93,8 @@
 		"test:coverage": "c8 npm test",
 		"test:jest": "jest --ci",
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
-		"test:mocha:cjs": "mocha dist/test/mocha",
-		"test:mocha:esm": "mocha lib/test/mocha",
+		"test:mocha:cjs": "cross-env MOCHA_SPEC=dist/test/mocha mocha",
+		"test:mocha:esm": "cross-env MOCHA_SPEC=lib/test/mocha mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"

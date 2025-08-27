@@ -54,9 +54,9 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
-		"test:mocha:cjs": "mocha dist/test",
-		"test:mocha:esm": "mocha lib/test",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"test:mocha:cjs": "mocha",
+		"test:mocha:esm": "mocha",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"c8": {

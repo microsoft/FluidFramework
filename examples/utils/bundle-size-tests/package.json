@@ -31,7 +31,7 @@
 		"prepack": "npm run webpack",
 		"test": "npm run test:mocha",
 		"test:mocha": "npm run test:mocha:esm",
-		"test:mocha:esm": "mocha lib/test",
+		"test:mocha:esm": "mocha",
 		"webpack": "webpack",
 		"webpack:profile": "npm run webpack"
 	},
