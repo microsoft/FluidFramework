@@ -288,6 +288,19 @@ describe("Reconnection", () => {
 			const subdir = directory1.getSubDirectory("a");
 			assert(subdir !== undefined, "subdir a should exist");
 			assert.equal(subdir.get("x"), undefined, "key x should be undefined");
+
+			assert.deepEqual(
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+				(subdir as any).pendingSubDirectoryData,
+				[],
+				"pending subdirectory data should be empty",
+			);
+			assert.deepEqual(
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+				(subdir as any).pendingStorageData,
+				[],
+				"pending storage data should be empty",
+			);
 		});
 
 		it("avoids resending createSubDirectory ops on recreated directories", async () => {
