@@ -55,7 +55,6 @@ export namespace DataVisualization {
 
 		/**
 		 * Reason for this visualization update.
-		 * Determines whether UI should show visual feedback (blinking/animation).
 		 */
 		reason: UpdateReason;
 	}
