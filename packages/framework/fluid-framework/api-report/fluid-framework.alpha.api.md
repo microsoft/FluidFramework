@@ -264,6 +264,7 @@ export class FieldSchemaAlpha<Kind extends FieldKind = FieldKind, Types extends 
     // (undocumented)
     readonly annotatedAllowedTypes: ImplicitAnnotatedAllowedTypes;
     get annotatedAllowedTypesNormalized(): NormalizedAnnotatedAllowedTypes;
+    // (undocumented)
     get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined;
 }
 
@@ -307,12 +308,12 @@ export type FluidObject<T = unknown> = {
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
-// @alpha
+// @beta @input
 export interface ForestOptions {
     readonly forest?: ForestType;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface ForestType extends ErasedType<"ForestType"> {
 }
 
@@ -324,6 +325,16 @@ export const ForestTypeOptimized: ForestType;
 
 // @alpha
 export const ForestTypeReference: ForestType;
+
+// @alpha @sealed
+export interface FormatValidator extends ErasedType<"FormatValidator"> {
+}
+
+// @alpha
+export const FormatValidatorBasic: FormatValidator_2;
+
+// @alpha
+export const FormatValidatorNoOp: FormatValidator;
 
 // @alpha
 export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSchema;
@@ -345,7 +356,7 @@ export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
 
 // @alpha @input
 export interface ICodecOptions {
-    readonly jsonValidator: JsonValidator;
+    readonly jsonValidator: JsonValidator | FormatValidator;
 }
 
 // @public
@@ -973,12 +984,12 @@ export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
     readonly description?: string | undefined;
 }
 
-// @public @sealed
+// @public @input
 export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
     readonly metadata?: NodeSchemaMetadata<TCustomMetadata> | undefined;
 }
 
-// @alpha
+// @alpha @input
 export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown> extends NodeSchemaOptions<TCustomMetadata> {
     readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }
@@ -1222,9 +1233,9 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
 }
 
-// @alpha
+// @alpha @input
 export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown> extends NodeSchemaOptionsAlpha<TCustomMetadata> {
-    allowUnknownOptionalFields?: boolean;
+    readonly allowUnknownOptionalFields?: boolean;
 }
 
 // @public @sealed @system
@@ -1274,7 +1285,7 @@ export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedTyp
 // @public
 export const SharedTree: SharedObjectKind<ITree>;
 
-// @alpha
+// @alpha @input
 export interface SharedTreeFormatOptions {
     formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
     treeEncodeType: TreeCompressionStrategy;

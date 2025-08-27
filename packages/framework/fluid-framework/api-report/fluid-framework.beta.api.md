@@ -165,6 +165,15 @@ export type FluidObject<T = unknown> = {
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
+// @beta @input
+export interface ForestOptions {
+    readonly forest?: ForestType;
+}
+
+// @beta @sealed
+export interface ForestType extends ErasedType<"ForestType"> {
+}
+
 // @public
 export interface IConnection {
     readonly id: string;
@@ -605,7 +614,7 @@ export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
     readonly description?: string | undefined;
 }
 
-// @public @sealed
+// @public @input
 export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
     readonly metadata?: NodeSchemaMetadata<TCustomMetadata> | undefined;
 }
