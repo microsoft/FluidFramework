@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
 	IGarbageCollectionDetailsBase,
@@ -23,7 +23,7 @@ import {
 import { cloneGCData, unpackChildNodesGCDetails } from "../../gc/index.js";
 
 import { SummarizerNode } from "./summarizerNode.js";
-import {
+import type {
 	ICreateChildDetails,
 	IStartSummaryResult,
 	ISummarizerNodeRootContract,

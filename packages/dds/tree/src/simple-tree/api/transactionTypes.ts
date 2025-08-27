@@ -113,6 +113,7 @@ export type TransactionResult =
 /**
  * The parameters for the {@link RunTransaction | RunTransaction} API.
  * @alpha
+ * @input
  */
 export interface RunTransactionParams {
 	/**

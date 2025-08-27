@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AttachState, IAudience } from "@fluidframework/container-definitions/";
-import {
+import type { AttachState, IAudience } from "@fluidframework/container-definitions/";
+import type {
 	IContainer,
 	IContainerEvents,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
 	IResolvedUrl,
 	IDocumentMessage,
 	ISequencedDocumentMessage,

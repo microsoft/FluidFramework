@@ -9,7 +9,7 @@ import ReactDOM from "react-dom";
 
 import {
 	CollaborativeTextContainerRuntimeFactory,
-	ICollaborativeTextAppModel,
+	type ICollaborativeTextAppModel,
 } from "./container.js";
 import { CollaborativeTextView } from "./view.js";
 

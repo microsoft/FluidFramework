@@ -6,7 +6,7 @@
 /* eslint-disable no-bitwise */
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { NumericUuid } from "./identifiers.js";
+import type { NumericUuid } from "./identifiers.js";
 
 const halfNumeric = BigInt("0xFFFFFFFFFFFFFFFF");
 const sixtyFour = BigInt(64);

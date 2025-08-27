@@ -1,5 +1,130 @@
 # @fluidframework/tree
 
+## 2.53.0
+
+### Minor Changes
+
+- TableSchema's "removeColumn" API now removes corresponding cells (alpha) ([#25213](https://github.com/microsoft/FluidFramework/pull/25213)) [b665ba8320d](https://github.com/microsoft/FluidFramework/commit/b665ba8320d9ab6d1b87de81bdf54c2fde20e5c1)
+
+  Previously, the [removeColumn](https://fluidframework.com/docs/api/fluid-framework/tableschema-namespace/table-interface#removecolumn-methodsignature) API on Table nodes derived from [TableSchema](https://fluidframework.com/docs/api/fluid-framework/tableschema-namespace/) (alpha) only removed the `Column` node from the list of columns tracked by the table.
+  To also remove the corresponding cells from the table (which are stored on the `Row` nodes), the user was required to write a custom transaction that removed the column and cells.
+
+  The motivation for this design was due to performance concerns with transactions.
+  Those concerns are still relevant, but the data leak risk of dropping columns without removing corresponding cells seems a greater risk, and we have plans to address the performance issues with transactions.
+
+- Adds staged allowed types to SchemaFactoryAlpha ([#25116](https://github.com/microsoft/FluidFramework/pull/25116)) [59baf03ac7f](https://github.com/microsoft/FluidFramework/commit/59baf03ac7f2f2779533c8c63e1de85c01a0d39a)
+
+  This adds the `staged` API to [`SchemaFactoryAlpha`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class).
+  Staged allowed types can be used for schema evolution to add members to an [`AllowedTypes`](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) while supporting cross version collaboration.
+
+  Staged allowed types are [allowed types](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) that can be upgraded by [schema upgrades](https://fluidframework.com/docs/api/fluid-framework/treeview-interface#upgradeschema-methodsignature).
+  Before being upgraded, any attempt to insert or move a node to a location which requires its type to be upgraded to be valid will throw an error.
+
+  To add a new member to an `AllowedTypes`, add the type wrapped by `staged`.
+  For example, migrating an array which previously supported only numbers to support both numbers and strings would start by deploying a version of the app using `staged`:
+
+  ```typescript
+  class TestArray extends schemaFactoryAlpha.arrayAlpha("TestArray", [
+    SchemaFactoryAlpha.number,
+    SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+  ]) {}
+  ```
+
+  Once enough clients have this code update, it is safe to allow writing strings to the array.
+  To allow writing strings to the array, a code change must be made to remove the staged annotation:
+
+  ```typescript
+  class TestArray extends schemaFactoryAlpha.arrayAlpha("TestArray", [
+    schemaFactoryAlpha.number,
+    schemaFactoryAlpha.string,
+  ]) {}
+  ```
+
+  Then when opening old documents [upgradeSchema](https://fluidframework.com/docs/api/fluid-framework/treeview-interface#upgradeschema-methodsignature) is used to upgrade the stored schema:
+
+  ```typescript
+  view.upgradeSchema();
+  ```
+
+  The `@alpha` API [extractPersistedSchema](https://fluidframework.com/docs/api/fluid-framework#extractpersistedschema-function) now takes the schema as an `ImplicitAnnotatedFieldSchema` and an additional parameter to filter which staged upgrades it includes.
+
+  Below is a full example of how the schema migration process works.
+  This can also be found in the [tests](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts).
+
+  ```typescript
+  // Schema A: only number allowed
+  const schemaA = SchemaFactoryAlpha.optional([SchemaFactoryAlpha.number]);
+
+  // Schema B: number or string (string is staged)
+  const schemaB = SchemaFactoryAlpha.optional([
+    SchemaFactoryAlpha.number,
+    SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+  ]);
+
+  // Schema C: number or string, both fully allowed
+  const schemaC = SchemaFactoryAlpha.optional([
+    SchemaFactoryAlpha.number,
+    SchemaFactoryAlpha.string,
+  ]);
+
+  // Initialize with schema A.
+  const configA = new TreeViewConfiguration({
+    schema: schemaA,
+  });
+  const viewA = treeA.viewWith(configA);
+  viewA.initialize(5);
+
+  // Since we are running all the different versions of the app in the same process making changes synchronously,
+  // an explicit flush is needed to make them available to each other.
+  synchronizeTrees();
+
+  assert.deepEqual(viewA.root, 5);
+
+  // View the same document with a second tree using schema B.
+  const configB = new TreeViewConfiguration({
+    schema: schemaB,
+  });
+  const viewB = treeB.viewWith(configB);
+  // B cannot write strings to the root.
+  assert.throws(() => (viewB.root = "test"));
+
+  // View the same document with a third tree using schema C.
+  const configC = new TreeViewConfiguration({
+    schema: schemaC,
+  });
+  const viewC = treeC.viewWith(configC);
+  // Upgrade to schema C
+  viewC.upgradeSchema();
+  // Use the newly enabled schema.
+  viewC.root = "test";
+
+  synchronizeTrees();
+
+  // View A is now incompatible with the stored schema:
+  assert.equal(viewA.compatibility.canView, false);
+
+  // View B can still read the document, and now sees the string root which relies on the staged schema.
+  assert.deepEqual(viewB.root, "test");
+  ```
+
+- Allow edits in arrays to be concurrent to dependent edits of transactions with violated constraints ([#25191](https://github.com/microsoft/FluidFramework/pull/25191)) [ef64bae6ab2](https://github.com/microsoft/FluidFramework/commit/ef64bae6ab2848c67d778d14ad56ae021f54ac7a)
+
+  Before this release, making concurrent edits to an array could lead to assertion error `0x8a2` being thrown if the following conditions were met:
+
+  - Some edit `e1` was a transaction with a constraint that turned out to be violated by edits concurrent to (and sequenced before) `e1`
+  - Some edit `e2` was dependent on `e1` (from before the violation of its constraint)
+  - Some edit `e3` was concurrent to and sequenced after both `e1` and `e2`
+  - `e3` was either concurrent to or the revert of some other edit `e0` that predated `e1`, `e2`, and `e3`.
+  - `e0` and `e2` made edits to the same gap (that is, in the same space between nodes) in the sequence/array.
+
+  After this release, these scenarios will work as expected (that is, no assertion error thrown).
+
+- Export TreeNode not only as a type ([#25226](https://github.com/microsoft/FluidFramework/pull/25226)) [eefb9522c01](https://github.com/microsoft/FluidFramework/commit/eefb9522c019ac68d8b4f40d7134116c78a1f2a5)
+
+  `TreeNode` can now be used as a runtime object.
+  This enables checking if an object is a `TreeNode` with `instanceof`.
+  `TreeNode` has customized `instanceof` support so it can detect `TreeNode` instances, even if they hide their prototype like [POJO mode nodes](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#schemafactory-remarks) do.
+
 ## 2.52.0
 
 ### Minor Changes

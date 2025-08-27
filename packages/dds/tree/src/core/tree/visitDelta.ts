@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { type NestedMap, setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
-import type { RevisionTag, TreeChunk } from "../index.js";
+
 import type { FieldKey } from "../schema-stored/index.js";
 
 import { mapCursorField, type ITreeCursorSynchronous } from "./cursor.js";
@@ -15,6 +15,8 @@ import { areDetachedNodeIdsEqual, offsetDetachId } from "./deltaUtil.js";
 import type { DetachedFieldIndex } from "./detachedFieldIndex.js";
 import type { ForestRootId, Major, Minor } from "./detachedFieldIndexTypes.js";
 import type { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
+import type { RevisionTag } from "../rebase/index.js";
+import type { TreeChunk } from "./chunk.js";
 
 /**
  * Implementation notes:

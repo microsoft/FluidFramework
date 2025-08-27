@@ -13,7 +13,7 @@ import {
 	Option,
 } from "@fluentui/react-components";
 import { Add24Regular, Checkmark24Regular, Delete24Regular } from "@fluentui/react-icons";
-import React, { DragEvent, useState } from "react";
+import React, { type DragEvent, useState } from "react";
 
 import { Column } from "../schema.js";
 

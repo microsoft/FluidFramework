@@ -17,7 +17,7 @@ import {
 } from "../node-kinds/index.js";
 import {
 	defaultSchemaFactoryObjectOptions,
-	SchemaFactory,
+	scoped,
 	structuralName,
 	type NodeSchemaOptionsAlpha,
 	type SchemaFactoryObjectOptions,
@@ -46,6 +46,7 @@ import type {
 	TreeRecordNodeUnsafe,
 } from "./typesUnsafe.js";
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
+import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
 
 // This import prevents a large number of type references in the API reports from showing up as *_2.
 /* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import/no-duplicates */
@@ -212,20 +213,14 @@ const schemaStaticsAlpha: SchemaStaticsAlpha = {
  *
  * @alpha
  * @privateRemarks
- *
- * Some private methods on `SchemaFactory` are intentionally duplicated here to avoid increasing their exposure to `protected`.
- * If we were to do so, they would be exposed on the public API surface of `SchemaFactory`.
+ * When building schema, when `options` is not provided, `TCustomMetadata` is inferred as `unknown`.
+ * If desired, this could be made to infer `undefined` instead by adding overloads for everything,
+ * but currently it is not worth the maintenance overhead as there is no use case which this is known to be helpful for.
  */
 export class SchemaFactoryAlpha<
 	out TScope extends string | undefined = string | undefined,
 	TName extends number | string = string,
-> extends SchemaFactory<TScope, TName> {
-	private scoped2<Name extends TName | string>(name: Name): ScopedSchemaName<TScope, Name> {
-		return (
-			this.scope === undefined ? `${name}` : `${this.scope}.${name}`
-		) as ScopedSchemaName<TScope, Name>;
-	}
-
+> extends SchemaFactoryBeta<TScope, TName> {
 	/**
 	 * Define a {@link TreeNodeSchemaClass} for a {@link TreeObjectNode}.
 	 *
@@ -255,7 +250,7 @@ export class SchemaFactoryAlpha<
 		readonly createFromInsertable: unknown;
 	} {
 		return objectSchema(
-			this.scoped2(name),
+			scoped<TScope, TName, Name>(this, name),
 			fields,
 			true,
 			options?.allowUnknownOptionalFields ??
@@ -410,7 +405,7 @@ export class SchemaFactoryAlpha<
 		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
 	): MapNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
 		return mapSchema(
-			this.scoped2(name),
+			scoped<TScope, TName, Name>(this, name),
 			allowedTypes,
 			true,
 			true,
@@ -440,7 +435,7 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * Define (and add to this library) a {@link TreeNodeSchemaClass} for a {@link (TreeArrayNode:interface)}.
+	 * Define a {@link TreeNodeSchemaClass} for a {@link (TreeArrayNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param allowedTypes - The types that may appear in the array.
@@ -461,7 +456,7 @@ export class SchemaFactoryAlpha<
 		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
 	): ArrayNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
 		return arraySchema(
-			this.scoped2(name),
+			scoped<TScope, TName, Name>(this, name),
 			allowedTypes,
 			true,
 			true,
@@ -628,23 +623,24 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * Define a {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
+	 * Define a {@link TreeNodeSchema} for a {@link (TreeRecordNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 *
 	 * @remarks
-	 * This is not intended to be used directly, use the overload of `array` which takes a name instead.
-	 * This is only public to work around a compiler limitation.
+	 * This is not intended to be used directly, use the overload of `record` which takes a name instead.
 	 */
 	private namedRecord<
 		Name extends TName | string,
 		const T extends ImplicitAllowedTypes,
 		const ImplicitlyConstructable extends boolean,
+		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
+		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
 	): TreeNodeSchemaBoth<
 		/* Name */ ScopedSchemaName<TScope, Name>,
 		/* Kind */ NodeKind.Record,
@@ -656,10 +652,12 @@ export class SchemaFactoryAlpha<
 		/* TConstructorExtra */ undefined
 	> {
 		const record = recordSchema({
-			identifier: this.scoped2(name),
+			identifier: scoped<TScope, TName, Name>(this, name),
 			info: allowedTypes,
 			customizable,
 			implicitlyConstructable,
+			metadata: options?.metadata,
+			persistedMetadata: options?.persistedMetadata,
 		});
 
 		return record as TreeNodeSchemaBoth<
@@ -696,7 +694,7 @@ export class SchemaFactoryAlpha<
 		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
 	): RecordNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
 		return recordSchema({
-			identifier: this.scoped2(name),
+			identifier: scoped<TScope, TName, Name>(this, name),
 			info: allowedTypes,
 			customizable: true,
 			implicitlyConstructable: true,
@@ -716,7 +714,8 @@ export class SchemaFactoryAlpha<
 	public recordRecursive<
 		Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
-	>(name: Name, allowedTypes: T) {
+		const TCustomMetadata = unknown,
+	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
 		const RecordSchema = this.namedRecord(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
@@ -724,6 +723,7 @@ export class SchemaFactoryAlpha<
 			// Setting this to true seems to work ok currently, but not for other node kinds.
 			// Supporting this could be fragile and might break other future changes, so it's being kept as false for now.
 			/* implicitlyConstructable */ false,
+			options,
 		);
 
 		return RecordSchema as TreeNodeSchemaClass<
@@ -740,19 +740,18 @@ export class SchemaFactoryAlpha<
 			},
 			/* ImplicitlyConstructable */ false,
 			/* Info */ T,
-			/* TConstructorExtra */ undefined
+			/* TConstructorExtra */ undefined,
+			/* TCustomMetadata */ TCustomMetadata
 		>;
 	}
 
 	/**
-	 * Create a {@link SchemaFactory} with a {@link SchemaFactory.scope|scope} which is a combination of this factory's scope and the provided name.
-	 * @remarks
-	 * The main use-case for this is when creating a collection of related schema (for example using a function that creates multiple schema).
-	 * Creating such related schema using a sub-scope helps ensure they won't collide with other schema in the parent scope.
+	 * {@inheritDoc SchemaFactoryBeta.scopedFactory}
 	 */
-	public scopedFactory<const T extends TName, TNameInner extends number | string = string>(
-		name: T,
-	): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner> {
-		return new SchemaFactoryAlpha(this.scoped2(name));
+	public scopedFactoryAlpha<
+		const T extends TName,
+		TNameInner extends number | string = string,
+	>(name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner> {
+		return new SchemaFactoryAlpha(scoped<TScope, TName, T>(this, name));
 	}
 }

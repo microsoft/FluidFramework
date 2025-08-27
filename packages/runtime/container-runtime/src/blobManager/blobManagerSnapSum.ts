@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { type IContainerContext } from "@fluidframework/container-definitions/internal";
+import {
+	AttachState,
+	type IContainerContext,
+} from "@fluidframework/container-definitions/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
@@ -56,34 +60,72 @@ const loadV1 = async (
 export const toRedirectTable = (
 	blobManagerLoadInfo: IBlobManagerLoadInfo,
 	logger: ITelemetryLoggerExt,
-): Map<string, string> => {
+	attachState: AttachState,
+): Map<string, string | undefined> => {
 	logger.sendTelemetryEvent({
 		eventName: "AttachmentBlobsLoaded",
 		count: blobManagerLoadInfo.ids?.length ?? 0,
 		redirectTable: blobManagerLoadInfo.redirectTable?.length,
 	});
-	return new Map<string, string>(blobManagerLoadInfo.redirectTable);
+	const redirectTable = new Map<string, string | undefined>(blobManagerLoadInfo.redirectTable);
+	const detached = attachState !== AttachState.Attached;
+	if (blobManagerLoadInfo.ids) {
+		// If we are detached, we don't have storage IDs yet, so set to undefined
+		// Otherwise, set identity (id -> id) entries.
+		for (const entry of blobManagerLoadInfo.ids) {
+			redirectTable.set(entry, detached ? undefined : entry);
+		}
+	}
+	return redirectTable;
 };
 
 export const summarizeBlobManagerState = (
-	redirectTable: Map<string, string>,
-): ISummaryTreeWithStats => summarizeV1(redirectTable);
+	redirectTable: Map<string, string | undefined>,
+	attachState: AttachState,
+): ISummaryTreeWithStats => summarizeV1(redirectTable, attachState);
 
-const summarizeV1 = (redirectTable: Map<string, string>): ISummaryTreeWithStats => {
+const summarizeV1 = (
+	redirectTable: Map<string, string | undefined>,
+	attachState: AttachState,
+): ISummaryTreeWithStats => {
+	const storageIds = getStorageIds(redirectTable, attachState);
+
+	// if storageIds is empty, it means we are detached and have only local IDs, or that there are no blobs attached
+	const blobIds = storageIds.size > 0 ? [...storageIds] : [...redirectTable.keys()];
 	const builder = new SummaryTreeBuilder();
-	const storageIds = getStorageIds(redirectTable);
-	for (const storageId of storageIds) {
-		// The attachment is inspectable by storage, which lets it detect that the blob is referenced
-		// and therefore should not be GC'd.
-		builder.addAttachment(storageId);
+	for (const blobId of blobIds) {
+		builder.addAttachment(blobId);
 	}
-	if (redirectTable.size > 0) {
-		builder.addBlob(redirectTableBlobName, JSON.stringify([...redirectTable.entries()]));
+
+	// Any non-identity entries in the table need to be saved in the summary
+	if (redirectTable.size > blobIds.length) {
+		builder.addBlob(
+			redirectTableBlobName,
+			// filter out identity entries
+			JSON.stringify(
+				[...redirectTable.entries()].filter(([localId, storageId]) => localId !== storageId),
+			),
+		);
 	}
 
 	return builder.getSummaryTree();
 };
 
-export const getStorageIds = (redirectTable: Map<string, string>): Set<string> => {
-	return new Set<string>(redirectTable.values());
+export const getStorageIds = (
+	redirectTable: Map<string, string | undefined>,
+	attachState: AttachState,
+): Set<string> => {
+	const ids = new Set<string | undefined>(redirectTable.values());
+
+	// If we are detached, we will not have storage IDs, only undefined
+	const undefinedValueInTable = ids.delete(undefined);
+
+	// For a detached container, entries are inserted into the redirect table with an undefined storage ID.
+	// For an attached container, entries are inserted w/storage ID after the BlobAttach op round-trips.
+	assert(
+		!undefinedValueInTable || (attachState === AttachState.Detached && ids.size === 0),
+		0x382 /* 'redirectTable' must contain only undefined while detached / defined values while attached */,
+	);
+
+	return ids as Set<string>;
 };

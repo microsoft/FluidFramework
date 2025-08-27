@@ -70,8 +70,7 @@ export interface IMapDeleteOperation {
  * channel ID.
  *
  * @deprecated This type is legacy and deprecated(AB#8004).
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISerializableValue {
 	/**

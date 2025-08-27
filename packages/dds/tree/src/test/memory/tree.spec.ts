@@ -12,19 +12,21 @@ import {
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { testIdCompressor } from "../utils.js";
 
+import type { NodeBuilderData } from "../../internalTypes.js";
 import {
-	configuredSharedTree,
-	ForestTypeOptimized,
-	ForestTypeReference,
 	SchemaFactory,
-	TreeCompressionStrategy,
 	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type InsertableTreeFieldFromImplicitField,
-	type SharedTreeOptions,
 	type TreeView,
-} from "../../index.js";
-import type { NodeBuilderData } from "../../internalTypes.js";
+} from "../../simple-tree/index.js";
+import {
+	ForestTypeOptimized,
+	ForestTypeReference,
+	type SharedTreeOptions,
+} from "../../shared-tree/index.js";
+import { configuredSharedTree } from "../../treeFactory.js";
+import { TreeCompressionStrategy } from "../../feature-libraries/index.js";
 
 const builder = new SchemaFactory("shared-tree-test");
 

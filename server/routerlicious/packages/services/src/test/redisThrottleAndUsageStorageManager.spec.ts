@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { IThrottlingMetrics, IUsageData } from "@fluidframework/server-services-core";
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { RedisThrottleAndUsageStorageManager } from "../redisThrottleAndUsageStorageManager";

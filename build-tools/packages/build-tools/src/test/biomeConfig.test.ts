@@ -7,7 +7,7 @@
 // There are no cases in this file where the values being checked should be undefined, so `!.` is more correct with
 // respect to intent than `?.`.
 
-import assert from "node:assert/strict";
+import { strict as assert } from "node:assert/strict";
 import path from "node:path";
 import {
 	BiomeConfigReader,

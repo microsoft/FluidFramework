@@ -3,14 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type {
+	IContainerContext,
+	IRuntime,
+} from "@fluidframework/container-definitions/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import Sinon from "sinon";
 
 import { RuntimeFactoryHelper } from "../runtimeFactoryHelper.js";
 
 class TestRuntimeFactoryHelper extends RuntimeFactoryHelper {
-	constructor(private readonly runtime: IRuntime & IContainerRuntime) {
+	public constructor(private readonly runtime: IRuntime & IContainerRuntime) {
 		super();
 	}
 

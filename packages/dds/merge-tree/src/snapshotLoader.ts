@@ -8,33 +8,33 @@
 import { bufferToString } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	UsageError,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { Client } from "./client.js";
+import type { Client } from "./client.js";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
-import { MergeTree } from "./mergeTree.js";
-import { ISegmentPrivate } from "./mergeTreeNodes.js";
-import { IJSONSegment } from "./ops.js";
+import type { MergeTree } from "./mergeTree.js";
+import type { ISegmentPrivate } from "./mergeTreeNodes.js";
+import type { IJSONSegment } from "./ops.js";
 import { PriorPerspective } from "./perspective.js";
 import {
-	IHasRemovalInfo,
+	type IHasRemovalInfo,
 	overwriteInfo,
 	type IHasInsertionInfo,
 	type SegmentWithInfo,
 } from "./segmentInfos.js";
 import {
-	IJSONSegmentWithMergeInfo,
-	MergeTreeChunkV1,
+	type IJSONSegmentWithMergeInfo,
+	type MergeTreeChunkV1,
 	hasMergeInfo,
 } from "./snapshotChunks.js";
 import { SnapshotV1 } from "./snapshotV1.js";

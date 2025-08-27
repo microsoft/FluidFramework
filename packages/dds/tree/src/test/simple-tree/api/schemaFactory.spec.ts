@@ -26,6 +26,7 @@ import {
 	NodeKind,
 	type TreeFieldFromImplicitField,
 	TreeViewConfigurationAlpha,
+	SchemaFactoryBeta,
 } from "../../../simple-tree/index.js";
 import {
 	// Import directly to get the non-type import to allow testing of the package only instanceof
@@ -53,6 +54,9 @@ import { hydrate } from "../utils.js";
 import { getView, TestTreeProviderLite, validateUsageError } from "../../utils.js";
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
 import { EmptyKey } from "../../../core/index.js";
+
+// Tests for the non-recursive API subset of SchemaFactory and SchemaFactoryAlpha.
+// Recursive APIs are tested in schemaFactoryRecursive.spec.ts
 
 {
 	const schema = new SchemaFactory("Blah");
@@ -389,6 +393,8 @@ describe("schemaFactory", () => {
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 
 		it("Field schema metadata", () => {
@@ -623,6 +629,8 @@ describe("schemaFactory", () => {
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 	});
 
@@ -692,6 +700,8 @@ describe("schemaFactory", () => {
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 	});
 
@@ -738,6 +748,10 @@ describe("schemaFactory", () => {
 			const factory = new SchemaFactoryAlpha("test");
 			class NamedRecord extends factory.record("name", factory.number) {}
 			const namedInstance = new NamedRecord({ x: 5 });
+			const x: number = namedInstance.x;
+			// TODO: AB#47136: this (and likely the line above as well) should not compile as the typing is incorrect (y is undefined, not number)
+			const y: number = namedInstance.y;
+			delete namedInstance.x;
 		});
 
 		it("Node schema metadata", () => {
@@ -759,6 +773,8 @@ describe("schemaFactory", () => {
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 	});
 
@@ -1262,10 +1278,40 @@ describe("schemaFactory", () => {
 	});
 
 	it("scopedFactory", () => {
+		const factory = new SchemaFactoryBeta("test.blah");
+
+		const scopedFactory: SchemaFactoryBeta<"test.blah.scoped"> =
+			factory.scopedFactory("scoped");
+		assert.equal(scopedFactory.scope, "test.blah.scoped");
+		type _check = requireTrue<
+			areSafelyAssignable<typeof scopedFactory.scope, "test.blah.scoped">
+		>;
+
+		type Scope = typeof scopedFactory extends SchemaFactoryBeta<infer S> ? S : never;
+
+		function inferScope<TScope extends string>(f: SchemaFactory<TScope>) {
+			return f.scope;
+		}
+
+		const inferred = inferScope(scopedFactory);
+		// TODO: AB#43345
+		// @ts-expect-error Known issue: see "variance with respect to scope and alpha" test.
+		type _check2 = requireTrue<areSafelyAssignable<typeof inferred, "test.blah.scoped">>;
+
+		function inferScope2<TScope extends string>(
+			f: SchemaFactory<TScope> | SchemaFactoryBeta<TScope>,
+		) {
+			return f.scope;
+		}
+		const inferred2 = inferScope2(scopedFactory);
+		type _check3 = requireTrue<areSafelyAssignable<typeof inferred2, "test.blah.scoped">>;
+	});
+
+	it("scopedFactoryAlpha", () => {
 		const factory = new SchemaFactoryAlpha("test.blah");
 
 		const scopedFactory: SchemaFactoryAlpha<"test.blah.scoped"> =
-			factory.scopedFactory("scoped");
+			factory.scopedFactoryAlpha("scoped");
 		assert.equal(scopedFactory.scope, "test.blah.scoped");
 		type _check = requireTrue<
 			areSafelyAssignable<typeof scopedFactory.scope, "test.blah.scoped">

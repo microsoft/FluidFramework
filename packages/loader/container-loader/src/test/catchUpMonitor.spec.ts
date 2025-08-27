@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
+import type {
 	IDeltaManager,
 	IDeltaManagerEvents,
 } from "@fluidframework/container-definitions/internal";

@@ -4,9 +4,9 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDisposable } from "@fluidframework/core-interfaces";
-import { ConnectionMode } from "@fluidframework/driver-definitions";
-import {
+import type { IDisposable } from "@fluidframework/core-interfaces";
+import type { ConnectionMode } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IAnyDriverError,
