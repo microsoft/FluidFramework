@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-export {
+export type {
 	IdCreationRange,
 	SerializedIdCompressor,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
 } from "./persisted-types/index.js";
 
-export { IIdCompressorCore, IIdCompressor } from "./idCompressor.js";
+export type { IIdCompressorCore, IIdCompressor } from "./idCompressor.js";
 
-export {
+export type {
 	SessionSpaceCompressedId,
 	OpSpaceCompressedId,
 	SessionId,

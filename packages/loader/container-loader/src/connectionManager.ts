@@ -4,32 +4,39 @@
  */
 
 import { TypedEventEmitter, performanceNow } from "@fluid-internal/client-utils";
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
+import type {
+	IDeltaQueue,
+	ReadOnlyInfo,
+} from "@fluidframework/container-definitions/internal";
 import {
-	IDisposable,
-	ITelemetryBaseProperties,
+	type IDisposable,
+	type ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ConnectionMode, IClient, IClientDetails } from "@fluidframework/driver-definitions";
+import type {
+	ConnectionMode,
+	IClient,
+	IClientDetails,
+} from "@fluidframework/driver-definitions";
 import {
-	IDocumentDeltaConnection,
-	IDocumentDeltaConnectionEvents,
-	IDocumentService,
+	type IDocumentDeltaConnection,
+	type IDocumentDeltaConnectionEvents,
+	type IDocumentService,
 	DriverErrorTypes,
-	IAnyDriverError,
-	IClientConfiguration,
-	IDocumentMessage,
-	INack,
-	INackContent,
-	ISequencedDocumentSystemMessage,
-	ISignalClient,
-	ITokenClaims,
+	type IAnyDriverError,
+	type IClientConfiguration,
+	type IDocumentMessage,
+	type INack,
+	type INackContent,
+	type ISequencedDocumentSystemMessage,
+	type ISignalClient,
+	type ITokenClaims,
 	MessageType,
 	ScopeType,
-	ISequencedDocumentMessage,
-	ISignalMessage,
+	type ISequencedDocumentMessage,
+	type ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	calculateMaxWaitTime,
@@ -43,7 +50,7 @@ import {
 	type ThrottlingError,
 } from "@fluidframework/driver-utils/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	GenericError,
 	UsageError,
 	formatTick,
@@ -53,10 +60,10 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	IConnectionDetailsInternal,
-	IConnectionManager,
-	IConnectionManagerFactoryArgs,
-	IConnectionStateChangeReason,
+	type IConnectionDetailsInternal,
+	type IConnectionManager,
+	type IConnectionManagerFactoryArgs,
+	type IConnectionStateChangeReason,
 	ReconnectMode,
 } from "./contracts.js";
 import { DeltaQueue } from "./deltaQueue.js";

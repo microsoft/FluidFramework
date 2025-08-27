@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { Tree, TreeAlpha } from "./shared-tree/index.js";
@@ -166,7 +166,7 @@ export namespace System_TableSchema {
 		cellSchema: TCellSchema,
 		propsSchema: TPropsSchema,
 	) {
-		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
+		const schemaFactory = inputSchemaFactory.scopedFactoryAlpha(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
 		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
@@ -342,7 +342,7 @@ export namespace System_TableSchema {
 		cellSchema: TCellSchema,
 		propsSchema: TPropsSchema,
 	) {
-		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
+		const schemaFactory = inputSchemaFactory.scopedFactoryAlpha(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
 		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
@@ -566,7 +566,7 @@ export namespace System_TableSchema {
 		columnSchema: TColumnSchema,
 		rowSchema: TRowSchema,
 	) {
-		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
+		const schemaFactory = inputSchemaFactory.scopedFactoryAlpha(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
 		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
@@ -727,33 +727,58 @@ export namespace System_TableSchema {
 				count: number | undefined = undefined,
 			): ColumnValueType[] {
 				if (typeof indexOrColumns === "number" || indexOrColumns === undefined) {
+					let removedColumns: ColumnValueType[] | undefined;
 					const startIndex = indexOrColumns ?? 0;
-					return Table._removeRange(
-						{
-							index: startIndex,
-							count: count ?? this.columns.length - startIndex,
-						},
-						this.columns,
-					);
-				}
+					const _count = count ?? this.columns.length - startIndex;
 
-				const columnsToRemove = indexOrColumns;
-
-				// If there are no columns to remove, do nothing
-				if (columnsToRemove.length === 0) {
-					return [];
-				}
-
-				const removedColumns: ColumnValueType[] = [];
-				Tree.runTransaction(this, () => {
-					// Note, throwing an error within a transaction will abort the entire transaction.
-					// So if we throw an error here for any column, no columns will be removed.
-					for (const columnToRemove of columnsToRemove) {
-						const removedColumn = this.removeColumn(columnToRemove);
-						removedColumns.push(removedColumn);
+					// If there are no columns to remove, do nothing
+					if (_count === 0) {
+						return [];
 					}
-				});
-				return removedColumns;
+
+					Table.assertValidRange({ index: startIndex, count: _count }, this.columns);
+
+					Tree.runTransaction(this, () => {
+						const columnsToRemove = this.columns.slice(
+							startIndex,
+							startIndex + _count,
+						) as ColumnValueType[];
+
+						// First, remove all cells that correspond to each column from each row:
+						for (const column of columnsToRemove) {
+							this.removeCells(column);
+						}
+
+						// Second, remove the column nodes:
+						Table._removeRange(
+							{
+								index: startIndex,
+								count: _count,
+							},
+							this.columns,
+						);
+						removedColumns = columnsToRemove;
+					});
+					return removedColumns ?? fail("Transaction did not complete.");
+				} else {
+					const columnsToRemove = indexOrColumns;
+
+					// If there are no columns to remove, do nothing
+					if (columnsToRemove.length === 0) {
+						return [];
+					}
+
+					const removedColumns: ColumnValueType[] = [];
+					Tree.runTransaction(this, () => {
+						// Note, throwing an error within a transaction will abort the entire transaction.
+						// So if we throw an error here for any column, no columns will be removed.
+						for (const columnToRemove of columnsToRemove) {
+							const removedColumn = this.removeColumn(columnToRemove);
+							removedColumns.push(removedColumn);
+						}
+					});
+					return removedColumns;
+				}
 			}
 
 			public removeColumn(columnOrId: string | ColumnValueType): ColumnValueType {
@@ -787,10 +812,17 @@ export namespace System_TableSchema {
 			): RowValueType[] {
 				if (typeof indexOrRows === "number" || indexOrRows === undefined) {
 					const startIndex = indexOrRows ?? 0;
+					const _count = count ?? this.columns.length - startIndex;
+
+					// If there are no rows to remove, do nothing
+					if (_count === 0) {
+						return [];
+					}
+
 					return Table._removeRange(
 						{
 							index: startIndex,
-							count: count ?? this.rows.length - startIndex,
+							count: _count,
 						},
 						this.rows,
 					);
@@ -860,6 +892,36 @@ export namespace System_TableSchema {
 				return cell;
 			}
 
+			private removeCells(column: ColumnValueType): void {
+				for (const row of this.rows) {
+					// TypeScript is unable to narrow the row type correctly here, hence the cast.
+					// See: https://github.com/microsoft/TypeScript/issues/52144
+					(row as RowValueType).removeCell(column);
+				}
+			}
+
+			private static assertValidRange<T>(
+				range: { index: number; count: number },
+				array: readonly T[],
+			): void {
+				const { index, count } = range;
+				if (index < 0 || index >= array.length) {
+					throw new UsageError(
+						`Start index out of bounds. Expected index to be on [0, ${array.length - 1}], but got ${index}.`,
+					);
+				}
+				if (count < 0) {
+					throw new UsageError(`Expected non-negative count. Got ${count}.`);
+				}
+
+				const end = index + count; // exclusive
+				if (end > array.length) {
+					throw new UsageError(
+						`End index out of bounds. Expected end to be on [${index}, ${array.length}], but got ${end}.`,
+					);
+				}
+			}
+
 			private _getColumn(columnOrId: string | ColumnValueType): ColumnValueType | undefined {
 				return typeof columnOrId === "string" ? this.getColumn(columnOrId) : columnOrId;
 			}
@@ -907,23 +969,10 @@ export namespace System_TableSchema {
 				range: { index: number; count: number },
 				array: TreeArrayNode<TNodeSchema>,
 			): TreeNodeFromImplicitAllowedTypes<TNodeSchema>[] {
+				Table.assertValidRange(range, array);
+
 				const { index, count } = range;
-
-				if (index < 0 || index >= array.length) {
-					throw new UsageError(
-						`Start index out of bounds. Expected index to be on [0, ${array.length - 1}], but got ${index}.`,
-					);
-				}
-				if (count < 0) {
-					throw new UsageError(`Expected non-negative count. Got ${count}.`);
-				}
-
 				const end = index + count; // exclusive
-				if (end > array.length) {
-					throw new UsageError(
-						`End index out of bounds. Expected end to be on [${index}, ${array.length}], but got ${end}.`,
-					);
-				}
 
 				// TypeScript is unable to narrow the array element type correctly here, hence the cast.
 				// See: https://github.com/microsoft/TypeScript/issues/52144

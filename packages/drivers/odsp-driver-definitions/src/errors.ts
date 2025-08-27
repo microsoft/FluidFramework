@@ -13,7 +13,7 @@ import {
  * ODSP Error types.
  * Different error types that may be thrown by the ODSP driver.
  * @legacy
- * @alpha
+ * @beta
  */
 export const OdspErrorTypes = {
 	// Inherit base driver error types
@@ -65,13 +65,13 @@ export const OdspErrorTypes = {
 } as const;
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export type OdspErrorTypes = (typeof OdspErrorTypes)[keyof typeof OdspErrorTypes];
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IOdspErrorAugmentations {
 	/**
@@ -96,7 +96,7 @@ export interface IOdspErrorAugmentations {
  * Base interface for all errors and warnings
  * Superset of IDriverErrorBase, but with Odsp-specific errorType and properties
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IOdspError
 	extends Omit<IDriverErrorBase, "errorType">,
@@ -106,6 +106,6 @@ export interface IOdspError
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
