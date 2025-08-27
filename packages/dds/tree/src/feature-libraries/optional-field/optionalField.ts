@@ -37,6 +37,8 @@ import {
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
 
+const useCompatMode: boolean = true;
+
 export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose,
 	invert: (
@@ -147,6 +149,12 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			nodeManager.addDetach(rebasedDetachId, 1);
 		}
 
+		assert(
+			!useCompatMode ||
+				rebased.nodeDetach === undefined ||
+				areEqualChangeAtomIdOpts(rebased.nodeDetach, rebased.valueReplace?.src),
+			"When supporting older clients, nodeDetach should only be used for pins",
+		);
 		return rebased;
 	},
 
@@ -209,6 +217,10 @@ function compose(
 
 	const composedDetach = composeNodeDetaches(change1, change2, nodeManager);
 	const composedReplace = composeReplaces(change1, change2);
+	if (useCompatMode && composedReplace !== undefined && composedDetach !== undefined) {
+		(composedReplace as Mutable<Replace>).dst = composedDetach;
+	}
+
 	const composedChildChange = getComposedChildChanges(
 		change1,
 		change2,
@@ -226,7 +238,11 @@ function compose(
 		return makeChangeset(undefined, undefined, composedChildChange);
 	}
 
-	return makeChangeset(composedReplace, composedDetach, composedChildChange);
+	return makeChangeset(
+		composedReplace,
+		useCompatMode ? undefined : composedDetach,
+		composedChildChange,
+	);
 }
 
 function composeNodeDetaches(
@@ -237,7 +253,6 @@ function composeNodeDetaches(
 	const detach1 = getEffectiveDetachId(change1);
 	if (detach1 !== undefined) {
 		const newDetachId = nodeManager.getNewChangesForBaseDetach(detach1, 1).value?.detachId;
-
 		if (newDetachId !== undefined) {
 			return newDetachId;
 		}

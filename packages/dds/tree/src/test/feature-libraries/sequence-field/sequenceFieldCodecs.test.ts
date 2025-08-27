@@ -56,6 +56,9 @@ const context: FieldChangeEncodingContext = {
 	rootRenames: newChangeAtomIdTransform(),
 	decodeRootNodeChange: () => {},
 	decodeRootRename: () => {},
+	generateId: () => ({
+		localId: brand(0),
+	}),
 };
 
 const changes = TestNodeId.create({ localId: brand(2) }, TestChange.mint([], 1));

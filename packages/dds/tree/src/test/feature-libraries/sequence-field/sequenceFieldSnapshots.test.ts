@@ -16,6 +16,7 @@ import { TestNodeId } from "../../testNodeId.js";
 import { createSnapshotCompressor, testIdCompressor } from "../../utils.js";
 import { generatePopulatedMarks } from "./populatedMarks.js";
 import { newTupleBTree } from "../../../util/bTreeUtils.js";
+import { brand } from "../../../util/brand.js";
 
 export function testSnapshots() {
 	describe("Snapshots", () => {
@@ -56,6 +57,7 @@ export function testSnapshots() {
 							}),
 							decodeRootNodeChange: () => {},
 							decodeRootRename: () => {},
+							generateId: () => ({ localId: brand(0) }),
 						});
 						takeJsonSnapshot(encoded);
 					});

@@ -229,6 +229,9 @@ describe("GenericField", () => {
 						rootRenames: newChangeAtomIdTransform(),
 						decodeRootNodeChange: () => {},
 						decodeRootRename: () => {},
+						generateId: () => ({
+							localId: brand(0),
+						}),
 					},
 				],
 			],

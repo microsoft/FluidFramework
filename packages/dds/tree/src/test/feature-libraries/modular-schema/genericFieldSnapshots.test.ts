@@ -62,6 +62,9 @@ export function testSnapshots() {
 							rootRenames: newChangeAtomIdTransform(),
 							decodeRootNodeChange: () => {},
 							decodeRootRename: () => {},
+							generateId: () => ({
+								localId: brand(0),
+							}),
 						});
 						takeJsonSnapshot(encoded);
 					});

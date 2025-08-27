@@ -3988,21 +3988,22 @@ function rebaseRoots(
 
 		const detachId = makeChangeAtomId(detachIdKey[1], detachIdKey[0]);
 		const attachId = firstAttachIdFromDetachId(base.rootNodes, detachId, 1).value;
-		const result = base.crossFieldKeys.getFirst(
+		const baseAttachEntry = base.crossFieldKeys.getFirst(
 			{ target: CrossFieldTarget.Destination, ...attachId },
 			1,
 		);
-		if (result.value !== undefined) {
-			affectedBaseFields.set(fieldIdKeyFromFieldId(result.value), true);
+		if (baseAttachEntry.value !== undefined) {
+			affectedBaseFields.set(fieldIdKeyFromFieldId(baseAttachEntry.value), true);
 			rebasedNodeToParent.delete(detachIdKey);
 		} else {
 			const renamedDetachId = firstAttachIdFromDetachId(base.rootNodes, detachId, 1).value;
+			// XXX: Handle base move of detach location.
 			assignRootChange(
 				rebasedRoots,
 				rebasedNodeToParent,
 				renamedDetachId,
 				nodeId,
-				change.rootNodes.detachLocations.getFirst(attachId, 1).value,
+				change.rootNodes.detachLocations.getFirst(detachId, 1).value,
 			);
 		}
 	}

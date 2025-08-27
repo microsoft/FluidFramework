@@ -29,6 +29,7 @@ import {
 	type RevisionTag,
 } from "../../core/index.js";
 import {
+	type IdAllocator,
 	type JsonCompatibleReadOnly,
 	type Mutable,
 	type RangeQueryEntry,
@@ -203,6 +204,7 @@ function makeModularChangeCodec(
 				decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
 				decodeRootNodeChange: () => fail("Should not be called during encoding"),
 				decodeRootRename: () => fail("Should not be called during encoding"),
+				generateId: () => fail("Should not be called during encoding"),
 			};
 
 			const encodedChange = codec.json.encode(fieldChange.change, fieldContext);
@@ -261,6 +263,7 @@ function makeModularChangeCodec(
 		decodedRootTable: RootNodeTable,
 		context: ChangeEncodingContext,
 		decodeNode: NodeDecoder,
+		idAllocator: IdAllocator,
 	): FieldChangeMap {
 		const decodedFields: FieldChangeMap = new Map();
 		for (const field of encodedChange) {
@@ -298,6 +301,11 @@ function makeModularChangeCodec(
 				decodeRootRename: (oldId, newId, count): void => {
 					addNodeRename(decodedRootTable, oldId, newId, count, fieldId);
 				},
+
+				generateId: (): ChangeAtomId => ({
+					revision: context.revision,
+					localId: brand(idAllocator.allocate()),
+				}),
 			};
 
 			const fieldChangeset = codec.json.decode(field.change, fieldContext);
@@ -328,6 +336,7 @@ function makeModularChangeCodec(
 		decodedRootTable: RootNodeTable,
 		context: ChangeEncodingContext,
 		decodeNode: NodeDecoder,
+		idAllocator: IdAllocator,
 	): NodeChangeset {
 		const decodedChange: NodeChangeset = {};
 		const { fieldChanges, nodeExistsConstraint } = encodedChange;
@@ -340,6 +349,7 @@ function makeModularChangeCodec(
 				decodedRootTable,
 				context,
 				decodeNode,
+				idAllocator,
 			);
 		}
 
@@ -588,6 +598,7 @@ function makeModularChangeCodec(
 					rootNodes,
 					context,
 					decodeNode,
+					idAllocator,
 				);
 
 				nodeChanges.set([nodeId.revision, nodeId.localId], node);
@@ -607,6 +618,7 @@ function makeModularChangeCodec(
 					rootNodes,
 					context,
 					decodeNode,
+					idAllocator,
 				),
 				nodeChanges,
 				rootNodes,

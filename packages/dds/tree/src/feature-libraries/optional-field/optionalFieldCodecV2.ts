@@ -6,11 +6,12 @@
 import type { TAnySchema } from "@sinclair/typebox";
 
 import type { IJsonCodec } from "../../codec/index.js";
-import type {
-	ChangeAtomId,
-	ChangeEncodingContext,
-	EncodedRevisionTag,
-	RevisionTag,
+import {
+	areEqualChangeAtomIdOpts,
+	type ChangeAtomId,
+	type ChangeEncodingContext,
+	type EncodedRevisionTag,
+	type RevisionTag,
 } from "../../core/index.js";
 import type { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
@@ -69,14 +70,24 @@ export function makeOptionalFieldCodec(
 
 	return {
 		encode: (change: OptionalChangeset, context: FieldChangeEncodingContext) => {
+			assert(
+				change.nodeDetach === undefined ||
+					areEqualChangeAtomIdOpts(change.valueReplace?.src, change.nodeDetach),
+				"This format only supports node detach when it represents a pin",
+			);
+
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
+
 			if (change.valueReplace !== undefined) {
 				encoded.r = {
 					e: change.valueReplace.isEmpty,
 					d: changeAtomIdCodec.encode(change.valueReplace.dst, context.baseContext),
 				};
 				if (change.valueReplace.src !== undefined) {
-					encoded.r.s = registerIdCodec.encode(change.valueReplace.src, context.baseContext);
+					const srcRegister =
+						change.nodeDetach === undefined ? change.valueReplace.src : "self";
+
+					encoded.r.s = registerIdCodec.encode(srcRegister, context.baseContext);
 				}
 			}
 
@@ -117,7 +128,6 @@ export function makeOptionalFieldCodec(
 				encoded.m = encodedMoves;
 			}
 
-			assert(change.nodeDetach === undefined, "XXX");
 			return encoded;
 		},
 
@@ -134,7 +144,16 @@ export function makeOptionalFieldCodec(
 				};
 				if (encoded.r.s !== undefined) {
 					const register = registerIdCodec.decode(encoded.r.s, context.baseContext);
-					replace.src = register === "self" ? replace.dst : register;
+					if (register === "self") {
+						// Note that this is safe as long as we assume that this change will not be rebased
+						// over a move to a sequence field.
+						// The ID of an attach and accompanying detach/rename is arbitrary, except in sequence field where
+						// the ID of the detach becomes a cell ID which may be referenced by other changes.
+						replace.src = context.generateId();
+						decoded.nodeDetach = replace.src;
+					} else {
+						replace.src = register;
+					}
 				}
 				decoded.valueReplace = replace;
 			}
