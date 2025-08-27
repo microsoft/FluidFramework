@@ -939,7 +939,7 @@ export namespace System_TableSchema {
 			}
 
 			/**
-			 * Attempts to resolve a Column node or Row ID to a Column node.
+			 * Attempts to resolve a Column node or Column ID to a Column node.
 			 * If a Column node is provided, it is returned as-is.
 			 * If an ID is provided, we check the table for the corresponding Column node and return it if it exists, otherwise we throw an exception.
 			 */
