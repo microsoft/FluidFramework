@@ -2330,10 +2330,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		} else if (localOpMetadata.type === "deleteSubDir") {
 			assert(localOpMetadata.subDirectory !== undefined, "Subdirectory should exist");
 			// For delete operations, look specifically for deleteSubDirectory entries
-			const pendingEntryIndex = this.pendingSubDirectoryData.findIndex(
+			const pendingEntry = findLast(
+				this.pendingSubDirectoryData,
 				(entry) => entry.subdirName === op.subdirName && entry.type === "deleteSubDirectory",
 			);
-			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
 			if (pendingEntry !== undefined) {
 				this.submitDeleteSubDirectoryMessage(op, localOpMetadata.subDirectory);
 			}
