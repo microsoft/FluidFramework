@@ -204,5 +204,5 @@ export interface IFluidDataStoreRuntimeInternalConfig {
 	/**
 	 * The minVersionForCollab used when instantiating the ContainerRuntime. DDSes may read this value to determine which feature flags should be enabled.
 	 */
-	readonly minVersionForCollab: MinimumVersionForCollab;
+	readonly minVersionForCollab: MinimumVersionForCollab | undefined;
 }
