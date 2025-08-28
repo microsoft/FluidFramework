@@ -337,6 +337,10 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			assert.ok(obj, "container added dynamic objects incorrectly");
 		});
 
+		it("This fails to ensure CI runts these tests", () => {
+			assert.fail("This fails to ensure CI runts these tests");
+		});
+
 		/**
 		 * Scenario: test if FluidContainer emits error events with appropriate error type.
 		 *
