@@ -139,6 +139,31 @@ function DataRow(props: DataRowProps): React.ReactElement {
 	);
 }
 
+function getStatusBadgeColor(status: string): "success" | "warning" | "danger" | "subtle" {
+	switch (status) {
+		case "Closed":
+		case "Detached":
+		case "Disconnected": {
+			return "danger";
+		}
+		case "Attaching":
+		case "Establishing connection":
+		case "Catching up": {
+			return "warning";
+		}
+		case "Connected":
+		case "Attached": {
+			return "success";
+		}
+		case "Read-only": {
+			return "subtle";
+		}
+		default: {
+			return "subtle";
+		}
+	}
+}
+
 function containerStatusValueCell(statusComponents: string[]): React.ReactElement {
 	// Show all states simultaneously in a single container
 	if (statusComponents.length === 0) {
@@ -155,44 +180,11 @@ function containerStatusValueCell(statusComponents: string[]): React.ReactElemen
 	return (
 		<TableCellLayout>
 			<div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-				{statusComponents.map((status, index) => {
-					let color: "success" | "warning" | "danger" | "subtle" = "subtle";
-
-					// Determine badge color based on status
-					switch (status) {
-						case "Closed":
-						case "Detached":
-						case "Disconnected": {
-							color = "danger";
-							break;
-						}
-						case "Attaching":
-						case "Establishing connection":
-						case "Catching up": {
-							color = "warning";
-							break;
-						}
-						case "Connected":
-						case "Attached": {
-							color = "success";
-							break;
-						}
-						case "Read-only": {
-							color = "subtle";
-							break;
-						}
-						default: {
-							color = "subtle";
-							break;
-						}
-					}
-
-					return (
-						<Badge key={index} shape="rounded" color={color}>
-							{status}
-						</Badge>
-					);
-				})}
+				{statusComponents.map((status, index) => (
+					<Badge key={index} shape="rounded" color={getStatusBadgeColor(status)}>
+						{status}
+					</Badge>
+				))}
 			</div>
 		</TableCellLayout>
 	);

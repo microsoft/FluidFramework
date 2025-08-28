@@ -63,9 +63,13 @@ const useMenuStyles = makeStyles({
 			marginTop: "auto",
 			marginBottom: "15px",
 		},
-		"> div > div": {
-			marginBottom: "4px",
-		},
+	},
+	/**
+	 * Provides consistent spacing between menu items within sections.
+	 * Applied to nested divs that contain individual menu items.
+	 */
+	menuItemSpacing: {
+		marginBottom: "4px",
 	},
 
 	// TODO: dedupe with MenuItem
@@ -213,6 +217,9 @@ const useMenuSectionStyles = makeStyles({
 		display: "flex",
 		flexDirection: "column",
 	},
+	item: {
+		marginBottom: "4px",
+	},
 });
 
 /**
@@ -226,7 +233,7 @@ export function MenuSection(props: MenuSectionProps): React.ReactElement {
 	return (
 		<div className={styles.root}>
 			{header}
-			{children}
+			<div className={styles.item}>{children}</div>
 		</div>
 	);
 }
@@ -562,6 +569,109 @@ export interface MenuProps {
 	onRemoveContainer?: (containerKey: ContainerKey) => void;
 }
 /**
+ * Props for {@link ConnectionStateIcon}
+ */
+interface ConnectionStateIconProps {
+	/**
+	 * The connection state to display an icon for.
+	 */
+	connectionState: ConnectionState;
+}
+
+/**
+ * Displays an icon with tooltip for the given connection state.
+ * Returns undefined if the connection state doesn't have a corresponding icon.
+ */
+function ConnectionStateIcon(props: ConnectionStateIconProps): React.ReactElement | undefined {
+	const { connectionState } = props;
+
+	switch (connectionState) {
+		case ConnectionState.Connected: {
+			return (
+				<Tooltip content="Container is connected" relationship="label" key="connected">
+					<PlugConnected16Regular />
+				</Tooltip>
+			);
+		}
+		case ConnectionState.Disconnected: {
+			return (
+				<Tooltip content="Container is disconnected" relationship="label" key="disconnected">
+					<PlugDisconnected16Regular />
+				</Tooltip>
+			);
+		}
+		case ConnectionState.EstablishingConnection: {
+			return (
+				<Tooltip
+					content="Container is establishing connection"
+					relationship="label"
+					key="establishing"
+				>
+					<Run16Regular />
+				</Tooltip>
+			);
+		}
+		case ConnectionState.CatchingUp: {
+			return (
+				<Tooltip content="Container is catching up" relationship="label" key="catching-up">
+					<CatchUp16Regular />
+				</Tooltip>
+			);
+		}
+		default: {
+			// No icon for unknown connection state
+			return undefined;
+		}
+	}
+}
+
+/**
+ * Props for {@link AttachStateIcon}
+ */
+interface AttachStateIconProps {
+	/**
+	 * The attach state to display an icon for.
+	 */
+	attachState: string;
+}
+
+/**
+ * Displays an icon with tooltip for the given attach state.
+ * Returns undefined if the attach state doesn't have a corresponding icon.
+ */
+function AttachStateIcon(props: AttachStateIconProps): React.ReactElement | undefined {
+	const { attachState } = props;
+
+	switch (attachState) {
+		case "Detached": {
+			return (
+				<Tooltip content="Container is detached" relationship="label" key="detached">
+					<DocumentDismiss16Regular />
+				</Tooltip>
+			);
+		}
+		case "Attaching": {
+			return (
+				<Tooltip content="Container is attaching" relationship="label" key="attaching">
+					<DocumentDataLink16Regular />
+				</Tooltip>
+			);
+		}
+		case "Attached": {
+			return (
+				<Tooltip content="Container is attached" relationship="label" key="attached">
+					<Attach16Regular />
+				</Tooltip>
+			);
+		}
+		default: {
+			// No icon for unknown attach state
+			return undefined;
+		}
+	}
+}
+
+/**
  * {@link ContainersMenuSection} input props.
  */
 interface ContainersMenuSectionProps {
@@ -693,105 +803,19 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 						} else {
 							// Add connection state icon
 							if (state.connectionState !== undefined) {
-								switch (state.connectionState) {
-									case ConnectionState.Connected: {
-										stateIcons.push(
-											<Tooltip
-												content="Container is connected"
-												relationship="label"
-												key="connected"
-											>
-												<PlugConnected16Regular />
-											</Tooltip>,
-										);
-										break;
-									}
-									case ConnectionState.Disconnected: {
-										stateIcons.push(
-											<Tooltip
-												content="Container is disconnected"
-												relationship="label"
-												key="disconnected"
-											>
-												<PlugDisconnected16Regular />
-											</Tooltip>,
-										);
-										break;
-									}
-									case ConnectionState.EstablishingConnection: {
-										stateIcons.push(
-											<Tooltip
-												content="Container is establishing connection"
-												relationship="label"
-												key="establishing"
-											>
-												<Run16Regular />
-											</Tooltip>,
-										);
-										break;
-									}
-									case ConnectionState.CatchingUp: {
-										stateIcons.push(
-											<Tooltip
-												content="Container is catching up"
-												relationship="label"
-												key="catching-up"
-											>
-												<CatchUp16Regular />
-											</Tooltip>,
-										);
-										break;
-									}
-									default: {
-										// No icon for unknown connection state
-										break;
-									}
+								const connectionIcon = (
+									<ConnectionStateIcon connectionState={state.connectionState} />
+								);
+								if (connectionIcon !== undefined) {
+									stateIcons.push(connectionIcon);
 								}
 							}
 
 							// Add attach state icon
 							if (state.attachState !== undefined) {
-								switch (state.attachState) {
-									case "Detached": {
-										stateIcons.push(
-											<Tooltip
-												content="Container is detached"
-												relationship="label"
-												key="detached"
-											>
-												<DocumentDismiss16Regular />
-											</Tooltip>,
-										);
-										break;
-									}
-									case "Attaching": {
-										stateIcons.push(
-											<Tooltip
-												content="Container is attaching"
-												relationship="label"
-												key="attaching"
-											>
-												<DocumentDataLink16Regular />
-											</Tooltip>,
-										);
-										break;
-									}
-									case "Attached": {
-										stateIcons.push(
-											<Tooltip
-												content="Container is attached"
-												relationship="label"
-												key="attached"
-											>
-												<Attach16Regular />
-											</Tooltip>,
-										);
-										break;
-									}
-									default: {
-										// No icon for unknown attach state
-										break;
-									}
+								const attachIcon = <AttachStateIcon attachState={state.attachState} />;
+								if (attachIcon !== undefined) {
+									stateIcons.push(attachIcon);
 								}
 							}
 							if (state.isReadOnly === true) {
