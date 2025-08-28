@@ -63,7 +63,7 @@ class Table extends TableSchema.table({
 	row: Row,
 }) {}
 
-describe.only("TableFactory unit tests", () => {
+describe("TableFactory unit tests", () => {
 	/**
 	 * Compares a tree with an expected "concise" tree representation.
 	 * Fails if they are not equivalent.
