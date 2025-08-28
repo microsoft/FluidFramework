@@ -1001,6 +1001,88 @@ describe("SharedDirectory rollback", () => {
 				"Post-rollback order should not have rolled back subdirs (remote)",
 			);
 		});
+
+		it("can rollback subdir with pending set on that subdir (non staging mode)", () => {
+			const {
+				sharedDirectory: sharedDirectory1,
+				containerRuntimeFactory,
+				containerRuntime: containerRuntime1,
+			} = setupRollbackTest();
+			const { sharedDirectory: sharedDirectory2, containerRuntime: containerRuntime2 } =
+				createAdditionalClient(containerRuntimeFactory);
+
+			sharedDirectory1.createSubDirectory("subdirA");
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			sharedDirectory1.getSubDirectory("subdirA")?.set("valueX", "foo");
+			// sharedDirectory1 enters staging mode
+
+			sharedDirectory1.deleteSubDirectory("subdirA");
+			containerRuntime1.flushSomeMessages(1);
+			containerRuntimeFactory.processOneMessage();
+
+			assert.equal(sharedDirectory1.getSubDirectory("subdirA")?.get("valueX"), undefined);
+
+			containerRuntime1.rollback?.();
+			assert.equal(sharedDirectory1.getSubDirectory("subdirA")?.get("valueX"), "foo");
+
+			sharedDirectory1.getSubDirectory("subdirA")?.set("valueX", "bar");
+			sharedDirectory1.getSubDirectory("subdirA")?.set("valueY", "baz");
+
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(sharedDirectory1.getSubDirectory("subdirA")?.get("valueX"), "bar");
+			assert.equal(sharedDirectory1.getSubDirectory("subdirA")?.get("valueY"), "baz");
+		});
+
+		it("can rollback subdir delete with pending subdir create on that subdir (non staging mode)", () => {
+			const {
+				sharedDirectory: sharedDirectory1,
+				containerRuntimeFactory,
+				containerRuntime: containerRuntime1,
+			} = setupRollbackTest();
+			const { sharedDirectory: sharedDirectory2, containerRuntime: containerRuntime2 } =
+				createAdditionalClient(containerRuntimeFactory);
+
+			sharedDirectory1.createSubDirectory("subdirA");
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			sharedDirectory1.getSubDirectory("subdirA")?.createSubDirectory("subdirB");
+			// sharedDirectory1 enters staging mode
+
+			sharedDirectory1.deleteSubDirectory("subdirA");
+			containerRuntime1.flushSomeMessages(1);
+			containerRuntimeFactory.processOneMessage();
+
+			assert(
+				sharedDirectory1.getSubDirectory("subdirA")?.getSubDirectory("subdirB") === undefined,
+			);
+
+			containerRuntime1.rollback?.();
+			assert(
+				sharedDirectory1.getSubDirectory("subdirA")?.getSubDirectory("subdirB") !== undefined,
+			);
+
+			sharedDirectory1.getSubDirectory("subdirA")?.createSubDirectory("subdirB");
+			sharedDirectory1.getSubDirectory("subdirA")?.createSubDirectory("subdirC");
+			sharedDirectory1.getSubDirectory("subdirA")?.createSubDirectory("subdirD");
+
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			assert(
+				sharedDirectory1.getSubDirectory("subdirA")?.getSubDirectory("subdirB") !== undefined,
+			);
+			assert(
+				sharedDirectory1.getSubDirectory("subdirA")?.getSubDirectory("subdirC") !== undefined,
+			);
+			assert(
+				sharedDirectory1.getSubDirectory("subdirA")?.getSubDirectory("subdirD") !== undefined,
+			);
+		});
 	});
 
 	describe("Events", () => {

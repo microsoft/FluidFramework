@@ -827,30 +827,6 @@ export class SharedDirectory
 	}
 
 	/**
-	 * This checks if there is pending delete op for local delete for a any subdir in the relative path.
-	 * @param relativePath - path of sub directory.
-	 * @returns `true` if there is pending delete, `false` otherwise.
-	 */
-	private isSubDirectoryDeletePending(relativePath: string): boolean {
-		const absolutePath = this.makeAbsolute(relativePath);
-		if (absolutePath === posix.sep) {
-			return false;
-		}
-		let currentParent = this.root;
-		const pathParts = absolutePath.split(posix.sep).slice(1);
-		for (const dirName of pathParts) {
-			if (currentParent.isSubDirectoryDeletePending(dirName)) {
-				return true;
-			}
-			currentParent = currentParent.getSubDirectory(dirName) as SubDirectory;
-			if (currentParent === undefined) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
 	 * Set the message handlers for the directory.
 	 */
 	private setMessageHandlers(): void {
@@ -868,7 +844,7 @@ export class SharedDirectory
 				localOpMetadata: ClearLocalOpMetadata | undefined,
 			) => {
 				const subdir = this.getSequencedWorkingDirectory(op.path) as SubDirectory | undefined;
-				if (subdir !== undefined && this.shouldProcessOp(subdir, local, op.path)) {
+				if (subdir !== undefined && !subdir?.disposed) {
 					subdir.processClearMessage(msg, op, local, localOpMetadata);
 				}
 			},
@@ -887,7 +863,7 @@ export class SharedDirectory
 				localOpMetadata: EditLocalOpMetadata | undefined,
 			) => {
 				const subdir = this.getSequencedWorkingDirectory(op.path) as SubDirectory | undefined;
-				if (subdir !== undefined && this.shouldProcessOp(subdir, local, op.path)) {
+				if (subdir !== undefined && !subdir?.disposed) {
 					subdir.processDeleteMessage(msg, op, local, localOpMetadata);
 				}
 			},
@@ -906,7 +882,7 @@ export class SharedDirectory
 				localOpMetadata: EditLocalOpMetadata | undefined,
 			) => {
 				const subdir = this.getSequencedWorkingDirectory(op.path) as SubDirectory | undefined;
-				if (subdir !== undefined && this.shouldProcessOp(subdir, local, op.path)) {
+				if (subdir !== undefined && !subdir?.disposed) {
 					migrateIfSharedSerializable(op.value, this.serializer, this.handle);
 					const localValue: unknown = local ? undefined : op.value.value;
 					subdir.processSetMessage(msg, op, localValue, local, localOpMetadata);
@@ -930,7 +906,7 @@ export class SharedDirectory
 				const parentSubdir = this.getSequencedWorkingDirectory(op.path) as
 					| SubDirectory
 					| undefined;
-				if (parentSubdir !== undefined && this.shouldProcessOp(parentSubdir, local, op.path)) {
+				if (parentSubdir !== undefined && !parentSubdir?.disposed) {
 					parentSubdir.processCreateSubDirectoryMessage(msg, op, local, localOpMetadata);
 				}
 			},
@@ -956,7 +932,7 @@ export class SharedDirectory
 				const parentSubdir = this.getSequencedWorkingDirectory(op.path) as
 					| SubDirectory
 					| undefined;
-				if (parentSubdir !== undefined && this.shouldProcessOp(parentSubdir, local, op.path)) {
+				if (parentSubdir !== undefined && !parentSubdir?.disposed) {
 					parentSubdir.processDeleteSubDirectoryMessage(msg, op, local, localOpMetadata);
 				}
 			},
@@ -971,24 +947,6 @@ export class SharedDirectory
 				}
 			},
 		});
-	}
-
-	/**
-	 * Checks if we should process an op targeting a particular subdirectory.
-	 * We allow processing of messages that are:
-	 * 1. Not disposed
-	 * 2. Not pending to be deleted OR the message is from a remote client
-	 * This is because if we rollback the pending delete, we want to make sure we still
-	 * process the messages that would later become visible
-	 */
-	private shouldProcessOp(
-		subdir: SubDirectory | undefined,
-		local: boolean,
-		subdirPath: string,
-	): boolean {
-		return (
-			subdir?.disposed === false && (!this.isSubDirectoryDeletePending(subdirPath) || !local)
-		);
 	}
 
 	/**
@@ -1889,7 +1847,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		localOpMetadata: ClearLocalOpMetadata | undefined,
 	): void {
 		this.throwIfDisposed();
-		if (!this.isMessageForCurrentInstanceOfSubDirectory(msg)) {
+		if (!this.isMessageForCurrentInstanceOfSubDirectory(msg, localOpMetadata?.subdir)) {
 			return;
 		}
 
@@ -1949,7 +1907,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		localOpMetadata: EditLocalOpMetadata | undefined,
 	): void {
 		this.throwIfDisposed();
-		if (!this.isMessageForCurrentInstanceOfSubDirectory(msg)) {
+		if (!this.isMessageForCurrentInstanceOfSubDirectory(msg, localOpMetadata?.subdir)) {
 			return;
 		}
 		if (local) {
@@ -2002,7 +1960,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		localOpMetadata: EditLocalOpMetadata | undefined,
 	): void {
 		this.throwIfDisposed();
-		if (!this.isMessageForCurrentInstanceOfSubDirectory(msg)) {
+		if (!this.isMessageForCurrentInstanceOfSubDirectory(msg, localOpMetadata?.subdir)) {
 			return;
 		}
 
@@ -2059,7 +2017,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	): void {
 		this.throwIfDisposed();
 
-		if (!this.isMessageForCurrentInstanceOfSubDirectory(msg)) {
+		if (!this.isMessageForCurrentInstanceOfSubDirectory(msg, localOpMetadata?.parentSubdir)) {
 			return;
 		}
 		assertNonNullClientId(msg.clientId);
@@ -2147,7 +2105,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		localOpMetadata: SubDirLocalOpMetadata | undefined,
 	): void {
 		this.throwIfDisposed();
-		if (!this.isMessageForCurrentInstanceOfSubDirectory(msg)) {
+		if (!this.isMessageForCurrentInstanceOfSubDirectory(msg, localOpMetadata?.parentSubdir)) {
 			return;
 		}
 
@@ -2546,14 +2504,18 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * can be deleted and created again, then this finds if the message is for current instance of directory or not.
 	 * @param msg - message for the directory
 	 */
-	private isMessageForCurrentInstanceOfSubDirectory(msg: ISequencedDocumentMessage): boolean {
+	private isMessageForCurrentInstanceOfSubDirectory(
+		msg: ISequencedDocumentMessage,
+		targetSubdir?: SubDirectory | undefined,
+	): boolean {
 		// If the message is either from the creator of directory or this directory was created when
 		// container was detached or in case this directory is already live(known to other clients)
 		// and the op was created after the directory was created then apply this op.
 		return (
-			(msg.clientId !== null && this.clientIds.has(msg.clientId)) ||
-			this.clientIds.has("detached") ||
-			(this.seqData.seq !== -1 && this.seqData.seq <= msg.referenceSequenceNumber)
+			(targetSubdir === undefined || targetSubdir === this) &&
+			((msg.clientId !== null && this.clientIds.has(msg.clientId)) ||
+				this.clientIds.has("detached") ||
+				(this.seqData.seq !== -1 && this.seqData.seq <= msg.referenceSequenceNumber))
 		);
 	}
 

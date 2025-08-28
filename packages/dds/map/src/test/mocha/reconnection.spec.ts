@@ -495,5 +495,40 @@ describe("Reconnection", () => {
 			);
 			await assertEquivalentDirectories(directory1, directory2);
 		});
+
+		it("delete subdirectory op while disconnected and other pending ops", async () => {
+			const subDirName = "subDir";
+			directory1.createSubDirectory(subDirName);
+			directory2.createSubDirectory(subDirName);
+			directory1.getSubDirectory(subDirName)?.set("a", "b");
+
+			containerRuntime1.connected = false;
+			containerRuntime2.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			directory1.deleteSubDirectory(subDirName);
+
+			containerRuntime1.connected = true;
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			await assertEquivalentDirectories(directory1, directory2);
+		});
+
+		it("createSubdirectory collision when reconnecting", async () => {
+			directory1.createSubDirectory("a");
+			directory1.getSubDirectory("a")?.createSubDirectory("b");
+			directory1.deleteSubDirectory("a");
+			containerRuntime1.connected = false;
+
+			directory1.createSubDirectory("a");
+			directory2.createSubDirectory("a");
+			containerRuntime1.connected = true;
+
+			containerRuntime1.flush();
+			containerRuntime2.flush();
+			containerRuntimeFactory.processAllMessages();
+			await assertEquivalentDirectories(directory1, directory2);
+		});
 	});
 });
