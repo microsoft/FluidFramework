@@ -742,6 +742,11 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     static readonly string: LeafSchema<"string", string>;
 }
 
+// @beta
+export class SchemaFactoryBeta<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory<TScope, TName> {
+    scopedFactory<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner>;
+}
+
 // @public @sealed @system
 export interface SchemaStatics {
     readonly boolean: LeafSchema<"boolean", boolean>;
