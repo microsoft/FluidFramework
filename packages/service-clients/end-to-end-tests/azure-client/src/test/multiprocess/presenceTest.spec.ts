@@ -80,7 +80,7 @@ describe(`Presence with AzureClient`, () => {
 				afterCleanUp,
 			);
 
-			// Act + Verify
+			// Further Setup with Act and Verify
 			await connectAndWaitForAttendees(
 				children,
 				numClients - 1,
