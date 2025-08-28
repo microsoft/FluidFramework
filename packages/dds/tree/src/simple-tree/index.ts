@@ -71,6 +71,7 @@ export {
 	type SchemaCompatibilityStatus,
 	type ITreeConfigurationOptions,
 	SchemaFactory,
+	SchemaFactoryBeta,
 	SchemaFactoryAlpha,
 	type SchemaFactoryObjectOptions,
 	type ScopedSchemaName,

@@ -792,6 +792,19 @@ describe("TableFactory unit tests", () => {
 			});
 		});
 
+		it("Remove empty range", () => {
+			const table = initializeTree(Table, {
+				columns: [new Column({ id: "column-0", props: {} })],
+				rows: [],
+			});
+
+			table.removeColumns(0, 0);
+			assertEqualTrees(table, {
+				columns: [{ id: "column-0", props: {} }],
+				rows: [],
+			});
+		});
+
 		it("Remove single column", () => {
 			const column0 = new Column({ id: "column-0", props: {} });
 			const column1 = new Column({ id: "column-1", props: {} });
@@ -885,6 +898,42 @@ describe("TableFactory unit tests", () => {
 			});
 		});
 
+		it("Remove columns by index range", () => {
+			const column0 = new Column({ id: "column-0", props: {} });
+			const column1 = new Column({ id: "column-1", props: {} });
+			const column2 = new Column({ id: "column-2", props: {} });
+			const column3 = new Column({ id: "column-3", props: {} });
+			const table = initializeTree(Table, {
+				columns: [column0, column1, column2, column3],
+				rows: [
+					new Row({
+						id: "row-0",
+						cells: {
+							"column-0": { value: "Hello" },
+							"column-2": { value: "world" },
+						},
+					}),
+				],
+			});
+
+			// Remove columns 1-2
+			table.removeColumns(1, 2);
+			assertEqualTrees(table, {
+				columns: [
+					{ id: "column-0", props: {} },
+					{ id: "column-3", props: {} },
+				],
+				rows: [
+					{
+						id: "row-0",
+						cells: {
+							"column-0": { value: "Hello" },
+						},
+					},
+				],
+			});
+		});
+
 		it("Removing a single column that doesn't exist on table errors", () => {
 			const table = initializeTree(Table, {
 				columns: [],
@@ -893,7 +942,7 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => table.removeColumns([new Column({ id: "column-0", props: {} })]),
-				validateUsageError(/Specified column with ID "column-0" does not exist in the table./),
+				validateUsageError(/No column with ID "column-0" exists in the table./),
 			);
 		});
 
@@ -906,15 +955,13 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => table.removeColumns([column0, new Column({ id: "column-1", props: {} })]),
-				validateUsageError(/Specified column with ID "column-1" does not exist in the table./),
+				validateUsageError(/No column with ID "column-1" exists in the table./),
 			);
 
 			// Additionally, `column-0` should not have been removed.
 			assert(table.columns.length === 1);
 		});
-	});
 
-	describeHydration("removeColumns", (initializeTree) => {
 		it("Remove empty range", () => {
 			const table = initializeTree(Table, {
 				columns: [new Column({ id: "column-0", props: {} })],
@@ -996,7 +1043,7 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
-	describeHydration("removeRows", (initializeTree, hydrated) => {
+	describeHydration("removeRows", (initializeTree) => {
 		it("Remove empty list", () => {
 			const table = initializeTree(Table, {
 				columns: [],
@@ -1087,7 +1134,7 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => table.removeRows([new Row({ id: "row-0", cells: {}, props: {} })]),
-				validateUsageError(/Specified row with ID "row-0" does not exist in the table./),
+				validateUsageError(/No row with ID "row-0" exists in the table./),
 			);
 		});
 
@@ -1100,11 +1147,11 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => table.removeRows([row0, new Row({ id: "row-1", cells: {}, props: {} })]),
-				validateUsageError(/Specified row with ID "row-1" does not exist in the table./),
+				validateUsageError(/No row with ID "row-1" exists in the table./),
 			);
 
 			// Additionally, `row-0` should not have been removed.
-			assert(table.rows.length === 1);
+			assert.equal(table.rows.length, 1);
 		});
 
 		it("Remove empty range", () => {
@@ -1286,7 +1333,7 @@ describe("TableFactory unit tests", () => {
 						row: "row-1",
 						column: "column-0",
 					}),
-				validateUsageError(/Specified row with ID "row-1" does not exist in the table./),
+				validateUsageError(/No row with ID "row-1" exists in the table./),
 			);
 
 			// Invalid column
@@ -1296,7 +1343,7 @@ describe("TableFactory unit tests", () => {
 						row: "row-0",
 						column: "column-1",
 					}),
-				validateUsageError(/Specified column with ID "column-1" does not exist in the table./),
+				validateUsageError(/No column with ID "column-1" exists in the table./),
 			);
 		});
 	});
@@ -1345,7 +1392,8 @@ describe("TableFactory unit tests", () => {
 			assert.equal(eventCount, 4);
 		});
 
-		// TODO: Unhydrated nodes fire more events in move than hydrated
+		// Extra events are fired for move operation within unhydrated array nodes.
+		// TODO:AB#47457: Fix and re-enable this test in unhydrated mode.
 		if (hydrated) {
 			it("Responding to column list changes", () => {
 				const table = initializeTree(Table, Table.empty());
