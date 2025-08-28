@@ -348,7 +348,7 @@ export class OdspDocumentService
 		return this._opsCache;
 	}
 
-	// Called whenever re receive ops through any channel for this document (snapshot, delta connection, delta storage)
+	// Called whenever we receive ops through any channel for this document (snapshot, delta connection, delta storage)
 	// We use it to notify caching layer of how stale is snapshot stored in cache.
 	protected opsReceived(ops: ISequencedDocumentMessage[]): void {
 		// No need for two clients to save same ops
