@@ -47,19 +47,17 @@ export function exceptionToResponse(error: unknown): IResponse {
 	}
 
 	// Capture error objects, not stack itself, as stack retrieval is very expensive operation
-	const errWithStack = generateErrorWithStack();
+	const errWithStack =
+		(typeof error === "object" && error !== null && "stack" in error
+			? (error as { stack: string })
+			: undefined) ?? generateErrorWithStack();
 
 	return {
 		mimeType: "text/plain",
 		status,
 		value: `${error}`,
 		get stack() {
-			// Use type assertion after checking if error is an object with stack
-			return (
-				(typeof error === "object" && error !== null && "stack" in error
-					? (error.stack as string | undefined)
-					: undefined) ?? errWithStack.stack
-			);
+			return errWithStack.stack;
 		},
 	};
 }
@@ -75,14 +73,14 @@ export function responseToException(response: IResponse, request: IRequest): Err
 	// As of 2025-08-20 the code seems to assume `response.value` is always a string.
 	// This type assertion just encodes that assumption as we move to stricter linting rules, but it might need to be revisited.
 	const message = response.value as string;
-	const errWithStack = generateErrorWithStack();
+	const errWithStack = "stack" in response ? response : generateErrorWithStack();
 	const responseErr: Error & IResponseException = {
 		errorFromRequestFluidObject: true,
 		message,
 		name: "Error",
 		code: response.status,
 		get stack() {
-			return response.stack ?? errWithStack.stack;
+			return errWithStack.stack;
 		},
 		underlyingResponseHeaders: response.headers,
 	};
