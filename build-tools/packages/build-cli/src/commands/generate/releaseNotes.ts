@@ -62,6 +62,11 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 			description: `Output the results to this file.`,
 			required: true,
 			default: "RELEASE_NOTES.md",
+			deprecateAliases: true,
+			aliases: [
+				// Can be removed in 0.46+
+				"out",
+			],
 		}),
 		includeUnknown: Flags.boolean({
 			default: false,
