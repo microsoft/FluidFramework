@@ -269,8 +269,6 @@ function runBenchmark(options: BenchmarkOptions): Test {
 	}
 }
 
-// TODO: add range-based insertion and removal tests
-
 /**
  * Shared test suite for matrix execution time and memory benchmarks
  * Note: These benchmarks are designed to closely match the benchmarks in SharedTree.
