@@ -23,12 +23,15 @@ export function getGitMode(value: SummaryObject): string {
 	const type = value.type === SummaryType.Handle ? value.handleType : value.type;
 	switch (type) {
 		case SummaryType.Blob:
-		case SummaryType.Attachment:
+		case SummaryType.Attachment: {
 			return FileMode.File;
-		case SummaryType.Tree:
+		}
+		case SummaryType.Tree: {
 			return FileMode.Directory;
-		default:
+		}
+		default: {
 			unreachableCase(type, `Unknown type: ${type}`);
+		}
 	}
 }
 
@@ -44,12 +47,15 @@ export function getGitType(value: SummaryObject): "blob" | "tree" {
 
 	switch (type) {
 		case SummaryType.Blob:
-		case SummaryType.Attachment:
+		case SummaryType.Attachment: {
 			return "blob";
-		case SummaryType.Tree:
+		}
+		case SummaryType.Tree: {
 			return "tree";
-		default:
+		}
+		default: {
 			unreachableCase(type, `Unknown type: ${type}`);
+		}
 	}
 }
 
@@ -79,7 +85,7 @@ export function buildGitTreeHierarchy(
 		const entryPathBase = entryPath.slice(lastIndex + 1);
 
 		// The flat output is breadth-first so we can assume we see tree nodes prior to their contents
-		const node = lookup[entryPathDir];
+		const node: ISnapshotTreeEx | undefined = lookup[entryPathDir];
 
 		// Add in either the blob or tree
 		if (entry.type === "tree") {
