@@ -5,68 +5,20 @@
 
 import { strict as assert } from "node:assert";
 
-import { AttachState } from "@fluidframework/container-definitions";
-import {
-	MockContainerRuntimeFactory,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-	type MockContainerRuntime,
-} from "@fluidframework/test-runtime-utils/internal";
+import { setupRollbackTest, createAdditionalClient } from "@fluid-private/test-dds-utils";
 
 import { DirectoryFactory } from "../../directoryFactory.js";
 import type { ISharedDirectory, IValueChanged } from "../../interfaces.js";
 
-interface RollbackTestSetup {
-	sharedDirectory: ISharedDirectory;
-	dataStoreRuntime: MockFluidDataStoreRuntime;
-	containerRuntimeFactory: MockContainerRuntimeFactory;
-	containerRuntime: MockContainerRuntime;
-}
-
 const directoryFactory = new DirectoryFactory();
-
-function setupRollbackTest(): RollbackTestSetup {
-	const containerRuntimeFactory = new MockContainerRuntimeFactory({ flushMode: 1 }); // TurnBased
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const sharedDirectory = directoryFactory.create(dataStoreRuntime, "shared-directory-1");
-	dataStoreRuntime.setAttachState(AttachState.Attached);
-	sharedDirectory.connect({
-		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: new MockStorage(),
-	});
-	return {
-		sharedDirectory,
-		dataStoreRuntime,
-		containerRuntimeFactory,
-		containerRuntime,
-	};
-}
-
-// Helper to create another client attached to the same containerRuntimeFactory
-function createAdditionalClient(
-	containerRuntimeFactory: MockContainerRuntimeFactory,
-	id: string = "client-2",
-): {
-	sharedDirectory: ISharedDirectory;
-	dataStoreRuntime: MockFluidDataStoreRuntime;
-	containerRuntime: MockContainerRuntime;
-} {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: id });
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const sharedDirectory = directoryFactory.create(dataStoreRuntime, `shared-directory-${id}`);
-	dataStoreRuntime.setAttachState(AttachState.Attached);
-	sharedDirectory.connect({
-		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: new MockStorage(),
-	});
-	return { sharedDirectory, dataStoreRuntime, containerRuntime };
-}
 
 describe("SharedDirectory rollback", () => {
 	describe("Storage operations (root subdirectory)", () => {
 		it("should rollback set operation", () => {
-			const { sharedDirectory, containerRuntime } = setupRollbackTest();
+			const { dds: sharedDirectory, containerRuntime } = setupRollbackTest<ISharedDirectory>(
+				"shared-map",
+				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
+			);
 			const valueChanges: IValueChanged[] = [];
 			sharedDirectory.on("valueChanged", (event: IValueChanged) => {
 				valueChanges.push(event);
@@ -94,8 +46,14 @@ describe("SharedDirectory rollback", () => {
 		});
 
 		it("should rollback delete operation", () => {
-			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
-				setupRollbackTest();
+			const {
+				dds: sharedDirectory,
+				containerRuntime,
+				containerRuntimeFactory,
+			} = setupRollbackTest<ISharedDirectory>(
+				"shared-map",
+				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
+			);
 			sharedDirectory.set("key1", "value1");
 			containerRuntime.flush();
 			containerRuntimeFactory.processAllMessages();
@@ -126,8 +84,14 @@ describe("SharedDirectory rollback", () => {
 		});
 
 		it("should rollback clear operation", () => {
-			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
-				setupRollbackTest();
+			const {
+				dds: sharedDirectory,
+				containerRuntime,
+				containerRuntimeFactory,
+			} = setupRollbackTest<ISharedDirectory>(
+				"shared-map",
+				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
+			);
 			sharedDirectory.set("key1", "value1");
 			sharedDirectory.set("key2", "value2");
 			containerRuntime.flush();
@@ -182,8 +146,14 @@ describe("SharedDirectory rollback", () => {
 		});
 
 		it("should rollback multiple operations in sequence", () => {
-			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
-				setupRollbackTest();
+			const {
+				dds: sharedDirectory,
+				containerRuntime,
+				containerRuntimeFactory,
+			} = setupRollbackTest<ISharedDirectory>(
+				"shared-map",
+				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
+			);
 			sharedDirectory.set("key1", "value1");
 			sharedDirectory.set("key2", "value2");
 			containerRuntime.flush();
@@ -259,11 +229,22 @@ describe("SharedDirectory rollback", () => {
 		});
 
 		it("should rollback local changes in presence of remote changes from another client", () => {
-			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
-				setupRollbackTest();
+			const {
+				dds: sharedDirectory,
+				containerRuntime,
+				containerRuntimeFactory,
+			} = setupRollbackTest<ISharedDirectory>(
+				"shared-map",
+				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
+			);
 			// Create a second client
-			const { sharedDirectory: sharedDirectory2, containerRuntime: containerRuntime2 } =
-				createAdditionalClient(containerRuntimeFactory);
+
+			const { dds: sharedDirectory2, containerRuntime: containerRuntime2 } =
+				createAdditionalClient(
+					containerRuntimeFactory,
+					"client-2",
+					(rt, id): ISharedDirectory => directoryFactory.create(rt, `directory-${id}`),
+				);
 
 			sharedDirectory.set("key1", "value1");
 			sharedDirectory.set("key2", "value2");
@@ -307,8 +288,14 @@ describe("SharedDirectory rollback", () => {
 
 	describe("Storage operations (nested subdirectories)", () => {
 		it("should rollback all basic operations (set, delete, clear) in subdirectories and nested subdirectories", () => {
-			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
-				setupRollbackTest();
+			const {
+				dds: sharedDirectory,
+				containerRuntime,
+				containerRuntimeFactory,
+			} = setupRollbackTest<ISharedDirectory>(
+				"shared-map",
+				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
+			);
 
 			const subDir = sharedDirectory.createSubDirectory("subdir");
 			const level1 = sharedDirectory.createSubDirectory("level1");
@@ -383,10 +370,21 @@ describe("SharedDirectory rollback", () => {
 		});
 
 		it("should rollback subdirectory operations with concurrent remote changes", () => {
-			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
-				setupRollbackTest();
-			const { sharedDirectory: sharedDirectory2, containerRuntime: containerRuntime2 } =
-				createAdditionalClient(containerRuntimeFactory);
+			const {
+				dds: sharedDirectory,
+				containerRuntime,
+				containerRuntimeFactory,
+			} = setupRollbackTest<ISharedDirectory>(
+				"shared-map",
+				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
+			);
+
+			const { dds: sharedDirectory2, containerRuntime: containerRuntime2 } =
+				createAdditionalClient(
+					containerRuntimeFactory,
+					"client-2",
+					(rt, id): ISharedDirectory => directoryFactory.create(rt, `directory-${id}`),
+				);
 
 			const subDir1 = sharedDirectory.createSubDirectory("shared");
 			const nestedDir1 = subDir1.createSubDirectory("nested");
@@ -443,8 +441,14 @@ describe("SharedDirectory rollback", () => {
 		});
 
 		it("should rollback complex mixed operations across multiple subdirectory levels", () => {
-			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
-				setupRollbackTest();
+			const {
+				dds: sharedDirectory,
+				containerRuntime,
+				containerRuntimeFactory,
+			} = setupRollbackTest<ISharedDirectory>(
+				"shared-map",
+				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
+			);
 
 			const dirA = sharedDirectory.createSubDirectory("dirA");
 			const dirB = sharedDirectory.createSubDirectory("dirB");
