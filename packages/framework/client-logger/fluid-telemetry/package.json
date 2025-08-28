@@ -87,6 +87,7 @@
 		"test:mocha:esm:unit": "mocha --recursive \"lib/test/**/*.spec.js\"",
 		"test:realsvc": "npm run test:realsvc:tinylicious",
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
+		"test:realsvc:tinylicious:report": "npm run test:realsvc:tinylicious",
 		"test:realsvc:tinylicious:run": "npm run test:mocha:end-to-end",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v",
