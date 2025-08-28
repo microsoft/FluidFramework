@@ -69,9 +69,26 @@ describe(`Presence with AzureClient`, () => {
 	// TODO: AB#45620: "Presence: perf: update Join pattern for scale" may help, then remove .slice.
 	for (const numClients of numClientsForAttendeeTests.slice(0, 2)) {
 		assert(numClients > 1, "Must have at least two clients");
+		/**
+		 * Timeout for child processes to connect to container ({@link ConnectedEvent})
+		 */
 		const childConnectTimeoutMs = 1000 * numClients;
-		const allConnectedTimeoutMs = 2000;
-		const timeoutMs = 5000;
+		/**
+		 * Timeout for presence attendees to connect {@link AttendeeConnectedEvent}
+		 */
+		const attendeeJoinedTimeoutMs = 2000;
+		/**
+		 * Timeout for workspace registration {@link WorkspaceRegisteredEvent}
+		 */
+		const workspaceRegisterTimeoutMs = 5000;
+		/**
+		 * Timeout for presence update events {@link LatestMapValueUpdatedEvent} and {@link LatestValueUpdatedEvent}
+		 */
+		const stateUpdateTimeoutMs = 5000;
+		/**
+		 * Timeout for {@link LatestMapValueGetResponseEvent} and {@link LatestValueGetResponseEvent}
+		 */
+		const getStateTimeoutMs = 5000;
 
 		it(`announces 'attendeeConnected' when remote client joins session [${numClients} clients]`, async () => {
 			// Setup
@@ -85,7 +102,7 @@ describe(`Presence with AzureClient`, () => {
 				children,
 				numClients - 1,
 				childConnectTimeoutMs,
-				allConnectedTimeoutMs,
+				attendeeJoinedTimeoutMs,
 				childErrorPromise,
 			);
 		});
@@ -101,9 +118,11 @@ describe(`Presence with AzureClient`, () => {
 				children,
 				numClients - 1,
 				childConnectTimeoutMs,
-				allConnectedTimeoutMs,
+				attendeeJoinedTimeoutMs,
 				childErrorPromise,
 			);
+
+			const childDisconnectTimeoutMs = 10_000;
 
 			const waitForDisconnected = children.map(async (child, index) =>
 				index === 0
@@ -121,7 +140,7 @@ describe(`Presence with AzureClient`, () => {
 								});
 							},
 							{
-								durationMs: 5000,
+								durationMs: childDisconnectTimeoutMs,
 								errorMsg: `Attendee[${index}] Disconnected Timeout`,
 							},
 						),
@@ -156,7 +175,7 @@ describe(`Presence with AzureClient`, () => {
 				// NOTE: For testing purposes child clients will expect a Latest value of type string (StateFactory.latest<{ value: string }>).
 				await registerWorkspaceOnChildren(children, workspaceId, {
 					latest: true,
-					timeoutMs,
+					timeoutMs: workspaceRegisterTimeoutMs,
 				});
 			});
 
@@ -166,7 +185,7 @@ describe(`Presence with AzureClient`, () => {
 					remoteClients,
 					workspaceId,
 					childErrorPromise,
-					timeoutMs,
+					stateUpdateTimeoutMs,
 					{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
 				);
 
@@ -197,7 +216,7 @@ describe(`Presence with AzureClient`, () => {
 					remoteClients,
 					workspaceId,
 					childErrorPromise,
-					timeoutMs,
+					getStateTimeoutMs,
 				);
 
 				// Verify - all responses should contain the expected value
@@ -232,7 +251,7 @@ describe(`Presence with AzureClient`, () => {
 				// NOTE: For testing purposes child clients will expect a LatestMap value of type Record<string, string | number> (StateFactory.latestMap<{ value: Record<string, string | number> }, string>).
 				await registerWorkspaceOnChildren(children, workspaceId, {
 					latestMap: true,
-					timeoutMs,
+					timeoutMs: workspaceRegisterTimeoutMs,
 				});
 			});
 
@@ -245,7 +264,7 @@ describe(`Presence with AzureClient`, () => {
 					workspaceId,
 					testKey,
 					childErrorPromise,
-					timeoutMs,
+					stateUpdateTimeoutMs,
 					{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
 				);
 
@@ -278,7 +297,7 @@ describe(`Presence with AzureClient`, () => {
 					workspaceId,
 					testKey,
 					childErrorPromise,
-					timeoutMs,
+					getStateTimeoutMs,
 				);
 
 				// Verify
@@ -300,7 +319,7 @@ describe(`Presence with AzureClient`, () => {
 					workspaceId,
 					key1,
 					childErrorPromise,
-					timeoutMs,
+					stateUpdateTimeoutMs,
 					{ fromAttendeeId: attendee0Id, expectedValue: value1 },
 				);
 				const key2UpdateEventsPromise = waitForLatestMapValueUpdates(
@@ -308,7 +327,7 @@ describe(`Presence with AzureClient`, () => {
 					workspaceId,
 					key2,
 					childErrorPromise,
-					timeoutMs,
+					stateUpdateTimeoutMs,
 					{ fromAttendeeId: attendee1Id, expectedValue: value2 },
 				);
 
@@ -354,7 +373,7 @@ describe(`Presence with AzureClient`, () => {
 					workspaceId,
 					key1,
 					childErrorPromise,
-					timeoutMs,
+					getStateTimeoutMs,
 				);
 
 				// Read key2 of attendee1 from all children
@@ -371,7 +390,7 @@ describe(`Presence with AzureClient`, () => {
 					workspaceId,
 					key2,
 					childErrorPromise,
-					timeoutMs,
+					getStateTimeoutMs,
 				);
 
 				// Verify
