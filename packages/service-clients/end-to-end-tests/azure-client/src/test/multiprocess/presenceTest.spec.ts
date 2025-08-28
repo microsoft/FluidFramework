@@ -72,7 +72,7 @@ describe(`Presence with AzureClient`, () => {
 		assert(numClients > 1, "Must have at least two clients");
 		const childConnectTimeoutMs = 1000 * numClients;
 		const allConnectedTimeoutMs = 2000;
-		const durationMs = 10_000;
+		const durationMs = 5000;
 
 		it(`announces 'attendeeConnected' when remote client joins session [${numClients} clients]`, async () => {
 			// Setup
@@ -106,8 +106,6 @@ describe(`Presence with AzureClient`, () => {
 				childErrorPromise,
 			);
 
-			const childDisconnectTimeoutMs = 10_000;
-
 			const waitForDisconnected = children.map(async (child, index) =>
 				index === 0
 					? Promise.resolve()
@@ -124,7 +122,7 @@ describe(`Presence with AzureClient`, () => {
 								});
 							},
 							{
-								durationMs: childDisconnectTimeoutMs,
+								durationMs: 5000,
 								errorMsg: `Attendee[${index}] Disconnected Timeout`,
 							},
 						),
@@ -141,7 +139,7 @@ describe(`Presence with AzureClient`, () => {
 		// NOTE: For testing purposes child clients will expect a Latest value of type string.
 		describe("using Latest state object", () => {
 			let children: ChildProcess[];
-			let childErrorPromise: Promise<void>;
+			let childErrorPromise: Promise<never>;
 			let containerCreatorAttendeeId: AttendeeId;
 			let attendeeIdPromises: Promise<AttendeeId>[];
 			let remoteClients: ChildProcess[];
@@ -157,7 +155,10 @@ describe(`Presence with AzureClient`, () => {
 				await Promise.all(attendeeIdPromises);
 				remoteClients = children.filter((_, index) => index !== 0);
 				// NOTE: For testing purposes child clients will expect a Latest value of type string (StateFactory.latest<{ value: string }>).
-				await registerWorkspaceOnChildren(children, workspaceId, { latest: true });
+				await registerWorkspaceOnChildren(children, workspaceId, {
+					latest: true,
+					timeoutMs: durationMs,
+				});
 			});
 
 			it(`synchronizes Latest state updates between clients [${numClients} clients]`, async () => {
@@ -235,7 +236,7 @@ describe(`Presence with AzureClient`, () => {
 		// NOTE: For testing purposes child clients will expect a LatestMap value of type Record<string, string | number>.
 		describe("using LatestMap state object", () => {
 			let children: ChildProcess[];
-			let childErrorPromise: Promise<void>;
+			let childErrorPromise: Promise<never>;
 			let containerCreatorAttendeeId: AttendeeId;
 			let attendeeIdPromises: Promise<AttendeeId>[];
 			let remoteClients: ChildProcess[];
@@ -254,7 +255,10 @@ describe(`Presence with AzureClient`, () => {
 				await Promise.all(attendeeIdPromises);
 				remoteClients = children.filter((_, index) => index !== 0);
 				// NOTE: For testing purposes child clients will expect a LatestMap value of type Record<string, string | number> (StateFactory.latestMap<{ value: Record<string, string | number> }, string>).
-				await registerWorkspaceOnChildren(children, workspaceId, { latestMap: true });
+				await registerWorkspaceOnChildren(children, workspaceId, {
+					latestMap: true,
+					timeoutMs: durationMs,
+				});
 			});
 
 			it(`synchronizes LatestMap state updates between clients [${numClients} clients]`, async () => {

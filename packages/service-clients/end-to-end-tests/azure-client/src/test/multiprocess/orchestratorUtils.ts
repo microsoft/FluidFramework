@@ -34,11 +34,14 @@ export async function forkChildProcesses(
 	cleanUpAccumulator: (() => void)[],
 ): Promise<{
 	children: ChildProcess[];
-	childErrorPromise: Promise<void>;
+	/**
+	 * Will never resolve successfully, it is only used to reject on child process error.
+	 */
+	childErrorPromise: Promise<never>;
 }> {
 	const children: ChildProcess[] = [];
 	const childReadyPromises: Promise<void>[] = [];
-	const childErrorPromises: Promise<void>[] = [];
+	const childErrorPromises: Promise<never>[] = [];
 	for (let i = 0; i < numProcesses; i++) {
 		const child = fork("./lib/test/multiprocess/childClient.js", [
 			`child${i}` /* identifier passed to child process */,
@@ -59,7 +62,7 @@ export async function forkChildProcesses(
 			});
 		});
 		childReadyPromises.push(readyPromise);
-		const errorPromise = new Promise<void>((_resolve, reject) => {
+		const errorPromise = new Promise<never>((_resolve, reject) => {
 			child.on("error", (error) => {
 				reject(new Error(`Child${i} process errored: ${error.message}`));
 			});
@@ -161,7 +164,7 @@ export async function connectAndWaitForAttendees(
 	attendeeCountRequired: number,
 	childConnectTimeoutMs: number,
 	attendeesJoinedTimeoutMs: number,
-	earlyExitPromise: Promise<void> = Promise.resolve(),
+	earlyExitPromise: Promise<never>,
 ): Promise<{ containerCreatorAttendeeId: AttendeeId }> {
 	const attendeeConnectedPromise = new Promise<void>((resolve) => {
 		let attendeesJoinedEvents = 0;
@@ -199,18 +202,19 @@ export async function connectAndWaitForAttendees(
 export async function registerWorkspaceOnChildren(
 	children: ChildProcess[],
 	workspaceId: string,
-	options: { latest?: boolean; latestMap?: boolean; timeoutMs?: number },
+	options: { latest?: boolean; latestMap?: boolean; timeoutMs: number },
 ): Promise<void> {
-	const { latest, latestMap, timeoutMs = 10_000 } = options;
+	const { latest, latestMap, timeoutMs } = options;
 	const promises = children.map(async (child, index) => {
 		const ackPromise = waitForEvent(
 			child,
 			"workspaceRegistered",
-			(msg) => msg.event === "workspaceRegistered" && msg.workspaceId === workspaceId,
 			{
 				timeoutMs,
 				errorMsg: `Child ${index} did not acknowledge workspace registration ${workspaceId}`,
 			},
+			(msg: MessageFromChild) =>
+				msg.event === "workspaceRegistered" && msg.workspaceId === workspaceId,
 		);
 		child.send({
 			command: "registerWorkspace",
@@ -245,10 +249,10 @@ function isLatestMapValueUpdated(msg: MessageFromChild): msg is LatestMapValueUp
 export async function waitForEvent(
 	child: ChildProcess,
 	eventType: MessageFromChild["event"],
+	options: { timeoutMs: number; errorMsg?: string },
 	predicate?: (msg: MessageFromChild) => boolean,
-	options: { timeoutMs?: number; errorMsg?: string } = {},
 ): Promise<MessageFromChild> {
-	const { timeoutMs = 10_000, errorMsg = `did not receive '${eventType}' event` } = options;
+	const { timeoutMs, errorMsg = `did not receive '${eventType}' event` } = options;
 
 	let handler: ((msg: MessageFromChild) => void) | undefined;
 
@@ -259,23 +263,18 @@ export async function waitForEvent(
 		}
 	};
 
-	try {
-		return await timeoutPromise<MessageFromChild>(
-			(resolve) => {
-				handler = (msg: MessageFromChild): void => {
-					if (msg.event === eventType && (!predicate || predicate(msg))) {
-						cleanup();
-						resolve(msg);
-					}
-				};
-				child.on("message", handler);
-			},
-			{ durationMs: timeoutMs, errorMsg },
-		);
-	} catch (error) {
-		cleanup();
-		throw error;
-	}
+	return timeoutPromise<MessageFromChild>(
+		(resolve) => {
+			handler = (msg: MessageFromChild): void => {
+				if (msg.event === eventType && (!predicate || predicate(msg))) {
+					cleanup();
+					resolve(msg);
+				}
+			};
+			child.on("message", handler);
+		},
+		{ durationMs: timeoutMs, errorMsg },
+	).finally(cleanup);
 }
 
 /**
@@ -290,40 +289,42 @@ export async function waitForEvent(
 export async function waitForLatestValueUpdates(
 	clients: ChildProcess[],
 	workspaceId: string,
-	earlyExitPromise: Promise<void>,
-	timeoutMs = 10_000,
+	earlyExitPromise: Promise<never>,
+	timeoutMs: number,
 	options: { fromAttendeeId?: AttendeeId; expectedValue?: unknown } = {},
 ): Promise<LatestValueUpdatedEvent[]> {
 	const { fromAttendeeId, expectedValue } = options;
-	const updatePromises = clients.map(async (child, index) => {
-		const filterMsg = (msg: MessageFromChild): boolean => {
-			if (!isLatestValueUpdated(msg) || msg.workspaceId !== workspaceId) {
-				return false;
-			}
-			if (fromAttendeeId !== undefined && msg.attendeeId !== fromAttendeeId) {
-				return false;
-			}
-			if (expectedValue !== undefined) {
-				return JSON.stringify(msg.value) === JSON.stringify(expectedValue);
-			}
-			return true;
-		};
 
-		let filterDescription = "update";
-		if (fromAttendeeId) filterDescription += ` from attendee ${fromAttendeeId}`;
-		if (expectedValue !== undefined)
-			filterDescription += ` with specific value ${JSON.stringify(expectedValue)}`;
-		if (filterDescription === "update") filterDescription = "any update";
+	const filterMsg = (msg: MessageFromChild): boolean => {
+		if (!isLatestValueUpdated(msg) || msg.workspaceId !== workspaceId) {
+			return false;
+		}
+		if (fromAttendeeId !== undefined && msg.attendeeId !== fromAttendeeId) {
+			return false;
+		}
+		if (expectedValue !== undefined) {
+			return JSON.stringify(msg.value) === JSON.stringify(expectedValue);
+		}
+		return true;
+	};
+	let filterDescription = "update";
+	if (fromAttendeeId) filterDescription += ` from attendee ${fromAttendeeId}`;
+	if (expectedValue !== undefined)
+		filterDescription += ` with specific value ${JSON.stringify(expectedValue)}`;
+	if (filterDescription === "update") filterDescription = "any update";
 
-		return waitForEvent(child, "latestValueUpdated", filterMsg, {
-			timeoutMs,
-			errorMsg: `Client ${index} did not receive latest value ${filterDescription}`,
-		});
-	});
+	const updatePromises = clients.map(async (child, index) =>
+		waitForEvent(
+			child,
+			"latestValueUpdated",
+			{
+				timeoutMs,
+				errorMsg: `Client ${index} did not receive latest value ${filterDescription}`,
+			},
+			filterMsg,
+		),
+	);
 	const responses = await Promise.race([Promise.all(updatePromises), earlyExitPromise]);
-	if (!Array.isArray(responses)) {
-		throw new TypeError("Expected array of responses");
-	}
 	const latestValueUpdatedEvents: LatestValueUpdatedEvent[] = [];
 	for (const response of responses) {
 		if (isLatestValueUpdated(response)) {
@@ -349,43 +350,41 @@ export async function waitForLatestMapValueUpdates(
 	clients: ChildProcess[],
 	workspaceId: string,
 	key: string,
-	earlyExitPromise: Promise<void>,
-	timeoutMs = 10_000,
+	earlyExitPromise: Promise<never>,
+	timeoutMs: number,
 	options: { fromAttendeeId?: AttendeeId; expectedValue?: unknown } = {},
 ): Promise<LatestMapValueUpdatedEvent[]> {
 	const { fromAttendeeId, expectedValue } = options;
-	const updatePromises = clients.map(async (child, index) => {
-		const filterMsg = (msg: MessageFromChild): boolean => {
-			if (
-				!isLatestMapValueUpdated(msg) ||
-				msg.workspaceId !== workspaceId ||
-				msg.key !== key
-			) {
-				return false;
-			}
-			if (fromAttendeeId !== undefined && msg.attendeeId !== fromAttendeeId) {
-				return false;
-			}
-			if (expectedValue !== undefined) {
-				return JSON.stringify(msg.value) === JSON.stringify(expectedValue);
-			}
-			return true;
-		};
 
-		let filterDescription = `update for key "${key}"`;
-		if (fromAttendeeId) filterDescription += ` from attendee ${fromAttendeeId}`;
-		if (expectedValue !== undefined)
-			filterDescription += ` with specific value ${JSON.stringify(expectedValue)}`;
+	const filterMsg = (msg: MessageFromChild): boolean => {
+		if (!isLatestMapValueUpdated(msg) || msg.workspaceId !== workspaceId || msg.key !== key) {
+			return false;
+		}
+		if (fromAttendeeId !== undefined && msg.attendeeId !== fromAttendeeId) {
+			return false;
+		}
+		if (expectedValue !== undefined) {
+			return JSON.stringify(msg.value) === JSON.stringify(expectedValue);
+		}
+		return true;
+	};
+	let filterDescription = `update for key "${key}"`;
+	if (fromAttendeeId) filterDescription += ` from attendee ${fromAttendeeId}`;
+	if (expectedValue !== undefined)
+		filterDescription += ` with specific value ${JSON.stringify(expectedValue)}`;
 
-		return waitForEvent(child, "latestMapValueUpdated", filterMsg, {
-			timeoutMs,
-			errorMsg: `Client ${index} did not receive latest map value ${filterDescription}`,
-		});
-	});
+	const updatePromises = clients.map(async (child, index) =>
+		waitForEvent(
+			child,
+			"latestMapValueUpdated",
+			{
+				timeoutMs,
+				errorMsg: `Client ${index} did not receive latest map value ${filterDescription}`,
+			},
+			filterMsg,
+		),
+	);
 	const responses = await Promise.race([Promise.all(updatePromises), earlyExitPromise]);
-	if (!Array.isArray(responses)) {
-		throw new TypeError("Expected array of responses");
-	}
 	const latestMapValueUpdatedEvents: LatestMapValueUpdatedEvent[] = [];
 	for (const response of responses) {
 		if (isLatestMapValueUpdated(response)) {
@@ -403,21 +402,19 @@ export async function waitForLatestMapValueUpdates(
 export async function getLatestValueResponses(
 	clients: ChildProcess[],
 	workspaceId: string,
-	earlyExitPromise: Promise<void>,
-	timeoutMs = 10_000,
+	earlyExitPromise: Promise<never>,
+	timeoutMs: number,
 ): Promise<LatestValueGetResponseEvent[]> {
 	const responsePromises = clients.map(async (child, index) =>
 		waitForEvent(
 			child,
 			"latestValueGetResponse",
-			(msg) => isLatestValueGetResponse(msg) && msg.workspaceId === workspaceId,
 			{ timeoutMs, errorMsg: `Client ${index} did not respond with latest value` },
+			(msg: MessageFromChild) =>
+				isLatestValueGetResponse(msg) && msg.workspaceId === workspaceId,
 		),
 	);
 	const responses = await Promise.race([Promise.all(responsePromises), earlyExitPromise]);
-	if (!Array.isArray(responses)) {
-		throw new TypeError("Expected array of responses");
-	}
 	return responses.map((response) => {
 		if (!isLatestValueGetResponse(response)) {
 			throw new TypeError(`Expected LatestValueGetResponse but got ${response.event}`);
@@ -433,22 +430,19 @@ export async function getLatestMapValueResponses(
 	clients: ChildProcess[],
 	workspaceId: string,
 	key: string,
-	earlyExitPromise: Promise<void>,
-	timeoutMs = 10_000,
+	earlyExitPromise: Promise<never>,
+	timeoutMs: number,
 ): Promise<LatestMapValueGetResponseEvent[]> {
 	const responsePromises = clients.map(async (child, index) =>
 		waitForEvent(
 			child,
 			"latestMapValueGetResponse",
-			(msg) =>
-				isLatestMapValueGetResponse(msg) && msg.workspaceId === workspaceId && msg.key === key,
 			{ timeoutMs, errorMsg: `Client ${index} did not respond with latest map value` },
+			(msg: MessageFromChild) =>
+				isLatestMapValueGetResponse(msg) && msg.workspaceId === workspaceId && msg.key === key,
 		),
 	);
 	const responses = await Promise.race([Promise.all(responsePromises), earlyExitPromise]);
-	if (!Array.isArray(responses)) {
-		throw new TypeError("Expected array of responses");
-	}
 	return responses.map((response) => {
 		if (!isLatestMapValueGetResponse(response)) {
 			throw new TypeError(`Expected LatestMapValueGetResponse but got ${response.event}`);
