@@ -835,7 +835,7 @@ export class BlobManager {
 	 * The provided table must have exactly the same set of pseudo storage IDs as are found in the redirect table.
 	 * @param detachedStorageTable - A map of pseudo storage IDs to real storage IDs.
 	 */
-	public setRedirectTable(detachedStorageTable: Map<string, string>): void {
+	public patchRedirectTable(detachedStorageTable: Map<string, string>): void {
 		assert(
 			this.runtime.attachState === AttachState.Detached,
 			0x252 /* "redirect table can only be set in detached container" */,

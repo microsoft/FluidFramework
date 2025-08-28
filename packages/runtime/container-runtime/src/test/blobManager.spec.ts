@@ -250,7 +250,7 @@ export class MockRuntime
 				table.set(detachedId, id);
 			}
 			this.detachedStorage.blobs.clear();
-			this.blobManager.setRedirectTable(table);
+			this.blobManager.patchRedirectTable(table);
 		}
 		const summary = validateSummary(this);
 		this.attachState = AttachState.Attached;
