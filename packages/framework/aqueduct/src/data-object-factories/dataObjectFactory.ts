@@ -6,7 +6,9 @@
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
+	SharedMap,
 	DirectoryFactory,
+	MapFactory,
 	SharedDirectory,
 } from "@fluidframework/map/internal";
 import type { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
@@ -74,6 +76,13 @@ export class DataObjectFactory<
 		if (!sharedObjects.some((factory) => factory.type === DirectoryFactory.Type)) {
 			// User did not register for directory
 			sharedObjects.push(SharedDirectory.getFactory());
+		}
+
+		// Keep SharedMap factory registration for customer compatibility
+		// Customers may inadvertently depend on the map factory being registered
+		if (!sharedObjects.some((factory) => factory.type === MapFactory.Type)) {
+			// User did not register for map
+			sharedObjects.push(SharedMap.getFactory());
 		}
 
 		super(newProps);
