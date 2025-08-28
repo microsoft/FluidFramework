@@ -337,44 +337,15 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 
 	/**
 	 * If flush mode is set to FlushMode.TurnBased, it will send all messages queued since the last time
-	 * this method (or flushSomeMessages) was called. Otherwise, calling the method does nothing.
+	 * this method (or `flushSomeMessages`) was called. Otherwise, calling the method does nothing.
 	 */
 	public flush() {
-		if (this.runtimeOptions.flushMode !== FlushMode.TurnBased) {
-			return;
-		}
-
-		// This mimics the runtime behavior of the IdCompressor by generating an IdAllocationOp
-		// and sticking it in front of any op that might rely on that id. It differs slightly in that
-		// in the actual runtime it would get put in its own separate batch
-		const idAllocationOp = this.generateIdAllocationOp();
-		if (idAllocationOp !== undefined) {
-			this.idAllocationOutbox.push(idAllocationOp);
-		}
-
-		// As with the runtime behavior, we need to send the idAllocationOps first
-		const messagesToSubmit = this.idAllocationOutbox.concat(this.outbox);
-		this.idAllocationOutbox.length = 0;
-		this.outbox.length = 0;
-
-		let fakeClientSequenceNumber = 1;
-		messagesToSubmit.forEach((message) => {
-			this.submitInternal(
-				message,
-				// When grouped batching is used, the ops within the same grouped batch will have
-				// fake sequence numbers when they're ungrouped. The submit function will still
-				// return the clientSequenceNumber but this will ensure that the readers will always
-				// read the fake client sequence numbers.
-				this.runtimeOptions.enableGroupedBatching
-					? fakeClientSequenceNumber++
-					: this.deltaManager.clientSequenceNumber,
-			);
-		});
+		this.flushSomeMessages(this.outbox.length);
 	}
 
 	/**
 	 * If flush mode is set to FlushMode.TurnBased, it will send the specified number of messages from the outbox
-	 * queued since the last time this (or flush) was called. Otherwise, calling the method does nothing.
+	 * queued since the last time this (or `flush`) was called. Otherwise, calling the method does nothing.
 	 * This can be useful when simulating staging mode, and we only want to flush certain messages.
 	 */
 	public flushSomeMessages(numMessages: number): void {
