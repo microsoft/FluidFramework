@@ -10,6 +10,8 @@ import {
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
+import { getThrottlingBaseTelemetryProperties } from "./utils";
+
 /**
  * @internal
  */
@@ -35,6 +37,12 @@ export interface ITokenBucketConfig {
 	 * The minimum cooldown interval between bursts of token consumption.
 	 */
 	minCooldownIntervalMs: number;
+	/**
+	 * Enables enhanced logging for debugging purposes.
+	 * @remarks
+	 * This should only be enabled selectively for debugging, as it will generate a large quantity of telemetry.
+	 */
+	enableEnhancedTelemetry: boolean;
 }
 
 /**
@@ -44,6 +52,7 @@ const defaultTokenBucketConfig: ITokenBucketConfig = {
 	capacity: 1_000_000,
 	refillRatePerMs: 1_000_000,
 	minCooldownIntervalMs: 1_000_000,
+	enableEnhancedTelemetry: false,
 };
 
 /**
@@ -55,7 +64,7 @@ export class TokenBucket implements ITokenBucket {
 	/**
 	 * The current number of tokens in the bucket.
 	 */
-	protected tokens: number;
+	protected availableTokens: number;
 	/**
 	 * The timestamp of the last time tokens were refilled.
 	 */
@@ -71,7 +80,7 @@ export class TokenBucket implements ITokenBucket {
 			...defaultTokenBucketConfig,
 			...config,
 		};
-		this.tokens = this.config.capacity;
+		this.availableTokens = this.config.capacity;
 		this.lastRefillTimestamp = Date.now();
 	}
 
@@ -84,42 +93,76 @@ export class TokenBucket implements ITokenBucket {
 	/**
 	 * Refills the token bucket with new tokens based on the elapsed time since last refill.
 	 */
-	protected refillTokens() {
+	protected tryRefillTokens(): void {
 		if (this.isCoolingDown()) {
 			// If we're still in the cooldown period, do nothing.
+			if (this.config.enableEnhancedTelemetry) {
+				Lumberjack.verbose("TokenBucket: Still in cooldown period, skipping refill", {
+					...getThrottlingBaseTelemetryProperties().baseLumberjackProperties,
+				});
+			}
 			return;
 		}
 		const now = Date.now();
 		const elapsed = now - this.lastRefillTimestamp;
 		const tokensToAdd = Math.floor(elapsed * this.config.refillRatePerMs);
-		this.tokens = Math.min(this.config.capacity, this.tokens + tokensToAdd);
+		this.availableTokens = Math.min(this.config.capacity, this.availableTokens + tokensToAdd);
 		this.lastRefillTimestamp = now;
 	}
 
 	/**
 	 * Tries to consume a certain number of tokens from the bucket.
-	 * @param tokens - The number of tokens to consume.
+	 * @param tokensToConsume - The number of tokens to consume.
 	 * @returns 0 if the tokens were successfully consumed, or the duration until the tokens can be consumed in milliseconds.
 	 */
-	public tryConsume(tokens: number): number {
-		this.refillTokens();
-		if (tokens <= this.tokens) {
-			// Consume the tokens.
-			this.tokens -= tokens;
+	public tryConsume(tokensToConsume: number): number {
+		if (tokensToConsume <= this.availableTokens) {
+			// Consume the tokens without bothering to refill.
+			// This is an optimization for the common case where there are enough tokens.
+			this.availableTokens -= tokensToConsume;
+			return 0;
+		}
+
+		// Refill the tokens based on elapsed time since last refill.
+		this.tryRefillTokens();
+		if (tokensToConsume <= this.availableTokens) {
+			// Now there are enough tokens available.
+			this.availableTokens -= tokensToConsume;
 			return 0;
 		}
 
 		// Not enough tokens available, so communicate how long it will take for the necessary tokens to be refilled.
-		const timeUntilRefill = Math.ceil((tokens - this.tokens) / this.config.refillRatePerMs);
+		const timeUntilRefillToAvailable = Math.ceil(
+			(tokensToConsume - this.availableTokens) / this.config.refillRatePerMs,
+		);
 		if (!this.isCoolingDown()) {
 			// Calculate the duration until the tokens can be consumed from now.
-			return timeUntilRefill;
+			if (this.config.enableEnhancedTelemetry) {
+				Lumberjack.verbose("TokenBucket: Not enough tokens", {
+					...getThrottlingBaseTelemetryProperties().baseLumberjackProperties,
+					tokensRequested: tokensToConsume,
+					tokensAvailable: this.availableTokens,
+					timeUntilAvailable: timeUntilRefillToAvailable,
+				});
+			}
+			return timeUntilRefillToAvailable;
 		}
 		// Otherwise, communicate the minimum time until the next cooldown interval is reached,
 		// or the duration until the tokens can be consumed, whichever is higher.
 		const timeUntilCooledDown =
 			this.config.minCooldownIntervalMs - (Date.now() - this.lastRefillTimestamp);
-		return Math.max(timeUntilRefill, timeUntilCooledDown);
+		const timeUntilAvailable = Math.max(timeUntilRefillToAvailable, timeUntilCooledDown);
+		if (this.config.enableEnhancedTelemetry) {
+			Lumberjack.verbose("TokenBucket: Not enough tokens and still cooling down", {
+				...getThrottlingBaseTelemetryProperties().baseLumberjackProperties,
+				tokensRequested: tokensToConsume,
+				tokensAvailable: this.availableTokens,
+				timeUntilAvailable,
+				timeUntilCooledDown,
+				timeUntilRefillToAvailable,
+			});
+		}
+		return timeUntilAvailable;
 	}
 }
 
@@ -198,6 +241,15 @@ export class DistributedTokenBucket implements ITokenBucket {
 		// Exit early if already throttled and no chance of being unthrottled
 		const retryAfterInMs = this.getRetryAfterInMs(throttlingMetric, now);
 		if (retryAfterInMs > 0) {
+			if (this.config.enableEnhancedTelemetry) {
+				Lumberjack.verbose("DistributedTokenBucket: Already throttled, exiting early", {
+					...getThrottlingBaseTelemetryProperties().baseLumberjackProperties,
+					remoteId: this.remoteId,
+					tokensConsumedSinceLastSync: this.tokensConsumedSinceLastSync,
+					currentCount: throttlingMetric.count,
+					retryAfterInMs,
+				});
+			}
 			throttlingMetric.retryAfterInMs = retryAfterInMs;
 			await this.setThrottlingMetricAndUsageData(throttlingMetric, usageData);
 			this.lastConsumeTokensSyncResult = throttlingMetric.retryAfterInMs;
@@ -211,6 +263,14 @@ export class DistributedTokenBucket implements ITokenBucket {
 		if (amountToReplenish > 0) {
 			throttlingMetric.count += amountToReplenish;
 			throttlingMetric.lastCoolDownAt = now;
+			if (this.config.enableEnhancedTelemetry) {
+				Lumberjack.verbose("DistributedTokenBucket: Replenishing tokens", {
+					...getThrottlingBaseTelemetryProperties().baseLumberjackProperties,
+					remoteId: this.remoteId,
+					amountToReplenish,
+					newCount: throttlingMetric.count,
+				});
+			}
 		}
 
 		// throttle if "token bucket" is empty
@@ -221,10 +281,26 @@ export class DistributedTokenBucket implements ITokenBucket {
 				throttlingMetric.count,
 			)} at ${new Date(now).toISOString()}`;
 			throttlingMetric.retryAfterInMs = newRetryAfterInMs;
+			if (this.config.enableEnhancedTelemetry) {
+				Lumberjack.verbose("DistributedTokenBucket: Setting throttle status", {
+					...getThrottlingBaseTelemetryProperties().baseLumberjackProperties,
+					remoteId: this.remoteId,
+					currentCount: throttlingMetric.count,
+					retryAfterInMs: newRetryAfterInMs,
+					throttleReason: throttlingMetric.throttleReason,
+				});
+			}
 		} else {
 			throttlingMetric.throttleStatus = false;
 			throttlingMetric.throttleReason = "";
 			throttlingMetric.retryAfterInMs = 0;
+			if (this.config.enableEnhancedTelemetry) {
+				Lumberjack.verbose("DistributedTokenBucket: Clearing throttle status", {
+					...getThrottlingBaseTelemetryProperties().baseLumberjackProperties,
+					remoteId: this.remoteId,
+					currentCount: throttlingMetric.count,
+				});
+			}
 		}
 
 		await this.setThrottlingMetricAndUsageData(throttlingMetric, usageData);
@@ -288,8 +364,31 @@ export class DistributedTokenBucket implements ITokenBucket {
 			!this.lastSyncTimestamp ||
 			Date.now() - this.lastSyncTimestamp >= this.config.distributedSyncIntervalInMs
 		) {
+			if (this.config.enableEnhancedTelemetry) {
+				Lumberjack.verbose("DistributedTokenBucket: Triggering sync", {
+					...getThrottlingBaseTelemetryProperties().baseLumberjackProperties,
+					remoteId: this.remoteId,
+					tokensRequested: tokens,
+					tokensConsumedSinceLastSync: this.tokensConsumedSinceLastSync,
+					lastSyncTimestamp: this.lastSyncTimestamp,
+					timeSinceLastSync: this.lastSyncTimestamp
+						? Date.now() - this.lastSyncTimestamp
+						: undefined,
+				});
+			}
 			this.tryConsumeCore(usageData).catch((error) => {
 				Lumberjack.error("Failed to consume tokens", { error });
+			});
+		} else if (this.config.enableEnhancedTelemetry) {
+			Lumberjack.verbose("DistributedTokenBucket: Using cached result", {
+				...getThrottlingBaseTelemetryProperties().baseLumberjackProperties,
+				remoteId: this.remoteId,
+				tokensRequested: tokens,
+				tokensConsumedSinceLastSync: this.tokensConsumedSinceLastSync,
+				cachedResult: this.lastConsumeTokensSyncResult,
+				timeSinceLastSync: this.lastSyncTimestamp
+					? Date.now() - this.lastSyncTimestamp
+					: undefined,
 			});
 		}
 		return this.lastConsumeTokensSyncResult ?? 0;

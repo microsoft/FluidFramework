@@ -8,8 +8,8 @@ for high-performance scenarios where occasional over-limit operations are accept
 
 The legacy throttling system consists of two main components:
 
-- **`ThrottlerHelper`**: Implements the core token bucket algorithm with distributed storage backing
-- **`Throttler`**: Provides a lenient wrapper with local caching to minimize latency impact
+-   **`ThrottlerHelper`**: Implements the core token bucket algorithm with distributed storage backing
+-   **`Throttler`**: Provides a lenient wrapper with local caching to minimize latency impact
 
 This system uses a single-layer approach where all rate limiting is coordinated through shared
 storage, with local caching to reduce storage load and improve response times. A running count
@@ -70,9 +70,9 @@ The legacy throttling system requires configuration of both the helper and wrapp
 ```typescript
 const throttlerHelper = new ThrottlerHelper(
 	throttleAndUsageStorageManager, // IThrottleAndUsageStorageManager instance
-	rateInOperationsPerMs,          // Token replenishment rate (default: 1000000)
-	operationBurstLimit,            // Maximum tokens in bucket (default: 1000000)
-	minCooldownIntervalInMs,        // Minimum time between replenishments (default: 1000000)
+	rateInOperationsPerMs, // Token replenishment rate (default: 1000000)
+	operationBurstLimit, // Maximum tokens in bucket (default: 1000000)
+	minCooldownIntervalInMs, // Minimum time between replenishments (default: 1000000)
 );
 ```
 
@@ -80,12 +80,12 @@ const throttlerHelper = new ThrottlerHelper(
 
 ```typescript
 const throttler = new Throttler(
-	throttlerHelper,                // IThrottlerHelper instance
-	minThrottleIntervalInMs,        // How often to check throttle status (default: 1000000)
-	logger,                         // Optional ILogger for telemetry
-	maxCacheSize,                   // LRU cache size limit (default: 1000)
-	maxCacheAge,                    // Cache entry expiration in ms (default: 60000)
-	enableEnhancedTelemetry,        // Enable detailed logging (default: false)
+	throttlerHelper, // IThrottlerHelper instance
+	minThrottleIntervalInMs, // How often to check throttle status (default: 1000000)
+	logger, // Optional ILogger for telemetry
+	maxCacheSize, // LRU cache size limit (default: 1000)
+	maxCacheAge, // Cache entry expiration in ms (default: 60000)
+	enableEnhancedTelemetry, // Enable detailed logging (default: false)
 );
 ```
 
@@ -107,18 +107,18 @@ const storageManager = new RedisThrottleAndUsageStorageManager(
 
 const throttlerHelper = new ThrottlerHelper(
 	storageManager,
-	0.1,    // 100 operations per second (0.1 per ms)
-	100,    // Allow 100 operation burst
-	1000,   // Replenish tokens every second
+	0.1, // 100 operations per second (0.1 per ms)
+	100, // Allow 100 operation burst
+	1000, // Replenish tokens every second
 );
 
 const throttler = new Throttler(
 	throttlerHelper,
-	5000,   // Check throttle status every 5 seconds
+	5000, // Check throttle status every 5 seconds
 	logger,
-	1000,   // Track up to 1000 operation IDs
-	60000,  // Cache entries expire after 1 minute
-	false,  // Disable enhanced telemetry for production
+	1000, // Track up to 1000 operation IDs
+	60000, // Cache entries expire after 1 minute
+	false, // Disable enhanced telemetry for production
 );
 ```
 
@@ -177,17 +177,17 @@ throttler.decrementCount("api:upload", 5);
 ```typescript
 const throttlerHelper = new ThrottlerHelper(
 	storageManager,
-	1,      // 1000 ops/second sustained
-	5000,   // 5000 operation burst
-	1000,   // 1 second cooldown
+	1, // 1000 ops/second sustained
+	5000, // 5000 operation burst
+	1000, // 1 second cooldown
 );
 
 const throttler = new Throttler(
 	throttlerHelper,
-	10000,  // Check every 10 seconds (very lenient)
+	10000, // Check every 10 seconds (very lenient)
 	logger,
-	10000,  // Large cache for many users
-	30000,  // 30 second cache expiration
+	10000, // Large cache for many users
+	30000, // 30 second cache expiration
 );
 ```
 
@@ -196,17 +196,17 @@ const throttler = new Throttler(
 ```typescript
 const throttlerHelper = new ThrottlerHelper(
 	storageManager,
-	0.01,   // 10 connections/second sustained
-	50,     // 50 connection burst
-	5000,   // 5 second cooldown
+	0.01, // 10 connections/second sustained
+	50, // 50 connection burst
+	5000, // 5 second cooldown
 );
 
 const throttler = new Throttler(
 	throttlerHelper,
-	1000,   // Check every second (responsive)
+	1000, // Check every second (responsive)
 	logger,
-	1000,   // Moderate cache size
-	60000,  // 1 minute cache expiration
+	1000, // Moderate cache size
+	60000, // 1 minute cache expiration
 );
 ```
 
@@ -233,9 +233,9 @@ This provides logging for cache evictions due to size limits and/or age.
 
 > **Recommendation**: Redis
 
-- **Consistency**: Requires shared storage accessible by all service instances
-- **Performance**: Storage latency directly impacts throttling accuracy
-- **Reliability**: Storage failures disable distributed coordination
+-   **Consistency**: Requires shared storage accessible by all service instances
+-   **Performance**: Storage latency directly impacts throttling accuracy
+-   **Reliability**: Storage failures disable distributed coordination
 
 ### Migration Considerations
 
@@ -244,7 +244,7 @@ local+distributed throttling system:
 
 ```typescript
 // Legacy approach (single-layer distributed)
-const legacyThrottler: IThrottler = new Throttler(throttlerHelper, /* ... */);
+const legacyThrottler: IThrottler = new Throttler(throttlerHelper /* ... */);
 
 // Migration target (dual-layer local+distributed)
 const modernThrottler: IThrottler = new DistributedTokenBucketThrottler(/* ... */);
@@ -263,7 +263,7 @@ modernThrottler.incrementCount(id, weight);
 
 ## Related Classes
 
-- **`TestThrottlerHelper`**: Simple in-memory implementation for testing
-- **`RedisThrottleAndUsageStorageManager`**: Redis-based storage backend
-- **`DistributedTokenBucketThrottler`**: Modern replacement with dual-layer architecture
-- **Core interfaces**: `IThrottler`, `IThrottlerHelper`, `IThrottlerResponse`, `IThrottlingMetrics`
+-   **`TestThrottlerHelper`**: Simple in-memory implementation for testing
+-   **`RedisThrottleAndUsageStorageManager`**: Redis-based storage backend
+-   **`DistributedTokenBucketThrottler`**: Modern replacement with dual-layer architecture
+-   **Core interfaces**: `IThrottler`, `IThrottlerHelper`, `IThrottlerResponse`, `IThrottlingMetrics`

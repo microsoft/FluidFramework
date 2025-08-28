@@ -108,6 +108,7 @@ const storageManager = new RedisThrottleAndUsageStorageManager(
 );
 
 const config: IDistributedTokenBucketThrottlerConfig = {
+	type: "DistributedTokenBucket",
 	localTokenBucket: {
 		capacity: 10, // Allow 10 operation burst per instance
 		refillRatePerMs: 0.1, // Add 1 token every 10ms (100 ops/second)

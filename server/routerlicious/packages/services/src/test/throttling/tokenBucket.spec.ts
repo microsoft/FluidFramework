@@ -34,6 +34,7 @@ describe("TokenBucket", () => {
 				capacity: 10,
 				refillRatePerMs: 1,
 				minCooldownIntervalMs: 100,
+				enableEnhancedTelemetry: false,
 			};
 			const bucket = new TokenBucket(config);
 
@@ -49,6 +50,7 @@ describe("TokenBucket", () => {
 				capacity: 5,
 				refillRatePerMs: 1,
 				minCooldownIntervalMs: 100,
+				enableEnhancedTelemetry: false,
 			};
 			const bucket = new TokenBucket(config);
 
@@ -68,6 +70,7 @@ describe("TokenBucket", () => {
 				capacity: 5,
 				refillRatePerMs: 1, // 1 token per ms
 				minCooldownIntervalMs: 100,
+				enableEnhancedTelemetry: false,
 			};
 			const bucket = new TokenBucket(config);
 
@@ -93,6 +96,7 @@ describe("TokenBucket", () => {
 				capacity: 5,
 				refillRatePerMs: 10, // High refill rate
 				minCooldownIntervalMs: 1000, // Long cooldown
+				enableEnhancedTelemetry: false,
 			};
 			const bucket = new TokenBucket(config);
 
@@ -114,6 +118,7 @@ describe("TokenBucket", () => {
 				capacity: 10,
 				refillRatePerMs: 1,
 				minCooldownIntervalMs: 100,
+				enableEnhancedTelemetry: false,
 			};
 			const bucket = new TokenBucket(config);
 
@@ -135,6 +140,7 @@ describe("TokenBucket", () => {
 				capacity: 10,
 				refillRatePerMs: 1,
 				minCooldownIntervalMs: 100,
+				enableEnhancedTelemetry: false,
 			};
 			const bucket = new TokenBucket(config);
 
@@ -164,6 +170,7 @@ describe("TokenBucket", () => {
 				capacity: 0,
 				refillRatePerMs: 1,
 				minCooldownIntervalMs: 100,
+				enableEnhancedTelemetry: false,
 			};
 			const bucket = new TokenBucket(config);
 
@@ -176,6 +183,7 @@ describe("TokenBucket", () => {
 				capacity: 5,
 				refillRatePerMs: 0,
 				minCooldownIntervalMs: 100,
+				enableEnhancedTelemetry: false,
 			};
 			const bucket = new TokenBucket(config);
 
@@ -195,6 +203,7 @@ describe("TokenBucket", () => {
 				capacity: 5,
 				refillRatePerMs: 100, // Very high refill rate
 				minCooldownIntervalMs: 10,
+				enableEnhancedTelemetry: false,
 			};
 			const bucket = new TokenBucket(config);
 
@@ -233,6 +242,7 @@ describe("DistributedTokenBucket", () => {
 				refillRatePerMs: 1,
 				minCooldownIntervalMs: 100,
 				distributedSyncIntervalInMs: 1000,
+				enableEnhancedTelemetry: false,
 			};
 			const storageManager = new TestThrottleAndUsageStorageManager();
 			const bucket = new DistributedTokenBucket("test-id", storageManager, config);
@@ -254,6 +264,7 @@ describe("DistributedTokenBucket", () => {
 				refillRatePerMs: 1,
 				minCooldownIntervalMs: 100,
 				distributedSyncIntervalInMs: 500,
+				enableEnhancedTelemetry: false,
 			};
 			const storageManager = new TestThrottleAndUsageStorageManager();
 			const bucket = new DistributedTokenBucket("test-id", storageManager, config);
@@ -282,6 +293,7 @@ describe("DistributedTokenBucket", () => {
 				refillRatePerMs: 1,
 				minCooldownIntervalMs: 100,
 				distributedSyncIntervalInMs: 500,
+				enableEnhancedTelemetry: false,
 			};
 			const storageManager = new TestThrottleAndUsageStorageManager();
 
@@ -334,6 +346,7 @@ describe("DistributedTokenBucket", () => {
 				refillRatePerMs: 1,
 				minCooldownIntervalMs: 100,
 				distributedSyncIntervalInMs: 500,
+				enableEnhancedTelemetry: false,
 			};
 			const storageManager = new TestThrottleAndUsageStorageManager();
 			const bucket = new DistributedTokenBucket(
@@ -370,6 +383,7 @@ describe("DistributedTokenBucket", () => {
 				refillRatePerMs: 1,
 				minCooldownIntervalMs: 100,
 				distributedSyncIntervalInMs: 500,
+				enableEnhancedTelemetry: false,
 			};
 			const storageManager = new TestThrottleAndUsageStorageManager();
 			const bucket = new DistributedTokenBucket("test-id", storageManager, config);
@@ -390,6 +404,7 @@ describe("DistributedTokenBucket", () => {
 				refillRatePerMs: 1,
 				minCooldownIntervalMs: 100,
 				distributedSyncIntervalInMs: 500,
+				enableEnhancedTelemetry: false,
 			};
 			const storageManager = new TestThrottleAndUsageStorageManager();
 
@@ -416,6 +431,7 @@ describe("DistributedTokenBucket", () => {
 				refillRatePerMs: 1,
 				minCooldownIntervalMs: 1000,
 				distributedSyncIntervalInMs: 500,
+				enableEnhancedTelemetry: false,
 			};
 			const storageManager = new TestThrottleAndUsageStorageManager();
 

@@ -10,11 +10,7 @@ import {
 	IUsageData,
 	ThrottlingError,
 } from "@fluidframework/server-services-core";
-import {
-	CommonProperties,
-	Lumberjack,
-	ThrottlingTelemetryProperties,
-} from "@fluidframework/server-services-telemetry";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import LRUCache, { Options as LRUCacheOptions } from "lru-cache";
 
 import {
@@ -23,6 +19,7 @@ import {
 	ITokenBucketConfig,
 	TokenBucket,
 } from "./tokenBucket";
+import { getThrottlingBaseTelemetryProperties } from "./utils";
 
 export interface IDistributedTokenBucketThrottlerConfig {
 	/**
@@ -70,12 +67,14 @@ const defaultDistributedTokenBucketThrottlerConfig: Required<IDistributedTokenBu
 			capacity: 1_000_000,
 			refillRatePerMs: 1_000_000,
 			minCooldownIntervalMs: 1_000_000,
+			enableEnhancedTelemetry: false,
 		},
 		distributedTokenBucket: {
 			capacity: 1_000_000,
 			refillRatePerMs: 1_000_000,
 			minCooldownIntervalMs: 1_000_000,
 			distributedSyncIntervalInMs: 1_000_000,
+			enableEnhancedTelemetry: false,
 		},
 		maxLocalCacheSize: 1_000,
 		maxLocalCacheAgeInMs: 60_000,
@@ -124,7 +123,24 @@ export class DistributedTokenBucketThrottler implements IThrottler {
 		private readonly logger?: ILogger,
 		config?: Partial<IDistributedTokenBucketThrottlerConfig>,
 	) {
-		this.config = { ...defaultDistributedTokenBucketThrottlerConfig, ...config };
+		this.config = {
+			...defaultDistributedTokenBucketThrottlerConfig,
+			...config,
+			distributedTokenBucket: {
+				...defaultDistributedTokenBucketThrottlerConfig.distributedTokenBucket,
+				enableEnhancedTelemetry:
+					config?.enableEnhancedTelemetry ??
+					defaultDistributedTokenBucketThrottlerConfig.enableEnhancedTelemetry,
+				...config?.distributedTokenBucket,
+			},
+			localTokenBucket: {
+				...defaultDistributedTokenBucketThrottlerConfig.localTokenBucket,
+				enableEnhancedTelemetry:
+					config?.enableEnhancedTelemetry ??
+					defaultDistributedTokenBucketThrottlerConfig.enableEnhancedTelemetry,
+				...config?.localTokenBucket,
+			},
+		};
 		const cacheOptions: LRUCacheOptions<string, ITokenBucketCacheEntry> = {
 			max: this.config.maxLocalCacheSize,
 			maxAge: this.config.maxLocalCacheAgeInMs,
@@ -136,7 +152,7 @@ export class DistributedTokenBucketThrottler implements IThrottler {
 						if (now - value.lastUpdate < this.config.maxLocalCacheAgeInMs) {
 							// lastUpdate value should be equal to the time that the cached value was last updated.
 							// If it is being disposed before the maxCacheAge is reached, it indicates that the cache is full.
-							const telemetryProperties = this.getBaseTelemetryProperties(key);
+							const telemetryProperties = getThrottlingBaseTelemetryProperties(key);
 							const lumberjackProperties = {
 								...telemetryProperties.baseLumberjackProperties,
 								ageInMs: now - value.lastUpdate,
@@ -162,7 +178,6 @@ export class DistributedTokenBucketThrottler implements IThrottler {
 		usageStorageId?: string,
 		usageData?: IUsageData,
 	): void {
-		const telemetryProperties = this.getBaseTelemetryProperties(id);
 		// Step 1: Get or create the token bucket
 		const existingTokenBucket = this.tokenBuckets.get(id);
 		const tokenBucket: ITokenBucketCacheEntry = existingTokenBucket ?? {
@@ -199,20 +214,27 @@ export class DistributedTokenBucketThrottler implements IThrottler {
 				`Token bucket for ${id} is exhausted`,
 				retryAfterInSeconds,
 			);
-			Lumberjack.warning(
-				`Token bucket for ${id} is exhausted`,
-				{
-					...telemetryProperties,
+			if (this.config.enableEnhancedTelemetry) {
+				const telemetryProperties = getThrottlingBaseTelemetryProperties(id);
+				this.logger?.warn(`Token bucket for ${id} is exhausted`, {
+					...telemetryProperties.baseLumberjackProperties,
 					retryAfterInSeconds,
-				},
-				throttlingError,
-			);
+					error: throttlingError,
+				});
+				Lumberjack.warning(
+					`Token bucket for ${id} is exhausted`,
+					{
+						...telemetryProperties.baseLumberjackProperties,
+						retryAfterInSeconds,
+					},
+					throttlingError,
+				);
+			}
 			throw throttlingError;
 		}
 	}
 
 	public decrementCount(id: string, weight: number = 1): void {
-		const telemetryProperties = this.getBaseTelemetryProperties(id);
 		const tokenBucket = this.tokenBuckets.get(id);
 		if (!tokenBucket) {
 			return;
@@ -221,6 +243,7 @@ export class DistributedTokenBucketThrottler implements IThrottler {
 			tokenBucket.localBucket.tryConsume(-weight);
 			tokenBucket.distributedBucket.tryConsume(-weight);
 		} catch (error) {
+			const telemetryProperties = getThrottlingBaseTelemetryProperties(id);
 			// If the token buckets are still exhausted, we shouldn't throw when attempting to replenish tokens.
 			this.logger?.warn(`Failed to decrement token bucket for ${id}`, {
 				...telemetryProperties,
@@ -233,18 +256,5 @@ export class DistributedTokenBucketThrottler implements IThrottler {
 			);
 		}
 		tokenBucket.lastUpdate = Date.now();
-	}
-
-	private getBaseTelemetryProperties(key: string) {
-		return {
-			baseMessageMetaData: {
-				key,
-				eventName: "throttling",
-			},
-			baseLumberjackProperties: {
-				[CommonProperties.telemetryGroupName]: "throttling",
-				[ThrottlingTelemetryProperties.key]: key,
-			},
-		};
 	}
 }
