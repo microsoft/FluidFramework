@@ -153,6 +153,15 @@ function isStringOrNumberRecord(value: unknown): value is Record<string, string 
 	return true;
 }
 
+// NOTE:
+// - This schema intentionally uses optional keys (latest?, latestMap?) so tests can register
+//   states conditionally at runtime.
+// - Optional keys are not explicitly supported in StatesWorkspace typing today, which means
+//   workspace.states.<key> is typed as any. As a result, usages below require casts
+//   (e.g., to LatestRaw / LatestMapRaw) to recover concrete types.
+// - Track adding proper optional-key support to Presence state workspace typing here:
+//   Work item: AB#47518
+// - Fallout: Until the above is addressed, keep the casts in place and document new usages accordingly.
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type WorkspaceSchema = {
 	latest?: ReturnType<typeof StateFactory.latest<{ value: string }>>;
@@ -187,6 +196,8 @@ class MessageHandler {
 				"latest",
 				StateFactory.latest<{ value: string }>({ local: { value: "initial" } }),
 			);
+			// Cast required due to optional keys in WorkspaceSchema
+			// TODO: AB#47518
 			const latestState = workspace.states.latest as LatestRaw<{ value: string }>;
 			latestState.events.on("remoteUpdated", (update) => {
 				send({
@@ -213,6 +224,8 @@ class MessageHandler {
 					local: {},
 				}),
 			);
+			// Cast required due to optional keys in WorkspaceSchema
+			// TODO: AB#47518
 			const latestMapState = workspace.states.latestMap as LatestMapRaw<
 				{ value: Record<string, string | number> },
 				string
@@ -357,6 +370,8 @@ class MessageHandler {
 			send({ event: "error", error: `${process_id} workspace ${msg.workspaceId} not found` });
 			return;
 		}
+		// Cast required due to optional keys in WorkspaceSchema
+		// TODO: AB#47518
 		const latestState = workspace.states.latest as LatestRaw<{ value: string }> | undefined;
 		if (!latestState) {
 			send({
@@ -387,6 +402,8 @@ class MessageHandler {
 			send({ event: "error", error: `${process_id} workspace ${msg.workspaceId} not found` });
 			return;
 		}
+		// Cast required due to optional keys in WorkspaceSchema
+		// TODO: AB#47518
 		const latestMapState = workspace.states.latestMap as
 			| LatestMapRaw<{ value: Record<string, string | number> }, string>
 			| undefined;
@@ -415,6 +432,8 @@ class MessageHandler {
 			send({ event: "error", error: `${process_id} workspace ${msg.workspaceId} not found` });
 			return;
 		}
+		// Cast required due to optional keys in WorkspaceSchema
+		// TODO: AB#47518
 		const latestState = workspace.states.latest as LatestRaw<{ value: string }> | undefined;
 		if (!latestState) {
 			send({
@@ -455,6 +474,8 @@ class MessageHandler {
 			send({ event: "error", error: `${process_id} workspace ${msg.workspaceId} not found` });
 			return;
 		}
+		// Cast required due to optional keys in WorkspaceSchema
+		// TODO: AB#47518
 		const latestMapState = workspace.states.latestMap as
 			| LatestMapRaw<{ value: Record<string, string | number> }, string>
 			| undefined;
