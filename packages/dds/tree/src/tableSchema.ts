@@ -958,24 +958,10 @@ export namespace System_TableSchema {
 			}
 
 			/**
-			 * Attempts to resolve a Column node or ID to its index in the table.
-			 * Returns undefined if the Column does not exist in the table.
-			 */
-			private _getColumnIndex(columnOrId: string | ColumnValueType): number | undefined {
-				const column = this._tryGetColumn(columnOrId);
-				if (column === undefined) {
-					return undefined;
-				}
-
-				const index = this.columns.indexOf(column);
-				return index === -1 ? undefined : index;
-			}
-
-			/**
 			 * Checks if a Column with the specified ID exists in the table.
 			 */
 			private _containsColumnWithId(columnId: string): boolean {
-				return this._getColumnIndex(columnId) !== undefined;
+				return this._tryGetColumn(columnId) !== undefined;
 			}
 
 			/**
@@ -1015,26 +1001,6 @@ export namespace System_TableSchema {
 			 */
 			private _getRowId(rowOrId: string | RowValueType): string {
 				return typeof rowOrId === "string" ? rowOrId : rowOrId.id;
-			}
-
-			/**
-			 * Attempts to resolve a Row node or ID to its index in the table.
-			 * Returns undefined if the Row does not exist in the table.
-			 */
-			private _getRowIndex(rowOrId: string | RowValueType): number | undefined {
-				const row = this._tryGetRow(rowOrId);
-				if (row === undefined) {
-					return undefined;
-				}
-				const index = this.rows.indexOf(row);
-				return index === -1 ? undefined : index;
-			}
-
-			/**
-			 * Checks if a Column with the specified ID exists in the table.
-			 */
-			private _containsRowWithId(rowId: string): boolean {
-				return this._getRowIndex(rowId) !== undefined;
 			}
 
 			/**
