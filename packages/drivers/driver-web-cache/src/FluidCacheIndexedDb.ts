@@ -35,7 +35,7 @@ export function getKeyForCacheEntry(entry: ICacheEntry) {
 			: "";
 	const suffix =
 		entry.type === snapshotKey || entry.type === snapshotWithLoadingGroupIdKey
-			? ""
+			? "_"
 			: `_${entry.key}`;
 	return `${entry.file.docId}${version}_${entry.type}${suffix}`;
 }
