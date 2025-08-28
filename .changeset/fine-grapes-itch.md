@@ -11,7 +11,7 @@
 `SharedObject` construction.
 DDSes may optionally consume this value and use it to determine which sets of feature flags should be enabled.
 
-## Interface changes
+#### Interface changes
 
 All implementors of `IContainerRuntimeBase`, `IFluidDataStoreContext`, and `IFluidDataStoreRuntime` should forward the `minVersionForCollab`
 value. Constraints for the interfaces that now provide the value via getters or fields:
