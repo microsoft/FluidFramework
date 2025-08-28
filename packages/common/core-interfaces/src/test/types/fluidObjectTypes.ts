@@ -24,127 +24,132 @@ declare function useLoadable(params: FluidObject<IFluidLoadable> | undefined): v
 declare function getLoadable(): IFluidLoadable;
 
 declare function use(obj: unknown);
-// test implicit conversions between FluidObject and a FluidObject with a provides interface
-{
-	const provider: FluidObject<IProvideFluidLoadable> = getFluidObject();
-	useFluidObject(provider);
-	useFluidObject(provider.IFluidLoadable);
-	useProvider(provider);
-	useProvider(provider.IFluidLoadable);
-	useLoadable(provider);
-	useLoadable(provider.IFluidLoadable);
-	// @ts-expect-error provider shouldn't have any non-provider properties
-	use(provider.handle);
-	use(provider.IFluidLoadable?.handle);
-	const unknown: FluidObject | undefined = provider.IFluidLoadable;
-	useFluidObject(unknown);
-	useProvider(unknown);
-	useProvider<IFluidLoadable>(unknown);
-	useLoadable(unknown);
-}
 
-// test implicit conversions between FluidObject and a FluidObject with a implementation interface
-{
-	const foo: FluidObject<IFluidLoadable> = getFluidObject();
-	useFluidObject(foo);
-	useFluidObject(foo.IFluidLoadable);
-	useProvider(foo);
-	useProvider(foo.IFluidLoadable);
-	useLoadable(foo);
-	useLoadable(foo.IFluidLoadable);
-	// @ts-expect-error provider shouldn't have any non-provider properties
-	use(foo.handle);
-	use(foo.IFluidLoadable?.handle);
-	const unknown: FluidObject | undefined = foo.IFluidLoadable;
-	useFluidObject(unknown);
-	useProvider(unknown);
-	useProvider<IFluidLoadable>(unknown);
-	useLoadable(unknown);
-}
-
-// test getting keys
-{
-	useProviderKey<IProvideFluidLoadable>(IFluidLoadable);
-	useProviderKey<IFluidLoadable>(IFluidLoadable);
-	const loadableKey: keyof IFluidLoadable = "handle";
-	// @ts-expect-error provider shouldn't have any non-provider properties
-	useProviderKey<IFluidLoadable>(loadableKey);
-}
-
-// test implicit conversions between FluidObject and a FluidObject with a partial provider interface
-{
-	interface IProvideFoo {
-		IFoo: IFoo;
-	}
-	interface IFoo extends Partial<IProvideFoo> {
-		doFoo();
+// This code is only intended to be type checked, not executed, so put it in unexecuted conditional.
+// eslint-disable-next-line no-constant-condition
+if (false) {
+	// test implicit conversions between FluidObject and a FluidObject with a provides interface
+	{
+		const provider: FluidObject<IProvideFluidLoadable> = getFluidObject();
+		useFluidObject(provider);
+		useFluidObject(provider.IFluidLoadable);
+		useProvider(provider);
+		useProvider(provider.IFluidLoadable);
+		useLoadable(provider);
+		useLoadable(provider.IFluidLoadable);
+		// @ts-expect-error provider shouldn't have any non-provider properties
+		use(provider.handle);
+		use(provider.IFluidLoadable?.handle);
+		const unknown: FluidObject | undefined = provider.IFluidLoadable;
+		useFluidObject(unknown);
+		useProvider(unknown);
+		useProvider<IFluidLoadable>(unknown);
+		useLoadable(unknown);
 	}
 
-	const foo: FluidObject<IFoo> = getFluidObject();
-	useFluidObject(foo);
-	useFluidObject(foo.IFoo);
-	useProvider(foo);
-	useProvider(foo.IFoo);
-	foo.IFoo?.doFoo();
-	const fooKey: keyof IFoo = "doFoo";
-	// @ts-expect-error provider shouldn't have any non-provider properties
-	useProviderKey<IFoo>(fooKey);
-	const unknown: FluidObject | undefined = foo.IFoo;
-	useFluidObject(unknown);
-	useProvider(unknown);
-	useProvider<IFoo>(unknown);
-	useLoadable(unknown);
-}
-
-// validate nested property is FluidObject too
-{
-	interface IFoo {
-		z: { z: { z: boolean } };
+	// test implicit conversions between FluidObject and a FluidObject with a implementation interface
+	{
+		const foo: FluidObject<IFluidLoadable> = getFluidObject();
+		useFluidObject(foo);
+		useFluidObject(foo.IFluidLoadable);
+		useProvider(foo);
+		useProvider(foo.IFluidLoadable);
+		useLoadable(foo);
+		useLoadable(foo.IFluidLoadable);
+		// @ts-expect-error provider shouldn't have any non-provider properties
+		use(foo.handle);
+		use(foo.IFluidLoadable?.handle);
+		const unknown: FluidObject | undefined = foo.IFluidLoadable;
+		useFluidObject(unknown);
+		useProvider(unknown);
+		useProvider<IFluidLoadable>(unknown);
+		useLoadable(unknown);
 	}
 
-	const foo: FluidObject<IFoo> = getFluidObject();
-	// @ts-expect-error "Property 'z' does not exist on type 'FluidObject<IFoo>'."
-	useProvider(foo.z);
-}
-
-// validate provider inheritance
-{
-	interface IProvideFooParent {
-		IFooParent: IFooParent;
+	// test getting keys
+	{
+		useProviderKey<IProvideFluidLoadable>(IFluidLoadable);
+		useProviderKey<IFluidLoadable>(IFluidLoadable);
+		const loadableKey: keyof IFluidLoadable = "handle";
+		// @ts-expect-error provider shouldn't have any non-provider properties
+		useProviderKey<IFluidLoadable>(loadableKey);
 	}
 
-	interface IFooParent extends Partial<IProvideFooParent> {
-		parent();
+	// test implicit conversions between FluidObject and a FluidObject with a partial provider interface
+	{
+		interface IProvideFoo {
+			IFoo: IFoo;
+		}
+		interface IFoo extends Partial<IProvideFoo> {
+			doFoo();
+		}
+
+		const foo: FluidObject<IFoo> = getFluidObject();
+		useFluidObject(foo);
+		useFluidObject(foo.IFoo);
+		useProvider(foo);
+		useProvider(foo.IFoo);
+		foo.IFoo?.doFoo();
+		const fooKey: keyof IFoo = "doFoo";
+		// @ts-expect-error provider shouldn't have any non-provider properties
+		useProviderKey<IFoo>(fooKey);
+		const unknown: FluidObject | undefined = foo.IFoo;
+		useFluidObject(unknown);
+		useProvider(unknown);
+		useProvider<IFoo>(unknown);
+		useLoadable(unknown);
 	}
 
-	interface IFooProvideChild {
-		IFooChild: IFooChild;
+	// validate nested property is FluidObject too
+	{
+		interface IFoo {
+			z: { z: { z: boolean } };
+		}
+
+		const foo: FluidObject<IFoo> = getFluidObject();
+		// @ts-expect-error "Property 'z' does not exist on type 'FluidObject<IFoo>'."
+		useProvider(foo.z);
 	}
 
-	interface IFooChild extends IFooParent, Partial<IFooProvideChild> {
-		child();
+	// validate provider inheritance
+	{
+		interface IProvideFooParent {
+			IFooParent: IFooParent;
+		}
+
+		interface IFooParent extends Partial<IProvideFooParent> {
+			parent();
+		}
+
+		interface IFooProvideChild {
+			IFooChild: IFooChild;
+		}
+
+		interface IFooChild extends IFooParent, Partial<IFooProvideChild> {
+			child();
+		}
+
+		const p: FluidObject<IProvideFooParent> = getFluidObject();
+		useProvider(p.IFooParent?.parent());
+
+		const c: FluidObject<IFooProvideChild> = getFluidObject();
+		// @ts-expect-error Property 'IFooParent' does not exist on type 'FluidObject<IFooProvideChild>'.
+		useProvider(c.IFooParent?.parent());
+		useProvider(c.IFooChild?.child());
+		useProvider(c.IFooChild?.parent());
+		useProvider(c.IFooChild?.IFooParent?.parent());
 	}
 
-	const p: FluidObject<IProvideFooParent> = getFluidObject();
-	useProvider(p.IFooParent?.parent());
+	// validate usage as builder
+	{
+		const builder: FluidObject<IFluidLoadable> = {};
+		builder.IFluidLoadable = getLoadable();
+	}
 
-	const c: FluidObject<IFooProvideChild> = getFluidObject();
-	// @ts-expect-error Property 'IFooParent' does not exist on type 'FluidObject<IFooProvideChild>'.
-	useProvider(c.IFooParent?.parent());
-	useProvider(c.IFooChild?.child());
-	useProvider(c.IFooChild?.parent());
-	useProvider(c.IFooChild?.IFooParent?.parent());
-}
-
-// validate usage as builder
-{
-	const builder: FluidObject<IFluidLoadable> = {};
-	builder.IFluidLoadable = getLoadable();
-}
-
-// validate readonly prevents modification
-{
-	const builder: Readonly<FluidObject<IFluidLoadable>> = {};
-	// @ts-expect-error Cannot assign to 'IFluidLoadable' because it is a read-only property.
-	builder.IFluidLoadable = getLoadable();
+	// validate readonly prevents modification
+	{
+		const builder: Readonly<FluidObject<IFluidLoadable>> = {};
+		// @ts-expect-error Cannot assign to 'IFluidLoadable' because it is a read-only property.
+		builder.IFluidLoadable = getLoadable();
+	}
 }

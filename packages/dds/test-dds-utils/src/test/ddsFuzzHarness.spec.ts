@@ -873,8 +873,8 @@ describe("DDS Fuzz Harness", () => {
 			const result = await execa(
 				"npm",
 				[
-					"run",
-					"test:mocha:base",
+					"exec",
+					"mocha",
 					"--silent",
 					"--",
 					"--config",

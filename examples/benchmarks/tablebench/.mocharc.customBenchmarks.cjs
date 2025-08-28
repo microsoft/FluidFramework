@@ -8,10 +8,7 @@
  */
 "use strict";
 
-const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
-
-const packageDir = __dirname;
-const baseConfig = getFluidTestMochaConfig(packageDir);
+const baseConfig = require("./.mocharc.cjs");
 
 baseConfig["node-option"].push("gc-global");
 
@@ -21,5 +18,4 @@ module.exports = {
 	"recursive": true,
 	"reporter": "@fluid-tools/benchmark/dist/MochaReporter.js",
 	"reporterOptions": ["reportDir=.customBenchmarksOutput/"],
-	"spec": ["lib/test/**/*.*js"],
 };

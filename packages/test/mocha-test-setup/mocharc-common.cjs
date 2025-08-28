@@ -8,6 +8,17 @@
 const { existsSync } = require("fs");
 const path = require("path");
 
+/**
+ * Get the mocha configuration for running tests using the conventions followed in the Fluid Framework repository.
+ *
+ * @param {string} packageDir - the directory of the package, typically set using `__dirname`
+ * @param {string[]} additionalRequiredModules - modules to require in addition to the standard set.
+ * @param {string} testReportPrefix - prefix for the test output report file names.
+ * @remarks
+ * Additional configuration can be provided via environment variables: see {@link file://./README.md}.
+ *
+ * Users desiring exact control over the `spec` from the CLI should delete or replace the spec from the returned config, since mocha's behavior is to extend it, not override it.
+ */
 function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testReportPrefix) {
 	const moduleDir = `${packageDir}/node_modules`;
 
@@ -62,6 +73,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 			// these must be provided here and not via mocha's --v8-expose-gc.
 			"expose-gc",
 		],
+		spec: process.env.MOCHA_SPEC ?? "lib/test",
 	};
 
 	if (process.env.FLUID_TEST_TIMEOUT !== undefined) {
