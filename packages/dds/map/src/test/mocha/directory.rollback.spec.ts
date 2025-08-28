@@ -1004,7 +1004,7 @@ describe("SharedDirectory rollback", () => {
 	});
 
 	describe("Events", () => {
-		it("should fire correct events for rollback of local set", () => {
+		it("fires correct events for set rollback", () => {
 			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
 				setupRollbackTest();
 
@@ -1028,7 +1028,7 @@ describe("SharedDirectory rollback", () => {
 			assert.equal(valueChangeCount, 2, "should have 2 value change events post-rollback");
 		});
 
-		it("should fire correct events for rollback of local delete", () => {
+		it("fires correct events for delete rollback", () => {
 			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
 				setupRollbackTest();
 
@@ -1056,7 +1056,7 @@ describe("SharedDirectory rollback", () => {
 			assert.equal(valueChangeCount, 2, "should have 2 value change events post-rollback");
 		});
 
-		it("should fire correct events for rollback of local clear", () => {
+		it("fires correct events for clear rollback", () => {
 			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
 				setupRollbackTest();
 
@@ -1084,7 +1084,52 @@ describe("SharedDirectory rollback", () => {
 			assert.equal(valueChangeCount, 1, "should have 1 value change event post-rollback");
 		});
 
-		it("should fire correct events for rollback of local subdir delete", () => {
+		it("fires correct events for subdir create rollback", () => {
+			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
+				setupRollbackTest();
+
+			const subdirName = "subdir";
+			let disposedCount = 0;
+			let undisposedCount = 0;
+			let subdirCreated = 0;
+			let subdirDeleted = 0;
+
+			sharedDirectory.on("subDirectoryCreated", (path: string) => {
+				if (path === subdirName) {
+					subdirCreated++;
+				}
+			});
+			sharedDirectory.on("subDirectoryDeleted", (path: string) => {
+				console.log("here!", path);
+				if (path === subdirName) {
+					subdirDeleted++;
+				}
+			});
+
+			const subdir = sharedDirectory.createSubDirectory(subdirName);
+			assert(subdir !== undefined);
+			subdir.on("disposed", () => {
+				disposedCount++;
+			});
+			subdir.on("undisposed", () => {
+				undisposedCount++;
+			});
+
+			assert.deepEqual(
+				[subdirCreated, subdirDeleted, disposedCount, undisposedCount],
+				[1, 0, 0, 0],
+				"should fire correct events pre-rollback",
+			);
+
+			containerRuntime.rollback?.();
+			assert.deepEqual(
+				[subdirCreated, subdirDeleted, disposedCount, undisposedCount],
+				[1, 1, 1, 0],
+				"should fire correct events post-rollback",
+			);
+		});
+
+		it("fires correct events for subdir delete rollback", () => {
 			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
 				setupRollbackTest();
 
@@ -1130,7 +1175,7 @@ describe("SharedDirectory rollback", () => {
 			assert.strictEqual(subdirCreatedCount, 1, "subdirCreated should fire once on rollback");
 		});
 
-		it("should fire correct events for rollback of local subdir delete across nested subdirectories", () => {
+		it("fires correct events for subdir delete (nested) rollback", () => {
 			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
 				setupRollbackTest();
 
