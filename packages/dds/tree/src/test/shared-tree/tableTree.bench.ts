@@ -585,16 +585,19 @@ describe("SharedTree table APIs execution time", () => {
 					// 	title: `Undo: ${scenarioName}`,
 					// 	tableSize,
 					// 	initialCellValue,
-					// 	beforeOperation: (table) => {
+					// 	beforeOperation: (table, undoRedoManager) => {
 					// 		for (let i = 0; i < count; i++) {
 					// 			const column = table.columns[Math.floor(table.columns.length / 2)];
 					// 			table.removeColumns([column]);
 					// 		}
+					// 		assert(undoRedoManager.canUndo);
 					// 	},
 					// 	operation: (table, undoRedoManager) => {
 					// 		for (let i = 0; i < count; i++) {
 					// 			undoRedoManager.undo();
 					// 		}
+					// 	},
+					// 	afterOperation: (table, undoRedoManager) => {
 					// 		assert(!undoRedoManager.canUndo);
 					// 	},
 					// 	maxBenchmarkDurationSeconds,
