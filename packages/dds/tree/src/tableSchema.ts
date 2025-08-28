@@ -928,24 +928,24 @@ export namespace System_TableSchema {
 			}
 
 			/**
-			 * Attempts to resolve a Column node or ID to a Column node.
-			 * If a node is provided, it is returned as-is.
-			 * If an ID is provided, we check the table for the corresponding Column node and return it if it exists, otherwise undefined.
+			 * Attempts to resolve the provided Column node or ID to a Column node in the table.
+			 * Returns `undefined` if there is no match.
+			 * @remarks Searches for a match based strictly on the ID and returns that result.
 			 */
 			private _tryGetColumn(
 				columnOrId: string | ColumnValueType,
 			): ColumnValueType | undefined {
-				return typeof columnOrId === "string" ? this.getColumn(columnOrId) : columnOrId;
+				const columnId = this._getColumnId(columnOrId);
+				return this.getColumn(columnId);
 			}
 
 			/**
-			 * Attempts to resolve a Column node or ID to a Column node.
-			 * If a node is provided, it is returned as-is.
-			 * If an ID is provided, we check the table for the corresponding Column node and return it if it exists, otherwise we throw an exception.
+			 * Attempts to resolve the provided Column node or ID to a Column node in the table.
+			 * @throws Throws a `UsageError` if there is no match.
+			 * @remarks Searches for a match based strictly on the ID and returns that result.
 			 */
 			private _getColumn(columnOrId: string | ColumnValueType): ColumnValueType {
-				const column =
-					typeof columnOrId === "string" ? this.getColumn(columnOrId) : columnOrId;
+				const column = this._tryGetColumn(columnOrId);
 				if (column === undefined) {
 					this._throwMissingColumnError(this._getColumnId(columnOrId));
 				}
@@ -1001,21 +1001,22 @@ export namespace System_TableSchema {
 			}
 
 			/**
-			 * Attempts to resolve a Row node or ID to a Row node.
-			 * If a node is provided, it is returned as-is.
-			 * If an ID is provided, we check the table for the corresponding Row node and return it if it exists, otherwise undefined.
+			 * Attempts to resolve the provided Row node or ID to a Row node in the table.
+			 * Returns `undefined` if there is no match.
+			 * @remarks Searches for a match based strictly on the ID and returns that result.
 			 */
 			private _tryGetRow(rowOrId: string | RowValueType): RowValueType | undefined {
-				return typeof rowOrId === "string" ? this.getRow(rowOrId) : rowOrId;
+				const rowId = this._getRowId(rowOrId);
+				return this.getRow(rowId);
 			}
 
 			/**
-			 * Attempts to resolve a Row node or ID to a Row node.
-			 * If a node is provided, it is returned as-is.
-			 * If an ID is provided, we check the table for the corresponding Row node and return it if it exists, otherwise we throw an exception.
+			 * Attempts to resolve the provided Row node or ID to a Row node in the table.
+			 * @throws Throws a `UsageError` if there is no match.
+			 * @remarks Searches for a match based strictly on the ID and returns that result.
 			 */
 			private _getRow(rowOrId: string | RowValueType): RowValueType {
-				const row = typeof rowOrId === "string" ? this.getRow(rowOrId) : rowOrId;
+				const row = this._tryGetRow(rowOrId);
 				if (row === undefined) {
 					this._throwMissingRowError(this._getRowId(rowOrId));
 				}
