@@ -5,8 +5,6 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
@@ -30,14 +28,9 @@ import { TinyliciousClient } from "../index.js";
 
 import { TestDataObject } from "./TestDataObject.js";
 
-const corruptedAliasOp = async (
-	runtime: IContainerRuntime,
-	alias: string,
-): Promise<boolean | Error> =>
-	new Promise<boolean>((resolve, reject) => {
-		runtime.once("dispose", () => reject(new Error("Runtime disposed")));
-		(runtime as any).submit(ContainerMessageType.Alias, { id: alias }, resolve);
-	}).catch((error) => new Error(error.message));
+const corruptedAliasOp = (runtime: IContainerRuntime, alias: string): void => {
+	(runtime as any).submit({ type: ContainerMessageType.Alias, contents: { id: alias } });
+};
 
 const runtimeOf = (dataObject: TestDataObject): IContainerRuntime =>
 	(dataObject as any).context.containerRuntime as IContainerRuntime;
@@ -45,17 +38,16 @@ const runtimeOf = (dataObject: TestDataObject): IContainerRuntime =>
 const connectionModeOf = (container: IFluidContainer): ConnectionMode =>
 	(container as any).container.connectionMode as ConnectionMode;
 
-const allDataCorruption = async (containers: IFluidContainer[]): Promise<boolean> =>
-	Promise.all(
-		containers.map(
-			async (c) =>
-				new Promise<boolean>((resolve) =>
-					c.once("disposed", (error) => {
-						resolve(error?.errorType === ContainerErrorTypes.dataCorruptionError);
-					}),
-				),
-		),
-	).then((all) => !all.includes(false));
+const waitForDataCorruption = async (container: IFluidContainer): Promise<void> =>
+	new Promise<void>((resolve, reject) =>
+		container.once("disposed", (error) => {
+			if (error?.errorType === ContainerErrorTypes.dataCorruptionError) {
+				resolve();
+			} else {
+				reject(error);
+			}
+		}),
+	);
 
 for (const compatibilityMode of ["1", "2"] as const) {
 	describe(`TinyliciousClient (compatibilityMode: ${compatibilityMode})`, function () {
@@ -362,9 +354,11 @@ for (const compatibilityMode of ["1", "2"] as const) {
 			});
 
 			const do1 = createFluidContainer.initialObjects.do1;
-			const dataCorruption = allDataCorruption([createFluidContainer]);
-			await corruptedAliasOp(runtimeOf(do1), "alias");
-			assert(await dataCorruption);
+			const dataCorruptionP = waitForDataCorruption(createFluidContainer);
+			corruptedAliasOp(runtimeOf(do1), "alias");
+			// dataCorruptionP resolves if the container disposes with the expected error, rejects
+			// if it disposes with any other error.
+			await dataCorruptionP;
 		});
 
 		/**
