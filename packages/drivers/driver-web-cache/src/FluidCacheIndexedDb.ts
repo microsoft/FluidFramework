@@ -4,7 +4,11 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ICacheEntry } from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	ICacheEntry,
+	snapshotKey,
+	snapshotWithLoadingGroupIdKey,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { DBSchema, DeleteDBCallbacks, IDBPDatabase, deleteDB, openDB } from "idb";
 
@@ -25,7 +29,15 @@ export const oldVersionNameMapping: Partial<{ [key: number]: string }> = {
 };
 
 export function getKeyForCacheEntry(entry: ICacheEntry) {
-	return `${entry.file.docId}_${entry.type}_${entry.key}`;
+	const version =
+		"fileVersion" in entry.file.resolvedUrl && entry.file.resolvedUrl.fileVersion !== undefined
+			? `_${entry.file.resolvedUrl.fileVersion}`
+			: "";
+	const suffix =
+		entry.type === snapshotKey || entry.type === snapshotWithLoadingGroupIdKey
+			? ""
+			: `_${entry.key}`;
+	return `${entry.file.docId}${version}_${entry.type}${suffix}`;
 }
 
 export function getFluidCacheIndexedDbInstance(

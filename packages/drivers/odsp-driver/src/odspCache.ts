@@ -46,10 +46,6 @@ export class LocalPersistentCache implements IPersistedCache {
 		return this.cache.get(key);
 	}
 
-	/**
-	 *
-	 * this is the put call that the write call goes into and calls getKeyForCacheEntry
-	 */
 	async put(entry: ICacheEntry, value: unknown): Promise<void> {
 		const key = getKeyForCacheEntry(entry);
 		this.cache.set(key, value);
