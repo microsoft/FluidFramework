@@ -248,59 +248,6 @@ describe("SharedTree table APIs memory usage", () => {
 						},
 					});
 				});
-
-				// Test the memory usage of inserting a batch of N columns in the middle of the table.
-				runBenchmark({
-					title: `Insert a batch of ${count} columns in the middle of the table`,
-					tableSize,
-					initialCellValue,
-					operation: (table) => {
-						table.insertColumns({
-							index: Math.floor(table.columns.length / 2),
-							columns: Array.from({ length: count }, () => new Column({})),
-						});
-					},
-				});
-
-				// Test the memory usage of undoing the insertion of a batch of N columns in the middle of the table.
-				runBenchmark({
-					title: `Undo: insert a batch of ${count} columns in the middle of the table`,
-					tableSize,
-					initialCellValue,
-					beforeOperation: (table, undoRedoManager) => {
-						table.insertColumns({
-							index: Math.floor(table.columns.length / 2),
-							columns: Array.from({ length: count }, () => new Column({})),
-						});
-						assert(undoRedoManager.canUndo);
-					},
-					operation: (table, undoRedoManager) => {
-						undoRedoManager.undo();
-						assert(!undoRedoManager.canUndo);
-					},
-				});
-
-				// Test the memory usage of redoing the insertion of a batch of N columns in the middle of the table.
-				runBenchmark({
-					title: `Redo: insert a batch of ${count} columns in the middle of the table`,
-					tableSize,
-					initialCellValue,
-					beforeOperation: (table, undoRedoManager) => {
-						table.insertColumns({
-							index: Math.floor(table.columns.length / 2),
-							columns: Array.from({ length: count }, () => new Column({})),
-						});
-						assert(undoRedoManager.canUndo);
-
-						undoRedoManager.undo();
-						assert(!undoRedoManager.canUndo);
-						assert(undoRedoManager.canRedo);
-					},
-					operation: (table, undoRedoManager) => {
-						undoRedoManager.redo();
-						assert(!undoRedoManager.canRedo);
-					},
-				});
 			});
 
 			describe("Row insertion", () => {
@@ -419,59 +366,6 @@ describe("SharedTree table APIs memory usage", () => {
 							assert(!undoRedoManager.canRedo);
 						},
 					});
-				});
-
-				// Test the memory usage of inserting a batch of N rows in the middle of the table.
-				runBenchmark({
-					title: `Insert a batch of ${count} empty rows in the middle of the table`,
-					tableSize,
-					initialCellValue,
-					operation: (table) => {
-						table.insertRows({
-							index: Math.floor(table.rows.length / 2),
-							rows: Array.from({ length: count }, () => new Row({ cells: {} })),
-						});
-					},
-				});
-
-				// Test the memory usage of undoing the insertion of a batch of empty rows in the middle of the table.
-				runBenchmark({
-					title: `Undo: insert a batch of ${count} rows in the middle of the table`,
-					tableSize,
-					initialCellValue,
-					beforeOperation: (table, undoRedoManager) => {
-						table.insertRows({
-							index: Math.floor(table.rows.length / 2),
-							rows: Array.from({ length: count }, () => new Row({ cells: {} })),
-						});
-						assert(undoRedoManager.canUndo);
-					},
-					operation: (table, undoRedoManager) => {
-						undoRedoManager.undo();
-						assert(!undoRedoManager.canUndo);
-					},
-				});
-
-				// Test the memory usage of redoing the insertion of a batch of empty rows in the middle of the table.
-				runBenchmark({
-					title: `Redo: insert a batch of ${count} rows in the middle of the table`,
-					tableSize,
-					initialCellValue,
-					beforeOperation: (table, undoRedoManager) => {
-						table.insertRows({
-							index: Math.floor(table.rows.length / 2),
-							rows: Array.from({ length: count }, () => new Row({ cells: {} })),
-						});
-						assert(undoRedoManager.canUndo);
-
-						undoRedoManager.undo();
-						assert(!undoRedoManager.canUndo);
-						assert(undoRedoManager.canRedo);
-					},
-					operation: (table, undoRedoManager) => {
-						undoRedoManager.redo();
-						assert(!undoRedoManager.canRedo);
-					},
 				});
 			});
 

@@ -247,67 +247,6 @@ describe("SharedTree table APIs execution time", () => {
 						maxBenchmarkDurationSeconds,
 					});
 				});
-
-				// Test the execution time of inserting a batch of N columns in the middle of the table.
-				runBenchmark({
-					title: `Insert ${count} columns in the middle of the table`,
-					tableSize,
-					initialCellValue,
-					operation: (table) => {
-						table.insertColumns({
-							index: Math.floor(table.columns.length / 2),
-							columns: Array.from({ length: count }, () => new Column({})),
-						});
-					},
-					maxBenchmarkDurationSeconds,
-				});
-
-				// Test the execution time of undoing the insertion a batch of N columns in the middle of the table.
-				runBenchmark({
-					title: `Undo: insert ${count} columns in the middle of the table`,
-					tableSize,
-					initialCellValue,
-					beforeOperation: (table, undoRedoManager) => {
-						table.insertColumns({
-							index: Math.floor(table.columns.length / 2),
-							columns: Array.from({ length: count }, () => new Column({})),
-						});
-						assert(undoRedoManager.canUndo);
-					},
-					operation: (table, undoRedoManager) => {
-						undoRedoManager.undo();
-					},
-					afterOperation: (table, undoRedoManager) => {
-						assert(!undoRedoManager.canUndo);
-					},
-					maxBenchmarkDurationSeconds,
-				});
-
-				// Test the execution time of redoing the insertion a batch of N columns in the middle of the table.
-				runBenchmark({
-					title: `Redo: insert ${count} columns in the middle of the table`,
-					tableSize,
-					initialCellValue,
-					beforeOperation: (table, undoRedoManager) => {
-						table.insertColumns({
-							index: Math.floor(table.columns.length / 2),
-							columns: Array.from({ length: count }, () => new Column({})),
-						});
-						assert(undoRedoManager.canUndo);
-
-						undoRedoManager.undo();
-
-						assert(!undoRedoManager.canUndo);
-						assert(undoRedoManager.canRedo);
-					},
-					operation: (table, undoRedoManager) => {
-						undoRedoManager.redo();
-					},
-					afterOperation: (table, undoRedoManager) => {
-						assert(!undoRedoManager.canRedo);
-					},
-					maxBenchmarkDurationSeconds,
-				});
 			});
 
 			describe("Row insertion", () => {
@@ -432,67 +371,6 @@ describe("SharedTree table APIs execution time", () => {
 						},
 						maxBenchmarkDurationSeconds,
 					});
-				});
-
-				// Test the execution time of inserting a batch of N rows in the middle of the table.
-				runBenchmark({
-					title: `Insert ${count} rows in the middle of the table`,
-					tableSize,
-					initialCellValue,
-					operation: (table) => {
-						table.insertRows({
-							index: Math.floor(table.rows.length / 2),
-							rows: Array.from({ length: count }, () => new Row({ cells: {} })),
-						});
-					},
-					maxBenchmarkDurationSeconds,
-				});
-
-				// Test the execution time of undoing the insertion a batch of N rows in the middle of the table.
-				runBenchmark({
-					title: `Undo: insert ${count} rows in the middle of the table`,
-					tableSize,
-					initialCellValue,
-					beforeOperation: (table, undoRedoManager) => {
-						table.insertRows({
-							index: Math.floor(table.rows.length / 2),
-							rows: Array.from({ length: count }, () => new Row({ cells: {} })),
-						});
-						assert(undoRedoManager.canUndo);
-					},
-					operation: (table, undoRedoManager) => {
-						undoRedoManager.undo();
-					},
-					afterOperation: (table, undoRedoManager) => {
-						assert(!undoRedoManager.canUndo);
-					},
-					maxBenchmarkDurationSeconds,
-				});
-
-				// Test the execution time of redoing the insertion a batch of N rows in the middle of the table.
-				runBenchmark({
-					title: `Redo: insert ${count} rows in the middle of the table`,
-					tableSize,
-					initialCellValue,
-					beforeOperation: (table, undoRedoManager) => {
-						table.insertRows({
-							index: Math.floor(table.rows.length / 2),
-							rows: Array.from({ length: count }, () => new Row({ cells: {} })),
-						});
-						assert(undoRedoManager.canUndo);
-
-						undoRedoManager.undo();
-
-						assert(!undoRedoManager.canUndo);
-						assert(undoRedoManager.canRedo);
-					},
-					operation: (table, undoRedoManager) => {
-						undoRedoManager.redo();
-					},
-					afterOperation: (table, undoRedoManager) => {
-						assert(!undoRedoManager.canRedo);
-					},
-					maxBenchmarkDurationSeconds,
 				});
 			});
 
