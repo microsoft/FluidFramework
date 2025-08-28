@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import type { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../core/index.js";
 import type { IdAllocator } from "../../util/index.js";
@@ -114,13 +114,21 @@ class RebaseQueue {
 		private readonly metadata: RevisionMetadataSource,
 		private readonly moveEffects: RebaseNodeManager,
 	) {
-		const queryFunc: NodeRangeQueryFunc = (mark) =>
-			isAttach(mark)
-				? moveEffects.getNewChangesForBaseAttach(getAttachedNodeId(mark), mark.count).length
-				: mark.count;
+		const queryFunc: NodeRangeQueryFunc = (mark) => {
+			if (isAttach(mark)) {
+				return moveEffects.getNewChangesForBaseAttach(getAttachedNodeId(mark), mark.count)
+					.length;
+			} else if (isDetach(mark)) {
+				return moveEffects.doesBaseMoveNodes(getDetachedNodeId(mark), mark.count).length;
+			} else if (mark.cellId !== undefined) {
+				return moveEffects.doesBaseMoveNodes(mark.cellId, mark.count).length;
+			} else {
+				return mark.count;
+			}
+		};
 
 		this.baseMarks = new MarkQueue(baseMarks, queryFunc);
-		this.newMarks = new MarkQueue(newMarks, queryFunc);
+		this.newMarks = new MarkQueue(newMarks, (mark) => mark.count);
 		this.baseMarksCellSources = cellSourcesFromMarks(baseMarks, getInputCellId);
 		this.newMarksCellSources = cellSourcesFromMarks(newMarks, getInputCellId);
 	}
@@ -281,33 +289,45 @@ function rebaseMarkIgnoreChild(
 			0x69d /* A new attach should not be rebased over its cell being emptied */,
 		);
 		const baseCellId = getDetachOutputCellId(baseMark);
+		const baseDetachId = getDetachedNodeId(baseMark);
 
-		const { remains, follows } = separateEffectsForMove(extractMarkEffect(currMark));
-		moveRebasedChanges(
+		const { remains, follows } = separateEffectsForMove(
+			extractMarkEffect(currMark),
+			baseDetachId,
 			moveEffects,
-			getDetachedNodeId(baseMark),
-			baseMark.count,
-			currMark.changes,
-			follows,
 		);
 
+		moveRebasedChanges(moveEffects, baseDetachId, baseMark.count, currMark.changes, follows);
 		rebasedMark = { ...(remains ?? {}), count: baseMark.count };
-		rebasedMark = makeDetachedMark(rebasedMark, cloneCellId(baseCellId));
+		return makeDetachedMark(rebasedMark, cloneCellId(baseCellId));
 	} else if (markFillsCells(baseMark)) {
-		rebasedMark = withCellId(currMark, undefined);
+		// XXX: This seems wrong if currMark is a rename
+		return withCellId(currMark, undefined);
 	} else if (isRename(baseMark)) {
+		// XXX: Is this right if currMark is a rename?
 		return withCellId(currMark, getDetachOutputCellId(baseMark));
+	} else if (
+		isRename(currMark) &&
+		moveEffects.doesBaseMoveNodes(
+			currMark.cellId ?? fail("Rename should target an empty cell"),
+			currMark.count,
+		).value
+	) {
+		return generateNoOpWithCellId(currMark);
 	} else {
-		rebasedMark = currMark;
+		return currMark;
 	}
-	return rebasedMark;
 }
 
 /**
  * @returns A pair of marks that represent the effects which should remain in place in the face of concurrent move,
  * and the effects that should be sent to the move destination.
  */
-function separateEffectsForMove(mark: MarkEffect): {
+function separateEffectsForMove(
+	mark: MarkEffect,
+	baseDetachId: ChangeAtomId,
+	nodeManager: RebaseNodeManager,
+): {
 	remains?: MarkEffect;
 	follows?: Detach;
 } {
@@ -315,8 +335,15 @@ function separateEffectsForMove(mark: MarkEffect): {
 	switch (type) {
 		case NoopMarkType:
 			return {};
-		case "Remove":
-			return { follows: mark };
+		case "Remove": {
+			// We should rename these cells unless the nodes are reattached elsewhere,
+			// in which case we will rename those cells instead.
+			const remains: MarkEffect = nodeManager.doesBaseMoveNodes(baseDetachId, 1).value
+				? {}
+				: { type: "Rename", idOverride: getDetachOutputCellId(mark) };
+
+			return { remains, follows: mark };
+		}
 		case "Rename":
 			return { remains: mark };
 		case "Insert": {

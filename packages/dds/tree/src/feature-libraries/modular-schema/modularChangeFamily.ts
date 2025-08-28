@@ -2914,6 +2914,35 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		this.table.movedDetaches.set(id, count, true);
 	}
 
+	public doesBaseMoveNodes(
+		id: ChangeAtomId,
+		count: number,
+	): RangeQueryEntry<ChangeAtomId, boolean> {
+		let countToProcess = count;
+		const attachEntry = getFirstAttachField(
+			this.table.baseChange.crossFieldKeys,
+			id,
+			countToProcess,
+		);
+
+		countToProcess = attachEntry.length;
+
+		if (attachEntry.value !== undefined) {
+			return { start: id, value: true, length: countToProcess };
+		}
+
+		const detachedMoveEntry = this.table.baseChange.rootNodes.outputDetachLocations.getFirst(
+			id,
+			countToProcess,
+		);
+
+		return {
+			start: id,
+			value: detachedMoveEntry.value !== undefined,
+			length: detachedMoveEntry.length,
+		};
+	}
+
 	private invalidateBaseFields(fields: FieldId[]): void {
 		if (this.allowInval) {
 			for (const fieldId of fields) {

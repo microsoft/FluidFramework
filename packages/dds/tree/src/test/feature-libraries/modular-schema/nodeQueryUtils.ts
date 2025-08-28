@@ -17,6 +17,7 @@ export const failRebaseManager: RebaseNodeManager = {
 	rebaseOverDetach: failingDelegate,
 	addDetach: failingDelegate,
 	removeDetach: failingDelegate,
+	doesBaseMoveNodes: failingDelegate,
 };
 
 export const failComposeManager: ComposeNodeManager = {

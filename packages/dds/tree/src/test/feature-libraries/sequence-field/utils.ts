@@ -863,6 +863,13 @@ function newRebaseManager(): TestRebaseManager {
 		removeDetach(id: ChangeAtomId, count: number): void {
 			throw new Error("Function not implemented.");
 		},
+
+		doesBaseMoveNodes(
+			id: ChangeAtomId,
+			count: number,
+		): RangeQueryEntry<ChangeAtomId, boolean> {
+			throw new Error("Function not implemented.");
+		},
 	};
 	return manager;
 }

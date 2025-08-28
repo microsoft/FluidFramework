@@ -151,6 +151,13 @@ export interface RebaseNodeManager {
 
 	addDetach(id: ChangeAtomId, count: number): void;
 	removeDetach(id: ChangeAtomId, count: number): void;
+
+	/**
+	 * Returns whether nodes which were either previously detached by `id` or the base changeset is now detaching with `id`
+	 * are moved to a different location by the base changeset, either because they are being attached or because their last
+	 * detach location is being changed.
+	 */
+	doesBaseMoveNodes(id: ChangeAtomId, count: number): RangeQueryEntry<ChangeAtomId, boolean>;
 }
 
 export interface DetachedNodeEntry {
