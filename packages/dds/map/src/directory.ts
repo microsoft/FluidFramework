@@ -2503,6 +2503,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * This return true if the message is for the current instance of this sub directory. As the sub directory
 	 * can be deleted and created again, then this finds if the message is for current instance of directory or not.
 	 * @param msg - message for the directory
+	 * @param targetSubdir - subdirectory instance we are targeting from local op metadata (if a local op)
 	 */
 	private isMessageForCurrentInstanceOfSubDirectory(
 		msg: ISequencedDocumentMessage,
