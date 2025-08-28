@@ -385,49 +385,6 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		});
 	}
 
-	public flushSomeMessages(numMessages: number): void {
-		if (this.runtimeOptions.flushMode !== FlushMode.TurnBased) {
-			return;
-		}
-
-		// This mimics the runtime behavior of the IdCompressor by generating an IdAllocationOp
-		// and sticking it in front of any op that might rely on that id. It differs slightly in that
-		// in the actual runtime it would get put in its own separate batch
-		const idAllocationOp = this.generateIdAllocationOp();
-		if (idAllocationOp !== undefined) {
-			this.idAllocationOutbox.push(idAllocationOp);
-		}
-
-		// As with the runtime behavior, we need to send the idAllocationOps first
-		const allMessages = this.idAllocationOutbox.concat(this.outbox);
-		const messagesToSubmit = allMessages.slice(0, numMessages);
-
-		// Remove the processed messages from the outboxes
-		const idAllocationCount = this.idAllocationOutbox.length;
-		if (numMessages >= idAllocationCount) {
-			// All id allocation messages and some regular messages are being processed
-			this.idAllocationOutbox.length = 0;
-			this.outbox.splice(0, numMessages - idAllocationCount);
-		} else {
-			// Only some id allocation messages are being processed
-			this.idAllocationOutbox.splice(0, numMessages);
-		}
-
-		let fakeClientSequenceNumber = 1;
-		messagesToSubmit.forEach((message) => {
-			this.submitInternal(
-				message,
-				// When grouped batching is used, the ops within the same grouped batch will have
-				// fake sequence numbers when they're ungrouped. The submit function will still
-				// return the clientSequenceNumber but this will ensure that the readers will always
-				// read the fake client sequence numbers.
-				this.runtimeOptions.enableGroupedBatching
-					? fakeClientSequenceNumber++
-					: this.deltaManager.clientSequenceNumber,
-			);
-		});
-	}
-
 	/**
 	 * If flush mode is set to FlushMode.TurnBased, it will rebase the current batch by resubmitting them
 	 * to the data stores. Otherwise, calling the method does nothing.
