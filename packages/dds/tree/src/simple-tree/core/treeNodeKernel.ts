@@ -534,7 +534,6 @@ class TreeNodeKernelEventBatcher
 	 */
 	public flush(): void {
 		this.assertNotDisposed();
-		assert(pauseEvents, "Expected events to be paused."); // TODO: remove this
 
 		if (this.childrenChangedBuffer.size > 0) {
 			for (const listener of this.childrenChangedListeners) {
