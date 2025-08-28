@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-infrastructure",
-	"version": "0.58.1",
+	"version": "0.58.2",
 	"description": "Fluid build infrastructure",
 	"homepage": "https://fluidframework.com",
 	"repository": {
