@@ -769,30 +769,19 @@ export namespace System_TableSchema {
 						// Note, throwing an error within a transaction will abort the entire transaction.
 						// So if we throw an error here for any column, no columns will be removed.
 						for (const columnToRemove of columnsToRemove) {
-							this._removeColumn(columnToRemove);
+							// Remove the corresponding cell from all rows.
+							for (const row of this.rows) {
+								// TypeScript is unable to narrow the row type correctly here, hence the cast.
+								// See: https://github.com/microsoft/TypeScript/issues/52144
+								(row as RowValueType).removeCell(columnToRemove);
+							}
+
+							// We have already validated that all of the columns exist above, so this is safe.
+							this.columns.removeAt(this.columns.indexOf(columnToRemove));
 						}
 					});
 					return columnsToRemove;
 				}
-			}
-
-			private _removeColumn(columnOrId: string | ColumnValueType): ColumnValueType {
-				const column = this._getColumn(columnOrId);
-				const index = this.columns.indexOf(column);
-				assert(index !== -1, "Column should exist");
-
-				this._applyEditsInBatch(() => {
-					// Remove the corresponding cell from all rows.
-					for (const row of this.rows) {
-						// TypeScript is unable to narrow the row type correctly here, hence the cast.
-						// See: https://github.com/microsoft/TypeScript/issues/52144
-						(row as RowValueType).removeCell(column);
-					}
-
-					this.columns.removeAt(index);
-				});
-
-				return column;
 			}
 
 			public removeRows(
@@ -834,20 +823,11 @@ export namespace System_TableSchema {
 					// Note, throwing an error within a transaction will abort the entire transaction.
 					// So if we throw an error here for any row, no rows will be removed.
 					for (const rowToRemove of rowsToRemove) {
-						this._removeRow(rowToRemove);
+						// We have already validated that all of the rows exist above, so this is safe.
+						this.rows.removeAt(this.rows.indexOf(rowToRemove));
 					}
 				});
 				return rowsToRemove;
-			}
-
-			private _removeRow(rowOrId: string | RowValueType): RowValueType {
-				const rowToRemove = this._getRow(rowOrId);
-
-				const index = this.rows.indexOf(rowToRemove);
-				assert(index !== -1, "Row should exist");
-
-				this.rows.removeAt(index);
-				return rowToRemove;
 			}
 
 			public removeCell(
