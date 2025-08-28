@@ -294,7 +294,6 @@ class MessageHandler {
 		}
 	}
 
-	// --- Handlers split from onMessage for readability ---
 	private handlePing(): void {
 		send({ event: "ack" });
 	}
