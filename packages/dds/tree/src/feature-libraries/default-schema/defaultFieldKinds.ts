@@ -267,11 +267,30 @@ export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> =
 
 // TODO: Find a way to make docs like {@inheritDoc required} work in vscode.
 // TODO: ensure thy work in generated docs.
-// TODO: add these comments to the rest of the cases below.
+
+/**
+ * Exactly one item.
+ */
 export interface Required extends FlexFieldKind<"Value", Multiplicity.Single> {}
+
+/**
+ * Zero or one items.
+ */
 export interface Optional extends FlexFieldKind<"Optional", Multiplicity.Optional> {}
+
+/**
+ * Zero or more items.
+ */
 export interface Sequence extends FlexFieldKind<"Sequence", Multiplicity.Sequence> {}
+
+/**
+ * Exactly one item, which must be an identifier.
+ */
 export interface Identifier extends FlexFieldKind<"Identifier", Multiplicity.Single> {}
+
+/**
+ * Zero items (forbidden content).
+ */
 export interface Forbidden
 	extends FlexFieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {}
 
