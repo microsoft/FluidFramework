@@ -29,6 +29,7 @@ import {
 	type UnannotateImplicitFieldSchema,
 	isArrayNodeSchema,
 	type InsertableField,
+	pauseTreeEvents,
 } from "./simple-tree/index.js";
 
 // Future improvement TODOs:
@@ -752,49 +753,30 @@ export namespace System_TableSchema {
 					});
 					return removedColumns ?? fail("Transaction did not complete.");
 				} else {
-					const columnsToRemove = indexOrColumns;
-
 					// If there are no columns to remove, do nothing
-					if (columnsToRemove.length === 0) {
+					if (indexOrColumns.length === 0) {
 						return [];
 					}
 
-					// Ensure the specified columns exists before starting transaction.
+					// Ensure the specified rows exists before starting transaction.
 					// Improves user-facing error experience.
-					for (const columnToRemove of columnsToRemove) {
-						this._assertContainsColumn(columnToRemove);
+					const columnsToRemove: ColumnValueType[] = [];
+					for (const columnOrIdToRemove of indexOrColumns) {
+						columnsToRemove.push(this._getColumn(columnOrIdToRemove));
 					}
 
-					const removedColumns: ColumnValueType[] = [];
-					this._applyEditsInBatch(() => {
-						// Note, throwing an error within a transaction will abort the entire transaction.
-						// So if we throw an error here for any column, no columns will be removed.
-						for (const columnToRemove of columnsToRemove) {
-							const removedColumn = this._removeColumn(columnToRemove);
-							removedColumns.push(removedColumn);
+					this._applyEditsInBatch((): void => {
+						for (const column of columnsToRemove) {
+							// First, remove all cells that correspond to the column from each row:
+							this._removeCells(column);
+
+							// Second, remove the column node:
+							this.columns.removeAt(this.columns.indexOf(column));
 						}
 					});
-					return removedColumns;
+
+					return columnsToRemove;
 				}
-			}
-
-			private _removeColumn(columnOrId: string | ColumnValueType): ColumnValueType {
-				const column = this._getColumn(columnOrId);
-				const index = this.columns.indexOf(column);
-				assert(index !== -1, "Column should exist");
-
-				this._applyEditsInBatch(() => {
-					// Remove the corresponding cell from all rows.
-					for (const row of this.rows) {
-						// TypeScript is unable to narrow the row type correctly here, hence the cast.
-						// See: https://github.com/microsoft/TypeScript/issues/52144
-						(row as RowValueType).removeCell(column);
-					}
-
-					this.columns.removeAt(index);
-				});
-
-				return column;
 			}
 
 			public removeRows(
@@ -819,39 +801,27 @@ export namespace System_TableSchema {
 					);
 				}
 
-				const rowsToRemove = indexOrRows;
-
 				// If there are no rows to remove, do nothing
-				if (rowsToRemove.length === 0) {
+				if (indexOrRows.length === 0) {
 					return [];
 				}
 
 				// Ensure the specified rows exists before starting transaction.
 				// Improves user-facing error experience.
-				for (const rowToRemove of rowsToRemove) {
-					this._assertContainsRow(rowToRemove);
+				const rowsToRemove: RowValueType[] = [];
+				for (const rowOrIdToRemove of indexOrRows) {
+					rowsToRemove.push(this._getRow(rowOrIdToRemove));
 				}
 
-				const removedRows: RowValueType[] = [];
 				this._applyEditsInBatch(() => {
 					// Note, throwing an error within a transaction will abort the entire transaction.
 					// So if we throw an error here for any row, no rows will be removed.
 					for (const rowToRemove of rowsToRemove) {
-						const removedRow = this._removeRow(rowToRemove);
-						removedRows.push(removedRow);
+						this.rows.removeAt(this.rows.indexOf(rowToRemove));
 					}
 				});
-				return removedRows;
-			}
 
-			private _removeRow(rowOrId: string | RowValueType): RowValueType {
-				const rowToRemove = this._getRow(rowOrId);
-
-				const index = this.rows.indexOf(rowToRemove);
-				assert(index !== -1, "Row should exist");
-
-				this.rows.removeAt(index);
-				return rowToRemove;
+				return rowsToRemove;
 			}
 
 			public removeCell(
@@ -915,37 +885,48 @@ export namespace System_TableSchema {
 			private _applyEditsInBatch(applyEdits: () => void): void {
 				const branch = TreeAlpha.branch(this);
 
-				if (branch === undefined) {
-					// If this node does not have a corresponding branch, then it is unhydrated.
-					// I.e., it is not part of a collaborative session yet.
-					// Therefore, we don't need to run the edits as a transaction.
-					applyEdits();
-				} else {
-					branch.runTransaction(() => {
+				// To ensure the user is not spammed with events during the transaction,
+				// we will pause events for the duration.
+				// If this node is part of a collaborative session ("hydrated"),
+				// we will also batch the edits in a transaction to ensure the larger edit is atomic.
+
+				const resumeAndFlushTreeEvents = pauseTreeEvents();
+				try {
+					if (branch === undefined) {
+						// If this node does not have a corresponding branch, then it is unhydrated.
+						// I.e., it is not part of a collaborative session yet.
+						// Therefore, we don't need to run the edits as a transaction,
+						// but we do still need to ensure the events are batched.
 						applyEdits();
-					});
+					} else {
+						branch.runTransaction(() => {
+							applyEdits();
+						});
+					}
+				} finally {
+					resumeAndFlushTreeEvents();
 				}
 			}
 
 			/**
-			 * Attempts to resolve a Column node or ID to a Column node.
-			 * If a node is provided, it is returned as-is.
-			 * If an ID is provided, we check the table for the corresponding Column node and return it if it exists, otherwise undefined.
+			 * Attempts to resolve the provided Column node or ID to a Column node in the table.
+			 * Returns `undefined` if there is no match.
+			 * @remarks Searches for a match based strictly on the ID and returns that result.
 			 */
 			private _tryGetColumn(
 				columnOrId: string | ColumnValueType,
 			): ColumnValueType | undefined {
-				return typeof columnOrId === "string" ? this.getColumn(columnOrId) : columnOrId;
+				const columnId = this._getColumnId(columnOrId);
+				return this.getColumn(columnId);
 			}
 
 			/**
-			 * Attempts to resolve a Column node or ID to a Column node.
-			 * If a node is provided, it is returned as-is.
-			 * If an ID is provided, we check the table for the corresponding Column node and return it if it exists, otherwise we throw an exception.
+			 * Attempts to resolve the provided Column node or ID to a Column node in the table.
+			 * @throws Throws a `UsageError` if there is no match.
+			 * @remarks Searches for a match based strictly on the ID and returns that result.
 			 */
 			private _getColumn(columnOrId: string | ColumnValueType): ColumnValueType {
-				const column =
-					typeof columnOrId === "string" ? this.getColumn(columnOrId) : columnOrId;
+				const column = this._tryGetColumn(columnOrId);
 				if (column === undefined) {
 					this._throwMissingColumnError(this._getColumnId(columnOrId));
 				}
@@ -983,17 +964,6 @@ export namespace System_TableSchema {
 			}
 
 			/**
-			 * Assert that the provided Column exists in the table.
-			 * @throws Throws a `UsageError` if the Column does not exist.
-			 */
-			private _assertContainsColumn(columnOrId: ColumnValueType | string): void {
-				const columnId = this._getColumnId(columnOrId);
-				if (!this._containsColumnWithId(columnId)) {
-					this._throwMissingColumnError(columnId);
-				}
-			}
-
-			/**
 			 * Throw a `UsageError` for a missing Column by its ID.
 			 */
 			private _throwMissingColumnError(columnId: string): never {
@@ -1001,21 +971,22 @@ export namespace System_TableSchema {
 			}
 
 			/**
-			 * Attempts to resolve a Row node or ID to a Row node.
-			 * If a node is provided, it is returned as-is.
-			 * If an ID is provided, we check the table for the corresponding Row node and return it if it exists, otherwise undefined.
+			 * Attempts to resolve the provided Row node or ID to a Row node in the table.
+			 * Returns `undefined` if there is no match.
+			 * @remarks Searches for a match based strictly on the ID and returns that result.
 			 */
 			private _tryGetRow(rowOrId: string | RowValueType): RowValueType | undefined {
-				return typeof rowOrId === "string" ? this.getRow(rowOrId) : rowOrId;
+				const rowId = this._getRowId(rowOrId);
+				return this.getRow(rowId);
 			}
 
 			/**
-			 * Attempts to resolve a Row node or ID to a Row node.
-			 * If a node is provided, it is returned as-is.
-			 * If an ID is provided, we check the table for the corresponding Row node and return it if it exists, otherwise we throw an exception.
+			 * Attempts to resolve the provided Row node or ID to a Row node in the table.
+			 * @throws Throws a `UsageError` if there is no match.
+			 * @remarks Searches for a match based strictly on the ID and returns that result.
 			 */
 			private _getRow(rowOrId: string | RowValueType): RowValueType {
-				const row = typeof rowOrId === "string" ? this.getRow(rowOrId) : rowOrId;
+				const row = this._tryGetRow(rowOrId);
 				if (row === undefined) {
 					this._throwMissingRowError(this._getRowId(rowOrId));
 				}
@@ -1049,17 +1020,6 @@ export namespace System_TableSchema {
 			 */
 			private _containsRowWithId(rowId: string): boolean {
 				return this._getRowIndex(rowId) !== undefined;
-			}
-
-			/**
-			 * Assert that the provided Row exists in the table.
-			 * @throws Throws a `UsageError` if the Row does not exist.
-			 */
-			private _assertContainsRow(rowOrId: RowValueType | string): void {
-				const rowId = this._getRowId(rowOrId);
-				if (!this._containsRowWithId(rowId)) {
-					this._throwMissingRowError(rowId);
-				}
 			}
 
 			/**

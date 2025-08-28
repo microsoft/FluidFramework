@@ -165,4 +165,6 @@ describe("simple-tree proxies", () => {
 			assert(anchors.isEmpty());
 		});
 	}
+
+	// TODO: event deferral tests
 });

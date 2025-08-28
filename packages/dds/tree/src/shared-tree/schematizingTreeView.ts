@@ -66,6 +66,7 @@ import {
 
 import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
+import { pauseTreeEvents } from "../simple-tree/index.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -229,16 +230,10 @@ export class SchematizingSimpleTreeView<
 		return this.flexTreeContext;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
-	 */
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
-	/**
-	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
-	 */
 	public runTransaction(
 		transaction: () => VoidTransactionCallbackStatus | void,
 		params?: RunTransactionParams,
@@ -250,6 +245,8 @@ export class SchematizingSimpleTreeView<
 			| void,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
+		const { preconditions } = params ?? {};
+
 		const addConstraints = (
 			constraintsOnRevert: boolean,
 			constraints: readonly TransactionConstraint[] = [],
@@ -260,7 +257,7 @@ export class SchematizingSimpleTreeView<
 		this.checkout.transaction.start();
 
 		// Validate preconditions before running the transaction callback.
-		addConstraints(false /* constraintsOnRevert */, params?.preconditions);
+		addConstraints(false /* constraintsOnRevert */, preconditions);
 		const transactionCallbackStatus = transaction();
 		const rollback = transactionCallbackStatus?.rollback;
 		const value = (
