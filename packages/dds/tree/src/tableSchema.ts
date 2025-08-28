@@ -752,29 +752,27 @@ export namespace System_TableSchema {
 					});
 					return removedColumns ?? fail("Transaction did not complete.");
 				} else {
-					const columnsToRemove = indexOrColumns;
-
 					// If there are no columns to remove, do nothing
-					if (columnsToRemove.length === 0) {
+					if (indexOrColumns.length === 0) {
 						return [];
 					}
 
-					// Ensure the specified columns exists before starting transaction.
-					// Improves user-facing error experience.
-					for (const columnToRemove of columnsToRemove) {
-						this._assertContainsColumn(columnToRemove);
+					// Resolve any IDs to actual nodes.
+					// This validates that all of the rows exist before starting transaction.
+					// This improves user-facing error experience.
+					const columnsToRemove: ColumnValueType[] = [];
+					for (const columnOrIdToRemove of indexOrColumns) {
+						columnsToRemove.push(this._getColumn(columnOrIdToRemove));
 					}
 
-					const removedColumns: ColumnValueType[] = [];
 					this._applyEditsInBatch(() => {
 						// Note, throwing an error within a transaction will abort the entire transaction.
 						// So if we throw an error here for any column, no columns will be removed.
 						for (const columnToRemove of columnsToRemove) {
-							const removedColumn = this._removeColumn(columnToRemove);
-							removedColumns.push(removedColumn);
+							this._removeColumn(columnToRemove);
 						}
 					});
-					return removedColumns;
+					return columnsToRemove;
 				}
 			}
 
@@ -819,29 +817,27 @@ export namespace System_TableSchema {
 					);
 				}
 
-				const rowsToRemove = indexOrRows;
-
 				// If there are no rows to remove, do nothing
-				if (rowsToRemove.length === 0) {
+				if (indexOrRows.length === 0) {
 					return [];
 				}
 
-				// Ensure the specified rows exists before starting transaction.
-				// Improves user-facing error experience.
-				for (const rowToRemove of rowsToRemove) {
-					this._assertContainsRow(rowToRemove);
+				// Resolve any IDs to actual nodes.
+				// This validates that all of the rows exist before starting transaction.
+				// This improves user-facing error experience.
+				const rowsToRemove: RowValueType[] = [];
+				for (const rowToRemove of indexOrRows) {
+					rowsToRemove.push(this._getRow(rowToRemove));
 				}
 
-				const removedRows: RowValueType[] = [];
 				this._applyEditsInBatch(() => {
 					// Note, throwing an error within a transaction will abort the entire transaction.
 					// So if we throw an error here for any row, no rows will be removed.
 					for (const rowToRemove of rowsToRemove) {
-						const removedRow = this._removeRow(rowToRemove);
-						removedRows.push(removedRow);
+						this._removeRow(rowToRemove);
 					}
 				});
-				return removedRows;
+				return rowsToRemove;
 			}
 
 			private _removeRow(rowOrId: string | RowValueType): RowValueType {
@@ -983,17 +979,6 @@ export namespace System_TableSchema {
 			}
 
 			/**
-			 * Assert that the provided Column exists in the table.
-			 * @throws Throws a `UsageError` if the Column does not exist.
-			 */
-			private _assertContainsColumn(columnOrId: ColumnValueType | string): void {
-				const columnId = this._getColumnId(columnOrId);
-				if (!this._containsColumnWithId(columnId)) {
-					this._throwMissingColumnError(columnId);
-				}
-			}
-
-			/**
 			 * Throw a `UsageError` for a missing Column by its ID.
 			 */
 			private _throwMissingColumnError(columnId: string): never {
@@ -1050,17 +1035,6 @@ export namespace System_TableSchema {
 			 */
 			private _containsRowWithId(rowId: string): boolean {
 				return this._getRowIndex(rowId) !== undefined;
-			}
-
-			/**
-			 * Assert that the provided Row exists in the table.
-			 * @throws Throws a `UsageError` if the Row does not exist.
-			 */
-			private _assertContainsRow(rowOrId: RowValueType | string): void {
-				const rowId = this._getRowId(rowOrId);
-				if (!this._containsRowWithId(rowId)) {
-					this._throwMissingRowError(rowId);
-				}
 			}
 
 			/**
