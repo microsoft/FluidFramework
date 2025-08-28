@@ -337,9 +337,21 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 
 	/**
 	 * If flush mode is set to FlushMode.TurnBased, it will send all messages queued since the last time
-	 * this method was called. Otherwise, calling the method does nothing.
+	 * this method (or `flushSomeMessages`) was called. Otherwise, calling the method does nothing.
 	 */
 	public flush() {
+		this.flushSomeMessages(this.outbox.length);
+	}
+
+	/**
+	 * If flush mode is set to FlushMode.TurnBased, it will send the specified number of messages from the outbox
+	 * queued since the last time this (or `flush`) was called. Otherwise, calling the method does nothing.
+	 * This can be useful when simulating staging mode, and we only want to flush certain messages.
+	 */
+	public flushSomeMessages(numMessages: number): void {
+		if (!Number.isInteger(numMessages) || numMessages < 0) {
+			throw new Error("flushSomeMessages: numMessages must be a non-negative integer");
+		}
 		if (this.runtimeOptions.flushMode !== FlushMode.TurnBased) {
 			return;
 		}
@@ -352,10 +364,11 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			this.idAllocationOutbox.push(idAllocationOp);
 		}
 
+		const actualMessagesToSubmit = this.outbox.splice(0, numMessages);
+
 		// As with the runtime behavior, we need to send the idAllocationOps first
-		const messagesToSubmit = this.idAllocationOutbox.concat(this.outbox);
+		const messagesToSubmit = this.idAllocationOutbox.concat(actualMessagesToSubmit);
 		this.idAllocationOutbox.length = 0;
-		this.outbox.length = 0;
 
 		let fakeClientSequenceNumber = 1;
 		messagesToSubmit.forEach((message) => {
