@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Heap, oob } from "@fluidframework/core-utils/internal";
+import { fail, Heap, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { Tree, TreeAlpha } from "./shared-tree/index.js";
@@ -634,12 +634,12 @@ export namespace System_TableSchema {
 				key: TableSchema.CellKey<TColumnSchema, TRowSchema>,
 			): CellValueType | undefined {
 				const { column: columnOrId, row: rowOrId } = key;
-				const row = this._getRow(rowOrId);
+				const row = this._tryGetRow(rowOrId);
 				if (row === undefined) {
 					return undefined;
 				}
 
-				const column = this._getColumn(columnOrId);
+				const column = this._tryGetColumn(columnOrId);
 				if (column === undefined) {
 					return undefined;
 				}
@@ -691,7 +691,7 @@ export namespace System_TableSchema {
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						const keys: string[] = Object.keys((newRow as any).cells);
 						for (const key of keys) {
-							if (!this.containsColumnWithId(key)) {
+							if (!this._containsColumnWithId(key)) {
 								throw new UsageError(
 									`Attempted to insert row a cell under column ID "${key}", but the table does not contain a column with that ID.`,
 								);
@@ -723,16 +723,7 @@ export namespace System_TableSchema {
 				const { column: columnOrId, row: rowOrId } = key;
 
 				const row = this._getRow(rowOrId);
-				if (row === undefined) {
-					const rowId = this._getRowId(rowOrId);
-					throw new UsageError(`No row with ID "${rowId}" exists in the table.`);
-				}
-
 				const column = this._getColumn(columnOrId);
-				if (column === undefined) {
-					const columnId = this._getColumnId(columnOrId);
-					throw new UsageError(`No column with ID "${columnId}" exists in the table.`);
-				}
 
 				row.setCell(column, cell);
 			}
@@ -742,74 +733,96 @@ export namespace System_TableSchema {
 				count: number | undefined = undefined,
 			): ColumnValueType[] {
 				if (typeof indexOrColumns === "number" || indexOrColumns === undefined) {
+					let removedColumns: ColumnValueType[] | undefined;
 					const startIndex = indexOrColumns ?? 0;
-					return Table._removeRange(
-						{
-							start: startIndex,
-							count: count ?? this.columns.length - startIndex,
-						},
-						this.columns,
-					);
-				}
+					const _count = count ?? this.columns.length - startIndex;
 
-				const columnsToRemove = indexOrColumns;
-
-				// If there are no columns to remove, do nothing
-				if (columnsToRemove.length === 0) {
-					return [];
-				}
-
-				// To reduce the number of operations in the transaction, we will build up a series of
-				// contiguous ranges to be removed from the input list and remove each range as a single operation.
-				const columnIndicesToRemove: number[] = [];
-				for (const column of columnsToRemove) {
-					const columnIndex = this._getColumnIndex(column);
-					if (columnIndex === undefined) {
-						const columnId = this._getColumnId(column);
-						throw new UsageError(
-							`Specified column with ID "${columnId}" does not exist in the table.`,
-						);
+					// If there are no columns to remove, do nothing
+					if (_count === 0) {
+						return [];
 					}
-					columnIndicesToRemove.push(columnIndex);
-				}
 
-				const rangesToRemove = Table._groupIndicesIntoRanges(columnIndicesToRemove);
+					Table._assertValidRange({ index: startIndex, count: _count }, this.columns);
 
-				const removedColumns: ColumnValueType[] = [];
-				Tree.runTransaction(this, () => {
-					// #region Remove columns in batches of contiguous ranges
+					this._applyEditsInBatch(() => {
+						const columnsToRemove = this.columns.slice(
+							startIndex,
+							startIndex + _count,
+						) as ColumnValueType[];
 
-					// Note: Each range we remove from the list impacts the indices of the remaining items.
-					// As a result, we need to adjust each subsequent range we remove to account for the changes.
-					// `rangesToRemove` is sorted in ascending order, so it is sufficient to just track and modify based on a single offset.
-					let offset = 0;
-					for (const range of rangesToRemove) {
-						const removed = Table._removeRange(
+						// First, remove all cells that correspond to each column from each row:
+						for (const column of columnsToRemove) {
+							this._removeCells(column);
+						}
+
+						// Second, remove the column nodes:
+						Table._removeRange(
 							{
-								start: range.start - offset,
-								count: range.count,
+								index: startIndex,
+								count: _count,
 							},
 							this.columns,
 						);
-						removedColumns.push(...removed);
-						offset = offset + range.count;
+						removedColumns = columnsToRemove;
+					});
+					return removedColumns ?? fail("Transaction did not complete.");
+				} else {
+					const columnsToRemove = indexOrColumns;
+
+					// If there are no columns to remove, do nothing
+					if (columnsToRemove.length === 0) {
+						return [];
 					}
 
-					// #endregion
+					// To reduce the number of operations we need to perform, we will build up a series of
+					// contiguous ranges to be removed from the input list and remove each range as an operation
+					// (rather than each column individually).
+					const columnIndicesToRemove: number[] = [];
+					for (const column of columnsToRemove) {
+						this._assertContainsColumn(column);
+						const columnIndex =
+							this._getColumnIndex(column) ?? fail("Expected column to exist.");
+						columnIndicesToRemove.push(columnIndex);
+					}
 
-					// #region Remove cells corresponding with removed columns from each row
+					const rangesToRemove = Table._groupIndicesIntoRanges(columnIndicesToRemove);
 
-					for (const row of this.rows) {
-						for (const column of removedColumns) {
-							// TypeScript is unable to narrow the row type correctly here, hence the cast.
-							// See: https://github.com/microsoft/TypeScript/issues/52144
-							(row as RowValueType).removeCell(column);
+					const removedColumns: ColumnValueType[] = [];
+					this._applyEditsInBatch(() => {
+						// #region Remove columns in batches of contiguous ranges
+
+						// Note: Each range we remove from the list impacts the indices of the remaining items.
+						// As a result, we need to adjust each subsequent range we remove to account for the changes.
+						// `rangesToRemove` is sorted in ascending order, so it is sufficient to just track and modify based on a single offset.
+						let offset = 0;
+						for (const range of rangesToRemove) {
+							const removed = Table._removeRange(
+								{
+									index: range.start - offset,
+									count: range.count,
+								},
+								this.columns,
+							);
+							removedColumns.push(...removed);
+							offset = offset + range.count;
 						}
-					}
 
-					// #endregion
-				});
-				return removedColumns;
+						// #endregion
+
+						// #region Remove cells corresponding with removed columns from each row
+
+						for (const row of this.rows) {
+							for (const column of removedColumns) {
+								// TypeScript is unable to narrow the row type correctly here, hence the cast.
+								// See: https://github.com/microsoft/TypeScript/issues/52144
+								(row as RowValueType).removeCell(column);
+							}
+						}
+
+						// #endregion
+					});
+					return removedColumns;
+				}
 			}
 
 			public removeRows(
@@ -818,10 +831,17 @@ export namespace System_TableSchema {
 			): RowValueType[] {
 				if (typeof indexOrRows === "number" || indexOrRows === undefined) {
 					const startIndex = indexOrRows ?? 0;
+					const _count = count ?? this.columns.length - startIndex;
+
+					// If there are no rows to remove, do nothing
+					if (_count === 0) {
+						return [];
+					}
+
 					return Table._removeRange(
 						{
-							start: startIndex,
-							count: count ?? this.rows.length - startIndex,
+							index: startIndex,
+							count: _count,
 						},
 						this.rows,
 					);
@@ -834,42 +854,20 @@ export namespace System_TableSchema {
 					return [];
 				}
 
-				// If there is only one row to remove, remove it (and don't incur cost of transaction)
-				if (rowsToRemove.length === 1) {
-					const rowOrIdToRemove = rowsToRemove[0] ?? oob();
-					const index = this._getRowIndex(rowOrIdToRemove);
-
-					if (index === undefined) {
-						const rowId = this._getRowId(rowOrIdToRemove);
-						throw new UsageError(
-							`Specified row with ID "${rowId}" does not exist in the table.`,
-						);
-					}
-					const removedRow = this.rows[index] as RowValueType;
-					this.rows.removeAt(index);
-					return [removedRow];
-				}
-
-				// If there are multiple rows to remove, remove them in a transaction.
-
-				// To reduce the number of operations in the transaction, we will build up a series of
-				// contiguous ranges to be removed from the input list and remove each range as a single operation.
+				// To reduce the number of operations we need to perform, we will build up a series of
+				// contiguous ranges to be removed from the input list and remove each range as an operation
+				// (rather than each row individually).
 				const rowIndicesToRemove: number[] = [];
 				for (const row of rowsToRemove) {
-					const rowIndex = this._getRowIndex(row);
-					if (rowIndex === undefined) {
-						const rowId = this._getRowId(row);
-						throw new UsageError(
-							`Specified row with ID "${rowId}" does not exist in the table.`,
-						);
-					}
+					this._assertContainsRow(row);
+					const rowIndex = this._getRowIndex(row) ?? fail("Expected row to exist.");
 					rowIndicesToRemove.push(rowIndex);
 				}
 
 				const rangesToRemove = Table._groupIndicesIntoRanges(rowIndicesToRemove);
 
 				const removedRows: RowValueType[] = [];
-				Tree.runTransaction(this, () => {
+				this._applyEditsInBatch(() => {
 					// Note: Each range we remove from the list impacts the indices of the remaining items.
 					// As a result, we need to adjust each subsequent range we remove to account for the changes.
 					// `rangesToRemove` is sorted in ascending order, so it is sufficient to just track and modify based on a single offset.
@@ -879,7 +877,7 @@ export namespace System_TableSchema {
 						// So if we throw an error here for any column, no columns will be removed.
 						const removed = Table._removeRange(
 							{
-								start: range.start - offset,
+								index: range.start - offset,
 								count: range.count,
 							},
 							this.rows,
@@ -896,20 +894,7 @@ export namespace System_TableSchema {
 			): CellValueType | undefined {
 				const { column: columnOrId, row: rowOrId } = key;
 				const row = this._getRow(rowOrId);
-				if (row === undefined) {
-					const rowId = this._getRowId(rowOrId);
-					throw new UsageError(
-						`Specified row with ID "${rowId}" does not exist in the table.`,
-					);
-				}
-
 				const column = this._getColumn(columnOrId);
-				if (column === undefined) {
-					const columnId = this._getColumnId(columnOrId);
-					throw new UsageError(
-						`Specified column with ID "${columnId}" does not exist in the table.`,
-					);
-				}
 
 				const cell: CellValueType | undefined = row.getCell(column.id);
 				if (cell === undefined) {
@@ -920,16 +905,103 @@ export namespace System_TableSchema {
 				return cell;
 			}
 
-			private _getColumn(columnOrId: string | ColumnValueType): ColumnValueType | undefined {
+			/**
+			 * Removes the cell corresponding with the specified column from each row in the table.
+			 */
+			private _removeCells(column: ColumnValueType): void {
+				for (const row of this.rows) {
+					// TypeScript is unable to narrow the row type correctly here, hence the cast.
+					// See: https://github.com/microsoft/TypeScript/issues/52144
+					(row as RowValueType).removeCell(column);
+				}
+			}
+
+			private static _assertValidRange<T>(
+				range: { index: number; count: number },
+				array: readonly T[],
+			): void {
+				const { index, count } = range;
+				if (index < 0 || index >= array.length) {
+					throw new UsageError(
+						`Start index out of bounds. Expected index to be on [0, ${array.length - 1}], but got ${index}.`,
+					);
+				}
+				if (count < 0) {
+					throw new UsageError(`Expected non-negative count. Got ${count}.`);
+				}
+
+				const end = index + count; // exclusive
+				if (end > array.length) {
+					throw new UsageError(
+						`End index out of bounds. Expected end to be on [${index}, ${array.length}], but got ${end}.`,
+					);
+				}
+			}
+
+			/**
+			 * Applies the provided edits in a "batch".
+			 *
+			 * @remarks
+			 * For hydrated trees, this will be done in a transaction to ensure atomicity.
+			 *
+			 * Transactions are not supported for unhydrated trees, so we cannot run a transaction in that case.
+			 * But since there are no collaborators, this is not an issue.
+			 */
+			private _applyEditsInBatch(applyEdits: () => void): void {
+				const branch = TreeAlpha.branch(this);
+
+				if (branch === undefined) {
+					// If this node does not have a corresponding branch, then it is unhydrated.
+					// I.e., it is not part of a collaborative session yet.
+					// Therefore, we don't need to run the edits as a transaction.
+					applyEdits();
+				} else {
+					branch.runTransaction(() => {
+						applyEdits();
+					});
+				}
+			}
+
+			/**
+			 * Attempts to resolve a Column node or ID to a Column node.
+			 * If a node is provided, it is returned as-is.
+			 * If an ID is provided, we check the table for the corresponding Column node and return it if it exists, otherwise undefined.
+			 */
+			private _tryGetColumn(
+				columnOrId: string | ColumnValueType,
+			): ColumnValueType | undefined {
 				return typeof columnOrId === "string" ? this.getColumn(columnOrId) : columnOrId;
 			}
 
+			/**
+			 * Attempts to resolve a Column node or ID to a Column node.
+			 * If a node is provided, it is returned as-is.
+			 * If an ID is provided, we check the table for the corresponding Column node and return it if it exists, otherwise we throw an exception.
+			 */
+			private _getColumn(columnOrId: string | ColumnValueType): ColumnValueType {
+				const column =
+					typeof columnOrId === "string" ? this.getColumn(columnOrId) : columnOrId;
+				if (column === undefined) {
+					this._throwMissingColumnError(this._getColumnId(columnOrId));
+				}
+				return column;
+			}
+
+			/**
+			 * Resolves a Column node or ID to its ID.
+			 * If an ID is provided, it is returned as-is.
+			 * If a node is provided, its ID is returned.
+			 */
 			private _getColumnId(columnOrId: string | ColumnValueType): string {
 				return typeof columnOrId === "string" ? columnOrId : columnOrId.id;
 			}
 
+			/**
+			 * Attempts to resolve a Column node or ID to its index in the table.
+			 * Returns undefined if the Column does not exist in the table.
+			 */
 			private _getColumnIndex(columnOrId: string | ColumnValueType): number | undefined {
-				const column = this._getColumn(columnOrId);
+				const column = this._tryGetColumn(columnOrId);
 				if (column === undefined) {
 					return undefined;
 				}
@@ -938,20 +1010,68 @@ export namespace System_TableSchema {
 				return index === -1 ? undefined : index;
 			}
 
-			private containsColumnWithId(columnId: string): boolean {
+			/**
+			 * Checks if a Column with the specified ID exists in the table.
+			 */
+			private _containsColumnWithId(columnId: string): boolean {
 				return this._getColumnIndex(columnId) !== undefined;
 			}
 
-			private _getRow(rowOrId: string | RowValueType): RowValueType | undefined {
+			/**
+			 * Assert that the provided Column exists in the table.
+			 * @throws Throws a `UsageError` if the Column does not exist.
+			 */
+			private _assertContainsColumn(columnOrId: ColumnValueType | string): void {
+				const columnId = this._getColumnId(columnOrId);
+				if (!this._containsColumnWithId(columnId)) {
+					this._throwMissingColumnError(columnId);
+				}
+			}
+
+			/**
+			 * Throw a `UsageError` for a missing Column by its ID.
+			 */
+			private _throwMissingColumnError(columnId: string): never {
+				throw new UsageError(`No column with ID "${columnId}" exists in the table.`);
+			}
+
+			/**
+			 * Attempts to resolve a Row node or ID to a Row node.
+			 * If a node is provided, it is returned as-is.
+			 * If an ID is provided, we check the table for the corresponding Row node and return it if it exists, otherwise undefined.
+			 */
+			private _tryGetRow(rowOrId: string | RowValueType): RowValueType | undefined {
 				return typeof rowOrId === "string" ? this.getRow(rowOrId) : rowOrId;
 			}
 
+			/**
+			 * Attempts to resolve a Row node or ID to a Row node.
+			 * If a node is provided, it is returned as-is.
+			 * If an ID is provided, we check the table for the corresponding Row node and return it if it exists, otherwise we throw an exception.
+			 */
+			private _getRow(rowOrId: string | RowValueType): RowValueType {
+				const row = typeof rowOrId === "string" ? this.getRow(rowOrId) : rowOrId;
+				if (row === undefined) {
+					this._throwMissingRowError(this._getRowId(rowOrId));
+				}
+				return row;
+			}
+
+			/**
+			 * Resolves a Row node or ID to its ID.
+			 * If an ID is provided, it is returned as-is.
+			 * If a node is provided, its ID is returned.
+			 */
 			private _getRowId(rowOrId: string | RowValueType): string {
 				return typeof rowOrId === "string" ? rowOrId : rowOrId.id;
 			}
 
+			/**
+			 * Attempts to resolve a Row node or ID to its index in the table.
+			 * Returns undefined if the Row does not exist in the table.
+			 */
 			private _getRowIndex(rowOrId: string | RowValueType): number | undefined {
-				const row = this._getRow(rowOrId);
+				const row = this._tryGetRow(rowOrId);
 				if (row === undefined) {
 					return undefined;
 				}
@@ -959,39 +1079,47 @@ export namespace System_TableSchema {
 				return index === -1 ? undefined : index;
 			}
 
-			private containsRowWithId(rowId: string): boolean {
+			/**
+			 * Checks if a Column with the specified ID exists in the table.
+			 */
+			private _containsRowWithId(rowId: string): boolean {
 				return this._getRowIndex(rowId) !== undefined;
 			}
 
+			/**
+			 * Assert that the provided Row exists in the table.
+			 * @throws Throws a `UsageError` if the Row does not exist.
+			 */
+			private _assertContainsRow(rowOrId: RowValueType | string): void {
+				const rowId = this._getRowId(rowOrId);
+				if (!this._containsRowWithId(rowId)) {
+					this._throwMissingRowError(rowId);
+				}
+			}
+
+			/**
+			 * Throw a `UsageError` for a missing Row by its ID.
+			 */
+			private _throwMissingRowError(rowId: string): never {
+				throw new UsageError(`No row with ID "${rowId}" exists in the table.`);
+			}
+
 			private static _removeRange<TNodeSchema extends ImplicitAllowedTypes>(
-				range: IndexRange,
+				range: { index: number; count: number },
 				array: TreeArrayNode<TNodeSchema>,
 			): TreeNodeFromImplicitAllowedTypes<TNodeSchema>[] {
-				const { start, count } = range;
+				Table._assertValidRange(range, array);
 
-				if (start < 0 || start >= array.length) {
-					throw new UsageError(
-						`Start index out of bounds. Expected index to be on [0, ${array.length - 1}], but got ${start}.`,
-					);
-				}
-				if (count < 0) {
-					throw new UsageError(`Expected non-negative count. Got ${count}.`);
-				}
-
-				const end = start + count; // exclusive
-				if (end > array.length) {
-					throw new UsageError(
-						`End index out of bounds. Expected end to be on [${start}, ${array.length}], but got ${end}.`,
-					);
-				}
+				const { index, count } = range;
+				const end = index + count; // exclusive
 
 				// TypeScript is unable to narrow the row type correctly here, hence the cast.
 				// See: https://github.com/microsoft/TypeScript/issues/52144
 				const removedRows = array.slice(
-					start,
+					index,
 					end,
 				) as TreeNodeFromImplicitAllowedTypes<TNodeSchema>[];
-				array.removeRange(start, end);
+				array.removeRange(index, end);
 
 				return removedRows;
 			}

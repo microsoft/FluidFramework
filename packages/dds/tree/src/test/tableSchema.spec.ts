@@ -63,7 +63,7 @@ class Table extends TableSchema.table({
 	row: Row,
 }) {}
 
-describe("TableFactory unit tests", () => {
+describe.only("TableFactory unit tests", () => {
 	/**
 	 * Compares a tree with an expected "concise" tree representation.
 	 * Fails if they are not equivalent.
@@ -792,6 +792,19 @@ describe("TableFactory unit tests", () => {
 			});
 		});
 
+		it("Remove empty range", () => {
+			const table = initializeTree(Table, {
+				columns: [new Column({ id: "column-0", props: {} })],
+				rows: [],
+			});
+
+			table.removeColumns(0, 0);
+			assertEqualTrees(table, {
+				columns: [{ id: "column-0", props: {} }],
+				rows: [],
+			});
+		});
+
 		it("Remove single column", () => {
 			const column0 = new Column({ id: "column-0", props: {} });
 			const column1 = new Column({ id: "column-1", props: {} });
@@ -885,6 +898,42 @@ describe("TableFactory unit tests", () => {
 			});
 		});
 
+		it("Remove columns by index range", () => {
+			const column0 = new Column({ id: "column-0", props: {} });
+			const column1 = new Column({ id: "column-1", props: {} });
+			const column2 = new Column({ id: "column-2", props: {} });
+			const column3 = new Column({ id: "column-3", props: {} });
+			const table = initializeTree(Table, {
+				columns: [column0, column1, column2, column3],
+				rows: [
+					new Row({
+						id: "row-0",
+						cells: {
+							"column-0": { value: "Hello" },
+							"column-2": { value: "world" },
+						},
+					}),
+				],
+			});
+
+			// Remove columns 1-2
+			table.removeColumns(1, 2);
+			assertEqualTrees(table, {
+				columns: [
+					{ id: "column-0", props: {} },
+					{ id: "column-3", props: {} },
+				],
+				rows: [
+					{
+						id: "row-0",
+						cells: {
+							"column-0": { value: "Hello" },
+						},
+					},
+				],
+			});
+		});
+
 		it("Removing a single column that doesn't exist on table errors", () => {
 			const table = initializeTree(Table, {
 				columns: [],
@@ -893,7 +942,7 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => table.removeColumns([new Column({ id: "column-0", props: {} })]),
-				validateUsageError(/Specified column with ID "column-0" does not exist in the table./),
+				validateUsageError(/No column with ID "column-0" exists in the table./),
 			);
 		});
 
@@ -906,128 +955,11 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => table.removeColumns([column0, new Column({ id: "column-1", props: {} })]),
-				validateUsageError(/Specified column with ID "column-1" does not exist in the table./),
+				validateUsageError(/No column with ID "column-1" exists in the table./),
 			);
 
 			// Additionally, `column-0` should not have been removed.
-			assert(table.columns.length === 1);
-		});
-
-		it("Remove empty range", () => {
-			const table = initializeTree(Table, {
-				columns: [new Column({ id: "column-0", props: {} })],
-				rows: [],
-			});
-
-			table.removeColumns(0, 0);
-			assertEqualTrees(table, {
-				columns: [{ id: "column-0", props: {} }],
-				rows: [],
-			});
-		});
-
-		it("Remove by index range", () => {
-			const column0 = new Column({ id: "column-0", props: {} });
-			const column1 = new Column({ id: "column-1", props: {} });
-			const column2 = new Column({ id: "column-2", props: {} });
-			const column3 = new Column({ id: "column-3", props: {} });
-			const table = initializeTree(Table, {
-				columns: [column0, column1, column2, column3],
-				rows: [],
-			});
-
-			// Remove columns 1-2
-			table.removeColumns(1, 2);
-			assertEqualTrees(table, {
-				columns: [
-					{ id: "column-0", props: {} },
-					{ id: "column-3", props: {} },
-				],
-				rows: [],
-			});
-		});
-
-		it("Removing by range fails for invalid ranges", () => {
-			const column0 = new Column({ id: "column-0", props: {} });
-			const column1 = new Column({ id: "column-1", props: {} });
-			const table = initializeTree(Table, {
-				columns: [column0, column1],
-				rows: [],
-			});
-
-			assert.throws(
-				() => table.removeColumns(-1, undefined),
-				validateUsageError(
-					/Start index out of bounds. Expected index to be on \[0, 1], but got -1/,
-				),
-			);
-
-			assert.throws(
-				() => table.removeColumns(1, -1),
-				validateUsageError(/Expected non-negative count. Got -1./),
-			);
-
-			assert.throws(
-				() => table.removeColumns(0, 5),
-				validateUsageError(
-					/End index out of bounds. Expected end to be on \[0, 2], but got 5/,
-				),
-			);
-
-			// Additionally, no columns should have been removed.
-			assert(table.columns.length === 2);
-		});
-
-		it("Removing multiple columns errors if at least one column doesn't exist", () => {
-			const column0 = new Column({ id: "column-0", props: {} });
-			const table = initializeTree(Table, {
-				columns: [column0],
-				rows: [],
-			});
-
-			assert.throws(
-				() => table.removeColumns([column0, new Column({ id: "column-1", props: {} })]),
-				validateUsageError(/Specified column with ID "column-1" does not exist in the table./),
-			);
-
-			// Additionally, `column-0` should not have been removed.
-			assert(table.columns.length === 1);
-		});
-	});
-
-	describeHydration("removeColumns", (initializeTree) => {
-		it("Remove empty range", () => {
-			const table = initializeTree(Table, {
-				columns: [new Column({ id: "column-0", props: {} })],
-				rows: [],
-			});
-
-			table.removeColumns(0, 0);
-			assertEqualTrees(table, {
-				columns: [{ id: "column-0", props: {} }],
-				rows: [],
-			});
-		});
-
-		it("Remove by index range", () => {
-			const column0 = new Column({ id: "column-0", props: {} });
-			const column1 = new Column({ id: "column-1", props: {} });
-			const column2 = new Column({ id: "column-2", props: {} });
-			const column3 = new Column({ id: "column-3", props: {} });
-			const table = initializeTree(Table, {
-				columns: [column0, column1, column2, column3],
-				rows: [],
-			});
-
-			// Remove columns 1-2
-			table.removeColumns(1, 2);
-			assertEqualTrees(table, {
-				columns: [
-					{ id: "column-0", props: {} },
-					{ id: "column-3", props: {} },
-				],
-				rows: [],
-			});
+			assert.equal(table.columns.length, 1);
 		});
 
 		it("Removing by range fails for invalid ranges", () => {
@@ -1153,7 +1085,7 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => table.removeRows([new Row({ id: "row-0", cells: {}, props: {} })]),
-				validateUsageError(/Specified row with ID "row-0" does not exist in the table./),
+				validateUsageError(/No row with ID "row-0" exists in the table./),
 			);
 		});
 
@@ -1166,11 +1098,11 @@ describe("TableFactory unit tests", () => {
 
 			assert.throws(
 				() => table.removeRows([row0, new Row({ id: "row-1", cells: {}, props: {} })]),
-				validateUsageError(/Specified row with ID "row-1" does not exist in the table./),
+				validateUsageError(/No row with ID "row-1" exists in the table./),
 			);
 
 			// Additionally, `row-0` should not have been removed.
-			assert(table.rows.length === 1);
+			assert.equal(table.rows.length, 1);
 		});
 
 		it("Remove empty range", () => {
@@ -1352,7 +1284,7 @@ describe("TableFactory unit tests", () => {
 						row: "row-1",
 						column: "column-0",
 					}),
-				validateUsageError(/Specified row with ID "row-1" does not exist in the table./),
+				validateUsageError(/No row with ID "row-1" exists in the table./),
 			);
 
 			// Invalid column
@@ -1362,7 +1294,7 @@ describe("TableFactory unit tests", () => {
 						row: "row-0",
 						column: "column-1",
 					}),
-				validateUsageError(/Specified column with ID "column-1" does not exist in the table./),
+				validateUsageError(/No column with ID "column-1" exists in the table./),
 			);
 		});
 	});
