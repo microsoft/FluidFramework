@@ -337,7 +337,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 
 	/**
 	 * If flush mode is set to FlushMode.TurnBased, it will send all messages queued since the last time
-	 * this method was called. Otherwise, calling the method does nothing.
+	 * this method (or flushSomeMessages) was called. Otherwise, calling the method does nothing.
 	 */
 	public flush() {
 		if (this.runtimeOptions.flushMode !== FlushMode.TurnBased) {
@@ -373,8 +373,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	/**
-	 * If flush mode is set to FlushMode.TurnBased, it will send the specified number of messages queued since
-	 * the last time this method was called. Otherwise, calling the method does nothing.
+	 * If flush mode is set to FlushMode.TurnBased, it will send the specified number of messages from the outbox
+	 * queued since the last time this (or flush) was called. Otherwise, calling the method does nothing.
 	 * This can be useful when simulating staging mode, and we only want to flush certain messages.
 	 */
 	public flushSomeMessages(numMessages: number): void {
@@ -390,20 +390,11 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			this.idAllocationOutbox.push(idAllocationOp);
 		}
 
-		// As with the runtime behavior, we need to send the idAllocationOps first
-		const allMessages = this.idAllocationOutbox.concat(this.outbox);
-		const messagesToSubmit = allMessages.slice(0, numMessages);
+		const actualMessagesToSubmit = this.outbox.splice(0, numMessages);
 
-		// Remove the processed messages from the outboxes
-		const idAllocationCount = this.idAllocationOutbox.length;
-		if (numMessages >= idAllocationCount) {
-			// All id allocation messages and some regular messages are being processed
-			this.idAllocationOutbox.length = 0;
-			this.outbox.splice(0, numMessages - idAllocationCount);
-		} else {
-			// Only some id allocation messages are being processed
-			this.idAllocationOutbox.splice(0, numMessages);
-		}
+		// As with the runtime behavior, we need to send the idAllocationOps first
+		const messagesToSubmit = this.idAllocationOutbox.concat(actualMessagesToSubmit);
+		this.idAllocationOutbox.length = 0;
 
 		let fakeClientSequenceNumber = 1;
 		messagesToSubmit.forEach((message) => {
