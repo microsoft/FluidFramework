@@ -131,6 +131,6 @@ export function getKeyForCacheEntry(entry: ICacheEntry): string {
 		"fileVersion" in entry.file.resolvedUrl && entry.file.resolvedUrl.fileVersion !== undefined
 			? `_${entry.file.resolvedUrl.fileVersion}`
 			: "";
-	const suffix = entry.type === "snapshot" ? "" : `_${entry.key}`;
+	const suffix = entry.type === snapshotKey ? "" : `_${entry.key}`;
 	return `${entry.file.docId}${version}_${entry.type}${suffix}`;
 }
