@@ -146,10 +146,10 @@ describe(`Presence with AzureClient`, () => {
 						),
 			);
 
-			// Act
+			// Act - disconnect first child process
 			children[0].send({ command: "disconnectSelf" });
 
-			// Verify
+			// Verify - wait for all 'attendeeDisconnected' events
 			await Promise.race([Promise.all(waitForDisconnected), childErrorPromise]);
 		});
 
