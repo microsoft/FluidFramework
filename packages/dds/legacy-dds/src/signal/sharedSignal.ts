@@ -4,7 +4,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -164,6 +164,15 @@ export class SharedSignalClass<T extends SerializableTypeForSharedSignal = any>
 	}
 
 	protected applyStashedOp(_content: unknown): void {
-		throw new Error("Not implemented");
+		const op = _content as ISignalOperation<T>;
+
+		switch (op.type) {
+			case "signal": {
+				break;
+			}
+			default: {
+				unreachableCase(op as never);
+			}
+		}
 	}
 }
