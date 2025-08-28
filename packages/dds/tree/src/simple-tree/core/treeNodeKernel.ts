@@ -374,7 +374,12 @@ const eventDeferralEmitter = createEmitter<{
 	flush: () => void;
 }>();
 
-let pauseEvents: boolean = false;
+/**
+ * Tracks the number of times {@link pauseTreeEvents} has been called without
+ * being matched by a corresponding resume call.
+ * Events will be paused while this counter is \> 0.
+ */
+let pauseEvents: number = 0;
 
 /**
  * Pause events emitted by {@link TreeNode}s.
@@ -382,11 +387,14 @@ let pauseEvents: boolean = false;
  * @returns A function that, when called, resumes event emission and flushes any buffered events.
  */
 export function pauseTreeEvents(): () => void {
-	pauseEvents = true;
+	pauseEvents++;
 
 	return () => {
-		eventDeferralEmitter.emit("flush");
-		pauseEvents = false;
+		pauseEvents--;
+		assert(pauseEvents >= 0, "pauseEvents count should never be negative");
+		if (pauseEvents === 0) {
+			eventDeferralEmitter.emit("flush");
+		}
 	};
 }
 
@@ -400,6 +408,7 @@ class TreeNodeKernelEventBatcher
 	private disposed: boolean = false;
 
 	private readonly disposeOnFlushListener = eventDeferralEmitter.on("flush", () => {
+		assert(pauseEvents === 0, "Tree events should not be paused");
 		this.flush();
 	});
 
