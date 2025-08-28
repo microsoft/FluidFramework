@@ -101,7 +101,14 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IContainerRuntime": {
+				"backCompat": false
+			},
+			"Interface_IContainerRuntimeWithResolveHandle_Deprecated": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

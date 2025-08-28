@@ -10,7 +10,7 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import type { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	FetchSource,
 	IDocumentService,
@@ -250,16 +250,6 @@ export class ContainerStorageAdapter
 
 	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
 		return this._storageService.createBlob(file);
-	}
-
-	/**
-	 * {@link IRuntimeStorageService.downloadSummary}.
-	 *
-	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
-	 * it is unused in the Runtime and below layers.
-	 */
-	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
-		return this._storageService.downloadSummary(handle);
 	}
 }
 

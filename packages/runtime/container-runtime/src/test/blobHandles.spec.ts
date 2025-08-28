@@ -6,9 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { AttachState } from "@fluidframework/container-definitions/internal";
+import {
+	AttachState,
+	type IContainerStorageService,
+} from "@fluidframework/container-definitions/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import type { IRuntimeStorageService } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { BlobManager, type IBlobManagerRuntime } from "../blobManager/index.js";
@@ -80,7 +82,7 @@ describe("BlobHandles", () => {
 			stashedBlobs: {},
 			localBlobIdGenerator: () => "localId",
 			isBlobDeleted: () => false,
-			storage: failProxy<IRuntimeStorageService>({
+			storage: failProxy<Pick<IContainerStorageService, "createBlob" | "readBlob">>({
 				createBlob: async () => {
 					return { id: "blobId" };
 				},
@@ -119,7 +121,7 @@ describe("BlobHandles", () => {
 			},
 			stashedBlobs: {},
 			localBlobIdGenerator: () => "localId",
-			storage: failProxy<IRuntimeStorageService>({
+			storage: failProxy<Pick<IContainerStorageService, "createBlob" | "readBlob">>({
 				createBlob: async () => {
 					count++;
 					return { id: "blobId", minTTLInSeconds: count < 3 ? -1 : undefined };

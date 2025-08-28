@@ -32,6 +32,7 @@ import type {
 	ReadOnlyInfo,
 	ILoader,
 	ILoaderOptions,
+	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
 import { isFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
@@ -54,7 +55,6 @@ import {
 import {
 	type IDocumentService,
 	type IDocumentServiceFactory,
-	type IDocumentStorageService,
 	type IResolvedUrl,
 	type ISnapshot,
 	type IThrottlingWarning,
@@ -1886,7 +1886,7 @@ export class Container
 
 	private async initializeProtocolStateFromSnapshot(
 		attributes: IDocumentAttributes,
-		storage: IDocumentStorageService,
+		storage: IContainerStorageService,
 		snapshot: ISnapshotTree | undefined,
 	): Promise<void> {
 		const quorumSnapshot: IQuorumSnapshot = {

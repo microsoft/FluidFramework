@@ -301,25 +301,7 @@ export interface IRuntimeMessagesContent {
 
 // @beta @legacy
 export interface IRuntimeStorageService {
-    // @deprecated (undocumented)
-    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
-    // @deprecated
-    dispose?(error?: Error): void;
-    // @deprecated
-    readonly disposed?: boolean;
-    // @deprecated (undocumented)
-    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
-    // @deprecated (undocumented)
-    getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
-    // @deprecated (undocumented)
-    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
-    // @deprecated (undocumented)
-    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
-    // @deprecated (undocumented)
-    readonly policies?: IDocumentStorageServicePolicies | undefined;
     readBlob(id: string): Promise<ArrayBufferLike>;
-    // @deprecated (undocumented)
-    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }
 
 // @beta @legacy

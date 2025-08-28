@@ -107,7 +107,20 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IFluidDataStoreContext": {
+				"backCompat": false
+			},
+			"Interface_IFluidDataStoreContextDetached": {
+				"backCompat": false
+			},
+			"Interface_IFluidParentContext": {
+				"backCompat": false
+			},
+			"Interface_IRuntimeStorageService": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

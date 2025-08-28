@@ -11,7 +11,10 @@ import {
 	bufferToString,
 	gitHashFile,
 } from "@fluid-internal/client-utils";
-import { AttachState } from "@fluidframework/container-definitions/internal";
+import {
+	AttachState,
+	type IContainerStorageService,
+} from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	ConfigTypes,
@@ -24,10 +27,7 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { type IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
-import type {
-	IRuntimeStorageService,
-	ISequencedMessageEnvelope,
-} from "@fluidframework/runtime-definitions/internal";
+import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandleInternalPayloadPending,
 	isFluidHandlePayloadPending,
@@ -55,7 +55,7 @@ import {
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP
 abstract class BaseMockBlobStorage
-	implements Pick<IRuntimeStorageService, "readBlob" | "createBlob">
+	implements Pick<IContainerStorageService, "readBlob" | "createBlob">
 {
 	public blobs: Map<string, ArrayBufferLike> = new Map();
 	public abstract createBlob(blob: ArrayBufferLike);
@@ -117,16 +117,16 @@ export class MockRuntime
 
 	public disposed: boolean = false;
 
-	public get storage(): IRuntimeStorageService {
+	public get storage(): IContainerStorageService {
 		return (this.attachState === AttachState.Detached
 			? this.detachedStorage
-			: this.attachedStorage) as unknown as IRuntimeStorageService;
+			: this.attachedStorage) as unknown as IContainerStorageService;
 	}
 
 	private processing = false;
 	public unprocessedBlobs = new Set();
 
-	public getStorage(): IRuntimeStorageService {
+	public getStorage(): IContainerStorageService {
 		return {
 			createBlob: async (blob: ArrayBufferLike) => {
 				if (this.processing) {
@@ -147,7 +147,7 @@ export class MockRuntime
 				return P;
 			},
 			readBlob: async (id: string) => this.storage.readBlob(id),
-		} as unknown as IRuntimeStorageService;
+		} as unknown as IContainerStorageService;
 	}
 
 	public sendBlobAttachOp(localId: string, blobId?: string): void {
