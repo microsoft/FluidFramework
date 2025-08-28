@@ -1100,7 +1100,6 @@ describe("SharedDirectory rollback", () => {
 				}
 			});
 			sharedDirectory.on("subDirectoryDeleted", (path: string) => {
-				console.log("here!", path);
 				if (path === subdirName) {
 					subdirDeleted++;
 				}
