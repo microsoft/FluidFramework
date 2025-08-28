@@ -288,7 +288,7 @@ describe(`Presence with AzureClient`, () => {
 				}
 			});
 
-			it(`emits and returns per-key update events and values on read [${numClients} clients]`, async () => {
+			it(`returns per-key values on read [${numClients} clients]`, async () => {
 				// Setup
 				const allAttendeeIds = await Promise.all(attendeeIdPromises);
 				const attendee0Id = containerCreatorAttendeeId;
