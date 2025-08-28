@@ -15,5 +15,5 @@ import type {
  */
 export interface IDelayLoadChannelFactory<T> extends IChannelFactory<T> {
 	createAsync(runtime: IFluidDataStoreRuntime, id?: string): Promise<T>;
-	loadObjectKindAsync(): Promise<T>;
+	loadObjectKindAsync(): Promise<void>;
 }
