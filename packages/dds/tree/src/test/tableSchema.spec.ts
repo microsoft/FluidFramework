@@ -1319,7 +1319,11 @@ describe("TableFactory unit tests", () => {
 
 			// Add a column
 			table.insertColumns({
-				columns: [{ id: "column-0", props: {} }],
+				columns: [
+					{ id: "column-0", props: {} },
+					{ id: "column-1", props: {} },
+					{ id: "column-2", props: {} },
+				],
 			});
 			assert.equal(eventCount, 2);
 
@@ -1341,6 +1345,10 @@ describe("TableFactory unit tests", () => {
 				}) ?? fail("Cell not found");
 			cell.value = "Updated value!";
 			assert.equal(eventCount, 4);
+
+			// Remove columns
+			table.removeColumns(["column-0", "column-2"]);
+			assert.equal(eventCount, 5);
 		});
 
 		// Extra events are fired for move operation within unhydrated array nodes.
