@@ -30,7 +30,7 @@ import {
 	generateStack,
 } from "../errorLogging.js";
 import { type IFluidErrorBase, isFluidError } from "../fluidErrorBase.js";
-import { TaggedLoggerAdapter, TelemetryDataTag, TelemetryLogger } from "../logger.js";
+import { TelemetryDataTag, TelemetryLogger } from "../logger.js";
 import { MockLogger } from "../mockLogger.js";
 import type { ITelemetryPropertiesExt } from "../telemetryTypes.js";
 
@@ -134,68 +134,6 @@ describe("Error Logging", () => {
 			TelemetryLogger.prepareErrorObject(event, error, true);
 			assert.strictEqual(typeof event.stack, "string");
 			assert(!(event.stack as string).includes("MyName"));
-		});
-	});
-	describe("TaggedLoggerAdapter", () => {
-		const events: ITelemetryBaseEvent[] = [];
-		class TestTelemetryLogger extends TelemetryLogger {
-			public events: ITelemetryBaseEvent[] = [];
-			public send(event: ITelemetryBaseEvent): void {
-				events.push(this.prepareEvent(event));
-			}
-		}
-		const adaptedLogger = new TaggedLoggerAdapter(new TestTelemetryLogger("namespace"));
-
-		it("TaggedLoggerAdapter - tagged UserData is removed", () => {
-			const event = {
-				category: "cat",
-				eventName: "event",
-				userDataObject: {
-					tag: TelemetryDataTag.UserData,
-					value: "someUserData",
-				},
-			};
-			adaptedLogger.send(event);
-			assert.strictEqual(
-				events[0].userDataObject,
-				"REDACTED (UserData)",
-				"someUserData should be redacted",
-			);
-			events.pop();
-		});
-		it("TaggedLoggerAdapter - tagged CodeArtifact are preserved", () => {
-			const event = {
-				category: "cat",
-				eventName: "event",
-				packageDataObject: {
-					tag: TelemetryDataTag.CodeArtifact,
-					value: "somePackageData",
-				},
-			};
-			adaptedLogger.send(event);
-			assert.strictEqual(
-				events[0].packageDataObject,
-				"somePackageData",
-				"somePackageData should be preserved",
-			);
-			events.pop();
-		});
-		it("TaggedLoggerAdapter - tagged [unrecognized tag] are removed", () => {
-			const event = {
-				category: "cat",
-				eventName: "event",
-				unknownTaggedObject: {
-					tag: "someUnknownTag",
-					value: "someEvilData",
-				},
-			};
-			adaptedLogger.send(event);
-			assert.strictEqual(
-				events[0].unknownTaggedObject,
-				"REDACTED (unknown tag)",
-				"someUnknownTag should be redacted",
-			);
-			events.pop();
 		});
 	});
 	describe("TaggedTelemetryData", () => {

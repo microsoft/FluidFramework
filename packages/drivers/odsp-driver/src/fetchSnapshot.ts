@@ -129,14 +129,6 @@ export async function fetchSnapshotWithRedeem(
 	loadingGroupIds: string[] | undefined,
 	enableRedeemFallback?: boolean,
 ): Promise<ISnapshot> {
-	// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-	const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
-	if (sharingLinkToRedeem) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		odspResolvedUrl.shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo, sharingLinkToRedeem };
-	}
-
 	return fetchLatestSnapshotCore(
 		odspResolvedUrl,
 		storageTokenFetcher,
@@ -703,17 +695,6 @@ export const downloadSnapshot = mockify(
 		epochTracker?: EpochTracker,
 		scenarioName?: string,
 	): Promise<ISnapshotRequestAndResponseOptions> => {
-		// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-		const sharingLinkToRedeem = (odspResolvedUrl as any).sharingLinkToRedeem;
-		if (sharingLinkToRedeem) {
-			odspResolvedUrl.shareLinkInfo = {
-				...odspResolvedUrl.shareLinkInfo,
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				sharingLinkToRedeem,
-			};
-		}
-
 		const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
 
 		const queryParams: Record<string, unknown> = { ump: 1 };
