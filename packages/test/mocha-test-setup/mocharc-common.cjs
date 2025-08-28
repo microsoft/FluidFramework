@@ -17,7 +17,7 @@ const path = require("path");
  * @remarks
  * Additional configuration can be provided via environment variables: see {@link file://./README.md}.
  *
- * Users desiring exact control over the `spec` from the CLI should delete or replace the spec from the returned config.
+ * Users desiring exact control over the `spec` from the CLI should delete or replace the spec from the returned config, since mocha's behavior is to extend it, not override it.
  */
 function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testReportPrefix) {
 	const moduleDir = `${packageDir}/node_modules`;
