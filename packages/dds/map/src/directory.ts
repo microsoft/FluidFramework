@@ -2508,9 +2508,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		msg: ISequencedDocumentMessage,
 		targetSubdir?: SubDirectory | undefined,
 	): boolean {
-		// If the message is either from the creator of directory or this directory was created when
-		// container was detached or in case this directory is already live(known to other clients)
-		// and the op was created after the directory was created then apply this op.
+		// The message must be from this instance of the directory (if a local op) AND one of the following must be true:
+		// 1. The message was from the creator of this directory
+		// 2. This directory was created while detached
+		// 3. This directory was already live (known to other clients) and the op was created after the directory was created.
 		return (
 			(targetSubdir === undefined || targetSubdir === this) &&
 			((msg.clientId !== null && this.clientIds.has(msg.clientId)) ||
