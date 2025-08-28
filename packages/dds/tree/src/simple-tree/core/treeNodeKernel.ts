@@ -138,7 +138,7 @@ export class TreeNodeKernel {
 	 * This means optimizations like skipping processing data in subtrees where no subtreeChanged events are subscribed to would be able to work,
 	 * since the kernel does not unconditionally subscribe to those events (like a design which simply forwards all events would).
 	 */
-	readonly #events = new Lazy(() => new TreeNodeKernelEventBatcher());
+	readonly #events = new Lazy(() => new TreeNodeEventBuffer());
 
 	/**
 	 * Create a TreeNodeKernel which can be looked up with {@link getKernel}.
@@ -370,16 +370,12 @@ type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
 
 // #region Document this thoroughly
 
-const eventDeferralEmitter = createEmitter<{
-	flush: () => void;
-}>();
-
 /**
  * Tracks the number of times {@link pauseTreeEvents} has been called without
  * being matched by a corresponding resume call.
  * Events will be paused while this counter is \> 0.
  */
-let pauseEvents: number = 0;
+let pauseTreeEventsStack: number = 0;
 
 /**
  * Pause events emitted by {@link TreeNode}s.
@@ -387,19 +383,25 @@ let pauseEvents: number = 0;
  * @returns A function that, when called, resumes event emission and flushes any buffered events.
  */
 export function pauseTreeEvents(): () => void {
-	pauseEvents++;
+	pauseTreeEventsStack++;
 
 	return () => {
-		pauseEvents--;
-		assert(pauseEvents >= 0, "pauseEvents count should never be negative");
-		if (pauseEvents === 0) {
-			eventDeferralEmitter.emit("flush");
+		pauseTreeEventsStack--;
+		assert(pauseTreeEventsStack >= 0, "pauseEvents count should never be negative");
+		if (pauseTreeEventsStack === 0) {
+			flushEventsEmitter.emit("flush");
 		}
 	};
 }
 
-// TODO: better name
-class TreeNodeKernelEventBatcher
+/**
+ * Event emitter to notify subscribers when tree events buffered due to {@link pauseTreeEvents} should be flushed.
+ */
+const flushEventsEmitter = createEmitter<{
+	flush: () => void;
+}>();
+
+class TreeNodeEventBuffer
 	implements
 		Listenable<KernelEvents>,
 		Pick<IEmitter<KernelEvents>, "emit">,
@@ -407,8 +409,7 @@ class TreeNodeKernelEventBatcher
 {
 	private disposed: boolean = false;
 
-	private readonly disposeOnFlushListener = eventDeferralEmitter.on("flush", () => {
-		assert(pauseEvents === 0, "Tree events should not be paused");
+	private readonly disposeOnFlushListener = flushEventsEmitter.on("flush", () => {
 		this.flush();
 	});
 
@@ -443,7 +444,7 @@ class TreeNodeKernelEventBatcher
 		},
 	): void {
 		this.assertNotDisposed();
-		if (pauseEvents) {
+		if (pauseTreeEventsStack) {
 			// If events are currently paused, buffer the event to be flushed later.
 			switch (eventName) {
 				case "childrenChangedAfterBatch":
@@ -539,7 +540,7 @@ class TreeNodeKernelEventBatcher
 	}
 
 	/**
-	 * Flushes any batched events.
+	 * Flushes any events buffered due to {@link pauseTreeEvents}.
 	 */
 	public flush(): void {
 		this.assertNotDisposed();
