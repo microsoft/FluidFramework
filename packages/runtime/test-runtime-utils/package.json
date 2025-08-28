@@ -153,7 +153,17 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_MockFluidDataStoreRuntime": {
+				"forwardCompat": false
+			},
+			"Class_MockContainerRuntimeForReconnection": {
+				"forwardCompat": false
+			},
+			"Class_MockContainerRuntime": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
