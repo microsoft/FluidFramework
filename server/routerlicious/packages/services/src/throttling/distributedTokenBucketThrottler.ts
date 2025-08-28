@@ -206,32 +206,34 @@ export class DistributedTokenBucketThrottler implements IThrottler {
 			timeUntilLocalTokensCanBeConsumedMs,
 			timeUntilDistributedTokensCanBeConsumedMs,
 		);
-		if (timeUntilTokensCanBeConsumedMs !== 0) {
-			// Tokens could not be consumed, indicating that a bucket is exhausted.
-			// Throw a throttling error, and don't bother syncing with the distributed storage.
-			const retryAfterInSeconds = timeUntilTokensCanBeConsumedMs / 1000;
-			const throttlingError = new ThrottlingError(
-				`Token bucket for ${id} is exhausted`,
+		if (timeUntilTokensCanBeConsumedMs === 0) {
+			// Tokens could be consumed immediately.
+			return;
+		}
+		// Tokens could not be consumed, indicating that a bucket is exhausted.
+		// Throw a throttling error, and don't bother syncing with the distributed storage.
+		const retryAfterInSeconds = timeUntilTokensCanBeConsumedMs / 1000;
+		const throttlingError = new ThrottlingError(
+			`Token bucket for ${id} is exhausted`,
+			retryAfterInSeconds,
+		);
+		if (this.config.enableEnhancedTelemetry) {
+			const telemetryProperties = getThrottlingBaseTelemetryProperties(id);
+			this.logger?.warn(`Token bucket for ${id} is exhausted`, {
+				...telemetryProperties.baseLumberjackProperties,
 				retryAfterInSeconds,
-			);
-			if (this.config.enableEnhancedTelemetry) {
-				const telemetryProperties = getThrottlingBaseTelemetryProperties(id);
-				this.logger?.warn(`Token bucket for ${id} is exhausted`, {
+				error: throttlingError,
+			});
+			Lumberjack.warning(
+				`Token bucket for ${id} is exhausted`,
+				{
 					...telemetryProperties.baseLumberjackProperties,
 					retryAfterInSeconds,
-					error: throttlingError,
-				});
-				Lumberjack.warning(
-					`Token bucket for ${id} is exhausted`,
-					{
-						...telemetryProperties.baseLumberjackProperties,
-						retryAfterInSeconds,
-					},
-					throttlingError,
-				);
-			}
-			throw throttlingError;
+				},
+				throttlingError,
+			);
 		}
+		throw throttlingError;
 	}
 
 	public decrementCount(id: string, weight: number = 1): void {

@@ -162,6 +162,63 @@ describe("TokenBucket", () => {
 				);
 			}
 		});
+
+		it("allows consumption within capacity at refill interval", () => {
+			// Tests to make sure that optimization to reduce refill calculation frequency
+			// does not impact ability to accurately consume tokens.
+			const config: ITokenBucketConfig = {
+				capacity: 5,
+				refillRatePerMs: 1, // simple refill rate
+				minCooldownIntervalMs: 1, // very short cooldown
+				enableEnhancedTelemetry: false,
+			};
+			const bucket = new TokenBucket(config);
+			// Reduce available bucket tokens to 1
+			bucket.tryConsume(4);
+			// Loop consumption and refill to keep capacity at barely enough.
+			for (let i = 0; i < config.capacity * 2; i++) {
+				const result = bucket.tryConsume(1);
+				assert.strictEqual(result, 0, `Token ${i + 1} should be consumed`);
+				// Wait for refill
+				Sinon.clock.tick(1);
+			}
+
+			// Bring bucket back up to 2
+			Sinon.clock.tick(1);
+			for (let i = 0; i < config.capacity * 2; i++) {
+				const result = bucket.tryConsume(2);
+				assert.strictEqual(result, 0, `Token ${i + 1} should be consumed`);
+				// Wait for refill
+				Sinon.clock.tick(2);
+			}
+		});
+
+		it("throttles above capacity after several refills", () => {
+			// Tests to make sure that optimization to reduce refill calculation frequency
+			// does not impact ability to accurately consume tokens.
+			const config: ITokenBucketConfig = {
+				capacity: 5,
+				refillRatePerMs: 1, // simple refill rate
+				minCooldownIntervalMs: 1, // very short cooldown
+				enableEnhancedTelemetry: false,
+			};
+			const bucket = new TokenBucket(config);
+			// Reduce available bucket tokens to 1
+			bucket.tryConsume(4);
+			// Loop consumption and refill to keep capacity at barely enough.
+			for (let i = 0; i < config.capacity * 2; i++) {
+				const result = bucket.tryConsume(1);
+				assert.strictEqual(result, 0, `Token ${i + 1} should be consumed`);
+				// Wait for refill
+				Sinon.clock.tick(1);
+			}
+			// Try to consume the last refilled token
+			const result = bucket.tryConsume(1);
+			assert.strictEqual(result, 0, `Refilled token should be consumed`);
+			// Try to consume a token that hasn't been refilled yet
+			const result2 = bucket.tryConsume(1);
+			assert.strictEqual(result2, 1, `Not refilled token should not be consumed`);
+		});
 	});
 
 	describe("Edge Cases", () => {
@@ -222,63 +279,6 @@ describe("TokenBucket", () => {
 			// Next should be throttled
 			const result = bucket.tryConsume(1);
 			assert.notStrictEqual(result, 0, "Should be capped at capacity");
-		});
-
-		it("allows consumption within capacity at refill interval", () => {
-			// Tests to make sure that optimization to reduce refill calculation frequency
-			// does not impact ability to accurately consume tokens.
-			const config: ITokenBucketConfig = {
-				capacity: 5,
-				refillRatePerMs: 1, // simple refill rate
-				minCooldownIntervalMs: 1, // very short cooldown
-				enableEnhancedTelemetry: false,
-			};
-			const bucket = new TokenBucket(config);
-			// Reduce available bucket tokens to 1
-			bucket.tryConsume(4);
-			// Loop consumption and refill to keep capacity at barely enough.
-			for (let i = 0; i < config.capacity * 2; i++) {
-				const result = bucket.tryConsume(1);
-				assert.strictEqual(result, 0, `Token ${i + 1} should be consumed`);
-				// Wait for refill
-				Sinon.clock.tick(1);
-			}
-
-			// Bring bucket back up to 2
-			Sinon.clock.tick(1);
-			for (let i = 0; i < config.capacity * 2; i++) {
-				const result = bucket.tryConsume(2);
-				assert.strictEqual(result, 0, `Token ${i + 1} should be consumed`);
-				// Wait for refill
-				Sinon.clock.tick(2);
-			}
-		});
-
-		it("throttles above capacity after several refills", () => {
-			// Tests to make sure that optimization to reduce refill calculation frequency
-			// does not impact ability to accurately consume tokens.
-			const config: ITokenBucketConfig = {
-				capacity: 5,
-				refillRatePerMs: 1, // simple refill rate
-				minCooldownIntervalMs: 1, // very short cooldown
-				enableEnhancedTelemetry: false,
-			};
-			const bucket = new TokenBucket(config);
-			// Reduce available bucket tokens to 1
-			bucket.tryConsume(4);
-			// Loop consumption and refill to keep capacity at barely enough.
-			for (let i = 0; i < config.capacity * 2; i++) {
-				const result = bucket.tryConsume(1);
-				assert.strictEqual(result, 0, `Token ${i + 1} should be consumed`);
-				// Wait for refill
-				Sinon.clock.tick(1);
-			}
-			// Try to consume the last refilled token
-			const result = bucket.tryConsume(1);
-			assert.strictEqual(result, 0, `Refilled token should be consumed`);
-			// Try to consume a token that hasn't been refilled yet
-			const result2 = bucket.tryConsume(1);
-			assert.strictEqual(result2, 1, `Not refilled token should not be consumed`);
 		});
 	});
 });
