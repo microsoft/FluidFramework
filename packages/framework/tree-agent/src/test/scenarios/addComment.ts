@@ -162,7 +162,8 @@ const expected: ScorableVerboseTree = {
 };
 
 /**
- * TODO
+ * Test scenario for adding a comment to a page.
+ * Tests the ability to add comments to existing text content.
  */
 export const addCommentTest = {
 	name: "Add a comment",
