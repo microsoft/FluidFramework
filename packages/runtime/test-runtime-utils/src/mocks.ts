@@ -378,6 +378,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	 * This can be useful when simulating staging mode, and we only want to flush certain messages.
 	 */
 	public flushSomeMessages(numMessages: number): void {
+		if (!Number.isInteger(numMessages) || numMessages < 0) {
+			throw new Error("flushSomeMessages: numMessages must be a non-negative integer");
+		}
 		if (this.runtimeOptions.flushMode !== FlushMode.TurnBased) {
 			return;
 		}
