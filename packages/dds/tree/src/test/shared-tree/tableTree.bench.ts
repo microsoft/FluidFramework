@@ -116,9 +116,10 @@ describe("SharedTree table APIs execution time", () => {
 		// Insert-related tests that are not limited by tableSize
 		for (const count of operationCounts) {
 			describe(`Column Insertion`, () => {
+				const scenarioName = `Insert a column in the middle ${count} times`;
 				// Test the execute time of the SharedTree for inserting a column in the middle for a given number of times.
 				runBenchmark({
-					title: `Insert a column in the middle ${count} times`,
+					title: scenarioName,
 					tableSize,
 					initialCellValue,
 					operation: (table) => {
@@ -135,7 +136,7 @@ describe("SharedTree table APIs execution time", () => {
 
 				// Test the execute time of undoing insert a column in the middle for a given number of times.
 				runBenchmark({
-					title: `Undo insert the middle column ${count} times`,
+					title: `Undo: ${scenarioName}`,
 					tableSize,
 					initialCellValue,
 					beforeOperation: (table, undoRedoManager) => {
@@ -161,7 +162,7 @@ describe("SharedTree table APIs execution time", () => {
 
 				// Test the execute time of the SharedTree for redoing an insert column in the middle for a given number of times.
 				runBenchmark({
-					title: `Redo insert the middle column ${count} times`,
+					title: `Redo: ${scenarioName}`,
 					tableSize,
 					initialCellValue,
 					beforeOperation: (table, undoRedoManager) => {
@@ -191,9 +192,10 @@ describe("SharedTree table APIs execution time", () => {
 			});
 
 			describe(`Row Insertion`, () => {
+				const scenarioName = `Insert a row in the middle ${count} times`;
 				// Test the execute time of the SharedTree for inserting a row in the middle for a given number of times.
 				runBenchmark({
-					title: `Insert a row in the middle ${count} times`,
+					title: scenarioName,
 					tableSize,
 					initialCellValue,
 					operation: (table) => {
@@ -207,7 +209,7 @@ describe("SharedTree table APIs execution time", () => {
 
 				// Test the execute time of undoing insert a row in the middle for a given number of times.
 				runBenchmark({
-					title: `Undo insert the middle row ${count} times`,
+					title: `Undo: ${scenarioName}`,
 					tableSize,
 					initialCellValue,
 					beforeOperation: (table, undoRedoManager) => {
@@ -230,7 +232,7 @@ describe("SharedTree table APIs execution time", () => {
 
 				// Test the execute time of the SharedTree for redoing an insert row in the middle for a given number of times.
 				runBenchmark({
-					title: `Redo insert the middle row ${count} times`,
+					title: `Redo: ${scenarioName}`,
 					tableSize,
 					initialCellValue,
 					beforeOperation: (table, undoRedoManager) => {
@@ -257,9 +259,10 @@ describe("SharedTree table APIs execution time", () => {
 			});
 
 			describe(`Column and Row Insertion`, () => {
+				const scenarioName = `Insert a column and a row in the middle ${count} times`;
 				// Test the execute time of the SharedTree for inserting a row and a column in the middle for a given number of times.
 				runBenchmark({
-					title: `Insert a column and a row in the middle ${count} times`,
+					title: scenarioName,
 					tableSize,
 					initialCellValue,
 					operation: (table) => {
@@ -278,7 +281,7 @@ describe("SharedTree table APIs execution time", () => {
 
 				// Test the execute time of undoing insert a row and a column in the middle for a given number of times.
 				runBenchmark({
-					title: `Undo insert the middle column and row ${count} times`,
+					title: `Undo: ${scenarioName}`,
 					tableSize,
 					initialCellValue,
 					beforeOperation: (table, undoRedoManager) => {
@@ -310,7 +313,7 @@ describe("SharedTree table APIs execution time", () => {
 				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
 				// Test the execute time of the SharedTree for redoing a remove row and a column in the middle for a given number of times.
 				// runBenchmark({
-				// 	title: `Redo remove the middle column and row ${count} times`,
+				// 	title: `Redo: ${scenarioName}`,
 				// 	tableSize,
 				// 	initialCellValue,
 				// 	beforeOperation: (table, undoRedoManager) => {
@@ -345,9 +348,10 @@ describe("SharedTree table APIs execution time", () => {
 			});
 
 			describe(`Insert a column and a row and remove right away`, () => {
+				const scenarioName = `Insert a column and a row and remove them right away ${count} times`;
 				// Test the execute time of the SharedTree for inserting a row and a column and removing them right away for a given number of times.
 				runBenchmark({
-					title: `Insert a column and a row and remove them right away ${count} times`,
+					title: scenarioName,
 					tableSize,
 					initialCellValue,
 					operation: (table) => {
@@ -369,7 +373,7 @@ describe("SharedTree table APIs execution time", () => {
 				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
 				// Test the execute time of undoing insert a row and a column and removing them right away for a given number of times.
 				// runBenchmark({
-				// 	title: `Undo insert the middle column and row ${count} times`,
+				// 	title: `Undo: ${scenarioName}`,
 				// 	tableSize,
 				// 	initialCellValue,
 				// 	beforeOperation: (table, undoRedoManager) => {
@@ -404,7 +408,7 @@ describe("SharedTree table APIs execution time", () => {
 				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
 				// Test the execute time of the SharedTree for redoing an insert row and a column and removing them right away for a given number of times.
 				// runBenchmark({
-				// 	title: `Redo insert the middle column and row ${count} times`,
+				// 	title: `Redo: ${scenarioName}`,
 				// 	tableSize,
 				// 	initialCellValue,
 				// 	beforeOperation: (table, undoRedoManager) => {
@@ -445,9 +449,10 @@ describe("SharedTree table APIs execution time", () => {
 		// Set/Remove-related tests that are limited by tableSize
 		for (const count of validRemoveCounts) {
 			describe(`Column Removal`, () => {
+				const scenarioName = `Remove a column in the middle ${count} times`;
 				// Test the execute time of the SharedTree for removing a column in the middle for a given number of times.
 				runBenchmark({
-					title: `Remove a column in the middle ${count} times`,
+					title: scenarioName,
 					tableSize,
 					initialCellValue,
 					operation: (table) => {
@@ -463,7 +468,7 @@ describe("SharedTree table APIs execution time", () => {
 				// Test the execute time of undoing insert a row and a column and removing them right away for a given number of times.
 				// Test the execute time of undoing remove a column in the middle for a given number of times.
 				// runBenchmark({
-				// 	title: `Undo remove the middle column ${count} times`,
+				// 	title: `Undo: ${scenarioName}`,
 				// 	tableSize,
 				// 	initialCellValue,
 				// 	beforeOperation: (table, undoRedoManager) => {
@@ -487,7 +492,7 @@ describe("SharedTree table APIs execution time", () => {
 				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
 				// Test the execute time of the SharedTree for redoing a remove column in the middle for a given number of times.
 				// runBenchmark({
-				// 	title: `Redo remove the middle column ${count} times`,
+				// 	title: `Redo: ${scenarioName}`,
 				// 	tableSize,
 				// 	initialCellValue,
 				// 	beforeOperation: (table, undoRedoManager) => {
@@ -514,9 +519,10 @@ describe("SharedTree table APIs execution time", () => {
 			});
 
 			describe(`Row Removal`, () => {
+				const scenarioName = `Remove a row in the middle ${count} times`;
 				// Test the execute time of the SharedTree for removing a row in the middle for a given number of times.
 				runBenchmark({
-					title: `Remove a row in the middle ${count} times`,
+					title: scenarioName,
 					tableSize,
 					initialCellValue,
 					operation: (table) => {
@@ -530,7 +536,7 @@ describe("SharedTree table APIs execution time", () => {
 
 				// Test the execute time of undoing remove a row in the middle for a given number of times.
 				runBenchmark({
-					title: `Undo remove the middle row ${count} times`,
+					title: `Undo: ${scenarioName}`,
 					tableSize,
 					initialCellValue,
 					beforeOperation: (table, undoRedoManager) => {
@@ -553,7 +559,7 @@ describe("SharedTree table APIs execution time", () => {
 
 				// Test the execute time of the SharedTree for redoing a remove row in the middle for a given number of times.
 				runBenchmark({
-					title: `Redo remove the middle row ${count} times`,
+					title: `Redo: ${scenarioName}`,
 					tableSize,
 					initialCellValue,
 					beforeOperation: (table, undoRedoManager) => {
@@ -580,9 +586,10 @@ describe("SharedTree table APIs execution time", () => {
 			});
 
 			describe(`Column and Row Removal`, () => {
+				const scenarioName = `Remove a single column and a row in the middle ${count} times`;
 				// Test the execute time of the SharedTree for removing a row and a column in the middle for a given number of times.
 				runBenchmark({
-					title: `Remove a single column and a row in the middle ${count} times`,
+					title: scenarioName,
 					tableSize,
 					initialCellValue,
 					operation: (table) => {
@@ -600,7 +607,7 @@ describe("SharedTree table APIs execution time", () => {
 				// Test the execute time of undoing insert a row and a column and removing them right away for a given number of times.
 				// Test the execute time of undoing remove a row and a column in the middle for a given number of times.
 				// runBenchmark({
-				// 	title: `Undo remove the middle column and row ${count} times`,
+				// 	title: `Undo: ${scenarioName}`,
 				// 	tableSize,
 				// 	initialCellValue,
 				// 	beforeOperation: (table, undoRedoManager) => {
@@ -629,7 +636,7 @@ describe("SharedTree table APIs execution time", () => {
 				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
 				// Test the execute time of the SharedTree for redoing a remove row and a column in the middle for a given number of times.
 				// runBenchmark({
-				// 	title: `Redo remove the middle column and row ${count} times`,
+				// 	title: `Redo: ${scenarioName}`,
 				// 	tableSize,
 				// 	initialCellValue,
 				// 	beforeOperation: (table, undoRedoManager) => {
@@ -662,9 +669,10 @@ describe("SharedTree table APIs execution time", () => {
 			});
 
 			describe(`Cell Value Setting`, () => {
+				const scenarioName = `Set a cell value ${count} times`;
 				// Test the execute time of the SharedTree for setting a string in a cell for a given number of times.
 				runBenchmark({
-					title: `Set a cell value ${count} times`,
+					title: scenarioName,
 					tableSize,
 					initialCellValue: "abc",
 					operation: (table) => {
@@ -685,7 +693,7 @@ describe("SharedTree table APIs execution time", () => {
 
 				// Test the execute time of undoing set a cell value for a given number of times.
 				runBenchmark({
-					title: `Undo set a cell value ${count} times`,
+					title: `Undo: ${scenarioName}`,
 					tableSize,
 					initialCellValue: "abc",
 					beforeOperation: (table, undoRedoManager) => {
@@ -715,7 +723,7 @@ describe("SharedTree table APIs execution time", () => {
 
 				// Test the execute time of the SharedTree for redoing a set cell value for a given number of times.
 				runBenchmark({
-					title: `Redo set a cell value ${count} times`,
+					title: `Redo: ${scenarioName}`,
 					tableSize,
 					initialCellValue: "abc",
 					beforeOperation: (table, undoRedoManager) => {
