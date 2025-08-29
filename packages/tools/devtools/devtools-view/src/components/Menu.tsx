@@ -387,6 +387,9 @@ const useMenuItemStyles = makeStyles({
 		"border": `1px solid ${tokens.colorNeutralStroke2}`,
 		"backgroundColor": tokens.colorNeutralBackground1,
 		"transition": "all 0.15s ease-in-out",
+		"minWidth": "140px",
+		"maxWidth": "150px",
+		"flex": "0 1 auto",
 		"&:hover": {
 			color: tokens.colorNeutralForeground1Hover,
 			backgroundColor: tokens.colorNeutralBackground1Hover,
@@ -413,6 +416,7 @@ const useMenuItemStyles = makeStyles({
 		flexDirection: "column",
 		flex: 1,
 		gap: "2px",
+		width: "100%",
 		minWidth: 0,
 		overflow: "visible",
 	},
@@ -463,6 +467,10 @@ const useMenuItemStyles = makeStyles({
 		cursor: "pointer",
 		padding: "2px",
 		borderRadius: "4px",
+		flexShrink: "0",
+		alignSelf: "center",
+		marginRight: "8px",
+		marginLeft: "-4px",
 		"&:hover": {
 			color: tokens.colorPaletteRedForeground1,
 			backgroundColor: tokens.colorPaletteRedBackground1,
@@ -471,6 +479,14 @@ const useMenuItemStyles = makeStyles({
 	hasChanges: {
 		backgroundColor: tokens.colorPaletteYellowBackground1,
 		boxShadow: `0 0 10px ${tokens.colorPaletteYellowForeground1}`,
+	},
+	menuItemContainer: {
+		display: "flex",
+		alignItems: "center",
+		gap: "0px",
+		width: "100%",
+		paddingRight: "0px",
+		position: "relative",
 	},
 });
 
@@ -496,40 +512,42 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 	);
 
 	return (
-		<div
-			role="button"
-			className={style}
-			onClick={onClick}
-			onKeyDown={handleKeyDown}
-			tabIndex={0}
-		>
-			<div className={styles.itemContent}>
-				{stateIcon === undefined && onRemove === undefined ? (
-					<div className={styles.simpleContent}>
-						<span className={styles.textSpan}>{text}</span>
-					</div>
-				) : (
-					<>
-						<div className={styles.headerRow}>
+		<div className={styles.itemContent}>
+			<div className={styles.menuItemContainer}>
+				<div
+					role="button"
+					className={mergeClasses(styles.root, style)}
+					onClick={onClick}
+					onKeyDown={handleKeyDown}
+					tabIndex={0}
+				>
+					{stateIcon === undefined && onRemove === undefined ? (
+						<div className={styles.simpleContent}>
 							<span className={styles.textSpan}>{text}</span>
 						</div>
-						<div className={styles.bottomRow}>
-							{stateIcon && <div className={styles.iconsRow}>{stateIcon}</div>}
-							{onRemove && (
-								<Tooltip content="Remove container" relationship="label">
-									<Button
-										icon={<Dismiss24Regular />}
-										className={styles.deleteButton}
-										onClick={(e) => {
-											e.stopPropagation();
-											onRemove();
-										}}
-										aria-label="Remove container"
-									/>
-								</Tooltip>
-							)}
-						</div>
-					</>
+					) : (
+						<>
+							<div className={styles.headerRow}>
+								<span className={styles.textSpan}>{text}</span>
+							</div>
+							<div className={styles.bottomRow}>
+								{stateIcon && <div className={styles.iconsRow}>{stateIcon}</div>}
+							</div>
+						</>
+					)}
+				</div>
+				{onRemove && (
+					<Tooltip content="Remove container" relationship="label">
+						<Button
+							icon={<Dismiss24Regular />}
+							className={styles.deleteButton}
+							onClick={(e) => {
+								e.stopPropagation();
+								onRemove();
+							}}
+							aria-label="Remove container"
+						/>
+					</Tooltip>
 				)}
 			</div>
 		</div>
