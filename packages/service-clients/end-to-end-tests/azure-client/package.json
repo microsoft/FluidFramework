@@ -35,7 +35,8 @@
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7071 test:realsvc:tinylicious:run",
 		"test:realsvc:tinylicious:report": "npm run test:realsvc:tinylicious",
 		"test:realsvc:tinylicious:run": "npm run test:realsvc:azure:run -- --driver=t9s",
-		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc"
+		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=msgs npm run test:realsvc",
+		"test:realsvc:veryverbose": "cross-env FLUID_TEST_VERBOSE=msgs+telem npm run test:realsvc"
 	},
 	"c8": {
 		"all": true,
