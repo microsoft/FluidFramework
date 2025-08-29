@@ -125,7 +125,7 @@ describeCompat(
 			if (provider.driver.type !== "local") {
 				this.skip();
 			}
-			container = await provider.makeTestContainer();
+			container = await provider.makeTestContainer({ skipSecondContainerLoad: true });
 			dataObject1 = await getContainerEntryPointBackCompat(container);
 			containerRuntime = dataObject1._context.containerRuntime;
 			await waitForContainerConnection(container);
