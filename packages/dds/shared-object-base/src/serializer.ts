@@ -64,7 +64,10 @@ export interface IFluidSerializer {
 export class FluidSerializer implements IFluidSerializer {
 	private readonly root: IFluidHandleContext;
 
-	public constructor(private readonly context: IFluidHandleContext) {
+	public constructor(
+		private readonly context: IFluidHandleContext,
+		private readonly forSummarization: boolean = false,
+	) {
 		this.root = this.context;
 		while (this.root.routeContext !== undefined) {
 			this.root = this.root.routeContext;
@@ -225,7 +228,13 @@ export class FluidSerializer implements IFluidSerializer {
 		handle: IFluidHandleInternal,
 		bind: ISharedObjectHandle,
 	): ISerializedHandle {
-		bind.bind(handle);
+		if (this.forSummarization) {
+			assert(bind.isAttached, "Expected bind to be attached in the Summarizer");
+			assert(handle.isAttached, "Expected bind to have been called previously");
+			// So bind would be a no-op.
+		} else {
+			bind.bind(handle);
+		}
 		return encodeHandleForSerialization(handle);
 	}
 }

@@ -4,6 +4,7 @@
  */
 
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+//* import { assert } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 // eslint-disable-next-line import/no-deprecated
 import type { IFluidDataStoreRuntimeExperimental } from "@fluidframework/datastore-definitions/internal";
@@ -134,6 +135,8 @@ export class SharedObjectHandle
 			handle.attachGraph();
 			return;
 		}
+
+		//* 		assert(false, "BOO!");
 
 		// If this handle is not visible, we will attach it later when this handle's attachGraph is called.
 		this.pendingHandles.add(handle);

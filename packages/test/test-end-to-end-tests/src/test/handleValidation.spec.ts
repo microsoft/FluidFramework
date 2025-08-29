@@ -169,6 +169,8 @@ async function getExistingHandleStorage(
 	return factory.downCast(channel);
 }
 
+//* To show where we add pending handles
+// describeCompat.only("handle validation", "NoCompat", (getTestObjectProvider, apis) => {
 describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) => {
 	const {
 		SharedMap,
