@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 import type { ChildProcess } from "node:child_process";
 
-// eslint-disable-next-line import/no-internal-modules
 import type { AttendeeId } from "@fluidframework/presence/beta";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 

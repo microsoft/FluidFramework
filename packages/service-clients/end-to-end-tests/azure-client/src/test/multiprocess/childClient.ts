@@ -22,7 +22,6 @@ import {
 	type LatestRaw,
 	type LatestMapRaw,
 	type StatesWorkspace,
-	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/presence/beta";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
@@ -32,15 +31,10 @@ import { createAzureTokenProvider } from "../AzureTokenFactory.js";
 import { TestDataObject } from "../TestDataObject.js";
 import type { configProvider } from "../utils.js";
 
-import type { MessageFromChild, MessageToChild } from "./messageTypes.js";
+import type { MessageFromChild, MessageToChild, UserIdAndName } from "./messageTypes.js";
 
 type MessageFromParent = MessageToChild;
 type MessageToParent = Required<MessageFromChild>;
-interface UserIdAndName {
-	id: string;
-	name: string;
-}
-
 const connectTimeoutMs = 10_000;
 // Identifier given to child process
 const process_id = process.argv[2];

@@ -5,7 +5,6 @@
 
 import { fork, type ChildProcess } from "node:child_process";
 
-// eslint-disable-next-line import/no-internal-modules
 import type { AttendeeId } from "@fluidframework/presence/beta";
 import { timeoutAwait, timeoutPromise } from "@fluidframework/test-utils/internal";
 
