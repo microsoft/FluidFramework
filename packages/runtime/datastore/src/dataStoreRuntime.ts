@@ -1158,6 +1158,11 @@ export class FluidDataStoreRuntime
 		}
 	}
 
+	/**
+	 * Do not use.
+	 * @deprecated - Use `IFluidDataStoreContext.submitMessage` instead.
+	 * @see https://github.com/microsoft/FluidFramework/issues/24406
+	 */
 	public submitMessage(
 		type: DataStoreMessageType,
 		// TODO: use something other than `any` here (breaking change)
