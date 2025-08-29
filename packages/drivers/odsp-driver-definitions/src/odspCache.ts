@@ -114,7 +114,7 @@ export interface IPersistedCache {
 	put(entry: ICacheEntry, value: any): Promise<void>;
 
 	/**
-	 * Removes the entries from the cache for given parametres.
+	 * Removes the entries from the cache for given parameters.
 	 * @param file - file entry to be deleted.
 	 */
 	removeEntries(file: IFileEntry): Promise<void>;
@@ -127,5 +127,26 @@ export interface IPersistedCache {
  * @internal
  */
 export function getKeyForCacheEntry(entry: ICacheEntry): string {
-	return `${entry.file.docId}_${entry.type}_${entry.key}`;
+	switch (entry.type) {
+		case snapshotWithLoadingGroupIdKey:
+		case snapshotKey: {
+			const version = entry.key === undefined ? "" : `_${entry.key}`;
+			// example versioned entry: docId_4.0_snapshot_
+			// example non-versioned entry: docId_snapshot_
+			// The trailing '_' is included for consistency with existing cache entries
+			return `${entry.file.docId}${version}_${entry.type}_`;
+		}
+		case "ops": {
+			const version =
+				"fileVersion" in entry.file.resolvedUrl &&
+				entry.file.resolvedUrl.fileVersion !== undefined
+					? `_${entry.file.resolvedUrl.fileVersion}`
+					: "";
+			// example versioned entry: docId_4.0_ops_100_3
+			// example non-versioned entry: docId_ops_100_3
+			return `${entry.file.docId}${version}_${entry.type}_${entry.key}`;
+		}
+		default:
+			return `${entry.file.docId}_${entry.type}_${entry.key}`;
+	}
 }
