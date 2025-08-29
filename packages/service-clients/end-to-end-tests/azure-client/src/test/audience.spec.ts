@@ -428,5 +428,147 @@ for (const testOpts of testMatrix) {
 				"Original read-only partner should see new read-only partner.",
 			);
 		});
+
+		/**
+		 * Scenario: Verify audience state after all collaborators leave
+		 *
+		 * Expected behavior: When all collaborators have left the session and a new client
+		 * connects to fetch the audience, it should either return zero users OR if it returns
+		 * any users, they should have proper non-null/non-undefined ids.
+		 *
+		 * This test addresses an intermittent issue where the Audience API returns a single
+		 * user with id as null/undefined after all collaborators have left the session.
+		 */
+		it("should not return users with null/undefined ids after all collaborators leave", async function () {
+			const numCollaborators = 10; // Variable number of collaborators to test with - can be changed to test different scenarios
+			let containerId: string;
+			let container: IFluidContainer;
+			let services: AzureContainerServices;
+			if (isEphemeral) {
+				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+					ephemeralSummaryTrees.observeMemberLeaving,
+					"test-user-id-1",
+					"test-user-name-1",
+				);
+				containerId = getContainerIdFromPayloadResponse(containerResponse);
+				({ container, services } = await client.getContainer(containerId, schema, "2"));
+			} else {
+				({ container, services } = await client.createContainer(schema, "2"));
+				containerId = await container.attach();
+			}
+
+			if (container.connectionState !== ConnectionState.Connected) {
+				await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "client1 container connect() timeout",
+				});
+			}
+
+			// Add multiple collaborators
+			const collaboratorClients: AzureClient[] = [];
+			const collaboratorContainers: IFluidContainer[] = [];
+			const collaboratorServices: AzureContainerServices[] = [];
+
+			for (let i = 1; i <= numCollaborators; i++) {
+				const collaboratorClient = createAzureClient(
+					`test-user-id-collaborator-${i}`,
+					`test-user-name-collaborator-${i}`,
+					undefined,
+					configProvider({
+						"Fluid.Container.ForceWriteConnection": true,
+					}),
+				);
+				collaboratorClients.push(collaboratorClient);
+
+				const { container: collaboratorContainer, services: collaboratorServicesInstance } =
+					await collaboratorClient.getContainer(containerId, schema, "2");
+
+				if (collaboratorContainer.connectionState !== ConnectionState.Connected) {
+					await timeoutPromise(
+						(resolve) => collaboratorContainer.once("connected", () => resolve()),
+						{
+							durationMs: connectTimeoutMs,
+							errorMsg: `collaborator${i} container connect() timeout`,
+						},
+					);
+				}
+
+				collaboratorContainers.push(collaboratorContainer);
+				collaboratorServices.push(collaboratorServicesInstance);
+			}
+
+			// Wait for all members to be visible
+			await waitForMember(services.audience, "test-user-id-1");
+			for (let i = 1; i <= numCollaborators; i++) {
+				await waitForMember(
+					collaboratorServices[i - 1].audience,
+					`test-user-id-collaborator-${i}`,
+				);
+			}
+
+			// Verify we have all members (original + collaborators)
+			const members = services.audience.getMembers();
+			assert.strictEqual(
+				members.size,
+				numCollaborators + 1,
+				`We should have ${numCollaborators + 1} members at this point.`,
+			);
+
+			// Have all collaborators leave
+			for (const collaboratorContainer of collaboratorContainers) {
+				collaboratorContainer.disconnect();
+			}
+			container.disconnect();
+
+			// Wait a bit for the disconnections to be processed
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+
+			// Now connect a fresh client to fetch the audience
+			const freshClient = createAzureClient(
+				"test-user-id-fresh",
+				"test-user-name-fresh",
+				undefined,
+				configProvider({
+					"Fluid.Container.ForceWriteConnection": true,
+				}),
+			);
+
+			const { container: freshContainer, services: freshServices } =
+				await freshClient.getContainer(containerId, schema, "2");
+
+			if (freshContainer.connectionState !== ConnectionState.Connected) {
+				await timeoutPromise((resolve) => freshContainer.once("connected", () => resolve()), {
+					durationMs: connectTimeoutMs,
+					errorMsg: "fresh client container connect() timeout",
+				});
+			}
+
+			// Wait for the fresh client to establish its audience view
+			await new Promise((resolve) => setTimeout(resolve, 500));
+
+			const freshMembers = freshServices.audience.getMembers();
+
+			// The main assertion: if any members are returned, they should have valid ids
+			for (const member of freshMembers.values()) {
+				assert.notStrictEqual(
+					member.id,
+					undefined,
+					"Member id should not be undefined after all collaborators have left",
+				);
+				assert.strictEqual(
+					typeof member.id,
+					"string",
+					"Member id should be a string after all collaborators have left",
+				);
+				assert.notStrictEqual(
+					member.id.length,
+					0,
+					"Member id should not be an empty string after all collaborators have left",
+				);
+			}
+
+			// Clean up
+			freshContainer.disconnect();
+		});
 	});
 }
