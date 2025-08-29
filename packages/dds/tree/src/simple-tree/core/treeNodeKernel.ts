@@ -435,8 +435,6 @@ class TreeNodeEventBuffer
 		}
 	}
 
-	// TODO: this can probably be cleaned up a lot
-	// TODO: overloads
 	public emit(
 		eventName: keyof KernelEvents,
 		arg?: {
@@ -463,11 +461,7 @@ class TreeNodeEventBuffer
 		} else {
 			// Otherwise, emit the event right away.
 			assert(
-				this.childrenChangedBuffer.size === 0,
-				"Events are not paused. Buffer should be empty.",
-			);
-			assert(
-				this.subTreeChangedBuffer === false,
+				this.childrenChangedBuffer.size === 0 && this.subTreeChangedBuffer === false,
 				"Events are not paused. Buffer should be empty.",
 			);
 
@@ -490,7 +484,13 @@ class TreeNodeEventBuffer
 		}
 	}
 
-	// TODO: overloads
+	public on(
+		eventName: "childrenChangedAfterBatch",
+		listener: (arg: {
+			changedFields: ReadonlySet<FieldKey>;
+		}) => void,
+	): () => void;
+	public on(eventName: "subtreeChangedAfterBatch", listener: () => void): () => void;
 	public on(
 		eventName: keyof KernelEvents,
 		listener: (arg: {
@@ -505,17 +505,22 @@ class TreeNodeEventBuffer
 						changedFields: ReadonlySet<FieldKey>;
 					}) => void,
 				);
-				break;
+				return () => this.off("childrenChangedAfterBatch", listener);
 			case "subtreeChangedAfterBatch":
 				this.subTreeChangedListeners.add(listener as () => void);
-				break;
+				return () => this.off("subtreeChangedAfterBatch", listener as () => void);
 			default:
 				unreachableCase(eventName);
 		}
-		return () => this.off(eventName, listener);
 	}
 
-	// TODO: overloads
+	public off(
+		eventName: "childrenChangedAfterBatch",
+		listener: (arg: {
+			changedFields: ReadonlySet<FieldKey>;
+		}) => void,
+	): void;
+	public off(eventName: "subtreeChangedAfterBatch", listener: () => void): void;
 	public off(
 		eventName: keyof KernelEvents,
 		listener: (arg: {
