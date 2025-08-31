@@ -15,6 +15,7 @@ import { IInsecureUser } from "./insecureUsers.js";
  *
  * As the name implies, this is not secure and should not be used in production.
  * It simply makes examples where authentication is not relevant easier to bootstrap.
+ * @sealed
  * @internal
  */
 export class InsecureTokenProvider implements ITokenProvider {
@@ -54,10 +55,7 @@ export class InsecureTokenProvider implements ITokenProvider {
 		private readonly attachContainerScopes?: ScopeType[],
 	) {}
 
-	private readonly fetchToken = async (
-		tenantId: string,
-		documentId?: string,
-	): Promise<ITokenResponse> => {
+	private async fetchToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {
 		const generalScopes = this.scopes ?? [
 			ScopeType.DocRead,
 			ScopeType.DocWrite,
@@ -68,9 +66,9 @@ export class InsecureTokenProvider implements ITokenProvider {
 			fromCache: true,
 			jwt: generateToken(tenantId, this.tenantKey, scopes, documentId, this.user),
 		};
-	};
+	}
 
-	public readonly fetchOrdererToken = this.fetchToken;
+	public readonly fetchOrdererToken = this.fetchToken.bind(this);
 
-	public readonly fetchStorageToken = this.fetchToken;
+	public readonly fetchStorageToken = this.fetchToken.bind(this);
 }
