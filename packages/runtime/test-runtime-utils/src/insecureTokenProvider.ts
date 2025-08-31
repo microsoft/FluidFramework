@@ -41,7 +41,7 @@ export class InsecureTokenProvider implements ITokenProvider {
 
 		/**
 		 * Optional. Override of attach container scopes. If a param is not provided,
-		 * InsecureTokenProvider will use the value of {@link scopes}.
+		 * InsecureTokenProvider will use the value of {@link InsecureTokenProvider.scopes}.
 		 *
 		 * @remarks Common use of this parameter is to allow write for container
 		 * attach and just read for all other access. Effectively can create a
@@ -49,7 +49,7 @@ export class InsecureTokenProvider implements ITokenProvider {
 		 *
 		 * @param attachContainerScopes - See {@link @fluidframework/protocol-definitions#ITokenClaims.scopes}
 		 *
-		 * @defaultValue {@link scopes}
+		 * @defaultValue {@link InsecureTokenProvider.scopes}
 		 */
 		private readonly attachContainerScopes?: ScopeType[],
 	) {}
