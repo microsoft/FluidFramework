@@ -61,6 +61,7 @@ export {
 	SequenceMaintenanceEvent,
 } from "./sequenceDeltaEvent.js";
 export { SharedString } from "./sequenceFactory.js";
+export { SharedStringOracle } from "./sharedStringOracle.js";
 export {
 	getTextAndMarkers,
 	ISharedString,

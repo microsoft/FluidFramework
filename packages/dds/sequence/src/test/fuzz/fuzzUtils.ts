@@ -44,6 +44,7 @@ import {
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
 import { ISharedString, type SharedStringClass } from "../../sharedString.js";
+import { SharedStringOracle } from "../../sharedStringOracle.js";
 import { _dirname } from "../dirname.cjs";
 import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
 
@@ -465,7 +466,15 @@ export const baseModel: Omit<
 		// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 		makeReducer(),
-	validateConsistency: async (a, b) => assertEquivalentSharedStrings(a.channel, b.channel),
+	validateConsistency: async (a, b) => {
+		const oracleA = new SharedStringOracle(a.channel);
+		const oracleB = new SharedStringOracle(b.channel);
+
+		oracleA.validate();
+		oracleB.validate();
+
+		void assertEquivalentSharedStrings(a.channel, b.channel);
+	},
 	factory: new SharedStringFuzzFactory(),
 	minimizationTransforms: [
 		(op) => {
