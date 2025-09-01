@@ -149,7 +149,10 @@ export async function connectChildProcesses(
 			attendeeIdPromises.push(Promise.resolve(containerCreatorAttendeeId));
 			continue;
 		}
-		const message = composeConnectMessage(index);
+		// TODO: AB#45620: "Presence: perf: update Join pattern for scale" can handle
+		// larger counts of read-only attendees. Without protocol changes tests with
+		// 20+ attendees exceed current limits.
+		const message = composeConnectMessage(index, [ScopeType.DocWrite]);
 		message.containerId = containerId;
 		attendeeIdPromises.push(
 			new Promise<AttendeeId>((resolve, reject) => {
