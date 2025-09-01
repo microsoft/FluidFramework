@@ -104,7 +104,7 @@ function composeConnectMessage(
  */
 export async function connectChildProcesses(
 	childProcesses: ChildProcess[],
-	readyTimeoutMs: number,
+	{ writeClients, readyTimeoutMs }: { writeClients: number; readyTimeoutMs: number },
 ): Promise<{
 	containerCreatorAttendeeId: AttendeeId;
 	attendeeIdPromises: Promise<AttendeeId>[];
@@ -132,7 +132,9 @@ export async function connectChildProcesses(
 		// Note that DocWrite is used to have this attendee be the "leader".
 		// DocRead would also be valid as DocWrite is specified for attach when there
 		// is no document id (container id).
-		const connectContainerCreator = composeConnectMessage(0, [ScopeType.DocWrite]);
+		const connectContainerCreator = composeConnectMessage(0, [
+			writeClients > 0 ? ScopeType.DocWrite : ScopeType.DocRead,
+		]);
 		firstChild.send(connectContainerCreator);
 	}
 	const { containerCreatorAttendeeId, containerId } = await timeoutAwait(
@@ -149,10 +151,9 @@ export async function connectChildProcesses(
 			attendeeIdPromises.push(Promise.resolve(containerCreatorAttendeeId));
 			continue;
 		}
-		// TODO: AB#45620: "Presence: perf: update Join pattern for scale" can handle
-		// larger counts of read-only attendees. Without protocol changes tests with
-		// 20+ attendees exceed current limits.
-		const message = composeConnectMessage(index, [ScopeType.DocWrite]);
+		const message = composeConnectMessage(index, [
+			index < writeClients ? ScopeType.DocWrite : ScopeType.DocRead,
+		]);
 		message.containerId = containerId;
 		attendeeIdPromises.push(
 			new Promise<AttendeeId>((resolve, reject) => {
@@ -175,9 +176,17 @@ export async function connectChildProcesses(
  */
 export async function connectAndWaitForAttendees(
 	children: ChildProcess[],
-	attendeeCountRequired: number,
-	childConnectTimeoutMs: number,
-	attendeesJoinedTimeoutMs: number,
+	{
+		writeClients,
+		attendeeCountRequired,
+		childConnectTimeoutMs,
+		attendeesJoinedTimeoutMs,
+	}: {
+		writeClients: number;
+		attendeeCountRequired: number;
+		childConnectTimeoutMs: number;
+		attendeesJoinedTimeoutMs: number;
+	},
 	earlyExitPromise: Promise<never>,
 ): Promise<{ containerCreatorAttendeeId: AttendeeId }> {
 	const attendeeConnectedPromise = new Promise<void>((resolve) => {
@@ -191,7 +200,10 @@ export async function connectAndWaitForAttendees(
 			}
 		});
 	});
-	const connectResult = await connectChildProcesses(children, childConnectTimeoutMs);
+	const connectResult = await connectChildProcesses(children, {
+		writeClients,
+		readyTimeoutMs: childConnectTimeoutMs,
+	});
 	Promise.all(connectResult.attendeeIdPromises).catch((error) => {
 		console.error("Error connecting children:", error);
 	});
