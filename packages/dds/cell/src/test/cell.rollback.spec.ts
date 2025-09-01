@@ -23,6 +23,8 @@ describe("Cell with rollback", () => {
 
 		cell.on("valueChanged", (value) => events.push("valueChanged"));
 
+		cell.on("delete", () => events.push("delete"));
+
 		cell.set(10);
 		assert.equal(cell.get(), 10);
 
@@ -30,7 +32,7 @@ describe("Cell with rollback", () => {
 
 		assert.equal(cell.get(), undefined);
 
-		assert.deepEqual(events, ["valueChanged"]);
+		assert.deepEqual(events, ["valueChanged", "delete"]);
 	});
 
 	it("should emit delete on delete, and rollback should re-emit last valueChanged", async () => {
@@ -49,6 +51,7 @@ describe("Cell with rollback", () => {
 		cell.on("delete", () => events.push("delete"));
 
 		cell.set(42);
+		assert.equal(events.shift(), "valueChanged");
 		containerRuntime.flush();
 		containerRuntimeFactory.processAllMessages();
 
@@ -154,6 +157,10 @@ describe("SharedCell rollback events with multiple clients", () => {
 
 		// Rollback delete
 		runtime1.rollback?.();
+
+		// After rollback, this flush/process should not affect cell2.
+		runtime1.flush();
+		containerRuntimeFactory.processAllMessages();
 
 		// After rollback, value is restored
 		assert.equal(cell1.get(), 42);

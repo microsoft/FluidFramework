@@ -16,7 +16,7 @@ describe("SharedDirectory rollback", () => {
 	describe("Storage operations (root subdirectory)", () => {
 		it("should rollback set operation", () => {
 			const { dds: sharedDirectory, containerRuntime } = setupRollbackTest<ISharedDirectory>(
-				"shared-map",
+				"client-1",
 				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
 			);
 			const valueChanges: IValueChanged[] = [];
@@ -51,7 +51,7 @@ describe("SharedDirectory rollback", () => {
 				containerRuntime,
 				containerRuntimeFactory,
 			} = setupRollbackTest<ISharedDirectory>(
-				"shared-map",
+				"client-1",
 				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
 			);
 			sharedDirectory.set("key1", "value1");
@@ -89,7 +89,7 @@ describe("SharedDirectory rollback", () => {
 				containerRuntime,
 				containerRuntimeFactory,
 			} = setupRollbackTest<ISharedDirectory>(
-				"shared-map",
+				"client-1",
 				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
 			);
 			sharedDirectory.set("key1", "value1");
@@ -151,7 +151,7 @@ describe("SharedDirectory rollback", () => {
 				containerRuntime,
 				containerRuntimeFactory,
 			} = setupRollbackTest<ISharedDirectory>(
-				"shared-map",
+				"client-1",
 				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
 			);
 			sharedDirectory.set("key1", "value1");
@@ -234,7 +234,7 @@ describe("SharedDirectory rollback", () => {
 				containerRuntime,
 				containerRuntimeFactory,
 			} = setupRollbackTest<ISharedDirectory>(
-				"shared-map",
+				"client-1",
 				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
 			);
 			// Create a second client
@@ -293,7 +293,7 @@ describe("SharedDirectory rollback", () => {
 				containerRuntime,
 				containerRuntimeFactory,
 			} = setupRollbackTest<ISharedDirectory>(
-				"shared-map",
+				"client-1",
 				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
 			);
 
@@ -375,7 +375,7 @@ describe("SharedDirectory rollback", () => {
 				containerRuntime,
 				containerRuntimeFactory,
 			} = setupRollbackTest<ISharedDirectory>(
-				"shared-map",
+				"client-1",
 				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
 			);
 
@@ -446,7 +446,7 @@ describe("SharedDirectory rollback", () => {
 				containerRuntime,
 				containerRuntimeFactory,
 			} = setupRollbackTest<ISharedDirectory>(
-				"shared-map",
+				"client-1",
 				(rt, id): ISharedDirectory => directoryFactory.create(rt, id),
 			);
 

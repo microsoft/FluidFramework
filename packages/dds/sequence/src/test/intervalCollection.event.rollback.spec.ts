@@ -8,7 +8,6 @@ import { strict as assert } from "assert";
 import { setupRollbackTest, createAdditionalClient } from "@fluid-private/test-dds-utils";
 
 import { IntervalCollection } from "../intervalCollection.js";
-// import type { SequenceInterval } from "../intervals/index.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
 
