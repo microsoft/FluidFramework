@@ -9,21 +9,28 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { OnlineStatus, canRetryOnError, isOnline } from "./network.js";
 
 /**
+ * Log a network failure, enriching the event with online/connection details and severity based on retryability.
+ *
  * @internal
  */
 export function logNetworkFailure(
 	logger: ITelemetryLoggerExt,
 	event: ITelemetryErrorEventExt,
-	error?: any,
-) {
+	error?: unknown,
+): void {
 	const newEvent = { ...event };
 
-	const errorOnlineProp = error?.online;
+	const errorOnlineProp = (error as { online?: string } | undefined)?.online;
 	newEvent.online =
 		typeof errorOnlineProp === "string" ? errorOnlineProp : OnlineStatus[isOnline()];
 
 	if (typeof navigator === "object" && navigator !== null) {
-		const nav = navigator as any;
+		// Narrow navigator with known optional connection properties used by some browsers
+		const nav = navigator as Navigator & {
+			connection?: { type?: string } | null;
+			mozConnection?: { type?: string } | null;
+			webkitConnection?: { type?: string } | null;
+		};
 		const connection = nav.connection ?? nav.mozConnection ?? nav.webkitConnection;
 		if (connection !== null && typeof connection === "object") {
 			newEvent.connectionType = connection.type;
@@ -32,5 +39,5 @@ export function logNetworkFailure(
 
 	// non-retryable errors are fatal and should be logged as errors
 	newEvent.category = canRetryOnError(error) ? "generic" : "error";
-	logger.sendTelemetryEvent(newEvent, error);
+	logger.sendTelemetryEvent(newEvent, error as Error | undefined);
 }
