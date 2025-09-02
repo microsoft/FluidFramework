@@ -229,9 +229,12 @@ export class FluidSerializer implements IFluidSerializer {
 		bind: ISharedObjectHandle,
 	): ISerializedHandle {
 		if (this.forSummarization) {
-			assert(bind.isAttached, "Expected bind to be attached in the Summarizer");
-			assert(handle.isAttached, "Expected bind to have been called previously");
-			// So bind would be a no-op.
+			assert(bind.isAttached, "Expected bind source to be attached in the Summarizer");
+			assert(
+				handle.isAttached,
+				"Expected target to have been already attached (via binding to source)",
+			);
+			// Skip bind, since it'll be a no-op given the two conditions asserted above
 		} else {
 			bind.bind(handle);
 		}
