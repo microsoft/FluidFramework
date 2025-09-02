@@ -442,44 +442,35 @@ class TreeNodeEventBuffer
 		},
 	): void {
 		this.assertNotDisposed();
+		switch (eventName) {
+			case "childrenChangedAfterBatch":
+				assert(arg !== undefined, "childrenChangedAfterBatch should have arg");
+				return this.handleChildrenChangedAfterBatch(arg.changedFields);
+			case "subtreeChangedAfterBatch":
+				return this.handleSubtreeChangedAfterBatch();
+			default:
+				unreachableCase(eventName);
+		}
+	}
+
+	private handleChildrenChangedAfterBatch(changedFields: ReadonlySet<FieldKey>): void {
 		if (pauseTreeEventsStack) {
-			// If events are currently paused, buffer the event to be flushed later.
-			switch (eventName) {
-				case "childrenChangedAfterBatch":
-					assert(arg !== undefined, "childrenChangedAfterBatch should have arg");
-					for (const fieldKey of arg.changedFields) {
-						this.childrenChangedBuffer.add(fieldKey);
-					}
-					break;
-				case "subtreeChangedAfterBatch":
-					assert(arg === undefined, "subtreeChangedAfterBatch should not have arg");
-					this.subTreeChangedBuffer = true;
-					break;
-				default:
-					unreachableCase(eventName);
+			for (const fieldKey of changedFields) {
+				this.childrenChangedBuffer.add(fieldKey);
 			}
 		} else {
-			// Otherwise, emit the event right away.
-			assert(
-				this.childrenChangedBuffer.size === 0 && this.subTreeChangedBuffer === false,
-				"Events are not paused. Buffer should be empty.",
-			);
+			for (const listener of this.childrenChangedListeners) {
+				listener({ changedFields });
+			}
+		}
+	}
 
-			switch (eventName) {
-				case "childrenChangedAfterBatch":
-					assert(arg !== undefined, "childrenChangedAfterBatch should have arg");
-					for (const listener of this.childrenChangedListeners) {
-						listener(arg);
-					}
-					break;
-				case "subtreeChangedAfterBatch":
-					assert(arg === undefined, "subtreeChangedAfterBatch should not have arg");
-					for (const listener of this.subTreeChangedListeners) {
-						listener();
-					}
-					break;
-				default:
-					unreachableCase(eventName);
+	private handleSubtreeChangedAfterBatch(): void {
+		if (pauseTreeEventsStack) {
+			this.subTreeChangedBuffer = true;
+		} else {
+			for (const listener of this.subTreeChangedListeners) {
+				listener();
 			}
 		}
 	}
