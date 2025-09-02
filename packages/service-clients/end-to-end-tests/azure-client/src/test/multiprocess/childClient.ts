@@ -160,6 +160,19 @@ function createSendFunction(): (msg: MessageToParent) => void {
 
 const send = createSendFunction();
 
+function sendAttendeeConnected(attendee: Attendee): void {
+	send({
+		event: "attendeeConnected",
+		attendeeId: attendee.attendeeId,
+	});
+}
+function sendAttendeeDisconnected(attendee: Attendee): void {
+	send({
+		event: "attendeeDisconnected",
+		attendeeId: attendee.attendeeId,
+	});
+}
+
 function isConnected(container: IFluidContainer | undefined): boolean {
 	return container !== undefined && container.connectionState === ConnectionState.Connected;
 }
@@ -365,17 +378,25 @@ class MessageHandler {
 		this.container = container;
 		this.presence = presence;
 		this.containerId = containerId;
-		presence.attendees.events.on("attendeeConnected", (attendee: Attendee) => {
-			send({ event: "attendeeConnected", attendeeId: attendee.attendeeId });
-		});
-		presence.attendees.events.on("attendeeDisconnected", (attendee: Attendee) => {
-			send({ event: "attendeeDisconnected", attendeeId: attendee.attendeeId });
-		});
+
+		// Acknowledge connection before sending current attendee information
 		send({
 			event: "connected",
 			containerId,
 			attendeeId: presence.attendees.getMyself().attendeeId,
 		});
+
+		// Send existing attendees excluding self to parent/orchestrator
+		const self = presence.attendees.getMyself();
+		for (const attendee of presence.attendees.getAttendees()) {
+			if (attendee !== self) {
+				sendAttendeeConnected(attendee);
+			}
+		}
+
+		// Listen for presence events to notify parent/orchestrator when a new attendee joins or leaves the session.
+		presence.attendees.events.on("attendeeConnected", sendAttendeeConnected);
+		presence.attendees.events.on("attendeeDisconnected", sendAttendeeDisconnected);
 	}
 
 	private handleDisconnectSelf(): void {
