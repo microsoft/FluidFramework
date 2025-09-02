@@ -46,7 +46,7 @@ export class InsecureTokenProvider implements ITokenProvider {
 		 *
 		 * @remarks Common use of this parameter is to allow write for container
 		 * attach and just read for all other access. Effectively can create a
-		 * create and then read-only client.
+		 * container and then read-only client.
 		 *
 		 * @param attachContainerScopes - See {@link @fluidframework/protocol-definitions#ITokenClaims.scopes}
 		 *
