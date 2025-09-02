@@ -215,6 +215,12 @@ export function configureWebSocketServices(
 		// Map from client Ids to supportedFeatures ()
 		const supportedFeaturesMap = new Map<string, Record<string, unknown>>();
 
+		// Map from client IDs to session operation count
+		const sessionOpCountMap = new Map<string, number>();
+
+		// Map from client IDs to session signal count
+		const sessionSignalCountMap = new Map<string, number>();
+
 		// Set of client Ids that have been disconnected from orderer.
 		const disconnectedOrdererConnections = new Set<string>();
 
@@ -232,6 +238,8 @@ export function configureWebSocketServices(
 			disconnectedOrdererConnections,
 			disconnectedClients,
 			supportedFeaturesMap,
+			sessionOpCountMap,
+			sessionSignalCountMap,
 		};
 
 		let connectDocumentComplete: boolean = false;
@@ -512,6 +520,10 @@ export function configureWebSocketServices(
 							});
 
 							if (sanitized.length > 0) {
+								// Increment session op count for this client
+								const currentOpCount = sessionOpCountMap.get(clientId) || 0;
+								sessionOpCountMap.set(clientId, currentOpCount + sanitized.length);
+
 								// Cannot await this order call without delaying other message batches in this submitOp.
 								connection
 									.order(sanitized)
@@ -622,6 +634,10 @@ export function configureWebSocketServices(
 										: getClientSpecificRoomId(signal.targetClientId);
 
 								socket.emitToRoom(roomId, "signal", signalMessage);
+
+								// Increment session signal count for this client
+								const currentSignalCount = sessionSignalCountMap.get(clientId) || 0;
+								sessionSignalCountMap.set(clientId, currentSignalCount + 1);
 							} else {
 								// If the signal is not in the expected format, nack the message.
 								// This will disconnect client from the socket.
@@ -648,6 +664,10 @@ export function configureWebSocketServices(
 								const roomId: string = getRoomId(room);
 
 								socket.emitToRoom(roomId, "signal", signalMessage);
+
+								// Increment session signal count for this client
+								const currentSignalCount = sessionSignalCountMap.get(clientId) || 0;
+								sessionSignalCountMap.set(clientId, currentSignalCount + 1);
 							}
 						}
 					}

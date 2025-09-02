@@ -55,6 +55,8 @@ export const logCommonSessionEndMetrics = (
 	sequenceNumber: number,
 	lastSummarySequenceNumber: number,
 	activeNackMessageTypes: NackMessagesType[] | undefined,
+	sessionOpCount?: number,
+	sessionSignalCount?: number,
 ): void => {
 	if (!sessionMetric) {
 		return;
@@ -68,6 +70,14 @@ export const logCommonSessionEndMetrics = (
 	sessionMetric.setProperties({
 		[CommonProperties.lastSummarySequenceNumber]: lastSummarySequenceNumber,
 	});
+
+	// Add session op and signal counts if provided
+	if (sessionOpCount !== undefined) {
+		sessionMetric.setProperties({ [CommonProperties.sessionOpCount]: sessionOpCount });
+	}
+	if (sessionSignalCount !== undefined) {
+		sessionMetric.setProperties({ [CommonProperties.sessionSignalCount]: sessionSignalCount });
+	}
 
 	if (contextError) {
 		sessionMetric.error(`Session terminated due to ${contextError}`);
