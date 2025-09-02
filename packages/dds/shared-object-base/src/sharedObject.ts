@@ -822,7 +822,7 @@ export abstract class SharedObject<
 
 	//* TODO: Probably don't actually create two.  We'll see.
 	//* For Summarization (not attach summaries)
-	protected get serializer2(): IFluidSerializer {
+	private get serializer2(): IFluidSerializer {
 		/**
 		 * During garbage collection, the GCHandleVisitor "serializer" keeps track of IFluidHandles that are serialized. These
 		 * handles represent references to other Fluid objects.
