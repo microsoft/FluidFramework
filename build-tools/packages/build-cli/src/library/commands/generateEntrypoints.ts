@@ -67,7 +67,11 @@ interface Options {
 	readonly outFileSuffix: string;
 }
 
-const optionDefaults = {
+/**
+ * {@link Options} defaults.
+ * @privateRemarks Exported for testing.
+ */
+export const optionDefaults = {
 	mainEntrypoint: "./src/index.ts",
 	outDir: "./lib",
 	outFilePrefix: "",
@@ -367,16 +371,16 @@ function getOutputConfiguration(
  * @param commandLine - command line to extract from
  * @param argQuery - record of arguments to read (keys) with default values
  * @returns record of argument values extracted or given default value
+ * @privateRemarks Exported for testing.
  */
-function readArgValues(commandLine: string, argQuery: Options): Options {
-	const values: Record<string, string | undefined> = {};
+export function readArgValues(commandLine: string, argQuery: Options): Options {
 	const args = commandLine.split(" ");
 
 	const argValues: Record<string, string | undefined> = {};
 	for (const argName of Object.keys(argQuery)) {
 		const indexOfArgValue = args.indexOf(`--${argName}`) + 1;
 		if (0 < indexOfArgValue && indexOfArgValue < args.length) {
-			values[argName] = args[indexOfArgValue];
+			argValues[argName] = args[indexOfArgValue];
 		}
 	}
 	return {

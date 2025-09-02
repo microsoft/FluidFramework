@@ -135,7 +135,11 @@
 				"forwardCompat": false
 			},
 			"Class_AlfredResources": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassStatics_AlfredResources": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": "public"

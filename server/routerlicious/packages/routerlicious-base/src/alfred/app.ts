@@ -60,7 +60,7 @@ export function create(
 	storage: IDocumentStorage,
 	appTenants: IAlfredTenant[],
 	deltaService: IDeltaService,
-	producer: IProducer,
+	producer: IProducer | undefined,
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
 	startupCheck: IReadinessCheck,

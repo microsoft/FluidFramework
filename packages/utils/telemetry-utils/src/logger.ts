@@ -54,13 +54,13 @@ export enum TelemetryDataTag {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export type TelemetryEventPropertyTypes = ITelemetryPropertiesExt[string];
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export type ITelemetryLoggerPropertyBag = Record<
 	string,
@@ -69,7 +69,7 @@ export type ITelemetryLoggerPropertyBag = Record<
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ITelemetryLoggerPropertyBags {
 	all?: ITelemetryLoggerPropertyBag;
@@ -370,7 +370,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
  * @param props - logger is the base logger the child will log to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
  *
  * @legacy
- * @alpha
+ * @beta
  */
 export function createChildLogger(props?: {
 	logger?: ITelemetryBaseLogger;

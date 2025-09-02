@@ -4,14 +4,14 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 
 /**
  * Returns a new IChannelStorageService that resolves the given `path` as root.
  * @internal
  */
 export class ObjectStoragePartition implements IChannelStorageService {
-	constructor(
+	public constructor(
 		private readonly storage: IChannelStorageService,
 		private readonly path: string,
 	) {

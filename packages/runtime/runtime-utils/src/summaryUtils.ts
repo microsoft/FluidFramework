@@ -9,29 +9,30 @@ import {
 	bufferToString,
 	fromBase64ToUtf8,
 } from "@fluid-internal/client-utils";
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
+import type { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	ISummaryBlob,
 	ISummaryTree,
 	SummaryObject,
-	SummaryType,
 } from "@fluidframework/driver-definitions";
-import { ITree, ITreeEntry, TreeEntry } from "@fluidframework/driver-definitions/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import type { ITree, ITreeEntry } from "@fluidframework/driver-definitions/internal";
+import { TreeEntry } from "@fluidframework/driver-definitions/internal";
 import {
 	AttachmentTreeEntry,
 	BlobTreeEntry,
 	TreeTreeEntry,
 } from "@fluidframework/driver-utils/internal";
-import {
+import type {
 	ISummaryStats,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IGarbageCollectionData,
 	ISummarizeResult,
 	ITelemetryContextExt,
-	gcDataBlobKey,
 } from "@fluidframework/runtime-definitions/internal";
+import { gcDataBlobKey } from "@fluidframework/runtime-definitions/internal";
 import type { TelemetryEventPropertyTypeExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -59,26 +60,34 @@ export function mergeStats(...stats: ISummaryStats[]): ISummaryStats {
 }
 
 /**
+ * Calculates the byte length of an UTF-8 encoded string
+ * @param str - The string to calculate the byte length of
+ * @returns The byte length of the string
  * @internal
  */
 export function utf8ByteLength(str: string): number {
 	// returns the byte length of an utf8 string
 	let s = str.length;
 	for (let i = str.length - 1; i >= 0; i--) {
-		const code = str.charCodeAt(i);
-		if (code > 0x7f && code <= 0x7ff) {
-			s++;
-		} else if (code > 0x7ff && code <= 0xffff) {
-			s += 2;
-		}
-		if (code >= 0xdc00 && code <= 0xdfff) {
-			i--; // trail surrogate
+		const code = str.codePointAt(i);
+		if (code !== undefined) {
+			if (code > 0x7f && code <= 0x7ff) {
+				s++;
+			} else if (code > 0x7ff && code <= 0xffff) {
+				s += 2;
+			}
+			if (code >= 0xdc00 && code <= 0xdfff) {
+				i--; // trail surrogate
+			}
 		}
 	}
 	return s;
 }
 
 /**
+ * Gets the size of a blob
+ * @param content - The content of the blob
+ * @returns The size of the blob in bytes
  * @internal
  */
 export function getBlobSize(content: ISummaryBlob["content"]): number {
@@ -103,12 +112,16 @@ function calculateStatsCore(summaryObject: SummaryObject, stats: ISummaryStats):
 			stats.totalBlobSize += getBlobSize(summaryObject.content);
 			return;
 		}
-		default:
+		default: {
 			return;
+		}
 	}
 }
 
 /**
+ * Calculates the stats for a summary object
+ * @param summary - The summary object to calculate stats for
+ * @returns The calculated stats
  * @internal
  */
 export function calculateStats(summary: SummaryObject): ISummaryStats {
@@ -118,6 +131,10 @@ export function calculateStats(summary: SummaryObject): ISummaryStats {
 }
 
 /**
+ * Adds a blob to the summary tree
+ * @param summary - The summary tree to add the blob to
+ * @param key - The key to store the blob at
+ * @param content - The content of the blob to be added
  * @internal
  */
 export function addBlobToSummary(
@@ -135,6 +152,10 @@ export function addBlobToSummary(
 }
 
 /**
+ * Adds a summarize result to the summary tree
+ * @param summary - The summary tree to add the summarize result to
+ * @param key - The key to store the summarize result at
+ * @param summarizeResult - The summarize result to be added
  * @internal
  */
 export function addSummarizeResultToSummary(
@@ -181,13 +202,13 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 		return { ...this.summaryStats };
 	}
 
-	constructor(params?: { groupId?: string }) {
+	public constructor(params?: { groupId?: string }) {
 		this.summaryStats = mergeStats();
 		this.summaryStats.treeNodeCount++;
 		this.groupId = params?.groupId;
 	}
 
-	private readonly summaryTree: { [path: string]: SummaryObject } = {};
+	private readonly summaryTree: Record<string, SummaryObject> = {};
 	private summaryStats: ISummaryStats;
 
 	/**
@@ -245,7 +266,7 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 	 * Adds an {@link @fluidframework/driver-definitions#ISummaryAttachment} to the summary. This blob needs to already be uploaded to storage.
 	 * @param id - The id of the uploaded attachment to be added to the summary tree.
 	 */
-	public addAttachment(id: string) {
+	public addAttachment(id: string): void {
 		this.summaryTree[this.attachmentCounter++] = { id, type: SummaryType.Attachment };
 	}
 
@@ -296,8 +317,9 @@ export function convertToSummaryTreeWithStats(
 				break;
 			}
 
-			default:
+			default: {
 				throw new Error("Unexpected TreeEntry type");
+			}
 		}
 	}
 
@@ -351,6 +373,8 @@ export function convertSnapshotTreeToSummaryTree(
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const content: ArrayBufferLike = snapshot.blobsContents[id]!;
 			if (content !== undefined) {
+				// Cannot change "utf-8" to "utf8" as this encoding value is stored in summaries and would be a breaking change which needs to be done first before changing to utf8.
+				// eslint-disable-next-line unicorn/text-encoding-identifier-case -- External on-disk format is 'utf-8'.
 				decoded = bufferToString(content, "utf-8");
 			}
 			// 0.44 back-compat We still put contents in same blob for back-compat so need to add blob
@@ -387,6 +411,8 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
 		switch (value.type) {
 			case SummaryType.Blob: {
 				let parsedContent: string;
+				// Cannot change "utf-8" to "utf8" as this encoding value is stored in summaries and would be a breaking change which needs to be done first before changing to utf8.
+				// eslint-disable-next-line unicorn/text-encoding-identifier-case -- external contract uses 'utf-8'.
 				let encoding: "utf-8" | "base64" = "utf-8";
 				if (typeof value.content === "string") {
 					parsedContent = value.content;
@@ -412,8 +438,9 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
 				throw new Error("Should not have Handle type in summary tree");
 			}
 
-			default:
+			default: {
 				unreachableCase(value, "Unexpected summary tree type");
+			}
 		}
 	}
 	return {
@@ -437,7 +464,7 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
  * @internal
  */
 export function processAttachMessageGCData(
-	snapshot: ITree | null,
+	snapshot: ITree | undefined,
 	addedGCOutboundRoute: (fromNodeId: string, toPath: string) => void,
 ): boolean {
 	const gcDataEntry = snapshot?.entries.find((e) => e.path === gcDataBlobKey);
@@ -449,15 +476,18 @@ export function processAttachMessageGCData(
 	}
 
 	assert(
+		// Cannot change "utf-8" to "utf8" as this encoding value is stored in summaries and would be a breaking change which needs to be done first before changing to utf8.
+		// eslint-disable-next-line unicorn/text-encoding-identifier-case  -- external contract uses 'utf-8'.
 		gcDataEntry.type === TreeEntry.Blob && gcDataEntry.value.encoding === "utf-8",
 		0x8ff /* GC data should be a utf-8-encoded blob */,
 	);
 
+	// Type assertion is safe as we expect the GC data to conform to IGarbageCollectionData schema
 	const gcData = JSON.parse(gcDataEntry.value.contents) as IGarbageCollectionData;
 	for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-		outboundRoutes.forEach((toPath) => {
+		for (const toPath of outboundRoutes) {
 			addedGCOutboundRoute(nodeId, toPath);
-		});
+		}
 	}
 	return true;
 }
@@ -471,14 +501,14 @@ export class TelemetryContext implements ITelemetryContext, ITelemetryContextExt
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.set}
 	 */
-	set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void {
+	public set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void {
 		this.telemetry.set(`${prefix}${property}`, value);
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.setMultiple}
 	 */
-	setMultiple(
+	public setMultiple(
 		prefix: string,
 		property: string,
 		values: Record<string, TelemetryEventPropertyTypeExt>,
@@ -492,18 +522,18 @@ export class TelemetryContext implements ITelemetryContext, ITelemetryContextExt
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.get}
 	 */
-	get(prefix: string, property: string): TelemetryEventPropertyTypeExt {
+	public get(prefix: string, property: string): TelemetryEventPropertyTypeExt {
 		return this.telemetry.get(`${prefix}${property}`);
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.serialize}
 	 */
-	serialize(): string {
+	public serialize(): string {
 		const jsonObject = {};
-		this.telemetry.forEach((value, key) => {
+		for (const [key, value] of this.telemetry.entries()) {
 			jsonObject[key] = value;
-		});
+		}
 		return JSON.stringify(jsonObject);
 	}
 }
@@ -513,7 +543,7 @@ export class TelemetryContext implements ITelemetryContext, ITelemetryContextExt
  * @param str - A string that may contain leading slashes.
  * @returns A new string without leading slashes.
  */
-function trimLeadingSlashes(str: string) {
+function trimLeadingSlashes(str: string): string {
 	return str.replace(/^\/+/g, "");
 }
 
@@ -522,7 +552,7 @@ function trimLeadingSlashes(str: string) {
  * @param str - A string that may contain trailing slashes.
  * @returns A new string without trailing slashes.
  */
-function trimTrailingSlashes(str: string) {
+function trimTrailingSlashes(str: string): string {
 	return str.replace(/\/+$/g, "");
 }
 
@@ -531,8 +561,8 @@ function trimTrailingSlashes(str: string) {
  * @internal
  */
 export class GCDataBuilder implements IGarbageCollectionData {
-	private readonly gcNodesSet: { [id: string]: Set<string> } = {};
-	public get gcNodes(): { [id: string]: string[] } {
+	private readonly gcNodesSet: Record<string, Set<string>> = {};
+	public get gcNodes(): Record<string, string[]> {
 		const gcNodes = {};
 		for (const [nodeId, outboundRoutes] of Object.entries(this.gcNodesSet)) {
 			gcNodes[nodeId] = [...outboundRoutes];
@@ -540,7 +570,7 @@ export class GCDataBuilder implements IGarbageCollectionData {
 		return gcNodes;
 	}
 
-	public addNode(id: string, outboundRoutes: string[]) {
+	public addNode(id: string, outboundRoutes: string[]): void {
 		this.gcNodesSet[id] = new Set(outboundRoutes);
 	}
 
@@ -550,7 +580,7 @@ export class GCDataBuilder implements IGarbageCollectionData {
 	 * - Prefixes the given `prefixId` to the given nodes' ids.
 	 * - Adds the outbound routes of the nodes against the normalized and prefixed id.
 	 */
-	public prefixAndAddNodes(prefixId: string, gcNodes: { [id: string]: string[] }) {
+	public prefixAndAddNodes(prefixId: string, gcNodes: Record<string, string[]>): void {
 		for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
 			// Remove any leading slashes from the id.
 			let normalizedId = trimLeadingSlashes(id);
@@ -565,7 +595,7 @@ export class GCDataBuilder implements IGarbageCollectionData {
 		}
 	}
 
-	public addNodes(gcNodes: { [id: string]: string[] }) {
+	public addNodes(gcNodes: Record<string, string[]>): void {
 		for (const [id, outboundRoutes] of Object.entries(gcNodes)) {
 			this.gcNodesSet[id] = new Set(outboundRoutes);
 		}
@@ -574,7 +604,7 @@ export class GCDataBuilder implements IGarbageCollectionData {
 	/**
 	 * Adds the given outbound route to the outbound routes of all GC nodes.
 	 */
-	public addRouteToAllNodes(outboundRoute: string) {
+	public addRouteToAllNodes(outboundRoute: string): void {
 		for (const outboundRoutes of Object.values(this.gcNodesSet)) {
 			outboundRoutes.add(outboundRoute);
 		}

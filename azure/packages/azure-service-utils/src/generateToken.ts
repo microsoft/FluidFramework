@@ -50,7 +50,7 @@ import { v4 as uuid } from "uuid";
  * Default: `1.0`.
  *
  * @legacy
- * @alpha
+ * @beta
  */
 export function generateToken(
 	tenantId: string,

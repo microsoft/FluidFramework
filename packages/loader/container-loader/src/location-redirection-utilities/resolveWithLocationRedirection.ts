@@ -36,7 +36,7 @@ export function isLocationRedirectionError(
  * @param logger - logger to send events.
  * @returns Response from the API call.
  * @legacy
- * @alpha
+ * @beta
  */
 export async function resolveWithLocationRedirectionHandling<T>(
 	api: (request: IRequest) => Promise<T>,

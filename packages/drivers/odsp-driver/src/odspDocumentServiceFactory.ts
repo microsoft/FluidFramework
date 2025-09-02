@@ -19,7 +19,7 @@ import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore
  * Factory for creating the sharepoint document service. Use this if you want to
  * use the sharepoint implementation.
  * @legacy
- * @alpha
+ * @beta
  */
 export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
 	constructor(
@@ -39,7 +39,7 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
  * content directly.
  *
  * @legacy
- * @alpha
+ * @beta
  */
 export function createLocalOdspDocumentServiceFactory(
 	localSnapshot: Uint8Array | string,

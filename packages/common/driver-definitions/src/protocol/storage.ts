@@ -43,7 +43,7 @@ export interface IBlob {
 	/**
 	 * The encoding of the contents string
 	 */
-	// eslint-disable-next-line unicorn/text-encoding-identifier-case
+	// eslint-disable-next-line unicorn/text-encoding-identifier-case -- Cannot change "utf-8" to "utf8" as this encoding value is stored in summaries and would be a breaking change which needs to be done first before changing to utf8
 	encoding: "utf-8" | "base64";
 }
 

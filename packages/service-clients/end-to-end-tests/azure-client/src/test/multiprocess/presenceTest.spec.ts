@@ -4,13 +4,22 @@
  */
 
 import { strict as assert } from "node:assert";
-import { fork, type ChildProcess } from "node:child_process";
+import type { ChildProcess } from "node:child_process";
 
-// eslint-disable-next-line import/no-internal-modules
 import type { AttendeeId } from "@fluidframework/presence/beta";
-import { timeoutAwait, timeoutPromise } from "@fluidframework/test-utils/internal";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import type { ConnectCommand, MessageFromChild } from "./messageTypes.js";
+import type { MessageFromChild } from "./messageTypes.js";
+import {
+	forkChildProcesses,
+	connectChildProcesses,
+	connectAndWaitForAttendees,
+	registerWorkspaceOnChildren,
+	waitForLatestValueUpdates,
+	waitForLatestMapValueUpdates,
+	getLatestValueResponses,
+	getLatestMapValueResponses,
+} from "./orchestratorUtils.js";
 
 /**
  * This test suite is a prototype for a multi-process end to end test for Fluid using the new Presence API on AzureClient.
@@ -39,211 +48,6 @@ import type { ConnectCommand, MessageFromChild } from "./messageTypes.js";
  */
 
 /**
- * Fork child processes to simulate multiple Fluid clients.
- *
- * @remarks
- * Individual child processes may be scheduled concurrently on a multi-core CPU
- * and separate processes will never share a port when connected to a service.
- *
- * @param numProcesses - The number of child processes to fork.
- * @param cleanUpAccumulator - An array to accumulate cleanup functions for
- * each child process. This is build per instance to accommodate any errors
- * that might occur before completing all forking.
- *
- * @returns A promise that resolves with an object containing the child
- * processes and a promise that rejects on any child process errors.
- */
-async function forkChildProcesses(
-	numProcesses: number,
-	cleanUpAccumulator: (() => void)[],
-): Promise<{
-	children: ChildProcess[];
-	/**
-	 * Will never resolve successfully, it is only used to reject on child process error.
-	 */
-	childErrorPromise: Promise<void>;
-}> {
-	const children: ChildProcess[] = [];
-	const childReadyPromises: Promise<void>[] = [];
-	// Collect all child process error promises into this array
-	const childErrorPromises: Promise<void>[] = [];
-	// Fork child processes
-	for (let i = 0; i < numProcesses; i++) {
-		const child = fork("./lib/test/multiprocess/childClient.js", [
-			`child${i}` /* identifier passed to child process */,
-		]);
-		// Register a cleanup function to kill the child process
-		cleanUpAccumulator.push(() => {
-			child.kill();
-			child.removeAllListeners();
-		});
-		const readyPromise = new Promise<void>((resolve, reject) => {
-			child.once("message", (msg: MessageFromChild) => {
-				if (msg.event === "ack") {
-					resolve();
-				} else {
-					reject(
-						new Error(`Unexpected (non-"ack") message from child${i}: ${JSON.stringify(msg)}`),
-					);
-				}
-			});
-		});
-		childReadyPromises.push(readyPromise);
-		const errorPromise = new Promise<void>((_, reject) => {
-			child.on("error", (error) => {
-				reject(new Error(`Child${i} process errored: ${error.message}`));
-			});
-		});
-		childErrorPromises.push(errorPromise);
-
-		child.send({ command: "ping" });
-
-		children.push(child);
-	}
-	// This race will be used to reject any of the following tests on any child process errors
-	const childErrorPromise = Promise.race(childErrorPromises);
-
-	// All children are always expected to connect successfully and acknowledge the ping.
-	await Promise.race([Promise.all(childReadyPromises), childErrorPromise]);
-
-	return {
-		children,
-		childErrorPromise,
-	};
-}
-
-function composeConnectMessage(id: string | number): ConnectCommand {
-	return {
-		command: "connect",
-		user: {
-			id: `test-user-id-${id}`,
-			name: `test-user-name-${id}`,
-		},
-	};
-}
-
-async function connectChildProcesses(
-	childProcesses: ChildProcess[],
-	readyTimeoutMs: number,
-): Promise<{
-	containerCreatorAttendeeId: AttendeeId;
-	attendeeIdPromises: Promise<AttendeeId>[];
-}> {
-	if (childProcesses.length === 0) {
-		throw new Error("No child processes provided for connection.");
-	}
-	const firstChild = childProcesses[0];
-	const containerReadyPromise = new Promise<{
-		containerCreatorAttendeeId: AttendeeId;
-		containerId: string;
-	}>((resolve, reject) => {
-		firstChild.once("message", (msg: MessageFromChild) => {
-			if (msg.event === "connected" && msg.containerId) {
-				resolve({
-					containerCreatorAttendeeId: msg.attendeeId,
-					containerId: msg.containerId,
-				});
-			} else {
-				reject(new Error(`Non-connected message from child0: ${JSON.stringify(msg)}`));
-			}
-		});
-	});
-	{
-		firstChild.send(composeConnectMessage(0));
-	}
-	const { containerCreatorAttendeeId, containerId } = await timeoutAwait(
-		containerReadyPromise,
-		{
-			durationMs: readyTimeoutMs,
-			errorMsg: "did not receive 'connected' from child process",
-		},
-	);
-
-	const attendeeIdPromises: Promise<AttendeeId>[] = [];
-	for (const [index, child] of childProcesses.entries()) {
-		if (index === 0) {
-			// The first child process is the container creator, it has already sent the 'connected' message.
-			attendeeIdPromises.push(Promise.resolve(containerCreatorAttendeeId));
-			continue;
-		}
-		const message = composeConnectMessage(index);
-
-		// For subsequent children, send containerId but do not wait for a response.
-		message.containerId = containerId;
-
-		attendeeIdPromises.push(
-			new Promise<AttendeeId>((resolve, reject) => {
-				child.once("message", (msg: MessageFromChild) => {
-					if (msg.event === "connected") {
-						resolve(msg.attendeeId);
-					} else if (msg.event === "error") {
-						reject(new Error(`Child process error: ${msg.error}`));
-					}
-				});
-			}),
-		);
-
-		child.send(message);
-	}
-
-	if (containerCreatorAttendeeId === undefined) {
-		throw new Error("No container creator session ID received from child processes.");
-	}
-
-	return { containerCreatorAttendeeId, attendeeIdPromises };
-}
-
-/**
- * Connects the child processes and waits for the specified number of attendees to connect.
- * @remarks
- * This function can be used directly as a test. Comments in the functionality describe the
- * breakdown of test blocks.
- *
- * @param children - Array of child processes to connect.
- * @param attendeeCountRequired - The number of attendees that must connect.
- * @param childConnectTimeoutMs - Timeout duration for child process connections.
- * @param attendeesJoinedTimeoutMs - Timeout duration for required attendees to join.
- * @param earlyExitPromise - Promise that resolves/rejects when the test should early exit.
- */
-async function connectAndWaitForAttendees(
-	children: ChildProcess[],
-	attendeeCountRequired: number,
-	childConnectTimeoutMs: number,
-	attendeesJoinedTimeoutMs: number,
-	earlyExitPromise: Promise<void> = Promise.resolve(),
-): Promise<{ containerCreatorAttendeeId: AttendeeId }> {
-	// Setup
-	const attendeeConnectedPromise = new Promise<void>((resolve) => {
-		let attendeesJoinedEvents = 0;
-		children[0].on("message", (msg: MessageFromChild) => {
-			if (msg.event === "attendeeConnected") {
-				attendeesJoinedEvents++;
-				if (attendeesJoinedEvents >= attendeeCountRequired) {
-					resolve();
-				}
-			}
-		});
-	});
-
-	// Act - connect all child processes
-	const connectResult = await connectChildProcesses(children, childConnectTimeoutMs);
-
-	Promise.all(connectResult.attendeeIdPromises)
-		.then(() => console.log("All attendees connected."))
-		.catch((error) => {
-			console.error("Error connecting children:", error);
-		});
-
-	// Verify - wait for all 'attendeeConnected' events
-	await timeoutAwait(Promise.race([attendeeConnectedPromise, earlyExitPromise]), {
-		durationMs: attendeesJoinedTimeoutMs,
-		errorMsg: "did not receive all 'attendeeConnected' events",
-	});
-
-	return connectResult;
-}
-
-/**
  * This particular test suite tests the following E2E functionality for Presence:
  * - Announce 'attendeeConnected' when remote client joins session.
  * - Announce 'attendeeDisconnected' when remote client disconnects.
@@ -264,10 +68,26 @@ describe(`Presence with AzureClient`, () => {
 	// TODO: AB#45620: "Presence: perf: update Join pattern for scale" may help, then remove .slice.
 	for (const numClients of numClientsForAttendeeTests.slice(0, 2)) {
 		assert(numClients > 1, "Must have at least two clients");
-
-		// Timeout duration used when waiting for response messages from child processes.
+		/**
+		 * Timeout for child processes to connect to container ({@link ConnectedEvent})
+		 */
 		const childConnectTimeoutMs = 1000 * numClients;
-		const allConnectedTimeoutMs = 2000;
+		/**
+		 * Timeout for presence attendees to connect {@link AttendeeConnectedEvent}
+		 */
+		const attendeeJoinedTimeoutMs = 2000;
+		/**
+		 * Timeout for workspace registration {@link WorkspaceRegisteredEvent}
+		 */
+		const workspaceRegisterTimeoutMs = 5000;
+		/**
+		 * Timeout for presence update events {@link LatestMapValueUpdatedEvent} and {@link LatestValueUpdatedEvent}
+		 */
+		const stateUpdateTimeoutMs = 5000;
+		/**
+		 * Timeout for {@link LatestMapValueGetResponseEvent} and {@link LatestValueGetResponseEvent}
+		 */
+		const getStateTimeoutMs = 5000;
 
 		it(`announces 'attendeeConnected' when remote client joins session [${numClients} clients]`, async () => {
 			// Setup
@@ -281,7 +101,7 @@ describe(`Presence with AzureClient`, () => {
 				children,
 				numClients - 1,
 				childConnectTimeoutMs,
-				allConnectedTimeoutMs,
+				attendeeJoinedTimeoutMs,
 				childErrorPromise,
 			);
 		});
@@ -297,7 +117,7 @@ describe(`Presence with AzureClient`, () => {
 				children,
 				numClients - 1,
 				childConnectTimeoutMs,
-				allConnectedTimeoutMs,
+				attendeeJoinedTimeoutMs,
 				childErrorPromise,
 			);
 
@@ -330,6 +150,267 @@ describe(`Presence with AzureClient`, () => {
 
 			// Verify - wait for all 'attendeeDisconnected' events
 			await Promise.race([Promise.all(waitForDisconnected), childErrorPromise]);
+		});
+
+		// This test suite focuses on the synchronization of Latest state between clients.
+		// NOTE: For testing purposes child clients will expect a Latest value of type string.
+		describe(`using Latest state object [${numClients} clients]`, () => {
+			let children: ChildProcess[];
+			let childErrorPromise: Promise<never>;
+			let containerCreatorAttendeeId: AttendeeId;
+			let attendeeIdPromises: Promise<AttendeeId>[];
+			let remoteClients: ChildProcess[];
+			const testValue = "testValue";
+			const workspaceId = "presenceTestWorkspace";
+
+			beforeEach(async () => {
+				({ children, childErrorPromise } = await forkChildProcesses(numClients, afterCleanUp));
+				({ containerCreatorAttendeeId, attendeeIdPromises } = await connectChildProcesses(
+					children,
+					childConnectTimeoutMs,
+				));
+				await Promise.all(attendeeIdPromises);
+				remoteClients = children.filter((_, index) => index !== 0);
+				// NOTE: For testing purposes child clients will expect a Latest value of type string (StateFactory.latest<{ value: string }>).
+				await registerWorkspaceOnChildren(children, workspaceId, {
+					latest: true,
+					timeoutMs: workspaceRegisterTimeoutMs,
+				});
+			});
+
+			it(`allows clients to read Latest state from other clients [${numClients} clients]`, async () => {
+				// Setup
+				const updateEventsPromise = waitForLatestValueUpdates(
+					remoteClients,
+					workspaceId,
+					childErrorPromise,
+					stateUpdateTimeoutMs,
+					{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
+				);
+
+				// Act - Trigger the update
+				children[0].send({
+					command: "setLatestValue",
+					workspaceId,
+					value: testValue,
+				});
+				const updateEvents = await updateEventsPromise;
+
+				// Verify all events are from the expected attendee
+				for (const updateEvent of updateEvents) {
+					assert.strictEqual(updateEvent.attendeeId, containerCreatorAttendeeId);
+					assert.deepStrictEqual(updateEvent.value, testValue);
+				}
+
+				// Act - Request each remote client to read latest state from container creator
+				for (const child of remoteClients) {
+					child.send({
+						command: "getLatestValue",
+						workspaceId,
+						attendeeId: containerCreatorAttendeeId,
+					});
+				}
+
+				const getResponses = await getLatestValueResponses(
+					remoteClients,
+					workspaceId,
+					childErrorPromise,
+					getStateTimeoutMs,
+				);
+
+				// Verify - all responses should contain the expected value
+				for (const getResponse of getResponses) {
+					assert.deepStrictEqual(getResponse.value, testValue);
+				}
+			});
+		});
+
+		// This test suite focuses on the synchronization of LatestMap state between clients.
+		// NOTE: For testing purposes child clients will expect a LatestMap value of type Record<string, string | number>.
+		describe(`using LatestMap state object [${numClients} clients]`, () => {
+			let children: ChildProcess[];
+			let childErrorPromise: Promise<never>;
+			let containerCreatorAttendeeId: AttendeeId;
+			let attendeeIdPromises: Promise<AttendeeId>[];
+			let remoteClients: ChildProcess[];
+			const workspaceId = "presenceTestWorkspace";
+			const key1 = "player1";
+			const key2 = "player2";
+			const value1 = { name: "Alice", score: 100 };
+			const value2 = { name: "Bob", score: 200 };
+
+			beforeEach(async () => {
+				({ children, childErrorPromise } = await forkChildProcesses(numClients, afterCleanUp));
+				({ containerCreatorAttendeeId, attendeeIdPromises } = await connectChildProcesses(
+					children,
+					childConnectTimeoutMs,
+				));
+				await Promise.all(attendeeIdPromises);
+				remoteClients = children.filter((_, index) => index !== 0);
+				// NOTE: For testing purposes child clients will expect a LatestMap value of type Record<string, string | number> (StateFactory.latestMap<{ value: Record<string, string | number> }, string>).
+				await registerWorkspaceOnChildren(children, workspaceId, {
+					latestMap: true,
+					timeoutMs: workspaceRegisterTimeoutMs,
+				});
+			});
+
+			it(`allows clients to read LatestMap values from other clients [${numClients} clients]`, async () => {
+				// Setup
+				const testKey = "cursor";
+				const testValue = { x: 150, y: 300 };
+				const updateEventsPromise = waitForLatestMapValueUpdates(
+					remoteClients,
+					workspaceId,
+					testKey,
+					childErrorPromise,
+					stateUpdateTimeoutMs,
+					{ fromAttendeeId: containerCreatorAttendeeId, expectedValue: testValue },
+				);
+
+				// Act
+				children[0].send({
+					command: "setLatestMapValue",
+					workspaceId,
+					key: testKey,
+					value: testValue,
+				});
+				const updateEvents = await updateEventsPromise;
+
+				// Check all events are from the expected attendee
+				for (const updateEvent of updateEvents) {
+					assert.strictEqual(updateEvent.attendeeId, containerCreatorAttendeeId);
+					assert.strictEqual(updateEvent.key, testKey);
+					assert.deepStrictEqual(updateEvent.value, testValue);
+				}
+
+				for (const child of remoteClients) {
+					child.send({
+						command: "getLatestMapValue",
+						workspaceId,
+						key: testKey,
+						attendeeId: containerCreatorAttendeeId,
+					});
+				}
+				const getResponses = await getLatestMapValueResponses(
+					remoteClients,
+					workspaceId,
+					testKey,
+					childErrorPromise,
+					getStateTimeoutMs,
+				);
+
+				// Verify
+				for (const getResponse of getResponses) {
+					assert.deepStrictEqual(getResponse.value, testValue);
+				}
+			});
+
+			it(`returns per-key values on read [${numClients} clients]`, async () => {
+				// Setup
+				const allAttendeeIds = await Promise.all(attendeeIdPromises);
+				const attendee0Id = containerCreatorAttendeeId;
+				const attendee1Id = allAttendeeIds[1];
+
+				const key1Recipients = children.filter((_, index) => index !== 0);
+				const key2Recipients = children.filter((_, index) => index !== 1);
+				const key1UpdateEventsPromise = waitForLatestMapValueUpdates(
+					key1Recipients,
+					workspaceId,
+					key1,
+					childErrorPromise,
+					stateUpdateTimeoutMs,
+					{ fromAttendeeId: attendee0Id, expectedValue: value1 },
+				);
+				const key2UpdateEventsPromise = waitForLatestMapValueUpdates(
+					key2Recipients,
+					workspaceId,
+					key2,
+					childErrorPromise,
+					stateUpdateTimeoutMs,
+					{ fromAttendeeId: attendee1Id, expectedValue: value2 },
+				);
+
+				// Act
+				children[0].send({
+					command: "setLatestMapValue",
+					workspaceId,
+					key: key1,
+					value: value1,
+				});
+				const key1UpdateEvents = await key1UpdateEventsPromise;
+				children[1].send({
+					command: "setLatestMapValue",
+					workspaceId,
+					key: key2,
+					value: value2,
+				});
+				const key2UpdateEvents = await key2UpdateEventsPromise;
+
+				// Verify all events are from the expected attendees
+				for (const updateEvent of key1UpdateEvents) {
+					assert.strictEqual(updateEvent.attendeeId, attendee0Id);
+					assert.strictEqual(updateEvent.key, key1);
+					assert.deepStrictEqual(updateEvent.value, value1);
+				}
+				for (const updateEvent of key2UpdateEvents) {
+					assert.strictEqual(updateEvent.attendeeId, attendee1Id);
+					assert.strictEqual(updateEvent.key, key2);
+					assert.deepStrictEqual(updateEvent.value, value2);
+				}
+
+				// Read key1 of attendee0 from all children
+				for (const child of children) {
+					child.send({
+						command: "getLatestMapValue",
+						workspaceId,
+						key: key1,
+						attendeeId: attendee0Id,
+					});
+				}
+				const key1Responses = await getLatestMapValueResponses(
+					children,
+					workspaceId,
+					key1,
+					childErrorPromise,
+					getStateTimeoutMs,
+				);
+
+				// Read key2 of attendee1 from all children
+				for (const child of children) {
+					child.send({
+						command: "getLatestMapValue",
+						workspaceId,
+						key: key2,
+						attendeeId: attendee1Id,
+					});
+				}
+				const key2Responses = await getLatestMapValueResponses(
+					children,
+					workspaceId,
+					key2,
+					childErrorPromise,
+					getStateTimeoutMs,
+				);
+
+				// Verify
+				assert.strictEqual(
+					key1Responses.length,
+					numClients,
+					"Expected responses from all clients for key1",
+				);
+				assert.strictEqual(
+					key2Responses.length,
+					numClients,
+					"Expected responses from all clients for key2",
+				);
+
+				for (const response of key1Responses) {
+					assert.deepStrictEqual(response.value, value1, "Key1 value should match");
+				}
+				for (const response of key2Responses) {
+					assert.deepStrictEqual(response.value, value2, "Key2 value should match");
+				}
+			});
 		});
 	}
 });

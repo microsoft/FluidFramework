@@ -15284,12 +15284,18 @@ importers:
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../loader/container-loader
+      '@fluidframework/container-runtime':
+        specifier: workspace:~
+        version: link:../../../runtime/container-runtime
       '@fluidframework/container-runtime-definitions':
         specifier: workspace:~
         version: link:../../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../../common/core-utils
       '@fluidframework/counter':
         specifier: workspace:~
         version: link:../../../dds/counter

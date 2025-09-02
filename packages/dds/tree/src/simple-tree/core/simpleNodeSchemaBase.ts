@@ -25,6 +25,12 @@ export interface SimpleNodeSchemaBase<
 
 	/**
 	 * User-provided {@link NodeSchemaMetadata} for this schema.
+	 *
+	 * @remarks
+	 * Note: this metadata is not persisted nor made part of the collaborative state; it is strictly client-local.
+	 * Different clients in the same collaborative session may see different metadata for the same field.
+	 *
+	 * Set via {@link NodeSchemaOptions.metadata}.
 	 */
 	readonly metadata: NodeSchemaMetadata<TCustomMetadata>;
 }

@@ -21,6 +21,10 @@ export {
 	withSchemaValidation,
 	FluidClientVersion,
 	currentVersion,
+	toFormatValidator,
+	FormatValidatorNoOp,
+	type FormatValidator,
+	extractJsonValidator,
 } from "./codec.js";
 export {
 	DiscriminatedUnionDispatcher,

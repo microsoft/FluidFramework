@@ -61,7 +61,7 @@ import {
  *
  * @returns `true` if the snapshot is cached, `false` otherwise.
  * @legacy
- * @alpha
+ * @beta
  */
 export async function prefetchLatestSnapshot(
 	resolvedUrl: IResolvedUrl,

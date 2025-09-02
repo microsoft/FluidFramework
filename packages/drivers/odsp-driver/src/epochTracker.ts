@@ -48,7 +48,7 @@ import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export type FetchType =
 	| "blob"
@@ -66,7 +66,7 @@ export type FetchType =
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export type FetchTypeInternal = FetchType | "cache";
 
@@ -87,7 +87,7 @@ export const Odsp409Error = "Odsp409Error";
  * It also validates the epoch value received in response of fetch calls. If the epoch does not match,
  * then it also clears all the cached entries for the given container.
  * @legacy
- * @alpha
+ * @beta
  */
 export class EpochTracker implements IPersistedFileCache {
 	private _fluidEpoch: string | undefined;
@@ -619,7 +619,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ICacheAndTracker {
 	cache: IOdspCache;

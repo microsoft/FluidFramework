@@ -23,7 +23,7 @@ import { buildOdspShareLinkReqParams, getContainerPackageName } from "./odspUtil
  * @param containerPackageInfo - Container package information which will be used to extract the container package name.
  * If not given that means that the container package does not have a name.
  * @legacy
- * @alpha
+ * @beta
  */
 export function createOdspCreateContainerRequest(
 	siteUrl: string,

@@ -4,4 +4,10 @@
 
 ```ts
 
+// @beta @legacy
+export const SharedTreeAttributes: IChannelAttributes;
+
+// @beta @legacy
+export const SharedTreeFactoryType = "SharedTree";
+
 ```

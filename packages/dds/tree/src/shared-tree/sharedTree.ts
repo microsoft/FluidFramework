@@ -603,7 +603,7 @@ export interface SharedTreeOptionsInternal
 }
 /**
  * Configuration options for SharedTree's internal tree storage.
- * @alpha
+ * @beta @input
  */
 export interface ForestOptions {
 	/**
@@ -614,7 +614,7 @@ export interface ForestOptions {
 
 /**
  * Options for configuring the persisted format SharedTree uses.
- * @alpha
+ * @alpha @input
  */
 export interface SharedTreeFormatOptions {
 	/**
@@ -644,8 +644,14 @@ export interface SharedTreeFormatOptionsInternal
 /**
  * Used to distinguish between different forest types.
  * @remarks
+ * The "Forest" is the internal data structure used to store all the trees (the main tree and any removed ones) for a given view or branch.
+ * ForestTypes should all have the same behavior, but may differ in performance and debuggability.
+ *
  * Current options are {@link ForestTypeReference}, {@link ForestTypeOptimized} and {@link ForestTypeExpensiveDebug}.
- * @sealed @alpha
+ * @privateRemarks
+ * Implement using {@link toForestType}.
+ * Consume using {@link buildConfiguredForest}.
+ * @sealed @beta
  */
 export interface ForestType extends ErasedType<"ForestType"> {}
 

@@ -14,7 +14,7 @@ import {
 	type TreeView,
 	type InsertableTreeFieldFromImplicitField,
 	type TreeNodeFromImplicitAllowedTypes,
-	SchemaFactoryAlpha,
+	SchemaFactoryBeta,
 } from "../../../simple-tree/index.js";
 import {
 	adaptEnum,
@@ -76,7 +76,7 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("enumFromStrings - construction tests", () => {
-		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
+		const schemaFactory = new SchemaFactoryBeta("com.myApp");
 
 		const ModeNodes = enumFromStrings(schemaFactory.scopedFactory("Mode"), ["A", "B", "C"]);
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
@@ -112,7 +112,7 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("adaptEnum example from docs", () => {
-		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
+		const schemaFactory = new SchemaFactoryBeta("com.myApp");
 		// An enum for use in the tree. Must have string keys.
 		enum Mode {
 			a = "A",
@@ -141,7 +141,7 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("adaptEnum - numbers", () => {
-		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
+		const schemaFactory = new SchemaFactoryBeta("com.myApp");
 		enum Mode {
 			a = 1,
 			b = "B",
@@ -149,7 +149,7 @@ describe("schemaCreationUtilities", () => {
 		}
 		const f = schemaFactory.scopedFactory("Mode");
 
-		type Scope = typeof f extends SchemaFactoryAlpha<infer S> ? S : never;
+		type Scope = typeof f extends SchemaFactoryBeta<infer S> ? S : never;
 		type _check0 = requireTrue<areSafelyAssignable<Scope, "com.myApp.Mode">>;
 
 		const ModeNodes = adaptEnum(f, Mode);
@@ -197,13 +197,13 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("scoping", () => {
-		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
+		const schemaFactory = new SchemaFactoryBeta("com.myApp");
 		enum Mode {
 			a,
 		}
 		const f = schemaFactory.scopedFactory("Mode");
 
-		type Scope = typeof f extends SchemaFactoryAlpha<infer S> ? S : never;
+		type Scope = typeof f extends SchemaFactoryBeta<infer S> ? S : never;
 		type _check0 = requireTrue<areSafelyAssignable<Scope, "com.myApp.Mode">>;
 
 		const ModeNodes = adaptEnum(f, Mode);
@@ -219,7 +219,7 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("adaptEnum - construction tests", () => {
-		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
+		const schemaFactory = new SchemaFactoryBeta("com.myApp");
 		enum Mode {
 			a = "A",
 			b = "B",

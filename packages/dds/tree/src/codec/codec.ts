@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import type { ErasedType } from "@fluidframework/core-interfaces/internal";
 import { IsoBuffer, bufferToString } from "@fluid-internal/client-utils";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 
 import type { ChangeEncodingContext } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
+import { noopValidator } from "./noopValidator.js";
 
 /**
  * Translates decoded data to encoded data.
@@ -45,6 +47,46 @@ export interface SchemaValidationFunction<Schema extends TSchema> {
 }
 
 /**
+ * A kind of validator for SharedTree's internal data formats.
+ * @remarks
+ * Assuming no data corruption or type confusion, such validation should never fail.
+ * Any client version compatibility issues should instead be detected by the data format versioning which Shared Tree does internally independent of data format validation.
+ * However, persisted data can sometimes be corrupted, bugs can produce invalid data, or users can mix up which data is compatible with which APIs.
+ * In such cases, a format validator can help catch issues.
+ *
+ * Current options are {@link FormatValidatorNoOp} and {@link FormatValidatorBasic}.
+ * @privateRemarks
+ * Implement using {@link toFormatValidator}.
+ * Consume using {@link extractJsonValidator}.
+ *
+ * Exposing this as the stable API entry point (instead of {@link JsonValidator}) means that we avoid leaking the reference to TypeBox to the API surface.
+ * Additionally, if we adopt non JSON formats, we can just update the validators as needed without breaking the API.
+ * This also allows us to avoid stabilizing or documenting how handles interact with JSON validation since that is not exposed through this type.
+ * @sealed @alpha
+ */
+export interface FormatValidator extends ErasedType<"FormatValidator"> {}
+
+/**
+ * A {@link FormatValidator} which does no validation.
+ * @alpha
+ */
+export const FormatValidatorNoOp = toFormatValidator(noopValidator);
+
+/**
+ * Type erase a {@link JsonValidator} to a {@link FormatValidator}.
+ */
+export function toFormatValidator(factory: JsonValidator): FormatValidator {
+	return factory as unknown as FormatValidator;
+}
+
+/**
+ * Un-type-erase the {@link FormatValidator}.
+ */
+export function extractJsonValidator(input: FormatValidator | JsonValidator): JsonValidator {
+	return input as unknown as JsonValidator;
+}
+
+/**
  * JSON schema validator compliant with draft 6 schema. See https://json-schema.org.
  * @alpha @input
  */
@@ -69,19 +111,22 @@ export interface JsonValidator {
  */
 export interface ICodecOptions {
 	/**
-	 * {@link JsonValidator} which SharedTree uses to validate persisted data it reads & writes
+	 * {@link FormatValidator} which SharedTree uses to validate persisted data it reads & writes
 	 * matches the expected encoded format (i.e. the wire format for ops and summaries).
-	 *
-	 * See {@link noopValidator} and {@link typeboxValidator} for out-of-the-box implementations.
+	 * @remarks
+	 * See {@link FormatValidatorNoOp} and {@link FormatValidatorBasic} for out-of-the-box implementations.
 	 *
 	 * This option is not "on-by-default" because JSON schema validation comes with a small but noticeable
 	 * runtime performance cost, and popular schema validation libraries have relatively large bundle size.
 	 *
-	 * SharedTree users are still encouraged to use a non-trivial validator (i.e. not `noopValidator`)
+	 * SharedTree users are still encouraged to use a non-trivial validator (i.e. not `FormatValidatorNoOp`)
 	 * whenever reasonable: it gives better fail-fast behavior when unexpected encoded data is found,
 	 * which reduces the risk of unrecoverable data corruption.
+	 *
+	 * Use of {@link JsonValidator} here is deprecated and will be removed:
+	 * it is recommended to use {@link FormatValidator} instead.
 	 */
-	readonly jsonValidator: JsonValidator;
+	readonly jsonValidator: JsonValidator | FormatValidator;
 }
 
 /**
@@ -326,12 +371,12 @@ export function withSchemaValidation<
 >(
 	schema: EncodedSchema,
 	codec: IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TContext>,
-	validator?: JsonValidator,
+	validator?: JsonValidator | FormatValidator,
 ): IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TContext> {
 	if (!validator) {
 		return codec;
 	}
-	const compiledFormat = validator.compile(schema);
+	const compiledFormat = extractJsonValidator(validator).compile(schema);
 	return {
 		encode: (obj: TInMemoryFormat, context: TContext): TEncodedFormat => {
 			const encoded = codec.encode(obj, context);

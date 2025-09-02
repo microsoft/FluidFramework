@@ -8,7 +8,7 @@ import type { Static, TSchema } from "@sinclair/typebox";
 // eslint-disable-next-line import/no-internal-modules
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 
-import type { JsonValidator } from "../codec/index.js";
+import { toFormatValidator, type JsonValidator } from "../codec/index.js";
 
 /**
  * A {@link JsonValidator} implementation which uses TypeBox's JSON schema validator.
@@ -29,3 +29,9 @@ export const typeboxValidator: JsonValidator = {
 		};
 	},
 };
+
+/**
+ * A {@link FormatValidator} implementation which uses TypeBox's JSON schema validator.
+ * @alpha
+ */
+export const FormatValidatorBasic = toFormatValidator(typeboxValidator);

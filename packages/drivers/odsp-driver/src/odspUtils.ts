@@ -63,7 +63,7 @@ export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRep
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IOdspResponse<T> {
 	content: T;
@@ -341,7 +341,7 @@ export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl 
  * Type narrowing utility to determine if the provided {@link @fluidframework/driver-definitions#IResolvedUrl}
  * is an {@link @fluidframework/odsp-driver-definitions#IOdspResolvedUrl}.
  * @legacy
- * @alpha
+ * @beta
  */
 export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl {
 	return "odspResolvedUrl" in resolvedUrl && resolvedUrl.odspResolvedUrl === true;
