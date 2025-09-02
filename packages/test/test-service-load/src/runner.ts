@@ -604,31 +604,49 @@ async function setupOpsMetrics(
 
 	let submittedOpsSize = 0;
 	let submittedOps = 0;
+	// Track cumulative session-level metrics
+	let sessionSubmittedOpsSize = 0;
+	let sessionSubmittedOps = 0;
+	
 	container.deltaManager.on("submitOp", (message) => {
 		if (message?.type === "op") {
 			submittedOps++;
+			sessionSubmittedOps++;
 			const currOpSize = JSON.stringify(message).length;
 			submittedOpsSize += currOpSize;
+			sessionSubmittedOpsSize += currOpSize;
 		}
 	});
 
 	let receivedOpsSize = 0;
 	let receivedOps = 0;
+	// Track cumulative session-level metrics
+	let sessionReceivedOpsSize = 0;
+	let sessionReceivedOps = 0;
+	
 	container.deltaManager.on("op", (message) => {
 		if (message?.type === "op") {
 			receivedOps++;
+			sessionReceivedOps++;
 			const currOpSize = JSON.stringify(message).length;
 			receivedOpsSize += currOpSize;
+			sessionReceivedOpsSize += currOpSize;
 		}
 	});
 
 	let submittedSignals = 0;
 	let receivedSignals = 0;
+	// Track cumulative session-level metrics
+	let sessionSubmittedSignals = 0;
+	let sessionReceivedSignals = 0;
+	
 	testRuntime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 		if (message.type === "generic-signal" && local === true) {
 			submittedSignals += 1;
+			sessionSubmittedSignals += 1;
 		} else if (message.type === "generic-signal" && local === false) {
 			receivedSignals += 1;
+			sessionReceivedSignals += 1;
 		}
 	});
 
@@ -643,6 +661,15 @@ async function setupOpsMetrics(
 				clientId: container.clientId,
 				userName: getUserName(container),
 			});
+			// Send session-level cumulative metric
+			logger.send({
+				category: "metric",
+				eventName: "Fluid Session Operations Sent",
+				testHarnessEvent: true,
+				value: sessionSubmittedOps,
+				clientId: container.clientId,
+				userName: getUserName(container),
+			});
 		}
 		if (receivedOps > 0) {
 			logger.send({
@@ -650,6 +677,15 @@ async function setupOpsMetrics(
 				eventName: "Fluid Operations Received",
 				testHarnessEvent: true,
 				value: receivedOps,
+				clientId: container.clientId,
+				userName: getUserName(container),
+			});
+			// Send session-level cumulative metric
+			logger.send({
+				category: "metric",
+				eventName: "Fluid Session Operations Received",
+				testHarnessEvent: true,
+				value: sessionReceivedOps,
 				clientId: container.clientId,
 				userName: getUserName(container),
 			});
@@ -664,6 +700,15 @@ async function setupOpsMetrics(
 				clientId: container.clientId,
 				userName: getUserName(container),
 			});
+			// Send session-level cumulative metric
+			logger.send({
+				category: "metric",
+				eventName: "Fluid Session Signals Submitted",
+				testHarnessEvent: true,
+				value: sessionSubmittedSignals,
+				clientId: container.clientId,
+				userName: getUserName(container),
+			});
 		}
 		if (receivedSignals > 0) {
 			logger.send({
@@ -671,6 +716,15 @@ async function setupOpsMetrics(
 				eventName: "Fluid Signals Received",
 				testHarnessEvent: true,
 				value: receivedSignals,
+				clientId: container.clientId,
+				userName: getUserName(container),
+			});
+			// Send session-level cumulative metric
+			logger.send({
+				category: "metric",
+				eventName: "Fluid Session Signals Received",
+				testHarnessEvent: true,
+				value: sessionReceivedSignals,
 				clientId: container.clientId,
 				userName: getUserName(container),
 			});
@@ -684,6 +738,15 @@ async function setupOpsMetrics(
 				clientId: container.clientId,
 				userName: getUserName(container),
 			});
+			// Send session-level cumulative metric
+			logger.send({
+				category: "metric",
+				eventName: "Size of Fluid Session Operations Sent",
+				testHarnessEvent: true,
+				value: sessionSubmittedOpsSize,
+				clientId: container.clientId,
+				userName: getUserName(container),
+			});
 		}
 		if (receivedOps > 0) {
 			logger.send({
@@ -691,6 +754,15 @@ async function setupOpsMetrics(
 				eventName: "Size of Fluid Operations Received",
 				testHarnessEvent: true,
 				value: receivedOpsSize,
+				clientId: container.clientId,
+				userName: getUserName(container),
+			});
+			// Send session-level cumulative metric
+			logger.send({
+				category: "metric",
+				eventName: "Size of Fluid Session Operations Received",
+				testHarnessEvent: true,
+				value: sessionReceivedOpsSize,
 				clientId: container.clientId,
 				userName: getUserName(container),
 			});
@@ -702,6 +774,7 @@ async function setupOpsMetrics(
 		receivedSignals = 0;
 		submittedOpsSize = 0;
 		receivedOpsSize = 0;
+		// Note: Don't reset session-level cumulative counters
 
 		t = setTimeout(sendMetrics, progressIntervalMs);
 	};
@@ -710,6 +783,55 @@ async function setupOpsMetrics(
 
 	return (): void => {
 		sendMetrics();
+		// Send final session totals
+		logger.send({
+			category: "metric",
+			eventName: "Fluid Final Session Operations Sent",
+			testHarnessEvent: true,
+			value: sessionSubmittedOps,
+			clientId: container.clientId,
+			userName: getUserName(container),
+		});
+		logger.send({
+			category: "metric",
+			eventName: "Fluid Final Session Operations Received",
+			testHarnessEvent: true,
+			value: sessionReceivedOps,
+			clientId: container.clientId,
+			userName: getUserName(container),
+		});
+		logger.send({
+			category: "metric",
+			eventName: "Fluid Final Session Signals Submitted",
+			testHarnessEvent: true,
+			value: sessionSubmittedSignals,
+			clientId: container.clientId,
+			userName: getUserName(container),
+		});
+		logger.send({
+			category: "metric",
+			eventName: "Fluid Final Session Signals Received",
+			testHarnessEvent: true,
+			value: sessionReceivedSignals,
+			clientId: container.clientId,
+			userName: getUserName(container),
+		});
+		logger.send({
+			category: "metric",
+			eventName: "Size of Fluid Final Session Operations Sent",
+			testHarnessEvent: true,
+			value: sessionSubmittedOpsSize,
+			clientId: container.clientId,
+			userName: getUserName(container),
+		});
+		logger.send({
+			category: "metric",
+			eventName: "Size of Fluid Final Session Operations Received",
+			testHarnessEvent: true,
+			value: sessionReceivedOpsSize,
+			clientId: container.clientId,
+			userName: getUserName(container),
+		});
 		if (t) {
 			clearTimeout(t);
 		}

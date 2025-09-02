@@ -111,6 +111,13 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 					existingSession?.telemetryProperties?.maxConcurrentClients ?? 0,
 					totalCurrentClients,
 				),
+				// Initialize ops and signals counters if they don't exist
+				totalOpsSubmitted: existingSession?.telemetryProperties?.totalOpsSubmitted ?? 0,
+				totalOpsReceived: existingSession?.telemetryProperties?.totalOpsReceived ?? 0,
+				totalSignalsSubmitted: existingSession?.telemetryProperties?.totalSignalsSubmitted ?? 0,
+				totalSignalsReceived: existingSession?.telemetryProperties?.totalSignalsReceived ?? 0,
+				totalOpsSubmittedSize: existingSession?.telemetryProperties?.totalOpsSubmittedSize ?? 0,
+				totalOpsReceivedSize: existingSession?.telemetryProperties?.totalOpsReceivedSize ?? 0,
 			},
 		};
 		// Create a new session in the session manager
@@ -320,6 +327,7 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 				session.lastClientLeaveTime !== undefined
 					? now - session.lastClientLeaveTime
 					: undefined,
+			// Include all session telemetry properties (including new ops/signals metrics)
 			...session.telemetryProperties,
 		});
 		// The lumber metric is created at the end of the session, so "timestamp" is the end time, rather than the usual "start time".
@@ -348,5 +356,81 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
 	): string {
 		return `${sessionId.tenantId}/${sessionId.documentId}`;
+	}
+
+	public async trackSessionOps(
+		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
+		opsSubmitted: number,
+		opsReceived: number,
+		opsSubmittedSize: number,
+		opsReceivedSize: number,
+	): Promise<void> {
+		try {
+			const existingSession = await this.sessionManager.getSession(sessionId);
+			if (!existingSession) {
+				// Session doesn't exist, so we can't track ops for it
+				return;
+			}
+
+			const updatedTelemetryProperties = {
+				...existingSession.telemetryProperties,
+				totalOpsSubmitted: (existingSession.telemetryProperties.totalOpsSubmitted ?? 0) + opsSubmitted,
+				totalOpsReceived: (existingSession.telemetryProperties.totalOpsReceived ?? 0) + opsReceived,
+				totalOpsSubmittedSize: (existingSession.telemetryProperties.totalOpsSubmittedSize ?? 0) + opsSubmittedSize,
+				totalOpsReceivedSize: (existingSession.telemetryProperties.totalOpsReceivedSize ?? 0) + opsReceivedSize,
+			};
+
+			await this.sessionManager.addOrUpdateSession({
+				...existingSession,
+				telemetryProperties: updatedTelemetryProperties,
+			});
+		} catch (error) {
+			Lumberjack.error(
+				"Failed to track session ops",
+				{
+					...getLumberBaseProperties(sessionId.documentId, sessionId.tenantId),
+					opsSubmitted,
+					opsReceived,
+					opsSubmittedSize,
+					opsReceivedSize,
+				},
+				error,
+			);
+		}
+	}
+
+	public async trackSessionSignals(
+		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
+		signalsSubmitted: number,
+		signalsReceived: number,
+	): Promise<void> {
+		try {
+			const existingSession = await this.sessionManager.getSession(sessionId);
+			if (!existingSession) {
+				// Session doesn't exist, so we can't track signals for it
+				return;
+			}
+
+			const updatedTelemetryProperties = {
+				...existingSession.telemetryProperties,
+				totalSignalsSubmitted: (existingSession.telemetryProperties.totalSignalsSubmitted ?? 0) + signalsSubmitted,
+				totalSignalsReceived: (existingSession.telemetryProperties.totalSignalsReceived ?? 0) + signalsReceived,
+			};
+
+			await this.sessionManager.addOrUpdateSession({
+				...existingSession,
+				telemetryProperties: updatedTelemetryProperties,
+			});
+		} catch (error) {
+			Lumberjack.error(
+				"Failed to track session signals",
+				{
+					...getLumberBaseProperties(sessionId.documentId, sessionId.tenantId),
+					signalsSubmitted,
+					signalsReceived,
+				},
+				error,
+			);
+		}
 	}
 }

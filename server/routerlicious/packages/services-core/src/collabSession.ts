@@ -48,6 +48,30 @@ export interface ICollaborationSessionTelemetryProperties {
 	 * The maximum number of clients that have been connected to the session at the same time.
 	 */
 	maxConcurrentClients: number;
+	/**
+	 * Total number of operations submitted during the session lifetime.
+	 */
+	totalOpsSubmitted?: number;
+	/**
+	 * Total number of operations received during the session lifetime.
+	 */
+	totalOpsReceived?: number;
+	/**
+	 * Total number of signals submitted during the session lifetime.
+	 */
+	totalSignalsSubmitted?: number;
+	/**
+	 * Total number of signals received during the session lifetime.
+	 */
+	totalSignalsReceived?: number;
+	/**
+	 * Total size in bytes of operations submitted during the session lifetime.
+	 */
+	totalOpsSubmittedSize?: number;
+	/**
+	 * Total size in bytes of operations received during the session lifetime.
+	 */
+	totalOpsReceivedSize?: number;
 }
 
 /**
@@ -197,4 +221,32 @@ export interface ICollaborationSessionTracker {
 	 * timer shutting down or other errors related to session clean up.
 	 */
 	pruneInactiveSessions(): Promise<void>;
+	/**
+	 * Track operations submitted and received for a specific session.
+	 *
+	 * @param sessionId - Information to identify the document session.
+	 * @param opsSubmitted - Number of operations submitted.
+	 * @param opsReceived - Number of operations received.
+	 * @param opsSubmittedSize - Size in bytes of operations submitted.
+	 * @param opsReceivedSize - Size in bytes of operations received.
+	 */
+	trackSessionOps(
+		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
+		opsSubmitted: number,
+		opsReceived: number,
+		opsSubmittedSize: number,
+		opsReceivedSize: number,
+	): Promise<void>;
+	/**
+	 * Track signals submitted and received for a specific session.
+	 *
+	 * @param sessionId - Information to identify the document session.
+	 * @param signalsSubmitted - Number of signals submitted.
+	 * @param signalsReceived - Number of signals received.
+	 */
+	trackSessionSignals(
+		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
+		signalsSubmitted: number,
+		signalsReceived: number,
+	): Promise<void>;
 }
