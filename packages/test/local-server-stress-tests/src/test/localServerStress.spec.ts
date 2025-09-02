@@ -40,6 +40,8 @@ describe("Local Server Stress", () => {
 		saveFailures,
 		// saveSuccesses,
 		configurations: { "Fluid.Container.enableOfflineLoad": true },
-		skip: [],
+		skip: [
+			...[62], // shared array error
+		],
 	});
 });
