@@ -4,13 +4,10 @@
  */
 
 /* eslint-disable import/no-internal-modules */
-import { done, takeAsync, type AsyncGenerator } from "@fluid-private/stochastic-test-utils";
+import { done, type AsyncGenerator } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import {
-	baseSharedArrayModel,
-	makeSharedArrayOperationGenerator,
-} from "@fluidframework/legacy-dds/internal/test";
+import { baseSharedArrayModel } from "@fluidframework/legacy-dds/internal/test";
 import { baseMapModel, baseDirModel } from "@fluidframework/map/internal/test";
 import { baseSharedMatrixModel } from "@fluidframework/matrix/internal/test";
 import {
@@ -72,19 +69,5 @@ export const ddsModelMap = generateSubModelMap(
 	baseIntervalModel,
 	baseSharedMatrixModel,
 	baseTreeModel,
-	{
-		...baseSharedArrayModel,
-		generatorFactory: () =>
-			takeAsync(
-				100,
-				makeSharedArrayOperationGenerator({
-					insert: 5,
-					delete: 3,
-					move: 3,
-					insertBulkAfter: 1,
-					toggle: 0,
-					toggleMove: 0,
-				}),
-			),
-	},
+	baseSharedArrayModel,
 );

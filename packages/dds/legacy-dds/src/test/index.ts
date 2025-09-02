@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { baseSharedArrayModel, makeSharedArrayOperationGenerator } from "./array/index.js";
+export { baseSharedArrayModel } from "./array/index.js";
