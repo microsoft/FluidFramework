@@ -139,44 +139,53 @@ function DataRow(props: DataRowProps): React.ReactElement {
 	);
 }
 
+function getStatusBadgeColor(status: string): "success" | "warning" | "danger" | "subtle" {
+	switch (status) {
+		case "Closed":
+		case "Detached":
+		case "Disconnected": {
+			return "danger";
+		}
+		case "Attaching":
+		case "Establishing connection":
+		case "Catching up": {
+			return "warning";
+		}
+		case "Connected":
+		case "Attached": {
+			return "success";
+		}
+		case "Read-only": {
+			return "subtle";
+		}
+		default: {
+			return "subtle";
+		}
+	}
+}
+
 function containerStatusValueCell(statusComponents: string[]): React.ReactElement {
+	// Show all states simultaneously in a single container
+	if (statusComponents.length === 0) {
+		return (
+			<TableCellLayout>
+				<Badge shape="rounded" color="subtle">
+					Unknown
+				</Badge>
+			</TableCellLayout>
+		);
+	}
+
+	// Create a flex container to show all status badges side by side
 	return (
-		<TableCellLayout
-			media={((): JSX.Element => {
-				switch (statusComponents[0]) {
-					case AttachState.Attaching: {
-						return (
-							<Badge shape="rounded" color="warning">
-								{statusComponents[0]}
-							</Badge>
-						);
-					}
-					case AttachState.Detached: {
-						return (
-							<Badge shape="rounded" color="danger">
-								{statusComponents[0]}
-							</Badge>
-						);
-					}
-					default: {
-						return (
-							<Badge shape="rounded" color="success">
-								{statusComponents[0]}
-							</Badge>
-						);
-					}
-				}
-			})()}
-		>
-			{statusComponents[1] === "Connected" ? (
-				<Badge shape="rounded" color="success">
-					{statusComponents[1]}
-				</Badge>
-			) : (
-				<Badge shape="rounded" color="danger">
-					{statusComponents[1]}
-				</Badge>
-			)}
+		<TableCellLayout>
+			<div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+				{statusComponents.map((status, index) => (
+					<Badge key={index} shape="rounded" color={getStatusBadgeColor(status)}>
+						{status}
+					</Badge>
+				))}
+			</div>
 		</TableCellLayout>
 	);
 }
@@ -295,21 +304,27 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		usageLogger?.sendTelemetryEvent({ eventName: "CloseContainerButtonClicked" });
 	}
 
-	// Build up status string
+	// Build up status string - show all states simultaneously
 	const statusComponents: string[] = [];
-	if (closed) {
+	if (containerState.closed) {
 		statusComponents.push("Closed");
 	} else {
+		// Always show attach state
 		statusComponents.push(containerState.attachState);
-		if (containerState.attachState === AttachState.Attached) {
+
+		// Show connection state if applicable (regardless of readonly state)
+		if (
+			containerState.attachState === AttachState.Attached &&
+			containerState.connectionState !== undefined
+		) {
 			statusComponents.push(connectionStateToString(containerState.connectionState));
-		} else {
-			/*
-			 * If the container is not attached, it is not connected
-			 * TODO: If the container is detached, it is advisable to disable the action buttons
-			 * since Fluid will consistently fail to establish a connection with a detached container.
-			 */
+		} else if (containerState.attachState !== AttachState.Attached) {
+			// If not attached, show disconnected state
 			statusComponents.push(connectionStateToString(ConnectionState.Disconnected));
+		}
+
+		if (containerState.isReadOnly === true) {
+			statusComponents.push("Read-only");
 		}
 	}
 

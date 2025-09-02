@@ -40,6 +40,7 @@ declare type current_as_old_for_Class_MockAudience = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Class_MockContainerRuntime": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_MockContainerRuntime = requireAssignableTo<TypeOnly<old.MockContainerRuntime>, TypeOnly<current.MockContainerRuntime>>
 
 /*
@@ -94,6 +95,7 @@ declare type current_as_old_for_Class_MockContainerRuntimeFactoryForReconnection
  * typeValidation.broken:
  * "Class_MockContainerRuntimeForReconnection": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_MockContainerRuntimeForReconnection = requireAssignableTo<TypeOnly<old.MockContainerRuntimeForReconnection>, TypeOnly<current.MockContainerRuntimeForReconnection>>
 
 /*

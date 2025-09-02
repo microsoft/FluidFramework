@@ -159,6 +159,12 @@
 			},
 			"Class_MockFluidDataStoreContext": {
 				"forwardCompat": false
+			},
+			"Class_MockContainerRuntimeForReconnection": {
+				"forwardCompat": false
+			},
+			"Class_MockContainerRuntime": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "legacy"

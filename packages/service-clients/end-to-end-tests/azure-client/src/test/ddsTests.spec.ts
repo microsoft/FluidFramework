@@ -9,7 +9,7 @@ import type { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/legacy";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import type { AxiosResponse } from "axios";
 
