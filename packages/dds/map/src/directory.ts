@@ -1813,7 +1813,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			subdir = this._sequencedSubdirectories.get(subdirName);
 		} else if (latestPendingEntry.type === "createSubDirectory") {
 			subdir = latestPendingEntry.subdir;
-			assert(subdir !== undefined, "Subdirectory should exist in pending data");
+			assert(subdir !== undefined, 0xc2f /* Subdirectory should exist in pending data */);
 		} else {
 			// Pending delete
 			return undefined;
@@ -2030,7 +2030,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
 			assert(
 				pendingEntry !== undefined && pendingEntry.type === "createSubDirectory",
-				"Got a local subdir create message we weren't expecting",
+				0xc30 /* Got a local subdir create message we weren't expecting */,
 			);
 			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
 			subDir = pendingEntry.subdir;
@@ -2124,7 +2124,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					pendingEntry !== undefined &&
 						pendingEntry.type === "deleteSubDirectory" &&
 						pendingEntry.subdirName === op.subdirName,
-					"Got a local deleteSubDirectory message we weren't expecting",
+					0xc31 /* Got a local deleteSubDirectory message we weren't expecting */,
 				);
 				this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
 			}
@@ -2143,7 +2143,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				pendingEntry !== undefined &&
 					pendingEntry.type === "deleteSubDirectory" &&
 					pendingEntry.subdirName === op.subdirName,
-				"Got a local deleteSubDirectory message we weren't expecting",
+				0xc32 /* Got a local deleteSubDirectory message we weren't expecting */,
 			);
 			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
 		} else {
@@ -2277,7 +2277,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			if (pendingEntry !== undefined) {
 				assert(
 					pendingEntry.type === "createSubDirectory",
-					"pending entry should be createSubDirectory",
+					0xc33 /* pending entry should be createSubDirectory */,
 				);
 				// We should add the client id, since when reconnecting it can have a different client id.
 				pendingEntry.subdir.clientIds.add(this.runtime.clientId ?? "detached");
@@ -2286,7 +2286,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				this.submitCreateSubDirectoryMessage(op);
 			}
 		} else if (localOpMetadata.type === "deleteSubDir") {
-			assert(localOpMetadata.subDirectory !== undefined, "Subdirectory should exist");
+			assert(
+				localOpMetadata.subDirectory !== undefined,
+				0xc34 /* Subdirectory should exist */,
+			);
 			// For delete operations, look specifically for deleteSubDirectory entries
 			const pendingEntry = findLast(
 				this.pendingSubDirectoryData,
@@ -2364,7 +2367,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			}
 			assert(
 				pendingClear.type === "clear" && localOpMetadata.type === "clear",
-				"Unexpected clear rollback",
+				0xc35 /* Unexpected clear rollback */,
 			);
 			for (const [key] of this.internalIterator()) {
 				const event: IDirectoryValueChanged = {
@@ -2395,7 +2398,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			}
 			assert(
 				pendingEntry.type === "delete" || pendingEntry.type === "lifetime",
-				"Unexpected pending data for set/delete op",
+				0xc36 /* Unexpected pending data for set/delete op */,
 			);
 			if (pendingEntry.type === "delete") {
 				assert(pendingEntry === localOpMetadata, 0xc0b /* Unexpected delete rollback */);
@@ -2448,7 +2451,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
 			assert(
 				pendingEntry !== undefined && pendingEntry.type === "createSubDirectory",
-				"Unexpected pending data for createSubDirectory op",
+				0xc37 /* Unexpected pending data for createSubDirectory op */,
 			);
 
 			// We still need to emit the disposed event for any locally created (and now
@@ -2472,13 +2475,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
 			assert(
 				pendingEntry !== undefined && pendingEntry.type === "deleteSubDirectory",
-				"Unexpected pending data for deleteSubDirectory op",
+				0xc38 /* Unexpected pending data for deleteSubDirectory op */,
 			);
 			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
 
 			// Restore the subdirectory
 			const subDirectoryToRestore = localOpMetadata.subDirectory;
-			assert(subDirectoryToRestore !== undefined, "Subdirectory should exist");
+			assert(subDirectoryToRestore !== undefined, 0xc39 /* Subdirectory should exist */);
 			// Recursively undispose all nested subdirectories before adding to the map
 			// This ensures the subdirectory is properly restored before being exposed
 			this.undisposeSubdirectoryTree(subDirectoryToRestore);
@@ -2603,7 +2606,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const orderedSubdirs = allSubdirs.sort((a, b) => {
 			const aSeqData = a[1].seqData;
 			const bSeqData = b[1].seqData;
-			assert(aSeqData !== undefined && bSeqData !== undefined, "seqData should be defined");
+			assert(
+				aSeqData !== undefined && bSeqData !== undefined,
+				0xc3a /* seqData should be defined */,
+			);
 			return seqDataComparator(aSeqData, bSeqData);
 		});
 
