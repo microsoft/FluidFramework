@@ -39,6 +39,88 @@ export interface ModelDescriptor<T = unknown> {
 }
 
 /**
+ * This base class provides an abstraction between a Data Object's internal data access API
+ * and the underlying Fluid data model.  Any number of data models may be supported, for
+ * perma-back-compat scenarios where the component needs to be ready to load any version
+ * from data at rest.
+ * @experimental
+ * @legacy
+ * @alpha
+ */
+export abstract class MigrationDataObject<
+	M = unknown,
+	I extends DataObjectTypes = DataObjectTypes,
+> extends PureDataObject<I> {
+	// The currently active model and its descriptor, if discovered or created.
+	#activeModel: { descriptor: ModelDescriptor; model: M } | undefined;
+
+	/**
+	 * Probeable candidate roots the implementer expects for existing stores.
+	 * The order defines probing priority.
+	 */
+	protected abstract get modelCandidates(): ModelDescriptor<M>[];
+
+	/**
+	 * Descriptor used to create the new root when initializing a non-existing store.
+	 * If undefined, no root will be created by this base class.
+	 */
+	protected abstract get modelCreator(): ModelDescriptor<M> | undefined;
+
+	/**
+	 * Returns the active model descriptor and channel after initialization.
+	 * Throws if initialization did not set a model.
+	 */
+	public getModel(): { descriptor: ModelDescriptor<M>; model: M } {
+		assert(this.#activeModel !== undefined, "Expected an active model to be defined");
+		return {
+			descriptor: this.#activeModel.descriptor as ModelDescriptor<M>,
+			model: this.#activeModel.model,
+		};
+	}
+
+	/**
+	 * Walks the model candidates in order and finds the first one that probes successfully.
+	 * Sets the active model if found, otherwise leaves it undefined.
+	 */
+	private async refreshRoot(): Promise<void> {
+		this.#activeModel = undefined;
+
+		for (const descriptor of this.modelCandidates ?? []) {
+			try {
+				const maybe = await descriptor.probe(this.runtime);
+				if (maybe !== undefined) {
+					this.#activeModel = { descriptor, model: maybe };
+					return;
+				}
+			} catch {
+				// probe error for this candidate; continue to next candidate
+			}
+		}
+	}
+
+	public override async initializeInternal(existing: boolean): Promise<void> {
+		if (existing) {
+			await this.refreshRoot();
+		} else {
+			const creator = this.modelCreator;
+			if (creator !== undefined) {
+				// Note: implementer is responsible for binding any root channels and populating initial content on the created model
+				const created = await creator.create?.(this.runtime);
+				if (created !== undefined) {
+					this.#activeModel = { descriptor: creator, model: created };
+				}
+			}
+		}
+
+		await super.initializeInternal(existing);
+	}
+
+	// Backwards-compatibility helpers (optional for implementers):
+	// Implementers may provide RootDescriptor helpers for common types like SharedTree/SharedDirectory
+	// rather than implementing create/runtime probing themselves.
+}
+
+/**
  * Helper to build a simple channel-backed model descriptor where the model is an object
  * containing the single channel under `channel` key. The caller provides an id and a
  * runtime type guard for the underlying channel, and optionally a create factory.
@@ -143,86 +225,4 @@ export function sharedTreeDescriptor(
 		},
 		is: (m): m is { tree: ITree } => !!(m && (m as unknown as Record<string, unknown>).tree),
 	};
-}
-
-/**
- * This base class provides an abstraction between a Data Object's internal data access API
- * and the underlying Fluid data model.  Any number of data models may be supported, for
- * perma-back-compat scenarios where the component needs to be ready to load any version
- * from data at rest.
- * @experimental
- * @legacy
- * @alpha
- */
-export abstract class MigrationDataObject<
-	M = unknown,
-	I extends DataObjectTypes = DataObjectTypes,
-> extends PureDataObject<I> {
-	// The currently active model and its descriptor, if discovered or created.
-	#activeModel: { descriptor: ModelDescriptor; model: M } | undefined;
-
-	/**
-	 * Probeable candidate roots the implementer expects for existing stores.
-	 * The order defines probing priority.
-	 */
-	protected abstract get modelCandidates(): ModelDescriptor<M>[];
-
-	/**
-	 * Descriptor used to create the new root when initializing a non-existing store.
-	 * If undefined, no root will be created by this base class.
-	 */
-	protected abstract get modelCreator(): ModelDescriptor<M> | undefined;
-
-	/**
-	 * Returns the active model descriptor and channel after initialization.
-	 * Throws if initialization did not set a model.
-	 */
-	public getModel(): { descriptor: ModelDescriptor<M>; model: M } {
-		assert(this.#activeModel !== undefined, "Expected an active model to be defined");
-		return {
-			descriptor: this.#activeModel.descriptor as ModelDescriptor<M>,
-			model: this.#activeModel.model,
-		};
-	}
-
-	/**
-	 * Walks the model candidates in order and finds the first one that probes successfully.
-	 * Sets the active model if found, otherwise leaves it undefined.
-	 */
-	private async refreshRoot(): Promise<void> {
-		this.#activeModel = undefined;
-
-		for (const descriptor of this.modelCandidates ?? []) {
-			try {
-				const maybe = await descriptor.probe(this.runtime);
-				if (maybe !== undefined) {
-					this.#activeModel = { descriptor, model: maybe };
-					return;
-				}
-			} catch {
-				// probe error for this candidate; continue to next candidate
-			}
-		}
-	}
-
-	public override async initializeInternal(existing: boolean): Promise<void> {
-		if (existing) {
-			await this.refreshRoot();
-		} else {
-			const creator = this.modelCreator;
-			if (creator !== undefined) {
-				// Note: implementer is responsible for binding any root channels and populating initial content on the created model
-				const created = await creator.create?.(this.runtime);
-				if (created !== undefined) {
-					this.#activeModel = { descriptor: creator, model: created };
-				}
-			}
-		}
-
-		await super.initializeInternal(existing);
-	}
-
-	// Backwards-compatibility helpers (optional for implementers):
-	// Implementers may provide RootDescriptor helpers for common types like SharedTree/SharedDirectory
-	// rather than implementing create/runtime probing themselves.
 }
