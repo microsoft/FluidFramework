@@ -5,6 +5,7 @@
 
 import { fork, type ChildProcess } from "node:child_process";
 
+import { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { AttendeeId } from "@fluidframework/presence/beta";
 import { timeoutAwait, timeoutPromise } from "@fluidframework/test-utils/internal";
 
@@ -80,13 +81,18 @@ export async function forkChildProcesses(
  *
  * @param id - Suffix used to construct stable test user identity.
  */
-export function composeConnectMessage(id: string | number): ConnectCommand {
+function composeConnectMessage(
+	id: string | number,
+	scopes: ScopeType[] = [ScopeType.DocRead],
+): ConnectCommand {
 	return {
 		command: "connect",
 		user: {
 			id: `test-user-id-${id}`,
 			name: `test-user-name-${id}`,
 		},
+		scopes,
+		createScopes: [ScopeType.DocWrite],
 	};
 }
 
@@ -98,7 +104,7 @@ export function composeConnectMessage(id: string | number): ConnectCommand {
  */
 export async function connectChildProcesses(
 	childProcesses: ChildProcess[],
-	readyTimeoutMs: number,
+	{ writeClients, readyTimeoutMs }: { writeClients: number; readyTimeoutMs: number },
 ): Promise<{
 	containerCreatorAttendeeId: AttendeeId;
 	attendeeIdPromises: Promise<AttendeeId>[];
@@ -122,7 +128,15 @@ export async function connectChildProcesses(
 			}
 		});
 	});
-	firstChild.send(composeConnectMessage(0));
+	{
+		// Note that DocWrite is used to have this attendee be the "leader".
+		// DocRead would also be valid as DocWrite is specified for attach when there
+		// is no document id (container id).
+		const connectContainerCreator = composeConnectMessage(0, [
+			writeClients > 0 ? ScopeType.DocWrite : ScopeType.DocRead,
+		]);
+		firstChild.send(connectContainerCreator);
+	}
 	const { containerCreatorAttendeeId, containerId } = await timeoutAwait(
 		containerReadyPromise,
 		{
@@ -137,7 +151,9 @@ export async function connectChildProcesses(
 			attendeeIdPromises.push(Promise.resolve(containerCreatorAttendeeId));
 			continue;
 		}
-		const message = composeConnectMessage(index);
+		const message = composeConnectMessage(index, [
+			index < writeClients ? ScopeType.DocWrite : ScopeType.DocRead,
+		]);
 		message.containerId = containerId;
 		attendeeIdPromises.push(
 			new Promise<AttendeeId>((resolve, reject) => {
@@ -160,9 +176,17 @@ export async function connectChildProcesses(
  */
 export async function connectAndWaitForAttendees(
 	children: ChildProcess[],
-	attendeeCountRequired: number,
-	childConnectTimeoutMs: number,
-	attendeesJoinedTimeoutMs: number,
+	{
+		writeClients,
+		attendeeCountRequired,
+		childConnectTimeoutMs,
+		attendeesJoinedTimeoutMs,
+	}: {
+		writeClients: number;
+		attendeeCountRequired: number;
+		childConnectTimeoutMs: number;
+		attendeesJoinedTimeoutMs: number;
+	},
 	earlyExitPromise: Promise<never>,
 ): Promise<{ containerCreatorAttendeeId: AttendeeId }> {
 	const attendeeConnectedPromise = new Promise<void>((resolve) => {
@@ -176,7 +200,10 @@ export async function connectAndWaitForAttendees(
 			}
 		});
 	});
-	const connectResult = await connectChildProcesses(children, childConnectTimeoutMs);
+	const connectResult = await connectChildProcesses(children, {
+		writeClients,
+		readyTimeoutMs: childConnectTimeoutMs,
+	});
 	Promise.all(connectResult.attendeeIdPromises).catch((error) => {
 		console.error("Error connecting children:", error);
 	});
