@@ -426,18 +426,39 @@ class TreeNodeEventBuffer
 {
 	private disposed: boolean = false;
 
+	/**
+	 * Listen to {@link flushEventsEmitter} to know when to flush buffered events.
+	 */
 	private readonly disposeOnFlushListener = flushEventsEmitter.on("flush", () => {
 		this.flush();
 	});
 
+	/**
+	 * {@link AnchorEvents.childrenChangedAfterBatch} listeners.
+	 */
 	private readonly childrenChangedListeners: Set<
 		(arg: {
 			changedFields: ReadonlySet<FieldKey>;
 		}) => void
 	> = new Set();
+
+	/**
+	 * {@link AnchorEvents.subTreeChanged} listeners.
+	 */
 	private readonly subTreeChangedListeners: Set<() => void> = new Set();
 
+	/**
+	 * Buffer of fields that have changed since events were paused.
+	 * When events are flushed, a single {@link AnchorEvents.childrenChangedAfterBatch} event will be emitted
+	 * containing the accumulated set of changed fields.
+	 */
 	private readonly childrenChangedBuffer: Set<FieldKey> = new Set();
+
+	/**
+	 * Whether or not the subtree has changed since events were paused.
+	 * When events are flushed, a single {@link AnchorEvents.subTreeChanged} event will be emitted if and only
+	 * if the subtree has changed.
+	 */
 	private subTreeChangedBuffer: boolean = false;
 
 	public hasListeners(eventName: keyof KernelEvents): boolean {
