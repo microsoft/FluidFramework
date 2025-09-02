@@ -1054,9 +1054,35 @@ export abstract class FluidDataStoreContext
 	 * Get the summary required when attaching this context's DataStore.
 	 * Used for both Container Attach and DataStore Attach.
 	 */
-	public abstract getAttachSummary(
-		telemetryContext?: ITelemetryContext,
-	): ISummaryTreeWithStats;
+	/**
+	 * {@inheritDoc FluidDataStoreContext.getAttachSummary}
+	 */
+	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
+		assert(
+			this.channel !== undefined,
+			0x14f /* "There should be a channel when generating attach message" */,
+		);
+		assert(
+			this.pkg !== undefined,
+			0x150 /* "pkg should be available in local data store context" */,
+		);
+
+		const attachSummary = this.channel.getAttachSummary(telemetryContext);
+
+		// Wrap dds summaries in .channels subtree.
+		wrapSummaryInChannelsTree(attachSummary);
+
+		// Add data store's attributes to the summary.
+		const attributes = createAttributes(this.pkg, this.isInMemoryRoot());
+		addBlobToSummary(attachSummary, dataStoreAttributesBlobName, JSON.stringify(attributes));
+
+		// Add loadingGroupId to the summary
+		if (this.loadingGroupId !== undefined) {
+			attachSummary.summary.groupId = this.loadingGroupId;
+		}
+
+		return attachSummary;
+	}
 
 	/**
 	 * Get the GC Data for the initial state being attached so remote clients can learn of this DataStore's
@@ -1354,13 +1380,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	}
 
 	/**
-	 * {@inheritDoc FluidDataStoreContext.getAttachSummary}
-	 */
-	public getAttachSummary(): ISummaryTreeWithStats {
-		throw new Error("Cannot attach remote store");
-	}
-
-	/**
 	 * {@inheritDoc FluidDataStoreContext.getAttachGCData}
 	 */
 	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
@@ -1434,36 +1453,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 				unreachableCase(attachState, "unreached");
 			}
 		}
-	}
-
-	/**
-	 * {@inheritDoc FluidDataStoreContext.getAttachSummary}
-	 */
-	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
-		assert(
-			this.channel !== undefined,
-			0x14f /* "There should be a channel when generating attach message" */,
-		);
-		assert(
-			this.pkg !== undefined,
-			0x150 /* "pkg should be available in local data store context" */,
-		);
-
-		const attachSummary = this.channel.getAttachSummary(telemetryContext);
-
-		// Wrap dds summaries in .channels subtree.
-		wrapSummaryInChannelsTree(attachSummary);
-
-		// Add data store's attributes to the summary.
-		const attributes = createAttributes(this.pkg, this.isInMemoryRoot());
-		addBlobToSummary(attachSummary, dataStoreAttributesBlobName, JSON.stringify(attributes));
-
-		// Add loadingGroupId to the summary
-		if (this.loadingGroupId !== undefined) {
-			attachSummary.summary.groupId = this.loadingGroupId;
-		}
-
-		return attachSummary;
 	}
 
 	/**

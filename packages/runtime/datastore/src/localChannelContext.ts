@@ -57,7 +57,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		assert(!this.id.includes("/"), 0x30f /* Channel context ID cannot contain slashes */);
 	}
 
-	protected get isGloballyVisible(): boolean {
+	public get isGloballyVisible(): boolean {
 		return this.globallyVisible;
 	}
 

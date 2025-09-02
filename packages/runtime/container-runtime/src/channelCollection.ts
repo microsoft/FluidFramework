@@ -1605,22 +1605,31 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		input: Set<IFluidHandle>,
 	): Record<string, ISummaryTreeWithStats> | undefined {
 		const paths: string[] = [...input].map((h) => toFluidHandleInternal(h).absolutePath);
-		const visited: Set<string> = new Set();
+		const visitedDataStores: Set<string> = new Set();
 
 		let summaries: Record<string, ISummaryTreeWithStats> | undefined;
 
 		while (paths.length > 0) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const path = paths.shift()!;
-			// Path is expected to be "/datastoreId" or similar
-			const id = path.startsWith("/") ? path.slice(1) : path;
-			if (visited.has(id)) continue;
-			visited.add(id);
-			const context = this.contexts.get(id);
-			if (context && this.contexts.isNotBound(id)) {
+			const [datastoreId, channelId, ...things] = (
+				path.startsWith("/") ? path.slice(1) : path
+			).split("/");
+			assert(things.length === 0, "these should never be");
+
+			if (visitedDataStores.has(datastoreId)) continue;
+			visitedDataStores.add(datastoreId);
+			const context = this.contexts.get(datastoreId);
+			assert(context !== undefined, "must have context");
+			if (this.contexts.isNotBound(datastoreId)) {
 				const summary = context.getAttachSummary();
 				summaries ??= {};
-				summaries[id] = summary;
+				summaries[datastoreId] = summary;
+				paths.push(...findAllHandlePaths(summary));
+			} else if (channelId) {
+				const summary = context.getAttachSummary();
+				summaries ??= {};
+				summaries[datastoreId] = summary;
 				paths.push(...findAllHandlePaths(summary));
 			}
 		}

@@ -1057,28 +1057,30 @@ export class FluidDataStoreRuntime
 		this.visitLocalBoundContextsDuringAttach(
 			(contextId: string, context: LocalChannelContextBase) => {
 				let summaryTree: ISummaryTreeWithStats;
-				if (context.isLoaded) {
-					const contextSummary = context.getAttachSummary(telemetryContext);
-					assert(
-						contextSummary.summary.type === SummaryType.Tree,
-						0x180 /* "getAttachSummary should always return a tree" */,
-					);
+				if (!context.isGloballyVisible) {
+					if (context.isLoaded) {
+						const contextSummary = context.getAttachSummary(telemetryContext);
+						assert(
+							contextSummary.summary.type === SummaryType.Tree,
+							0x180 /* "getAttachSummary should always return a tree" */,
+						);
 
-					summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
-				} else {
-					// If this channel is not yet loaded, then there should be no changes in the snapshot from which
-					// it was created as it is detached container. So just use the previous snapshot.
-					assert(
-						!!this.dataStoreContext.baseSnapshot,
-						0x181 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
-					);
-					summaryTree = convertSnapshotTreeToSummaryTree(
-						// TODO why are we non null asserting here?
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						this.dataStoreContext.baseSnapshot.trees[contextId]!,
-					);
+						summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
+					} else {
+						// If this channel is not yet loaded, then there should be no changes in the snapshot from which
+						// it was created as it is detached container. So just use the previous snapshot.
+						assert(
+							!!this.dataStoreContext.baseSnapshot,
+							0x181 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
+						);
+						summaryTree = convertSnapshotTreeToSummaryTree(
+							// TODO why are we non null asserting here?
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							this.dataStoreContext.baseSnapshot.trees[contextId]!,
+						);
+					}
+					summaryBuilder.addWithStats(contextId, summaryTree);
 				}
-				summaryBuilder.addWithStats(contextId, summaryTree);
 			},
 		);
 
