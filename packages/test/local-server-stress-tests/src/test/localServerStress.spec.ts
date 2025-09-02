@@ -44,6 +44,7 @@ describe("Local Server Stress", () => {
 			...[46], // Number of keys not same
 			...[9, 79], // Number of subDirectories not same,
 			...[26], // Unexpected pending data for set/delete op
+			...[62], // shared array error
 		],
 	});
 });

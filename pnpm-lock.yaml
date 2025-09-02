@@ -13623,6 +13623,9 @@ importers:
       '@fluidframework/id-compressor':
         specifier: workspace:~
         version: link:../../runtime/id-compressor
+      '@fluidframework/legacy-dds':
+        specifier: workspace:~
+        version: link:../../dds/legacy-dds
       '@fluidframework/local-driver':
         specifier: workspace:~
         version: link:../../drivers/local-driver
