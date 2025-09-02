@@ -41,8 +41,8 @@ importers:
         specifier: workspace:~
         version: link:packages/tools/changelog-generator-wrapper
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluid-tools/markdown-magic':
         specifier: workspace:~
         version: link:tools/markdown-magic
@@ -50,8 +50,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -126,8 +126,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -163,8 +163,8 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/azure-service-utils-previous':
         specifier: npm:@fluidframework/azure-service-utils@2.53.0
         version: '@fluidframework/azure-service-utils@2.53.0'
@@ -172,8 +172,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -223,8 +223,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/ai-collab':
         specifier: workspace:~
         version: link:../../../packages/framework/ai-collab
@@ -232,8 +232,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/devtools':
         specifier: workspace:~
         version: link:../../../packages/tools/devtools/devtools
@@ -380,14 +380,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -507,14 +507,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -634,14 +634,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -794,14 +794,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -948,14 +948,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -1096,14 +1096,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -1229,14 +1229,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -1332,8 +1332,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -1429,14 +1429,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -1556,8 +1556,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -1659,14 +1659,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -1726,8 +1726,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -1838,8 +1838,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -1941,8 +1941,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -2047,14 +2047,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -2156,8 +2156,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -2256,8 +2256,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -2377,8 +2377,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -2492,8 +2492,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -2619,8 +2619,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -2692,8 +2692,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -2798,8 +2798,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -2904,8 +2904,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -2989,8 +2989,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3023,8 +3023,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3102,8 +3102,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3199,8 +3199,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3224,14 +3224,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3261,8 +3261,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3298,8 +3298,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3335,8 +3335,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3444,8 +3444,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3519,8 +3519,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
@@ -3649,14 +3649,14 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/test-version-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3758,8 +3758,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -3885,8 +3885,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -4021,8 +4021,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -4211,8 +4211,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -4353,8 +4353,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../../packages/common/container-definitions
@@ -4507,8 +4507,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../../packages/common/container-definitions
@@ -4655,14 +4655,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -4770,8 +4770,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/bundle-size-tools':
         specifier: ^0.57.0
         version: 0.57.0(webpack-cli@5.1.4)
@@ -4915,14 +4915,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -4973,8 +4973,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -5070,14 +5070,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -5191,14 +5191,14 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -5300,14 +5300,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -5451,14 +5451,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -5629,14 +5629,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -5789,14 +5789,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -5919,14 +5919,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -6064,14 +6064,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -6185,14 +6185,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -6306,8 +6306,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@types/lodash':
         specifier: ^4.14.118
         version: 4.17.13
@@ -6397,8 +6397,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -6533,14 +6533,14 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/test/test-drivers
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../../packages/loader/container-loader
@@ -6645,8 +6645,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -6724,14 +6724,14 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/dds/test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -6815,14 +6815,14 @@ importers:
         specifier: workspace:~
         version: link:../../../../../packages/dds/test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -6903,14 +6903,14 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -7036,8 +7036,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.86)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../packages/loader/container-loader
@@ -7058,7 +7058,7 @@ importers:
         version: link:../../../packages/framework/undo-redo
       '@microsoft/api-extractor':
         specifier: 7.52.8
-        version: 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
       '@types/chai':
         specifier: ^4.0.0
         version: 4.3.20
@@ -7142,14 +7142,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -7209,14 +7209,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -7279,14 +7279,14 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -7373,14 +7373,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -7485,14 +7485,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/container-definitions-previous':
         specifier: npm:@fluidframework/container-definitions@2.53.0
         version: '@fluidframework/container-definitions@2.53.0'
@@ -7527,14 +7527,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/core-interfaces-previous':
         specifier: npm:@fluidframework/core-interfaces@2.53.0
         version: '@fluidframework/core-interfaces@2.53.0'
@@ -7593,14 +7593,14 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/core-utils-previous':
         specifier: npm:@fluidframework/core-utils@2.53.0
         version: '@fluidframework/core-utils@2.53.0'
@@ -7666,14 +7666,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/driver-definitions-previous':
         specifier: npm:@fluidframework/driver-definitions@2.53.0
         version: '@fluidframework/driver-definitions@2.53.0'
@@ -7736,14 +7736,14 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/cell-previous':
         specifier: npm:@fluidframework/cell@2.53.0
         version: '@fluidframework/cell@2.53.0'
@@ -7827,14 +7827,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -7918,14 +7918,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -8021,14 +8021,14 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -8133,14 +8133,14 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -8257,14 +8257,14 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -8381,14 +8381,14 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -8487,14 +8487,14 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -8581,14 +8581,14 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -8672,14 +8672,14 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -8784,14 +8784,14 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -8905,14 +8905,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/test-pairwise-generator
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -9005,14 +9005,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -9117,14 +9117,14 @@ importers:
         specifier: workspace:~
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -9223,14 +9223,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -9344,14 +9344,14 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -9456,14 +9456,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/debugger-previous':
         specifier: npm:@fluidframework/debugger@2.53.0
         version: '@fluidframework/debugger@2.53.0'
@@ -9523,14 +9523,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/driver-base-previous':
         specifier: npm:@fluidframework/driver-base@2.53.0
         version: '@fluidframework/driver-base@2.53.0(debug@4.4.0)'
@@ -9602,14 +9602,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/driver-web-cache-previous':
         specifier: npm:@fluidframework/driver-web-cache@2.53.0
         version: '@fluidframework/driver-web-cache@2.53.0'
@@ -9675,14 +9675,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -9769,14 +9769,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -9872,14 +9872,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -9942,14 +9942,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -10009,14 +10009,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -10085,14 +10085,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -10176,14 +10176,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -10267,14 +10267,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -10352,14 +10352,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -10446,8 +10446,8 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/agent-scheduler-previous':
         specifier: npm:@fluidframework/agent-scheduler@2.53.0
         version: '@fluidframework/agent-scheduler@2.53.0'
@@ -10455,8 +10455,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -10522,14 +10522,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -10640,8 +10640,8 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/aqueduct-previous':
         specifier: npm:@fluidframework/aqueduct@2.53.0
         version: '@fluidframework/aqueduct@2.53.0'
@@ -10649,8 +10649,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -10746,14 +10746,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/stochastic-test-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -10825,8 +10825,8 @@ importers:
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/app-insights-logger-previous':
         specifier: npm:@fluidframework/app-insights-logger@2.53.0
         version: '@fluidframework/app-insights-logger@2.53.0(tslib@1.14.1)'
@@ -10834,8 +10834,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@microsoft/api-extractor':
         specifier: 7.52.8
         version: 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.67)
@@ -10922,11 +10922,11 @@ importers:
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../test/test-utils
@@ -11028,14 +11028,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -11089,14 +11089,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -11189,14 +11189,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -11283,14 +11283,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -11368,14 +11368,14 @@ importers:
         specifier: workspace:~
         version: link:../../dds/test-dds-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -11453,14 +11453,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
@@ -11544,14 +11544,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -11617,14 +11617,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
@@ -11717,14 +11717,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -11817,14 +11817,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -11932,14 +11932,14 @@ importers:
         specifier: workspace:~
         version: link:../test-loader-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/container-loader-previous':
         specifier: npm:@fluidframework/container-loader@2.53.0
         version: '@fluidframework/container-loader@2.53.0'
@@ -12035,14 +12035,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/driver-utils-previous':
         specifier: npm:@fluidframework/driver-utils@2.53.0
         version: '@fluidframework/driver-utils@2.53.0(debug@4.4.0)'
@@ -12114,14 +12114,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -12217,14 +12217,14 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/container-runtime-previous':
         specifier: npm:@fluidframework/container-runtime@2.53.0
         version: '@fluidframework/container-runtime@2.53.0(debug@4.4.0)'
@@ -12308,14 +12308,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/container-runtime-definitions-previous':
         specifier: npm:@fluidframework/container-runtime-definitions@2.53.0
         version: '@fluidframework/container-runtime-definitions@2.53.0'
@@ -12390,14 +12390,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/datastore-previous':
         specifier: npm:@fluidframework/datastore@2.53.0
         version: '@fluidframework/datastore@2.53.0(debug@4.4.0)'
@@ -12478,14 +12478,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/datastore-definitions-previous':
         specifier: npm:@fluidframework/datastore-definitions@2.53.0
         version: '@fluidframework/datastore-definitions@2.53.0'
@@ -12548,14 +12548,14 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -12624,14 +12624,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -12703,14 +12703,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -12821,14 +12821,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -12909,8 +12909,8 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/azure-client-previous':
         specifier: npm:@fluidframework/azure-client@2.53.0
         version: '@fluidframework/azure-client@2.53.0(encoding@0.1.13)'
@@ -12921,8 +12921,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/container-runtime':
         specifier: workspace:~
         version: link:../../runtime/container-runtime
@@ -13081,8 +13081,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../../common/driver-definitions
@@ -13190,8 +13190,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -13272,14 +13272,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -13366,8 +13366,8 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../framework/aqueduct
@@ -13375,8 +13375,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/container-runtime':
         specifier: workspace:~
         version: link:../../runtime/container-runtime
@@ -13444,14 +13444,14 @@ importers:
         specifier: workspace:~
         version: link:../../loader/test-loader-utils
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/cell':
         specifier: workspace:~
         version: link:../../dds/cell
@@ -13582,8 +13582,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -13715,8 +13715,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -13839,14 +13839,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -13951,14 +13951,14 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -14015,14 +14015,14 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -14085,14 +14085,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -14185,14 +14185,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -14390,14 +14390,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -14448,14 +14448,14 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -14581,14 +14581,14 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -14705,14 +14705,14 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -14871,14 +14871,14 @@ importers:
         specifier: workspace:~
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -14946,8 +14946,8 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       jest-environment-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.8.2)
@@ -15014,14 +15014,14 @@ importers:
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/devtools-previous':
         specifier: npm:@fluidframework/devtools@2.53.0
         version: '@fluidframework/devtools@2.53.0'
@@ -15117,8 +15117,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../common/container-definitions
@@ -15337,14 +15337,14 @@ importers:
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/devtools-core-previous':
         specifier: npm:@fluidframework/devtools-core@2.53.0
         version: '@fluidframework/devtools-core@2.53.0'
@@ -15500,8 +15500,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.14.1)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -15663,14 +15663,14 @@ importers:
         specifier: workspace:~
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -15832,8 +15832,8 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluid-tools/fetch-tool-previous':
         specifier: npm:@fluid-tools/fetch-tool@2.53.0
         version: '@fluid-tools/fetch-tool@2.53.0(encoding@0.1.13)'
@@ -15841,8 +15841,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -15905,14 +15905,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -16050,14 +16050,14 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -16117,14 +16117,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -16202,14 +16202,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -16296,14 +16296,14 @@ importers:
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.67)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -17454,13 +17454,13 @@ packages:
   '@fluid-tools/benchmark@0.51.0':
     resolution: {integrity: sha512-Hych9VQu9RrBlYwBHvb2J20GHIs8abpzx1TgypHHIsYDxqK7IVrQ/NRYTE+e8XvXwVHbiuBWQrtpK9oB9bGm2Q==}
 
-  '@fluid-tools/build-cli@0.57.0':
-    resolution: {integrity: sha512-NWZ5KGmtPFdMQDOfisaa7tiuAIRWvdtPE4ZpJnwS/VR/SW0B/MtX2dCkvVAL/QOvzNk8HZUPJ0wM5cp8NmLMUg==}
+  '@fluid-tools/build-cli@0.58.1':
+    resolution: {integrity: sha512-6tqXSazIjAo+IE6ALB2wZDo4F6uK7BSxv2SswxvHkdXhLXjKOWscI70SoNgbB9D1ZCQUsu3XcmjbP5RbVLZOzw==}
     engines: {node: '>=20.15.1'}
     hasBin: true
 
-  '@fluid-tools/build-infrastructure@0.57.0':
-    resolution: {integrity: sha512-b2Iw8tG1x/odBMldYG9oIH8OtU3RAX56mNcXOs6zWDNvZeA/xCIJNA2LWVki53yUnyICxLjQSlqS+oeX5BBARg==}
+  '@fluid-tools/build-infrastructure@0.58.1':
+    resolution: {integrity: sha512-6TWr9SM5G49X6sKqjzec5B5lK1H3LEylgmIHUGhXQnvw8ura2YFvcIHERptRgNjjl9AZIw/fPCBrDk5sNZM2yg==}
     hasBin: true
 
   '@fluid-tools/fetch-tool@2.53.0':
@@ -17469,6 +17469,11 @@ packages:
 
   '@fluid-tools/version-tools@0.57.0':
     resolution: {integrity: sha512-SViGNYQff84ZHlra9WI8VJe70mnPKbFByuBnA7ZFThGUKPg5ZTmdstkOjaYluQXcz2SPCFnJ/FDNTuXNQPHOjQ==}
+    engines: {node: '>=20.15.1'}
+    hasBin: true
+
+  '@fluid-tools/version-tools@0.58.1':
+    resolution: {integrity: sha512-aljJzuC8D7s6hC4Pj79ru41pDNBjdseYuCzvLLoyqVvvrqDINUFZQFZFP0BxDADcEv+NKf0T8q8SRbwT+NGkYA==}
     engines: {node: '>=20.15.1'}
     hasBin: true
 
@@ -17497,13 +17502,16 @@ packages:
     resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
     hasBin: true
 
-  '@fluidframework/build-tools@0.57.0':
-    resolution: {integrity: sha512-zFCXXM9Gj+gCNAH9AzrgrA0svAm8kcXzrMGkWB98rDjOoYtBDC4MJg4EsM/fzlwG1Qc7ms+yGUYtMOoKJAqwUA==}
+  '@fluidframework/build-tools@0.58.1':
+    resolution: {integrity: sha512-wn+ecw2DtRgWMs+E+ZRy+Ht2trvJi4Y0ZKWTNRRC/9iJ7hY0Qrofysmm61juGnZm4ElTwKELGgVgOYd0aak12A==}
     engines: {node: '>=20.15.1'}
     hasBin: true
 
   '@fluidframework/bundle-size-tools@0.57.0':
     resolution: {integrity: sha512-kPKm02xhVgwXX7X+UbvhsX3N/QO4Tc88fr7Xe6suXyzP3MCovFRkaktVM8i684g83oi9cL51fnTYES5q8r99sg==}
+
+  '@fluidframework/bundle-size-tools@0.58.1':
+    resolution: {integrity: sha512-45wsb8o9vQe9yMX7zr34pHJUPEtgpoZ0gIYlbcbic2GoQGgIhvquqoZ4TXn1KjJrdZZImmfR4yGs/bSb55Qnag==}
 
   '@fluidframework/cell@2.53.0':
     resolution: {integrity: sha512-L7uUAPMGZodkzKxZFwuuisddJPYlWvFciJk2FYzPT5IaRfaXWCbmdZ3EwIzX0t25E09eHxRomUcL6DWD/HSiOQ==}
@@ -29632,13 +29640,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluid-tools/build-cli@0.57.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)':
+  '@fluid-tools/build-cli@0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/build-infrastructure': 0.57.0(@types/node@18.19.67)
-      '@fluid-tools/version-tools': 0.57.0(@types/node@18.19.67)
-      '@fluidframework/build-tools': 0.57.0(@types/node@18.19.67)
-      '@fluidframework/bundle-size-tools': 0.57.0(webpack-cli@5.1.4)
+      '@fluid-tools/build-infrastructure': 0.58.1(@types/node@18.19.67)
+      '@fluid-tools/version-tools': 0.58.1(@types/node@18.19.67)
+      '@fluidframework/build-tools': 0.58.1(@types/node@18.19.67)
+      '@fluidframework/bundle-size-tools': 0.58.1(webpack-cli@5.1.4)
       '@inquirer/prompts': 7.2.0(@types/node@18.19.67)
       '@microsoft/api-extractor': 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.67)
       '@oclif/core': 4.0.36
@@ -29709,13 +29717,13 @@ snapshots:
       - utf-8-validate
       - webpack-cli
 
-  '@fluid-tools/build-cli@0.57.0(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)':
+  '@fluid-tools/build-cli@0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/build-infrastructure': 0.57.0(@types/node@22.14.1)
-      '@fluid-tools/version-tools': 0.57.0(@types/node@22.14.1)
-      '@fluidframework/build-tools': 0.57.0(@types/node@22.14.1)
-      '@fluidframework/bundle-size-tools': 0.57.0(webpack-cli@5.1.4)
+      '@fluid-tools/build-infrastructure': 0.58.1(@types/node@22.14.1)
+      '@fluid-tools/version-tools': 0.58.1(@types/node@22.14.1)
+      '@fluidframework/build-tools': 0.58.1(@types/node@22.14.1)
+      '@fluidframework/bundle-size-tools': 0.58.1(webpack-cli@5.1.4)
       '@inquirer/prompts': 7.2.0(@types/node@22.14.1)
       '@microsoft/api-extractor': 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
       '@oclif/core': 4.0.36
@@ -29786,9 +29794,9 @@ snapshots:
       - utf-8-validate
       - webpack-cli
 
-  '@fluid-tools/build-infrastructure@0.57.0(@types/node@18.19.67)':
+  '@fluid-tools/build-infrastructure@0.58.1(@types/node@18.19.67)':
     dependencies:
-      '@fluid-tools/version-tools': 0.57.0(@types/node@18.19.67)
+      '@fluid-tools/version-tools': 0.58.1(@types/node@18.19.67)
       '@manypkg/get-packages': 2.2.2
       '@oclif/core': 4.0.36
       cosmiconfig: 8.3.6(typescript@5.4.5)
@@ -29812,9 +29820,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluid-tools/build-infrastructure@0.57.0(@types/node@22.14.1)':
+  '@fluid-tools/build-infrastructure@0.58.1(@types/node@22.14.1)':
     dependencies:
-      '@fluid-tools/version-tools': 0.57.0(@types/node@22.14.1)
+      '@fluid-tools/version-tools': 0.58.1(@types/node@22.14.1)
       '@manypkg/get-packages': 2.2.2
       '@oclif/core': 4.0.36
       cosmiconfig: 8.3.6(typescript@5.4.5)
@@ -29879,13 +29887,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluid-tools/version-tools@0.57.0(@types/node@18.19.86)':
+  '@fluid-tools/version-tools@0.58.1(@types/node@18.19.67)':
     dependencies:
       '@oclif/core': 4.0.36
       '@oclif/plugin-autocomplete': 3.2.13
       '@oclif/plugin-commands': 4.1.13
       '@oclif/plugin-help': 6.2.19
-      '@oclif/plugin-not-found': 3.2.30(@types/node@18.19.86)
+      '@oclif/plugin-not-found': 3.2.30(@types/node@18.19.67)
       semver: 7.7.1
       table: 6.9.0
     transitivePeerDependencies:
@@ -29895,7 +29903,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluid-tools/version-tools@0.57.0(@types/node@22.14.1)':
+  '@fluid-tools/version-tools@0.58.1(@types/node@22.14.1)':
     dependencies:
       '@oclif/core': 4.0.36
       '@oclif/plugin-autocomplete': 3.2.13
@@ -30030,9 +30038,9 @@ snapshots:
 
   '@fluidframework/build-common@2.0.3': {}
 
-  '@fluidframework/build-tools@0.57.0(@types/node@18.19.67)':
+  '@fluidframework/build-tools@0.58.1(@types/node@18.19.67)':
     dependencies:
-      '@fluid-tools/version-tools': 0.57.0(@types/node@18.19.67)
+      '@fluid-tools/version-tools': 0.58.1(@types/node@18.19.67)
       '@manypkg/get-packages': 2.2.2
       async: 3.2.6
       cosmiconfig: 8.3.6(typescript@5.4.5)
@@ -30064,43 +30072,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/build-tools@0.57.0(@types/node@18.19.86)':
+  '@fluidframework/build-tools@0.58.1(@types/node@22.14.1)':
     dependencies:
-      '@fluid-tools/version-tools': 0.57.0(@types/node@18.19.86)
-      '@manypkg/get-packages': 2.2.2
-      async: 3.2.6
-      cosmiconfig: 8.3.6(typescript@5.4.5)
-      date-fns: 2.30.0
-      debug: 4.4.0(supports-color@8.1.1)
-      detect-indent: 6.1.0
-      find-up: 7.0.0
-      fs-extra: 11.3.0
-      glob: 7.2.3
-      globby: 11.1.0
-      ignore: 5.3.2
-      json5: 2.2.3
-      lodash.isequal: 4.5.0
-      multimatch: 5.0.0
-      picocolors: 1.1.1
-      picomatch: 2.3.1
-      picospinner: 2.0.0
-      rimraf: 4.4.1
-      semver: 7.7.1
-      sort-package-json: 1.57.0
-      ts-deepmerge: 7.0.2
-      type-fest: 2.19.0
-      typescript: 5.4.5
-      yaml: 2.6.1
-    transitivePeerDependencies:
-      - '@types/node'
-      - bufferutil
-      - react-devtools-core
-      - supports-color
-      - utf-8-validate
-
-  '@fluidframework/build-tools@0.57.0(@types/node@22.14.1)':
-    dependencies:
-      '@fluid-tools/version-tools': 0.57.0(@types/node@22.14.1)
+      '@fluid-tools/version-tools': 0.58.1(@types/node@22.14.1)
       '@manypkg/get-packages': 2.2.2
       async: 3.2.6
       cosmiconfig: 8.3.6(typescript@5.4.5)
@@ -30133,6 +30107,20 @@ snapshots:
       - utf-8-validate
 
   '@fluidframework/bundle-size-tools@0.57.0(webpack-cli@5.1.4)':
+    dependencies:
+      azure-devops-node-api: 11.2.0
+      jszip: 3.10.1
+      msgpack-lite: 0.1.26
+      pako: 2.1.0
+      typescript: 5.4.5
+      webpack: 5.97.1(webpack-cli@5.1.4)
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+      - webpack-cli
+
+  '@fluidframework/bundle-size-tools@0.58.1(webpack-cli@5.1.4)':
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -30529,9 +30517,9 @@ snapshots:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
       eslint-config-biome: 1.9.4
       eslint-config-prettier: 9.0.0(eslint@8.55.0)
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.55.0)
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       eslint-plugin-jsdoc: 46.8.2(eslint@8.55.0)
       eslint-plugin-promise: 6.1.1(eslint@8.55.0)
       eslint-plugin-react: 7.33.2(eslint@8.55.0)
@@ -31538,15 +31526,6 @@ snapshots:
       ansi-escapes: 4.3.2
       yoctocolors-cjs: 2.1.2
 
-  '@inquirer/checkbox@4.0.3(@types/node@18.19.86)':
-    dependencies:
-      '@inquirer/core': 10.1.1(@types/node@18.19.86)
-      '@inquirer/figures': 1.0.8
-      '@inquirer/type': 3.0.1(@types/node@18.19.86)
-      '@types/node': 18.19.86
-      ansi-escapes: 4.3.2
-      yoctocolors-cjs: 2.1.2
-
   '@inquirer/checkbox@4.0.3(@types/node@22.14.1)':
     dependencies:
       '@inquirer/core': 10.1.1(@types/node@22.14.1)
@@ -31573,12 +31552,6 @@ snapshots:
       '@inquirer/type': 3.0.1(@types/node@18.19.67)
       '@types/node': 18.19.67
 
-  '@inquirer/confirm@5.1.0(@types/node@18.19.86)':
-    dependencies:
-      '@inquirer/core': 10.1.1(@types/node@18.19.86)
-      '@inquirer/type': 3.0.1(@types/node@18.19.86)
-      '@types/node': 18.19.86
-
   '@inquirer/confirm@5.1.0(@types/node@22.14.1)':
     dependencies:
       '@inquirer/core': 10.1.1(@types/node@22.14.1)
@@ -31589,20 +31562,6 @@ snapshots:
     dependencies:
       '@inquirer/figures': 1.0.8
       '@inquirer/type': 3.0.1(@types/node@18.19.67)
-      ansi-escapes: 4.3.2
-      cli-width: 4.1.0
-      mute-stream: 2.0.0
-      signal-exit: 4.1.0
-      strip-ansi: 6.0.1
-      wrap-ansi: 6.2.0
-      yoctocolors-cjs: 2.1.2
-    transitivePeerDependencies:
-      - '@types/node'
-
-  '@inquirer/core@10.1.1(@types/node@18.19.86)':
-    dependencies:
-      '@inquirer/figures': 1.0.8
-      '@inquirer/type': 3.0.1(@types/node@18.19.86)
       ansi-escapes: 4.3.2
       cli-width: 4.1.0
       mute-stream: 2.0.0
@@ -31673,13 +31632,6 @@ snapshots:
       '@types/node': 18.19.67
       external-editor: 3.1.0
 
-  '@inquirer/editor@4.2.0(@types/node@18.19.86)':
-    dependencies:
-      '@inquirer/core': 10.1.1(@types/node@18.19.86)
-      '@inquirer/type': 3.0.1(@types/node@18.19.86)
-      '@types/node': 18.19.86
-      external-editor: 3.1.0
-
   '@inquirer/editor@4.2.0(@types/node@22.14.1)':
     dependencies:
       '@inquirer/core': 10.1.1(@types/node@22.14.1)
@@ -31699,13 +31651,6 @@ snapshots:
       '@inquirer/core': 10.1.1(@types/node@18.19.67)
       '@inquirer/type': 3.0.1(@types/node@18.19.67)
       '@types/node': 18.19.67
-      yoctocolors-cjs: 2.1.2
-
-  '@inquirer/expand@4.0.3(@types/node@18.19.86)':
-    dependencies:
-      '@inquirer/core': 10.1.1(@types/node@18.19.86)
-      '@inquirer/type': 3.0.1(@types/node@18.19.86)
-      '@types/node': 18.19.86
       yoctocolors-cjs: 2.1.2
 
   '@inquirer/expand@4.0.3(@types/node@22.14.1)':
@@ -31734,12 +31679,6 @@ snapshots:
       '@inquirer/type': 3.0.1(@types/node@18.19.67)
       '@types/node': 18.19.67
 
-  '@inquirer/input@4.1.0(@types/node@18.19.86)':
-    dependencies:
-      '@inquirer/core': 10.1.1(@types/node@18.19.86)
-      '@inquirer/type': 3.0.1(@types/node@18.19.86)
-      '@types/node': 18.19.86
-
   '@inquirer/input@4.1.0(@types/node@22.14.1)':
     dependencies:
       '@inquirer/core': 10.1.1(@types/node@22.14.1)
@@ -31751,12 +31690,6 @@ snapshots:
       '@inquirer/core': 10.1.1(@types/node@18.19.67)
       '@inquirer/type': 3.0.1(@types/node@18.19.67)
       '@types/node': 18.19.67
-
-  '@inquirer/number@3.0.3(@types/node@18.19.86)':
-    dependencies:
-      '@inquirer/core': 10.1.1(@types/node@18.19.86)
-      '@inquirer/type': 3.0.1(@types/node@18.19.86)
-      '@types/node': 18.19.86
 
   '@inquirer/number@3.0.3(@types/node@22.14.1)':
     dependencies:
@@ -31776,13 +31709,6 @@ snapshots:
       '@inquirer/core': 10.1.1(@types/node@18.19.67)
       '@inquirer/type': 3.0.1(@types/node@18.19.67)
       '@types/node': 18.19.67
-      ansi-escapes: 4.3.2
-
-  '@inquirer/password@4.0.3(@types/node@18.19.86)':
-    dependencies:
-      '@inquirer/core': 10.1.1(@types/node@18.19.86)
-      '@inquirer/type': 3.0.1(@types/node@18.19.86)
-      '@types/node': 18.19.86
       ansi-escapes: 4.3.2
 
   '@inquirer/password@4.0.3(@types/node@22.14.1)':
@@ -31818,20 +31744,6 @@ snapshots:
       '@inquirer/select': 4.0.3(@types/node@18.19.67)
       '@types/node': 18.19.67
 
-  '@inquirer/prompts@7.2.0(@types/node@18.19.86)':
-    dependencies:
-      '@inquirer/checkbox': 4.0.3(@types/node@18.19.86)
-      '@inquirer/confirm': 5.1.0(@types/node@18.19.86)
-      '@inquirer/editor': 4.2.0(@types/node@18.19.86)
-      '@inquirer/expand': 4.0.3(@types/node@18.19.86)
-      '@inquirer/input': 4.1.0(@types/node@18.19.86)
-      '@inquirer/number': 3.0.3(@types/node@18.19.86)
-      '@inquirer/password': 4.0.3(@types/node@18.19.86)
-      '@inquirer/rawlist': 4.0.3(@types/node@18.19.86)
-      '@inquirer/search': 3.0.3(@types/node@18.19.86)
-      '@inquirer/select': 4.0.3(@types/node@18.19.86)
-      '@types/node': 18.19.86
-
   '@inquirer/prompts@7.2.0(@types/node@22.14.1)':
     dependencies:
       '@inquirer/checkbox': 4.0.3(@types/node@22.14.1)
@@ -31859,13 +31771,6 @@ snapshots:
       '@types/node': 18.19.67
       yoctocolors-cjs: 2.1.2
 
-  '@inquirer/rawlist@4.0.3(@types/node@18.19.86)':
-    dependencies:
-      '@inquirer/core': 10.1.1(@types/node@18.19.86)
-      '@inquirer/type': 3.0.1(@types/node@18.19.86)
-      '@types/node': 18.19.86
-      yoctocolors-cjs: 2.1.2
-
   '@inquirer/rawlist@4.0.3(@types/node@22.14.1)':
     dependencies:
       '@inquirer/core': 10.1.1(@types/node@22.14.1)
@@ -31879,14 +31784,6 @@ snapshots:
       '@inquirer/figures': 1.0.8
       '@inquirer/type': 3.0.1(@types/node@18.19.67)
       '@types/node': 18.19.67
-      yoctocolors-cjs: 2.1.2
-
-  '@inquirer/search@3.0.3(@types/node@18.19.86)':
-    dependencies:
-      '@inquirer/core': 10.1.1(@types/node@18.19.86)
-      '@inquirer/figures': 1.0.8
-      '@inquirer/type': 3.0.1(@types/node@18.19.86)
-      '@types/node': 18.19.86
       yoctocolors-cjs: 2.1.2
 
   '@inquirer/search@3.0.3(@types/node@22.14.1)':
@@ -31922,15 +31819,6 @@ snapshots:
       ansi-escapes: 4.3.2
       yoctocolors-cjs: 2.1.2
 
-  '@inquirer/select@4.0.3(@types/node@18.19.86)':
-    dependencies:
-      '@inquirer/core': 10.1.1(@types/node@18.19.86)
-      '@inquirer/figures': 1.0.8
-      '@inquirer/type': 3.0.1(@types/node@18.19.86)
-      '@types/node': 18.19.86
-      ansi-escapes: 4.3.2
-      yoctocolors-cjs: 2.1.2
-
   '@inquirer/select@4.0.3(@types/node@22.14.1)':
     dependencies:
       '@inquirer/core': 10.1.1(@types/node@22.14.1)
@@ -31951,10 +31839,6 @@ snapshots:
   '@inquirer/type@3.0.1(@types/node@18.19.67)':
     dependencies:
       '@types/node': 18.19.67
-
-  '@inquirer/type@3.0.1(@types/node@18.19.86)':
-    dependencies:
-      '@types/node': 18.19.86
 
   '@inquirer/type@3.0.1(@types/node@22.14.1)':
     dependencies:
@@ -32363,14 +32247,6 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@microsoft/api-extractor-model@7.30.6(@types/node@18.19.86)':
-    dependencies:
-      '@microsoft/tsdoc': 0.15.1
-      '@microsoft/tsdoc-config': 0.17.1
-      '@rushstack/node-core-library': 5.13.1(@types/node@18.19.86)
-    transitivePeerDependencies:
-      - '@types/node'
-
   '@microsoft/api-extractor-model@7.30.6(@types/node@22.14.1)':
     dependencies:
       '@microsoft/tsdoc': 0.15.1
@@ -32388,24 +32264,6 @@ snapshots:
       '@rushstack/rig-package': 0.5.3
       '@rushstack/terminal': 0.15.3(@types/node@18.19.67)
       '@rushstack/ts-command-line': 5.0.1(@types/node@18.19.67)
-      lodash: 4.17.21
-      minimatch: 3.0.8
-      resolve: 1.22.10
-      semver: 7.5.4
-      source-map: 0.6.1
-      typescript: 5.8.2
-    transitivePeerDependencies:
-      - '@types/node'
-
-  '@microsoft/api-extractor@7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)':
-    dependencies:
-      '@microsoft/api-extractor-model': 7.30.6(@types/node@18.19.86)
-      '@microsoft/tsdoc': 0.15.1
-      '@microsoft/tsdoc-config': 0.17.1
-      '@rushstack/node-core-library': 5.13.1(@types/node@18.19.86)
-      '@rushstack/rig-package': 0.5.3
-      '@rushstack/terminal': 0.15.3(@types/node@18.19.86)
-      '@rushstack/ts-command-line': 5.0.1(@types/node@18.19.86)
       lodash: 4.17.21
       minimatch: 3.0.8
       resolve: 1.22.10
@@ -32822,15 +32680,6 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@oclif/plugin-not-found@3.2.30(@types/node@18.19.86)':
-    dependencies:
-      '@inquirer/prompts': 7.2.0(@types/node@18.19.86)
-      '@oclif/core': 4.0.36
-      ansis: 3.3.2
-      fast-levenshtein: 3.0.0
-    transitivePeerDependencies:
-      - '@types/node'
-
   '@oclif/plugin-not-found@3.2.30(@types/node@22.14.1)':
     dependencies:
       '@inquirer/prompts': 7.2.0(@types/node@22.14.1)
@@ -32878,7 +32727,7 @@ snapshots:
       '@octokit/graphql': 7.1.0
       '@octokit/request': 8.4.0
       '@octokit/request-error': 5.1.0
-      '@octokit/types': 13.6.2
+      '@octokit/types': 13.10.0
       before-after-hook: 2.2.3
       universal-user-agent: 6.0.1
 
@@ -32905,7 +32754,7 @@ snapshots:
   '@octokit/graphql@7.1.0':
     dependencies:
       '@octokit/request': 8.4.0
-      '@octokit/types': 13.6.2
+      '@octokit/types': 13.10.0
       universal-user-agent: 6.0.1
 
   '@octokit/graphql@8.1.1':
@@ -32948,7 +32797,7 @@ snapshots:
 
   '@octokit/request-error@5.1.0':
     dependencies:
-      '@octokit/types': 13.6.2
+      '@octokit/types': 13.10.0
       deprecation: 2.3.1
       once: 1.4.0
 
@@ -32960,7 +32809,7 @@ snapshots:
     dependencies:
       '@octokit/endpoint': 9.0.5
       '@octokit/request-error': 5.1.0
-      '@octokit/types': 13.6.2
+      '@octokit/types': 13.10.0
       universal-user-agent: 6.0.1
 
   '@octokit/request@9.1.3':
@@ -33195,19 +33044,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 18.19.67
 
-  '@rushstack/node-core-library@5.13.1(@types/node@18.19.86)':
-    dependencies:
-      ajv: 8.13.0
-      ajv-draft-04: 1.0.0(ajv@8.13.0)
-      ajv-formats: 3.0.1(ajv@8.13.0)
-      fs-extra: 11.3.0
-      import-lazy: 4.0.0
-      jju: 1.4.0
-      resolve: 1.22.10
-      semver: 7.5.4
-    optionalDependencies:
-      '@types/node': 18.19.86
-
   '@rushstack/node-core-library@5.13.1(@types/node@22.14.1)':
     dependencies:
       ajv: 8.13.0
@@ -33240,13 +33076,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 18.19.67
 
-  '@rushstack/terminal@0.15.3(@types/node@18.19.86)':
-    dependencies:
-      '@rushstack/node-core-library': 5.13.1(@types/node@18.19.86)
-      supports-color: 8.1.1
-    optionalDependencies:
-      '@types/node': 18.19.86
-
   '@rushstack/terminal@0.15.3(@types/node@22.14.1)':
     dependencies:
       '@rushstack/node-core-library': 5.13.1(@types/node@22.14.1)
@@ -33268,15 +33097,6 @@ snapshots:
   '@rushstack/ts-command-line@5.0.1(@types/node@18.19.67)':
     dependencies:
       '@rushstack/terminal': 0.15.3(@types/node@18.19.67)
-      '@types/argparse': 1.0.38
-      argparse: 1.0.10
-      string-argv: 0.3.2
-    transitivePeerDependencies:
-      - '@types/node'
-
-  '@rushstack/ts-command-line@5.0.1(@types/node@18.19.86)':
-    dependencies:
-      '@rushstack/terminal': 0.15.3(@types/node@18.19.86)
       '@types/argparse': 1.0.38
       argparse: 1.0.10
       string-argv: 0.3.2
@@ -36463,33 +36283,33 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.0(supports-color@8.1.1)
       enhanced-resolve: 5.17.1
       eslint: 8.55.0
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       fast-glob: 3.3.3
       get-tsconfig: 4.10.0
       is-bun-module: 1.3.0
       is-glob: 4.0.3
     optionalDependencies:
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
       - eslint-import-resolver-node
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -36503,13 +36323,13 @@ snapshots:
       eslint: 8.55.0
       ignore: 5.3.2
 
-  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
     dependencies:
       debug: 4.4.0(supports-color@8.1.1)
       doctrine: 3.0.0
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       get-tsconfig: 4.10.0
       is-glob: 4.0.3
       minimatch: 3.1.2
