@@ -13,4 +13,4 @@ Enum
 openable
 Datastore
 DDSes
-accessors
+accessor
