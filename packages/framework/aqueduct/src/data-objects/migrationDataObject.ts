@@ -4,17 +4,26 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { SharedDirectory, type ISharedDirectory } from "@fluidframework/map/internal";
+import type {
+	IChannel,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
-import { SharedTree, type ITree } from "@fluidframework/tree/internal";
 
-import type { IDelayLoadChannelFactory } from "../channel-factories/index.js";
-
-import { dataObjectRootDirectoryId } from "./dataObject.js";
 import { PureDataObject } from "./pureDataObject.js";
-import { treeChannelId } from "./treeDataObject.js";
 import type { DataObjectTypes } from "./types.js";
+
+/**
+ * Descriptor for a candidate root/channel type the migration data object can probe for
+ * or create when initializing.
+ */
+export interface RootDescriptor<T extends IChannel = IChannel> {
+	id: string;
+	// runtime type guard to validate a retrieved channel
+	typeGuard: (ch: IChannel) => ch is T;
+	// optional factory used to create the channel when initializing a new object
+	create?: (runtime: IFluidDataStoreRuntime) => Promise<T> | T;
+}
 
 /**
  * ! TODO
@@ -25,49 +34,49 @@ import type { DataObjectTypes } from "./types.js";
 export abstract class MigrationDataObject<
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObject<I> {
-	#tree: ITree | undefined;
-	#directory: ISharedDirectory | undefined;
+	// The currently active model/channel and its descriptor, if discovered or created.
+	#activeModel: { descriptor: RootDescriptor; channel: IChannel } | undefined;
 
-	public getRoot():
-		| {
-				isDirectory: true;
-				root: ISharedDirectory;
-		  }
-		| {
-				isDirectory: false;
-				root: ITree;
-		  } {
-		assert(
-			this.#directory !== undefined && this.#tree !== undefined,
-			"Expected either directory or tree to be defined",
-		);
-		return this.#directory === undefined
-			? {
-					isDirectory: false,
-					root: this.#tree,
-				}
-			: {
-					isDirectory: true,
-					root: this.#directory,
-				};
+	/**
+	 * Probeable candidate roots the implementer expects for existing stores.
+	 * The order defines probing priority.
+	 */
+	protected abstract get rootCandidates(): RootDescriptor[];
+
+	/**
+	 * Descriptor used to create the new root when initializing a non-existing store.
+	 * If undefined, no root will be created by this base class.
+	 */
+	protected abstract get rootCreator(): RootDescriptor | undefined;
+
+	/**
+	 * Returns the active model descriptor and channel after initialization.
+	 * Throws if initialization did not set a model.
+	 */
+	public getModel<T extends IChannel = IChannel>(): {
+		descriptor: RootDescriptor<T>;
+		root: T;
+	} {
+		assert(this.#activeModel !== undefined, "Expected an active model to be defined");
+		return {
+			descriptor: this.#activeModel.descriptor as RootDescriptor<T>,
+			root: this.#activeModel.channel as unknown as T,
+		};
 	}
 
 	private async refreshRoot(): Promise<void> {
-		this.#tree = undefined;
-		this.#directory = undefined;
-		let channel: IChannel;
-		try {
-			// data store has a root tree so we just need to set it before calling initializingFromExisting
-			channel = await this.runtime.getChannel(treeChannelId);
-			// eslint-disable-next-line unicorn/prefer-optional-catch-binding
-		} catch (_) {
-			channel = await this.runtime.getChannel(dataObjectRootDirectoryId);
-		}
+		this.#activeModel = undefined;
 
-		if (SharedTree.is(channel)) {
-			this.#tree = channel;
-		} else {
-			this.#directory = channel as ISharedDirectory;
+		for (const desc of this.rootCandidates ?? []) {
+			try {
+				const channel = await this.runtime.getChannel(desc.id);
+				if (desc.typeGuard(channel)) {
+					this.#activeModel = { descriptor: desc, channel };
+					return;
+				}
+			} catch {
+				// channel not present or other error probing this id; continue to next candidate
+			}
 		}
 	}
 
@@ -75,28 +84,25 @@ export abstract class MigrationDataObject<
 		if (existing) {
 			await this.refreshRoot();
 		} else {
-			if (this.createUsingSharedTree) {
-				const sharedTree = await this.treeDelayLoadFactory.createAsync(
-					this.runtime,
-					treeChannelId,
-				);
-				(sharedTree as unknown as ISharedObject).bindToContext();
-
-				this.#tree = sharedTree;
-
-				// Note, the implementer is responsible for initializing the tree with initial data.
-				// Generally, this can be done via `initializingFirstTime`.
-			} else {
-				this.#directory = SharedDirectory.create(this.runtime, dataObjectRootDirectoryId);
-				this.#directory.bindToContext();
+			const creator = this.rootCreator;
+			if (creator !== undefined) {
+				const created = await creator.create?.(this.runtime);
+				if (created !== undefined) {
+					// bind to context if supported
+					const maybeShared = created as unknown as ISharedObject;
+					if (maybeShared.bindToContext !== undefined) {
+						maybeShared.bindToContext();
+					}
+					this.#activeModel = { descriptor: creator, channel: created as unknown as IChannel };
+				}
+				// Note: implementer is responsible for populating initial content on the created channel
 			}
 		}
 
 		await super.initializeInternal(existing);
 	}
 
-	protected abstract get createUsingSharedTree(): boolean;
-
-	// ! Should we try and pass this from factory to not double up on downloading the package? Or would it reuse the firwsst download?
-	protected abstract get treeDelayLoadFactory(): IDelayLoadChannelFactory<ITree>;
+	// Backwards-compatibility helpers (optional for implementers):
+	// Implementers may provide RootDescriptor helpers for common types like SharedTree/SharedDirectory
+	// rather than implementing create/runtime probing themselves.
 }
