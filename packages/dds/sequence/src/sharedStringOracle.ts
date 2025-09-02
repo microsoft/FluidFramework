@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MergeTreeDeltaType } from "@fluidframework/merge-tree/internal";
+import { MergeTreeDeltaType, TextSegment } from "@fluidframework/merge-tree/internal";
 
 import type { SequenceDeltaEvent } from "./sequenceDeltaEvent.js";
 import type { SharedString } from "./sequenceFactory.js";
@@ -14,7 +14,8 @@ import type { SharedString } from "./sequenceFactory.js";
  * @internal
  */
 export class SharedStringOracle {
-	private model: string[] = [];
+	private readonly model: string[] = [];
+	private readonly onDelta = (event: SequenceDeltaEvent) => this.applyDelta(event);
 
 	constructor(private readonly shared: SharedString) {
 		this.model = shared.getText().split("");
@@ -29,8 +30,9 @@ export class SharedStringOracle {
 
 			switch (range.operation) {
 				case MergeTreeDeltaType.INSERT: {
-					const insertedText = this.shared.getText(pos, pos + len);
-					this.model.splice(pos, 0, ...insertedText.split(""));
+					if (TextSegment.is(range.segment)) {
+						this.model.splice(pos, 0, ...range.segment.text.split(""));
+					}
 					break;
 				}
 				case MergeTreeDeltaType.REMOVE: {
@@ -42,7 +44,7 @@ export class SharedStringOracle {
 					break;
 				}
 				case MergeTreeDeltaType.OBLITERATE: {
-					this.model = [];
+					this.model.splice(pos, len);
 					break;
 				}
 				default: {
@@ -62,5 +64,9 @@ export class SharedStringOracle {
 		if (actual !== mirror) {
 			throw new Error(`SharedStringOracle mismatch: expected="${mirror}", actual="${actual}"`);
 		}
+	}
+
+	dispose() {
+		this.shared.off("sequenceDelta", this.onDelta);
 	}
 }

@@ -44,7 +44,7 @@ import {
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
 import { ISharedString, type SharedStringClass } from "../../sharedString.js";
-import { SharedStringOracle } from "../../sharedStringOracle.js";
+import type { SharedStringOracle } from "../../sharedStringOracle.js";
 import { _dirname } from "../dirname.cjs";
 import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
 
@@ -56,6 +56,14 @@ export type RevertibleSharedString = ISharedString & {
 };
 export function isRevertibleSharedString(s: ISharedString): s is RevertibleSharedString {
 	return (s as RevertibleSharedString).revertibles !== undefined;
+}
+
+export interface OracleSharedString extends ISharedString {
+	oracle: SharedStringOracle;
+}
+
+export function hasOracle(s: ISharedString): s is OracleSharedString {
+	return (s as OracleSharedString).oracle !== undefined;
 }
 
 export interface RangeSpec {
@@ -467,12 +475,6 @@ export const baseModel: Omit<
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 		makeReducer(),
 	validateConsistency: async (a, b) => {
-		const oracleA = new SharedStringOracle(a.channel);
-		const oracleB = new SharedStringOracle(b.channel);
-
-		oracleA.validate();
-		oracleB.validate();
-
 		void assertEquivalentSharedStrings(a.channel, b.channel);
 	},
 	factory: new SharedStringFuzzFactory(),
