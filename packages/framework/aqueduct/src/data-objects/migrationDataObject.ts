@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { PureDataObject } from "./pureDataObject.js";
 import type { DataObjectTypes } from "./types.js";
@@ -16,19 +15,22 @@ import type { DataObjectTypes } from "./types.js";
  * runtime state to determine whether the model exists and return a model instance.
  */
 export interface ModelDescriptor<T = unknown> {
-	//* Add discriminated union tag
-	// Optional human-friendly name for diagnostics
-	name?: string;
+	// Discriminated union tag
+	type?: string;
 	// Optional convenience id for simple channel-backed models
 	id?: string;
-	// Probe runtime for an existing model. Return the model instance or undefined if not found.
+	//* This mechanism feels a bit brittle or overly generic. Maybe each model needs a key channel or something? Or maybe it's ok.
+	// Probe runtime for an existing model based on which channels exist. Return the model instance or undefined if not found.
 	probe: (runtime: IFluidDataStoreRuntime) => Promise<T | undefined> | T | undefined;
 	// Optional factory to create the model when initializing a new store.
 	create?: (runtime: IFluidDataStoreRuntime) => Promise<T> | T;
 }
 
 /**
- * ! TODO
+ * This base class provides an abstraction between a Data Object's internal data access API
+ * and the underlying Fluid data model.  Any number of data models may be supported, for
+ * perma-back-compat scenarios where the component needs to be ready to load any version
+ * from data at rest.
  * @experimental
  * @legacy
  * @alpha
@@ -63,14 +65,18 @@ export abstract class MigrationDataObject<
 		};
 	}
 
+	/**
+	 * Walks the model candidates in order and finds the first one that probes successfully.
+	 * Sets the active model if found, otherwise leaves it undefined.
+	 */
 	private async refreshRoot(): Promise<void> {
 		this.#activeModel = undefined;
 
-		for (const desc of this.modelCandidates ?? []) {
+		for (const descriptor of this.modelCandidates ?? []) {
 			try {
-				const maybe = await desc.probe(this.runtime);
+				const maybe = await descriptor.probe(this.runtime);
 				if (maybe !== undefined) {
-					this.#activeModel = { descriptor: desc, model: maybe };
+					this.#activeModel = { descriptor, model: maybe };
 					return;
 				}
 			} catch {
@@ -85,16 +91,11 @@ export abstract class MigrationDataObject<
 		} else {
 			const creator = this.modelCreator;
 			if (creator !== undefined) {
+				// Note: implementer is responsible for binding any root channels and populating initial content on the created model
 				const created = await creator.create?.(this.runtime);
 				if (created !== undefined) {
-					// bind to context if supported
-					const maybeShared = created as unknown as ISharedObject;
-					if (maybeShared.bindToContext !== undefined) {
-						maybeShared.bindToContext();
-					}
 					this.#activeModel = { descriptor: creator, model: created };
 				}
-				// Note: implementer is responsible for populating initial content on the created model
 			}
 		}
 
