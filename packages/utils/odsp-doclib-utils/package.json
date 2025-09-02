@@ -132,7 +132,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.57.0",
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
-		"@fluidframework/odsp-doclib-utils-previous": "npm:@fluidframework/odsp-doclib-utils@2.53.0",
+		"@fluidframework/odsp-doclib-utils-previous": "npm:@fluidframework/odsp-doclib-utils@2.60.0",
 		"@microsoft/api-extractor": "7.52.8",
 		"@types/isomorphic-fetch": "^0.0.39",
 		"@types/mocha": "^10.0.10",
