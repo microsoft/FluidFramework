@@ -99,7 +99,6 @@
 		"@fluid-tools/build-cli": "^0.57.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.57.0",
-		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.45.1",
 		"c8": "^8.0.1",
 		"changesets-format-with-issue-links": "^0.3.0",
