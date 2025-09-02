@@ -818,24 +818,8 @@ export abstract class SharedObject<
 		return this._serializer;
 	}
 
-	private readonly _serializer2: IFluidSerializer;
-
 	//* TODO: Probably don't actually create two.  We'll see.
 	//* For Summarization (not attach summaries)
-	private get serializer2(): IFluidSerializer {
-		/**
-		 * During garbage collection, the GCHandleVisitor "serializer" keeps track of IFluidHandles that are serialized. These
-		 * handles represent references to other Fluid objects.
-		 *
-		 * This is fine for now. However, if we implement delay loading in DDSes, they may load and de-serialize content
-		 * in summarize. When that happens, they may incorrectly hit this assert and we will have to change this.
-		 */
-		assert(
-			!this._isGCing,
-			0x075 /* "SummarySerializer should be used for serializing data during summary." */,
-		);
-		return this._serializer2;
-	}
 
 	constructor(
 		id: string,
@@ -849,10 +833,6 @@ export abstract class SharedObject<
 		super(id, runtime, attributes);
 
 		this._serializer = new FluidSerializer(this.runtime.channelsRoutingContext);
-		this._serializer2 = new FluidSerializer(
-			this.runtime.channelsRoutingContext,
-			true /* forSummarization */,
-		);
 	}
 
 	/**
@@ -891,8 +871,15 @@ export abstract class SharedObject<
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): Promise<ISummaryTreeWithStats> {
+		// Create a fresh serializer instance with forSummarization: true
+		// This will skip the "bind" side effect of FluidSerializer, which is asserted to be a no-op in this case.
+		const summarizeSerializer = new FluidSerializer(
+			this.runtime.channelsRoutingContext,
+			true /* forSummarization */,
+		);
+
 		const result = this.summarizeCore(
-			this.serializer2,
+			summarizeSerializer,
 			telemetryContext,
 			incrementalSummaryContext,
 			fullTree,
