@@ -66,7 +66,7 @@ export class FluidSerializer implements IFluidSerializer {
 
 	public constructor(
 		private readonly context: IFluidHandleContext,
-		private readonly forSummarization: boolean = false,
+		private readonly forSummarizer: boolean = false,
 	) {
 		this.root = this.context;
 		while (this.root.routeContext !== undefined) {
@@ -228,7 +228,7 @@ export class FluidSerializer implements IFluidSerializer {
 		handle: IFluidHandleInternal,
 		bind: ISharedObjectHandle,
 	): ISerializedHandle {
-		if (this.forSummarization) {
+		if (this.forSummarizer) {
 			assert(bind.isAttached, "Expected bind source to be attached in the Summarizer");
 			assert(
 				handle.isAttached,

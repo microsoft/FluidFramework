@@ -818,9 +818,6 @@ export abstract class SharedObject<
 		return this._serializer;
 	}
 
-	//* TODO: Probably don't actually create two.  We'll see.
-	//* For Summarization (not attach summaries)
-
 	constructor(
 		id: string,
 		runtime: IFluidDataStoreRuntime,
@@ -871,15 +868,15 @@ export abstract class SharedObject<
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): Promise<ISummaryTreeWithStats> {
-		// Create a fresh serializer instance with forSummarization: true
+		// Create a fresh serializer instance with forSummarizer: true
 		// This will skip the "bind" side effect of FluidSerializer, which is asserted to be a no-op in this case.
-		const summarizeSerializer = new FluidSerializer(
+		const summarizerSerializer = new FluidSerializer(
 			this.runtime.channelsRoutingContext,
-			true /* forSummarization */,
+			true /* forSummarizer */,
 		);
 
 		const result = this.summarizeCore(
-			summarizeSerializer,
+			summarizerSerializer,
 			telemetryContext,
 			incrementalSummaryContext,
 			fullTree,
