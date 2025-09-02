@@ -1789,7 +1789,7 @@ describe("treeNodeApi", () => {
 			});
 		});
 
-		describeHydration("array node", (initializeTree, hydrated) => {
+		describeHydration("array node", (initializeTree) => {
 			const sb = new SchemaFactory("array-node-tests");
 			class myObject extends sb.object("object", {
 				myNumber: sb.number,
@@ -1874,53 +1874,49 @@ describe("treeNodeApi", () => {
 				assert.equal(a2DeepChanges, 1, `treeChanged should fire once.`);
 			});
 
-			// Extra events are fired for move operation within unhydrated array nodes.
-			// TODO:AB#47457: Fix and re-enable this test in unhydrated mode.
-			if (hydrated) {
-				it(`all operations on the node trigger 'nodeChanged' and 'treeChanged' the correct number of times`, () => {
-					const testSchema = sb.array("listRoot", sb.number);
-					const root = initializeTree(testSchema, []);
+			it(`all operations on the node trigger 'nodeChanged' and 'treeChanged' the correct number of times`, () => {
+				const testSchema = sb.array("listRoot", sb.number);
+				const root = initializeTree(testSchema, []);
 
-					let shallowChanges = 0;
-					let deepChanges = 0;
-					Tree.on(root, "treeChanged", () => {
-						deepChanges++;
-					});
-					Tree.on(root, "nodeChanged", () => {
-						shallowChanges++;
-					});
-
-					// Insert single item
-					root.insertAtStart(1);
-					assert.equal(shallowChanges, 1);
-					assert.equal(deepChanges, 1);
-
-					// Insert multiple items
-					root.insertAtEnd(2, 3);
-					assert.equal(shallowChanges, 2);
-					assert.equal(deepChanges, 2);
-
-					// Move one item within the same node
-					root.moveToEnd(0);
-					assert.equal(shallowChanges, 3);
-					assert.equal(deepChanges, 3);
-
-					// Move multiple items within the same node
-					root.moveRangeToEnd(0, 2);
-					assert.equal(shallowChanges, 4);
-					assert.equal(deepChanges, 4);
-
-					// Remove single item
-					root.removeAt(0);
-					assert.equal(shallowChanges, 5);
-					assert.equal(deepChanges, 5);
-
-					// Remove multiple items
-					root.removeRange(0, 2);
-					assert.equal(shallowChanges, 6);
-					assert.equal(deepChanges, 6);
+				let shallowChanges = 0;
+				let deepChanges = 0;
+				Tree.on(root, "treeChanged", () => {
+					deepChanges++;
 				});
-			}
+				Tree.on(root, "nodeChanged", () => {
+					shallowChanges++;
+				});
+
+				// Insert single item
+				root.insertAtStart(1);
+				assert.equal(shallowChanges, 1);
+				assert.equal(deepChanges, 1);
+
+				// Insert multiple items
+				root.insertAtEnd(2, 3);
+				assert.equal(shallowChanges, 2);
+				assert.equal(deepChanges, 2);
+
+				// Move one item within the same node
+				root.moveToEnd(0);
+				assert.equal(shallowChanges, 3);
+				assert.equal(deepChanges, 3);
+
+				// Move multiple items within the same node
+				root.moveRangeToEnd(0, 2);
+				assert.equal(shallowChanges, 4);
+				assert.equal(deepChanges, 4);
+
+				// Remove single item
+				root.removeAt(0);
+				assert.equal(shallowChanges, 5);
+				assert.equal(deepChanges, 5);
+
+				// Remove multiple items
+				root.removeRange(0, 2);
+				assert.equal(shallowChanges, 6);
+				assert.equal(deepChanges, 6);
+			});
 		});
 
 		describeHydration("map node", (initializeTree) => {
