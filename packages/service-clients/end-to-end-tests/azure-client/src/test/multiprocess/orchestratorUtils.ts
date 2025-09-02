@@ -33,7 +33,7 @@ const childLoggingVerbosity = process.env.FLUID_TEST_VERBOSE ?? "none";
 /**
  * Capture console./warn/error before test infrastructure alters it.
  */
-const testConsole = {
+export const testConsole = {
 	log: console.log,
 	warn: console.warn,
 	error: console.error,
