@@ -379,7 +379,20 @@ let pauseTreeEventsStack: number = 0;
 
 /**
  * Pause events emitted by {@link TreeNode}s.
- * @remarks Events that would otherwise have been emitted are buffered until the returned function is called.
+ *
+ * @remarks
+ * Events that would otherwise have been emitted are buffered until the returned function is called.
+ *
+ * Note: this should be used with caution. User application behaviors are implicitly coupled to event timing.
+ * Disrupting this timing can lead to unexpected behavior.
+ *
+ * It is also vitally important that the returned callback be invoked to ensure events are resumed.
+ * Failing to do so will result in events never being emitted again.
+ *
+ * @privateRemarks
+ * If we had access to `Symbol.dispose`, that would probably be a better pattern than returning a callback.
+ * Users could then use this API with `using` to ensure proper cleanup.
+ *
  * @returns A function that, when called, resumes event emission and flushes any buffered events.
  */
 export function pauseTreeEvents(): () => void {
@@ -401,6 +414,10 @@ const flushEventsEmitter = createEmitter<{
 	flush: () => void;
 }>();
 
+/**
+ * Event emitter for {@link TreeNodeKernel}, which optionally buffers events based on {@link pauseTreeEvents}.
+ * @remarks Listens to {@link flushEventsEmitter} to know when to flush any buffered events.
+ */
 class TreeNodeEventBuffer
 	implements
 		Listenable<KernelEvents>,
