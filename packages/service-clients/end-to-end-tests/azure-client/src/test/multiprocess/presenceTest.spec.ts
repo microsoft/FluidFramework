@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import type { ChildProcess } from "node:child_process";
+import inspector from "node:inspector";
 
 import type { AttendeeId } from "@fluidframework/presence/beta";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
@@ -14,12 +15,44 @@ import {
 	forkChildProcesses,
 	connectChildProcesses,
 	connectAndWaitForAttendees,
-	registerWorkspaceOnChildren,
-	waitForLatestValueUpdates,
-	waitForLatestMapValueUpdates,
-	getLatestValueResponses,
 	getLatestMapValueResponses,
+	getLatestValueResponses,
+	registerWorkspaceOnChildren,
+	testConsole,
+	waitForLatestMapValueUpdates,
+	waitForLatestValueUpdates,
 } from "./orchestratorUtils.js";
+
+const debuggerAttached = inspector.url() !== undefined;
+
+/**
+ * Set this to a high number when debugging to avoid timeouts from debugging time.
+ */
+const timeoutMultiplier = debuggerAttached ? 1000 : 1;
+
+/**
+ * Sets the timeout for the given test context.
+ *
+ * @remarks
+ * If a debugger is attached, the timeout is set to 0 to prevent timeouts during debugging.
+ * Otherwise, it sets the timeout to the maximum of the current timeout and the specified duration.
+ *
+ * @param context - The Mocha test context.
+ * @param duration - The duration in milliseconds to set the timeout to. Zero disables the timeout.
+ */
+function setTimeout(context: Mocha.Context, duration: number): void {
+	const currentTimeout = context.timeout();
+	const newTimeout =
+		debuggerAttached || currentTimeout === 0 || duration === 0
+			? 0
+			: Math.max(currentTimeout, duration);
+	if (newTimeout !== currentTimeout) {
+		testConsole.log(
+			`${context.test?.title}: setting timeout to ${newTimeout}ms (was ${currentTimeout}ms)`,
+		);
+		context.timeout(newTimeout);
+	}
+}
 
 /**
  * This test suite is a prototype for a multi-process end to end test for Fluid using the new Presence API on AzureClient.
@@ -71,11 +104,11 @@ describe(`Presence with AzureClient`, () => {
 		/**
 		 * Timeout for child processes to connect to container ({@link ConnectedEvent})
 		 */
-		const childConnectTimeoutMs = 1000 * numClients;
+		const childConnectTimeoutMs = 1000 * numClients * timeoutMultiplier;
 		/**
 		 * Timeout for presence attendees to connect {@link AttendeeConnectedEvent}
 		 */
-		const attendeeJoinedTimeoutMs = 2000;
+		const attendeesJoinedTimeoutMs = (1000 + 200 * numClients) * timeoutMultiplier;
 		/**
 		 * Timeout for workspace registration {@link WorkspaceRegisteredEvent}
 		 */
@@ -89,68 +122,90 @@ describe(`Presence with AzureClient`, () => {
 		 */
 		const getStateTimeoutMs = 5000;
 
-		it(`announces 'attendeeConnected' when remote client joins session [${numClients} clients]`, async () => {
-			// Setup
-			const { children, childErrorPromise } = await forkChildProcesses(
-				numClients,
-				afterCleanUp,
-			);
+		for (const writeClients of [numClients, 1]) {
+			it(`announces 'attendeeConnected' when remote client joins session [${numClients} clients, ${writeClients} writers]`, async function () {
+				setTimeout(this, childConnectTimeoutMs + attendeesJoinedTimeoutMs + 1000);
 
-			// Further Setup with Act and Verify
-			await connectAndWaitForAttendees(
-				children,
-				numClients - 1,
-				childConnectTimeoutMs,
-				attendeeJoinedTimeoutMs,
-				childErrorPromise,
-			);
-		});
+				// Setup
+				const { children, childErrorPromise } = await forkChildProcesses(
+					numClients,
+					afterCleanUp,
+				);
 
-		it(`announces 'attendeeDisconnected' when remote client disconnects [${numClients} clients]`, async () => {
-			// Setup
-			const { children, childErrorPromise } = await forkChildProcesses(
-				numClients,
-				afterCleanUp,
-			);
+				// Further Setup with Act and Verify
+				await connectAndWaitForAttendees(
+					children,
+					{
+						writeClients,
+						attendeeCountRequired: numClients - 1,
+						childConnectTimeoutMs,
+						attendeesJoinedTimeoutMs,
+					},
+					childErrorPromise,
+				);
+			});
 
-			const connectResult = await connectAndWaitForAttendees(
-				children,
-				numClients - 1,
-				childConnectTimeoutMs,
-				attendeeJoinedTimeoutMs,
-				childErrorPromise,
-			);
+			it(`announces 'attendeeDisconnected' when remote client disconnects [${numClients} clients, ${writeClients} writers]`, async function () {
+				// TODO: AB#45620: "Presence: perf: update Join pattern for scale" can handle
+				// larger counts of read-only attendees. Without protocol changes tests with
+				// 20+ attendees exceed current limits.
+				if (numClients >= 20 && writeClients === 1) {
+					this.skip();
+				}
 
-			const childDisconnectTimeoutMs = 10_000;
+				const childDisconnectTimeoutMs = 10_000 * timeoutMultiplier;
 
-			const waitForDisconnected = children.map(async (child, index) =>
-				index === 0
-					? Promise.resolve()
-					: timeoutPromise(
-							(resolve) => {
-								child.on("message", (msg: MessageFromChild) => {
-									if (
-										msg.event === "attendeeDisconnected" &&
-										msg.attendeeId === connectResult.containerCreatorAttendeeId
-									) {
-										console.log(`Child[${index}] saw creator disconnect`);
-										resolve();
-									}
-								});
-							},
-							{
-								durationMs: childDisconnectTimeoutMs,
-								errorMsg: `Attendee[${index}] Disconnected Timeout`,
-							},
-						),
-			);
+				setTimeout(
+					this,
+					childConnectTimeoutMs + attendeesJoinedTimeoutMs + childDisconnectTimeoutMs + 1000,
+				);
 
-			// Act - disconnect first child process
-			children[0].send({ command: "disconnectSelf" });
+				// Setup
+				const { children, childErrorPromise } = await forkChildProcesses(
+					numClients,
+					afterCleanUp,
+				);
 
-			// Verify - wait for all 'attendeeDisconnected' events
-			await Promise.race([Promise.all(waitForDisconnected), childErrorPromise]);
-		});
+				const connectResult = await connectAndWaitForAttendees(
+					children,
+					{
+						writeClients,
+						attendeeCountRequired: numClients - 1,
+						childConnectTimeoutMs,
+						attendeesJoinedTimeoutMs,
+					},
+					childErrorPromise,
+				);
+
+				const waitForDisconnected = children.map(async (child, index) =>
+					index === 0
+						? Promise.resolve()
+						: timeoutPromise(
+								(resolve) => {
+									child.on("message", (msg: MessageFromChild) => {
+										if (
+											msg.event === "attendeeDisconnected" &&
+											msg.attendeeId === connectResult.containerCreatorAttendeeId
+										) {
+											console.log(`Child[${index}] saw creator disconnect`);
+											resolve();
+										}
+									});
+								},
+								{
+									durationMs: childDisconnectTimeoutMs,
+									errorMsg: `Attendee[${index}] Disconnected Timeout`,
+								},
+							),
+				);
+
+				// Act - disconnect first child process
+				children[0].send({ command: "disconnectSelf" });
+
+				// Verify - wait for all 'attendeeDisconnected' events
+				await Promise.race([Promise.all(waitForDisconnected), childErrorPromise]);
+			});
+		}
 
 		// This test suite focuses on the synchronization of Latest state between clients.
 		// NOTE: For testing purposes child clients will expect a Latest value of type string.
@@ -167,7 +222,7 @@ describe(`Presence with AzureClient`, () => {
 				({ children, childErrorPromise } = await forkChildProcesses(numClients, afterCleanUp));
 				({ containerCreatorAttendeeId, attendeeIdPromises } = await connectChildProcesses(
 					children,
-					childConnectTimeoutMs,
+					{ writeClients: numClients, readyTimeoutMs: childConnectTimeoutMs },
 				));
 				await Promise.all(attendeeIdPromises);
 				remoteClients = children.filter((_, index) => index !== 0);
@@ -243,7 +298,7 @@ describe(`Presence with AzureClient`, () => {
 				({ children, childErrorPromise } = await forkChildProcesses(numClients, afterCleanUp));
 				({ containerCreatorAttendeeId, attendeeIdPromises } = await connectChildProcesses(
 					children,
-					childConnectTimeoutMs,
+					{ writeClients: numClients, readyTimeoutMs: childConnectTimeoutMs },
 				));
 				await Promise.all(attendeeIdPromises);
 				remoteClients = children.filter((_, index) => index !== 0);
