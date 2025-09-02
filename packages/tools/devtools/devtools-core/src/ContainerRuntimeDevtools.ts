@@ -169,7 +169,7 @@ export class DecomposedContainerForContainerRuntime
 		// IContainerRuntime doesn't expose readonly in its interface, but the implementation has isReadOnly()
 		assert(
 			this.runtime instanceof ContainerRuntime,
-			"DecomposedContainerForContainerRuntime is not a ContainerRuntime",
+			0xc2e /* DecomposedContainerForContainerRuntime is not a ContainerRuntime */,
 		);
 		return { readonly: this.runtime.isReadOnly() };
 	}
