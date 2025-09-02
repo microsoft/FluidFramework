@@ -4,9 +4,19 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type {
+	IFluidDataStoreRuntime,
+	IChannel,
+} from "@fluidframework/datastore-definitions/internal";
+import { SharedDirectory, type ISharedDirectory } from "@fluidframework/map/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
+import { SharedTree, type ITree } from "@fluidframework/tree/internal";
 
+import type { IDelayLoadChannelFactory } from "../channel-factories/index.js";
+
+import { dataObjectRootDirectoryId } from "./dataObject.js";
 import { PureDataObject } from "./pureDataObject.js";
+import { treeChannelId } from "./treeDataObject.js";
 import type { DataObjectTypes } from "./types.js";
 
 /**
@@ -24,6 +34,115 @@ export interface ModelDescriptor<T = unknown> {
 	probe: (runtime: IFluidDataStoreRuntime) => Promise<T | undefined> | T | undefined;
 	// Optional factory to create the model when initializing a new store.
 	create?: (runtime: IFluidDataStoreRuntime) => Promise<T> | T;
+	// Optional runtime type guard to help callers narrow model types.
+	is?: (m: unknown) => m is T;
+}
+
+/**
+ * Helper to build a simple channel-backed model descriptor where the model is an object
+ * containing the single channel under `channel` key. The caller provides an id and a
+ * runtime type guard for the underlying channel, and optionally a create factory.
+ */
+export function channelBackedDescriptor<T extends IChannel = IChannel>(opts: {
+	id: string;
+	name?: string;
+	probeTypeGuard: (ch: IChannel) => ch is T;
+	createFactory?: (runtime: IFluidDataStoreRuntime) => Promise<T> | T;
+}): ModelDescriptor<{ channel: T }> {
+	return {
+		type: opts.name,
+		id: opts.id,
+		probe: async (runtime) => {
+			try {
+				const ch = await runtime.getChannel(opts.id);
+				if (opts.probeTypeGuard(ch)) {
+					return { channel: ch };
+				}
+			} catch {
+				return undefined;
+			}
+		},
+		create: async (runtime) => {
+			if (!opts.createFactory) {
+				throw new Error("No create factory provided for channel-backed descriptor");
+			}
+			const c = await opts.createFactory(runtime);
+			// bind if possible
+			const maybeShared = c as unknown as Partial<ISharedObject>;
+			if (
+				maybeShared.bindToContext !== undefined &&
+				typeof maybeShared.bindToContext === "function"
+			) {
+				maybeShared.bindToContext();
+			}
+			return { channel: c };
+		},
+		is: (m): m is { channel: T } => !!(m && (m as unknown as Record<string, unknown>).channel),
+	};
+}
+
+/**
+ * Convenience descriptor for SharedDirectory-backed models using the standard root id.
+ */
+export function sharedDirectoryDescriptor(): ModelDescriptor<{ directory: ISharedDirectory }> {
+	return {
+		type: "sharedDirectory",
+		id: dataObjectRootDirectoryId,
+		probe: async (runtime) => {
+			try {
+				const ch = await runtime.getChannel(dataObjectRootDirectoryId);
+				const rec = ch as unknown as Record<string, unknown>;
+				if (rec !== undefined && "get" in rec && "set" in rec) {
+					// rough duck-typing for SharedDirectory
+					return { directory: ch as ISharedDirectory };
+				}
+			} catch {
+				return undefined;
+			}
+		},
+		create: (runtime) => {
+			const d = SharedDirectory.create(runtime, dataObjectRootDirectoryId);
+			d.bindToContext();
+			return { directory: d };
+		},
+		is: (m): m is { directory: ISharedDirectory } =>
+			!!(m && (m as unknown as Record<string, unknown>).directory),
+	};
+}
+
+/**
+ * Convenience descriptor for SharedTree-backed models using the standard tree channel id
+ * and a delay-load factory.
+ */
+export function sharedTreeDescriptor(
+	factory: IDelayLoadChannelFactory<ITree>,
+): ModelDescriptor<{ tree: ITree }> {
+	return {
+		type: "sharedTree",
+		id: treeChannelId,
+		probe: async (runtime) => {
+			try {
+				const ch = await runtime.getChannel(treeChannelId);
+				if (SharedTree.is(ch)) {
+					return { tree: ch as ITree };
+				}
+			} catch {
+				return undefined;
+			}
+		},
+		create: async (runtime) => {
+			const t = await factory.createAsync(runtime, treeChannelId);
+			const maybeShared = t as unknown as Partial<ISharedObject>;
+			if (
+				maybeShared.bindToContext !== undefined &&
+				typeof maybeShared.bindToContext === "function"
+			) {
+				maybeShared.bindToContext();
+			}
+			return { tree: t };
+		},
+		is: (m): m is { tree: ITree } => !!(m && (m as unknown as Record<string, unknown>).tree),
+	};
 }
 
 /**
@@ -36,32 +155,33 @@ export interface ModelDescriptor<T = unknown> {
  * @alpha
  */
 export abstract class MigrationDataObject<
+	M = unknown,
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObject<I> {
 	// The currently active model and its descriptor, if discovered or created.
-	#activeModel: { descriptor: ModelDescriptor; model: unknown } | undefined;
+	#activeModel: { descriptor: ModelDescriptor; model: M } | undefined;
 
 	/**
 	 * Probeable candidate roots the implementer expects for existing stores.
 	 * The order defines probing priority.
 	 */
-	protected abstract get modelCandidates(): ModelDescriptor[];
+	protected abstract get modelCandidates(): ModelDescriptor<M>[];
 
 	/**
 	 * Descriptor used to create the new root when initializing a non-existing store.
 	 * If undefined, no root will be created by this base class.
 	 */
-	protected abstract get modelCreator(): ModelDescriptor | undefined;
+	protected abstract get modelCreator(): ModelDescriptor<M> | undefined;
 
 	/**
 	 * Returns the active model descriptor and channel after initialization.
 	 * Throws if initialization did not set a model.
 	 */
-	public getModel<T = unknown>(): { descriptor: ModelDescriptor<T>; model: T } {
+	public getModel(): { descriptor: ModelDescriptor<M>; model: M } {
 		assert(this.#activeModel !== undefined, "Expected an active model to be defined");
 		return {
-			descriptor: this.#activeModel.descriptor as ModelDescriptor<T>,
-			model: this.#activeModel.model as T,
+			descriptor: this.#activeModel.descriptor as ModelDescriptor<M>,
+			model: this.#activeModel.model,
 		};
 	}
 
