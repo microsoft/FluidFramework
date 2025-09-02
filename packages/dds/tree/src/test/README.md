@@ -7,7 +7,7 @@ In general, these tests should be organized such that every file under `src` has
 
 Files under `src/test/` are identified by their "test file kind", which is indicated by an extra `.` delimited section before the file extension. For example `foo.spec.ts` is a `spec` test file.
 
-Files `src/test/` should fall into one ofo these kinds:
+Files `src/test/` should fall into one of these kinds:
 
  - None: These are regular TypeScript files, like `foo.ts`. These should never contain top level test suites. They are files which exist to be imported by other kinds of test files. They can contain functions which generate test suites, or other test utilities.
  - `spec`: These are Mocha test suites, and should correspond to a matching file under `src`.
@@ -29,8 +29,8 @@ Any other kinds of test files should be documented when created by adding them t
 This is written aspirationalally: much of our current test suite only roughly approximates the patterns described above.
 Both this document and the test suite should evolve in a way to converge on a set of patterns which is both documented and followed.
 
-It is expected that at least one other kind of test suite will be create for the purposes of integration testing multiple components.
+It is expected that at least one other kind of test suite will be created for the purposes of integration testing multiple components.
 
 This approach could be applied to the rest of the Fluid Framework repository, however many packages currently have logic which filters which files are loaded based on file name which may need to be adjusted.
 Additionally some packages also use testing tools other than Mocha which further complicates things.
-Therefor this policy is currently specific to this package, but future work (to both the policy and the other packages) could generalize it.
+Therefore this policy is currently specific to this package, but future work (to both the policy and the other packages) could generalize it.
