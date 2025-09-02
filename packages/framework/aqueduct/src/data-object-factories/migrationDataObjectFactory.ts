@@ -43,7 +43,8 @@ import {
  * @alpha
  */
 export interface MigrationDataObjectFactoryProps<
-	TObj extends MigrationDataObject<I>,
+	T,
+	TObj extends MigrationDataObject<T, I>,
 	TMigrationData,
 	I extends DataObjectTypes = DataObjectTypes,
 > extends DataObjectFactoryProps<TObj, I> {
@@ -119,7 +120,8 @@ export interface MigrationDataObjectFactoryProps<
  * @alpha
  */
 export class MigrationDataObjectFactory<
-	TObj extends MigrationDataObject<I>,
+	T,
+	TObj extends MigrationDataObject<T, I>,
 	TMigrationData,
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObjectFactory<TObj, I> {
@@ -129,7 +131,7 @@ export class MigrationDataObjectFactory<
 	private static readonly conversionContent = "conversion";
 
 	public constructor(
-		private readonly props: MigrationDataObjectFactoryProps<TObj, TMigrationData, I>,
+		private readonly props: MigrationDataObjectFactoryProps<T, TObj, TMigrationData, I>,
 	) {
 		const submitConversionOp = (runtime: FluidDataStoreRuntime): void => {
 			runtime.submitMessage(

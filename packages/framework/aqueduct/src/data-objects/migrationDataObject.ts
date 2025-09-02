@@ -30,10 +30,11 @@ export interface ModelDescriptor<T = unknown> {
 	// Optional convenience id for simple channel-backed models
 	id?: string;
 	//* This mechanism feels a bit brittle or overly generic. Maybe each model needs a key channel or something? Or maybe it's ok.
+	//* See Craig's DDS shim branch for an example of tagging migrations
 	// Probe runtime for an existing model based on which channels exist. Return the model instance or undefined if not found.
 	probe: (runtime: IFluidDataStoreRuntime) => Promise<T | undefined> | T | undefined;
-	// Optional factory to create the model when initializing a new store.
-	create?: (runtime: IFluidDataStoreRuntime) => Promise<T> | T;
+	// Factory to create the model when initializing a new store.
+	create: (runtime: IFluidDataStoreRuntime) => Promise<T> | T;
 	// Optional runtime type guard to help callers narrow model types.
 	is?: (m: unknown) => m is T;
 }
@@ -58,7 +59,7 @@ export abstract class MigrationDataObject<
 	 * Probeable candidate roots the implementer expects for existing stores.
 	 * The order defines probing priority.
 	 */
-	protected abstract get modelCandidates(): ModelDescriptor<M>[];
+	protected abstract get modelCandidates(): Exclude<ModelDescriptor<M>[], []>;
 
 	/**
 	 * Descriptor used to create the new root when initializing a non-existing store.
@@ -105,7 +106,7 @@ export abstract class MigrationDataObject<
 			const creator = this.modelCreator;
 			if (creator !== undefined) {
 				// Note: implementer is responsible for binding any root channels and populating initial content on the created model
-				const created = await creator.create?.(this.runtime);
+				const created = await creator.create(this.runtime);
 				if (created !== undefined) {
 					this.#activeModel = { descriptor: creator, model: created };
 				}
