@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import type { ChildProcess } from "node:child_process";
+import inspector from "node:inspector";
 
 import type { AttendeeId } from "@fluidframework/presence/beta";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
@@ -14,12 +15,44 @@ import {
 	forkChildProcesses,
 	connectChildProcesses,
 	connectAndWaitForAttendees,
-	registerWorkspaceOnChildren,
-	waitForLatestValueUpdates,
-	waitForLatestMapValueUpdates,
-	getLatestValueResponses,
 	getLatestMapValueResponses,
+	getLatestValueResponses,
+	registerWorkspaceOnChildren,
+	testConsole,
+	waitForLatestMapValueUpdates,
+	waitForLatestValueUpdates,
 } from "./orchestratorUtils.js";
+
+const debuggerAttached = inspector.url() !== undefined;
+
+/**
+ * Set this to a high number when debugging to avoid timeouts from debugging time.
+ */
+const timeoutMultiplier = debuggerAttached ? 1000 : 1;
+
+/**
+ * Sets the timeout for the given test context.
+ *
+ * @remarks
+ * If a debugger is attached, the timeout is set to 0 to prevent timeouts during debugging.
+ * Otherwise, it sets the timeout to the maximum of the current timeout and the specified duration.
+ *
+ * @param context - The Mocha test context.
+ * @param duration - The duration in milliseconds to set the timeout to. Zero disables the timeout.
+ */
+function setTimeout(context: Mocha.Context, duration: number): void {
+	const currentTimeout = context.timeout();
+	const newTimeout =
+		debuggerAttached || currentTimeout === 0 || duration === 0
+			? 0
+			: Math.max(currentTimeout, duration);
+	if (newTimeout !== currentTimeout) {
+		testConsole.log(
+			`${context.test?.title}: setting timeout to ${newTimeout}ms (was ${currentTimeout}ms)`,
+		);
+		context.timeout(newTimeout);
+	}
+}
 
 /**
  * This test suite is a prototype for a multi-process end to end test for Fluid using the new Presence API on AzureClient.
@@ -71,11 +104,11 @@ describe(`Presence with AzureClient`, () => {
 		/**
 		 * Timeout for child processes to connect to container ({@link ConnectedEvent})
 		 */
-		const childConnectTimeoutMs = 1000 * numClients;
+		const childConnectTimeoutMs = 1000 * numClients * timeoutMultiplier;
 		/**
 		 * Timeout for presence attendees to connect {@link AttendeeConnectedEvent}
 		 */
-		const attendeesJoinedTimeoutMs = 2000;
+		const attendeesJoinedTimeoutMs = (1000 + 200 * numClients) * timeoutMultiplier;
 		/**
 		 * Timeout for workspace registration {@link WorkspaceRegisteredEvent}
 		 */
@@ -90,7 +123,9 @@ describe(`Presence with AzureClient`, () => {
 		const getStateTimeoutMs = 5000;
 
 		for (const writeClients of [numClients, 1]) {
-			it(`announces 'attendeeConnected' when remote client joins session [${numClients} clients, ${writeClients} writers]`, async () => {
+			it(`announces 'attendeeConnected' when remote client joins session [${numClients} clients, ${writeClients} writers]`, async function () {
+				setTimeout(this, childConnectTimeoutMs + attendeesJoinedTimeoutMs + 1000);
+
 				// Setup
 				const { children, childErrorPromise } = await forkChildProcesses(
 					numClients,
@@ -118,6 +153,13 @@ describe(`Presence with AzureClient`, () => {
 					this.skip();
 				}
 
+				const childDisconnectTimeoutMs = 10_000 * timeoutMultiplier;
+
+				setTimeout(
+					this,
+					childConnectTimeoutMs + attendeesJoinedTimeoutMs + childDisconnectTimeoutMs + 1000,
+				);
+
 				// Setup
 				const { children, childErrorPromise } = await forkChildProcesses(
 					numClients,
@@ -134,8 +176,6 @@ describe(`Presence with AzureClient`, () => {
 					},
 					childErrorPromise,
 				);
-
-				const childDisconnectTimeoutMs = 10_000;
 
 				const waitForDisconnected = children.map(async (child, index) =>
 					index === 0
