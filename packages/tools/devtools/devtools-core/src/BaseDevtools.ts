@@ -124,6 +124,7 @@ export abstract class BaseDevtools<TContainer extends DecomposedContainer>
 		return {
 			containerKey: this.containerKey,
 			attachState: this.container.attachState,
+			isReadOnly: this.container.readOnlyInfo?.readonly,
 			connectionState: this.container.connectionState,
 			closed: this.container.closed,
 			clientId: this.container.clientId,
@@ -223,7 +224,11 @@ export abstract class BaseDevtools<TContainer extends DecomposedContainer>
 
 	protected readonly dataUpdateHandler = (visualization: FluidObjectNode): void => {
 		// This is called when actual data changes occur - should trigger blinking
-		this.postDataVisualization(visualization.fluidObjectId, visualization);
+		this.postDataVisualization(
+			visualization.fluidObjectId,
+			visualization,
+			DataVisualization.UpdateReason.DataChanged,
+		);
 	};
 
 	// #endregion
@@ -274,7 +279,11 @@ export abstract class BaseDevtools<TContainer extends DecomposedContainer>
 				if (message.data.containerKey === this.containerKey) {
 					const visualization = await this.getDataVisualization(message.data.fluidObjectId);
 					// This is a user-requested visualization - should NOT trigger blinking
-					this.postDataVisualization(message.data.fluidObjectId, visualization);
+					this.postDataVisualization(
+						message.data.fluidObjectId,
+						visualization,
+						DataVisualization.UpdateReason.UserRequested,
+					);
 					return true;
 				}
 				return false;
@@ -371,6 +380,7 @@ export abstract class BaseDevtools<TContainer extends DecomposedContainer>
 	protected readonly postDataVisualization = (
 		fluidObjectId: FluidObjectId,
 		visualization: FluidObjectNode | undefined,
+		reason: DataVisualization.UpdateReason,
 	): void => {
 		postMessagesToWindow(
 			this.messageLoggingOptions,
@@ -378,6 +388,7 @@ export abstract class BaseDevtools<TContainer extends DecomposedContainer>
 				containerKey: this.containerKey,
 				fluidObjectId,
 				visualization,
+				reason,
 			}),
 		);
 	};

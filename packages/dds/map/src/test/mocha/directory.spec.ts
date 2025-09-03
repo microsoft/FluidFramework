@@ -1048,6 +1048,39 @@ describe("Directory", () => {
 				assert.equal(directory2.get("testKey2"), undefined);
 			});
 
+			it(".forEach() should iterate over all keys in the directory", () => {
+				const values = [
+					["a", "b"],
+					["c", "d"],
+					["e", "f"],
+				];
+
+				for (const [key, value] of values) {
+					directory1.set(key, value);
+				}
+				containerRuntimeFactory.processAllMessages();
+
+				let i = 0;
+				// eslint-disable-next-line unicorn/no-array-for-each
+				directory1.forEach((value, key) => {
+					assert(i < values.length, "forEach() should not have iterated more than i times");
+					assert.equal(key, values[i][0], "key should match");
+					assert.equal(value, values[i][1], "value should match");
+					i++;
+				});
+				assert.equal(i, values.length, "forEach() should have iterated i times");
+
+				i = 0;
+				// eslint-disable-next-line unicorn/no-array-for-each
+				directory2.forEach((value, key) => {
+					assert(i < values.length, "forEach() should not have iterated more than i times");
+					assert.equal(key, values[i][0], "key should match");
+					assert.equal(value, values[i][1], "value should match");
+					i++;
+				});
+				assert.equal(i, values.length, "forEach() should have iterated i times");
+			});
+
 			it("Shouldn't clear value if there is pending set", () => {
 				const valuesChanged: IDirectoryValueChanged[] = [];
 				let clearCount = 0;

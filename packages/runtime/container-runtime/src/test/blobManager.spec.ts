@@ -12,14 +12,18 @@ import {
 	gitHashFile,
 } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
-import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
-import {
-	type IFluidHandleContext,
-	type IFluidHandleInternal,
+import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
+import type {
+	ConfigTypes,
+	IConfigProviderBase,
+	IErrorBase,
+} from "@fluidframework/core-interfaces";
+import type {
+	IFluidHandleContext,
+	IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
+import { type IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	IRuntimeStorageService,
 	ISequencedMessageEnvelope,
@@ -32,7 +36,7 @@ import {
 import {
 	LoggingError,
 	MockLogger,
-	MonitoringContext,
+	type MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
 	type ITelemetryLoggerExt,
@@ -42,8 +46,8 @@ import { v4 as uuid } from "uuid";
 
 import {
 	BlobManager,
-	IBlobManagerLoadInfo,
-	IBlobManagerRuntime,
+	type IBlobManagerLoadInfo,
+	type IBlobManagerRuntime,
 	blobManagerBasePath,
 	redirectTableBlobName,
 	type IPendingBlobs,
@@ -456,7 +460,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable?.length, 1);
+			assert.strictEqual(summaryData.redirectTable, undefined);
 		});
 
 		it("detached->attached snapshot", async () => {
@@ -700,7 +704,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable?.length, 2);
+			assert.strictEqual(summaryData.redirectTable, undefined);
 		});
 
 		it("handles deduped IDs in detached->attached", async () => {
@@ -725,7 +729,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable?.length, 6);
+			assert.strictEqual(summaryData.redirectTable?.length, 4);
 		});
 
 		it("can load from summary", async () => {
@@ -827,10 +831,9 @@ for (const createBlobPayloadPending of [false, true]) {
 		});
 
 		it("runtime disposed during readBlob - log no error", async () => {
-			const someLocalId = "someLocalId";
-			const someStorageId = "someStorageId";
+			const someId = "someId";
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call -- Accessing private property
-			(runtime.blobManager as any).setRedirection(someLocalId, someStorageId); // To appease an assert
+			(runtime.blobManager as any).setRedirection(someId, undefined); // To appease an assert
 
 			// Mock storage.readBlob to dispose the runtime and throw an error
 			Sinon.stub(runtime.storage, "readBlob").callsFake(async (_id: string) => {
@@ -839,7 +842,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			});
 
 			await assert.rejects(
-				async () => runtime.blobManager.getBlob(someLocalId, false),
+				async () => runtime.blobManager.getBlob(someId, false),
 				(e: Error) => e.message === "BOOM!",
 				"Expected getBlob to throw with test error message",
 			);
@@ -1104,7 +1107,7 @@ for (const createBlobPayloadPending of [false, true]) {
 		});
 
 		describe("Garbage Collection", () => {
-			let redirectTable: Map<string, string>;
+			let redirectTable: Map<string, string | undefined>;
 
 			/**
 			 * Creates a blob with the given content and returns its local and storage id.
@@ -1207,13 +1210,13 @@ for (const createBlobPayloadPending of [false, true]) {
 					// since the blob only had one reference.
 					runtime.blobManager.deleteSweepReadyNodes([blob1.localGCNodeId]);
 					assert(!redirectTable.has(blob1.localId));
-					assert(![...redirectTable.values()].includes(blob1.storageId));
+					assert(!redirectTable.has(blob1.storageId));
 
 					// Delete blob2's local id. The local id and the storage id should both be deleted from the redirect table
 					// since the blob only had one reference.
 					runtime.blobManager.deleteSweepReadyNodes([blob2.localGCNodeId]);
 					assert(!redirectTable.has(blob2.localId));
-					assert(![...redirectTable.values()].includes(blob2.storageId));
+					assert(!redirectTable.has(blob2.storageId));
 				});
 
 			it("deletes unused de-duped blobs", async () => {
@@ -1235,7 +1238,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				runtime.blobManager.deleteSweepReadyNodes([blob1.localGCNodeId]);
 				assert(!redirectTable.has(blob1.localId), "blob1 localId should have been deleted");
 				assert(
-					[...redirectTable.values()].includes(blob1.storageId),
+					redirectTable.has(blob1.storageId),
 					"blob1 storageId should not have been deleted",
 				);
 				// Delete blob1's de-duped local id. The local id and the storage id should both be deleted from the redirect table
@@ -1246,7 +1249,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					"blob1Duplicate localId should have been deleted",
 				);
 				assert(
-					![...redirectTable.values()].includes(blob1.storageId),
+					!redirectTable.has(blob1.storageId),
 					"blob1 storageId should have been deleted",
 				);
 
@@ -1255,7 +1258,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				runtime.blobManager.deleteSweepReadyNodes([blob2.localGCNodeId]);
 				assert(!redirectTable.has(blob2.localId), "blob2 localId should have been deleted");
 				assert(
-					[...redirectTable.values()].includes(blob2.storageId),
+					redirectTable.has(blob2.storageId),
 					"blob2 storageId should not have been deleted",
 				);
 				// Delete blob2's de-duped local id. The local id and the storage id should both be deleted from the redirect table
@@ -1266,7 +1269,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					"blob2Duplicate localId should have been deleted",
 				);
 				assert(
-					![...redirectTable.values()].includes(blob2.storageId),
+					!redirectTable.has(blob2.storageId),
 					"blob2 storageId should have been deleted",
 				);
 			});

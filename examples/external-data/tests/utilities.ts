@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Server } from "node:http";
+import type { Server } from "node:http";
 
 /**
  * "Promisifies" `Server.close`.

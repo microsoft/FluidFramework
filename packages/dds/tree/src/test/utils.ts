@@ -133,10 +133,10 @@ import {
 	type ISharedTreeEditor,
 	type ITreeCheckoutFork,
 	independentView,
-	type TreeStoredContent,
 	SchematizingSimpleTreeView,
 	type ForestOptions,
 	type SharedTreeOptionsInternal,
+	type SharedTreeOptions,
 	buildConfiguredForest,
 	type ForestType,
 	ForestTypeReference,
@@ -613,10 +613,13 @@ export class SharedTreeTestFactory implements IChannelFactory<ISharedTree> {
 		protected readonly onLoad?: (tree: ISharedTree) => void,
 		options: SharedTreeOptionsInternal = {},
 	) {
-		this.inner = configuredSharedTree({
+		const optionsUpdated: SharedTreeOptionsInternal = {
 			...options,
 			jsonValidator: typeboxValidator,
-		}).getFactory() as IChannelFactory<ISharedTree>;
+		};
+		this.inner = configuredSharedTree(
+			optionsUpdated as SharedTreeOptions,
+		).getFactory() as IChannelFactory<ISharedTree>;
 	}
 
 	public get type(): string {
@@ -689,23 +692,12 @@ export function validateFuzzTreeConsistency(
 	);
 }
 
-function contentToJsonableTree(content: TreeStoredContent): JsonableTree[] {
-	return jsonableTreeFromFieldCursor(normalizeNewFieldContent(content.initialTree));
-}
-
 export function validateTreeContent(tree: ITreeCheckout, content: TreeSimpleContent): void {
 	const contentReference = jsonableTreeFromFieldCursor(
 		fieldCursorFromInsertable<UnsafeUnknownSchema>(content.schema, content.initialTree),
 	);
 	assert.deepEqual(toJsonableTree(tree), contentReference);
 	expectSchemaEqual(tree.storedSchema, toInitialSchema(content.schema));
-}
-export function validateTreeStoredContent(
-	tree: ITreeCheckout,
-	content: TreeStoredContent,
-): void {
-	assert.deepEqual(toJsonableTree(tree), contentToJsonableTree(content));
-	expectSchemaEqual(tree.storedSchema, content.schema);
 }
 
 export function expectSchemaEqual(
@@ -1390,16 +1382,38 @@ export class MockTreeCheckout implements ITreeCheckout {
 	}
 }
 
+/**
+ * {@link validateError} for `UsageError`.
+ */
 export function validateUsageError(expectedErrorMsg: string | RegExp): (error: Error) => true {
+	return validateError(expectedErrorMsg, UsageError);
+}
+
+/**
+ * {@link validateError} for `TypeError`.
+ */
+export function validateTypeError(expectedErrorMsg: string | RegExp): (error: Error) => true {
+	return validateError(expectedErrorMsg, TypeError);
+}
+
+/**
+ * Validates that a specific kind of error was thrown with the expected message.
+ *
+ * Intended for use with NodeJS's `assert.throws`.
+ */
+export function validateError(
+	expectedErrorMsg: string | RegExp,
+	errorType: new (...args: any[]) => Error = Error,
+): (error: Error) => true {
 	return (error: Error) => {
-		assert(error instanceof UsageError, `Expected UsageError, got ${error}`);
+		assert(error instanceof errorType, `Expected ${errorType.name}, got ${error}`);
 		if (
 			typeof expectedErrorMsg === "string"
 				? error.message !== expectedErrorMsg
 				: !expectedErrorMsg.test(error.message)
 		) {
 			throw new Error(
-				`Unexpected UsageError thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
+				`Unexpected ${errorType.name} thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
 			);
 		}
 		return true;
@@ -1548,4 +1562,45 @@ export class TestSchemaRepository extends TreeStoredSchemaRepository {
 		}
 		return false;
 	}
+}
+
+/**
+ * Content that can populate a `SharedTree`.
+ * @remarks
+ * Consider using TreeStoredContentStrict instead which has more specific typing.
+ */
+interface TreeStoredContent {
+	readonly schema: TreeStoredSchema;
+
+	/**
+	 * Default tree content to initialize the tree with iff the tree is uninitialized
+	 * (meaning it does not even have any schema set at all).
+	 *
+	 * Can be a single field cursor, array of nodes cursors, or undefined, or a single node cursor (in which case the root is assumed to have a single child).
+	 *
+	 * This cannot encode the dummy "above root" node and thus can not specify additional detached fields.
+	 */
+	readonly initialTree: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined;
+}
+
+/**
+ * Content that can populate a `SharedTree`.
+ */
+export interface TreeStoredContentStrict {
+	/**
+	 * The stored schema.
+	 */
+	readonly schema: TreeStoredSchema;
+
+	/**
+	 * Field cursor with the initial tree content for the {@link rootField}.
+	 */
+	readonly initialTree: ITreeCursorSynchronous;
+}
+
+export function treeChunkFromCursor(fieldCursor: ITreeCursorSynchronous): TreeChunk {
+	return chunkFieldSingle(fieldCursor, {
+		policy: defaultChunkPolicy,
+		idCompressor: testIdCompressor,
+	});
 }

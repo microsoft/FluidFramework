@@ -4,7 +4,7 @@
  */
 
 import { TypedEventEmitter, performanceNow } from "@fluid-internal/client-utils";
-import {
+import type {
 	IDeltaQueue,
 	IDeltaQueueEvents,
 } from "@fluidframework/container-definitions/internal";

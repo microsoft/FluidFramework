@@ -5,6 +5,7 @@
 
 import { parentPort } from "worker_threads";
 
+import { apiExtractorWorker } from "./apiExtractorWorker";
 import { lint } from "./eslintWorker";
 import { compile, fluidCompile } from "./tscWorker";
 
@@ -24,6 +25,7 @@ const workers: { [key: string]: (message: WorkerMessage) => Promise<WorkerExecRe
 	"tsc": compile,
 	"fluid-tsc": fluidCompile,
 	"eslint": lint,
+	"api-extractor": apiExtractorWorker,
 };
 
 let collectMemoryUsage = false;

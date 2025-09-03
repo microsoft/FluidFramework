@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContact, IContactCollection } from "./dataObject.js";
+import type { IContact, IContactCollection } from "./dataObject.js";
 
 function makeContactDiv(contact: IContact): HTMLDivElement {
 	const contactDiv = document.createElement("div");

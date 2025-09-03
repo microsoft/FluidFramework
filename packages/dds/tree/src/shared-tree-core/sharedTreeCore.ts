@@ -6,6 +6,7 @@
 import type { IFluidLoadable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import type {
 	IExperimentalIncrementalSummaryContext,
@@ -516,6 +517,22 @@ function scopeStorageService(
 		},
 		async list(path) {
 			return service.list(`${scope}${path}`);
+		},
+		getSnapshotTree(): ISnapshotTree | undefined {
+			const snapshotTree = service.getSnapshotTree?.();
+			if (snapshotTree === undefined) {
+				return undefined;
+			}
+			let scopedTree = snapshotTree;
+			for (const element of pathElements) {
+				const tree = scopedTree.trees[element];
+				assert(
+					tree !== undefined,
+					0xc20 /* snapshot tree not found for one of tree's summarizables */,
+				);
+				scopedTree = tree;
+			}
+			return scopedTree;
 		},
 	};
 }

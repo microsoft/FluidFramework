@@ -20,17 +20,17 @@ importers:
         specifier: ^0.15.2
         version: 0.15.3
       '@fluid-tools/build-cli':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.5.4)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.5.4)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@22.5.4)
+        specifier: ^0.58.1
+        version: 0.58.1(@types/node@22.5.4)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/protocol-definitions-previous':
         specifier: npm:@fluidframework/protocol-definitions@3.2.0
         version: '@fluidframework/protocol-definitions@3.2.0'
@@ -281,17 +281,17 @@ packages:
   '@fluid-internal/eslint-plugin-fluid@0.1.5':
     resolution: {integrity: sha512-p0nVeMiEfLL2deQJQaRUxid08jgV5wEkh9h9WXNosR1BRq9nFCjD8nZpC1K+YhjwQZEvgGDE+s+28VR2lAg61Q==}
 
-  '@fluid-tools/build-cli@0.57.0':
-    resolution: {integrity: sha512-NWZ5KGmtPFdMQDOfisaa7tiuAIRWvdtPE4ZpJnwS/VR/SW0B/MtX2dCkvVAL/QOvzNk8HZUPJ0wM5cp8NmLMUg==}
+  '@fluid-tools/build-cli@0.58.1':
+    resolution: {integrity: sha512-6tqXSazIjAo+IE6ALB2wZDo4F6uK7BSxv2SswxvHkdXhLXjKOWscI70SoNgbB9D1ZCQUsu3XcmjbP5RbVLZOzw==}
     engines: {node: '>=20.15.1'}
     hasBin: true
 
-  '@fluid-tools/build-infrastructure@0.57.0':
-    resolution: {integrity: sha512-b2Iw8tG1x/odBMldYG9oIH8OtU3RAX56mNcXOs6zWDNvZeA/xCIJNA2LWVki53yUnyICxLjQSlqS+oeX5BBARg==}
+  '@fluid-tools/build-infrastructure@0.58.1':
+    resolution: {integrity: sha512-6TWr9SM5G49X6sKqjzec5B5lK1H3LEylgmIHUGhXQnvw8ura2YFvcIHERptRgNjjl9AZIw/fPCBrDk5sNZM2yg==}
     hasBin: true
 
-  '@fluid-tools/version-tools@0.57.0':
-    resolution: {integrity: sha512-SViGNYQff84ZHlra9WI8VJe70mnPKbFByuBnA7ZFThGUKPg5ZTmdstkOjaYluQXcz2SPCFnJ/FDNTuXNQPHOjQ==}
+  '@fluid-tools/version-tools@0.58.1':
+    resolution: {integrity: sha512-aljJzuC8D7s6hC4Pj79ru41pDNBjdseYuCzvLLoyqVvvrqDINUFZQFZFP0BxDADcEv+NKf0T8q8SRbwT+NGkYA==}
     engines: {node: '>=20.15.1'}
     hasBin: true
 
@@ -299,16 +299,16 @@ packages:
     resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
     hasBin: true
 
-  '@fluidframework/build-tools@0.57.0':
-    resolution: {integrity: sha512-zFCXXM9Gj+gCNAH9AzrgrA0svAm8kcXzrMGkWB98rDjOoYtBDC4MJg4EsM/fzlwG1Qc7ms+yGUYtMOoKJAqwUA==}
+  '@fluidframework/build-tools@0.58.1':
+    resolution: {integrity: sha512-wn+ecw2DtRgWMs+E+ZRy+Ht2trvJi4Y0ZKWTNRRC/9iJ7hY0Qrofysmm61juGnZm4ElTwKELGgVgOYd0aak12A==}
     engines: {node: '>=20.15.1'}
     hasBin: true
 
-  '@fluidframework/bundle-size-tools@0.57.0':
-    resolution: {integrity: sha512-kPKm02xhVgwXX7X+UbvhsX3N/QO4Tc88fr7Xe6suXyzP3MCovFRkaktVM8i684g83oi9cL51fnTYES5q8r99sg==}
+  '@fluidframework/bundle-size-tools@0.58.1':
+    resolution: {integrity: sha512-45wsb8o9vQe9yMX7zr34pHJUPEtgpoZ0gIYlbcbic2GoQGgIhvquqoZ4TXn1KjJrdZZImmfR4yGs/bSb55Qnag==}
 
-  '@fluidframework/eslint-config-fluid@5.8.0':
-    resolution: {integrity: sha512-MH0phD6UXLI1HGr9L8IDEYhv1UfnT55PeENu63mz7m/fNsawDQr/MI7OopIFKcW99vDtnMOEy5WHQk+hUFCkrw==}
+  '@fluidframework/eslint-config-fluid@6.0.0':
+    resolution: {integrity: sha512-RdbEYUQmLkW8zQ6GZXx1T/t5g9k7iA5K6vPZdvsIK4keb5VXcVCHDluvc7AtOXEVOb5Bt2XyM16NWz2Rlho5NA==}
 
   '@fluidframework/protocol-definitions@3.2.0':
     resolution: {integrity: sha512-xgcyMN4uF6dAp2/XYFSHvGFITIV7JbVt3itA+T0c71/lZjq/HU/a/ClPIxfl9AEN0RbtuR/1n5LP4FXSV9j0hA==}
@@ -331,6 +331,7 @@ packages:
   '@humanwhocodes/config-array@0.11.13':
     resolution: {integrity: sha512-JSBDMiDKSzQVngfRjOdFXgFfklaXI4K9nLF49Auh21lmBWRLIK3+xTErTWD4KU54pb6coM6ESE7Awz/FNU3zgQ==}
     engines: {node: '>=10.10.0'}
+    deprecated: Use @eslint/config-array instead
 
   '@humanwhocodes/module-importer@1.0.1':
     resolution: {integrity: sha512-bxveV4V8v5Yb4ncFTT3rPSgZBOpCkjfK0y4oVVVJwIuDVBRMDXrPyXRL988i5ap9m9bnyEEjWfm5WkBmtffLfA==}
@@ -338,6 +339,7 @@ packages:
 
   '@humanwhocodes/object-schema@2.0.1':
     resolution: {integrity: sha512-dvuCeX5fC9dXgJn9t+X5atfmgQAzUOWqS1254Gh0m6i8wKd10ebXkfNKiRK+1GWi/yTvvLDHpoxLr0xxxeslWw==}
+    deprecated: Use @eslint/object-schema instead
 
   '@inquirer/checkbox@4.1.9':
     resolution: {integrity: sha512-DBJBkzI5Wx4jFaYm221LHvAhpKYkhVS0k9plqHwaHhofGNxvYB7J3Bz8w+bFJ05zaMb0sZNHo4KdmENQFlNTuQ==}
@@ -652,9 +654,6 @@ packages:
     resolution: {integrity: sha512-ukiRmuHTi6ebQx/HFRCXKbDlOh/7xEV6QUXaE7MJEKGNAncGI/STSbOkl12qVXZrfZdpXctx5O9X1AIaebiDBg==}
     engines: {node: '>= 18'}
 
-  '@octokit/openapi-types@22.2.0':
-    resolution: {integrity: sha512-QBhVjcUa9W7Wwhm6DBFu6ZZ+1/t/oYxqc2tp81Pi41YNuJinbFRx8B133qVOrAaBbF7D/m0Et6f9/pZt9Rc+tg==}
-
   '@octokit/openapi-types@24.2.0':
     resolution: {integrity: sha512-9sIH3nSUttelJSXUrmGzl7QUBFul0/mB8HRYl3fOlgHbIWG+WnYDXU3v/2zMtAvuzZ/ed00Ei6on975FhBfzrg==}
 
@@ -720,9 +719,6 @@ packages:
 
   '@octokit/types@13.10.0':
     resolution: {integrity: sha512-ifLaO34EbbPj0Xgro4G5lP5asESjwHracYJvVaPIyXMuiuXLlhic3S47cBdTb+jfODkTE5YtGCLt3Ay3+J97sA==}
-
-  '@octokit/types@13.6.1':
-    resolution: {integrity: sha512-PHZE9Z+kWXb23Ndik8MKPirBPziOc0D2/3KH1P+6jK5nGWe96kadZuE4jev2/Jq7FvIfTlT2Ltg8Fv2x1v0a5g==}
 
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
@@ -1489,9 +1485,6 @@ packages:
     resolution: {integrity: sha512-zhaCDicdLuWN5UbN5IMnFqNMhNfo919sH85y2/ea+5Yg9TsTkeZxpL+JLbp6cgYFS4sRLp3YV4S6yDuqVWHYOw==}
     engines: {node: '>=6'}
 
-  builtins@5.0.1:
-    resolution: {integrity: sha512-qwVpFEHNfhYJIzNRBvd2C1kyo6jz3ZSMPyyuR47OPdiKWlbYnZNyDWuyR175qDnAJLiCo5fBBqPb3RiXgWlkOQ==}
-
   cacache@16.1.3:
     resolution: {integrity: sha512-/+Emcj9DAXxX4cwlLmRI9c166RuL3w30zp4R7Joiv2cQTtTtA+jeuCAjH3ZlGnYS3tKENSrKhAzVVP9GVyzeYQ==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
@@ -1749,24 +1742,6 @@ packages:
       supports-color:
         optional: true
 
-  debug@4.3.4:
-    resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
-    engines: {node: '>=6.0'}
-    peerDependencies:
-      supports-color: '*'
-    peerDependenciesMeta:
-      supports-color:
-        optional: true
-
-  debug@4.3.6:
-    resolution: {integrity: sha512-O/09Bd4Z1fBrU4VzkhFqVgpPzaGbw6Sm9FEkBT1A/YBXQFGuuSxa1dN2nxgxS34JmKXqYx8CZAwEVoJFImUXIg==}
-    engines: {node: '>=6.0'}
-    peerDependencies:
-      supports-color: '*'
-    peerDependenciesMeta:
-      supports-color:
-        optional: true
-
   debug@4.4.1:
     resolution: {integrity: sha512-KcKCqiftBJcZr++7ykoDIEwSa3XWowTfNPo92BYxjXiyYEVrUQh2aLyhxBCwww+heortUFxEJYcRzosstTEBYQ==}
     engines: {node: '>=6.0'}
@@ -1933,10 +1908,6 @@ packages:
     resolution: {integrity: sha512-QCOllgZJtaUo9miYBcLChTUaHNjJF3PYs1VidD7AwiEj1kYxKeQTctLAezAOH5ZKRH0g2IgPn6KwB4IT8iRpvA==}
     engines: {node: '>= 0.4'}
 
-  escalade@3.1.1:
-    resolution: {integrity: sha512-k0er2gUkLf8O0zKJiAhmkTnJlTvINGv7ygDNPbeIsX/TJjGJZHuh9B2UxbsaEkmlEo9MfhrSzmhIlhRlI2GXnw==}
-    engines: {node: '>=6'}
-
   escalade@3.2.0:
     resolution: {integrity: sha512-WUj2qlxaQtO4g6Pq5c29GTcWGDyd8itL8zTlipgECz3JesAiiOKotd8JU6otB3PACgG6xkJUyVhboMS+bje/jA==}
     engines: {node: '>=6'}
@@ -2082,6 +2053,7 @@ packages:
   eslint@8.55.0:
     resolution: {integrity: sha512-iyUUAM0PCKj5QpwGfmCAG9XXbZCWsqP/eWAWrG/W0umvjuLRBECwSFdt+rCntju0xEH7teIABPwXpahftIaTdA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
 
   espree@9.6.1:
@@ -2495,10 +2467,6 @@ packages:
   ignore-walk@6.0.3:
     resolution: {integrity: sha512-C7FfFoTA+bI10qfeydT8aZbvr91vAEU+2W5BZUlzPec47oNb07SsOfwYrtxuvOYdUApPP/Qlh4DtAO51Ekk2QA==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
-
-  ignore@5.2.4:
-    resolution: {integrity: sha512-MAb38BcSbH0eHNBxn7ql2NH/kX33OkB3lZ1BNdh7ENeRChHTYsTvWrMubiIAMNS2llXEEgZ1MUOBtXChP3kaFQ==}
-    engines: {node: '>= 4'}
 
   ignore@5.3.2:
     resolution: {integrity: sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g==}
@@ -3304,9 +3272,6 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
-  ms@2.1.2:
-    resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
-
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
 
@@ -3894,6 +3859,7 @@ packages:
 
   rimraf@2.7.1:
     resolution: {integrity: sha512-uWjbaKIK3T1OSVptzX7Nl6PvQ3qAGtKEtVRjRuazjfL3Bx5eI409VZSqgND+4UNnmzLVdPj9FqFJNPqBZFve4w==}
+    deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
 
   rimraf@3.0.2:
@@ -3965,11 +3931,6 @@ packages:
 
   semver@7.5.4:
     resolution: {integrity: sha512-1bCSESV6Pv+i21Hvpxp3Dx+pSD8lIPt8uVjRrxAUt/nbswYc+tK6Y2btiULjd4+fnq15PX+nqQDC7Oft7WkwcA==}
-    engines: {node: '>=10'}
-    hasBin: true
-
-  semver@7.6.0:
-    resolution: {integrity: sha512-EnwXhrlwXMk9gKu5/flx5sv/an57AkRplG3hTK68W7FRDN+k+OWBj65M7719OkA82XLBxrcX0KSHj+X5COhOVg==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -4518,10 +4479,6 @@ packages:
   validate-npm-package-license@3.0.4:
     resolution: {integrity: sha512-DpKm2Ui/xN7/HQKCtpZxoRWBhZ9Z0kqtygG8XCgNQ8ZlDnxuQmWhj566j8fN4Cu3/JmbhsDo7fcAJq4s9h27Ew==}
 
-  validate-npm-package-name@5.0.0:
-    resolution: {integrity: sha512-YuKoXDAhBYxY7SfOKxHBDoSyENFeW5VvIIQp2TGQuit8gpK6MnWaQelBKxso72DoxTZfZdcP3W90LqpSkgPzLQ==}
-    engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
-
   validate-npm-package-name@5.0.1:
     resolution: {integrity: sha512-OljLrQ9SQdOUqTaQxqL5dEfZWrXExyyWsozYlAWFawPVNuD83igl7uJD2RTkNMbniIYgt8l81eCJGIdQF7avLQ==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
@@ -4716,7 +4673,7 @@ snapshots:
       commander: 10.0.1
       marked: 9.1.6
       marked-terminal: 6.2.0(marked@9.1.6)
-      semver: 7.6.0
+      semver: 7.7.2
 
   '@arethetypeswrong/core@0.15.1':
     dependencies:
@@ -4725,7 +4682,7 @@ snapshots:
       semver: 7.7.2
       ts-expose-internals-conditionally: 1.0.0-empty.0
       typescript: 5.3.3
-      validate-npm-package-name: 5.0.0
+      validate-npm-package-name: 5.0.1
 
   '@aws-crypto/crc32@5.2.0':
     dependencies:
@@ -5274,10 +5231,10 @@ snapshots:
   '@eslint/eslintrc@2.1.4':
     dependencies:
       ajv: 6.12.6
-      debug: 4.3.6
+      debug: 4.4.1(supports-color@8.1.1)
       espree: 9.6.1
       globals: 13.20.0
-      ignore: 5.2.4
+      ignore: 5.3.2
       import-fresh: 3.3.0
       js-yaml: 4.1.0
       minimatch: 3.1.2
@@ -5297,13 +5254,13 @@ snapshots:
       - supports-color
       - typescript
 
-  '@fluid-tools/build-cli@0.57.0(@types/node@22.5.4)(encoding@0.1.13)(typescript@5.1.6)':
+  '@fluid-tools/build-cli@0.58.1(@types/node@22.5.4)(encoding@0.1.13)(typescript@5.1.6)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/build-infrastructure': 0.57.0(@types/node@22.5.4)
-      '@fluid-tools/version-tools': 0.57.0(@types/node@22.5.4)
-      '@fluidframework/build-tools': 0.57.0(@types/node@22.5.4)
-      '@fluidframework/bundle-size-tools': 0.57.0
+      '@fluid-tools/build-infrastructure': 0.58.1(@types/node@22.5.4)
+      '@fluid-tools/version-tools': 0.58.1(@types/node@22.5.4)
+      '@fluidframework/build-tools': 0.58.1(@types/node@22.5.4)
+      '@fluidframework/bundle-size-tools': 0.58.1
       '@inquirer/prompts': 7.6.0(@types/node@22.5.4)
       '@microsoft/api-extractor': 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.5.4)
       '@oclif/core': 4.4.0
@@ -5375,9 +5332,9 @@ snapshots:
       - utf-8-validate
       - webpack-cli
 
-  '@fluid-tools/build-infrastructure@0.57.0(@types/node@22.5.4)':
+  '@fluid-tools/build-infrastructure@0.58.1(@types/node@22.5.4)':
     dependencies:
-      '@fluid-tools/version-tools': 0.57.0(@types/node@22.5.4)
+      '@fluid-tools/version-tools': 0.58.1(@types/node@22.5.4)
       '@manypkg/get-packages': 2.2.2
       '@oclif/core': 4.4.0
       cosmiconfig: 8.3.6(typescript@5.4.5)
@@ -5402,7 +5359,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluid-tools/version-tools@0.57.0(@types/node@22.5.4)':
+  '@fluid-tools/version-tools@0.58.1(@types/node@22.5.4)':
     dependencies:
       '@oclif/core': 4.4.0
       '@oclif/plugin-autocomplete': 3.2.31
@@ -5420,9 +5377,9 @@ snapshots:
 
   '@fluidframework/build-common@2.0.3': {}
 
-  '@fluidframework/build-tools@0.57.0(@types/node@22.5.4)':
+  '@fluidframework/build-tools@0.58.1(@types/node@22.5.4)':
     dependencies:
-      '@fluid-tools/version-tools': 0.57.0(@types/node@22.5.4)
+      '@fluid-tools/version-tools': 0.58.1(@types/node@22.5.4)
       '@manypkg/get-packages': 2.2.2
       async: 3.2.6
       cosmiconfig: 8.3.6(typescript@5.4.5)
@@ -5454,7 +5411,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/bundle-size-tools@0.57.0':
+  '@fluidframework/bundle-size-tools@0.58.1':
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -5468,7 +5425,7 @@ snapshots:
       - uglify-js
       - webpack-cli
 
-  '@fluidframework/eslint-config-fluid@5.8.0(eslint@8.55.0)(typescript@5.1.6)':
+  '@fluidframework/eslint-config-fluid@6.0.0(eslint@8.55.0)(typescript@5.1.6)':
     dependencies:
       '@fluid-internal/eslint-plugin-fluid': 0.1.5(eslint@8.55.0)(typescript@5.1.6)
       '@microsoft/tsdoc': 0.14.2
@@ -5520,7 +5477,7 @@ snapshots:
   '@humanwhocodes/config-array@0.11.13':
     dependencies:
       '@humanwhocodes/object-schema': 2.0.1
-      debug: 4.3.6
+      debug: 4.4.1(supports-color@8.1.1)
       minimatch: 3.1.2
     transitivePeerDependencies:
       - supports-color
@@ -5935,7 +5892,7 @@ snapshots:
       '@octokit/graphql': 7.1.1
       '@octokit/request': 8.4.1
       '@octokit/request-error': 5.1.1
-      '@octokit/types': 13.6.1
+      '@octokit/types': 13.10.0
       before-after-hook: 2.2.3
       universal-user-agent: 6.0.0
 
@@ -5945,40 +5902,38 @@ snapshots:
       '@octokit/graphql': 8.1.1
       '@octokit/request': 9.1.3
       '@octokit/request-error': 6.1.5
-      '@octokit/types': 13.6.1
+      '@octokit/types': 13.10.0
       before-after-hook: 3.0.2
       universal-user-agent: 7.0.2
 
   '@octokit/endpoint@10.1.1':
     dependencies:
-      '@octokit/types': 13.6.1
+      '@octokit/types': 13.10.0
       universal-user-agent: 7.0.2
 
   '@octokit/endpoint@9.0.6':
     dependencies:
-      '@octokit/types': 13.6.1
+      '@octokit/types': 13.10.0
       universal-user-agent: 6.0.0
 
   '@octokit/graphql@7.1.1':
     dependencies:
       '@octokit/request': 8.4.1
-      '@octokit/types': 13.6.1
+      '@octokit/types': 13.10.0
       universal-user-agent: 6.0.0
 
   '@octokit/graphql@8.1.1':
     dependencies:
       '@octokit/request': 9.1.3
-      '@octokit/types': 13.6.1
+      '@octokit/types': 13.10.0
       universal-user-agent: 7.0.2
-
-  '@octokit/openapi-types@22.2.0': {}
 
   '@octokit/openapi-types@24.2.0': {}
 
   '@octokit/plugin-paginate-rest@11.3.5(@octokit/core@6.1.2)':
     dependencies:
       '@octokit/core': 6.1.2
-      '@octokit/types': 13.6.1
+      '@octokit/types': 13.10.0
 
   '@octokit/plugin-paginate-rest@11.4.4-cjs.2(@octokit/core@5.2.1)':
     dependencies:
@@ -5996,7 +5951,7 @@ snapshots:
   '@octokit/plugin-rest-endpoint-methods@13.2.6(@octokit/core@6.1.2)':
     dependencies:
       '@octokit/core': 6.1.2
-      '@octokit/types': 13.6.1
+      '@octokit/types': 13.10.0
 
   '@octokit/plugin-rest-endpoint-methods@13.3.2-cjs.1(@octokit/core@5.2.1)':
     dependencies:
@@ -6005,26 +5960,26 @@ snapshots:
 
   '@octokit/request-error@5.1.1':
     dependencies:
-      '@octokit/types': 13.6.1
+      '@octokit/types': 13.10.0
       deprecation: 2.3.1
       once: 1.4.0
 
   '@octokit/request-error@6.1.5':
     dependencies:
-      '@octokit/types': 13.6.1
+      '@octokit/types': 13.10.0
 
   '@octokit/request@8.4.1':
     dependencies:
       '@octokit/endpoint': 9.0.6
       '@octokit/request-error': 5.1.1
-      '@octokit/types': 13.6.1
+      '@octokit/types': 13.10.0
       universal-user-agent: 6.0.0
 
   '@octokit/request@9.1.3':
     dependencies:
       '@octokit/endpoint': 10.1.1
       '@octokit/request-error': 6.1.5
-      '@octokit/types': 13.6.1
+      '@octokit/types': 13.10.0
       universal-user-agent: 7.0.2
 
   '@octokit/rest@20.1.2':
@@ -6044,10 +5999,6 @@ snapshots:
   '@octokit/types@13.10.0':
     dependencies:
       '@octokit/openapi-types': 24.2.0
-
-  '@octokit/types@13.6.1':
-    dependencies:
-      '@octokit/openapi-types': 22.2.0
 
   '@pkgjs/parseargs@0.11.0':
     optional: true
@@ -7028,10 +6979,6 @@ snapshots:
 
   builtin-modules@3.3.0: {}
 
-  builtins@5.0.1:
-    dependencies:
-      semver: 7.7.2
-
   cacache@16.1.3:
     dependencies:
       '@npmcli/fs': 2.1.2
@@ -7393,14 +7340,6 @@ snapshots:
     dependencies:
       ms: 2.1.3
 
-  debug@4.3.4:
-    dependencies:
-      ms: 2.1.2
-
-  debug@4.3.6:
-    dependencies:
-      ms: 2.1.2
-
   debug@4.4.1(supports-color@8.1.1):
     dependencies:
       ms: 2.1.3
@@ -7599,8 +7538,6 @@ snapshots:
       is-date-object: 1.0.5
       is-symbol: 1.0.4
 
-  escalade@3.1.1: {}
-
   escalade@3.2.0: {}
 
   escape-goat@4.0.0: {}
@@ -7781,7 +7718,7 @@ snapshots:
       ajv: 6.12.6
       chalk: 4.1.2
       cross-spawn: 7.0.6
-      debug: 4.3.4
+      debug: 4.4.1(supports-color@8.1.1)
       doctrine: 3.0.0
       escape-string-regexp: 4.0.0
       eslint-scope: 7.2.2
@@ -7795,7 +7732,7 @@ snapshots:
       glob-parent: 6.0.2
       globals: 13.20.0
       graphemer: 1.4.0
-      ignore: 5.2.4
+      ignore: 5.3.2
       imurmurhash: 0.1.4
       is-glob: 4.0.3
       is-path-inside: 3.0.3
@@ -8263,8 +8200,6 @@ snapshots:
   ignore-walk@6.0.3:
     dependencies:
       minimatch: 9.0.5
-
-  ignore@5.2.4: {}
 
   ignore@5.3.2: {}
 
@@ -9231,8 +9166,6 @@ snapshots:
 
   mkdirp@3.0.1: {}
 
-  ms@2.1.2: {}
-
   ms@2.1.3: {}
 
   msgpack-lite@0.1.26:
@@ -10031,10 +9964,6 @@ snapshots:
     dependencies:
       lru-cache: 6.0.0
 
-  semver@7.6.0:
-    dependencies:
-      lru-cache: 6.0.0
-
   semver@7.7.2: {}
 
   sentence-case@2.1.1:
@@ -10628,10 +10557,6 @@ snapshots:
       spdx-correct: 3.2.0
       spdx-expression-parse: 3.0.1
 
-  validate-npm-package-name@5.0.0:
-    dependencies:
-      builtins: 5.0.1
-
   validate-npm-package-name@5.0.1: {}
 
   vfile-message@4.0.2:
@@ -10813,7 +10738,7 @@ snapshots:
   yargs@16.2.0:
     dependencies:
       cliui: 7.0.4
-      escalade: 3.1.1
+      escalade: 3.2.0
       get-caller-file: 2.0.5
       require-directory: 2.1.1
       string-width: 4.2.3

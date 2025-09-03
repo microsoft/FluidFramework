@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Timer } from "@fluidframework/core-utils/internal";
-import { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
-import { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
+import type { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
+import type { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import {
 	type TelemetryEventCategory,
-	ITelemetryLoggerExt,
-	MonitoringContext,
+	type ITelemetryLoggerExt,
+	type MonitoringContext,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor.js";
+import { CatchUpMonitor, type ICatchUpMonitor } from "./catchUpMonitor.js";
 import { ConnectionState } from "./connectionState.js";
-import { IConnectionDetailsInternal, IConnectionStateChangeReason } from "./contracts.js";
-import { IProtocolHandler } from "./protocol.js";
+import type { IConnectionDetailsInternal, IConnectionStateChangeReason } from "./contracts.js";
+import type { IProtocolHandler } from "./protocol.js";
 
 // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
 // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so

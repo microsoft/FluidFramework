@@ -39,8 +39,8 @@ import React, { useState, type ReactNode, type SetStateAction } from "react";
 
 import { getOpenAiClient } from "@/infra/openAiClient";
 import {
-	SharedTreeTask,
-	SharedTreeTaskGroup,
+	type SharedTreeTask,
+	type SharedTreeTaskGroup,
 	SharedTreeAppState,
 	TaskPriorities,
 	type TaskPriority,

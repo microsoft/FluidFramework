@@ -16,7 +16,7 @@ import { anchorSlot } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
-	cursorForMapTreeNode,
+	cursorForMapTreeField,
 	TreeStatus,
 	Context,
 } from "../feature-libraries/index.js";
@@ -55,6 +55,7 @@ import {
 	FieldSchemaAlpha,
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
+	toUpgradeSchema,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -63,7 +64,7 @@ import {
 	type WithBreakable,
 } from "../util/index.js";
 
-import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
+import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
 
 /**
@@ -78,7 +79,7 @@ export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
 @breakingClass
 export class SchematizingSimpleTreeView<
 	in out TRootSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
-> implements TreeBranch, TreeViewAlpha<TRootSchema>, WithBreakable
+> implements TreeViewAlpha<TRootSchema>, WithBreakable
 {
 	/**
 	 * This is set to undefined when this object is disposed or the view schema does not support viewing the document's stored schema.
@@ -184,10 +185,19 @@ export class SchematizingSimpleTreeView<
 				schema.rootFieldSchema,
 			);
 
-			initialize(this.checkout, {
+			this.checkout.transaction.start();
+
+			initialize(
+				this.checkout,
 				schema,
-				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
-			});
+				initializerFromChunk(this.checkout, () => {
+					// This must be done after initial schema is set!
+					return this.checkout.forest.chunkField(
+						cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
+					);
+				}),
+			);
+			this.checkout.transaction.commit();
 		});
 	}
 
@@ -206,10 +216,8 @@ export class SchematizingSimpleTreeView<
 			);
 		}
 
-		this.runSchemaEdit(() => {
-			const result = ensureSchema(this.viewSchema, this.checkout);
-			assert(result, 0x8bf /* Schema upgrade should always work if canUpgrade is set. */);
-		});
+		const newSchema = toUpgradeSchema(this.viewSchema.viewSchema.root);
+		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
 	}
 
 	/**

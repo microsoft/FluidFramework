@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/webpack-fluid-loader",
-	"version": "2.53.0",
+	"version": "2.61.0",
 	"private": true,
 	"description": "Fluid object loader for webpack-dev-server",
 	"homepage": "https://fluidframework.com",
@@ -114,10 +114,10 @@
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.57.0",
+		"@fluid-tools/build-cli": "^0.58.1",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.57.0",
-		"@fluidframework/eslint-config-fluid": "^5.7.4",
+		"@fluidframework/build-tools": "^0.58.1",
+		"@fluidframework/eslint-config-fluid": "^6.0.0",
 		"@types/express": "^4.17.21",
 		"@types/fs-extra": "^9.0.11",
 		"@types/mocha": "^10.0.10",
@@ -137,14 +137,13 @@
 		"webpack-cli": "^5.1.4"
 	},
 	"fluidBuild": {
+		"_tasksComment1": "webpack-fluid-loader injects a script tag pointing at its own bundle (/code/fluid-loader.bundle.js) into the page. This bundle must remain up to date for webpack-fluid-loader users.",
+		"_tasksComment2": "Using build:esnext over something like compile guarantees that this happens, since the build:esnext target depends on all transitive dependencies' build:esnext targets.",
 		"tasks": {
-			"compile": {
-				"dependsOn": [
-					"...",
-					"webpack"
-				],
-				"script": false
-			}
+			"build:esnext": [
+				"...",
+				"webpack"
+			]
 		}
 	},
 	"typeValidation": {

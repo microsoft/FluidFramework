@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IPactMap, PactMap } from "@fluid-experimental/pact-map";
+import { type IPactMap, PactMap } from "@fluid-experimental/pact-map";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
 	FluidObject,
@@ -18,7 +18,7 @@ import type {
 } from "@fluidframework/datastore-definitions/legacy";
 import {
 	ConsensusRegisterCollection,
-	IConsensusRegisterCollection,
+	type IConsensusRegisterCollection,
 } from "@fluidframework/register-collection/legacy";
 import type {
 	IFluidDataStoreChannel,

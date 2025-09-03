@@ -408,8 +408,7 @@ export class DocumentPostCreateError extends Error {
 /**
  * Creates factory for creating the routerlicious document service.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function createRouterliciousDocumentServiceFactory(
 	tokenProvider: ITokenProvider,

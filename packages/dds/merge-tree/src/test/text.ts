@@ -4,7 +4,7 @@
  */
 
 import { NonCollabClient, UniversalSequenceNumber } from "../constants.js";
-import { MergeTree } from "../mergeTree.js";
+import type { MergeTree } from "../mergeTree.js";
 import { Marker } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import { reservedTileLabelsKey } from "../referencePositions.js";

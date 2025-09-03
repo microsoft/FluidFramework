@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback.js";
