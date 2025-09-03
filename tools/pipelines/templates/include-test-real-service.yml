@@ -373,7 +373,7 @@ stages:
                 set -eu -o pipefail
 
                 # Increase the maximum time to wait for a tenant to 1 hour to accommodate multiple test runs at the same time.
-                npx --package=@ff-internal/trips-setup@0.0.5 -- trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN
+                npx --package=@ff-internal/trips-setup@0.0.6 -- trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN
                 echo "##vso[task.setvariable variable=tenantSetupSuccess;]true"
 
         # run the test
@@ -462,7 +462,7 @@ stages:
               script: |
                 set -eu -o pipefail
 
-                npx --package=@ff-internal/trips-setup@0.0.5 -- trips-cleanup --reservationId=$(stringBearerToken)
+                npx --package=@ff-internal/trips-setup@0.0.6 -- trips-cleanup --reservationId=$(stringBearerToken)
             condition: eq(variables['tenantSetupSuccess'], 'true')
 
         # Log Test Failures
