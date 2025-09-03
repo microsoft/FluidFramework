@@ -312,9 +312,11 @@ export function runBenchmarkTestSuite(mode: "memory" | "execution-time"): Suite 
 			// See the comment at the top of the test suite for more details.
 		});
 
-		const maxBenchmarkDurationSeconds = 5;
+		let maxBenchmarkDurationSeconds: number;
 
 		for (const matrixSize of matrixSizes) {
+			maxBenchmarkDurationSeconds = matrixSize === 50 ? 10 : 5;
+
 			describe(`Size of ${matrixSize}*${matrixSize} SharedMatrix`, () => {
 				// Filter counts to ensure remove operation do not exceed matrixSize
 				const validRemoveCounts = operationCounts.filter((count) => count <= matrixSize);

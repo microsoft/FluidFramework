@@ -106,9 +106,11 @@ describe("SharedTree table APIs execution time", () => {
 			[5];
 
 	// The maximum duration for each benchmark, in seconds.
-	const maxBenchmarkDurationSeconds = 5;
+	let maxBenchmarkDurationSeconds: number;
 
 	for (const tableSize of tableSizes) {
+		maxBenchmarkDurationSeconds = tableSize === 50 ? 10 : 5;
+
 		// Filter counts to ensure remove operation do not exceed tableSize
 		const validRemoveCounts = operationCounts.filter((count) => count <= tableSize);
 
