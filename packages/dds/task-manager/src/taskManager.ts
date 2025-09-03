@@ -457,19 +457,8 @@ export class TaskManagerClass
 			return;
 		}
 
-		if (this.queuedOptimistically(taskId)) {
-			this.submitAbandonOp(taskId);
-			if (!this.assigned(taskId)) {
-				// If we try to abandon when queued but not assigned then we should emit to the abandonWatcher
-				// to ensure that the volunteer promise is rejected.
-				this.abandonWatcher.emit("abandon", taskId);
-			}
-		} else if (this.subscribed(taskId) && !this.connected) {
-			// If we are subscribed, not queued, and offline, then we should still submit the
-			// abandon op/event to ensure we abandon the subscription when reconnecting.
-			this.submitAbandonOp(taskId);
-			this.abandonWatcher.emit("abandon", taskId);
-		}
+		this.submitAbandonOp(taskId);
+		this.abandonWatcher.emit("abandon", taskId);
 	}
 
 	/**
