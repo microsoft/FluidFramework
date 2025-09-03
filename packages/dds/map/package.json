@@ -156,7 +156,7 @@
 		"@fluidframework/build-tools": "^0.58.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
-		"@fluidframework/map-previous": "npm:@fluidframework/map@2.53.0",
+		"@fluidframework/map-previous": "npm:@fluidframework/map@2.60.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
