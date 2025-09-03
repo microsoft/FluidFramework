@@ -467,7 +467,7 @@ export function createCacheSnapshotKey(
 ): ICacheEntry {
 	const cacheEntry: ICacheEntry = {
 		type: snapshotWithLoadingGroupId ? snapshotWithLoadingGroupIdKey : snapshotKey,
-		key: "",
+		key: odspResolvedUrl.fileVersion ?? "",
 		file: {
 			resolvedUrl: odspResolvedUrl,
 			docId: odspResolvedUrl.hashedDocumentId,
