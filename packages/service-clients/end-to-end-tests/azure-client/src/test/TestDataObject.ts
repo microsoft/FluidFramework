@@ -5,16 +5,17 @@
 
 import type { SignalListener } from "@fluid-experimental/data-objects";
 import { EventEmitter } from "@fluid-internal/client-utils";
+// eslint-disable-next-line import/no-internal-modules -- TODO consider a test exposure to avoid /internal
+import { createDataObjectKind } from "@fluidframework/aqueduct/internal";
 import {
 	DataObject,
 	DataObjectFactory,
 	type IDataObjectProps,
-	createDataObjectKind,
-} from "@fluidframework/aqueduct/internal";
+} from "@fluidframework/aqueduct/legacy";
 import type { IErrorEvent, IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedCounter } from "@fluidframework/counter/internal";
-import type { Jsonable } from "@fluidframework/datastore-definitions/internal";
-import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
+import { SharedCounter } from "@fluidframework/counter/legacy";
+import type { Jsonable } from "@fluidframework/datastore-definitions/legacy";
+import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/legacy";
 
 class TestDataObjectClass extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
