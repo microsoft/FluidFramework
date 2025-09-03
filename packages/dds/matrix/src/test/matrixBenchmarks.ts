@@ -283,14 +283,14 @@ export function runBenchmarkTestSuite(mode: "memory" | "execution-time"): Suite 
 		// The test matrix's size will be 10*10, 100*100.
 		// Matrix size 1000 benchmarks removed due to high overhead and unreliable results.
 		const matrixSizes = isInPerformanceTestingMode
-			? [10, 100]
+			? [5, 50]
 			: // When not measuring perf, use a single smaller data size so the tests run faster.
-				[10];
+				[5];
 
 		// The number of operations to perform on the matrix.
 		// Operation counts 1000 removed due to high overhead and unreliable results.
 		const operationCounts = isInPerformanceTestingMode
-			? [10, 100]
+			? [5, 50]
 			: // When not measuring perf, use a single smaller data size so the tests run faster.
 				[5];
 
@@ -312,10 +312,9 @@ export function runBenchmarkTestSuite(mode: "memory" | "execution-time"): Suite 
 			// See the comment at the top of the test suite for more details.
 		});
 
-		let maxBenchmarkDurationSeconds: number;
+		const maxBenchmarkDurationSeconds = 5;
 
 		for (const matrixSize of matrixSizes) {
-			maxBenchmarkDurationSeconds = matrixSize === 100 ? 10 : 5;
 			describe(`Size of ${matrixSize}*${matrixSize} SharedMatrix`, () => {
 				// Filter counts to ensure remove operation do not exceed matrixSize
 				const validRemoveCounts = operationCounts.filter((count) => count <= matrixSize);

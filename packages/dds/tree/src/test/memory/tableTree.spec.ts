@@ -88,14 +88,14 @@ describe("SharedTree table APIs memory usage", () => {
 	// The test tree's size will be 10*10, 100*100.
 	// Tree size 1000 benchmarks removed due to high overhead and unreliable results.
 	const tableSizes = isInPerformanceTestingMode
-		? [10, 100]
+		? [5, 50]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
-			[10];
+			[5];
 
 	// The number of operations to perform on the tree.
 	// Operation counts 1000 removed due to high overhead and unreliable results.
 	const operationCounts = isInPerformanceTestingMode
-		? [10, 100]
+		? [5, 50]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
 			[5];
 

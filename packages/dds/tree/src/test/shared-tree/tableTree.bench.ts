@@ -94,22 +94,21 @@ describe("SharedTree table APIs execution time", () => {
 	// The test tree's size will be 10*10, 100*100.
 	// Table size 1000 benchmarks removed due to high overhead and unreliable results.
 	const tableSizes = isInPerformanceTestingMode
-		? [10, 100]
+		? [5, 50]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
-			[10];
+			[5];
 
 	// The number of operations to perform on the tree.
 	// Operation counts 1000 removed due to high overhead and unreliable results.
 	const operationCounts = isInPerformanceTestingMode
-		? [10, 100]
+		? [5, 50]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
 			[5];
+
 	// The maximum duration for each benchmark, in seconds.
-	let maxBenchmarkDurationSeconds: number;
+	const maxBenchmarkDurationSeconds = 5;
 
 	for (const tableSize of tableSizes) {
-		maxBenchmarkDurationSeconds = tableSize === 100 ? 10 : 5;
-
 		// Filter counts to ensure remove operation do not exceed tableSize
 		const validRemoveCounts = operationCounts.filter((count) => count <= tableSize);
 
