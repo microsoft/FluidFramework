@@ -5,7 +5,7 @@
 
 import { fork, type ChildProcess } from "node:child_process";
 
-// eslint-disable-next-line import/no-internal-modules
+import { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { AttendeeId } from "@fluidframework/presence/beta";
 import { timeoutAwait, timeoutPromise } from "@fluidframework/test-utils/internal";
 
@@ -17,6 +17,27 @@ import type {
 	LatestValueGetResponseEvent,
 	LatestMapValueGetResponseEvent,
 } from "./messageTypes.js";
+
+/**
+ * Child process to console logging verbosity
+ *
+ * @remarks
+ * Meaningful substrings:
+ * - "msgs"
+ * - "telem"
+ *
+ * @example "msgs+telem"
+ */
+const childLoggingVerbosity = process.env.FLUID_TEST_VERBOSE ?? "none";
+
+/**
+ * Capture console./warn/error before test infrastructure alters it.
+ */
+export const testConsole = {
+	log: console.log,
+	warn: console.warn,
+	error: console.error,
+};
 
 /**
  * Fork child processes to simulate multiple Fluid clients.
@@ -44,7 +65,8 @@ export async function forkChildProcesses(
 	const childErrorPromises: Promise<never>[] = [];
 	for (let i = 0; i < numProcesses; i++) {
 		const child = fork("./lib/test/multiprocess/childClient.js", [
-			`child${i}` /* identifier passed to child process */,
+			`child ${i}` /* identifier passed to child process */,
+			childLoggingVerbosity /* console logging verbosity */,
 		]);
 		cleanUpAccumulator.push(() => {
 			child.kill();
@@ -81,14 +103,24 @@ export async function forkChildProcesses(
  *
  * @param id - Suffix used to construct stable test user identity.
  */
-export function composeConnectMessage(id: string | number): ConnectCommand {
+function composeConnectMessage(
+	id: string | number,
+	scopes: ScopeType[] = [ScopeType.DocRead],
+): ConnectCommand {
 	return {
 		command: "connect",
 		user: {
 			id: `test-user-id-${id}`,
 			name: `test-user-name-${id}`,
 		},
+		scopes,
+		createScopes: [ScopeType.DocWrite],
 	};
+}
+
+interface CreatorAttendeeIdAndAttendeePromises {
+	containerCreatorAttendeeId: AttendeeId;
+	attendeeIdPromises: Promise<AttendeeId>[];
 }
 
 /**
@@ -99,11 +131,8 @@ export function composeConnectMessage(id: string | number): ConnectCommand {
  */
 export async function connectChildProcesses(
 	childProcesses: ChildProcess[],
-	readyTimeoutMs: number,
-): Promise<{
-	containerCreatorAttendeeId: AttendeeId;
-	attendeeIdPromises: Promise<AttendeeId>[];
-}> {
+	{ writeClients, readyTimeoutMs }: { writeClients: number; readyTimeoutMs: number },
+): Promise<CreatorAttendeeIdAndAttendeePromises> {
 	if (childProcesses.length === 0) {
 		throw new Error("No child processes provided for connection.");
 	}
@@ -123,7 +152,15 @@ export async function connectChildProcesses(
 			}
 		});
 	});
-	firstChild.send(composeConnectMessage(0));
+	{
+		// Note that DocWrite is used to have this attendee be the "leader".
+		// DocRead would also be valid as DocWrite is specified for attach when there
+		// is no document id (container id).
+		const connectContainerCreator = composeConnectMessage(0, [
+			writeClients > 0 ? ScopeType.DocWrite : ScopeType.DocRead,
+		]);
+		firstChild.send(connectContainerCreator);
+	}
 	const { containerCreatorAttendeeId, containerId } = await timeoutAwait(
 		containerReadyPromise,
 		{
@@ -138,7 +175,9 @@ export async function connectChildProcesses(
 			attendeeIdPromises.push(Promise.resolve(containerCreatorAttendeeId));
 			continue;
 		}
-		const message = composeConnectMessage(index);
+		const message = composeConnectMessage(index, [
+			index < writeClients ? ScopeType.DocWrite : ScopeType.DocRead,
+		]);
 		message.containerId = containerId;
 		attendeeIdPromises.push(
 			new Promise<AttendeeId>((resolve, reject) => {
@@ -156,36 +195,116 @@ export async function connectChildProcesses(
 	return { containerCreatorAttendeeId, attendeeIdPromises };
 }
 
+interface ConnectAndListenForAttendees extends CreatorAttendeeIdAndAttendeePromises {
+	attendeeCountRequiredPromises: Promise<void>[];
+}
+
+/**
+ * Connects the child processes and creates promises for the specified number of
+ * attendees to connect.
+ */
+export async function connectAndListenForAttendees(
+	children: ChildProcess[],
+	{
+		writeClients,
+		attendeeCountRequired,
+		childConnectTimeoutMs,
+	}: {
+		/**
+		 * The number of clients that should have write access.
+		 */
+		writeClients: number;
+		/**
+		 * The number of attendees that must connect.
+		 */
+		attendeeCountRequired: number;
+		/**
+		 * Timeout duration for child process connections.
+		 */
+		childConnectTimeoutMs: number;
+	},
+): Promise<ConnectAndListenForAttendees> {
+	// Setup
+	const attendeeCountRequiredPromises = children.map(
+		// eslint-disable-next-line @typescript-eslint/promise-function-async
+		(child) =>
+			new Promise<void>((resolve) => {
+				let attendeesJoinedEvents = 0;
+				const listenForAttendees = (msg: MessageFromChild): void => {
+					if (msg.event === "attendeeConnected") {
+						attendeesJoinedEvents++;
+						if (attendeesJoinedEvents >= attendeeCountRequired) {
+							resolve();
+						}
+					}
+				};
+				child.on("message", listenForAttendees);
+			}),
+	);
+
+	// Act - connect all child processes
+	const connectResult = await connectChildProcesses(children, {
+		writeClients,
+		readyTimeoutMs: childConnectTimeoutMs,
+	});
+
+	Promise.all(connectResult.attendeeIdPromises)
+		.then(() => console.log("All attendees connected."))
+		.catch((error) => {
+			testConsole.error("Error connecting children:", error);
+		});
+
+	return { ...connectResult, attendeeCountRequiredPromises };
+}
+
 /**
  * Connects the child processes and waits for the specified number of attendees to connect.
+ *
+ * @remarks
+ * This function can be used directly as a test. Comments in the functionality describe the
+ * breakdown of test blocks.
  */
 export async function connectAndWaitForAttendees(
 	children: ChildProcess[],
-	attendeeCountRequired: number,
-	childConnectTimeoutMs: number,
-	attendeesJoinedTimeoutMs: number,
+	{
+		writeClients,
+		attendeeCountRequired,
+		childConnectTimeoutMs,
+		allAttendeesJoinedTimeoutMs,
+	}: {
+		/**
+		 * The number of clients that should have write access.
+		 */
+		writeClients: number;
+		/**
+		 * The number of attendees that must connect.
+		 */
+		attendeeCountRequired: number;
+		/**
+		 * Timeout duration for child process connections.
+		 */
+		childConnectTimeoutMs: number;
+		/**
+		 * Timeout duration for all required attendees to join.
+		 */
+		allAttendeesJoinedTimeoutMs: number;
+	},
 	earlyExitPromise: Promise<never>,
 ): Promise<{ containerCreatorAttendeeId: AttendeeId }> {
-	const attendeeConnectedPromise = new Promise<void>((resolve) => {
-		let attendeesJoinedEvents = 0;
-		children[0].on("message", (msg: MessageFromChild) => {
-			if (msg.event === "attendeeConnected") {
-				attendeesJoinedEvents++;
-				if (attendeesJoinedEvents >= attendeeCountRequired) {
-					resolve();
-				}
-			}
-		});
+	// Setup and Act - connect all child processes
+	const connectAndListenResult = await connectAndListenForAttendees(children, {
+		writeClients,
+		attendeeCountRequired,
+		childConnectTimeoutMs,
 	});
-	const connectResult = await connectChildProcesses(children, childConnectTimeoutMs);
-	Promise.all(connectResult.attendeeIdPromises).catch((error) => {
-		console.error("Error connecting children:", error);
-	});
+
+	const attendeeConnectedPromise = connectAndListenResult.attendeeCountRequiredPromises[0];
+
 	await timeoutAwait(Promise.race([attendeeConnectedPromise, earlyExitPromise]), {
-		durationMs: attendeesJoinedTimeoutMs,
-		errorMsg: "did not receive all 'attendeeConnected' events",
+		durationMs: allAttendeesJoinedTimeoutMs,
+		errorMsg: "child 0 did not receive all 'attendeeConnected' events",
 	});
-	return connectResult;
+	return connectAndListenResult;
 }
 
 /**
