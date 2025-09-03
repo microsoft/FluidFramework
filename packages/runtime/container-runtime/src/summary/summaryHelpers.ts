@@ -15,6 +15,7 @@ import {
 	type ISummaryConfiguration,
 	type ISummaryConfigurationDisableSummarizer,
 	type ISummaryConfigurationHeuristics,
+	type ISummaryConfigurationWithSummaryOnRequest,
 } from "./summarizerTypes.js";
 
 export const summarizerRequestUrl = "_summarizer";
@@ -23,6 +24,15 @@ export function isSummariesDisabled(
 	config: ISummaryConfiguration,
 ): config is ISummaryConfigurationDisableSummarizer {
 	return config.state === "disabled";
+}
+
+/**
+ * Returns true when the summary configuration is set to on-demand mode (no election/heuristics).
+ */
+export function isSummaryOnRequest(
+	config: ISummaryConfiguration,
+): config is ISummaryConfigurationWithSummaryOnRequest {
+	return config.state === "summaryOnRequest";
 }
 
 /**
