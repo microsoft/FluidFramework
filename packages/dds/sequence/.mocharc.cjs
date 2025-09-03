@@ -8,5 +8,4 @@
 const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
 
 const config = getFluidTestMochaConfig(__dirname);
-config.ignore = config.spec + "/memory/**/*";
 module.exports = config;

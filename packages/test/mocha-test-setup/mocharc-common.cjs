@@ -64,6 +64,10 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		"recursive": true,
 		"require": requiredModulePaths,
 		"unhandled-rejections": "strict",
+		ignore: [
+			// Ignore "tools" which are scripts intended to be run, not part of the test suite.
+			"**/*.tool.js",
+		],
 		"node-option": [
 			// Allow test-only indexes to be imported. Search the FF repo for package.json files with this condition to see example usage.
 			"conditions=allow-ff-test-exports",
