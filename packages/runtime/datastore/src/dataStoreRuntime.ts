@@ -61,7 +61,6 @@ import {
 	type IInboundSignalMessage,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
-	// eslint-disable-next-line import/no-deprecated
 	type IContainerRuntimeBaseExperimental,
 	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
@@ -448,11 +447,8 @@ export class FluidDataStoreRuntime
 	 */
 	// eslint-disable-next-line import/no-deprecated
 	private get inStagingMode(): IFluidDataStoreRuntimeExperimental["inStagingMode"] {
-		return (
-			// eslint-disable-next-line import/no-deprecated
-			(this.dataStoreContext.containerRuntime as IContainerRuntimeBaseExperimental)
-				?.inStagingMode
-		);
+		return (this.dataStoreContext.containerRuntime as IContainerRuntimeBaseExperimental)
+			?.inStagingMode;
 	}
 
 	/**

@@ -308,8 +308,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 
 /**
  * @experimental
- * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
- * @legacy @beta
+ * @legacy @alpha
  * @sealed
  */
 export interface CommitStagedChangesOptionsExperimental {
@@ -332,8 +331,7 @@ export interface CommitStagedChangesOptionsExperimental {
 
 /**
  * @experimental
- * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
- * @legacy @beta
+ * @legacy @alpha
  * @sealed
  */
 export interface StageControlsExperimental {
@@ -352,8 +350,7 @@ export interface StageControlsExperimental {
 
 /**
  * @experimental
- * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
- * @legacy @beta
+ * @legacy @alpha
  * @sealed
  */
 export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {

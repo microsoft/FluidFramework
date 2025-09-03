@@ -33,6 +33,16 @@
 				"default": "./dist/index.js"
 			}
 		},
+		"./legacy/alpha": {
+			"import": {
+				"types": "./lib/legacyAlpha.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/legacyAlpha.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
 		"./internal": {
 			"import": {
 				"types": "./lib/index.d.ts",
@@ -48,8 +58,12 @@
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
+		"api-extractor:commonjs": "concurrently \"npm:api-extractor:commonjs:*\"",
+		"api-extractor:esnext": "concurrently \"npm:api-extractor:esnext:*\"",
+		"api-extractor:commonjs:legacyBeta": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./dist",
+		"api-extractor:esnext:legacyBeta": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
+		"api-extractor:commonjs:legacyAlpha": "flub generate entrypoints --outFileLegacyAlpha legacyAlpha --outDir ./dist",
+		"api-extractor:esnext:legacyAlpha": "flub generate entrypoints --outFileLegacyAlpha legacyAlpha --outDir ./lib --node10TypeCompat",
 		"build": "fluid-build . --task build",
 		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
 		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor.current.json",

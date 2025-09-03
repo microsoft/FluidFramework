@@ -120,9 +120,7 @@ import type {
 	IInboundSignalMessage,
 	IRuntimeMessagesContent,
 	ISummarizerNodeWithGC,
-	// eslint-disable-next-line import/no-deprecated
 	StageControlsExperimental,
-	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeBaseExperimental,
 	IFluidParentContext,
 	MinimumVersionForCollab,

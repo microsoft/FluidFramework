@@ -1,0 +1,30 @@
+diff --git a/lib/library/commands/generateEntrypoints.js b/lib/library/commands/generateEntrypoints.js
+index 5ed54259041a3bb15ca9360e4898b61080737d27..a6a558cc7affa14b37509bed9138efc4b66d695a 100644
+--- a/lib/library/commands/generateEntrypoints.js
++++ b/lib/library/commands/generateEntrypoints.js
+@@ -378,16 +378,19 @@ async function generateNode10TypeEntrypoints(mapExportPathToData, log) {
+      * promises so we can await them all at once.
+      */
+     const fileSavePromises = [];
+-    async function createEntrypointFile(filePath, content) {
+-        await fs.ensureDir(path.dirname(filePath));
++    async function createEntrypointFile(filePath, relPath, isTypeOnly) {
++        const dirPath = path.dirname(filePath);
++        await fs.ensureDir(dirPath);
++        const fixedPath = path.posix.relative(dirPath, relPath);
++        const jsImport = fixedPath.replace(/\.d\.([cm]?)ts/, ".$1js");
++        const content = isTypeOnly
++            ? `${generatedHeader}export type * from "${fixedPath}";\n`
++            : `${generatedHeader}export * from "${jsImport}";\n`;
+         await fs.writeFile(filePath, content, "utf8");
+     }
+     for (const [outFile, { relPath, isTypeOnly }] of mapExportPathToData.entries()) {
+         log.info(`\tGenerating ${outFile}`);
+-        const jsImport = relPath.replace(/\.d\.([cm]?)ts/, ".$1js");
+-        fileSavePromises.push(createEntrypointFile(outFile, isTypeOnly
+-            ? `${generatedHeader}export type * from "${relPath}";\n`
+-            : `${generatedHeader}export * from "${jsImport}";\n`));
++        fileSavePromises.push(createEntrypointFile(outFile, relPath, isTypeOnly));
+     }
+     if (fileSavePromises.length === 0) {
+         log.info(`\tNo Node10 compat files generated.`);

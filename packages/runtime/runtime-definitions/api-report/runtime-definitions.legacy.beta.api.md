@@ -16,11 +16,6 @@ export interface AttributionInfo {
 // @beta @legacy
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
-// @beta @sealed @deprecated @legacy (undocumented)
-export interface CommitStagedChangesOptionsExperimental {
-    squash?: boolean;
-}
-
 // @beta @legacy (undocumented)
 export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
@@ -104,14 +99,6 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
     // (undocumented)
     (event: "dispose", listener: () => void): any;
-}
-
-// @beta @sealed @deprecated @legacy (undocumented)
-export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
-    // (undocumented)
-    enterStagingMode?(): StageControlsExperimental;
-    // (undocumented)
-    readonly inStagingMode?: boolean;
 }
 
 // @beta @legacy
@@ -441,12 +428,6 @@ export interface OpAttributionKey {
 
 // @beta @legacy
 export type PackagePath = readonly string[];
-
-// @beta @sealed @deprecated @legacy (undocumented)
-export interface StageControlsExperimental {
-    readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsExperimental>) => void;
-    readonly discardChanges: () => void;
-}
 
 // @beta @legacy (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;

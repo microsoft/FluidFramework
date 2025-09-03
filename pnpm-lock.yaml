@@ -23,6 +23,9 @@ overrides:
 pnpmfileChecksum: jsbnis4v7zlhs4t7yscsd3mtxe
 
 patchedDependencies:
+  '@fluid-tools/build-cli@0.58.1':
+    hash: k4oisraxyzjqac4in6yj3adobe
+    path: patches/@fluid-tools__build-cli@0.58.1.patch
   '@microsoft/api-extractor@7.52.8':
     hash: ldzfpsbo3oeejrejk775zxplmi
     path: patches/@microsoft__api-extractor@7.52.8.patch
@@ -42,7 +45,7 @@ importers:
         version: link:packages/tools/changelog-generator-wrapper
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluid-tools/markdown-magic':
         specifier: workspace:~
         version: link:tools/markdown-magic
@@ -164,7 +167,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/azure-service-utils-previous':
         specifier: npm:@fluidframework/azure-service-utils@2.53.0
         version: '@fluidframework/azure-service-utils@2.53.0'
@@ -224,7 +227,7 @@ importers:
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/ai-collab':
         specifier: workspace:~
         version: link:../../../packages/framework/ai-collab
@@ -381,7 +384,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -508,7 +511,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -635,7 +638,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -795,7 +798,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -949,7 +952,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -1097,7 +1100,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -1230,7 +1233,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -1430,7 +1433,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -1660,7 +1663,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -2048,7 +2051,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -3225,7 +3228,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -3650,7 +3653,7 @@ importers:
         version: link:../../../packages/test/test-version-utils
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -4656,7 +4659,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -4916,7 +4919,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -5071,7 +5074,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -5192,7 +5195,7 @@ importers:
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -5301,7 +5304,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -5452,7 +5455,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -5630,7 +5633,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -5790,7 +5793,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -5920,7 +5923,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -6065,7 +6068,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -6186,7 +6189,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -6534,7 +6537,7 @@ importers:
         version: link:../../../../packages/test/test-drivers
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -6725,7 +6728,7 @@ importers:
         version: link:../../../../packages/dds/test-dds-utils
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -6816,7 +6819,7 @@ importers:
         version: link:../../../../../packages/dds/test-dds-utils
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -6904,7 +6907,7 @@ importers:
         version: link:../../../packages/dds/test-dds-utils
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -7037,7 +7040,7 @@ importers:
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)
+        version: 0.58.1(@types/node@18.19.86)
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../../packages/loader/container-loader
@@ -7058,7 +7061,7 @@ importers:
         version: link:../../../packages/framework/undo-redo
       '@microsoft/api-extractor':
         specifier: 7.52.8
-        version: 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
+        version: 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
       '@types/chai':
         specifier: ^4.0.0
         version: 4.3.20
@@ -7143,7 +7146,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -7210,7 +7213,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -7280,7 +7283,7 @@ importers:
         version: link:../../../packages/test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -7374,7 +7377,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -7486,7 +7489,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -7528,7 +7531,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -7594,7 +7597,7 @@ importers:
         version: 0.51.0
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -7667,7 +7670,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -7737,7 +7740,7 @@ importers:
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -7828,7 +7831,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -7919,7 +7922,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -8022,7 +8025,7 @@ importers:
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -8134,7 +8137,7 @@ importers:
         version: 0.51.0
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -8258,7 +8261,7 @@ importers:
         version: 0.51.0
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -8382,7 +8385,7 @@ importers:
         version: 0.51.0
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -8488,7 +8491,7 @@ importers:
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -8582,7 +8585,7 @@ importers:
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -8673,7 +8676,7 @@ importers:
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -8785,7 +8788,7 @@ importers:
         version: 0.51.0
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -8906,7 +8909,7 @@ importers:
         version: link:../../test/test-pairwise-generator
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -9006,7 +9009,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -9118,7 +9121,7 @@ importers:
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -9224,7 +9227,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -9345,7 +9348,7 @@ importers:
         version: 0.51.0
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -9457,7 +9460,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -9524,7 +9527,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -9603,7 +9606,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -9676,7 +9679,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -9770,7 +9773,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -9873,7 +9876,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -9943,7 +9946,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -10010,7 +10013,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -10086,7 +10089,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -10177,7 +10180,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -10268,7 +10271,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -10353,7 +10356,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -10447,7 +10450,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/agent-scheduler-previous':
         specifier: npm:@fluidframework/agent-scheduler@2.53.0
         version: '@fluidframework/agent-scheduler@2.53.0'
@@ -10523,7 +10526,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -10641,7 +10644,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/aqueduct-previous':
         specifier: npm:@fluidframework/aqueduct@2.53.0
         version: '@fluidframework/aqueduct@2.53.0'
@@ -10747,7 +10750,7 @@ importers:
         version: link:../../test/stochastic-test-utils
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -10826,7 +10829,7 @@ importers:
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/app-insights-logger-previous':
         specifier: npm:@fluidframework/app-insights-logger@2.53.0
         version: '@fluidframework/app-insights-logger@2.53.0(tslib@1.14.1)'
@@ -10923,7 +10926,7 @@ importers:
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-tools':
         specifier: ^0.58.1
         version: 0.58.1(@types/node@22.14.1)
@@ -11029,7 +11032,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -11090,7 +11093,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -11190,7 +11193,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -11284,7 +11287,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -11369,7 +11372,7 @@ importers:
         version: link:../../dds/test-dds-utils
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -11454,7 +11457,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -11545,7 +11548,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -11618,7 +11621,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -11718,7 +11721,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -11818,7 +11821,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -11933,7 +11936,7 @@ importers:
         version: link:../test-loader-utils
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -12036,7 +12039,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -12115,7 +12118,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -12218,7 +12221,7 @@ importers:
         version: 0.51.0
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -12309,7 +12312,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -12391,7 +12394,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -12479,7 +12482,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -12549,7 +12552,7 @@ importers:
         version: 0.51.0
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -12625,7 +12628,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -12704,7 +12707,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -12822,7 +12825,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -12910,7 +12913,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/azure-client-previous':
         specifier: npm:@fluidframework/azure-client@2.53.0
         version: '@fluidframework/azure-client@2.53.0(encoding@0.1.13)'
@@ -13273,7 +13276,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -13367,7 +13370,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../framework/aqueduct
@@ -13445,7 +13448,7 @@ importers:
         version: link:../../loader/test-loader-utils
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -13840,7 +13843,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -13952,7 +13955,7 @@ importers:
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -14016,7 +14019,7 @@ importers:
         version: 0.51.0
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -14086,7 +14089,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -14186,7 +14189,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -14391,7 +14394,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -14449,7 +14452,7 @@ importers:
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -14582,7 +14585,7 @@ importers:
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -14706,7 +14709,7 @@ importers:
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -14872,7 +14875,7 @@ importers:
         version: link:../mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -15015,7 +15018,7 @@ importers:
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -15338,7 +15341,7 @@ importers:
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -15664,7 +15667,7 @@ importers:
         version: link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -15833,7 +15836,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluid-tools/fetch-tool-previous':
         specifier: npm:@fluid-tools/fetch-tool@2.53.0
         version: '@fluid-tools/fetch-tool@2.53.0(encoding@0.1.13)'
@@ -15906,7 +15909,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -16051,7 +16054,7 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -16118,7 +16121,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -16203,7 +16206,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -16297,7 +16300,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: ^0.58.1
-        version: 0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -29640,7 +29643,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluid-tools/build-cli@0.58.1(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)':
+  '@fluid-tools/build-cli@0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
       '@fluid-tools/build-infrastructure': 0.58.1(@types/node@18.19.67)
@@ -29717,7 +29720,7 @@ snapshots:
       - utf-8-validate
       - webpack-cli
 
-  '@fluid-tools/build-cli@0.58.1(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)':
+  '@fluid-tools/build-cli@0.58.1(patch_hash=k4oisraxyzjqac4in6yj3adobe)(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
       '@fluid-tools/build-infrastructure': 0.58.1(@types/node@22.14.1)
@@ -29903,6 +29906,22 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  '@fluid-tools/version-tools@0.58.1(@types/node@18.19.86)':
+    dependencies:
+      '@oclif/core': 4.0.36
+      '@oclif/plugin-autocomplete': 3.2.13
+      '@oclif/plugin-commands': 4.1.13
+      '@oclif/plugin-help': 6.2.19
+      '@oclif/plugin-not-found': 3.2.30(@types/node@18.19.86)
+      semver: 7.7.1
+      table: 6.9.0
+    transitivePeerDependencies:
+      - '@types/node'
+      - bufferutil
+      - react-devtools-core
+      - supports-color
+      - utf-8-validate
+
   '@fluid-tools/version-tools@0.58.1(@types/node@22.14.1)':
     dependencies:
       '@oclif/core': 4.0.36
@@ -30041,6 +30060,40 @@ snapshots:
   '@fluidframework/build-tools@0.58.1(@types/node@18.19.67)':
     dependencies:
       '@fluid-tools/version-tools': 0.58.1(@types/node@18.19.67)
+      '@manypkg/get-packages': 2.2.2
+      async: 3.2.6
+      cosmiconfig: 8.3.6(typescript@5.4.5)
+      date-fns: 2.30.0
+      debug: 4.4.0(supports-color@8.1.1)
+      detect-indent: 6.1.0
+      find-up: 7.0.0
+      fs-extra: 11.3.0
+      glob: 7.2.3
+      globby: 11.1.0
+      ignore: 5.3.2
+      json5: 2.2.3
+      lodash.isequal: 4.5.0
+      multimatch: 5.0.0
+      picocolors: 1.1.1
+      picomatch: 2.3.1
+      picospinner: 2.0.0
+      rimraf: 4.4.1
+      semver: 7.7.1
+      sort-package-json: 1.57.0
+      ts-deepmerge: 7.0.2
+      type-fest: 2.19.0
+      typescript: 5.4.5
+      yaml: 2.6.1
+    transitivePeerDependencies:
+      - '@types/node'
+      - bufferutil
+      - react-devtools-core
+      - supports-color
+      - utf-8-validate
+
+  '@fluidframework/build-tools@0.58.1(@types/node@18.19.86)':
+    dependencies:
+      '@fluid-tools/version-tools': 0.58.1(@types/node@18.19.86)
       '@manypkg/get-packages': 2.2.2
       async: 3.2.6
       cosmiconfig: 8.3.6(typescript@5.4.5)
@@ -31526,6 +31579,15 @@ snapshots:
       ansi-escapes: 4.3.2
       yoctocolors-cjs: 2.1.2
 
+  '@inquirer/checkbox@4.0.3(@types/node@18.19.86)':
+    dependencies:
+      '@inquirer/core': 10.1.1(@types/node@18.19.86)
+      '@inquirer/figures': 1.0.8
+      '@inquirer/type': 3.0.1(@types/node@18.19.86)
+      '@types/node': 18.19.86
+      ansi-escapes: 4.3.2
+      yoctocolors-cjs: 2.1.2
+
   '@inquirer/checkbox@4.0.3(@types/node@22.14.1)':
     dependencies:
       '@inquirer/core': 10.1.1(@types/node@22.14.1)
@@ -31552,6 +31614,12 @@ snapshots:
       '@inquirer/type': 3.0.1(@types/node@18.19.67)
       '@types/node': 18.19.67
 
+  '@inquirer/confirm@5.1.0(@types/node@18.19.86)':
+    dependencies:
+      '@inquirer/core': 10.1.1(@types/node@18.19.86)
+      '@inquirer/type': 3.0.1(@types/node@18.19.86)
+      '@types/node': 18.19.86
+
   '@inquirer/confirm@5.1.0(@types/node@22.14.1)':
     dependencies:
       '@inquirer/core': 10.1.1(@types/node@22.14.1)
@@ -31562,6 +31630,20 @@ snapshots:
     dependencies:
       '@inquirer/figures': 1.0.8
       '@inquirer/type': 3.0.1(@types/node@18.19.67)
+      ansi-escapes: 4.3.2
+      cli-width: 4.1.0
+      mute-stream: 2.0.0
+      signal-exit: 4.1.0
+      strip-ansi: 6.0.1
+      wrap-ansi: 6.2.0
+      yoctocolors-cjs: 2.1.2
+    transitivePeerDependencies:
+      - '@types/node'
+
+  '@inquirer/core@10.1.1(@types/node@18.19.86)':
+    dependencies:
+      '@inquirer/figures': 1.0.8
+      '@inquirer/type': 3.0.1(@types/node@18.19.86)
       ansi-escapes: 4.3.2
       cli-width: 4.1.0
       mute-stream: 2.0.0
@@ -31632,6 +31714,13 @@ snapshots:
       '@types/node': 18.19.67
       external-editor: 3.1.0
 
+  '@inquirer/editor@4.2.0(@types/node@18.19.86)':
+    dependencies:
+      '@inquirer/core': 10.1.1(@types/node@18.19.86)
+      '@inquirer/type': 3.0.1(@types/node@18.19.86)
+      '@types/node': 18.19.86
+      external-editor: 3.1.0
+
   '@inquirer/editor@4.2.0(@types/node@22.14.1)':
     dependencies:
       '@inquirer/core': 10.1.1(@types/node@22.14.1)
@@ -31651,6 +31740,13 @@ snapshots:
       '@inquirer/core': 10.1.1(@types/node@18.19.67)
       '@inquirer/type': 3.0.1(@types/node@18.19.67)
       '@types/node': 18.19.67
+      yoctocolors-cjs: 2.1.2
+
+  '@inquirer/expand@4.0.3(@types/node@18.19.86)':
+    dependencies:
+      '@inquirer/core': 10.1.1(@types/node@18.19.86)
+      '@inquirer/type': 3.0.1(@types/node@18.19.86)
+      '@types/node': 18.19.86
       yoctocolors-cjs: 2.1.2
 
   '@inquirer/expand@4.0.3(@types/node@22.14.1)':
@@ -31679,6 +31775,12 @@ snapshots:
       '@inquirer/type': 3.0.1(@types/node@18.19.67)
       '@types/node': 18.19.67
 
+  '@inquirer/input@4.1.0(@types/node@18.19.86)':
+    dependencies:
+      '@inquirer/core': 10.1.1(@types/node@18.19.86)
+      '@inquirer/type': 3.0.1(@types/node@18.19.86)
+      '@types/node': 18.19.86
+
   '@inquirer/input@4.1.0(@types/node@22.14.1)':
     dependencies:
       '@inquirer/core': 10.1.1(@types/node@22.14.1)
@@ -31690,6 +31792,12 @@ snapshots:
       '@inquirer/core': 10.1.1(@types/node@18.19.67)
       '@inquirer/type': 3.0.1(@types/node@18.19.67)
       '@types/node': 18.19.67
+
+  '@inquirer/number@3.0.3(@types/node@18.19.86)':
+    dependencies:
+      '@inquirer/core': 10.1.1(@types/node@18.19.86)
+      '@inquirer/type': 3.0.1(@types/node@18.19.86)
+      '@types/node': 18.19.86
 
   '@inquirer/number@3.0.3(@types/node@22.14.1)':
     dependencies:
@@ -31709,6 +31817,13 @@ snapshots:
       '@inquirer/core': 10.1.1(@types/node@18.19.67)
       '@inquirer/type': 3.0.1(@types/node@18.19.67)
       '@types/node': 18.19.67
+      ansi-escapes: 4.3.2
+
+  '@inquirer/password@4.0.3(@types/node@18.19.86)':
+    dependencies:
+      '@inquirer/core': 10.1.1(@types/node@18.19.86)
+      '@inquirer/type': 3.0.1(@types/node@18.19.86)
+      '@types/node': 18.19.86
       ansi-escapes: 4.3.2
 
   '@inquirer/password@4.0.3(@types/node@22.14.1)':
@@ -31744,6 +31859,20 @@ snapshots:
       '@inquirer/select': 4.0.3(@types/node@18.19.67)
       '@types/node': 18.19.67
 
+  '@inquirer/prompts@7.2.0(@types/node@18.19.86)':
+    dependencies:
+      '@inquirer/checkbox': 4.0.3(@types/node@18.19.86)
+      '@inquirer/confirm': 5.1.0(@types/node@18.19.86)
+      '@inquirer/editor': 4.2.0(@types/node@18.19.86)
+      '@inquirer/expand': 4.0.3(@types/node@18.19.86)
+      '@inquirer/input': 4.1.0(@types/node@18.19.86)
+      '@inquirer/number': 3.0.3(@types/node@18.19.86)
+      '@inquirer/password': 4.0.3(@types/node@18.19.86)
+      '@inquirer/rawlist': 4.0.3(@types/node@18.19.86)
+      '@inquirer/search': 3.0.3(@types/node@18.19.86)
+      '@inquirer/select': 4.0.3(@types/node@18.19.86)
+      '@types/node': 18.19.86
+
   '@inquirer/prompts@7.2.0(@types/node@22.14.1)':
     dependencies:
       '@inquirer/checkbox': 4.0.3(@types/node@22.14.1)
@@ -31771,6 +31900,13 @@ snapshots:
       '@types/node': 18.19.67
       yoctocolors-cjs: 2.1.2
 
+  '@inquirer/rawlist@4.0.3(@types/node@18.19.86)':
+    dependencies:
+      '@inquirer/core': 10.1.1(@types/node@18.19.86)
+      '@inquirer/type': 3.0.1(@types/node@18.19.86)
+      '@types/node': 18.19.86
+      yoctocolors-cjs: 2.1.2
+
   '@inquirer/rawlist@4.0.3(@types/node@22.14.1)':
     dependencies:
       '@inquirer/core': 10.1.1(@types/node@22.14.1)
@@ -31784,6 +31920,14 @@ snapshots:
       '@inquirer/figures': 1.0.8
       '@inquirer/type': 3.0.1(@types/node@18.19.67)
       '@types/node': 18.19.67
+      yoctocolors-cjs: 2.1.2
+
+  '@inquirer/search@3.0.3(@types/node@18.19.86)':
+    dependencies:
+      '@inquirer/core': 10.1.1(@types/node@18.19.86)
+      '@inquirer/figures': 1.0.8
+      '@inquirer/type': 3.0.1(@types/node@18.19.86)
+      '@types/node': 18.19.86
       yoctocolors-cjs: 2.1.2
 
   '@inquirer/search@3.0.3(@types/node@22.14.1)':
@@ -31819,6 +31963,15 @@ snapshots:
       ansi-escapes: 4.3.2
       yoctocolors-cjs: 2.1.2
 
+  '@inquirer/select@4.0.3(@types/node@18.19.86)':
+    dependencies:
+      '@inquirer/core': 10.1.1(@types/node@18.19.86)
+      '@inquirer/figures': 1.0.8
+      '@inquirer/type': 3.0.1(@types/node@18.19.86)
+      '@types/node': 18.19.86
+      ansi-escapes: 4.3.2
+      yoctocolors-cjs: 2.1.2
+
   '@inquirer/select@4.0.3(@types/node@22.14.1)':
     dependencies:
       '@inquirer/core': 10.1.1(@types/node@22.14.1)
@@ -31839,6 +31992,10 @@ snapshots:
   '@inquirer/type@3.0.1(@types/node@18.19.67)':
     dependencies:
       '@types/node': 18.19.67
+
+  '@inquirer/type@3.0.1(@types/node@18.19.86)':
+    dependencies:
+      '@types/node': 18.19.86
 
   '@inquirer/type@3.0.1(@types/node@22.14.1)':
     dependencies:
@@ -32247,6 +32404,14 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
+  '@microsoft/api-extractor-model@7.30.6(@types/node@18.19.86)':
+    dependencies:
+      '@microsoft/tsdoc': 0.15.1
+      '@microsoft/tsdoc-config': 0.17.1
+      '@rushstack/node-core-library': 5.13.1(@types/node@18.19.86)
+    transitivePeerDependencies:
+      - '@types/node'
+
   '@microsoft/api-extractor-model@7.30.6(@types/node@22.14.1)':
     dependencies:
       '@microsoft/tsdoc': 0.15.1
@@ -32264,6 +32429,24 @@ snapshots:
       '@rushstack/rig-package': 0.5.3
       '@rushstack/terminal': 0.15.3(@types/node@18.19.67)
       '@rushstack/ts-command-line': 5.0.1(@types/node@18.19.67)
+      lodash: 4.17.21
+      minimatch: 3.0.8
+      resolve: 1.22.10
+      semver: 7.5.4
+      source-map: 0.6.1
+      typescript: 5.8.2
+    transitivePeerDependencies:
+      - '@types/node'
+
+  '@microsoft/api-extractor@7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)':
+    dependencies:
+      '@microsoft/api-extractor-model': 7.30.6(@types/node@18.19.86)
+      '@microsoft/tsdoc': 0.15.1
+      '@microsoft/tsdoc-config': 0.17.1
+      '@rushstack/node-core-library': 5.13.1(@types/node@18.19.86)
+      '@rushstack/rig-package': 0.5.3
+      '@rushstack/terminal': 0.15.3(@types/node@18.19.86)
+      '@rushstack/ts-command-line': 5.0.1(@types/node@18.19.86)
       lodash: 4.17.21
       minimatch: 3.0.8
       resolve: 1.22.10
@@ -32680,6 +32863,15 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
+  '@oclif/plugin-not-found@3.2.30(@types/node@18.19.86)':
+    dependencies:
+      '@inquirer/prompts': 7.2.0(@types/node@18.19.86)
+      '@oclif/core': 4.0.36
+      ansis: 3.3.2
+      fast-levenshtein: 3.0.0
+    transitivePeerDependencies:
+      - '@types/node'
+
   '@oclif/plugin-not-found@3.2.30(@types/node@22.14.1)':
     dependencies:
       '@inquirer/prompts': 7.2.0(@types/node@22.14.1)
@@ -33044,6 +33236,19 @@ snapshots:
     optionalDependencies:
       '@types/node': 18.19.67
 
+  '@rushstack/node-core-library@5.13.1(@types/node@18.19.86)':
+    dependencies:
+      ajv: 8.13.0
+      ajv-draft-04: 1.0.0(ajv@8.13.0)
+      ajv-formats: 3.0.1(ajv@8.13.0)
+      fs-extra: 11.3.0
+      import-lazy: 4.0.0
+      jju: 1.4.0
+      resolve: 1.22.10
+      semver: 7.5.4
+    optionalDependencies:
+      '@types/node': 18.19.86
+
   '@rushstack/node-core-library@5.13.1(@types/node@22.14.1)':
     dependencies:
       ajv: 8.13.0
@@ -33076,6 +33281,13 @@ snapshots:
     optionalDependencies:
       '@types/node': 18.19.67
 
+  '@rushstack/terminal@0.15.3(@types/node@18.19.86)':
+    dependencies:
+      '@rushstack/node-core-library': 5.13.1(@types/node@18.19.86)
+      supports-color: 8.1.1
+    optionalDependencies:
+      '@types/node': 18.19.86
+
   '@rushstack/terminal@0.15.3(@types/node@22.14.1)':
     dependencies:
       '@rushstack/node-core-library': 5.13.1(@types/node@22.14.1)
@@ -33097,6 +33309,15 @@ snapshots:
   '@rushstack/ts-command-line@5.0.1(@types/node@18.19.67)':
     dependencies:
       '@rushstack/terminal': 0.15.3(@types/node@18.19.67)
+      '@types/argparse': 1.0.38
+      argparse: 1.0.10
+      string-argv: 0.3.2
+    transitivePeerDependencies:
+      - '@types/node'
+
+  '@rushstack/ts-command-line@5.0.1(@types/node@18.19.86)':
+    dependencies:
+      '@rushstack/terminal': 0.15.3(@types/node@18.19.86)
       '@types/argparse': 1.0.38
       argparse: 1.0.10
       string-argv: 0.3.2

@@ -400,7 +400,8 @@
 			]
 		},
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.52.8": "patches/@microsoft__api-extractor@7.52.8.patch"
+			"@microsoft/api-extractor@7.52.8": "patches/@microsoft__api-extractor@7.52.8.patch",
+			"@fluid-tools/build-cli@0.58.1": "patches/@fluid-tools__build-cli@0.58.1.patch"
 		}
 	}
 }
