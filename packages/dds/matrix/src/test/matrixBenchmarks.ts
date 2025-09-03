@@ -322,137 +322,247 @@ export function runBenchmarkTestSuite(mode: "memory" | "execution-time"): Suite 
 
 				// Insert-related tests that are not limited by matrixSize
 				for (const count of operationCounts) {
-					describe(`Column insertion`, () => {
-						const scenarioName = `Insert a single column in the middle of the table ${count} times`;
-						runBenchmark({
-							title: scenarioName,
-							matrixSize,
-							initialCellValue,
-							operation: (matrix) => {
-								for (let i = 0; i < count; i++) {
-									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
-								}
-							},
-							maxBenchmarkDurationSeconds,
-							mode,
+					describe("Column insertion", () => {
+						describe("Single column insertion", () => {
+							const scenarioName = `Insert a single column in the middle of the table ${count} times`;
+							runBenchmark({
+								title: scenarioName,
+								matrixSize,
+								initialCellValue,
+								operation: (matrix) => {
+									for (let i = 0; i < count; i++) {
+										matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
+									}
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
+
+							runBenchmark({
+								title: `Undo: ${scenarioName}`,
+								matrixSize,
+								initialCellValue,
+								beforeOperation: (matrix, undoRedoStack) => {
+									for (let i = 0; i < count; i++) {
+										matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
+									}
+									assert.equal(undoRedoStack.undoStackLength, count);
+								},
+								operation: (_matrix, undoRedoStack) => {
+									for (let i = 0; i < count; i++) {
+										undoRedoStack.undoOperation();
+									}
+								},
+								afterOperation: (_matrix, undoRedoStack) => {
+									assert.equal(undoRedoStack.undoStackLength, 0);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
+
+							runBenchmark({
+								title: `Redo: ${scenarioName}`,
+								matrixSize,
+								initialCellValue,
+								beforeOperation: (matrix, undoRedoStack) => {
+									for (let i = 0; i < count; i++) {
+										matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
+									}
+									assert.equal(undoRedoStack.undoStackLength, count);
+									for (let i = 0; i < count; i++) {
+										undoRedoStack.undoOperation();
+									}
+									assert.equal(undoRedoStack.undoStackLength, 0);
+									assert.equal(undoRedoStack.redoStackLength, count);
+								},
+								operation: (_matrix, undoRedoStack) => {
+									for (let i = 0; i < count; i++) {
+										undoRedoStack.redoOperation();
+									}
+								},
+								afterOperation: (_matrix, undoRedoStack) => {
+									assert.equal(undoRedoStack.redoStackLength, 0);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
 						});
 
-						runBenchmark({
-							title: `Undo: ${scenarioName}`,
-							matrixSize,
-							initialCellValue,
-							beforeOperation: (matrix, undoRedoStack) => {
-								for (let i = 0; i < count; i++) {
-									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
-								}
-								assert.equal(undoRedoStack.undoStackLength, count);
-							},
-							operation: (_matrix, undoRedoStack) => {
-								for (let i = 0; i < count; i++) {
-									undoRedoStack.undoOperation();
-								}
-							},
-							afterOperation: (_matrix, undoRedoStack) => {
-								assert.equal(undoRedoStack.undoStackLength, 0);
-							},
-							maxBenchmarkDurationSeconds,
-							mode,
-						});
+						describe("Batch column insertion", () => {
+							const scenarioName = `Insert a batch of ${count} columns in the middle of the table`;
+							runBenchmark({
+								title: scenarioName,
+								matrixSize,
+								initialCellValue,
+								operation: (matrix) => {
+									matrix.insertCols(Math.floor(matrix.colCount / 2), count);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
 
-						runBenchmark({
-							title: `Redo: ${scenarioName}`,
-							matrixSize,
-							initialCellValue,
-							beforeOperation: (matrix, undoRedoStack) => {
-								for (let i = 0; i < count; i++) {
-									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
-								}
-								assert.equal(undoRedoStack.undoStackLength, count);
-								for (let i = 0; i < count; i++) {
+							runBenchmark({
+								title: `Undo: ${scenarioName}`,
+								matrixSize,
+								initialCellValue,
+								beforeOperation: (matrix, undoRedoStack) => {
+									matrix.insertCols(Math.floor(matrix.colCount / 2), count);
+									assert.equal(undoRedoStack.undoStackLength, 1);
+								},
+								operation: (_matrix, undoRedoStack) => {
 									undoRedoStack.undoOperation();
-								}
-								assert.equal(undoRedoStack.undoStackLength, 0);
-								assert.equal(undoRedoStack.redoStackLength, count);
-							},
-							operation: (_matrix, undoRedoStack) => {
-								for (let i = 0; i < count; i++) {
+								},
+								afterOperation: (_matrix, undoRedoStack) => {
+									assert.equal(undoRedoStack.undoStackLength, 0);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
+
+							runBenchmark({
+								title: `Redo: ${scenarioName}`,
+								matrixSize,
+								initialCellValue,
+								beforeOperation: (matrix, undoRedoStack) => {
+									matrix.insertCols(Math.floor(matrix.colCount / 2), count);
+									assert.equal(undoRedoStack.undoStackLength, 1);
+									undoRedoStack.undoOperation();
+									assert.equal(undoRedoStack.undoStackLength, 0);
+									assert.equal(undoRedoStack.redoStackLength, 1);
+								},
+								operation: (_matrix, undoRedoStack) => {
 									undoRedoStack.redoOperation();
-								}
-							},
-							afterOperation: (_matrix, undoRedoStack) => {
-								assert.equal(undoRedoStack.redoStackLength, 0);
-							},
-							maxBenchmarkDurationSeconds,
-							mode,
+								},
+								afterOperation: (_matrix, undoRedoStack) => {
+									assert.equal(undoRedoStack.redoStackLength, 0);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
 						});
 					});
 
-					describe(`Row insertion`, () => {
-						const scenarioName = `Insert a single row in the middle of the table ${count} times`;
-						runBenchmark({
-							title: scenarioName,
-							matrixSize,
-							initialCellValue,
-							operation: (matrix) => {
-								for (let i = 0; i < count; i++) {
-									matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
-								}
-							},
-							maxBenchmarkDurationSeconds,
-							mode,
+					describe("Row insertion", () => {
+						describe("Single row insertion", () => {
+							const scenarioName = `Insert a single row in the middle of the table ${count} times`;
+							runBenchmark({
+								title: scenarioName,
+								matrixSize,
+								initialCellValue,
+								operation: (matrix) => {
+									for (let i = 0; i < count; i++) {
+										matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
+									}
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
+
+							runBenchmark({
+								title: `Undo: ${scenarioName}`,
+								matrixSize,
+								initialCellValue,
+								beforeOperation: (matrix, undoRedoStack) => {
+									for (let i = 0; i < count; i++) {
+										matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
+									}
+									assert.equal(undoRedoStack.undoStackLength, count);
+								},
+								operation: (_matrix, undoRedoStack) => {
+									for (let i = 0; i < count; i++) {
+										undoRedoStack.undoOperation();
+									}
+								},
+								afterOperation: (_matrix, undoRedoStack) => {
+									assert.equal(undoRedoStack.undoStackLength, 0);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
+
+							runBenchmark({
+								title: `Redo: ${scenarioName}`,
+								matrixSize,
+								initialCellValue,
+								beforeOperation: (matrix, undoRedoStack) => {
+									for (let i = 0; i < count; i++) {
+										matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
+									}
+									assert.equal(undoRedoStack.undoStackLength, count);
+									for (let i = 0; i < count; i++) {
+										undoRedoStack.undoOperation();
+									}
+									assert.equal(undoRedoStack.undoStackLength, 0);
+									assert.equal(undoRedoStack.redoStackLength, count);
+								},
+								operation: (_matrix, undoRedoStack) => {
+									for (let i = 0; i < count; i++) {
+										undoRedoStack.redoOperation();
+									}
+								},
+								afterOperation: (_matrix, undoRedoStack) => {
+									assert.equal(undoRedoStack.redoStackLength, 0);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
 						});
 
-						runBenchmark({
-							title: `Undo: ${scenarioName}`,
-							matrixSize,
-							initialCellValue,
-							beforeOperation: (matrix, undoRedoStack) => {
-								for (let i = 0; i < count; i++) {
-									matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
-								}
-								assert.equal(undoRedoStack.undoStackLength, count);
-							},
-							operation: (_matrix, undoRedoStack) => {
-								for (let i = 0; i < count; i++) {
-									undoRedoStack.undoOperation();
-								}
-							},
-							afterOperation: (_matrix, undoRedoStack) => {
-								assert.equal(undoRedoStack.undoStackLength, 0);
-							},
-							maxBenchmarkDurationSeconds,
-							mode,
-						});
+						describe("Batch row insertion", () => {
+							const scenarioName = `Insert a batch of ${count} rows in the middle of the table`;
+							runBenchmark({
+								title: scenarioName,
+								matrixSize,
+								initialCellValue,
+								operation: (matrix) => {
+									matrix.insertRows(Math.floor(matrix.rowCount / 2), count);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
 
-						runBenchmark({
-							title: `Redo: ${scenarioName}`,
-							matrixSize,
-							initialCellValue,
-							beforeOperation: (matrix, undoRedoStack) => {
-								for (let i = 0; i < count; i++) {
-									matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
-								}
-								assert.equal(undoRedoStack.undoStackLength, count);
-								for (let i = 0; i < count; i++) {
+							runBenchmark({
+								title: `Undo: ${scenarioName}`,
+								matrixSize,
+								initialCellValue,
+								beforeOperation: (matrix, undoRedoStack) => {
+									matrix.insertRows(Math.floor(matrix.rowCount / 2), count);
+									assert.equal(undoRedoStack.undoStackLength, 1);
+								},
+								operation: (_matrix, undoRedoStack) => {
 									undoRedoStack.undoOperation();
-								}
-								assert.equal(undoRedoStack.undoStackLength, 0);
-								assert.equal(undoRedoStack.redoStackLength, count);
-							},
-							operation: (_matrix, undoRedoStack) => {
-								for (let i = 0; i < count; i++) {
+								},
+								afterOperation: (_matrix, undoRedoStack) => {
+									assert.equal(undoRedoStack.undoStackLength, 0);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
+
+							runBenchmark({
+								title: `Redo: ${scenarioName}`,
+								matrixSize,
+								initialCellValue,
+								beforeOperation: (matrix, undoRedoStack) => {
+									matrix.insertRows(Math.floor(matrix.rowCount / 2), count);
+									assert.equal(undoRedoStack.undoStackLength, 1);
+									undoRedoStack.undoOperation();
+									assert.equal(undoRedoStack.undoStackLength, 0);
+									assert.equal(undoRedoStack.redoStackLength, 1);
+								},
+								operation: (_matrix, undoRedoStack) => {
 									undoRedoStack.redoOperation();
-								}
-							},
-							afterOperation: (_matrix, undoRedoStack) => {
-								assert.equal(undoRedoStack.redoStackLength, 0);
-							},
-							maxBenchmarkDurationSeconds,
-							mode,
+								},
+								afterOperation: (_matrix, undoRedoStack) => {
+									assert.equal(undoRedoStack.redoStackLength, 0);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
 						});
 					});
 
-					describe(`Column and row insertion`, () => {
+					describe(`Single column and row insertion`, () => {
 						const scenarioName = `Insert a single row and a single column in the middle of the table ${count} times`;
 						runBenchmark({
 							title: scenarioName,
@@ -522,133 +632,243 @@ export function runBenchmarkTestSuite(mode: "memory" | "execution-time"): Suite 
 
 				// Set/Remove-related tests that are limited by matrixSize
 				for (const count of validRemoveCounts) {
-					describe(`Column removal`, () => {
-						const scenarioName = `Remove the middle column ${count} times`;
-						runBenchmark({
-							title: scenarioName,
-							matrixSize,
-							initialCellValue,
-							operation: (matrix) => {
-								for (let i = 0; i < count; i++) {
-									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
-								}
-							},
-							maxBenchmarkDurationSeconds,
-							mode,
+					describe("Column removal", () => {
+						describe("Single column removal", () => {
+							const scenarioName = `Remove the middle column ${count} times`;
+							runBenchmark({
+								title: scenarioName,
+								matrixSize,
+								initialCellValue,
+								operation: (matrix) => {
+									for (let i = 0; i < count; i++) {
+										matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
+									}
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
+
+							runBenchmark({
+								title: `Undo: ${scenarioName}`,
+								matrixSize,
+								initialCellValue,
+								beforeOperation: (matrix, undoRedoStack) => {
+									for (let i = 0; i < count; i++) {
+										matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
+									}
+									assert.equal(undoRedoStack.undoStackLength, count);
+								},
+								operation: (_matrix, undoRedoStack) => {
+									for (let i = 0; i < count; i++) {
+										undoRedoStack.undoOperation();
+									}
+								},
+								afterOperation: (_matrix, undoRedoStack) => {
+									assert.equal(undoRedoStack.undoStackLength, 0);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
+
+							runBenchmark({
+								title: `Redo: ${scenarioName}`,
+								matrixSize,
+								initialCellValue,
+								beforeOperation: (matrix, undoRedoStack) => {
+									for (let i = 0; i < count; i++) {
+										matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
+									}
+									assert.equal(undoRedoStack.undoStackLength, count);
+									for (let i = 0; i < count; i++) {
+										undoRedoStack.undoOperation();
+									}
+									assert.equal(undoRedoStack.undoStackLength, 0);
+									assert.equal(undoRedoStack.redoStackLength, count);
+								},
+								operation: (_matrix, undoRedoStack) => {
+									for (let i = 0; i < count; i++) {
+										undoRedoStack.redoOperation();
+									}
+								},
+								afterOperation: (_matrix, undoRedoStack) => {
+									assert.equal(undoRedoStack.redoStackLength, 0);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
 						});
 
-						runBenchmark({
-							title: `Undo: ${scenarioName}`,
-							matrixSize,
-							initialCellValue,
-							beforeOperation: (matrix, undoRedoStack) => {
-								for (let i = 0; i < count; i++) {
-									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
-								}
-								assert.equal(undoRedoStack.undoStackLength, count);
-							},
-							operation: (_matrix, undoRedoStack) => {
-								for (let i = 0; i < count; i++) {
-									undoRedoStack.undoOperation();
-								}
-							},
-							afterOperation: (_matrix, undoRedoStack) => {
-								assert.equal(undoRedoStack.undoStackLength, 0);
-							},
-							maxBenchmarkDurationSeconds,
-							mode,
-						});
+						describe("Batch column removal", () => {
+							const scenarioName = `Remove ${count} columns from the middle of the table`;
+							runBenchmark({
+								title: scenarioName,
+								matrixSize,
+								initialCellValue,
+								operation: (matrix) => {
+									matrix.removeCols(Math.floor(matrix.colCount / 2), count);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
 
-						runBenchmark({
-							title: `Redo: ${scenarioName}`,
-							matrixSize,
-							initialCellValue,
-							beforeOperation: (matrix, undoRedoStack) => {
-								for (let i = 0; i < count; i++) {
-									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
-								}
-								assert.equal(undoRedoStack.undoStackLength, count);
-								for (let i = 0; i < count; i++) {
+							runBenchmark({
+								title: `Undo: ${scenarioName}`,
+								matrixSize,
+								initialCellValue,
+								beforeOperation: (matrix, undoRedoStack) => {
+									matrix.removeCols(Math.floor(matrix.colCount / 2), count);
+									assert.equal(undoRedoStack.undoStackLength, 1);
+								},
+								operation: (_matrix, undoRedoStack) => {
 									undoRedoStack.undoOperation();
-								}
-								assert.equal(undoRedoStack.undoStackLength, 0);
-								assert.equal(undoRedoStack.redoStackLength, count);
-							},
-							operation: (_matrix, undoRedoStack) => {
-								for (let i = 0; i < count; i++) {
+								},
+								afterOperation: (_matrix, undoRedoStack) => {
+									assert.equal(undoRedoStack.undoStackLength, 0);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
+
+							runBenchmark({
+								title: `Redo: ${scenarioName}`,
+								matrixSize,
+								initialCellValue,
+								beforeOperation: (matrix, undoRedoStack) => {
+									matrix.removeCols(Math.floor(matrix.colCount / 2), count);
+									assert.equal(undoRedoStack.undoStackLength, 1);
+									undoRedoStack.undoOperation();
+									assert.equal(undoRedoStack.undoStackLength, 0);
+									assert.equal(undoRedoStack.redoStackLength, 1);
+								},
+								operation: (_matrix, undoRedoStack) => {
 									undoRedoStack.redoOperation();
-								}
-							},
-							afterOperation: (_matrix, undoRedoStack) => {
-								assert.equal(undoRedoStack.redoStackLength, 0);
-							},
-							maxBenchmarkDurationSeconds,
-							mode,
+								},
+								afterOperation: (_matrix, undoRedoStack) => {
+									assert.equal(undoRedoStack.redoStackLength, 0);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
 						});
 					});
 
-					describe(`Row removal`, () => {
-						const scenarioName = `Remove the middle row ${count} times`;
-						runBenchmark({
-							title: scenarioName,
-							matrixSize,
-							initialCellValue,
-							operation: (matrix) => {
-								for (let i = 0; i < count; i++) {
-									matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
-								}
-							},
-							maxBenchmarkDurationSeconds,
-							mode,
+					describe("Row removal", () => {
+						describe("Single row removal", () => {
+							const scenarioName = `Remove the middle row ${count} times`;
+							runBenchmark({
+								title: scenarioName,
+								matrixSize,
+								initialCellValue,
+								operation: (matrix) => {
+									for (let i = 0; i < count; i++) {
+										matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
+									}
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
+
+							runBenchmark({
+								title: `Undo: ${scenarioName}`,
+								matrixSize,
+								initialCellValue,
+								beforeOperation: (matrix, undoRedoStack) => {
+									for (let i = 0; i < count; i++) {
+										matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
+									}
+									assert.equal(undoRedoStack.undoStackLength, count);
+								},
+								operation: (_matrix, undoRedoStack) => {
+									for (let i = 0; i < count; i++) {
+										undoRedoStack.undoOperation();
+									}
+								},
+								afterOperation: (_matrix, undoRedoStack) => {
+									assert.equal(undoRedoStack.undoStackLength, 0);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
+
+							runBenchmark({
+								title: `Redo: ${scenarioName}`,
+								matrixSize,
+								initialCellValue,
+								beforeOperation: (matrix, undoRedoStack) => {
+									for (let i = 0; i < count; i++) {
+										matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
+									}
+									assert.equal(undoRedoStack.undoStackLength, count);
+									for (let i = 0; i < count; i++) {
+										undoRedoStack.undoOperation();
+									}
+									assert.equal(undoRedoStack.undoStackLength, 0);
+									assert.equal(undoRedoStack.redoStackLength, count);
+								},
+								operation: (_matrix, undoRedoStack) => {
+									for (let i = 0; i < count; i++) {
+										undoRedoStack.redoOperation();
+									}
+								},
+								afterOperation: (_matrix, undoRedoStack) => {
+									assert.equal(undoRedoStack.redoStackLength, 0);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
 						});
 
-						runBenchmark({
-							title: `Undo: ${scenarioName}`,
-							matrixSize,
-							initialCellValue,
-							beforeOperation: (matrix, undoRedoStack) => {
-								for (let i = 0; i < count; i++) {
-									matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
-								}
-								assert.equal(undoRedoStack.undoStackLength, count);
-							},
-							operation: (_matrix, undoRedoStack) => {
-								for (let i = 0; i < count; i++) {
-									undoRedoStack.undoOperation();
-								}
-							},
-							afterOperation: (_matrix, undoRedoStack) => {
-								assert.equal(undoRedoStack.undoStackLength, 0);
-							},
-							maxBenchmarkDurationSeconds,
-							mode,
-						});
+						describe("Batch row removal", () => {
+							const scenarioName = `Remove ${count} rows from the middle of the table`;
+							runBenchmark({
+								title: scenarioName,
+								matrixSize,
+								initialCellValue,
+								operation: (matrix) => {
+									matrix.removeRows(Math.floor(matrix.rowCount / 2), count);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
 
-						runBenchmark({
-							title: `Redo: ${scenarioName}`,
-							matrixSize,
-							initialCellValue,
-							beforeOperation: (matrix, undoRedoStack) => {
-								for (let i = 0; i < count; i++) {
-									matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
-								}
-								assert.equal(undoRedoStack.undoStackLength, count);
-								for (let i = 0; i < count; i++) {
+							runBenchmark({
+								title: `Undo: ${scenarioName}`,
+								matrixSize,
+								initialCellValue,
+								beforeOperation: (matrix, undoRedoStack) => {
+									matrix.removeRows(Math.floor(matrix.rowCount / 2), count);
+									assert.equal(undoRedoStack.undoStackLength, 1);
+								},
+								operation: (_matrix, undoRedoStack) => {
 									undoRedoStack.undoOperation();
-								}
-								assert.equal(undoRedoStack.undoStackLength, 0);
-								assert.equal(undoRedoStack.redoStackLength, count);
-							},
-							operation: (_matrix, undoRedoStack) => {
-								for (let i = 0; i < count; i++) {
+								},
+								afterOperation: (_matrix, undoRedoStack) => {
+									assert.equal(undoRedoStack.undoStackLength, 0);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
+
+							runBenchmark({
+								title: `Redo: ${scenarioName}`,
+								matrixSize,
+								initialCellValue,
+								beforeOperation: (matrix, undoRedoStack) => {
+									matrix.removeRows(Math.floor(matrix.rowCount / 2), count);
+									assert.equal(undoRedoStack.undoStackLength, 1);
+									undoRedoStack.undoOperation();
+									assert.equal(undoRedoStack.undoStackLength, 0);
+									assert.equal(undoRedoStack.redoStackLength, 1);
+								},
+								operation: (_matrix, undoRedoStack) => {
 									undoRedoStack.redoOperation();
-								}
-							},
-							afterOperation: (_matrix, undoRedoStack) => {
-								assert.equal(undoRedoStack.redoStackLength, 0);
-							},
-							maxBenchmarkDurationSeconds,
-							mode,
+								},
+								afterOperation: (_matrix, undoRedoStack) => {
+									assert.equal(undoRedoStack.redoStackLength, 0);
+								},
+								maxBenchmarkDurationSeconds,
+								mode,
+							});
 						});
 					});
 
