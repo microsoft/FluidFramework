@@ -431,12 +431,9 @@ export class TaskManagerClass
 		} else if (!this.connected) {
 			// If we are disconnected (and attached), wait to be connected and submit volunteer op
 			disconnectHandler();
-		} else if (!this.assigned(taskId) && !this.queuedOptimistically(taskId)) {
-			const latestPendingOp = this.latestPendingOps.get(taskId);
-			if (latestPendingOp?.type !== "volunteer") {
-				// We don't need to send a second volunteer op if we just sent one.
-				submitVolunteerOp();
-			}
+		} else if (!this.queuedOptimistically(taskId)) {
+			// We don't need to send a second volunteer op if we just sent one.
+			submitVolunteerOp();
 		}
 		this.subscribedTasks.add(taskId);
 	}
