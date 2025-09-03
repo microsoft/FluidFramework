@@ -9,7 +9,7 @@ import {
 	comparePersistedSchema,
 	extractPersistedSchema,
 	FluidClientVersion,
-	typeboxValidator,
+	FormatValidatorBasic,
 	type ForestOptions,
 	type ICodecOptions,
 	type ImplicitFieldSchema,
@@ -128,7 +128,7 @@ describe("schema", () => {
 	});
 
 	describe("historical schema can be upgraded to current schema", () => {
-		const options: ForestOptions & ICodecOptions = { jsonValidator: typeboxValidator };
+		const options: ForestOptions & ICodecOptions = { jsonValidator: FormatValidatorBasic };
 
 		for (let documentIndex = 0; documentIndex < historicalSchema.length; documentIndex++) {
 			for (let viewIndex = 0; viewIndex < historicalSchema.length; viewIndex++) {
