@@ -475,6 +475,14 @@ export const baseModel: Omit<
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 		makeReducer(),
 	validateConsistency: async (a, b) => {
+		if (hasOracle(a.channel)) {
+			a.channel.oracle.validate();
+		}
+
+		if (hasOracle(b.channel)) {
+			b.channel.oracle.validate();
+		}
+
 		void assertEquivalentSharedStrings(a.channel, b.channel);
 	},
 	factory: new SharedStringFuzzFactory(),
