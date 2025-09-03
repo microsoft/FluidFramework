@@ -665,10 +665,7 @@ export class TaskManagerClass
 			}
 
 			const oldLockHolder = clientQueue[0];
-			if (!clientQueue.includes(clientId)) {
-				// Ensure a client is not in the queue twice.
-				clientQueue.push(clientId);
-			}
+			clientQueue.push(clientId);
 			const newLockHolder = clientQueue[0];
 			if (newLockHolder !== oldLockHolder) {
 				this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
