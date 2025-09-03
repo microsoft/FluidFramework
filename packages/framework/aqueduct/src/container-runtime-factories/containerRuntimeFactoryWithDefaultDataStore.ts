@@ -34,7 +34,7 @@ async function getDefaultFluidObject(runtime: IContainerRuntime): Promise<FluidO
 /**
  * {@link ContainerRuntimeFactoryWithDefaultDataStore} construction properties.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	defaultFactory: IFluidDataStoreFactory;
@@ -69,7 +69,7 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
  *
  * This factory should be exposed as fluidExport off the entry point to your module.
  * @legacy
- * @alpha
+ * @beta
  */
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
 	public static readonly defaultDataStoreId = defaultDataStoreId;

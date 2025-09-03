@@ -199,4 +199,56 @@ describe("SharedDirectory iteration", () => {
 			"Subdirectory keys should match between clients",
 		);
 	});
+
+	it("should have eventually consistent subdirectory iteration order with multiple create/delete", () => {
+		const { sharedDirectory, containerRuntimeFactory, containerRuntime } = setupTest();
+		const { sharedDirectory: sharedDirectory2, containerRuntime: containerRuntime2 } =
+			createAdditionalClient(containerRuntimeFactory);
+
+		sharedDirectory.createSubDirectory("dir1");
+		sharedDirectory.createSubDirectory("dir2");
+		sharedDirectory.createSubDirectory("dir3");
+		containerRuntime.flush();
+		containerRuntimeFactory.processAllMessages();
+
+		const initialSubdirs1 = [...sharedDirectory.subdirectories()].map(([name]) => name);
+		const initialSubdirs2 = [...sharedDirectory2.subdirectories()].map(([name]) => name);
+		assert.deepStrictEqual(
+			initialSubdirs1,
+			["dir1", "dir2", "dir3"],
+			"Initial order should be preserved",
+		);
+		assert.deepStrictEqual(
+			initialSubdirs1,
+			initialSubdirs2,
+			"Both clients should have the same order",
+		);
+
+		sharedDirectory.deleteSubDirectory("dir2");
+		sharedDirectory2.createSubDirectory("dir4");
+		containerRuntime.flush();
+		containerRuntime2.flush();
+		containerRuntimeFactory.processAllMessages();
+
+		sharedDirectory2.deleteSubDirectory("dir1");
+		sharedDirectory2.createSubDirectory("dir2");
+		sharedDirectory.createSubDirectory("dir5");
+		containerRuntime.flush();
+		containerRuntime2.flush();
+		containerRuntimeFactory.processAllMessages();
+
+		const finalSubdirs1 = [...sharedDirectory.subdirectories()].map(([name]) => name);
+		const finalSubdirs2 = [...sharedDirectory2.subdirectories()].map(([name]) => name);
+
+		assert.deepStrictEqual(
+			finalSubdirs1,
+			["dir3", "dir4", "dir5", "dir2"],
+			"Final order should reflect creation sequence",
+		);
+		assert.deepStrictEqual(
+			finalSubdirs1,
+			finalSubdirs2,
+			"Both clients should have the same order",
+		);
+	});
 });

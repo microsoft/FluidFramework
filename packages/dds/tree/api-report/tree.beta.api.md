@@ -112,6 +112,15 @@ type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 // @public @system
 type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
+// @beta @input
+export interface ForestOptions {
+    readonly forest?: ForestType;
+}
+
+// @beta @sealed
+export interface ForestType extends ErasedType_2<"ForestType"> {
+}
+
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
@@ -373,6 +382,11 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly scope: TScope;
     readonly string: LeafSchema<"string", string>;
     static readonly string: LeafSchema<"string", string>;
+}
+
+// @beta
+export class SchemaFactoryBeta<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory<TScope, TName> {
+    scopedFactory<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner>;
 }
 
 // @public @sealed @system
