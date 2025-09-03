@@ -150,7 +150,7 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "7.52.8",
+		"@microsoft/api-extractor": "7.52.11",
 		"@types/jest": "29.5.3",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
