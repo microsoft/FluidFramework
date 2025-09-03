@@ -154,6 +154,11 @@ function removeClientAndSendNotifications(
 							tenantId: room.tenantId,
 							documentId: room.documentId,
 						},
+						undefined,
+						{
+							opCount: sessionOpCount,
+							signalCount: sessionSignalCount,
+						},
 					)
 					.catch((error) => {
 						Lumberjack.error(

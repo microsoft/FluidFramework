@@ -15,6 +15,7 @@ import {
 	getLumberBaseProperties,
 	LumberEventName,
 	Lumberjack,
+	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 
 /**
@@ -123,8 +124,12 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		client: ICollaborationSessionClient,
 		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
 		knownConnectedClients?: ISignalClient[],
+		clientMetrics?: {
+			opCount?: number;
+			signalCount?: number;
+		},
 	): Promise<void> {
-		return this.endClientSessionCore(client, sessionId, knownConnectedClients).catch(
+		return this.endClientSessionCore(client, sessionId, knownConnectedClients, clientMetrics).catch(
 			(error) => {
 				Lumberjack.error(
 					"Failed to end tracking client session",
@@ -143,6 +148,10 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		client: ICollaborationSessionClient,
 		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
 		knownConnectedClients?: ISignalClient[],
+		clientMetrics?: {
+			opCount?: number;
+			signalCount?: number;
+		},
 	): Promise<void> {
 		const sessionTimerKey = this.getSessionTimerKey(sessionId);
 		const { existingSession, otherConnectedClients } = await this.getSessionAndClients(
@@ -162,6 +171,20 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 			});
 			return;
 		}
+		
+		// Update session with accumulated client metrics if provided
+		const updatedTelemetryProperties = { ...existingSession.telemetryProperties };
+		if (clientMetrics) {
+			if (clientMetrics.opCount !== undefined && clientMetrics.opCount > 0) {
+				updatedTelemetryProperties.sessionOpCount = 
+					(updatedTelemetryProperties.sessionOpCount || 0) + clientMetrics.opCount;
+			}
+			if (clientMetrics.signalCount !== undefined && clientMetrics.signalCount > 0) {
+				updatedTelemetryProperties.sessionSignalCount = 
+					(updatedTelemetryProperties.sessionSignalCount || 0) + clientMetrics.signalCount;
+			}
+		}
+
 		if (otherConnectedClients.length === 0) {
 			// Start a timer to end the session after a period of inactivity
 			const timer = setTimeout(() => {
@@ -180,16 +203,18 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 				});
 			}, this.sessionActivityTimeoutMs);
 			this.sessionEndTimers.set(sessionTimerKey, timer);
-			// Update the session to have a lastClientLeaveTime
+			// Update the session to have a lastClientLeaveTime and updated telemetry properties
 			await this.sessionManager.addOrUpdateSession({
 				...existingSession,
 				lastClientLeaveTime: Date.now(),
+				telemetryProperties: updatedTelemetryProperties,
 			});
 		} else {
-			// Make sure the session manager shows lastClientLeaveTime as undefined
+			// Make sure the session manager shows lastClientLeaveTime as undefined but keep updated telemetry properties
 			await this.sessionManager.addOrUpdateSession({
 				...existingSession,
 				lastClientLeaveTime: undefined,
+				telemetryProperties: updatedTelemetryProperties,
 			});
 		}
 	}
@@ -292,7 +317,7 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 			tenantId: session.tenantId,
 			documentId: session.documentId,
 		});
-		if (latestSessionInformation !== undefined && this.isSessionExpired(session)) {
+		if (latestSessionInformation !== undefined && !this.isSessionExpired(latestSessionInformation)) {
 			// Session information on this instance is stale, so don't end the session.
 			Lumberjack.verbose("Session end timer expired but session is still active", {
 				...getLumberBaseProperties(session.documentId, session.tenantId),
@@ -305,30 +330,35 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		}
 		// Session end timer expired and no clients are connected, so end the session.
 		const now = Date.now();
-		const sessionDurationInMs = now - session.firstClientJoinTime;
+		// Use the latest session information if available, otherwise use the passed session
+		const finalSession = latestSessionInformation || session;
+		const sessionDurationInMs = now - finalSession.firstClientJoinTime;
 		const metric = Lumberjack.newLumberMetric(LumberEventName.NexusSessionResult, {
-			...getLumberBaseProperties(session.documentId, session.tenantId),
+			...getLumberBaseProperties(finalSession.documentId, finalSession.tenantId),
 			// Explicitly set metric value as durationInMs because we can't use the automatic
 			// start/end time calculation for this metric since we are logging immediately on create.
 			metricValue: sessionDurationInMs,
 			durationInMs: sessionDurationInMs,
 			lastClientLeaveTimestamp:
-				session.lastClientLeaveTime !== undefined
-					? new Date(session.lastClientLeaveTime).toISOString()
+				finalSession.lastClientLeaveTime !== undefined
+					? new Date(finalSession.lastClientLeaveTime).toISOString()
 					: undefined,
 			timeSinceLastClientLeaveMs:
-				session.lastClientLeaveTime !== undefined
-					? now - session.lastClientLeaveTime
+				finalSession.lastClientLeaveTime !== undefined
+					? now - finalSession.lastClientLeaveTime
 					: undefined,
-			...session.telemetryProperties,
+			...finalSession.telemetryProperties,
+			// Explicitly include session-level metrics using CommonProperties enum values
+			[CommonProperties.sessionOpCount]: finalSession.telemetryProperties.sessionOpCount || 0,
+			[CommonProperties.sessionSignalCount]: finalSession.telemetryProperties.sessionSignalCount || 0,
 		});
 		// The lumber metric is created at the end of the session, so "timestamp" is the end time, rather than the usual "start time".
 		// Override the timestamp to be the start time of the session.
-		metric.overrideTimestamp(session.firstClientJoinTime);
+		metric.overrideTimestamp(finalSession.firstClientJoinTime);
 
 		// For now, always a "success" result
 		metric.success(`Session ended due to ${reason}`);
-		return this.cleanupSessionOnEnd(session);
+		return this.cleanupSessionOnEnd(finalSession);
 	}
 
 	private async cleanupSessionOnEnd(session: ICollaborationSession): Promise<void> {
