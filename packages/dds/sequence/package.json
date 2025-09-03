@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/sequence",
-	"version": "2.60.0",
+	"version": "2.60.1",
 	"description": "Distributed sequence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -170,7 +170,7 @@
 		"@fluidframework/build-tools": "^0.57.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.53.0",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.60.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.52.8",
 		"@types/diff": "^3.5.1",
@@ -198,24 +198,7 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"Interface_IInterval": {
-				"backCompat": false
-			},
-			"Interface_ISerializableInterval": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"Interface_SequenceInterval": {
-				"backCompat": false
-			},
-			"TypeAlias_IntervalRevertible": {
-				"backCompat": false
-			},
-			"TypeAlias_SharedStringRevertible": {
-				"backCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "legacy"
 	}
 }
