@@ -26,6 +26,7 @@ declare function getLoadable(): IFluidLoadable;
 declare function use(obj: unknown);
 
 // This code is only intended to be type checked, not executed, so put it in unexecuted conditional.
+// This is to account for the fact that our shared mocha config will read all files under lib/test/ (or dist/test/).
 // eslint-disable-next-line no-constant-condition
 if (false) {
 	// test implicit conversions between FluidObject and a FluidObject with a provides interface

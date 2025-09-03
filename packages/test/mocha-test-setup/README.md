@@ -99,6 +99,8 @@ FLUID_LOGGER_PROPS='{ "hostName": "Benchmark" }'
 ### FLUID_TEST_LOGGER_PKG_SPECIFIER
 
 Injects implementation of `createTestLogger`.
+We use it in our pipelines to submit telemetry to internal engineering systems.
+Probably not useful outside of that scenario, except when using it locally to test something related to its use in the pipelines.
 
 ### MOCHA_SPEC
 
