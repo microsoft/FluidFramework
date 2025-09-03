@@ -3708,7 +3708,7 @@ export class ContainerRuntime
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTree {
 		if (blobRedirectTable) {
-			this.blobManager.setRedirectTable(blobRedirectTable);
+			this.blobManager.patchRedirectTable(blobRedirectTable);
 		}
 
 		// We can finalize any allocated IDs since we're the only client

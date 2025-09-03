@@ -134,7 +134,7 @@
 		"@langchain/anthropic": "^0.3.24",
 		"@langchain/google-genai": "^0.2.16",
 		"@langchain/openai": "^0.6.3",
-		"@microsoft/api-extractor": "7.52.8",
+		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",
