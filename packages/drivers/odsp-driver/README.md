@@ -14,12 +14,12 @@ In the table I have used the failure ones.
 
 | Event Name | Endpoint | Notes |
 |:---|:---|:---|
-| fluid:telemetry:OdspDriver:TreesLatest_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/snapshots/trees/latest?ump=1` | Error when fetching snapshot from storage. (Storage Call) |
+| fluid:telemetry:OdspDriver:TreesLatest_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/snapshots/trees/latest?ump=1` | Error when fetching snapshot from storage, typically during document load. (Storage Call) |
 | fluid:telemetry:OdspDriver:GetDeltas_cancel<br>fluid:telemetry:OdspDriver:OpsFetch_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream?ump=1&filter=sequenceNumber ge START and sequenceNumber le END` | Error when fetching ops from the storage. (Storage Call) |
-| fluid:telemetry:OdspDriver:JoinSession_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/joinSession?ump=1` | Error when calling join session before connecting to socket. It is also called every 15 mins to renew session. (Storage Call) |
-| fluid:telemetry:BlobManager:AttachmentReadBlob_cancel<br>fluid:telemetry:OdspDriver:readDataBlob_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/attachments/BLOB_ID/content` | Error when reading attachment blobs. (Storage Call) |
-| fluid:telemetry:OdspDriver:createBlob_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/attachment/content` | Error when creating a blob. (Storage Call) |
-| fluid:telemetry:OdspDriver:CreateNewFile_cancel | `/_api/v2.1/drives/DRIVEID/items/root:%2f<path>.fluid:/opStream/snapshots/snapshot?ump=1` | Error when creating a new Fluid file. (Storage Call) |
+| fluid:telemetry:OdspDriver:JoinSession_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/joinSession?ump=1` | Error when getting the details needed to connect to socket. It is also called every 15 mins to renew session. (Storage Call) |
+| fluid:telemetry:BlobManager:AttachmentReadBlob_cancel<br>fluid:telemetry:OdspDriver:readDataBlob_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/attachments/BLOB_ID/content` | Error when reading attachment blobs (e.g. images). (Storage Call) |
+| fluid:telemetry:OdspDriver:createBlob_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/attachment/content` | Error when creating an attachment blob (e.g. an inserted image). (Storage Call) |
+| fluid:telemetry:OdspDriver:CreateNewFile_cancel | `/_api/v2.1/drives/DRIVEID/items/root:%2f<path>.fluid:/opStream/snapshots/snapshot?ump=1` | Error when creating a new Fluid file, during Container Attach. (Storage Call) |
 | fluid:telemetry:OdspDriver:createNewEmptyFile_cancel | `/_api/v2.1/drives/DRIVEID/items/root://FILEPATH/FILENAME:/content?@name.conflictBehavior=rename&select=id,name,parentReference&ump=1` | Error when creating a new empty Fluid file. (Storage Call) |
 | fluid:telemetry:OdspDriver:uploadSummary_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/snapshots/snapshot` | Error when uploading Fluid summary to storage. (Storage Call) |
 | fluid:telemetry:OdspDriver:RedeemShareLink_cancel | `_api/v2.0/shares/${encodedShareUrl}/driveItem` | Error when redeeming the share link after single Round Trip redeem during snapshot fetch already failed. |
