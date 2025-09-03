@@ -7357,8 +7357,8 @@ importers:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
       sha.js:
-        specifier: ^2.4.11
-        version: 2.4.11
+        specifier: ^2.4.12
+        version: 2.4.12
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -26040,8 +26040,9 @@ packages:
   setprototypeof@1.2.0:
     resolution: {integrity: sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw==}
 
-  sha.js@2.4.11:
-    resolution: {integrity: sha512-QMEp5B7cftE7APOjk5Y6xgrbWu+WkLVQwk8JNjZ8nKRciZaByEW6MubieAiToS7+dwvrjGhH8jRXz3MVd0AYqQ==}
+  sha.js@2.4.12:
+    resolution: {integrity: sha512-8LzC5+bvI45BjpfXU8V5fdU2mfeKiQe1D1gIMn7XUlF3OTUrpdJpPPH4EMAnF0DsHHdSZqCdSss5qCmJKuiO3w==}
+    engines: {node: '>= 0.10'}
     hasBin: true
 
   shallow-clone@3.0.1:
@@ -26701,6 +26702,10 @@ packages:
 
   tmpl@1.0.5:
     resolution: {integrity: sha512-3f0uOEAQwIqGuWW2MVzYg8fV/QNnc/IpuJNG837rLuczAaLVHslWHZQj4IGiEl5Hs3kkbhwL9Ab7Hrsmuj+Smw==}
+
+  to-buffer@1.2.1:
+    resolution: {integrity: sha512-tB82LpAIWjhLYbqjx3X4zEeHN6M8CiuOEy2JY8SEQVdYRe3CCHOFaqrBW1doLDrfpWhplcW7BL+bO3/6S3pcDQ==}
+    engines: {node: '>= 0.4'}
 
   to-regex-range@5.0.1:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
@@ -29607,7 +29612,7 @@ snapshots:
       base64-js: 1.5.1
       buffer: 6.0.3
       events_pkg: events@3.3.0
-      sha.js: 2.4.11
+      sha.js: 2.4.12
 
   '@fluid-internal/eslint-plugin-fluid@0.1.5(eslint@8.55.0)(typescript@5.4.5)':
     dependencies:
@@ -30154,7 +30159,7 @@ snapshots:
       buffer: 6.0.3
       events: 3.3.0
       lodash: 4.17.21
-      sha.js: 2.4.11
+      sha.js: 2.4.12
 
   '@fluidframework/common-utils@1.1.1':
     dependencies:
@@ -30164,7 +30169,7 @@ snapshots:
       buffer: 6.0.3
       events: 3.3.0
       lodash: 4.17.21
-      sha.js: 2.4.11
+      sha.js: 2.4.12
 
   '@fluidframework/common-utils@3.1.0':
     dependencies:
@@ -30174,7 +30179,7 @@ snapshots:
       buffer: 6.0.3
       events: 3.3.0
       lodash: 4.17.21
-      sha.js: 2.4.11
+      sha.js: 2.4.12
 
   '@fluidframework/container-definitions@1.4.0':
     dependencies:
@@ -31020,7 +31025,7 @@ snapshots:
       opossum: 8.5.0
       semver: 7.7.1
       serialize-error: 8.1.0
-      sha.js: 2.4.11
+      sha.js: 2.4.12
       uuid: 11.1.0
     transitivePeerDependencies:
       - debug
@@ -38012,7 +38017,7 @@ snapshots:
       path-browserify: 1.0.1
       pify: 4.0.1
       readable-stream: 3.6.2
-      sha.js: 2.4.11
+      sha.js: 2.4.12
       simple-get: 4.0.1
 
   issue-parser@7.0.1:
@@ -41960,10 +41965,11 @@ snapshots:
 
   setprototypeof@1.2.0: {}
 
-  sha.js@2.4.11:
+  sha.js@2.4.12:
     dependencies:
       inherits: 2.0.4
       safe-buffer: 5.2.1
+      to-buffer: 1.2.1
 
   shallow-clone@3.0.1:
     dependencies:
@@ -42867,6 +42873,12 @@ snapshots:
       os-tmpdir: 1.0.2
 
   tmpl@1.0.5: {}
+
+  to-buffer@1.2.1:
+    dependencies:
+      isarray: 2.0.5
+      safe-buffer: 5.2.1
+      typed-array-buffer: 1.0.3
 
   to-regex-range@5.0.1:
     dependencies:

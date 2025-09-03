@@ -138,7 +138,7 @@
 		"base64-js": "^1.5.1",
 		"buffer": "^6.0.3",
 		"events_pkg": "npm:events@^3.1.0",
-		"sha.js": "^2.4.11"
+		"sha.js": "^2.4.12"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",

@@ -81,7 +81,7 @@
 		"buffer": "^6.0.3",
 		"events": "^3.1.0",
 		"lodash": "^4.17.21",
-		"sha.js": "^2.4.11"
+		"sha.js": "^2.4.12"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.57.0",
