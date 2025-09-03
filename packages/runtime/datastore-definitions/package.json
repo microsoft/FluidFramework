@@ -93,7 +93,7 @@
 		"@fluidframework/build-tools": "^0.58.1",
 		"@fluidframework/datastore-definitions-previous": "npm:@fluidframework/datastore-definitions@2.60.0",
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
-		"@microsoft/api-extractor": "7.52.8",
+		"@microsoft/api-extractor": "7.52.11",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",

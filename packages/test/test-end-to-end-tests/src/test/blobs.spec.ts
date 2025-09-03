@@ -396,7 +396,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 				const container2 = await provider.loadTestContainer(testContainerConfig);
 				const snapshot2 = (container2 as any).runtime.blobManager.summarize();
 				assert.strictEqual(snapshot2.stats.treeNodeCount, 1);
-				assert.strictEqual(snapshot1.summary.tree[0].id, snapshot2.summary.tree[0].id);
+				assert.deepStrictEqual(snapshot1.summary.tree, snapshot2.summary.tree);
 			});
 
 			// regression test for https://github.com/microsoft/FluidFramework/issues/9702
