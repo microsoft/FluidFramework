@@ -14,7 +14,7 @@ In the table I have used the failure ones.
 
 | Event Name | Endpoint | Notes |
 |:---|:---|:---|
-| fluid:telemetry:OdspDriver:TreesLatest_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/snapshots/trees/latest?ump=1` | Error when fetching snapshot from storage. (Storage Call) |
+| fluid:telemetry:OdspDriver:TreesLatest_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/snapshots/trees/latest?ump=1` | Error when fetching snapshot from storage, typically during document load. (Storage Call) |
 | fluid:telemetry:OdspDriver:GetDeltas_cancel<br>fluid:telemetry:OdspDriver:OpsFetch_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream?ump=1&filter=sequenceNumber ge START and sequenceNumber le END` | Error when fetching ops from the storage. (Storage Call) |
 | fluid:telemetry:OdspDriver:JoinSession_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/joinSession?ump=1` | Error when calling join session before connecting to socket. It is also called every 15 mins to renew session. (Storage Call) |
 | fluid:telemetry:BlobManager:AttachmentReadBlob_cancel<br>fluid:telemetry:OdspDriver:readDataBlob_cancel | `/_api/v2.1/drives/DRIVEID/items/ITEMID/opStream/attachments/BLOB_ID/content` | Error when reading attachment blobs. (Storage Call) |
