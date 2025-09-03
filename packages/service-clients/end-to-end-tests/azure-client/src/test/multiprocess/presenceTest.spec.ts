@@ -72,7 +72,7 @@ function setTimeout(context: Mocha.Context, duration: number): void {
  * - Receive response messages from child clients to verify expected behavior.
  * - Clean up child processes after each test.
  *
- * The child processes are located in the `childClient.ts` file. Each child process simulates a Fluid client.
+ * The child processes are located in the `childClient.tool.ts` file. Each child process simulates a Fluid client.
  *
  * The child client's job includes:
  * - Create/Get + connect to Fluid container.
