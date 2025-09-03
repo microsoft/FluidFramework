@@ -119,30 +119,24 @@ export interface IDelayLoadChannelFactory<T> extends IChannelFactory<T> {
     // (undocumented)
     createAsync(runtime: IFluidDataStoreRuntime, id?: string): Promise<T>;
     // (undocumented)
-    loadObjectKindAsync(): Promise<T>;
+    loadObjectKindAsync(): Promise<void>;
 }
 
 // @alpha @legacy
-export abstract class MigrationDataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
-    // (undocumented)
-    protected abstract get createUsingSharedTree(): boolean;
-    // (undocumented)
-    getRoot(): {
-        isDirectory: true;
-        root: ISharedDirectory;
-    } | {
-        isDirectory: false;
-        root: ITree;
+export abstract class MigrationDataObject<M = unknown, I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
+    getModel(): {
+        descriptor: ModelDescriptor<M>;
+        model: M;
     };
     // (undocumented)
     initializeInternal(existing: boolean): Promise<void>;
-    // (undocumented)
-    protected abstract get treeDelayLoadFactory(): IDelayLoadChannelFactory<ITree>;
+    protected abstract get modelCandidates(): [ModelDescriptor<M>, ...ModelDescriptor<M>[]];
 }
 
 // @alpha @legacy
-export class MigrationDataObjectFactory<TObj extends MigrationDataObject<I>, TMigrationData, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
-    constructor(props: MigrationDataObjectFactoryProps<TObj, TMigrationData, I>);
+export class MigrationDataObjectFactory<T, TObj extends MigrationDataObject<T, I>, TMigrationData, //* Related to T?  T is a common interface that all models implement.
+I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
+    constructor(props: MigrationDataObjectFactoryProps<T, TObj, TMigrationData, I>);
     protected observeCreateDataObject(createProps: {
         context: IFluidDataStoreContext;
         optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>;
@@ -150,12 +144,26 @@ export class MigrationDataObjectFactory<TObj extends MigrationDataObject<I>, TMi
 }
 
 // @alpha @legacy
-export interface MigrationDataObjectFactoryProps<TObj extends MigrationDataObject<I>, TMigrationData, I extends DataObjectTypes = DataObjectTypes> extends DataObjectFactoryProps<TObj, I> {
+export interface MigrationDataObjectFactoryProps<T, TObj extends MigrationDataObject<T, I>, TMigrationData, I extends DataObjectTypes = DataObjectTypes> extends DataObjectFactoryProps<TObj, I> {
     asyncGetDataForMigration: (root: ISharedDirectory) => Promise<TMigrationData>;
     canPerformMigration: (providers: AsyncFluidObjectProvider<I["OptionalProviders"]>) => Promise<boolean>;
-    migrateDataObject: (runtime: FluidDataStoreRuntime, treeRoot: ITree_2, data: TMigrationData) => void;
+    migrateDataObject: (runtime: FluidDataStoreRuntime, treeRoot: ITree, data: TMigrationData) => void;
     refreshDataObject?: () => Promise<void>;
-    treeDelayLoadFactory: IDelayLoadChannelFactory<ITree_2>;
+    treeDelayLoadFactory: IDelayLoadChannelFactory<ITree>;
+}
+
+// @alpha @legacy
+export interface ModelDescriptor<T = unknown> {
+    // (undocumented)
+    create: (runtime: IFluidDataStoreRuntime) => Promise<T> | T;
+    // (undocumented)
+    id?: string;
+    // (undocumented)
+    is?: (m: unknown) => m is T;
+    // (undocumented)
+    probe: (runtime: IFluidDataStoreRuntime) => Promise<T | undefined> | T | undefined;
+    // (undocumented)
+    type?: string;
 }
 
 // @alpha @legacy
@@ -211,7 +219,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
 export abstract class TreeDataObject<TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObject<TDataObjectTypes> {
     // (undocumented)
     initializeInternal(existing: boolean): Promise<void>;
-    protected get tree(): ITree;
+    protected get tree(): ITree_2;
 }
 
 // @alpha @legacy

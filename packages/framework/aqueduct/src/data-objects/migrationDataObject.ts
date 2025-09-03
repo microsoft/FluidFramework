@@ -23,6 +23,8 @@ import type { DataObjectTypes } from "./types.js";
  * Descriptor for a model shape (arbitrary schema) the migration data object can probe for
  * or create when initializing. The probe function may inspect multiple channels or other
  * runtime state to determine whether the model exists and return a model instance.
+ * @legacy
+ * @alpha
  */
 export interface ModelDescriptor<T = unknown> {
 	// Discriminated union tag

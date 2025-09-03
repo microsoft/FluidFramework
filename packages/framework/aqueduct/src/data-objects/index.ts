@@ -9,3 +9,4 @@ export { PureDataObject } from "./pureDataObject.js";
 export { TreeDataObject, treeChannelId } from "./treeDataObject.js";
 export type { DataObjectKind, DataObjectTypes, IDataObjectProps } from "./types.js";
 export { MigrationDataObject } from "./migrationDataObject.js";
+export type { ModelDescriptor } from "./migrationDataObject.js";
