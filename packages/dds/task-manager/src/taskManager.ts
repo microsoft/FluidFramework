@@ -760,7 +760,7 @@ export class TaskManagerClass
 			latestPendingOp?.type === "abandon" || latestPendingOp?.type === "complete";
 		// We return true if the client is either in queue already or the latest pending op for this task is a volunteer op.
 		// But we should always return false if the latest pending op is an abandon or complete op.
-		return (inQueue || isPendingVolunteer) && !isPendingAbandonOrComplete;
+		return (inQueue && !isPendingAbandonOrComplete) || isPendingVolunteer;
 	}
 
 	protected applyStashedOp(content: unknown): void {
