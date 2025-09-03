@@ -759,7 +759,7 @@ export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConf
 	state: "disableHeuristics";
 }
 
-export interface ISummaryConfigurationWithSummaryOnRequest {
+export interface ISummaryConfigurationWithSummaryOnRequest extends ISummaryBaseConfiguration {
 	state: "summaryOnRequest";
 }
 
