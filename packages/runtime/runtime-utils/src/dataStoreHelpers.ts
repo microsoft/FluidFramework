@@ -48,9 +48,9 @@ export function exceptionToResponse(error: unknown): IResponse {
 
 	// Capture error objects, not stack itself, as stack retrieval is very expensive operation
 	const errWithStack =
-		(typeof error === "object" && error !== null && "stack" in error
+		typeof error === "object" && error !== null && "stack" in error
 			? (error as { stack: string })
-			: undefined) ?? generateErrorWithStack();
+			:  generateErrorWithStack();
 
 	return {
 		mimeType: "text/plain",
