@@ -172,7 +172,6 @@
 		"@fluidframework/build-tools": "^0.58.1",
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
 		"@fluidframework/test-tools": "^1.0.195075",
-		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "7.52.11",
 		"@vvago/vale": "^3.11.2",
 		"auto-changelog": "^2.4.0",
