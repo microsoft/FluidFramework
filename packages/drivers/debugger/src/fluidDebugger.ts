@@ -40,7 +40,7 @@ export namespace FluidDebugger {
 
 	/**
 	 * @legacy
-	 * @alpha
+	 * @beta
 	 */
 	export async function createFromServiceFactory(
 		documentServiceFactory: IDocumentServiceFactory,
