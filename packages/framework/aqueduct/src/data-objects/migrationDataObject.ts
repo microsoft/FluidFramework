@@ -58,14 +58,9 @@ export abstract class MigrationDataObject<
 	/**
 	 * Probeable candidate roots the implementer expects for existing stores.
 	 * The order defines probing priority.
+	 * The first one will also be used for creation.
 	 */
-	protected abstract get modelCandidates(): Exclude<ModelDescriptor<M>[], []>;
-
-	/**
-	 * Descriptor used to create the new root when initializing a non-existing store.
-	 * If undefined, no root will be created by this base class.
-	 */
-	protected abstract get modelCreator(): ModelDescriptor<M> | undefined;
+	protected abstract get modelCandidates(): [ModelDescriptor<M>, ...ModelDescriptor<M>[]];
 
 	/**
 	 * Returns the active model descriptor and channel after initialization.
@@ -103,13 +98,12 @@ export abstract class MigrationDataObject<
 		if (existing) {
 			await this.refreshRoot();
 		} else {
-			const creator = this.modelCreator;
-			if (creator !== undefined) {
-				// Note: implementer is responsible for binding any root channels and populating initial content on the created model
-				const created = await creator.create(this.runtime);
-				if (created !== undefined) {
-					this.#activeModel = { descriptor: creator, model: created };
-				}
+			const creator = this.modelCandidates[0];
+
+			// Note: implementer is responsible for binding any root channels and populating initial content on the created model
+			const created = await creator.create(this.runtime);
+			if (created !== undefined) {
+				this.#activeModel = { descriptor: creator, model: created };
 			}
 		}
 
