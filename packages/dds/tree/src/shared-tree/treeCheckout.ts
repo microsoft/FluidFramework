@@ -11,7 +11,7 @@ import {
 	UsageError,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
-import { FluidClientVersion, noopValidator } from "../codec/index.js";
+import { FluidClientVersion, FormatValidatorNoOp } from "../codec/index.js";
 import {
 	type Anchor,
 	type AnchorLocator,
@@ -296,7 +296,7 @@ export function createTreeCheckout(
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest(breaker, schema);
 	const defaultCodecOptions = {
-		jsonValidator: noopValidator,
+		jsonValidator: FormatValidatorNoOp,
 		oldestCompatibleClient: FluidClientVersion.v2_0,
 	};
 	const defaultFieldBatchVersion = 1;

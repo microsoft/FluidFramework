@@ -12,7 +12,7 @@ import {
 import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
-import { typeboxValidator } from "../../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import {
 	ForestSummarizer,
@@ -75,9 +75,9 @@ function createForestSummarizer(args: {
 		forestType,
 		shouldEncodeFieldIncrementally,
 	} = args;
-	const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, 1);
+	const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: FormatValidatorBasic }, 1);
 	const options: CodecWriteOptions = {
-		jsonValidator: typeboxValidator,
+		jsonValidator: FormatValidatorBasic,
 		oldestCompatibleClient: FluidClientVersion.v2_0,
 	};
 	const checkout = checkoutWithContent(initialContent, {

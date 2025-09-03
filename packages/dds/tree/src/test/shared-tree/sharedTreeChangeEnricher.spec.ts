@@ -17,7 +17,7 @@ import {
 	tagChange,
 } from "../../core/index.js";
 import { cursorToJsonObject, fieldJsonCursor } from "../json/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { optional } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
@@ -93,7 +93,7 @@ export function setupEnricher() {
 		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 		testRevisionTagCodec,
 		testIdCompressor,
-		{ jsonValidator: typeboxValidator, oldestCompatibleClient: FluidClientVersion.v2_0 },
+		{ jsonValidator: FormatValidatorBasic, oldestCompatibleClient: FluidClientVersion.v2_0 },
 	);
 	const schema = new TreeStoredSchemaRepository(jsonSequenceRootSchema);
 	const forest = buildTestForest({ additionalAsserts: true, schema });

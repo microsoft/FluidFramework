@@ -21,7 +21,7 @@ import {
 	type GraphCommit,
 	type RevisionTag,
 } from "../../core/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	DefaultChangeFamily,
 	type DefaultChangeset,
@@ -72,7 +72,7 @@ import { mockSerializer } from "../mockSerializer.js";
 import { TestChange } from "../testChange.js";
 
 const codecOptions: ICodecOptions = {
-	jsonValidator: typeboxValidator,
+	jsonValidator: FormatValidatorBasic,
 };
 const formatVersions = { editManager: 1, message: 1, fieldBatch: 1 };
 

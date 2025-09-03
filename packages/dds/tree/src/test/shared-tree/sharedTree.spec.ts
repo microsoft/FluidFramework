@@ -31,7 +31,7 @@ import {
 	type ChangeFamilyEditor,
 	EmptyKey,
 } from "../../core/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	ChunkedForest,
 	// eslint-disable-next-line import/no-internal-modules
@@ -122,7 +122,7 @@ import { FluidClientVersion } from "../../codec/index.js";
 const enableSchemaValidation = true;
 
 const DebugSharedTree = configuredSharedTree({
-	jsonValidator: typeboxValidator,
+	jsonValidator: FormatValidatorBasic,
 	forest: ForestTypeExpensiveDebug,
 }) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
@@ -329,7 +329,7 @@ describe("SharedTree", () => {
 			2,
 			SummarizeType.disabled,
 			configuredSharedTree({
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 				treeEncodeType: TreeCompressionStrategy.Uncompressed,
 			}).getFactory(),
 		);
@@ -2129,7 +2129,7 @@ describe("SharedTree", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
-					jsonValidator: typeboxValidator,
+					jsonValidator: FormatValidatorBasic,
 				}).getFactory(),
 			);
 			assert.equal(trees[0].kernel.checkout.forest instanceof ObjectForest, true);
@@ -2139,7 +2139,7 @@ describe("SharedTree", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
-					jsonValidator: typeboxValidator,
+					jsonValidator: FormatValidatorBasic,
 					forest: ForestTypeReference,
 				}).getFactory(),
 			);
@@ -2152,7 +2152,7 @@ describe("SharedTree", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
-					jsonValidator: typeboxValidator,
+					jsonValidator: FormatValidatorBasic,
 					forest: ForestTypeOptimized,
 				}).getFactory(),
 			);
@@ -2163,7 +2163,7 @@ describe("SharedTree", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
-					jsonValidator: typeboxValidator,
+					jsonValidator: FormatValidatorBasic,
 					forest: ForestTypeExpensiveDebug,
 				}).getFactory(),
 			);
@@ -2176,7 +2176,7 @@ describe("SharedTree", () => {
 		// TODO:#8915: This test will fail until bug #8915 is fixed
 		it.skip("uses the correct schema for subsequent edits after schema change.", async () => {
 			const factory = configuredSharedTree({
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 				treeEncodeType: TreeCompressionStrategy.Compressed,
 			}).getFactory();
 			const provider = new TestTreeProviderLite(2, factory);
@@ -2221,7 +2221,7 @@ describe("SharedTree", () => {
 		it("properly encodes ops using specified compression strategy", async () => {
 			// Check that ops are using uncompressed encoding with "Uncompressed" treeEncodeType
 			const factory = configuredSharedTree({
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 				treeEncodeType: TreeCompressionStrategy.Uncompressed,
 			}).getFactory();
 			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand, factory);
@@ -2264,7 +2264,7 @@ describe("SharedTree", () => {
 
 			// Check that ops are encoded using schema based compression with "Compressed" treeEncodeType
 			const factory2 = configuredSharedTree({
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 				treeEncodeType: TreeCompressionStrategy.Compressed,
 			}).getFactory();
 			const provider2 = await TestTreeProvider.create(1, SummarizeType.onDemand, factory2);
@@ -2412,7 +2412,7 @@ describe("SharedTree", () => {
 	it("summarize with pre-attach removed nodes", () => {
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const sharedObject = configuredSharedTree({
-			jsonValidator: typeboxValidator,
+			jsonValidator: FormatValidatorBasic,
 			forest: ForestTypeExpensiveDebug,
 			oldestCompatibleClient: FluidClientVersion.v2_52,
 		}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
