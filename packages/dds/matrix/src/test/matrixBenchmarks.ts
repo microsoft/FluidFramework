@@ -280,7 +280,7 @@ export function runBenchmarkTestSuite(mode: "memory" | "execution-time"): Suite 
 		// The value to be set in the cells of the matrix.
 		const initialCellValue = "cellValue";
 
-		// The test matrix's size will be 10*10, 100*100.
+		// The test matrix's size will be 5*5, 50*50.
 		// Matrix size 1000 benchmarks removed due to high overhead and unreliable results.
 		const matrixSizes = isInPerformanceTestingMode
 			? [5, 50]

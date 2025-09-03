@@ -91,7 +91,7 @@ describe("SharedTree table APIs execution time", () => {
 	// The value to be set in the cells of the tree.
 	const initialCellValue = "cellValue";
 
-	// The test tree's size will be 10*10, 100*100.
+	// The test tree's size will be 5*5, 50*50.
 	// Table size 1000 benchmarks removed due to high overhead and unreliable results.
 	const tableSizes = isInPerformanceTestingMode
 		? [5, 50]
