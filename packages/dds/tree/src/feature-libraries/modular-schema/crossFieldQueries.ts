@@ -158,6 +158,15 @@ export interface RebaseNodeManager {
 	 * detach location is being changed.
 	 */
 	doesBaseMoveNodes(id: ChangeAtomId, count: number): RangeQueryEntry<ChangeAtomId, boolean>;
+
+	/**
+	 * Given a detached node ID in the base changeset's output context,
+	 * returns the ID the rebased changeset renames that ID to, if any.
+	 */
+	getNewRenameForBaseRename(
+		baseRenameTo: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId, ChangeAtomId>;
 }
 
 export interface DetachedNodeEntry {

@@ -46,6 +46,7 @@ import {
 	isAttach,
 	isDetach,
 	isNewAttach,
+	isNoopMark,
 	isRename,
 	isTombstone,
 	markEmptiesCells,
@@ -120,11 +121,16 @@ class RebaseQueue {
 					.length;
 			} else if (isDetach(mark)) {
 				return moveEffects.doesBaseMoveNodes(getDetachedNodeId(mark), mark.count).length;
-			} else if (mark.cellId !== undefined) {
-				return moveEffects.doesBaseMoveNodes(mark.cellId, mark.count).length;
-			} else {
-				return mark.count;
 			}
+
+			let count = mark.count;
+			if (mark.type === "Rename") {
+				count = moveEffects.getNewRenameForBaseRename(mark.idOverride, count).length;
+			}
+
+			return mark.cellId !== undefined
+				? moveEffects.doesBaseMoveNodes(mark.cellId, count).length
+				: count;
 		};
 
 		this.baseMarks = new MarkQueue(baseMarks, queryFunc);
@@ -304,6 +310,21 @@ function rebaseMarkIgnoreChild(
 		// XXX: This seems wrong if currMark is a rename
 		return withCellId(currMark, undefined);
 	} else if (isRename(baseMark)) {
+		const newRenameId = moveEffects.getNewRenameForBaseRename(
+			baseMark.idOverride,
+			baseMark.count,
+		).value;
+
+		if (newRenameId !== undefined) {
+			assert(isNoopMark(currMark), "Unexpected mark type");
+			return {
+				type: "Rename",
+				cellId: baseMark.idOverride,
+				count: baseMark.count,
+				idOverride: newRenameId,
+			};
+		}
+
 		// XXX: Is this right if currMark is a rename?
 		return withCellId(currMark, getDetachOutputCellId(baseMark));
 	} else if (
@@ -313,6 +334,7 @@ function rebaseMarkIgnoreChild(
 			currMark.count,
 		).value
 	) {
+		// XXX: Shouldn't the base changeset have a rename for these cells if the nodes are moved?
 		return generateNoOpWithCellId(currMark);
 	} else {
 		return currMark;

@@ -181,11 +181,32 @@ describe("ModularChangeFamily integration", () => {
 		});
 
 		it("remove over move and remove", () => {
+			// This change moves two nodes and removes the second one.
 			const targetChange = Change.build(
-				{ family, maxId: 2 },
+				{
+					family,
+					maxId: 4,
+					detachedMoves: [
+						{
+							detachId: { revision: tag1, localId: brand(4) },
+							count: 1,
+							newLocation: { nodeId: undefined, field: fieldA },
+						},
+					],
+				},
 				Change.field(fieldA, sequence.identifier, [
-					MarkMaker.remove(2, { revision: tag1, localId: brand(0) }),
+					MarkMaker.remove(1, { revision: tag1, localId: brand(0) }),
+					MarkMaker.remove(
+						1,
+						{ revision: tag1, localId: brand(4) },
+						{ idOverride: { revision: tag1, localId: brand(1) } },
+					),
 					MarkMaker.insert(1, { revision: tag1, localId: brand(2) }, { id: brand(0) }),
+					MarkMaker.rename(
+						1,
+						{ revision: tag1, localId: brand(3) },
+						{ revision: tag1, localId: brand(4) },
+					),
 				]),
 			);
 
@@ -205,19 +226,24 @@ describe("ModularChangeFamily integration", () => {
 			const expected = Change.build(
 				{
 					family,
-					maxId: 2,
+					maxId: 4,
 					renames: [
 						{
-							oldId: { revision: tag1, localId: brand(1) },
+							oldId: { revision: tag1, localId: brand(4) },
 							newId: { revision: tag2, localId: brand(1) },
 							count: 1,
-							detachLocation: undefined,
+							detachLocation: { nodeId: undefined, field: fieldA },
 						},
 					],
 				},
 				Change.field(fieldA, sequence.identifier, [
 					MarkMaker.tomb(tag1, brand(0), 2),
 					MarkMaker.remove(1, { revision: tag2, localId: brand(0) }),
+					MarkMaker.rename(
+						1,
+						{ revision: tag1, localId: brand(4) },
+						{ revision: tag2, localId: brand(1) },
+					),
 				]),
 			);
 
@@ -746,6 +772,7 @@ describe("ModularChangeFamily integration", () => {
 								MarkMaker.remove(1, { revision: tag2, localId: brand(1) }),
 							]),
 						),
+						detachLocation: { nodeId: undefined, field: fieldA },
 					},
 				],
 			});
@@ -814,6 +841,7 @@ describe("ModularChangeFamily integration", () => {
 								MarkMaker.remove(1, { revision: tag3, localId: brand(4) }),
 							]),
 						),
+						detachLocation: { nodeId: undefined, field: fieldA },
 					},
 				],
 			});
@@ -838,10 +866,16 @@ describe("ModularChangeFamily integration", () => {
 								{ revision: tag2, localId: brand(3) },
 								Change.field(fieldB, sequence.identifier, [MarkMaker.insert(1, moveId)]),
 							),
+							detachLocation: { nodeId: undefined, field: fieldA },
 						},
 					],
 					renames: [
-						{ oldId: oldRootId, newId: newRootId, count: 1, detachLocation: undefined },
+						{
+							oldId: oldRootId,
+							newId: newRootId,
+							count: 1,
+							detachLocation: { nodeId: undefined, field: fieldA },
+						},
 					],
 				},
 				Change.field(fieldA, sequence.identifier, [MarkMaker.remove(1, moveId)]),
@@ -874,6 +908,7 @@ describe("ModularChangeFamily integration", () => {
 								MarkMaker.remove(1, { revision: tag3, localId: brand(4) }),
 							]),
 						),
+						detachLocation: { nodeId: undefined, field: fieldA },
 					},
 				],
 			});
@@ -1282,7 +1317,10 @@ describe("ModularChangeFamily integration", () => {
 								oldId: { revision: tag1, localId: brand(0) },
 								newId: { revision: tag2, localId: brand(0) },
 								count: 1,
-								detachLocation: undefined,
+								detachLocation: {
+									nodeId: { revision: tag1, localId: brand(1) },
+									field: fieldC,
+								},
 							},
 						],
 					},
@@ -1384,7 +1422,10 @@ describe("ModularChangeFamily integration", () => {
 								oldId: { revision: tag1, localId: brand(5) },
 								newId: { revision: tag2, localId: brand(5) },
 								count: 1,
-								detachLocation: undefined,
+								detachLocation: {
+									nodeId: { revision: tag1, localId: brand(6) },
+									field: fieldC,
+								},
 							},
 						],
 					},

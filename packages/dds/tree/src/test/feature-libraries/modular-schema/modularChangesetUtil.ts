@@ -502,6 +502,11 @@ interface BuildArgs {
 		detachLocation?: FieldId;
 		change: NodeChangesetDescription;
 	}[];
+	detachedMoves?: {
+		detachId: ChangeAtomId;
+		count: number;
+		newLocation: FieldId;
+	}[];
 }
 
 function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): ModularChangeset {
@@ -567,6 +572,12 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 				rename.count,
 				rename.detachLocation,
 			);
+		}
+	}
+
+	if (args.detachedMoves !== undefined) {
+		for (const { detachId, count, newLocation } of args.detachedMoves) {
+			result.rootNodes.outputDetachLocations.set(detachId, count, newLocation);
 		}
 	}
 

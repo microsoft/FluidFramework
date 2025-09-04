@@ -2790,6 +2790,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		countToProcess = nodeEntry.length;
 		const newNodeId = nodeEntry.value;
 
+		// XXX: Can we do this in `rebaseRoots` instead?
 		deleteRebasedRoot(this.table, detachEntry.value);
 
 		const newRenameEntry = this.table.newChange.rootNodes.oldToNewId.getFirst(
@@ -2822,6 +2823,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		}
 
 		if (result.value?.nodeChange !== undefined) {
+			// XXX: Can we do this in `rebaseRoots` instead?
 			setInChangeAtomIdMap(this.table.rebasedNodeToParent, result.value.nodeChange, {
 				field: this.fieldId,
 			});
@@ -2850,20 +2852,29 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			{ ...baseAttachId, target: CrossFieldTarget.Destination },
 			countToProcess,
 		);
-
 		countToProcess = attachFieldEntry.length;
 
-		if (attachFieldEntry.value !== undefined) {
-			// The base detach is part of a move in the base changeset.
+		const detachedMoveEntry = this.table.baseChange.rootNodes.outputDetachLocations.getFirst(
+			baseDetachId,
+			countToProcess,
+		);
+		countToProcess = detachedMoveEntry.length;
+
+		const destinationField = attachFieldEntry.value ?? detachedMoveEntry.value;
+		if (destinationField !== undefined) {
+			// The base detach is part of a move (or move of detach location) in the base changeset.
 			setInCrossFieldMap(this.table.entries, baseAttachId, countToProcess, {
 				nodeChange,
 				detachId: newDetachId,
 			});
 
 			if (nodeChange !== undefined || newDetachId !== undefined) {
-				this.invalidateBaseFields([attachFieldEntry.value]);
+				this.invalidateBaseFields([destinationField]);
 			}
-		} else {
+		}
+
+		if (attachFieldEntry.value === undefined) {
+			// These nodes are detached in the output context of the base changeset.
 			if (nodeChange !== undefined) {
 				assignRootChange(
 					this.table.rebasedRootNodes,
@@ -2941,6 +2952,30 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			value: detachedMoveEntry.value !== undefined,
 			length: detachedMoveEntry.length,
 		};
+	}
+
+	public getNewRenameForBaseRename(
+		baseRenameTo: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId, ChangeAtomId> {
+		let countToProcess = count;
+		const inputEntry = firstDetachIdFromAttachId(
+			this.table.baseChange.rootNodes,
+			baseRenameTo,
+			countToProcess,
+		);
+
+		countToProcess = inputEntry.length;
+		const inputId = inputEntry.value;
+
+		const moveEntry = this.table.entries.getFirst(inputId, countToProcess);
+
+		countToProcess = moveEntry.length;
+		if (moveEntry.value?.detachId !== undefined) {
+			return { ...moveEntry, value: moveEntry.value.detachId };
+		}
+
+		return this.table.newChange.rootNodes.oldToNewId.getFirst(inputId, countToProcess);
 	}
 
 	private invalidateBaseFields(fields: FieldId[]): void {
