@@ -359,17 +359,16 @@ describe("TaskManager Rollback", () => {
 			containerRuntime2.flush();
 			containerRuntimeFactory.processAllMessages();
 
-			const assigned1 = await timeoutAwait(volunteerP2, {
-				durationMs,
-				reject: false,
-				value: false,
-			});
 			const assigned2 = await timeoutAwait(volunteerP2, {
 				durationMs,
 				reject: false,
 				value: false,
 			});
-			assert(assigned1, "taskManager1 should not be assigned post-rollback");
+			assert.equal(
+				taskManager1.assigned(taskId),
+				false,
+				"taskManager1 should not be assigned post-rollback",
+			);
 			assert.equal(assigned2, true, "taskManager2 should be assigned post-rollback");
 
 			assert.deepEqual(
