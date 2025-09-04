@@ -453,12 +453,12 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				liveEntry.isDeleted = isDeleted;
 				liveEntry.isLocalPendingDelete = 0;
 
-				const op: IToggleOperation = {
+				const toggleOp: IToggleOperation = {
 					type: OperationType.toggle,
 					entryId,
 					isDeleted,
 				};
-				this.emitValueChangedEvent(op, true /* isLocal */);
+				this.emitValueChangedEvent(toggleOp, true /* isLocal */);
 				break;
 			}
 			case OperationType.toggleMove: {
@@ -466,12 +466,12 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				this.getEntryForId(oldEntryId).isLocalPendingMove = 0;
 				this.updateLiveEntry(oldEntryId, newEntryId);
 
-				const op: IToggleMoveOperation = {
+				const toggleMoveOp: IToggleMoveOperation = {
 					type: OperationType.toggleMove,
 					entryId: newEntryId,
 					changedToEntryId: oldEntryId,
 				};
-				this.emitValueChangedEvent(op, true /* isLocal */);
+				this.emitValueChangedEvent(toggleMoveOp, true /* isLocal */);
 				break;
 			}
 			default: {
