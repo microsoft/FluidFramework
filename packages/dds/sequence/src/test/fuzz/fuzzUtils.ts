@@ -43,16 +43,19 @@ import {
 	type IntervalCollection,
 	type ISequenceIntervalCollection,
 } from "../../intervalCollection.js";
+import { IntervalCollectionOracle } from "../../intervalCollectionOracle.js";
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
 import { ISharedString, type SharedStringClass } from "../../sharedString.js";
-import {
-	hasSharedStringOracle,
-	SharedStringOracle,
-	type ISharedStringWithOracle,
-} from "../../sharedStringOracle.js";
+import { SharedStringOracle } from "../../sharedStringOracle.js";
 import { _dirname } from "../dirname.cjs";
 import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
+
+import {
+	hasIntervalCollectionOracle,
+	hasSharedStringOracle,
+	type IChannelWithOracles,
+} from "./oracleUtils.js";
 
 export type RevertibleSharedString = ISharedString & {
 	revertibles: SharedStringRevertible[];
@@ -474,11 +477,19 @@ export const baseModel: Omit<
 		makeReducer(),
 	validateConsistency: async (a, b) => {
 		if (hasSharedStringOracle(a.channel)) {
-			a.channel.oracle.validate();
+			a.channel.sharedStringOracle.validate();
 		}
 
 		if (hasSharedStringOracle(b.channel)) {
-			b.channel.oracle.validate();
+			b.channel.sharedStringOracle.validate();
+		}
+
+		if (hasIntervalCollectionOracle(a.channel)) {
+			a.channel.intervalCollectionOracle.validate();
+		}
+
+		if (hasIntervalCollectionOracle(b.channel)) {
+			b.channel.intervalCollectionOracle.validate();
 		}
 
 		void assertEquivalentSharedStrings(a.channel, b.channel);
@@ -544,10 +555,16 @@ export const baseModel: Omit<
 const oracleEmitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 
 oracleEmitter.on("clientCreate", (client) => {
-	const channel = client.channel as ISharedStringWithOracle;
-	const oracle = new SharedStringOracle(channel);
+	const channel = client.channel as IChannelWithOracles;
 
-	channel.oracle = oracle;
+	// Attach SharedString oracle
+	const sharedStringOracle = new SharedStringOracle(channel);
+	channel.sharedStringOracle = sharedStringOracle;
+
+	// Attach IntervalCollection oracle
+	const collection = channel.getIntervalCollection("default");
+	const intervalCollectionOracle = new IntervalCollectionOracle(collection);
+	channel.intervalCollectionOracle = intervalCollectionOracle;
 });
 
 export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {

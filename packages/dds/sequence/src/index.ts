@@ -31,6 +31,10 @@ export {
 	ISequenceIntervalCollectionEvents,
 } from "./intervalCollection.js";
 export {
+	IntervalCollectionOracle,
+	IntervalCollectionWithEvents,
+} from "./intervalCollectionOracle.js";
+export {
 	SequenceIntervalIndex,
 	SequenceIntervalIndexes,
 	ISequenceOverlappingIntervalsIndex,
@@ -61,11 +65,7 @@ export {
 	SequenceMaintenanceEvent,
 } from "./sequenceDeltaEvent.js";
 export { SharedString } from "./sequenceFactory.js";
-export {
-	SharedStringOracle,
-	ISharedStringWithOracle as OracleSharedString,
-	hasSharedStringOracle as hasOracle,
-} from "./sharedStringOracle.js";
+export { SharedStringOracle } from "./sharedStringOracle.js";
 export {
 	getTextAndMarkers,
 	ISharedString,
