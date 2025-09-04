@@ -32,10 +32,8 @@ import type {
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import type {
-	// eslint-disable-next-line import/no-deprecated
-	IContainerRuntimeBaseExperimental,
-	// eslint-disable-next-line import/no-deprecated
-	StageControlsExperimental,
+	ContainerRuntimeBaseAlpha,
+	StageControlsAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import { RuntimeHeaders, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
@@ -305,11 +303,9 @@ export class DefaultStressDataObject extends StressDataObject {
 		this._locallyCreatedObjects.push(obj);
 	}
 
-	// eslint-disable-next-line import/no-deprecated
-	private stageControls: StageControlsExperimental | undefined;
-	// eslint-disable-next-line import/no-deprecated
-	private readonly containerRuntimeExp: IContainerRuntimeBaseExperimental =
-		this.context.containerRuntime;
+	private stageControls: StageControlsAlpha | undefined;
+	private readonly containerRuntimeExp = this.context
+		.containerRuntime as ContainerRuntimeBaseAlpha;
 	public enterStagingMode() {
 		assert(
 			this.containerRuntimeExp.enterStagingMode !== undefined,

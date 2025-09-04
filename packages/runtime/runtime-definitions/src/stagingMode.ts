@@ -6,10 +6,13 @@
 import type { IContainerRuntimeBase } from "./dataStoreContext.js";
 
 /**
+ * Options for committing staged changes in experimental staging mode.
+ *
  * @experimental
  * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
  * @legacy @beta
  * @sealed
+ * @privateRemarks After partners move to the alpha interfaces this interface should be renamed and tagged to be internal.
  */
 export interface CommitStagedChangesOptionsExperimental {
 	/**
@@ -30,10 +33,15 @@ export interface CommitStagedChangesOptionsExperimental {
 }
 
 /**
+ * Controls for managing staged changes in experimental staging mode.
+ *
+ * Provides methods to either commit or discard changes made while in staging mode.
+ *
  * @experimental
  * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
  * @legacy @beta
  * @sealed
+ * @privateRemarks After partners move to the alpha interfaces this interface should be renamed and tagged to be internal.
  */
 export interface StageControlsExperimental {
 	/**
@@ -50,6 +58,10 @@ export interface StageControlsExperimental {
 }
 
 /**
+ * Controls for managing staged changes in alpha staging mode.
+ *
+ * Provides methods to either commit or discard changes made while in staging mode.
+ *
  * @legacy @alpha
  * @sealed
  */
@@ -67,20 +79,40 @@ export interface StageControlsAlpha {
 }
 
 /**
+ * Experimental extension of {@link IContainerRuntimeBase} to support staging mode.
+ *
  * @experimental
  * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
  * @legacy @beta
  * @sealed
+ * @privateRemarks After partners move to the alpha interfaces this interface should be renamed and tagged to be internal.
  */
 export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
+	/**
+	 * Enters staging mode, allowing changes to be staged before being committed or discarded.
+	 * @returns Controls for committing or discarding staged changes.
+	 */
 	enterStagingMode?(): StageControlsExperimental;
+	/**
+	 * Indicates whether the container is currently in staging mode.
+	 */
 	readonly inStagingMode?: boolean;
 }
+
 /**
+ * Alpha interface for container runtime base supporting staging mode.
+ *
  * @legacy @alpha
  * @sealed
  */
-export interface ContainerRuntimeBaseAlpha {
+export interface ContainerRuntimeBaseAlpha extends IContainerRuntimeBase {
+	/**
+	 * Enters staging mode, allowing changes to be staged before being committed or discarded.
+	 * @returns Controls for committing or discarding staged changes.
+	 */
 	enterStagingMode(): StageControlsAlpha;
-	readonly inStagingMode?: boolean;
+	/**
+	 * Indicates whether the container is currently in staging mode.
+	 */
+	readonly inStagingMode: boolean;
 }

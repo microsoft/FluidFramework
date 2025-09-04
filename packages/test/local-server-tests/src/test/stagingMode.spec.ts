@@ -28,7 +28,10 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map/internal";
-import type { IContainerRuntimeBaseExperimental } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ContainerRuntimeBaseAlpha,
+	StageControlsExperimental,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	encodeHandleForSerialization,
 	isFluidHandle,
@@ -55,8 +58,8 @@ class DataObjectWithStagingMode extends DataObject {
 			? -1
 			: DataObjectWithStagingMode.instanceCount++;
 
-	private readonly containerRuntimeExp: IContainerRuntimeBaseExperimental =
-		this.context.containerRuntime;
+	private readonly containerRuntimeExp = this.context
+		.containerRuntime as ContainerRuntimeBaseAlpha;
 	get DataObjectWithStagingMode() {
 		return this;
 	}
@@ -617,7 +620,8 @@ describe("Staging Mode", () => {
 			const reSubmitSquashedSpy = sinon.spy(rootMap, "reSubmitSquashed" as keyof SharedObject);
 			const reSubmitCoreSpy = sinon.spy(rootMap, "reSubmitCore" as keyof SharedObject);
 
-			const stagingControls = clients.original.dataObject.enterStagingMode();
+			const stagingControls =
+				clients.original.dataObject.enterStagingMode() as StageControlsExperimental;
 			clients.original.dataObject.makeEdit("branch-only");
 
 			if (disconnectBeforeCommit) {
