@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "@fluid-internal/client-utils";
 import type { ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -750,23 +750,9 @@ export class TaskManagerClass
 	}
 
 	protected applyStashedOp(content: unknown): void {
-		const taskOp: ITaskManagerOperation = content as ITaskManagerOperation;
-		switch (taskOp.type) {
-			case "abandon": {
-				this.abandon(taskOp.taskId);
-				break;
-			}
-			case "complete": {
-				this.complete(taskOp.taskId);
-				break;
-			}
-			case "volunteer": {
-				this.subscribeToTask(taskOp.taskId);
-				break;
-			}
-			default: {
-				unreachableCase(taskOp);
-			}
-		}
+		// We don't apply any stashed ops since during the rehydration process. Since we lose any assigned tasks
+		// during rehydration we cannot be assigned any tasks. Additionally, without the in-memory state of the
+		// previous dds, we also cannot re-volunteer based on a previous subscribeToTask() call. Since we are
+		// unable to be assigned to any tasks, there is no reason to process abandon/complete ops either.
 	}
 }

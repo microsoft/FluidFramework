@@ -79,7 +79,7 @@ const defaultOptions: Required<OperationGenerationConfig> = {
 	taskPoolSize: 3,
 	taskStringLength: 5,
 	validateInterval: 10,
-	testCount: 10,
+	testCount: 100,
 	operations: 100,
 };
 
@@ -255,21 +255,7 @@ describe("TaskManager fuzz testing", () => {
 
 	createDDSFuzzSuite(model, {
 		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
-		// AB#3985: TaskManager has some eventual consistency issue with reconnect enabled.
-		// To make this configuration similar to pre-generic DDS fuzz harness refactor, this constant
-		// should be 0.2.
-		// Leaving the tests enabled without reconnect on mimics previous behavior (and provides more coverage
-		// than skipping them)
-		reconnectProbability: 0,
 		rollbackProbability: 0,
-		detachedStartOptions: {
-			numOpsBeforeAttach: 5,
-			// similar to reconnect there are eventual consistency errors when we enter attaching before rehydrate
-			// when fixed, detachedStartOptions can be removed from this config, and attachingBeforeRehydrateDisable
-			// can be completely removed, as it is only used by this test. Rather than file more bugs. I'll just combine
-			// this with AB#3985, as it looks like the dds has fundamental issue around lifecycle handling
-			attachingBeforeRehydrateDisable: true,
-		},
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.05,
@@ -310,10 +296,6 @@ describe("TaskManager fuzz testing with rebasing", () => {
 		},
 		defaultTestCount: defaultOptions.testCount,
 		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
-		// AB#5341: enabling 'start from detached' within the fuzz harness demonstrates eventual consistency failures.
-		detachedStartOptions: {
-			numOpsBeforeAttach: 0,
-		},
 		rollbackProbability: 0,
 		// Uncomment this line to replay a specific seed:
 		// replay: 0,
