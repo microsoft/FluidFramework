@@ -444,9 +444,35 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				this.emitValueChangedEvent(moveOp, true /* isLocal */);
 				break;
 			}
-			case OperationType.toggle:
+			case OperationType.toggle: {
+				const entryId = arrayOp.entryId;
+				const liveEntry = this.getLiveEntry(entryId);
+				const isDeleted = !liveEntry.isDeleted;
+
+				// Toggling the isDeleted flag to undo the last operation for the skip list payload/value
+				liveEntry.isDeleted = isDeleted;
+				liveEntry.isLocalPendingDelete = 0;
+
+				const op: IToggleOperation = {
+					type: OperationType.toggle,
+					entryId,
+					isDeleted,
+				};
+				this.emitValueChangedEvent(op, true /* isLocal */);
+				break;
+			}
 			case OperationType.toggleMove: {
-				throw new Error(`Rollback not implemented for ${arrayOp.type} operations`);
+				const { entryId: oldEntryId, changedToEntryId: newEntryId } = arrayOp;
+				this.getEntryForId(oldEntryId).isLocalPendingMove = 0;
+				this.updateLiveEntry(oldEntryId, newEntryId);
+
+				const op: IToggleMoveOperation = {
+					type: OperationType.toggleMove,
+					entryId: newEntryId,
+					changedToEntryId: oldEntryId,
+				};
+				this.emitValueChangedEvent(op, true /* isLocal */);
+				break;
 			}
 			default: {
 				unreachableCase(arrayOp);

@@ -20,7 +20,6 @@ describe("SharedArray fuzz", () => {
 	createDDSFuzzSuite(
 		{
 			...baseSharedArrayModel,
-			workloadName: "insert, move and delete rollback",
 			generatorFactory: () =>
 				takeAsync(
 					100,
@@ -57,7 +56,19 @@ describe("SharedArray fuzz", () => {
 	createDDSFuzzSuite(
 		{
 			...baseSharedArrayModel,
-			workloadName: "insert, move and delete rollback",
+			workloadName: "rollback",
+			generatorFactory: () =>
+				takeAsync(
+					100,
+					makeSharedArrayOperationGenerator({
+						insert: 5,
+						delete: 3,
+						move: 3,
+						insertBulkAfter: 1,
+						toggle: 0, // TODO: solve toggle bugs.
+						toggleMove: 1,
+					}),
+				),
 		},
 		{
 			validationStrategy: { type: "fixedInterval", interval: 10 },
