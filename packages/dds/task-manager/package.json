@@ -138,6 +138,7 @@
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
 		"@fluidframework/task-manager-previous": "npm:@fluidframework/task-manager@2.60.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@fluidframework/test-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",

@@ -51,6 +51,17 @@ interface IPendingOp {
 	messageId: number;
 }
 
+function isTaskManagerOperation(op: unknown): op is ITaskManagerOperation {
+	return (
+		typeof op === "object" &&
+		op !== null &&
+		"taskId" in op &&
+		typeof op.taskId === "string" &&
+		"type" in op &&
+		(op.type === "volunteer" || op.type === "abandon" || op.type === "complete")
+	);
+}
+
 const snapshotFileName = "header";
 
 /**
@@ -84,12 +95,14 @@ export class TaskManagerClass
 	private readonly connectionWatcher: EventEmitter = new EventEmitter();
 	// completedWatcher emits an event whenever the local client receives a completed op.
 	private readonly completedWatcher: EventEmitter = new EventEmitter();
+	// rollbackWatcher emits an event whenever a pending op is rolled back.
+	private readonly rollbackWatcher: EventEmitter = new EventEmitter();
 
 	private messageId: number = -1;
 	/**
 	 * Tracks the most recent pending op for a given task
 	 */
-	private readonly latestPendingOps = new Map<string, IPendingOp>();
+	private readonly latestPendingOps = new Map<string, IPendingOp[]>();
 
 	/**
 	 * Tracks tasks that are this client is currently subscribed to.
@@ -130,13 +143,15 @@ export class TaskManagerClass
 				// We're tracking local ops from this connection. Filter out local ops during "connecting"
 				// state since these were sent on the prior connection and were already cleared from the latestPendingOps.
 				if (runtime.connected && local) {
-					const pendingOp = this.latestPendingOps.get(taskId);
+					const latestPendingOps = this.latestPendingOps.get(taskId);
+					const pendingOp = latestPendingOps?.shift();
 					assert(pendingOp !== undefined, 0x07b /* "Unexpected op" */);
 					// Need to check the id, since it's possible to volunteer and abandon multiple times before the acks
 					if (messageId === pendingOp.messageId) {
 						assert(pendingOp.type === "volunteer", 0x07c /* "Unexpected op type" */);
-						// Delete the pending, because we no longer have an outstanding op
-						this.latestPendingOps.delete(taskId);
+						if (latestPendingOps?.length === 0) {
+							this.latestPendingOps.delete(taskId);
+						}
 					}
 				}
 
@@ -148,14 +163,16 @@ export class TaskManagerClass
 			"abandon",
 			(taskId: string, clientId: string, local: boolean, messageId: number) => {
 				if (runtime.connected && local) {
-					const pendingOp = this.latestPendingOps.get(taskId);
+					const latestPendingOps = this.latestPendingOps.get(taskId);
+					const pendingOp = latestPendingOps?.shift();
 					assert(pendingOp !== undefined, 0x07d /* "Unexpected op" */);
 					// Need to check the id, since it's possible to abandon and volunteer multiple times before the acks
 					if (messageId === pendingOp.messageId) {
 						assert(pendingOp.type === "abandon", 0x07e /* "Unexpected op type" */);
-						// Delete the pending, because we no longer have an outstanding op
-						this.latestPendingOps.delete(taskId);
-						this.abandonWatcher.emit("abandon", taskId);
+						if (latestPendingOps?.length === 0) {
+							this.latestPendingOps.delete(taskId);
+						}
+						this.abandonWatcher.emit("abandon", taskId, messageId);
 					}
 				}
 
@@ -167,18 +184,20 @@ export class TaskManagerClass
 			"complete",
 			(taskId: string, clientId: string, local: boolean, messageId: number) => {
 				if (runtime.connected && local) {
-					const pendingOp = this.latestPendingOps.get(taskId);
+					const latestPendingOps = this.latestPendingOps.get(taskId);
+					const pendingOp = latestPendingOps?.shift();
 					assert(pendingOp !== undefined, 0x400 /* Unexpected op */);
 					// Need to check the id, since it's possible to complete multiple times before the acks
 					if (messageId === pendingOp.messageId) {
 						assert(pendingOp.type === "complete", 0x401 /* Unexpected op type */);
-						// Delete the pending, because we no longer have an outstanding op
-						this.latestPendingOps.delete(taskId);
+						if (latestPendingOps?.length === 0) {
+							this.latestPendingOps.delete(taskId);
+						}
 					}
 				}
 
 				this.taskQueues.delete(taskId);
-				this.completedWatcher.emit("completed", taskId);
+				this.completedWatcher.emit("completed", taskId, messageId);
 				this.emit("completed", taskId);
 			},
 		);
@@ -238,7 +257,12 @@ export class TaskManagerClass
 			messageId: ++this.messageId,
 		};
 		this.submitLocalMessage(op, pendingOp.messageId);
-		this.latestPendingOps.set(taskId, pendingOp);
+		const latestPendingOps = this.latestPendingOps.get(taskId);
+		if (latestPendingOps === undefined) {
+			this.latestPendingOps.set(taskId, [pendingOp]);
+		} else {
+			latestPendingOps.push(pendingOp);
+		}
 	}
 
 	private submitAbandonOp(taskId: string): void {
@@ -251,7 +275,12 @@ export class TaskManagerClass
 			messageId: ++this.messageId,
 		};
 		this.submitLocalMessage(op, pendingOp.messageId);
-		this.latestPendingOps.set(taskId, pendingOp);
+		const latestPendingOps = this.latestPendingOps.get(taskId);
+		if (latestPendingOps === undefined) {
+			this.latestPendingOps.set(taskId, [pendingOp]);
+		} else {
+			latestPendingOps.push(pendingOp);
+		}
 	}
 
 	private submitCompleteOp(taskId: string): void {
@@ -265,7 +294,12 @@ export class TaskManagerClass
 		};
 
 		this.submitLocalMessage(op, pendingOp.messageId);
-		this.latestPendingOps.set(taskId, pendingOp);
+		const latestPendingOps = this.latestPendingOps.get(taskId);
+		if (latestPendingOps === undefined) {
+			this.latestPendingOps.set(taskId, [pendingOp]);
+		} else {
+			latestPendingOps.push(pendingOp);
+		}
 	}
 
 	/**
@@ -300,17 +334,20 @@ export class TaskManagerClass
 
 		// This promise works even if we already have an outstanding volunteer op.
 		const lockAcquireP = new Promise<boolean>((resolve, reject) => {
+			const currentMessageId = this.messageId;
 			const setupListeners = (): void => {
 				this.queueWatcher.on("queueChange", checkIfAcquiredLock);
 				this.abandonWatcher.on("abandon", checkIfAbandoned);
 				this.connectionWatcher.on("disconnect", rejectOnDisconnect);
 				this.completedWatcher.on("completed", checkIfCompleted);
+				this.rollbackWatcher.on("rollback", checkIfRolledBack);
 			};
 			const removeListeners = (): void => {
 				this.queueWatcher.off("queueChange", checkIfAcquiredLock);
 				this.abandonWatcher.off("abandon", checkIfAbandoned);
 				this.connectionWatcher.off("disconnect", rejectOnDisconnect);
 				this.completedWatcher.off("completed", checkIfCompleted);
+				this.rollbackWatcher.off("rollback", checkIfRolledBack);
 			};
 
 			const checkIfAcquiredLock = (eventTaskId: string): void => {
@@ -326,8 +363,12 @@ export class TaskManagerClass
 				}
 			};
 
-			const checkIfAbandoned = (eventTaskId: string): void => {
+			const checkIfAbandoned = (eventTaskId: string, messageId: number | undefined): void => {
 				if (eventTaskId !== taskId) {
+					return;
+				}
+				if (messageId !== undefined && messageId <= currentMessageId) {
+					// Ignore abandon events that were for abandon ops that were sent prior to our current volunteer attempt.
 					return;
 				}
 				removeListeners();
@@ -339,10 +380,23 @@ export class TaskManagerClass
 				reject(new Error("Disconnected before acquiring task assignment"));
 			};
 
-			const checkIfCompleted = (eventTaskId: string): void => {
+			const checkIfCompleted = (eventTaskId: string, messageId: number | undefined): void => {
 				if (eventTaskId !== taskId) {
 					return;
 				}
+				if (messageId !== undefined && messageId <= currentMessageId) {
+					// Ignore abandon events that were for abandon ops that were sent prior to our current volunteer attempt.
+					return;
+				}
+				removeListeners();
+				resolve(false);
+			};
+
+			const checkIfRolledBack = (eventTaskId: string): void => {
+				if (eventTaskId !== taskId) {
+					return;
+				}
+
 				removeListeners();
 				resolve(false);
 			};
@@ -369,6 +423,8 @@ export class TaskManagerClass
 			throw new Error("Attempted to subscribe with read-only permissions");
 		}
 
+		const currentMessageId = this.messageId;
+
 		const submitVolunteerOp = (): void => {
 			this.submitVolunteerOp(taskId);
 		};
@@ -377,12 +433,14 @@ export class TaskManagerClass
 			this.abandonWatcher.on("abandon", checkIfAbandoned);
 			this.connectionWatcher.on("disconnect", disconnectHandler);
 			this.completedWatcher.on("completed", checkIfCompleted);
+			this.rollbackWatcher.on("rollback", checkIfRolledBack);
 		};
 		const removeListeners = (): void => {
 			this.abandonWatcher.off("abandon", checkIfAbandoned);
 			this.connectionWatcher.off("disconnect", disconnectHandler);
 			this.connectionWatcher.off("connect", submitVolunteerOp);
 			this.completedWatcher.off("completed", checkIfCompleted);
+			this.rollbackWatcher.off("rollback", checkIfRolledBack);
 		};
 
 		const disconnectHandler = (): void => {
@@ -390,18 +448,35 @@ export class TaskManagerClass
 			this.connectionWatcher.once("connect", submitVolunteerOp);
 		};
 
-		const checkIfAbandoned = (eventTaskId: string): void => {
+		const checkIfAbandoned = (eventTaskId: string, messageId: number | undefined): void => {
 			if (eventTaskId !== taskId) {
+				return;
+			}
+			if (messageId !== undefined && messageId <= currentMessageId) {
+				// Ignore abandon events that were for abandon ops that were sent prior to our current volunteer attempt.
 				return;
 			}
 			removeListeners();
 			this.subscribedTasks.delete(taskId);
 		};
 
-		const checkIfCompleted = (eventTaskId: string): void => {
+		const checkIfCompleted = (eventTaskId: string, messageId: number | undefined): void => {
 			if (eventTaskId !== taskId) {
 				return;
 			}
+			if (messageId !== undefined && messageId <= currentMessageId) {
+				// Ignore abandon events that were for abandon ops that were sent prior to our current volunteer attempt.
+				return;
+			}
+			removeListeners();
+			this.subscribedTasks.delete(taskId);
+		};
+
+		const checkIfRolledBack = (eventTaskId: string): void => {
+			if (eventTaskId !== taskId) {
+				return;
+			}
+
 			removeListeners();
 			this.subscribedTasks.delete(taskId);
 		};
@@ -740,7 +815,12 @@ export class TaskManagerClass
 		assert(this.clientId !== undefined, 0x07f /* "clientId undefined" */);
 
 		const inQueue = this.taskQueues.get(taskId)?.includes(this.clientId) ?? false;
-		const latestPendingOp = this.latestPendingOps.get(taskId);
+		const latestPendingOps = this.latestPendingOps.get(taskId);
+
+		const latestPendingOp =
+			latestPendingOps !== undefined && latestPendingOps.length > 0
+				? latestPendingOps[latestPendingOps.length - 1]
+				: undefined;
 		const isPendingVolunteer = latestPendingOp?.type === "volunteer";
 		const isPendingAbandonOrComplete =
 			latestPendingOp?.type === "abandon" || latestPendingOp?.type === "complete";
@@ -754,5 +834,23 @@ export class TaskManagerClass
 		// during rehydration we cannot be assigned any tasks. Additionally, without the in-memory state of the
 		// previous dds, we also cannot re-volunteer based on a previous subscribeToTask() call. Since we are
 		// unable to be assigned to any tasks, there is no reason to process abandon/complete ops either.
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
+	 */
+	protected rollback(content: unknown, localOpMetadata: unknown): void {
+		assert(typeof localOpMetadata === "number", "Expect localOpMetadata to be a number");
+		assert(isTaskManagerOperation(content), "unexpected op content");
+		const latestPendingOps = this.latestPendingOps.get(content.taskId);
+		const pendingOpToRollback = latestPendingOps?.pop();
+		assert(
+			pendingOpToRollback !== undefined && pendingOpToRollback.messageId === localOpMetadata,
+			"pending op mismatch",
+		);
+		if (latestPendingOps?.length === 0) {
+			this.latestPendingOps.delete(content.taskId);
+		}
+		this.rollbackWatcher.emit("rollback", content.taskId);
 	}
 }

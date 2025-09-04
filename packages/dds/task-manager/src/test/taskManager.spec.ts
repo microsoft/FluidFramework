@@ -646,6 +646,28 @@ describe("TaskManager", () => {
 					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
 					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
 				});
+
+				it("Can abandon and immediately attempt to reacquire a task while detached", async () => {
+					const taskId = "taskId";
+					const volunteerTaskP = taskManager1.volunteerForTask(taskId);
+					assert.ok(taskManager1.queued(taskId), "Should be queued");
+					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+					const isAssigned = await volunteerTaskP;
+					assert.ok(isAssigned, "Should resolve true");
+					assert.ok(taskManager1.queued(taskId), "Should be queued");
+					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+
+					taskManager1.abandon(taskId);
+					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+					const revolunteerTaskP = taskManager1.volunteerForTask(taskId);
+					assert.ok(taskManager1.queued(taskId), "Should be queued");
+					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+					const isAssigned2 = await revolunteerTaskP;
+					assert.ok(isAssigned2, "Should resolve true");
+					assert.ok(taskManager1.queued(taskId), "Should be queued");
+					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+				});
 			});
 
 			describe("Subscribing to a task", () => {

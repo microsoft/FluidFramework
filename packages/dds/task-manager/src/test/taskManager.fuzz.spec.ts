@@ -255,7 +255,6 @@ describe("TaskManager fuzz testing", () => {
 
 	createDDSFuzzSuite(model, {
 		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
-		rollbackProbability: 0,
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.05,
@@ -296,7 +295,6 @@ describe("TaskManager fuzz testing with rebasing", () => {
 		},
 		defaultTestCount: defaultOptions.testCount,
 		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
-		rollbackProbability: 0,
 		// Uncomment this line to replay a specific seed:
 		// replay: 0,
 		// This can be useful for quickly minimizing failure json while attempting to root-cause a failure.
