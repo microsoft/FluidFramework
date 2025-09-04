@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { FluidClientVersion, ICodecOptions } from "../../codec/index.js";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { ICodecOptions } from "../../codec/index.js";
 import { SchemaVersion } from "../../core/index.js";
 import { encodeTreeSchema, makeSchemaCodec } from "../../feature-libraries/index.js";
 import {
@@ -58,7 +59,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  */
 export function extractPersistedSchema(
 	schema: ImplicitAnnotatedFieldSchema,
-	oldestCompatibleClient: FluidClientVersion,
+	oldestCompatibleClient: MinimumVersionForCollab,
 	includeStaged: (upgrade: SchemaUpgrade) => boolean,
 ): JsonCompatible {
 	const stored = toStoredSchema(schema, { includeStaged });

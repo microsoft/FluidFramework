@@ -7,7 +7,6 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 
 import {
-	type FluidClientVersion,
 	type ICodecOptions,
 	type IJsonCodec,
 	makeVersionedValidatedCodec,
@@ -36,6 +35,7 @@ import type { FieldBatch } from "./fieldBatch.js";
 import { EncodedFieldBatch, validVersions } from "./format.js";
 import { schemaCompressedEncode } from "./schemaBasedEncode.js";
 import { uncompressedEncode } from "./uncompressedEncode.js";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Reference ID for a chunk that is incrementally encoded.
@@ -124,7 +124,7 @@ export type FieldBatchCodec = IJsonCodec<
  * TODO: makeFieldBatchCodec (and makeVersionDispatchingCodec transitively) should bake in this versionToFormat logic and the resulting codec can then support use with FluidClientVersion directly.
  */
 export function fluidVersionToFieldBatchCodecWriteVersion(
-	oldestCompatibleClient: FluidClientVersion,
+	oldestCompatibleClient: MinimumVersionForCollab,
 ): number {
 	// There is currently on only 1 version.
 	return 1;
