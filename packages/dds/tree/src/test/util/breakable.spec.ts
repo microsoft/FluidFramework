@@ -69,6 +69,15 @@ Error: BreakFoo`;
 
 		assert.throws(() => foo.read(1), validateUsageError(message));
 		assert.throws(() => foo.canBreak(1), validateUsageError(message));
+
+		// Check ".cause" is set
+		assert.throws(
+			() => foo.canBreak(1),
+			(error: Error) => {
+				assert.equal((error as unknown as { cause: unknown }).cause, breakError);
+				return true;
+			},
+		);
 	});
 
 	it("reentrant", () => {
