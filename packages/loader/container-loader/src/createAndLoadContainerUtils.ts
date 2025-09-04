@@ -28,6 +28,7 @@ import { GenericError, normalizeError } from "@fluidframework/telemetry-utils/in
 
 import { Loader } from "./loader.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
+
 interface OnDemandSummarizeOptions {
 	readonly reason?: string | undefined;
 	readonly retryOnFailure?: boolean | undefined;
