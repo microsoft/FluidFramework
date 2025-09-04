@@ -18,7 +18,7 @@ import type {
  * DependencyContainer is similar to a IoC Container. It takes providers and will
  * synthesize an object based on them when requested.
  * @legacy
- * @alpha
+ * @beta
  */
 export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use a real type here

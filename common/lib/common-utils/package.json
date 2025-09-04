@@ -81,7 +81,7 @@
 		"buffer": "^6.0.3",
 		"events": "^3.1.0",
 		"lodash": "^4.17.21",
-		"sha.js": "^2.4.11"
+		"sha.js": "^2.4.12"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.57.0",
@@ -89,7 +89,7 @@
 		"@fluidframework/build-tools": "^0.57.0",
 		"@fluidframework/common-utils-previous": "npm:@fluidframework/common-utils@1.0.0",
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
-		"@microsoft/api-extractor": "7.52.8",
+		"@microsoft/api-extractor": "7.52.11",
 		"@types/base64-js": "^1.3.0",
 		"@types/benchmark": "^2.1.0",
 		"@types/jest": "29.5.3",
@@ -98,7 +98,7 @@
 		"@types/node": "^18.19.39",
 		"@types/sinon": "^17.0.3",
 		"benchmark": "^2.1.4",
-		"c8": "^8.0.1",
+		"c8": "^10.1.3",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
@@ -150,7 +150,7 @@
 			"sharp": "^0.33.2"
 		},
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.52.8": "../../../patches/@microsoft__api-extractor@7.52.8.patch"
+			"@microsoft/api-extractor@7.52.11": "../../../patches/@microsoft__api-extractor@7.52.11.patch"
 		}
 	},
 	"typeValidation": {

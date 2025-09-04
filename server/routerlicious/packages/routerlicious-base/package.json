@@ -80,7 +80,7 @@
 		"lodash": "^4.17.21",
 		"nconf": "^0.12.0",
 		"serialize-error": "^8.1.0",
-		"sha.js": "^2.4.11",
+		"sha.js": "^2.4.12",
 		"sillyname": "^0.1.0",
 		"uuid": "^11.1.0",
 		"winston": "^3.6.0",
@@ -111,7 +111,7 @@
 		"@types/split": "^0.3.28",
 		"@types/supertest": "^2.0.5",
 		"@types/ws": "^6.0.1",
-		"c8": "^8.0.1",
+		"c8": "^10.1.3",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",
 		"mocha": "^10.8.2",
@@ -135,7 +135,11 @@
 				"forwardCompat": false
 			},
 			"Class_AlfredResources": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassStatics_AlfredResources": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": "public"

@@ -322,13 +322,13 @@ declare type current_as_old_for_Interface_NodeInDocumentConstraint = requireAssi
 declare type current_as_old_for_Interface_NodeSchemaMetadata = requireAssignableTo<TypeOnly<current.NodeSchemaMetadata>, TypeOnly<old.NodeSchemaMetadata>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_NodeSchemaOptions": {"backCompat": false}
+ * "Interface_NodeSchemaOptions": {"forwardCompat": false}
  */
-declare type current_as_old_for_Interface_NodeSchemaOptions = requireAssignableTo<TypeOnly<current.NodeSchemaOptions>, TypeOnly<old.NodeSchemaOptions>>
+declare type old_as_current_for_Interface_NodeSchemaOptions = requireAssignableTo<TypeOnly<old.NodeSchemaOptions>, TypeOnly<current.NodeSchemaOptions>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
