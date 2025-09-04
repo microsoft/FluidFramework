@@ -47,6 +47,8 @@ import { ISharedString, type SharedStringClass } from "../../sharedString.js";
 import { _dirname } from "../dirname.cjs";
 import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
 
+import { hasOracle } from "./intervalCollectionOracle.fuzz.spec.js";
+
 export type RevertibleSharedString = ISharedString & {
 	revertibles: SharedStringRevertible[];
 	// This field prevents change events that are emitted while in the process of a revert from
@@ -465,7 +467,17 @@ export const baseModel: Omit<
 		// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 		makeReducer(),
-	validateConsistency: async (a, b) => assertEquivalentSharedStrings(a.channel, b.channel),
+	validateConsistency: async (a, b) => {
+		if (hasOracle(a.channel)) {
+			a.channel.oracle.validate();
+		}
+
+		if (hasOracle(b.channel)) {
+			b.channel.oracle.validate();
+		}
+
+		void assertEquivalentSharedStrings(a.channel, b.channel);
+	},
 	factory: new SharedStringFuzzFactory(),
 	minimizationTransforms: [
 		(op) => {
