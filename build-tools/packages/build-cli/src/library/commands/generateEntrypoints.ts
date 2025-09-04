@@ -579,17 +579,17 @@ async function generateNode10TypeEntrypoints(
 
 	async function createEntrypointFile(
 		filePath: string,
-		relPath: string,
+		sourceTypeRelPath: string,
 		isTypeOnly: boolean,
 	): Promise<void> {
 		const dirPath = path.dirname(filePath);
 		await fs.ensureDir(dirPath);
 
-		const fixedPath = path.posix.relative(dirPath, relPath);
-		const jsImport = fixedPath.replace(/\.d\.([cm]?)ts/, ".$1js");
+		const entrypointToTypeImportPath = path.posix.relative(dirPath, sourceTypeRelPath);
+		const jsImport = entrypointToTypeImportPath.replace(/\.d\.([cm]?)ts/, ".$1js");
 
 		const content = isTypeOnly
-			? `${generatedHeader}export type * from "${fixedPath}";\n`
+			? `${generatedHeader}export type * from "${entrypointToTypeImportPath}";\n`
 			: `${generatedHeader}export * from "${jsImport}";\n`;
 
 		await fs.writeFile(filePath, content, "utf8");
