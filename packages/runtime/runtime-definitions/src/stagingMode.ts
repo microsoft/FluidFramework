@@ -9,7 +9,7 @@ import type { IContainerRuntimeBase } from "./dataStoreContext.js";
  * Options for committing staged changes in experimental staging mode.
  *
  * @experimental
- * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @deprecated These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
  * @legacy @beta
  * @sealed
  * @privateRemarks After partners move to the alpha interfaces this interface should be renamed and tagged to be internal.
@@ -38,7 +38,7 @@ export interface CommitStagedChangesOptionsExperimental {
  * Provides methods to either commit or discard changes made while in staging mode.
  *
  * @experimental
- * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @deprecated These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
  * @legacy @beta
  * @sealed
  * @privateRemarks After partners move to the alpha interfaces this interface should be renamed and tagged to be internal.
@@ -82,7 +82,7 @@ export interface StageControlsAlpha {
  * Experimental extension of {@link IContainerRuntimeBase} to support staging mode.
  *
  * @experimental
- * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @deprecated These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
  * @legacy @beta
  * @sealed
  * @privateRemarks After partners move to the alpha interfaces this interface should be renamed and tagged to be internal.
