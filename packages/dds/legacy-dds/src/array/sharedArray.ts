@@ -463,7 +463,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			}
 			case OperationType.toggleMove: {
 				const { entryId: oldEntryId, changedToEntryId: newEntryId } = arrayOp;
-				this.getEntryForId(oldEntryId).isLocalPendingMove = 0;
+				this.getEntryForId(oldEntryId).isLocalPendingMove -= 1;
 				this.updateLiveEntry(oldEntryId, newEntryId);
 
 				const toggleMoveOp: IToggleMoveOperation = {
