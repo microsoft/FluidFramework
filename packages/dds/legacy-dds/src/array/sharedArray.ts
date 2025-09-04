@@ -456,7 +456,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				const toggleOp: IToggleOperation = {
 					type: OperationType.toggle,
 					entryId,
-					isDeleted,
+					isDeleted: liveEntry.isDeleted,
 				};
 				this.emitValueChangedEvent(toggleOp, true /* isLocal */);
 				break;
