@@ -227,8 +227,8 @@ export class RunningSummarizer
 			},
 		});
 
-		// Only create heuristics when in 'enabled' mode. This bypasses heuristics for
-		// 'disableHeuristics' and 'summaryOnRequest' configurations.
+		// Only create heuristics when in 'enabled' mode.
+		// This bypasses heuristics for 'disableHeuristics' and 'summaryOnRequest' configurations.
 		if (configuration.state === "enabled") {
 			this.heuristicRunner = new SummarizeHeuristicRunner(
 				heuristicData,

@@ -9,20 +9,40 @@ import type {
 	IFluidCodeDetails,
 	IContainerPolicies,
 } from "@fluidframework/container-definitions/internal";
+import { LoaderHeader, ConnectionState } from "@fluidframework/container-definitions/internal";
 import type {
+	ConfigTypes,
 	FluidObject,
 	IConfigProviderBase,
 	IRequest,
 	ITelemetryBaseLogger,
+	IResponse,
 } from "@fluidframework/core-interfaces";
 import type { IClientDetails } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentServiceFactory,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
+import { DriverHeader } from "@fluidframework/driver-definitions/internal";
+import { GenericError, normalizeError } from "@fluidframework/telemetry-utils/internal";
 
 import { Loader } from "./loader.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
+interface OnDemandSummarizeOptions {
+	readonly reason?: string | undefined;
+	readonly retryOnFailure?: boolean | undefined;
+	readonly fullTree?: boolean | undefined;
+}
+interface SummarizeResultsLike {
+	readonly summarySubmitted: Promise<unknown>;
+}
+interface SummarizerLike {
+	readonly ISummarizer?: SummarizerLike;
+	summarizeOnDemand(options: OnDemandSummarizeOptions): SummarizeResultsLike;
+}
+
+// Internal route used for summarizer entry point resolution (legacy fallback when getEntryPoint() is absent)
+const summarizerRequestUrl = "_summarizer";
 
 /**
  * Properties necessary for creating and loading a container.
@@ -172,4 +192,94 @@ export async function loadExistingContainer(
 		loadExistingContainerProps.request,
 		loadExistingContainerProps.pendingLocalState,
 	);
+}
+
+/**
+ * Loads a summarizer container with the required headers, triggers an on-demand summary, and then closes it.
+ * Returns success/failure and an optional error for host-side handling.
+ *
+ * Note: This summarizer container is not intended to be reused.
+ *
+ * @beta
+ */
+export async function loadSummarizerContainerAndMakeSummary(
+	loadExistingContainerProps: ILoadExistingContainerProps,
+): Promise<{ success: true } | { success: false; error: Error }> {
+	const loader = new Loader(loadExistingContainerProps);
+	const baseHeaders = loadExistingContainerProps.request.headers;
+	const request = {
+		...loadExistingContainerProps.request,
+		headers: {
+			...baseHeaders,
+			[LoaderHeader.cache]: false,
+			[LoaderHeader.clientDetails]: {
+				capabilities: { interactive: false },
+				type: "summarizer",
+			},
+			[DriverHeader.summarizingClient]: true,
+			[LoaderHeader.reconnect]: false,
+		},
+	} as const;
+
+	const container = await loader.resolve(request);
+
+	loadExistingContainerProps.logger?.send({
+		category: "generic",
+		eventName: "summarizerContainer_created",
+		requestUrl: loadExistingContainerProps.request.url,
+	});
+
+	let success = false;
+	let caughtError: Error | undefined;
+	try {
+		if (container.connectionState !== ConnectionState.Connected) {
+			await new Promise<void>((resolve) => container.once("connected", () => resolve()));
+		}
+
+		let fluidObject: FluidObject<SummarizerLike> | undefined;
+		// Back-compat: Older containers may not implement getEntryPoint().
+		if (container.getEntryPoint === undefined) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+			const response = (await (container as any).request({
+				url: `/${summarizerRequestUrl}`,
+			})) as IResponse;
+			if (response.status !== 200 || response.mimeType !== "fluid/object") {
+				throw new GenericError("Summarizer entry point request failed");
+			}
+			fluidObject = response.value as FluidObject<SummarizerLike>;
+		} else {
+			fluidObject = (await container.getEntryPoint()) as FluidObject<SummarizerLike>;
+		}
+		const summarizer = fluidObject?.ISummarizer;
+		if (summarizer === undefined) {
+			throw new GenericError("Summarizer entry point not available");
+		}
+		// Host controlled feature gate for fullTree
+		// Default value will be false
+		const raw: ConfigTypes | undefined =
+			loadExistingContainerProps.configProvider?.getRawConfig?.(
+				"Fluid.Summarizer.FullTree.OnDemand",
+			);
+		const fullTreeGate = typeof raw === "boolean" ? raw : false;
+
+		await summarizer.summarizeOnDemand({
+			reason: "summaryOnRequest",
+			retryOnFailure: true,
+			fullTree: fullTreeGate,
+		}).summarySubmitted;
+		success = true;
+		return { success: true };
+	} catch (error) {
+		caughtError = normalizeError(error);
+		return { success: false, error: caughtError };
+	} finally {
+		container.dispose();
+		loadExistingContainerProps.logger?.send({
+			category: "generic",
+			eventName: "summarizerContainer_closed",
+			requestUrl: loadExistingContainerProps.request.url,
+			success,
+			error: success ? undefined : caughtError?.message,
+		});
+	}
 }

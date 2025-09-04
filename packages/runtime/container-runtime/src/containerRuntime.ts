@@ -2194,7 +2194,10 @@ export class ContainerRuntime
 						() => this.innerDeltaManager.active,
 					),
 			);
-		} else if (!onRequestMode && SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)) {
+		} else if (
+			!onRequestMode &&
+			SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)
+		) {
 			// Only create a SummaryManager and SummarizerClientElection
 			// if summaries are enabled and we are not the summarizer client.
 			const orderedClientLogger = createChildLogger({

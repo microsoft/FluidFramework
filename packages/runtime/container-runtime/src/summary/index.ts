@@ -39,7 +39,6 @@ export {
 	type ISummaryConfiguration,
 	type ISummaryConfigurationDisableHeuristics,
 	type ISummaryConfigurationDisableSummarizer,
-	 type ISummaryConfigurationWithSummaryOnRequest,
 	type ISummaryConfigurationHeuristics,
 	type ISummaryBaseConfiguration,
 } from "./summarizerTypes.js";
