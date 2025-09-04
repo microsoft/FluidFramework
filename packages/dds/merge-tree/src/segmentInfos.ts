@@ -7,8 +7,8 @@ import { assert, isObject } from "@fluidframework/core-utils/internal";
 
 import { UnassignedSequenceNumber } from "./constants.js";
 import {
-	ISegmentInternal,
-	ISegmentPrivate,
+	type ISegmentInternal,
+	type ISegmentPrivate,
 	MergeBlock,
 	type ObliterateInfo,
 } from "./mergeTreeNodes.js";

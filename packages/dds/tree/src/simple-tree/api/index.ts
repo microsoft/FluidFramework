@@ -32,6 +32,7 @@ export {
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 } from "./schemaFactory.js";
+export { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
 export { SchemaFactoryAlpha, type SchemaStaticsAlpha } from "./schemaFactoryAlpha.js";
 export type {
 	ValidateRecursiveSchema,
@@ -101,6 +102,8 @@ export {
 	tryStoredSchemaAsArray,
 	replaceHandles,
 	type HandleConverter,
+	KeyEncodingOptions,
+	type TreeParsingOptions,
 } from "./customTree.js";
 
 export {

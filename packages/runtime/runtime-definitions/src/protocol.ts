@@ -22,8 +22,7 @@ import type {
 
 /**
  * An envelope wraps the contents with the intended target
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IEnvelope {
 	/**
@@ -50,8 +49,7 @@ export interface IInboundSignalMessage<TMessage extends TypedMessage = TypedMess
 /**
  * Message send by client attaching local data structure.
  * Contains snapshot of data structure which is the current state of this data structure.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IAttachMessage {
 	/**
@@ -75,8 +73,7 @@ export interface IAttachMessage {
  * but it should not be used when creating a new attach op.
  * Older versions of attach messages could have null snapshots,
  * so this gives correct typings for writing backward compatible code.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
 	// eslint-disable-next-line @rushstack/no-new-null -- TODO: breaking change; protocol might even explicitly use null
@@ -138,8 +135,7 @@ export interface IRuntimeMessageCollection {
 /**
  * Interface to provide access to snapshot blobs to DataStore layer.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IRuntimeStorageService {
 	/**

@@ -5,11 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 
 import { detectOutboundReferences, getSummaryForDatastores } from "../channelCollection.js";
-import { IContainerRuntimeMetadata, nonDataStorePaths } from "../summary/index.js";
+import { type IContainerRuntimeMetadata, nonDataStorePaths } from "../summary/index.js";
 
 describe("Runtime", () => {
 	describe("Container Runtime", () => {

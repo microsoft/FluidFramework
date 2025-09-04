@@ -4,14 +4,14 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	AttributionKey,
 	DetachedAttributionKey,
 	OpAttributionKey,
 } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { ISegment } from "./mergeTreeNodes.js";
+import type { ISegment } from "./mergeTreeNodes.js";
 
 /**
  * @legacy @beta

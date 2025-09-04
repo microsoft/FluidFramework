@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
@@ -11,25 +11,29 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import { isFluidHandle, lookupBlobStorageId } from "../handles.js";
 
 describe("Handles", () => {
-	it("isFluidHandle", () => {
-		assert(!isFluidHandle(0));
-		assert(!isFluidHandle({}));
-		assert(!isFluidHandle(undefined));
-		assert(!isFluidHandle(null));
-		assert(!isFluidHandle([]));
-		assert(!isFluidHandle({ get: () => {} }));
-		assert(!isFluidHandle({ IFluidHandle: 5, get: () => {} }));
+	it("encodeCompactIdToString() with strings", () => {
+		it("isFluidHandle", () => {
+			assert(!isFluidHandle(0));
+			assert(!isFluidHandle({}));
+			assert(!isFluidHandle(undefined));
+			// eslint-disable-next-line unicorn/no-null -- We want to explicitly test for null
+			assert(!isFluidHandle(null));
+			assert(!isFluidHandle([]));
+			assert(!isFluidHandle({ get: () => {} }));
+			assert(!isFluidHandle({ IFluidHandle: 5, get: () => {} }));
 
-		// Legacy compatibility for non symbol based handle
-		const loopy = { IFluidHandle: {} };
-		loopy.IFluidHandle = loopy;
-		assert(isFluidHandle(loopy));
-		assert(!isFluidHandle({ IFluidHandle: 5 }));
-		assert(!isFluidHandle({ IFluidHandle: {} }));
-		assert(!isFluidHandle({ IFluidHandle: null }));
+			// Legacy compatibility for non symbol based handle
+			const loopy = { IFluidHandle: {} };
+			loopy.IFluidHandle = loopy;
+			assert(isFluidHandle(loopy));
+			assert(!isFluidHandle({ IFluidHandle: 5 }));
+			assert(!isFluidHandle({ IFluidHandle: {} }));
+			// eslint-disable-next-line unicorn/no-null -- We want to explicitly test for null
+			assert(!isFluidHandle({ IFluidHandle: null }));
 
-		// Symbol based:
-		assert(isFluidHandle({ [fluidHandleSymbol]: {} }));
+			// Symbol based:
+			assert(isFluidHandle({ [fluidHandleSymbol]: {} }));
+		});
 	});
 
 	describe("lookupBlobStorageId", () => {
@@ -37,13 +41,13 @@ describe("Handles", () => {
 		const createMockHandle = (absolutePath: string) => {
 			const mockHandleInternal = { absolutePath, [fluidHandleSymbol]: {} };
 			return {
-				[fluidHandleSymbol]: mockHandleInternal
+				[fluidHandleSymbol]: mockHandleInternal,
 			} as any;
 		};
 
 		it("throws error for non-blob handles", () => {
 			const mockRuntime = {
-				lookupBlobStorageId: () => "storage-id-123"
+				lookupBlobStorageId: () => "storage-id-123",
 			} as unknown as IContainerRuntime;
 
 			const nonBlobHandle = createMockHandle("/non-blob/path");
@@ -55,7 +59,7 @@ describe("Handles", () => {
 
 		it("throws error for invalid blob handle path", () => {
 			const mockRuntime = {
-				lookupBlobStorageId: () => "storage-id-123"
+				lookupBlobStorageId: () => "storage-id-123",
 			} as unknown as IContainerRuntime;
 
 			const invalidHandle = createMockHandle("/_blobs/");
@@ -71,7 +75,7 @@ describe("Handles", () => {
 				lookupBlobStorageId: (localId: string) => {
 					assert.strictEqual(localId, "test-local-id");
 					return expectedStorageId;
-				}
+				},
 			} as unknown as IContainerRuntime;
 
 			const blobHandle = createMockHandle("/_blobs/test-local-id");
@@ -82,7 +86,7 @@ describe("Handles", () => {
 
 		it("returns undefined when runtime returns undefined", () => {
 			const mockRuntime = {
-				lookupBlobStorageId: () => undefined
+				lookupBlobStorageId: () => undefined,
 			} as unknown as IContainerRuntime;
 
 			const blobHandle = createMockHandle("/_blobs/pending-blob-id");

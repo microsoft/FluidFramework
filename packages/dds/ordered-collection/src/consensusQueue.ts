@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 
 import { ConsensusOrderedCollection } from "./consensusOrderedCollection.js";
-import { IOrderedCollection } from "./interfaces.js";
+import type { IOrderedCollection } from "./interfaces.js";
 import { SnapshotableArray } from "./snapshotableArray.js";
 
 /**

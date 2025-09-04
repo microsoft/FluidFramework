@@ -15,8 +15,7 @@ import type {
 } from "../summaryCollection.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IBroadcastSummaryResult {
 	readonly summarizeOp: ISummaryOpMessage;
@@ -24,8 +23,7 @@ export interface IBroadcastSummaryResult {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IAckSummaryResult {
 	readonly summaryAckOp: ISummaryAckMessage;
@@ -33,8 +31,7 @@ export interface IAckSummaryResult {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface INackSummaryResult {
 	readonly summaryNackOp: ISummaryNackMessage;
@@ -42,8 +39,7 @@ export interface INackSummaryResult {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummarizeResults {
 	/**
@@ -65,8 +61,7 @@ export interface ISummarizeResults {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type EnqueueSummarizeResult =
 	| (ISummarizeResults & {

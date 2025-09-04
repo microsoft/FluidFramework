@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	type LocalEmptyBatchPlaceholder,
-	type OutboundBatch,
-	type OutboundSingletonBatch,
+import type {
+	LocalEmptyBatchPlaceholder,
+	OutboundBatch,
+	OutboundSingletonBatch,
 } from "./definitions.js";
 
 /**

@@ -14,11 +14,11 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { IEnvelope } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import Deque from "double-ended-queue";
+import type Deque from "double-ended-queue";
 import Sinon from "sinon";
 
 import {
@@ -29,13 +29,13 @@ import {
 import {
 	addBatchMetadata,
 	BatchManager,
-	LocalBatchMessage,
+	type LocalBatchMessage,
 	OpGroupingManager,
 	type InboundMessageResult,
 } from "../opLifecycle/index.js";
 import {
 	findFirstCharacterMismatched,
-	IPendingMessage,
+	type IPendingMessage,
 	PendingStateManager,
 	type IPendingLocalState,
 	type IRuntimeStateHandler,

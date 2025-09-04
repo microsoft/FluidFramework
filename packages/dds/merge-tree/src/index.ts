@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
+export type {
 	IAttributionCollection,
 	IAttributionCollectionSerializer,
 	IAttributionCollectionSpec,
@@ -15,61 +15,61 @@ export {
 	createPropertyTrackingAttributionPolicyFactory,
 	createPropertyTrackingAndInsertionAttributionPolicyFactory,
 } from "./attributionPolicy.js";
-export { Client, IClientEvents } from "./client.js";
+export { Client, type IClientEvents } from "./client.js";
 export {
-	ConflictAction,
-	Dictionary,
-	IRBAugmentation,
-	IRBMatcher,
-	KeyComparer,
-	Property,
-	PropertyAction,
-	QProperty,
+	type ConflictAction,
+	type Dictionary,
+	type IRBAugmentation,
+	type IRBMatcher,
+	type KeyComparer,
+	type Property,
+	type PropertyAction,
+	type QProperty,
 	RBColor,
-	RBNode,
-	RBNodeActions,
+	type RBNode,
+	type RBNodeActions,
 	RedBlackTree,
-	SortedDictionary,
+	type SortedDictionary,
 } from "./collections/index.js";
 export { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 export {
 	createDetachedLocalReferencePosition,
 	LocalReferenceCollection,
-	LocalReferencePosition,
+	type LocalReferencePosition,
 	SlidingPreference,
 } from "./localReference.js";
 export {
-	AttributionPolicy,
-	IMergeTreeAttributionOptions,
-	IMergeTreeOptions,
-	IMergeTreeOptionsInternal,
+	type AttributionPolicy,
+	type IMergeTreeAttributionOptions,
+	type IMergeTreeOptions,
+	type IMergeTreeOptionsInternal,
 	getSlideToSegoff,
 } from "./mergeTree.js";
 export {
-	IMergeTreeDeltaCallbackArgs,
-	IMergeTreeDeltaOpArgs,
-	IMergeTreeMaintenanceCallbackArgs,
-	IMergeTreeSegmentDelta,
-	MergeTreeDeltaOperationType,
-	MergeTreeDeltaOperationTypes,
+	type IMergeTreeDeltaCallbackArgs,
+	type IMergeTreeDeltaOpArgs,
+	type IMergeTreeMaintenanceCallbackArgs,
+	type IMergeTreeSegmentDelta,
+	type MergeTreeDeltaOperationType,
+	type MergeTreeDeltaOperationTypes,
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback.js";
 export {
 	BaseSegment,
 	CollaborationWindow,
-	IJSONMarkerSegment,
+	type IJSONMarkerSegment,
 	segmentIsRemoved,
-	ISegment,
-	ISegmentAction,
+	type ISegment,
+	type ISegmentAction,
 	Marker,
 	reservedMarkerIdKey,
 	reservedMarkerSimpleTypeKey,
-	ISegmentInternal,
+	type ISegmentInternal,
 } from "./mergeTreeNodes.js";
 export {
-	Trackable,
+	type Trackable,
 	TrackingGroup,
-	ITrackingGroup,
+	type ITrackingGroup,
 	TrackingGroupCollection,
 } from "./mergeTreeTracking.js";
 export {
@@ -81,36 +81,36 @@ export {
 	createObliterateRangeOp,
 } from "./opBuilder.js";
 export {
-	AdjustParams,
-	IJSONSegment,
-	IMarkerDef,
-	IMergeTreeAnnotateMsg,
-	IMergeTreeDelta,
-	IMergeTreeDeltaOp,
-	IMergeTreeGroupMsg,
-	IMergeTreeInsertMsg,
-	IMergeTreeOp,
-	IMergeTreeRemoveMsg,
-	IMergeTreeAnnotateAdjustMsg,
-	IRelativePosition,
+	type AdjustParams,
+	type IJSONSegment,
+	type IMarkerDef,
+	type IMergeTreeAnnotateMsg,
+	type IMergeTreeDelta,
+	type IMergeTreeDeltaOp,
+	type IMergeTreeGroupMsg,
+	type IMergeTreeInsertMsg,
+	type IMergeTreeOp,
+	type IMergeTreeRemoveMsg,
+	type IMergeTreeAnnotateAdjustMsg,
+	type IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
-	IMergeTreeObliterateMsg,
-	IMergeTreeObliterateSidedMsg,
+	type IMergeTreeObliterateMsg,
+	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
 export {
 	addProperties,
 	createMap,
-	MapLike,
+	type MapLike,
 	matchProperties,
-	PropertySet,
+	type PropertySet,
 } from "./properties.js";
 export {
 	compareReferencePositions,
 	DetachedReferencePosition,
 	maxReferencePosition,
 	minReferencePosition,
-	ReferencePosition,
+	type ReferencePosition,
 	refGetTileLabels,
 	refHasTileLabel,
 	refHasTileLabels,
@@ -119,25 +119,25 @@ export {
 	reservedTileLabelsKey,
 } from "./referencePositions.js";
 export {
-	PropsOrAdjust,
+	type PropsOrAdjust,
 	copyPropertiesAndManager,
 	PropertiesManager,
 } from "./segmentPropertiesManager.js";
 export {
-	InteriorSequencePlace,
+	type InteriorSequencePlace,
 	Side,
-	SequencePlace,
+	type SequencePlace,
 	endpointPosAndSide,
 } from "./sequencePlace.js";
 export { SortedSet } from "./sortedSet.js";
-export { SortedSegmentSet, SortedSegmentSetItem } from "./sortedSegmentSet.js";
-export { IJSONTextSegment, TextSegment } from "./textSegment.js";
+export { SortedSegmentSet, type SortedSegmentSetItem } from "./sortedSegmentSet.js";
+export { type IJSONTextSegment, TextSegment } from "./textSegment.js";
 export {
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
 	isMergeTreeDeltaRevertible,
-	MergeTreeDeltaRevertible,
-	MergeTreeRevertibleDriver,
+	type MergeTreeDeltaRevertible,
+	type MergeTreeRevertibleDriver,
 	revertMergeTreeDeltaRevertibles,
 } from "./revertibles.js";
 export type { OperationStamp } from "./stamps.js";

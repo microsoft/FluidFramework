@@ -11,10 +11,10 @@ import { Deferred } from "@fluidframework/core-utils/internal";
 import type { IRuntimeStorageService } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { BlobManager, IBlobManagerRuntime } from "../blobManager/index.js";
+import { BlobManager, type IBlobManagerRuntime } from "../blobManager/index.js";
 import {
 	ContainerFluidHandleContext,
-	IContainerHandleContextRuntime,
+	type IContainerHandleContextRuntime,
 } from "../containerHandleContext.js";
 
 export const failProxy = <T extends object>(handler: Partial<T> = {}): T => {
@@ -78,7 +78,7 @@ describe("BlobHandles", () => {
 				d.resolve();
 			},
 			stashedBlobs: {},
-			localBlobIdGenerator: () => "localId",
+			localIdGenerator: () => "localId",
 			isBlobDeleted: () => false,
 			storage: failProxy<IRuntimeStorageService>({
 				createBlob: async () => {
@@ -118,7 +118,7 @@ describe("BlobHandles", () => {
 				d.resolve();
 			},
 			stashedBlobs: {},
-			localBlobIdGenerator: () => "localId",
+			localIdGenerator: () => "localId",
 			storage: failProxy<IRuntimeStorageService>({
 				createBlob: async () => {
 					count++;

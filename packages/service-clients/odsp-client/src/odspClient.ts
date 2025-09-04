@@ -104,7 +104,10 @@ function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigPr
  * @param resolvedUrl - The ODSP resolved URL containing endpoint information
  * @returns The blob URL if it can be built, undefined otherwise
  */
-function buildOdspBlobUrl(storageId: string, resolvedUrl: IOdspResolvedUrl): string | undefined {
+function buildOdspBlobUrl(
+	storageId: string,
+	resolvedUrl: IOdspResolvedUrl,
+): string | undefined {
 	try {
 		const attachmentGETUrl = resolvedUrl.endpoints.attachmentGETStorageUrl;
 		if (!attachmentGETUrl) {
@@ -131,14 +134,15 @@ function lookupOdspBlobURL(
 	try {
 		if (
 			runtimeInternal !== undefined &&
-			typeof (runtimeInternal as { lookupBlobStorageId?: unknown }).lookupBlobStorageId === "function"
+			typeof (runtimeInternal as { lookupBlobStorageId?: unknown }).lookupBlobStorageId ===
+				"function"
 		) {
 			// Get the storage ID from the runtime
 			const storageId = lookupBlobStorageId(runtimeInternal as never, handle);
 			if (storageId === undefined) {
 				return undefined;
 			}
-			
+
 			// Build the URL using ODSP-specific logic
 			return buildOdspBlobUrl(storageId, resolvedUrl);
 		}
@@ -298,7 +302,8 @@ export class OdspClient {
 
 		// Get the resolved URL for ODSP-specific URL building
 		const resolvedUrl = container.resolvedUrl;
-		const odspResolvedUrl = (resolvedUrl && isOdspResolvedUrl(resolvedUrl)) ? resolvedUrl : undefined;
+		const odspResolvedUrl =
+			resolvedUrl && isOdspResolvedUrl(resolvedUrl) ? resolvedUrl : undefined;
 
 		return {
 			audience: createServiceAudience({

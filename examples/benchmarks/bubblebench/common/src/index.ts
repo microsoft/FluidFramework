@@ -4,6 +4,13 @@
  */
 
 export { AppView, type IAppProps } from "./view/index.js";
-export { IAppState, IBubble, IClient, makeBubble, makeClient, SimpleClient } from "./types.js";
+export {
+	type IAppState,
+	type IBubble,
+	type IClient,
+	makeBubble,
+	makeClient,
+	type SimpleClient,
+} from "./types.js";
 export { normal, randomColor, rnd } from "./rnd.js";
 export { Stats } from "./stats.js";

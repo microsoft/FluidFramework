@@ -13,6 +13,7 @@ import {
 	replaceHandles,
 	type TreeEncodingOptions,
 	type HandleConverter,
+	KeyEncodingOptions,
 } from "./customTree.js";
 
 /**
@@ -46,7 +47,7 @@ export function conciseFromCursor(
 	options: TreeEncodingOptions,
 ): ConciseTree {
 	const config: Required<TreeEncodingOptions> = {
-		useStoredKeys: false,
+		keys: KeyEncodingOptions.usePropertyKeys,
 		...options,
 	};
 

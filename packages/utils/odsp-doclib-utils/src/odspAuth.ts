@@ -29,8 +29,7 @@ export interface IPublicClientConfig {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IOdspAuthRequestInfo {
 	accessToken: string;
@@ -63,14 +62,12 @@ type TokenRequestBody = TokenRequestCredentials & {
 
 // eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const getOdspScope = (server: string): string =>
 	`offline_access ${getSiteUrl(server)}/AllSites.Write`;
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const pushScope =
 	"offline_access https://pushchannel.1drv.ms/PushChannel.ReadWrite.All";

@@ -6,9 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import {
-	BaseFuzzTestState,
-	Generator,
-	SaveInfo,
+	type BaseFuzzTestState,
+	type Generator,
+	type SaveInfo,
 	createWeightedGenerator,
 	interleave,
 	makeRandom,
@@ -16,27 +16,27 @@ import {
 	repeat,
 	take,
 } from "@fluid-private/stochastic-test-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 import { IdCompressor } from "../idCompressor.js";
 import {
 	type IIdCompressor,
 	type IIdCompressorCore,
-	IdCreationRange,
-	OpSpaceCompressedId,
-	SerializedIdCompressorWithNoSession,
-	SerializedIdCompressorWithOngoingSession,
-	SessionId,
-	SessionSpaceCompressedId,
-	StableId,
+	type IdCreationRange,
+	type OpSpaceCompressedId,
+	type SerializedIdCompressorWithNoSession,
+	type SerializedIdCompressorWithOngoingSession,
+	type SessionId,
+	type SessionSpaceCompressedId,
+	type StableId,
 	createIdCompressor,
 } from "../index.js";
 import { SessionSpaceNormalizer } from "../sessionSpaceNormalizer.js";
 import { assertIsSessionId, createSessionId, localIdFromGenCount } from "../utilities.js";
 
 import {
-	FinalCompressedId,
-	ReadonlyIdCompressor,
+	type FinalCompressedId,
+	type ReadonlyIdCompressor,
 	fail,
 	getOrCreate,
 	incrementStableId,

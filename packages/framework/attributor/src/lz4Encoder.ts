@@ -13,7 +13,7 @@ import type { Encoder } from "./encoders.js";
 // eslint-disable-next-line jsdoc/require-description
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export function makeLZ4Encoder<T>(): Encoder<Jsonable<T>, string> {
 	return {
