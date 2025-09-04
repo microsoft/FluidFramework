@@ -78,9 +78,11 @@ describe("TaskManager Rollback", () => {
 
 			const assigned = await volunteerP;
 
-			assert(taskManager.assigned(taskId) === false, "task manager should not be assigned");
-			assert.strictEqual(assignedEvents, 0, "should have not emitted assigned event");
-			assert(assigned === false, "should not have resolved volunteer promise with true");
+			assert.deepEqual(
+				[taskManager.assigned(taskId), assignedEvents, assigned],
+				[false, 0, false],
+				"Task manager should be unassigned with no events after volunteer rollback",
+			);
 		});
 
 		it("Can rollback abandon", async () => {
@@ -96,23 +98,25 @@ describe("TaskManager Rollback", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			const assigned = await volunteerP;
-			assert(assigned === true, "taskManager should still be assigned post-rollback");
+			assert.equal(assigned, true, "taskManager should still be assigned post-rollback");
 
 			taskManager.abandon(taskId);
-			assert(
-				taskManager.assigned(taskId) === true,
+			assert.equal(
+				taskManager.assigned(taskId),
+				true,
 				"task manager should still be assigned pre-rollback",
 			);
-			assert.strictEqual(lostEvents, 0, "should not have emitted lost event pre-rollback");
+			assert.equal(lostEvents, 0, "should not have emitted lost event pre-rollback");
 
 			containerRuntime.rollback?.();
 			containerRuntimeFactory.processAllMessages();
 
-			assert(
-				taskManager.assigned(taskId) === true,
+			assert.equal(
+				taskManager.assigned(taskId),
+				true,
 				"task manager should still be assigned post-rollback",
 			);
-			assert.strictEqual(lostEvents, 0, "should not have emitted lost event post-rollback");
+			assert.equal(lostEvents, 0, "should not have emitted lost event post-rollback");
 		});
 
 		it("Can rollback subscribe", async () => {
@@ -130,8 +134,11 @@ describe("TaskManager Rollback", () => {
 			containerRuntime.flush();
 			containerRuntimeFactory.processAllMessages();
 
-			assert(taskManager.assigned(taskId) === false, "task manager should not be assigned");
-			assert.strictEqual(assignedEvents, 0, "should have not emitted assigned event");
+			assert.deepEqual(
+				[taskManager.assigned(taskId), assignedEvents],
+				[false, 0],
+				"Task manager should be unassigned with no events after subscribe rollback",
+			);
 		});
 
 		it("Can rollback complete", async () => {
@@ -149,26 +156,24 @@ describe("TaskManager Rollback", () => {
 			assert(assigned, "taskManager should be assigned to task");
 
 			taskManager.complete(taskId);
-			assert(
-				taskManager.assigned(taskId) === true,
+			assert.equal(
+				taskManager.assigned(taskId),
+				true,
 				"task manager should still be assigned pre-rollback",
 			);
-			assert.strictEqual(
-				completedEvents,
-				0,
-				"should have not emitted completed event pre-rollback",
-			);
+			assert.equal(completedEvents, 0, "should have not emitted completed event pre-rollback");
 
 			containerRuntime.rollback?.();
 
 			containerRuntime.flush();
 			containerRuntimeFactory.processAllMessages();
 
-			assert(
-				taskManager.assigned(taskId) === true,
+			assert.equal(
+				taskManager.assigned(taskId),
+				true,
 				"task manager should still be assigned post-rollback",
 			);
-			assert.strictEqual(
+			assert.equal(
 				completedEvents,
 				0,
 				"should have not emitted completed event post-rollback",
@@ -207,13 +212,18 @@ describe("TaskManager Rollback", () => {
 			const assigned1 = await volunteerP1;
 			const assigned2 = await volunteerP2;
 
-			assert(taskManager1.assigned(taskId) === false, "taskManager1 should not be assigned");
-			assert(assignedEvents1 === 0, "taskManager1 should have not emitted assigned event");
-			assert(assigned1 === false, "taskManager1 should not have resolved volunteer promise");
-
-			assert(taskManager2.assigned(taskId) === true, "taskManager2 should be assigned");
-			assert(assignedEvents2 === 1, "taskManager2 should have emitted assigned event");
-			assert(assigned2 === true, "taskManager2 should have resolved volunteer promise");
+			assert.deepEqual(
+				[
+					taskManager1.assigned(taskId),
+					assignedEvents1,
+					assigned1,
+					taskManager2.assigned(taskId),
+					assignedEvents2,
+					assigned2,
+				],
+				[false, 0, false, true, 1, true],
+				"TaskManager1 should be unassigned and taskManager2 should be assigned after rollback",
+			);
 		});
 
 		it("Can rollback abandon op across remote ops", async () => {
@@ -245,8 +255,12 @@ describe("TaskManager Rollback", () => {
 				reject: false,
 				value: false,
 			});
-			assert(assigned1 === true, "taskManager1 should be assigned");
-			assert(assigned2 === false, "taskManager2 should not be assigned");
+
+			assert.deepEqual(
+				[assigned1, assigned2],
+				[true, false],
+				"TaskManager1 should be assigned and taskManager2 should not be assigned initially",
+			);
 
 			taskManager1.abandon(taskId);
 			containerRuntime1.rollback?.();
@@ -255,22 +269,16 @@ describe("TaskManager Rollback", () => {
 			containerRuntime2.flush();
 			containerRuntimeFactory.processAllMessages();
 
-			assert.strictEqual(
-				taskManager1.assigned(taskId),
-				true,
-				"taskManager1 should be assigned post-rollback",
+			assert.deepEqual(
+				[
+					taskManager1.assigned(taskId),
+					taskManager2.assigned(taskId),
+					assignedEvents2,
+					lostEvents1,
+				],
+				[true, false, 0, 0],
+				"TaskManager1 should remain assigned with no events emitted after abandon rollback",
 			);
-			assert.strictEqual(
-				taskManager2.assigned(taskId),
-				false,
-				"taskManager2 should not be assigned post-rollback",
-			);
-			assert.strictEqual(
-				assignedEvents2,
-				0,
-				"taskManager2 should not have emitted assigned event",
-			);
-			assert.strictEqual(lostEvents1, 0, "taskManager1 should not have emitted lost event");
 		});
 
 		it("Can rollback complete across remote ops", async () => {
@@ -300,9 +308,14 @@ describe("TaskManager Rollback", () => {
 			});
 
 			taskManager1.complete(taskId);
-			assert(taskManager1.assigned(taskId) === true, "taskManager1 should still be assigned");
-			assert(
-				taskManager2.assigned(taskId) === false,
+			assert.equal(
+				taskManager1.assigned(taskId),
+				true,
+				"taskManager1 should still be assigned",
+			);
+			assert.equal(
+				taskManager2.assigned(taskId),
+				false,
 				"taskManager2 should still not be assigned",
 			);
 
@@ -312,20 +325,10 @@ describe("TaskManager Rollback", () => {
 			containerRuntime2.flush();
 			containerRuntimeFactory.processAllMessages();
 
-			assert.strictEqual(
-				taskManager1.assigned(taskId),
-				true,
-				"taskManager1 should be assigned post-rollback",
-			);
-			assert.strictEqual(
-				taskManager2.assigned(taskId),
-				false,
-				"taskManager2 should not be assigned post-rollback",
-			);
-			assert.strictEqual(
-				completedEvents1,
-				0,
-				"taskManager1 should not have emitted completed event",
+			assert.deepEqual(
+				[taskManager1.assigned(taskId), taskManager2.assigned(taskId), completedEvents1],
+				[true, false, 0],
+				"TaskManager1 should remain assigned with no completed events after complete rollback",
 			);
 		});
 
@@ -367,32 +370,18 @@ describe("TaskManager Rollback", () => {
 				value: false,
 			});
 			assert(assigned1, "taskManager1 should not be assigned post-rollback");
-			assert(assigned2 === true, "taskManager2 should be assigned post-rollback");
+			assert.equal(assigned2, true, "taskManager2 should be assigned post-rollback");
 
-			assert.strictEqual(
-				taskManager1.assigned(taskId),
-				false,
-				"taskManager1 should be assigned post-rollback",
-			);
-			assert.strictEqual(
-				taskManager1.queued(taskId),
-				false,
-				"taskManager1 should not be queued",
-			);
-			assert.strictEqual(
-				taskManager2.assigned(taskId),
-				true,
-				"taskManager2 should not be assigned post-rollback",
-			);
-			assert.strictEqual(
-				assignedEvents1,
-				0,
-				"taskManager1 should not have emitted assigned event",
-			);
-			assert.strictEqual(
-				assignedEvents2,
-				1,
-				"taskManager2 should have emitted assigned event",
+			assert.deepEqual(
+				[
+					taskManager1.assigned(taskId),
+					taskManager1.queued(taskId),
+					assignedEvents1,
+					taskManager2.assigned(taskId),
+					assignedEvents2,
+				],
+				[false, false, 0, true, 1],
+				"TaskManager1 should be unassigned and taskManager2 should be assigned after volunteer rollback",
 			);
 		});
 	});
