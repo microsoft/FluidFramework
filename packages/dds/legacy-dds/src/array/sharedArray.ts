@@ -451,7 +451,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 
 				// Toggling the isDeleted flag to undo the last operation for the skip list payload/value
 				liveEntry.isDeleted = !isDeleted;
-				liveEntry.isLocalPendingDelete = 0;
+				liveEntry.isLocalPendingDelete -= 1;
 
 				const toggleOp: IToggleOperation = {
 					type: OperationType.toggle,
