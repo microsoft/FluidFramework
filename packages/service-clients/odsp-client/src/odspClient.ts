@@ -38,9 +38,11 @@ import {
 	createOdspUrl,
 	isOdspResolvedUrl,
 } from "@fluidframework/odsp-driver/internal";
-import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
+import type {
+	OdspResourceTokenFetchOptions,
+	IOdspResolvedUrl,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { lookupBlobStorageId } from "@fluidframework/runtime-utils/internal";
-import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -152,6 +154,11 @@ function lookupOdspBlobURL(
 	}
 }
 
+/**
+ * OdspClient provides the ability to have a Fluid object backed by the ODSP service within the context of Microsoft 365 (M365) tenants.
+ * @sealed
+ * @beta
+ */
 export class OdspClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
 	private readonly urlResolver: OdspDriverUrlResolver;

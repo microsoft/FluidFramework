@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import type {
+	IContainerRuntime,
+	IContainerRuntimeInternal,
+} from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandleErased } from "@fluidframework/core-interfaces";
 import { IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import type {
@@ -11,10 +15,6 @@ import type {
 	IFluidHandlePayloadPending,
 	ILocalFluidHandle,
 } from "@fluidframework/core-interfaces/internal";
-import type {
-	IContainerRuntime,
-	IContainerRuntimeInternal,
-} from "@fluidframework/container-runtime-definitions/internal";
 
 /**
  * JSON serialized form of an IFluidHandle
@@ -229,7 +229,12 @@ export function lookupBlobStorageId(
 
 	// Extract the local ID from the path
 	const pathParts = absolutePath.split("/");
-	if (pathParts.length !== 3 || pathParts[1] !== "_blobs" || !pathParts[2]) {
+	if (
+		pathParts.length !== 3 ||
+		pathParts[1] !== "_blobs" ||
+		pathParts[2] === undefined ||
+		pathParts[2] === ""
+	) {
 		throw new Error("Invalid blob handle path format");
 	}
 

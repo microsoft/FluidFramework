@@ -5,8 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-interfaces";
 
 import { isFluidHandle, lookupBlobStorageId } from "../handles.js";
 
@@ -38,12 +38,9 @@ describe("Handles", () => {
 
 	describe("lookupBlobStorageId", () => {
 		// Helper to create a mock handle
-		const createMockHandle = (absolutePath: string) => {
-			const mockHandleInternal = { absolutePath, [fluidHandleSymbol]: {} };
-			return {
-				[fluidHandleSymbol]: mockHandleInternal,
-			} as any;
-		};
+		function createMockHandle(absolutePath?: string): IFluidHandle {
+			return { absolutePath, [fluidHandleSymbol]: {} } as unknown as IFluidHandle;
+		}
 
 		it("throws error for non-blob handles", () => {
 			const mockRuntime = {

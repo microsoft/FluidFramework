@@ -46,7 +46,7 @@ export interface OdspConnectionConfig {
 // @beta
 export interface OdspContainerServices {
     audience: IOdspAudience;
-    lookupBlobStorageId: (handle: IFluidHandle) => string | undefined;
+    lookupBlobURL: (handle: IFluidHandle) => string | undefined;
 }
 
 // @beta

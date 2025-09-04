@@ -219,10 +219,7 @@ export class BlobManager {
 		readonly routeContext: IFluidHandleContext;
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo;
-		readonly storage: Pick<
-			IContainerStorageService,
-			"createBlob" | "readBlob" | "buildBlobUrl"
-		>;
+		readonly storage: Pick<IContainerStorageService, "createBlob" | "readBlob">;
 		/**
 		 * Submit a BlobAttach op. When a blob is uploaded, there is a short grace period before which the blob is
 		 * deleted. The BlobAttach op notifies the server that blob is in use. The server will then not delete the
