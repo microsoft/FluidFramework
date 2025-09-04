@@ -405,12 +405,12 @@ describe("SharedArray rollback", () => {
 		assert.strictEqual(
 			valueChanges[0].op.type,
 			OperationType.toggleMove,
-			"First event should be for toggle",
+			"First event should be for toggleMove",
 		);
 		assert.strictEqual(
 			valueChanges[1].op.type,
 			OperationType.toggleMove,
-			"Second event should be for toggle",
+			"Second event should be for toggleMove",
 		);
 		assert.deepStrictEqual(
 			sharedArray.get(),
