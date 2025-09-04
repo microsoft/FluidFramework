@@ -515,7 +515,7 @@ describe("SchemaFactory Recursive methods", () => {
 				class Test extends factory.arrayRecursiveAlpha("Test", [
 					{ type: () => Test, metadata: {} },
 				]) {}
-				type _check = ValidateRecursiveSchemaAlpha<typeof Test>;
+				type _check = ValidateRecursiveSchema<typeof Test>;
 			}
 
 			{
@@ -531,7 +531,7 @@ describe("SchemaFactory Recursive methods", () => {
 			}
 		});
 
-		it("Valid cases: annotated", () => {
+		it("Valid cases Alpha: annotated", () => {
 			const factory = new SchemaFactoryAlpha("");
 			{
 				class Test extends factory.arrayRecursiveAlpha("Test", [
@@ -541,15 +541,15 @@ describe("SchemaFactory Recursive methods", () => {
 			}
 
 			{
-				class Test extends sf.objectRecursive("Test", {
-					x: sf.optionalRecursive([() => Test]),
+				class Test extends factory.objectRecursive("Test", {
+					x: factory.optionalRecursive([() => Test]),
 				}) {}
-				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check = ValidateRecursiveSchemaAlpha<typeof Test>;
 			}
 
 			{
-				class Test extends sf.mapRecursive("Test", [() => Test]) {}
-				type _check = ValidateRecursiveSchema<typeof Test>;
+				class Test extends factory.mapRecursive("Test", [() => Test]) {}
+				type _check = ValidateRecursiveSchemaAlpha<typeof Test>;
 			}
 		});
 
@@ -584,6 +584,15 @@ describe("SchemaFactory Recursive methods", () => {
 					) {}
 					// @ts-expect-error Maps accept allowed types, not field schema.
 					type _check = ValidateRecursiveSchema<typeof MapRecursive>;
+				}
+
+				const factory = new SchemaFactoryAlpha("");
+				{
+					class Test extends factory.arrayRecursiveAlpha("Test", [
+						{ wrong: () => Test, metadata: {} },
+					]) {}
+					// @ts-expect-error This is wrong
+					type _check = ValidateRecursiveSchema<typeof Test>;
 				}
 			}
 
@@ -909,7 +918,7 @@ describe("SchemaFactory Recursive methods", () => {
 
 		// Test adding persistedMetadata to a recursive array schema
 		const factory = new SchemaFactoryAlpha("");
-		class Foos extends factory.arrayRecursiveAlpha("Foos", [() => Fooss], {
+		class Foos extends factory.arrayRecursiveAlpha("Foos", [() => Foos], {
 			persistedMetadata,
 		}) {}
 		{
