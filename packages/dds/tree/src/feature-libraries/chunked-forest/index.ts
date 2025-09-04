@@ -23,5 +23,7 @@ export {
 	fluidVersionToFieldBatchCodecWriteVersion,
 	type IncrementalEncoderDecoder,
 	type ChunkReferenceId,
+	type IncrementalEncodingPolicy,
+	defaultIncrementalEncodingPolicy,
 } from "./codec/index.js";
 export { emptyChunk } from "./emptyChunk.js";

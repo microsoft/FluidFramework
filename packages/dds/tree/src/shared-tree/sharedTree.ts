@@ -57,6 +57,7 @@ import {
 	makeMitigatedChangeFamily,
 	makeSchemaCodec,
 	makeTreeChunker,
+	type IncrementalEncodingPolicy,
 	type TreeCompressionStrategyPrivate,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -239,7 +240,13 @@ export class SharedTreeKernel
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
 		const codecVersions = getCodecVersions(options.formatVersion);
 		const schema = new TreeStoredSchemaRepository();
-		const forest = buildConfiguredForest(breaker, options.forest, schema, idCompressor);
+		const forest = buildConfiguredForest(
+			breaker,
+			options.forest,
+			schema,
+			idCompressor,
+			options.shouldEncodeIncrementally,
+		);
 		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const removedRoots = makeDetachedFieldIndex(
 			"repair",
@@ -273,7 +280,7 @@ export class SharedTreeKernel
 			encoderContext,
 			options,
 			idCompressor,
-			options.shouldEncodeFieldIncrementally,
+			options.shouldEncodeIncrementally,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
 		const innerChangeFamily = new SharedTreeChangeFamily(
@@ -590,16 +597,11 @@ export interface SharedTreeOptionsInternal
 		Partial<SharedTreeFormatOptionsInternal> {
 	disposeForksAfterTransaction?: boolean;
 	/**
-	 * Returns whether a field should be incrementally encoded.
-	 * @param nodeIdentifier - The identifier of the node containing the field.
-	 * @param fieldKey - The key of the field to check.
+	 * Returns whether a node / field should be incrementally encoded.
 	 * @remarks
-	 * The policy for which fields should get incremental encoding should eventually be specified some other way.
+	 * See {@link IncrementalEncodingPolicy}.
 	 */
-	shouldEncodeFieldIncrementally?(
-		nodeIdentifier: TreeNodeSchemaIdentifier,
-		fieldKey: FieldKey,
-	): boolean;
+	shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 }
 /**
  * Configuration options for SharedTree's internal tree storage.
@@ -672,8 +674,17 @@ export const ForestTypeReference = toForestType(
  * @alpha
  */
 export const ForestTypeOptimized = toForestType(
-	(breaker: Breakable, schema: TreeStoredSchemaSubscription, idCompressor: IIdCompressor) =>
-		buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy), undefined, idCompressor),
+	(
+		breaker: Breakable,
+		schema: TreeStoredSchemaSubscription,
+		idCompressor: IIdCompressor,
+		shouldEncodeIncrementally: IncrementalEncodingPolicy,
+	) =>
+		buildChunkedForest(
+			makeTreeChunker(schema, defaultSchemaPolicy, shouldEncodeIncrementally),
+			undefined,
+			idCompressor,
+		),
 );
 
 /**
@@ -694,6 +705,7 @@ type ForestFactory = (
 	breaker: Breakable,
 	schema: TreeStoredSchemaSubscription,
 	idCompressor: IIdCompressor,
+	shouldEncodeIncrementally: IncrementalEncodingPolicy,
 ) => IEditableForest;
 
 function toForestType(factory: ForestFactory): ForestType {
@@ -708,8 +720,14 @@ export function buildConfiguredForest(
 	factory: ForestType,
 	schema: TreeStoredSchemaSubscription,
 	idCompressor: IIdCompressor,
+	shouldEncodeIncrementally: IncrementalEncodingPolicy,
 ): IEditableForest {
-	return (factory as unknown as ForestFactory)(breaker, schema, idCompressor);
+	return (factory as unknown as ForestFactory)(
+		breaker,
+		schema,
+		idCompressor,
+		shouldEncodeIncrementally,
+	);
 }
 
 export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
@@ -719,7 +737,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	formatVersion: SharedTreeFormatVersion.v3,
 	disposeForksAfterTransaction: true,
-	shouldEncodeFieldIncrementally: (
+	shouldEncodeIncrementally: (
 		nodeIdentifier: TreeNodeSchemaIdentifier,
 		fieldKey: FieldKey,
 	): boolean => {

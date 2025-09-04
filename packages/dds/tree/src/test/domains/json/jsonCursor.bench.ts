@@ -26,6 +26,7 @@ import {
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 	cursorForMapTreeNode,
+	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	mapTreeFromCursor,
@@ -128,6 +129,7 @@ function bench(
 							makeTreeChunker(
 								new TreeStoredSchemaRepository(toInitialSchema(JsonAsTree.Tree)),
 								defaultSchemaPolicy,
+								defaultIncrementalEncodingPolicy,
 							),
 						);
 						initializeForest(
