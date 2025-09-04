@@ -447,10 +447,10 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			case OperationType.toggle: {
 				const entryId = arrayOp.entryId;
 				const liveEntry = this.getLiveEntry(entryId);
-				const isDeleted = !liveEntry.isDeleted;
+				const isDeleted = liveEntry.isDeleted;
 
 				// Toggling the isDeleted flag to undo the last operation for the skip list payload/value
-				liveEntry.isDeleted = isDeleted;
+				liveEntry.isDeleted = !isDeleted;
 				liveEntry.isLocalPendingDelete = 0;
 
 				const toggleOp: IToggleOperation = {
