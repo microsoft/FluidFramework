@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import * as path from "path";
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
@@ -18,6 +19,7 @@ import {
 	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
+	type DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
 import {
 	IChannelAttributes,
@@ -44,7 +46,11 @@ import {
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
 import { ISharedString, type SharedStringClass } from "../../sharedString.js";
-import type { SharedStringOracle } from "../../sharedStringOracle.js";
+import {
+	hasSharedStringOracle,
+	SharedStringOracle,
+	type ISharedStringWithOracle,
+} from "../../sharedStringOracle.js";
 import { _dirname } from "../dirname.cjs";
 import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
 
@@ -56,14 +62,6 @@ export type RevertibleSharedString = ISharedString & {
 };
 export function isRevertibleSharedString(s: ISharedString): s is RevertibleSharedString {
 	return (s as RevertibleSharedString).revertibles !== undefined;
-}
-
-export interface OracleSharedString extends ISharedString {
-	oracle: SharedStringOracle;
-}
-
-export function hasOracle(s: ISharedString): s is OracleSharedString {
-	return (s as OracleSharedString).oracle !== undefined;
 }
 
 export interface RangeSpec {
@@ -464,10 +462,6 @@ export class SharedStringFuzzFactory extends SharedStringFactory {
 		setSharedStringRuntimeOptions(document);
 		return super.create(document, id);
 	}
-
-	// public close(channel: OracleSharedString) {
-	// 	channel.oracle.dispose();
-	// }
 }
 
 export const baseModel: Omit<
@@ -479,11 +473,11 @@ export const baseModel: Omit<
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 		makeReducer(),
 	validateConsistency: async (a, b) => {
-		if (hasOracle(a.channel)) {
+		if (hasSharedStringOracle(a.channel)) {
 			a.channel.oracle.validate();
 		}
 
-		if (hasOracle(b.channel)) {
+		if (hasSharedStringOracle(b.channel)) {
 			b.channel.oracle.validate();
 		}
 
@@ -547,6 +541,15 @@ export const baseModel: Omit<
 	],
 };
 
+const oracleEmitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+
+oracleEmitter.on("clientCreate", (client) => {
+	const channel = client.channel as ISharedStringWithOracle;
+	const oracle = new SharedStringOracle(channel);
+
+	channel.oracle = oracle;
+});
+
 export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 	validationStrategy: { type: "fixedInterval", interval: 10 },
 	reconnectProbability: 0.1,
@@ -558,6 +561,7 @@ export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 	defaultTestCount: 100,
 	saveFailures: { directory: path.join(_dirname, "../../src/test/fuzz/results") },
 	testSquashResubmit: true,
+	emitter: oracleEmitter,
 };
 
 export function makeIntervalOperationGenerator(

@@ -7,6 +7,24 @@ import { MergeTreeDeltaType, TextSegment } from "@fluidframework/merge-tree/inte
 
 import type { SequenceDeltaEvent } from "./sequenceDeltaEvent.js";
 import type { SharedString } from "./sequenceFactory.js";
+import type { ISharedString } from "./sharedString.js";
+
+/**
+ * SharedString type decorated with an oracle for validation
+ * @internal
+ */
+export interface ISharedStringWithOracle extends ISharedString {
+	oracle: SharedStringOracle;
+}
+
+/**
+ * Type guard to check if a SharedString is decorated with an oracle.
+ * Returns true if the given ISharedString has an oracle attached
+ * @internal
+ */
+export function hasSharedStringOracle(s: ISharedString): s is ISharedStringWithOracle {
+	return "oracle" in s && s.oracle instanceof SharedStringOracle;
+}
 
 /**
  * Oracle that mirrors a single SharedString instance by listening to events
@@ -20,7 +38,7 @@ export class SharedStringOracle {
 	constructor(private readonly shared: SharedString) {
 		this.model = shared.getText().split("");
 
-		shared.on("sequenceDelta", (event: SequenceDeltaEvent) => this.applyDelta(event));
+		this.shared.on("sequenceDelta", this.onDelta);
 	}
 
 	private applyDelta(e: SequenceDeltaEvent) {
