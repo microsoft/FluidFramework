@@ -162,14 +162,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"Interface_IProvideTestFluidObject": {
-				"forwardCompat": false
-			},
-			"Interface_ITestFluidObject": {
-				"forwardCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "legacy"
 	}
 }

@@ -13,6 +13,7 @@ import type {
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
+	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor/internal";
 import type {
@@ -141,7 +142,8 @@ class SharedObjectFromKernel<
 			logger: this.logger,
 			idCompressor: runtime.idCompressor,
 			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
-			minVersionForCollab: runtime.minVersionForCollab,
+			minVersionForCollab: (runtime as IFluidDataStoreRuntimeInternalConfig)
+				.minVersionForCollab,
 		};
 	}
 

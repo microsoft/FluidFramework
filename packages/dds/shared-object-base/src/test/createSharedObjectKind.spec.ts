@@ -12,6 +12,7 @@ import type {
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
+	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
@@ -43,7 +44,8 @@ class SharedFooFactory implements IChannelFactory<IFoo> {
 			foo: "bar",
 			attributes: this.attributes,
 			id,
-			minVersionForCollab: runtime.minVersionForCollab,
+			minVersionForCollab: (runtime as IFluidDataStoreRuntimeInternalConfig)
+				.minVersionForCollab,
 			// Note: other IChannel methods aren't relevant
 		} as IFoo & IChannel;
 	}

@@ -174,11 +174,6 @@ export interface IFluidDataStoreRuntime
 	 * with it.
 	 */
 	readonly entryPoint: IFluidHandle<FluidObject>;
-
-	/**
-	 * Get the minVersionForCollab specified when instantiating the ContainerRuntime.
-	 */
-	readonly minVersionForCollab: MinimumVersionForCollab | undefined;
 }
 
 /**
@@ -204,5 +199,5 @@ export interface IFluidDataStoreRuntimeInternalConfig {
 	/**
 	 * The minVersionForCollab used when instantiating the ContainerRuntime. DDSes may read this value to determine which feature flags should be enabled.
 	 */
-	readonly minVersionForCollab: MinimumVersionForCollab | undefined;
+	readonly minVersionForCollab?: MinimumVersionForCollab | undefined;
 }
