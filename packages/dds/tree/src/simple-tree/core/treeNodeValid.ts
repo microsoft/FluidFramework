@@ -8,7 +8,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type FlexTreeNode, isFlexTreeNode } from "../../feature-libraries/index.js";
 
-import { markEager } from "./flexList.js";
 import { inPrototypeChain, privateToken, TreeNode } from "./treeNode.js";
 import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 import {
@@ -209,8 +208,6 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		return result;
 	}
 }
-// Class objects are functions (callable), so we need a strong way to distinguish between `schema` and `() => schema` when used as a `LazyItem`.
-markEager(TreeNodeValid);
 
 /**
  * Data cached about the most derived type in a schema's class hierarchy.

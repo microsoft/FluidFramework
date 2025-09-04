@@ -255,6 +255,27 @@
         "@typescript-eslint/no-require-imports": [
             "error"
         ],
+        "@typescript-eslint/no-restricted-imports": [
+            "error",
+            {
+                "paths": [
+                    {
+                        "name": "assert",
+                        "importNames": [
+                            "default"
+                        ],
+                        "message": "Use `strict` instead. E.g. `import { strict as assert } from \"node:assert\";`"
+                    },
+                    {
+                        "name": "node:assert",
+                        "importNames": [
+                            "default"
+                        ],
+                        "message": "Use `strict` instead. E.g. `import { strict as assert } from \"node:assert\";`"
+                    }
+                ]
+            }
+        ],
         "@typescript-eslint/no-shadow": [
             "error",
             {

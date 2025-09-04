@@ -76,8 +76,7 @@ export function getFluidCacheIndexedDbInstance(
  * Deletes the indexed DB instance.
  *
  * @remarks Warning this can throw an error in Firefox incognito, where accessing storage is prohibited.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function deleteFluidCacheIndexDbInstance(
 	deleteDBCallbacks?: DeleteDBCallbacks,

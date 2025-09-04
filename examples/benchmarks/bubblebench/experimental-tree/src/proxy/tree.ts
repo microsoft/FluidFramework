@@ -5,12 +5,12 @@
 
 import {
 	Change,
-	ChangeNode,
-	NodeId,
-	SharedTree,
+	type ChangeNode,
+	type NodeId,
+	type SharedTree,
 	StablePlace,
 	StableRange,
-	TraitLabel,
+	type TraitLabel,
 } from "@fluid-experimental/tree";
 import { Serializable } from "@fluidframework/datastore-definitions/legacy";
 

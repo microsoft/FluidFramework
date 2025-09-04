@@ -70,6 +70,7 @@ export type {
 	ApiModifier,
 	ApiModuleLike,
 	ApiSignatureLike,
+	ApiTypeLike,
 	ReleaseLevel,
 	ValidApiItemKind,
 } from "./utilities/index.js";

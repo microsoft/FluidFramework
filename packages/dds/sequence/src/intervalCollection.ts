@@ -334,8 +334,7 @@ export class LocalIntervalCollection {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type DeserializeCallback = (properties: PropertySet) => void;
 
@@ -372,8 +371,7 @@ class IntervalCollectionIterator implements Iterator<SequenceIntervalClass> {
 
 /**
  * Change events emitted by `IntervalCollection`s
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISequenceIntervalCollectionEvents extends IEvent {
 	/**
@@ -457,8 +455,7 @@ export interface ISequenceIntervalCollectionEvents extends IEvent {
 /**
  * Collection of intervals that supports addition, modification, removal, and efficient spatial querying.
  * Changes to this collection will be incur updates on collaborating clients (i.e. they are not local-only).
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISequenceIntervalCollection
 	extends TypedEventEmitter<ISequenceIntervalCollectionEvents> {

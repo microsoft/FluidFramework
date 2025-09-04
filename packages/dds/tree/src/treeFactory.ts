@@ -84,8 +84,7 @@ function treeKernelFactory(
 /**
  * SharedTree is a hierarchical data structure for collaboratively editing strongly typed JSON-like trees
  * of objects, arrays, and other data types.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const SharedTree = configuredSharedTree({});
 

@@ -32,8 +32,7 @@ import type { ContainerExtensionStore } from "./containerExtension.js";
 
 /**
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
 	readonly IFluidHandleContext: IFluidHandleContext;
@@ -42,8 +41,7 @@ export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContaine
 
 /**
  * Events emitted by {@link IContainerRuntime}.
- * @legacy
- * @alpha
+ * @legacy @beta
  * @sealed
  */
 export interface IContainerRuntimeEvents
@@ -54,8 +52,7 @@ export interface IContainerRuntimeEvents
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  * @sealed
  */
 export type SummarizerStopReason =
@@ -93,8 +90,7 @@ export type SummarizerStopReason =
 	| "latestSummaryStateStale";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  * @sealed
  */
 export interface ISummarizeEventProps {
@@ -114,8 +110,7 @@ export interface ISummarizeEventProps {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  * @sealed
  */
 export interface ISummarizerObservabilityProps {
@@ -124,8 +119,7 @@ export interface ISummarizerObservabilityProps {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  * @sealed
  */
 export interface ISummarizerEvents extends IEvent {
@@ -159,8 +153,7 @@ export interface ISummarizerEvents extends IEvent {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  * @sealed
  */
 export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
@@ -168,8 +161,7 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
 
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
- * @legacy
- * @alpha
+ * @legacy @beta
  * @sealed
  */
 export interface IContainerRuntime

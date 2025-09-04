@@ -150,7 +150,6 @@ export type {
 	IInterval,
 	IntervalStickiness,
 	ISequenceDeltaRange,
-	ISerializableInterval,
 	ISerializedInterval,
 	ISharedSegmentSequenceEvents,
 	ISharedString,

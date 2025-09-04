@@ -14,9 +14,7 @@ export {
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
 	type TreeNodeSchemaCore,
-	// TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instanceof.
-	// See docs on TreeNode for more details.
-	type TreeNode,
+	TreeNode,
 	type Unhydrated,
 	type InternalTreeNode,
 	isTreeNode,
@@ -72,6 +70,7 @@ export {
 	type SchemaCompatibilityStatus,
 	type ITreeConfigurationOptions,
 	SchemaFactory,
+	SchemaFactoryBeta,
 	SchemaFactoryAlpha,
 	type SchemaFactoryObjectOptions,
 	type ScopedSchemaName,
@@ -163,6 +162,8 @@ export {
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type SchemaStaticsAlpha,
+	KeyEncodingOptions,
+	type TreeParsingOptions,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,

@@ -319,7 +319,7 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 		// TODO: Support for non-object roots
 		assert(
 			typeof view.root === "object" && view.root !== null && !isFluidHandle(view.root),
-			"",
+			0xc1c /*  */,
 		);
 		const schema = getSimpleSchema(view.schema);
 

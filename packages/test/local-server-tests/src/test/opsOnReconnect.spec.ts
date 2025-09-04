@@ -30,8 +30,8 @@ import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
-import { createDataStoreFactory } from "@fluidframework/test-utils/internal";
 import {
+	createDataStoreFactory,
 	createAndAttachContainerUsingProps,
 	ITestFluidObject,
 	LoaderContainerTracker,

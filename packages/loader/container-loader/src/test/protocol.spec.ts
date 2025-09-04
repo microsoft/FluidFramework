@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { type IClientDetails, type IUser } from "@fluidframework/driver-definitions";
+import type { IClientDetails, IUser } from "@fluidframework/driver-definitions";
 import {
 	MessageType,
 	type ISequencedDocumentMessage,

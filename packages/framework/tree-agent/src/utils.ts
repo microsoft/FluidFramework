@@ -138,7 +138,7 @@ export function constructNode(schema: TreeNodeSchema, value: InsertableContent):
 	const node = TreeAlpha.create<UnsafeUnknownSchema>(schema, value);
 	assert(
 		node !== undefined && node !== null && typeof node === "object" && !isFluidHandle(node),
-		"Expected a constructed node to be an object",
+		0xc1e /* Expected a constructed node to be an object */,
 	);
 	return node;
 }

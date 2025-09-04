@@ -10,7 +10,7 @@ import { SharedString } from "@fluidframework/sequence/legacy";
 import { SharedTree, TreeViewConfiguration, type TreeView } from "@fluidframework/tree/legacy";
 import { v4 as uuid } from "uuid";
 
-import { TodoItem, TodoList } from "./index.js";
+import { TodoItem, TodoList } from "./schema.js";
 
 /**
  * Props used when creating a new todo item.

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IUser } from "@fluidframework/driver-definitions";
+import type { IUser } from "@fluidframework/driver-definitions";
 
 /**
  * @internal

@@ -5,25 +5,25 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { NonCollabClient } from "./constants.js";
-import { MergeTree } from "./mergeTree.js";
+import type { MergeTree } from "./mergeTree.js";
 import { isSegmentLeaf, type ISegmentPrivate } from "./mergeTreeNodes.js";
 import { PriorPerspective } from "./perspective.js";
 import { matchProperties } from "./properties.js";
 import {
-	JsonSegmentSpecs,
-	MergeTreeChunkLegacy,
+	type JsonSegmentSpecs,
+	type MergeTreeChunkLegacy,
 	serializeAsMinSupportedVersion,
 } from "./snapshotChunks.js";
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainerExperimental } from "@fluidframework/container-loader/internal";

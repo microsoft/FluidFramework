@@ -90,6 +90,7 @@ export {
 	type TreeView,
 	type TreeViewEvents,
 	SchemaFactory,
+	SchemaFactoryBeta,
 	SchemaFactoryAlpha,
 	type SchemaFactoryObjectOptions,
 	type ImplicitFieldSchema,
@@ -264,6 +265,8 @@ export {
 	type RecordNodeInsertableData,
 	type RecordNodePojoEmulationSchema,
 	type TreeRecordNode,
+	KeyEncodingOptions,
+	type TreeParsingOptions,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -278,9 +281,11 @@ export {
 	type JsonValidator,
 	type SchemaValidationFunction,
 	FluidClientVersion,
+	type FormatValidator,
+	FormatValidatorNoOp,
 } from "./codec/index.js";
 export { noopValidator } from "./codec/index.js";
-export { typeboxValidator } from "./external-utilities/index.js";
+export { typeboxValidator, FormatValidatorBasic } from "./external-utilities/index.js";
 
 export type {
 	// Type Testing

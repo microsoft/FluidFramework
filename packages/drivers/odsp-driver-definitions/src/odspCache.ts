@@ -28,8 +28,7 @@ export const snapshotKey = "snapshot";
 export const snapshotWithLoadingGroupIdKey = "snapshotWithLoadingGroupId";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type CacheContentType = "snapshot" | "ops" | "snapshotWithLoadingGroupId";
 
@@ -39,8 +38,7 @@ export type CacheContentType = "snapshot" | "ops" | "snapshotWithLoadingGroupId"
  * to implement storage / identify files.
  */
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFileEntry {
 	/**
@@ -59,8 +57,7 @@ export interface IFileEntry {
 
 /**
  * Cache entry. Identifies file that this entry belongs to, and type of content stored in it.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IEntry {
 	/**
@@ -83,8 +80,7 @@ export interface IEntry {
 
 /**
  * Cache entry. Identifies file that this entry belongs to, and type of content stored in it.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ICacheEntry extends IEntry {
 	/**
@@ -99,8 +95,7 @@ export interface ICacheEntry extends IEntry {
  * cache implementation that does not survive across sessions. Snapshot entires stored in the
  * IPersistedCache will be considered stale and removed after 2 days. Read the README for more
  * information.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IPersistedCache {
 	/**

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";

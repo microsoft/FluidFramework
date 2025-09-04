@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 
 import { RateLimiter } from "@fluidframework/driver-utils/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";

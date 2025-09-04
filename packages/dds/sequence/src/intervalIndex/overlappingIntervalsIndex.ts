@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import {
 	Client,
 	SequencePlace,
@@ -22,8 +20,7 @@ import { ISharedString } from "../sharedString.js";
 import { type SequenceIntervalIndex } from "./intervalIndex.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISequenceOverlappingIntervalsIndex extends SequenceIntervalIndex {
 	/**
@@ -171,8 +168,7 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function createOverlappingIntervalsIndex(
 	sharedString: ISharedString,

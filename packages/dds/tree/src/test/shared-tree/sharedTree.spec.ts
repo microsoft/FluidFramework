@@ -54,6 +54,7 @@ import {
 	type ITreePrivate,
 	SharedTreeFormatVersion,
 	Tree,
+	TreeAlpha,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import {
@@ -1641,6 +1642,52 @@ describe("SharedTree", () => {
 				resubmitter.assertOuterListEquals(finalState);
 				submitter.assertOuterListEquals(finalState);
 			});
+		});
+
+		it("revert constraint", () => {
+			// This test ensures that the feature works across peers as opposed to solely across branches.
+			const provider = new TestTreeProviderLite(2);
+			const config = new TreeViewConfiguration({ schema: JsonAsTree.JsonObject });
+			const viewA = asTreeViewAlpha(provider.trees[0].viewWith(config));
+			const viewB = provider.trees[1].viewWith(config);
+			viewA.initialize(
+				new JsonAsTree.JsonObject({ child: new JsonAsTree.JsonObject({ id: "A" }) }),
+			);
+			provider.synchronizeMessages();
+
+			const stack = createTestUndoRedoStacks(provider.trees[0].kernel.checkout.events);
+
+			// Make transaction on a branch that does the following:
+			// 1. Changes value of "foo" to a new child.
+			// 2. Adds inverse constraint on existence of node "B" on field "foo".
+			viewA.runTransaction(() => {
+				viewA.root.child = new JsonAsTree.JsonObject({ id: "B" });
+				return {
+					preconditionsOnRevert: [{ type: "nodeInDocument", node: viewA.root.child }],
+				};
+			});
+			provider.synchronizeMessages();
+
+			assert.deepEqual(TreeAlpha.exportConcise(viewA.root), { child: { id: "B" } });
+			assert.deepEqual(TreeAlpha.exportConcise(viewB.root), { child: { id: "B" } });
+
+			const restoreChildA = stack.undoStack[0] ?? assert.fail("Missing undo");
+
+			// This change should violate the inverse constraint because it changes the
+			// child node from B to C
+			viewB.root.child = new JsonAsTree.JsonObject({ id: "C" });
+			provider.synchronizeMessages();
+
+			assert.deepEqual(TreeAlpha.exportConcise(viewA.root), { child: { id: "C" } });
+			assert.deepEqual(TreeAlpha.exportConcise(viewB.root), { child: { id: "C" } });
+
+			// This revert should do nothing since its constraint on the undo has been violated.
+			restoreChildA.revert();
+
+			assert.deepEqual(TreeAlpha.exportConcise(viewA.root), { child: { id: "C" } });
+			assert.deepEqual(TreeAlpha.exportConcise(viewB.root), { child: { id: "C" } });
+
+			stack.unsubscribe();
 		});
 	});
 

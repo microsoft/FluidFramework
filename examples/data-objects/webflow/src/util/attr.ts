@@ -6,8 +6,7 @@
 import { ISegment } from "@fluidframework/sequence/legacy";
 
 import { areStringsEquivalent } from "./string.js";
-
-import { emptyObject } from "./index.js";
+import { emptyObject } from "./utilities.js";
 
 export interface IHTMLAttributes {
 	src?: string;
