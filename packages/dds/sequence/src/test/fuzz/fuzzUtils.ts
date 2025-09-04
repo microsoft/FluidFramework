@@ -464,6 +464,10 @@ export class SharedStringFuzzFactory extends SharedStringFactory {
 		setSharedStringRuntimeOptions(document);
 		return super.create(document, id);
 	}
+
+	// public close(channel: OracleSharedString) {
+	// 	channel.oracle.dispose();
+	// }
 }
 
 export const baseModel: Omit<

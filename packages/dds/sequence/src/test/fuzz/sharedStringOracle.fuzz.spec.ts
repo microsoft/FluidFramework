@@ -11,6 +11,7 @@ import { SharedStringOracle } from "../../sharedStringOracle.js";
 import {
 	baseSharedStringModel,
 	defaultFuzzOptions,
+	SharedStringFuzzFactory,
 	type OracleSharedString,
 } from "./fuzzUtils.js";
 
@@ -23,9 +24,20 @@ emitter.on("clientCreate", (client) => {
 	channel.oracle = oracle;
 });
 
+export class OracleSharedStringFuzzFactory extends SharedStringFuzzFactory {
+	public close(channel: OracleSharedString) {
+		channel.oracle?.dispose();
+	}
+}
+
+const oracleModel: typeof baseSharedStringModel = {
+	...baseSharedStringModel,
+	factory: new OracleSharedStringFuzzFactory(),
+};
+
 describe("SharedString oracle fuzz testing", () => {
 	createDDSFuzzSuite(
-		{ ...baseSharedStringModel, workloadName: "SharedString oracle" },
+		{ ...oracleModel, workloadName: "SharedString oracle" },
 		{
 			...defaultFuzzOptions,
 			emitter,
