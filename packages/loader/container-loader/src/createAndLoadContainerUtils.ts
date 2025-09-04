@@ -41,7 +41,6 @@ interface SummarizerLike {
 	summarizeOnDemand(options: OnDemandSummarizeOptions): SummarizeResultsLike;
 }
 
-// Internal route used for summarizer entry point resolution (legacy fallback when getEntryPoint() is absent)
 const summarizerRequestUrl = "_summarizer";
 
 /**
