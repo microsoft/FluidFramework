@@ -74,7 +74,8 @@ Error: BreakFoo`;
 		assert.throws(
 			() => foo.canBreak(1),
 			(error: Error) => {
-				assert.equal((error as unknown as { cause: unknown }).cause, breakError);
+				// TODO: remove cast when targeting ES2022 lib or later.
+				assert.equal((error as { cause?: unknown }).cause, breakError);
 				return true;
 			},
 		);
