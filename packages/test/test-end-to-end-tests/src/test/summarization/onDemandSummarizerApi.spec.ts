@@ -18,7 +18,7 @@ import {
 	DataObjectFactoryType,
 } from "@fluidframework/test-utils/internal";
 
-describeCompat("on-demand summarizer api", "FullCompat", (getTestObjectProvider, apis) => {
+describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, apis) => {
 	let logger: MockLogger;
 
 	beforeEach(() => {
