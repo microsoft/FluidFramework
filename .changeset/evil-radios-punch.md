@@ -88,7 +88,7 @@
 ---
 Packages will soon be built targeting ES2022
 
-Packages will soon be built targeting ES2022
+Packages will soon be built targeting ES2022.
 This results in reduced bundle size (measured at 2% for SharedTree) and improved developer experience in debuggers due to JavaScript private fields being visible.
 
 Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the ReadMe for every client package.
