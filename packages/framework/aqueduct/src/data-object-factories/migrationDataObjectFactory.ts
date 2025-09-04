@@ -9,26 +9,23 @@ import {
 	DataStoreMessageType,
 	FluidDataStoreRuntime,
 } from "@fluidframework/datastore/internal";
-import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import type {
 	AsyncFluidObjectProvider,
 	FluidObjectSymbolProvider,
 	IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize/internal";
-import type { ITree } from "@fluidframework/tree";
 
-import type { IDelayLoadChannelFactory } from "../channel-factories/index.js";
-import {
-	type DataObjectTypes,
-	type MigrationDataObject,
-	dataObjectRootDirectoryId,
-	treeChannelId,
+import type {
+	DataObjectTypes,
+	MigrationDataObject,
+	ModelDescriptor,
 } from "../data-objects/index.js";
 
 import {
@@ -43,8 +40,9 @@ import {
  * @alpha
  */
 export interface MigrationDataObjectFactoryProps<
-	T,
-	TObj extends MigrationDataObject<T, I>,
+	ExistingModel,
+	NewModel,
+	TObj extends MigrationDataObject<NewModel, I>,
 	TMigrationData,
 	I extends DataObjectTypes = DataObjectTypes,
 > extends DataObjectFactoryProps<TObj, I> {
@@ -73,7 +71,9 @@ export interface MigrationDataObjectFactoryProps<
 	 * }
 	 * ```
 	 */
-	asyncGetDataForMigration: (root: ISharedDirectory) => Promise<TMigrationData>;
+	asyncGetDataForMigration: (
+		existingModel: ExistingModel | undefined,
+	) => Promise<TMigrationData>;
 
 	/**
 	 * Migrate the DataObject upon resolve (i.e. on retrieval of the DataStore).
@@ -96,7 +96,7 @@ export interface MigrationDataObjectFactoryProps<
 	 */
 	migrateDataObject: (
 		runtime: FluidDataStoreRuntime,
-		treeRoot: ITree,
+		newModel: NewModel,
 		data: TMigrationData,
 	) => void;
 
@@ -105,10 +105,9 @@ export interface MigrationDataObjectFactoryProps<
 	 */
 	refreshDataObject?: () => Promise<void>;
 
-	/**
-	 * ! TODO
-	 */
-	treeDelayLoadFactory: IDelayLoadChannelFactory<ITree>;
+	// No legacy/backwards-compat properties: consumers must provide descriptors
+	existingModelDescriptor?: ModelDescriptor<ExistingModel>;
+	newModelDescriptor: ModelDescriptor<NewModel>;
 }
 
 /**
@@ -120,9 +119,10 @@ export interface MigrationDataObjectFactoryProps<
  * @alpha
  */
 export class MigrationDataObjectFactory<
-	TDataCommon,
-	TObj extends MigrationDataObject<TDataCommon, I>,
-	TMigrationData, //* Related to T?  T is a common interface that all models implement.
+	ExistingModel,
+	NewModel,
+	TObj extends MigrationDataObject<NewModel, I>,
+	TMigrationData,
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObjectFactory<TObj, I> {
 	private migrateLock = false;
@@ -132,7 +132,8 @@ export class MigrationDataObjectFactory<
 
 	public constructor(
 		private readonly props: MigrationDataObjectFactoryProps<
-			TDataCommon,
+			ExistingModel,
+			NewModel,
 			TObj,
 			TMigrationData,
 			I
@@ -148,34 +149,54 @@ export class MigrationDataObjectFactory<
 
 		const fullMigrateDataObject = async (runtime: IFluidDataStoreChannel): Promise<void> => {
 			const realRuntime = runtime as FluidDataStoreRuntime;
+			// Descriptor-driven migration flow (no backwards compatibility path)
+			assert(
+				this.props.newModelDescriptor !== undefined,
+				"Expected newModelDescriptor to be provided",
+			);
+
+			if (!this.canPerformMigration || this.migrateLock) {
+				return;
+			}
+
+			this.migrateLock = true;
+
 			try {
-				// ! If we are able to retrieve a tree at the root, then migration has already happened
-				await realRuntime.getChannel(treeChannelId);
-				// eslint-disable-next-line unicorn/prefer-optional-catch-binding
-			} catch (_) {
-				assert(
-					this.canPerformMigration !== undefined,
-					"Expected canPerformMigration to be set",
-				);
-
-				const root = (await realRuntime.getChannel(
-					dataObjectRootDirectoryId,
-				)) as ISharedDirectory;
-
-				if (this.canPerformMigration && !this.migrateLock) {
-					this.migrateLock = true;
-					//* Can we leverage type M here for thinking about the data?
-					const data = await props.asyncGetDataForMigration(root);
-					await props.treeDelayLoadFactory.loadObjectKindAsync();
-
-					// ! TODO: ensure these ops aren't sent immediately AB#41625
-					submitConversionOp(realRuntime);
-					const treeRoot = props.treeDelayLoadFactory.create(realRuntime, treeChannelId);
-					props.migrateDataObject(realRuntime, treeRoot, data);
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-					(runtime as any).removeRoot();
-					this.migrateLock = false;
+				// Probe for an existing model if a descriptor was supplied.
+				let existingModel: ExistingModel | undefined;
+				if (this.props.existingModelDescriptor) {
+					existingModel = await this.props.existingModelDescriptor.probe(realRuntime);
 				}
+
+				// Retrieve any async data required for migration using the discovered existing model (may be undefined)
+				const data = await this.props.asyncGetDataForMigration(existingModel);
+
+				// ! TODO: ensure these ops aren't sent immediately AB#41625
+				submitConversionOp(realRuntime);
+
+				//* const treeRoot = props.treeDelayLoadFactory.create(realRuntime, treeChannelId);
+				// Create the new model
+				let newModel: NewModel | undefined =
+					await this.props.newModelDescriptor.probe(realRuntime);
+				//* Should always be true - original probing would have found it before the old one
+				if (newModel === undefined) {
+					newModel = await this.props.newModelDescriptor.create(realRuntime);
+					// bind to context if channel-like
+					const maybeShared = newModel as unknown as Partial<ISharedObject>;
+					if (
+						maybeShared.bindToContext !== undefined &&
+						typeof maybeShared.bindToContext === "function"
+					) {
+						maybeShared.bindToContext();
+					}
+				}
+				// Call consumer-provided migration implementation
+				this.props.migrateDataObject(realRuntime, newModel, data);
+
+				//* TODO: ModelDescriptor needs an "evacuate" function that removes its roots from the DataStoreRuntime
+				//* (runtime as any).removeRoot();
+			} finally {
+				this.migrateLock = false;
 			}
 		};
 
@@ -239,8 +260,9 @@ export class MigrationDataObjectFactory<
 					super.reSubmit(type, content, localOpMetadata);
 				}
 
+				//* TODO: Replace with generic "evacuate" function on ModelDescriptor
 				public removeRoot(): void {
-					this.contexts.delete(dataObjectRootDirectoryId);
+					//* this.contexts.delete(dataObjectRootDirectoryId);
 				}
 			},
 		});

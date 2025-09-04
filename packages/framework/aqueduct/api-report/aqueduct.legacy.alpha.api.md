@@ -134,9 +134,8 @@ export abstract class MigrationDataObject<M = unknown, I extends DataObjectTypes
 }
 
 // @alpha @legacy
-export class MigrationDataObjectFactory<T, TObj extends MigrationDataObject<T, I>, TMigrationData, //* Related to T?  T is a common interface that all models implement.
-I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
-    constructor(props: MigrationDataObjectFactoryProps<T, TObj, TMigrationData, I>);
+export class MigrationDataObjectFactory<ExistingModel, NewModel, TObj extends MigrationDataObject<NewModel, I>, TMigrationData, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
+    constructor(props: MigrationDataObjectFactoryProps<ExistingModel, NewModel, TObj, TMigrationData, I>);
     protected observeCreateDataObject(createProps: {
         context: IFluidDataStoreContext;
         optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>;
@@ -144,12 +143,15 @@ I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj,
 }
 
 // @alpha @legacy
-export interface MigrationDataObjectFactoryProps<T, TObj extends MigrationDataObject<T, I>, TMigrationData, I extends DataObjectTypes = DataObjectTypes> extends DataObjectFactoryProps<TObj, I> {
-    asyncGetDataForMigration: (root: ISharedDirectory) => Promise<TMigrationData>;
+export interface MigrationDataObjectFactoryProps<ExistingModel, NewModel, TObj extends MigrationDataObject<NewModel, I>, TMigrationData, I extends DataObjectTypes = DataObjectTypes> extends DataObjectFactoryProps<TObj, I> {
+    asyncGetDataForMigration: (existingModel: ExistingModel | undefined) => Promise<TMigrationData>;
     canPerformMigration: (providers: AsyncFluidObjectProvider<I["OptionalProviders"]>) => Promise<boolean>;
-    migrateDataObject: (runtime: FluidDataStoreRuntime, treeRoot: ITree, data: TMigrationData) => void;
+    // (undocumented)
+    existingModelDescriptor?: ModelDescriptor<ExistingModel>;
+    migrateDataObject: (runtime: FluidDataStoreRuntime, newModel: NewModel, data: TMigrationData) => void;
+    // (undocumented)
+    newModelDescriptor: ModelDescriptor<NewModel>;
     refreshDataObject?: () => Promise<void>;
-    treeDelayLoadFactory: IDelayLoadChannelFactory<ITree>;
 }
 
 // @alpha @legacy
@@ -219,7 +221,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
 export abstract class TreeDataObject<TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObject<TDataObjectTypes> {
     // (undocumented)
     initializeInternal(existing: boolean): Promise<void>;
-    protected get tree(): ITree_2;
+    protected get tree(): ITree;
 }
 
 // @alpha @legacy
