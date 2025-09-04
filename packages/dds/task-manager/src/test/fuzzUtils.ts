@@ -99,7 +99,7 @@ function makeOperationGenerator(
 	const dedupe = <T>(arr: T[]): T[] => [...new Set(arr)];
 	const taskIdPool = dedupe(
 		Array.from({ length: options.taskPoolSize }, () =>
-			taskIdPoolRandom.string(defaultOptions.taskStringLength),
+			taskIdPoolRandom.string(options.taskStringLength),
 		),
 	);
 
