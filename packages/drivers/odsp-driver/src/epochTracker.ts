@@ -487,9 +487,12 @@ export class EpochTracker implements IPersistedFileCache {
 	}
 
 	private fileEntryFromEntry(entry: IEntry): ICacheEntry {
-		const maybeCacheEntry = entry as ICacheEntry;
-		const file = maybeCacheEntry.file ?? this.fileEntry;
-		return { ...entry, file };
+		if ("file" in entry) {
+			const maybeCacheEntry = entry as ICacheEntry;
+			const file = { ...maybeCacheEntry.file, ...this.fileEntry };
+			return { ...entry, file };
+		}
+		return { ...entry, file: this.fileEntry };
 	}
 }
 
