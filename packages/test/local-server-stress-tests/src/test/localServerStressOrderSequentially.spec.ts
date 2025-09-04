@@ -104,7 +104,6 @@ describe("Local Server Stress with rollback", () => {
 		},
 		skip: [
 			...[97], // channel maps should be the same size
-			...[30, 32, 35, 67], // task manager - The number of tasks queues are not the same
 		],
 	});
 });

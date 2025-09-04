@@ -214,7 +214,19 @@ function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, FuzzTestStat
 			client.channel.subscribeToTask(taskId);
 		},
 		complete: ({ client }, { taskId }) => {
-			client.channel.complete(taskId);
+			try {
+				client.channel.complete(taskId);
+			} catch (error: unknown) {
+				// We expect an error to be thrown if we are disconnected while trying to complete
+				const expectedErrors = ["Attempted to complete task in disconnected state"];
+				if (
+					error instanceof Object &&
+					"message" in error &&
+					!expectedErrors.includes((error as Error).message)
+				) {
+					throw error as Error;
+				}
+			}
 		},
 	});
 

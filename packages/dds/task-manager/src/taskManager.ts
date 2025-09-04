@@ -4,7 +4,10 @@
  */
 
 import { EventEmitter } from "@fluid-internal/client-utils";
-import type { ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
+import {
+	AttachState,
+	type ReadOnlyInfo,
+} from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
@@ -321,7 +324,7 @@ export class TaskManagerClass
 			throw error;
 		}
 
-		if (!this.isAttached()) {
+		if (this.isDetached()) {
 			// Simulate auto-ack in detached scenario
 			assert(this.clientId !== undefined, 0x472 /* clientId should not be undefined */);
 			this.addClientToQueue(taskId, this.clientId);
@@ -483,7 +486,7 @@ export class TaskManagerClass
 
 		setupListeners();
 
-		if (!this.isAttached()) {
+		if (this.isDetached()) {
 			// Simulate auto-ack in detached scenario
 			assert(this.clientId !== undefined, 0x473 /* clientId should not be undefined */);
 			this.addClientToQueue(taskId, this.clientId);
@@ -491,11 +494,9 @@ export class TaskManagerClass
 			// a real clientId. At that point we should re-enter the queue with a real volunteer op (assuming we are
 			// connected).
 			this.runtime.once("attached", () => {
-				if (this.queuedOptimistically(taskId)) {
-					// If we are already queued, then we were able to replace the placeholderClientId with our real
-					// clientId and no action is required.
-					return;
-				} else if (this.connected) {
+				// We call scrubClientsNotInQuorum() in case our clientId changed during the attach process.
+				this.scrubClientsNotInQuorum();
+				if (this.connected) {
 					submitVolunteerOp();
 				} else {
 					this.connectionWatcher.once("connect", () => {
@@ -524,7 +525,7 @@ export class TaskManagerClass
 			return;
 		}
 
-		if (!this.isAttached()) {
+		if (this.isDetached()) {
 			// Simulate auto-ack in detached scenario
 			assert(this.clientId !== undefined, 0x474 /* clientId is undefined */);
 			this.removeClientFromQueue(taskId, this.clientId);
@@ -577,7 +578,7 @@ export class TaskManagerClass
 
 		// If we are detached we will simulate auto-ack for the complete op. Therefore we only need to send the op if
 		// we are attached. Additionally, we don't need to check if we are connected while detached.
-		if (!this.isAttached()) {
+		if (this.isDetached()) {
 			this.taskQueues.delete(taskId);
 			this.completedWatcher.emit("completed", taskId);
 			this.emit("completed", taskId);
@@ -827,6 +828,16 @@ export class TaskManagerClass
 		// We return true if the client is either in queue already or the latest pending op for this task is a volunteer op.
 		// But we should always return false if the latest pending op is an abandon or complete op.
 		return (inQueue && !isPendingAbandonOrComplete) || isPendingVolunteer;
+	}
+
+	/**
+	 * Returns true if the client is detached.
+	 * This is distinct from !this.isAttached() because `isAttached()` also checks if `this._isBoundToContext`
+	 * is true. We use `isDetached()` to determine if we should simulate auto-ack behavior for ops, which is
+	 * mainly concerned with if we have been assigned a real clientId yet.
+	 */
+	private isDetached(): boolean {
+		return this.runtime.attachState === AttachState.Detached;
 	}
 
 	protected applyStashedOp(content: unknown): void {
