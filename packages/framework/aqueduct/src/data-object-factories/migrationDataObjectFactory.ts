@@ -120,9 +120,9 @@ export interface MigrationDataObjectFactoryProps<
  * @alpha
  */
 export class MigrationDataObjectFactory<
-	T,
-	TObj extends MigrationDataObject<T, I>,
-	TMigrationData,
+	TDataCommon,
+	TObj extends MigrationDataObject<TDataCommon, I>,
+	TMigrationData, //* Related to T?  T is a common interface that all models implement.
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObjectFactory<TObj, I> {
 	private migrateLock = false;
@@ -131,7 +131,12 @@ export class MigrationDataObjectFactory<
 	private static readonly conversionContent = "conversion";
 
 	public constructor(
-		private readonly props: MigrationDataObjectFactoryProps<T, TObj, TMigrationData, I>,
+		private readonly props: MigrationDataObjectFactoryProps<
+			TDataCommon,
+			TObj,
+			TMigrationData,
+			I
+		>,
 	) {
 		const submitConversionOp = (runtime: FluidDataStoreRuntime): void => {
 			runtime.submitMessage(
@@ -159,6 +164,7 @@ export class MigrationDataObjectFactory<
 
 				if (this.canPerformMigration && !this.migrateLock) {
 					this.migrateLock = true;
+					//* Can we leverage type M here for thinking about the data?
 					const data = await props.asyncGetDataForMigration(root);
 					await props.treeDelayLoadFactory.loadObjectKindAsync();
 
@@ -218,20 +224,19 @@ export class MigrationDataObjectFactory<
 				}
 
 				public reSubmit(
-					type2: DataStoreMessageType,
+					type: DataStoreMessageType,
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					content: any,
 					localOpMetadata: unknown,
 				): void {
 					if (
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-						type2 === DataStoreMessageType.ChannelOp &&
+						type === DataStoreMessageType.ChannelOp &&
 						content === MigrationDataObjectFactory.conversionContent
 					) {
 						submitConversionOp(this);
 						return;
 					}
-					super.reSubmit(type2, content, localOpMetadata);
+					super.reSubmit(type, content, localOpMetadata);
 				}
 
 				public removeRoot(): void {
