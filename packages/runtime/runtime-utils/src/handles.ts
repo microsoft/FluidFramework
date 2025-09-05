@@ -218,10 +218,10 @@ export function lookupBlobStorageId(
 	handle: IFluidHandle,
 ): string | undefined {
 	// Verify that the handle points to a blob by checking its path format
-	const absolutePath = toFluidHandleInternal(handle).absolutePath;
+	const absolutePath: string | undefined = toFluidHandleInternal(handle).absolutePath;
 
 	// Blob handles have paths in the format "/_blobs/{localId}"
-	if (!absolutePath.startsWith("/_blobs/")) {
+	if (!absolutePath?.startsWith("/_blobs/")) {
 		throw new Error(
 			"Handle does not point to a blob - expected path to start with '/_blobs/'",
 		);

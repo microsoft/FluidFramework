@@ -39,7 +39,12 @@ describe("Handles", () => {
 	describe("lookupBlobStorageId", () => {
 		// Helper to create a mock handle
 		function createMockHandle(absolutePath?: string): IFluidHandle {
-			return { absolutePath, [fluidHandleSymbol]: {} } as unknown as IFluidHandle;
+			return {
+				[fluidHandleSymbol]: {
+					absolutePath,
+					[fluidHandleSymbol]: {},
+				},
+			} as unknown as IFluidHandle;
 		}
 
 		it("throws error for non-blob handles", () => {
