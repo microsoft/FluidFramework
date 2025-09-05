@@ -7,19 +7,10 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	SharedDirectory,
-	SharedMap,
-	type ISharedDirectory,
-} from "@fluidframework/map/internal";
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
-import { SharedTree, type ITree } from "@fluidframework/tree/internal";
 
 import type { IDelayLoadChannelFactory } from "../channel-factories/index.js";
 
-import { dataObjectRootDirectoryId } from "./dataObject.js";
 import { PureDataObject } from "./pureDataObject.js";
-import { treeChannelId } from "./treeDataObject.js";
 import type { DataObjectTypes } from "./types.js";
 
 /**
@@ -138,76 +129,4 @@ export abstract class MigrationDataObject<
 
 		await super.initializeInternal(existing);
 	}
-}
-
-/**
- * Convenience descriptor for SharedDirectory-backed models using the standard root id.
- */
-export function sharedDirectoryDescriptor(): ModelDescriptor<{ directory: ISharedDirectory }> {
-	return {
-		type: "sharedDirectory",
-		id: dataObjectRootDirectoryId,
-		sharedObjects: {
-			// SharedDirectory is always loaded on the root id
-			alwaysLoaded: [
-				SharedDirectory.getFactory(),
-				// TODO: Remove SharedMap factory when compatibility with SharedMap DataObject is no longer needed in 0.10
-				SharedMap.getFactory(),
-			],
-		},
-		probe: async (runtime) => {
-			try {
-				const directory = await runtime.getChannel(dataObjectRootDirectoryId);
-				if (SharedDirectory.is(directory)) {
-					return { directory };
-				}
-			} catch {
-				return undefined;
-			}
-		},
-		ensureFactoriesLoaded: async () => {},
-		create: (runtime) => {
-			const directory = SharedDirectory.create(runtime, dataObjectRootDirectoryId);
-			directory.bindToContext();
-			return { directory };
-		},
-		is: (m): m is { directory: ISharedDirectory } =>
-			!!(m && (m as unknown as Record<string, unknown>).directory),
-	};
-}
-
-/**
- * Convenience descriptor for SharedTree-backed models using the standard tree channel id
- * and a delay-load factory.
- */
-export function sharedTreeDescriptor(
-	factory: IDelayLoadChannelFactory<ITree & ISharedObject>, //* ISharedObject needed for bindToContext call
-): ModelDescriptor<{ tree: ITree }> {
-	return {
-		type: "sharedTree",
-		id: treeChannelId,
-		sharedObjects: {
-			// Tree is provided via a delay-load factory
-			delayLoaded: [factory],
-		},
-		probe: async (runtime) => {
-			try {
-				const tree = await runtime.getChannel(treeChannelId);
-				if (SharedTree.is(tree)) {
-					return { tree };
-				}
-			} catch {
-				return undefined;
-			}
-		},
-		ensureFactoriesLoaded: async () => {
-			await factory.loadObjectKindAsync();
-		},
-		create: (runtime) => {
-			const tree = factory.create(runtime, treeChannelId);
-			tree.bindToContext();
-			return { tree };
-		},
-		is: (m): m is { tree: ITree } => !!(m && (m as unknown as Record<string, unknown>).tree),
-	};
 }
