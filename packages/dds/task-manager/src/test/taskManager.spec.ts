@@ -1076,6 +1076,86 @@ describe("TaskManager", () => {
 						"Task manager 1 should not be subscribed",
 					);
 				});
+
+				it("Can abandon subscription to multiple tasks while disconnected", async () => {
+					const taskId1 = "taskId1";
+					const taskId2 = "taskId2";
+					const taskId3 = "taskId3";
+					containerRuntime1.connected = false;
+
+					taskManager1.subscribeToTask(taskId1);
+					taskManager1.subscribeToTask(taskId2);
+					taskManager1.subscribeToTask(taskId3);
+
+					containerRuntime1.connected = true;
+					containerRuntimeFactory.processAllMessages();
+
+					assert.deepEqual(
+						[
+							taskManager1.assigned(taskId1),
+							taskManager1.assigned(taskId2),
+							taskManager1.assigned(taskId3),
+						],
+						[true, true, true],
+						"Should be assigned all tasks",
+					);
+				});
+
+				it("Can abandon subscription to multiple tasks while disconnected and abandon/complete after", async () => {
+					const taskId1 = "taskId1";
+					const taskId2 = "taskId2";
+					const taskId3 = "taskId3";
+					containerRuntime1.connected = false;
+
+					taskManager1.subscribeToTask(taskId1);
+					taskManager1.subscribeToTask(taskId2);
+					taskManager1.subscribeToTask(taskId3);
+
+					containerRuntime1.connected = true;
+					containerRuntimeFactory.processAllMessages();
+
+					taskManager1.abandon(taskId1);
+					taskManager1.complete(taskId3);
+					containerRuntimeFactory.processAllMessages();
+
+					assert.deepEqual(
+						[
+							taskManager1.assigned(taskId1),
+							taskManager1.assigned(taskId2),
+							taskManager1.assigned(taskId3),
+						],
+						[false, true, false],
+						"Should only be assigned task 2",
+					);
+				});
+
+				it("Can abandon subscription to multiple tasks while disconnected and abandon/resubscribe after", async () => {
+					const taskId1 = "taskId1";
+					const taskId2 = "taskId2";
+					const taskId3 = "taskId3";
+					containerRuntime1.connected = false;
+
+					taskManager1.subscribeToTask(taskId1);
+					taskManager1.subscribeToTask(taskId2);
+					taskManager1.subscribeToTask(taskId3);
+
+					containerRuntime1.connected = true;
+					containerRuntimeFactory.processAllMessages();
+
+					taskManager1.abandon(taskId1);
+					taskManager1.subscribeToTask(taskId1);
+					containerRuntimeFactory.processAllMessages();
+
+					assert.deepEqual(
+						[
+							taskManager1.assigned(taskId1),
+							taskManager1.assigned(taskId2),
+							taskManager1.assigned(taskId3),
+						],
+						[true, true, true],
+						"Should be subscribed to all tasks",
+					);
+				});
 			});
 
 			describe("Completing tasks", () => {
