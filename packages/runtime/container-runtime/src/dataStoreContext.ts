@@ -1217,7 +1217,7 @@ export abstract class FluidDataStoreContext
 	}
 
 	public getMinVersionForCollab?(): MinimumVersionForCollab | undefined {
-		return this.containerRuntime.getMinVersionForCollab?.();
+		return this.parentContext.getMinVersionForCollab?.();
 	}
 }
 

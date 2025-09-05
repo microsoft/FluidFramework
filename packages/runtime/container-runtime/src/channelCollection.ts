@@ -46,6 +46,7 @@ import {
 	type IRuntimeMessagesContent,
 	type InboundAttachMessage,
 	type IRuntimeMessageCollection,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -129,6 +130,11 @@ interface FluidDataStoreMessage {
  */
 export interface IFluidParentContextPrivate extends Omit<IFluidParentContext, "isReadOnly"> {
 	readonly isReadOnly: () => boolean;
+
+	/**
+	 * Gets the minVersionForCollab passed into the ContainerRuntime.
+	 */
+	getMinVersionForCollab?(): MinimumVersionForCollab | undefined;
 }
 
 /**

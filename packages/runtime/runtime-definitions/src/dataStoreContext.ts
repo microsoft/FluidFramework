@@ -305,11 +305,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 		loadingGroupIds: string[],
 		pathParts: string[],
 	): Promise<{ snapshotTree: ISnapshotTree; sequenceNumber: number }>;
-
-	/**
-	 * Gets the minVersionForCollab passed into the ContainerRuntime.
-	 */
-	getMinVersionForCollab?(): MinimumVersionForCollab;
 }
 
 /**
