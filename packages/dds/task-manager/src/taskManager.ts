@@ -862,12 +862,13 @@ export class TaskManagerClass
 		assert(typeof localOpMetadata === "number", "Expect localOpMetadata to be a number");
 		assertIsTaskManagerOperation(content);
 		const latestPendingOps = this.latestPendingOps.get(content.taskId);
-		const pendingOpToRollback = latestPendingOps?.pop();
+		assert(latestPendingOps !== undefined, "No pending ops when trying to rollback");
+		const pendingOpToRollback = latestPendingOps.pop();
 		assert(
 			pendingOpToRollback !== undefined && pendingOpToRollback.messageId === localOpMetadata,
 			"pending op mismatch",
 		);
-		if (latestPendingOps?.length === 0) {
+		if (latestPendingOps.length === 0) {
 			this.latestPendingOps.delete(content.taskId);
 		}
 		this.rollbackWatcher.emit("rollback", content.taskId);
