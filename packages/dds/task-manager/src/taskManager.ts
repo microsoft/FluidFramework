@@ -102,7 +102,7 @@ export class TaskManagerClass
 	// rollbackWatcher emits an event whenever a pending op is rolled back.
 	private readonly rollbackWatcher: EventEmitter = new EventEmitter();
 
-	private messageId: number = -1;
+	private nextPendingMessageId: number = 0;
 	/**
 	 * Tracks the most recent pending op for a given task
 	 */
@@ -255,7 +255,7 @@ export class TaskManagerClass
 		};
 		const pendingOp: IPendingOp = {
 			type: "volunteer",
-			messageId: ++this.messageId,
+			messageId: this.nextPendingMessageId++,
 		};
 		this.submitLocalMessage(op, pendingOp.messageId);
 		const latestPendingOps = this.latestPendingOps.get(taskId);
@@ -273,7 +273,7 @@ export class TaskManagerClass
 		};
 		const pendingOp: IPendingOp = {
 			type: "abandon",
-			messageId: ++this.messageId,
+			messageId: this.nextPendingMessageId++,
 		};
 		this.submitLocalMessage(op, pendingOp.messageId);
 		const latestPendingOps = this.latestPendingOps.get(taskId);
@@ -291,7 +291,7 @@ export class TaskManagerClass
 		};
 		const pendingOp: IPendingOp = {
 			type: "complete",
-			messageId: ++this.messageId,
+			messageId: this.nextPendingMessageId++,
 		};
 
 		this.submitLocalMessage(op, pendingOp.messageId);
@@ -335,7 +335,7 @@ export class TaskManagerClass
 
 		// This promise works even if we already have an outstanding volunteer op.
 		const lockAcquireP = new Promise<boolean>((resolve, reject) => {
-			const currentMessageId = this.messageId;
+			const nextPendingMessageId = this.nextPendingMessageId;
 			const setupListeners = (): void => {
 				this.queueWatcher.on("queueChange", checkIfAcquiredLock);
 				this.abandonWatcher.on("abandon", checkIfAbandoned);
@@ -368,7 +368,7 @@ export class TaskManagerClass
 				if (eventTaskId !== taskId) {
 					return;
 				}
-				if (messageId !== undefined && messageId <= currentMessageId) {
+				if (messageId !== undefined && messageId <= nextPendingMessageId) {
 					// Ignore abandon events that were for abandon ops that were sent prior to our current volunteer attempt.
 					return;
 				}
@@ -385,7 +385,7 @@ export class TaskManagerClass
 				if (eventTaskId !== taskId) {
 					return;
 				}
-				if (messageId !== undefined && messageId <= currentMessageId) {
+				if (messageId !== undefined && messageId <= nextPendingMessageId) {
 					// Ignore abandon events that were for abandon ops that were sent prior to our current volunteer attempt.
 					return;
 				}
@@ -424,7 +424,7 @@ export class TaskManagerClass
 			throw new Error("Attempted to subscribe with read-only permissions");
 		}
 
-		const currentMessageId = this.messageId;
+		const nextPendingMessageId = this.nextPendingMessageId;
 
 		const submitVolunteerOp = (): void => {
 			this.submitVolunteerOp(taskId);
@@ -453,7 +453,7 @@ export class TaskManagerClass
 			if (eventTaskId !== taskId) {
 				return;
 			}
-			if (messageId !== undefined && messageId <= currentMessageId) {
+			if (messageId !== undefined && messageId <= nextPendingMessageId) {
 				// Ignore abandon events that were for abandon ops that were sent prior to our current volunteer attempt.
 				return;
 			}
@@ -465,7 +465,7 @@ export class TaskManagerClass
 			if (eventTaskId !== taskId) {
 				return;
 			}
-			if (messageId !== undefined && messageId <= currentMessageId) {
+			if (messageId !== undefined && messageId <= nextPendingMessageId) {
 				// Ignore abandon events that were for abandon ops that were sent prior to our current volunteer attempt.
 				return;
 			}
