@@ -12624,7 +12624,7 @@ importers:
         specifier: ~1.9.3
         version: 1.9.4
       '@fluid-tools/build-cli':
-        specifier: ^0.58.1
+        specifier: ^0.58.2
         version: 0.58.2(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
