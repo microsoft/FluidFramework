@@ -5,8 +5,15 @@
 
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
+import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
-import { SharedTree, type ITree } from "@fluidframework/tree/internal";
+import {
+	SchemaFactory,
+	SharedTree,
+	TreeViewConfiguration,
+	type ITree,
+	type TreeView,
+} from "@fluidframework/tree/internal";
 
 import type { IDelayLoadChannelFactory } from "./channel-factories/index.js";
 import {
@@ -15,52 +22,173 @@ import {
 } from "./data-object-factories/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rootDirectoryDescriptor } from "./data-objects/dataObject.js";
-import {
-	MigrationDataObject,
-	treeChannelId,
-	type ModelDescriptor,
-} from "./data-objects/index.js";
+import { MigrationDataObject, type ModelDescriptor } from "./data-objects/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { treeChannelId } from "./data-objects/treeDataObject.js";
 
 //* NOTE: For illustration purposes.  This will need to be properly created in the app
-declare const treeDelayLoadFactory: IDelayLoadChannelFactory<ITree & ISharedObject>;
+declare const treeDelayLoadFactory: IDelayLoadChannelFactory<ITree>;
 
-// Model shapes
-interface TreeModel {
-	tree: ITree & ISharedObject;
+const schemaIdentifier = "edc30555-e3ce-4214-b65b-ec69830e506e";
+const sf = new SchemaFactory(`${schemaIdentifier}.MigrationDemo`);
+
+class DemoSchema extends sf.object("DemoSchema", {
+	arbitraryKeys: sf.map([sf.string, sf.boolean]),
+}) {}
+
+const demoTreeConfiguration = new TreeViewConfiguration({
+	// root node schema
+	schema: DemoSchema,
+});
+
+// (Taken from the prototype in the other app repo)
+interface ViewWithDirOrTree {
+	readonly getArbitraryKey: (key: string) => string | boolean | undefined;
+	readonly setArbitraryKey: (key: string, value: string | boolean) => void;
+	readonly deleteArbitraryKey: (key: string) => void;
+	readonly getRoot: () =>
+		| {
+				isDirectory: true;
+				root: ISharedDirectory;
+		  }
+		| {
+				isDirectory: false;
+				root: ITree;
+		  };
 }
-interface DirModel {
-	root: ISharedDirectory;
+
+interface TreeModel extends ViewWithDirOrTree {
+	readonly getRoot: () => {
+		isDirectory: false;
+		root: ITree;
+	};
 }
-//* NOTE: This would include the Arbitrary Keys APIs as well)
-type UniversalView = TreeModel | DirModel;
+
+interface DirModel extends ViewWithDirOrTree {
+	readonly getRoot: () => {
+		isDirectory: true;
+		root: ISharedDirectory;
+	};
+}
+
+const wrapTreeView = <T>(
+	tree: ITree,
+	func: (treeView: TreeView<typeof DemoSchema>) => T,
+): T => {
+	const treeView = tree.viewWith(demoTreeConfiguration);
+	// Initialize the root of the tree if it is not already initialized.
+	if (treeView.compatibility.canInitialize) {
+		treeView.initialize(new DemoSchema({ arbitraryKeys: [] }));
+	}
+	const value = func(treeView);
+	treeView.dispose();
+	return value;
+};
+
+function makeDirModel(root: ISharedDirectory): DirModel {
+	return {
+		getRoot: () => ({ isDirectory: true, root }),
+		getArbitraryKey: (key) => root.get(key),
+		setArbitraryKey: (key, value) => root.set(key, value),
+		deleteArbitraryKey: (key) => root.delete(key),
+	};
+}
+
+function makeTreeModel(tree: ITree): TreeModel {
+	return {
+		getRoot: () => ({ isDirectory: false, root: tree }),
+		getArbitraryKey: (key) => {
+			return wrapTreeView(tree, (treeView) => {
+				return treeView.root.arbitraryKeys.get(key);
+			});
+		},
+		setArbitraryKey: (key, value) => {
+			return wrapTreeView(tree, (treeView) => {
+				treeView.root.arbitraryKeys.set(key, value);
+			});
+		},
+		deleteArbitraryKey: (key) => {
+			wrapTreeView(tree, (treeView) => {
+				treeView.root.arbitraryKeys.delete(key);
+			});
+		},
+	};
+}
 
 // Build the model descriptors: target is SharedTree first, then SharedDirectory as the existing model
-const treeDesc: ModelDescriptor<TreeModel> = sharedTreeDescriptor(treeDelayLoadFactory);
-const dirDesc: ModelDescriptor<DirModel> = rootDirectoryDescriptor;
+const treeDesc: ModelDescriptor<TreeModel> = {
+	sharedObjects: {
+		// Tree is provided via a delay-load factory
+		delayLoaded: [treeDelayLoadFactory],
+	},
+	probe: async (runtime) => {
+		const tree = await runtime.getChannel(treeChannelId);
+		if (!SharedTree.is(tree)) {
+			return undefined;
+		}
+		return makeTreeModel(tree);
+	},
+	ensureFactoriesLoaded: async () => {
+		await treeDelayLoadFactory.loadObjectKindAsync();
+	},
+	create: (runtime) => {
+		const tree = runtime.createChannel(
+			treeChannelId,
+			SharedTree.getFactory().type,
+		) as unknown as ITree & ISharedObject; //* Bummer casting here. The factory knows what it returns (although that doesn't help with ISharedObject)
+		tree.bindToContext();
+		return makeTreeModel(tree);
+	},
+};
+
+// For fun, try converting the basic directory model into this one with the more interesting view
+const dirDesc: ModelDescriptor<DirModel> = {
+	...rootDirectoryDescriptor,
+	probe: async (runtime) => {
+		const result = await rootDirectoryDescriptor.probe(runtime);
+		return result && makeDirModel(result.root);
+	},
+	create: (runtime) => {
+		return makeDirModel(rootDirectoryDescriptor.create(runtime).root);
+	},
+	is: undefined, //* Whatever
+};
 
 // Example migration props
 interface MigrationData {
 	entries: [string, unknown][];
 }
 
-class DirToTreeDataObject extends MigrationDataObject<UniversalView> {
+/**
+ * DataObject that can migrate from a SharedDirectory-based model to a SharedTree-based model.
+ *
+ * @remarks
+ * Access the data via dirToTreeDataObject.dataModel?.view
+ */
+class DirToTreeDataObject extends MigrationDataObject<ViewWithDirOrTree> {
 	// Single source of truth for descriptors: static on the DataObject class
 	public static modelDescriptors = [treeDesc, dirDesc] as const;
 }
 
 const props: MigrationDataObjectFactoryProps<
-	UniversalView,
-	TreeModel,
+	ViewWithDirOrTree,
+	ViewWithDirOrTree & {
+		readonly getRoot: () => {
+			isDirectory: false;
+			root: ITree;
+		};
+	},
 	DirToTreeDataObject,
 	MigrationData
 > = {
 	type: "DirToTree",
 	ctor: DirToTreeDataObject,
 	canPerformMigration: async () => true,
-	asyncGetDataForMigration: async (existingModel: UniversalView) => {
+	asyncGetDataForMigration: async (existingModel: ViewWithDirOrTree) => {
 		// existingModel will be { root: ISharedDirectory } when present
-		if ("root" in existingModel) {
-			const dir = existingModel.root;
+		const existingRoot = existingModel.getRoot();
+		if (existingRoot.isDirectory) {
+			const dir = existingRoot.root;
 			// read some synchronous snapshot data out of the directory handles
 			return { entries: [...dir.entries()] };
 		}
@@ -79,37 +207,6 @@ const props: MigrationDataObjectFactoryProps<
 // eslint-disable-next-line jsdoc/require-jsdoc
 export const factory = new MigrationDataObjectFactory(props);
 
-/**
- * Convenience descriptor for SharedTree-backed models using the standard tree channel id
- * and a delay-load factory.
- */
-export function sharedTreeDescriptor(
-	treeFactory: IDelayLoadChannelFactory<ITree & ISharedObject>, //* ISharedObject needed for bindToContext call
-): ModelDescriptor<{ tree: ITree & ISharedObject }> {
-	return {
-		sharedObjects: {
-			// Tree is provided via a delay-load factory
-			delayLoaded: [treeFactory],
-		},
-		probe: async (runtime) => {
-			try {
-				const tree = await runtime.getChannel(treeChannelId);
-				if (SharedTree.is(tree)) {
-					return { tree: tree as ITree & ISharedObject };
-				}
-			} catch {
-				return undefined;
-			}
-		},
-		ensureFactoriesLoaded: async () => {
-			await treeFactory.loadObjectKindAsync();
-		},
-		create: (runtime) => {
-			const tree = treeFactory.create(runtime, treeChannelId);
-			tree.bindToContext();
-			return { tree };
-		},
-		is: (m): m is { tree: ITree & ISharedObject } =>
-			!!(m && (m as unknown as Record<string, unknown>).tree),
-	};
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const dataObject = await factory.createInstance({} as any as IContainerRuntimeBase);
+dataObject.dataModel?.view.getArbitraryKey("exampleKey");
