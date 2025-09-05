@@ -57,7 +57,7 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		 * After a the last client in a document's session disconnects, this countdown begins.
 		 * Default: 10 minutes
 		 */
-		private readonly sessionActivityTimeoutMs = 10 * 60 * 1000,
+		private readonly sessionActivityTimeoutMs = 30 * 1000,
 	) {}
 
 	public async startClientSession(
@@ -112,6 +112,8 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 					existingSession?.telemetryProperties?.maxConcurrentClients ?? 0,
 					totalCurrentClients,
 				),
+				sessionOpCount: existingSession?.telemetryProperties?.sessionOpCount ?? 0,
+				sessionSignalCount: existingSession?.telemetryProperties?.sessionSignalCount ?? 0,
 			},
 		};
 		// Create a new session in the session manager
@@ -188,6 +190,8 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 					clientMetrics.signalCount;
 			}
 		}
+
+		Lumberjack.info("Xin debugging", { updatedTelemetryProperties, clientMetrics });
 
 		let lastClientLeaveTime: number | undefined;
 		if (otherConnectedClients.length === 0) {
@@ -318,7 +322,7 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		});
 		if (
 			latestSessionInformation !== undefined &&
-			this.isSessionExpired(latestSessionInformation)
+			!this.isSessionExpired(latestSessionInformation)
 		) {
 			// Session information on this instance is stale, so don't end the session.
 			Lumberjack.verbose("Session end timer expired but session is still active", {
