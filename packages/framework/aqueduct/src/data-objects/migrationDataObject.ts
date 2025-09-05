@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IFluidDataStoreRuntime,
 	IChannelFactory,
@@ -30,7 +29,7 @@ import type { DataObjectTypes } from "./types.js";
  * @legacy
  * @alpha
  */
-export interface ModelDescriptor<T = unknown> {
+export interface ModelDescriptor<TModel = unknown> {
 	// Discriminated union tag
 	type?: string;
 	// Optional convenience id for simple channel-backed models
@@ -38,7 +37,7 @@ export interface ModelDescriptor<T = unknown> {
 	//* Consider if we want something more formal here or if "duck typing" the runtime channel structure is sufficient.
 	//* See Craig's DDS shim branch for an example of tagging migrations
 	// Probe runtime for an existing model based on which channels exist. Return the model instance or undefined if not found.
-	probe: (runtime: IFluidDataStoreRuntime) => Promise<T | undefined>;
+	probe: (runtime: IFluidDataStoreRuntime) => Promise<TModel | undefined>;
 	/**
 	 * Load any delay-loaded factories needed for this model.
 	 *
@@ -51,7 +50,7 @@ export interface ModelDescriptor<T = unknown> {
 	 * @remarks
 	 * Any delay-loaded factories must already have been loaded via ModelDescriptor.loadFactories.
 	 */
-	create: (runtime: IFluidDataStoreRuntime) => T;
+	create: (runtime: IFluidDataStoreRuntime) => TModel;
 	/**
 	 * The factories needed for this Data Model, divided by whether they are always loaded or delay-loaded
 	 */
@@ -61,7 +60,8 @@ export interface ModelDescriptor<T = unknown> {
 		delayLoaded?: IDelayLoadChannelFactory[];
 	};
 	// Optional runtime type guard to help callers narrow model types.
-	is?: (m: unknown) => m is T;
+	//* Probably remove?  Copilot added it
+	is?: (m: unknown) => m is TModel;
 }
 
 /**
@@ -74,36 +74,39 @@ export interface ModelDescriptor<T = unknown> {
  * @alpha
  */
 export abstract class MigrationDataObject<
-	M = unknown,
+	TUniversalView,
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObject<I> {
 	// The currently active model and its descriptor, if discovered or created.
-	#activeModel: { descriptor: ModelDescriptor; model: M } | undefined;
+	#activeModel:
+		| { descriptor: ModelDescriptor<TUniversalView>; model: TUniversalView }
+		| undefined;
 
 	/**
 	 * Probeable candidate roots the implementer expects for existing stores.
 	 * The order defines probing priority.
 	 * The first one will also be used for creation.
 	 */
-	protected abstract get modelCandidates(): [ModelDescriptor<M>, ...ModelDescriptor<M>[]];
+	protected abstract get modelCandidates(): [
+		ModelDescriptor<TUniversalView>,
+		...ModelDescriptor<TUniversalView>[],
+	];
 
 	/**
 	 * Returns the active model descriptor and channel after initialization.
 	 * Throws if initialization did not set a model.
 	 */
-	public getModel(): { descriptor: ModelDescriptor<M>; model: M } {
-		assert(this.#activeModel !== undefined, "Expected an active model to be defined");
-		return {
-			descriptor: this.#activeModel.descriptor as ModelDescriptor<M>,
-			model: this.#activeModel.model,
-		};
+	public getModel():
+		| { descriptor: ModelDescriptor<TUniversalView>; model: TUniversalView }
+		| undefined {
+		return this.#activeModel;
 	}
 
 	/**
 	 * Walks the model candidates in order and finds the first one that probes successfully.
 	 * Sets the active model if found, otherwise leaves it undefined.
 	 */
-	private async refreshRoot(): Promise<void> {
+	private async inferModelFromRuntime(): Promise<void> {
 		this.#activeModel = undefined;
 
 		for (const descriptor of this.modelCandidates ?? []) {
@@ -121,7 +124,7 @@ export abstract class MigrationDataObject<
 
 	public override async initializeInternal(existing: boolean): Promise<void> {
 		if (existing) {
-			await this.refreshRoot();
+			await this.inferModelFromRuntime();
 		} else {
 			const creator = this.modelCandidates[0];
 			await creator.ensureFactoriesLoaded();
@@ -135,10 +138,6 @@ export abstract class MigrationDataObject<
 
 		await super.initializeInternal(existing);
 	}
-
-	// Backwards-compatibility helpers (optional for implementers):
-	// Implementers may provide RootDescriptor helpers for common types like SharedTree/SharedDirectory
-	// rather than implementing create/runtime probing themselves.
 }
 
 /**
@@ -158,11 +157,9 @@ export function sharedDirectoryDescriptor(): ModelDescriptor<{ directory: IShare
 		},
 		probe: async (runtime) => {
 			try {
-				const ch = await runtime.getChannel(dataObjectRootDirectoryId);
-				const rec = ch as unknown as Record<string, unknown>;
-				if (rec !== undefined && "get" in rec && "set" in rec) {
-					// rough duck-typing for SharedDirectory
-					return { directory: ch as ISharedDirectory };
+				const directory = await runtime.getChannel(dataObjectRootDirectoryId);
+				if (SharedDirectory.is(directory)) {
+					return { directory };
 				}
 			} catch {
 				return undefined;
@@ -170,9 +167,9 @@ export function sharedDirectoryDescriptor(): ModelDescriptor<{ directory: IShare
 		},
 		ensureFactoriesLoaded: async () => {},
 		create: (runtime) => {
-			const d = SharedDirectory.create(runtime, dataObjectRootDirectoryId);
-			d.bindToContext();
-			return { directory: d };
+			const directory = SharedDirectory.create(runtime, dataObjectRootDirectoryId);
+			directory.bindToContext();
+			return { directory };
 		},
 		is: (m): m is { directory: ISharedDirectory } =>
 			!!(m && (m as unknown as Record<string, unknown>).directory),
@@ -184,7 +181,7 @@ export function sharedDirectoryDescriptor(): ModelDescriptor<{ directory: IShare
  * and a delay-load factory.
  */
 export function sharedTreeDescriptor(
-	factory: IDelayLoadChannelFactory<ITree>,
+	factory: IDelayLoadChannelFactory<ITree & ISharedObject>, //* ISharedObject needed for bindToContext call
 ): ModelDescriptor<{ tree: ITree }> {
 	return {
 		type: "sharedTree",
@@ -195,9 +192,9 @@ export function sharedTreeDescriptor(
 		},
 		probe: async (runtime) => {
 			try {
-				const ch = await runtime.getChannel(treeChannelId);
-				if (SharedTree.is(ch)) {
-					return { tree: ch as ITree };
+				const tree = await runtime.getChannel(treeChannelId);
+				if (SharedTree.is(tree)) {
+					return { tree };
 				}
 			} catch {
 				return undefined;
@@ -207,15 +204,9 @@ export function sharedTreeDescriptor(
 			await factory.loadObjectKindAsync();
 		},
 		create: (runtime) => {
-			const t = factory.create(runtime, treeChannelId);
-			const maybeShared = t as unknown as Partial<ISharedObject>;
-			if (
-				maybeShared.bindToContext !== undefined &&
-				typeof maybeShared.bindToContext === "function"
-			) {
-				maybeShared.bindToContext();
-			}
-			return { tree: t };
+			const tree = factory.create(runtime, treeChannelId);
+			tree.bindToContext();
+			return { tree };
 		},
 		is: (m): m is { tree: ITree } => !!(m && (m as unknown as Record<string, unknown>).tree),
 	};

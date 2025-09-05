@@ -41,8 +41,9 @@ import {
  * @alpha
  */
 export interface MigrationDataObjectFactoryProps<
-	M,
-	TObj extends MigrationDataObject<M, I>,
+	TUniversalView,
+	TNewModel extends TUniversalView,
+	TObj extends MigrationDataObject<TUniversalView, I>,
 	TMigrationData,
 	I extends DataObjectTypes = DataObjectTypes,
 > extends DataObjectFactoryProps<TObj, I> {
@@ -71,7 +72,7 @@ export interface MigrationDataObjectFactoryProps<
 	 * }
 	 * ```
 	 */
-	asyncGetDataForMigration: (existingModel: M) => Promise<TMigrationData>;
+	asyncGetDataForMigration: (existingModel: TUniversalView) => Promise<TMigrationData>;
 
 	/**
 	 * Migrate the DataObject upon resolve (i.e. on retrieval of the DataStore).
@@ -90,11 +91,12 @@ export interface MigrationDataObjectFactoryProps<
 	 *     view.dispose();
 	 * }
 	 * ```
+	 * @param newModel - New model which is ready to be populated with the data
 	 * @param data - Provided by the "asyncGetDataForMigration" function
 	 */
 	migrateDataObject: (
 		runtime: FluidDataStoreRuntime,
-		newModel: M,
+		newModel: TNewModel,
 		data: TMigrationData,
 	) => void;
 
@@ -104,7 +106,7 @@ export interface MigrationDataObjectFactoryProps<
 	refreshDataObject?: () => Promise<void>;
 
 	// Descriptors ordered by desired priority. The first descriptor is the target (new) model.
-	modelDescriptors: [ModelDescriptor<M>, ...ModelDescriptor<M>[]];
+	modelDescriptors: [ModelDescriptor<TNewModel>, ...ModelDescriptor<TUniversalView>[]];
 }
 
 /**
@@ -116,8 +118,9 @@ export interface MigrationDataObjectFactoryProps<
  * @alpha
  */
 export class MigrationDataObjectFactory<
-	M,
-	TObj extends MigrationDataObject<M, I>,
+	TUniversalView,
+	TNewModel extends TUniversalView,
+	TObj extends MigrationDataObject<TUniversalView, I>,
 	TMigrationData,
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObjectFactory<TObj, I> {
@@ -127,7 +130,13 @@ export class MigrationDataObjectFactory<
 	private static readonly conversionContent = "conversion";
 
 	public constructor(
-		private readonly props: MigrationDataObjectFactoryProps<M, TObj, TMigrationData, I>,
+		private readonly props: MigrationDataObjectFactoryProps<
+			TUniversalView,
+			TNewModel,
+			TObj,
+			TMigrationData,
+			I
+		>,
 	) {
 		const submitConversionOp = (runtime: FluidDataStoreRuntime): void => {
 			runtime.submitMessage(
@@ -138,12 +147,14 @@ export class MigrationDataObjectFactory<
 		};
 
 		const fullMigrateDataObject = async (runtime: IFluidDataStoreChannel): Promise<void> => {
+			assert(this.canPerformMigration !== undefined, "canPerformMigration should be defined");
 			const realRuntime = runtime as FluidDataStoreRuntime;
 			// Descriptor-driven migration flow (no backwards compatibility path)
 			if (!this.canPerformMigration || this.migrateLock) {
 				return;
 			}
 
+			//* Should this move down a bit lower, to have less code in the lock zone?
 			this.migrateLock = true;
 
 			try {
@@ -156,10 +167,11 @@ export class MigrationDataObjectFactory<
 					// Already on target model; nothing to do.
 					return;
 				}
+				// Download the code in parallel with async operations happening on the existing model
 				const targetFactoriesP = targetDescriptor.ensureFactoriesLoaded();
 
 				// Find the first model that probes successfully.
-				let existingModel: M | undefined;
+				let existingModel: TUniversalView | undefined;
 				for (const desc of otherDescriptors) {
 					//* Should probe errors be fatal?
 					existingModel = await desc.probe(realRuntime).catch(() => undefined);
@@ -234,6 +246,7 @@ export class MigrationDataObjectFactory<
 
 		super({
 			...props,
+			sharedObjects,
 			afterBindRuntime: fullMigrateDataObject,
 			runtimeClass: class MigratorDataStoreRuntime extends runtimeClass {
 				private migrationOpSeqNum = -1;
