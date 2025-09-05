@@ -134,7 +134,7 @@ export class EpochTracker implements IPersistedFileCache {
 			// Return undefined so that the ops/snapshots are grabbed from the server instead of the cache
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const value: IVersionedValueWithEpoch = await this.cache.get(
-				this.fileEntryFromEntry(entry),
+				fileEntryFromEntry(entry, this.fileEntry),
 			);
 			// Version mismatch between what the runtime expects and what it recieved.
 			// The cached value should not be used
@@ -192,7 +192,7 @@ export class EpochTracker implements IPersistedFileCache {
 			version: persistedCacheValueVersion,
 			fluidEpoch: this._fluidEpoch,
 		};
-		return this.cache.put(this.fileEntryFromEntry(entry), data).catch((error) => {
+		return this.cache.put(fileEntryFromEntry(entry, this.fileEntry), data).catch((error) => {
 			this.logger.sendErrorEvent({ eventName: "cachePutError", type: entry.type }, error);
 			throw error;
 		});
@@ -485,10 +485,6 @@ export class EpochTracker implements IPersistedFileCache {
 			});
 		}
 	}
-
-	private fileEntryFromEntry(entry: IEntry): ICacheEntry {
-		return { ...entry, file: this.fileEntry };
-	}
 }
 
 export class EpochTrackerWithRedemption extends EpochTracker {
@@ -646,4 +642,17 @@ export function createOdspCacheAndTracker(
 		},
 		epochTracker,
 	};
+}
+
+export function fileEntryFromEntry(entry: IEntry, epochEntry: IFileEntry): ICacheEntry {
+	if ("file" in entry) {
+		const maybeCacheEntry = entry as ICacheEntry;
+		const mergedResolvedUrl = {
+			...maybeCacheEntry.file.resolvedUrl,
+			...epochEntry.resolvedUrl,
+		};
+		const file = { ...epochEntry, resolvedUrl: mergedResolvedUrl };
+		return { ...entry, file };
+	}
+	return { ...entry, file: epochEntry };
 }

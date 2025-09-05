@@ -19,7 +19,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { type IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts.js";
-import { EpochTracker } from "../epochTracker.js";
+import { EpochTracker, fileEntryFromEntry } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 
@@ -399,5 +399,42 @@ describe("Tests for Epoch Tracker", () => {
 			assert.strictEqual(newResolvedUrl.driveId, driveId, "driveId should remain same");
 		}
 		assert.strictEqual(success, false, "Fetching should not succeed!!");
+	});
+
+	it("Validate getFileEntryFromEntry", () => {
+		const resolvedUrlWithFileVersion: IOdspResolvedUrl = {
+			siteUrl,
+			driveId,
+			itemId,
+			odspResolvedUrl: true,
+			fileVersion: "2",
+			type: "fluid",
+			url: "",
+			hashedDocumentId,
+			endpoints: {
+				snapshotStorageUrl: "fake",
+				attachmentPOSTStorageUrl: "",
+				attachmentGETStorageUrl: "",
+				deltaStorageUrl: "",
+			},
+			tokens: {},
+			fileName: "",
+			summarizer: false,
+			id: "id",
+		};
+		const cacheEntry1: ICacheEntry = {
+			key: "key1",
+			type: "snapshot",
+			file: { docId: hashedDocumentId, resolvedUrl: resolvedUrlWithFileVersion },
+		};
+
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		const entryFile1 = fileEntryFromEntry(cacheEntry1, epochTracker["fileEntry"]);
+		assert("fileVersion" in entryFile1.file.resolvedUrl, "file version should be present");
+		assert.strictEqual(
+			entryFile1.file.resolvedUrl.fileVersion,
+			"2",
+			"file version should be 2",
+		);
 	});
 });
