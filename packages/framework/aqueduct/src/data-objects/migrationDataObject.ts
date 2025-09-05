@@ -7,8 +7,13 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IFluidDataStoreRuntime,
 	IChannel,
+	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
-import { SharedDirectory, type ISharedDirectory } from "@fluidframework/map/internal";
+import {
+	SharedDirectory,
+	SharedMap,
+	type ISharedDirectory,
+} from "@fluidframework/map/internal";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { SharedTree, type ITree } from "@fluidframework/tree/internal";
 
@@ -36,8 +41,16 @@ export interface ModelDescriptor<T = unknown> {
 	// Probe runtime for an existing model based on which channels exist. Return the model instance or undefined if not found.
 	probe: (runtime: IFluidDataStoreRuntime) => Promise<T | undefined>;
 	// Factory to create the model when initializing a new store.
-	//* Should be async or synchronous?
+	//* BUG: Must be synchronous so can happen during migrate turn
 	create: (runtime: IFluidDataStoreRuntime) => Promise<T>;
+	/**
+	 * The factories needed for this Data Model, divided by whether they are always loaded or delay-loaded
+	 */
+	sharedObjects: {
+		//* Do we need to split these apart or just have IChannelFactory[]?
+		alwaysLoaded?: IChannelFactory[];
+		delayLoaded?: IDelayLoadChannelFactory[];
+	};
 	// Optional runtime type guard to help callers narrow model types.
 	is?: (m: unknown) => m is T;
 }
@@ -132,6 +145,12 @@ export function channelBackedDescriptor<T extends IChannel = IChannel>(opts: {
 	return {
 		type: opts.name,
 		id: opts.id,
+		sharedObjects: {
+			// Unknown channel factory for generic channel-backed descriptor; consumers
+			// can provide more specific descriptors when they know the concrete type.
+			alwaysLoaded: [],
+			delayLoaded: [],
+		},
 		probe: async (runtime) => {
 			try {
 				const ch = await runtime.getChannel(opts.id);
@@ -168,6 +187,14 @@ export function sharedDirectoryDescriptor(): ModelDescriptor<{ directory: IShare
 	return {
 		type: "sharedDirectory",
 		id: dataObjectRootDirectoryId,
+		sharedObjects: {
+			// SharedDirectory is always loaded on the root id
+			alwaysLoaded: [
+				SharedDirectory.getFactory(),
+				// TODO: Remove SharedMap factory when compatibility with SharedMap DataObject is no longer needed in 0.10
+				SharedMap.getFactory(),
+			],
+		},
 		probe: async (runtime) => {
 			try {
 				const ch = await runtime.getChannel(dataObjectRootDirectoryId);
@@ -200,6 +227,10 @@ export function sharedTreeDescriptor(
 	return {
 		type: "sharedTree",
 		id: treeChannelId,
+		sharedObjects: {
+			// Tree is provided via a delay-load factory
+			delayLoaded: [factory],
+		},
 		probe: async (runtime) => {
 			try {
 				const ch = await runtime.getChannel(treeChannelId);
@@ -211,6 +242,8 @@ export function sharedTreeDescriptor(
 			}
 		},
 		create: async (runtime) => {
+			//* Compare with what MigrationDataObjectFactory was doing before this PR:
+			//* It was awaiting loadObjectKindAsync() on the factory and then calling create() synchronously
 			const t = await factory.createAsync(runtime, treeChannelId);
 			const maybeShared = t as unknown as Partial<ISharedObject>;
 			if (

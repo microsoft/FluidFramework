@@ -9,6 +9,7 @@ import {
 	DataStoreMessageType,
 	FluidDataStoreRuntime,
 } from "@fluidframework/datastore/internal";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
@@ -21,6 +22,7 @@ import type {
 	IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize/internal";
 
+import type { IDelayLoadChannelFactory } from "../channel-factories/index.js";
 import type {
 	DataObjectTypes,
 	MigrationDataObject,
@@ -172,6 +174,11 @@ export class MigrationDataObjectFactory<
 				// Retrieve any async data required for migration using the discovered existing model (may be undefined)
 				const data = await this.props.asyncGetDataForMigration(existingModel);
 
+				// ! TODO: ensure these ops aren't sent immediately AB#41625
+				submitConversionOp(realRuntime);
+
+				//* BUG: Need to load any async factories for the target model
+				//* and then this create call can/must be synchronous (so all happens in one JS turn)
 				// Create the target model and run migration.
 				const newModel = await targetDescriptor.create(realRuntime);
 
@@ -187,6 +194,42 @@ export class MigrationDataObjectFactory<
 		};
 
 		const runtimeClass = props.runtimeClass ?? FluidDataStoreRuntime;
+
+		// Shallow copy since the input array is typed as a readonly array
+		const sharedObjects = [...(props.sharedObjects ?? [])];
+
+		//* TODO: Maybe we don't need to split by delay-loaded here (and in ModelDescriptor type)
+		const allFactories: {
+			alwaysLoaded: Map<string, IChannelFactory>;
+			delayLoaded: Map<string, IDelayLoadChannelFactory>;
+			// eslint-disable-next-line unicorn/no-array-reduce
+		} = props.modelDescriptors.reduce(
+			(acc, curr) => {
+				for (const factory of curr.sharedObjects.alwaysLoaded ?? []) {
+					acc.alwaysLoaded.set(factory.type, factory);
+				}
+				for (const factory of curr.sharedObjects.delayLoaded ?? []) {
+					acc.delayLoaded.set(factory.type, factory);
+				}
+				return acc;
+			},
+			{
+				alwaysLoaded: new Map<string, IChannelFactory>(),
+				delayLoaded: new Map<string, IDelayLoadChannelFactory>(),
+			},
+		);
+		for (const factory of allFactories.alwaysLoaded.values()) {
+			if (!sharedObjects.some((f) => f.type === factory.type)) {
+				// User did not register this factory
+				sharedObjects.push(factory);
+			}
+		}
+		for (const factory of allFactories.delayLoaded.values()) {
+			if (!sharedObjects.some((f) => f.type === factory.type)) {
+				// User did not register this factory
+				sharedObjects.push(factory);
+			}
+		}
 
 		super({
 			...props,
