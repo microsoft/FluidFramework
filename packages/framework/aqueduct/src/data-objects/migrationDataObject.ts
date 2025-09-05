@@ -21,10 +21,6 @@ import type { DataObjectTypes } from "./types.js";
  * @alpha
  */
 export interface ModelDescriptor<TModel = unknown> {
-	// Discriminated union tag
-	type?: string;
-	// Optional convenience id for simple channel-backed models
-	id?: string;
 	//* Consider if we want something more formal here or if "duck typing" the runtime channel structure is sufficient.
 	//* See Craig's DDS shim branch for an example of tagging migrations
 	// Probe runtime for an existing model based on which channels exist. Return the model instance or undefined if not found.
@@ -70,7 +66,7 @@ export abstract class MigrationDataObject<
 > extends PureDataObject<I> {
 	// The currently active model and its descriptor, if discovered or created.
 	#activeModel:
-		| { descriptor: ModelDescriptor<TUniversalView>; model: TUniversalView }
+		| { descriptor: ModelDescriptor<TUniversalView>; view: TUniversalView }
 		| undefined;
 
 	/**
@@ -87,8 +83,8 @@ export abstract class MigrationDataObject<
 	 * Returns the active model descriptor and channel after initialization.
 	 * Throws if initialization did not set a model.
 	 */
-	public getModel():
-		| { descriptor: ModelDescriptor<TUniversalView>; model: TUniversalView }
+	public get dataModel():
+		| { descriptor: ModelDescriptor<TUniversalView>; view: TUniversalView }
 		| undefined {
 		return this.#activeModel;
 	}
@@ -104,7 +100,7 @@ export abstract class MigrationDataObject<
 			try {
 				const maybe = await descriptor.probe(this.runtime);
 				if (maybe !== undefined) {
-					this.#activeModel = { descriptor, model: maybe };
+					this.#activeModel = { descriptor, view: maybe };
 					return;
 				}
 			} catch {
@@ -123,10 +119,18 @@ export abstract class MigrationDataObject<
 			// Note: implementer is responsible for binding any root channels and populating initial content on the created model
 			const created = creator.create(this.runtime);
 			if (created !== undefined) {
-				this.#activeModel = { descriptor: creator, model: created };
+				this.#activeModel = { descriptor: creator, view: created };
 			}
 		}
 
 		await super.initializeInternal(existing);
+	}
+
+	/**
+	 * Generates an error string indicating an item is uninitialized.
+	 * @param item - The name of the item that was uninitialized.
+	 */
+	protected getUninitializedErrorString(item: string): string {
+		return `${item} must be initialized before being accessed.`;
 	}
 }

@@ -5,21 +5,18 @@
 
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import {
-	SharedMap,
-	DirectoryFactory,
-	MapFactory,
-	SharedDirectory,
-} from "@fluidframework/map/internal";
 import type { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
 import type { FluidObjectSymbolProvider } from "@fluidframework/synthesize/internal";
 
-import type { DataObject, DataObjectTypes, IDataObjectProps } from "../data-objects/index.js";
-
 import {
-	PureDataObjectFactory,
-	type DataObjectFactoryProps,
-} from "./pureDataObjectFactory.js";
+	rootDirectoryDescriptor,
+	type RootDirectoryView,
+	// eslint-disable-next-line import/no-internal-modules -- //* TODO: do proper exports
+} from "../data-objects/dataObject.js";
+import type { DataObject, DataObjectTypes, IDataObjectProps } from "../data-objects/index.js";
+import { MigrationDataObjectFactory } from "../index.js";
+
+import type { DataObjectFactoryProps } from "./pureDataObjectFactory.js";
 
 /**
  * DataObjectFactory is the IFluidDataStoreFactory for use with DataObjects.
@@ -34,7 +31,7 @@ import {
 export class DataObjectFactory<
 	TObj extends DataObject<I>,
 	I extends DataObjectTypes = DataObjectTypes,
-> extends PureDataObjectFactory<TObj, I> {
+> extends MigrationDataObjectFactory<RootDirectoryView, RootDirectoryView, TObj, never, I> {
 	/**
 	 * @remarks Use the props object based constructor instead.
 	 * No new features will be added to this constructor,
@@ -71,19 +68,16 @@ export class DataObjectFactory<
 					}
 				: { ...propsOrType };
 
-		const sharedObjects = (newProps.sharedObjects = [...(newProps.sharedObjects ?? [])]);
-
-		if (!sharedObjects.some((factory) => factory.type === DirectoryFactory.Type)) {
-			// User did not register for directory
-			sharedObjects.push(SharedDirectory.getFactory());
-		}
-
-		// TODO: Remove SharedMap factory when compatibility with SharedMap DataObject is no longer needed in 0.10
-		if (!sharedObjects.some((factory) => factory.type === MapFactory.Type)) {
-			// User did not register for map
-			sharedObjects.push(SharedMap.getFactory());
-		}
-
-		super(newProps);
+		super({
+			...newProps,
+			asyncGetDataForMigration: async () => {
+				throw new Error("No migration supported");
+			},
+			canPerformMigration: async () => false,
+			modelDescriptors: [rootDirectoryDescriptor],
+			migrateDataObject: () => {
+				throw new Error("No migration supported");
+			},
+		});
 	}
 }

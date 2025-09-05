@@ -4,11 +4,7 @@
  */
 
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import {
-	SharedDirectory,
-	SharedMap,
-	type ISharedDirectory,
-} from "@fluidframework/map/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { SharedTree, type ITree } from "@fluidframework/tree/internal";
 
@@ -17,8 +13,9 @@ import {
 	MigrationDataObjectFactory,
 	type MigrationDataObjectFactoryProps,
 } from "./data-object-factories/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { rootDirectoryDescriptor } from "./data-objects/dataObject.js";
 import {
-	dataObjectRootDirectoryId,
 	MigrationDataObject,
 	treeChannelId,
 	type ModelDescriptor,
@@ -32,14 +29,14 @@ interface TreeModel {
 	tree: ITree & ISharedObject;
 }
 interface DirModel {
-	directory: ISharedDirectory;
+	root: ISharedDirectory;
 }
 //* NOTE: This would include the Arbitrary Keys APIs as well)
 type UniversalView = TreeModel | DirModel;
 
 // Build the model descriptors: target is SharedTree first, then SharedDirectory as the existing model
 const treeDesc: ModelDescriptor<TreeModel> = sharedTreeDescriptor(treeDelayLoadFactory);
-const dirDesc: ModelDescriptor<DirModel> = sharedDirectoryDescriptor();
+const dirDesc: ModelDescriptor<DirModel> = rootDirectoryDescriptor;
 
 // Example migration props
 interface MigrationData {
@@ -68,9 +65,9 @@ const props: MigrationDataObjectFactoryProps<
 	modelDescriptors: [treeDesc, dirDesc],
 	canPerformMigration: async () => true,
 	asyncGetDataForMigration: async (existingModel: UniversalView) => {
-		// existingModel will be { directory: ISharedDirectory } when present
-		if ("directory" in existingModel) {
-			const dir = existingModel.directory;
+		// existingModel will be { root: ISharedDirectory } when present
+		if ("root" in existingModel) {
+			const dir = existingModel.root;
 			// read some synchronous snapshot data out of the directory handles
 			return { entries: [...dir.entries()] };
 		}
@@ -90,42 +87,6 @@ const props: MigrationDataObjectFactoryProps<
 export const factory = new MigrationDataObjectFactory(props);
 
 /**
- * Convenience descriptor for SharedDirectory-backed models using the standard root id.
- */
-export function sharedDirectoryDescriptor(): ModelDescriptor<{ directory: ISharedDirectory }> {
-	return {
-		type: "sharedDirectory",
-		id: dataObjectRootDirectoryId,
-		sharedObjects: {
-			// SharedDirectory is always loaded on the root id
-			alwaysLoaded: [
-				SharedDirectory.getFactory(),
-				// TODO: Remove SharedMap factory when compatibility with SharedMap DataObject is no longer needed in 0.10
-				SharedMap.getFactory(),
-			],
-		},
-		probe: async (runtime) => {
-			try {
-				const directory = await runtime.getChannel(dataObjectRootDirectoryId);
-				if (SharedDirectory.is(directory)) {
-					return { directory };
-				}
-			} catch {
-				return undefined;
-			}
-		},
-		ensureFactoriesLoaded: async () => {},
-		create: (runtime) => {
-			const directory = SharedDirectory.create(runtime, dataObjectRootDirectoryId);
-			directory.bindToContext();
-			return { directory };
-		},
-		is: (m): m is { directory: ISharedDirectory } =>
-			!!(m && (m as unknown as Record<string, unknown>).directory),
-	};
-}
-
-/**
  * Convenience descriptor for SharedTree-backed models using the standard tree channel id
  * and a delay-load factory.
  */
@@ -133,8 +94,6 @@ export function sharedTreeDescriptor(
 	treeFactory: IDelayLoadChannelFactory<ITree & ISharedObject>, //* ISharedObject needed for bindToContext call
 ): ModelDescriptor<{ tree: ITree & ISharedObject }> {
 	return {
-		type: "sharedTree",
-		id: treeChannelId,
 		sharedObjects: {
 			// Tree is provided via a delay-load factory
 			delayLoaded: [treeFactory],

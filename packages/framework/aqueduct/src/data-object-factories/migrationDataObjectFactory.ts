@@ -42,9 +42,9 @@ import {
  */
 export interface MigrationDataObjectFactoryProps<
 	TUniversalView,
-	TNewModel extends TUniversalView,
+	TNewModel extends TUniversalView, //* TODO: Change order and default to TNewModel = TUniversalView
 	TObj extends MigrationDataObject<TUniversalView, I>,
-	TMigrationData,
+	TMigrationData = never, // In case migration is not needed (only a single model descriptor)
 	I extends DataObjectTypes = DataObjectTypes,
 > extends DataObjectFactoryProps<TObj, I> {
 	/**
