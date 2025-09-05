@@ -146,7 +146,7 @@ export class TaskManagerClass
 			(taskId: string, clientId: string, local: boolean, messageId: number) => {
 				// We're tracking local ops from this connection. Filter out local ops during "connecting"
 				// state since these were sent on the prior connection and were already cleared from the latestPendingOps.
-				if (runtime.connected && local) {
+				if (local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
 					assert(latestPendingOps !== undefined, "No pending ops for task");
 					const pendingOp = latestPendingOps.shift();
@@ -167,7 +167,7 @@ export class TaskManagerClass
 		this.opWatcher.on(
 			"abandon",
 			(taskId: string, clientId: string, local: boolean, messageId: number) => {
-				if (runtime.connected && local) {
+				if (local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
 					assert(latestPendingOps !== undefined, "No pending ops for task");
 					const pendingOp = latestPendingOps.shift();
@@ -189,7 +189,7 @@ export class TaskManagerClass
 		this.opWatcher.on(
 			"complete",
 			(taskId: string, clientId: string, local: boolean, messageId: number) => {
-				if (runtime.connected && local) {
+				if (local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
 					assert(latestPendingOps !== undefined, "No pending ops for task");
 					const pendingOp = latestPendingOps.shift();
@@ -668,7 +668,8 @@ export class TaskManagerClass
 	protected reSubmitCore(content: unknown, localOpMetadata: number): void {
 		assertIsTaskManagerOperation(content);
 		const pendingOps = this.latestPendingOps.get(content.taskId);
-		const pendingOp = pendingOps?.shift();
+		assert(pendingOps !== undefined, "No pending ops for task on resubmit attempt");
+		const pendingOp = pendingOps.shift();
 		assert(
 			pendingOp !== undefined &&
 				pendingOp.messageId === localOpMetadata &&
