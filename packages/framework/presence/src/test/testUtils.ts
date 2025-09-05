@@ -13,9 +13,11 @@ import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/inter
 import { spy } from "sinon";
 import type { SinonFakeTimers } from "sinon";
 
+import { broadcastJoinResponseDelaysMs } from "../presenceDatastoreManager.js";
 import { createPresenceManager } from "../presenceManager.js";
 import type {
 	InboundClientJoinMessage,
+	InboundDatastoreUpdateMessage,
 	OutboundClientJoinMessage,
 	SignalMessages,
 } from "../protocol.js";
@@ -155,18 +157,24 @@ export function prepareConnectedPresence(
 	const quorumClientIds = [...runtime.quorum.getMembers().keys()].filter(
 		(quorumClientId) => quorumClientId !== clientConnectionId,
 	);
-	if (quorumClientIds.length > 3) {
-		quorumClientIds.length = 3;
+	const audienceClientIds = [...runtime.audience.getMembers().keys()].filter(
+		(audienceClientId) => audienceClientId !== clientConnectionId,
+	);
+	const updateProviders = quorumClientIds.length > 0 ? quorumClientIds : audienceClientIds;
+	if (updateProviders.length > 3) {
+		updateProviders.length = 3;
 	}
 
 	const expectedClientJoin: OutboundClientJoinMessage &
 		Partial<Pick<InboundClientJoinMessage, "clientId">> = generateBasicClientJoin(clock.now, {
 		attendeeId,
 		clientConnectionId,
-		updateProviders: quorumClientIds,
+		updateProviders,
 	});
 	delete expectedClientJoin.clientId;
-	runtime.signalsExpected.push([expectedClientJoin]);
+	if (updateProviders.length > 0) {
+		runtime.signalsExpected.push([expectedClientJoin]);
+	}
 
 	const presence = createPresenceManager(runtime, attendeeId as AttendeeId);
 
@@ -200,8 +208,31 @@ export function prepareConnectedPresence(
 	// Pass a little time (to mimic reality)
 	clock.tick(10);
 
-	// Return the join signal
-	processSignal([], { ...expectedClientJoin, clientId: clientConnectionId }, true);
+	if (updateProviders.length > 0) {
+		// Return the join signal
+		processSignal([], { ...expectedClientJoin, clientId: clientConnectionId }, true);
+
+		// Pass time (to mimic likely response)
+		clock.tick(broadcastJoinResponseDelaysMs.namedResponder + 20);
+
+		// Send a fake join response
+		// There are no other attendees in the session (not realistic) but this
+		// convinces the presence manager that it now has full knowledge, which
+		// enables it to respond to other's join requests.
+		processSignal(
+			[],
+			{
+				type: "Pres:DatastoreUpdate",
+				content: {
+					...expectedClientJoin.content,
+					isComplete: true,
+					joinResponseFor: [clientConnectionId],
+				},
+				clientId: updateProviders[0],
+			} satisfies InboundDatastoreUpdateMessage,
+			false,
+		);
+	}
 
 	return {
 		presence,
