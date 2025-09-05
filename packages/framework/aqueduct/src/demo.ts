@@ -160,7 +160,7 @@ const dirDesc: ModelDescriptor<DirModel> = {
 
 // Example migration props
 interface MigrationData {
-	entries: [string, unknown][];
+	entries: [string, string][];
 }
 
 /**
@@ -189,18 +189,26 @@ const props: MigrationDataObjectFactoryProps<
 		const existingRoot = existingModel.getRoot();
 		if (existingRoot.isDirectory) {
 			const dir = existingRoot.root;
-			// read some synchronous snapshot data out of the directory handles
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			return { entries: [...dir.entries()] };
 		}
-		// else -- No need to migrate from tree, so don't implement this
+		// else -- No need to migrate from tree, so don't implement that fork
 		return { entries: [] };
 	},
 	migrateDataObject: (
-		runtime: IFluidDataStoreRuntime,
+		_runtime: IFluidDataStoreRuntime,
 		newModel: TreeModel,
 		data: MigrationData,
 	) => {
-		// newModel.tree.viewWith... to ingest the data
+		wrapTreeView(newModel.getRoot().root, (treeView) => {
+			// Initialize the root of the tree if it is not already initialized.
+			if (treeView.compatibility.canInitialize) {
+				treeView.initialize(new DemoSchema({ arbitraryKeys: [] }));
+			}
+			for (const [key, value] of data.entries) {
+				treeView.root.arbitraryKeys.set(key, value);
+			}
+		});
 	},
 };
 
