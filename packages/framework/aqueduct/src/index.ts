@@ -37,7 +37,11 @@ export {
 	createDataObjectKind,
 	MigrationDataObject,
 } from "./data-objects/index.js";
-export type { ModelDescriptor } from "./data-objects/index.js";
+export type {
+	ModelDescriptor,
+	RootDirectoryView,
+	RootTreeView,
+} from "./data-objects/index.js";
 export {
 	BaseContainerRuntimeFactory,
 	type BaseContainerRuntimeFactoryProps,

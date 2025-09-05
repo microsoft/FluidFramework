@@ -23,6 +23,8 @@ export const treeChannelId = "root-tree";
 
 /**
  * How to access the root Shared Tree maintained by this DataObject.
+ * @legacy
+ * @alpha
  */
 export interface RootTreeView {
 	tree: ITree;

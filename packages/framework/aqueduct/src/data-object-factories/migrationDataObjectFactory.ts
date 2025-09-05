@@ -42,11 +42,11 @@ import {
  * @alpha
  */
 export interface MigrationDataObjectFactoryProps<
-	TUniversalView,
-	TNewModel extends TUniversalView, //* TODO: Change order and default to TNewModel = TUniversalView
 	TObj extends MigrationDataObject<TUniversalView, I>,
-	TMigrationData = never, // In case migration is not needed (only a single model descriptor)
+	TUniversalView,
 	I extends DataObjectTypes = DataObjectTypes,
+	TNewModel extends TUniversalView = TUniversalView, // default case works for a single model descriptor
+	TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
 > extends DataObjectFactoryProps<TObj, I> {
 	/**
 	 * The constructor for the data object, which must also include static `modelDescriptors` property.
@@ -129,11 +129,11 @@ export interface MigrationDataObjectFactoryProps<
  * @alpha
  */
 export class MigrationDataObjectFactory<
-	TUniversalView,
-	TNewModel extends TUniversalView,
 	TObj extends MigrationDataObject<TUniversalView, I>,
-	TMigrationData,
+	TUniversalView,
 	I extends DataObjectTypes = DataObjectTypes,
+	TNewModel extends TUniversalView = TUniversalView, // default case works for a single model descriptor
+	TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
 > extends PureDataObjectFactory<TObj, I> {
 	private migrateLock = false;
 
@@ -142,11 +142,11 @@ export class MigrationDataObjectFactory<
 
 	public constructor(
 		private readonly props: MigrationDataObjectFactoryProps<
-			TUniversalView,
-			TNewModel,
 			TObj,
-			TMigrationData,
-			I
+			TUniversalView,
+			I,
+			TNewModel,
+			TMigrationData
 		>,
 	) {
 		const submitConversionOp = (runtime: FluidDataStoreRuntime): void => {

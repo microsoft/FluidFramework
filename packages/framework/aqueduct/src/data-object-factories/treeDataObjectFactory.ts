@@ -27,11 +27,10 @@ export class TreeDataObjectFactory<
 	TDataObject extends TreeDataObject<TDataObjectTypes>,
 	TDataObjectTypes extends DataObjectTypes = DataObjectTypes,
 > extends MigrationDataObjectFactory<
-	RootTreeView,
-	RootTreeView,
 	TDataObject,
-	never, // Migration not supported
-	TDataObjectTypes
+	RootTreeView,
+	TDataObjectTypes,
+	RootTreeView
 > {
 	public constructor(props: DataObjectFactoryProps<TDataObject, TDataObjectTypes>) {
 		const newProps = {

@@ -84,10 +84,8 @@ export abstract class MigrationDataObject<
 	] {
 		// Pull the static modelDescriptors off the subclass
 		const { modelDescriptors } = this.constructor as MigrationDataObjectFactoryProps<
-			TUniversalView,
-			TUniversalView,
 			this,
-			unknown,
+			TUniversalView,
 			I
 		>["ctor"];
 

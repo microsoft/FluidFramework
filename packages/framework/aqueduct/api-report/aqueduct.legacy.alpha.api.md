@@ -71,14 +71,16 @@ export interface CreateDataObjectProps<TObj extends PureDataObject, I extends Da
 }
 
 // @alpha @legacy
-export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
-    protected getUninitializedErrorString(item: string): string;
-    initializeInternal(existing: boolean): Promise<void>;
+export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends MigrationDataObject<RootDirectoryView, I> {
+    protected static modelDescriptors: [
+    ModelDescriptor<RootDirectoryView>,
+    ...ModelDescriptor<RootDirectoryView>[]
+    ];
     protected get root(): ISharedDirectory;
 }
 
 // @alpha @legacy
-export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
+export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes> extends MigrationDataObjectFactory<TObj, RootDirectoryView, I> {
     constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects?: readonly IChannelFactory[], optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeFactory?: typeof FluidDataStoreRuntime);
     constructor(props: DataObjectFactoryProps<TObj, I>);
 }
@@ -124,21 +126,19 @@ export interface IDelayLoadChannelFactory<T = unknown> extends IChannelFactory<T
 
 // @alpha @legacy
 export abstract class MigrationDataObject<TUniversalView, I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
-    getModel(): {
+    get dataModel(): {
         descriptor: ModelDescriptor<TUniversalView>;
-        model: TUniversalView;
+        view: TUniversalView;
     } | undefined;
+    protected getUninitializedErrorString(item: string): string;
     // (undocumented)
     initializeInternal(existing: boolean): Promise<void>;
-    protected abstract get modelCandidates(): [
-    ModelDescriptor<TUniversalView>,
-    ...ModelDescriptor<TUniversalView>[]
-    ];
 }
 
 // @alpha @legacy
-export class MigrationDataObjectFactory<TUniversalView, TNewModel extends TUniversalView, TObj extends MigrationDataObject<TUniversalView, I>, TMigrationData, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
-    constructor(props: MigrationDataObjectFactoryProps<TUniversalView, TNewModel, TObj, TMigrationData, I>);
+export class MigrationDataObjectFactory<TObj extends MigrationDataObject<TUniversalView, I>, TUniversalView, I extends DataObjectTypes = DataObjectTypes, TNewModel extends TUniversalView = TUniversalView, // default case works for a single model descriptor
+TMigrationData = never> extends PureDataObjectFactory<TObj, I> {
+    constructor(props: MigrationDataObjectFactoryProps<TObj, TUniversalView, I, TNewModel, TMigrationData>);
     protected observeCreateDataObject(createProps: {
         context: IFluidDataStoreContext;
         optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>;
@@ -146,12 +146,17 @@ export class MigrationDataObjectFactory<TUniversalView, TNewModel extends TUnive
 }
 
 // @alpha @legacy
-export interface MigrationDataObjectFactoryProps<TUniversalView, TNewModel extends TUniversalView, TObj extends MigrationDataObject<TUniversalView, I>, TMigrationData, I extends DataObjectTypes = DataObjectTypes> extends DataObjectFactoryProps<TObj, I> {
+export interface MigrationDataObjectFactoryProps<TObj extends MigrationDataObject<TUniversalView, I>, TUniversalView, I extends DataObjectTypes = DataObjectTypes, TNewModel extends TUniversalView = TUniversalView, // default case works for a single model descriptor
+TMigrationData = never> extends DataObjectFactoryProps<TObj, I> {
     asyncGetDataForMigration: (existingModel: TUniversalView) => Promise<TMigrationData>;
     canPerformMigration: (providers: AsyncFluidObjectProvider<I["OptionalProviders"]>) => Promise<boolean>;
+    ctor: (new (props: IDataObjectProps<I>) => TObj) & {
+        modelDescriptors: readonly [
+        ModelDescriptor<TNewModel>,
+        ...ModelDescriptor<TUniversalView>[]
+        ];
+    };
     migrateDataObject: (runtime: FluidDataStoreRuntime, newModel: TNewModel, data: TMigrationData) => void;
-    // (undocumented)
-    modelDescriptors: [ModelDescriptor<TNewModel>, ...ModelDescriptor<TUniversalView>[]];
     refreshDataObject?: () => Promise<void>;
 }
 
@@ -160,8 +165,6 @@ export interface ModelDescriptor<TModel = unknown> {
     create: (runtime: IFluidDataStoreRuntime) => TModel;
     ensureFactoriesLoaded: () => Promise<void>;
     // (undocumented)
-    id?: string;
-    // (undocumented)
     is?: (m: unknown) => m is TModel;
     // (undocumented)
     probe: (runtime: IFluidDataStoreRuntime) => Promise<TModel | undefined>;
@@ -169,8 +172,6 @@ export interface ModelDescriptor<TModel = unknown> {
         alwaysLoaded?: IChannelFactory[];
         delayLoaded?: IDelayLoadChannelFactory[];
     };
-    // (undocumented)
-    type?: string;
 }
 
 // @alpha @legacy
@@ -223,14 +224,24 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
 }
 
 // @alpha @legacy
-export abstract class TreeDataObject<TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObject<TDataObjectTypes> {
+export interface RootDirectoryView {
     // (undocumented)
-    initializeInternal(existing: boolean): Promise<void>;
+    root: ISharedDirectory;
+}
+
+// @alpha @legacy
+export interface RootTreeView {
+    // (undocumented)
+    tree: ITree;
+}
+
+// @alpha @legacy
+export abstract class TreeDataObject<TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends MigrationDataObject<RootTreeView, TDataObjectTypes> {
     protected get tree(): ITree;
 }
 
 // @alpha @legacy
-export class TreeDataObjectFactory<TDataObject extends TreeDataObject<TDataObjectTypes>, TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TDataObject, TDataObjectTypes> {
+export class TreeDataObjectFactory<TDataObject extends TreeDataObject<TDataObjectTypes>, TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends MigrationDataObjectFactory<TDataObject, RootTreeView, TDataObjectTypes, RootTreeView> {
     constructor(props: DataObjectFactoryProps<TDataObject, TDataObjectTypes>);
 }
 

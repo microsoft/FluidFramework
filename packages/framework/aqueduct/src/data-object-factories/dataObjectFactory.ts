@@ -32,7 +32,7 @@ import type { DataObjectFactoryProps } from "./pureDataObjectFactory.js";
 export class DataObjectFactory<
 	TObj extends DataObject<I>,
 	I extends DataObjectTypes = DataObjectTypes,
-> extends MigrationDataObjectFactory<RootDirectoryView, RootDirectoryView, TObj, never, I> {
+> extends MigrationDataObjectFactory<TObj, RootDirectoryView, I> {
 	/**
 	 * @remarks Use the props object based constructor instead.
 	 * No new features will be added to this constructor,

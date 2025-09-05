@@ -22,7 +22,11 @@ import {
 } from "./data-object-factories/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rootDirectoryDescriptor } from "./data-objects/dataObject.js";
-import { MigrationDataObject, type ModelDescriptor } from "./data-objects/index.js";
+import {
+	MigrationDataObject,
+	type DataObjectTypes,
+	type ModelDescriptor,
+} from "./data-objects/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { treeChannelId } from "./data-objects/treeDataObject.js";
 
@@ -171,14 +175,10 @@ class DirToTreeDataObject extends MigrationDataObject<ViewWithDirOrTree> {
 }
 
 const props: MigrationDataObjectFactoryProps<
-	ViewWithDirOrTree,
-	ViewWithDirOrTree & {
-		readonly getRoot: () => {
-			isDirectory: false;
-			root: ITree;
-		};
-	},
 	DirToTreeDataObject,
+	ViewWithDirOrTree,
+	DataObjectTypes,
+	TreeModel,
 	MigrationData
 > = {
 	type: "DirToTree",
@@ -205,8 +205,10 @@ const props: MigrationDataObjectFactoryProps<
 };
 
 // eslint-disable-next-line jsdoc/require-jsdoc
-export const factory = new MigrationDataObjectFactory(props);
+export async function demo(): Promise<void> {
+	const factory = new MigrationDataObjectFactory(props);
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const dataObject = await factory.createInstance({} as any as IContainerRuntimeBase);
-dataObject.dataModel?.view.getArbitraryKey("exampleKey");
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const dataObject = await factory.createInstance({} as any as IContainerRuntimeBase);
+	dataObject.dataModel?.view.getArbitraryKey("exampleKey");
+}
