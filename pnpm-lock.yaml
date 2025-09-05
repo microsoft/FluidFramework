@@ -9131,6 +9131,9 @@ importers:
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
+      '@fluidframework/test-utils':
+        specifier: workspace:~
+        version: link:../../test/test-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
@@ -13644,6 +13647,9 @@ importers:
       '@fluidframework/server-local-server':
         specifier: ^7.0.0
         version: 7.0.0
+      '@fluidframework/task-manager':
+        specifier: workspace:~
+        version: link:../../dds/task-manager
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
