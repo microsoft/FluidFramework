@@ -1077,6 +1077,26 @@ describe("TaskManager", () => {
 					);
 				});
 
+				it("Can subscribe to a task while disconnected and pending abandon won't be applied", async () => {
+					const taskId = "taskId";
+					const volunteerTaskP = taskManager1.volunteerForTask(taskId);
+					containerRuntimeFactory.processAllMessages();
+					const isAssigned = await volunteerTaskP;
+					assert.ok(isAssigned, "Should resolve true");
+					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+
+					taskManager1.abandon(taskId);
+					// Abandon won't be processed anymore since we're now disconnected and we
+					// don't resubmit ops.
+					containerRuntime1.connected = false;
+
+					taskManager1.subscribeToTask(taskId);
+					containerRuntime1.connected = true;
+					containerRuntimeFactory.processAllMessages();
+
+					assert.equal(taskManager1.assigned(taskId), true, "Should be assigned");
+				});
+
 				it("Can abandon subscription to multiple tasks while disconnected", async () => {
 					const taskId1 = "taskId1";
 					const taskId2 = "taskId2";
