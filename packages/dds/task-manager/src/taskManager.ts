@@ -673,13 +673,14 @@ export class TaskManagerClass
 		assertIsTaskManagerOperation(content);
 		const pendingOps = this.latestPendingOps.get(content.taskId);
 		assert(pendingOps !== undefined, "No pending ops for task on resubmit attempt");
-		const pendingOp = pendingOps.shift();
-		assert(
-			pendingOp !== undefined &&
-				pendingOp.messageId === localOpMetadata &&
-				pendingOp.type === content.type,
-			"Could not match pending op on resubmit attempt",
+		const pendingOpIndex = pendingOps.findIndex(
+			(op) => op.messageId === localOpMetadata && op.type === content.type,
 		);
+		assert(pendingOpIndex !== -1, "Could not match pending op on resubmit attempt");
+		pendingOps.splice(pendingOpIndex, 1);
+		if (pendingOps.length === 0) {
+			this.latestPendingOps.delete(content.taskId);
+		}
 	}
 
 	/**
@@ -872,11 +873,11 @@ export class TaskManagerClass
 		assertIsTaskManagerOperation(content);
 		const latestPendingOps = this.latestPendingOps.get(content.taskId);
 		assert(latestPendingOps !== undefined, "No pending ops when trying to rollback");
-		const pendingOpToRollback = latestPendingOps.pop();
-		assert(
-			pendingOpToRollback !== undefined && pendingOpToRollback.messageId === localOpMetadata,
-			"pending op mismatch",
+		const pendingOpIndex = latestPendingOps.findIndex(
+			(op) => op.messageId === localOpMetadata && op.type === content.type,
 		);
+		assert(pendingOpIndex !== -1, "pending op mismatch");
+		latestPendingOps.splice(pendingOpIndex, 1);
 		if (latestPendingOps.length === 0) {
 			this.latestPendingOps.delete(content.taskId);
 		}
