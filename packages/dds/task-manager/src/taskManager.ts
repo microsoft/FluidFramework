@@ -144,8 +144,6 @@ export class TaskManagerClass
 		this.opWatcher.on(
 			"volunteer",
 			(taskId: string, clientId: string, local: boolean, messageId: number | undefined) => {
-				// We're tracking local ops from this connection. Filter out local ops during "connecting"
-				// state since these were sent on the prior connection and were already cleared from the latestPendingOps.
 				if (local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
 					assert(latestPendingOps !== undefined, "No pending ops for task");
