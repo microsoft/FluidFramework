@@ -99,7 +99,7 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeFieldStoredSchema,
 } from "../core/index.js";
-import { typeboxValidator } from "../external-utilities/index.js";
+import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
 	Context,
 	type NodeIdentifierManager,
@@ -202,7 +202,7 @@ import { initializeForest } from "./feature-libraries/index.js";
  * A SharedObjectKind typed to return `ISharedTree` and configured with a `jsonValidator`.
  */
 export const DefaultTestSharedTreeKind = configuredSharedTree({
-	jsonValidator: typeboxValidator,
+	jsonValidator: FormatValidatorBasic,
 }) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 /**
@@ -615,7 +615,7 @@ export class SharedTreeTestFactory implements IChannelFactory<ISharedTree> {
 	) {
 		const optionsUpdated: SharedTreeOptionsInternal = {
 			...options,
-			jsonValidator: typeboxValidator,
+			jsonValidator: FormatValidatorBasic,
 		};
 		this.inner = configuredSharedTree(
 			optionsUpdated as SharedTreeOptions,
@@ -656,7 +656,7 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 // that equality of two schemas in tests is achieved by deep-comparing their persisted representations.
 // If the newer format is a superset of the previous format, it can be safely used for comparisons. This is the
 // case with schema format v2.
-const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaVersion.v2);
+const schemaCodec = makeSchemaCodec({ jsonValidator: FormatValidatorBasic }, SchemaVersion.v2);
 
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {
 	if (trees.length > 1) {
@@ -1023,7 +1023,7 @@ const assertDeepEqual = (a: unknown, b: unknown): void => assert.deepEqual(a, b)
  * Constructs a basic suite of round-trip tests for all versions of a codec family.
  * This helper should generally be wrapped in a `describe` block.
  *
- * Encoded data for JSON codecs within `family` will be validated using `typeboxValidator`.
+ * Encoded data for JSON codecs within `family` will be validated using `FormatValidatorBasic`.
  *
  * @privateRemarks It is generally not valid to compare the decoded formats with assert.deepEqual,
  * but since these round trip tests start with the decoded format (not the encoded format),
@@ -1052,7 +1052,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 			// pattern.
 			const jsonCodec =
 				codec.json.encodedSchema !== undefined
-					? withSchemaValidation(codec.json.encodedSchema, codec.json, typeboxValidator)
+					? withSchemaValidation(codec.json.encodedSchema, codec.json, FormatValidatorBasic)
 					: codec.json;
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
