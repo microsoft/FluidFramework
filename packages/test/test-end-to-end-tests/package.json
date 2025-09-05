@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-end-to-end-tests",
-	"version": "2.60.0",
+	"version": "2.61.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -134,15 +134,15 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
-		"@fluid-tools/build-cli": "^0.57.0",
+		"@fluid-tools/build-cli": "^0.58.1",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.57.0",
+		"@fluidframework/build-tools": "^0.58.1",
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
 		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@types/mocha": "^10.0.10",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",
-		"c8": "^8.0.1",
+		"c8": "^10.1.3",
 		"eslint": "~8.55.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"nock": "^13.3.3",

@@ -78,7 +78,7 @@ describe("BlobHandles", () => {
 				d.resolve();
 			},
 			stashedBlobs: {},
-			localBlobIdGenerator: () => "localId",
+			localIdGenerator: () => "localId",
 			isBlobDeleted: () => false,
 			storage: failProxy<IRuntimeStorageService>({
 				createBlob: async () => {
@@ -118,7 +118,7 @@ describe("BlobHandles", () => {
 				d.resolve();
 			},
 			stashedBlobs: {},
-			localBlobIdGenerator: () => "localId",
+			localIdGenerator: () => "localId",
 			storage: failProxy<IRuntimeStorageService>({
 				createBlob: async () => {
 					count++;

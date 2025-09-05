@@ -11,6 +11,7 @@ export function createAzureTokenProvider(
 	id: string,
 	name: string,
 	scopes?: ScopeType[],
+	attachScopes?: ScopeType[],
 ): ITokenProvider {
 	const key = process.env.azure__fluid__relay__service__key as string;
 	if (key) {
@@ -18,7 +19,7 @@ export function createAzureTokenProvider(
 			id,
 			name,
 		};
-		return new InsecureTokenProvider(key, userConfig, scopes);
+		return new InsecureTokenProvider(key, userConfig, scopes, attachScopes);
 	} else {
 		throw new Error("Cannot create token provider.");
 	}

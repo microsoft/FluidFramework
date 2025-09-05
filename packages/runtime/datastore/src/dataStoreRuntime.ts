@@ -1138,7 +1138,7 @@ export class FluidDataStoreRuntime
 	): void {
 		assert(
 			this.visibilityState === VisibilityState.LocallyVisible,
-			"The data store should be locally visible when generating attach summary",
+			0xc2c /* The data store should be locally visible when generating attach summary */,
 		);
 
 		const visitedContexts = new Set<string>();

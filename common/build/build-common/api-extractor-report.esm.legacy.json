@@ -4,7 +4,7 @@
 	"mainEntryPointFilePath": "<projectFolder>/lib/legacy.d.ts",
 	"apiReport": {
 		"reportFileName": "<unscopedPackageName>.legacy",
-		"reportVariants": ["public", "beta"] // "alpha" is not included to reduce noise
+		"reportVariants": ["beta", "public"]
 	},
 	// Assume all projects use a "current" report and don't need tsdocMetadata generated a
 	// second time via "legacy" report.
