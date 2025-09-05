@@ -114,7 +114,7 @@ function composeConnectMessage(
 			name: `test-user-name-${id}`,
 		},
 		scopes,
-		createScopes: [ScopeType.DocWrite],
+		createScopes: [ScopeType.DocWrite, ScopeType.DocRead],
 	};
 }
 
@@ -156,9 +156,10 @@ export async function connectChildProcesses(
 		// Note that DocWrite is used to have this attendee be the "leader".
 		// DocRead would also be valid as DocWrite is specified for attach when there
 		// is no document id (container id).
-		const connectContainerCreator = composeConnectMessage(0, [
-			writeClients > 0 ? ScopeType.DocWrite : ScopeType.DocRead,
-		]);
+		const connectContainerCreator = composeConnectMessage(
+			0,
+			writeClients > 0 ? [ScopeType.DocWrite, ScopeType.DocRead] : [ScopeType.DocRead],
+		);
 		firstChild.send(connectContainerCreator);
 	}
 	const { containerCreatorAttendeeId, containerId } = await timeoutAwait(
@@ -175,9 +176,10 @@ export async function connectChildProcesses(
 			attendeeIdPromises.push(Promise.resolve(containerCreatorAttendeeId));
 			continue;
 		}
-		const message = composeConnectMessage(index, [
-			index < writeClients ? ScopeType.DocWrite : ScopeType.DocRead,
-		]);
+		const message = composeConnectMessage(
+			index,
+			index < writeClients ? [ScopeType.DocWrite, ScopeType.DocRead] : [ScopeType.DocRead],
+		);
 		message.containerId = containerId;
 		attendeeIdPromises.push(
 			new Promise<AttendeeId>((resolve, reject) => {
