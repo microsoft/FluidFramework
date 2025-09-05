@@ -148,13 +148,14 @@ export class TaskManagerClass
 				// state since these were sent on the prior connection and were already cleared from the latestPendingOps.
 				if (runtime.connected && local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
-					const pendingOp = latestPendingOps?.shift();
+					assert(latestPendingOps !== undefined, "No pending ops for task");
+					const pendingOp = latestPendingOps.shift();
 					assert(
 						pendingOp !== undefined && pendingOp.messageId === messageId,
 						"Unexpected op",
 					);
 					assert(pendingOp.type === "volunteer", 0x07c /* "Unexpected op type" */);
-					if (latestPendingOps?.length === 0) {
+					if (latestPendingOps.length === 0) {
 						this.latestPendingOps.delete(taskId);
 					}
 				}
@@ -168,13 +169,14 @@ export class TaskManagerClass
 			(taskId: string, clientId: string, local: boolean, messageId: number) => {
 				if (runtime.connected && local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
-					const pendingOp = latestPendingOps?.shift();
+					assert(latestPendingOps !== undefined, "No pending ops for task");
+					const pendingOp = latestPendingOps.shift();
 					assert(
 						pendingOp !== undefined && pendingOp.messageId === messageId,
 						"Unexpected op",
 					);
 					assert(pendingOp.type === "abandon", 0x07e /* "Unexpected op type" */);
-					if (latestPendingOps?.length === 0) {
+					if (latestPendingOps.length === 0) {
 						this.latestPendingOps.delete(taskId);
 					}
 					this.abandonWatcher.emit("abandon", taskId, messageId);
@@ -189,13 +191,14 @@ export class TaskManagerClass
 			(taskId: string, clientId: string, local: boolean, messageId: number) => {
 				if (runtime.connected && local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
-					const pendingOp = latestPendingOps?.shift();
+					assert(latestPendingOps !== undefined, "No pending ops for task");
+					const pendingOp = latestPendingOps.shift();
 					assert(
 						pendingOp !== undefined && pendingOp.messageId === messageId,
 						"Unexpected op",
 					);
 					assert(pendingOp.type === "complete", 0x401 /* Unexpected op type */);
-					if (latestPendingOps?.length === 0) {
+					if (latestPendingOps.length === 0) {
 						this.latestPendingOps.delete(taskId);
 					}
 				}
