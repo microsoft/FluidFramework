@@ -25,6 +25,7 @@ import type {
 import type { IDelayLoadChannelFactory } from "../channel-factories/index.js";
 import type {
 	DataObjectTypes,
+	IDataObjectProps,
 	MigrationDataObject,
 	ModelDescriptor,
 } from "../data-objects/index.js";
@@ -47,6 +48,19 @@ export interface MigrationDataObjectFactoryProps<
 	TMigrationData = never, // In case migration is not needed (only a single model descriptor)
 	I extends DataObjectTypes = DataObjectTypes,
 > extends DataObjectFactoryProps<TObj, I> {
+	/**
+	 * The constructor for the data object, which must also include static `modelDescriptors` property.
+	 */
+	ctor: (new (
+		props: IDataObjectProps<I>,
+	) => TObj) & {
+		//* TODO: Add type alias for this array type
+		modelDescriptors: readonly [
+			ModelDescriptor<TNewModel>,
+			...ModelDescriptor<TUniversalView>[],
+		];
+	};
+
 	/**
 	 * Used for determining whether or not a migration can be performed based on providers and/or feature gates.
 	 *
@@ -104,9 +118,6 @@ export interface MigrationDataObjectFactoryProps<
 	 * If not provided, the Container will be closed after migration due to underlying changes affecting the data model.
 	 */
 	refreshDataObject?: () => Promise<void>;
-
-	// Descriptors ordered by desired priority. The first descriptor is the target (new) model.
-	modelDescriptors: [ModelDescriptor<TNewModel>, ...ModelDescriptor<TUniversalView>[]];
 }
 
 /**
@@ -158,9 +169,12 @@ export class MigrationDataObjectFactory<
 			this.migrateLock = true;
 
 			try {
+				// Read the model descriptors from the DataObject ctor (single source of truth).
+				const modelDescriptors = this.props.ctor.modelDescriptors;
+
 				// Destructure the target/first descriptor and probe it first. If it's present,
 				// the object already uses the target model and we're done.
-				const [targetDescriptor, ...otherDescriptors] = this.props.modelDescriptors;
+				const [targetDescriptor, ...otherDescriptors] = modelDescriptors;
 				//* TODO: Wrap error here with a proper error type?
 				const maybeTarget = await targetDescriptor.probe(realRuntime);
 				if (maybeTarget !== undefined) {
@@ -216,7 +230,7 @@ export class MigrationDataObjectFactory<
 			alwaysLoaded: Map<string, IChannelFactory>;
 			delayLoaded: Map<string, IDelayLoadChannelFactory>;
 			// eslint-disable-next-line unicorn/no-array-reduce
-		} = props.modelDescriptors.reduce(
+		} = props.ctor.modelDescriptors.reduce(
 			(acc, curr) => {
 				for (const factory of curr.sharedObjects.alwaysLoaded ?? []) {
 					acc.alwaysLoaded.set(factory.type, factory);

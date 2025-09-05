@@ -10,3 +10,4 @@ export { TreeDataObject, treeChannelId } from "./treeDataObject.js";
 export type { DataObjectKind, DataObjectTypes, IDataObjectProps } from "./types.js";
 export { MigrationDataObject } from "./migrationDataObject.js";
 export type { ModelDescriptor } from "./migrationDataObject.js";
+export type { RootDirectoryView } from "./dataObject.js";

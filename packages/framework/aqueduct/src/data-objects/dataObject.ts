@@ -20,40 +20,10 @@ import type { DataObjectTypes } from "./types.js";
 export const dataObjectRootDirectoryId = "root";
 
 /**
- * How to access the root Shared Directory maintained by this DataObject
+ * How to access the root Shared Directory maintained by this DataObject.
  */
 export interface RootDirectoryView {
 	[dataObjectRootDirectoryId]: ISharedDirectory;
-}
-
-/**
- * DataObject is a base data store that is primed with a root directory. It
- * ensures that it is created and ready before you can access it.
- *
- * Having a single root directory allows for easier development. Instead of creating
- * and registering channels with the runtime any new DDS that is set on the root
- * will automatically be registered.
- *
- * @typeParam I - The optional input types used to strongly type the data object
- * @legacy
- * @alpha
- */
-export abstract class DataObject<
-	I extends DataObjectTypes = DataObjectTypes,
-> extends MigrationDataObject<RootDirectoryView, I> {
-	/**
-	 * Access the root directory.
-	 *
-	 * Throws an error if the root directory is not yet initialized (should be hard to hit)
-	 */
-	protected get root(): ISharedDirectory {
-		const internalRoot = this.dataModel?.view.root;
-		if (!internalRoot) {
-			throw new Error(this.getUninitializedErrorString(`root`));
-		}
-
-		return internalRoot;
-	}
 }
 
 /**
@@ -93,3 +63,44 @@ export const rootDirectoryDescriptor: ModelDescriptor<RootDirectoryView> = {
 	is: (m): m is { root: ISharedDirectory } =>
 		!!(m && (m as unknown as Record<string, unknown>).root),
 };
+
+/**
+ * DataObject is a base data store that is primed with a root directory. It
+ * ensures that it is created and ready before you can access it.
+ *
+ * Having a single root directory allows for easier development. Instead of creating
+ * and registering channels with the runtime any new DDS that is set on the root
+ * will automatically be registered.
+ *
+ * @typeParam I - The optional input types used to strongly type the data object
+ * @legacy
+ * @alpha
+ */
+export abstract class DataObject<
+	I extends DataObjectTypes = DataObjectTypes,
+> extends MigrationDataObject<RootDirectoryView, I> {
+	//* QUESTION: What happens if a subclass tries to overwrite this> Is this a design concern?
+	/**
+	 * Probeable candidate roots the implementer expects for existing stores.
+	 * The order defines probing priority.
+	 * The first one will also be used for creation.
+	 */
+	protected static modelDescriptors: [
+		ModelDescriptor<RootDirectoryView>,
+		...ModelDescriptor<RootDirectoryView>[],
+	] = [rootDirectoryDescriptor];
+
+	/**
+	 * Access the root directory.
+	 *
+	 * Throws an error if the root directory is not yet initialized (should be hard to hit)
+	 */
+	protected get root(): ISharedDirectory {
+		const internalRoot = this.dataModel?.view.root;
+		if (!internalRoot) {
+			throw new Error(this.getUninitializedErrorString(`root`));
+		}
+
+		return internalRoot;
+	}
+}

@@ -9,6 +9,7 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 
 import type { IDelayLoadChannelFactory } from "../channel-factories/index.js";
+import type { MigrationDataObjectFactoryProps } from "../index.js";
 
 import { PureDataObject } from "./pureDataObject.js";
 import type { DataObjectTypes } from "./types.js";
@@ -73,11 +74,26 @@ export abstract class MigrationDataObject<
 	 * Probeable candidate roots the implementer expects for existing stores.
 	 * The order defines probing priority.
 	 * The first one will also be used for creation.
+	 *
+	 * @privateremarks
+	 * IMPORTANT: This accesses a static member on the subclass, so beware of class initialization order issues
 	 */
-	protected abstract get modelCandidates(): [
+	private get modelCandidates(): readonly [
 		ModelDescriptor<TUniversalView>,
 		...ModelDescriptor<TUniversalView>[],
-	];
+	] {
+		// Pull the static modelDescriptors off the subclass
+		const { modelDescriptors } = this.constructor as MigrationDataObjectFactoryProps<
+			TUniversalView,
+			TUniversalView,
+			this,
+			unknown,
+			I
+		>["ctor"];
+
+		//* TODO: Add runtime type guards? Or is type system sufficient here?
+		return modelDescriptors;
+	}
 
 	/**
 	 * Returns the active model descriptor and channel after initialization.
@@ -96,7 +112,7 @@ export abstract class MigrationDataObject<
 	private async inferModelFromRuntime(): Promise<void> {
 		this.#activeModel = undefined;
 
-		for (const descriptor of this.modelCandidates ?? []) {
+		for (const descriptor of this.modelCandidates) {
 			try {
 				const maybe = await descriptor.probe(this.runtime);
 				if (maybe !== undefined) {

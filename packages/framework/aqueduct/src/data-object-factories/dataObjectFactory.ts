@@ -8,12 +8,13 @@ import type { IChannelFactory } from "@fluidframework/datastore-definitions/inte
 import type { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
 import type { FluidObjectSymbolProvider } from "@fluidframework/synthesize/internal";
 
-import {
-	rootDirectoryDescriptor,
-	type RootDirectoryView,
-	// eslint-disable-next-line import/no-internal-modules -- //* TODO: do proper exports
-} from "../data-objects/dataObject.js";
-import type { DataObject, DataObjectTypes, IDataObjectProps } from "../data-objects/index.js";
+import type {
+	DataObject,
+	DataObjectTypes,
+	IDataObjectProps,
+	ModelDescriptor,
+	RootDirectoryView,
+} from "../data-objects/index.js";
 import { MigrationDataObjectFactory } from "../index.js";
 
 import type { DataObjectFactoryProps } from "./pureDataObjectFactory.js";
@@ -70,11 +71,19 @@ export class DataObjectFactory<
 
 		super({
 			...newProps,
+			// This cast is safe because TObj extends DataObject, which has static modelDescriptors
+			ctor: newProps.ctor as (new (
+				doProps: IDataObjectProps<I>,
+			) => TObj) & {
+				modelDescriptors: readonly [
+					ModelDescriptor<RootDirectoryView>,
+					...ModelDescriptor<RootDirectoryView>[],
+				];
+			}, //* TODO: Can we remove this cast?
 			asyncGetDataForMigration: async () => {
 				throw new Error("No migration supported");
 			},
 			canPerformMigration: async () => false,
-			modelDescriptors: [rootDirectoryDescriptor],
 			migrateDataObject: () => {
 				throw new Error("No migration supported");
 			},

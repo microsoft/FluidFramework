@@ -44,14 +44,8 @@ interface MigrationData {
 }
 
 class DirToTreeDataObject extends MigrationDataObject<UniversalView> {
-	protected get modelCandidates(): [
-		ModelDescriptor<UniversalView>,
-		...ModelDescriptor<UniversalView>[],
-	] {
-		//* BUG: This is redundant with the same list in the Factory
-		//* We need to fix the API so this array is only specified once
-		return [treeDesc, dirDesc];
-	}
+	// Single source of truth for descriptors: static on the DataObject class
+	public static modelDescriptors = [treeDesc, dirDesc] as const;
 }
 
 const props: MigrationDataObjectFactoryProps<
@@ -62,7 +56,6 @@ const props: MigrationDataObjectFactoryProps<
 > = {
 	type: "DirToTree",
 	ctor: DirToTreeDataObject,
-	modelDescriptors: [treeDesc, dirDesc],
 	canPerformMigration: async () => true,
 	asyncGetDataForMigration: async (existingModel: UniversalView) => {
 		// existingModel will be { root: ISharedDirectory } when present
