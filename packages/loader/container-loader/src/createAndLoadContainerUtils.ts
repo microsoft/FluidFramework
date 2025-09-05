@@ -219,7 +219,7 @@ export async function loadSummarizerContainerAndMakeSummary(
 			[DriverHeader.summarizingClient]: true,
 			[LoaderHeader.reconnect]: false,
 		},
-	} as const;
+	};
 
 	const container = await loader.resolve(request);
 
