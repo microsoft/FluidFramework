@@ -143,7 +143,7 @@ export class TaskManagerClass
 
 		this.opWatcher.on(
 			"volunteer",
-			(taskId: string, clientId: string, local: boolean, messageId: number) => {
+			(taskId: string, clientId: string, local: boolean, messageId: number | undefined) => {
 				// We're tracking local ops from this connection. Filter out local ops during "connecting"
 				// state since these were sent on the prior connection and were already cleared from the latestPendingOps.
 				if (local) {
@@ -166,7 +166,7 @@ export class TaskManagerClass
 
 		this.opWatcher.on(
 			"abandon",
-			(taskId: string, clientId: string, local: boolean, messageId: number) => {
+			(taskId: string, clientId: string, local: boolean, messageId: number | undefined) => {
 				if (local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
 					assert(latestPendingOps !== undefined, "No pending ops for task");
@@ -188,7 +188,7 @@ export class TaskManagerClass
 
 		this.opWatcher.on(
 			"complete",
-			(taskId: string, clientId: string, local: boolean, messageId: number) => {
+			(taskId: string, clientId: string, local: boolean, messageId: number | undefined) => {
 				if (local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
 					assert(latestPendingOps !== undefined, "No pending ops for task");
@@ -689,12 +689,12 @@ export class TaskManagerClass
 	protected processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
-		localOpMetadata: unknown,
+		localOpMetadata: number | undefined,
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
 			const op = message.contents as ITaskManagerOperation;
-			const messageId = localOpMetadata as number;
+			const messageId = localOpMetadata;
 
 			switch (op.type) {
 				case "volunteer": {
