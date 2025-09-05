@@ -190,6 +190,13 @@ export function chunkFieldSingle(
 	policy: ChunkCompressor,
 ): TreeChunk {
 	const chunks = chunkField(cursor, policy);
+	return combineChunks(chunks);
+}
+
+/**
+ * Combine multiple TreeChunks into a single TreeChunk.
+ */
+export function combineChunks(chunks: TreeChunk[]): TreeChunk {
 	if (chunks.length === 1) {
 		return chunks[0] ?? oob();
 	}
@@ -298,7 +305,8 @@ export function tryShapeFromFieldSchema(
 	if (childShape instanceof Polymorphic) {
 		return undefined;
 	}
-	return [key, childShape, 1];
+	return undefined;
+	// return [key, childShape, 1];
 }
 
 /**

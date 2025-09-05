@@ -163,6 +163,8 @@ export {
 	type SchemaStaticsAlpha,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
+	incrementalAllowedTypesMetadata,
+	shouldIncrementallySummarizeAllowedTypes,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
