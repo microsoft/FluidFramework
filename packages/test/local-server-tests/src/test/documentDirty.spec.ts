@@ -18,7 +18,7 @@ import {
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import type { IContainerRuntimeBaseExperimental } from "@fluidframework/runtime-definitions/internal";
+import type { ContainerRuntimeBaseAlpha } from "@fluidframework/runtime-definitions/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
@@ -300,8 +300,8 @@ describe("Document Dirty", () => {
 				containerRuntime.submit(nonDirtyableOp);
 
 				const stageControls = (
-					containerRuntime as IContainerRuntimeBaseExperimental
-				).enterStagingMode?.();
+					containerRuntime as unknown as ContainerRuntimeBaseAlpha
+				).enterStagingMode();
 
 				// Submit an op in staging mode - we will discard it later
 				sharedMap.set("key", "value");
@@ -309,7 +309,7 @@ describe("Document Dirty", () => {
 				// Dirty due to staged op
 				checkDirtyState("after value set", true, 0);
 
-				stageControls?.discardChanges();
+				stageControls.discardChanges();
 				// Not dirty since all that's left is a non-dirtyable op
 				checkDirtyState("after discarding staged changes", false, 1);
 
