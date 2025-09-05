@@ -742,7 +742,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	/**
 	 * Gets the minVersionForCollab passed into the ContainerRuntime.
 	 */
-	getMinVersionForCollab?(): MinimumVersionForCollab | undefined;
+	getMinVersionForCollab?(): MinimumVersionForCollab;
 }
 
 /**
