@@ -25,7 +25,7 @@ Afterwards, it is immutable until explicitly [upgraded](./index.mdx#schema-upgra
 The stored schema follows additional constraints that don't apply to view schemas:
 
 **1. Complete Description**
-The stored schema completely describes all data in the tree.
+The stored schema completely describes all possible data in the tree.
 Every node and field in the document is known to the stored schema.
 
 **2. Additive Only**
@@ -33,8 +33,8 @@ The stored schema can grow over time but cannot shrink.
 All nodes types present in the stored schema will exist forever, even if they stop being used by the view schema.
 
 **3. Field Key Stability**
-Field keys are permanent once introduced.
-If a field is removed and later reintroduced with a different type, SharedTree cannot distinguish between old and new data without inspecting values.
+Field keys on object nodes are permanent once introduced.
+Therefore, a field key on an object node in the stored schema can never be changed/reused/repurposed.
 
 ### Why These Constraints?
 
@@ -48,12 +48,12 @@ When you open a document, SharedTree compares your application's view schema wit
 
 - **Compatible**: Document can be opened and used normally
 - **Upgradeable**: Document can be upgraded to match your view schema using [`view.upgradeSchema()`](../../../api/fluid-framework/treeview-interface#upgradeschema-method)
-- **Incompatible**: Document cannot be opened with your current view schema
+- **Incompatible**: Document cannot be opened with or upgraded to match your current view schema
 
 They must be compatible or upgradeable in order for the application to work - otherwise, it cannot read or write data from/to the document.
 SharedTree will throw an assert if the application attempts to access the document's data with an incompatible view schema.
 
-Initially, a document is always compatible with the application that created it (i.e. the view schema is compatible with the stored schema).
+Initially, a document's stored schema is created to match the view schema at the time of creation, and therefore the view schema is compatible with the stored schema.
 However, later on the application might change the view schema.
 Such a change might be backwards compatible, forwards compatible, or neither or both.
 

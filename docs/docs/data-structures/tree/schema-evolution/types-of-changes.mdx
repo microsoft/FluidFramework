@@ -19,7 +19,7 @@ class Note extends factory.object("Note", {
 ## Compatible Changes
 
 The following changes are [backwards compatible](index.mdx#backwards-compatibility).
-However, it's important that applications carefully whether the change is [forwards compatible](./index.mdx#forwards-compatibility) inherently or if a [staged rollout](./index.mdx#staged-rollouts) is necessary.
+However, it's important that applications carefully review whether the change is [forwards compatible](./index.mdx#forwards-compatibility) inherently or if a [staged rollout](./index.mdx#staged-rollouts) is necessary.
 
 ### Adding Optional Fields
 
@@ -98,7 +98,7 @@ class Note extends factory.object("Note", {
 
 ### Making Optional Fields Required
 
-Making an optional field required breaks documents that don't have that field:
+Making an optional field required breaks documents whose stored schema does not know about that field:
 
 ```typescript
 // Breaking: Making optional field required
