@@ -17,7 +17,6 @@ import type {
 	IConfigProviderBase,
 	IRequest,
 	ITelemetryBaseLogger,
-	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
@@ -38,11 +37,7 @@ import {
 	createOdspUrl,
 	isOdspResolvedUrl,
 } from "@fluidframework/odsp-driver/internal";
-import type {
-	OdspResourceTokenFetchOptions,
-	IOdspResolvedUrl,
-} from "@fluidframework/odsp-driver-definitions/internal";
-import { lookupBlobStorageId } from "@fluidframework/runtime-utils/internal";
+import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -93,65 +88,6 @@ const odspClientFeatureGates = {
  */
 function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigProviderBase {
 	return wrapConfigProviderWithDefaults(baseConfigProvider, odspClientFeatureGates);
-}
-
-/**
- * OdspClient provides the ability to have a Fluid object backed by the ODSP service within the context of Microsoft 365 (M365) tenants.
- * @sealed
- * @beta
- */
-/**
- * Helper function to build a blob URL from a storage ID using ODSP-specific logic
- * @param storageId - The storage ID of the blob
- * @param resolvedUrl - The ODSP resolved URL containing endpoint information
- * @returns The blob URL if it can be built, undefined otherwise
- */
-function buildOdspBlobUrl(
-	storageId: string,
-	resolvedUrl: IOdspResolvedUrl,
-): string | undefined {
-	try {
-		const attachmentGETUrl = resolvedUrl.endpoints.attachmentGETStorageUrl;
-		if (!attachmentGETUrl) {
-			return undefined;
-		}
-		return `${attachmentGETUrl}/${encodeURIComponent(storageId)}/content`;
-	} catch {
-		return undefined;
-	}
-}
-
-/**
- * Helper function for ODSPClient to lookup blob URLs
- * @param runtimeInternal - The container runtime internal interface
- * @param handle - The blob handle to lookup the URL for
- * @param resolvedUrl - The ODSP resolved URL containing endpoint information
- * @returns The blob URL if found and the blob is not pending, undefined otherwise
- */
-function lookupOdspBlobURL(
-	runtimeInternal: unknown,
-	handle: IFluidHandle,
-	resolvedUrl: IOdspResolvedUrl,
-): string | undefined {
-	try {
-		if (
-			runtimeInternal !== undefined &&
-			typeof (runtimeInternal as { lookupBlobStorageId?: unknown }).lookupBlobStorageId ===
-				"function"
-		) {
-			// Get the storage ID from the runtime
-			const storageId = lookupBlobStorageId(runtimeInternal as never, handle);
-			if (storageId === undefined) {
-				return undefined;
-			}
-
-			// Build the URL using ODSP-specific logic
-			return buildOdspBlobUrl(storageId, resolvedUrl);
-		}
-		return undefined;
-	} catch {
-		return undefined;
-	}
 }
 
 /**
@@ -297,33 +233,11 @@ export class OdspClient {
 	}
 
 	private async getContainerServices(container: IContainer): Promise<OdspContainerServices> {
-		// Get the runtime access upfront
-		let runtimeInternal: unknown;
-		try {
-			const entryPoint = await container.getEntryPoint();
-			runtimeInternal = (entryPoint as { IStaticEntryPoint?: { extensionStore?: unknown } })
-				?.IStaticEntryPoint?.extensionStore;
-		} catch {
-			// If we can't access the runtime, runtimeInternal will remain undefined
-		}
-
-		// Get the resolved URL for ODSP-specific URL building
-		const resolvedUrl = container.resolvedUrl;
-		const odspResolvedUrl =
-			resolvedUrl && isOdspResolvedUrl(resolvedUrl) ? resolvedUrl : undefined;
-
 		return {
 			audience: createServiceAudience({
 				container,
 				createServiceMember: createOdspAudienceMember,
 			}),
-			lookupBlobURL: (handle) => {
-				if (!odspResolvedUrl) {
-					// Can't build URLs without ODSP resolved URL information
-					return undefined;
-				}
-				return lookupOdspBlobURL(runtimeInternal, handle, odspResolvedUrl);
-			},
 		};
 	}
 }

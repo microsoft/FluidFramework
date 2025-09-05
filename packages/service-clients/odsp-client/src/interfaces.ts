@@ -6,7 +6,6 @@
 import type {
 	IConfigProviderBase,
 	ITelemetryBaseLogger,
-	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 
@@ -88,22 +87,6 @@ export interface OdspContainerServices {
 	 * Provides an object that facilitates obtaining information about users present in the Fluid session, as well as listeners for roster changes triggered by users joining or leaving the session.
 	 */
 	audience: IOdspAudience;
-
-	/**
-	 * Lookup the blob URL for a blob handle.
-	 * @param handle - The blob handle to lookup the URL for
-	 * @returns The blob URL if found and the blob is not pending, undefined otherwise
-	 * @remarks
-	 * This function provides access to blob URLs for handles.
-	 * The URL may expire and does not support permalinks.
-	 * For blobs with pending payloads, this returns undefined. Consumers should use
-	 * the observability APIs on the handle (handle.payloadState, payloadShared event)
-	 * to understand/wait for URL availability.
-	 *
-	 * **WARNING**: This API comes with strong warnings that the URL may expire
-	 * and does not support permalinks.
-	 */
-	lookupBlobURL: (handle: IFluidHandle) => string | undefined;
 }
 
 /**
