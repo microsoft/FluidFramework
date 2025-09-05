@@ -1018,7 +1018,7 @@ export class MockFluidDataStoreRuntime
 	}
 
 	/**
-	 * @deprecated - Use `IFluidDataStoreContext.submitMessage` instead.
+	 * @deprecated Use `IFluidDataStoreContext.submitMessage` instead.
 	 * @see https://github.com/microsoft/FluidFramework/issues/24406
 	 */
 	public submitMessage(type: MessageType, content: any) {
