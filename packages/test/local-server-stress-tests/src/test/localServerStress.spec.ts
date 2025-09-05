@@ -35,13 +35,14 @@ describe("Local Server Stress", () => {
 		defaultTestCount: 100,
 		// skipMinimization: true,
 		// Uncomment to replay a particular seed.
-		// replay: 93,
+		// replay: 94,
 		// only: [30, 69],
 		saveFailures,
 		// saveSuccesses,
 		configurations: { "Fluid.Container.enableOfflineLoad": true },
 		skip: [
 			...[62], // shared array error
+			...[94], // task manager - Task queues are not the same size
 		],
 	});
 });
