@@ -627,7 +627,7 @@ describe("SchemaFactory Recursive methods", () => {
 						{ wrong: () => Test, metadata: {} },
 					]) {}
 					// @ts-expect-error This is malformed, and should fail
-					type _check = ValidateRecursiveSchemaAlpha<typeof Test>;
+					type _check = ValidateRecursiveSchema<typeof Test>;
 				}
 			}
 
