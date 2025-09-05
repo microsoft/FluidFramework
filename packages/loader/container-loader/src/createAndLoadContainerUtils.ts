@@ -198,8 +198,6 @@ export async function loadExistingContainer(
  * Loads a summarizer container with the required headers, triggers an on-demand summary, and then closes it.
  * Returns success/failure and an optional error for host-side handling.
  *
- * Note: This summarizer container is not intended to be reused.
- *
  * @beta
  */
 export async function loadSummarizerContainerAndMakeSummary(
