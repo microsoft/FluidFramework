@@ -305,8 +305,7 @@ export function tryShapeFromFieldSchema(
 	if (childShape instanceof Polymorphic) {
 		return undefined;
 	}
-	return undefined;
-	// return [key, childShape, 1];
+	return [key, childShape, 1];
 }
 
 /**
