@@ -156,6 +156,7 @@ export class MigrationDataObjectFactory<
 					// Already on target model; nothing to do.
 					return;
 				}
+				const targetFactoriesP = targetDescriptor.ensureFactoriesLoaded();
 
 				// Find the first model that probes successfully.
 				let existingModel: M | undefined;
@@ -172,15 +173,15 @@ export class MigrationDataObjectFactory<
 				);
 
 				// Retrieve any async data required for migration using the discovered existing model (may be undefined)
+				// In parallel, we are waiting for the target factories to load
 				const data = await this.props.asyncGetDataForMigration(existingModel);
+				await targetFactoriesP;
 
 				// ! TODO: ensure these ops aren't sent immediately AB#41625
 				submitConversionOp(realRuntime);
 
-				//* BUG: Need to load any async factories for the target model
-				//* and then this create call can/must be synchronous (so all happens in one JS turn)
 				// Create the target model and run migration.
-				const newModel = await targetDescriptor.create(realRuntime);
+				const newModel = targetDescriptor.create(realRuntime);
 
 				// Call consumer-provided migration implementation
 				this.props.migrateDataObject(realRuntime, newModel, data);

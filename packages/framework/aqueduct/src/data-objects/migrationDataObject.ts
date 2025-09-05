@@ -6,7 +6,6 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IFluidDataStoreRuntime,
-	IChannel,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
 import {
@@ -40,9 +39,19 @@ export interface ModelDescriptor<T = unknown> {
 	//* See Craig's DDS shim branch for an example of tagging migrations
 	// Probe runtime for an existing model based on which channels exist. Return the model instance or undefined if not found.
 	probe: (runtime: IFluidDataStoreRuntime) => Promise<T | undefined>;
-	// Factory to create the model when initializing a new store.
-	//* BUG: Must be synchronous so can happen during migrate turn
-	create: (runtime: IFluidDataStoreRuntime) => Promise<T>;
+	/**
+	 * Load any delay-loaded factories needed for this model.
+	 *
+	 * @remarks
+	 * This must be called before create can be called - otherwise the factory may be missing!
+	 */
+	ensureFactoriesLoaded: () => Promise<void>;
+	/**
+	 * Synchronously create the model.
+	 * @remarks
+	 * Any delay-loaded factories must already have been loaded via ModelDescriptor.loadFactories.
+	 */
+	create: (runtime: IFluidDataStoreRuntime) => T;
 	/**
 	 * The factories needed for this Data Model, divided by whether they are always loaded or delay-loaded
 	 */
@@ -115,9 +124,10 @@ export abstract class MigrationDataObject<
 			await this.refreshRoot();
 		} else {
 			const creator = this.modelCandidates[0];
+			await creator.ensureFactoriesLoaded();
 
 			// Note: implementer is responsible for binding any root channels and populating initial content on the created model
-			const created = await creator.create(this.runtime);
+			const created = creator.create(this.runtime);
 			if (created !== undefined) {
 				this.#activeModel = { descriptor: creator, model: created };
 			}
@@ -129,55 +139,6 @@ export abstract class MigrationDataObject<
 	// Backwards-compatibility helpers (optional for implementers):
 	// Implementers may provide RootDescriptor helpers for common types like SharedTree/SharedDirectory
 	// rather than implementing create/runtime probing themselves.
-}
-
-/**
- * Helper to build a simple channel-backed model descriptor where the model is an object
- * containing the single channel under `channel` key. The caller provides an id and a
- * runtime type guard for the underlying channel, and optionally a create factory.
- */
-export function channelBackedDescriptor<T extends IChannel = IChannel>(opts: {
-	id: string;
-	name?: string;
-	probeTypeGuard: (ch: IChannel) => ch is T;
-	createFactory?: (runtime: IFluidDataStoreRuntime) => Promise<T> | T;
-}): ModelDescriptor<{ channel: T }> {
-	return {
-		type: opts.name,
-		id: opts.id,
-		sharedObjects: {
-			// Unknown channel factory for generic channel-backed descriptor; consumers
-			// can provide more specific descriptors when they know the concrete type.
-			alwaysLoaded: [],
-			delayLoaded: [],
-		},
-		probe: async (runtime) => {
-			try {
-				const ch = await runtime.getChannel(opts.id);
-				if (opts.probeTypeGuard(ch)) {
-					return { channel: ch };
-				}
-			} catch {
-				return undefined;
-			}
-		},
-		create: async (runtime) => {
-			if (!opts.createFactory) {
-				throw new Error("No create factory provided for channel-backed descriptor");
-			}
-			const c = await opts.createFactory(runtime);
-			// bind if possible
-			const maybeShared = c as unknown as Partial<ISharedObject>;
-			if (
-				maybeShared.bindToContext !== undefined &&
-				typeof maybeShared.bindToContext === "function"
-			) {
-				maybeShared.bindToContext();
-			}
-			return { channel: c };
-		},
-		is: (m): m is { channel: T } => !!(m && (m as unknown as Record<string, unknown>).channel),
-	};
 }
 
 /**
@@ -207,7 +168,8 @@ export function sharedDirectoryDescriptor(): ModelDescriptor<{ directory: IShare
 				return undefined;
 			}
 		},
-		create: async (runtime) => {
+		ensureFactoriesLoaded: async () => {},
+		create: (runtime) => {
 			const d = SharedDirectory.create(runtime, dataObjectRootDirectoryId);
 			d.bindToContext();
 			return { directory: d };
@@ -241,10 +203,11 @@ export function sharedTreeDescriptor(
 				return undefined;
 			}
 		},
-		create: async (runtime) => {
-			//* Compare with what MigrationDataObjectFactory was doing before this PR:
-			//* It was awaiting loadObjectKindAsync() on the factory and then calling create() synchronously
-			const t = await factory.createAsync(runtime, treeChannelId);
+		ensureFactoriesLoaded: async () => {
+			await factory.loadObjectKindAsync();
+		},
+		create: (runtime) => {
+			const t = factory.create(runtime, treeChannelId);
 			const maybeShared = t as unknown as Partial<ISharedObject>;
 			if (
 				maybeShared.bindToContext !== undefined &&
