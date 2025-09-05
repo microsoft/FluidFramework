@@ -494,7 +494,29 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * {@inheritDoc SchemaFactory.objectRecursive}
+	 * {@link SchemaFactory.arrayRecursive} but only supporting some of the alpha features.
+	 *
+	 * Does not support annotated allowed types.
+	 */
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+	public arrayRecursiveAlphaLimited<
+		const Name extends TName,
+		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
+		const TCustomMetadata = unknown,
+	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
+		return this.arrayAlpha(
+			name,
+			allowedTypes as T & ImplicitAllowedTypes,
+			options,
+		) as unknown as ArrayNodeCustomizableSchemaUnsafe<
+			ScopedSchemaName<TScope, Name>,
+			T,
+			TCustomMetadata
+		>;
+	}
+
+	/**
+	 * {@inheritDoc SchemaFactory.arrayRecursive}
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public arrayRecursiveAlpha<
@@ -508,7 +530,7 @@ export class SchemaFactoryAlpha<
 			options,
 		) as unknown as ArrayNodeCustomizableSchemaUnsafe<
 			ScopedSchemaName<TScope, Name>,
-			UnannotateImplicitAllowedTypesUnsafe<T>,
+			T,
 			TCustomMetadata
 		>;
 	}
