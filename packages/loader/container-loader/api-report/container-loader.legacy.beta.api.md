@@ -159,6 +159,14 @@ export class Loader implements IHostLoader {
 // @beta @legacy
 export function loadExistingContainer(loadExistingContainerProps: ILoadExistingContainerProps): Promise<IContainer>;
 
+// @beta
+export function loadSummarizerContainerAndMakeSummary(loadExistingContainerProps: ILoadExistingContainerProps): Promise<{
+    success: true;
+} | {
+    success: false;
+    error: Error;
+}>;
+
 // @beta @legacy
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
 

@@ -760,6 +760,14 @@ export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConf
 }
 
 /**
+ * Configuration used internally to indicate on-demand summaries only (no election/heuristics).
+ * @internal
+ */
+export interface ISummaryConfigurationWithSummaryOnRequest extends ISummaryBaseConfiguration {
+	state: "summaryOnRequest";
+}
+
+/**
  * @legacy @beta
  */
 export type ISummaryConfiguration =
