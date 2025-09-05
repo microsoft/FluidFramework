@@ -54,14 +54,15 @@ interface IPendingOp {
 	messageId: number;
 }
 
-function isTaskManagerOperation(op: unknown): op is ITaskManagerOperation {
-	return (
+function assertIsTaskManagerOperation(op: unknown): asserts op is ITaskManagerOperation {
+	assert(
 		typeof op === "object" &&
-		op !== null &&
-		"taskId" in op &&
-		typeof op.taskId === "string" &&
-		"type" in op &&
-		(op.type === "volunteer" || op.type === "abandon" || op.type === "complete")
+			op !== null &&
+			"taskId" in op &&
+			typeof op.taskId === "string" &&
+			"type" in op &&
+			(op.type === "volunteer" || op.type === "abandon" || op.type === "complete"),
+		"Not a TaskManager operation",
 	);
 }
 
@@ -148,13 +149,13 @@ export class TaskManagerClass
 				if (runtime.connected && local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
 					const pendingOp = latestPendingOps?.shift();
-					assert(pendingOp !== undefined, 0x07b /* "Unexpected op" */);
-					// Need to check the id, since it's possible to volunteer and abandon multiple times before the acks
-					if (messageId === pendingOp.messageId) {
-						assert(pendingOp.type === "volunteer", 0x07c /* "Unexpected op type" */);
-						if (latestPendingOps?.length === 0) {
-							this.latestPendingOps.delete(taskId);
-						}
+					assert(
+						pendingOp !== undefined && pendingOp.messageId === messageId,
+						"Unexpected op",
+					);
+					assert(pendingOp.type === "volunteer", 0x07c /* "Unexpected op type" */);
+					if (latestPendingOps?.length === 0) {
+						this.latestPendingOps.delete(taskId);
 					}
 				}
 
@@ -168,15 +169,15 @@ export class TaskManagerClass
 				if (runtime.connected && local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
 					const pendingOp = latestPendingOps?.shift();
-					assert(pendingOp !== undefined, 0x07d /* "Unexpected op" */);
-					// Need to check the id, since it's possible to abandon and volunteer multiple times before the acks
-					if (messageId === pendingOp.messageId) {
-						assert(pendingOp.type === "abandon", 0x07e /* "Unexpected op type" */);
-						if (latestPendingOps?.length === 0) {
-							this.latestPendingOps.delete(taskId);
-						}
-						this.abandonWatcher.emit("abandon", taskId, messageId);
+					assert(
+						pendingOp !== undefined && pendingOp.messageId === messageId,
+						"Unexpected op",
+					);
+					assert(pendingOp.type === "abandon", 0x07e /* "Unexpected op type" */);
+					if (latestPendingOps?.length === 0) {
+						this.latestPendingOps.delete(taskId);
 					}
+					this.abandonWatcher.emit("abandon", taskId, messageId);
 				}
 
 				this.removeClientFromQueue(taskId, clientId);
@@ -189,13 +190,13 @@ export class TaskManagerClass
 				if (runtime.connected && local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
 					const pendingOp = latestPendingOps?.shift();
-					assert(pendingOp !== undefined, 0x400 /* Unexpected op */);
-					// Need to check the id, since it's possible to complete multiple times before the acks
-					if (messageId === pendingOp.messageId) {
-						assert(pendingOp.type === "complete", 0x401 /* Unexpected op type */);
-						if (latestPendingOps?.length === 0) {
-							this.latestPendingOps.delete(taskId);
-						}
+					assert(
+						pendingOp !== undefined && pendingOp.messageId === messageId,
+						"Unexpected op",
+					);
+					assert(pendingOp.type === "complete", 0x401 /* Unexpected op type */);
+					if (latestPendingOps?.length === 0) {
+						this.latestPendingOps.delete(taskId);
 					}
 				}
 
@@ -244,9 +245,6 @@ export class TaskManagerClass
 			// Remove this client from all queues to reflect the new state, since being disconnected automatically removes
 			// this client from all queues.
 			this.removeClientFromAllQueues(this.clientId);
-
-			// All of our outstanding ops will be for the old clientId even if they get ack'd
-			this.latestPendingOps.clear();
 		});
 	}
 
@@ -658,12 +656,22 @@ export class TaskManagerClass
 		this.connectionWatcher.emit("connect");
 	}
 
-	//
 	/**
 	 * Override resubmit core to avoid resubmission on reconnect.  On disconnect we accept our removal from the
 	 * queues, and leave it up to the user to decide whether they want to attempt to re-enter a queue on reconnect.
+	 * However, we do need to update latestPendingOps to account for the ops we will no longer be processing.
 	 */
-	protected reSubmitCore(): void {}
+	protected reSubmitCore(content: unknown, localOpMetadata: number): void {
+		assertIsTaskManagerOperation(content);
+		const pendingOps = this.latestPendingOps.get(content.taskId);
+		const pendingOp = pendingOps?.shift();
+		assert(
+			pendingOp !== undefined &&
+				pendingOp.messageId === localOpMetadata &&
+				pendingOp.type === content.type,
+			"Could not match pending op on resubmit attempt",
+		);
+	}
 
 	/**
 	 * Process a task manager operation
@@ -852,7 +860,7 @@ export class TaskManagerClass
 	 */
 	protected rollback(content: unknown, localOpMetadata: unknown): void {
 		assert(typeof localOpMetadata === "number", "Expect localOpMetadata to be a number");
-		assert(isTaskManagerOperation(content), "unexpected op content");
+		assertIsTaskManagerOperation(content);
 		const latestPendingOps = this.latestPendingOps.get(content.taskId);
 		const pendingOpToRollback = latestPendingOps?.pop();
 		assert(
