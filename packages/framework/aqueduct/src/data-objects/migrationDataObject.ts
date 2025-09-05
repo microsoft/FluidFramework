@@ -123,6 +123,8 @@ export abstract class MigrationDataObject<
 				// probe error for this candidate; continue to next candidate
 			}
 		}
+
+		//* TODO: Throw if we reach here?  It means no expected models were found
 	}
 
 	public override async initializeInternal(existing: boolean): Promise<void> {
@@ -134,9 +136,7 @@ export abstract class MigrationDataObject<
 
 			// Note: implementer is responsible for binding any root channels and populating initial content on the created model
 			const created = creator.create(this.runtime);
-			if (created !== undefined) {
-				this.#activeModel = { descriptor: creator, view: created };
-			}
+			this.#activeModel = { descriptor: creator, view: created };
 		}
 
 		await super.initializeInternal(existing);

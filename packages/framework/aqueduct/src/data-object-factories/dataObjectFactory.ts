@@ -79,7 +79,7 @@ export class DataObjectFactory<
 					ModelDescriptor<RootDirectoryView>,
 					...ModelDescriptor<RootDirectoryView>[],
 				];
-			}, //* TODO: Can we remove this cast?
+			}, //* TODO: Can we do something to avoid needing this cast?
 			asyncGetDataForMigration: async () => {
 				throw new Error("No migration supported");
 			},

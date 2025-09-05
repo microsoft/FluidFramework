@@ -7,7 +7,12 @@ import type { ISharedObject } from "@fluidframework/shared-object-base/internal"
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { SharedTree, type ITree } from "@fluidframework/tree/internal";
 
-import { PureDataObject } from "./pureDataObject.js";
+import {
+	MigrationDataObject,
+	type IDelayLoadChannelFactory,
+	type ModelDescriptor,
+} from "../index.js";
+
 import type { DataObjectTypes } from "./types.js";
 
 /**
@@ -15,6 +20,13 @@ import type { DataObjectTypes } from "./types.js";
  * @privateRemarks This key is persisted and should not be changed without a migration strategy.
  */
 export const treeChannelId = "root-tree";
+
+/**
+ * How to access the root Shared Tree maintained by this DataObject.
+ */
+export interface RootTreeView {
+	tree: ITree;
+}
 
 const uninitializedErrorString =
 	"The tree has not yet been initialized. The data object must be initialized before accessing.";
@@ -61,52 +73,54 @@ const uninitializedErrorString =
  */
 export abstract class TreeDataObject<
 	TDataObjectTypes extends DataObjectTypes = DataObjectTypes,
-> extends PureDataObject<TDataObjectTypes> {
-	/**
-	 * The underlying {@link @fluidframework/tree#ITree | tree}.
-	 * @remarks Created once during initialization.
-	 */
-	#tree: ITree | undefined;
-
+> extends MigrationDataObject<RootTreeView, TDataObjectTypes> {
 	/**
 	 * The underlying {@link @fluidframework/tree#ITree | tree}.
 	 * @remarks Created once during initialization.
 	 */
 	protected get tree(): ITree {
-		if (this.#tree === undefined) {
+		const tree = this.dataModel?.view.tree;
+		if (!tree) {
 			throw new UsageError(uninitializedErrorString);
 		}
-		return this.#tree;
+
+		return tree;
 	}
+}
 
-	public override async initializeInternal(existing: boolean): Promise<void> {
-		if (existing) {
-			// data store has a root tree so we just need to set it before calling initializingFromExisting
-			const channel = await this.runtime.getChannel(treeChannelId);
-
-			// TODO: Support using a Directory to Tree migration shim and DataObject's root channel ID
-			// to allow migrating from DataObject to TreeDataObject instead of just erroring in that case.
-			if (!SharedTree.is(channel)) {
-				throw new Error(
-					`Content with id ${channel.id} is not a SharedTree and cannot be loaded with treeDataObject.`,
-				);
+/**
+ * Model Descriptor for the new root SharedTree model.
+ * Note that it leverages a delay-load factory for the tree's factory.
+ */
+export function rootSharedTreeDescriptor(
+	treeFactory: IDelayLoadChannelFactory<ITree>,
+): ModelDescriptor<{ tree: ITree }> {
+	return {
+		sharedObjects: {
+			// Tree is provided via a delay-load factory
+			delayLoaded: [treeFactory],
+		},
+		probe: async (runtime) => {
+			try {
+				const tree = await runtime.getChannel(treeChannelId);
+				if (SharedTree.is(tree)) {
+					return { tree: tree as ITree };
+				}
+			} catch {
+				return undefined;
 			}
-			const sharedTree: ITree = channel;
-
-			this.#tree = sharedTree;
-		} else {
-			const sharedTree = this.runtime.createChannel(
+		},
+		ensureFactoriesLoaded: async () => {
+			await treeFactory.loadObjectKindAsync();
+		},
+		create: (runtime) => {
+			const tree = runtime.createChannel(
 				treeChannelId,
 				SharedTree.getFactory().type,
-			) as unknown as ITree;
-			(sharedTree as unknown as ISharedObject).bindToContext();
-
-			this.#tree = sharedTree;
-
-			// Note, the implementer is responsible for initializing the tree with initial data.
-			// Generally, this can be done via `initializingFirstTime`.
-		}
-
-		await super.initializeInternal(existing);
-	}
+			) as unknown as ITree & ISharedObject; //* Bummer casting here. The factory knows what it returns (although that doesn't help with ISharedObject)
+			tree.bindToContext();
+			return { tree };
+		},
+		is: (m): m is { tree: ITree } => !!(m && (m as unknown as Record<string, unknown>).tree),
+	};
 }

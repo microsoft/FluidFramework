@@ -23,11 +23,11 @@ export const dataObjectRootDirectoryId = "root";
  * How to access the root Shared Directory maintained by this DataObject.
  */
 export interface RootDirectoryView {
-	[dataObjectRootDirectoryId]: ISharedDirectory;
+	root: ISharedDirectory; // (property name here doesn't have to match the channel ID "root")
 }
 
 /**
- * Convenience descriptor for SharedDirectory-backed models using the standard root id.
+ * Model Descriptor for the classic root SharedDirectory model.
  */
 export const rootDirectoryDescriptor: ModelDescriptor<RootDirectoryView> = {
 	sharedObjects: {
