@@ -338,6 +338,10 @@ export class TaskManagerClass
 
 		// This promise works even if we already have an outstanding volunteer op.
 		const lockAcquireP = new Promise<boolean>((resolve, reject) => {
+			// If we don't send an op (meaning the latest pending op is "volunteer"), nextPendingMessageId
+			// will be greater than that prior "volunteer" op's messageId.  This is OK because
+			// we only use it to filter stale abandon/complete, and not when determining if we
+			// acquired the lock.
 			const nextPendingMessageId = this.nextPendingMessageId;
 			const setupListeners = (): void => {
 				this.queueWatcher.on("queueChange", checkIfAcquiredLock);
