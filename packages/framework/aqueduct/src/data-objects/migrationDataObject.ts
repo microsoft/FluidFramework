@@ -31,12 +31,13 @@ export interface ModelDescriptor<T = unknown> {
 	type?: string;
 	// Optional convenience id for simple channel-backed models
 	id?: string;
-	//* This mechanism feels a bit brittle or overly generic. Maybe each model needs a key channel or something? Or maybe it's ok.
+	//* Consider if we want something more formal here or if "duck typing" the runtime channel structure is sufficient.
 	//* See Craig's DDS shim branch for an example of tagging migrations
 	// Probe runtime for an existing model based on which channels exist. Return the model instance or undefined if not found.
-	probe: (runtime: IFluidDataStoreRuntime) => Promise<T | undefined> | T | undefined;
+	probe: (runtime: IFluidDataStoreRuntime) => Promise<T | undefined>;
 	// Factory to create the model when initializing a new store.
-	create: (runtime: IFluidDataStoreRuntime) => Promise<T> | T;
+	//* Should be async or synchronous?
+	create: (runtime: IFluidDataStoreRuntime) => Promise<T>;
 	// Optional runtime type guard to help callers narrow model types.
 	is?: (m: unknown) => m is T;
 }
@@ -179,7 +180,7 @@ export function sharedDirectoryDescriptor(): ModelDescriptor<{ directory: IShare
 				return undefined;
 			}
 		},
-		create: (runtime) => {
+		create: async (runtime) => {
 			const d = SharedDirectory.create(runtime, dataObjectRootDirectoryId);
 			d.bindToContext();
 			return { directory: d };

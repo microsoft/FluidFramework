@@ -15,7 +15,6 @@ import type {
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import type {
 	AsyncFluidObjectProvider,
 	FluidObjectSymbolProvider,
@@ -40,9 +39,8 @@ import {
  * @alpha
  */
 export interface MigrationDataObjectFactoryProps<
-	ExistingModel,
-	NewModel,
-	TObj extends MigrationDataObject<NewModel, I>,
+	M,
+	TObj extends MigrationDataObject<M, I>,
 	TMigrationData,
 	I extends DataObjectTypes = DataObjectTypes,
 > extends DataObjectFactoryProps<TObj, I> {
@@ -71,9 +69,7 @@ export interface MigrationDataObjectFactoryProps<
 	 * }
 	 * ```
 	 */
-	asyncGetDataForMigration: (
-		existingModel: ExistingModel | undefined,
-	) => Promise<TMigrationData>;
+	asyncGetDataForMigration: (existingModel: M) => Promise<TMigrationData>;
 
 	/**
 	 * Migrate the DataObject upon resolve (i.e. on retrieval of the DataStore).
@@ -96,7 +92,7 @@ export interface MigrationDataObjectFactoryProps<
 	 */
 	migrateDataObject: (
 		runtime: FluidDataStoreRuntime,
-		newModel: NewModel,
+		newModel: M,
 		data: TMigrationData,
 	) => void;
 
@@ -105,9 +101,8 @@ export interface MigrationDataObjectFactoryProps<
 	 */
 	refreshDataObject?: () => Promise<void>;
 
-	// No legacy/backwards-compat properties: consumers must provide descriptors
-	existingModelDescriptor?: ModelDescriptor<ExistingModel>;
-	newModelDescriptor: ModelDescriptor<NewModel>;
+	// Descriptors ordered by desired priority. The first descriptor is the target (new) model.
+	modelDescriptors: [ModelDescriptor<M>, ...ModelDescriptor<M>[]];
 }
 
 /**
@@ -119,9 +114,8 @@ export interface MigrationDataObjectFactoryProps<
  * @alpha
  */
 export class MigrationDataObjectFactory<
-	ExistingModel,
-	NewModel,
-	TObj extends MigrationDataObject<NewModel, I>,
+	M,
+	TObj extends MigrationDataObject<M, I>,
 	TMigrationData,
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObjectFactory<TObj, I> {
@@ -131,13 +125,7 @@ export class MigrationDataObjectFactory<
 	private static readonly conversionContent = "conversion";
 
 	public constructor(
-		private readonly props: MigrationDataObjectFactoryProps<
-			ExistingModel,
-			NewModel,
-			TObj,
-			TMigrationData,
-			I
-		>,
+		private readonly props: MigrationDataObjectFactoryProps<M, TObj, TMigrationData, I>,
 	) {
 		const submitConversionOp = (runtime: FluidDataStoreRuntime): void => {
 			runtime.submitMessage(
@@ -150,11 +138,6 @@ export class MigrationDataObjectFactory<
 		const fullMigrateDataObject = async (runtime: IFluidDataStoreChannel): Promise<void> => {
 			const realRuntime = runtime as FluidDataStoreRuntime;
 			// Descriptor-driven migration flow (no backwards compatibility path)
-			assert(
-				this.props.newModelDescriptor !== undefined,
-				"Expected newModelDescriptor to be provided",
-			);
-
 			if (!this.canPerformMigration || this.migrateLock) {
 				return;
 			}
@@ -162,39 +145,42 @@ export class MigrationDataObjectFactory<
 			this.migrateLock = true;
 
 			try {
-				// Probe for an existing model if a descriptor was supplied.
-				let existingModel: ExistingModel | undefined;
-				if (this.props.existingModelDescriptor) {
-					existingModel = await this.props.existingModelDescriptor.probe(realRuntime);
+				// Destructure the target/first descriptor and probe it first. If it's present,
+				// the object already uses the target model and we're done.
+				const [targetDescriptor, ...otherDescriptors] = this.props.modelDescriptors;
+				//* TODO: Wrap error here with a proper error type?
+				const maybeTarget = await targetDescriptor.probe(realRuntime);
+				if (maybeTarget !== undefined) {
+					// Already on target model; nothing to do.
+					return;
 				}
+
+				// Find the first model that probes successfully.
+				let existingModel: M | undefined;
+				for (const desc of otherDescriptors) {
+					//* Should probe errors be fatal?
+					existingModel = await desc.probe(realRuntime).catch(() => undefined);
+					if (existingModel !== undefined) {
+						break;
+					}
+				}
+				assert(
+					existingModel !== undefined,
+					"Unable to match runtime structure to any known data model",
+				);
 
 				// Retrieve any async data required for migration using the discovered existing model (may be undefined)
 				const data = await this.props.asyncGetDataForMigration(existingModel);
 
-				// ! TODO: ensure these ops aren't sent immediately AB#41625
-				submitConversionOp(realRuntime);
+				// Create the target model and run migration.
+				const newModel = await targetDescriptor.create(realRuntime);
 
-				//* const treeRoot = props.treeDelayLoadFactory.create(realRuntime, treeChannelId);
-				// Create the new model
-				let newModel: NewModel | undefined =
-					await this.props.newModelDescriptor.probe(realRuntime);
-				//* Should always be true - original probing would have found it before the old one
-				if (newModel === undefined) {
-					newModel = await this.props.newModelDescriptor.create(realRuntime);
-					// bind to context if channel-like
-					const maybeShared = newModel as unknown as Partial<ISharedObject>;
-					if (
-						maybeShared.bindToContext !== undefined &&
-						typeof maybeShared.bindToContext === "function"
-					) {
-						maybeShared.bindToContext();
-					}
-				}
 				// Call consumer-provided migration implementation
 				this.props.migrateDataObject(realRuntime, newModel, data);
 
-				//* TODO: ModelDescriptor needs an "evacuate" function that removes its roots from the DataStoreRuntime
-				//* (runtime as any).removeRoot();
+				//* TODO: evacuate old model
+				//* i.e. delete unused root contexts, but not only that.  GC doesn't run sub-DataStore.
+				//* So we will need to plumb through now-unused channels to here.  Can be a follow-up.
 			} finally {
 				this.migrateLock = false;
 			}
