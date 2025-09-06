@@ -333,6 +333,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
     // (undocumented)
     getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
+    getMinVersionForCollab?(): MinimumVersionForCollab;
     // (undocumented)
     getQuorum(): IQuorumClients;
     // (undocumented)
@@ -349,6 +350,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     isLocalDataStore: boolean;
     // (undocumented)
     makeLocallyVisible(): void;
+    // (undocumented)
+    minVersionForCollab: MinimumVersionForCollab;
     // (undocumented)
     off(event: string | symbol, listener: (...args: any[]) => void): this;
     // (undocumented)
@@ -385,6 +388,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         idCompressor?: IIdCompressor & IIdCompressorCore;
         attachState?: AttachState;
         registry?: readonly IChannelFactory[];
+        minVersionForCollab?: MinimumVersionForCollab;
     });
     // (undocumented)
     get absolutePath(): string;

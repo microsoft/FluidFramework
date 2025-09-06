@@ -13,6 +13,7 @@ import type {
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
+	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor/internal";
 import type {
@@ -20,6 +21,7 @@ import type {
 	ITelemetryContext,
 	IExperimentalIncrementalSummaryContext,
 	IRuntimeMessageCollection,
+	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -140,6 +142,8 @@ class SharedObjectFromKernel<
 			logger: this.logger,
 			idCompressor: runtime.idCompressor,
 			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
+			minVersionForCollab: (runtime as IFluidDataStoreRuntimeInternalConfig)
+				.minVersionForCollab,
 		};
 	}
 
@@ -289,6 +293,10 @@ export interface KernelArgs {
 	 * {@inheritdoc @fluidframework/container-definitions#IDeltaManager.lastSequenceNumber}
 	 */
 	readonly lastSequenceNumber: () => number;
+	/**
+	 * The minVersionForCollab specified when instantiating the ContainerRuntime.
+	 */
+	readonly minVersionForCollab: MinimumVersionForCollab | undefined;
 }
 
 /**

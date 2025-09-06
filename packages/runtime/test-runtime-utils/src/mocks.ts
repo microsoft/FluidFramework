@@ -60,6 +60,7 @@ import {
 	type ITelemetryContext,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getNormalizedObjectStoragePathParts,
@@ -856,6 +857,7 @@ export class MockFluidDataStoreRuntime
 		idCompressor?: IIdCompressor & IIdCompressorCore;
 		attachState?: AttachState;
 		registry?: readonly IChannelFactory[];
+		minVersionForCollab?: MinimumVersionForCollab;
 	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
@@ -879,6 +881,7 @@ export class MockFluidDataStoreRuntime
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
 	}
+
 	private readonly: boolean = false;
 	public readonly isReadOnly = () => this.readonly;
 

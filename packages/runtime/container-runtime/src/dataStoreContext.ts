@@ -67,6 +67,7 @@ import {
 	type IFluidDataStoreFactory,
 	type PackagePath,
 	type IRuntimeStorageService,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -1213,6 +1214,10 @@ export abstract class FluidDataStoreContext
 		signal?: AbortSignal,
 	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		return this.parentContext.uploadBlob(blob, signal);
+	}
+
+	public getMinVersionForCollab(): MinimumVersionForCollab {
+		return this.parentContext.getMinVersionForCollab();
 	}
 }
 
