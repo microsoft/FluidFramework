@@ -47,6 +47,7 @@ import {
 	MockNodeIdentifierManager,
 	jsonableTreeFromCursor,
 	cursorForJsonableTreeNode,
+	defaultIncrementalEncodingPolicy,
 } from "../../../feature-libraries/index.js";
 import {
 	type ISharedTreeEditor,
@@ -135,7 +136,13 @@ describe("End to end chunked encoding", () => {
 			Number.POSITIVE_INFINITY,
 			Number.POSITIVE_INFINITY,
 			defaultChunkPolicy.uniformChunkNodeCount,
-			tryShapeFromSchema,
+			(...args) =>
+				tryShapeFromSchema(
+					treeSchema,
+					defaultSchemaPolicy,
+					defaultIncrementalEncodingPolicy,
+					...args,
+				),
 		);
 
 		const forest = buildChunkedForest(chunker);

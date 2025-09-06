@@ -15,7 +15,6 @@ import {
 	type StoredSchemaCollection,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
-	type TreeStoredSchema,
 	type TreeStoredSchemaSubscription,
 	type TreeValue,
 	type Value,
@@ -32,6 +31,7 @@ import { isStableNodeIdentifier } from "../node-identifier/index.js";
 import { BasicChunk } from "./basicChunk.js";
 import { SequenceChunk } from "./sequenceChunk.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
+import type { IncrementalEncodingPolicy } from "./codec/index.js";
 
 export interface Disposable {
 	/**
@@ -46,6 +46,7 @@ export interface Disposable {
 export function makeTreeChunker(
 	schema: TreeStoredSchemaSubscription,
 	policy: FullSchemaPolicy,
+	shouldEncodeIncrementally: IncrementalEncodingPolicy,
 ): IChunker {
 	return new Chunker(
 		schema,
@@ -53,7 +54,8 @@ export function makeTreeChunker(
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.uniformChunkNodeCount,
-		tryShapeFromSchema,
+		(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+			tryShapeFromSchema(schema, policy, shouldEncodeIncrementally, type, shapes),
 	);
 }
 
@@ -110,8 +112,6 @@ export class Chunker implements IChunker {
 		public readonly uniformChunkNodeCount: number,
 		// eslint-disable-next-line @typescript-eslint/no-shadow
 		private readonly tryShapeFromSchema: (
-			schema: TreeStoredSchema,
-			policy: FullSchemaPolicy,
 			type: TreeNodeSchemaIdentifier,
 			shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 		) => ShapeInfo,
@@ -138,7 +138,7 @@ export class Chunker implements IChunker {
 		this.unregisterSchemaCallback = this.schema.events.on("afterSchemaChange", () =>
 			this.schemaChanged(),
 		);
-		return this.tryShapeFromSchema(this.schema, this.policy, schema, this.typeShapes);
+		return this.tryShapeFromSchema(schema, this.typeShapes);
 	}
 
 	public dispose(): void {
@@ -226,17 +226,6 @@ export function makePolicy(policy?: Partial<ChunkPolicy>): ChunkPolicy {
 	return withDefaults;
 }
 
-export function shapesFromSchema(
-	schema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
-): Map<TreeNodeSchemaIdentifier, ShapeInfo> {
-	const shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo> = new Map();
-	for (const identifier of schema.nodeSchema.keys()) {
-		tryShapeFromSchema(schema, policy, identifier, shapes);
-	}
-	return shapes;
-}
-
 /**
  * If `schema` has only one shape, return it.
  *
@@ -245,6 +234,7 @@ export function shapesFromSchema(
 export function tryShapeFromSchema(
 	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
+	shouldEncodeIncrementally: IncrementalEncodingPolicy,
 	type: TreeNodeSchemaIdentifier,
 	shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 ): ShapeInfo {
@@ -262,7 +252,19 @@ export function tryShapeFromSchema(
 		if (treeSchema instanceof ObjectNodeStoredSchema) {
 			const fieldsArray: FieldShape[] = [];
 			for (const [key, field] of treeSchema.objectNodeFields) {
-				const fieldShape = tryShapeFromFieldSchema(schema, policy, field, key, shapes);
+				// If this node / field should be encoded incrementally, use polymorphic shape so that they
+				// are chunked separately and can be re-used across encodings if they do not change.
+				if (shouldEncodeIncrementally(type, key)) {
+					return polymorphic;
+				}
+				const fieldShape = tryShapeFromFieldSchema(
+					schema,
+					policy,
+					shouldEncodeIncrementally,
+					field,
+					key,
+					shapes,
+				);
 				if (fieldShape === undefined) {
 					return polymorphic;
 				}
@@ -282,6 +284,7 @@ export function tryShapeFromSchema(
 export function tryShapeFromFieldSchema(
 	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
+	shouldEncodeIncrementally: IncrementalEncodingPolicy,
 	type: TreeFieldStoredSchema,
 	key: FieldKey,
 	shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
@@ -294,7 +297,13 @@ export function tryShapeFromFieldSchema(
 		return undefined;
 	}
 	const childType = [...type.types][0] ?? oob();
-	const childShape = tryShapeFromSchema(schema, policy, childType, shapes);
+	const childShape = tryShapeFromSchema(
+		schema,
+		policy,
+		shouldEncodeIncrementally,
+		childType,
+		shapes,
+	);
 	if (childShape instanceof Polymorphic) {
 		return undefined;
 	}

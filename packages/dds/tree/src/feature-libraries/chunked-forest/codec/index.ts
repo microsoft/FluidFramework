@@ -15,3 +15,7 @@ export {
 	type IncrementalDecoder,
 	type ChunkReferenceId,
 } from "./codecs.js";
+export {
+	type IncrementalEncodingPolicy,
+	defaultIncrementalEncodingPolicy,
+} from "./incrementalEncodingPolicy.js";

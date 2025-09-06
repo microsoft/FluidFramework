@@ -17,7 +17,10 @@ import {
 // Allow importing from this specific file which is being tested:
 // eslint-disable-next-line import/no-internal-modules
 import { buildChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
-import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+import {
+	defaultIncrementalEncodingPolicy,
+	defaultSchemaPolicy,
+} from "../../../feature-libraries/index.js";
 import { testForest } from "../../forestTestSuite.js";
 
 const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] = [
@@ -33,7 +36,10 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				() => polymorphic,
 			),
 	],
-	["default", (schema) => makeTreeChunker(schema, defaultSchemaPolicy)],
+	[
+		"default",
+		(schema) => makeTreeChunker(schema, defaultSchemaPolicy, defaultIncrementalEncodingPolicy),
+	],
 	[
 		"sequences",
 		(schema): IChunker =>
@@ -48,7 +54,13 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				Number.POSITIVE_INFINITY,
 				Number.POSITIVE_INFINITY,
 				1,
-				tryShapeFromSchema,
+				(...args) =>
+					tryShapeFromSchema(
+						schema,
+						defaultSchemaPolicy,
+						defaultIncrementalEncodingPolicy,
+						...args,
+					),
 			),
 	],
 	[
@@ -60,7 +72,13 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				Number.POSITIVE_INFINITY,
 				Number.POSITIVE_INFINITY,
 				defaultChunkPolicy.uniformChunkNodeCount,
-				tryShapeFromSchema,
+				(...args) =>
+					tryShapeFromSchema(
+						schema,
+						defaultSchemaPolicy,
+						defaultIncrementalEncodingPolicy,
+						...args,
+					),
 			),
 	],
 	[
@@ -72,7 +90,13 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				2,
 				1,
 				defaultChunkPolicy.uniformChunkNodeCount,
-				tryShapeFromSchema,
+				(...args) =>
+					tryShapeFromSchema(
+						schema,
+						defaultSchemaPolicy,
+						defaultIncrementalEncodingPolicy,
+						...args,
+					),
 			),
 	],
 ];
