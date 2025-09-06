@@ -38,8 +38,11 @@ import {
 	type TreeCheckout,
 } from "../../../shared-tree/index.js";
 import {
+	incrementalAllowedTypesMetadata,
 	permissiveStoredSchemaGenerationOptions,
 	SchemaFactory,
+	SchemaFactoryAlpha,
+	shouldIncrementallySummarizeAllowedTypes,
 	toStoredSchema,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
@@ -47,12 +50,6 @@ import { fieldJsonCursor } from "../../json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { forestSummaryContentKey } from "../../../feature-libraries/forest-summary/incrementalSummaryBuilder.js";
 import type { FieldKey, TreeNodeSchemaIdentifier } from "../../../core/index.js";
-import {
-	brand,
-	setInNestedMap,
-	tryGetFromNestedMap,
-	type NestedMap,
-} from "../../../util/index.js";
 
 function createForestSummarizer(args: {
 	// The encoding strategy to use when summarizing the forest.
@@ -260,7 +257,7 @@ describe("ForestSummarizer", () => {
 	});
 
 	describe("Incremental summarization", () => {
-		const sf = new SchemaFactory("IncrementalSummarization");
+		const sf = new SchemaFactoryAlpha("IncrementalSummarization");
 
 		function validateSummaryIsIncremental(summary: ISummaryTree) {
 			assert(
@@ -332,18 +329,29 @@ describe("ForestSummarizer", () => {
 		});
 
 		describe("multi-depth schema", () => {
-			// The tests in this block use the following schema:
-			class ItemDepth2 extends sf.object("depth2", {
+			// The property bar in FooItem will be incrementally summarized.
+			class FooItem extends sf.objectAlpha("fooItem", {
 				id: sf.number,
-				propertyDepth3: sf.required(sf.string), // Incremental field
+				bar: {
+					types: [
+						{
+							type: sf.string,
+							metadata: {},
+						},
+					],
+					metadata: { custom: incrementalAllowedTypesMetadata },
+				},
 			}) {}
-			class ItemDepth1 extends sf.object("depth1", {
-				id: sf.number,
-				itemDepth2: sf.optional(ItemDepth2), // Incremental field
+
+			// Every entry in this array will be incrementally summarized.
+			class MyFooArray extends sf.arrayAlpha("myFooArray", {
+				types: [{ type: FooItem, metadata: {} }],
+				metadata: { custom: incrementalAllowedTypesMetadata },
 			}) {}
-			class Root extends sf.object("root", {
-				id: sf.number,
-				itemsDepth1: sf.array(ItemDepth1), // Incremental field
+
+			class Root extends sf.objectAlpha("root", {
+				rootId: sf.number,
+				fooArray: MyFooArray,
 			}) {}
 
 			/**
@@ -362,74 +370,45 @@ describe("ForestSummarizer", () => {
 					initialTree: fieldCursor,
 				};
 
-				const incrementalFieldsMap: NestedMap<TreeNodeSchemaIdentifier, FieldKey, boolean> =
-					new Map();
-				setInNestedMap(
-					incrementalFieldsMap,
-					brand<TreeNodeSchemaIdentifier>(Root.identifier),
-					brand<FieldKey>("itemsDepth1"),
-					true,
-				);
-				setInNestedMap(
-					incrementalFieldsMap,
-					brand<TreeNodeSchemaIdentifier>(ItemDepth1.identifier),
-					brand<FieldKey>("itemDepth2"),
-					true,
-				);
-				setInNestedMap(
-					incrementalFieldsMap,
-					brand<TreeNodeSchemaIdentifier>(ItemDepth2.identifier),
-					brand<FieldKey>("propertyDepth3"),
-					true,
-				);
-
-				const shouldEncodeFieldIncrementally = (
-					nodeIdentifier: TreeNodeSchemaIdentifier,
-					fieldKey: FieldKey,
-				): boolean => {
-					return tryGetFromNestedMap(incrementalFieldsMap, nodeIdentifier, fieldKey) ?? false;
-				};
-
 				return createForestSummarizer({
 					initialContent,
 					encodeType: TreeCompressionStrategyExtended.CompressedIncremental,
 					forestType: ForestTypeOptimized,
-					shouldEncodeFieldIncrementally,
+					shouldEncodeFieldIncrementally: (
+						nodeIdentifier: TreeNodeSchemaIdentifier,
+						fieldKey: FieldKey,
+					) => {
+						return shouldIncrementallySummarizeAllowedTypes(nodeIdentifier, fieldKey, Root);
+					},
 				});
 			}
 
 			/**
 			 * Creates an initial Root object with the specified number of items under it.
-			 * Each item will have a unique ID, and every other item will have a label so as to test incremental
-			 * summarization on optional fields which may or may not be present.
 			 * @param itemsCount - The number of items to create.
 			 */
 			function createInitialBoard(itemsCount: number) {
-				let nextItemId = 1;
-				const itemsDepth1: ItemDepth1[] = [];
+				let nextItemId = 10;
+				const fooArray: FooItem[] = [];
 				for (let i = 0; i < itemsCount; i++) {
-					const addDepth2 = i % 2 === 0; // Add depth 2 item to every other item in a list
-					const item = new ItemDepth1({
-						id: nextItemId,
-						itemDepth2: addDepth2
-							? {
-									id: nextItemId,
-									propertyDepth3: `Property for itemDepth2 ${nextItemId}`,
-								}
-							: undefined,
-					});
-					itemsDepth1.push(item);
-					nextItemId++;
+					fooArray.push(
+						new FooItem({
+							id: nextItemId,
+							bar: `Item ${nextItemId} bar`,
+						}),
+					);
+					nextItemId += 10;
 				}
 				return new Root({
-					id: 1,
-					itemsDepth1,
+					rootId: 1,
+					fooArray,
 				});
 			}
 
 			it("can incrementally summarize a forest", async () => {
+				const itemsCount = 3;
 				const { forestSummarizer } = setupForestForIncrementalSummarization(
-					createInitialBoard(3 /* itemsCount */),
+					createInitialBoard(itemsCount),
 				);
 
 				// Incremental summary context for the first summary. This is needed for incremental summarization.
@@ -469,18 +448,19 @@ describe("ForestSummarizer", () => {
 					incrementalSummaryContext: incrementalSummaryContext2,
 				});
 
-				// Validate that this summary has just one handle - nothing changed, so the first incremental summary
-				// node (for `Root::itemsDepth1`) should now be a handle.
+				// At the root of the summary tree, there should be `itemsCount` number of incremental chunk tree nodes,
+				// one for each item in the `Root::fooArray`. Since nothing changed, all of them should be handles.
 				validateHandlesInForestSummary(summary2.summary, {
 					shouldContainHandle: true,
-					handleCount: 1,
+					handleCount: itemsCount,
 					lastSummary: summary1.summary,
 				});
 			});
 
 			it("can incrementally summarize a forest with changes in between", async () => {
+				const itemsCount = 3;
 				const { checkout, forestSummarizer } = setupForestForIncrementalSummarization(
-					createInitialBoard(3 /* itemsCount */),
+					createInitialBoard(itemsCount),
 				);
 
 				// Incremental summary context for the first summary. This is needed for incremental summarization.
@@ -503,7 +483,7 @@ describe("ForestSummarizer", () => {
 				// be the `summarySequenceNumber` of the previous summary.
 				const incrementalSummaryContext2: IExperimentalIncrementalSummaryContext = {
 					summarySequenceNumber: 10,
-					latestSummarySequenceNumber: 0,
+					latestSummarySequenceNumber: incrementalSummaryContext1.summarySequenceNumber,
 					summaryPath: "",
 				};
 				const summary2 = forestSummarizer.summarize({
@@ -511,45 +491,45 @@ describe("ForestSummarizer", () => {
 					incrementalSummaryContext: incrementalSummaryContext2,
 				});
 
-				// Validate that this summary has just one handle - nothing changed, so the first incremental summary
-				// node (for chunk of `Root::itemsDepth1`) should now be a handle.
+				// At the root of the summary tree, there should be `itemsCount` number of incremental chunk tree nodes,
+				// one for each item in the `Root::fooArray`. Since nothing changed, all of them should be handles.
 				validateHandlesInForestSummary(summary2.summary, {
 					shouldContainHandle: true,
-					handleCount: 1,
+					handleCount: itemsCount,
 					lastSummary: summary1.summary,
 				});
 
-				// Make changes to the field `Root::itemsDepth1`. This should cause the first incremental summary node
-				// for it to be updated. The two summary nodes under that for chunks of `ItemDepth1::itemDepth2` should
-				// now be handles.
+				// Make changes to `FooItem::bar` in one of the `Root::fooArray` entries. This will update one of the
+				// chunk tree nodes at the root of the summary tree and the chunk tree node under it as well.
+				// So, there should be one less than `itemsCount` number of handles.
 				const view = checkout.viewWith(new TreeViewConfiguration({ schema: Root }));
 				const root = view.root;
-				const firstItem = root.itemsDepth1.at(0);
-				assert(firstItem !== undefined, "Could not find first item at depth 1");
-				firstItem.id++;
+				const firstItem = root.fooArray.at(0);
+				assert(firstItem !== undefined, "Could not find first item");
+				firstItem.bar = "Updated bar";
 
 				// Incremental summary context for the third summary. `latestSummarySequenceNumber` should
 				// be the `summarySequenceNumber` of the previous summary.
 				const incrementalSummaryContext3: IExperimentalIncrementalSummaryContext = {
 					summarySequenceNumber: 20,
-					latestSummarySequenceNumber: 10,
+					latestSummarySequenceNumber: incrementalSummaryContext2.summarySequenceNumber,
 					summaryPath: "",
 				};
 				const summary3 = forestSummarizer.summarize({
 					stringify: JSON.stringify,
 					incrementalSummaryContext: incrementalSummaryContext3,
 				});
-				// This summary should have two handles as per the changes to the tree above.
 				validateHandlesInForestSummary(summary3.summary, {
 					shouldContainHandle: true,
-					handleCount: 2,
-					lastSummary: summary1.summary,
+					handleCount: itemsCount - 1,
+					lastSummary: summary2.summary,
 				});
 			});
 
 			it("can incrementally summarize a forest with a summary failure in between", async () => {
+				const itemsCount = 2;
 				const { checkout, forestSummarizer } = setupForestForIncrementalSummarization(
-					createInitialBoard(3 /* itemsCount */),
+					createInitialBoard(itemsCount),
 				);
 
 				// Incremental summary context for the first summary. This is needed for incremental summarization.
@@ -568,20 +548,20 @@ describe("ForestSummarizer", () => {
 					shouldContainHandle: false,
 				});
 
-				// Make changes to the field `Root::itemsDepth1`. This should cause the first incremental summary node
-				// for it to be updated. The two summary nodes under that for chunks of `ItemDepth1::itemDepth2` should
-				// now be handles.
+				// Make changes to `FooItem::bar` in one of the `Root::fooArray` entries. This will update one of the
+				// chunk tree nodes at the root of the summary tree and the chunk tree node under it as well.
+				// So, there should be one less than `itemsCount` number of handles.
 				const view = checkout.viewWith(new TreeViewConfiguration({ schema: Root }));
 				const root = view.root;
-				const firstItem = root.itemsDepth1.at(0);
-				assert(firstItem !== undefined, "Could not find first item at depth 1");
-				firstItem.id++;
+				const firstItem = root.fooArray.at(0);
+				assert(firstItem !== undefined, "Could not find first item");
+				firstItem.bar = "Updated bar";
 
 				// Incremental summary context for the second summary. `latestSummarySequenceNumber` should
 				// be the `summarySequenceNumber` of the previous summary.
 				const incrementalSummaryContext2: IExperimentalIncrementalSummaryContext = {
 					summarySequenceNumber: 10,
-					latestSummarySequenceNumber: 0,
+					latestSummarySequenceNumber: incrementalSummaryContext1.summarySequenceNumber,
 					summaryPath: "",
 				};
 				const summary2 = forestSummarizer.summarize({
@@ -592,7 +572,7 @@ describe("ForestSummarizer", () => {
 				// This summary should have two handles as per the changes to the tree above.
 				validateHandlesInForestSummary(summary2.summary, {
 					shouldContainHandle: true,
-					handleCount: 2,
+					handleCount: itemsCount - 1,
 					lastSummary: summary1.summary,
 				});
 
@@ -600,18 +580,18 @@ describe("ForestSummarizer", () => {
 				// failed by setting `latestSummarySequenceNumber` to the `summarySequenceNumber` of the first summary.
 				const incrementalSummaryContext3: IExperimentalIncrementalSummaryContext = {
 					summarySequenceNumber: 20,
-					latestSummarySequenceNumber: 0,
+					latestSummarySequenceNumber: incrementalSummaryContext1.summarySequenceNumber,
 					summaryPath: "",
 				};
 				const summary3 = forestSummarizer.summarize({
 					stringify: JSON.stringify,
 					incrementalSummaryContext: incrementalSummaryContext3,
 				});
-				// This summary should have two handles similar to the second summary that failed. Also, the handle
+				// This summary should have the same number of handles as the second summary that failed. Also, the handle
 				// paths must exist in the first summary tree (not the second).
 				validateHandlesInForestSummary(summary3.summary, {
 					shouldContainHandle: true,
-					handleCount: 2,
+					handleCount: itemsCount - 1,
 					lastSummary: summary1.summary,
 				});
 			});
