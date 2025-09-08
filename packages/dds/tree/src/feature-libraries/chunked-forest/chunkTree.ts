@@ -241,7 +241,10 @@ export function makePolicy(policy?: Partial<ChunkPolicy>): ChunkPolicy {
  * @returns TreeShape if the schema has a uniform shape, or Polymorphic if shape varies.
  *
  * @remarks
- * Note that this does not tolerate optional or sequence fields, nor does it optimize for patterns of specific values.
+ * The determination here is conservative. `shouldEncodeIncrementally` is used to split up shapes so incrementally
+ * encoded schema are not part of larger shapes. It also does not tolerate optional or sequence fields, nor does it
+ * optimize for patterns of specific values.
+ *
  */
 export function tryShapeFromSchema(
 	schema: StoredSchemaCollection,
@@ -301,7 +304,9 @@ export function tryShapeFromSchema(
  * @returns FieldShape if the field has a uniform shape, or undefined if the field is polymorphic.
  *
  * @remarks
- * Note that this does not tolerate optional or sequence fields, nor does it optimize for patterns of specific values.
+ * The determination here is conservative. `shouldEncodeIncrementally` is used to split up shapes so incrementally
+ * encoded schema are not part of larger shapes. It also does not tolerate optional or sequence fields, nor does it
+ * optimize for patterns of specific values.
  */
 export function tryShapeFromFieldSchema(
 	schema: StoredSchemaCollection,
