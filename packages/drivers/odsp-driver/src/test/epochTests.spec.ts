@@ -430,11 +430,7 @@ describe("Tests for Epoch Tracker", () => {
 
 		// eslint-disable-next-line @typescript-eslint/dot-notation
 		const entryFile1 = fileEntryFromEntry(cacheEntry1, epochTracker["fileEntry"]);
-		assert("fileVersion" in entryFile1.file.resolvedUrl, "file version should be present");
-		assert.strictEqual(
-			entryFile1.file.resolvedUrl.fileVersion,
-			"2",
-			"file version should be 2",
-		);
+		assert(entryFile1.file.fileVersion !== undefined, "file version should be present");
+		assert.strictEqual(entryFile1.file.fileVersion, "2", "file version should be 2");
 	});
 });

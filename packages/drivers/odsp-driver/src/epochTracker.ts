@@ -647,11 +647,8 @@ export function createOdspCacheAndTracker(
 export function fileEntryFromEntry(entry: IEntry, epochEntry: IFileEntry): ICacheEntry {
 	if ("file" in entry) {
 		const maybeCacheEntry = entry as ICacheEntry;
-		const mergedResolvedUrl = {
-			...maybeCacheEntry.file.resolvedUrl,
-			...epochEntry.resolvedUrl,
-		};
-		const file = { ...epochEntry, resolvedUrl: mergedResolvedUrl };
+		const maybeODSPResolvedUrl = maybeCacheEntry.file.resolvedUrl as IOdspResolvedUrl;
+		const file = { ...epochEntry, fileVersion: maybeODSPResolvedUrl.fileVersion ?? undefined };
 		return { ...entry, file };
 	}
 	return { ...entry, file: epochEntry };
