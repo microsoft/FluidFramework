@@ -29,6 +29,7 @@ import {
 	type ITelemetryLoggerExt,
 	type MonitoringContext,
 	PerformanceEvent,
+	createChildLogger,
 	createChildMonitoringContext,
 	mixinMonitoringContext,
 	sessionStorageConfigProvider,
@@ -36,7 +37,6 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { Container } from "./container.js";
-import { DebugLogger } from "./debugLogger.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
 import type { IPendingContainerState } from "./serializedStateManager.js";
@@ -253,8 +253,12 @@ export class Loader implements IHostLoader {
 		};
 
 		const subMc = mixinMonitoringContext(
-			DebugLogger.mixinDebugLogger("fluid:telemetry", logger, {
-				all: telemetryProps,
+			createChildLogger({
+				namespace: "fluid:telemetry",
+				logger,
+				properties: {
+					all: telemetryProps,
+				},
 			}),
 			sessionStorageConfigProvider.value,
 			configProvider,
