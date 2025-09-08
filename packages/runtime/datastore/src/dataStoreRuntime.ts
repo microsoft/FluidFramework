@@ -1135,7 +1135,7 @@ export class FluidDataStoreRuntime
 			this.dataStoreContext.containerRuntime;
 		assert(
 			runtimeExp.inStagingMode === true ||
-			this.visibilityState === VisibilityState.LocallyVisible,
+				this.visibilityState === VisibilityState.LocallyVisible,
 			0xc2c /* The data store should be locally visible when generating attach summary */,
 		);
 
@@ -1150,7 +1150,7 @@ export class FluidDataStoreRuntime
 			visitedLength = visitedContexts.size;
 			for (const [contextId, context] of this.contexts) {
 				if (!(context instanceof LocalChannelContextBase)) {
-					throw new LoggingError("Should only be called with local channel handles");
+					continue;
 				}
 
 				if (

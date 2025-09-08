@@ -1604,8 +1604,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	public getPendingLocalState(
 		input: Set<IFluidHandle>,
 	): Record<string, ISummaryTreeWithStats> | undefined {
-		const paths: string[] = [...input].map((h) => toFluidHandleInternal(h).absolutePath);
-		const visitedDataStores: Set<string> = new Set();
+		const paths: string[] = [...input]
+			.filter((h) => !h.isAttached)
+			.map((h) => toFluidHandleInternal(h).absolutePath);
+		const visitedDataStores: Set<string> = new Set(["_blobs"]);
 
 		let summaries: Record<string, ISummaryTreeWithStats> | undefined;
 

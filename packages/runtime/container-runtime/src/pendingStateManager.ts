@@ -50,7 +50,7 @@ export interface IPendingMessage {
 	 * Serialized copy of runtimeOp
 	 */
 	content: string;
-	handleCache: ReadonlySet<IFluidHandle> | undefined;
+	stagedHandleCache: ReadonlySet<IFluidHandle> | undefined;
 	/**
 	 * The original runtime op that was submitted to the ContainerRuntime
 	 * Unless this pending message came from stashed content, in which case this is undefined at first and then deserialized from the contents string
@@ -230,13 +230,13 @@ export function findFirstCharacterMismatched(
 function toSerializableForm(message: IPendingMessage): IPendingMessage & {
 	runtimeOp: undefined;
 	localOpMetadata: undefined;
-	handleCache: undefined;
+	stagedHandleCache: undefined;
 } {
 	return {
 		...message,
 		localOpMetadata: undefined,
 		runtimeOp: undefined,
-		handleCache: undefined,
+		stagedHandleCache: undefined,
 		batchInfo: {
 			...message.batchInfo,
 			staged: false,
@@ -344,7 +344,7 @@ export class PendingStateManager implements IDisposable {
 
 	public getLocalState(snapshotSequenceNumber?: number): {
 		pending: IPendingLocalState;
-		handleCache: Set<IFluidHandle>;
+		stagedHandleCache: Set<IFluidHandle>;
 	} {
 		assert(
 			this.initialMessages.isEmpty(),
@@ -368,18 +368,19 @@ export class PendingStateManager implements IDisposable {
 				throw new LoggingError("trying to stash ops older than our latest snapshot");
 			}
 		}
-		const handleCache = new Set<IFluidHandle>();
+		const stagedHandleCache = new Set<IFluidHandle>();
 		return {
 			pending: {
 				pendingStates: [
 					...newSavedOps,
 					...this.pendingMessages.toArray().map((message) => {
-						if (message.handleCache) for (const h of message.handleCache) handleCache.add(h);
+						if (message.stagedHandleCache)
+							for (const h of message.stagedHandleCache) stagedHandleCache.add(h);
 						return toSerializableForm(message);
 					}),
 				],
 			},
-			handleCache,
+			stagedHandleCache,
 		};
 	}
 
@@ -455,7 +456,7 @@ export class PendingStateManager implements IDisposable {
 			const pendingMessage: IPendingMessage = {
 				type: "message",
 				referenceSequenceNumber,
-				...serializeOp(runtimeOp),
+				...serializeOp(runtimeOp, staged),
 				runtimeOp,
 				localOpMetadata,
 				opMetadata,

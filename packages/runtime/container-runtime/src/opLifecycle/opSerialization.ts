@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	encodeHandleForSerialization,
@@ -41,8 +41,9 @@ export function serializeOp(
 		| EmptyGroupedBatch
 		| LocalContainerRuntimeMessage
 		| LocalContainerRuntimeMessage[],
-): { content: string; handleCache: ReadonlySet<IFluidHandle> } {
-	const handleCache = new Set<IFluidHandle>();
+	staged?: boolean,
+): { content: string; stagedHandleCache: ReadonlySet<IFluidHandle> } {
+	const stagedHandleCache = new Set<IFluidHandle>();
 	return {
 		content: JSON.stringify(
 			toSerialize,
@@ -50,12 +51,12 @@ export function serializeOp(
 			(key, value: unknown) => {
 				// If 'value' is an IFluidHandle return its encoded form.
 				if (isFluidHandle(value)) {
-					handleCache.add(value);
+					if (staged === true) stagedHandleCache.add(value);
 					return encodeHandleForSerialization(toFluidHandleInternal(value));
 				}
 				return value;
 			},
 		),
-		handleCache,
+		stagedHandleCache,
 	};
 }

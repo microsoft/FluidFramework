@@ -5057,9 +5057,8 @@ export class ContainerRuntime
 				eventName: "getPendingLocalState",
 			},
 			(event) => {
-				const { pending, handleCache } = this.pendingStateManager.getLocalState(
-					props?.snapshotSequenceNumber,
-				);
+				const { pending, stagedHandleCache: handleCache } =
+					this.pendingStateManager.getLocalState(props?.snapshotSequenceNumber);
 				const sessionExpiryTimerStarted =
 					props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
 
@@ -5067,8 +5066,9 @@ export class ContainerRuntime
 				const pendingAttachmentBlobs = this.blobManager.getPendingBlobs();
 
 				// Use channelCollection to collect summaries for all referenced but not-yet-attached datastores
-				const pendingAttachmentSummaries =
-					this.channelCollection.getPendingLocalState(handleCache);
+				const pendingAttachmentSummaries = this.inStagingMode
+					? this.channelCollection.getPendingLocalState(handleCache)
+					: undefined;
 
 				const pendingRuntimeState: IPendingRuntimeState = {
 					pending,
