@@ -3,13 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import type { FieldKey, TreeNodeSchemaIdentifier } from "../../core/index.js";
-import { normalizeAnnotatedAllowedTypes, type AllowedTypesMetadata } from "../core/index.js";
+import {
+	NodeKind,
+	normalizeAnnotatedAllowedTypes,
+	type AllowedTypesMetadata,
+} from "../core/index.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import {
 	isArrayNodeSchema,
 	isMapNodeSchema,
 	isObjectNodeSchema,
+	isRecordNodeSchema,
 } from "../node-kinds/index.js";
 import { TreeViewConfigurationAlpha } from "./configuration.js";
 
@@ -50,6 +56,11 @@ export function shouldIncrementallySummarizeAllowedTypes<
 	const treeSchema = new TreeViewConfigurationAlpha({ schema });
 	const targetNode = treeSchema.definitions.get(targetNodeIdentifier);
 	if (targetNode === undefined) {
+		// The requested type is unknown to this schema.
+		// In this case we have no hints available from the view schema, and fall back to the default behavior of non-incremental encoding.
+		// There are two ways this can happen:
+		// 1. The view schema being used does not match the stored schema.
+		// 2. The view schema is compatible, but there are unknown optional fields which contain new types not described by the view schema.
 		return false;
 	}
 
@@ -65,10 +76,15 @@ export function shouldIncrementallySummarizeAllowedTypes<
 		return false;
 	}
 
-	if (isArrayNodeSchema(targetNode) || isMapNodeSchema(targetNode)) {
+	if (
+		isArrayNodeSchema(targetNode) ||
+		isMapNodeSchema(targetNode) ||
+		isRecordNodeSchema(targetNode)
+	) {
 		const annotatedAllowedTypes = normalizeAnnotatedAllowedTypes(targetNode.info);
 		return annotatedAllowedTypes.metadata.custom === incrementalAllowedTypesMetadata;
 	}
 
+	assert(targetNode.kind === NodeKind.Leaf, "unexpected node kind");
 	return false;
 }
