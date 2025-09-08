@@ -9,7 +9,13 @@ import {
 	DataStoreMessageType,
 	FluidDataStoreRuntime,
 } from "@fluidframework/datastore/internal";
-import type { ISharedDirectory } from "@fluidframework/map/internal";
+import {
+	DirectoryFactory,
+	MapFactory,
+	SharedDirectory,
+	SharedMap,
+	type ISharedDirectory,
+} from "@fluidframework/map/internal";
 import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
@@ -173,8 +179,28 @@ export class MigrationDataObjectFactory<
 
 		const runtimeClass = props.runtimeClass ?? FluidDataStoreRuntime;
 
+		const sharedObjects = [...(props.sharedObjects ?? [])];
+		if (!sharedObjects.some((factory) => factory.type === DirectoryFactory.Type)) {
+			// User did not register for directory
+			sharedObjects.push(SharedDirectory.getFactory());
+		}
+
+		if (!sharedObjects.some((factory) => factory.type === MapFactory.Type)) {
+			// User did not register for map
+			sharedObjects.push(SharedMap.getFactory());
+		}
+
+		if (
+			!sharedObjects.some(
+				(sharedObject) => sharedObject.type === props.treeDelayLoadFactory.type,
+			)
+		) {
+			sharedObjects.push(props.treeDelayLoadFactory);
+		}
+
 		super({
 			...props,
+			sharedObjects,
 			afterBindRuntime: fullMigrateDataObject,
 			runtimeClass: class MigratorDataStoreRuntime extends runtimeClass {
 				private migrationOpSeqNum = -1;

@@ -38,13 +38,14 @@ export abstract class MigrationDataObject<
 				root: ITree;
 		  } {
 		assert(
-			this.#directory !== undefined && this.#tree !== undefined,
+			this.#directory !== undefined || this.#tree !== undefined,
 			"Expected either directory or tree to be defined",
 		);
 		return this.#directory === undefined
 			? {
 					isDirectory: false,
-					root: this.#tree,
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					root: this.#tree!,
 				}
 			: {
 					isDirectory: true,
