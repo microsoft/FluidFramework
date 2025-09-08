@@ -142,7 +142,7 @@ export type ValidateRecursiveSchema<T extends ValidateRecursiveSchemaTemplate<T>
 /**
  * Validation logic used by {@link ValidateRecursiveSchema}.
  * @privateRemarks
- * Recursive types should always be using TreeNodeSchemaClass (not TreeNodeSchemaNonClass) as thats part of the requirements for the type to work across compilation boundaries correctly.
+ * Recursive types should always be using TreeNodeSchemaClass (not TreeNodeSchemaNonClass) as that's part of the requirements for the type to work across compilation boundaries correctly.
  * @system @public
  */
 export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchemaClass> =
