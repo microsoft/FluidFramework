@@ -119,7 +119,7 @@ export interface IDelayLoadChannelFactory<T> extends IChannelFactory<T> {
     // (undocumented)
     createAsync(runtime: IFluidDataStoreRuntime, id?: string): Promise<T>;
     // (undocumented)
-    loadObjectKindAsync(): Promise<T>;
+    loadObjectKindAsync(): Promise<void>;
 }
 
 // @alpha @legacy
