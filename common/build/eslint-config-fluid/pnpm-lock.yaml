@@ -18,8 +18,8 @@ importers:
         specifier: ^0.15.1
         version: 0.15.1
       '@rushstack/eslint-patch':
-        specifier: ~1.4.0
-        version: 1.4.0
+        specifier: ~1.12.0
+        version: 1.12.0
       '@rushstack/eslint-plugin':
         specifier: ~0.19.0
         version: 0.19.0(eslint@8.57.1)(typescript@5.4.5)
@@ -191,8 +191,8 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@rushstack/eslint-patch@1.4.0':
-    resolution: {integrity: sha512-cEjvTPU32OM9lUFegJagO0mRnIn+rbqrG89vV8/xLnLFX0DoR0r1oy5IlTga71Q7uT3Qus7qm7wgeiMT/+Irlg==}
+  '@rushstack/eslint-patch@1.12.0':
+    resolution: {integrity: sha512-5EwMtOqvJMMa3HbmxLlF74e+3/HhwBTMcvt3nqVJgGCozO6hzIPOBlwm8mGVNR9SN2IJpxSnlxczyDjcn7qIyw==}
 
   '@rushstack/eslint-plugin-security@0.11.0':
     resolution: {integrity: sha512-c7UojOyNQDD7fwtj7NJx4x8ZU0KeKnefVDEe+f16ZQT6sIXy8CCmbEwduCgGZugIPqwV9hXYHNJiWZtU3iDXng==}
@@ -2625,7 +2625,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.15.0
 
-  '@rushstack/eslint-patch@1.4.0': {}
+  '@rushstack/eslint-patch@1.12.0': {}
 
   '@rushstack/eslint-plugin-security@0.11.0(eslint@8.57.1)(typescript@5.4.5)':
     dependencies:
