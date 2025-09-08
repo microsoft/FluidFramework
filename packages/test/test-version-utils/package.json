@@ -75,7 +75,7 @@
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluid-internal/test-driver-definitions": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
-		"@fluid-tools/version-tools": "^0.57.0",
+		"@fluid-tools/version-tools": "^0.58.2",
 		"@fluidframework/agent-scheduler": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/cell": "workspace:~",

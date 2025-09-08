@@ -4761,8 +4761,8 @@ importers:
         specifier: ~2.3.0
         version: 2.3.0(webpack@5.97.1)
       '@fluid-tools/version-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.86)
+        specifier: ^0.58.2
+        version: 0.58.2(@types/node@18.19.86)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -14777,8 +14777,8 @@ importers:
         specifier: workspace:~
         version: link:../test-drivers
       '@fluid-tools/version-tools':
-        specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.86)
+        specifier: ^0.58.2
+        version: 0.58.2(@types/node@18.19.86)
       '@fluidframework/agent-scheduler':
         specifier: workspace:~
         version: link:../../framework/agent-scheduler
@@ -17466,11 +17466,6 @@ packages:
 
   '@fluid-tools/fetch-tool@2.60.0':
     resolution: {integrity: sha512-ayu9Yl1j+4EdaSf0p8pb11+CrXTsxDbGQB33yZWQYEW6as5x2gxxLj2NC0N8uCMyJfAIHDh/HnvFFomvKhuFzg==}
-    hasBin: true
-
-  '@fluid-tools/version-tools@0.57.0':
-    resolution: {integrity: sha512-SViGNYQff84ZHlra9WI8VJe70mnPKbFByuBnA7ZFThGUKPg5ZTmdstkOjaYluQXcz2SPCFnJ/FDNTuXNQPHOjQ==}
-    engines: {node: '>=20.15.1'}
     hasBin: true
 
   '@fluid-tools/version-tools@0.58.2':
@@ -29846,22 +29841,6 @@ snapshots:
       - bufferutil
       - debug
       - encoding
-      - supports-color
-      - utf-8-validate
-
-  '@fluid-tools/version-tools@0.57.0(@types/node@18.19.86)':
-    dependencies:
-      '@oclif/core': 4.0.36
-      '@oclif/plugin-autocomplete': 3.2.13
-      '@oclif/plugin-commands': 4.1.13
-      '@oclif/plugin-help': 6.2.19
-      '@oclif/plugin-not-found': 3.2.30(@types/node@18.19.86)
-      semver: 7.7.1
-      table: 6.9.0
-    transitivePeerDependencies:
-      - '@types/node'
-      - bufferutil
-      - react-devtools-core
       - supports-color
       - utf-8-validate
 
