@@ -67,7 +67,11 @@ interface Options {
 	readonly outFileSuffix: string;
 }
 
-const optionDefaults = {
+/**
+ * {@link Options} defaults.
+ * @privateRemarks Exported for testing.
+ */
+export const optionDefaults = {
 	mainEntrypoint: "./src/index.ts",
 	outDir: "./lib",
 	outFilePrefix: "",
@@ -367,16 +371,16 @@ function getOutputConfiguration(
  * @param commandLine - command line to extract from
  * @param argQuery - record of arguments to read (keys) with default values
  * @returns record of argument values extracted or given default value
+ * @privateRemarks Exported for testing.
  */
-function readArgValues(commandLine: string, argQuery: Options): Options {
-	const values: Record<string, string | undefined> = {};
+export function readArgValues(commandLine: string, argQuery: Options): Options {
 	const args = commandLine.split(" ");
 
 	const argValues: Record<string, string | undefined> = {};
 	for (const argName of Object.keys(argQuery)) {
 		const indexOfArgValue = args.indexOf(`--${argName}`) + 1;
 		if (0 < indexOfArgValue && indexOfArgValue < args.length) {
-			values[argName] = args[indexOfArgValue];
+			argValues[argName] = args[indexOfArgValue];
 		}
 	}
 	return {
@@ -573,22 +577,28 @@ async function generateNode10TypeEntrypoints(
 	 */
 	const fileSavePromises: Promise<void>[] = [];
 
-	async function createEntrypointFile(filePath: string, content: string): Promise<void> {
-		await fs.ensureDir(path.dirname(filePath));
+	async function createEntrypointFile(
+		filePath: string,
+		sourceTypeRelPath: string,
+		isTypeOnly: boolean,
+	): Promise<void> {
+		const dirPath = path.dirname(filePath);
+		await fs.ensureDir(dirPath);
+
+		const entrypointToTypeImportPath = path.posix.relative(dirPath, sourceTypeRelPath);
+		const jsImport = entrypointToTypeImportPath.replace(/\.d\.([cm]?)ts/, ".$1js");
+
+		const content = isTypeOnly
+			? `${generatedHeader}export type * from "${entrypointToTypeImportPath}";\n`
+			: `${generatedHeader}export * from "${jsImport}";\n`;
+
 		await fs.writeFile(filePath, content, "utf8");
 	}
 
 	for (const [outFile, { relPath, isTypeOnly }] of mapExportPathToData.entries()) {
 		log.info(`\tGenerating ${outFile}`);
-		const jsImport = relPath.replace(/\.d\.([cm]?)ts/, ".$1js");
-		fileSavePromises.push(
-			createEntrypointFile(
-				outFile,
-				isTypeOnly
-					? `${generatedHeader}export type * from "${relPath}";\n`
-					: `${generatedHeader}export * from "${jsImport}";\n`,
-			),
-		);
+
+		fileSavePromises.push(createEntrypointFile(outFile, relPath, isTypeOnly));
 	}
 
 	if (fileSavePromises.length === 0) {

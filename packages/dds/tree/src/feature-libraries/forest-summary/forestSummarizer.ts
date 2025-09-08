@@ -163,7 +163,7 @@ export class ForestSummarizer implements Summarizable {
 		// The contents of the incremental chunks will be in separate tree nodes and will be read later during decoding.
 		assert(
 			await services.contains(forestSummaryContentKey),
-			"Forest summary content missing in snapshot",
+			0xc21 /* Forest summary content missing in snapshot */,
 		);
 
 		const readAndParseBlob = async <T extends JsonCompatible<IFluidHandle>>(

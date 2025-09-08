@@ -73,6 +73,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     // (undocumented)
     finalizeIdRange(range: IdCreationRange): void;
     flush(): void;
+    flushSomeMessages(numMessages: number): void;
     // (undocumented)
     get isDirty(): boolean;
     protected maybeProcessIdAllocationMessage(message: ISequencedDocumentMessage): boolean;

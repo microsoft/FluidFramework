@@ -59,14 +59,9 @@ class TestInterval implements ISerializableInterval {
 }
 
 describe("Collections.IntervalTree", () => {
-	let intervalTree: IntervalTree<TestInterval>;
-
-	beforeEach(() => {
-		intervalTree = new IntervalTree<TestInterval>();
-	});
-
 	describe(".map", () => {
 		it("Should run each node through the given function", () => {
+			const intervalTree = new IntervalTree<TestInterval>();
 			intervalTree.put(new TestInterval(1, 5));
 			intervalTree.put(new TestInterval(4, 8));
 			intervalTree.put(new TestInterval(1, 10));
