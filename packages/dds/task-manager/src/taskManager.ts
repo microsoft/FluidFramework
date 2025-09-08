@@ -871,11 +871,11 @@ export class TaskManagerClass
 		assertIsTaskManagerOperation(content);
 		const latestPendingOps = this.latestPendingOps.get(content.taskId);
 		assert(latestPendingOps !== undefined, "No pending ops when trying to rollback");
-		const pendingOpIndex = latestPendingOps.findIndex(
-			(op) => op.messageId === localOpMetadata && op.type === content.type,
+		const pendingOpToRollback = latestPendingOps.pop();
+		assert(
+			pendingOpToRollback !== undefined && pendingOpToRollback.messageId === localOpMetadata,
+			"pending op mismatch",
 		);
-		assert(pendingOpIndex !== -1, "pending op mismatch");
-		latestPendingOps.splice(pendingOpIndex, 1);
 		if (latestPendingOps.length === 0) {
 			this.latestPendingOps.delete(content.taskId);
 		}
