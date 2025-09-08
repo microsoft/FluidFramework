@@ -104,10 +104,16 @@
             "error"
         ],
         "@typescript-eslint/consistent-type-exports": [
-            "off"
+            "error",
+            {
+                "fixMixedExportsWithInlineTypeSpecifier": true
+            }
         ],
         "@typescript-eslint/consistent-type-imports": [
-            "off"
+            "error",
+            {
+                "fixStyle": "separate-type-imports"
+            }
         ],
         "@typescript-eslint/dot-notation": [
             "error"
@@ -213,6 +219,9 @@
         "@typescript-eslint/no-implied-eval": [
             "error"
         ],
+        "@typescript-eslint/no-import-type-side-effects": [
+            "error"
+        ],
         "@typescript-eslint/no-inferrable-types": [
             "off"
         ],
@@ -245,6 +254,27 @@
         ],
         "@typescript-eslint/no-require-imports": [
             "error"
+        ],
+        "@typescript-eslint/no-restricted-imports": [
+            "error",
+            {
+                "paths": [
+                    {
+                        "name": "assert",
+                        "importNames": [
+                            "default"
+                        ],
+                        "message": "Use `strict` instead. E.g. `import { strict as assert } from \"node:assert\";`"
+                    },
+                    {
+                        "name": "node:assert",
+                        "importNames": [
+                            "default"
+                        ],
+                        "message": "Use `strict` instead. E.g. `import { strict as assert } from \"node:assert\";`"
+                    }
+                ]
+            }
         ],
         "@typescript-eslint/no-shadow": [
             "error",

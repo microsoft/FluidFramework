@@ -24,14 +24,38 @@ const permittedImports = [
 	"*/index.js",
 ];
 
+// Restricted import patterns for all code.
+const restrictedImportPaths = [
+	// Prefer strict assertions
+	// See: <https://nodejs.org/api/assert.html#strict-assertion-mode>
+	{
+		name: "assert",
+		importNames: ["default"],
+		message: 'Use `strict` instead. E.g. `import { strict as assert } from "node:assert";`',
+	},
+	{
+		name: "node:assert",
+		importNames: ["default"],
+		message: 'Use `strict` instead. E.g. `import { strict as assert } from "node:assert";`',
+	},
+];
+
+// Restricted import patterns for production code.
+// Not applied to test code.
+const restrictedImportPatternsForProductionCode = [
+	// Don't import from the parent index file.
+	{
+		group: ["./index.js", "**/../index.js"],
+		message:
+			"Importing from a parent index file tends to cause cyclic dependencies. Import from a more specific sibling file instead.",
+	},
+];
+
 /**
- * "Minimal" eslint configuration.
+ * DO NOT USE.
  *
- * This configuration is primarily intended for use in packages during prototyping / initial setup.
- * Ideally, all of packages in the fluid-framework repository should derive from either the "Recommended" or
- * "Strict" configuration.
- *
- * Production packages **should not** use this configuration.
+ * This configuration is extended by our `recommended` and `strict` configurations,
+ * but this configuration should not be used directly.
  *
  * @deprecated This config is too permissive and should not be used. It will be removed in a future release.
  * Use the "Recommended" or "Strict" configuration instead.
@@ -148,6 +172,14 @@ module.exports = {
 		"@typescript-eslint/dot-notation": "error",
 		"@typescript-eslint/no-non-null-assertion": "error",
 		"@typescript-eslint/no-unnecessary-type-assertion": "error",
+
+		"@typescript-eslint/no-restricted-imports": [
+			"error",
+			{
+				paths: restrictedImportPaths,
+				patterns: restrictedImportPatternsForProductionCode,
+			},
+		],
 
 		"eqeqeq": ["error", "smart"],
 		"import/no-deprecated": "error",
@@ -442,6 +474,13 @@ module.exports = {
 				// Disabled for test files
 				"@typescript-eslint/consistent-type-exports": "off",
 				"@typescript-eslint/consistent-type-imports": "off",
+
+				"@typescript-eslint/no-restricted-imports": [
+					"error",
+					{
+						paths: restrictedImportPaths,
+					},
+				],
 
 				// For test files only, additionally allow import of '/test*' and '/internal/test*' exports.
 				"import/no-internal-modules": [

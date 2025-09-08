@@ -5,11 +5,11 @@
 
 import {
 	extractBoxcar,
-	IContext,
-	IQueuedMessage,
-	IPartitionLambda,
-	ISequencedOperationMessage,
-	IServiceConfiguration,
+	type IContext,
+	type IQueuedMessage,
+	type IPartitionLambda,
+	type ISequencedOperationMessage,
+	type IServiceConfiguration,
 	SequencedOperationType,
 } from "@fluidframework/server-services-core";
 import {

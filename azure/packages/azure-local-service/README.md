@@ -41,7 +41,6 @@ You can install, build, and start this service by running the following
 
 ```sh
 npm i
-npm run build
 npm run start
 ```
 

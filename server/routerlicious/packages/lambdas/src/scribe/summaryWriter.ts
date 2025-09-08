@@ -4,22 +4,22 @@
  */
 
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
+import type { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
-	ISequencedDocumentMessage,
-	ISummaryContent,
-	ITreeEntry,
+	type ISequencedDocumentMessage,
+	type ISummaryContent,
+	type ITreeEntry,
 	TreeEntry,
 	FileMode,
-	ISequencedDocumentAugmentedMessage,
-	SummaryObject,
+	type ISequencedDocumentAugmentedMessage,
+	type SummaryObject,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
 	buildTreePath,
-	IGitManager,
-	ISummaryTree,
-	NetworkError,
+	type IGitManager,
+	type ISummaryTree,
+	type NetworkError,
 	WholeSummaryUploadManager,
 	getQuorumTreeEntries,
 	generateServiceProtocolEntries,
@@ -30,23 +30,23 @@ import {
 	convertSortedNumberArrayToRanges,
 } from "@fluidframework/server-services-client";
 import {
-	ICollection,
-	IDeltaService,
-	IScribe,
-	ISequencedOperationMessage,
+	type ICollection,
+	type IDeltaService,
+	type IScribe,
+	type ISequencedOperationMessage,
 	requestWithRetry,
 	shouldRetryNetworkError,
 } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,
 	getLumberBaseProperties,
-	Lumber,
+	type Lumber,
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import safeStringify from "json-stringify-safe";
 
-import { ISummaryWriteResponse, ISummaryWriter } from "./interfaces";
+import type { ISummaryWriteResponse, ISummaryWriter } from "./interfaces";
 
 /**
  * Git specific implementation of ISummaryWriter

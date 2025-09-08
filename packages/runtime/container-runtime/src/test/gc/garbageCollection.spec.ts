@@ -5,62 +5,62 @@
 
 import { strict as assert } from "node:assert";
 
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
-import { IErrorBase, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { Timer } from "@fluidframework/core-utils/internal";
+import type { IErrorBase, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { Timer } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
-	IGarbageCollectionDetailsBase,
-	ISummarizeResult,
+	type IGarbageCollectionDetailsBase,
+	type ISummarizeResult,
 	channelsTreeName,
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
-	IGarbageCollectionData,
+	type IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
-	MonitoringContext,
+	type MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
-import { SinonFakeTimers, spy, useFakeTimers } from "sinon";
+import { type SinonFakeTimers, spy, useFakeTimers } from "sinon";
 
 import {
 	GCNodeType,
-	GCSummaryStateTracker,
-	GCTelemetryTracker,
-	GCVersion,
-	GarbageCollectionMessage,
+	type GCSummaryStateTracker,
+	type GCTelemetryTracker,
+	type GCVersion,
+	type GarbageCollectionMessage,
 	GarbageCollectionMessageType,
 	GarbageCollector,
-	IGCMetadata,
-	IGCStats,
-	IGCSummaryTrackingData,
-	IGarbageCollectionNodeData,
-	IGarbageCollectionRuntime,
-	IGarbageCollectionSnapshotData,
-	IGarbageCollectionState,
-	IGarbageCollectionSummaryDetailsLegacy,
-	IGarbageCollector,
-	IGarbageCollectorConfigs,
-	IGarbageCollectorCreateParams,
+	type IGCMetadata,
+	type IGCStats,
+	type IGCSummaryTrackingData,
+	type IGarbageCollectionNodeData,
+	type IGarbageCollectionRuntime,
+	type IGarbageCollectionSnapshotData,
+	type IGarbageCollectionState,
+	type IGarbageCollectionSummaryDetailsLegacy,
+	type IGarbageCollector,
+	type IGarbageCollectorConfigs,
+	type IGarbageCollectorCreateParams,
 	UnreferencedState,
-	UnreferencedStateTracker,
+	type UnreferencedStateTracker,
 	concatGarbageCollectionStates,
 	defaultSessionExpiryDurationMs,
 	defaultSweepGracePeriodMs,
 	oneDayMs,
 	stableGCVersion,
 } from "../../gc/index.js";
-import { ContainerMessageType, ContainerRuntimeGCMessage } from "../../messageTypes.js";
+import { ContainerMessageType, type ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";
 import {
-	IContainerRuntimeMetadata,
+	type IContainerRuntimeMetadata,
 	dataStoreAttributesBlobName,
 	metadataBlobName,
 } from "../../summary/index.js";

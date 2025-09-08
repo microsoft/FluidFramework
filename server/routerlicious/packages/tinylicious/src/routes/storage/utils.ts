@@ -5,8 +5,8 @@
 
 import * as path from "path";
 
-import { Response } from "express";
-import nconf from "nconf";
+import type { Response } from "express";
+import type nconf from "nconf";
 
 /**
  * Helper function to handle a promise that should be returned to the user

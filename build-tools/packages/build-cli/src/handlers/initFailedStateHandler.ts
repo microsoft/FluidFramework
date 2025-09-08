@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Machine } from "jssm";
+import type { Machine } from "jssm";
 
-import { CommandLogger } from "../logging.js";
-import { MachineState } from "../machines/index.js";
+import type { CommandLogger } from "../logging.js";
+import type { MachineState } from "../machines/index.js";
 import { BaseStateHandler } from "./stateHandlers.js";
 
 /**

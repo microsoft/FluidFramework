@@ -4,7 +4,7 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import {
+import type {
 	FluidObject,
 	IDisposable,
 	IRequest,
@@ -14,8 +14,8 @@ import {
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
-import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import {
+import type {
+	ISnapshot,
 	ISnapshotTree,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
@@ -25,23 +25,23 @@ import {
 	isInstanceOfISnapshot,
 } from "@fluidframework/driver-utils/internal";
 import {
-	ISummaryTreeWithStats,
-	ITelemetryContext,
-	IGarbageCollectionData,
-	AliasResult,
+	type ISummaryTreeWithStats,
+	type ITelemetryContext,
+	type IGarbageCollectionData,
+	type AliasResult,
 	CreateSummarizerNodeSource,
-	IAttachMessage,
-	IEnvelope,
-	IFluidDataStoreChannel,
-	IFluidDataStoreContext,
-	IFluidDataStoreContextDetached,
-	IFluidDataStoreFactory,
-	IFluidDataStoreRegistry,
-	IFluidParentContext,
-	ISummarizeResult,
-	NamedFluidDataStoreRegistryEntries,
+	type IAttachMessage,
+	type IEnvelope,
+	type IFluidDataStoreChannel,
+	type IFluidDataStoreContext,
+	type IFluidDataStoreContextDetached,
+	type IFluidDataStoreFactory,
+	type IFluidDataStoreRegistry,
+	type IFluidParentContext,
+	type ISummarizeResult,
+	type NamedFluidDataStoreRegistryEntries,
 	channelsTreeName,
-	IInboundSignalMessage,
+	type IInboundSignalMessage,
 	gcDataBlobKey,
 	type IRuntimeMessagesContent,
 	type InboundAttachMessage,
@@ -67,7 +67,7 @@ import {
 	DataCorruptionError,
 	DataProcessingError,
 	LoggingError,
-	MonitoringContext,
+	type MonitoringContext,
 	createChildLogger,
 	createChildMonitoringContext,
 	extractSafePropertiesFromMessage,
@@ -78,18 +78,18 @@ import { v4 as uuid } from "uuid";
 
 import {
 	DeletedResponseHeaderKey,
-	RuntimeHeaderData,
+	type RuntimeHeaderData,
 	defaultRuntimeHeaderData,
 } from "./containerRuntime.js";
 import {
-	IDataStoreAliasMessage,
+	type IDataStoreAliasMessage,
 	channelToDataStore,
 	isDataStoreAliasMessage,
 } from "./dataStore.js";
 import {
 	FluidDataStoreContext,
-	IFluidDataStoreContextInternal,
-	ILocalDetachedFluidDataStoreContextProps,
+	type IFluidDataStoreContextInternal,
+	type ILocalDetachedFluidDataStoreContextProps,
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
 	RemoteFluidDataStoreContext,
@@ -97,19 +97,18 @@ import {
 } from "./dataStoreContext.js";
 import { DataStoreContexts } from "./dataStoreContexts.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
-import { GCNodeType, IGCNodeUpdatedProps, urlToGCNodePath } from "./gc/index.js";
-import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes.js";
+import { GCNodeType, type IGCNodeUpdatedProps, urlToGCNodePath } from "./gc/index.js";
+import { ContainerMessageType, type LocalContainerRuntimeMessage } from "./messageTypes.js";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
 import {
-	IContainerRuntimeMetadata,
+	type IContainerRuntimeMetadata,
 	nonDataStorePaths,
 	rootHasIsolatedChannels,
 } from "./summary/index.js";
 
 /**
  * True if a tombstoned object should be returned without erroring
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
 
@@ -402,7 +401,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			const attachMessage = contents as InboundAttachMessage;
 			// We need to process the GC Data for both local and remote attach messages
 			const foundGCData = processAttachMessageGCData(
-				attachMessage.snapshot,
+				attachMessage.snapshot ?? undefined,
 				(nodeId, toPath) => {
 					// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
 					const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;

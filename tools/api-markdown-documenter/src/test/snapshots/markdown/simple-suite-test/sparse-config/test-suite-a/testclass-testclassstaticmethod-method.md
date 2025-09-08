@@ -2,19 +2,19 @@
 
 Test class static method
 
-### Signature {#testclassstaticmethod-signature}
+<h3 id="testclassstaticmethod-signature">Signature</h3>
 
 ```typescript
 static testClassStaticMethod(foo: number): string;
 ```
 
-### Parameters {#testclassstaticmethod-parameters}
+<h3 id="testclassstaticmethod-parameters">Parameters</h3>
 
 | Parameter | Type | Description |
 | - | - | - |
 | foo | number | Some number |
 
-### Returns {#testclassstaticmethod-returns}
+<h3 id="testclassstaticmethod-returns">Returns</h3>
 
 - Some string
 

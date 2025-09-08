@@ -5,7 +5,7 @@
 
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
-import { IDb, IDbFactory } from "./database";
+import type { IDb, IDbFactory } from "./database";
 import { debug } from "./debug";
 
 /**

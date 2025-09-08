@@ -110,9 +110,6 @@ export interface SchemaAndPolicy {
  * This contains information that describes the semantics of things which can be referenced in stored schema.
  * For example, field kind identifiers refer to specific field kinds, which imply specific rules around what is valid in a given field (the multiplicity).
  * This structure provides such information, allowing it to be possible to determine if a given tree complies with a particular stored schema.
- *
- * TODO: AB#43546
- * Some additional data which is not needed to define compatibility with a given stored schema is currently included here, and should be removed.
  */
 export interface SchemaPolicy {
 	/**
@@ -123,27 +120,6 @@ export interface SchemaPolicy {
 	 * and will be unable to process any changes that use those FieldKinds.
 	 */
 	readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindData>;
-
-	/**
-	 * If true, new content inserted into the tree should be validated against the stored schema.
-	 * @remarks
-	 * TODO: AB#43546: This is not information used to interpret the stored schema: this configuration should be moved elsewhere.
-	 */
-	readonly validateSchema: boolean;
-
-	/**
-	 * Whether to allow a document to be opened when a particular stored schema (identified by `identifier`)
-	 * contains optional fields that are not known to the view schema.
-	 *
-	 * @privateRemarks
-	 * Plumbing this in via `SchemaPolicy` avoids needing to walk the view schema representation repeatedly in places
-	 * that need it (schema validation, view vs stored compatibility checks).
-	 *
-	 * TODO: AB#43546
-	 * This is not information used to interpret the stored schema: it is instead about view schema, and how compatible they are with a stored schema.
-	 * SchemaCompatibilityTester should be updated to not store this table in here, and then this field should be removed.
-	 */
-	allowUnknownOptionalFields(identifier: TreeNodeSchemaIdentifier): boolean;
 }
 
 /**
@@ -179,7 +155,7 @@ export interface TreeFieldStoredSchema {
  *
  * 2. The schema used for out of schema fields (which thus must be empty/not exist) on object and leaf nodes.
  */
-export const forbiddenFieldKindIdentifier = "Forbidden";
+export const forbiddenFieldKindIdentifier: FieldKindIdentifier = brand("Forbidden");
 
 /**
  * A schema for empty fields (fields which must always be empty).
@@ -187,7 +163,7 @@ export const forbiddenFieldKindIdentifier = "Forbidden";
  */
 export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
 	// This kind requires the field to be empty.
-	kind: brand(forbiddenFieldKindIdentifier),
+	kind: forbiddenFieldKindIdentifier,
 	// This type set also forces the field to be empty not not allowing any types as all.
 	types: new Set(),
 	persistedMetadata: undefined,

@@ -8,7 +8,7 @@ import path from "node:path";
 import mm from "micromatch";
 
 import { getChangedSinceRef, getRemote } from "./git.js";
-import { type IBuildProject, IPackage } from "./types.js";
+import type { IBuildProject, IPackage } from "./types.js";
 
 export const defaultSelectionKinds = ["dir", "all"] as const;
 

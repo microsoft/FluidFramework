@@ -5,7 +5,8 @@
 
 import { parse } from "path";
 
-import { NetworkError } from "@fluidframework/server-services-client";
+import { NetworkError, getNetworkInformationFromIP } from "@fluidframework/server-services-client";
+import { ITenantManager, type ITenantConfig } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { RequestHandler, Response } from "express";
 
@@ -34,6 +35,85 @@ export function validateRequestParams(...paramNames: (string | number)[]): Reque
 					Promise.reject(new NetworkError(400, `Invalid ${paramName}: ${param}`)),
 					res,
 				);
+			}
+		}
+		next();
+	};
+}
+
+/**
+ * Validate private link.
+ * @internal
+ */
+export function validatePrivateLink(
+	tenantManager: ITenantManager,
+	enablePrivateLinkNetworkCheck: boolean = false,
+): RequestHandler {
+	return async (req, res, next) => {
+		if (enablePrivateLinkNetworkCheck) {
+			const tenantId = req.params.tenantId;
+			if (!tenantId) {
+				next();
+			}
+			const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
+			const privateLinkEnable = tenantInfo?.customData?.privateEndpoints?.accountLinkId
+				? true
+				: false;
+			const clientIPAddress = req.ip ?? "";
+			if (privateLinkEnable && (!clientIPAddress || clientIPAddress.trim() === "")) {
+				return handleResponse(
+					Promise.reject(
+						new NetworkError(
+							400,
+							`Client IP address is required for private link in req.ip`,
+						),
+					),
+					res,
+				);
+			}
+			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
+			if (networkInfo.isPrivateLink) {
+				if (privateLinkEnable) {
+					const accountLinkId = tenantInfo?.customData?.privateEndpoints?.accountLinkId;
+					if (networkInfo.privateLinkId === accountLinkId) {
+						Lumberjack.info("This is a private link request", {
+							tenantId,
+							privateLinkId: networkInfo.privateLinkId,
+						});
+					} else {
+						return handleResponse(
+							Promise.reject(
+								new NetworkError(
+									400,
+									`This private link should not be connected since the link id ${networkInfo.privateLinkId} does not match ${accountLinkId}`,
+								),
+							),
+							res,
+						);
+					}
+				} else {
+					return handleResponse(
+						Promise.reject(
+							new NetworkError(
+								400,
+								`This private link should not be connected since the tenant is not private link enabled`,
+							),
+						),
+						res,
+					);
+				}
+			} else {
+				if (privateLinkEnable) {
+					return handleResponse(
+						Promise.reject(
+							new NetworkError(
+								400,
+								`This is the public network called from the private link tenant ${tenantId}`,
+							),
+						),
+						res,
+					);
+				}
 			}
 		}
 		next();

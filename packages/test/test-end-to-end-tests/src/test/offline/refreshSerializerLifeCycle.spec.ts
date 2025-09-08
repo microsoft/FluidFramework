@@ -209,7 +209,8 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 				await provider.ensureSynchronized(container);
 			}
 
-			const pendingOps = await container1.closeAndGetPendingLocalState?.();
+			const pendingOps = await container1.getPendingLocalState?.();
+			container1.close();
 			assert.ok(pendingOps);
 
 			if (testConfig.summaryWhileOffline) {
@@ -270,7 +271,8 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 				groupIdDataObject2.root.set(`${j}`, j++);
 			}
 
-			const pendingOps2 = await container2.closeAndGetPendingLocalState?.();
+			const pendingOps2 = await container2.getPendingLocalState?.();
+			container2.close();
 			// first container which loads from a snapshot with groupId
 			const container3: IContainerExperimental = await loader.resolve({ url }, pendingOps2);
 			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
@@ -288,7 +290,8 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			map3.set(`${i}`, i++);
 			groupIdDataObject3.root.set(`${j}`, j++);
 
-			const pendingOps3 = await container3.closeAndGetPendingLocalState?.();
+			const pendingOps3 = await container3.getPendingLocalState?.();
+			container3.close();
 			// container created just for validation.
 			const container4: IContainerExperimental = await loader.resolve({ url }, pendingOps3);
 			const dataStore4 = (await container4.getEntryPoint()) as ITestFluidObject;

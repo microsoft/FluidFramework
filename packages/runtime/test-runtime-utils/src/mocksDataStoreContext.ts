@@ -12,7 +12,6 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import {
-	IDocumentStorageService,
 	IDocumentMessage,
 	ISnapshotTree,
 	ISequencedDocumentMessage,
@@ -26,6 +25,7 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
@@ -36,8 +36,7 @@ import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public isLocalDataStore: boolean = true;
@@ -53,7 +52,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		new MockDeltaManager(() => this.clientId);
 
 	public containerRuntime: IContainerRuntimeBase = undefined as any;
-	public storage: IDocumentStorageService = undefined as any;
+	public storage: IRuntimeStorageService = undefined as any;
 	public IFluidDataStoreRegistry: IFluidDataStoreRegistry = undefined as any;
 	public IFluidHandleContext: IFluidHandleContext = undefined as any;
 	public idCompressor: IIdCompressorCore & IIdCompressor = undefined as any;

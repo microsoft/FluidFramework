@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import {
+import type { IRequest } from "@fluidframework/core-interfaces";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type {
 	IPublicClientConfig,
 	IOdspAuthRequestInfo,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import * as odsp from "@fluidframework/odsp-driver/internal";
-import {
+import type {
 	IOdspResolvedUrl,
 	OdspResourceTokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";

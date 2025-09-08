@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ICollaborationSession,
 	ICollaborationSessionManager,
 } from "@fluidframework/server-services-core";
-import {
+import type {
 	IRedisClientConnectionManager,
 	IRedisParameters,
 } from "@fluidframework/server-services-utils";

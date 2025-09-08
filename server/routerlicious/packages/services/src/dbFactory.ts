@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IDbFactory } from "@fluidframework/server-services-core";
+import type { IDbFactory } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 
 import * as services from "./";
 

@@ -5,11 +5,11 @@
 
 import { EventEmitter } from "events";
 
-import { IQueuedMessage } from "@fluidframework/server-services-core";
+import type { IQueuedMessage } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import * as Deque from "double-ended-queue";
+import type * as Deque from "double-ended-queue";
 
-import { IKafkaSubscriber } from "./interfaces";
+import type { IKafkaSubscriber } from "./interfaces";
 
 /**
  * A subscription for a single lambda

@@ -5,13 +5,13 @@
 
 import { isIPv4, isIPv6 } from "net";
 
-import { RestLessServer, IHttpServerConfig } from "@fluidframework/server-services";
+import { RestLessServer, type IHttpServerConfig } from "@fluidframework/server-services";
 import {
 	CallingServiceHeaderName,
 	DriverVersionHeaderName,
-	IAlfredTenant,
+	type IAlfredTenant,
 } from "@fluidframework/server-services-client";
-import {
+import type {
 	IDeltaService,
 	IDocumentStorage,
 	IProducer,
@@ -24,7 +24,7 @@ import {
 	IClusterDrainingChecker,
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
 import {
 	BaseTelemetryProperties,
@@ -43,13 +43,13 @@ import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import express from "express";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import shajs from "sha.js";
 
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 
 import * as alfredRoutes from "./routes";
-import { IDocumentDeleteService } from "./services";
+import type { IDocumentDeleteService } from "./services";
 
 export function create(
 	config: Provider,
@@ -60,7 +60,7 @@ export function create(
 	storage: IDocumentStorage,
 	appTenants: IAlfredTenant[],
 	deltaService: IDeltaService,
-	producer: IProducer,
+	producer: IProducer | undefined,
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
 	startupCheck: IReadinessCheck,
@@ -136,7 +136,7 @@ export function create(
 							: "";
 						additionalProperties.hashedClientIPAddress = hashedClientIP;
 
-						const clientIPAddress = req.ip ? req.ip : "";
+						const clientIPAddress = req.ip ?? "";
 						if (isIPv4(clientIPAddress)) {
 							additionalProperties.clientIPType = "IPv4";
 						} else if (isIPv6(clientIPAddress)) {

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@fluidframework/common-utils";
+import type { Deferred } from "@fluidframework/common-utils";
 
-import { ITicketedMessage } from "./messages";
+import type { ITicketedMessage } from "./messages";
 
 /**
  * @internal

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export { IHistorianResourcesCustomizations } from "./customizations";
+export type { IHistorianResourcesCustomizations } from "./customizations";
 export { configureHistorianLogging } from "./logger";
-export { create, IRoutes } from "./routes";
+export { create, type IRoutes } from "./routes";
 export { HistorianRunner } from "./runner";
 export {
 	HistorianResources,
@@ -13,16 +13,16 @@ export {
 	HistorianRunnerFactory,
 } from "./runnerFactory";
 export {
-	ICache,
-	IConnectionString,
-	ICredentials,
-	IDocument,
-	IExternalStorage,
-	IOauthAccessInfo,
-	IStorage,
-	ITenant,
-	ITenantCustomDataExternal,
-	ITenantService,
+	type ICache,
+	type IConnectionString,
+	type ICredentials,
+	type IDocument,
+	type IExternalStorage,
+	type IOauthAccessInfo,
+	type IStorage,
+	type ITenant,
+	type ITenantCustomDataExternal,
+	type ITenantService,
 	RedisCache,
 	RedisTenantCache,
 	RestGitService,

@@ -5,17 +5,17 @@
 
 import { strict as assert } from "node:assert";
 
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
-	MockDeltaConnection,
+	type MockContainerRuntimeForReconnection,
+	type MockDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedMatrix } from "../index.js";
+import type { SharedMatrix } from "../index.js";
 
 import { extract, matrixFactory } from "./utils.js";
 

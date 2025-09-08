@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IClient, IClientDetails, IConnect, IUser } from "@fluidframework/protocol-definitions";
+import type {
+	IClient,
+	IClientDetails,
+	IConnect,
+	IUser,
+} from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as semver from "semver";

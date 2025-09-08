@@ -3,34 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitterEventType } from "@fluid-internal/client-utils";
+import type { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseProperties, type ErasedType } from "@fluidframework/core-interfaces";
-import {
-	type IFluidHandleInternal,
-	type IFluidLoadable,
+import type { ITelemetryBaseProperties, ErasedType } from "@fluidframework/core-interfaces";
+import type {
+	IFluidHandleInternal,
+	IFluidLoadable,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelServices,
 	IChannelStorageService,
-	type IChannel,
+	IChannel,
 	IChannelAttributes,
-	type IChannelFactory,
+	IChannelFactory,
 	IFluidDataStoreRuntime,
-	type IDeltaHandler,
-	type IFluidDataStoreRuntimeInternalConfig,
+	IDeltaHandler,
+	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	type IDocumentMessage,
+import type {
+	IDocumentMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	IExperimentalIncrementalSummaryContext,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
-	IGarbageCollectionData,
+	type IExperimentalIncrementalSummaryContext,
+	type ISummaryTreeWithStats,
+	type ITelemetryContext,
+	type IGarbageCollectionData,
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 	type IRuntimeMessageCollection,
@@ -38,13 +38,13 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	toDeltaManagerInternal,
-	TelemetryContext,
+	type TelemetryContext,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	DataProcessingError,
 	EventEmitterWithErrorHandling,
-	MonitoringContext,
+	type MonitoringContext,
 	SampledTelemetryHelper,
 	createChildLogger,
 	loggerToMonitoringContext,
@@ -57,8 +57,8 @@ import { v4 as uuid } from "uuid";
 
 import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { SharedObjectHandle } from "./handle.js";
-import { FluidSerializer, IFluidSerializer } from "./serializer.js";
-import { ISharedObject, ISharedObjectEvents } from "./types.js";
+import { FluidSerializer, type IFluidSerializer } from "./serializer.js";
+import type { ISharedObject, ISharedObjectEvents } from "./types.js";
 import { bindHandles, makeHandlesSerializable, parseHandles } from "./utils.js";
 
 /**
@@ -83,8 +83,7 @@ interface ProcessTelemetryProperties {
  *
  * TODO:
  * This class should eventually be made internal, as custom subclasses of it outside this repository are intended to be made unsupported in the future.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export abstract class SharedObjectCore<
 		TEvent extends ISharedObjectEvents = ISharedObjectEvents,
@@ -789,8 +788,7 @@ export abstract class SharedObjectCore<
  * This class is badly named.
  * Once it becomes `@internal` "SharedObjectCore" should probably become "SharedObject"
  * and this class should be renamed to something like "SharedObjectSynchronous".
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export abstract class SharedObject<
 	TEvent extends ISharedObjectEvents = ISharedObjectEvents,
@@ -979,8 +977,7 @@ export abstract class SharedObject<
  * This does not extend {@link SharedObjectKind} since doing so would prevent implementing this interface in type safe code.
  * Any implementation of this can safely be used as a {@link SharedObjectKind} with an explicit type conversion,
  * but doing so is typically not needed as {@link createSharedObjectKind} is used to produce values that are both types simultaneously.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedObjectKind<TSharedObject> {
 	/**

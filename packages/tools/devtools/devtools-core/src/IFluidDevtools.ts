@@ -7,6 +7,7 @@ import type { IDisposable } from "@fluidframework/core-interfaces";
 
 import type { ContainerKey } from "./CommonInterfaces.js";
 import type { ContainerDevtoolsProps } from "./ContainerDevtools.js";
+import type { ContainerRuntimeProps } from "./ContainerRuntimeDevtools.js";
 
 /**
  * Fluid Devtools. A single, global instance is used to generate and communicate stats associated with the general Fluid
@@ -21,6 +22,7 @@ import type { ContainerDevtoolsProps } from "./ContainerDevtools.js";
  * disposed of on Window unload.
  * If you wish to dispose of it earlier, you may call its {@link @fluidframework/core-interfaces#IDisposable.dispose} method.
  * @alpha
+ * @sealed
  */
 export interface IFluidDevtools extends IDisposable {
 	/**
@@ -32,6 +34,15 @@ export interface IFluidDevtools extends IDisposable {
 	 * @throws Will throw if devtools have already been registered for the specified {@link ContainerKey}.
 	 */
 	registerContainerDevtools(props: ContainerDevtoolsProps): void;
+
+	/**
+	 * Registers a container runtime with the devtools.
+	 *
+	 * @remarks To remove the Container Runtime from the Devtools, call {@link IFluidDevtools.closeContainerDevtools}.
+	 *
+	 * @throws Will throw if devtools have already been registered for the specified {@link ContainerKey}.
+	 */
+	registerContainerRuntime(props: ContainerRuntimeProps): Promise<void>;
 
 	/**
 	 * Removes the Container with the specified {@link ContainerKey} from the Devtools.

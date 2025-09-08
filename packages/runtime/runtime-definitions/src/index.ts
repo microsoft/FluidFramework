@@ -57,6 +57,7 @@ export type {
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
+	IRuntimeStorageService,
 } from "./protocol.js";
 export {
 	encodeHandlesInContainerRuntime,
@@ -83,3 +84,4 @@ export {
 	CreateSummarizerNodeSource,
 	totalBlobSizePropertyName,
 } from "./summary.js";
+export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";

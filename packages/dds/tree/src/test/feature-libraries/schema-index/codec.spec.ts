@@ -25,7 +25,7 @@ import { Format as FormatV2 } from "../../../feature-libraries/schema-index/form
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { type EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
+import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -35,11 +35,11 @@ const schemaCodecs = makeSchemaCodecs({ jsonValidator: typeboxValidator });
 const codecV1 = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaVersion.v1);
 const codecV2 = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaVersion.v2);
 
-const schema2 = toStoredSchema(SchemaFactory.optional(JsonAsTree.Primitive));
+const schema2 = toInitialSchema(SchemaFactory.optional(JsonAsTree.Primitive));
 
 const testCases: EncodingTestData<TreeStoredSchema, FormatV1> = {
 	successes: [
-		["json", toStoredSchema(JsonAsTree.Tree)],
+		["json", toInitialSchema(JsonAsTree.Tree)],
 		["testSchemas", schema2],
 	],
 };

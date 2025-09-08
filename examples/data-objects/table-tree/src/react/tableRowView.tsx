@@ -5,9 +5,9 @@
 
 import { TableRow, TableCell, Input, Button, Checkbox } from "@fluentui/react-components";
 import { Delete24Regular } from "@fluentui/react-icons";
-import React, { DragEvent } from "react";
+import React, { type DragEvent } from "react";
 
-import { type Column, type Row } from "../schema.js";
+import type { Column, Row } from "../schema.js";
 
 /**
  * Props for the `TableRowView` component, which renders a single row in the table.

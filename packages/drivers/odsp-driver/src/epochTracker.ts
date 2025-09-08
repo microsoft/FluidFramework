@@ -11,20 +11,20 @@ import {
 	ThrottlingError,
 } from "@fluidframework/driver-utils/internal";
 import {
-	ICacheEntry,
-	IEntry,
-	IFileEntry,
-	IOdspError,
-	IOdspErrorAugmentations,
-	IOdspResolvedUrl,
-	IPersistedCache,
+	type ICacheEntry,
+	type IEntry,
+	type IFileEntry,
+	type IOdspError,
+	type IOdspErrorAugmentations,
+	type IOdspResolvedUrl,
+	type IPersistedCache,
 	OdspErrorTypes,
 	maximumCacheDurationMs,
 	snapshotKey,
 	snapshotWithLoadingGroupIdKey,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 	isFluidError,
 	loggerToMonitoringContext,
@@ -33,12 +33,12 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";
+import { type IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
-import { INonPersistentCache, IOdspCache, IPersistedFileCache } from "./odspCache.js";
+import type { INonPersistentCache, IOdspCache, IPersistedFileCache } from "./odspCache.js";
 import { patchOdspResolvedUrl } from "./odspLocationRedirection.js";
 import {
-	IOdspResponse,
+	type IOdspResponse,
 	fetchAndParseAsJSONHelper,
 	fetchArray,
 	fetchHelper,
@@ -48,7 +48,7 @@ import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export type FetchType =
 	| "blob"
@@ -66,7 +66,7 @@ export type FetchType =
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export type FetchTypeInternal = FetchType | "cache";
 
@@ -87,7 +87,7 @@ export const Odsp409Error = "Odsp409Error";
  * It also validates the epoch value received in response of fetch calls. If the epoch does not match,
  * then it also clears all the cached entries for the given container.
  * @legacy
- * @alpha
+ * @beta
  */
 export class EpochTracker implements IPersistedFileCache {
 	private _fluidEpoch: string | undefined;
@@ -619,7 +619,7 @@ export class EpochTrackerWithRedemption extends EpochTracker {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ICacheAndTracker {
 	cache: IOdspCache;

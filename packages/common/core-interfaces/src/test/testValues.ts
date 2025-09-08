@@ -270,10 +270,21 @@ export const objectWithMismatchedGetterAndSetterProperty: ObjectWithMismatchedGe
 export const objectWithMismatchedGetterAndSetterPropertyViaValue: ObjectWithMismatchedGetterAndSetterProperty =
 	{ property: 0 };
 
-// #region Index signature types
+// #region Index(`Record`) signature types
+// Records and directly declared index types (`{[x: type]: type}`) can have
+// different treatment. `Record`s generally fair better but won't allow self
+// references; so, later self-references are declared with direct index types.
 
 export const stringRecordOfNumbers: Record<string, number> = { key: 0 };
 export const stringRecordOfUndefined: Record<string, undefined> = { key: undefined };
+export const stringRecordOfNumberOrUndefined: Record<string, number | undefined> = {
+	number,
+	undefined,
+};
+export const stringRecordOfSymbolOrBoolean: Record<string, symbol | boolean> = {
+	boolean,
+	symbol,
+};
 export const stringRecordOfUnknown: Record<string, unknown> = { key: 0 };
 export const stringOrNumberRecordOfStrings: Record<string | number, string> = { 5: "value" };
 export const stringOrNumberRecordOfObjects: Record<string | number, { string: string }> = {
@@ -600,6 +611,16 @@ export const classInstanceWithPublicDataAndIsFunction = Object.assign(
 	() => 26,
 );
 
+type ObjectWithClassWithPrivateDataInOptionalRecursion = {
+	class: ClassWithPrivateData;
+	recurse?: ObjectWithClassWithPrivateDataInOptionalRecursion;
+};
+export const objectWithClassWithPrivateDataInOptionalRecursion: ObjectWithClassWithPrivateDataInOptionalRecursion =
+	{
+		class: classInstanceWithPrivateData,
+		recurse: { class: classInstanceWithPrivateData },
+	};
+
 // #region Built-in Class types
 
 export type Point = { x: number; y: number };
@@ -634,6 +655,74 @@ export const brandedObjectWithString = objectWithString as typeof objectWithStri
 export const objectWithBrandedNumber = { brandedNumber };
 export const objectWithBrandedString = { brandedString };
 
+export const brandedStringIndexOfBooleans: { [x: string & BrandedType<"encoded">]: boolean } =
+	{
+		[brandedString]: false,
+	};
+// TypeScript has different treatment for index types such that duck-typing
+// doesn't fully apply. These recreations are a bit different.
+export const brandedStringAliasIndexOfBooleans: { [x: BrandedString]: boolean } =
+	brandedStringIndexOfBooleans;
+// @ts-expect-error - while the same, aliased index is not treated as same (just confirm)
+assertIdenticalTypes(brandedStringAliasIndexOfBooleans, brandedStringIndexOfBooleans);
+export const brandedStringRecordOfBooleans: Record<string & BrandedType<"encoded">, boolean> =
+	brandedStringIndexOfBooleans;
+export const brandedStringAliasRecordOfBooleans: Record<BrandedString, boolean> =
+	brandedStringIndexOfBooleans;
+// Records don't have the same aliased index issue
+assertIdenticalTypes(brandedStringAliasRecordOfBooleans, brandedStringRecordOfBooleans);
+
+// There is an unknown difference in handling of objects with number or string values compared
+// to booleans and objects. (number or string valued cases did not have problems where boolean
+// of object valued cases did. A scan of logic for values did not reveal special treatment of
+// `string` or `number` compared to `boolean`. Since strings of numbers are possible key types
+// there maybe some accidental key type check having an impact.)
+export const brandedStringIndexOfNumbers: { [x: string & BrandedType<"encoded">]: number } = {
+	[brandedString]: 5,
+};
+export type BrandedString = string & BrandedType<"encoded">;
+export const brandedStringAliasIndexOfNumbers: { [x: BrandedString]: number } =
+	brandedStringIndexOfNumbers;
+// @ts-expect-error - while the same, aliased index is not treated as same (just confirm)
+assertIdenticalTypes(brandedStringAliasIndexOfNumbers, brandedStringIndexOfNumbers);
+export const brandedStringRecordOfNumbers: Record<string & BrandedType<"encoded">, number> =
+	brandedStringIndexOfNumbers;
+export const brandedStringAliasRecordOfNumbers: Record<BrandedString, number> =
+	brandedStringIndexOfNumbers;
+// Records don't have the same aliased index issue
+assertIdenticalTypes(brandedStringAliasRecordOfNumbers, brandedStringRecordOfNumbers);
+
+export const brandedStringAliasIndexOfTrueOrUndefined: {
+	[x: BrandedString]: true | undefined;
+} = {
+	[brandedString]: undefined,
+};
+
+// #region Example Data Store
+// This test mimics aspects of structures used in Presence protocol.
+interface DecodedValueRequiredState<TValue> {
+	value: TValue;
+}
+interface DecodedValueOptionalState<T> {
+	value?: T;
+}
+interface DecodedValueDirectory<T> {
+	items: {
+		[name: string | number]: DecodedValueOptionalState<T> | DecodedValueDirectory<T>;
+	};
+}
+export type DecodedValueDirectoryOrRequiredState<T> =
+	| DecodedValueDirectory<T>
+	| DecodedValueRequiredState<T>;
+export type BrandedKey = string & BrandedType<"typed-key">;
+type DataStore = {
+	[k: string]: {
+		[x: BrandedKey]: DecodedValueDirectoryOrRequiredState<OpaqueJsonDeserialized<unknown>>;
+	};
+};
+
+export const datastore: DataStore = { outer: {} };
+// #endregion
 // #endregion
 
 // #region Fluid types
@@ -679,6 +768,53 @@ export const opaqueDeserializedUnknown =
 export const opaqueSerializableAndDeserializedUnknown =
 	opaqueSerializableAndDeserializedObject as OpaqueJsonSerializable<unknown> &
 		OpaqueJsonDeserialized<unknown>;
+
+export const objectWithOpaqueSerializableUnknown = {
+	opaque: opaqueSerializableUnknown,
+};
+export const objectWithOpaqueDeserializedUnknown = {
+	opaque: opaqueDeserializedUnknown,
+};
+export const objectWithOpaqueSerializableAndDeserializedUnknown = {
+	opaque: opaqueSerializableAndDeserializedUnknown,
+};
+
+interface OptionalValue<TValue> {
+	value?: TValue;
+}
+
+export interface DirectoryOfValues<TValue> {
+	items: {
+		[name: string | number]: OptionalValue<TValue> | DirectoryOfValues<TValue>;
+	};
+}
+
+export const opaqueSerializableInRecursiveStructure: DirectoryOfValues<
+	OpaqueJsonSerializable<unknown>
+> = {
+	items: {
+		item1: {},
+		item2: { items: { subItem1: {} } },
+	},
+};
+
+export const opaqueDeserializedInRecursiveStructure: DirectoryOfValues<
+	OpaqueJsonDeserialized<unknown>
+> = {
+	items: {
+		item1: {},
+		item2: { items: { subItem1: {} } },
+	},
+};
+
+export const opaqueSerializableAndDeserializedInRecursiveStructure: DirectoryOfValues<
+	OpaqueJsonSerializable<unknown> & OpaqueJsonDeserialized<unknown>
+> = {
+	items: {
+		item1: {},
+		item2: { items: { subItem1: {} } },
+	},
+};
 
 export const opaqueSerializableObjectRequiringBigintSupport =
 	objectWithBigint as unknown as OpaqueJsonSerializable<typeof objectWithBigint, [bigint]>;

@@ -45,5 +45,7 @@ export {
 export {
 	IProvideSessionAwareDriverFactory,
 	IRelaySessionAwareDriverFactory,
+	ISensitivityLabel,
+	ISensitivityLabelsInfo,
 	ISocketStorageDiscovery,
 } from "./sessionProvider.js";

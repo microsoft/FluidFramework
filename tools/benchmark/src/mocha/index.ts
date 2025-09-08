@@ -4,9 +4,13 @@
  */
 
 export { benchmark } from "./runner";
-export { benchmarkMemory, IMemoryTestObject, MemoryTestObjectProps } from "./memoryTestRunner";
+export {
+	benchmarkMemory,
+	type IMemoryTestObject,
+	type MemoryTestObjectProps,
+} from "./memoryTestRunner";
 export {
 	benchmarkCustom,
-	CustomBenchmarkOptions,
-	IMeasurementReporter,
+	type CustomBenchmarkOptions,
+	type IMeasurementReporter,
 } from "./customOutputRunner";

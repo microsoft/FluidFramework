@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ErasedType,
-	IFluidHandle,
-	IFluidLoadable,
-} from "@fluidframework/core-interfaces/internal";
+import type { ErasedType, IFluidLoadable } from "@fluidframework/core-interfaces/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -31,7 +27,6 @@ import {
 	type FieldKey,
 	type GraphCommit,
 	type IEditableForest,
-	type ITreeCursor,
 	type JsonableTree,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -62,6 +57,7 @@ import {
 	makeMitigatedChangeFamily,
 	makeSchemaCodec,
 	makeTreeChunker,
+	type TreeCompressionStrategyPrivate,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { FormatV1 } from "../feature-libraries/schema-index/index.js";
@@ -85,10 +81,7 @@ import {
 	type VerboseTree,
 	tryStoredSchemaAsArray,
 	type SimpleNodeSchema,
-	customFromCursorStored,
 	FieldKind,
-	type CustomTreeNode,
-	type CustomTreeValue,
 	type ITreeAlpha,
 	type SimpleObjectFieldSchema,
 } from "../simple-tree/index.js";
@@ -280,6 +273,7 @@ export class SharedTreeKernel
 			encoderContext,
 			options,
 			idCompressor,
+			options.shouldEncodeFieldIncrementally,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
 		const innerChangeFamily = new SharedTreeChangeFamily(
@@ -382,21 +376,7 @@ export class SharedTreeKernel
 	}
 
 	public exportVerbose(): VerboseTree | undefined {
-		const cursor = this.checkout.forest.allocateCursor("contentSnapshot");
-		try {
-			moveToDetachedField(this.checkout.forest, cursor);
-			const length = cursor.getFieldLength();
-			if (length === 0) {
-				return undefined;
-			} else if (length === 1) {
-				cursor.enterNode(0);
-				return verboseFromCursor(cursor, this.storedSchema.nodeSchema);
-			} else {
-				fail(0xac8 /* Invalid document root length */);
-			}
-		} finally {
-			cursor.free();
-		}
+		return this.checkout.exportVerbose();
 	}
 
 	public exportSimpleSchema(): SimpleTreeSchema {
@@ -605,12 +585,25 @@ export type SharedTreeOptions = Partial<CodecWriteOptions> &
 	Partial<SharedTreeFormatOptions> &
 	ForestOptions;
 
-export interface SharedTreeOptionsInternal extends SharedTreeOptions {
+export interface SharedTreeOptionsInternal
+	extends Omit<SharedTreeOptions, "treeEncodeType">,
+		Partial<SharedTreeFormatOptionsInternal> {
 	disposeForksAfterTransaction?: boolean;
+	/**
+	 * Returns whether a field should be incrementally encoded.
+	 * @param nodeIdentifier - The identifier of the node containing the field.
+	 * @param fieldKey - The key of the field to check.
+	 * @remarks
+	 * The policy for which fields should get incremental encoding should eventually be specified some other way.
+	 */
+	shouldEncodeFieldIncrementally?(
+		nodeIdentifier: TreeNodeSchemaIdentifier,
+		fieldKey: FieldKey,
+	): boolean;
 }
 /**
  * Configuration options for SharedTree's internal tree storage.
- * @alpha
+ * @beta @input
  */
 export interface ForestOptions {
 	/**
@@ -621,7 +614,7 @@ export interface ForestOptions {
 
 /**
  * Options for configuring the persisted format SharedTree uses.
- * @alpha
+ * @alpha @input
  */
 export interface SharedTreeFormatOptions {
 	/**
@@ -643,11 +636,22 @@ export interface SharedTreeFormatOptions {
 	formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
 }
 
+export interface SharedTreeFormatOptionsInternal
+	extends Omit<SharedTreeFormatOptions, "treeEncodeType"> {
+	treeEncodeType: TreeCompressionStrategyPrivate;
+}
+
 /**
  * Used to distinguish between different forest types.
  * @remarks
+ * The "Forest" is the internal data structure used to store all the trees (the main tree and any removed ones) for a given view or branch.
+ * ForestTypes should all have the same behavior, but may differ in performance and debuggability.
+ *
  * Current options are {@link ForestTypeReference}, {@link ForestTypeOptimized} and {@link ForestTypeExpensiveDebug}.
- * @sealed @alpha
+ * @privateRemarks
+ * Implement using {@link toForestType}.
+ * Consume using {@link buildConfiguredForest}.
+ * @sealed @beta
  */
 export interface ForestType extends ErasedType<"ForestType"> {}
 
@@ -721,24 +725,13 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	formatVersion: SharedTreeFormatVersion.v3,
 	disposeForksAfterTransaction: true,
+	shouldEncodeFieldIncrementally: (
+		nodeIdentifier: TreeNodeSchemaIdentifier,
+		fieldKey: FieldKey,
+	): boolean => {
+		return false;
+	},
 };
-
-function verboseFromCursor(
-	reader: ITreeCursor,
-	schema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
-): VerboseTree {
-	const fields = customFromCursorStored(reader, schema, verboseFromCursor);
-	const nodeSchema =
-		schema.get(reader.type) ?? fail(0xac9 /* missing schema for type in cursor */);
-	if (nodeSchema instanceof LeafNodeStoredSchema) {
-		return fields as CustomTreeValue;
-	}
-
-	return {
-		type: reader.type,
-		fields: fields as CustomTreeNode<IFluidHandle>,
-	};
-}
 
 function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFieldSchema {
 	let kind: FieldKind;

@@ -4,8 +4,8 @@
  */
 
 import RedisMock from "ioredis-mock";
-import * as Redis from "ioredis";
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import type * as Redis from "ioredis";
+import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 
 // TODO: Implement this in Routerlicious
 export class TestRedisClientConnectionManagerWithInvalidation

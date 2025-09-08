@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { TestRedisClientConnectionManager } from "@fluidframework/server-test-utils";
 import { RedisCollaborationSessionManager } from "../redisSessionManager";

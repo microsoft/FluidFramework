@@ -32,66 +32,78 @@ export enum SchemaValidationError {
 }
 
 /**
- * Throws a UsageError if maybeError indicates a tree is out of schema.
+ * Throws a UsageError indicating a tree is out of schema.
  */
-export function inSchemaOrThrow(maybeError: SchemaValidationError | undefined): void {
-	if (maybeError !== undefined) {
-		throw new UsageError(
-			`Tree does not conform to schema: ${SchemaValidationError[maybeError]}`,
-		);
-	}
+export function throwOutOfSchema(maybeError: SchemaValidationError): never {
+	throw new UsageError(
+		`Tree does not conform to schema: ${SchemaValidationError[maybeError]}`,
+	);
 }
+
+type NotUndefined = number | string | boolean | bigint | symbol | object;
 
 /**
  * Deeply checks that the provided node complies with the schema based on its identifier.
+ *
+ * @param onError - Called with the first error (if any).
+ *
+ * @returns the return value from `onError` if the node or anything inside of it is out of schema, otherwise `undefined`.
  */
-export function isNodeInSchema(
+export function isNodeInSchema<T extends NotUndefined>(
 	node: MinimalMapTreeNodeView,
 	schemaAndPolicy: SchemaAndPolicy,
-): SchemaValidationError | undefined {
+	onError: (error: SchemaValidationError) => T,
+): T | undefined {
 	// Validate the schema declared by the node exists
 	const schema = schemaAndPolicy.schema.nodeSchema.get(node.type);
 	if (schema === undefined) {
-		return SchemaValidationError.Node_MissingSchema;
+		return onError(SchemaValidationError.Node_MissingSchema);
 	}
 
 	// Validate the node is well formed according to its schema
 
 	if (schema instanceof LeafNodeStoredSchema) {
 		if (iterableHasSome(node.fields)) {
-			return SchemaValidationError.LeafNode_FieldsNotAllowed;
+			return onError(SchemaValidationError.LeafNode_FieldsNotAllowed);
 		}
 		if (!allowsValue(schema.leafValue, node.value)) {
-			return SchemaValidationError.LeafNode_InvalidValue;
+			return onError(SchemaValidationError.LeafNode_InvalidValue);
 		}
 	} else {
 		if (node.value !== undefined) {
-			return SchemaValidationError.NonLeafNode_ValueNotAllowed;
+			return onError(SchemaValidationError.NonLeafNode_ValueNotAllowed);
 		}
 
 		if (schema instanceof ObjectNodeStoredSchema) {
 			const uncheckedFieldsFromNode = new Set(mapIterable(node.fields, ([key, field]) => key));
 			for (const [fieldKey, fieldSchema] of schema.objectNodeFields) {
 				const nodeField = node.fields.get(fieldKey) ?? [];
-				const fieldInSchemaResult = isFieldInSchema(nodeField, fieldSchema, schemaAndPolicy);
+				const fieldInSchemaResult = isFieldInSchema(
+					nodeField,
+					fieldSchema,
+					schemaAndPolicy,
+					onError,
+				);
 				if (fieldInSchemaResult !== undefined) {
 					return fieldInSchemaResult;
 				}
 				uncheckedFieldsFromNode.delete(fieldKey);
 			}
-			// The node has fields that we did not check as part of looking at every field defined in the node's schema
-			if (
-				uncheckedFieldsFromNode.size !== 0 &&
-				// TODO: AB#43547: This check is wrong. If a given view schema allows an unknown optional field, that does NOT mean the stored schema should allow unknown:
-				// In-fact, any data the view schema does not know about must still comply with the stored schema:
-				// if this were not the case schema evolution could not add any fields since they might already have out of schema data.
-				!schemaAndPolicy.policy.allowUnknownOptionalFields(node.type)
-			) {
-				return SchemaValidationError.ObjectNode_FieldNotInSchema;
+			// The node has fields that we did not check as part of looking at every field defined in the node's schema.
+			// Since this is testing compatibility with a stored schema (not view schema), "allowUnknownOptionalFields" does not exist at this layer.
+			// Code using this with a stored schema derived from a view schema rather than the document can be problematic because it may be missing unknown fields that the actual document has.
+			// Other schema evolution features like "staged" allowed types will likely cause similar issues elsewhere in this checker.
+			if (uncheckedFieldsFromNode.size !== 0) {
+				return onError(SchemaValidationError.ObjectNode_FieldNotInSchema);
 			}
 		} else if (schema instanceof MapNodeStoredSchema) {
 			for (const [_key, field] of node.fields) {
-				const fieldInSchemaResult = isFieldInSchema(field, schema.mapFields, schemaAndPolicy);
+				const fieldInSchemaResult = isFieldInSchema(
+					field,
+					schema.mapFields,
+					schemaAndPolicy,
+					onError,
+				);
 				if (fieldInSchemaResult !== undefined) {
 					return fieldInSchemaResult;
 				}
@@ -106,34 +118,39 @@ export function isNodeInSchema(
 
 /**
  * Deeply checks that the nodes comply with the field schema and included schema.
+ *
+ * @param onError - Called with the first error (if any).
+ *
+ * @returns the return value from `onError` if the field or anything inside of it is out of schema, otherwise `undefined`.
  */
-export function isFieldInSchema(
+export function isFieldInSchema<T extends NotUndefined>(
 	childNodes: MapTreeFieldViewGeneric<MinimalMapTreeNodeView>,
 	schema: TreeFieldStoredSchema,
 	schemaAndPolicy: SchemaAndPolicy,
-): SchemaValidationError | undefined {
+	onError: (error: SchemaValidationError) => T,
+): T | undefined {
 	// Validate that the field kind is handled by the schema policy
 	const kind = schemaAndPolicy.policy.fieldKinds.get(schema.kind);
 	if (kind === undefined) {
-		return SchemaValidationError.Field_KindNotInSchemaPolicy;
+		return onError(SchemaValidationError.Field_KindNotInSchemaPolicy);
 	}
 
 	// Validate that the field doesn't contain more nodes than its type supports
 	{
 		const multiplicityCheck = compliesWithMultiplicity(childNodes.length, kind.multiplicity);
 		if (multiplicityCheck !== undefined) {
-			return multiplicityCheck;
+			return onError(multiplicityCheck);
 		}
 	}
 
 	for (const node of childNodes) {
 		// Validate the type declared by the node is allowed in this field
 		if (schema.types !== undefined && !schema.types.has(node.type)) {
-			return SchemaValidationError.Field_NodeTypeNotAllowed;
+			return onError(SchemaValidationError.Field_NodeTypeNotAllowed);
 		}
 
 		// Validate the node complies with the type it declares to be.
-		const nodeInSchemaResult = isNodeInSchema(node, schemaAndPolicy);
+		const nodeInSchemaResult = isNodeInSchema(node, schemaAndPolicy, onError);
 		if (nodeInSchemaResult !== undefined) {
 			return nodeInSchemaResult;
 		}

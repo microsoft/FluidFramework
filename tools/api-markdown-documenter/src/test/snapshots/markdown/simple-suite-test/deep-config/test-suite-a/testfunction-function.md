@@ -6,7 +6,7 @@ Test function
 
 **WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
-## Signature {#testfunction-signature}
+<h2 id="testfunction-signature">Signature</h2>
 
 ```typescript
 export declare function testFunction<TTypeParameter extends TestInterface = TestInterface>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
@@ -18,23 +18,23 @@ export declare function testFunction<TTypeParameter extends TestInterface = Test
 | - | - | - | - |
 | TTypeParameter | [TestInterface](/test-suite-a/testinterface-interface/) | [TestInterface](/test-suite-a/testinterface-interface/) | A test type parameter |
 
-## Remarks {#testfunction-remarks}
+<h2 id="testfunction-remarks">Remarks</h2>
 
 This is a test [link](/test-suite-a/testinterface-interface/) to another API member
 
-## Parameters {#testfunction-parameters}
+<h2 id="testfunction-parameters">Parameters</h2>
 
 | Parameter | Modifiers | Type | Description |
 | - | - | - | - |
 | testParameter | | TTypeParameter | A test parameter |
 | testOptionalParameter | optional | TTypeParameter | |
 
-## Returns {#testfunction-returns}
+<h2 id="testfunction-returns">Returns</h2>
 
 The provided parameter
 
 **Return type**: TTypeParameter
 
-## Throws {#testfunction-throws}
+<h2 id="testfunction-throws">Throws</h2>
 
 An Error when something bad happens.

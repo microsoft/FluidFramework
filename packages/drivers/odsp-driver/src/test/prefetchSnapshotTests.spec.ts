@@ -8,33 +8,33 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { PromiseCache } from "@fluidframework/core-utils/internal";
+import type { PromiseCache } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
-	ISnapshot,
-	ISnapshotTree,
+	type ISnapshot,
+	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	ICacheEntry,
-	IOdspResolvedUrl,
+	type ICacheEntry,
+	type IOdspResolvedUrl,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
 import {
-	HostStoragePolicyInternal,
-	IOdspSnapshot,
-	IVersionedValueWithEpoch,
+	type HostStoragePolicyInternal,
+	type IOdspSnapshot,
+	type IVersionedValueWithEpoch,
 	persistedCacheValueVersion,
 } from "../contracts.js";
 import { createOdspUrl } from "../createOdspUrl.js";
-import { IPrefetchSnapshotContents, LocalPersistentCache } from "../odspCache.js";
+import { type IPrefetchSnapshotContents, LocalPersistentCache } from "../odspCache.js";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
-import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
+import type { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
-import { INewFileInfo, createCacheSnapshotKey } from "../odspUtils.js";
+import { type INewFileInfo, createCacheSnapshotKey } from "../odspUtils.js";
 import { prefetchLatestSnapshot } from "../prefetchLatestSnapshot.js";
 
 import { createResponse, mockFetchSingle, notFound } from "./mockFetch.js";

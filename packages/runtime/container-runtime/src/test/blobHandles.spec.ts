@@ -6,16 +6,17 @@
 import { strict as assert } from "node:assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import type { IRuntimeStorageService } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { BlobManager, IBlobManagerRuntime } from "../blobManager/index.js";
+import { BlobManager, type IBlobManagerRuntime } from "../blobManager/index.js";
 import {
 	ContainerFluidHandleContext,
-	IContainerHandleContextRuntime,
+	type IContainerHandleContextRuntime,
 } from "../containerHandleContext.js";
+
 export const failProxy = <T extends object>(handler: Partial<T> = {}): T => {
 	const proxy: T = new Proxy<T>(handler as T, {
 		get: (t, p, r) => {
@@ -77,9 +78,9 @@ describe("BlobHandles", () => {
 				d.resolve();
 			},
 			stashedBlobs: {},
-			localBlobIdGenerator: () => "localId",
+			localIdGenerator: () => "localId",
 			isBlobDeleted: () => false,
-			storage: failProxy<IDocumentStorageService>({
+			storage: failProxy<IRuntimeStorageService>({
 				createBlob: async () => {
 					return { id: "blobId" };
 				},
@@ -117,8 +118,8 @@ describe("BlobHandles", () => {
 				d.resolve();
 			},
 			stashedBlobs: {},
-			localBlobIdGenerator: () => "localId",
-			storage: failProxy<IDocumentStorageService>({
+			localIdGenerator: () => "localId",
+			storage: failProxy<IRuntimeStorageService>({
 				createBlob: async () => {
 					count++;
 					return { id: "blobId", minTTLInSeconds: count < 3 ? -1 : undefined };

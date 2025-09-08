@@ -4,21 +4,21 @@
  */
 
 import { PromiseCache } from "@fluidframework/core-utils/internal";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
-	ICacheEntry,
-	IEntry,
-	IFileEntry,
-	IOdspResolvedUrl,
-	IPersistedCache,
-	ISocketStorageDiscovery,
+	type ICacheEntry,
+	type IEntry,
+	type IFileEntry,
+	type IOdspResolvedUrl,
+	type IPersistedCache,
+	type ISocketStorageDiscovery,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions/internal";
 
 /**
  * Similar to IPersistedCache, but exposes cache interface for single file
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IPersistedFileCache {
 	// TODO: use a stronger type
@@ -97,7 +97,7 @@ export class PromiseCacheWithOneHourSlidingExpiry<T> extends PromiseCache<string
 /**
  * Internal cache interface used within driver only
  * @legacy
- * @alpha
+ * @beta
  */
 export interface INonPersistentCache {
 	/**
@@ -123,7 +123,7 @@ export interface INonPersistentCache {
 /**
  * Internal cache interface used within driver only
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IOdspCache extends INonPersistentCache {
 	/**
@@ -148,7 +148,7 @@ export class NonPersistentCache implements INonPersistentCache {
 
 /**
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IPrefetchSnapshotContents extends ISnapshot {
 	fluidEpoch: string;

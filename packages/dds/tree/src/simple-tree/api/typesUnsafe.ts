@@ -15,9 +15,7 @@ import type {
 	FieldKind,
 	FieldSchema,
 	FieldSchemaAlpha,
-	ImplicitAllowedTypes,
-	TreeLeafValue,
-} from "../schemaTypes.js";
+} from "../fieldSchema.js";
 import type {
 	NodeKind,
 	WithType,
@@ -27,9 +25,12 @@ import type {
 	TreeNodeSchema,
 	TreeNodeSchemaCore,
 	TreeNodeSchemaClass,
+	ImplicitAllowedTypes,
+	TreeLeafValue,
+	FlexListToUnion,
+	LazyItem,
 } from "../core/index.js";
 import type { TreeArrayNode } from "../node-kinds/index.js";
-import type { FlexListToUnion, LazyItem } from "../flexList.js";
 import type { SimpleArrayNodeSchema, SimpleMapNodeSchema } from "../simpleSchema.js";
 
 /*

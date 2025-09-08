@@ -5,7 +5,7 @@
 
 import { BaseTelemetryProperties, QueuedMessageProperties } from "../resources";
 import { LambdaSchemaValidator, BasePropertiesValidator } from "../schema";
-import assert from "assert";
+import { strict as assert } from "assert";
 
 describe("LumberjackSchemaValidator", () => {
 	it("Makes sure BasePropertiesValidator can use BaseLumberjackSchemaValidator's base functionality and validation passes.", async () => {

@@ -6,12 +6,12 @@
 import { strict as assert } from "node:assert";
 import path from "node:path";
 import { updatePackageJsonFile } from "@fluid-tools/build-infrastructure";
-import { Package, PackageJson } from "@fluidframework/build-tools";
+import type { Package, PackageJson } from "@fluidframework/build-tools";
 import { ExtractorConfig } from "@microsoft/api-extractor";
 import { Flags } from "@oclif/core";
 import { PackageCommand } from "../../BasePackageCommand.js";
 import type { PackageSelectionDefault } from "../../flags.js";
-import { CommandLogger } from "../../logging.js";
+import type { CommandLogger } from "../../logging.js";
 
 /**
  * Represents a list of package categorized into two arrays

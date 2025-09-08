@@ -2,19 +2,19 @@
 
 Test Enum
 
-### Signature {#testenum-signature}
+<h3 id="testenum-signature">Signature</h3>
 
 ```typescript
 export declare enum TestEnum
 ```
 
-### Remarks {#testenum-remarks}
+<h3 id="testenum-remarks">Remarks</h3>
 
 Here are some remarks about the enum
 
-### Examples {#testenum-examples}
+<h3 id="testenum-examples">Examples</h3>
 
-#### Example 1 {#testenum-example1}
+<h4 id="testenum-example1">Example 1</h4>
 
 Some example
 
@@ -22,7 +22,7 @@ Some example
 const foo = TestEnum.TestEnumValue1
 ```
 
-#### Example 2 {#testenum-example2}
+<h4 id="testenum-example2">Example 2</h4>
 
 Another example
 
@@ -40,36 +40,36 @@ const bar = TestEnum.TestEnumValue2
 
 Test enum value 1 (string)
 
-#### Signature {#testenumvalue1-signature}
+<h4 id="testenumvalue1-signature">Signature</h4>
 
 ```typescript
 TestEnumValue1 = "test-enum-value-1"
 ```
 
-#### Remarks {#testenumvalue1-remarks}
+<h4 id="testenumvalue1-remarks">Remarks</h4>
 
 Here are some remarks about the enum value
 
 Test enum value 2 (number)
 
-#### Signature {#testenumvalue2-signature}
+<h4 id="testenumvalue2-signature">Signature</h4>
 
 ```typescript
 TestEnumValue2 = 3
 ```
 
-#### Remarks {#testenumvalue2-remarks}
+<h4 id="testenumvalue2-remarks">Remarks</h4>
 
 Here are some remarks about the enum value
 
 Test enum value 3 (default)
 
-#### Signature {#testenumvalue3-signature}
+<h4 id="testenumvalue3-signature">Signature</h4>
 
 ```typescript
 TestEnumValue3 = 4
 ```
 
-#### Remarks {#testenumvalue3-remarks}
+<h4 id="testenumvalue3-remarks">Remarks</h4>
 
 Here are some remarks about the enum value

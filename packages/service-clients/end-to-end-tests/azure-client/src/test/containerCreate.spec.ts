@@ -5,21 +5,28 @@
 
 import { strict as assert } from "node:assert";
 
-import { AzureClient } from "@fluidframework/azure-client";
-import { AzureClient as AzureClientLegacy } from "@fluidframework/azure-client-legacy";
+import type { AzureClient } from "@fluidframework/azure-client";
+import type { AzureClient as AzureClientLegacy } from "@fluidframework/azure-client-legacy";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
 	MessageType,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
-import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map/internal";
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/legacy";
+// eslint-disable-next-line import/no-internal-modules -- TODO consider a test exposure to avoid /internal
+import { isTreeContainerSchema } from "@fluidframework/fluid-static/internal";
+import {
+	type ContainerSchema,
+	createTreeContainerRuntimeFactory,
+	type IFluidContainer,
+} from "@fluidframework/fluid-static/legacy";
+import { SharedMap } from "@fluidframework/map/legacy";
 import { SharedMap as SharedMapLegacy } from "@fluidframework/map-legacy";
-import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import { AxiosResponse } from "axios";
+import { SharedTree } from "@fluidframework/tree/legacy";
+import type { AxiosResponse } from "axios";
 import type { SinonSandbox } from "sinon";
 import { createSandbox } from "sinon";
 
@@ -671,3 +678,57 @@ for (const testOpts of testMatrix) {
 		}
 	});
 }
+
+/**
+ * Testing creating/loading containers with a tree-based root data object.
+ */
+describe("Container create in tree-only mode", () => {
+	const invalidSchemaErrorMessage =
+		"Tree-only mode requires exactly 1 SharedTree in initialObjects.";
+	function createClient(): AzureClient {
+		return createAzureClient(
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			({ schema, compatibilityMode }) => {
+				if (!isTreeContainerSchema(schema)) {
+					throw new UsageError(invalidSchemaErrorMessage);
+				}
+				return createTreeContainerRuntimeFactory({ schema, compatibilityMode });
+			},
+		);
+	}
+	it("can create tree-based container", async function () {
+		const client = createClient();
+		const schema = {
+			initialObjects: {
+				tree: SharedTree,
+			},
+		};
+		const { container } = await client.createContainer(schema, "2");
+
+		assert(SharedTree.is(container.initialObjects.tree));
+	});
+
+	it("throws if invalid schema is encountered", async function () {
+		const client = createClient();
+		const schema = {
+			initialObjects: {
+				tree: SharedTree,
+				map: SharedMap,
+			},
+		};
+
+		await assert.rejects(
+			client.createContainer(schema, "2"),
+			(error: unknown) => {
+				assert(error instanceof UsageError);
+				assert.strictEqual(error.message, invalidSchemaErrorMessage);
+				return true;
+			},
+			"Expected an error to be thrown for invalid schema",
+		);
+	});
+});

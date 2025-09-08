@@ -13,25 +13,26 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 } from "../core/index.js";
-import { FieldKinds, isFlexTreeNode, type FlexTreeNode } from "../feature-libraries/index.js";
-import type { CheckoutFlexTreeView } from "../shared-tree/index.js";
+import {
+	FieldKinds,
+	isFlexTreeNode,
+	type Context,
+	type FlexTreeNode,
+} from "../feature-libraries/index.js";
 import { brand } from "../util/index.js";
 import {
 	SchemaFactory,
+	toInitialSchema,
 	type InsertableContent,
 	type UnsafeUnknownSchema,
 	type ValidateRecursiveSchema,
 } from "../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { TreeStoredContent } from "../shared-tree/schematizeTree.js";
-// eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../simple-tree/toStoredSchema.js";
 
 import type {
 	TreeSimpleContent,
 	// eslint-disable-next-line import/no-internal-modules
 } from "./feature-libraries/flex-tree/utils.js";
-import { fieldCursorFromInsertable } from "./utils.js";
+import { fieldCursorFromInsertable, type TreeStoredContentStrict } from "./utils.js";
 
 /**
  * Test trees which can be parametrically scaled to any size.
@@ -88,14 +89,14 @@ export function makeDeepContentSimple(
 export function makeDeepStoredContent(
 	depth: number,
 	leafValue: number = 1,
-): TreeStoredContent {
+): TreeStoredContentStrict {
 	const content = makeDeepContentSimple(depth, leafValue);
 	return {
 		initialTree: fieldCursorFromInsertable<UnsafeUnknownSchema>(
 			content.schema,
 			content.initialTree,
 		),
-		schema: toStoredSchema(content.schema),
+		schema: toInitialSchema(content.schema),
 	};
 }
 
@@ -123,14 +124,14 @@ export function makeWideContentWithEndValueSimple(
 export function makeWideStoredContentWithEndValue(
 	numberOfNodes: number,
 	endLeafValue?: number,
-): TreeStoredContent {
+): TreeStoredContentStrict {
 	const content = makeWideContentWithEndValueSimple(numberOfNodes, endLeafValue);
 	return {
 		initialTree: fieldCursorFromInsertable<UnsafeUnknownSchema>(
 			content.schema,
 			content.initialTree,
 		),
-		schema: toStoredSchema(content.schema),
+		schema: toInitialSchema(content.schema),
 	};
 }
 
@@ -178,7 +179,7 @@ export function readWideTreeAsJSObject(nodes: JSWideTree): {
 	return { nodesCount: nodes.length, sum };
 }
 
-export function readWideCursorTree(tree: CheckoutFlexTreeView): {
+export function readWideCursorTree(tree: Context): {
 	nodesCount: number;
 	sum: number;
 } {
@@ -196,7 +197,7 @@ export function readWideCursorTree(tree: CheckoutFlexTreeView): {
 	return { nodesCount, sum };
 }
 
-export function readDeepCursorTree(tree: CheckoutFlexTreeView): {
+export function readDeepCursorTree(tree: Context): {
 	depth: number;
 	value: number;
 } {
@@ -254,13 +255,13 @@ export function wideLeafPath(index: number): UpPath {
 	return path;
 }
 
-export function readWideFlexTree(tree: CheckoutFlexTreeView): {
+export function readWideFlexTree(tree: Context): {
 	nodesCount: number;
 	sum: number;
 } {
 	let sum = 0;
 	let nodesCount = 0;
-	const root = tree.flexTree;
+	const root = tree.root;
 	assert(root.is(FieldKinds.required));
 	const field = (root.content as FlexTreeNode).getBoxed(EmptyKey);
 	assert(field.length !== 0);
@@ -272,13 +273,13 @@ export function readWideFlexTree(tree: CheckoutFlexTreeView): {
 	return { nodesCount, sum };
 }
 
-export function readDeepFlexTree(tree: CheckoutFlexTreeView): {
+export function readDeepFlexTree(tree: Context): {
 	depth: number;
 	value: number;
 } {
 	let depth = 0;
-	assert(tree.flexTree.is(FieldKinds.required));
-	let currentNode = tree.flexTree.content as FlexTreeNode | number;
+	assert(tree.root.is(FieldKinds.required));
+	let currentNode = tree.root.content as FlexTreeNode | number;
 	while (isFlexTreeNode(currentNode)) {
 		const read = currentNode.getBoxed(brand("foo"));
 		assert(read.is(FieldKinds.required));

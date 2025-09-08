@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import nconf, { Provider } from "nconf";
+import nconf, { type Provider } from "nconf";
 import { WinstonLumberjackEngine } from "@fluidframework/server-services-utils";
 import {
-	ILumberjackEngine,
-	ILumberjackOptions,
-	ILumberjackSchemaValidator,
+	type ILumberjackEngine,
+	type ILumberjackOptions,
+	type ILumberjackSchemaValidator,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 

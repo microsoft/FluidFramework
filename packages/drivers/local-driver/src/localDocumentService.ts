@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	TypedEventEmitter,
-	type ILayerCompatDetails,
-	type IProvideLayerCompatDetails,
-} from "@fluid-internal/client-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
@@ -27,7 +23,6 @@ import { TestHistorian } from "@fluidframework/server-test-utils";
 import { LocalDeltaStorageService } from "./localDeltaStorageService.js";
 import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js";
 import { LocalDocumentStorageService } from "./localDocumentStorageService.js";
-import { localDriverCompatDetailsForLoader } from "./localLayerCompatState.js";
 
 /**
  * Basic implementation of a document service for local use.
@@ -35,7 +30,7 @@ import { localDriverCompatDetailsForLoader } from "./localLayerCompatState.js";
  */
 export class LocalDocumentService
 	extends TypedEventEmitter<IDocumentServiceEvents>
-	implements IDocumentService, IProvideLayerCompatDetails
+	implements IDocumentService
 {
 	/**
 	 * @param localDeltaConnectionServer - delta connection server for ops
@@ -55,14 +50,6 @@ export class LocalDocumentService
 		private readonly logger?: ITelemetryBaseLogger,
 	) {
 		super();
-	}
-
-	/**
-	 * The compatibility details of the Local Driver layer that is exposed to the Loader layer
-	 * for validating Loader-Driver compatibility.
-	 */
-	public get ILayerCompatDetails(): ILayerCompatDetails {
-		return localDriverCompatDetailsForLoader;
 	}
 
 	public dispose() {}

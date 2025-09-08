@@ -14,14 +14,14 @@ import {
 import { InMemoryApiCounters } from "@fluidframework/server-services-utils";
 import { cloneDeep } from "lodash";
 import {
-	AggregationCursor,
-	Collection,
-	Document,
-	FindOneAndUpdateOptions,
-	FindOptions,
+	type AggregationCursor,
+	type Collection,
+	type Document,
+	type FindOneAndUpdateOptions,
+	type FindOptions,
 	MongoClient,
-	MongoClientOptions,
-	OptionalUnlessRequiredId,
+	type MongoClientOptions,
+	type OptionalUnlessRequiredId,
 } from "mongodb";
 
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";

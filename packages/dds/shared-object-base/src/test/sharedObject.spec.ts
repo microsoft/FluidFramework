@@ -7,14 +7,14 @@ import { strict as assert } from "node:assert";
 
 // Add IFluidHandle import for mock handle
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import {
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
@@ -26,7 +26,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
-import { FluidSerializer, IFluidSerializer } from "../serializer.js";
+import { FluidSerializer, type IFluidSerializer } from "../serializer.js";
 import { SharedObject, SharedObjectCore } from "../sharedObject.js";
 
 class MySharedObject extends SharedObject {

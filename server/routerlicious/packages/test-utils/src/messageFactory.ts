@@ -4,20 +4,20 @@
  */
 
 import {
-	IClientJoin,
-	IDocumentMessage,
-	IDocumentSystemMessage,
-	ISequencedDocumentAugmentedMessage,
-	ISequencedDocumentMessage,
+	type IClientJoin,
+	type IDocumentMessage,
+	type IDocumentSystemMessage,
+	type ISequencedDocumentAugmentedMessage,
+	type ISequencedDocumentMessage,
 	MessageType,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
 import {
 	BoxcarType,
-	IBoxcarMessage,
-	IQueuedMessage,
-	IRawOperationMessage,
-	ISequencedOperationMessage,
+	type IBoxcarMessage,
+	type IQueuedMessage,
+	type IRawOperationMessage,
+	type ISequencedOperationMessage,
 	RawOperationType,
 	SequencedOperationType,
 } from "@fluidframework/server-services-core";

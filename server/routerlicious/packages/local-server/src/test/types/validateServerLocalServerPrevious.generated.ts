@@ -22,6 +22,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_LocalDeltaConnectionServer": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_LocalDeltaConnectionServer = requireAssignableTo<TypeOnly<old.LocalDeltaConnectionServer>, TypeOnly<current.LocalDeltaConnectionServer>>
 
 /*
@@ -40,7 +41,6 @@ declare type current_as_old_for_Class_LocalDeltaConnectionServer = requireAssign
  * typeValidation.broken:
  * "Class_LocalOrdererManager": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_LocalOrdererManager = requireAssignableTo<TypeOnly<old.LocalOrdererManager>, TypeOnly<current.LocalOrdererManager>>
 
 /*
@@ -59,6 +59,7 @@ declare type current_as_old_for_Class_LocalOrdererManager = requireAssignableTo<
  * typeValidation.broken:
  * "Class_LocalWebSocket": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_LocalWebSocket = requireAssignableTo<TypeOnly<old.LocalWebSocket>, TypeOnly<current.LocalWebSocket>>
 
 /*
@@ -77,6 +78,7 @@ declare type current_as_old_for_Class_LocalWebSocket = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Class_LocalWebSocketServer": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_LocalWebSocketServer = requireAssignableTo<TypeOnly<old.LocalWebSocketServer>, TypeOnly<current.LocalWebSocketServer>>
 
 /*

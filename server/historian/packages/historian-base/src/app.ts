@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
 	IReadinessCheck,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cors from "cors";
 import express from "express";
-import * as nconf from "nconf";
+import type * as nconf from "nconf";
 import {
 	DriverVersionHeaderName,
 	CallingServiceHeaderName,
@@ -33,7 +33,7 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import { RestLessServer, createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import * as routes from "./routes";
-import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
+import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
 import { Constants, getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
 
 export function create(

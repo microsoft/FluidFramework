@@ -12,7 +12,7 @@ import {
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import express from "express";
+import type express from "express";
 import morgan from "morgan";
 
 import { getTelemetryContextPropertiesWithHttpInfo } from "./telemetryContext";

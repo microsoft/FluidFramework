@@ -5,8 +5,8 @@
 
 import { getExecutableFromCommand } from "../../common/utils";
 import type { BuildContext } from "../buildContext";
-import { BuildPackage } from "../buildGraph";
-import { TaskFileDependencies } from "../fluidTaskDefinitions";
+import type { BuildPackage } from "../buildGraph";
+import type { TaskFileDependencies } from "../fluidTaskDefinitions";
 import { isConcurrentlyCommand, parseConcurrentlyCommand } from "../parseCommands";
 import { GroupTask } from "./groupTask";
 import { ApiExtractorTask } from "./leaf/apiExtractorTask";
@@ -29,8 +29,8 @@ import { PrettierTask } from "./leaf/prettierTask";
 import { Ts2EsmTask } from "./leaf/ts2EsmTask";
 import { TscTask } from "./leaf/tscTask";
 import { WebpackTask } from "./leaf/webpackTask";
-import { type Task } from "./task";
-import { type TaskHandler } from "./taskHandlers";
+import type { Task } from "./task";
+import type { TaskHandler } from "./taskHandlers";
 
 // Map of executable name to LeafTasks
 const executableToLeafTask: {

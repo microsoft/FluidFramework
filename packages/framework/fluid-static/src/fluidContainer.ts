@@ -19,7 +19,7 @@ import type {
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { SharedObjectKind } from "@fluidframework/shared-object-base";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import type {
 	ContainerAttachProps,

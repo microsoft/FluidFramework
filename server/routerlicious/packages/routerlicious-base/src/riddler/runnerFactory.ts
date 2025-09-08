@@ -8,25 +8,25 @@ import { RedisCache } from "@fluidframework/server-services";
 import { getOrCreateRepository } from "@fluidframework/server-services-client";
 import {
 	MongoManager,
-	IDb,
-	ISecretManager,
-	IResources,
-	IResourcesFactory,
-	IRunner,
-	IRunnerFactory,
-	IWebServerFactory,
-	IReadinessCheck,
+	type IDb,
+	type ISecretManager,
+	type IResources,
+	type IResourcesFactory,
+	type IRunner,
+	type IRunnerFactory,
+	type IWebServerFactory,
+	type IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import * as winston from "winston";
 
-import { IRiddlerResourcesCustomizations } from "./customizations";
-import { ITenantRepository, MongoTenantRepository } from "./mongoTenantRepository";
+import type { IRiddlerResourcesCustomizations } from "./customizations";
+import { type ITenantRepository, MongoTenantRepository } from "./mongoTenantRepository";
 import { RiddlerRunner } from "./runner";
-import { ITenantDocument } from "./tenantManager";
+import type { ITenantDocument } from "./tenantManager";
 
 /**
  * @internal

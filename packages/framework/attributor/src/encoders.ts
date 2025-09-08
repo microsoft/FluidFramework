@@ -4,10 +4,10 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { type IUser } from "@fluidframework/driver-definitions";
-import { type AttributionInfo } from "@fluidframework/runtime-definitions/internal";
+import type { IUser } from "@fluidframework/driver-definitions";
+import type { AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 
-import { type IAttributor } from "./attributor.js";
+import type { IAttributor } from "./attributor.js";
 import { type InternedStringId, MutableStringInterner } from "./stringInterner.js";
 
 export interface Encoder<TDecoded, TEncoded> {

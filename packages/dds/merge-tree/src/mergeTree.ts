@@ -9,14 +9,14 @@
 import {
 	assert,
 	Heap,
-	IComparer,
+	type IComparer,
 	DoublyLinkedList,
-	ListNode,
+	type ListNode,
 } from "@fluidframework/core-utils/internal";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { IAttributionCollectionSerializer } from "./attributionCollection.js";
-import { Client } from "./client.js";
+import type { IAttributionCollectionSerializer } from "./attributionCollection.js";
+import type { Client } from "./client.js";
 import {
 	NonCollabClient,
 	TreeMaintenanceSequenceNumber,
@@ -25,16 +25,16 @@ import {
 import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment.js";
 import {
 	LocalReferenceCollection,
-	LocalReferencePosition,
+	type LocalReferencePosition,
 	SlidingPreference,
 	anyLocalReferencePosition,
 	filterLocalReferencePositions,
 } from "./localReference.js";
 import {
-	IMergeTreeDeltaOpArgs,
-	IMergeTreeSegmentDelta,
-	MergeTreeDeltaCallback,
-	MergeTreeMaintenanceCallback,
+	type IMergeTreeDeltaOpArgs,
+	type IMergeTreeSegmentDelta,
+	type MergeTreeDeltaCallback,
+	type MergeTreeMaintenanceCallback,
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback.js";
 import {
@@ -47,14 +47,14 @@ import {
 } from "./mergeTreeNodeWalk.js";
 import {
 	CollaborationWindow,
-	IMergeNode,
-	ISegmentAction,
-	ISegmentChanges,
-	InsertContext,
+	type IMergeNode,
+	type ISegmentAction,
+	type ISegmentChanges,
+	type InsertContext,
 	Marker,
 	MaxNodesInBlock,
 	MergeBlock,
-	SegmentGroup,
+	type SegmentGroup,
 	assertSegmentLeaf,
 	assignChild,
 	getMinSeqPerspective,
@@ -74,10 +74,10 @@ import {
 	createRemoveRangeOp,
 } from "./opBuilder.js";
 import {
-	IMergeTreeDeltaOp,
-	IRelativePosition,
+	type IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
+	type IMergeTreeOp,
 } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
 import {
@@ -88,10 +88,10 @@ import {
 	RemoteObliteratePerspective,
 	allAckedChangesPerspective,
 } from "./perspective.js";
-import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
+import { type PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
 	DetachedReferencePosition,
-	ReferencePosition,
+	type ReferencePosition,
 	refGetTileLabels,
 	refHasTileLabel,
 	refTypeIncludesFlag,
@@ -99,7 +99,7 @@ import {
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
 	assertRemoved,
-	ISegmentInsideObliterateInfo,
+	type ISegmentInsideObliterateInfo,
 	isInsideObliterate,
 	isMergeNodeInfo,
 	isRemoved,
@@ -215,8 +215,7 @@ function ackSegment(
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IMergeTreeOptions {
 	catchUpBlobName?: string;
@@ -2386,7 +2385,15 @@ export class MergeTree {
 	/**
 	 * Revert an unacked local op
 	 */
-	public rollback(op: IMergeTreeDeltaOp, localOpMetadata: SegmentGroup): void {
+	public rollback(op: IMergeTreeOp, localOpMetadata: SegmentGroup | SegmentGroup[]): void {
+		if (op.type === MergeTreeDeltaType.GROUP) {
+			assert(Array.isArray(localOpMetadata), 0xbe2 /* metadata must be array for group ops */);
+			for (let i = op.ops.length - 1; i >= 0; i--) {
+				this.rollback(op.ops[i], localOpMetadata[i]);
+			}
+			return;
+		}
+
 		const rollbackStamp: OperationStamp = {
 			seq: TreeMaintenanceSequenceNumber,
 			clientId: NonCollabClient,
@@ -2404,31 +2411,31 @@ export class MergeTree {
 					segmentSegmentGroup === pendingSegmentGroup,
 					0x3ee /* Unexpected segmentGroup in segment */,
 				);
-
 				assert(
-					isRemoved(segment) &&
-						segment.removes[0].clientId === this.collabWindow.clientId &&
-						segment.removes[0].type === "setRemove",
+					isRemoved(segment) && segment.removes[0].type === "setRemove",
 					0x39d /* Rollback segment removedClientId does not match local client */,
 				);
-				// This also removes obliterates, but that should be ok as we can only remove a segment once.
-				// If we were able to remove it locally, that also means there are no remote removals (since rollback is synchronous).
-				removeRemovalInfo(segment);
+				// if a peer client concurrently deleted the segment, don't revive it on rollback
+				if (segment.removes[0].clientId === this.collabWindow.clientId) {
+					// This also removes obliterates, but that should be ok as we can only remove a segment once.
+					// If we were able to remove it locally, that also means there are no remote removals (since rollback is synchronous).
+					removeRemovalInfo(segment);
 
-				this.blockUpdatePathLengths(segment.parent, rollbackStamp);
+					this.blockUpdatePathLengths(segment.parent, rollbackStamp);
 
-				// Note: optional chaining short-circuits:
-				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining#short-circuiting
-				this.mergeTreeDeltaCallback?.(
-					{
-						op: createInsertSegmentOp(this.findRollbackPosition(segment), segment),
-						rollback: true,
-					},
-					{
-						operation: MergeTreeDeltaType.INSERT,
-						deltaSegments: [{ segment }],
-					},
-				);
+					// Note: optional chaining short-circuits:
+					// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining#short-circuiting
+					this.mergeTreeDeltaCallback?.(
+						{
+							op: createInsertSegmentOp(this.findRollbackPosition(segment), segment),
+							rollback: true,
+						},
+						{
+							operation: MergeTreeDeltaType.INSERT,
+							deltaSegments: [{ segment }],
+						},
+					);
+				}
 			});
 		} else if (
 			op.type === MergeTreeDeltaType.INSERT ||

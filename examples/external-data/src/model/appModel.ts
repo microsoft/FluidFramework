@@ -4,9 +4,9 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IContainer } from "@fluidframework/container-definitions/legacy";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
-import { IResolvedUrl } from "@fluidframework/driver-definitions/legacy";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/legacy";
 
 import type { IAppModel, IAppModelEvents, IBaseDocument } from "../model-interface/index.js";
 

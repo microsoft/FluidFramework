@@ -103,7 +103,6 @@ declare type old_as_current_for_Class_NetworkError = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Class_NetworkError": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_NetworkError = requireAssignableTo<TypeOnly<current.NetworkError>, TypeOnly<old.NetworkError>>
 
 /*
@@ -221,7 +220,6 @@ declare type current_as_old_for_ClassStatics_Historian = requireAssignableTo<Typ
  * typeValidation.broken:
  * "ClassStatics_NetworkError": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_NetworkError = requireAssignableTo<TypeOnly<typeof current.NetworkError>, TypeOnly<typeof old.NetworkError>>
 
 /*
@@ -276,7 +274,6 @@ declare type old_as_current_for_Enum_InternalErrorCode = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Enum_InternalErrorCode": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Enum_InternalErrorCode = requireAssignableTo<TypeOnly<current.InternalErrorCode>, TypeOnly<old.InternalErrorCode>>
 
 /*
@@ -296,6 +293,15 @@ declare type old_as_current_for_Enum_RestLessFieldNames = requireAssignableTo<Ty
  * "Enum_RestLessFieldNames": {"backCompat": false}
  */
 declare type current_as_old_for_Enum_RestLessFieldNames = requireAssignableTo<TypeOnly<current.RestLessFieldNames>, TypeOnly<old.RestLessFieldNames>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_convertAxiosErrorToNetorkError": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_convertAxiosErrorToNetorkError = requireAssignableTo<TypeOnly<typeof current.convertAxiosErrorToNetorkError>, TypeOnly<typeof old.convertAxiosErrorToNetorkError>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -455,9 +461,27 @@ declare type current_as_old_for_Function_mergeSortedArrays = requireAssignableTo
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Function_parseToken": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_parseToken = requireAssignableTo<TypeOnly<typeof current.parseToken>, TypeOnly<typeof old.parseToken>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Function_promiseTimeout": {"backCompat": false}
  */
 declare type current_as_old_for_Function_promiseTimeout = requireAssignableTo<TypeOnly<typeof current.promiseTimeout>, TypeOnly<typeof old.promiseTimeout>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_setupAxiosInterceptorsForAbortSignals": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_setupAxiosInterceptorsForAbortSignals = requireAssignableTo<TypeOnly<typeof current.setupAxiosInterceptorsForAbortSignals>, TypeOnly<typeof old.setupAxiosInterceptorsForAbortSignals>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -491,6 +515,24 @@ declare type current_as_old_for_Function_validateTokenClaimsExpiration = require
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Interface_IAbortControllerContext": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IAbortControllerContext = requireAssignableTo<TypeOnly<old.IAbortControllerContext>, TypeOnly<current.IAbortControllerContext>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IAbortControllerContext": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IAbortControllerContext = requireAssignableTo<TypeOnly<current.IAbortControllerContext>, TypeOnly<old.IAbortControllerContext>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_IAlfredTenant": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_IAlfredTenant = requireAssignableTo<TypeOnly<old.IAlfredTenant>, TypeOnly<current.IAlfredTenant>>
@@ -503,6 +545,24 @@ declare type old_as_current_for_Interface_IAlfredTenant = requireAssignableTo<Ty
  * "Interface_IAlfredTenant": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IAlfredTenant = requireAssignableTo<TypeOnly<current.IAlfredTenant>, TypeOnly<old.IAlfredTenant>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IBasicRestWrapperMetricProps": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IBasicRestWrapperMetricProps = requireAssignableTo<TypeOnly<old.IBasicRestWrapperMetricProps>, TypeOnly<current.IBasicRestWrapperMetricProps>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IBasicRestWrapperMetricProps": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IBasicRestWrapperMetricProps = requireAssignableTo<TypeOnly<current.IBasicRestWrapperMetricProps>, TypeOnly<old.IBasicRestWrapperMetricProps>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -700,7 +760,6 @@ declare type old_as_current_for_Interface_INetworkErrorDetails = requireAssignab
  * typeValidation.broken:
  * "Interface_INetworkErrorDetails": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_INetworkErrorDetails = requireAssignableTo<TypeOnly<current.INetworkErrorDetails>, TypeOnly<old.INetworkErrorDetails>>
 
 /*
@@ -800,7 +859,6 @@ declare type current_as_old_for_Interface_ISummaryUploadManager = requireAssigna
  * typeValidation.broken:
  * "Interface_ITimeoutContext": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ITimeoutContext = requireAssignableTo<TypeOnly<old.ITimeoutContext>, TypeOnly<current.ITimeoutContext>>
 
 /*
@@ -1132,6 +1190,15 @@ declare type current_as_old_for_Variable_buildTreePath = requireAssignableTo<Typ
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Variable_CallingServiceHeaderName": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_CallingServiceHeaderName = requireAssignableTo<TypeOnly<typeof current.CallingServiceHeaderName>, TypeOnly<typeof old.CallingServiceHeaderName>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Variable_canDeleteDoc": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_canDeleteDoc = requireAssignableTo<TypeOnly<typeof current.canDeleteDoc>, TypeOnly<typeof old.canDeleteDoc>>
@@ -1231,6 +1298,15 @@ declare type current_as_old_for_Variable_getAuthorizationTokenFromCredentials = 
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Variable_getGlobalAbortControllerContext": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_getGlobalAbortControllerContext = requireAssignableTo<TypeOnly<typeof current.getGlobalAbortControllerContext>, TypeOnly<typeof old.getGlobalAbortControllerContext>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Variable_getGlobalTimeoutContext": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_getGlobalTimeoutContext = requireAssignableTo<TypeOnly<typeof current.getGlobalTimeoutContext>, TypeOnly<typeof old.getGlobalTimeoutContext>>
@@ -1258,9 +1334,27 @@ declare type current_as_old_for_Variable_LatestSummaryId = requireAssignableTo<T
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Variable_setGlobalAbortControllerContext": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_setGlobalAbortControllerContext = requireAssignableTo<TypeOnly<typeof current.setGlobalAbortControllerContext>, TypeOnly<typeof old.setGlobalAbortControllerContext>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Variable_setGlobalTimeoutContext": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_setGlobalTimeoutContext = requireAssignableTo<TypeOnly<typeof current.setGlobalTimeoutContext>, TypeOnly<typeof old.setGlobalTimeoutContext>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_TelemetryContextHeaderName": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_TelemetryContextHeaderName = requireAssignableTo<TypeOnly<typeof current.TelemetryContextHeaderName>, TypeOnly<typeof old.TelemetryContextHeaderName>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

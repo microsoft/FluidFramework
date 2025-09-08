@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IReadinessCheck } from "@fluidframework/server-services-core";
-import {
+import type { IReadinessCheck } from "@fluidframework/server-services-core";
+import type {
 	IRedisClientConnectionManager,
 	ITenantKeyGenerator,
 } from "@fluidframework/server-services-utils";
 
-import { ITenantRepository } from "./mongoTenantRepository";
+import type { ITenantRepository } from "./mongoTenantRepository";
 
 /**
  * @internal

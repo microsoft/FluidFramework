@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncPriorityQueue } from "async";
+import type { AsyncPriorityQueue } from "async";
 import chalk from "picocolors";
 import { Spinner } from "picospinner";
 import * as semver from "semver";
@@ -12,22 +12,23 @@ import * as assert from "assert";
 import registerDebug from "debug";
 import type { GitRepo } from "../common/gitRepo";
 import { defaultLogger } from "../common/logging";
-import { Package } from "../common/npmPackage";
-import { Timer } from "../common/timer";
+import type { Package } from "../common/npmPackage";
+import type { Timer } from "../common/timer";
 import type { BuildContext } from "./buildContext";
+import { BuildResult, summarizeBuildResult } from "./buildResult";
 import { FileHashCache } from "./fileHashCache";
 import type { IFluidBuildConfig } from "./fluidBuildConfig";
 import {
-	TaskDefinition,
-	TaskDefinitions,
-	TaskDefinitionsOnDisk,
-	TaskFileDependencies,
+	type TaskDefinition,
+	type TaskDefinitions,
+	type TaskDefinitionsOnDisk,
+	type TaskFileDependencies,
 	getDefaultTaskDefinition,
 	getTaskDefinitions,
 	normalizeGlobalTaskDefinitions,
 } from "./fluidTaskDefinitions";
 import { options } from "./options";
-import { Task, TaskExec } from "./tasks/task";
+import { Task, type TaskExec } from "./tasks/task";
 import { TaskFactory } from "./tasks/taskFactory";
 import { WorkerPool } from "./tasks/workers/workerPool";
 
@@ -36,26 +37,6 @@ const traceTaskDepTask = registerDebug("fluid-build:task:init:dep:task");
 const traceGraph = registerDebug("fluid-build:graph");
 
 const { log } = defaultLogger;
-
-export enum BuildResult {
-	Success,
-	UpToDate,
-	Failed,
-}
-
-export function summarizeBuildResult(results: BuildResult[]) {
-	let retResult = BuildResult.UpToDate;
-	for (const result of results) {
-		if (result === BuildResult.Failed) {
-			return BuildResult.Failed;
-		}
-
-		if (result === BuildResult.Success) {
-			retResult = BuildResult.Success;
-		}
-	}
-	return retResult;
-}
 
 class TaskStats {
 	public leafTotalCount = 0;

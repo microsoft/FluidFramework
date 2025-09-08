@@ -5,14 +5,8 @@
 
 // TODO: Update import once TreeDataObject is exported in our non-internal package.
 // eslint-disable-next-line import/no-internal-modules
-import { TreeDataObject } from "@fluidframework/aqueduct/internal";
-import { PureDataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import {
-	SharedTree,
-	TreeViewConfiguration,
-	type ITree,
-	type TreeView,
-} from "@fluidframework/tree/legacy";
+import { TreeDataObject, TreeDataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { SharedTree, TreeViewConfiguration, type TreeView } from "@fluidframework/tree/legacy";
 
 import { Column, Row, Table } from "./schema.js";
 
@@ -22,22 +16,40 @@ import { Column, Row, Table } from "./schema.js";
  * @remarks
  * This class is responsible for initializing the tree with a predefined schema (`Table`)
  */
-export class TableDataObject extends TreeDataObject<TreeView<typeof Table>> {
+export class TableDataObject extends TreeDataObject {
 	public readonly config = new TreeViewConfiguration({ schema: Table });
-	public static readonly factory = new PureDataObjectFactory<
-		TreeDataObject<TreeView<typeof Table>>
-	>(`TreeDataObject`, TableDataObject, [SharedTree.getFactory()], {});
+	public static readonly factory = new TreeDataObjectFactory({
+		type: `TreeDataObject`,
+		ctor: TableDataObject,
+		sharedObjects: [SharedTree.getFactory()],
+	});
 
-	public override generateView(tree: ITree): TreeView<typeof Table> {
-		return tree.viewWith(this.config);
-	}
+	#treeView: TreeView<typeof Table> | undefined;
 
 	/**
-	 * Initializes the tree with a starter table.
-	 * @remarks Called during the initial creation of the data object.
+	 * The schema-aware view of the tree.
 	 */
-	public override async initializingFirstTime(): Promise<void> {
+	public get treeView(): TreeView<typeof Table> {
+		if (this.#treeView === undefined) {
+			throw new Error("treeView has not been initialized.");
+		}
+		return this.#treeView;
+	}
+
+	protected override async initializingFirstTime(): Promise<void> {
+		this.#treeView = this.tree.viewWith(this.config);
+		if (!this.treeView.compatibility.canInitialize) {
+			throw new Error("Incompatible schema");
+		}
+
 		this.treeView.initialize(getInitialTree());
+	}
+
+	protected override async initializingFromExisting(): Promise<void> {
+		this.#treeView = this.tree.viewWith(this.config);
+		if (!this.treeView.compatibility.canView) {
+			throw new Error("Incompatible schema");
+		}
 	}
 }
 

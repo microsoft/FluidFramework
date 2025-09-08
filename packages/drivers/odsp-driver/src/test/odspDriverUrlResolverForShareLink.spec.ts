@@ -7,8 +7,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
+import type { IRequest } from "@fluidframework/core-interfaces";
+import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { stub } from "sinon";
 
 import { SharingLinkHeader } from "../contractsPublic.js";

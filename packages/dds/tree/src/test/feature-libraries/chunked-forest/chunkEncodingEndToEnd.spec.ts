@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { SummaryType } from "@fluidframework/driver-definitions";
 
 import {
 	type ChangesetLocalId,
@@ -66,10 +67,8 @@ import {
 	SchemaFactory,
 	stringSchema,
 	TreeViewConfiguration,
+	toInitialSchema,
 } from "../../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
-import { SummaryType } from "@fluidframework/driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
 import type {
@@ -112,7 +111,7 @@ class HasIdentifier extends schemaFactory.object("parent", {
 function getIdentifierEncodingContext(id: string) {
 	const view = getView(new TreeViewConfiguration({ schema: HasIdentifier }));
 	view.initialize({ identifier: id });
-	const flexSchema = toStoredSchema(HasIdentifier);
+	const flexSchema = toInitialSchema(HasIdentifier);
 	const checkout = view.checkout;
 
 	const encoderContext: FieldBatchEncodingContext = {

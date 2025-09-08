@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IWebSocket } from "./http";
+import type { IWebSocket } from "./http";
 
 /**
  * Interface of web socket tracker

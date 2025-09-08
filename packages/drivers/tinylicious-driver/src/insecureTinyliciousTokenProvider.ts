@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenClaims, ScopeType } from "@fluidframework/driver-definitions/internal";
-import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
+import { type ITokenClaims, ScopeType } from "@fluidframework/driver-definitions/internal";
+import type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
 

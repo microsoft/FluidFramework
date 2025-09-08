@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@fluidframework/common-utils";
+import type { Deferred } from "@fluidframework/common-utils";
 import { promiseTimeout } from "@fluidframework/server-services-client";
-import { IWebServer } from "@fluidframework/server-services-core";
-import { Lumber, Lumberjack } from "@fluidframework/server-services-telemetry";
+import type { IWebServer } from "@fluidframework/server-services-core";
+import { type Lumber, Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { serializeError } from "serialize-error";
 

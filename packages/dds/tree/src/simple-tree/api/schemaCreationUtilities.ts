@@ -7,8 +7,8 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
-import type { NodeFromSchema } from "../schemaTypes.js";
 import type {
+	NodeFromSchema,
 	InternalTreeNode,
 	NodeKind,
 	TreeNode,
@@ -86,7 +86,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * @remarks
  * The string value of the enum is used as the name of the schema: callers must ensure that it is stable and unique.
  * Numeric enums values have the value implicitly converted into a string.
- * Consider making a dedicated schema factory with a nested scope (for example using {@link SchemaFactoryAlpha.scopedFactory}) to avoid the enum members colliding with other schema.
+ * Consider making a dedicated schema factory with a nested scope (for example using {@link SchemaFactoryBeta.scopedFactory}) to avoid the enum members colliding with other schema.
  * @example
  * ```typescript
  * const schemaFactory = new SchemaFactory("com.myApp");
@@ -197,10 +197,13 @@ export function enumEntries(
 		}
 		// At this point, it is expected that all remaining cases are reverse mappings,
 		// but do some asserts to ensure that the above logic is sufficient.
-		assert(typeof value === "string", "expected reverse mapping and thus a string value");
+		assert(
+			typeof value === "string",
+			0xbe4 /* expected reverse mapping and thus a string value */,
+		);
 		assert(
 			Number.parseFloat(key).toString() === key,
-			"expected reverse mapping and thus a key that is a normalized number",
+			0xbe5 /* expected reverse mapping and thus a key that is a normalized number */,
 		);
 		// Discard the reverse mapping.
 		return false;

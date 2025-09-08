@@ -14,6 +14,7 @@ export type {
 	ExtensionMessage,
 	ExtensionRuntimeProperties,
 	InboundExtensionMessage,
+	JoinedStatus,
 	OutboundExtensionMessage,
 	RawInboundExtensionMessage,
 	UnverifiedBrand,

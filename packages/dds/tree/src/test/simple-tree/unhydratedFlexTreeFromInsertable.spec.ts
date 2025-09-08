@@ -29,7 +29,7 @@ import {
 	FieldKind,
 	getDefaultProvider,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/schemaTypes.js";
+} from "../../simple-tree/fieldSchema.js";
 import {
 	getPossibleTypes,
 	unhydratedFlexTreeFromInsertable,

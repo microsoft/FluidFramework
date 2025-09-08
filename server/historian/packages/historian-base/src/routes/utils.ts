@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { RequestHandler } from "express";
+import type { RequestHandler } from "express";
 import { decode } from "jsonwebtoken";
-import * as nconf from "nconf";
-import { ITokenClaims } from "@fluidframework/protocol-definitions";
+import type * as nconf from "nconf";
+import type { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { validateTokenClaims } from "@fluidframework/server-services-utils";
 import { handleResponse } from "@fluidframework/server-services-shared";
@@ -17,18 +17,18 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import {
 	runWithRetry,
-	IStorageNameRetriever,
-	IRevokedTokenChecker,
-	IDocumentManager,
-	IThrottler,
+	type IStorageNameRetriever,
+	type IRevokedTokenChecker,
+	type IDocumentManager,
+	type IThrottler,
 	type IDenyList,
 } from "@fluidframework/server-services-core";
 import {
-	ICache,
-	ITenantService,
+	type ICache,
+	type ITenantService,
 	RestGitService,
-	ITenantCustomDataExternal,
-	ISimplifiedCustomDataRetriever,
+	type ITenantCustomDataExternal,
+	type ISimplifiedCustomDataRetriever,
 } from "../services";
 import { containsPathTraversal, parseToken } from "../utils";
 

@@ -4,12 +4,12 @@
  */
 
 import {
-	IThrottler,
-	IThrottlerHelper,
-	IThrottlerResponse,
+	type IThrottler,
+	type IThrottlerHelper,
+	type IThrottlerResponse,
 	ThrottlingError,
-	ILogger,
-	IUsageData,
+	type ILogger,
+	type IUsageData,
 } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,

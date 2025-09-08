@@ -13,7 +13,7 @@ import {
 	type ApiPropertyItem,
 } from "@microsoft/api-extractor-model";
 
-import type { SectionNode } from "../../documentation-domain/index.js";
+import type { Section } from "../../mdast/index.js";
 import {
 	ApiModifier,
 	getApiItemKind,
@@ -67,9 +67,9 @@ import { createChildDetailsSection, createMemberTables } from "../helpers/index.
 export function transformApiTypeLike(
 	apiItem: ApiTypeLike,
 	config: ApiItemTransformationConfiguration,
-	generateChildContent: (apiItem: ApiItem) => SectionNode[],
-): SectionNode[] {
-	const sections: SectionNode[] = [];
+	generateChildContent: (apiItem: ApiItem) => Section[],
+): Section[] {
+	const sections: Section[] = [];
 
 	const filteredChildren = getFilteredMembers(apiItem, config);
 	if (filteredChildren.length > 0) {
@@ -220,32 +220,32 @@ export function transformApiTypeLike(
 		const detailsSections = createChildDetailsSection(
 			[
 				{
-					heading: { title: "Constructor Details" },
+					heading: { type: "sectionHeading", title: "Constructor Details" },
 					itemKind: ApiItemKind.Constructor,
 					items: constructors,
 				},
 				{
-					heading: { title: "Event Details" },
+					heading: { type: "sectionHeading", title: "Event Details" },
 					itemKind: ApiItemKind.Property,
 					items: eventProperties,
 				},
 				{
-					heading: { title: "Property Details" },
+					heading: { type: "sectionHeading", title: "Property Details" },
 					itemKind: ApiItemKind.Property,
 					items: standardProperties,
 				},
 				{
-					heading: { title: "Method Details" },
+					heading: { type: "sectionHeading", title: "Method Details" },
 					itemKind: ApiItemKind.MethodSignature,
 					items: allMethods,
 				},
 				{
-					heading: { title: "Call Signature Details" },
+					heading: { type: "sectionHeading", title: "Call Signature Details" },
 					itemKind: ApiItemKind.CallSignature,
 					items: callSignatures,
 				},
 				{
-					heading: { title: "Index Signature Details" },
+					heading: { type: "sectionHeading", title: "Index Signature Details" },
 					itemKind: ApiItemKind.IndexSignature,
 					items: indexSignatures,
 				},

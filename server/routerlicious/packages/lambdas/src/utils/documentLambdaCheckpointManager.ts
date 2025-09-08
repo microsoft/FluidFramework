@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IQueuedMessage } from "@fluidframework/server-services-core";
+import type { IQueuedMessage } from "@fluidframework/server-services-core";
 
-import { ICheckpoint } from "./checkpointHelper";
+import type { ICheckpoint } from "./checkpointHelper";
 
 interface IDocumentCheckpointManager {
 	updateCheckpointMessages(message: IQueuedMessage);

@@ -10,6 +10,8 @@ import { SharedTreeFuzzTestFactory, createOnCreate } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import { type EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
+import { FluidClientVersion } from "../../../codec/index.js";
+import { ForestTypeOptimized, ForestTypeReference } from "../../../shared-tree/index.js";
 
 export const runsPerBatch = 50;
 // TODO: Enable other types of ops.
@@ -37,8 +39,26 @@ export const baseTreeModel: DDSFuzzModel<
 	Operation,
 	DDSFuzzTestState<SharedTreeFuzzTestFactory>
 > = {
-	workloadName: "SharedTree",
-	factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined)),
+	workloadName: "SharedTree (Reference Forest)",
+	factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined), undefined, {
+		oldestCompatibleClient: FluidClientVersion.EnableUnstableFeatures,
+		forest: ForestTypeReference,
+	}),
+	generatorFactory,
+	reducer: fuzzReducer,
+	validateConsistency: validateFuzzTreeConsistency,
+};
+
+export const optimizedForestTreeModel: DDSFuzzModel<
+	SharedTreeFuzzTestFactory,
+	Operation,
+	DDSFuzzTestState<SharedTreeFuzzTestFactory>
+> = {
+	workloadName: "SharedTree (Optimized Forest)",
+	factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined), undefined, {
+		oldestCompatibleClient: FluidClientVersion.EnableUnstableFeatures,
+		forest: ForestTypeOptimized,
+	}),
 	generatorFactory,
 	reducer: fuzzReducer,
 	validateConsistency: validateFuzzTreeConsistency,

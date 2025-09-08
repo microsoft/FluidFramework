@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITaskMessage, ITaskMessageSender } from "./taskMessages";
+import type { ITaskMessage, ITaskMessageSender } from "./taskMessages";
 
 /**
  * @deprecated This was functionality related to RabbitMq which is not used anymore,
