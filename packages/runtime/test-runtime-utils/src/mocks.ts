@@ -880,12 +880,19 @@ export class MockFluidDataStoreRuntime
 		if (registry) {
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
+
+		this.minVersionForCollab = overrides?.minVersionForCollab;
 	}
 
 	private readonly: boolean = false;
 	public readonly isReadOnly = () => this.readonly;
 
 	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
+
+	/**
+	 * @see IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
+	 */
+	public readonly minVersionForCollab: MinimumVersionForCollab | undefined;
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this;

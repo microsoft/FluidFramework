@@ -156,6 +156,9 @@
 		"broken": {
 			"Class_MockFluidDataStoreContext": {
 				"forwardCompat": false
+			},
+			"Class_MockFluidDataStoreRuntime": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "legacy"
