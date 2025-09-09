@@ -435,7 +435,6 @@
 				"${fileDirname}/../../lib/**/*.js",
 				"${fileDirname}/../../../lib/**/*.js",
 				"${fileDirname}/../../../../lib/**/*.js",
-				"${fileDirname}/../../../../../lib/**/*.js",
 				"${workspaceFolder}/**/dist/**/!(*.spec,*.test,*.tests).js",
 				"${fileDirname}/../../dist/**/*.js",
 				"${fileDirname}/../../../dist/**/*.js",

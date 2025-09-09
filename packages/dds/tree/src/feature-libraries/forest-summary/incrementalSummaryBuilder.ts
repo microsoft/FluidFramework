@@ -333,8 +333,10 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 					summaryPath: chunkSubTreePath,
 				});
 
-				// Update the next chunk reference ID to the next available ID.
-				this.nextReferenceId = brand(Number(chunkReferenceId) + 1);
+				const chunkReferenceIdNumber = Number(chunkReferenceId);
+				this.nextReferenceId = brand(
+					Math.max(this.nextReferenceId, chunkReferenceIdNumber + 1),
+				);
 
 				// Recursively download the contents of chunks in this chunk's sub tree.
 				await downloadChunkContentsInTree(chunkSnapshotTree, `${chunkSubTreePath}/`);
