@@ -32,10 +32,12 @@ import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { createAzureTokenProvider } from "../AzureTokenFactory.js";
 import { TestDataObject } from "../TestDataObject.js";
 
-import type { MessageFromChild, MessageToChild, UserIdAndName } from "./messageTypes.js";
+import type {
+	MessageFromChild as MessageToParent,
+	MessageToChild as MessageFromParent,
+	UserIdAndName,
+} from "./messageTypes.js";
 
-type MessageFromParent = MessageToChild;
-type MessageToParent = Required<MessageFromChild>;
 const connectTimeoutMs = 10_000;
 // Identifier given to child process
 const process_id = process.argv[2];
@@ -49,6 +51,13 @@ const endPoint = process.env.azure__fluid__relay__service__endpoint as string;
 if (useAzure && endPoint === undefined) {
 	throw new Error("Azure Fluid Relay service endpoint is missing");
 }
+
+const containerSchema = {
+	initialObjects: {
+		// A DataObject is added as otherwise fluid-static complains "Container cannot be initialized without any DataTypes"
+		_unused: TestDataObject,
+	},
+} as const satisfies ContainerSchema;
 
 function selectiveVerboseLog(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 	if (event.eventName.includes(":Signal") || event.eventName.includes(":Join")) {
@@ -69,21 +78,20 @@ function selectiveVerboseLog(event: ITelemetryBaseEvent, logLevel?: LogLevel): v
 }
 
 /**
- * Get or create a Fluid container with Presence in initialObjects.
+ * Get or create a Fluid container.
  */
-const getOrCreatePresenceContainer = async (
+const getOrCreateContainer = async (
 	id: string | undefined,
 	user: UserIdAndName,
 	scopes?: ScopeType[],
 	createScopes?: ScopeType[],
 ): Promise<{
-	container: IFluidContainer;
-	presence: Presence;
+	container: IFluidContainer<typeof containerSchema>;
 	services: AzureContainerServices;
 	client: AzureClient;
 	containerId: string;
 }> => {
-	let container: IFluidContainer;
+	let container: IFluidContainer<typeof containerSchema>;
 	let containerId: string;
 	const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
 		? {
@@ -108,19 +116,13 @@ const getOrCreatePresenceContainer = async (
 			send: verbosity.includes("telem") ? selectiveVerboseLog : () => {},
 		},
 	});
-	const schema: ContainerSchema = {
-		initialObjects: {
-			// A DataObject is added as otherwise fluid-static complains "Container cannot be initialized without any DataTypes"
-			_unused: TestDataObject,
-		},
-	};
 	let services: AzureContainerServices;
 	if (id === undefined) {
-		({ container, services } = await client.createContainer(schema, "2"));
+		({ container, services } = await client.createContainer(containerSchema, "2"));
 		containerId = await container.attach();
 	} else {
 		containerId = id;
-		({ container, services } = await client.getContainer(containerId, schema, "2"));
+		({ container, services } = await client.getContainer(containerId, containerSchema, "2"));
 	}
 	// wait for 'ConnectionState.Connected' so we return with client connected to container
 	if (container.connectionState !== ConnectionState.Connected) {
@@ -135,15 +137,14 @@ const getOrCreatePresenceContainer = async (
 		"Container is not attached after attach is called",
 	);
 
-	const presence = getPresence(container);
 	return {
 		client,
 		container,
-		presence,
 		services,
 		containerId,
 	};
 };
+
 function createSendFunction(): (msg: MessageToParent) => void {
 	if (process.send) {
 		const sendFn = process.send.bind(process);
@@ -369,13 +370,14 @@ class MessageHandler {
 			send({ event: "error", error: `${process_id}: Already connected to container` });
 			return;
 		}
-		const { container, presence, containerId } = await getOrCreatePresenceContainer(
+		const { container, containerId } = await getOrCreateContainer(
 			msg.containerId,
 			msg.user,
 			msg.scopes,
 			msg.createScopes,
 		);
 		this.container = container;
+		const presence = getPresence(container);
 		this.presence = presence;
 		this.containerId = containerId;
 
