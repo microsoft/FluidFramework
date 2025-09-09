@@ -19,6 +19,7 @@ import {
 	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
+	registerOracle,
 	type DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
 import {
@@ -560,11 +561,17 @@ oracleEmitter.on("clientCreate", (client) => {
 	// Attach SharedString oracle
 	const sharedStringOracle = new SharedStringOracle(channel);
 	channel.sharedStringOracle = sharedStringOracle;
+	registerOracle(sharedStringOracle);
 
 	// Attach IntervalCollection oracle
-	const collection = channel.getIntervalCollection("default");
-	const intervalCollectionOracle = new IntervalCollectionOracle(collection);
-	channel.intervalCollectionOracle = intervalCollectionOracle;
+	for (const label of channel.getIntervalCollectionLabels()) {
+		const collection = channel.getIntervalCollection(label);
+		const intervalCollectionOracle = new IntervalCollectionOracle(collection);
+		if (collection !== undefined) {
+			channel.intervalCollectionOracle = intervalCollectionOracle;
+			registerOracle(intervalCollectionOracle);
+		}
+	}
 });
 
 export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {

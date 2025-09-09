@@ -42,6 +42,7 @@ export class IntervalCollectionOracle {
 		// Track newly added intervals in the oracle by storing a snapshot of their start, end, and properties.
 		// This allows the oracle to later validate the collection’s state.
 		this.collection.on("addInterval", (interval, local, op) => {
+			if (!local) return;
 			this.intervals.set(interval.getIntervalId(), {
 				id: interval.getIntervalId(),
 				start: interval.start,
@@ -53,12 +54,14 @@ export class IntervalCollectionOracle {
 		// Remove the interval snapshot from the oracle when an interval is deleted.
 		// Keeps the oracle’s state in sync with the collection.
 		this.collection.on("deleteInterval", (interval, local, op) => {
+			if (!local) return;
 			this.intervals.delete(interval.getIntervalId());
 		});
 
 		// Update the stored snapshot’s start and end positions when an interval’s endpoints change.
 		// This ensures the oracle reflects the latest interval positions.
 		this.collection.on("changeInterval", (interval, previousInterval, local, op, slide) => {
+			if (!local) return;
 			const existing = this.intervals.get(interval.getIntervalId());
 			if (existing) {
 				existing.start = interval.start;
@@ -69,6 +72,7 @@ export class IntervalCollectionOracle {
 		// Update the stored snapshot’s properties when an interval’s properties change.
 		// This keeps the oracle in sync with property updates.
 		this.collection.on("propertyChanged", (interval, propertyDeltas, local, op) => {
+			if (!local) return;
 			const existing = this.intervals.get(interval.getIntervalId());
 			if (existing) {
 				for (const key of Object.keys(propertyDeltas)) {
@@ -82,6 +86,7 @@ export class IntervalCollectionOracle {
 		this.collection.on(
 			"changed",
 			(interval, propertyDeltas, previousInterval, local, slide) => {
+				if (!local) return;
 				const existing = this.intervals.get(interval.getIntervalId());
 				if (existing) {
 					if (previousInterval) {
