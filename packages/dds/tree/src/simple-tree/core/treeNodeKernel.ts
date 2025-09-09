@@ -366,7 +366,7 @@ type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
 // #region TreeNodeEventBuffer
 
 /**
- * Tracks the number of nested calls to {@link withPausedTreeEvents}.
+ * Tracks the number of nested calls to {@link withBufferedTreeEvents}.
  * Events will be buffered while this counter is \> 0.
  * Events will be flushed when this counter returns to 0.
  */
@@ -375,14 +375,14 @@ let pauseTreeEventsStack: number = 0;
 /**
  * Call the provided callback with {@link TreeNode}s' events paused until after the callback's completion.
  *
- * @remarks
  * Events that would otherwise have been emitted immediately are merged and buffered until after the
  * provided callback has been completed.
  *
+ * @remarks
  * Note: this should be used with caution. User application behaviors are implicitly coupled to event timing.
  * Disrupting this timing can lead to unexpected behavior.
  */
-export function withPausedTreeEvents(callback: () => void): void {
+export function withBufferedTreeEvents(callback: () => void): void {
 	assert(pauseTreeEventsStack >= 0, "pauseEvents count should never be negative");
 
 	pauseTreeEventsStack++;
@@ -396,7 +396,7 @@ export function withPausedTreeEvents(callback: () => void): void {
 }
 
 /**
- * Event emitter to notify subscribers when tree events buffered due to {@link withPausedTreeEvents} should be flushed.
+ * Event emitter to notify subscribers when tree events buffered due to {@link withBufferedTreeEvents} should be flushed.
  */
 const flushEventsEmitter = createEmitter<{
 	flush: () => void;
@@ -469,7 +469,7 @@ class KernelEventBuffer {
 	}
 
 	/**
-	 * Flushes any events buffered due to {@link withPausedTreeEvents}.
+	 * Flushes any events buffered due to {@link withBufferedTreeEvents}.
 	 */
 	public flush(): void {
 		this.#assertNotDisposed();
