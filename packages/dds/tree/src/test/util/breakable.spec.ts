@@ -69,6 +69,16 @@ Error: BreakFoo`;
 
 		assert.throws(() => foo.read(1), validateUsageError(message));
 		assert.throws(() => foo.canBreak(1), validateUsageError(message));
+
+		// Check ".cause" is set
+		assert.throws(
+			() => foo.canBreak(1),
+			(error: Error) => {
+				// TODO: remove cast when targeting ES2022 lib or later.
+				assert.equal((error as { cause?: unknown }).cause, breakError);
+				return true;
+			},
+		);
 	});
 
 	it("reentrant", () => {

@@ -10,9 +10,12 @@ import {
 	type AzureContainerServices,
 	type AzureLocalConnectionConfig,
 	type AzureRemoteConnectionConfig,
+	type ITelemetryBaseEvent,
 } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
+import { LogLevel } from "@fluidframework/core-interfaces";
+import type { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
 	getPresence,
@@ -22,28 +25,21 @@ import {
 	type LatestRaw,
 	type LatestMapRaw,
 	type StatesWorkspace,
-	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/presence/beta";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import type { ScopeType } from "../AzureClientFactory.js";
 import { createAzureTokenProvider } from "../AzureTokenFactory.js";
 import { TestDataObject } from "../TestDataObject.js";
-import type { configProvider } from "../utils.js";
 
-import type { MessageFromChild, MessageToChild } from "./messageTypes.js";
+import type { MessageFromChild, MessageToChild, UserIdAndName } from "./messageTypes.js";
 
 type MessageFromParent = MessageToChild;
 type MessageToParent = Required<MessageFromChild>;
-interface UserIdAndName {
-	id: string;
-	name: string;
-}
-
 const connectTimeoutMs = 10_000;
 // Identifier given to child process
 const process_id = process.argv[2];
+const verbosity = process.argv[3] ?? "";
 
 const useAzure = process.env.FLUID_CLIENT === "azure";
 const tenantId = useAzure
@@ -54,14 +50,32 @@ if (useAzure && endPoint === undefined) {
 	throw new Error("Azure Fluid Relay service endpoint is missing");
 }
 
+function selectiveVerboseLog(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+	if (event.eventName.includes(":Signal") || event.eventName.includes(":Join")) {
+		console.log(`[${process_id}] [${logLevel ?? LogLevel.default}]`, {
+			eventName: event.eventName,
+			details: event.details,
+			containerConnectionState: event.containerConnectionState,
+		});
+	} else if (
+		event.eventName.includes(":Container:") ||
+		event.eventName.includes(":Presence:")
+	) {
+		console.log(`[${process_id}] [${logLevel ?? LogLevel.default}]`, {
+			eventName: event.eventName,
+			containerConnectionState: event.containerConnectionState,
+		});
+	}
+}
+
 /**
  * Get or create a Fluid container with Presence in initialObjects.
  */
 const getOrCreatePresenceContainer = async (
 	id: string | undefined,
 	user: UserIdAndName,
-	config?: ReturnType<typeof configProvider>,
 	scopes?: ScopeType[],
+	createScopes?: ScopeType[],
 ): Promise<{
 	container: IFluidContainer;
 	presence: Presence;
@@ -74,16 +88,26 @@ const getOrCreatePresenceContainer = async (
 	const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
 		? {
 				tenantId,
-				tokenProvider: createAzureTokenProvider(user.id ?? "foo", user.name ?? "bar", scopes),
+				tokenProvider: createAzureTokenProvider(
+					user.id ?? "foo",
+					user.name ?? "bar",
+					scopes,
+					createScopes,
+				),
 				endpoint: endPoint,
 				type: "remote",
 			}
 		: {
-				tokenProvider: new InsecureTokenProvider("fooBar", user, scopes),
+				tokenProvider: new InsecureTokenProvider("fooBar", user, scopes, createScopes),
 				endpoint: "http://localhost:7071",
 				type: "local",
 			};
-	const client = new AzureClient({ connection: connectionProps });
+	const client = new AzureClient({
+		connection: connectionProps,
+		logger: {
+			send: verbosity.includes("telem") ? selectiveVerboseLog : () => {},
+		},
+	});
 	const schema: ContainerSchema = {
 		initialObjects: {
 			// A DataObject is added as otherwise fluid-static complains "Container cannot be initialized without any DataTypes"
@@ -122,12 +146,32 @@ const getOrCreatePresenceContainer = async (
 };
 function createSendFunction(): (msg: MessageToParent) => void {
 	if (process.send) {
-		return process.send.bind(process);
+		const sendFn = process.send.bind(process);
+		if (verbosity.includes("msgs")) {
+			return (msg: MessageToParent) => {
+				console.log(`[${process_id}] Sending`, msg);
+				sendFn(msg);
+			};
+		}
+		return sendFn;
 	}
 	throw new Error("process.send is not defined");
 }
 
 const send = createSendFunction();
+
+function sendAttendeeConnected(attendee: Attendee): void {
+	send({
+		event: "attendeeConnected",
+		attendeeId: attendee.attendeeId,
+	});
+}
+function sendAttendeeDisconnected(attendee: Attendee): void {
+	send({
+		event: "attendeeDisconnected",
+		attendeeId: attendee.attendeeId,
+	});
+}
 
 function isConnected(container: IFluidContainer | undefined): boolean {
 	return container !== undefined && container.connectionState === ConnectionState.Connected;
@@ -264,6 +308,9 @@ class MessageHandler {
 	}
 
 	public async onMessage(msg: MessageFromParent): Promise<void> {
+		if (verbosity.includes("msgs")) {
+			console.log(`[${process_id}] Received`, msg);
+		}
 		switch (msg.command) {
 			case "ping": {
 				this.handlePing();
@@ -325,21 +372,31 @@ class MessageHandler {
 		const { container, presence, containerId } = await getOrCreatePresenceContainer(
 			msg.containerId,
 			msg.user,
+			msg.scopes,
+			msg.createScopes,
 		);
 		this.container = container;
 		this.presence = presence;
 		this.containerId = containerId;
-		presence.attendees.events.on("attendeeConnected", (attendee: Attendee) => {
-			send({ event: "attendeeConnected", attendeeId: attendee.attendeeId });
-		});
-		presence.attendees.events.on("attendeeDisconnected", (attendee: Attendee) => {
-			send({ event: "attendeeDisconnected", attendeeId: attendee.attendeeId });
-		});
+
+		// Acknowledge connection before sending current attendee information
 		send({
 			event: "connected",
 			containerId,
 			attendeeId: presence.attendees.getMyself().attendeeId,
 		});
+
+		// Send existing attendees excluding self to parent/orchestrator
+		const self = presence.attendees.getMyself();
+		for (const attendee of presence.attendees.getAttendees()) {
+			if (attendee !== self) {
+				sendAttendeeConnected(attendee);
+			}
+		}
+
+		// Listen for presence events to notify parent/orchestrator when a new attendee joins or leaves the session.
+		presence.attendees.events.on("attendeeConnected", sendAttendeeConnected);
+		presence.attendees.events.on("attendeeDisconnected", sendAttendeeDisconnected);
 	}
 
 	private handleDisconnectSelf(): void {

@@ -146,10 +146,13 @@ function validateTrackingSummary(
 	forestSummaryState: ForestSummaryTrackingState,
 	trackedSummaryProperties: TrackedSummaryProperties | undefined,
 ): asserts trackedSummaryProperties is TrackedSummaryProperties {
-	assert(forestSummaryState === ForestSummaryTrackingState.Tracking, "Not tracking a summary");
+	assert(
+		forestSummaryState === ForestSummaryTrackingState.Tracking,
+		0xc22 /* Not tracking a summary */,
+	);
 	assert(
 		trackedSummaryProperties !== undefined,
-		"Tracked summary properties must be available when tracking a summary",
+		0xc23 /* Tracked summary properties must be available when tracking a summary */,
 	);
 }
 
@@ -164,11 +167,11 @@ function validateReadyToTrackSummary(
 ): asserts trackedSummaryProperties is undefined {
 	assert(
 		forestSummaryState === ForestSummaryTrackingState.ReadyToTrack,
-		"Already tracking a summary",
+		0xc24 /* Already tracking a summary */,
 	);
 	assert(
 		trackedSummaryProperties === undefined,
-		"Tracked summary properties must not be available when ready to track",
+		0xc25 /* Tracked summary properties must not be available when ready to track */,
 	);
 }
 
@@ -499,7 +502,10 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 */
 	public getEncodedIncrementalChunk(referenceId: ChunkReferenceId): EncodedFieldBatch {
 		const chunkEncodedContents = this.encodedChunkContentsMap.get(`${referenceId}`);
-		assert(chunkEncodedContents !== undefined, "Incremental chunk contents not found");
+		assert(
+			chunkEncodedContents !== undefined,
+			0xc26 /* Incremental chunk contents not found */,
+		);
 		return chunkEncodedContents;
 	}
 }

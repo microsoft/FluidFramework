@@ -3,10 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import type { AzureUser } from "@fluidframework/azure-client/internal";
-import type { JsonSerializable } from "@fluidframework/core-interfaces/internal";
 // eslint-disable-next-line import/no-internal-modules
+import type { JsonSerializable } from "@fluidframework/core-interfaces/internal";
+import type { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { AttendeeId } from "@fluidframework/presence/beta";
+
+export interface UserIdAndName {
+	id: string;
+	name: string;
+}
 
 /**
  * Message types sent from the orchestrator to the child processes
@@ -35,7 +40,9 @@ interface PingCommand {
  */
 export interface ConnectCommand {
 	command: "connect";
-	user: AzureUser;
+	user: UserIdAndName;
+	scopes: ScopeType[];
+	createScopes?: ScopeType[];
 	/**
 	 * The ID of the Fluid container to connect to.
 	 * If not provided, a new Fluid container will be created.
