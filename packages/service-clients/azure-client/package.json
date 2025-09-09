@@ -104,11 +104,11 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
-		"@fluid-tools/build-cli": "^0.58.1",
+		"@fluid-tools/build-cli": "^0.58.2",
 		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.60.0",
 		"@fluidframework/azure-local-service": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.58.1",
+		"@fluidframework/build-tools": "^0.58.2",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
