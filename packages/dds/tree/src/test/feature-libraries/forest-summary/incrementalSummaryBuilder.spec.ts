@@ -238,8 +238,8 @@ describe("ForestIncrementalSummaryBuilder", () => {
 		});
 
 		it("loads chunk contents from snapshot tree", async () => {
-			const referenceId0 = brand(0) as ChunkReferenceId;
-			const referenceId1 = brand(1) as ChunkReferenceId;
+			const referenceId0: ChunkReferenceId = brand(0);
+			const referenceId1: ChunkReferenceId = brand(1);
 			const chunkContentsPath0 = `${referenceId0}/contents`;
 			const chunkContentsPath1 = `${referenceId1}/contents`;
 			const builder = createIncrementalSummaryBuilder();
@@ -280,8 +280,8 @@ describe("ForestIncrementalSummaryBuilder", () => {
 		});
 
 		it("loads nested chunk trees recursively", async () => {
-			const referenceId0 = brand(0) as ChunkReferenceId;
-			const referenceId1 = brand(1) as ChunkReferenceId;
+			const referenceId0: ChunkReferenceId = brand(0);
+			const referenceId1: ChunkReferenceId = brand(1);
 			const parentContentsPath = `${referenceId0}/contents`;
 			const childContentsPath = `${referenceId0}/${referenceId1}/contents`;
 			const builder = createIncrementalSummaryBuilder();
@@ -496,7 +496,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 
 		it("should assign increasing chunk reference IDs for new chunks after load", async () => {
 			// Load a builder with an existing chunk with the following chunk reference ID.
-			const referenceId = brand(1) as ChunkReferenceId;
+			const referenceId: ChunkReferenceId = brand(1);
 			const builder = createIncrementalSummaryBuilder();
 			const blobMap = new Map([[`${referenceId}/contents`, "chunk0"]]);
 			const mockSnapshotTree: ISnapshotTree = {
@@ -538,7 +538,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 
 	describe("decodeIncrementalChunk", () => {
 		it("decodes chunk when it exists", async () => {
-			const referenceId0 = brand(0) as ChunkReferenceId;
+			const referenceId0: ChunkReferenceId = brand(0);
 			const chunkContentsPath0 = `${referenceId0}/contents`;
 			const builder = createIncrementalSummaryBuilder();
 			const blobMap = new Map([[chunkContentsPath0, "chunk0"]]);

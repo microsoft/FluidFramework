@@ -65,7 +65,6 @@ import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { assertIsSessionId, testIdCompressor } from "../../../utils.js";
 import {
 	SpecialField,
-	version,
 	type EncodedFieldBatch,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
