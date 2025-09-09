@@ -6,7 +6,7 @@
 /**
  * String in a valid semver format of a specific version at least specifying minor.
  *
- * @legacy @beta
+ * @beta
  */
 export type MinimumVersionForCollab =
 	| `${1 | 2}.${bigint}.${bigint}`

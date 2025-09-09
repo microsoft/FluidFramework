@@ -85,3 +85,12 @@ export {
 	totalBlobSizePropertyName,
 } from "./summary.js";
 export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
+
+export { createContainer } from "./serviceClient.js";
+export type {
+	DataStoreKind,
+	FluidContainer,
+	ServiceClient,
+	ServiceOptions,
+	FluidContainerAttached,
+} from "./serviceClient.js";

@@ -328,3 +328,12 @@ export type { MapNodeInsertableData } from "./simple-tree/index.js";
 export { JsonAsTree } from "./jsonDomainSchema.js";
 export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
 export { TableSchema, type System_TableSchema } from "./tableSchema.js";
+export {
+	treeDataStoreKind,
+	dataStoreKind,
+} from "./treeDataStore.js";
+export type {
+	DataStoreOptions,
+	TreeDataStoreOptions,
+	Creator,
+} from "./treeDataStore.js";

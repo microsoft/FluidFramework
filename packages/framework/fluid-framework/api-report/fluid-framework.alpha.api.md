@@ -178,6 +178,22 @@ export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, 
 // @alpha
 export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): SimpleTreeIndex<TKey, TValue>;
 
+// @alpha @sealed
+export interface Creator {
+    // (undocumented)
+    create<T extends IFluidLoadable>(kind: SharedObjectKind<T>): Promise<T>;
+}
+
+// @alpha
+export function dataStoreKind<T, TRoot extends IFluidLoadable>(options: DataStoreOptions<TRoot, T>): DataStoreKind<T>;
+
+// @alpha @input (undocumented)
+export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutput> {
+    instantiateFirstTime(creator: Creator): Promise<TRoot>;
+    readonly registry: Iterable<SharedObjectKind>;
+    view(root: TRoot): TOutput;
+}
+
 // @public @sealed @system
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
@@ -1761,6 +1777,18 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends
 export enum TreeCompressionStrategy {
     Compressed = 0,
     Uncompressed = 1
+}
+
+// @alpha
+export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(options: TreeDataStoreOptions<TSchema>): DataStoreKind<TreeView<TSchema>>;
+
+// @alpha @input (undocumented)
+export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> {
+    // (undocumented)
+    readonly config: TreeViewConfiguration<TSchema>;
+    // (undocumented)
+    readonly initializer?: () => InsertableTreeFieldFromImplicitField<TSchema>;
+    readonly registry?: Iterable<SharedObjectKind>;
 }
 
 // @alpha @input
