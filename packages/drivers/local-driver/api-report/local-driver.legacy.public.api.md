@@ -4,6 +4,8 @@
 
 ```ts
 
+/// <reference types="node" />
+
 // (No @packageDocumentation comment for this package)
 
 ```
