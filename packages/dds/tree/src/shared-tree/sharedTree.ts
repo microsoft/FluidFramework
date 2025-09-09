@@ -232,6 +232,7 @@ export class SharedTreeKernel
 		serializer: IFluidSerializer,
 		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		lastSequenceNumber: () => number | undefined,
+		initialSequenceNumber: number,
 		logger: ITelemetryLoggerExt | undefined,
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
@@ -273,6 +274,7 @@ export class SharedTreeKernel
 			encoderContext,
 			options,
 			idCompressor,
+			initialSequenceNumber,
 			options.shouldEncodeFieldIncrementally,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);

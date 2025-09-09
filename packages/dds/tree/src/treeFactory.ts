@@ -58,6 +58,7 @@ function treeKernelFactory(
 			args.serializer,
 			args.submitLocalMessage,
 			args.lastSequenceNumber,
+			args.initialSequenceNumber,
 			args.logger,
 			args.idCompressor,
 			adjustedOptions,

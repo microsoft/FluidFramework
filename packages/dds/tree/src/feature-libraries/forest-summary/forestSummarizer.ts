@@ -74,6 +74,7 @@ export class ForestSummarizer implements Summarizable {
 		private readonly encoderContext: FieldBatchEncodingContext,
 		options: CodecWriteOptions,
 		private readonly idCompressor: IIdCompressor,
+		initialSequenceNumber: number,
 		shouldEncodeFieldIncrementally?: (
 			nodeIdentifier: TreeNodeSchemaIdentifier,
 			fieldKey: FieldKey,
@@ -91,6 +92,7 @@ export class ForestSummarizer implements Summarizable {
 				TreeCompressionStrategyExtended.CompressedIncremental /* enableIncrementalSummary */,
 			(cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
 			shouldEncodeFieldIncrementallyLocal,
+			initialSequenceNumber,
 		);
 	}
 
