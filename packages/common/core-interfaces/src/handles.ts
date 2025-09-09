@@ -8,14 +8,12 @@ import type { IRequest, IResponse } from "./fluidRouter.js";
 import type { Listenable } from "./internal.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const IFluidHandleContext: keyof IProvideFluidHandleContext = "IFluidHandleContext";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IProvideFluidHandleContext {
 	readonly IFluidHandleContext: IFluidHandleContext;
@@ -23,8 +21,7 @@ export interface IProvideFluidHandleContext {
 
 /**
  * Describes a routing context from which other `IFluidHandleContext`s are defined.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidHandleContext extends IProvideFluidHandleContext {
 	/**
@@ -61,8 +58,7 @@ export const IFluidHandle = "IFluidHandle";
 
 /**
  * @deprecated {@link IFluidHandleInternal} and {@link IFluidHandleInternal} should be identified should be identified using the {@link fluidHandleSymbol} symbol.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IProvideFluidHandle {
 	/**
@@ -77,8 +73,7 @@ export interface IProvideFluidHandle {
 
 /**
  * Handle to a shared {@link FluidObject}.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidHandleInternal<
 	// REVIEW: Constrain `T` to something? How do we support dds and datastores safely?
@@ -119,15 +114,13 @@ export interface IFluidHandleInternalPayloadPending<
  *
  * @remarks
  * Clients will see a transition of "pending" to "shared" when the payload has been shared to all collaborators.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type PayloadState = "pending" | "shared";
 
 /**
  * Events which fire from an IFluidHandle.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidHandleEvents {
 	/**
@@ -141,8 +134,7 @@ export interface IFluidHandleEvents {
  *
  * @privateRemarks
  * Contents to be merged to IFluidHandle, and then this separate interface should be removed.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidHandlePayloadPending<T> extends IFluidHandle<T> {
 	/**
@@ -157,8 +149,7 @@ export interface IFluidHandlePayloadPending<T> extends IFluidHandle<T> {
 
 /**
  * Additional events which fire as a local handle's payload state transitions.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ILocalFluidHandleEvents extends IFluidHandleEvents {
 	/**
@@ -169,8 +160,7 @@ export interface ILocalFluidHandleEvents extends IFluidHandleEvents {
 
 /**
  * Additional observable state on a local handle regarding its payload sharing state.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ILocalFluidHandle<T> extends IFluidHandlePayloadPending<T> {
 	/**

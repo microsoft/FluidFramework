@@ -23,7 +23,7 @@ import {
 	runtimeSupportRequirementsForDataStore,
 	validateRuntimeCompatibility,
 } from "../dataStoreLayerCompatState.js";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime.js";
+import { FluidDataStoreRuntime, type ISharedObjectRegistry } from "../dataStoreRuntime.js";
 import { pkgVersion } from "../packageVersion.js";
 
 type ILayerCompatSupportRequirementsOverride = Omit<

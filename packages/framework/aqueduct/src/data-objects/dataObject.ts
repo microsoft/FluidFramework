@@ -28,7 +28,7 @@ export const dataObjectRootDirectoryId = "root";
  *
  * @typeParam I - The optional input types used to strongly type the data object
  * @legacy
- * @alpha
+ * @beta
  */
 export abstract class DataObject<
 	I extends DataObjectTypes = DataObjectTypes,

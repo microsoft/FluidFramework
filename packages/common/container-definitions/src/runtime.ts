@@ -62,8 +62,7 @@ export enum AttachState {
  * The IRuntime represents an instantiation of a code package within a Container.
  * Primarily held by the ContainerContext to be able to interact with the running instance of the Container.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IRuntime extends IDisposable {
 	/**
@@ -124,8 +123,7 @@ export interface IRuntime extends IDisposable {
 
 /**
  * Payload type for IContainerContext.submitBatchFn()
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IBatchMessage {
 	contents?: string;
@@ -142,8 +140,7 @@ export interface IBatchMessage {
  * allows the Runtime to not support layer compatibility with the Driver layer. Instead, it supports compatibility
  * with the Loader layer which it already does.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IContainerStorageService {
 	/**
@@ -255,8 +252,7 @@ export interface IContainerStorageService {
  * TODO: once `@alpha` tag is removed, `unknown` should be removed from submitSignalFn.
  * See {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IContainerContext {
 	/**
@@ -357,14 +353,12 @@ export interface IContainerContext {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IProvideRuntimeFactory {
 	readonly IRuntimeFactory: IRuntimeFactory;
@@ -375,8 +369,7 @@ export interface IProvideRuntimeFactory {
  *
  * Provides the entry point for the ContainerContext to load the proper IRuntime
  * to start up the running instance of the Container.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
 	/**
@@ -391,8 +384,7 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 
 /**
  * Defines list of properties expected for getPendingLocalState
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IGetPendingLocalStateProps {
 	/**

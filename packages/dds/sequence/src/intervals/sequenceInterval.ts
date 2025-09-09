@@ -125,8 +125,7 @@ export function getSerializedProperties(
  * `mergeTreeReferencesCanSlideToEndpoint` feature flag set to true, the endpoints
  * of the interval that are exclusive will have the ability to slide to these
  * special endpoint segments.
- * @alpha
- * @legacy
+ * @legacy @beta
  */
 export interface SequenceInterval extends IInterval {
 	readonly start: LocalReferencePosition;

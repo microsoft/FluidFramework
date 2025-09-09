@@ -4,7 +4,7 @@
  */
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IRuntime } from "@fluidframework/container-definitions/internal";
+import type { IRuntime } from "@fluidframework/container-definitions/internal";
 import type {
 	IEventProvider,
 	IEvent,
@@ -14,17 +14,17 @@ import type {
 import { Timer, assert } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
-	IDocumentStorageService,
-	IResolvedUrl,
-	ISnapshot,
+	type IDocumentStorageService,
+	type IResolvedUrl,
+	type ISnapshot,
 	type IDocumentAttributes,
-	ISnapshotTree,
-	IVersion,
-	ISequencedDocumentMessage,
+	type ISnapshotTree,
+	type IVersion,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
-	MonitoringContext,
+	type MonitoringContext,
 	PerformanceEvent,
 	UsageError,
 	createChildMonitoringContext,
@@ -32,7 +32,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	ISerializableBlobContents,
+	type ISerializableBlobContents,
 	getBlobContentsFromTree,
 } from "./containerStorageAdapter.js";
 import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";

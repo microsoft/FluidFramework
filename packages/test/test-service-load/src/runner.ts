@@ -108,9 +108,27 @@ async function main() {
 	// https://v8.dev/docs/stack-trace-api
 	Error.stackTraceLimit = Infinity;
 
-	process.on("uncaughtExceptionMonitor", (error, origin) => {
+	// We need to install an uncaughtException monitor to prevent Node from killing our process
+	// for not handling exceptions, otherwise we don't get a chance to flush the logger and will
+	// simply lose the telemetry that led up to the uncaught exception.
+	process.on("uncaughtException", (error, origin) => {
 		try {
-			logger.sendErrorEvent({ eventName: "uncaughtExceptionMonitor", origin }, error);
+			logger.sendErrorEvent({ eventName: "uncaughtException", origin }, error);
+			// Since flush is async, it's possible that more telemetry may be added and sent after the
+			// uncaught exception occurs. It's probably best to ignore telemetry after the above
+			// "uncaughtException" event, since we are now in an undefined state and the process
+			// is about to die.
+			flush()
+				.then(() => {
+					// Using exit code -2 to denote this "handled" unhandled exception exit, which
+					// can later be detected via "Runner Exited" telemetry in stressTest.ts.
+					// This sets it apart from a truly unhandled exception, which exits with code 1.
+					process.exit(-2);
+				})
+				.catch(() => {
+					// If flush errors, exit with code -3.
+					process.exit(-3);
+				});
 		} catch (e) {
 			console.error("Error during logging unhandled exception: ", e);
 		}

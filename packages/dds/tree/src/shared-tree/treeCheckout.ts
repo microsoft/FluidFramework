@@ -50,7 +50,7 @@ import {
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
-	type TreeCompressionStrategy,
+	type TreeCompressionStrategyPrivate,
 	allowsRepoSuperset,
 	buildForest,
 	createNodeIdentifierManager,
@@ -286,7 +286,7 @@ export function createTreeCheckout(
 		forest?: IEditableForest;
 		fieldBatchCodec?: FieldBatchCodec;
 		removedRoots?: DetachedFieldIndex;
-		chunkCompressionStrategy?: TreeCompressionStrategy;
+		chunkCompressionStrategy?: TreeCompressionStrategyPrivate;
 		logger?: ITelemetryLoggerExt;
 		breaker?: Breakable;
 		disposeForksAfterTransaction?: boolean;
@@ -883,6 +883,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	private revertRevertible(revision: RevisionTag, kind: CommitKind): RevertMetrics {
+		this.editLock.checkUnlocked("Reverting a commit");
 		if (this.transaction.isInProgress()) {
 			throw new UsageError("Undo is not yet supported during transactions.");
 		}

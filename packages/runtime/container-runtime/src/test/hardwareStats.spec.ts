@@ -5,8 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { IContainerContext } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { IContainerContext } from "@fluidframework/container-definitions/internal";
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockDeltaManager,

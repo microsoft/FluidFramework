@@ -56,7 +56,6 @@ export class SharedSignalFactory implements IChannelFactory<ISharedSignal> {
 
 /**
  * Entrypoint for {@link ISharedSignal} creation.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const SharedSignal = createSharedObjectKind<ISharedSignal>(SharedSignalFactory);

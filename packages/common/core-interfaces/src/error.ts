@@ -7,8 +7,7 @@ import type { ITelemetryBaseProperties } from "./logger.js";
 
 /**
  * Error types the Fluid Framework may report.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const FluidErrorTypes = {
 	/**
@@ -38,8 +37,7 @@ export const FluidErrorTypes = {
 } as const;
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
 
@@ -121,8 +119,7 @@ export interface IUsageError extends IErrorBase {
 
 /**
  * Warning emitted when requests to storage are being throttled
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IThrottlingWarning extends IErrorBase {
 	/**

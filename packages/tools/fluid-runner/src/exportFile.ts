@@ -26,22 +26,19 @@ import { getArgsValidationError, getSnapshotFileContent, timeoutPromise } from "
 /* eslint-enable import/no-internal-modules */
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IExportFileResponseSuccess {
 	success: true;
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IExportFileResponseFailure {
 	success: false;

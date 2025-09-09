@@ -4,12 +4,12 @@
  */
 
 import {
-	Clicker,
+	type Clicker,
 	ClickerInstantiationFactory,
 	ClickerReactView,
 } from "@fluid-example/clicker";
 import {
-	CodeMirrorComponent,
+	type CodeMirrorComponent,
 	CodeMirrorReactView,
 	SmdeFactory,
 } from "@fluid-example/codemirror";
@@ -20,13 +20,13 @@ import {
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import {
-	ProseMirror,
+	type ProseMirror,
 	ProseMirrorFactory,
 	ProseMirrorReactView,
 } from "@fluid-example/prosemirror";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Serializable } from "@fluidframework/datastore-definitions/legacy";
-import {
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { Serializable } from "@fluidframework/datastore-definitions/legacy";
+import type {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,

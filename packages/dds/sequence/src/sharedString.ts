@@ -24,8 +24,7 @@ import { SharedStringFactory } from "./sequenceFactory.js";
 
 /**
  * Fluid object interface describing access methods on a SharedString
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedString extends ISharedSegmentSequence<SharedStringSegment> {
 	/**
@@ -125,8 +124,7 @@ export interface ISharedString extends ISharedSegmentSequence<SharedStringSegmen
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type SharedStringSegment = TextSegment | Marker;
 

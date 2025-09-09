@@ -15,8 +15,8 @@ importers:
         specifier: ^0.57.0
         version: 0.57.0(@types/node@18.19.31)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.8.0
-        version: 5.8.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -110,8 +110,8 @@ packages:
     engines: {node: '>=20.15.1'}
     hasBin: true
 
-  '@fluidframework/eslint-config-fluid@5.8.0':
-    resolution: {integrity: sha512-MH0phD6UXLI1HGr9L8IDEYhv1UfnT55PeENu63mz7m/fNsawDQr/MI7OopIFKcW99vDtnMOEy5WHQk+hUFCkrw==}
+  '@fluidframework/eslint-config-fluid@6.0.0':
+    resolution: {integrity: sha512-RdbEYUQmLkW8zQ6GZXx1T/t5g9k7iA5K6vPZdvsIK4keb5VXcVCHDluvc7AtOXEVOb5Bt2XyM16NWz2Rlho5NA==}
 
   '@humanwhocodes/config-array@0.11.14':
     resolution: {integrity: sha512-3T8LkOmg45BV5FICb15QQMsyUSWrQ8AygVfC7ZG32zOalnqrilm018ZVCw0eapXux8FtA33q8PSRSstjee3jSg==}
@@ -2334,7 +2334,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/eslint-config-fluid@5.8.0(eslint@8.55.0)(typescript@5.4.5)':
+  '@fluidframework/eslint-config-fluid@6.0.0(eslint@8.55.0)(typescript@5.4.5)':
     dependencies:
       '@fluid-internal/eslint-plugin-fluid': 0.1.5(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/tsdoc': 0.14.2

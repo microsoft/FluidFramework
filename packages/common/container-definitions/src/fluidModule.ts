@@ -9,8 +9,7 @@ import type { IProvideFluidCodeDetailsComparer } from "./fluidPackage.js";
 import type { IRuntimeFactory } from "./runtime.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidModule {
 	fluidExport: FluidObject<IRuntimeFactory & IProvideFluidCodeDetailsComparer>;
