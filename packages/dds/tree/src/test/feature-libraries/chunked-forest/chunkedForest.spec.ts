@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeStoredSchemaSubscription } from "../../../core/index.js";
+import type {
+	TreeNodeSchemaIdentifier,
+	TreeStoredSchemaSubscription,
+} from "../../../core/index.js";
 import {
 	Chunker,
 	type IChunker,
@@ -11,7 +14,7 @@ import {
 	defaultChunkPolicy,
 	makeTreeChunker,
 	polymorphic,
-	tryShapeFromSchema,
+	tryShapeFromNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // Allow importing from this specific file which is being tested:
@@ -54,13 +57,14 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				Number.POSITIVE_INFINITY,
 				Number.POSITIVE_INFINITY,
 				1,
-				(...args) =>
-					tryShapeFromSchema(
+				(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+					tryShapeFromNodeSchema({
 						schema,
-						defaultSchemaPolicy,
-						defaultIncrementalEncodingPolicy,
-						...args,
-					),
+						policy: defaultSchemaPolicy,
+						shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+						shapes,
+						nodeSchema: type,
+					}),
 			),
 	],
 	[
@@ -72,13 +76,14 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				Number.POSITIVE_INFINITY,
 				Number.POSITIVE_INFINITY,
 				defaultChunkPolicy.uniformChunkNodeCount,
-				(...args) =>
-					tryShapeFromSchema(
+				(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+					tryShapeFromNodeSchema({
 						schema,
-						defaultSchemaPolicy,
-						defaultIncrementalEncodingPolicy,
-						...args,
-					),
+						policy: defaultSchemaPolicy,
+						shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+						shapes,
+						nodeSchema: type,
+					}),
 			),
 	],
 	[
@@ -90,13 +95,14 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				2,
 				1,
 				defaultChunkPolicy.uniformChunkNodeCount,
-				(...args) =>
-					tryShapeFromSchema(
+				(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+					tryShapeFromNodeSchema({
 						schema,
-						defaultSchemaPolicy,
-						defaultIncrementalEncodingPolicy,
-						...args,
-					),
+						policy: defaultSchemaPolicy,
+						shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+						shapes,
+						nodeSchema: type,
+					}),
 			),
 	],
 ];

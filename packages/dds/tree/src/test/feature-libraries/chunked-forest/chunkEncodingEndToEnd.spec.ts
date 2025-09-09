@@ -16,14 +16,16 @@ import {
 	RevisionTagCodec,
 	rootFieldKey,
 	type TaggedChange,
+	type TreeNodeSchemaIdentifier,
 	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import {
 	Chunker,
 	defaultChunkPolicy,
-	tryShapeFromSchema,
+	tryShapeFromNodeSchema,
 	uniformChunkFromCursor,
+	type ShapeInfo,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -136,13 +138,14 @@ describe("End to end chunked encoding", () => {
 			Number.POSITIVE_INFINITY,
 			Number.POSITIVE_INFINITY,
 			defaultChunkPolicy.uniformChunkNodeCount,
-			(...args) =>
-				tryShapeFromSchema(
-					treeSchema,
-					defaultSchemaPolicy,
-					defaultIncrementalEncodingPolicy,
-					...args,
-				),
+			(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+				tryShapeFromNodeSchema({
+					schema: treeSchema,
+					policy: defaultSchemaPolicy,
+					shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+					shapes,
+					nodeSchema: type,
+				}),
 		);
 
 		const forest = buildChunkedForest(chunker);
