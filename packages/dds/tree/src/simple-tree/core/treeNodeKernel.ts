@@ -424,19 +424,19 @@ class TreeNodeEventBuffer
 		Pick<IEmitter<KernelEvents>, "emit">,
 		HasListeners<KernelEvents>
 {
-	private disposed: boolean = false;
+	#disposed: boolean = false;
 
 	/**
 	 * Listen to {@link flushEventsEmitter} to know when to flush buffered events.
 	 */
-	private readonly disposeOnFlushListener = flushEventsEmitter.on("flush", () => {
+	readonly #disposeOnFlushListener = flushEventsEmitter.on("flush", () => {
 		this.flush();
 	});
 
 	/**
 	 * {@link AnchorEvents.childrenChangedAfterBatch} listeners.
 	 */
-	private readonly childrenChangedListeners: Set<
+	readonly #childrenChangedListeners: Set<
 		(arg: {
 			changedFields: ReadonlySet<FieldKey>;
 		}) => void
@@ -445,28 +445,28 @@ class TreeNodeEventBuffer
 	/**
 	 * {@link AnchorEvents.subTreeChanged} listeners.
 	 */
-	private readonly subTreeChangedListeners: Set<() => void> = new Set();
+	readonly #subTreeChangedListeners: Set<() => void> = new Set();
 
 	/**
 	 * Buffer of fields that have changed since events were paused.
 	 * When events are flushed, a single {@link AnchorEvents.childrenChangedAfterBatch} event will be emitted
 	 * containing the accumulated set of changed fields.
 	 */
-	private readonly childrenChangedBuffer: Set<FieldKey> = new Set();
+	readonly #childrenChangedBuffer: Set<FieldKey> = new Set();
 
 	/**
 	 * Whether or not the subtree has changed since events were paused.
 	 * When events are flushed, a single {@link AnchorEvents.subTreeChanged} event will be emitted if and only
 	 * if the subtree has changed.
 	 */
-	private subTreeChangedBuffer: boolean = false;
+	#subTreeChangedBuffer: boolean = false;
 
 	public hasListeners(eventName: keyof KernelEvents): boolean {
 		switch (eventName) {
 			case "childrenChangedAfterBatch":
-				return this.childrenChangedListeners.size > 0;
+				return this.#childrenChangedListeners.size > 0;
 			case "subtreeChangedAfterBatch":
-				return this.subTreeChangedListeners.size > 0;
+				return this.#subTreeChangedListeners.size > 0;
 			default: {
 				unreachableCase(eventName);
 			}
@@ -479,35 +479,35 @@ class TreeNodeEventBuffer
 			changedFields: ReadonlySet<FieldKey>;
 		},
 	): void {
-		this.assertNotDisposed();
+		this.#assertNotDisposed();
 		switch (eventName) {
 			case "childrenChangedAfterBatch":
 				assert(arg !== undefined, "childrenChangedAfterBatch should have arg");
-				return this.handleChildrenChangedAfterBatch(arg.changedFields);
+				return this.#handleChildrenChangedAfterBatch(arg.changedFields);
 			case "subtreeChangedAfterBatch":
-				return this.handleSubtreeChangedAfterBatch();
+				return this.#handleSubtreeChangedAfterBatch();
 			default:
 				unreachableCase(eventName);
 		}
 	}
 
-	private handleChildrenChangedAfterBatch(changedFields: ReadonlySet<FieldKey>): void {
+	#handleChildrenChangedAfterBatch(changedFields: ReadonlySet<FieldKey>): void {
 		if (pauseTreeEventsStack) {
 			for (const fieldKey of changedFields) {
-				this.childrenChangedBuffer.add(fieldKey);
+				this.#childrenChangedBuffer.add(fieldKey);
 			}
 		} else {
-			for (const listener of this.childrenChangedListeners) {
+			for (const listener of this.#childrenChangedListeners) {
 				listener({ changedFields });
 			}
 		}
 	}
 
-	private handleSubtreeChangedAfterBatch(): void {
+	#handleSubtreeChangedAfterBatch(): void {
 		if (pauseTreeEventsStack) {
-			this.subTreeChangedBuffer = true;
+			this.#subTreeChangedBuffer = true;
 		} else {
-			for (const listener of this.subTreeChangedListeners) {
+			for (const listener of this.#subTreeChangedListeners) {
 				listener();
 			}
 		}
@@ -526,18 +526,18 @@ class TreeNodeEventBuffer
 			changedFields: ReadonlySet<FieldKey>;
 		}) => void | (() => void),
 	): () => void {
-		this.assertNotDisposed();
+		this.#assertNotDisposed();
 
 		switch (eventName) {
 			case "childrenChangedAfterBatch":
-				this.childrenChangedListeners.add(
+				this.#childrenChangedListeners.add(
 					listener as (arg: {
 						changedFields: ReadonlySet<FieldKey>;
 					}) => void,
 				);
 				return () => this.off("childrenChangedAfterBatch", listener);
 			case "subtreeChangedAfterBatch":
-				this.subTreeChangedListeners.add(listener as () => void);
+				this.#subTreeChangedListeners.add(listener as () => void);
 				return () => this.off("subtreeChangedAfterBatch", listener as () => void);
 			default:
 				unreachableCase(eventName);
@@ -557,18 +557,18 @@ class TreeNodeEventBuffer
 			changedFields: ReadonlySet<FieldKey>;
 		}) => void | (() => void),
 	): void {
-		this.assertNotDisposed();
+		this.#assertNotDisposed();
 
 		switch (eventName) {
 			case "childrenChangedAfterBatch":
-				this.childrenChangedListeners.delete(
+				this.#childrenChangedListeners.delete(
 					listener as (arg: {
 						changedFields: ReadonlySet<FieldKey>;
 					}) => void,
 				);
 				break;
 			case "subtreeChangedAfterBatch":
-				this.subTreeChangedListeners.delete(listener as () => void);
+				this.#subTreeChangedListeners.delete(listener as () => void);
 				break;
 			default:
 				unreachableCase(eventName);
@@ -579,35 +579,35 @@ class TreeNodeEventBuffer
 	 * Flushes any events buffered due to {@link pauseTreeEvents}.
 	 */
 	public flush(): void {
-		this.assertNotDisposed();
+		this.#assertNotDisposed();
 
-		if (this.childrenChangedBuffer.size > 0) {
-			for (const listener of this.childrenChangedListeners) {
-				listener({ changedFields: this.childrenChangedBuffer });
+		if (this.#childrenChangedBuffer.size > 0) {
+			for (const listener of this.#childrenChangedListeners) {
+				listener({ changedFields: this.#childrenChangedBuffer });
 			}
-			this.childrenChangedBuffer.clear();
+			this.#childrenChangedBuffer.clear();
 		}
 
-		if (this.subTreeChangedBuffer) {
-			for (const listener of this.subTreeChangedListeners) {
+		if (this.#subTreeChangedBuffer) {
+			for (const listener of this.#subTreeChangedListeners) {
 				listener();
 			}
-			this.subTreeChangedBuffer = false;
+			this.#subTreeChangedBuffer = false;
 		}
 	}
 
-	private assertNotDisposed(): void {
-		assert(!this.disposed, "Event handler disposed.");
+	#assertNotDisposed(): void {
+		assert(!this.#disposed, "Event handler disposed.");
 	}
 
 	public dispose(): void {
-		if (this.disposed) {
+		if (this.#disposed) {
 			return;
 		}
 
-		this.disposeOnFlushListener();
+		this.#disposeOnFlushListener();
 
-		this.disposed = true;
+		this.#disposed = true;
 	}
 }
 
