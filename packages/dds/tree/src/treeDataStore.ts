@@ -24,8 +24,12 @@ import type { IFluidLoadable } from "@fluidframework/core-interfaces";
  * @alpha
  */
 export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutput> {
+	// TODO: type/id
+
 	/**
 	 * The registry of shared object kinds (including other DataStores) that can be loaded or created within this DataStore.
+	 *
+	 * TODO: ensure this supports lazy code loading. Maybe define some kind of "lazy shared object kind" that can be used here.
 	 */
 	readonly registry: Iterable<SharedObjectKind>;
 	/**
@@ -66,6 +70,8 @@ export interface Creator {
  * @alpha
  */
 export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> {
+	// TODO: type/id
+
 	readonly config: TreeViewConfiguration<TSchema>;
 	readonly initializer?: () => InsertableTreeFieldFromImplicitField<TSchema>;
 
