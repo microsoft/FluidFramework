@@ -7,6 +7,5 @@
 
 const getFluidTestMochaConfig = require("./mocharc-common.cjs");
 
-const packageDir = __dirname;
-const config = getFluidTestMochaConfig(packageDir);
+const config = getFluidTestMochaConfig(__dirname);
 module.exports = config;

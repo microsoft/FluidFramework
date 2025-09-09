@@ -64,7 +64,7 @@ export async function forkChildProcesses(
 	const childReadyPromises: Promise<void>[] = [];
 	const childErrorPromises: Promise<never>[] = [];
 	for (let i = 0; i < numProcesses; i++) {
-		const child = fork("./lib/test/multiprocess/childClient.js", [
+		const child = fork("./lib/test/multiprocess/childClient.tool.js", [
 			`child ${i}` /* identifier passed to child process */,
 			childLoggingVerbosity /* console logging verbosity */,
 		]);
