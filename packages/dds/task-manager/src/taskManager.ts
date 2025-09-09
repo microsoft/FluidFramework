@@ -429,7 +429,7 @@ export class TaskManagerClass
 			throw new Error("Attempted to subscribe with read-only permissions");
 		}
 
-		let nextPendingMessageId: number;
+		let volunteerOpMessageId: number | undefined;
 
 		const submitVolunteerOp = (): void => {
 			nextPendingMessageId = this.nextPendingMessageId;
