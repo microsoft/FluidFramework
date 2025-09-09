@@ -132,7 +132,8 @@ export interface IFluidParentContextPrivate extends Omit<IFluidParentContext, "i
 	readonly isReadOnly: () => boolean;
 
 	/**
-	 * Gets the minVersionForCollab passed into the ContainerRuntime.
+	 * Gets the minVersionForCollab passed into the ContainerRuntime. Consumed by {@link FluidDataStoreContext}.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details.
 	 */
 	getMinVersionForCollab(): MinimumVersionForCollab;
 }

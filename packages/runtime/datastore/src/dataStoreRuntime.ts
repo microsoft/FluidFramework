@@ -294,7 +294,7 @@ export class FluidDataStoreRuntime
 	private readonly submitMessagesWithoutEncodingHandles: boolean;
 
 	/**
-	 * @see IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
+	 * See `IFluidDataStoreRuntimeInternalConfig.minVersionForCollab`.
 	 */
 	public readonly minVersionForCollab: MinimumVersionForCollab | undefined;
 

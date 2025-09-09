@@ -740,7 +740,8 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	): ReturnType<Exclude<T["createDataStore"], undefined>>;
 
 	/**
-	 * Gets the minVersionForCollab passed into the ContainerRuntime.
+	 * Gets the minVersionForCollab passed into the ContainerRuntime. Consumed by {@link @fluidframework/datastore#FluidDataStoreRuntime}.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details.
 	 */
 	getMinVersionForCollab?(): MinimumVersionForCollab;
 }

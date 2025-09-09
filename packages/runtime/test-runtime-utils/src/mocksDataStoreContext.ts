@@ -77,6 +77,9 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public createProps?: any;
 	public scope: FluidObject = undefined as any;
 
+	/**
+	 * Allows tests to set the value of minVersionForCollab.
+	 */
 	public minVersionForCollab: MinimumVersionForCollab = defaultMinVersionForCollab;
 
 	constructor(

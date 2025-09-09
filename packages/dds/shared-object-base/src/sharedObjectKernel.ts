@@ -294,7 +294,9 @@ export interface KernelArgs {
 	 */
 	readonly lastSequenceNumber: () => number;
 	/**
-	 * The minVersionForCollab specified when instantiating the ContainerRuntime.
+	 * The minVersionForCollab specified when instantiating the ContainerRuntime. Passed to the SharedKernelFactory so that a
+	 * compatible set of feature flags and formats can be enabled in the SharedObject implementation.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details on this property.
 	 */
 	readonly minVersionForCollab: MinimumVersionForCollab | undefined;
 }
