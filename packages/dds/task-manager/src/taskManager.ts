@@ -459,6 +459,12 @@ export class TaskManagerClass
 			if (eventTaskId !== taskId) {
 				return;
 			}
+			// abandonWatcher emits twice for a local abandon() call. When initially called it
+			// will emit with undefined messageId. It will emit a second time when the op is
+			// ack'd and processed, this time with the messageId for the ack.
+			// This condition accounts ensures we don't ignore the initial abandon() emit and
+			// only ignore emits associated with ack'd abandon ops that were sent prior to the
+			// current volunteer attempt.
 			if (
 				messageId !== undefined &&
 				volunteerOpMessageId !== undefined &&
