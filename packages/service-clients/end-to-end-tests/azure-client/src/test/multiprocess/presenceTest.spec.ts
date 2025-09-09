@@ -24,12 +24,17 @@ import {
 	waitForLatestValueUpdates,
 } from "./orchestratorUtils.js";
 
+const useAzure = process.env.FLUID_CLIENT === "azure";
+
+/**
+ * Detects if the debugger is attached (when code loaded).
+ */
 const debuggerAttached = inspector.url() !== undefined;
 
 /**
  * Set this to a high number when debugging to avoid timeouts from debugging time.
  */
-const timeoutMultiplier = debuggerAttached ? 1000 : 1;
+const timeoutMultiplier = debuggerAttached ? 1000 : useAzure ? 3 : 1;
 
 /**
  * Sets the timeout for the given test context.

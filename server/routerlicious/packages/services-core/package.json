@@ -51,7 +51,7 @@
 		"@fluidframework/server-services-core-previous": "npm:@fluidframework/server-services-core@7.0.0",
 		"@types/mocha": "^10.0.1",
 		"@types/sinon": "^17.0.3",
-		"c8": "^8.0.1",
+		"c8": "^10.1.3",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",
 		"mocha": "^10.8.2",
