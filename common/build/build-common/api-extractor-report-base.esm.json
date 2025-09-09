@@ -17,7 +17,7 @@
 
 			// TODO: consider if we want to enforce completeness of cross-package re-exports
 			"ae-forgotten-export": {
-				"logLevel": "none",
+				"logLevel": "none"
 			}
 		}
 	},
