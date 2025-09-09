@@ -4,8 +4,6 @@
 
 ```ts
 
-/// <reference types="node" />
-
 // @beta @legacy (undocumented)
 export function createLocalResolverCreateNewRequest(documentId: string): IRequest;
 
