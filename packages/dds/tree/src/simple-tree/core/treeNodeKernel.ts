@@ -368,7 +368,7 @@ const kernelEvents = ["childrenChangedAfterBatch", "subtreeChangedAfterBatch"] a
 
 type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
 
-// #region Document this thoroughly
+// #region TreeNodeEventBuffer
 
 /**
  * Tracks the number of times {@link pauseTreeEvents} has been called without
