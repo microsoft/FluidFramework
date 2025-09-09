@@ -4,12 +4,7 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
-import type {
-	HasListeners,
-	IEmitter,
-	Listenable,
-	Off,
-} from "@fluidframework/core-interfaces/internal";
+import type { Listenable, Off } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
 	Lazy,
@@ -281,7 +276,7 @@ export class TreeNodeKernel {
 	}
 
 	public get events(): Listenable<KernelEvents> {
-		return this.#events.value;
+		return this.#events.value.listeners;
 	}
 
 	public dispose(): void {
@@ -411,9 +406,7 @@ const flushEventsEmitter = createEmitter<{
  * Event emitter for {@link TreeNodeKernel}, which optionally buffers events based on {@link withPausedTreeEvents}.
  * @remarks Listens to {@link flushEventsEmitter} to know when to flush any buffered events.
  */
-class KernelEventBuffer
-	implements Listenable<KernelEvents>, Pick<IEmitter<KernelEvents>, "emit">
-{
+class KernelEventBuffer {
 	#disposed: boolean = false;
 
 	/**
@@ -423,21 +416,7 @@ class KernelEventBuffer
 		this.flush();
 	});
 
-	// TODO: just use an emitter here
-
-	/**
-	 * {@link AnchorEvents.childrenChangedAfterBatch} listeners.
-	 */
-	readonly #childrenChangedListeners: Set<
-		(arg: {
-			changedFields: ReadonlySet<FieldKey>;
-		}) => void
-	> = new Set();
-
-	/**
-	 * {@link AnchorEvents.subTreeChanged} listeners.
-	 */
-	readonly #subTreeChangedListeners: Set<() => void> = new Set();
+	public readonly listeners = createEmitter<KernelEvents>();
 
 	/**
 	 * Buffer of fields that have changed since events were paused.
@@ -477,9 +456,7 @@ class KernelEventBuffer
 				this.#childrenChangedBuffer.add(fieldKey);
 			}
 		} else {
-			for (const listener of this.#childrenChangedListeners) {
-				listener({ changedFields });
-			}
+			this.listeners.emit("childrenChangedAfterBatch", { changedFields });
 		}
 	}
 
@@ -487,71 +464,7 @@ class KernelEventBuffer
 		if (pauseTreeEventsStack) {
 			this.#subTreeChangedBuffer = true;
 		} else {
-			for (const listener of this.#subTreeChangedListeners) {
-				listener();
-			}
-		}
-	}
-
-	public on(
-		eventName: "childrenChangedAfterBatch",
-		listener: (arg: {
-			changedFields: ReadonlySet<FieldKey>;
-		}) => void,
-	): () => void;
-	public on(eventName: "subtreeChangedAfterBatch", listener: () => void): () => void;
-	public on(
-		eventName: keyof KernelEvents,
-		listener: (arg: {
-			changedFields: ReadonlySet<FieldKey>;
-		}) => void | (() => void),
-	): () => void {
-		this.#assertNotDisposed();
-
-		switch (eventName) {
-			case "childrenChangedAfterBatch":
-				this.#childrenChangedListeners.add(
-					listener as (arg: {
-						changedFields: ReadonlySet<FieldKey>;
-					}) => void,
-				);
-				return () => this.off("childrenChangedAfterBatch", listener);
-			case "subtreeChangedAfterBatch":
-				this.#subTreeChangedListeners.add(listener as () => void);
-				return () => this.off("subtreeChangedAfterBatch", listener as () => void);
-			default:
-				unreachableCase(eventName);
-		}
-	}
-
-	public off(
-		eventName: "childrenChangedAfterBatch",
-		listener: (arg: {
-			changedFields: ReadonlySet<FieldKey>;
-		}) => void,
-	): void;
-	public off(eventName: "subtreeChangedAfterBatch", listener: () => void): void;
-	public off(
-		eventName: keyof KernelEvents,
-		listener: (arg: {
-			changedFields: ReadonlySet<FieldKey>;
-		}) => void | (() => void),
-	): void {
-		this.#assertNotDisposed();
-
-		switch (eventName) {
-			case "childrenChangedAfterBatch":
-				this.#childrenChangedListeners.delete(
-					listener as (arg: {
-						changedFields: ReadonlySet<FieldKey>;
-					}) => void,
-				);
-				break;
-			case "subtreeChangedAfterBatch":
-				this.#subTreeChangedListeners.delete(listener as () => void);
-				break;
-			default:
-				unreachableCase(eventName);
+			this.listeners.emit("subtreeChangedAfterBatch");
 		}
 	}
 
@@ -563,16 +476,14 @@ class KernelEventBuffer
 
 		// TODO: verify this can't be fired with empty set of changed keys
 		if (this.#childrenChangedBuffer.size > 0) {
-			for (const listener of this.#childrenChangedListeners) {
-				listener({ changedFields: this.#childrenChangedBuffer });
-			}
+			this.listeners.emit("childrenChangedAfterBatch", {
+				changedFields: this.#childrenChangedBuffer,
+			});
 			this.#childrenChangedBuffer.clear();
 		}
 
 		if (this.#subTreeChangedBuffer) {
-			for (const listener of this.#subTreeChangedListeners) {
-				listener();
-			}
+			this.listeners.emit("subtreeChangedAfterBatch");
 			this.#subTreeChangedBuffer = false;
 		}
 	}
@@ -586,12 +497,15 @@ class KernelEventBuffer
 			return;
 		}
 
+		assert(
+			this.#childrenChangedBuffer.size === 0 && !this.#subTreeChangedBuffer,
+			"Buffered kernel events should have been flushed before disposing.",
+		);
+
 		this.#disposeOnFlushListener();
 
 		this.#childrenChangedBuffer.clear();
 		this.#subTreeChangedBuffer = false;
-		this.#childrenChangedListeners.clear();
-		this.#subTreeChangedListeners.clear();
 
 		this.#disposed = true;
 	}
