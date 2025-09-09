@@ -432,9 +432,8 @@ export class TaskManagerClass
 		let volunteerOpMessageId: number | undefined;
 
 		const submitVolunteerOp = (): void => {
-			nextPendingMessageId = this.nextPendingMessageId;
+			volunteerOpMessageId = this.nextPendingMessageId;
 			this.submitVolunteerOp(taskId);
-			setupListeners();
 		};
 
 		const setupListeners = (): void => {
@@ -452,25 +451,19 @@ export class TaskManagerClass
 		};
 
 		const disconnectHandler = (): void => {
-			const connectCallback = (): void => {
-				// Wait to be connected again and then re-submit volunteer op (if not abandoned).
-				submitVolunteerOp();
-				this.abandonWatcher.off("abandon", abandonCallback);
-			};
-			const abandonCallback = (): void => {
-				// While disconnected we should watch for abandons so we don't re-submit once reconnected.
-				this.subscribedTasks.delete(taskId);
-				this.connectionWatcher.off("connect", connectCallback);
-			};
-			this.abandonWatcher.once("abandon", abandonCallback);
-			this.connectionWatcher.once("connect", connectCallback);
+			// Wait to be connected again and then re-submit volunteer op
+			this.connectionWatcher.once("connect", submitVolunteerOp);
 		};
 
 		const checkIfAbandoned = (eventTaskId: string, messageId: number | undefined): void => {
 			if (eventTaskId !== taskId) {
 				return;
 			}
-			if (messageId !== undefined && messageId <= nextPendingMessageId) {
+			if (
+				messageId !== undefined &&
+				volunteerOpMessageId !== undefined &&
+				messageId <= volunteerOpMessageId
+			) {
 				// Ignore abandon events that were for abandon ops that were sent prior to our current volunteer attempt.
 				return;
 			}
@@ -482,7 +475,11 @@ export class TaskManagerClass
 			if (eventTaskId !== taskId) {
 				return;
 			}
-			if (messageId !== undefined && messageId <= nextPendingMessageId) {
+			if (
+				messageId !== undefined &&
+				volunteerOpMessageId !== undefined &&
+				messageId <= volunteerOpMessageId
+			) {
 				// Ignore abandon events that were for abandon ops that were sent prior to our current volunteer attempt.
 				return;
 			}
@@ -499,11 +496,12 @@ export class TaskManagerClass
 			this.subscribedTasks.delete(taskId);
 		};
 
+		setupListeners();
+
 		if (this.isDetached()) {
 			// Simulate auto-ack in detached scenario
 			assert(this.clientId !== undefined, 0x473 /* clientId should not be undefined */);
 			this.addClientToQueue(taskId, this.clientId);
-			setupListeners();
 			// Because we volunteered with placeholderClientId, we need to wait for when we attach and are assigned
 			// a real clientId. At that point we should re-enter the queue with a real volunteer op (assuming we are
 			// connected).
@@ -513,9 +511,7 @@ export class TaskManagerClass
 				if (this.connected) {
 					submitVolunteerOp();
 				} else {
-					this.connectionWatcher.once("connect", () => {
-						submitVolunteerOp();
-					});
+					this.connectionWatcher.once("connect", submitVolunteerOp);
 				}
 			});
 		} else if (!this.connected) {
