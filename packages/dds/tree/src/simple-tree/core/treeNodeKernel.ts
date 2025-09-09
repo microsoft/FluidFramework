@@ -607,6 +607,11 @@ class TreeNodeEventBuffer
 
 		this.#disposeOnFlushListener();
 
+		this.#childrenChangedBuffer.clear();
+		this.#subTreeChangedBuffer = false;
+		this.#childrenChangedListeners.clear();
+		this.#subTreeChangedListeners.clear();
+
 		this.#disposed = true;
 	}
 }
