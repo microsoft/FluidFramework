@@ -81,6 +81,7 @@ function selectiveVerboseLog(event: ITelemetryBaseEvent, logLevel?: LogLevel): v
  * Get or create a Fluid container.
  */
 const getOrCreateContainer = async (
+	onDisconnected: () => void,
 	id: string | undefined,
 	user: UserIdAndName,
 	scopes?: ScopeType[],
@@ -124,6 +125,8 @@ const getOrCreateContainer = async (
 		containerId = id;
 		({ container, services } = await client.getContainer(containerId, containerSchema, "2"));
 	}
+	container.on("disconnected", onDisconnected);
+
 	// wait for 'ConnectionState.Connected' so we return with client connected to container
 	if (container.connectionState !== ConnectionState.Connected) {
 		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -174,10 +177,6 @@ function sendAttendeeDisconnected(attendee: Attendee): void {
 	});
 }
 
-function isConnected(container: IFluidContainer | undefined): boolean {
-	return container !== undefined && container.connectionState === ConnectionState.Connected;
-}
-
 function isStringOrNumberRecord(value: unknown): value is Record<string, string | number> {
 	if (value === null || typeof value !== "object" || Array.isArray(value)) {
 		return false;
@@ -221,6 +220,11 @@ class MessageHandler {
 	public container: IFluidContainer | undefined;
 	public containerId: string | undefined;
 	private readonly workspaces = new Map<string, StatesWorkspace<WorkspaceSchema>>();
+
+	private readonly onDisconnected = (): void => {
+		// Test state is a bit fragile and does not account for reconnections.
+		send({ event: "error", error: `${process_id}: Container disconnected` });
+	};
 
 	private registerWorkspace(
 		workspaceId: string,
@@ -366,11 +370,12 @@ class MessageHandler {
 			send({ event: "error", error: `${process_id}: No azure user information given` });
 			return;
 		}
-		if (isConnected(this.container)) {
-			send({ event: "error", error: `${process_id}: Already connected to container` });
+		if (this.container) {
+			send({ event: "error", error: `${process_id}: Container already loaded` });
 			return;
 		}
 		const { container, containerId } = await getOrCreateContainer(
+			this.onDisconnected,
 			msg.containerId,
 			msg.user,
 			msg.scopes,
@@ -406,10 +411,12 @@ class MessageHandler {
 			send({ event: "error", error: `${process_id} is not connected to container` });
 			return;
 		}
+		// There are no current scenarios where disconnect without presence is expected.
 		if (!this.presence) {
 			send({ event: "error", error: `${process_id} is not connected to presence` });
 			return;
 		}
+		this.container.off("disconnected", this.onDisconnected);
 		this.container.disconnect();
 		send({
 			event: "disconnectedSelf",
