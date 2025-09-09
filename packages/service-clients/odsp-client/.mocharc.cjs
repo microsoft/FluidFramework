@@ -7,7 +7,8 @@
 
 const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
 
-const config = getFluidTestMochaConfig(__dirname);
+const packageDir = __dirname;
+const config = getFluidTestMochaConfig(packageDir);
 // TODO: figure out why this package needs the --exit flag, tests might not be cleaning up correctly after themselves
 // AB#7856
 config.exit = true;
