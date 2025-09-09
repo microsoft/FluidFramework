@@ -366,9 +366,9 @@ type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
 // #region TreeNodeEventBuffer
 
 /**
- * Tracks the number of times {@link withPausedTreeEvents} has been called without
- * being matched by a corresponding resume call.
- * Events will be paused while this counter is \> 0.
+ * Tracks the number of nested calls to {@link withPausedTreeEvents}.
+ * Events will be buffered while this counter is \> 0.
+ * Events will be flushed when this counter returns to 0.
  */
 let pauseTreeEventsStack: number = 0;
 
@@ -376,8 +376,8 @@ let pauseTreeEventsStack: number = 0;
  * Call the provided callback with {@link TreeNode}s' events paused until after the callback's completion.
  *
  * @remarks
- * Events that would otherwise have been emitted are merged and buffered until after the provided callback has been
- * completed.
+ * Events that would otherwise have been emitted immediately are merged and buffered until after the
+ * provided callback has been completed.
  *
  * Note: this should be used with caution. User application behaviors are implicitly coupled to event timing.
  * Disrupting this timing can lead to unexpected behavior.
@@ -403,7 +403,7 @@ const flushEventsEmitter = createEmitter<{
 }>();
 
 /**
- * Event emitter for {@link TreeNodeKernel}, which optionally buffers events based on {@link withPausedTreeEvents}.
+ * Event emitter for {@link TreeNodeKernel}, which optionally buffers events based on {@link pauseTreeEventsStack}.
  * @remarks Listens to {@link flushEventsEmitter} to know when to flush any buffered events.
  */
 class KernelEventBuffer {
