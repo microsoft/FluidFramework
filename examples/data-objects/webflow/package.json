@@ -41,7 +41,7 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm",
-		"test:mocha:esm": "cross-env \"NODE_OPTIONS=--experimental-loader esm-loader-css\" mocha --recursive \"lib/test/**/*.spec.*js\"",
+		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
@@ -91,7 +91,7 @@
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-version-utils": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.58.1",
+		"@fluidframework/build-tools": "^0.58.2",
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
