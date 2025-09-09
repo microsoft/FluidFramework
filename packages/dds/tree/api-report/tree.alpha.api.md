@@ -148,7 +148,8 @@ export function dataStoreKind<T, TRoot extends IFluidLoadable>(options: DataStor
 // @alpha @input (undocumented)
 export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutput> {
     instantiateFirstTime(creator: Creator): Promise<TRoot>;
-    readonly registry: Iterable<SharedObjectKind>;
+    readonly registry: SharedObjectRegistry;
+    readonly type: string;
     view(root: TRoot): TOutput;
 }
 
@@ -935,6 +936,9 @@ export interface SchemaValidationFunction<Schema extends TSchema> {
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
 // @alpha @input
+export type SharedObjectRegistry = Registry<() => Promise<SharedObjectKind>>;
+
+// @alpha @input
 export interface SharedTreeFormatOptions {
     formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
     treeEncodeType: TreeCompressionStrategy;
@@ -1403,6 +1407,7 @@ export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> {
     // (undocumented)
     readonly initializer?: () => InsertableTreeFieldFromImplicitField<TSchema>;
     readonly registry?: Iterable<SharedObjectKind>;
+    readonly type: string;
 }
 
 // @alpha @input

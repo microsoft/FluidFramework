@@ -11,7 +11,7 @@ import type {
 	TreeView,
 	TreeViewConfiguration,
 } from "./simple-tree/index.js";
-import type { DataStoreKind } from "@fluidframework/runtime-definitions/internal";
+import type { DataStoreKind, Registry } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { SharedTree } from "./treeFactory.js";
@@ -20,18 +20,40 @@ import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 // TODO: Non-tree specific content should be moved elsewhere.
 
 /**
+ * A {@link @fluidframework/runtime-definitions#Registry} of shared object kinds that can be created or loaded within a data store.
+ * @remarks
+ * Supports lazy code loading.
+ * @input
+ * @alpha
+ */
+export type SharedObjectRegistry = Registry<() => Promise<SharedObjectKind>>;
+
+export function sharedObjectRegistryFromIterable(
+	entries: Iterable<
+		SharedObjectKind | { type: string; kind: () => Promise<SharedObjectKind> }
+	>,
+): SharedObjectRegistry {
+	throw new Error("Not implemented: registry");
+}
+
+/**
  * @input
  * @alpha
  */
 export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutput> {
-	// TODO: type/id
+	/**
+	 * The type identifier for the data object factory.
+	 * @remarks
+	 * Persisted identifier which specifies which {@link @fluidframework/runtime-definitions#DataStoreKind} to use when loading it.
+	 * @privateRemarks
+	 * Equivalent to `DataObjectFactoryProps.type`.
+	 */
+	readonly type: string;
 
 	/**
 	 * The registry of shared object kinds (including other DataStores) that can be loaded or created within this DataStore.
-	 *
-	 * TODO: ensure this supports lazy code loading. Maybe define some kind of "lazy shared object kind" that can be used here.
 	 */
-	readonly registry: Iterable<SharedObjectKind>;
+	readonly registry: SharedObjectRegistry;
 	/**
 	 * Create the initial content of the datastore, and return the root shared object.
 	 */
@@ -70,7 +92,10 @@ export interface Creator {
  * @alpha
  */
 export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> {
-	// TODO: type/id
+	/**
+	 * {@inheritDoc DataStoreOptions."type"}
+	 */
+	readonly type: string;
 
 	readonly config: TreeViewConfiguration<TSchema>;
 	readonly initializer?: () => InsertableTreeFieldFromImplicitField<TSchema>;
@@ -104,8 +129,9 @@ export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(
 		"SharedTree must be included in the registry for treeDataStoreFactory to work.",
 	);
 
-	return dataStoreKind({
-		registry,
+	const result = dataStoreKind<TreeView<TSchema>, ITree>({
+		type: options.type,
+		registry: sharedObjectRegistryFromIterable(registry),
 		async instantiateFirstTime(creator: Creator): Promise<ITree> {
 			// TODO: remove need for this cast
 			const tree = await creator.create(treeKind as SharedObjectKind<ITree>);
@@ -121,4 +147,5 @@ export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(
 			return view;
 		},
 	});
+	return result;
 }

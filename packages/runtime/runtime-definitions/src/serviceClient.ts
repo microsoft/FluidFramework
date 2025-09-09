@@ -8,6 +8,19 @@ import type { ErasedType } from "@fluidframework/core-interfaces";
 import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
 
 /**
+ * A collection of entries looked up by a `type` string.
+ * @remarks
+ * Use of a function for this allows a few things that most collections would not:
+ * 1. It's possible to generate placeholder / error values on demand.
+ * 2. It makes loading from some external registry on demand practical.
+ * 3. The lookup can throw an exception is appropriate
+ * (the implementer can decide how to handle requests for unknown types, producing placeholders or errors).
+ * @input
+ * @alpha
+ */
+export type Registry<T> = (type: string) => T;
+
+/**
  * Options for configuring a {@link ServiceClient}.
  * @remarks
  * These are the options which apply to all services.
@@ -80,8 +93,21 @@ export interface ServiceClient {
 
 	/**
 	 * Loads an existing container from the service.
+	 * @param id - The unique identifier of the container to load.
+	 * @param root - The {@link DataStoreKind} for the root, or a registry which will be used to look up the root based on its type.
+	 *
+	 * @throws a UsageError if the DataStoreKind's type (either the root directly or looked up from the registry) does not match the type of the root data store in the container.
+	 *
+	 * @privateRemarks
+	 * The ability to provide a registry here means that it's possible to:
+	 * 1. Load a container which might have a few different possible roots, for example because of versioning.
+	 * 2. Generate the DataStoreKind on demand based on the type: this approach could be used for things like debug tools which can load any possible container.
+	 * 3. Generating the DataStoreKind if the type is unrecognized, for example to provide a placeholder which might support some minimal functionality (like debug inspection, and summary).
 	 */
-	loadContainer<T>(id: string, root: DataStoreKind<T>): Promise<FluidContainerAttached<T>>;
+	loadContainer<T>(
+		id: string,
+		root: DataStoreKind<T> | Registry<Promise<DataStoreKind<T>>>,
+	): Promise<FluidContainerAttached<T>>;
 }
 
 /**

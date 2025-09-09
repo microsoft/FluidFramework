@@ -93,4 +93,5 @@ export type {
 	ServiceClient,
 	ServiceOptions,
 	FluidContainerAttached,
+	Registry,
 } from "./serviceClient.js";

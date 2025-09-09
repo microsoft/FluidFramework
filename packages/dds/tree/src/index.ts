@@ -336,4 +336,5 @@ export type {
 	DataStoreOptions,
 	TreeDataStoreOptions,
 	Creator,
+	SharedObjectRegistry,
 } from "./treeDataStore.js";

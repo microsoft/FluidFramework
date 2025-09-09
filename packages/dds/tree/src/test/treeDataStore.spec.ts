@@ -14,6 +14,7 @@ import { createContainer } from "@fluidframework/runtime-definitions/internal";
 describe("treeDataStore", () => {
 	it("example use", async () => {
 		const myFactory = treeDataStoreKind({
+			type: "my-tree",
 			config: new TreeViewConfiguration({ schema: SchemaFactoryAlpha.number }),
 			initializer: () => 1,
 		});
