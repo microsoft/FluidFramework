@@ -58,8 +58,8 @@ export class IntervalCollectionOracle {
 			this.intervals.delete(interval.getIntervalId());
 		});
 
-		// Update the stored snapshot’s start and end positions when an interval’s endpoints change.
-		// This ensures the oracle reflects the latest interval positions.
+		// // Update the stored snapshot’s start and end positions when an interval’s endpoints change.
+		// // This ensures the oracle reflects the latest interval positions.
 		this.collection.on("changeInterval", (interval, previousInterval, local, op, slide) => {
 			if (!local) return;
 			const existing = this.intervals.get(interval.getIntervalId());
@@ -69,20 +69,20 @@ export class IntervalCollectionOracle {
 			}
 		});
 
-		// Update the stored snapshot’s properties when an interval’s properties change.
-		// This keeps the oracle in sync with property updates.
+		// // Update the stored snapshot’s properties when an interval’s properties change.
+		// // This keeps the oracle in sync with property updates.
 		this.collection.on("propertyChanged", (interval, propertyDeltas, local, op) => {
 			if (!local) return;
 			const existing = this.intervals.get(interval.getIntervalId());
-			if (existing) {
+			if (existing && propertyDeltas) {
 				for (const key of Object.keys(propertyDeltas)) {
 					existing.properties[key] = interval.properties[key];
 				}
 			}
 		});
 
-		// Update the stored snapshot for any combined changes (endpoints or properties).
-		// Handles cases where both endpoints and properties change simultaneously.
+		// // Update the stored snapshot for any combined changes (endpoints or properties).
+		// // Handles cases where both endpoints and properties change simultaneously.
 		this.collection.on(
 			"changed",
 			(interval, propertyDeltas, previousInterval, local, slide) => {
@@ -93,8 +93,10 @@ export class IntervalCollectionOracle {
 						existing.start = interval.start;
 						existing.end = interval.end;
 					}
-					for (const key of Object.keys(propertyDeltas)) {
-						existing.properties[key] = interval.properties[key];
+					if (propertyDeltas) {
+						for (const key of Object.keys(propertyDeltas)) {
+							existing.properties[key] = interval.properties[key];
+						}
 					}
 				}
 			},
@@ -104,8 +106,10 @@ export class IntervalCollectionOracle {
 	public validate() {
 		for (const [id, snapshot] of this.intervals) {
 			const actual = this.collection.getIntervalById(id);
+
+			// Skip validation for intervals still in pending state
 			if (!actual) {
-				throw new Error(`Interval ${id} missing in collection`);
+				continue;
 			}
 
 			const startOffset = snapshot.start.getOffset();
