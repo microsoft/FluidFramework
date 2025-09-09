@@ -31,10 +31,6 @@ export {
 	ISequenceIntervalCollectionEvents,
 } from "./intervalCollection.js";
 export {
-	IntervalCollectionOracle,
-	IntervalCollectionWithEvents,
-} from "./intervalCollectionOracle.js";
-export {
 	SequenceIntervalIndex,
 	SequenceIntervalIndexes,
 	ISequenceOverlappingIntervalsIndex,

@@ -44,7 +44,6 @@ import {
 	type IntervalCollection,
 	type ISequenceIntervalCollection,
 } from "../../intervalCollection.js";
-import { IntervalCollectionOracle } from "../../intervalCollectionOracle.js";
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
 import { ISharedString, type SharedStringClass } from "../../sharedString.js";
@@ -52,11 +51,7 @@ import { SharedStringOracle } from "../../sharedStringOracle.js";
 import { _dirname } from "../dirname.cjs";
 import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
 
-import {
-	hasIntervalCollectionOracle,
-	hasSharedStringOracle,
-	type IChannelWithOracles,
-} from "./oracleUtils.js";
+import { hasSharedStringOracle, type IChannelWithOracles } from "./oracleUtils.js";
 
 export type RevertibleSharedString = ISharedString & {
 	revertibles: SharedStringRevertible[];
@@ -485,14 +480,6 @@ export const baseModel: Omit<
 			b.channel.sharedStringOracle.validate();
 		}
 
-		if (hasIntervalCollectionOracle(a.channel)) {
-			a.channel.intervalCollectionOracle.validate();
-		}
-
-		if (hasIntervalCollectionOracle(b.channel)) {
-			b.channel.intervalCollectionOracle.validate();
-		}
-
 		void assertEquivalentSharedStrings(a.channel, b.channel);
 	},
 	factory: new SharedStringFuzzFactory(),
@@ -562,16 +549,6 @@ oracleEmitter.on("clientCreate", (client) => {
 	const sharedStringOracle = new SharedStringOracle(channel);
 	channel.sharedStringOracle = sharedStringOracle;
 	registerOracle(sharedStringOracle);
-
-	// Attach IntervalCollection oracle
-	for (const label of channel.getIntervalCollectionLabels()) {
-		const collection = channel.getIntervalCollection(label);
-		const intervalCollectionOracle = new IntervalCollectionOracle(collection);
-		if (collection !== undefined) {
-			channel.intervalCollectionOracle = intervalCollectionOracle;
-			registerOracle(intervalCollectionOracle);
-		}
-	}
 });
 
 export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {

@@ -3,21 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IntervalCollectionOracle } from "../../intervalCollectionOracle.js";
 import type { ISharedString } from "../../sharedString.js";
 import { SharedStringOracle } from "../../sharedStringOracle.js";
 
 /**
  * A channel decorated with one or more oracles for validation.
- * This supports SharedString and IntervalCollection oracles.
  * @internal
  */
 export interface IChannelWithOracles extends ISharedString {
 	/** Oracle for validating the SharedString state */
 	sharedStringOracle: SharedStringOracle;
-
-	/** Oracle for validating the interval collection state */
-	intervalCollectionOracle: IntervalCollectionOracle;
 }
 
 /**
@@ -27,14 +22,4 @@ export interface IChannelWithOracles extends ISharedString {
  */
 export function hasSharedStringOracle(s: ISharedString): s is IChannelWithOracles {
 	return "sharedStringOracle" in s && s.sharedStringOracle instanceof SharedStringOracle;
-}
-
-/**
- * @internal
- */
-export function hasIntervalCollectionOracle(s: ISharedString): s is IChannelWithOracles {
-	return (
-		"intervalCollectionOracle" in s &&
-		s.intervalCollectionOracle instanceof IntervalCollectionOracle
-	);
 }
