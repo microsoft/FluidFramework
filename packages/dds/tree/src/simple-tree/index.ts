@@ -56,7 +56,7 @@ export {
 	walkAllowedTypes,
 	type SchemaVisitor,
 	type SimpleNodeSchemaBase,
-	pauseTreeEvents,
+	withPausedTreeEvents,
 } from "./core/index.js";
 export { walkFieldSchema } from "./walkFieldSchema.js";
 export type { UnsafeUnknownSchema, Insertable } from "./unsafeUnknownSchema.js";

@@ -138,7 +138,7 @@ export class TreeNodeKernel {
 	 * This means optimizations like skipping processing data in subtrees where no subtreeChanged events are subscribed to would be able to work,
 	 * since the kernel does not unconditionally subscribe to those events (like a design which simply forwards all events would).
 	 */
-	readonly #events = new Lazy(() => new TreeNodeEventBuffer());
+	readonly #events = new Lazy(() => new KernelEventBuffer());
 
 	/**
 	 * Create a TreeNodeKernel which can be looked up with {@link getKernel}.
@@ -371,58 +371,48 @@ type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
 // #region TreeNodeEventBuffer
 
 /**
- * Tracks the number of times {@link pauseTreeEvents} has been called without
+ * Tracks the number of times {@link withPausedTreeEvents} has been called without
  * being matched by a corresponding resume call.
  * Events will be paused while this counter is \> 0.
  */
 let pauseTreeEventsStack: number = 0;
 
 /**
- * Pause events emitted by {@link TreeNode}s.
+ * Call the provided callback with {@link TreeNode}s' events paused until after the callback's completion.
  *
  * @remarks
- * Events that would otherwise have been emitted are buffered until the returned function is called.
+ * Events that would otherwise have been emitted are merged and buffered until after the provided callback has been
+ * completed.
  *
  * Note: this should be used with caution. User application behaviors are implicitly coupled to event timing.
  * Disrupting this timing can lead to unexpected behavior.
- *
- * It is also vitally important that the returned callback be invoked to ensure events are resumed.
- * Failing to do so will result in events never being emitted again.
- *
- * @privateRemarks
- * If we had access to `Symbol.dispose`, that would probably be a better pattern than returning a callback.
- * Users could then use this API with `using` to ensure proper cleanup.
- *
- * @returns A function that, when called, resumes event emission and flushes any buffered events.
  */
-export function pauseTreeEvents(): () => void {
+export function withPausedTreeEvents(callback: () => void): void {
+	assert(pauseTreeEventsStack >= 0, "pauseEvents count should never be negative");
+
 	pauseTreeEventsStack++;
 
-	return () => {
-		pauseTreeEventsStack--;
-		assert(pauseTreeEventsStack >= 0, "pauseEvents count should never be negative");
-		if (pauseTreeEventsStack === 0) {
-			flushEventsEmitter.emit("flush");
-		}
-	};
+	callback();
+
+	pauseTreeEventsStack--;
+	if (pauseTreeEventsStack === 0) {
+		flushEventsEmitter.emit("flush");
+	}
 }
 
 /**
- * Event emitter to notify subscribers when tree events buffered due to {@link pauseTreeEvents} should be flushed.
+ * Event emitter to notify subscribers when tree events buffered due to {@link withPausedTreeEvents} should be flushed.
  */
 const flushEventsEmitter = createEmitter<{
 	flush: () => void;
 }>();
 
 /**
- * Event emitter for {@link TreeNodeKernel}, which optionally buffers events based on {@link pauseTreeEvents}.
+ * Event emitter for {@link TreeNodeKernel}, which optionally buffers events based on {@link withPausedTreeEvents}.
  * @remarks Listens to {@link flushEventsEmitter} to know when to flush any buffered events.
  */
-class TreeNodeEventBuffer
-	implements
-		Listenable<KernelEvents>,
-		Pick<IEmitter<KernelEvents>, "emit">,
-		HasListeners<KernelEvents>
+class KernelEventBuffer
+	implements Listenable<KernelEvents>, Pick<IEmitter<KernelEvents>, "emit">
 {
 	#disposed: boolean = false;
 
@@ -432,6 +422,8 @@ class TreeNodeEventBuffer
 	readonly #disposeOnFlushListener = flushEventsEmitter.on("flush", () => {
 		this.flush();
 	});
+
+	// TODO: just use an emitter here
 
 	/**
 	 * {@link AnchorEvents.childrenChangedAfterBatch} listeners.
@@ -460,18 +452,6 @@ class TreeNodeEventBuffer
 	 * if the subtree has changed.
 	 */
 	#subTreeChangedBuffer: boolean = false;
-
-	public hasListeners(eventName: keyof KernelEvents): boolean {
-		switch (eventName) {
-			case "childrenChangedAfterBatch":
-				return this.#childrenChangedListeners.size > 0;
-			case "subtreeChangedAfterBatch":
-				return this.#subTreeChangedListeners.size > 0;
-			default: {
-				unreachableCase(eventName);
-			}
-		}
-	}
 
 	public emit(
 		eventName: keyof KernelEvents,
@@ -576,11 +556,12 @@ class TreeNodeEventBuffer
 	}
 
 	/**
-	 * Flushes any events buffered due to {@link pauseTreeEvents}.
+	 * Flushes any events buffered due to {@link withPausedTreeEvents}.
 	 */
 	public flush(): void {
 		this.#assertNotDisposed();
 
+		// TODO: verify this can't be fired with empty set of changed keys
 		if (this.#childrenChangedBuffer.size > 0) {
 			for (const listener of this.#childrenChangedListeners) {
 				listener({ changedFields: this.#childrenChangedBuffer });

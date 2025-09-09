@@ -14,7 +14,7 @@ export {
 	treeNodeFromAnchor,
 	getSimpleNodeSchemaFromInnerNode,
 	SimpleContextSlot,
-	pauseTreeEvents,
+	withPausedTreeEvents,
 } from "./treeNodeKernel.js";
 export { type WithType, typeNameSymbol, typeSchemaSymbol } from "./withType.js";
 export {

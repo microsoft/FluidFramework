@@ -29,7 +29,7 @@ import {
 	type UnannotateImplicitFieldSchema,
 	isArrayNodeSchema,
 	type InsertableField,
-	pauseTreeEvents,
+	withPausedTreeEvents,
 } from "./simple-tree/index.js";
 
 // Future improvement TODOs:
@@ -892,8 +892,10 @@ export namespace System_TableSchema {
 			private _applyEditsInBatch(applyEdits: () => void): void {
 				const branch = TreeAlpha.branch(this);
 
-				const resumeTreeEvents = pauseTreeEvents();
-				try {
+				// Ensure events are paused until all of the edits are applied.
+				// This ensures that the user sees the corresponding table-level edit as atomic,
+				// and ensures they are not spammed with intermediate events.
+				withPausedTreeEvents(() => {
 					if (branch === undefined) {
 						// If this node does not have a corresponding branch, then it is unhydrated.
 						// I.e., it is not part of a collaborative session yet.
@@ -904,9 +906,7 @@ export namespace System_TableSchema {
 							applyEdits();
 						});
 					}
-				} finally {
-					resumeTreeEvents();
-				}
+				});
 			}
 
 			/**

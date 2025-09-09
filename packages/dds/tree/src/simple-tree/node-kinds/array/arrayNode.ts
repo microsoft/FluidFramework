@@ -49,7 +49,7 @@ import {
 	type FlexContent,
 	type TreeNodeSchemaPrivateData,
 	convertAllowedTypes,
-	pauseTreeEvents,
+	withPausedTreeEvents,
 } from "../../core/index.js";
 import {
 	type FactoryContent,
@@ -1086,8 +1086,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			// TODO:AB#47457: Implement proper move support for unhydrated trees.
 			// As a temporary mitigation, we will pause tree events until both edits have been completed.
 			// That way, users will only see a single change event for the array instead of 2.
-			const resumeAndFlushEvents = pauseTreeEvents();
-			try {
+			withPausedTreeEvents(() => {
 				if (sourceField !== destinationField || destinationGap < sourceStart) {
 					destinationField.editor.insert(
 						destinationGap,
@@ -1099,9 +1098,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 						sourceField.editor.remove(sourceStart, movedCount),
 					);
 				}
-			} finally {
-				resumeAndFlushEvents();
-			}
+			});
 		} else {
 			if (!sourceField.context.isHydrated()) {
 				throw new UsageError(
