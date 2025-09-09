@@ -546,14 +546,15 @@ oracleEmitter.on("clientCreate", (client) => {
 	const channel = client.channel as IChannelWithOracles;
 
 	// Attach IntervalCollection oracle
-	for (const label of channel.getIntervalCollectionLabels()) {
-		const collection = channel.getIntervalCollection(label);
-		const intervalCollectionOracle = new IntervalCollectionOracle(collection);
-		if (collection !== undefined) {
-			channel.intervalCollectionOracle = intervalCollectionOracle;
-			registerOracle(intervalCollectionOracle);
-		}
-	}
+
+	const labels = channel.getIntervalCollectionLabels();
+	const interval = Array.from(labels)
+		.map((label) => channel.getIntervalCollection(label))
+		.find((result) => result !== undefined);
+	if (!interval) return;
+	const intervalCollectionOracle = new IntervalCollectionOracle(interval);
+	channel.intervalCollectionOracle = intervalCollectionOracle;
+	registerOracle(intervalCollectionOracle);
 });
 
 export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
