@@ -7,12 +7,9 @@ import type { ISharedObject } from "@fluidframework/shared-object-base/internal"
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { SharedTree, type ITree } from "@fluidframework/tree/internal";
 
-import {
-	MigrationDataObject,
-	type IDelayLoadChannelFactory,
-	type ModelDescriptor,
-} from "../index.js";
+import type { IDelayLoadChannelFactory } from "../channel-factories/index.js";
 
+import { MigrationDataObject, type ModelDescriptor } from "./migrationDataObject.js";
 import type { DataObjectTypes } from "./types.js";
 
 /**
@@ -24,7 +21,7 @@ export const treeChannelId = "root-tree";
 /**
  * How to access the root Shared Tree maintained by this DataObject.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface RootTreeView {
 	tree: ITree;

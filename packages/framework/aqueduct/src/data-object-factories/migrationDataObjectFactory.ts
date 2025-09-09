@@ -10,7 +10,6 @@ import {
 	FluidDataStoreRuntime,
 } from "@fluidframework/datastore/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-
 import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
@@ -40,7 +39,7 @@ import {
  * Represents the properties required to create a MigrationDataObjectFactory.
  * @experimental
  * @legacy
- * @alpha
+ * @beta
  */
 export interface MigrationDataObjectFactoryProps<
 	TObj extends MigrationDataObject<TUniversalView, I>,
@@ -127,7 +126,7 @@ export interface MigrationDataObjectFactoryProps<
  *
  * @experimental
  * @legacy
- * @alpha
+ * @beta
  */
 export class MigrationDataObjectFactory<
 	TObj extends MigrationDataObject<TUniversalView, I>,

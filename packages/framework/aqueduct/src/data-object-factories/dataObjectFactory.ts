@@ -15,8 +15,8 @@ import type {
 	ModelDescriptor,
 	RootDirectoryView,
 } from "../data-objects/index.js";
-import { MigrationDataObjectFactory } from "../index.js";
 
+import { MigrationDataObjectFactory } from "./migrationDataObjectFactory.js";
 import type { DataObjectFactoryProps } from "./pureDataObjectFactory.js";
 
 /**

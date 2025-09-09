@@ -11,8 +11,8 @@ import type {
 } from "../data-objects/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { RootTreeView } from "../data-objects/treeDataObject.js"; //* TODO: Properly export
-import { MigrationDataObjectFactory } from "../index.js";
 
+import { MigrationDataObjectFactory } from "./migrationDataObjectFactory.js";
 import type { DataObjectFactoryProps } from "./pureDataObjectFactory.js";
 
 /**

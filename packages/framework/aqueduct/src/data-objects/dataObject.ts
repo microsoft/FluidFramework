@@ -22,7 +22,7 @@ export const dataObjectRootDirectoryId = "root";
 /**
  * How to access the root Shared Directory maintained by this DataObject.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface RootDirectoryView {
 	root: ISharedDirectory; // (property name here doesn't have to match the channel ID "root")

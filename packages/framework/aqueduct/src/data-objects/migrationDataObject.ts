@@ -9,7 +9,7 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 
 import type { IDelayLoadChannelFactory } from "../channel-factories/index.js";
-import type { MigrationDataObjectFactoryProps } from "../index.js";
+import type { MigrationDataObjectFactoryProps } from "../data-object-factories/index.js";
 
 import { PureDataObject } from "./pureDataObject.js";
 import type { DataObjectTypes } from "./types.js";
@@ -19,7 +19,7 @@ import type { DataObjectTypes } from "./types.js";
  * or create when initializing. The probe function may inspect multiple channels or other
  * runtime state to determine whether the model exists and return a model instance.
  * @legacy
- * @alpha
+ * @beta
  */
 export interface ModelDescriptor<TModel = unknown> {
 	//* Consider if we want something more formal here or if "duck typing" the runtime channel structure is sufficient.
@@ -59,7 +59,7 @@ export interface ModelDescriptor<TModel = unknown> {
  * from data at rest.
  * @experimental
  * @legacy
- * @alpha
+ * @beta
  */
 export abstract class MigrationDataObject<
 	TUniversalView,

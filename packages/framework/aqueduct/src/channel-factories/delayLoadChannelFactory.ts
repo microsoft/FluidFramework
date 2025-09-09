@@ -11,7 +11,7 @@ import type {
 /**
  * ! TODO
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IDelayLoadChannelFactory<T = unknown> extends IChannelFactory<T> {
 	createAsync(runtime: IFluidDataStoreRuntime, id?: string): Promise<T>;
