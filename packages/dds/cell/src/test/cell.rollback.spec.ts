@@ -63,7 +63,7 @@ describe("Cell with rollback", () => {
 		assert.equal(cell.get(), 42);
 
 		// delete triggers delete event, rollback restores valueChanged
-		assert.deepEqual(events, ["valueChanged", "delete", "valueChanged"]);
+		assert.deepEqual(events, ["delete", "valueChanged"]);
 	});
 });
 
@@ -165,6 +165,11 @@ describe("SharedCell rollback events with multiple clients", () => {
 		// After rollback, value is restored
 		assert.equal(cell1.get(), 42);
 		assert.equal(cell2.get(), 42);
+
+		runtime1.flush();
+		containerRuntimeFactory.processAllMessages();
+		assert.equal(cell2.get(), 42);
+		assert.deepEqual(events2, ["valueChanged"]);
 
 		// Event order
 		assert.deepEqual(events1, ["valueChanged", "delete", "valueChanged"]);

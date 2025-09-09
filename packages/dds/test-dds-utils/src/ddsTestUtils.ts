@@ -74,10 +74,10 @@ export function createAdditionalClient<T extends IChannel>(
 	dataStoreRuntime: MockFluidDataStoreRuntime;
 	containerRuntime: MockContainerRuntime;
 } {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: id });
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: `client-${id}` });
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 
-	const dds = createDDS(dataStoreRuntime, id);
+	const dds = createDDS(dataStoreRuntime, `dds-${id}`);
 
 	dataStoreRuntime.setAttachState(AttachState.Attached);
 	opts?.initialize?.(dds);
