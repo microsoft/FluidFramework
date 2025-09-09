@@ -527,6 +527,7 @@ class TreeNodeEventBuffer
 		}) => void | (() => void),
 	): () => void {
 		this.assertNotDisposed();
+
 		switch (eventName) {
 			case "childrenChangedAfterBatch":
 				this.childrenChangedListeners.add(
@@ -557,6 +558,7 @@ class TreeNodeEventBuffer
 		}) => void | (() => void),
 	): void {
 		this.assertNotDisposed();
+
 		switch (eventName) {
 			case "childrenChangedAfterBatch":
 				this.childrenChangedListeners.delete(
