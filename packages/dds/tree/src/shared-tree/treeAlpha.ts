@@ -54,6 +54,7 @@ import {
 	toInitialSchema,
 	convertField,
 	toUnhydratedSchema,
+	type TreeParsingOptions,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
@@ -201,7 +202,7 @@ export interface TreeIdentifierUtils {
  * Note that {@link (TreeBeta:interface).clone} can create an unhydrated node with unknown optional fields, as it uses the source node's stored schema (if any).
  *
  * Export APIs in this interface include {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | unknown optional fields}
- * if they are using {@link TreeEncodingOptions.useStoredKeys | stored keys}.
+ * if they are using {@link KeyEncodingOptions.allStoredKeys}.
  *
  * @privateRemarks
  * TODO:
@@ -273,18 +274,16 @@ export interface TreeAlpha {
 	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
 	 * @param data - The data used to construct the field content. See {@link (TreeAlpha:interface).(exportVerbose:1)}.
 	 * @remarks
-	 * This currently does not support input containing {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields| unknown optional fields}.
-	 * @privateRemarks
-	 * See TODOs in {@link TreeEncodingOptions}.
-	 *
-	 * TODO: clarify how this handles out of schema data.
-	 * Does it robustly validate? How do you use it with schema evolution features like staged allowed types and allowUnknownOptionalFields? Which errors are deferred until insertion/hydration?
-	 * Ensure whatever policy is chosen is documented, enforces, tested and applied consistently to all import code paths.
+	 * This currently does not support input containing
+	 * {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields| unknown optional fields} but does support
+	 * {@link SchemaStaticsAlpha.staged | staged} allowed types.
+	 * Non-empty default values for fields are currently not supported (must be provided in the input).
+	 * The content will be validated against the schema and an error will be thrown if out of schema.
 	 */
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		data: VerboseTree | undefined,
-		options?: Partial<TreeEncodingOptions>,
+		options?: TreeParsingOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 	/**
@@ -322,7 +321,7 @@ export interface TreeAlpha {
 	 * If an `idCompressor` is provided, it will be used to compress identifiers and thus will be needed to decompress the data.
 	 *
 	 * Always uses "stored" keys.
-	 * See {@link TreeEncodingOptions.useStoredKeys} for details.
+	 * See {@link KeyEncodingOptions.allStoredKeys} for details.
 	 * @privateRemarks
 	 * TODO: It is currently not clear how to work with the idCompressors correctly in the package API.
 	 * Better APIs should probably be provided as there is currently no way to associate an un-hydrated tree with an idCompressor,
@@ -482,7 +481,7 @@ export const TreeAlpha: TreeAlpha = {
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		data: VerboseTree | undefined,
-		options?: TreeEncodingOptions,
+		options?: TreeParsingOptions,
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 		const config: TreeEncodingOptions = { ...options };
 		// Create a config which is standalone, and thus can be used without having to refer back to the schema.

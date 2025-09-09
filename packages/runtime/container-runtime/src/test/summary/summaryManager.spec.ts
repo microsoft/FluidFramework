@@ -6,33 +6,33 @@
 import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
 	ISummarizerEvents,
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import {
-	IDocumentMessage,
+	type IDocumentMessage,
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
 import {
-	IConnectedEvents,
-	IConnectedState,
-	ISummarizer,
-	ISummarizerClientElection,
-	ISummarizerClientElectionEvents,
-	ISummarizerRuntime,
-	ISummaryManagerConfig,
-	ISummaryOpMessage,
+	type IConnectedEvents,
+	type IConnectedState,
+	type ISummarizer,
+	type ISummarizerClientElection,
+	type ISummarizerClientElectionEvents,
+	type ISummarizerRuntime,
+	type ISummaryManagerConfig,
+	type ISummaryOpMessage,
 	SummarizeHeuristicData,
-	Summarizer,
+	type Summarizer,
 	SummaryCollection,
 	SummaryManager,
 	SummaryManagerState,

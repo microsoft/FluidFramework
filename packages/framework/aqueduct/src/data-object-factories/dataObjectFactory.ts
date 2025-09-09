@@ -27,7 +27,7 @@ import type { DataObjectFactoryProps } from "./pureDataObjectFactory.js";
  * @typeParam TObj - DataObject (concrete type)
  * @typeParam I - The input types for the DataObject
  * @legacy
- * @alpha
+ * @beta
  */
 export class DataObjectFactory<
 	TObj extends DataObject<I>,

@@ -173,7 +173,11 @@ export {
 	getOrCreateHydratedFlexTreeNode,
 } from "./flex-tree/index.js";
 
-export { TreeCompressionStrategy } from "./treeCompressionUtils.js";
+export {
+	TreeCompressionStrategy,
+	TreeCompressionStrategyExtended,
+	type TreeCompressionStrategyPrivate,
+} from "./treeCompressionUtils.js";
 
 export { valueSchemaAllows } from "./valueUtilities.js";
 

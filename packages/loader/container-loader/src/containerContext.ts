@@ -7,23 +7,23 @@ import type {
 	ILayerCompatDetails,
 	IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
-import {
+import type {
 	AttachState,
 	IAudience,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import {
+import type {
 	IBatchMessage,
 	IContainerContext,
 	ILoader,
 	ILoaderOptions,
 	IDeltaManager,
-	type IContainerStorageService,
+	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
-import { type FluidObject } from "@fluidframework/core-interfaces";
-import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
-import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
-import {
+import type { FluidObject } from "@fluidframework/core-interfaces";
+import type { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
+import type {
 	ISnapshot,
 	IDocumentMessage,
 	ISnapshotTree,
@@ -32,7 +32,7 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ConnectionState } from "./connectionState.js";
 import { loaderCompatDetailsForRuntime } from "./loaderLayerCompatState.js";

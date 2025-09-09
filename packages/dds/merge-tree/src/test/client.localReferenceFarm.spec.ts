@@ -10,11 +10,11 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { SlidingPreference, setValidateRefCount } from "../localReference.js";
 import type { ISegmentPrivate } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
-import { ReferencePosition } from "../referencePositions.js";
+import type { ReferencePosition } from "../referencePositions.js";
 
 import {
-	IConfigRange,
-	IMergeTreeOperationRunnerConfig,
+	type IConfigRange,
+	type IMergeTreeOperationRunnerConfig,
 	doOverRanges,
 	generateClientNames,
 	removeRange,

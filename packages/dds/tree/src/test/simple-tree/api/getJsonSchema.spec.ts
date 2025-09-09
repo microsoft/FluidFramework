@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 import {
 	getJsonSchema,
+	KeyEncodingOptions,
 	NodeKind,
 	SchemaFactory,
 	SchemaFactoryAlpha,
@@ -15,8 +16,9 @@ import {
 import { hydrate } from "../utils.js";
 import { getJsonValidator } from "./jsonSchemaUtilities.js";
 
-// TODO: consolidate these tests with those in getJsonSchema.spec.ts
+// TODO: consolidate these tests with those in src/test/simple-tree/api/simpleSchemaToJsonSchema.spec.ts
 // TODO: Add testing for requireFieldWithDefaults = false.
+// TODO: Add testing for KeyEncodingOptions.knownStoredKeys
 
 describe("getJsonSchema", () => {
 	it("Leaf node", () => {
@@ -24,7 +26,7 @@ describe("getJsonSchema", () => {
 		const Schema = schemaFactory.string;
 
 		const actual = getJsonSchema(Schema, {
-			useStoredKeys: false,
+			keys: KeyEncodingOptions.usePropertyKeys,
 			requireFieldsWithDefaults: true,
 		});
 
@@ -55,7 +57,7 @@ describe("getJsonSchema", () => {
 		const Schema = [schemaFactory.number, schemaFactory.string] as const;
 
 		const actual = getJsonSchema(Schema, {
-			useStoredKeys: false,
+			keys: KeyEncodingOptions.usePropertyKeys,
 			requireFieldsWithDefaults: true,
 		});
 
@@ -102,7 +104,7 @@ describe("getJsonSchema", () => {
 
 		assert.throws(() =>
 			getJsonSchema(Schema, {
-				useStoredKeys: false,
+				keys: KeyEncodingOptions.usePropertyKeys,
 				requireFieldsWithDefaults: true,
 			}),
 		);
@@ -117,7 +119,7 @@ describe("getJsonSchema", () => {
 		});
 
 		const actual = getJsonSchema(Schema, {
-			useStoredKeys: false,
+			keys: KeyEncodingOptions.usePropertyKeys,
 			requireFieldsWithDefaults: true,
 		});
 
@@ -163,7 +165,7 @@ describe("getJsonSchema", () => {
 		});
 
 		const actual = getJsonSchema(Schema, {
-			useStoredKeys: false,
+			keys: KeyEncodingOptions.usePropertyKeys,
 			requireFieldsWithDefaults: true,
 		});
 		const expected: JsonTreeSchema = {
@@ -228,7 +230,7 @@ describe("getJsonSchema", () => {
 		});
 
 		const actual = getJsonSchema(Schema, {
-			useStoredKeys: false,
+			keys: KeyEncodingOptions.usePropertyKeys,
 			requireFieldsWithDefaults: true,
 		});
 		const expected: JsonTreeSchema = {
@@ -291,7 +293,7 @@ describe("getJsonSchema", () => {
 		);
 
 		const actual = getJsonSchema(Schema, {
-			useStoredKeys: false,
+			keys: KeyEncodingOptions.usePropertyKeys,
 			requireFieldsWithDefaults: true,
 		});
 
@@ -379,7 +381,7 @@ describe("getJsonSchema", () => {
 		});
 
 		const actual = getJsonSchema(Schema, {
-			useStoredKeys: false,
+			keys: KeyEncodingOptions.usePropertyKeys,
 			requireFieldsWithDefaults: true,
 		});
 
@@ -413,7 +415,7 @@ describe("getJsonSchema", () => {
 		});
 
 		const actual = getJsonSchema(Schema, {
-			useStoredKeys: false,
+			keys: KeyEncodingOptions.usePropertyKeys,
 			requireFieldsWithDefaults: true,
 		});
 
@@ -454,7 +456,7 @@ describe("getJsonSchema", () => {
 		}) {}
 
 		const actual = getJsonSchema(Schema, {
-			useStoredKeys: false,
+			keys: KeyEncodingOptions.usePropertyKeys,
 			requireFieldsWithDefaults: true,
 		});
 

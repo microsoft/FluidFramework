@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ITelemetryContext } from "@fluidframework/runtime-definitions/internal";
 
 import { getEffectiveBatchId } from "./batchManager.js";
-import { type BatchStartInfo } from "./remoteMessageProcessor.js";
+import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 
 /**
  * This class tracks recent batchIds we've seen, and checks incoming batches for duplicates.

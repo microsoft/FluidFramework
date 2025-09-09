@@ -60,6 +60,9 @@ export interface Tree extends TreeNodeApi {
 export const Tree: Tree = {
 	...treeNodeApi,
 
+	// Note: the implementation details of `createRunTransaction` are deprecated.
+	// We have introduced replacement `@alpha` APIs on `TreeBranch`, but until they are `@public`, we can't reasonably deprecated this.
+	// Once they have been promoted to public, we can deprecate this API.
 	runTransaction: createRunTransaction(),
 
 	contains(parent: TreeNode, child: TreeNode): boolean {

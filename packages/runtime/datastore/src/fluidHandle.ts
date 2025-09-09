@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject } from "@fluidframework/core-interfaces";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import {
 	generateHandleContextPath,
 	FluidHandleBase,
@@ -12,8 +12,7 @@ import {
 
 /**
  * Handle for a shared {@link @fluidframework/core-interfaces#FluidObject}.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class FluidObjectHandle<
 	T extends FluidObject = FluidObject,

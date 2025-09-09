@@ -1,5 +1,14 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-lint.json",
-	"mainEntryPointFilePath": "<projectFolder>/lib/index.d.ts"
+	"mainEntryPointFilePath": "<projectFolder>/lib/index.d.ts",
+	// Bundle local dependencies so we can validate cross-package relationships
+	"bundledPackages": [
+		// Note: excluding server packages until we can update their tags (and release new server versions)
+		"@fluidframework/!(server-local-server)",
+		"@fluid-internal/*",
+		"@fluid-experimental/*",
+		"@fluid-private/*",
+		"@fluid-tools/*"
+	]
 }

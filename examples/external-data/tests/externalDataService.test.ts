@@ -11,11 +11,11 @@ import request from "supertest";
 
 import {
 	ExternalDataSource,
-	MockWebhook,
+	type MockWebhook,
 	initializeExternalDataService,
 } from "../src/mock-external-data-service/index.js";
 import { externalDataServicePort } from "../src/mock-external-data-service-interface/index.js";
-import { ITaskData, assertValidTaskData } from "../src/model-interface/index.js";
+import { type ITaskData, assertValidTaskData } from "../src/model-interface/index.js";
 
 import { closeServer, delay } from "./utilities.js";
 

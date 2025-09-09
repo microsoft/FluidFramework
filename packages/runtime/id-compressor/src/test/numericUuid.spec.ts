@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { StableId } from "../index.js";
+import type { StableId } from "../index.js";
 import { readNumericUuid, writeNumericUuid } from "../persistanceUtilities.js";
 import {
 	addNumericUuids,

@@ -6,14 +6,14 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { UnassignedSequenceNumber } from "./constants.js";
-import { MergeTree } from "./mergeTree.js";
+import type { MergeTree } from "./mergeTree.js";
 import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
 import {
 	type MergeBlock,
 	assignChild,
 	getMinSeqStamp,
-	IMergeNode,
-	ISegmentPrivate,
+	type IMergeNode,
+	type ISegmentPrivate,
 	Marker,
 	MaxNodesInBlock,
 } from "./mergeTreeNodes.js";
