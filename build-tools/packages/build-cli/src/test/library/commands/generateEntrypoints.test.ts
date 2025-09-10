@@ -75,6 +75,16 @@ describe("generateEntrypoints", () => {
 					).to.contain('export type * from "./lib/legacy/alpha.d.ts";\n');
 				});
 			});
+
+			it("sourceTypeRelPath: file with leading .", () => {
+				expect(
+					createNode10EntrypointFileContent({
+						dirPath: "",
+						sourceTypeRelPath: ".foo.d.ts",
+						isTypeOnly: true,
+					}),
+				).to.contain('export type * from "./.foo.d.ts";\n');
+			});
 		});
 
 		describe("non-type-only", () => {
@@ -108,6 +118,7 @@ describe("generateEntrypoints", () => {
 						}),
 					).to.contain('export * from "./lib/legacy/alpha.js";\n');
 				});
+
 				it("without leading ./", () => {
 					expect(
 						createNode10EntrypointFileContent({
@@ -117,6 +128,16 @@ describe("generateEntrypoints", () => {
 						}),
 					).to.contain('export * from "./lib/legacy/alpha.js";\n');
 				});
+			});
+
+			it("sourceTypeRelPath: file with leading .", () => {
+				expect(
+					createNode10EntrypointFileContent({
+						dirPath: "",
+						sourceTypeRelPath: ".foo.d.ts",
+						isTypeOnly: false,
+					}),
+				).to.contain('export * from "./.foo.js";\n');
 			});
 		});
 	});
