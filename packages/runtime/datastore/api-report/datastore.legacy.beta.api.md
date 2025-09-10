@@ -122,6 +122,25 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> extends Flui
     protected readonly value: T | Promise<T>;
 }
 
+// @beta @legacy
+export interface IChannelContext {
+    // (undocumented)
+    applyStashedOp(content: unknown): unknown;
+    // (undocumented)
+    getChannel(): Promise<IChannel>;
+    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    processMessages(messageCollection: IRuntimeMessageCollection): void;
+    // (undocumented)
+    reSubmit(content: unknown, localOpMetadata: unknown, squash?: boolean): void;
+    // (undocumented)
+    rollback(message: unknown, localOpMetadata: unknown): void;
+    // (undocumented)
+    setConnectionState(connected: boolean, clientId?: string): any;
+    // (undocumented)
+    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
+    updateUsedRoutes(usedRoutes: string[]): void;
+}
+
 // @beta @legacy (undocumented)
 export interface ISharedObjectRegistry {
     // (undocumented)
