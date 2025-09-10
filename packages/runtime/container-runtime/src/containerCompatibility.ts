@@ -58,7 +58,6 @@ type RuntimeOptionsThatRequireExplicitSchemaControl = keyof Omit<
 	RuntimeOptionsAffectingDocSchema,
 	keyof Pick<
 		RuntimeOptionsAffectingDocSchema,
-		| "explicitSchemaControl"
 		| "compressionOptions"
 		| "enableRuntimeIdCompressor"
 		| "flushMode"
