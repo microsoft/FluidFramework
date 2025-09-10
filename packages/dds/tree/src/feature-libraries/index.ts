@@ -103,6 +103,7 @@ export {
 	fluidVersionToFieldBatchCodecWriteVersion,
 	type FieldBatchEncodingContext,
 	emptyChunk,
+	combineChunks,
 } from "./chunked-forest/index.js";
 
 export {

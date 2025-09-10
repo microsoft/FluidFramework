@@ -92,7 +92,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 		return new ForestIncrementalSummaryBuilder(
 			true /* enableIncrementalSummary */,
 			(cursor: ITreeCursorSynchronous) => {
-				return testChunk;
+				return [testChunk];
 			},
 			(nodeIdentifier: TreeNodeSchemaIdentifier, fieldKey: FieldKey) => false,
 		);

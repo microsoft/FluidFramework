@@ -235,6 +235,20 @@ export class InlineArrayDecoder implements ChunkDecoder {
 }
 
 /**
+ * Top-level decoder for incremental chunks.
+ * An encoded incremental chunk can contain multiple nodes. This decoder will decode all the nodes in a chunk.
+ */
+const incrementalRootDecoder: ChunkDecoder = {
+	decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+		const chunks: TreeChunk[] = [];
+		while (stream.offset !== stream.data.length) {
+			chunks.push(anyDecoder.decode(decoders, stream));
+		}
+		return aggregateChunks(chunks);
+	},
+};
+
+/**
  * Decoder for {@link EncodedIncrementalChunkShape}s.
  */
 export class IncrementalChunkDecoder implements ChunkDecoder {
@@ -257,7 +271,7 @@ export class IncrementalChunkDecoder implements ChunkDecoder {
 			this.cache.idDecodingContext,
 			this.cache.incrementalDecoder,
 		);
-		const chunks = genericDecode(decoderLibrary, context, batch, anyDecoder);
+		const chunks = genericDecode(decoderLibrary, context, batch, incrementalRootDecoder);
 		return aggregateChunks(chunks);
 	}
 }

@@ -223,8 +223,8 @@ export const anyNodeEncoder: NodeEncoder = {
 		outputBuffer: BufferFormat,
 	): void {
 		// TODO: Fast path uniform chunk content.
-		const shape = context.nodeEncoderFromSchema(cursor.type);
-		AnyShape.encodeNode(cursor, context, outputBuffer, shape);
+		const nodeEncoder = context.nodeEncoderFromSchema(cursor.type);
+		AnyShape.encodeNode(cursor, context, outputBuffer, nodeEncoder);
 	},
 
 	shape: AnyShape.instance,
@@ -430,12 +430,13 @@ export class IncrementalChunkShape extends ShapeGeneric<EncodedChunkShape> {
 	 */
 	public static encodeChunk(chunk: TreeChunk, context: EncoderContext): BufferFormat {
 		const chunkOutputBuffer: BufferFormat = [];
-		const nodesEncoder = asNodesEncoder(anyNodeEncoder);
 		const chunkCursor = chunk.cursor();
+
+		// Encodes all nodes that are in the chunk at the chunk cursor position.
 		chunkCursor.firstNode();
-		const chunkLength = chunkCursor.chunkLength;
-		for (let index = 0; index < chunkLength; index++) {
-			nodesEncoder.encodeNodes(chunkCursor, context, chunkOutputBuffer);
+		while (chunkCursor.mode === CursorLocationType.Nodes) {
+			anyNodeEncoder.encodeNode(chunkCursor, context, chunkOutputBuffer);
+			chunkCursor.nextNode();
 		}
 		assert(
 			chunkCursor.mode === CursorLocationType.Fields,
