@@ -1286,6 +1286,8 @@
                     "TSTypeAliasDeclaration",
                     "ExportNamedDeclaration > VariableDeclaration"
                 ],
+                "skipInterveningOverloadedDeclarations": false,
+                "exemptOverloadedImplementations": true,
                 "checkConstructors": true,
                 "checkGetters": true,
                 "checkSetters": true,

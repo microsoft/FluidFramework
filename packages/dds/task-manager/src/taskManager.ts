@@ -4,7 +4,10 @@
  */
 
 import { EventEmitter } from "@fluid-internal/client-utils";
-import type { ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
+import {
+	AttachState,
+	type ReadOnlyInfo,
+} from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
@@ -51,6 +54,18 @@ interface IPendingOp {
 	messageId: number;
 }
 
+function assertIsTaskManagerOperation(op: unknown): asserts op is ITaskManagerOperation {
+	assert(
+		typeof op === "object" &&
+			op !== null &&
+			"taskId" in op &&
+			typeof op.taskId === "string" &&
+			"type" in op &&
+			(op.type === "volunteer" || op.type === "abandon" || op.type === "complete"),
+		"Not a TaskManager operation",
+	);
+}
+
 const snapshotFileName = "header";
 
 /**
@@ -84,12 +99,14 @@ export class TaskManagerClass
 	private readonly connectionWatcher: EventEmitter = new EventEmitter();
 	// completedWatcher emits an event whenever the local client receives a completed op.
 	private readonly completedWatcher: EventEmitter = new EventEmitter();
+	// rollbackWatcher emits an event whenever a pending op is rolled back.
+	private readonly rollbackWatcher: EventEmitter = new EventEmitter();
 
-	private messageId: number = -1;
+	private nextPendingMessageId: number = 0;
 	/**
 	 * Tracks the most recent pending op for a given task
 	 */
-	private readonly latestPendingOps = new Map<string, IPendingOp>();
+	private readonly latestPendingOps = new Map<string, IPendingOp[]>();
 
 	/**
 	 * Tracks tasks that are this client is currently subscribed to.
@@ -126,16 +143,17 @@ export class TaskManagerClass
 
 		this.opWatcher.on(
 			"volunteer",
-			(taskId: string, clientId: string, local: boolean, messageId: number) => {
-				// We're tracking local ops from this connection. Filter out local ops during "connecting"
-				// state since these were sent on the prior connection and were already cleared from the latestPendingOps.
-				if (runtime.connected && local) {
-					const pendingOp = this.latestPendingOps.get(taskId);
-					assert(pendingOp !== undefined, 0x07b /* "Unexpected op" */);
-					// Need to check the id, since it's possible to volunteer and abandon multiple times before the acks
-					if (messageId === pendingOp.messageId) {
-						assert(pendingOp.type === "volunteer", 0x07c /* "Unexpected op type" */);
-						// Delete the pending, because we no longer have an outstanding op
+			(taskId: string, clientId: string, local: boolean, messageId: number | undefined) => {
+				if (local) {
+					const latestPendingOps = this.latestPendingOps.get(taskId);
+					assert(latestPendingOps !== undefined, "No pending ops for task");
+					const pendingOp = latestPendingOps.shift();
+					assert(
+						pendingOp !== undefined && pendingOp.messageId === messageId,
+						"Unexpected op",
+					);
+					assert(pendingOp.type === "volunteer", 0x07c /* "Unexpected op type" */);
+					if (latestPendingOps.length === 0) {
 						this.latestPendingOps.delete(taskId);
 					}
 				}
@@ -146,17 +164,20 @@ export class TaskManagerClass
 
 		this.opWatcher.on(
 			"abandon",
-			(taskId: string, clientId: string, local: boolean, messageId: number) => {
-				if (runtime.connected && local) {
-					const pendingOp = this.latestPendingOps.get(taskId);
-					assert(pendingOp !== undefined, 0x07d /* "Unexpected op" */);
-					// Need to check the id, since it's possible to abandon and volunteer multiple times before the acks
-					if (messageId === pendingOp.messageId) {
-						assert(pendingOp.type === "abandon", 0x07e /* "Unexpected op type" */);
-						// Delete the pending, because we no longer have an outstanding op
+			(taskId: string, clientId: string, local: boolean, messageId: number | undefined) => {
+				if (local) {
+					const latestPendingOps = this.latestPendingOps.get(taskId);
+					assert(latestPendingOps !== undefined, "No pending ops for task");
+					const pendingOp = latestPendingOps.shift();
+					assert(
+						pendingOp !== undefined && pendingOp.messageId === messageId,
+						"Unexpected op",
+					);
+					assert(pendingOp.type === "abandon", 0x07e /* "Unexpected op type" */);
+					if (latestPendingOps.length === 0) {
 						this.latestPendingOps.delete(taskId);
-						this.abandonWatcher.emit("abandon", taskId);
 					}
+					this.abandonWatcher.emit("abandon", taskId, messageId);
 				}
 
 				this.removeClientFromQueue(taskId, clientId);
@@ -165,20 +186,23 @@ export class TaskManagerClass
 
 		this.opWatcher.on(
 			"complete",
-			(taskId: string, clientId: string, local: boolean, messageId: number) => {
-				if (runtime.connected && local) {
-					const pendingOp = this.latestPendingOps.get(taskId);
-					assert(pendingOp !== undefined, 0x400 /* Unexpected op */);
-					// Need to check the id, since it's possible to complete multiple times before the acks
-					if (messageId === pendingOp.messageId) {
-						assert(pendingOp.type === "complete", 0x401 /* Unexpected op type */);
-						// Delete the pending, because we no longer have an outstanding op
+			(taskId: string, clientId: string, local: boolean, messageId: number | undefined) => {
+				if (local) {
+					const latestPendingOps = this.latestPendingOps.get(taskId);
+					assert(latestPendingOps !== undefined, "No pending ops for task");
+					const pendingOp = latestPendingOps.shift();
+					assert(
+						pendingOp !== undefined && pendingOp.messageId === messageId,
+						"Unexpected op",
+					);
+					assert(pendingOp.type === "complete", 0x401 /* Unexpected op type */);
+					if (latestPendingOps.length === 0) {
 						this.latestPendingOps.delete(taskId);
 					}
 				}
 
 				this.taskQueues.delete(taskId);
-				this.completedWatcher.emit("completed", taskId);
+				this.completedWatcher.emit("completed", taskId, messageId);
 				this.emit("completed", taskId);
 			},
 		);
@@ -222,9 +246,6 @@ export class TaskManagerClass
 			// Remove this client from all queues to reflect the new state, since being disconnected automatically removes
 			// this client from all queues.
 			this.removeClientFromAllQueues(this.clientId);
-
-			// All of our outstanding ops will be for the old clientId even if they get ack'd
-			this.latestPendingOps.clear();
 		});
 	}
 
@@ -235,10 +256,15 @@ export class TaskManagerClass
 		};
 		const pendingOp: IPendingOp = {
 			type: "volunteer",
-			messageId: ++this.messageId,
+			messageId: this.nextPendingMessageId++,
 		};
 		this.submitLocalMessage(op, pendingOp.messageId);
-		this.latestPendingOps.set(taskId, pendingOp);
+		const latestPendingOps = this.latestPendingOps.get(taskId);
+		if (latestPendingOps === undefined) {
+			this.latestPendingOps.set(taskId, [pendingOp]);
+		} else {
+			latestPendingOps.push(pendingOp);
+		}
 	}
 
 	private submitAbandonOp(taskId: string): void {
@@ -248,10 +274,15 @@ export class TaskManagerClass
 		};
 		const pendingOp: IPendingOp = {
 			type: "abandon",
-			messageId: ++this.messageId,
+			messageId: this.nextPendingMessageId++,
 		};
 		this.submitLocalMessage(op, pendingOp.messageId);
-		this.latestPendingOps.set(taskId, pendingOp);
+		const latestPendingOps = this.latestPendingOps.get(taskId);
+		if (latestPendingOps === undefined) {
+			this.latestPendingOps.set(taskId, [pendingOp]);
+		} else {
+			latestPendingOps.push(pendingOp);
+		}
 	}
 
 	private submitCompleteOp(taskId: string): void {
@@ -261,11 +292,16 @@ export class TaskManagerClass
 		};
 		const pendingOp: IPendingOp = {
 			type: "complete",
-			messageId: ++this.messageId,
+			messageId: this.nextPendingMessageId++,
 		};
 
 		this.submitLocalMessage(op, pendingOp.messageId);
-		this.latestPendingOps.set(taskId, pendingOp);
+		const latestPendingOps = this.latestPendingOps.get(taskId);
+		if (latestPendingOps === undefined) {
+			this.latestPendingOps.set(taskId, [pendingOp]);
+		} else {
+			latestPendingOps.push(pendingOp);
+		}
 	}
 
 	/**
@@ -287,7 +323,7 @@ export class TaskManagerClass
 			throw error;
 		}
 
-		if (!this.isAttached()) {
+		if (this.isDetached()) {
 			// Simulate auto-ack in detached scenario
 			assert(this.clientId !== undefined, 0x472 /* clientId should not be undefined */);
 			this.addClientToQueue(taskId, this.clientId);
@@ -300,17 +336,24 @@ export class TaskManagerClass
 
 		// This promise works even if we already have an outstanding volunteer op.
 		const lockAcquireP = new Promise<boolean>((resolve, reject) => {
+			// If we don't send an op (meaning the latest pending op is "volunteer"), nextPendingMessageId
+			// will be greater than that prior "volunteer" op's messageId.  This is OK because
+			// we only use it to filter stale abandon/complete, and not when determining if we
+			// acquired the lock.
+			const nextPendingMessageId = this.nextPendingMessageId;
 			const setupListeners = (): void => {
 				this.queueWatcher.on("queueChange", checkIfAcquiredLock);
 				this.abandonWatcher.on("abandon", checkIfAbandoned);
 				this.connectionWatcher.on("disconnect", rejectOnDisconnect);
 				this.completedWatcher.on("completed", checkIfCompleted);
+				this.rollbackWatcher.on("rollback", checkIfRolledBack);
 			};
 			const removeListeners = (): void => {
 				this.queueWatcher.off("queueChange", checkIfAcquiredLock);
 				this.abandonWatcher.off("abandon", checkIfAbandoned);
 				this.connectionWatcher.off("disconnect", rejectOnDisconnect);
 				this.completedWatcher.off("completed", checkIfCompleted);
+				this.rollbackWatcher.off("rollback", checkIfRolledBack);
 			};
 
 			const checkIfAcquiredLock = (eventTaskId: string): void => {
@@ -326,8 +369,12 @@ export class TaskManagerClass
 				}
 			};
 
-			const checkIfAbandoned = (eventTaskId: string): void => {
+			const checkIfAbandoned = (eventTaskId: string, messageId: number | undefined): void => {
 				if (eventTaskId !== taskId) {
+					return;
+				}
+				if (messageId !== undefined && messageId <= nextPendingMessageId) {
+					// Ignore abandon events that were for abandon ops that were sent prior to our current volunteer attempt.
 					return;
 				}
 				removeListeners();
@@ -339,10 +386,23 @@ export class TaskManagerClass
 				reject(new Error("Disconnected before acquiring task assignment"));
 			};
 
-			const checkIfCompleted = (eventTaskId: string): void => {
+			const checkIfCompleted = (eventTaskId: string, messageId: number | undefined): void => {
 				if (eventTaskId !== taskId) {
 					return;
 				}
+				if (messageId !== undefined && messageId <= nextPendingMessageId) {
+					// Ignore abandon events that were for abandon ops that were sent prior to our current volunteer attempt.
+					return;
+				}
+				removeListeners();
+				resolve(false);
+			};
+
+			const checkIfRolledBack = (eventTaskId: string): void => {
+				if (eventTaskId !== taskId) {
+					return;
+				}
+
 				removeListeners();
 				resolve(false);
 			};
@@ -369,7 +429,10 @@ export class TaskManagerClass
 			throw new Error("Attempted to subscribe with read-only permissions");
 		}
 
+		let volunteerOpMessageId: number | undefined;
+
 		const submitVolunteerOp = (): void => {
+			volunteerOpMessageId = this.nextPendingMessageId;
 			this.submitVolunteerOp(taskId);
 		};
 
@@ -377,12 +440,14 @@ export class TaskManagerClass
 			this.abandonWatcher.on("abandon", checkIfAbandoned);
 			this.connectionWatcher.on("disconnect", disconnectHandler);
 			this.completedWatcher.on("completed", checkIfCompleted);
+			this.rollbackWatcher.on("rollback", checkIfRolledBack);
 		};
 		const removeListeners = (): void => {
 			this.abandonWatcher.off("abandon", checkIfAbandoned);
 			this.connectionWatcher.off("disconnect", disconnectHandler);
 			this.connectionWatcher.off("connect", submitVolunteerOp);
 			this.completedWatcher.off("completed", checkIfCompleted);
+			this.rollbackWatcher.off("rollback", checkIfRolledBack);
 		};
 
 		const disconnectHandler = (): void => {
@@ -390,25 +455,56 @@ export class TaskManagerClass
 			this.connectionWatcher.once("connect", submitVolunteerOp);
 		};
 
-		const checkIfAbandoned = (eventTaskId: string): void => {
+		const checkIfAbandoned = (eventTaskId: string, messageId: number | undefined): void => {
 			if (eventTaskId !== taskId) {
+				return;
+			}
+			// abandonWatcher emits twice for a local abandon() call. When initially called it
+			// will emit with undefined messageId. It will emit a second time when the op is
+			// ack'd and processed, this time with the messageId for the ack.
+			// This condition accounts ensures we don't ignore the initial abandon() emit and
+			// only ignore emits associated with ack'd abandon ops that were sent prior to the
+			// current volunteer attempt.
+			if (
+				messageId !== undefined &&
+				volunteerOpMessageId !== undefined &&
+				messageId <= volunteerOpMessageId
+			) {
+				// Ignore abandon events that were for abandon ops that were sent prior to our current volunteer attempt.
 				return;
 			}
 			removeListeners();
 			this.subscribedTasks.delete(taskId);
 		};
 
-		const checkIfCompleted = (eventTaskId: string): void => {
+		const checkIfCompleted = (eventTaskId: string, messageId: number | undefined): void => {
 			if (eventTaskId !== taskId) {
 				return;
 			}
+			if (
+				messageId !== undefined &&
+				volunteerOpMessageId !== undefined &&
+				messageId <= volunteerOpMessageId
+			) {
+				// Ignore abandon events that were for abandon ops that were sent prior to our current volunteer attempt.
+				return;
+			}
+			removeListeners();
+			this.subscribedTasks.delete(taskId);
+		};
+
+		const checkIfRolledBack = (eventTaskId: string): void => {
+			if (eventTaskId !== taskId) {
+				return;
+			}
+
 			removeListeners();
 			this.subscribedTasks.delete(taskId);
 		};
 
 		setupListeners();
 
-		if (!this.isAttached()) {
+		if (this.isDetached()) {
 			// Simulate auto-ack in detached scenario
 			assert(this.clientId !== undefined, 0x473 /* clientId should not be undefined */);
 			this.addClientToQueue(taskId, this.clientId);
@@ -416,16 +512,12 @@ export class TaskManagerClass
 			// a real clientId. At that point we should re-enter the queue with a real volunteer op (assuming we are
 			// connected).
 			this.runtime.once("attached", () => {
-				if (this.queuedOptimistically(taskId)) {
-					// If we are already queued, then we were able to replace the placeholderClientId with our real
-					// clientId and no action is required.
-					return;
-				} else if (this.connected) {
+				// We call scrubClientsNotInQuorum() in case our clientId changed during the attach process.
+				this.scrubClientsNotInQuorum();
+				if (this.connected) {
 					submitVolunteerOp();
 				} else {
-					this.connectionWatcher.once("connect", () => {
-						submitVolunteerOp();
-					});
+					this.connectionWatcher.once("connect", submitVolunteerOp);
 				}
 			});
 		} else if (!this.connected) {
@@ -449,7 +541,7 @@ export class TaskManagerClass
 			return;
 		}
 
-		if (!this.isAttached()) {
+		if (this.isDetached()) {
 			// Simulate auto-ack in detached scenario
 			assert(this.clientId !== undefined, 0x474 /* clientId is undefined */);
 			this.removeClientFromQueue(taskId, this.clientId);
@@ -502,7 +594,7 @@ export class TaskManagerClass
 
 		// If we are detached we will simulate auto-ack for the complete op. Therefore we only need to send the op if
 		// we are attached. Additionally, we don't need to check if we are connected while detached.
-		if (!this.isAttached()) {
+		if (this.isDetached()) {
 			this.taskQueues.delete(taskId);
 			this.completedWatcher.emit("completed", taskId);
 			this.emit("completed", taskId);
@@ -582,12 +674,24 @@ export class TaskManagerClass
 		this.connectionWatcher.emit("connect");
 	}
 
-	//
 	/**
 	 * Override resubmit core to avoid resubmission on reconnect.  On disconnect we accept our removal from the
 	 * queues, and leave it up to the user to decide whether they want to attempt to re-enter a queue on reconnect.
+	 * However, we do need to update latestPendingOps to account for the ops we will no longer be processing.
 	 */
-	protected reSubmitCore(): void {}
+	protected reSubmitCore(content: unknown, localOpMetadata: number): void {
+		assertIsTaskManagerOperation(content);
+		const pendingOps = this.latestPendingOps.get(content.taskId);
+		assert(pendingOps !== undefined, "No pending ops for task on resubmit attempt");
+		const pendingOpIndex = pendingOps.findIndex(
+			(op) => op.messageId === localOpMetadata && op.type === content.type,
+		);
+		assert(pendingOpIndex !== -1, "Could not match pending op on resubmit attempt");
+		pendingOps.splice(pendingOpIndex, 1);
+		if (pendingOps.length === 0) {
+			this.latestPendingOps.delete(content.taskId);
+		}
+	}
 
 	/**
 	 * Process a task manager operation
@@ -600,12 +704,12 @@ export class TaskManagerClass
 	protected processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
-		localOpMetadata: unknown,
+		localOpMetadata: number | undefined,
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
 			const op = message.contents as ITaskManagerOperation;
-			const messageId = localOpMetadata as number;
+			const messageId = localOpMetadata;
 
 			switch (op.type) {
 				case "volunteer": {
@@ -740,7 +844,12 @@ export class TaskManagerClass
 		assert(this.clientId !== undefined, 0x07f /* "clientId undefined" */);
 
 		const inQueue = this.taskQueues.get(taskId)?.includes(this.clientId) ?? false;
-		const latestPendingOp = this.latestPendingOps.get(taskId);
+		const latestPendingOps = this.latestPendingOps.get(taskId);
+
+		const latestPendingOp =
+			latestPendingOps !== undefined && latestPendingOps.length > 0
+				? latestPendingOps[latestPendingOps.length - 1]
+				: undefined;
 		const isPendingVolunteer = latestPendingOp?.type === "volunteer";
 		const isPendingAbandonOrComplete =
 			latestPendingOp?.type === "abandon" || latestPendingOp?.type === "complete";
@@ -749,10 +858,39 @@ export class TaskManagerClass
 		return (inQueue && !isPendingAbandonOrComplete) || isPendingVolunteer;
 	}
 
+	/**
+	 * Returns true if the client is detached.
+	 * This is distinct from !this.isAttached() because `isAttached()` also checks if `this._isBoundToContext`
+	 * is true. We use `isDetached()` to determine if we should simulate auto-ack behavior for ops, which is
+	 * mainly concerned with if we have been assigned a real clientId yet.
+	 */
+	private isDetached(): boolean {
+		return this.runtime.attachState === AttachState.Detached;
+	}
+
 	protected applyStashedOp(content: unknown): void {
 		// We don't apply any stashed ops since during the rehydration process. Since we lose any assigned tasks
 		// during rehydration we cannot be assigned any tasks. Additionally, without the in-memory state of the
 		// previous dds, we also cannot re-volunteer based on a previous subscribeToTask() call. Since we are
 		// unable to be assigned to any tasks, there is no reason to process abandon/complete ops either.
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
+	 */
+	protected rollback(content: unknown, localOpMetadata: unknown): void {
+		assert(typeof localOpMetadata === "number", "Expect localOpMetadata to be a number");
+		assertIsTaskManagerOperation(content);
+		const latestPendingOps = this.latestPendingOps.get(content.taskId);
+		assert(latestPendingOps !== undefined, "No pending ops when trying to rollback");
+		const pendingOpToRollback = latestPendingOps.pop();
+		assert(
+			pendingOpToRollback !== undefined && pendingOpToRollback.messageId === localOpMetadata,
+			"pending op mismatch",
+		);
+		if (latestPendingOps.length === 0) {
+			this.latestPendingOps.delete(content.taskId);
+		}
+		this.rollbackWatcher.emit("rollback", content.taskId);
 	}
 }
