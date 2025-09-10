@@ -180,15 +180,11 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		// Update session with accumulated client metrics if provided
 		const updatedTelemetryProperties = { ...existingSession.telemetryProperties };
 		if (clientMetrics) {
-			if (clientMetrics.opCount !== undefined && clientMetrics.opCount > 0) {
-				updatedTelemetryProperties.sessionOpCount =
-					(updatedTelemetryProperties.sessionOpCount || 0) + clientMetrics.opCount;
-			}
-			if (clientMetrics.signalCount !== undefined && clientMetrics.signalCount > 0) {
-				updatedTelemetryProperties.sessionSignalCount =
-					(updatedTelemetryProperties.sessionSignalCount || 0) +
-					clientMetrics.signalCount;
-			}
+			updatedTelemetryProperties.sessionOpCount =
+				(updatedTelemetryProperties.sessionOpCount ?? 0) + (clientMetrics.opCount ?? 0);
+			updatedTelemetryProperties.sessionSignalCount =
+				(updatedTelemetryProperties.sessionSignalCount ?? 0) +
+				(clientMetrics.signalCount ?? 0);
 		}
 
 		let lastClientLeaveTime: number | undefined;
