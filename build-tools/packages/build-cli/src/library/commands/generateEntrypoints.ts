@@ -572,11 +572,15 @@ async function generateEntrypoints(
  * Create Node10 entrypoint file content.
  * @privateRemarks Exported for testing.
  */
-export function createNode10EntrypointFileContent(
-	dirPath: string,
-	sourceTypeRelPath: string,
-	isTypeOnly: boolean,
-): string {
+export function createNode10EntrypointFileContent({
+	dirPath,
+	sourceTypeRelPath,
+	isTypeOnly,
+}: {
+	readonly dirPath: string;
+	readonly sourceTypeRelPath: string;
+	readonly isTypeOnly: boolean;
+}): string {
 	let entrypointToTypeImportPath = path.posix.relative(dirPath, sourceTypeRelPath);
 
 	// If the path is not explicitly relative, make it so.
@@ -612,7 +616,11 @@ async function generateNode10TypeEntrypoints(
 		const dirPath = path.dirname(filePath);
 		await fs.ensureDir(dirPath);
 
-		const content = createNode10EntrypointFileContent(dirPath, sourceTypeRelPath, isTypeOnly);
+		const content = createNode10EntrypointFileContent({
+			dirPath,
+			sourceTypeRelPath,
+			isTypeOnly,
+		});
 
 		await fs.writeFile(filePath, content, "utf8");
 	}

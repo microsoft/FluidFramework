@@ -32,37 +32,61 @@ describe("generateEntrypoints", () => {
 	it("generateNode10EntrypointFileContent", () => {
 		// #region type-only
 
-		expect(createNode10EntrypointFileContent("", "lib/legacy.d.ts", true)).to.contain(
-			'export type * from "./lib/legacy.d.ts";\n',
-		);
+		expect(
+			createNode10EntrypointFileContent({
+				dirPath: "",
+				sourceTypeRelPath: "lib/legacy.d.ts",
+				isTypeOnly: true,
+			}),
+		).to.contain('export type * from "./lib/legacy.d.ts";\n');
 
 		// dirPath: sub directory
-		expect(createNode10EntrypointFileContent("rollups", "lib/legacy.d.ts", true)).to.contain(
-			'export type * from "../lib/legacy.d.ts";\n',
-		);
+		expect(
+			createNode10EntrypointFileContent({
+				dirPath: "rollups",
+				sourceTypeRelPath: "lib/legacy.d.ts",
+				isTypeOnly: true,
+			}),
+		).to.contain('export type * from "../lib/legacy.d.ts";\n');
 
 		// dirPath: package root
-		expect(createNode10EntrypointFileContent("", "lib/legacy/alpha.d.ts", true)).to.contain(
-			'export type * from "./lib/legacy/alpha.d.ts";\n',
-		);
+		expect(
+			createNode10EntrypointFileContent({
+				dirPath: "",
+				sourceTypeRelPath: "lib/legacy/alpha.d.ts",
+				isTypeOnly: true,
+			}),
+		).to.contain('export type * from "./lib/legacy/alpha.d.ts";\n');
 
 		// #endregion
 
 		// #region non-type-only
 
-		expect(createNode10EntrypointFileContent("", "lib/legacy.d.ts", false)).to.contain(
-			'export * from "./lib/legacy.js";\n',
-		);
+		expect(
+			createNode10EntrypointFileContent({
+				dirPath: "",
+				sourceTypeRelPath: "lib/legacy.d.ts",
+				isTypeOnly: false,
+			}),
+		).to.contain('export * from "./lib/legacy.js";\n');
 
 		// dirPath: sub directory
-		expect(createNode10EntrypointFileContent("rollups", "lib/legacy.d.ts", false)).to.contain(
-			'export * from "../lib/legacy.js";\n',
-		);
+		expect(
+			createNode10EntrypointFileContent({
+				dirPath: "rollups",
+				sourceTypeRelPath: "lib/legacy.d.ts",
+				isTypeOnly: false,
+			}),
+		).to.contain('export * from "../lib/legacy.js";\n');
 
 		// sourceTypeRelPath: nested
-		expect(createNode10EntrypointFileContent("", "lib/legacy/alpha.d.ts", false)).to.contain(
-			'export * from "./lib/legacy/alpha.js";\n',
-		);
+		expect(
+			createNode10EntrypointFileContent({
+				dirPath: "",
+				sourceTypeRelPath: "lib/legacy/alpha.d.ts",
+				isTypeOnly: false,
+			}),
+		).to.contain('export * from "./lib/legacy/alpha.js";\n');
 
 		// #endregion
 	});
