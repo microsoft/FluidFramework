@@ -16,6 +16,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
+import { hasSharedMatrixOracle } from "../matrixOracle.js";
 import type { MatrixItem } from "../ops.js";
 import { SharedMatrix, type SharedMatrixFactory } from "../runtime.js";
 
@@ -225,7 +226,16 @@ export const baseSharedMatrixModel: Omit<
 	factory: SharedMatrix.getFactory(),
 	generatorFactory: () => takeAsync(50, makeGenerator()),
 	reducer: (state, operation) => reducer(state, operation),
-	validateConsistency: async (a, b) => assertMatricesAreEquivalent(a.channel, b.channel),
+	validateConsistency: async (a, b) => {
+		if (hasSharedMatrixOracle(a.channel)) {
+			a.channel.matrixOracle.validate();
+		}
+
+		if (hasSharedMatrixOracle(b.channel)) {
+			b.channel.matrixOracle.validate();
+		}
+		void assertMatricesAreEquivalent(a.channel, b.channel);
+	},
 	minimizationTransforms: ["count", "start", "row", "col"].map((p) => (op) => {
 		if (p in op && typeof op[p] === "number" && op[p] > 0) {
 			op[p]--;
