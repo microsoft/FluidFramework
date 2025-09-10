@@ -601,11 +601,15 @@ export function createNode10EntrypointFileContent({
 	return `${generatedHeader}export * from "${jsImport}";\n`;
 }
 
-async function createEntrypointFile(
-	filePath: string,
-	sourceTypeRelPath: string,
-	isTypeOnly: boolean,
-): Promise<void> {
+async function createEntrypointFile({
+	filePath,
+	sourceTypeRelPath,
+	isTypeOnly,
+}: {
+	filePath: string;
+	sourceTypeRelPath: string;
+	isTypeOnly: boolean;
+}): Promise<void> {
 	const dirPath = path.dirname(filePath);
 	await fs.ensureDir(dirPath);
 
@@ -632,7 +636,9 @@ async function generateNode10TypeEntrypoints(
 
 	for (const [outFile, { relPath, isTypeOnly }] of mapExportPathToData.entries()) {
 		log.info(`\tGenerating ${outFile}`);
-		fileSavePromises.push(createEntrypointFile(outFile, relPath, isTypeOnly));
+		fileSavePromises.push(
+			createEntrypointFile({ filePath: outFile, sourceTypeRelPath: relPath, isTypeOnly }),
+		);
 	}
 
 	if (fileSavePromises.length === 0) {
