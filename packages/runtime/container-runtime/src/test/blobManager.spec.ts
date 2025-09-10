@@ -634,25 +634,6 @@ for (const createBlobPayloadPending of [false, true]) {
 			assert.strictEqual(summaryData.redirectTable?.length, 1);
 		});
 
-		it.skip("upload fails and retries for retriable errors", async () => {
-			// Needs to use some sort of fake timer or write test in a different way as it is waiting
-			// for actual time which is causing timeouts.
-			await runtime.attach();
-			await runtime.connect();
-			const handleP = runtime.createBlob(textToBlob("blob"));
-			await runtime.processBlobs(false, true, 0);
-			// wait till next retry
-			await new Promise<void>((resolve) => setTimeout(resolve, 1));
-			// try again successfully
-			await runtime.processBlobs(true);
-			runtime.processOps();
-			await runtime.processHandles();
-			assert(handleP);
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable?.length, 1);
-		});
-
 		it("completes after disconnection while op in flight", async () => {
 			await runtime.attach();
 			await runtime.connect();
