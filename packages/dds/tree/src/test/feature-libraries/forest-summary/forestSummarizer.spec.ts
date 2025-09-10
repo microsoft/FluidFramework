@@ -289,7 +289,7 @@ describe("ForestSummarizer", () => {
 				};
 
 				const shouldEncodeIncrementally = (
-					nodeIdentifier: TreeNodeSchemaIdentifier,
+					nodeIdentifier: TreeNodeSchemaIdentifier | undefined,
 					fieldKey: FieldKey,
 				): boolean => {
 					if (nodeIdentifier === SimpleObject.identifier && fieldKey === "foo") {
@@ -383,7 +383,7 @@ describe("ForestSummarizer", () => {
 				);
 
 				const shouldEncodeIncrementally = (
-					nodeIdentifier: TreeNodeSchemaIdentifier,
+					nodeIdentifier: TreeNodeSchemaIdentifier | undefined,
 					fieldKey: FieldKey,
 				): boolean => {
 					return tryGetFromNestedMap(incrementalFieldsMap, nodeIdentifier, fieldKey) ?? false;

@@ -348,7 +348,7 @@ describe("schemaBasedEncoding", () => {
 			const testReferenceId: ChunkReferenceId = brand(123);
 			const mockIncrementalEncoder: IncrementalEncoder = {
 				shouldEncodeIncrementally: (
-					nodeIdentifier: TreeNodeSchemaIdentifier,
+					nodeIdentifier: TreeNodeSchemaIdentifier | undefined,
 					fieldKey: FieldKey,
 				): boolean => {
 					return (

@@ -35,7 +35,6 @@ import {
 	SchemaVersion,
 	type TaggedChange,
 	type TreeFieldStoredSchema,
-	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
@@ -51,6 +50,7 @@ import {
 	TreeCompressionStrategy,
 	buildChunkedForest,
 	buildForest,
+	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
 	makeFieldBatchCodec,
@@ -737,12 +737,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	formatVersion: SharedTreeFormatVersion.v3,
 	disposeForksAfterTransaction: true,
-	shouldEncodeIncrementally: (
-		nodeIdentifier: TreeNodeSchemaIdentifier,
-		fieldKey: FieldKey,
-	): boolean => {
-		return false;
-	},
+	shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
 };
 
 function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFieldSchema {

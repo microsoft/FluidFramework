@@ -139,13 +139,15 @@ describe("End to end chunked encoding", () => {
 			Number.POSITIVE_INFINITY,
 			defaultChunkPolicy.uniformChunkNodeCount,
 			(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
-				tryShapeFromNodeSchema({
-					schema: treeSchema,
-					policy: defaultSchemaPolicy,
-					shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
-					shapes,
-					nodeSchema: type,
-				}),
+				tryShapeFromNodeSchema(
+					{
+						schema: treeSchema,
+						policy: defaultSchemaPolicy,
+						shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+						shapes,
+					},
+					type,
+				),
 		);
 
 		const forest = buildChunkedForest(chunker);

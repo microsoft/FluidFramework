@@ -8,6 +8,7 @@ import type { FieldKey, TreeNodeSchemaIdentifier } from "../../../core/index.js"
 /**
  * Policy to determine whether a node / field should be incrementally encoded.
  * @param nodeIdentifier - The identifier of the node containing the field.
+ * If undefined, the field is a root field.
  * @param fieldKey - The key of the field to check.
  * @returns whether the node / field should be incrementally encoded.
  * @remarks
@@ -17,7 +18,7 @@ import type { FieldKey, TreeNodeSchemaIdentifier } from "../../../core/index.js"
  * TODO: AB#9068: Measure the actual overhead.
  */
 export type IncrementalEncodingPolicy = (
-	nodeIdentifier: TreeNodeSchemaIdentifier,
+	nodeIdentifier: TreeNodeSchemaIdentifier | undefined,
 	fieldKey: FieldKey,
 ) => boolean;
 
@@ -25,7 +26,7 @@ export type IncrementalEncodingPolicy = (
  * Default policy for incremental encoding is to not encode incrementally.
  */
 export const defaultIncrementalEncodingPolicy: IncrementalEncodingPolicy = (
-	nodeIdentifier: TreeNodeSchemaIdentifier,
+	nodeIdentifier: TreeNodeSchemaIdentifier | undefined,
 	fieldKey: FieldKey,
 ): boolean => {
 	return false;
