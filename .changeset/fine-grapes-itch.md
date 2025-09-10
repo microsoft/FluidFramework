@@ -10,7 +10,7 @@
 `SharedObject` construction.
 DDSes may optionally consume this value and use it to determine which sets of feature flags should be enabled.
 
-#### Interface changes
+#### Public type changes
 
 - **@fluidframework/datastore: `FluidDataStoreRuntime`** - Exposes `minVersionForCollab`.
 - **@fluidframework/runtime-definitions: `IFluidDataStoreContext`** - Exposes optional member `getMinVersionForCollab`.
