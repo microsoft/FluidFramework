@@ -46,6 +46,35 @@ export type RuntimeOptionsAffectingDocSchema = Omit<
 >;
 
 /**
+ * Subset of keys of {@link RuntimeOptionsAffectingDocSchema} which require explicit schema control to be enabled.
+ *
+ * @remarks
+ * Runtime options that affect document schema should generally require explicitSchemaControl to be enabled.
+ * However, to prevent disruption to existing customers, options that existed prior to explicitSchemaControl
+ * do not explicity require explicitSchemaControl to be enabled. We should avoid adding additional options to
+ * the exception list going forward.
+ */
+type RuntimeOptionsThatRequireExplicitSchemaControl = keyof Omit<
+	RuntimeOptionsAffectingDocSchema,
+	keyof Pick<
+		RuntimeOptionsAffectingDocSchema,
+		| "explicitSchemaControl"
+		| "compressionOptions"
+		| "enableRuntimeIdCompressor"
+		| "flushMode"
+		| "gcOptions"
+		| "enableGroupedBatching"
+	>
+>;
+
+/**
+ * List of keys of runtime options that require explicitSchemaControl.
+ */
+export const runtimeOptionKeysThatRequireExplicitSchemaControl = [
+	"createBlobPayloadPending",
+] as const satisfies RuntimeOptionsThatRequireExplicitSchemaControl[];
+
+/**
  * Mapping of RuntimeOptionsAffectingDocSchema to their compatibility related configs.
  *
  * Each key in this map corresponds to a property in RuntimeOptionsAffectingDocSchema. The value is an object that maps MinimumVersionForCollab

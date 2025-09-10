@@ -195,6 +195,7 @@ import {
 	getMinVersionForCollabDefaults,
 	type RuntimeOptionsAffectingDocSchema,
 	validateRuntimeOptions,
+	runtimeOptionKeysThatRequireExplicitSchemaControl,
 } from "./containerCompatibility.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
@@ -1143,14 +1144,8 @@ export class ContainerRuntime
 				? minVersionForCollab
 				: existingMinVersionForCollab;
 
-		// Validate options that depend on other options being enabled/disabled
 		if (compressionLz4 && !enableGroupedBatching) {
 			throw new UsageError("If compression is enabled, op grouping must be enabled too");
-		}
-		if (createBlobPayloadPending && !explicitSchemaControl) {
-			throw new UsageError(
-				"explicitSchemaControl must be enabled to to use createBlobPayloadPending",
-			);
 		}
 
 		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {};
@@ -1169,6 +1164,15 @@ export class ContainerRuntime
 			explicitSchemaControl,
 			createBlobPayloadPending,
 		};
+
+		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
+		if (!explicitSchemaControl) {
+			for (const key of runtimeOptionKeysThatRequireExplicitSchemaControl) {
+				if (internalRuntimeOptions[key] !== undefined) {
+					throw new UsageError(`explicitSchemaControl must be enabled to use ${key}`);
+				}
+			}
+		}
 
 		const runtime = new containerRuntimeCtor(
 			context,
