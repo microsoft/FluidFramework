@@ -241,10 +241,7 @@ export class MockRuntime
 		}
 	}
 
-	public async attach(): Promise<{
-		ids: string[];
-		redirectTable: [string, string][] | undefined;
-	}> {
+	public async attach(): Promise<IBlobManagerLoadInfo> {
 		if (this.detachedStorage.blobs.size > 0) {
 			const table = new Map<string, string>();
 			for (const [detachedId, blob] of this.detachedStorage.blobs) {
@@ -315,17 +312,13 @@ export class MockRuntime
 	}
 }
 
-export const validateSummary = (
-	runtime: MockRuntime,
-): {
-	ids: string[];
-	redirectTable: [string, string][] | undefined;
-} => {
+export const validateSummary = (runtime: MockRuntime): IBlobManagerLoadInfo => {
 	const summary = runtime.blobManager.summarize();
-	const ids: string[] = [];
+	let ids: string[] | undefined;
 	let redirectTable: [string, string][] | undefined;
 	for (const [key, attachment] of Object.entries(summary.summary.tree)) {
 		if (attachment.type === SummaryType.Attachment) {
+			ids ??= [];
 			ids.push(attachment.id);
 		} else {
 			assert.strictEqual(key, redirectTableBlobName);
@@ -425,7 +418,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 		it("empty snapshot", () => {
 			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 0);
+			assert.strictEqual(summaryData.ids, undefined);
 			assert.strictEqual(summaryData.redirectTable, undefined);
 		});
 
@@ -437,7 +430,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.processAll();
 
 			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 1);
 		});
 
@@ -452,7 +445,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.processAll();
 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
 			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 2);
+			assert.strictEqual(summaryData.ids?.length, 2);
 			assert.strictEqual(summaryData.redirectTable?.length, 2);
 		});
 
@@ -470,7 +463,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.processAll();
 			assert.strictEqual(count, 2);
 			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 3);
+			assert.strictEqual(summaryData.ids?.length, 3);
 			assert.strictEqual(summaryData.redirectTable?.length, 3);
 		});
 
@@ -481,7 +474,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, true);
 
 			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 1);
 		});
 
@@ -492,7 +485,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.attach();
 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
 			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 1);
 		});
 
@@ -504,7 +497,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			await assert.doesNotReject(handleP);
 
 			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 1);
 		});
 
@@ -531,7 +524,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			await assert.doesNotReject(handleP);
 
 			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 1);
 		});
 
@@ -593,7 +586,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				await assert.rejects(handleP);
 			}
 			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 0);
+			assert.strictEqual(summaryData.ids, undefined);
 			assert.strictEqual(summaryData.redirectTable, undefined);
 		});
 
@@ -630,7 +623,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert.strictEqual(handle.payloadState, "shared", "Handle should be in shared state");
 			}
 			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 1);
 		});
 
@@ -647,7 +640,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.processAll();
 
 			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 2);
 		});
 
@@ -669,7 +662,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			await assert.doesNotReject(handleP);
 			await assert.doesNotReject(handleP2);
 			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 2);
+			assert.strictEqual(summaryData.ids?.length, 2);
 			assert.strictEqual(summaryData.redirectTable?.length, 2);
 		});
 
@@ -694,7 +687,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.processAll();
 
 			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 6);
 		});
 
@@ -706,7 +699,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.processAll();
 
 			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 2);
 		});
 
@@ -731,7 +724,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.processAll();
 
 			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 6);
 		});
 
@@ -750,12 +743,12 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.processAll();
 
 			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 3);
 
 			const runtime2 = new MockRuntime(mc, createBlobPayloadPending, summaryData, true);
 			const summaryData2 = validateSummary(runtime2);
-			assert.strictEqual(summaryData2.ids.length, 1);
+			assert.strictEqual(summaryData2.ids?.length, 1);
 			assert.strictEqual(summaryData2.redirectTable?.length, 3);
 		});
 
@@ -769,12 +762,10 @@ for (const createBlobPayloadPending of [false, true]) {
 			await assert.doesNotReject(handle);
 
 			// Using the summary as a simple way to grab the storage ID of the blob we just created
-			const {
-				redirectTable,
-				ids: [storageId],
-			} = validateSummary(runtime);
+			const { redirectTable, ids: ids1 } = validateSummary(runtime);
+			const storageId = ids1?.[0];
 			assert.strictEqual(redirectTable?.length, 1);
-			assert.strictEqual(typeof storageId, "string", "Expect storage ID to be in the summary");
+			assert(typeof storageId === "string", "Expect storage ID to be in the summary");
 
 			const blob = await runtime.blobManager.getBlob(storageId, createBlobPayloadPending);
 
@@ -790,10 +781,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			await assert.doesNotReject(
 				runtime2.blobManager.getBlob(storageId, createBlobPayloadPending),
 			);
-			const {
-				redirectTable: redirectTable2,
-				ids: [storageId2],
-			} = validateSummary(runtime2);
+			const { redirectTable: redirectTable2, ids: ids2 } = validateSummary(runtime2);
+			const storageId2 = ids2?.[0];
 			assert.strictEqual(redirectTable2, undefined);
 			assert.strictEqual(storageId2, storageId, "Expect storage ID to be in the summary");
 		});
@@ -807,7 +796,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.processAll();
 
 			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 2);
 		});
 
@@ -821,7 +810,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.processAll();
 
 			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 2);
 		});
 
@@ -835,7 +824,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.processAll();
 
 			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 2);
 		});
 
@@ -849,8 +838,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			// state. BlobManager should know to include the list of attached blob
 			// IDs since this summary will be used to create the document
 			const summaryData = await runtime.attach();
-			assert.strictEqual(summaryData?.ids.length, 3);
-			assert.strictEqual(summaryData?.redirectTable?.length, 3);
+			assert.strictEqual(summaryData.ids?.length, 3);
+			assert.strictEqual(summaryData.redirectTable?.length, 3);
 		});
 
 		it("all blobs attached", async () => {
@@ -953,7 +942,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert.strictEqual(error.message, "uploadBlob aborted");
 				}
 				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 0);
+				assert.strictEqual(summaryData.ids, undefined);
 				assert.strictEqual(summaryData.redirectTable, undefined);
 			});
 
@@ -986,7 +975,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert(handleP);
 				await assert.rejects(handleP);
 				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 0);
+				assert.strictEqual(summaryData.ids, undefined);
 				assert.strictEqual(summaryData.redirectTable, undefined);
 			});
 
@@ -1019,7 +1008,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				await assert.rejects(handleP);
 				await assert.rejects(handleP2);
 				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 0);
+				assert.strictEqual(summaryData.ids, undefined);
 				assert.strictEqual(summaryData.redirectTable, undefined);
 			});
 
@@ -1044,7 +1033,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				}
 				await assert.rejects(handleP);
 				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 0);
+				assert.strictEqual(summaryData.ids, undefined);
 				assert.strictEqual(summaryData.redirectTable, undefined);
 			});
 
@@ -1068,7 +1057,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert(handleP);
 				await assert.doesNotReject(handleP);
 				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 1);
+				assert.strictEqual(summaryData.ids?.length, 1);
 				assert.strictEqual(summaryData.redirectTable?.length, 1);
 			});
 
@@ -1105,7 +1094,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				}
 				await assert.rejects(handleP);
 				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 0);
+				assert.strictEqual(summaryData.ids, undefined);
 				assert.strictEqual(summaryData.redirectTable, undefined);
 			});
 
@@ -1144,7 +1133,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				// TODO: `handleP` can be `undefined`; this should be made safer.
 				await assert.rejects(handleP as Promise<IFluidHandleInternal<ArrayBufferLike>>);
 				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 0);
+				assert.strictEqual(summaryData.ids, undefined);
 				assert.strictEqual(summaryData.redirectTable, undefined);
 			});
 		});
