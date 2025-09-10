@@ -78,12 +78,12 @@ type RuntimeOptionsThatRequireExplicitSchemaControl = keyof Omit<
  * This is defined as a Record instead of an array to allow TS enforcement that
  * all keys of RuntimeOptionsThatRequireExplicitSchemaControl are included.
  */
-export const runtimeOptionKeysThatRequireExplicitSchemaControl: Record<
+export const runtimeOptionKeysThatRequireExplicitSchemaControl = {
+	createBlobPayloadPending: "createBlobPayloadPending",
+} as const satisfies Record<
 	RuntimeOptionsThatRequireExplicitSchemaControl,
 	RuntimeOptionsThatRequireExplicitSchemaControl
-> = {
-	createBlobPayloadPending: "createBlobPayloadPending",
-} as const;
+>;
 
 /**
  * Mapping of RuntimeOptionsAffectingDocSchema to their compatibility related configs.
