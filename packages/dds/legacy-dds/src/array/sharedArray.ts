@@ -993,7 +993,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 						newElement.isDeleted = isDeleted;
 					}
 				}
-				newElement.isLocalPendingMove += 1;
+				opEntry.isLocalPendingMove += 1;
 				break;
 			}
 			case OperationType.toggle: {
