@@ -190,6 +190,7 @@ describe("End to end chunked encoding", () => {
 			context,
 			options,
 			idCompressor,
+			0 /* initialSequenceNumber */,
 		);
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
@@ -223,6 +224,7 @@ describe("End to end chunked encoding", () => {
 			context,
 			options,
 			idCompressor,
+			0 /* initialSequenceNumber */,
 		);
 
 		// This function is declared in the test to have access to the original uniform chunk for comparison.
@@ -251,6 +253,7 @@ describe("End to end chunked encoding", () => {
 				encoderContext,
 				options,
 				testIdCompressor,
+				0 /* initialSequenceNumber */,
 			);
 
 			const { summary } = forestSummarizer.summarize({ stringify: JSON.stringify });
@@ -278,6 +281,7 @@ describe("End to end chunked encoding", () => {
 				encoderContext,
 				options,
 				testIdCompressor,
+				0 /* initialSequenceNumber */,
 			);
 
 			const { summary } = forestSummarizer.summarize({ stringify: JSON.stringify });
@@ -300,6 +304,7 @@ describe("End to end chunked encoding", () => {
 				encoderContext,
 				options,
 				testIdCompressor,
+				0 /* initialSequenceNumber */,
 			);
 
 			const { summary } = forestSummarizer.summarize({ stringify: JSON.stringify });

@@ -140,6 +140,7 @@ class SharedObjectFromKernel<
 			logger: this.logger,
 			idCompressor: runtime.idCompressor,
 			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
+			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 		};
 	}
 
@@ -289,6 +290,10 @@ export interface KernelArgs {
 	 * {@inheritdoc @fluidframework/container-definitions#IDeltaManager.lastSequenceNumber}
 	 */
 	readonly lastSequenceNumber: () => number;
+	/**
+	 * {@inheritdoc @fluidframework/container-definitions#IDeltaManager.initialSequenceNumber}
+	 */
+	readonly initialSequenceNumber: number;
 }
 
 /**
