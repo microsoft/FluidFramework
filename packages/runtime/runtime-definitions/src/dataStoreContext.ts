@@ -27,6 +27,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
+import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
 import type {
 	IFluidDataStoreFactory,
 	IProvideFluidDataStoreFactory,
@@ -737,6 +738,12 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	createChildDataStore?<T extends IFluidDataStoreFactory>(
 		childFactory: T,
 	): ReturnType<Exclude<T["createDataStore"], undefined>>;
+
+	/**
+	 * Gets the minVersionForCollab passed into the ContainerRuntime. Consumed by {@link @fluidframework/datastore#FluidDataStoreRuntime}.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details.
+	 */
+	getMinVersionForCollab?(): MinimumVersionForCollab;
 }
 
 /**

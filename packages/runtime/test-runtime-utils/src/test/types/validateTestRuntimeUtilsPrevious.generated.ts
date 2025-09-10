@@ -166,6 +166,7 @@ declare type current_as_old_for_Class_MockDeltaQueue = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Class_MockFluidDataStoreContext": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_MockFluidDataStoreContext = requireAssignableTo<TypeOnly<old.MockFluidDataStoreContext>, TypeOnly<current.MockFluidDataStoreContext>>
 
 /*
@@ -184,6 +185,7 @@ declare type current_as_old_for_Class_MockFluidDataStoreContext = requireAssigna
  * typeValidation.broken:
  * "Class_MockFluidDataStoreRuntime": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_MockFluidDataStoreRuntime = requireAssignableTo<TypeOnly<old.MockFluidDataStoreRuntime>, TypeOnly<current.MockFluidDataStoreRuntime>>
 
 /*

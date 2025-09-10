@@ -14,12 +14,12 @@ import {
 	type IJsonCodec,
 	withSchemaValidation,
 	type FormatVersion,
-	type FluidClientVersion,
 	type CodecWriteOptions,
 } from "../codec.js";
 
 import { Versioned } from "./format.js";
 import { pkgVersion } from "../../packageVersion.js";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 export function makeVersionedCodec<
 	TDecoded,
@@ -115,11 +115,13 @@ export class ClientVersionDispatchingCodecBuilder<TDecoded, TContext> {
 		 */
 		private readonly family: ICodecFamily<TDecoded, TContext>,
 		/**
-		 * A function which maps a {@link FluidClientVersion} to a version number for the codec family which is supported by that version.
+		 * A function which maps a {@link MinimumVersionForCollab} to a version number for the codec family which is supported by that version.
 		 * This can (and typically does) pick the newest version of the codec which is known to be compatible with the client version so that
 		 * any improvements in newer versions of the codec can be used when allowed.
 		 */
-		private readonly versionMapping: (oldestCompatibleClient: FluidClientVersion) => number,
+		private readonly versionMapping: (
+			oldestCompatibleClient: MinimumVersionForCollab,
+		) => number,
 	) {}
 
 	public build(
