@@ -406,7 +406,7 @@ describe("ForestSummarizer", () => {
 			}
 
 			it("can incrementally summarize a forest", async () => {
-				const itemsCount = 3;
+				const itemsCount = 4;
 				const { forestSummarizer } = setupForestForIncrementalSummarization(
 					createInitialBoard(itemsCount),
 				);
