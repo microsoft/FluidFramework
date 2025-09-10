@@ -18,7 +18,7 @@ import {
 	SharedTreeFuzzTestFactory,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
-import { baseTreeModel, runsPerBatch } from "./baseModel.js";
+import { baseTreeModel, optimizedForestTreeModel, runsPerBatch } from "./baseModel.js";
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	numberOfClients: 3,
@@ -44,16 +44,7 @@ describe("Fuzz - Top-Level", () => {
 	 * This test suite is meant exercise all public APIs of SharedTree together, as well as all service-oriented
 	 * operations (such as summarization and stashed ops).
 	 */
-	describe("Everything", () => {
-		const model: DDSFuzzModel<
-			SharedTreeFuzzTestFactory,
-			Operation,
-			DDSFuzzTestState<SharedTreeFuzzTestFactory>
-		> = {
-			...baseTreeModel,
-			workloadName: "SharedTree",
-		};
-
+	describe("Everything - Reference Forest", () => {
 		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,
 			defaultTestCount: runsPerBatch,
@@ -75,7 +66,32 @@ describe("Fuzz - Top-Level", () => {
 				...[30], //  0x92a
 			],
 		};
-		createDDSFuzzSuite(model, options);
+		createDDSFuzzSuite(baseTreeModel, options);
+	});
+
+	describe("Everything - Optimized Forest", () => {
+		const options: Partial<DDSFuzzSuiteOptions> = {
+			...baseOptions,
+			defaultTestCount: runsPerBatch,
+			saveFailures: {
+				directory: failureDirectory,
+			},
+			clientJoinOptions: {
+				clientAddProbability: 0,
+				maxNumberOfClients: 3,
+			},
+			detachedStartOptions: {
+				numOpsBeforeAttach: 5,
+				// AB#43127: fully allowing rehydrate after attach is currently not supported in tests (but should be in prod) due to limitations in the test mocks.
+				attachingBeforeRehydrateDisable: true,
+			},
+			reconnectProbability: 0.1,
+			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
+			skip: [
+				...[30], //  0x92a
+			],
+		};
+		createDDSFuzzSuite(optimizedForestTreeModel, options);
 	});
 
 	describe("Batch rebasing", () => {

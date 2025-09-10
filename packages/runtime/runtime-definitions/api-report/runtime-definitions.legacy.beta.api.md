@@ -84,7 +84,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
     getAudience(): IAudience;
-    getMinVersionForCollab?(): MinimumVersionForCollab;
     getQuorum(): IQuorumClients;
     getSnapshotForLoadingGroupId(loadingGroupIds: string[], pathParts: string[]): Promise<{
         snapshotTree: ISnapshotTree;
@@ -167,7 +166,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
     readonly createProps?: any;
     // @deprecated (undocumented)
     getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
-    getMinVersionForCollab?(): MinimumVersionForCollab | undefined;
+    getMinVersionForCollab?(): MinimumVersionForCollab;
     // (undocumented)
     readonly id: string;
     readonly isLocalDataStore: boolean;

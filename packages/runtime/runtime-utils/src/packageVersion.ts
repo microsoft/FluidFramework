@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/runtime-utils";
-export const pkgVersion = "2.60.0";
+export const pkgVersion = "2.61.0";

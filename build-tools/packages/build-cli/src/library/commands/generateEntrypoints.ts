@@ -577,22 +577,28 @@ async function generateNode10TypeEntrypoints(
 	 */
 	const fileSavePromises: Promise<void>[] = [];
 
-	async function createEntrypointFile(filePath: string, content: string): Promise<void> {
-		await fs.ensureDir(path.dirname(filePath));
+	async function createEntrypointFile(
+		filePath: string,
+		sourceTypeRelPath: string,
+		isTypeOnly: boolean,
+	): Promise<void> {
+		const dirPath = path.dirname(filePath);
+		await fs.ensureDir(dirPath);
+
+		const entrypointToTypeImportPath = path.posix.relative(dirPath, sourceTypeRelPath);
+		const jsImport = entrypointToTypeImportPath.replace(/\.d\.([cm]?)ts/, ".$1js");
+
+		const content = isTypeOnly
+			? `${generatedHeader}export type * from "${entrypointToTypeImportPath}";\n`
+			: `${generatedHeader}export * from "${jsImport}";\n`;
+
 		await fs.writeFile(filePath, content, "utf8");
 	}
 
 	for (const [outFile, { relPath, isTypeOnly }] of mapExportPathToData.entries()) {
 		log.info(`\tGenerating ${outFile}`);
-		const jsImport = relPath.replace(/\.d\.([cm]?)ts/, ".$1js");
-		fileSavePromises.push(
-			createEntrypointFile(
-				outFile,
-				isTypeOnly
-					? `${generatedHeader}export type * from "${relPath}";\n`
-					: `${generatedHeader}export * from "${jsImport}";\n`,
-			),
-		);
+
+		fileSavePromises.push(createEntrypointFile(outFile, relPath, isTypeOnly));
 	}
 
 	if (fileSavePromises.length === 0) {

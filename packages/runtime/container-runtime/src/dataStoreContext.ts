@@ -1216,8 +1216,11 @@ export abstract class FluidDataStoreContext
 		return this.parentContext.uploadBlob(blob, signal);
 	}
 
-	public getMinVersionForCollab?(): MinimumVersionForCollab | undefined {
-		return this.containerRuntime.getMinVersionForCollab?.();
+	/**
+	 * {@inheritdoc IFluidDataStoreContext.getMinVersionForCollab}
+	 */
+	public getMinVersionForCollab(): MinimumVersionForCollab {
+		return this.parentContext.getMinVersionForCollab();
 	}
 }
 

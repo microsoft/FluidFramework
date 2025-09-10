@@ -439,7 +439,7 @@ export class IncrementalChunkShape extends ShapeGeneric<EncodedChunkShape> {
 		}
 		assert(
 			chunkCursor.mode === CursorLocationType.Fields,
-			"should return to fields mode when finished encoding",
+			0xc29 /* should return to fields mode when finished encoding */,
 		);
 		return chunkOutputBuffer;
 	}
@@ -476,7 +476,7 @@ export const incrementalFieldEncoder: FieldEncoder = {
 	): void {
 		assert(
 			context.shouldEncodeIncrementally,
-			"incremental encoding must be enabled to use IncrementalFieldShape",
+			0xc2a /* incremental encoding must be enabled to use IncrementalFieldShape */,
 		);
 
 		const chunkReferenceIds = context.encodeIncrementalField(cursor, (chunk: TreeChunk) =>
@@ -568,7 +568,10 @@ export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 		cursor: ITreeCursorSynchronous,
 		encoder: (chunk: TreeChunk) => BufferFormat,
 	): ChunkReferenceId[] {
-		assert(this.incrementalEncoder !== undefined, "incremental encoding must be enabled");
+		assert(
+			this.incrementalEncoder !== undefined,
+			0xc2b /* incremental encoding must be enabled */,
+		);
 		// Encoder for the chunk that encodes its data using the provided encoder function and
 		// updates the encoded data for shapes and identifiers.
 		const chunkEncoder = (chunk: TreeChunk): EncodedFieldBatch => {

@@ -750,7 +750,7 @@ export namespace System_TableSchema {
 						);
 						removedColumns = columnsToRemove;
 					});
-					return removedColumns ?? fail("Transaction did not complete.");
+					return removedColumns ?? fail(0xc1f /* Transaction did not complete. */);
 				} else {
 					// If there are no columns to remove, do nothing
 					if (indexOrColumns.length === 0) {

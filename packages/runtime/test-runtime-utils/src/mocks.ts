@@ -63,7 +63,6 @@ import {
 	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	defaultMinVersionForCollab,
 	getNormalizedObjectStoragePathParts,
 	mergeStats,
 	toDeltaManagerErased,
@@ -882,15 +881,18 @@ export class MockFluidDataStoreRuntime
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
 
-		this.minVersionForCollab = overrides?.minVersionForCollab ?? defaultMinVersionForCollab;
+		this.minVersionForCollab = overrides?.minVersionForCollab;
 	}
-
-	public readonly minVersionForCollab: MinimumVersionForCollab;
 
 	private readonly: boolean = false;
 	public readonly isReadOnly = () => this.readonly;
 
 	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
+
+	/**
+	 * @see IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
+	 */
+	public readonly minVersionForCollab: MinimumVersionForCollab | undefined;
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this;

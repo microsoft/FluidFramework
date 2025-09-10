@@ -13,6 +13,7 @@ import type {
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
+	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor/internal";
 import type {
@@ -141,7 +142,14 @@ class SharedObjectFromKernel<
 			logger: this.logger,
 			idCompressor: runtime.idCompressor,
 			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
-			minVersionForCollab: runtime.minVersionForCollab,
+
+			// This cast is needed since IFluidDataStoreRuntimeInternalConfig does not extend IFluidDataStoreRuntime directly. This pattern
+			// allows us to avoid breaking changes to IFluidDataStoreRuntime by hiding internal members in a separate interface, but comes
+			// at the cost of less compile-time enforcement. For example, if the runtime did not implement `minVersionForCollab` and the
+			// member was still optional (e.g., during the deprecation window where backwards-compatibility is maintained), the compiler
+			// would emit an error.
+			minVersionForCollab: (runtime as IFluidDataStoreRuntimeInternalConfig)
+				.minVersionForCollab,
 		};
 	}
 
@@ -292,7 +300,9 @@ export interface KernelArgs {
 	 */
 	readonly lastSequenceNumber: () => number;
 	/**
-	 * The minVersionForCollab specified when instantiating the ContainerRuntime.
+	 * The minVersionForCollab specified when instantiating the ContainerRuntime. Passed to the SharedKernelFactory so that a
+	 * compatible set of feature flags and formats can be enabled in the SharedObject implementation.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details on this property.
 	 */
 	readonly minVersionForCollab: MinimumVersionForCollab | undefined;
 }

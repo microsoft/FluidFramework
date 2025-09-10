@@ -139,6 +139,16 @@ function DataRow(props: DataRowProps): React.ReactElement {
 	);
 }
 
+/**
+ * Determines the appropriate badge color based on the container status.
+ *
+ * @param status - The container status string to evaluate
+ * @returns The badge color that best represents the status severity:
+ * - "danger" for closed, detached, or disconnected states
+ * - "warning" for transitional states like attaching or catching up
+ * - "success" for healthy states like connected or attached
+ * - "subtle" for read-only or unknown states
+ */
 function getStatusBadgeColor(status: string): "success" | "warning" | "danger" | "subtle" {
 	switch (status) {
 		case "Closed":
@@ -164,6 +174,17 @@ function getStatusBadgeColor(status: string): "success" | "warning" | "danger" |
 	}
 }
 
+/**
+ * Renders a table cell containing status badges for container states.
+ *
+ * @param statusComponents - Array of status strings to display as badges
+ * @returns A table cell layout with status badges displayed horizontally
+ *
+ * @remarks
+ * - If no status components are provided, shows an "Unknown" badge
+ * - Multiple status badges are displayed side by side with flexbox layout
+ * - Each badge color is determined by getStatusBadgeColor function
+ */
 function containerStatusValueCell(statusComponents: string[]): React.ReactElement {
 	// Show all states simultaneously in a single container
 	if (statusComponents.length === 0) {
@@ -190,6 +211,14 @@ function containerStatusValueCell(statusComponents: string[]): React.ReactElemen
 	);
 }
 
+/**
+ * Custom hook that provides styles for the ContainerSummaryView component.
+ *
+ * @returns An object containing CSS-in-JS styles for:
+ * - root: Main container with flexbox column layout
+ * - title: Centered title styling
+ * - actions: Left-aligned actions container
+ */
 const useContainerSummaryViewStyles = makeStyles({
 	root: {
 		display: "flex",

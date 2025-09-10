@@ -13,9 +13,9 @@ Adds the following [@typescript-eslint/no-restricted-imports](https://typescript
 
 Promotes the following rules from the `strict` ruleset to the `recommended` ruleset:
 
--   [@typescript-eslint/consistent-type-exports](https://typescript-eslint.io/rules/consistent-type-exports/)
--   [@typescript-eslint/consistent-type-imports](https://typescript-eslint.io/rules/consistent-type-imports/)
--   [@typescript-eslint/no-import-type-side-effects](https://typescript-eslint.io/rules/no-import-type-side-effects/)
+- [@typescript-eslint/consistent-type-exports](https://typescript-eslint.io/rules/consistent-type-exports/)
+- [@typescript-eslint/consistent-type-imports](https://typescript-eslint.io/rules/consistent-type-imports/)
+- [@typescript-eslint/no-import-type-side-effects](https://typescript-eslint.io/rules/no-import-type-side-effects/)
 
 ## [5.7.4](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.7.4)
 
@@ -41,7 +41,6 @@ export function foo(): void {
 Added support for two new patterns in the no-unchecked-record-access ESLint rule:
 
 1. **Nullish Coalescing Assignment Recognition**
-
     - The rule now recognizes nullish coalescing assignment (`??=`) as a valid safety check
     - Properties accessed after a nullish coalescing assignment will not trigger warnings
 
@@ -100,28 +99,28 @@ on formatting-related rules in favor of dedicated formatting tools.
 
 #### typescript-eslint
 
--   @typescript-eslint/comma-spacing
--   @typescript-eslint/func-call-spacing
--   @typescript-eslint/keyword-spacing
--   @typescript-eslint/member-delimiter-style
--   @typescript-eslint/object-curly-spacing
--   @typescript-eslint/semi
--   @typescript-eslint/space-before-function-paren
--   @typescript-eslint/space-infix-ops
--   @typescript-eslint/type-annotation-spacing
+- @typescript-eslint/comma-spacing
+- @typescript-eslint/func-call-spacing
+- @typescript-eslint/keyword-spacing
+- @typescript-eslint/member-delimiter-style
+- @typescript-eslint/object-curly-spacing
+- @typescript-eslint/semi
+- @typescript-eslint/space-before-function-paren
+- @typescript-eslint/space-infix-ops
+- @typescript-eslint/type-annotation-spacing
 
 #### eslint
 
 All rules below are deprecated. See <https://eslint.org/docs/latest/rules/#deprecated>
 
--   array-bracket-spacing
--   arrow-spacing
--   block-spacing
--   dot-location
--   jsx-quotes
--   key-spacing
--   space-unary-ops
--   switch-colon-spacing
+- array-bracket-spacing
+- arrow-spacing
+- block-spacing
+- dot-location
+- jsx-quotes
+- key-spacing
+- space-unary-ops
+- switch-colon-spacing
 
 ### Better test pattern support
 
@@ -138,16 +137,16 @@ Enabled new no-unchecked-record-access rule to enforce safe property access on i
 
 The following rules have been disabled in all configs because they conflict with formatter settings:
 
--   [@typescript-eslint/brace-style](https://typescript-eslint.io/rules/brace-style)
--   [unicorn/number-literal-case](https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v48.0.1/docs/rules/number-literal-case.md)
+- [@typescript-eslint/brace-style](https://typescript-eslint.io/rules/brace-style)
+- [unicorn/number-literal-case](https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v48.0.1/docs/rules/number-literal-case.md)
 
 The following rules have been disabled for test code:
 
--   [unicorn/prefer-module](https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v48.0.1/docs/rules/prefer-module.md)
+- [unicorn/prefer-module](https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v48.0.1/docs/rules/prefer-module.md)
 
 The following rules have been disabled due to frequency of false-positives reported:
 
--   [unicorn/no-useless-spread](https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v48.0.1/docs/rules/no-useless-spread.md)
+- [unicorn/no-useless-spread](https://github.com/sindresorhus/eslint-plugin-unicorn/blob/v48.0.1/docs/rules/no-useless-spread.md)
 
 ### @typescript-eslint/explicit-function-return-type changes
 

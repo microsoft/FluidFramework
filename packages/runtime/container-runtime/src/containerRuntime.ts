@@ -3709,7 +3709,7 @@ export class ContainerRuntime
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTree {
 		if (blobRedirectTable) {
-			this.blobManager.setRedirectTable(blobRedirectTable);
+			this.blobManager.patchRedirectTable(blobRedirectTable);
 		}
 
 		// We can finalize any allocated IDs since we're the only client
@@ -5186,7 +5186,7 @@ export class ContainerRuntime
 		return entry.interface as T;
 	}
 
-	public getMinVersionForCollab?(): MinimumVersionForCollab {
+	public getMinVersionForCollab(): MinimumVersionForCollab {
 		return semanticVersionToMinimumVersionForCollab(this.minVersionForCollab);
 	}
 
