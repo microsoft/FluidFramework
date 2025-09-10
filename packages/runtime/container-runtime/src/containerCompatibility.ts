@@ -51,8 +51,7 @@ export type RuntimeOptionsAffectingDocSchema = Omit<
  * @remarks
  * Runtime options that affect document schema should generally require explicitSchemaControl to be enabled.
  * However, to prevent disruption to existing customers, options that existed prior to explicitSchemaControl
- * do not explicity require explicitSchemaControl to be enabled. We should avoid adding additional options to
- * the exception list going forward.
+ * do not explicity require explicitSchemaControl to be enabled. Do not add new options to this list.
  */
 type RuntimeOptionsThatRequireExplicitSchemaControl = keyof Omit<
 	RuntimeOptionsAffectingDocSchema,
