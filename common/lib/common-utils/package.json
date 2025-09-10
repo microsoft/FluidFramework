@@ -81,7 +81,7 @@
 		"buffer": "^6.0.3",
 		"events": "^3.1.0",
 		"lodash": "^4.17.21",
-		"sha.js": "^2.4.11"
+		"sha.js": "^2.4.12"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.57.0",
@@ -98,7 +98,7 @@
 		"@types/node": "^18.19.39",
 		"@types/sinon": "^17.0.3",
 		"benchmark": "^2.1.4",
-		"c8": "^8.0.1",
+		"c8": "^10.1.3",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",

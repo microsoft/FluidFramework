@@ -24,12 +24,17 @@ import {
 	waitForLatestValueUpdates,
 } from "./orchestratorUtils.js";
 
+const useAzure = process.env.FLUID_CLIENT === "azure";
+
+/**
+ * Detects if the debugger is attached (when code loaded).
+ */
 const debuggerAttached = inspector.url() !== undefined;
 
 /**
  * Set this to a high number when debugging to avoid timeouts from debugging time.
  */
-const timeoutMultiplier = debuggerAttached ? 1000 : 1;
+const timeoutMultiplier = debuggerAttached ? 1000 : useAzure ? 3 : 1;
 
 /**
  * Sets the timeout for the given test context.
@@ -72,7 +77,7 @@ function setTimeout(context: Mocha.Context, duration: number): void {
  * - Receive response messages from child clients to verify expected behavior.
  * - Clean up child processes after each test.
  *
- * The child processes are located in the `childClient.ts` file. Each child process simulates a Fluid client.
+ * The child processes are located in the `childClient.tool.ts` file. Each child process simulates a Fluid client.
  *
  * The child client's job includes:
  * - Create/Get + connect to Fluid container.
