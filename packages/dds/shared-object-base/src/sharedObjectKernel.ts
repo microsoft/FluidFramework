@@ -142,6 +142,12 @@ class SharedObjectFromKernel<
 			logger: this.logger,
 			idCompressor: runtime.idCompressor,
 			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
+
+			// This cast is needed since IFluidDataStoreRuntimeInternalConfig does not extend IFluidDataStoreRuntime directly. This pattern
+			// allows us to avoid breaking changes to IFluidDataStoreRuntime by hiding internal members in a separate interface, but comes
+			// at the cost of less compile-time enforcement. For example, if the runtime did not implement `minVersionForCollab` and the
+			// member was still optional (e.g., during the deprecation window where backwards-compatibility is maintained), the compiler
+			// would emit an error.
 			minVersionForCollab: (runtime as IFluidDataStoreRuntimeInternalConfig)
 				.minVersionForCollab,
 		};
