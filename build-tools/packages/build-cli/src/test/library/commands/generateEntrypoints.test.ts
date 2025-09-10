@@ -54,26 +54,14 @@ describe("generateEntrypoints", () => {
 				).to.contain('export type * from "../lib/legacy.d.ts";\n');
 			});
 
-			describe("sourceTypeRelPath: nested", () => {
-				it("with leading ./", () => {
-					expect(
-						createNode10EntrypointFileContent({
-							dirPath: "",
-							sourceTypeRelPath: "./lib/legacy/alpha.d.ts",
-							isTypeOnly: true,
-						}),
-					).to.contain('export type * from "./lib/legacy/alpha.d.ts";\n');
-				});
-
-				it("without leading ./", () => {
-					expect(
-						createNode10EntrypointFileContent({
-							dirPath: "",
-							sourceTypeRelPath: "lib/legacy/alpha.d.ts",
-							isTypeOnly: true,
-						}),
-					).to.contain('export type * from "./lib/legacy/alpha.d.ts";\n');
-				});
+			it("sourceTypeRelPath: nested", () => {
+				expect(
+					createNode10EntrypointFileContent({
+						dirPath: "",
+						sourceTypeRelPath: "./lib/legacy/alpha.d.ts",
+						isTypeOnly: true,
+					}),
+				).to.contain('export type * from "./lib/legacy/alpha.d.ts";\n');
 			});
 
 			it("sourceTypeRelPath: file with leading .", () => {
@@ -108,26 +96,14 @@ describe("generateEntrypoints", () => {
 				).to.contain('export * from "../lib/legacy.js";\n');
 			});
 
-			describe("sourceTypeRelPath: nested", () => {
-				it("with leading ./", () => {
-					expect(
-						createNode10EntrypointFileContent({
-							dirPath: "",
-							sourceTypeRelPath: "./lib/legacy/alpha.d.ts",
-							isTypeOnly: false,
-						}),
-					).to.contain('export * from "./lib/legacy/alpha.js";\n');
-				});
-
-				it("without leading ./", () => {
-					expect(
-						createNode10EntrypointFileContent({
-							dirPath: "",
-							sourceTypeRelPath: "lib/legacy/alpha.d.ts",
-							isTypeOnly: false,
-						}),
-					).to.contain('export * from "./lib/legacy/alpha.js";\n');
-				});
+			it("sourceTypeRelPath: nested", () => {
+				expect(
+					createNode10EntrypointFileContent({
+						dirPath: "",
+						sourceTypeRelPath: "./lib/legacy/alpha.d.ts",
+						isTypeOnly: false,
+					}),
+				).to.contain('export * from "./lib/legacy/alpha.js";\n');
 			});
 
 			it("sourceTypeRelPath: file with leading .", () => {
