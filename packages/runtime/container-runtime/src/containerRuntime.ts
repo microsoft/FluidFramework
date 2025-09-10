@@ -1143,8 +1143,14 @@ export class ContainerRuntime
 				? minVersionForCollab
 				: existingMinVersionForCollab;
 
+		// Validate options that depend on other options being enabled/disabled
 		if (compressionLz4 && !enableGroupedBatching) {
 			throw new UsageError("If compression is enabled, op grouping must be enabled too");
+		}
+		if (createBlobPayloadPending && !explicitSchemaControl) {
+			throw new UsageError(
+				"explicitSchemaControl must be enabled to to use createBlobPayloadPending",
+			);
 		}
 
 		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {};

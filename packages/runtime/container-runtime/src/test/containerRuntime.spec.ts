@@ -4134,7 +4134,7 @@ describe("Runtime", () => {
 						existing: false,
 						// We would normally throw (since `createBlobPayloadPending` requires 2.40), but since we did
 						// not explicity set minVersionForCollab, we allow it.
-						runtimeOptions: { createBlobPayloadPending: true },
+						runtimeOptions: { createBlobPayloadPending: true, explicitSchemaControl: true },
 						provideEntryPoint: mockProvideEntryPoint,
 					});
 				});
