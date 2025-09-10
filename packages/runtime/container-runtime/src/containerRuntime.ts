@@ -1167,7 +1167,7 @@ export class ContainerRuntime
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
 		if (!explicitSchemaControl) {
-			for (const key of runtimeOptionKeysThatRequireExplicitSchemaControl) {
+			for (const key of Object.keys(runtimeOptionKeysThatRequireExplicitSchemaControl)) {
 				if (internalRuntimeOptions[key] !== undefined) {
 					throw new UsageError(`explicitSchemaControl must be enabled to use ${key}`);
 				}

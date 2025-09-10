@@ -46,6 +46,19 @@ export type RuntimeOptionsAffectingDocSchema = Omit<
 >;
 
 /**
+ * Subset of {@link RuntimeOptionsAffectingDocSchema} which existed prior to the introduction of explicitSchemaControl.
+ */
+type RuntimeOptionsPredatingExplicitSchemaControl = Pick<
+	RuntimeOptionsAffectingDocSchema,
+	| "explicitSchemaControl"
+	| "compressionOptions"
+	| "enableRuntimeIdCompressor"
+	| "flushMode"
+	| "gcOptions"
+	| "enableGroupedBatching"
+>;
+
+/**
  * Subset of keys of {@link RuntimeOptionsAffectingDocSchema} which require explicit schema control to be enabled.
  *
  * @remarks
@@ -55,22 +68,22 @@ export type RuntimeOptionsAffectingDocSchema = Omit<
  */
 type RuntimeOptionsThatRequireExplicitSchemaControl = keyof Omit<
 	RuntimeOptionsAffectingDocSchema,
-	keyof Pick<
-		RuntimeOptionsAffectingDocSchema,
-		| "compressionOptions"
-		| "enableRuntimeIdCompressor"
-		| "flushMode"
-		| "gcOptions"
-		| "enableGroupedBatching"
-	>
+	keyof RuntimeOptionsPredatingExplicitSchemaControl
 >;
 
 /**
- * List of keys of runtime options that require explicitSchemaControl.
+ * Runtime options that require explicitSchemaControl to be enabled.
+ *
+ * @remarks
+ * This is defined as a Record instead of an array to allow TS enforcement that
+ * all keys of RuntimeOptionsThatRequireExplicitSchemaControl are included.
  */
-export const runtimeOptionKeysThatRequireExplicitSchemaControl = [
-	"createBlobPayloadPending",
-] as const satisfies RuntimeOptionsThatRequireExplicitSchemaControl[];
+export const runtimeOptionKeysThatRequireExplicitSchemaControl: Record<
+	RuntimeOptionsThatRequireExplicitSchemaControl,
+	RuntimeOptionsThatRequireExplicitSchemaControl
+> = {
+	createBlobPayloadPending: "createBlobPayloadPending",
+} as const;
 
 /**
  * Mapping of RuntimeOptionsAffectingDocSchema to their compatibility related configs.
