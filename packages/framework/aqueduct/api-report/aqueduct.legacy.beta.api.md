@@ -237,6 +237,10 @@ export interface RootTreeView {
 
 // @beta @legacy
 export abstract class TreeDataObject<TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends MigrationDataObject<RootTreeView, TDataObjectTypes> {
+    protected static modelDescriptors: [
+    ModelDescriptor<RootTreeView>,
+    ...ModelDescriptor<RootTreeView>[]
+    ];
     protected get tree(): ITree;
 }
 
