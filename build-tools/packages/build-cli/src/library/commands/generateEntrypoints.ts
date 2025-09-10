@@ -601,6 +601,9 @@ export function createNode10EntrypointFileContent({
 	return `${generatedHeader}export * from "${jsImport}";\n`;
 }
 
+/**
+ * Create Node10 entrypoint file.
+ */
 async function createEntrypointFile({
 	filePath,
 	sourceTypeRelPath,
