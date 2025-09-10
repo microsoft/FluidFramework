@@ -612,7 +612,7 @@ async function generateNode10TypeEntrypoints(
 		const dirPath = path.dirname(filePath);
 		await fs.ensureDir(dirPath);
 
-		const content = createNode10EntrypointFileContent(filePath, sourceTypeRelPath, isTypeOnly);
+		const content = createNode10EntrypointFileContent(dirPath, sourceTypeRelPath, isTypeOnly);
 
 		await fs.writeFile(filePath, content, "utf8");
 	}
