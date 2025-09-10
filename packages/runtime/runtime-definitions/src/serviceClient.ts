@@ -39,6 +39,12 @@ export interface ServiceOptions {
  * @remarks
  * A document which can be stored to or loaded from a Fluid service using a {@link ServiceClient}.
  *
+ * @privateRemarks
+ * This will likely end up needing many of IFluidContainer's APIs, like disconnect, connectionState, events etc.
+ * Before adding them though, care should be taken to consider if they can be improved or simplified.
+ * For example maybe a single status enum for `detached -> attaching -> dirty -> saved -> closed` would be good.
+ * Or maybe `detached -> attaching -> attached -> closed` and a timer for how long since the last unsaved change was created.
+ *
  * @sealed
  * @alpha
  */
