@@ -6,6 +6,8 @@
 import { expect } from "chai";
 import { describe, it } from "mocha";
 import {
+	createNode10EntrypointFileContent,
+	generatedHeader,
 	optionDefaults,
 	readArgValues,
 } from "../../../library/commands/generateEntrypoints.js";
@@ -26,5 +28,43 @@ describe("generateEntrypoints", () => {
 			...optionDefaults,
 			outDir: "./lib",
 		});
+	});
+
+	it("generateNode10EntrypointFileContent", () => {
+		// #region type-only
+
+		expect(createNode10EntrypointFileContent("", "lib/legacy.d.ts", true)).to.equal(
+			`${generatedHeader}export type * from "./lib/legacy.d.ts";\n`,
+		);
+
+		// dirPath: sub directory
+		expect(createNode10EntrypointFileContent("rollups", "lib/legacy.d.ts", true)).to.equal(
+			`${generatedHeader}export type * from "../lib/legacy.d.ts";\n`,
+		);
+
+		// dirPath: package root
+		expect(createNode10EntrypointFileContent("", "lib/legacy/alpha.d.ts", true)).to.equal(
+			`${generatedHeader}export type * from "./lib/legacy/alpha.d.ts";\n`,
+		);
+
+		// #endregion
+
+		// #region non-type-only
+
+		expect(createNode10EntrypointFileContent("", "lib/legacy.d.ts", false)).to.equal(
+			`${generatedHeader}export * from "./lib/legacy.js";\n`,
+		);
+
+		// dirPath: sub directory
+		expect(createNode10EntrypointFileContent("rollups", "lib/legacy.d.ts", false)).to.equal(
+			`${generatedHeader}export * from "../lib/legacy.js";\n`,
+		);
+
+		// sourceTypeRelPath: nested
+		expect(createNode10EntrypointFileContent("", "lib/legacy/alpha.d.ts", false)).to.equal(
+			`${generatedHeader}export * from "./lib/legacy/alpha.js";\n`,
+		);
+
+		// #endregion
 	});
 });

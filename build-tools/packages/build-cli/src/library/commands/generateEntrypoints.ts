@@ -413,7 +413,11 @@ function sourceContext(node: Node): string {
 	return `${node.getSourceFile().getFilePath()}:${node.getStartLineNumber()}`;
 }
 
-const generatedHeader: string = `/*!
+/**
+ * Header injected into all generated files.
+ * @privateRemarks Exported for testing.
+ */
+export const generatedHeader: string = `/*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
@@ -565,6 +569,30 @@ async function generateEntrypoints(
 	await Promise.all(fileSavePromises);
 }
 
+/**
+ * Create Node10 entrypoint file content.
+ * @privateRemarks Exported for testing.
+ */
+export function createNode10EntrypointFileContent(
+	dirPath: string,
+	sourceTypeRelPath: string,
+	isTypeOnly: boolean,
+): string {
+	let entrypointToTypeImportPath = path.posix.relative(dirPath, sourceTypeRelPath);
+
+	// If the path is not explicitly relative, make it so.
+	if (!/^(\.\/|\.\.\/)/.test(entrypointToTypeImportPath)) {
+		entrypointToTypeImportPath = `./${entrypointToTypeImportPath}`;
+	}
+
+	if (isTypeOnly) {
+		return `${generatedHeader}export type * from "${entrypointToTypeImportPath}";\n`;
+	}
+
+	const jsImport = entrypointToTypeImportPath.replace(/\.d\.([cm]?)ts/, ".$1js");
+	return `${generatedHeader}export * from "${jsImport}";\n`;
+}
+
 async function generateNode10TypeEntrypoints(
 	mapExportPathToData: ReadonlyMap<string, Node10CompatExportData>,
 	log: CommandLogger,
@@ -585,12 +613,7 @@ async function generateNode10TypeEntrypoints(
 		const dirPath = path.dirname(filePath);
 		await fs.ensureDir(dirPath);
 
-		const entrypointToTypeImportPath = path.posix.relative(dirPath, sourceTypeRelPath);
-		const jsImport = entrypointToTypeImportPath.replace(/\.d\.([cm]?)ts/, ".$1js");
-
-		const content = isTypeOnly
-			? `${generatedHeader}export type * from "${entrypointToTypeImportPath}";\n`
-			: `${generatedHeader}export * from "${jsImport}";\n`;
+		const content = createNode10EntrypointFileContent(filePath, sourceTypeRelPath, isTypeOnly);
 
 		await fs.writeFile(filePath, content, "utf8");
 	}
