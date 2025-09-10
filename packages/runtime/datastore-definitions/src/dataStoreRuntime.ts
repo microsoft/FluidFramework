@@ -197,10 +197,10 @@ export interface IFluidDataStoreRuntimeInternalConfig {
 	readonly submitMessagesWithoutEncodingHandles?: boolean;
 
 	/**
-	 * The minVersionForCollab used when instantiating the ContainerRuntime. DDSes may read this value to determine which feature flags
-	 * should be enabled. This property is consumed by SharedObjectFactory (which are implementations of
-	 * {@link @fluidframework/datastore-definitions#IChannelFactory}).
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details on `minVersionForCollab`.
+	 * Minimum version of the FF runtime that is required to collaborate on new documents. DDSes may read this value to
+	 * determine which feature flags should be enabled. This property is consumed by SharedObjectFactory (which are
+	 * implementations of {@link @fluidframework/datastore-definitions#IChannelFactory}).
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
 	readonly minVersionForCollab?: MinimumVersionForCollab | undefined;
 }

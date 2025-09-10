@@ -300,9 +300,9 @@ export interface KernelArgs {
 	 */
 	readonly lastSequenceNumber: () => number;
 	/**
-	 * The minVersionForCollab specified when instantiating the ContainerRuntime. Passed to the SharedKernelFactory so that a
+	 * Minimum version of the FF runtime that is required to collaborate on new documents. Used so that a
 	 * compatible set of feature flags and formats can be enabled in the SharedObject implementation.
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details on this property.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
 	readonly minVersionForCollab: MinimumVersionForCollab | undefined;
 }

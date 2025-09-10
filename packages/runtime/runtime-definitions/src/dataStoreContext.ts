@@ -553,9 +553,9 @@ export interface IFluidParentContext
 	 */
 	readonly isReadOnly?: () => boolean;
 	/**
-	 * Gets the minVersionForCollab passed into the ContainerRuntime.
+	 * Minimum version of the FF runtime that is required to collaborate on new documents.
 	 * Consumed by {@link @fluidframework/container-runtime#FluidDataStoreContext}.
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
 	getMinVersionForCollab?(): MinimumVersionForCollab;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -746,8 +746,9 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	): ReturnType<Exclude<T["createDataStore"], undefined>>;
 
 	/**
-	 * Gets the minVersionForCollab passed into the ContainerRuntime. Consumed by {@link @fluidframework/datastore#FluidDataStoreRuntime}.
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details.
+	 * Minimum version of the FF runtime that is required to collaborate on new documents.
+	 * Consumed by {@link @fluidframework/datastore#FluidDataStoreRuntime}.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
 	getMinVersionForCollab?(): MinimumVersionForCollab;
 }
