@@ -6,6 +6,10 @@
 import type {
 	ServiceOptions,
 	ServiceClient,
+	FluidContainer,
+	FluidContainerAttached,
+	DataStoreKind,
+	Registry,
 } from "@fluidframework/runtime-definitions/internal";
 
 import { pkgVersion } from "./packageVersion.js";
@@ -21,5 +25,30 @@ import { pkgVersion } from "./packageVersion.js";
 export function createEphemeralServiceClient(
 	options: ServiceOptions = { minVersionForCollab: pkgVersion },
 ): ServiceClient {
-	throw new Error("Not implemented: createEphemeralServiceClient");
+	return new EphemeralServiceClient(options);
+}
+
+/**
+ * Ephemeral service client for local use.
+ *
+ * TODO: Implement:
+ * Maybe this can be layered on-top of `IDocumentService`?
+ * If so, a base class could be written in terms of `IDocumentService`,
+ * then the service specific derived class could use {@link createLocalDocumentService} to get it.
+ */
+class EphemeralServiceClient implements ServiceClient {
+	public constructor(public readonly options: ServiceOptions) {}
+
+	public async attachContainer<T>(
+		detached: FluidContainer<T>,
+	): Promise<FluidContainerAttached<T>> {
+		throw new Error("TODO: Not implemented: attachContainer");
+	}
+
+	public async loadContainer<T>(
+		id: string,
+		root: DataStoreKind<T> | Registry<Promise<DataStoreKind<T>>>,
+	): Promise<FluidContainerAttached<T>> {
+		throw new Error("TODO: Not implemented: loadContainer");
+	}
 }
