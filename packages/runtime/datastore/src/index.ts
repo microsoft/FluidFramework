@@ -16,4 +16,4 @@ export {
 	dataStoreCompatDetailsForRuntime,
 	runtimeSupportRequirementsForDataStore,
 } from "./dataStoreLayerCompatState.js";
-export { IChannelContext } from "./channelContext.js";
+export type { IChannelContext } from "./channelContext.js";

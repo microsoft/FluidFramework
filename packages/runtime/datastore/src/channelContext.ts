@@ -37,7 +37,7 @@ export const attributesBlobKey = ".attributes";
 /**
  * TODO
  * @legacy
- * @alpha
+ * @beta
  */
 export interface IChannelContext {
 	getChannel(): Promise<IChannel>;
