@@ -89,7 +89,7 @@ describe("generateEntrypoints", () => {
 			it("dirPath: sub directory", () => {
 				expect(
 					createNode10EntrypointFileContent({
-						dirPath: "./rollups",
+						dirPath: "rollups",
 						sourceTypeRelPath: "./lib/legacy.d.ts",
 						isTypeOnly: false,
 					}),
