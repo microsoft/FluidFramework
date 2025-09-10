@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// Too restrictive for test suite hierarchy
+/* eslint-disable max-nested-callbacks */
+
 import { expect } from "chai";
 import { describe, it } from "mocha";
 import {
@@ -29,79 +32,93 @@ describe("generateEntrypoints", () => {
 		});
 	});
 
-	it("generateNode10EntrypointFileContent", () => {
-		// #region type-only
+	describe("generateNode10EntrypointFileContent", () => {
+		describe("type-only", () => {
+			it("dirPath: package root", () => {
+				expect(
+					createNode10EntrypointFileContent({
+						dirPath: "",
+						sourceTypeRelPath: "lib/legacy.d.ts",
+						isTypeOnly: true,
+					}),
+				).to.contain('export type * from "./lib/legacy.d.ts";\n');
+			});
 
-		expect(
-			createNode10EntrypointFileContent({
-				dirPath: "",
-				sourceTypeRelPath: "lib/legacy.d.ts",
-				isTypeOnly: true,
-			}),
-		).to.contain('export type * from "./lib/legacy.d.ts";\n');
+			it("dirPath: sub directory", () => {
+				expect(
+					createNode10EntrypointFileContent({
+						dirPath: "rollups",
+						sourceTypeRelPath: "lib/legacy.d.ts",
+						isTypeOnly: true,
+					}),
+				).to.contain('export type * from "../lib/legacy.d.ts";\n');
+			});
 
-		// dirPath: sub directory
-		expect(
-			createNode10EntrypointFileContent({
-				dirPath: "rollups",
-				sourceTypeRelPath: "lib/legacy.d.ts",
-				isTypeOnly: true,
-			}),
-		).to.contain('export type * from "../lib/legacy.d.ts";\n');
+			describe("sourceTypeRelPath: nested", () => {
+				it("with leading ./", () => {
+					expect(
+						createNode10EntrypointFileContent({
+							dirPath: "",
+							sourceTypeRelPath: "lib/legacy/alpha.d.ts",
+							isTypeOnly: true,
+						}),
+					).to.contain('export type * from "./lib/legacy/alpha.d.ts";\n');
+				});
 
-		// sourceTypeRelPath: nested (with and without leading ./)
-		expect(
-			createNode10EntrypointFileContent({
-				dirPath: "",
-				sourceTypeRelPath: "lib/legacy/alpha.d.ts",
-				isTypeOnly: true,
-			}),
-		).to.contain('export type * from "./lib/legacy/alpha.d.ts";\n');
-		expect(
-			createNode10EntrypointFileContent({
-				dirPath: "",
-				sourceTypeRelPath: "./lib/legacy/alpha.d.ts",
-				isTypeOnly: true,
-			}),
-		).to.contain('export type * from "./lib/legacy/alpha.d.ts";\n');
+				it("without leading ./", () => {
+					expect(
+						createNode10EntrypointFileContent({
+							dirPath: "",
+							sourceTypeRelPath: "./lib/legacy/alpha.d.ts",
+							isTypeOnly: true,
+						}),
+					).to.contain('export type * from "./lib/legacy/alpha.d.ts";\n');
+				});
+			});
+		});
 
-		// #endregion
+		describe("non-type-only", () => {
+			it("dirPath: package root", () => {
+				expect(
+					createNode10EntrypointFileContent({
+						dirPath: "",
+						sourceTypeRelPath: "lib/legacy.d.ts",
+						isTypeOnly: false,
+					}),
+				).to.contain('export * from "./lib/legacy.js";\n');
+			});
 
-		// #region non-type-only
+			it("dirPath: sub directory", () => {
+				expect(
+					createNode10EntrypointFileContent({
+						dirPath: "rollups",
+						sourceTypeRelPath: "lib/legacy.d.ts",
+						isTypeOnly: false,
+					}),
+				).to.contain('export * from "../lib/legacy.js";\n');
+			});
 
-		expect(
-			createNode10EntrypointFileContent({
-				dirPath: "",
-				sourceTypeRelPath: "lib/legacy.d.ts",
-				isTypeOnly: false,
-			}),
-		).to.contain('export * from "./lib/legacy.js";\n');
+			describe("sourceTypeRelPath: nested", () => {
+				it("with leading ./", () => {
+					expect(
+						createNode10EntrypointFileContent({
+							dirPath: "",
+							sourceTypeRelPath: "lib/legacy/alpha.d.ts",
+							isTypeOnly: false,
+						}),
+					).to.contain('export * from "./lib/legacy/alpha.js";\n');
+				});
 
-		// dirPath: sub directory
-		expect(
-			createNode10EntrypointFileContent({
-				dirPath: "rollups",
-				sourceTypeRelPath: "lib/legacy.d.ts",
-				isTypeOnly: false,
-			}),
-		).to.contain('export * from "../lib/legacy.js";\n');
-
-		// sourceTypeRelPath: nested (with and without leading ./)
-		expect(
-			createNode10EntrypointFileContent({
-				dirPath: "",
-				sourceTypeRelPath: "lib/legacy/alpha.d.ts",
-				isTypeOnly: false,
-			}),
-		).to.contain('export * from "./lib/legacy/alpha.js";\n');
-		expect(
-			createNode10EntrypointFileContent({
-				dirPath: "",
-				sourceTypeRelPath: "./lib/legacy/alpha.d.ts",
-				isTypeOnly: false,
-			}),
-		).to.contain('export * from "./lib/legacy/alpha.js";\n');
-
-		// #endregion
+				it("without leading ./", () => {
+					expect(
+						createNode10EntrypointFileContent({
+							dirPath: "",
+							sourceTypeRelPath: "./lib/legacy/alpha.d.ts",
+							isTypeOnly: false,
+						}),
+					).to.contain('export * from "./lib/legacy/alpha.js";\n');
+				});
+			});
+		});
 	});
 });
