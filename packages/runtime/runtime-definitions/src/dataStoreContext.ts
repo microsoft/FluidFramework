@@ -552,6 +552,12 @@ export interface IFluidParentContext
 	 * the context should also consider themselves readonly.
 	 */
 	readonly isReadOnly?: () => boolean;
+	/**
+	 * Gets the minVersionForCollab passed into the ContainerRuntime.
+	 * Consumed by {@link @fluidframework/container-runtime#FluidDataStoreContext}.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details.
+	 */
+	getMinVersionForCollab?(): MinimumVersionForCollab;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IRuntimeStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;

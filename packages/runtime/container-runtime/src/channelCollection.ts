@@ -128,12 +128,12 @@ interface FluidDataStoreMessage {
  * being staged on IFluidParentContext can be added here as well, likely with optionality removed,
  * to ease interactions within this package.
  */
-export interface IFluidParentContextPrivate extends Omit<IFluidParentContext, "isReadOnly"> {
+export interface IFluidParentContextPrivate
+	extends Omit<IFluidParentContext, "isReadOnly" | "getMinVersionForCollab"> {
 	readonly isReadOnly: () => boolean;
 
 	/**
-	 * Gets the minVersionForCollab passed into the ContainerRuntime. Consumed by {@link FluidDataStoreContext}.
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details.
+	 * {@inheritdoc IFluidParentContext.getMinVersionForCollab}
 	 */
 	getMinVersionForCollab(): MinimumVersionForCollab;
 }

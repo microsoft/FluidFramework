@@ -232,6 +232,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     getCreateChildSummarizerNodeFn(
     id: string,
     createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
+    getMinVersionForCollab?(): MinimumVersionForCollab;
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly idCompressor?: IIdCompressor;
