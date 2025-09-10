@@ -18,6 +18,7 @@ import type {
 	DDSFuzzModel,
 	DDSFuzzTestState,
 } from "@fluid-private/test-dds-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 
 import type { ISharedArray, SerializableTypeForSharedArray } from "../../index.js";
@@ -150,6 +151,9 @@ eventEmitterForFuzzHarness.on("clientCreate", (client) => {
 				channel.moveIds.delete(op.changedToEntryId);
 				channel.moveIds.set(op.changedToEntryId, op.entryId);
 				break;
+			}
+			default: {
+				unreachableCase(op);
 			}
 		}
 	});
