@@ -9,13 +9,7 @@ import {
 	DataStoreMessageType,
 	FluidDataStoreRuntime,
 } from "@fluidframework/datastore/internal";
-import {
-	DirectoryFactory,
-	MapFactory,
-	SharedDirectory,
-	SharedMap,
-	type ISharedDirectory,
-} from "@fluidframework/map/internal";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
@@ -27,14 +21,13 @@ import type {
 	FluidObjectSymbolProvider,
 	IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize/internal";
-import type { ITree } from "@fluidframework/tree";
 
 import type { IDelayLoadChannelFactory } from "../channel-factories/index.js";
-import {
-	type DataObjectTypes,
-	type MigrationDataObject,
-	dataObjectRootDirectoryId,
-	treeChannelId,
+import type {
+	DataObjectTypes,
+	IDataObjectProps,
+	MigrationDataObject,
+	ModelDescriptor,
 } from "../data-objects/index.js";
 
 import {
@@ -46,13 +39,28 @@ import {
  * Represents the properties required to create a MigrationDataObjectFactory.
  * @experimental
  * @legacy
- * @alpha
+ * @beta
  */
 export interface MigrationDataObjectFactoryProps<
-	TObj extends MigrationDataObject<I>,
-	TMigrationData,
+	TObj extends MigrationDataObject<TUniversalView, I>,
+	TUniversalView,
 	I extends DataObjectTypes = DataObjectTypes,
+	TNewModel extends TUniversalView = TUniversalView, // default case works for a single model descriptor
+	TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
 > extends DataObjectFactoryProps<TObj, I> {
+	/**
+	 * The constructor for the data object, which must also include static `modelDescriptors` property.
+	 */
+	ctor: (new (
+		props: IDataObjectProps<I>,
+	) => TObj) & {
+		//* TODO: Add type alias for this array type
+		modelDescriptors: readonly [
+			ModelDescriptor<TNewModel>,
+			...ModelDescriptor<TUniversalView>[],
+		];
+	};
+
 	/**
 	 * Used for determining whether or not a migration can be performed based on providers and/or feature gates.
 	 *
@@ -78,7 +86,7 @@ export interface MigrationDataObjectFactoryProps<
 	 * }
 	 * ```
 	 */
-	asyncGetDataForMigration: (root: ISharedDirectory) => Promise<TMigrationData>;
+	asyncGetDataForMigration: (existingModel: TUniversalView) => Promise<TMigrationData>;
 
 	/**
 	 * Migrate the DataObject upon resolve (i.e. on retrieval of the DataStore).
@@ -97,11 +105,12 @@ export interface MigrationDataObjectFactoryProps<
 	 *     view.dispose();
 	 * }
 	 * ```
+	 * @param newModel - New model which is ready to be populated with the data
 	 * @param data - Provided by the "asyncGetDataForMigration" function
 	 */
 	migrateDataObject: (
 		runtime: FluidDataStoreRuntime,
-		treeRoot: ITree,
+		newModel: TNewModel,
 		data: TMigrationData,
 	) => void;
 
@@ -109,11 +118,6 @@ export interface MigrationDataObjectFactoryProps<
 	 * If not provided, the Container will be closed after migration due to underlying changes affecting the data model.
 	 */
 	refreshDataObject?: () => Promise<void>;
-
-	/**
-	 * ! TODO
-	 */
-	treeDelayLoadFactory: IDelayLoadChannelFactory<ITree>;
 }
 
 /**
@@ -122,12 +126,14 @@ export interface MigrationDataObjectFactoryProps<
  *
  * @experimental
  * @legacy
- * @alpha
+ * @beta
  */
 export class MigrationDataObjectFactory<
-	TObj extends MigrationDataObject<I>,
-	TMigrationData,
+	TObj extends MigrationDataObject<TUniversalView, I>,
+	TUniversalView,
 	I extends DataObjectTypes = DataObjectTypes,
+	TNewModel extends TUniversalView = TUniversalView, // default case works for a single model descriptor
+	TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
 > extends PureDataObjectFactory<TObj, I> {
 	private migrateLock = false;
 
@@ -135,7 +141,13 @@ export class MigrationDataObjectFactory<
 	private static readonly conversionContent = "conversion";
 
 	public constructor(
-		private readonly props: MigrationDataObjectFactoryProps<TObj, TMigrationData, I>,
+		private readonly props: MigrationDataObjectFactoryProps<
+			TObj,
+			TUniversalView,
+			I,
+			TNewModel,
+			TMigrationData
+		>,
 	) {
 		const submitConversionOp = (runtime: FluidDataStoreRuntime): void => {
 			runtime.submitMessage(
@@ -146,56 +158,104 @@ export class MigrationDataObjectFactory<
 		};
 
 		const fullMigrateDataObject = async (runtime: IFluidDataStoreChannel): Promise<void> => {
+			assert(this.canPerformMigration !== undefined, "canPerformMigration should be defined");
 			const realRuntime = runtime as FluidDataStoreRuntime;
+			// Descriptor-driven migration flow (no backwards compatibility path)
+			if (!this.canPerformMigration || this.migrateLock) {
+				return;
+			}
+
+			//* Should this move down a bit lower, to have less code in the lock zone?
+			this.migrateLock = true;
+
 			try {
-				// ! If we are able to retrieve a tree at the root, then migration has already happened
-				await realRuntime.getChannel(treeChannelId);
-				// eslint-disable-next-line unicorn/prefer-optional-catch-binding
-			} catch (_) {
+				// Read the model descriptors from the DataObject ctor (single source of truth).
+				const modelDescriptors = this.props.ctor.modelDescriptors;
+
+				// Destructure the target/first descriptor and probe it first. If it's present,
+				// the object already uses the target model and we're done.
+				const [targetDescriptor, ...otherDescriptors] = modelDescriptors;
+				//* TODO: Wrap error here with a proper error type?
+				const maybeTarget = await targetDescriptor.probe(realRuntime);
+				if (maybeTarget !== undefined) {
+					// Already on target model; nothing to do.
+					return;
+				}
+				// Download the code in parallel with async operations happening on the existing model
+				const targetFactoriesP = targetDescriptor.ensureFactoriesLoaded();
+
+				// Find the first model that probes successfully.
+				let existingModel: TUniversalView | undefined;
+				for (const desc of otherDescriptors) {
+					//* Should probe errors be fatal?
+					existingModel = await desc.probe(realRuntime).catch(() => undefined);
+					if (existingModel !== undefined) {
+						break;
+					}
+				}
 				assert(
-					this.canPerformMigration !== undefined,
-					"Expected canPerformMigration to be set",
+					existingModel !== undefined,
+					"Unable to match runtime structure to any known data model",
 				);
 
-				const root = (await realRuntime.getChannel(
-					dataObjectRootDirectoryId,
-				)) as ISharedDirectory;
+				// Retrieve any async data required for migration using the discovered existing model (may be undefined)
+				// In parallel, we are waiting for the target factories to load
+				const data = await this.props.asyncGetDataForMigration(existingModel);
+				await targetFactoriesP;
 
-				if (this.canPerformMigration && !this.migrateLock) {
-					this.migrateLock = true;
-					const data = await props.asyncGetDataForMigration(root);
-					await props.treeDelayLoadFactory.loadObjectKindAsync();
+				// ! TODO: ensure these ops aren't sent immediately AB#41625
+				submitConversionOp(realRuntime);
 
-					// ! TODO: ensure these ops aren't sent immediately AB#41625
-					submitConversionOp(realRuntime);
-					const treeRoot = props.treeDelayLoadFactory.create(realRuntime, treeChannelId);
-					props.migrateDataObject(realRuntime, treeRoot, data);
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-					(runtime as any).removeRoot();
-					this.migrateLock = false;
-				}
+				// Create the target model and run migration.
+				const newModel = targetDescriptor.create(realRuntime);
+
+				// Call consumer-provided migration implementation
+				this.props.migrateDataObject(realRuntime, newModel, data);
+
+				//* TODO: evacuate old model
+				//* i.e. delete unused root contexts, but not only that.  GC doesn't run sub-DataStore.
+				//* So we will need to plumb through now-unused channels to here.  Can be a follow-up.
+			} finally {
+				this.migrateLock = false;
 			}
 		};
 
 		const runtimeClass = props.runtimeClass ?? FluidDataStoreRuntime;
 
+		// Shallow copy since the input array is typed as a readonly array
 		const sharedObjects = [...(props.sharedObjects ?? [])];
-		if (!sharedObjects.some((factory) => factory.type === DirectoryFactory.Type)) {
-			// User did not register for directory
-			sharedObjects.push(SharedDirectory.getFactory());
-		}
 
-		if (!sharedObjects.some((factory) => factory.type === MapFactory.Type)) {
-			// User did not register for map
-			sharedObjects.push(SharedMap.getFactory());
+		//* TODO: Maybe we don't need to split by delay-loaded here (and in ModelDescriptor type)
+		const allFactories: {
+			alwaysLoaded: Map<string, IChannelFactory>;
+			delayLoaded: Map<string, IDelayLoadChannelFactory>;
+			// eslint-disable-next-line unicorn/no-array-reduce
+		} = props.ctor.modelDescriptors.reduce(
+			(acc, curr) => {
+				for (const factory of curr.sharedObjects.alwaysLoaded ?? []) {
+					acc.alwaysLoaded.set(factory.type, factory);
+				}
+				for (const factory of curr.sharedObjects.delayLoaded ?? []) {
+					acc.delayLoaded.set(factory.type, factory);
+				}
+				return acc;
+			},
+			{
+				alwaysLoaded: new Map<string, IChannelFactory>(),
+				delayLoaded: new Map<string, IDelayLoadChannelFactory>(),
+			},
+		);
+		for (const factory of allFactories.alwaysLoaded.values()) {
+			if (!sharedObjects.some((f) => f.type === factory.type)) {
+				// User did not register this factory
+				sharedObjects.push(factory);
+			}
 		}
-
-		if (
-			!sharedObjects.some(
-				(sharedObject) => sharedObject.type === props.treeDelayLoadFactory.type,
-			)
-		) {
-			sharedObjects.push(props.treeDelayLoadFactory);
+		for (const factory of allFactories.delayLoaded.values()) {
+			if (!sharedObjects.some((f) => f.type === factory.type)) {
+				// User did not register this factory
+				sharedObjects.push(factory);
+			}
 		}
 
 		super({
@@ -242,24 +302,24 @@ export class MigrationDataObjectFactory<
 				}
 
 				public reSubmit(
-					type2: DataStoreMessageType,
+					type: DataStoreMessageType,
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					content: any,
 					localOpMetadata: unknown,
 				): void {
 					if (
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-						type2 === DataStoreMessageType.ChannelOp &&
+						type === DataStoreMessageType.ChannelOp &&
 						content === MigrationDataObjectFactory.conversionContent
 					) {
 						submitConversionOp(this);
 						return;
 					}
-					super.reSubmit(type2, content, localOpMetadata);
+					super.reSubmit(type, content, localOpMetadata);
 				}
 
+				//* TODO: Replace with generic "evacuate" function on ModelDescriptor
 				public removeRoot(): void {
-					this.contexts.delete(dataObjectRootDirectoryId);
+					//* this.contexts.delete(dataObjectRootDirectoryId);
 				}
 			},
 		});
