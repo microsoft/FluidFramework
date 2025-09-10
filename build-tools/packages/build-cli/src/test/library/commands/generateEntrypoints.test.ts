@@ -49,11 +49,18 @@ describe("generateEntrypoints", () => {
 			}),
 		).to.contain('export type * from "../lib/legacy.d.ts";\n');
 
-		// dirPath: package root
+		// sourceTypeRelPath: nested (with and without leading ./)
 		expect(
 			createNode10EntrypointFileContent({
 				dirPath: "",
 				sourceTypeRelPath: "lib/legacy/alpha.d.ts",
+				isTypeOnly: true,
+			}),
+		).to.contain('export type * from "./lib/legacy/alpha.d.ts";\n');
+		expect(
+			createNode10EntrypointFileContent({
+				dirPath: "",
+				sourceTypeRelPath: "./lib/legacy/alpha.d.ts",
 				isTypeOnly: true,
 			}),
 		).to.contain('export type * from "./lib/legacy/alpha.d.ts";\n');
@@ -79,11 +86,18 @@ describe("generateEntrypoints", () => {
 			}),
 		).to.contain('export * from "../lib/legacy.js";\n');
 
-		// sourceTypeRelPath: nested
+		// sourceTypeRelPath: nested (with and without leading ./)
 		expect(
 			createNode10EntrypointFileContent({
 				dirPath: "",
 				sourceTypeRelPath: "lib/legacy/alpha.d.ts",
+				isTypeOnly: false,
+			}),
+		).to.contain('export * from "./lib/legacy/alpha.js";\n');
+		expect(
+			createNode10EntrypointFileContent({
+				dirPath: "",
+				sourceTypeRelPath: "./lib/legacy/alpha.d.ts",
 				isTypeOnly: false,
 			}),
 		).to.contain('export * from "./lib/legacy/alpha.js";\n');
