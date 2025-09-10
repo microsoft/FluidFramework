@@ -38,7 +38,7 @@ describe("generateEntrypoints", () => {
 				expect(
 					createNode10EntrypointFileContent({
 						dirPath: "",
-						sourceTypeRelPath: "lib/legacy.d.ts",
+						sourceTypeRelPath: "./lib/legacy.d.ts",
 						isTypeOnly: true,
 					}),
 				).to.contain('export type * from "./lib/legacy.d.ts";\n');
@@ -48,7 +48,7 @@ describe("generateEntrypoints", () => {
 				expect(
 					createNode10EntrypointFileContent({
 						dirPath: "rollups",
-						sourceTypeRelPath: "lib/legacy.d.ts",
+						sourceTypeRelPath: "./lib/legacy.d.ts",
 						isTypeOnly: true,
 					}),
 				).to.contain('export type * from "../lib/legacy.d.ts";\n');
@@ -92,7 +92,7 @@ describe("generateEntrypoints", () => {
 				expect(
 					createNode10EntrypointFileContent({
 						dirPath: "",
-						sourceTypeRelPath: "lib/legacy.d.ts",
+						sourceTypeRelPath: "./lib/legacy.d.ts",
 						isTypeOnly: false,
 					}),
 				).to.contain('export * from "./lib/legacy.js";\n');
@@ -101,8 +101,8 @@ describe("generateEntrypoints", () => {
 			it("dirPath: sub directory", () => {
 				expect(
 					createNode10EntrypointFileContent({
-						dirPath: "rollups",
-						sourceTypeRelPath: "lib/legacy.d.ts",
+						dirPath: "./rollups",
+						sourceTypeRelPath: "./lib/legacy.d.ts",
 						isTypeOnly: false,
 					}),
 				).to.contain('export * from "../lib/legacy.js";\n');
