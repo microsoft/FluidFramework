@@ -570,6 +570,11 @@ async function generateEntrypoints(
 
 /**
  * Create Node10 entrypoint file content.
+ *
+ * @remarks
+ * Generates the necessary export statement to re-export the contents of `sourceTypeRelPath` from a file under `dirPath`.
+ * Ensures the generated file path is explicitly relative to ensure Node10 compatibility.
+ *
  * @privateRemarks Exported for testing.
  */
 export function createNode10EntrypointFileContent({
@@ -596,6 +601,23 @@ export function createNode10EntrypointFileContent({
 	return `${generatedHeader}export * from "${jsImport}";\n`;
 }
 
+async function createEntrypointFile(
+	filePath: string,
+	sourceTypeRelPath: string,
+	isTypeOnly: boolean,
+): Promise<void> {
+	const dirPath = path.dirname(filePath);
+	await fs.ensureDir(dirPath);
+
+	const content = createNode10EntrypointFileContent({
+		dirPath,
+		sourceTypeRelPath,
+		isTypeOnly,
+	});
+
+	await fs.writeFile(filePath, content, "utf8");
+}
+
 async function generateNode10TypeEntrypoints(
 	mapExportPathToData: ReadonlyMap<string, Node10CompatExportData>,
 	log: CommandLogger,
@@ -608,26 +630,8 @@ async function generateNode10TypeEntrypoints(
 	 */
 	const fileSavePromises: Promise<void>[] = [];
 
-	async function createEntrypointFile(
-		filePath: string,
-		sourceTypeRelPath: string,
-		isTypeOnly: boolean,
-	): Promise<void> {
-		const dirPath = path.dirname(filePath);
-		await fs.ensureDir(dirPath);
-
-		const content = createNode10EntrypointFileContent({
-			dirPath,
-			sourceTypeRelPath,
-			isTypeOnly,
-		});
-
-		await fs.writeFile(filePath, content, "utf8");
-	}
-
 	for (const [outFile, { relPath, isTypeOnly }] of mapExportPathToData.entries()) {
 		log.info(`\tGenerating ${outFile}`);
-
 		fileSavePromises.push(createEntrypointFile(outFile, relPath, isTypeOnly));
 	}
 
