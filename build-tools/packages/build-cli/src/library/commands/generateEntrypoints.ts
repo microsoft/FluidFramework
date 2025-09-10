@@ -414,10 +414,9 @@ function sourceContext(node: Node): string {
 }
 
 /**
- * Header injected into all generated files.
- * @privateRemarks Exported for testing.
+ * Header injected into generated d.ts files.
  */
-export const generatedHeader: string = `/*!
+const generatedHeader: string = `/*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
