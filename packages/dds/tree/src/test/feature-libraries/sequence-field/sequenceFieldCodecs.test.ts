@@ -46,11 +46,6 @@ const context: FieldChangeEncodingContext = {
 		value: false,
 		length: count,
 	}),
-	isDetachId: (id, count) => ({
-		start: id,
-		value: false,
-		length: count,
-	}),
 	decodeNode: (node) => TestNodeId.decode(node, baseContext),
 	rootNodeChanges: newTupleBTree(),
 	rootRenames: newChangeAtomIdTransform(),

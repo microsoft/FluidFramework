@@ -50,11 +50,6 @@ export function testSnapshots() {
 								value: false,
 								length: count,
 							}),
-							isDetachId: (id, count) => ({
-								start: id,
-								value: false,
-								length: count,
-							}),
 							decodeRootNodeChange: () => {},
 							decodeRootRename: () => {},
 							generateId: () => ({ localId: brand(0) }),

@@ -310,19 +310,20 @@ function rebaseMarkIgnoreChild(
 		// XXX: This seems wrong if currMark is a rename
 		return withCellId(currMark, undefined);
 	} else if (isRename(baseMark)) {
-		const newRenameId = moveEffects.getNewRenameForBaseRename(
-			baseMark.idOverride,
-			baseMark.count,
-		).value;
+		if (isNoopMark(currMark)) {
+			const newRenameId = moveEffects.getNewRenameForBaseRename(
+				baseMark.idOverride,
+				baseMark.count,
+			).value;
 
-		if (newRenameId !== undefined) {
-			assert(isNoopMark(currMark), "Unexpected mark type");
-			return {
-				type: "Rename",
-				cellId: baseMark.idOverride,
-				count: baseMark.count,
-				idOverride: newRenameId,
-			};
+			if (newRenameId !== undefined) {
+				return {
+					type: "Rename",
+					cellId: baseMark.idOverride,
+					count: baseMark.count,
+					idOverride: newRenameId,
+				};
+			}
 		}
 
 		// XXX: Is this right if currMark is a rename?

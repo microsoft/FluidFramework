@@ -200,7 +200,6 @@ function makeModularChangeCodec(
 
 				encodeNode,
 				isMoveId,
-				isDetachId,
 				decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
 				decodeRootNodeChange: () => fail("Should not be called during encoding"),
 				decodeRootRename: () => fail("Should not be called during encoding"),
@@ -284,7 +283,6 @@ function makeModularChangeCodec(
 
 				encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
 				isMoveId: () => fail("Should not query move IDs during decoding"),
-				isDetachId: () => fail("Should not query move IDs during decoding"),
 				decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
 					return decodeNode(encodedNode, { field: fieldId });
 				},
@@ -521,8 +519,19 @@ function makeModularChangeCodec(
 			): RangeQueryEntry<ChangeAtomId, boolean> => {
 				const detachEntry = getFirstDetachField(change.crossFieldKeys, id, count);
 				const attachEntry = getFirstAttachField(change.crossFieldKeys, id, detachEntry.length);
+
 				const isMove = detachEntry.value !== undefined && attachEntry.value !== undefined;
-				return { start: id, value: isMove, length: attachEntry.length };
+				const detachedMoveEntry = change.rootNodes.outputDetachLocations.getFirst(
+					id,
+					attachEntry.length,
+				);
+
+				const isMoveOfDetachLocation = detachedMoveEntry.value !== undefined;
+				return {
+					start: id,
+					value: isMove || isMoveOfDetachLocation,
+					length: detachedMoveEntry.length,
+				};
 			};
 
 			const isDetachId = (

@@ -394,7 +394,7 @@ function encodeRename(
 ): Encoded.MarkEffect {
 	assert(mark.cellId !== undefined, "Rename should target empty cell");
 	const renamedNodeId = context.rootRenames.getFirst(mark.cellId, mark.count).value;
-	if (renamedNodeId !== undefined && !areEqualChangeAtomIds(renamedNodeId, mark.idOverride)) {
+	if (renamedNodeId !== undefined && context.isMoveId(renamedNodeId, mark.count).value) {
 		// Detached nodes which were last at this cell location have been moved.
 		return {
 			moveOut: {
@@ -405,7 +405,7 @@ function encodeRename(
 		};
 	}
 
-	if (context.isDetachId(mark.idOverride, 1).value) {
+	if (context.isMoveId(mark.idOverride, 1).value) {
 		// These cells are the final detach location of moved nodes.
 		const encodedRevision = encodeRevision(mark.idOverride.revision);
 
@@ -444,15 +444,24 @@ function encodeRename(
 }
 
 function getLengthToSplitMark(mark: Mark, context: FieldChangeEncodingContext): number {
-	// XXX: Split for renames and `isDetachId`.
-	const length1 =
+	let count =
 		mark.cellId !== undefined
 			? rangeQueryChangeAtomIdMap(context.rootNodeChanges, mark.cellId, mark.count).length
 			: mark.count;
 
-	return isMoveMark(mark)
-		? context.isMoveId(getMovedNodeId(mark), mark.count).length
-		: length1;
+	if (isMoveMark(mark)) {
+		count = context.isMoveId(getMovedNodeId(mark), count).length;
+	}
+
+	if (mark.cellId !== undefined) {
+		const renameEntry = context.rootRenames.getFirst(mark.cellId, count);
+		count = renameEntry.length;
+		if (renameEntry.value !== undefined) {
+			count = context.isMoveId(renameEntry.value, count).length;
+		}
+	}
+
+	return count;
 }
 
 function encodeSplitMark(
@@ -516,12 +525,7 @@ function encodeMarkEffect(
 					? undefined
 					: changeAtomIdCodec.encode(mark.idOverride, context.baseContext);
 
-			// Having an idOverride means that this is not the final detach location, and should be encoded as a move.
-			return context.isMoveId(getDetachedNodeId(mark), 1).value ||
-				!areEqualChangeAtomIdOpts(mark.idOverride, {
-					revision: mark.revision,
-					localId: mark.id,
-				})
+			return context.isMoveId(getDetachedNodeId(mark), 1).value
 				? {
 						moveOut: {
 							revision: encodeRevision(mark.revision),

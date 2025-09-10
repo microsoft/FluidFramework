@@ -1626,6 +1626,27 @@ describe("ModularChangeFamily integration", () => {
 		};
 
 		const fieldAPath = { parent: rootPath, field: fieldA };
+		const fieldAId = { nodeId: undefined, field: fieldA };
+		const revisions = [{ revision: tag1 }];
+
+		const revive = Change.build(
+			{
+				family,
+				maxId: 1,
+				renames: [
+					{
+						oldId: { revision: tag2, localId: brand(0) },
+						newId: { revision: tag1, localId: brand(0) },
+						count: 2,
+						detachLocation: fieldAId,
+					},
+				],
+				revisions,
+			},
+			Change.field(fieldA, sequence.identifier, [
+				MarkMaker.revive(2, { revision: tag2, localId: brand(0) }, { revision: tag1 }),
+			]),
+		);
 
 		const move = buildTransaction((editor) => {
 			editor.move(fieldAPath, 1, 1, fieldAPath, 0);
@@ -1638,7 +1659,7 @@ describe("ModularChangeFamily integration", () => {
 				roots: [
 					{
 						detachId: { revision: tag2, localId: brand(0) },
-						detachLocation: { nodeId: undefined, field: fieldA },
+						detachLocation: fieldAId,
 						change: Change.nodeWithId(
 							0,
 							{ revision: tag1, localId: brand(1) },
@@ -1648,7 +1669,7 @@ describe("ModularChangeFamily integration", () => {
 						),
 					},
 				],
-				revisions: [{ revision: tag1 }],
+				revisions,
 			},
 			Change.field(fieldA, sequence.identifier, [MarkMaker.tomb(tag2, brand(0))]),
 		);
@@ -1661,7 +1682,7 @@ describe("ModularChangeFamily integration", () => {
 		const oldId: ChangeAtomId = { revision: tag2, localId: brand(0) };
 		const moveOutId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const moveInId: ChangeAtomId = { revision: tag1, localId: brand(1) };
-		const reviveAndMove = Change.build(
+		const reviveAndMoveWithSeparateIds = Change.build(
 			{
 				family,
 				maxId: 1,
@@ -1670,13 +1691,35 @@ describe("ModularChangeFamily integration", () => {
 						oldId,
 						newId: moveInId,
 						count: 1,
-						detachLocation: { nodeId: undefined, field: fieldA },
+						detachLocation: fieldAId,
 					},
 				],
-				revisions: [{ revision: tag1 }],
+				detachedMoves: [{ detachId: moveInId, count: 1, newLocation: fieldAId }],
+				revisions,
 			},
 			Change.field(fieldA, sequence.identifier, [
 				MarkMaker.rename(1, oldId, moveOutId),
+				MarkMaker.revive(1, moveInId, { revision: tag1 }),
+			]),
+		);
+
+		const reviveAndMoveWithSameId = Change.build(
+			{
+				family,
+				maxId: 1,
+				renames: [
+					{
+						oldId,
+						newId: moveInId,
+						count: 1,
+						detachLocation: fieldAId,
+					},
+				],
+				detachedMoves: [{ detachId: moveInId, count: 1, newLocation: fieldAId }],
+				revisions,
+			},
+			Change.field(fieldA, sequence.identifier, [
+				MarkMaker.rename(1, oldId, moveInId),
 				MarkMaker.revive(1, moveInId, { revision: tag1 }),
 			]),
 		);
@@ -1691,10 +1734,11 @@ describe("ModularChangeFamily integration", () => {
 						oldId,
 						newId: removeId,
 						count: 1,
-						detachLocation: { nodeId: undefined, field: fieldA },
+						detachLocation: fieldAId,
 					},
 				],
-				revisions: [{ revision: tag1 }],
+				detachedMoves: [{ detachId: removeId, count: 1, newLocation: fieldAId }],
+				revisions,
 			},
 			Change.field(fieldA, sequence.identifier, [
 				MarkMaker.rename(1, oldId, moveOutId),
@@ -1708,9 +1752,11 @@ describe("ModularChangeFamily integration", () => {
 			ChangeEncodingContext
 		> = {
 			successes: [
+				["revive", revive, context],
 				["move", move, context],
 				["move and remove", moveAndRemove, context],
-				["revive and move", reviveAndMove, context],
+				["revive and move (separate IDs)", reviveAndMoveWithSeparateIds, context],
+				["revive and move (same ID)", reviveAndMoveWithSameId, context],
 				["revive, move, and remove", reviveMoveAndRemove, context],
 				["edit detached", editDetached, context],
 			],

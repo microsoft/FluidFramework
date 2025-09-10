@@ -51,11 +51,6 @@ export function testSnapshots() {
 								value: false,
 								length: count,
 							}),
-							isDetachId: (id, count) => ({
-								start: id,
-								value: false,
-								length: count,
-							}),
 							encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
 							decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
 							rootNodeChanges: newTupleBTree(),
