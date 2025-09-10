@@ -133,7 +133,7 @@ export class TreeNodeKernel {
 	 * This means optimizations like skipping processing data in subtrees where no subtreeChanged events are subscribed to would be able to work,
 	 * since the kernel does not unconditionally subscribe to those events (like a design which simply forwards all events would).
 	 */
-	readonly #events = new Lazy(() => new KernelEventBuffer());
+	readonly #eventBuffer = new Lazy(() => new KernelEventBuffer());
 
 	/**
 	 * Create a TreeNodeKernel which can be looked up with {@link getKernel}.
@@ -163,7 +163,7 @@ export class TreeNodeKernel {
 			this.#hydrationState = {
 				innerNode,
 				off: innerNode.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
-					this.#events.value.emit("childrenChangedAfterBatch", {
+					this.#eventBuffer.value.emit("childrenChangedAfterBatch", {
 						changedFields,
 					});
 
@@ -172,7 +172,7 @@ export class TreeNodeKernel {
 						const treeNode = unhydratedNode.treeNode;
 						if (treeNode !== undefined) {
 							const kernel = getKernel(treeNode);
-							kernel.#events.value.emit("subtreeChangedAfterBatch");
+							kernel.#eventBuffer.value.emit("subtreeChangedAfterBatch");
 						}
 						const parentNode: FlexTreeNode | undefined =
 							unhydratedNode.parentField.parent.parent;
@@ -193,7 +193,7 @@ export class TreeNodeKernel {
 			for (const eventName of kernelEvents) {
 				this.#hydrationState.offAnchorNode.add(
 					innerNode.anchorNode.events.on(eventName, (arg) =>
-						this.#events.value.emit(eventName, arg),
+						this.#eventBuffer.value.emit(eventName, arg),
 					),
 				);
 			}
@@ -232,7 +232,7 @@ export class TreeNodeKernel {
 		// Forward relevant anchorNode events to our event handler
 		for (const eventName of kernelEvents) {
 			this.#hydrationState.offAnchorNode.add(
-				anchorNode.events.on(eventName, (arg) => this.#events.value.emit(eventName, arg)),
+				anchorNode.events.on(eventName, (arg) => this.#eventBuffer.value.emit(eventName, arg)),
 			);
 		}
 	}
@@ -276,7 +276,7 @@ export class TreeNodeKernel {
 	}
 
 	public get events(): Listenable<KernelEvents> {
-		return this.#events.value.listeners;
+		return this.#eventBuffer.value.events;
 	}
 
 	public dispose(): void {
@@ -287,8 +287,8 @@ export class TreeNodeKernel {
 				off();
 			}
 		}
-		if (this.#events.evaluated) {
-			this.#events.value.dispose();
+		if (this.#eventBuffer.evaluated) {
+			this.#eventBuffer.value.dispose();
 		}
 		// TODO: go to the context and remove myself from withAnchors
 	}
@@ -416,7 +416,7 @@ class KernelEventBuffer {
 		this.flush();
 	});
 
-	public readonly listeners = createEmitter<KernelEvents>();
+	public readonly events = createEmitter<KernelEvents>();
 
 	/**
 	 * Buffer of fields that have changed since events were paused.
@@ -456,7 +456,7 @@ class KernelEventBuffer {
 				this.#childrenChangedBuffer.add(fieldKey);
 			}
 		} else {
-			this.listeners.emit("childrenChangedAfterBatch", { changedFields });
+			this.events.emit("childrenChangedAfterBatch", { changedFields });
 		}
 	}
 
@@ -464,7 +464,7 @@ class KernelEventBuffer {
 		if (pauseTreeEventsStack) {
 			this.#subTreeChangedBuffer = true;
 		} else {
-			this.listeners.emit("subtreeChangedAfterBatch");
+			this.events.emit("subtreeChangedAfterBatch");
 		}
 	}
 
@@ -476,14 +476,14 @@ class KernelEventBuffer {
 
 		// TODO: verify this can't be fired with empty set of changed keys
 		if (this.#childrenChangedBuffer.size > 0) {
-			this.listeners.emit("childrenChangedAfterBatch", {
+			this.events.emit("childrenChangedAfterBatch", {
 				changedFields: this.#childrenChangedBuffer,
 			});
 			this.#childrenChangedBuffer.clear();
 		}
 
 		if (this.#subTreeChangedBuffer) {
-			this.listeners.emit("subtreeChangedAfterBatch");
+			this.events.emit("subtreeChangedAfterBatch");
 			this.#subTreeChangedBuffer = false;
 		}
 	}
