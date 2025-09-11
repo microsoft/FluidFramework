@@ -316,17 +316,17 @@ export const validateSummary = (runtime: MockRuntime): IBlobManagerLoadInfo => {
 	const summary = runtime.blobManager.summarize();
 	let ids: string[] | undefined;
 	let redirectTable: [string, string][] | undefined;
-	for (const [key, attachment] of Object.entries(summary.summary.tree)) {
-		if (attachment.type === SummaryType.Attachment) {
+	for (const [key, summaryObject] of Object.entries(summary.summary.tree)) {
+		if (summaryObject.type === SummaryType.Attachment) {
 			ids ??= [];
-			ids.push(attachment.id);
+			ids.push(summaryObject.id);
 		} else {
 			assert.strictEqual(key, redirectTableBlobName);
-			assert(attachment.type === SummaryType.Blob);
-			assert(typeof attachment.content === "string");
+			assert(summaryObject.type === SummaryType.Blob);
+			assert(typeof summaryObject.content === "string");
 			redirectTable = [
 				...new Map<string, string>(
-					JSON.parse(attachment.content) as [string, string][],
+					JSON.parse(summaryObject.content) as [string, string][],
 				).entries(),
 			];
 		}
