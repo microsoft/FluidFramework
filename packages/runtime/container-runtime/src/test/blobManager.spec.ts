@@ -1313,6 +1313,44 @@ for (const createBlobPayloadPending of [false, true]) {
 					"blob2 storageId should have been deleted",
 				);
 			});
+		});
+
+		describe("Storage ID Lookup", () => {
+			let redirectTable: Map<string, string>;
+
+			/**
+			 * Creates a blob with the given content and returns its local and storage id.
+			 */
+			async function createBlobAndGetIds(content: string) {
+				// For a given blob's GC node id, returns the blob id.
+				const getBlobIdFromAbsolutePath = (gcNodeId: string) => {
+					const pathParts = gcNodeId.split("/");
+					assert(
+						pathParts.length === 3 && pathParts[1] === blobManagerBasePath,
+						"Invalid blob node path",
+					);
+					return pathParts[2];
+				};
+
+				const blobContents = IsoBuffer.from(content, "utf8");
+				const handleP = runtime.createBlob(blobContents);
+				await runtime.processAll();
+
+				const blobHandle = await handleP;
+				const localId = getBlobIdFromAbsolutePath(blobHandle.absolutePath);
+				assert(redirectTable.has(localId), "blob not found in redirect table");
+				const storageId = redirectTable.get(localId);
+				assert(storageId !== undefined, "storage id not found in redirect table");
+				return {
+					localId,
+					storageId,
+				};
+			}
+
+			beforeEach(() => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- Mutating private property
+				redirectTable = (runtime.blobManager as any).redirectTable;
+			});
 
 			it("lookupBlobStorageId returns correct storage ID for attached blobs", async () => {
 				await runtime.attach();
