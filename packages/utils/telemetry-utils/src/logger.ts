@@ -103,7 +103,6 @@ export function numberFromString(str: string | null | undefined): string | numbe
  *
  * @remarks
  * This function is used to standardize timing measurements in telemetry by removing fractional parts.
- * This ensures consistent, comparable values across different telemetry events.
  * This avoids precision issues that can occur with floating-point numbers in telemetry data.
  *
  * @internal
