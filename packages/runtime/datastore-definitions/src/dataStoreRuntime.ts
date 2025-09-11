@@ -202,5 +202,5 @@ export interface IFluidDataStoreRuntimeInternalConfig {
 	 * implementations of {@link @fluidframework/datastore-definitions#IChannelFactory}).
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
-	readonly minVersionForCollab?: MinimumVersionForCollab | undefined;
+	readonly minVersionForCollab: MinimumVersionForCollab | undefined;
 }

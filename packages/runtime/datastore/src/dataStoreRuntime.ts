@@ -296,7 +296,7 @@ export class FluidDataStoreRuntime
 	/**
 	 * See `IFluidDataStoreRuntimeInternalConfig.minVersionForCollab`.
 	 */
-	public readonly minVersionForCollab?: MinimumVersionForCollab | undefined;
+	public readonly minVersionForCollab: MinimumVersionForCollab;
 
 	/**
 	 * Create an instance of a DataStore runtime.

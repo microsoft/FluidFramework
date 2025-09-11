@@ -750,7 +750,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	 * Consumed by {@link @fluidframework/datastore#FluidDataStoreRuntime}.
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
-	readonly minVersionForCollab?: MinimumVersionForCollab;
+	readonly minVersionForCollab: MinimumVersionForCollab;
 }
 
 /**

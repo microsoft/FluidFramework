@@ -169,7 +169,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
     // (undocumented)
     readonly id: string;
     readonly isLocalDataStore: boolean;
-    readonly minVersionForCollab?: MinimumVersionForCollab;
+    readonly minVersionForCollab: MinimumVersionForCollab;
     readonly packagePath: PackagePath;
 }
 
