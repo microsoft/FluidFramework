@@ -47,6 +47,11 @@ export type RuntimeOptionsAffectingDocSchema = Omit<
 
 /**
  * Subset of {@link RuntimeOptionsAffectingDocSchema} which existed prior to the introduction of explicitSchemaControl.
+ *
+ * @remarks
+ * Runtime options that affect document schema should generally require explicitSchemaControl to be enabled.
+ * However, to prevent disruption to existing customers, options that existed prior to explicitSchemaControl
+ * do not explicity require explicitSchemaControl to be enabled. Do not add new options to this list.
  */
 type RuntimeOptionsPredatingExplicitSchemaControl = Pick<
 	RuntimeOptionsAffectingDocSchema,
@@ -56,33 +61,6 @@ type RuntimeOptionsPredatingExplicitSchemaControl = Pick<
 	| "flushMode"
 	| "gcOptions"
 	| "enableGroupedBatching"
->;
-
-/**
- * Subset of keys of {@link RuntimeOptionsAffectingDocSchema} which require explicit schema control to be enabled.
- *
- * @remarks
- * Runtime options that affect document schema should generally require explicitSchemaControl to be enabled.
- * However, to prevent disruption to existing customers, options that existed prior to explicitSchemaControl
- * do not explicity require explicitSchemaControl to be enabled. Do not add new options to this list.
- */
-type RuntimeOptionsThatRequireExplicitSchemaControl = keyof Omit<
-	RuntimeOptionsAffectingDocSchema,
-	keyof RuntimeOptionsPredatingExplicitSchemaControl
->;
-
-/**
- * Runtime options that require explicitSchemaControl to be enabled.
- *
- * @remarks
- * This is defined as a Record instead of an array to allow TS enforcement that
- * all keys of RuntimeOptionsThatRequireExplicitSchemaControl are included.
- */
-export const runtimeOptionKeysThatRequireExplicitSchemaControl = {
-	createBlobPayloadPending: "createBlobPayloadPending",
-} as const satisfies Record<
-	RuntimeOptionsThatRequireExplicitSchemaControl,
-	RuntimeOptionsThatRequireExplicitSchemaControl
 >;
 
 /**
@@ -152,6 +130,34 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 		"1.0.0": undefined,
 	},
 } as const satisfies ConfigMap<RuntimeOptionsAffectingDocSchema>;
+
+/**
+ * Keys of {@link ContainerRuntimeOptionsInternal} that require explicitSchemaControl to be enabled.
+ */
+export const runtimeOptionKeysThatRequireExplicitSchemaControl = Object.keys(
+	runtimeOptionsAffectingDocSchemaConfigMap,
+).filter((key) => {
+	// This automatically filters out the keys of RuntimeOptionsPredatingExplicitSchemaControl from
+	// the keys of RuntimeOptionsAffectingDocSchema. This will leave us with only the keys
+	// of the options that require explicitSchemaControl to be enabled.
+	// Do not add to this list going forward.
+	const optionsThatRequireExplicitSchemaControl: (keyof RuntimeOptionsPredatingExplicitSchemaControl)[] =
+		[
+			"explicitSchemaControl",
+			"compressionOptions",
+			"enableRuntimeIdCompressor",
+			"flushMode",
+			"gcOptions",
+			"enableGroupedBatching",
+		];
+
+	return !optionsThatRequireExplicitSchemaControl.includes(
+		key as keyof RuntimeOptionsPredatingExplicitSchemaControl,
+	);
+}) as (keyof Omit<
+	typeof runtimeOptionsAffectingDocSchemaConfigMap,
+	keyof RuntimeOptionsPredatingExplicitSchemaControl
+>)[];
 
 const runtimeOptionsAffectingDocSchemaConfigValidationMap = {
 	enableGroupedBatching: configValueToMinVersionForCollab([
