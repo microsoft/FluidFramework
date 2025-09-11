@@ -26,11 +26,7 @@ import type { DataObjectFactoryProps } from "./pureDataObjectFactory.js";
 export class TreeDataObjectFactory<
 	TDataObject extends TreeDataObject<TDataObjectTypes>,
 	TDataObjectTypes extends DataObjectTypes = DataObjectTypes,
-> extends MigrationDataObjectFactory<
-	TDataObject,
-	RootTreeView,
-	TDataObjectTypes
-> {
+> extends MigrationDataObjectFactory<TDataObject, RootTreeView, TDataObjectTypes> {
 	public constructor(props: DataObjectFactoryProps<TDataObject, TDataObjectTypes>) {
 		super({
 			...props,
