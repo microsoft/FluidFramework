@@ -37,5 +37,3 @@ export type {
 	IDirectoryNewStorageFormat,
 	IDirectoryDataObject,
 } from "./directory.js";
-
-export { SharedMapOracle } from "./mapOracle.js";

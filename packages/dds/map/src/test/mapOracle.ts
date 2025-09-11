@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { ISharedMap, IValueChanged } from "./interfaces.js";
+import { strict as assert } from "node:assert";
+
+import type { ISharedMap, IValueChanged } from "../interfaces.js";
 
 /**
  * Simple oracle for ISharedMap that mirrors the map state.
@@ -26,9 +28,11 @@ export class SharedMapOracle {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const { key, previousValue } = change;
 
-		if (previousValue !== this.oracle.get(key)) {
-			throw new Error("Mismatch on previous value");
-		}
+		assert.strictEqual(
+			previousValue,
+			this.oracle.get(key),
+			`Mismatch on previous value for key="${key}"`,
+		);
 
 		if (this.fuzzMap.has(key)) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -50,24 +54,14 @@ export class SharedMapOracle {
 	};
 
 	public validate(): void {
-		const actual = new Map(this.fuzzMap.entries());
+		const actual = Object.fromEntries(this.fuzzMap.entries());
+		const expected = Object.fromEntries(this.oracle.entries());
 
-		if (actual.size !== this.oracle.size) {
-			throw new Error(
-				`SharedMapOracle mismatch: expected ${this.oracle.size}, actual ${actual.size}`,
-			);
-		}
-
-		// Compare value by key
-		for (const [key, actualValue] of actual.entries()) {
-			const expectedValue = this.oracle.get(key);
-
-			if (actualValue !== expectedValue) {
-				throw new Error(
-					`Mismatch at key="${key}": actual=${actualValue}, expected=${expectedValue}`,
-				);
-			}
-		}
+		assert.deepStrictEqual(
+			actual,
+			expected,
+			`SharedMapOracle mismatch: actual vs expected differs`,
+		);
 	}
 
 	public dispose(): void {

@@ -5,7 +5,7 @@
 
 import type { ISharedMap } from "../../interfaces.js";
 import type { SharedMap } from "../../mapFactory.js";
-import { SharedMapOracle } from "../../mapOracle.js";
+import { SharedMapOracle } from "../mapOracle.js";
 
 /**
  * @internal

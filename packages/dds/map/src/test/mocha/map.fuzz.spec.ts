@@ -9,7 +9,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { createDDSFuzzSuite, type DDSFuzzHarnessEvents } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { SharedMapOracle } from "../../mapOracle.js";
+import { SharedMapOracle } from "../mapOracle.js";
 
 import { _dirname } from "./dirname.cjs";
 import { baseMapModel } from "./fuzzUtils.js";
