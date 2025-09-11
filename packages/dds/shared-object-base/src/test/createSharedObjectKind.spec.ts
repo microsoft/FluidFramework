@@ -211,12 +211,12 @@ describe("createSharedObjectKind with minVersionForCollab", () => {
 			factory: fooKernelFactory(options),
 		};
 
-		const LocalSharedFoo = makeSharedObjectKind(sharedObjectOptions);
+		const SharedFooClass = makeSharedObjectKind(sharedObjectOptions);
 		const runtime = new MockFluidDataStoreRuntime({
-			registry: [LocalSharedFoo.getFactory()],
+			registry: [SharedFooClass.getFactory()],
 			minVersionForCollab,
 		});
-		const foo = LocalSharedFoo.create(runtime, "test-id");
+		const foo = SharedFooClass.create(runtime, "test-id");
 
 		assert.strictEqual(foo.minVersionForCollab, "1.2.3");
 	});
