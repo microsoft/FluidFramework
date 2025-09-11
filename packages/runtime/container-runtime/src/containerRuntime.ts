@@ -5185,6 +5185,10 @@ export class ContainerRuntime
 		return entry.interface as T;
 	}
 
+	public getMinVersionForCollab(): MinimumVersionForCollab {
+		return semanticVersionToMinimumVersionForCollab(this.minVersionForCollab);
+	}
+
 	private get groupedBatchingEnabled(): boolean {
 		return this.sessionSchema.opGroupingEnabled === true;
 	}

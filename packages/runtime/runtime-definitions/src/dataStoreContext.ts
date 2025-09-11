@@ -305,6 +305,11 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 		loadingGroupIds: string[],
 		pathParts: string[],
 	): Promise<{ snapshotTree: ISnapshotTree; sequenceNumber: number }>;
+
+	/**
+	 * Gets the minVersionForCollab passed into the ContainerRuntime.
+	 */
+	getMinVersionForCollab(): MinimumVersionForCollab;
 }
 
 /**
@@ -557,7 +562,7 @@ export interface IFluidParentContext
 	 * Consumed by {@link @fluidframework/container-runtime#FluidDataStoreContext}.
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
-	readonly minVersionForCollab?: MinimumVersionForCollab;
+	readonly minVersionForCollab: MinimumVersionForCollab;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IRuntimeStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;

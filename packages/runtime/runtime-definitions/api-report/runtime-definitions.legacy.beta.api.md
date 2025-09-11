@@ -84,6 +84,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
     getAudience(): IAudience;
+    getMinVersionForCollab(): MinimumVersionForCollab;
     getQuorum(): IQuorumClients;
     getSnapshotForLoadingGroupId(loadingGroupIds: string[], pathParts: string[]): Promise<{
         snapshotTree: ISnapshotTree;
@@ -237,7 +238,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     readonly isReadOnly?: () => boolean;
     readonly loadingGroupId?: string;
     makeLocallyVisible(): void;
-    readonly minVersionForCollab?: MinimumVersionForCollab;
+    readonly minVersionForCollab: MinimumVersionForCollab;
     // (undocumented)
     readonly options: Record<string | number, any>;
     readonly scope: FluidObject;

@@ -334,6 +334,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
     // (undocumented)
+    getMinVersionForCollab(): MinimumVersionForCollab;
+    // (undocumented)
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
@@ -468,7 +470,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     makeVisibleAndAttachGraph(): void;
     // (undocumented)
-    readonly minVersionForCollab: MinimumVersionForCollab | undefined;
+    readonly minVersionForCollab: MinimumVersionForCollab;
     // (undocumented)
     notifyReadOnlyState(readonly: boolean): void;
     // (undocumented)

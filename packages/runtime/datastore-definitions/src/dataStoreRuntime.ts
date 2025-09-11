@@ -174,6 +174,11 @@ export interface IFluidDataStoreRuntime
 	 * with it.
 	 */
 	readonly entryPoint: IFluidHandle<FluidObject>;
+
+	/**
+	 * Get the minVersionForCollab specified when instantiating the ContainerRuntime.
+	 */
+	readonly minVersionForCollab: MinimumVersionForCollab;
 }
 
 /**

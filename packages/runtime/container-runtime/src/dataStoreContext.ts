@@ -1221,6 +1221,10 @@ export abstract class FluidDataStoreContext
 	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		return this.parentContext.uploadBlob(blob, signal);
 	}
+
+	public getMinVersionForCollab(): MinimumVersionForCollab {
+		return this.containerRuntime.getMinVersionForCollab();
+	}
 }
 
 /**

@@ -163,4 +163,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number) {
 		throw new Error("Method not implemented.");
 	}
+
+	public getMinVersionForCollab(): MinimumVersionForCollab {
+		return this.minVersionForCollab;
+	}
 }
