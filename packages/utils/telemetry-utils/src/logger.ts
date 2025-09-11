@@ -95,9 +95,17 @@ export function numberFromString(str: string | null | undefined): string | numbe
 	return Number.isNaN(num) ? str : num;
 }
 
-// TODO: add docs
-// eslint-disable-next-line jsdoc/require-description
 /**
+ * Formats a tick value (typically duration or timestamp) to ensure consistent precision for telemetry.
+ *
+ * @param tick - The tick value to format, typically representing time in milliseconds
+ * @returns The tick value rounded down to the nearest integer
+ *
+ * @remarks
+ * This function is used to standardize timing measurements in telemetry by removing fractional parts.
+ * This ensures consistent, comparable values across different telemetry events and avoids precision
+ * issues that can occur with floating-point numbers in telemetry data.
+ *
  * @internal
  */
 export function formatTick(tick: number): number {
