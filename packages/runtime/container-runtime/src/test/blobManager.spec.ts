@@ -1341,8 +1341,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 				// Create a blob but don't process it (keep it pending)
 				const blobContents = IsoBuffer.from("pending blob content", "utf8");
-				const handleP = runtime.createBlob(blobContents);
-				const blobHandle = await handleP;
+				const blobHandle = await runtime.createBlob(blobContents);
 
 				// Extract localId from the handle path
 				const getBlobIdFromGCNodeId = (gcNodeId: string) => {
