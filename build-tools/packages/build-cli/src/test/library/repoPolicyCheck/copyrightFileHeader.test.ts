@@ -35,7 +35,7 @@ describe("copyright-file-header", () => {
   });
 
   describe("readFilePartial", () => {
-    it("reads only the first portion of a file", () => {
+    it("reads only the first portion of a large file", () => {
       const testFile = path.join(testDir, "partial-test.txt");
       const content = "0123456789".repeat(100); // 1000 characters
       fs.writeFileSync(testFile, content);
@@ -47,26 +47,52 @@ describe("copyright-file-header", () => {
       expect(partial).to.equal("0123456789".repeat(10));
     });
 
-    it("handles files smaller than the byte limit", () => {
+    it("returns entire small file when file size <= maxBytes (optimized for common case)", () => {
       const testFile = path.join(testDir, "small-test.txt");
-      const content = "small file content";
+      const content = "small file content"; // 18 characters, much smaller than default 512
       fs.writeFileSync(testFile, content);
       testFiles.push(testFile);
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      const partial = readFilePartial(testFile, 1000);
+      const partial = readFilePartial(testFile); // Uses default 512 byte limit
       expect(partial).to.equal(content);
+      expect(partial).to.have.length(18);
     });
 
-    it("uses default 512 byte limit", () => {
-      const testFile = path.join(testDir, "default-test.txt");
-      const content = "x".repeat(1000);
+    it("truncates content when file size > maxBytes", () => {
+      const testFile = path.join(testDir, "medium-test.txt");
+      const content = "x".repeat(1000); // 1000 characters, larger than default 512
       fs.writeFileSync(testFile, content);
       testFiles.push(testFile);
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-      const partial = readFilePartial(testFile);
+      const partial = readFilePartial(testFile); // Uses default 512 byte limit
       expect(partial).to.have.length(512);
+      expect(partial).to.equal("x".repeat(512));
+    });
+
+    it("handles file exactly at the limit size", () => {
+      const testFile = path.join(testDir, "exact-test.txt");
+      const content = "x".repeat(512); // Exactly 512 characters
+      fs.writeFileSync(testFile, content);
+      testFiles.push(testFile);
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      const partial = readFilePartial(testFile, 512);
+      expect(partial).to.equal(content); // Should return entire file since size == maxBytes
+      expect(partial).to.have.length(512);
+    });
+
+    it("uses custom byte limit correctly", () => {
+      const testFile = path.join(testDir, "custom-limit-test.txt");
+      const content = "0123456789".repeat(20); // 200 characters
+      fs.writeFileSync(testFile, content);
+      testFiles.push(testFile);
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      const partial = readFilePartial(testFile, 50);
+      expect(partial).to.have.length(50);
+      expect(partial).to.equal("0123456789".repeat(5));
     });
   });
 
