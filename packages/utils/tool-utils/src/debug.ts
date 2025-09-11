@@ -8,7 +8,7 @@ import registerDebug from "debug";
 import { pkgName, pkgVersion } from "./packageVersion.js";
 
 /**
- * Debug logger for the @fluidframework/tool-utils package.
+ * Debug logger for the `@fluidframework/tool-utils` package.
  *
  * This logger is initialized with the namespace "fluid:tool-utils" and can be used
  * throughout the package for debug logging.
