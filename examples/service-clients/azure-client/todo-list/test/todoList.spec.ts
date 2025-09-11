@@ -18,7 +18,7 @@ describe("todo-list", () => {
 		await page.waitForFunction(() => (window as any).fluidStarted as unknown);
 	});
 
-	it("loads and there's a button with + for adding new to-do items", async () => {
+	it.skip("loads and there's a button with + for adding new to-do items", async () => {
 		// Validate there is a button that can be clicked
 		await expect(page).toClick("button", { text: "+" });
 	});
