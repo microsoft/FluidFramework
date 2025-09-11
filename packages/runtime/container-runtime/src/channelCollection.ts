@@ -129,13 +129,13 @@ interface FluidDataStoreMessage {
  * to ease interactions within this package.
  */
 export interface IFluidParentContextPrivate
-	extends Omit<IFluidParentContext, "isReadOnly" | "getMinVersionForCollab"> {
+	extends Omit<IFluidParentContext, "isReadOnly" | "minVersionForCollab"> {
 	readonly isReadOnly: () => boolean;
 
 	/**
-	 * {@inheritdoc IFluidParentContext.getMinVersionForCollab}
+	 * {@inheritdoc IFluidParentContext.minVersionForCollab}
 	 */
-	getMinVersionForCollab(): MinimumVersionForCollab;
+	readonly minVersionForCollab: MinimumVersionForCollab;
 }
 
 /**
@@ -205,9 +205,7 @@ export function wrapContext(context: IFluidParentContextPrivate): IFluidParentCo
 		setChannelDirty: (address: string) => {
 			return context.setChannelDirty(address);
 		},
-		getMinVersionForCollab: () => {
-			return context.getMinVersionForCollab();
-		},
+		minVersionForCollab: context.minVersionForCollab,
 	};
 }
 

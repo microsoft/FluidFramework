@@ -352,6 +352,11 @@ export abstract class FluidDataStoreContext
 		return runtimeCompatDetailsForDataStore;
 	}
 
+	/**
+	 * {@inheritdoc IFluidDataStoreContext.minVersionForCollab}
+	 */
+	public readonly minVersionForCollab: MinimumVersionForCollab;
+
 	private baseSnapshotSequenceNumber: number | undefined;
 
 	/**
@@ -461,6 +466,7 @@ export abstract class FluidDataStoreContext
 
 		this._containerRuntime = props.parentContext.containerRuntime;
 		this.parentContext = props.parentContext;
+		this.minVersionForCollab = props.parentContext.minVersionForCollab;
 		this.id = props.id;
 		this.storage = props.storage;
 		this.scope = props.scope;
@@ -1214,13 +1220,6 @@ export abstract class FluidDataStoreContext
 		signal?: AbortSignal,
 	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		return this.parentContext.uploadBlob(blob, signal);
-	}
-
-	/**
-	 * {@inheritdoc IFluidDataStoreContext.getMinVersionForCollab}
-	 */
-	public getMinVersionForCollab(): MinimumVersionForCollab {
-		return this.parentContext.getMinVersionForCollab();
 	}
 }
 

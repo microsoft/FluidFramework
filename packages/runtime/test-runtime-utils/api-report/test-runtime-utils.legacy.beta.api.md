@@ -333,7 +333,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
     // (undocumented)
     getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
-    getMinVersionForCollab?(): MinimumVersionForCollab;
     // (undocumented)
     getQuorum(): IQuorumClients;
     // (undocumented)

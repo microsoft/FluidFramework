@@ -557,7 +557,7 @@ export interface IFluidParentContext
 	 * Consumed by {@link @fluidframework/container-runtime#FluidDataStoreContext}.
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
-	getMinVersionForCollab?(): MinimumVersionForCollab;
+	readonly minVersionForCollab?: MinimumVersionForCollab;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IRuntimeStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;
@@ -750,7 +750,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	 * Consumed by {@link @fluidframework/datastore#FluidDataStoreRuntime}.
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
-	getMinVersionForCollab?(): MinimumVersionForCollab;
+	readonly minVersionForCollab?: MinimumVersionForCollab;
 }
 
 /**

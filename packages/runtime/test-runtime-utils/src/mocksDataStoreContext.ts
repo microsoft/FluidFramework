@@ -78,7 +78,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public scope: FluidObject = undefined as any;
 
 	/**
-	 * Allows tests to set the value of minVersionForCollab.
+	 * {@inheritdoc @fluidframework/runtime-definitions#IFluidDataStoreContext.minVersionForCollab}
 	 */
 	public minVersionForCollab: MinimumVersionForCollab = defaultMinVersionForCollab;
 
@@ -162,12 +162,5 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 
 	public addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number) {
 		throw new Error("Method not implemented.");
-	}
-
-	/**
-	 * {@inheritdoc @fluidframework/runtime-definitions#IFluidDataStoreContext.getMinVersionForCollab}
-	 */
-	public getMinVersionForCollab?(): MinimumVersionForCollab {
-		return this.minVersionForCollab;
 	}
 }

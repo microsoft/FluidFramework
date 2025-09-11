@@ -130,7 +130,6 @@ import type {
 import {
 	defaultMinVersionForCollab,
 	isValidMinVersionForCollab,
-	type SemanticVersion,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	GCDataBuilder,
@@ -1182,7 +1181,7 @@ export class ContainerRuntime
 			documentSchemaController,
 			featureGatesForTelemetry,
 			provideEntryPoint,
-			updatedMinVersionForCollab,
+			semanticVersionToMinimumVersionForCollab(updatedMinVersionForCollab),
 			requestHandler,
 			undefined, // summaryConfiguration
 			recentBatchInfo,
@@ -1504,7 +1503,7 @@ export class ContainerRuntime
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
-		private readonly minVersionForCollab: SemanticVersion,
+		public readonly minVersionForCollab: MinimumVersionForCollab,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,
@@ -5184,10 +5183,6 @@ export class ContainerRuntime
 			entry.extension.onNewUse(...useContext);
 		}
 		return entry.interface as T;
-	}
-
-	public getMinVersionForCollab(): MinimumVersionForCollab {
-		return semanticVersionToMinimumVersionForCollab(this.minVersionForCollab);
 	}
 
 	private get groupedBatchingEnabled(): boolean {
