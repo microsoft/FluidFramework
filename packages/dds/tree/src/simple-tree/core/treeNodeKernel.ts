@@ -362,11 +362,9 @@ type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
 // #region TreeNodeEventBuffer
 
 /**
- * Tracks the number of nested calls to {@link withBufferedTreeEvents}.
- * Events will be buffered while this counter is \> 0.
- * Events will be flushed when this counter returns to 0.
+ * Whether or not events from {@link TreeNodeKernel} should be buffered instead of emitted immediately.
  */
-let pauseTreeEventsStack: number = 0;
+let bufferTreeEvents: boolean = false;
 
 /**
  * Call the provided callback with {@link TreeNode}s' events paused until after the callback's completion.
@@ -379,15 +377,17 @@ let pauseTreeEventsStack: number = 0;
  * Disrupting this timing can lead to unexpected behavior.
  */
 export function withBufferedTreeEvents(callback: () => void): void {
-	assert(pauseTreeEventsStack >= 0, "pauseEvents count should never be negative");
-
-	pauseTreeEventsStack++;
-
-	callback();
-
-	pauseTreeEventsStack--;
-	if (pauseTreeEventsStack === 0) {
-		flushEventsEmitter.emit("flush");
+	if (bufferTreeEvents) {
+		// Already buffering - just run the callback
+		callback();
+	} else {
+		bufferTreeEvents = true;
+		try {
+			callback();
+		} finally {
+			bufferTreeEvents = false;
+			flushEventsEmitter.emit("flush");
+		}
 	}
 }
 
@@ -399,7 +399,7 @@ const flushEventsEmitter = createEmitter<{
 }>();
 
 /**
- * Event emitter for {@link TreeNodeKernel}, which optionally buffers events based on {@link pauseTreeEventsStack}.
+ * Event emitter for {@link TreeNodeKernel}, which optionally buffers events based on {@link bufferTreeEvents}.
  * @remarks Listens to {@link flushEventsEmitter} to know when to flush any buffered events.
  */
 class KernelEventBuffer implements Listenable<KernelEvents> {
@@ -515,7 +515,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	}
 
 	#handleChildrenChangedAfterBatch(changedFields: ReadonlySet<FieldKey>): void {
-		if (pauseTreeEventsStack) {
+		if (bufferTreeEvents) {
 			for (const fieldKey of changedFields) {
 				this.#childrenChangedBuffer.add(fieldKey);
 			}
@@ -525,7 +525,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	}
 
 	#handleSubtreeChangedAfterBatch(): void {
-		if (pauseTreeEventsStack) {
+		if (bufferTreeEvents) {
 			this.#subTreeChangedBuffer = true;
 		} else {
 			this.#events.emit("subtreeChangedAfterBatch");
