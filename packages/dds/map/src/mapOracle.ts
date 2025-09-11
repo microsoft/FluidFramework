@@ -23,46 +23,48 @@ export class SharedMapOracle {
 	}
 
 	private readonly onValueChanged = (change: IValueChanged): void => {
-		const { key } = change;
-
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const newVal = this.fuzzMap.get(key);
+		const { key, previousValue } = change;
+
+		if (previousValue !== this.oracle.get(key)) {
+			throw new Error("Mismatch on previous value");
+		}
+
 		if (this.fuzzMap.has(key)) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const newVal = this.fuzzMap.get(key);
 			this.oracle.set(key, newVal); // key exists, even if value is undefined
 		} else {
 			this.oracle.delete(key); // key was deleted
 		}
 	};
 
+	/**
+	 * Note: Simply clearing the oracle can leave it out of sync with the DDS, since other clients may re-populate entries immediately after a `clear`. To keep the oracle consistent, we rebuild it from the current state of the fuzzMap whenever a `clear` event is observed.
+	 */
 	private readonly onClear = (): void => {
 		this.oracle.clear();
+		for (const [k, v] of this.fuzzMap.entries()) {
+			this.oracle.set(k, v);
+		}
 	};
 
 	public validate(): void {
-		const actual = [...this.fuzzMap.entries()];
-		const expected = [...this.oracle.entries()];
+		const actual = new Map(this.fuzzMap.entries());
 
-		if (actual.length !== expected.length) {
+		if (actual.size !== this.oracle.size) {
 			throw new Error(
-				`SharedMapOracle mismatch: expected ${expected.length}, actual ${actual.length}`,
+				`SharedMapOracle mismatch: expected ${this.oracle.size}, actual ${actual.size}`,
 			);
 		}
 
-		for (let i = 0; i < actual.length; i++) {
-			const actualEntry = actual[i];
-			const expectedEntry = expected[i];
+		// Compare value by key
+		for (const [key, actualValue] of actual.entries()) {
+			const expectedValue = this.oracle.get(key);
 
-			if (!actualEntry || !expectedEntry) {
-				throw new Error(`Unexpected undefined entry at index ${i}`);
-			}
-
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const [actualKey, actualValue] = actualEntry;
-			const [expectedKey, expectedValue] = expectedEntry;
-
-			if (actualKey !== expectedKey || actualValue !== expectedValue) {
+			if (actualValue !== expectedValue) {
 				throw new Error(
-					`Mismatch at key="${actualKey}": actual=${actualValue}, expected=${expectedValue}`,
+					`Mismatch at key="${key}": actual=${actualValue}, expected=${expectedValue}`,
 				);
 			}
 		}
