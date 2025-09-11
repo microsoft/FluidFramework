@@ -194,6 +194,7 @@ import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import {
 	getMinVersionForCollabDefaults,
 	type RuntimeOptionsAffectingDocSchema,
+	type RuntimeOptionsThatRequireExplicitSchemaControl,
 	validateRuntimeOptions,
 	runtimeOptionKeysThatRequireExplicitSchemaControl,
 } from "./containerCompatibility.js";
@@ -948,6 +949,20 @@ export class ContainerRuntime
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
+		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
+		if (!explicitSchemaControl) {
+			for (const key of Object.keys(runtimeOptions)) {
+				if (
+					runtimeOptionKeysThatRequireExplicitSchemaControl.includes(
+						key as keyof RuntimeOptionsThatRequireExplicitSchemaControl,
+					) &&
+					runtimeOptions[key as keyof IContainerRuntimeOptionsInternal] !== undefined
+				) {
+					throw new UsageError(`explicitSchemaControl must be enabled to use ${key}`);
+				}
+			}
+		}
+
 		// The logic for enableRuntimeIdCompressor is a bit different. Since `undefined` represents a logical state (off)
 		// we need to check it's explicitly set in runtimeOptions. If so, we should use that value even if it's undefined.
 		const enableRuntimeIdCompressor =
@@ -1164,15 +1179,6 @@ export class ContainerRuntime
 			explicitSchemaControl,
 			createBlobPayloadPending,
 		};
-
-		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
-		if (!explicitSchemaControl) {
-			for (const key of runtimeOptionKeysThatRequireExplicitSchemaControl) {
-				if (internalRuntimeOptions[key] !== undefined) {
-					throw new UsageError(`explicitSchemaControl must be enabled to use ${key}`);
-				}
-			}
-		}
 
 		const runtime = new containerRuntimeCtor(
 			context,
