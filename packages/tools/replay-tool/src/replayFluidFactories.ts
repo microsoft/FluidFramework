@@ -129,9 +129,9 @@ export class ReplayDataStoreFactory
 			context,
 			new Map(allDdsFactories.map((factory) => [factory.type, factory])),
 			true /* existing */,
-			() => {
-				// TODO: AB#4779
-				throw new Error("TODO");
+			async () => {
+				// The replay tool only needs the runtime for summarization, not an actual data object
+				return {};
 			},
 		);
 	}

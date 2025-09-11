@@ -140,9 +140,9 @@ export function mixinDataStoreWithAnyChannel(
 				dataStoreContext,
 				new ObjectRegistryWithUnknownChannels(sharedObjectRegistry),
 				existing,
-				() => {
-					// TODO: AB#4779
-					throw new Error("TODO");
+				async () => {
+					// The replay tool only needs the runtime for summarization, not an actual data object
+					return {};
 				},
 			);
 		}
