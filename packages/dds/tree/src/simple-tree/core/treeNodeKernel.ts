@@ -473,15 +473,16 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	}
 
 	public on(eventName: keyof KernelEvents, listener: KernelEvents[typeof eventName]): Off {
-		this.#events.on(eventName, listener);
-
 		// Lazily bind event listeners to the source.
-		// If we do not have a dispose handler for the event on the source, then we have not registered a listener yet.
-		if (!this.#disposeSourceListeners.has(eventName)) {
+		// If we do not have any existing listeners for this event, then we need to bind to the source.
+		if (!this.#events.hasListeners(eventName)) {
+			assert(!this.#disposeSourceListeners.has(eventName), "Should not have a dispose function without listeners");
+
 			const off = this.#eventSource.on(eventName, (args) => this.emit(eventName, args));
 			this.#disposeSourceListeners.set(eventName, off);
 		}
 
+		this.#events.on(eventName, listener);
 		return () => this.off(eventName, listener);
 	}
 
