@@ -12,14 +12,6 @@ import { pkgName, pkgVersion } from "./packageVersion.js";
  *
  * This logger is initialized with the namespace "fluid:tool-utils" and can be used
  * throughout the package for debug logging.
- *
- * @internal
- *
- * @example
- * ```ts
- * import { debug } from "@fluidframework/tool-utils";
- * debug("This is a debug message");
- * ```
  */
 export const debug = registerDebug("fluid:tool-utils");
 debug(`Package: ${pkgName} - Version: ${pkgVersion}`);
