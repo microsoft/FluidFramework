@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { debug } from "./debug.js";
 export type { IAsyncCache, IResources } from "./fluidToolRc.js";
 export { loadRC, lockRC, saveRC } from "./fluidToolRc.js";
 export type { IOdspTokenManagerCacheKey, OdspTokenConfig } from "./odspTokenManager.js";
