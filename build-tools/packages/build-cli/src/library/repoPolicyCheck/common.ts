@@ -34,42 +34,6 @@ export function readFile(file: string): string {
 	return fs.readFileSync(file, { encoding: "utf8" });
 }
 
-/**
- * Reads only the first portion of a file, useful for checking headers.
- * Optimized to perform well on small files (which make up ~80% of the codebase)
- * while still providing memory efficiency for large files.
- * @param file - Absolute path to the file.
- * @param maxBytes - Maximum number of bytes to read. Defaults to 512.
- * @returns The first portion of the file as a string.
- */
-export function readFilePartial(file: string, maxBytes: number = 512): string {
-	try {
-		// For small files (the common case), this is the most efficient approach.
-		// For medium files, we read the whole file but only return the needed portion.
-		// This optimizes for the ~80% of files that are small while still working for larger files.
-		const content = fs.readFileSync(file, { encoding: "utf8" });
-		
-		// If the file is small enough, return it all (common case)
-		if (content.length <= maxBytes) {
-			return content;
-		}
-		
-		// For larger files, return only the first part
-		return content.substring(0, maxBytes);
-	} catch (error) {
-		// Fallback to partial reading for very large files where readFileSync might fail
-		// due to memory constraints or other issues
-		const fd = fs.openSync(file, "r");
-		try {
-			const buffer = Buffer.alloc(maxBytes);
-			const bytesRead = fs.readSync(fd, buffer, 0, maxBytes, 0);
-			return buffer.subarray(0, bytesRead).toString("utf8");
-		} finally {
-			fs.closeSync(fd);
-		}
-	}
-}
-
 export function writeFile(file: string, data: string): void {
 	fs.writeFileSync(file, data, { encoding: "utf8" });
 }
