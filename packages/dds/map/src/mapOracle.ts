@@ -11,41 +11,38 @@ import type { ISharedMap, IValueChanged } from "./interfaces.js";
  */
 export class SharedMapOracle {
 	private readonly oracle = new Map<string, unknown>();
-	private readonly onValueChanged: (change: IValueChanged) => void;
-	private readonly onClear: () => void;
 
 	public constructor(private readonly fuzzMap: ISharedMap) {
-		// Snapshot initial state
-		for (const [k, v] of fuzzMap.entries()) {
-			this.oracle.set(k, v);
-		}
-
-		this.onValueChanged = (change: IValueChanged) => {
-			const { key } = change;
-
-			// Update oracle to match DDS state
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const newVal = this.fuzzMap.get(key);
-
-			if (newVal === undefined) {
-				this.oracle.delete(key);
-			} else {
-				this.oracle.set(key, newVal);
-			}
-		};
-
-		this.onClear = () => {
-			this.oracle.clear();
-		};
-
 		// Subscribe
 		this.fuzzMap.on("valueChanged", this.onValueChanged);
 		this.fuzzMap.on("clear", this.onClear);
 	}
 
-	/**
-	 * Validate that the oracle matches the DDS
-	 * */
+	private readonly onValueChanged = (change: IValueChanged): void => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const { key, previousValue } = change;
+		const oraclePrev = this.oracle.get(key);
+
+		// Validate previousValue
+		if (oraclePrev !== previousValue) {
+			throw new Error(
+				`SharedMapOracle previousValue mismatch: key="${key}", expected=${oraclePrev}, actual=${previousValue}`,
+			);
+		}
+
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const newVal = this.fuzzMap.get(key);
+		if (this.fuzzMap.has(key)) {
+			this.oracle.set(key, newVal); // key exists, even if value is undefined
+		} else {
+			this.oracle.delete(key); // key was deleted
+		}
+	};
+
+	private readonly onClear = (): void => {
+		this.oracle.clear();
+	};
+
 	public validate(): void {
 		const actual = [...this.fuzzMap.entries()];
 		const expected = [...this.oracle.entries()];
@@ -74,6 +71,8 @@ export class SharedMapOracle {
 				);
 			}
 		}
+
+		this.oracle.clear();
 	}
 
 	public dispose(): void {
