@@ -60,7 +60,10 @@ import type { TreeNode } from "./treeNode.js";
 interface UnhydratedTreeSequenceFieldEditBuilder
 	extends SequenceFieldEditBuilder<FlexibleFieldContent, UnhydratedFlexTreeNode[]> {}
 
-type UnhydratedFlexTreeNodeEvents = Pick<AnchorEvents, "childrenChangedAfterBatch">;
+type UnhydratedFlexTreeNodeEvents = Pick<
+	AnchorEvents,
+	"childrenChangedAfterBatch" | "subtreeChangedAfterBatch"
+>;
 
 /** A node's parent field and its index in that field */
 type LocationInField = FlexTreeNode["parentField"];
@@ -245,6 +248,25 @@ export class UnhydratedFlexTreeNode
 
 	public emitChangedEvent(key: FieldKey): void {
 		this._events.emit("childrenChangedAfterBatch", { changedFields: new Set([key]) });
+
+		// Also emit subtree changed event for this node and all ancestors.
+		this.#emitSubtreeChangedEvents();
+	}
+
+	/**
+	 * Emit subtree changed events for this node and all ancestors.
+	 */
+	#emitSubtreeChangedEvents(): void {
+		this._events.emit("subtreeChangedAfterBatch");
+
+		const parent = this.parentField.parent.parent;
+		assert(
+			parent === undefined || parent instanceof UnhydratedFlexTreeNode,
+			0xb76 /* Unhydrated node's parent should be an unhydrated node */,
+		);
+		if (parent !== undefined) {
+			parent.#emitSubtreeChangedEvents();
+		}
 	}
 }
 

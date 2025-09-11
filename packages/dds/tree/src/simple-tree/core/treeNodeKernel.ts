@@ -80,8 +80,6 @@ export function tryGetTreeNodeSchema(value: unknown): undefined | TreeNodeSchema
 
 /** The {@link HydrationState} of a {@link TreeNodeKernel} before the kernel is hydrated */
 interface UnhydratedState {
-	readonly dispose: Off;
-	readonly events: ReturnType<typeof createEmitter<KernelEvents>>;
 	readonly innerNode: UnhydratedFlexTreeNode;
 }
 
@@ -160,43 +158,11 @@ export class TreeNodeKernel {
 			debugAssert(() => innerNode.treeNode === undefined);
 			innerNode.treeNode = node;
 
-			// Register for change events from the unhydrated flex node.
-			// These will be fired if the unhydrated node is edited, and will also be forwarded later to the hydrated node.
-			const unhydratedNodeEvents = createEmitter<KernelEvents>();
-			const disposeInnerNodeListener = innerNode.events.on(
-				"childrenChangedAfterBatch",
-				({ changedFields }) => {
-					unhydratedNodeEvents.emit("childrenChangedAfterBatch", {
-						changedFields,
-					});
-
-					let unhydratedNode: UnhydratedFlexTreeNode | undefined = innerNode;
-					while (unhydratedNode !== undefined) {
-						const treeNode = unhydratedNode.treeNode;
-						if (treeNode !== undefined) {
-							const kernel = getKernel(treeNode);
-							(kernel.#hydrationState as UnhydratedState).events.emit(
-								"subtreeChangedAfterBatch",
-							);
-						}
-						const parentNode: FlexTreeNode | undefined =
-							unhydratedNode.parentField.parent.parent;
-						assert(
-							parentNode === undefined || parentNode instanceof UnhydratedFlexTreeNode,
-							0xb76 /* Unhydrated node's parent should be an unhydrated node */,
-						);
-						unhydratedNode = parentNode;
-					}
-				},
-			);
-
 			this.#hydrationState = {
 				innerNode,
-				events: unhydratedNodeEvents,
-				dispose: disposeInnerNodeListener,
 			};
 
-			this.#eventBuffer = new KernelEventBuffer(unhydratedNodeEvents);
+			this.#eventBuffer = new KernelEventBuffer(innerNode.events);
 		} else {
 			// Hydrated case
 			this.#hydrationState = this.createHydratedState(innerNode.anchorNode);
