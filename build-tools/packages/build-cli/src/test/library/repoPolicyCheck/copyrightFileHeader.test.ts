@@ -11,7 +11,7 @@ import { handlers } from "../../../library/repoPolicyCheck/copyrightFileHeader.j
 
 describe("copyright-file-header", () => {
 	let testDir: string;
-	let testFiles: string[] = [];
+	const testFiles: string[] = [];
 
 	before(() => {
 		// Create a temporary directory for test files
@@ -81,9 +81,11 @@ ${"// ".repeat(1000)}`; // Add lots of content to test partial reading
 			testFiles.push(testFile);
 
 			const handler = handlers.find(h => h.name === "js-ts-copyright-file-header");
-			expect(handler).to.not.be.undefined;
+			if (!handler) {
+				throw new Error("Handler not found");
+			}
 
-			const result = await handler!.handler(testFile, "");
+			const result = await handler.handler(testFile, "");
 			expect(result).to.be.undefined; // No error means valid header
 		});
 
@@ -95,9 +97,11 @@ ${"// ".repeat(1000)}`; // Add lots of content to test partial reading
 			testFiles.push(testFile);
 
 			const handler = handlers.find(h => h.name === "js-ts-copyright-file-header");
-			expect(handler).to.not.be.undefined;
+			if (!handler) {
+				throw new Error("Handler not found");
+			}
 
-			const result = await handler!.handler(testFile, "");
+			const result = await handler.handler(testFile, "");
 			expect(result).to.equal("JavaScript/TypeScript file missing copyright header");
 		});
 
@@ -115,9 +119,11 @@ ${"<!-- content -->".repeat(1000)}
 			testFiles.push(testFile);
 
 			const handler = handlers.find(h => h.name === "html-copyright-file-header");
-			expect(handler).to.not.be.undefined;
+			if (!handler) {
+				throw new Error("Handler not found");
+			}
 
-			const result = await handler!.handler(testFile, "");
+			const result = await handler.handler(testFile, "");
 			expect(result).to.be.undefined; // No error means valid header
 		});
 
@@ -135,10 +141,12 @@ ${"<!-- content -->".repeat(1000)}
 			testFiles.push(testFile);
 
 			const handler = handlers.find(h => h.name === "js-ts-copyright-file-header");
-			expect(handler).to.not.be.undefined;
+			if (!handler) {
+				throw new Error("Handler not found");
+			}
 
 			const startTime = Date.now();
-			const result = await handler!.handler(testFile, "");
+			const result = await handler.handler(testFile, "");
 			const endTime = Date.now();
 
 			expect(result).to.be.undefined; // No error means valid header
