@@ -16,11 +16,11 @@ import { pkgName, pkgVersion } from "./packageVersion.js";
  * 
  * @example
  * ```typescript
- * import { debug } from "@fluidframework/tool-utils/internal";
+ * import { debug } from "./debug.js";
  * debug("Some debug message");
  * ```
  * 
- * @public
+ * @internal
  */
 export const debug = registerDebug("fluid:tool-utils");
 debug(`Package: ${pkgName} - Version: ${pkgVersion}`);
