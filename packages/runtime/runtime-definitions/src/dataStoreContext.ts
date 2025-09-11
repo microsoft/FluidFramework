@@ -27,6 +27,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
+import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
 import type {
 	IFluidDataStoreFactory,
 	IProvideFluidDataStoreFactory,
@@ -551,6 +552,12 @@ export interface IFluidParentContext
 	 * the context should also consider themselves readonly.
 	 */
 	readonly isReadOnly?: () => boolean;
+	/**
+	 * Minimum version of the FF runtime that is required to collaborate on new documents.
+	 * Consumed by {@link @fluidframework/container-runtime#FluidDataStoreContext}.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
+	 */
+	readonly minVersionForCollab?: MinimumVersionForCollab;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IRuntimeStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;
@@ -737,6 +744,13 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	createChildDataStore?<T extends IFluidDataStoreFactory>(
 		childFactory: T,
 	): ReturnType<Exclude<T["createDataStore"], undefined>>;
+
+	/**
+	 * Minimum version of the FF runtime that is required to collaborate on new documents.
+	 * Consumed by {@link @fluidframework/datastore#FluidDataStoreRuntime}.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
+	 */
+	readonly minVersionForCollab?: MinimumVersionForCollab;
 }
 
 /**
