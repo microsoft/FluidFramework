@@ -73,19 +73,42 @@ export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
     type: "remote";
 }
 
-export { CompatibilityMode }
+// @public
+export type CompatibilityMode = "1" | "2";
 
 // @public
 export type IAzureAudience = IServiceAudience<AzureMember>;
 
-export { ITelemetryBaseEvent }
+// @public
+export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
+    // (undocumented)
+    category: string;
+    // (undocumented)
+    eventName: string;
+}
 
-export { ITelemetryBaseLogger }
+// @public
+export interface ITelemetryBaseLogger {
+    minLogLevel?: LogLevel;
+    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+}
 
-export { ITokenProvider }
+// @public
+export interface ITokenProvider {
+    documentPostCreateCallback?(documentId: string, creationToken: string): Promise<void>;
+    fetchOrdererToken(tenantId: string, documentId?: string, refresh?: boolean): Promise<ITokenResponse>;
+    fetchStorageToken(tenantId: string, documentId: string, refresh?: boolean): Promise<ITokenResponse>;
+}
 
-export { ITokenResponse }
+// @public (undocumented)
+export interface ITokenResponse {
+    fromCache?: boolean;
+    jwt: string;
+}
 
-export { IUser }
+// @public
+export interface IUser {
+    id: string;
+}
 
 ```

@@ -46,6 +46,7 @@ import {
 	type IRuntimeMessagesContent,
 	type InboundAttachMessage,
 	type IRuntimeMessageCollection,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -127,8 +128,14 @@ interface FluidDataStoreMessage {
  * being staged on IFluidParentContext can be added here as well, likely with optionality removed,
  * to ease interactions within this package.
  */
-export interface IFluidParentContextPrivate extends Omit<IFluidParentContext, "isReadOnly"> {
+export interface IFluidParentContextPrivate
+	extends Omit<IFluidParentContext, "isReadOnly" | "minVersionForCollab"> {
 	readonly isReadOnly: () => boolean;
+
+	/**
+	 * {@inheritdoc IFluidParentContext.minVersionForCollab}
+	 */
+	readonly minVersionForCollab: MinimumVersionForCollab;
 }
 
 /**
@@ -198,6 +205,7 @@ export function wrapContext(context: IFluidParentContextPrivate): IFluidParentCo
 		setChannelDirty: (address: string) => {
 			return context.setChannelDirty(address);
 		},
+		minVersionForCollab: context.minVersionForCollab,
 	};
 }
 

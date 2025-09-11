@@ -10,8 +10,10 @@ import type {
 	IContainerEvents,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import { BaseDevtools } from "./BaseDevtools.js";
 import type { ContainerKey } from "./CommonInterfaces.js";
@@ -155,10 +157,20 @@ export class DecomposedContainerForContainerRuntime
 	}
 
 	public get connectionState(): ConnectionState {
+		// Normal connection state logic - readonly state is handled separately via readOnlyInfo
 		return this.runtime.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
 	}
 
 	public get closed(): boolean {
 		return this._disposed; // IContainerRuntime doesn't have a "closed" state - only "disconnected" (reconnectable) and "disposed" (permanent)
+	}
+
+	public get readOnlyInfo(): { readonly readonly?: boolean } {
+		// IContainerRuntime doesn't expose readonly in its interface, but the implementation has isReadOnly()
+		assert(
+			this.runtime instanceof ContainerRuntime,
+			0xc2e /* DecomposedContainerForContainerRuntime is not a ContainerRuntime */,
+		);
+		return { readonly: this.runtime.isReadOnly() };
 	}
 }

@@ -6,6 +6,7 @@
 import { FluentProvider, makeStyles, shorthands, tokens } from "@fluentui/react-components";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
+	CloseContainer,
 	type ContainerKey,
 	ContainerList,
 	type DevtoolsFeatureFlags,
@@ -275,6 +276,20 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 
 	const styles = useDevtoolsStyles();
 
+	/**
+	 * Handles removing a container from the list when the dismiss button is clicked.
+	 */
+	const handleRemoveContainer = React.useCallback(
+		(containerKey: ContainerKey): void => {
+			// Send message to client to remove container from tracking
+			messageRelay.postMessage(CloseContainer.createMessage({ containerKey }));
+
+			// Update local state to remove container from view
+			setContainers((prev) => prev?.filter((key) => key !== containerKey));
+		},
+		[messageRelay],
+	);
+
 	return (
 		<div className={styles.root}>
 			<Menu
@@ -282,6 +297,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 				setSelection={setMenuSelection}
 				containers={containers}
 				supportedFeatures={supportedFeatures}
+				onRemoveContainer={handleRemoveContainer}
 			/>
 			<div style={{ width: "1px", backgroundColor: tokens.colorNeutralForeground1 }}></div>
 			<View menuSelection={menuSelection} containers={containers} />

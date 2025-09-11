@@ -1,5 +1,61 @@
 # @fluidframework/tree
 
+## 2.60.0
+
+### Minor Changes
+
+- FormatValidator added to replace JsonValidator ([#25311](https://github.com/microsoft/FluidFramework/pull/25311)) [9db6e08ec12](https://github.com/microsoft/FluidFramework/commit/9db6e08ec12973e7cc4f7fe86fecd054bafcd1c0)
+
+  The existing `@alpha` type [`JsonValidator`](https://fluidframework.com/docs/api/fluid-framework/jsonvalidator-interface) has a new type-erased alternative, `FormatValidator`, which is planned to be stabilized to `@beta` in the future.
+  It replaces `JsonValidator` in `ICodecOptions`.
+  Existing code using `ICodecOptions` should migrate to use `FormatValidator`, but this is not required for adopting this release as `JsonValidator` is still supported.
+
+- Single-node insertion/removal APIs have been removed from TableSchema (alpha) ([#25233](https://github.com/microsoft/FluidFramework/pull/25233)) [99281d2b24e](https://github.com/microsoft/FluidFramework/commit/99281d2b24ec406760c9029aad5aa72a9265a65d)
+
+  There is a significant performance benefit to inserting / removing rows / columns in batches.
+  To help encourage more performant usage patterns, single-node insertion and removal APIs have been removed.
+  The APIs that operate on batches should be used instead.
+
+  Specifically:
+
+  - `insertColumn`
+    - Use `insertColumns` instead
+  - `insertRow`
+    - Use `insertRows` instead
+  - `removeColumn`
+    - Use `removeColumns` instead
+  - `removeRow`
+    - Use `removeRows` instead
+
+- Replace "TreeEncodingOptions.useStoredKeys" with "keys" and "KeyEncodingOptions" ([#25263](https://github.com/microsoft/FluidFramework/pull/25263)) [b65f2a86d44](https://github.com/microsoft/FluidFramework/commit/b65f2a86d44d690a675867600a0a7e3c1608a473)
+
+  The alpha API `TreeEncodingOptions` has had its `useStoredKeys` `boolean` replaced with `keys` that takes a `KeyEncodingOptions` allowing for three options instead of the previous two.
+  With the new API, it is now possible to control, for APIs which support it (like [`TreeAlpha.exportVerbose`](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#exportverbose-methodsignature)), if unknown optional fields will be included when exporting data using stored keys.
+
+  Additionally, the relevant options interfaces have been marked as `@input`, indicating that more options may be added as optional parameters in the future, and that should be considered non-breaking.
+
+- SchemaFactoryAlpha.recordRecursive now supports metadata ([#25289](https://github.com/microsoft/FluidFramework/pull/25289)) [83241702d5f](https://github.com/microsoft/FluidFramework/commit/83241702d5fb5608cfa0add569c7803837abcf82)
+
+  `SchemaFactoryAlpha.recordRecursive` now support metadata like `SchemaFactoryAlpha.recordAlpha` and the other `TreeNodeSchema` creation methods on `SchemaFactoryAlpha` (except for `SchemaFactoryAlpha.record` which does not support metadata).
+
+- Range-based row/column removal methods have been added to TableSchema APIs (alpha) ([#25235](https://github.com/microsoft/FluidFramework/pull/25235)) [c803393cec6](https://github.com/microsoft/FluidFramework/commit/c803393cec6847f4294dc34b4a074ec93baf111c)
+
+  Adds range-based overloads to `removeColumns` and `removeRows` for removing contiguous ranges of rows and columns.
+
+  The `removeAllColumns` and `removeAllRows` methods have been removed, as they can be trivially implemented in terms of the new methods.
+
+- Hoist runTransaction method from TreeViewAlpha to TreeBranch ([#25280](https://github.com/microsoft/FluidFramework/pull/25280)) [a66b3b77df3](https://github.com/microsoft/FluidFramework/commit/a66b3b77df346d1689ddedcefc16846eda45991a)
+
+  Transactions are not view-schema-dependent, so it isn't necessary for them to be exclusive to the view type.
+  `runTransaction` is now available on `TreeBranch` (alpha).
+  `TreeViewAlpha` extends `TreeBranch`, so this change strictly makes the API more accessible.
+
+- Add SchemaFactoryBeta ([#25313](https://github.com/microsoft/FluidFramework/pull/25313)) [dca2361d33d](https://github.com/microsoft/FluidFramework/commit/dca2361d33dd959f5d913cbb59601685f85ff6f0)
+
+  `SchemaFactoryBeta` is added to provide a place to partially stabilize APIs from [`SchemaFactoryAlpha`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class).
+  Initially just one APIs is added as `@beta`: `scopedFactory`.
+  Users of the existing `@alpha` `scopedFactory` API on `SchemaFactoryAlpha` will need to update to use `scopedFactoryAlpha` if they require the returned factory to be a `SchemaFactoryAlpha` instance.
+
 ## 2.53.0
 
 ### Minor Changes

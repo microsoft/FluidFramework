@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { baseTreeModel } from "./fuzz/index.js";
+export { baseTreeModel, optimizedForestTreeModel } from "./fuzz/index.js";

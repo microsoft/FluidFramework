@@ -39,6 +39,8 @@ describe("RedisCollaborationSessionManager", () => {
 				hadWriteClient: true,
 				totalClientsJoined: 2,
 				maxConcurrentClients: 1,
+				sessionOpCount: 5,
+				sessionSignalCount: 10,
 			},
 		};
 
@@ -65,6 +67,8 @@ describe("RedisCollaborationSessionManager", () => {
 				hadWriteClient: false,
 				totalClientsJoined: 2,
 				maxConcurrentClients: 1,
+				sessionOpCount: 5,
+				sessionSignalCount: 10,
 			},
 		};
 
@@ -75,6 +79,8 @@ describe("RedisCollaborationSessionManager", () => {
 				hadWriteClient: true,
 				totalClientsJoined: 3,
 				maxConcurrentClients: 2,
+				sessionOpCount: 15,
+				sessionSignalCount: 20,
 			},
 		};
 		await sessionManager.addOrUpdateSession(updatedSession);
@@ -111,6 +117,8 @@ describe("RedisCollaborationSessionManager", () => {
 				hadWriteClient: true,
 				totalClientsJoined: 10,
 				maxConcurrentClients: 5,
+				sessionOpCount: 100,
+				sessionSignalCount: 200,
 			},
 		};
 		const session2: ICollaborationSession = {
@@ -123,6 +131,8 @@ describe("RedisCollaborationSessionManager", () => {
 				hadWriteClient: false,
 				totalClientsJoined: 2,
 				maxConcurrentClients: 1,
+				sessionOpCount: 5,
+				sessionSignalCount: 10,
 			},
 		};
 		await sessionManager.addOrUpdateSession(session1);
@@ -163,6 +173,8 @@ describe("RedisCollaborationSessionManager", () => {
 					hadWriteClient: i % 2 === 0,
 					totalClientsJoined: 2,
 					maxConcurrentClients: 1,
+					sessionOpCount: i * 10,
+					sessionSignalCount: i * 20,
 				},
 			};
 			sessions.push(session);

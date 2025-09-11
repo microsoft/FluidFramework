@@ -130,7 +130,6 @@ import type {
 import {
 	defaultMinVersionForCollab,
 	isValidMinVersionForCollab,
-	type SemanticVersion,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	GCDataBuilder,
@@ -1182,7 +1181,7 @@ export class ContainerRuntime
 			documentSchemaController,
 			featureGatesForTelemetry,
 			provideEntryPoint,
-			updatedMinVersionForCollab,
+			semanticVersionToMinimumVersionForCollab(updatedMinVersionForCollab),
 			requestHandler,
 			undefined, // summaryConfiguration
 			recentBatchInfo,
@@ -1504,7 +1503,7 @@ export class ContainerRuntime
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
-		private readonly minVersionForCollab: SemanticVersion,
+		public readonly minVersionForCollab: MinimumVersionForCollab,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,
@@ -3709,7 +3708,7 @@ export class ContainerRuntime
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTree {
 		if (blobRedirectTable) {
-			this.blobManager.setRedirectTable(blobRedirectTable);
+			this.blobManager.patchRedirectTable(blobRedirectTable);
 		}
 
 		// We can finalize any allocated IDs since we're the only client

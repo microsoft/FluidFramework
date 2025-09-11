@@ -31,9 +31,17 @@ export class Breakable {
 	 */
 	public use(): void {
 		if (this.brokenBy !== undefined) {
-			throw new UsageError(
+			const error = new UsageError(
 				`Invalid use of ${this.name} after it was put into an invalid state by another error.\nOriginal Error:\n${this.brokenBy}`,
 			);
+
+			// This "cause" field is added in ES2022, but using if even without that built in support, it is still helpful.
+			// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause
+			// TODO: remove this cast when targeting ES2022 lib or later.
+			(error as { cause?: unknown }).cause =
+				(this.brokenBy as { cause?: unknown }).cause ?? this.brokenBy;
+
+			throw error;
 		}
 	}
 

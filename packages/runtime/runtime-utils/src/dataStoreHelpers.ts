@@ -46,20 +46,18 @@ export function exceptionToResponse(error: unknown): IResponse {
 		};
 	}
 
-	// Capture error objects, not stack itself, as stack retrieval is very expensive operation
-	const errWithStack = generateErrorWithStack();
+	// Both error generation, and accessing the stack value are expensive operations, so we only create an error if necessary, and then defer accessing the stack value until it is needed.
+	const errWithStack =
+		typeof error === "object" && error !== null && "stack" in error
+			? (error as { stack: string })
+			: generateErrorWithStack();
 
 	return {
 		mimeType: "text/plain",
 		status,
 		value: `${error}`,
 		get stack() {
-			// Use type assertion after checking if error is an object with stack
-			return (
-				(typeof error === "object" && error !== null && "stack" in error
-					? (error.stack as string | undefined)
-					: undefined) ?? errWithStack.stack
-			);
+			return errWithStack.stack;
 		},
 	};
 }
@@ -75,14 +73,15 @@ export function responseToException(response: IResponse, request: IRequest): Err
 	// As of 2025-08-20 the code seems to assume `response.value` is always a string.
 	// This type assertion just encodes that assumption as we move to stricter linting rules, but it might need to be revisited.
 	const message = response.value as string;
-	const errWithStack = generateErrorWithStack();
+	// Both error generation, and accessing the stack value are expensive operations, so we only create an error if necessary, and then defer accessing the stack value until it is needed.
+	const errWithStack = "stack" in response ? response : generateErrorWithStack();
 	const responseErr: Error & IResponseException = {
 		errorFromRequestFluidObject: true,
 		message,
 		name: "Error",
 		code: response.status,
 		get stack() {
-			return response.stack ?? errWithStack.stack;
+			return errWithStack.stack;
 		},
 		underlyingResponseHeaders: response.headers,
 	};
@@ -119,7 +118,7 @@ export function createResponseError(
 	// Omit query string which could contain personal data unfit for logging
 	const urlNoQuery = request.url?.split("?")[0];
 
-	// Capture error objects, not stack itself, as stack retrieval is very expensive operation, so we delay it
+	// Both error generation, and accessing the stack value are expensive operations, so we only create an error if necessary, and then defer accessing the stack value until it is needed.
 	const errWithStack = generateErrorWithStack();
 
 	return {

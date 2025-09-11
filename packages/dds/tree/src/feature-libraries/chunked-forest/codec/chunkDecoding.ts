@@ -242,13 +242,13 @@ export class IncrementalChunkDecoder implements ChunkDecoder {
 	public decode(_: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		assert(
 			this.cache.incrementalDecoder !== undefined,
-			"incremental decoder not available for incremental field decoding",
+			0xc27 /* incremental decoder not available for incremental field decoding */,
 		);
 		const chunkReferenceId = readStreamNumber(stream);
 		const batch = this.cache.incrementalDecoder.getEncodedIncrementalChunk(
 			brand(chunkReferenceId),
 		);
-		assert(batch !== undefined, "Incremental chunk data missing");
+		assert(batch !== undefined, 0xc28 /* Incremental chunk data missing */);
 		// The incremental chunk data is self-describing, i.e., it contain its own shapes list and identifier table.
 		// Use these to create a new decoder context to be used to decode the incremental chunk's data.
 		const context = new DecoderContext(

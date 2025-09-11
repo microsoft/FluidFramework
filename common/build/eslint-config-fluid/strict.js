@@ -51,6 +51,11 @@ module.exports = {
 					// Specifying just "VariableDeclaration" results in eslint flagging all variable declarations scoped within something that is exported, including in the body of functions, which is not desired.
 					"ExportNamedDeclaration > VariableDeclaration",
 				],
+				// Require docs on overload signatures.
+				skipInterveningOverloadedDeclarations: false,
+
+				// Do not require docs on overload implementations - only the overload signatures need them.
+				exemptOverloadedImplementations: true,
 			},
 		],
 	},

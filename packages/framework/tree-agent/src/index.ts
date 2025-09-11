@@ -9,7 +9,8 @@
  * @packageDocumentation
  */
 
-export type { Log, SharedTreeSemanticAgent, createSemanticAgent } from "./agent.js";
+export { createSemanticAgent } from "./agent.js";
+export type { Log, SharedTreeSemanticAgent } from "./agent.js";
 export type { TreeView, llmDefault, instanceOf } from "./utils.js";
 export {
 	buildFunc,

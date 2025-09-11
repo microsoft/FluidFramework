@@ -250,7 +250,7 @@ export class MockRuntime
 				table.set(detachedId, id);
 			}
 			this.detachedStorage.blobs.clear();
-			this.blobManager.setRedirectTable(table);
+			this.blobManager.patchRedirectTable(table);
 		}
 		const summary = validateSummary(this);
 		this.attachState = AttachState.Attached;
@@ -460,7 +460,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable, undefined);
+			assert.strictEqual(summaryData.redirectTable?.length, 1);
 		});
 
 		it("detached->attached snapshot", async () => {
@@ -704,7 +704,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable, undefined);
+			assert.strictEqual(summaryData.redirectTable?.length, 2);
 		});
 
 		it("handles deduped IDs in detached->attached", async () => {
@@ -729,7 +729,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable?.length, 4);
+			assert.strictEqual(summaryData.redirectTable?.length, 6);
 		});
 
 		it("can load from summary", async () => {
@@ -754,6 +754,45 @@ for (const createBlobPayloadPending of [false, true]) {
 			const summaryData2 = validateSummary(runtime2);
 			assert.strictEqual(summaryData2.ids.length, 1);
 			assert.strictEqual(summaryData2.redirectTable?.length, 3);
+		});
+
+		it("can get blobs by requesting their storage ID", async () => {
+			await runtime.attach();
+			await runtime.connect();
+
+			const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+			await runtime.processAll();
+
+			await assert.doesNotReject(handle);
+
+			// Using the summary as a simple way to grab the storage ID of the blob we just created
+			const {
+				redirectTable,
+				ids: [storageId],
+			} = validateSummary(runtime);
+			assert.strictEqual(redirectTable?.length, 1);
+			assert.strictEqual(typeof storageId, "string", "Expect storage ID to be in the summary");
+
+			const blob = await runtime.blobManager.getBlob(storageId, createBlobPayloadPending);
+
+			const runtime2 = new MockRuntime(
+				mc,
+				createBlobPayloadPending,
+				// Loading a second runtime with just the blob attachments and no redirect table
+				// lets us verify that we still correctly reconstruct the identity mapping during load.
+				{ ids: [storageId] },
+				true,
+			);
+			(runtime2.storage as unknown as BaseMockBlobStorage).blobs.set(storageId, blob);
+			await assert.doesNotReject(
+				runtime2.blobManager.getBlob(storageId, createBlobPayloadPending),
+			);
+			const {
+				redirectTable: redirectTable2,
+				ids: [storageId2],
+			} = validateSummary(runtime2);
+			assert.strictEqual(redirectTable2, undefined);
+			assert.strictEqual(storageId2, storageId, "Expect storage ID to be in the summary");
 		});
 
 		it("handles duplicate remote upload", async () => {
@@ -831,9 +870,10 @@ for (const createBlobPayloadPending of [false, true]) {
 		});
 
 		it("runtime disposed during readBlob - log no error", async () => {
-			const someId = "someId";
+			const someLocalId = "someLocalId";
+			const someStorageId = "someStorageId";
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call -- Accessing private property
-			(runtime.blobManager as any).setRedirection(someId, undefined); // To appease an assert
+			(runtime.blobManager as any).setRedirection(someLocalId, someStorageId); // To appease an assert
 
 			// Mock storage.readBlob to dispose the runtime and throw an error
 			Sinon.stub(runtime.storage, "readBlob").callsFake(async (_id: string) => {
@@ -842,7 +882,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			});
 
 			await assert.rejects(
-				async () => runtime.blobManager.getBlob(someId, false),
+				async () => runtime.blobManager.getBlob(someLocalId, false),
 				(e: Error) => e.message === "BOOM!",
 				"Expected getBlob to throw with test error message",
 			);
@@ -1107,7 +1147,7 @@ for (const createBlobPayloadPending of [false, true]) {
 		});
 
 		describe("Garbage Collection", () => {
-			let redirectTable: Map<string, string | undefined>;
+			let redirectTable: Map<string, string>;
 
 			/**
 			 * Creates a blob with the given content and returns its local and storage id.
