@@ -67,9 +67,9 @@ class SharedFooFactory implements IChannelFactory<IFoo> {
 	}
 }
 
-const SharedFoo = createSharedObjectKind<IFoo>(SharedFooFactory);
-
 describe("createSharedObjectKind's return type", () => {
+	const SharedFoo = createSharedObjectKind<IFoo>(SharedFooFactory);
+
 	it("delegates to runtime.createChannel on creation", () => {
 		const createChannelCalls: [id: string | undefined, type: string][] = [];
 		const runtime = new MockFluidDataStoreRuntime();
@@ -211,12 +211,12 @@ describe("createSharedObjectKind with minVersionForCollab", () => {
 			factory: fooKernelFactory(options),
 		};
 
-		const SharedFooClass = makeSharedObjectKind(sharedObjectOptions);
+		const SharedFoo = makeSharedObjectKind(sharedObjectOptions);
 		const runtime = new MockFluidDataStoreRuntime({
-			registry: [SharedFooClass.getFactory()],
+			registry: [SharedFoo.getFactory()],
 			minVersionForCollab,
 		});
-		const foo = SharedFooClass.create(runtime, "test-id");
+		const foo = SharedFoo.create(runtime, "test-id");
 
 		assert.strictEqual(foo.minVersionForCollab, "1.2.3");
 	});
