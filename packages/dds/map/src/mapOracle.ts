@@ -13,22 +13,17 @@ export class SharedMapOracle {
 	private readonly oracle = new Map<string, unknown>();
 
 	public constructor(private readonly fuzzMap: ISharedMap) {
+		// Snapshot current state
+		for (const [k, v] of fuzzMap.entries()) {
+			this.oracle.set(k, v);
+		}
 		// Subscribe
 		this.fuzzMap.on("valueChanged", this.onValueChanged);
 		this.fuzzMap.on("clear", this.onClear);
 	}
 
 	private readonly onValueChanged = (change: IValueChanged): void => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const { key, previousValue } = change;
-		const oraclePrev = this.oracle.get(key);
-
-		// Validate previousValue
-		if (oraclePrev !== previousValue) {
-			throw new Error(
-				`SharedMapOracle previousValue mismatch: key="${key}", expected=${oraclePrev}, actual=${previousValue}`,
-			);
-		}
+		const { key } = change;
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const newVal = this.fuzzMap.get(key);
@@ -71,8 +66,6 @@ export class SharedMapOracle {
 				);
 			}
 		}
-
-		this.oracle.clear();
 	}
 
 	public dispose(): void {

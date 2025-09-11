@@ -37,7 +37,6 @@ describe("Map fuzz tests", () => {
 		emitter: oracleEmitter,
 		// Uncomment to replay a particular seed.
 		// replay: 0,
-		only: 0,
 		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/map") },
 	});
 

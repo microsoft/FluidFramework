@@ -29,7 +29,7 @@ import {
 } from "../../index.js";
 
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
-// import { hasSharedMapOracle } from "./oracleUtils.js";
+import { hasSharedMapOracle } from "./oracleUtils.js";
 
 /**
  * Represents a map clear operation.
@@ -154,13 +154,13 @@ export const baseMapModel: DDSFuzzModel<MapFactory, MapOperation> = {
 	generatorFactory: () => takeAsync(100, mapMakeGenerator()),
 	reducer: (state, operation) => mapReducer(state, operation),
 	validateConsistency: async (a, b) => {
-		// if (hasSharedMapOracle(a.channel)) {
-		// 	a.channel.sharedMapOracle.validate();
-		// }
+		if (hasSharedMapOracle(a.channel)) {
+			a.channel.sharedMapOracle.validate();
+		}
 
-		// if (hasSharedMapOracle(b.channel)) {
-		// 	b.channel.sharedMapOracle.validate();
-		// }
+		if (hasSharedMapOracle(b.channel)) {
+			b.channel.sharedMapOracle.validate();
+		}
 		// eslint-disable-next-line no-void
 		void assertMapsAreEquivalent(a.channel, b.channel);
 	},
