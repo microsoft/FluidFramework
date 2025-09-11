@@ -73,6 +73,7 @@ export interface SharedArrayToggleMove {
 	type: "toggleMove";
 	oldEntryId: string;
 	newEntryId: string;
+	value: unknown;
 }
 
 /**
@@ -130,15 +131,18 @@ eventEmitterForFuzzHarness.on("clientCreate", (client) => {
 				break;
 			}
 			case OperationType.moveEntry: {
-				channel.insertIds.set(op.changedToEntryId, channel.insertIds.get(op.entryId));
-				channel.insertIds.delete(op.entryId);
-				channel.moveIds.set(op.entryId, op.changedToEntryId);
+				if (channel.insertIds.has(op.entryId)) {
+					channel.insertIds.set(op.changedToEntryId, channel.insertIds.get(op.entryId));
+					channel.insertIds.delete(op.entryId);
+					channel.moveIds.set(op.entryId, op.changedToEntryId);
+				}
 				break;
 			}
 			case OperationType.toggle: {
 				if (channel.insertIds.has(op.entryId)) {
 					channel.toggleIds.set(op.entryId, channel.insertIds.get(op.entryId));
 					channel.insertIds.delete(op.entryId);
+					channel.moveIds.delete(op.entryId);
 				} else {
 					channel.insertIds.set(op.entryId, channel.toggleIds.get(op.entryId));
 					channel.toggleIds.delete(op.entryId);
@@ -293,6 +297,7 @@ export function makeSharedArrayOperationGenerator(weights: {
 			type: "toggleMove",
 			oldEntryId,
 			newEntryId,
+			value: sharedArray.insertIds.get(newEntryId),
 		};
 	};
 

@@ -702,7 +702,8 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			}
 		} else if (
 			!this.isLocalPending(op.entryId, "isLocalPendingDelete") &&
-			!this.isLocalPending(op.entryId, "isLocalPendingMove")
+			!this.isLocalPending(op.entryId, "isLocalPendingMove") &&
+			this.getLiveEntry(op.entryId).isDeleted === false
 		) {
 			this.updateLiveEntry(this.getLiveEntry(op.entryId).entryId, op.entryId);
 		}

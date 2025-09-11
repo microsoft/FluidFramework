@@ -27,7 +27,6 @@ describe("SharedArray fuzz", () => {
 		rollbackProbability: 0.2,
 		defaultTestCount: 50,
 		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
-		skip: [12, 16, 26, 39, 47],
 		emitter: eventEmitterForFuzzHarness,
 	});
 });
