@@ -31,7 +31,6 @@ export {
 	type DiscriminatedUnionLibrary,
 	unionOptions,
 } from "./discriminatedUnions.js";
-export { noopValidator } from "./noopValidator.js";
 export {
 	Versioned,
 	makeVersionedCodec,

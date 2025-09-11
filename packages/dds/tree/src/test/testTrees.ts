@@ -53,8 +53,7 @@ import type { Partial } from "@sinclair/typebox";
 // eslint-disable-next-line import/no-internal-modules
 import { isLazy } from "../simple-tree/core/index.js";
 import { fieldCursorFromInsertable, testIdCompressor } from "./utils.js";
-// eslint-disable-next-line import/no-internal-modules
-import { typeboxValidator } from "../external-utilities/typeboxValidator.js";
+import { FormatValidatorBasic } from "../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { independentInitializedViewInternal } from "../shared-tree/independentView.js";
 
@@ -596,7 +595,7 @@ export function testDocumentIndependentView(
 			config,
 			{
 				forest: ForestTypeExpensiveDebug,
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 			},
 			new TreeStoredSchemaRepository(document.schemaData),
 			cursor,

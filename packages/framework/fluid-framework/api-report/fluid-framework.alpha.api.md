@@ -356,7 +356,7 @@ export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
 
 // @alpha @input
 export interface ICodecOptions {
-    readonly jsonValidator: JsonValidator | FormatValidator;
+    readonly jsonValidator: FormatValidator;
 }
 
 // @public
@@ -879,11 +879,6 @@ export type JsonTreeSchema = JsonFieldSchema & {
 };
 
 // @alpha @input
-export interface JsonValidator {
-    compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
-}
-
-// @alpha @input
 export enum KeyEncodingOptions {
     allStoredKeys = "allStoredKeys",
     knownStoredKeys = "knownStoredKeys",
@@ -993,9 +988,6 @@ export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
 export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown> extends NodeSchemaOptions<TCustomMetadata> {
     readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }
-
-// @alpha
-export const noopValidator: JsonValidator;
 
 // @alpha @sealed
 export interface NormalizedAnnotatedAllowedTypes extends AnnotatedAllowedTypes<TreeNodeSchema> {
@@ -1272,11 +1264,6 @@ export interface SchemaStaticsAlpha {
 export class SchemaUpgrade {
     // (undocumented)
     protected _typeCheck: MakeNominal;
-}
-
-// @alpha @input
-export interface SchemaValidationFunction<Schema extends TSchema> {
-    check(data: unknown): data is Static<Schema>;
 }
 
 // @public @system
@@ -1946,9 +1933,6 @@ export interface TreeViewEvents {
     rootChanged(): void;
     schemaChanged(): void;
 }
-
-// @alpha
-export const typeboxValidator: JsonValidator;
 
 // @public @deprecated @system
 const typeNameSymbol: unique symbol;
