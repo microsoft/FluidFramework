@@ -80,7 +80,8 @@ export function tryGetTreeNodeSchema(value: unknown): undefined | TreeNodeSchema
 
 /** The {@link HydrationState} of a {@link TreeNodeKernel} before the kernel is hydrated */
 interface UnhydratedState {
-	off: Off;
+	readonly dispose: Off;
+	readonly events: ReturnType<typeof createEmitter<KernelEvents>>;
 	readonly innerNode: UnhydratedFlexTreeNode;
 }
 
@@ -154,17 +155,18 @@ export class TreeNodeKernel {
 		treeNodeToKernel.set(node, this);
 
 		if (innerNode instanceof UnhydratedFlexTreeNode) {
-			this.#eventBuffer = new KernelEventBuffer(innerNode.events);
-
 			// Unhydrated case
+
 			debugAssert(() => innerNode.treeNode === undefined);
 			innerNode.treeNode = node;
+
 			// Register for change events from the unhydrated flex node.
 			// These will be fired if the unhydrated node is edited, and will also be forwarded later to the hydrated node.
-			this.#hydrationState = {
-				innerNode,
-				off: innerNode.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
-					this.#eventBuffer.emit("childrenChangedAfterBatch", {
+			const unhydratedNodeEvents = createEmitter<KernelEvents>();
+			const disposeInnerNodeListener = innerNode.events.on(
+				"childrenChangedAfterBatch",
+				({ changedFields }) => {
+					unhydratedNodeEvents.emit("childrenChangedAfterBatch", {
 						changedFields,
 					});
 
@@ -173,7 +175,9 @@ export class TreeNodeKernel {
 						const treeNode = unhydratedNode.treeNode;
 						if (treeNode !== undefined) {
 							const kernel = getKernel(treeNode);
-							kernel.#eventBuffer.emit("subtreeChangedAfterBatch");
+							(kernel.#hydrationState as UnhydratedState).events.emit(
+								"subtreeChangedAfterBatch",
+							);
 						}
 						const parentNode: FlexTreeNode | undefined =
 							unhydratedNode.parentField.parent.parent;
@@ -183,22 +187,22 @@ export class TreeNodeKernel {
 						);
 						unhydratedNode = parentNode;
 					}
-				}),
+				},
+			);
+
+			this.#hydrationState = {
+				innerNode,
+				events: unhydratedNodeEvents,
+				dispose: disposeInnerNodeListener,
 			};
+
+			this.#eventBuffer = new KernelEventBuffer(unhydratedNodeEvents);
 		} else {
-			this.#eventBuffer = new KernelEventBuffer(innerNode.anchorNode.events);
 			// Hydrated case
 			this.#hydrationState = this.createHydratedState(innerNode.anchorNode);
 			this.#hydrationState.innerNode = innerNode;
 
-			// Forward relevant anchorNode events to our event handler
-			for (const eventName of kernelEvents) {
-				this.#hydrationState.offAnchorNode.add(
-					innerNode.anchorNode.events.on(eventName, (arg) =>
-						this.#eventBuffer.emit(eventName, arg),
-					),
-				);
-			}
+			this.#eventBuffer = new KernelEventBuffer(innerNode.anchorNode.events);
 		}
 	}
 
@@ -460,13 +464,13 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 
 		if (this.#events.hasListeners("childrenChangedAfterBatch")) {
 			const off = this.#eventSource.on("childrenChangedAfterBatch", ({ changedFields }) =>
-				this.emit("childrenChangedAfterBatch", { changedFields }),
+				this.#emit("childrenChangedAfterBatch", { changedFields }),
 			);
 			this.#disposeSourceListeners.set("childrenChangedAfterBatch", off);
 		}
 		if (this.#events.hasListeners("subtreeChangedAfterBatch")) {
 			const off = this.#eventSource.on("subtreeChangedAfterBatch", () =>
-				this.emit("subtreeChangedAfterBatch"),
+				this.#emit("subtreeChangedAfterBatch"),
 			);
 			this.#disposeSourceListeners.set("subtreeChangedAfterBatch", off);
 		}
@@ -476,9 +480,12 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		// Lazily bind event listeners to the source.
 		// If we do not have any existing listeners for this event, then we need to bind to the source.
 		if (!this.#events.hasListeners(eventName)) {
-			assert(!this.#disposeSourceListeners.has(eventName), "Should not have a dispose function without listeners");
+			assert(
+				!this.#disposeSourceListeners.has(eventName),
+				"Should not have a dispose function without listeners",
+			);
 
-			const off = this.#eventSource.on(eventName, (args) => this.emit(eventName, args));
+			const off = this.#eventSource.on(eventName, (args) => this.#emit(eventName, args));
 			this.#disposeSourceListeners.set(eventName, off);
 		}
 
@@ -497,7 +504,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		}
 	}
 
-	public emit(
+	#emit(
 		eventName: keyof KernelEvents,
 		arg?: {
 			changedFields: ReadonlySet<FieldKey>;
