@@ -29,19 +29,13 @@ export class TreeDataObjectFactory<
 > extends MigrationDataObjectFactory<
 	TDataObject,
 	RootTreeView,
-	TDataObjectTypes,
-	RootTreeView
+	TDataObjectTypes
 > {
 	public constructor(props: DataObjectFactoryProps<TDataObject, TDataObjectTypes>) {
-		const newProps = {
-			...props,
-			sharedObjects: props.sharedObjects ? [...props.sharedObjects] : [],
-		};
-
 		super({
-			...newProps,
+			...props,
 			// This cast is safe because TObj extends DataObject, which has static modelDescriptors
-			ctor: newProps.ctor as (new (
+			ctor: props.ctor as (new (
 				doProps: IDataObjectProps<TDataObjectTypes>,
 			) => TDataObject) & {
 				modelDescriptors: readonly [
