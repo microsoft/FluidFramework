@@ -363,13 +363,6 @@ extends:
                   taskLintName: '${{ parameters.taskLintName }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
 
-              - task: Npm@1
-                displayName: 'npm run webpack'
-                inputs:
-                  command: custom
-                  workingDir: '${{ parameters.buildDirectory }}'
-                  customCommand: 'run webpack'
-
               - task: Bash@3
                 displayName: Archive Build Output Content
                 env:
