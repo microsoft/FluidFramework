@@ -38,5 +38,4 @@ export type {
 	IDirectoryDataObject,
 } from "./directory.js";
 
-export { SharedDirectoryOracle } from "./directroyOracle.js";
 export { SharedMapOracle } from "./mapOracle.js";
