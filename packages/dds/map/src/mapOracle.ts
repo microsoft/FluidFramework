@@ -22,22 +22,14 @@ export class SharedMapOracle {
 
 		this.onValueChanged = (change: IValueChanged) => {
 			const { key } = change;
-			// const oraclePreviousValue = this.oracle.get(key);
-			// if (oraclePreviousValue !== previousValue) {
-			// 	console.warn(
-			// 		`Oracle desync at key="${key}": oraclePrev=${oraclePreviousValue}, eventPrev=${previousValue}`,
-			// 	);
-			// }
 
-			// Get the new value after the change
+			// Update oracle to match DDS state
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const newVal = this.fuzzMap.get(key);
 
 			if (newVal === undefined) {
-				// key was deleted
 				this.oracle.delete(key);
 			} else {
-				// key was inserted or updated
 				this.oracle.set(key, newVal);
 			}
 		};
