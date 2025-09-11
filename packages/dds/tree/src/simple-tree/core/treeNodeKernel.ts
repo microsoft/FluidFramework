@@ -476,7 +476,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		this.#events.on(eventName, listener);
 
 		// Lazily bind event listeners to the source
-		if (!this.#eventSource.hasListeners(eventName)) {
+		if (!this.#disposeSourceListeners.has(eventName)) {
 			const off = this.#eventSource.on(eventName, (args) => this.emit(eventName, args));
 			this.#disposeSourceListeners.set(eventName, off);
 		}
