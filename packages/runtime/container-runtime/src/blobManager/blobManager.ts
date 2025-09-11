@@ -333,16 +333,11 @@ export class BlobManager {
 	 * @param localId - The local blob id. Likely coming from a handle.
 	 * @returns The storage ID if found and the blob is not pending, undefined otherwise.
 	 * @remarks
-	 * For blobs with pending payloads (localId exists but upload hasn't finished), this returns undefined.
+	 * For blobs with pending payloads (localId exists but upload hasn't finished), this is expected to return undefined.
 	 * Consumers should use the observability APIs on the handle (handle.payloadState, payloadShared event)
 	 * to understand/wait for storage ID availability.
 	 */
 	public lookupBlobStorageId(localId: string): string | undefined {
-		// Check if this is a pending blob (upload not yet complete)
-		if (this.pendingBlobs.has(localId)) {
-			return undefined;
-		}
-
 		// Get the storage ID from the redirect table
 		return this.redirectTable.get(localId);
 	}
