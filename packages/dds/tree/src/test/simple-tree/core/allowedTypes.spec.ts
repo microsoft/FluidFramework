@@ -8,14 +8,15 @@ import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	allowUnused,
+	numberSchema,
 	SchemaFactory,
+	stringSchema,
 	type booleanSchema,
 	type InsertableObjectFromSchemaRecord,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	type LazyItem,
-	type numberSchema,
-	type stringSchema,
 	type TreeLeafValue,
 	type TreeNode,
 	type TreeNodeSchema,
@@ -151,12 +152,8 @@ const schema = new SchemaFactory("com.example");
 	// UnannotateImplicitAllowedTypes
 	{
 		{
-			type _check = requireTrue<
-				areSafelyAssignable<
-					UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>,
-					ImplicitAllowedTypes
-				>
-			>;
+			type unannotated = UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>;
+			type _check = requireTrue<areSafelyAssignable<unannotated, ImplicitAllowedTypes>>;
 		}
 
 		{
@@ -190,6 +187,50 @@ const schema = new SchemaFactory("com.example");
 			type Result = UnannotateImplicitAllowedTypes<T>;
 			// @ts-expect-error Ideally this would compile, however TypeScript can't solve the type equivalence so it does not.
 			type _check = requireTrue<areSafelyAssignable<Result, T>>;
+		}
+
+		// Concrete annotated case
+		{
+			const annotatedAllowedType = {
+				type: numberSchema,
+				metadata: {},
+			} satisfies ImplicitAnnotatedAllowedTypes;
+
+			const annotatedAllowedTypes = {
+				types: [annotatedAllowedType] as const,
+				metadata: {},
+			} satisfies ImplicitAnnotatedAllowedTypes;
+
+			type annotated2 = UnannotateImplicitAllowedTypes<typeof annotatedAllowedTypes>;
+			// This gets wrapped in an array. Not ideal but potentially ok: depends on usage.
+			allowUnused<
+				requireTrue<areSafelyAssignable<annotated2, readonly [typeof numberSchema]>>
+			>;
+		}
+
+		// Concrete annotated case with multiple schema
+		{
+			const annotatedAllowedType = {
+				type: numberSchema,
+				metadata: {},
+			} satisfies ImplicitAnnotatedAllowedTypes;
+
+			const annotatedAllowedType2 = {
+				type: stringSchema,
+				metadata: {},
+			} satisfies ImplicitAnnotatedAllowedTypes;
+
+			const annotatedAllowedTypes = {
+				types: [annotatedAllowedType, annotatedAllowedType2],
+				metadata: {},
+			} satisfies ImplicitAnnotatedAllowedTypes;
+
+			type annotated2 = UnannotateImplicitAllowedTypes<typeof annotatedAllowedTypes>;
+			allowUnused<
+				requireTrue<
+					areSafelyAssignable<annotated2, [typeof numberSchema, typeof stringSchema]>
+				>
+			>;
 		}
 	}
 
@@ -231,6 +272,40 @@ const schema = new SchemaFactory("com.example");
 		type _check1 = requireAssignableTo<Empty, UnannotateAllowedTypesList<Empty>>;
 
 		type _check2 = requireAssignableTo<UnannotateAllowedTypesList<Mixed>, readonly A2[]>;
+
+		// Concrete annotated case
+		const annotatedAllowedType = {
+			type: numberSchema,
+			metadata: {},
+		} satisfies ImplicitAnnotatedAllowedTypes;
+
+		const annotatedAllowedType2 = {
+			type: stringSchema,
+			metadata: {},
+		} satisfies ImplicitAnnotatedAllowedTypes;
+
+		const annotatedAllowedTypes = {
+			types: [annotatedAllowedType, annotatedAllowedType2] as const,
+			metadata: {},
+		} satisfies ImplicitAnnotatedAllowedTypes;
+
+		type Unannotated = UnannotateAllowedTypesList<typeof annotatedAllowedTypes.types>;
+
+		allowUnused<
+			requireTrue<
+				areSafelyAssignable<Unannotated, readonly [typeof numberSchema, typeof stringSchema]>
+			>
+		>();
+
+		type UnannotatedSimple = UnannotateAllowedTypesList<
+			[typeof numberSchema, typeof stringSchema]
+		>;
+
+		allowUnused<
+			requireTrue<
+				areSafelyAssignable<UnannotatedSimple, [typeof numberSchema, typeof stringSchema]>
+			>
+		>();
 	}
 
 	// UnannotateAllowedTypes

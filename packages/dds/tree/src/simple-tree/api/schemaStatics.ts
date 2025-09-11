@@ -25,7 +25,12 @@ import {
 	nullSchema,
 	handleSchema,
 } from "../leafNodeSchema.js";
-import type { System_Unsafe, FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
+import type {
+	System_Unsafe,
+	FieldSchemaAlphaUnsafe,
+	ImplicitAnnotatedAllowedTypesUnsafe,
+	UnannotateImplicitAllowedTypesUnsafe,
+} from "./typesUnsafe.js";
 
 /**
  * Stateless APIs exposed via {@link SchemaFactory} as both instance properties and as statics.
@@ -217,6 +222,95 @@ function required<
 ): FieldSchemaAlpha<FieldKind.Required, UnannotateImplicitAllowedTypes<T>, TCustomMetadata> {
 	return createFieldSchema(FieldKind.Required, t, props);
 }
+
+function optionalRecursive<
+	const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, // TODO: this seems too inclusive, triggers wrong overload getting used.
+	const TCustomMetadata = unknown,
+>(
+	t: T,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
+): FieldSchemaAlphaUnsafe<FieldKind.Optional, T, TCustomMetadata>;
+
+function optionalRecursive<
+	const T extends ImplicitAnnotatedAllowedTypesUnsafe,
+	const TCustomMetadata = unknown,
+>(
+	t: T,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
+): FieldSchemaAlphaUnsafe<
+	FieldKind.Optional,
+	UnannotateImplicitAllowedTypesUnsafe<T>,
+	TCustomMetadata
+>;
+
+function optionalRecursive<
+	const T extends ImplicitAnnotatedAllowedTypesUnsafe,
+	const TCustomMetadata = unknown,
+>(
+	t: T,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
+): FieldSchemaAlphaUnsafe<
+	FieldKind.Optional,
+	UnannotateImplicitAllowedTypesUnsafe<T>,
+	TCustomMetadata
+> {
+	return createFieldSchemaUnsafe(FieldKind.Optional, t, {
+		defaultProvider: defaultOptionalProvider,
+		...props,
+	});
+}
+
+// Copy without overload to confirm overload issue
+export function optionalRecursive2<
+	const T extends ImplicitAnnotatedAllowedTypesUnsafe,
+	const TCustomMetadata = unknown,
+>(
+	t: T,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
+): FieldSchemaAlphaUnsafe<
+	FieldKind.Optional,
+	UnannotateImplicitAllowedTypesUnsafe<T>,
+	TCustomMetadata
+> {
+	return createFieldSchemaUnsafe(FieldKind.Optional, t, {
+		defaultProvider: defaultOptionalProvider,
+		...props,
+	});
+}
+
+function requiredRecursive<
+	const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
+	const TCustomMetadata = unknown,
+>(
+	t: T,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
+): FieldSchemaAlphaUnsafe<FieldKind.Required, T, TCustomMetadata>;
+
+function requiredRecursive<
+	const T extends ImplicitAnnotatedAllowedTypesUnsafe,
+	const TCustomMetadata = unknown,
+>(
+	t: T,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
+): FieldSchemaAlphaUnsafe<
+	FieldKind.Required,
+	UnannotateImplicitAllowedTypesUnsafe<T>,
+	TCustomMetadata
+>;
+
+function requiredRecursive<
+	const T extends ImplicitAnnotatedAllowedTypesUnsafe,
+	const TCustomMetadata = unknown,
+>(
+	t: T,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
+): FieldSchemaAlphaUnsafe<
+	FieldKind.Required,
+	UnannotateImplicitAllowedTypesUnsafe<T>,
+	TCustomMetadata
+> {
+	return createFieldSchemaUnsafe(FieldKind.Required, t, props);
+}
 // #endregion
 
 /**
@@ -234,31 +328,9 @@ export const schemaStaticsStable = {
 	leaves: [stringSchema, numberSchema, booleanSchema, nullSchema, handleSchema],
 
 	optional,
-
 	required,
-
-	optionalRecursive: <
-		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
-		const TCustomMetadata = unknown,
-	>(
-		t: T,
-		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
-	): FieldSchemaAlphaUnsafe<FieldKind.Optional, T, TCustomMetadata> => {
-		return createFieldSchemaUnsafe(FieldKind.Optional, t, {
-			defaultProvider: defaultOptionalProvider,
-			...props,
-		});
-	},
-
-	requiredRecursive: <
-		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
-		const TCustomMetadata = unknown,
-	>(
-		t: T,
-		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
-	): FieldSchemaAlphaUnsafe<FieldKind.Required, T, TCustomMetadata> => {
-		return createFieldSchemaUnsafe(FieldKind.Required, t, props);
-	},
+	optionalRecursive,
+	requiredRecursive,
 } as const satisfies SchemaStatics;
 
 /**
@@ -273,19 +345,49 @@ export const schemaStatics = {
 	},
 } as const;
 
-function createFieldSchemaUnsafe<
+/**
+ * {@link Unenforced} version of {@link createFieldSchema}.
+ */
+export function createFieldSchemaUnsafe<
 	Kind extends FieldKind,
 	Types extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 	TCustomMetadata = unknown,
 >(
 	kind: Kind,
-	allowedTypes: Types,
+	annotatedTypes: Types,
 	props?: FieldProps<TCustomMetadata>,
-): FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata> {
+): FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata>;
+
+/**
+ * {@link Unenforced} version of {@link createFieldSchema}.
+ */
+export function createFieldSchemaUnsafe<
+	Kind extends FieldKind,
+	Types extends ImplicitAnnotatedAllowedTypesUnsafe,
+	TCustomMetadata = unknown,
+>(
+	kind: Kind,
+	annotatedTypes: Types,
+	props?: FieldProps<TCustomMetadata>,
+): FieldSchemaAlphaUnsafe<Kind, UnannotateImplicitAllowedTypesUnsafe<Types>, TCustomMetadata>;
+
+export function createFieldSchemaUnsafe<
+	Kind extends FieldKind,
+	Types extends ImplicitAnnotatedAllowedTypesUnsafe,
+	TCustomMetadata = unknown,
+>(
+	kind: Kind,
+	annotatedTypes: Types,
+	props?: FieldProps<TCustomMetadata>,
+): FieldSchemaAlphaUnsafe<Kind, UnannotateImplicitAllowedTypesUnsafe<Types>, TCustomMetadata> {
 	// At runtime, we still want this to be a FieldSchema instance, but we can't satisfy its extends clause, so just return it as an FieldSchemaUnsafe
 	return createFieldSchema(
 		kind,
-		allowedTypes as ImplicitAllowedTypes & Types,
+		annotatedTypes as ImplicitAnnotatedAllowedTypes,
 		props,
-	) as FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata>;
+	) as FieldSchemaAlphaUnsafe<
+		Kind,
+		UnannotateImplicitAllowedTypesUnsafe<Types>,
+		TCustomMetadata
+	>;
 }

@@ -224,7 +224,7 @@ export type UnannotateImplicitAllowedTypes<T extends ImplicitAnnotatedAllowedTyp
 	T extends AnnotatedAllowedTypes
 		? UnannotateAllowedTypes<T>
 		: T extends AnnotatedAllowedType
-			? UnannotateAllowedTypesList<[T]>
+			? UnannotateAllowedTypesList<[T]> // TODO: add [0] to stop unnecessary array wrap
 			: T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]
 				? UnannotateAllowedTypesList<T>
 				: // This should able to just return `T` here, however doing so breaks generic code in ArrayNode.

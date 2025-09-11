@@ -34,7 +34,9 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactoryRecursive.js";
 import type {
+	AnnotatedAllowedTypeUnsafe,
 	System_Unsafe,
+	UnannotateImplicitAllowedTypesUnsafe,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/typesUnsafe.js";
 import { SharedTree } from "../../../treeFactory.js";
@@ -68,6 +70,67 @@ import { validateTypeError } from "../../utils.js";
 const schemaFactory = new SchemaFactory("recursive");
 
 describe("SchemaFactory Recursive methods", () => {
+	describe("fields", () => {
+		describe("optionalRecursive", () => {
+			const field = SchemaFactoryAlpha.optional(SchemaFactoryAlpha.number);
+
+			const fieldRecursive = SchemaFactoryAlpha.optionalRecursive(SchemaFactoryAlpha.number);
+
+			const fieldArray = SchemaFactoryAlpha.optional([() => SchemaFactoryAlpha.number]);
+
+			const fieldRecursiveAnnotated = SchemaFactoryAlpha.optionalRecursive({
+				type: () => SchemaFactoryAlpha.number,
+				metadata: {},
+			});
+
+			{
+				const arrayOfAnnotated = SchemaFactoryAlpha.optionalRecursive([
+					{ type: () => SchemaFactoryAlpha.number, metadata: {} },
+				]);
+
+				const arrayOfAnnotated2 = SchemaFactoryAlpha.optionalRecursiveAlpha([
+					{ type: () => SchemaFactoryAlpha.number, metadata: {} },
+				]);
+
+				allowUnused<requireTrue<areSafelyAssignable<typeof field, typeof fieldRecursive>>>();
+				allowUnused<
+					requireTrue<areSafelyAssignable<typeof fieldArray, typeof fieldRecursiveAnnotated>>
+				>();
+				allowUnused<
+					requireTrue<areSafelyAssignable<typeof arrayOfAnnotated, typeof fieldArray>>
+				>();
+
+				allowUnused<
+					requireTrue<areSafelyAssignable<typeof arrayOfAnnotated2, typeof fieldArray>>
+				>();
+			}
+
+			{
+				const annotatedTypes = SchemaFactoryAlpha.optionalRecursive({
+					types: [{ type: () => SchemaFactoryAlpha.number, metadata: {} }],
+					metadata: {},
+				});
+
+				const annotatedTypes2 = SchemaFactoryAlpha.optionalRecursiveAlpha({
+					types: [{ type: () => SchemaFactoryAlpha.number, metadata: {} }],
+					metadata: {},
+				});
+
+				allowUnused<requireTrue<areSafelyAssignable<typeof field, typeof fieldRecursive>>>();
+				allowUnused<
+					requireTrue<areSafelyAssignable<typeof fieldArray, typeof fieldRecursiveAnnotated>>
+				>();
+				allowUnused<
+					requireTrue<areSafelyAssignable<typeof annotatedTypes, typeof fieldArray>>
+				>();
+
+				allowUnused<
+					requireTrue<areSafelyAssignable<typeof annotatedTypes2, typeof fieldArray>>
+				>();
+			}
+		});
+	});
+
 	describe("objectRecursive", () => {
 		it("End-to-end with recursive object", () => {
 			const schema = new SchemaFactory("com.example");
@@ -650,6 +713,52 @@ describe("SchemaFactory Recursive methods", () => {
 				class Test extends factory.objectRecursive("Test", {
 					x: factory.optional([{ type: () => factory.null, metadata: {} }]),
 				}) {}
+
+				const field = Test.info.x;
+				allowUnused<requireAssignableTo<typeof field, FieldSchema>>();
+
+				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
+			}
+
+			{
+				const annotated = { type: () => factory.null, metadata: {} };
+
+				type AnnotatedArray = [typeof annotated];
+
+				type TT = UnannotateImplicitAllowedTypesUnsafe<AnnotatedArray>;
+
+				// TODO: this should not pass, and it passing results in incorrect overload getting used.
+				allowUnused<
+					requireAssignableTo<AnnotatedArray, System_Unsafe.ImplicitAllowedTypesUnsafe>
+				>();
+
+				allowUnused<
+					requireAssignableTo<AnnotatedArray, readonly AnnotatedAllowedTypeUnsafe[]>
+				>();
+
+				class Test extends factory.objectRecursive("Test", {
+					x: factory.optionalRecursive([annotated]),
+				}) {}
+
+				const field = Test.info.x;
+				allowUnused<requireAssignableTo<typeof field, FieldSchema>>();
+
+				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
+			}
+
+			{
+				class Test extends factory.objectRecursive("Test", {
+					x: factory.optionalRecursive({
+						types: [{ type: () => factory.null, metadata: {} }],
+						metadata: {},
+					}),
+				}) {}
+
+				const field = Test.info.x;
+				allowUnused<requireAssignableTo<typeof field, FieldSchema>>();
+
 				type _check = ValidateRecursiveSchema<typeof Test>;
 				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
 			}

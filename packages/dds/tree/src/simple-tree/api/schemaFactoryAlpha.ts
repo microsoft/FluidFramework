@@ -23,7 +23,7 @@ import {
 	type SchemaFactoryObjectOptions,
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
-import { schemaStatics } from "./schemaStatics.js";
+import { optionalRecursive2, schemaStatics } from "./schemaStatics.js";
 import type { ImplicitAnnotatedFieldSchema, ImplicitFieldSchema } from "../fieldSchema.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type {
@@ -46,7 +46,6 @@ import type {
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
 	TreeRecordNodeUnsafe,
-	UnannotateImplicitAllowedTypesUnsafe,
 	Unenforced,
 } from "./typesUnsafe.js";
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
@@ -355,6 +354,11 @@ export class SchemaFactoryAlpha<
 	public static override readonly optionalRecursive = schemaStatics.optionalRecursive;
 
 	/**
+	 * {@inheritDoc SchemaStatics.optionalRecursive}
+	 */
+	public static readonly optionalRecursiveAlpha = optionalRecursive2;
+
+	/**
 	 * {@inheritDoc SchemaStatics.requiredRecursive}
 	 */
 	public static override readonly requiredRecursive = schemaStatics.requiredRecursive;
@@ -383,6 +387,11 @@ export class SchemaFactoryAlpha<
 	 * {@inheritDoc SchemaStatics.optionalRecursive}
 	 */
 	public override readonly optionalRecursive = schemaStatics.optionalRecursive;
+
+	/**
+	 * {@inheritDoc SchemaStatics.optionalRecursive}
+	 */
+	public readonly optionalRecursiveAlpha = optionalRecursive2;
 
 	/**
 	 * {@inheritDoc SchemaStatics.requiredRecursive}

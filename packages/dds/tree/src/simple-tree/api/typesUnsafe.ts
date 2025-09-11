@@ -563,7 +563,28 @@ export type UnannotateImplicitAllowedTypesUnsafeMinimal<
 export type UnannotateImplicitAllowedTypesUnsafe<T> = T extends AnnotatedAllowedTypesUnsafe
 	? UnannotateAllowedTypesUnsafe<T>
 	: T extends AnnotatedAllowedTypeUnsafe
-		? UnannotateAllowedTypesListUnsafe<[T]>
+		? UnannotateAllowedTypesListUnsafe<[T]> // TODO: add [0] to stop unnecessary array wrap
+		: T extends readonly (
+					| AnnotatedAllowedTypeUnsafe
+					| LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>
+				)[]
+			? UnannotateAllowedTypesListUnsafe<T>
+			: T extends TreeNodeSchema
+				? T
+				: ImplicitAllowedTypes;
+
+/**
+ * {@link Unenforced} version of {@link UnannotateImplicitAllowedTypes}.
+ * @remarks
+ * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
+ * @sealed
+ * @alpha
+ * @system
+ */
+export type UnannotateImplicitAllowedTypesUnsafeOld<T> = T extends AnnotatedAllowedTypesUnsafe
+	? UnannotateAllowedTypesUnsafe<T>
+	: T extends AnnotatedAllowedTypeUnsafe
+		? UnannotateAllowedTypesListUnsafe<[T]> // TODO: add [0] to stop unnecessary array wrap
 		: T extends readonly (
 					| AnnotatedAllowedType<System_Unsafe.TreeNodeSchemaUnsafe>
 					| LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>
@@ -586,7 +607,7 @@ export type UnannotateAllowedTypesListUnsafe<
 		| LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>
 	)[],
 > = {
-	[I in keyof T]: UnannotateAllowedTypeUnsafe<T[I]>;
+	readonly [I in keyof T]: UnannotateAllowedTypeUnsafe<T[I]>;
 };
 
 export type UnannotateAllowedTypeUnsafe<
@@ -647,13 +668,11 @@ export interface TreeRecordNodeUnsafe<
  */
 export type ImplicitAnnotatedAllowedTypesUnsafe =
 	| System_Unsafe.TreeNodeSchemaUnsafe
-	// | AnnotatedAllowedType<LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>>
+	| AnnotatedAllowedTypesUnsafe
 	| AnnotatedAllowedTypeUnsafe
-	| readonly (
-			| AnnotatedAllowedType<Unenforced<TreeNodeSchema>>
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
-			| LazyItem<Unenforced<TreeNodeSchema>>
-	  )[];
+	| readonly // | AnnotatedAllowedType<Unenforced<TreeNodeSchema>>
+	  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
+	  LazyItem<Unenforced<TreeNodeSchema>>[];
 
 /**
  * {@link Unenforced} version of {@link AnnotatedAllowedType}.
@@ -664,12 +683,6 @@ export type ImplicitAnnotatedAllowedTypesUnsafe =
 export interface AnnotatedAllowedTypeUnsafe<T = LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>>
 	extends AnnotatedAllowedType<T> {}
 
-export type ImplicitAnnotatedAllowedTypes<T = TreeNodeSchema> =
-	| T
-	| AnnotatedAllowedType<LazyItem<T>>
-	| AnnotatedAllowedTypes<LazyItem<T>>
-	| readonly (AnnotatedAllowedType<LazyItem<T>> | LazyItem<T>)[];
-
 /**
  * {@link Unenforced} version of {@link AnnotatedAllowedTypes}.
  * @remarks
@@ -677,4 +690,4 @@ export type ImplicitAnnotatedAllowedTypes<T = TreeNodeSchema> =
  * @system @sealed @alpha
  */
 export interface AnnotatedAllowedTypesUnsafe
-	extends AnnotatedAllowedTypes<System_Unsafe.TreeNodeSchemaUnsafe> {}
+	extends AnnotatedAllowedTypes<LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>> {}
