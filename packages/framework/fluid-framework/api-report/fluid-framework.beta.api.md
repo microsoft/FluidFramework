@@ -723,7 +723,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
 }
 
 // @public @system
-export const SchemaFactory_base: SchemaStatics & (new () => Object & SchemaStatics);
+export const SchemaFactory_base: SchemaStatics & (new () => SchemaStatics);
 
 // @beta
 export class SchemaFactoryBeta<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory<TScope, TName> {

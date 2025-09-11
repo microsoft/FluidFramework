@@ -174,19 +174,21 @@ export type ScopedSchemaName<
 
 const schemaStaticsPublic: SchemaStatics = schemaStatics;
 
-function addStaticsToClass<
-	ExistingStatics extends new () => InstanceType<ExistingStatics>,
-	NewStatics extends object,
->(
-	ctor: ExistingStatics,
-	statics: NewStatics,
-): NewStatics & (new () => InstanceType<ExistingStatics> & NewStatics) {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	class WithStatics extends (ctor as any) {}
+/**
+ * Create a class with `Statics` as both static properties and member properties.
+ * @privateRemarks
+ * An attempt was made to let this take in a base class so it could be used again on SchemaFactoryAlpha.
+ * This was unsuccessful, mostly due to issues with trying to manipulate constructor types.
+ */
+function classWithStatics<Statics extends object>(
+	statics: Statics,
+): Statics & (new () => Statics) {
+	// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+	class WithStatics {}
 
 	Object.assign(WithStatics.prototype, statics);
 	Object.assign(WithStatics, statics);
-	return WithStatics as NewStatics & (new () => InstanceType<ExistingStatics> & NewStatics);
+	return WithStatics as Statics & (new () => Statics);
 }
 
 /**
@@ -197,7 +199,7 @@ function addStaticsToClass<
  * Exported only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
  * @system @public
  */
-export const SchemaFactory_base = addStaticsToClass(Object, schemaStaticsPublic);
+export const SchemaFactory_base = classWithStatics(schemaStaticsPublic);
 
 // TODO:
 // SchemaFactory.array references should link to the correct overloads, however the syntax for this does not seems to work currently for methods unless the they are not qualified with the class.
