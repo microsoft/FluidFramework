@@ -34,6 +34,23 @@ export function readFile(file: string): string {
 	return fs.readFileSync(file, { encoding: "utf8" });
 }
 
+/**
+ * Reads only the first portion of a file, useful for checking headers.
+ * @param file - Absolute path to the file.
+ * @param maxBytes - Maximum number of bytes to read. Defaults to 512.
+ * @returns The first portion of the file as a string.
+ */
+export function readFilePartial(file: string, maxBytes: number = 512): string {
+	const fd = fs.openSync(file, "r");
+	try {
+		const buffer = Buffer.alloc(maxBytes);
+		const bytesRead = fs.readSync(fd, buffer, 0, maxBytes, 0);
+		return buffer.subarray(0, bytesRead).toString("utf8");
+	} finally {
+		fs.closeSync(fd);
+	}
+}
+
 export function writeFile(file: string, data: string): void {
 	fs.writeFileSync(file, data, { encoding: "utf8" });
 }
