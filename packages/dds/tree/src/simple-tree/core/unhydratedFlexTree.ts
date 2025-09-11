@@ -4,7 +4,7 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
-import type { Listenable } from "@fluidframework/core-interfaces";
+import type { HasListeners, Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert, oob, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -96,7 +96,8 @@ export class UnhydratedFlexTreeNode
 	public readonly [flexTreeMarker] = FlexTreeEntityKind.Node as const;
 
 	private readonly _events = createEmitter<UnhydratedFlexTreeNodeEvents>();
-	public get events(): Listenable<UnhydratedFlexTreeNodeEvents> {
+	public get events(): Listenable<UnhydratedFlexTreeNodeEvents> &
+		HasListeners<UnhydratedFlexTreeNodeEvents> {
 		return this._events;
 	}
 
