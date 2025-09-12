@@ -117,7 +117,7 @@ export function generateRuntimeOptions(
 		enableRuntimeIdCompressor: ["on", undefined, "delayed"],
 		enableGroupedBatching: [true, false],
 		createBlobPayloadPending: [true, undefined],
-		explicitSchemaControl: [true],
+		explicitSchemaControl: [true, false],
 	};
 
 	const pairwiseOptions = generatePairwiseOptions<IContainerRuntimeOptionsInternal>(
@@ -138,6 +138,18 @@ export function generateRuntimeOptions(
 					-readonly [P in keyof ContainerRuntimeOptionsInternal]: ContainerRuntimeOptionsInternal[P];
 				}
 			).compressionOptions = disabledCompressionConfig;
+		}
+	});
+
+	// Override createBlobPayloadPending to off it if explicitSchemaControl is false
+	pairwiseOptions.map((options) => {
+		if (options.explicitSchemaControl === false) {
+			(
+				options as {
+					// Remove readonly modifier to allow overriding
+					-readonly [P in keyof ContainerRuntimeOptionsInternal]: ContainerRuntimeOptionsInternal[P];
+				}
+			).createBlobPayloadPending = undefined;
 		}
 	});
 
