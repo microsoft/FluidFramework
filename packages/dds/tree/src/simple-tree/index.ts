@@ -164,6 +164,7 @@ export {
 	type SchemaStaticsAlpha,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
+	type SchemaFactory_base,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,

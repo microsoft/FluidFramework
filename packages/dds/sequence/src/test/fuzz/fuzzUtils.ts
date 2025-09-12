@@ -51,7 +51,12 @@ import { _dirname } from "../dirname.cjs";
 import { IntervalCollectionOracle } from "../intervalCollectionOracle.js";
 import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
 
-import { hasIntervalCollectionOracle, type IChannelWithOracles } from "./oracleUtils.js";
+import {
+	hasSharedStringOracle,
+	hasIntervalCollectionOracle,
+	type IChannelWithOracles,
+} from "./oracleUtils.js";
+import { SharedStringOracle } from "./sharedStringOracle.js";
 
 export type RevertibleSharedString = ISharedString & {
 	revertibles: SharedStringRevertible[];
@@ -472,6 +477,14 @@ export const baseModel: Omit<
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 		makeReducer(),
 	validateConsistency: async (a, b) => {
+		if (hasSharedStringOracle(a.channel)) {
+			a.channel.sharedStringOracle.validate();
+		}
+
+		if (hasSharedStringOracle(b.channel)) {
+			b.channel.sharedStringOracle.validate();
+		}
+
 		if (hasIntervalCollectionOracle(a.channel)) {
 			a.channel.intervalCollectionOracle.validate();
 		}
@@ -545,8 +558,12 @@ const oracleEmitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 oracleEmitter.on("clientCreate", (client) => {
 	const channel = client.channel as IChannelWithOracles;
 
-	// Attach IntervalCollection oracle
+	// Attach SharedString oracle
+	const sharedStringOracle = new SharedStringOracle(channel);
+	channel.sharedStringOracle = sharedStringOracle;
+	registerOracle(sharedStringOracle);
 
+	// Attach IntervalCollection oracle
 	const labels = channel.getIntervalCollectionLabels();
 	const interval = Array.from(labels)
 		.map((label) => channel.getIntervalCollection(label))

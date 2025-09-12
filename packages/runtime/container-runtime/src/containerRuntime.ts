@@ -130,7 +130,6 @@ import type {
 import {
 	defaultMinVersionForCollab,
 	isValidMinVersionForCollab,
-	type SemanticVersion,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	GCDataBuilder,
@@ -144,6 +143,7 @@ import {
 	exceptionToResponse,
 	seqFromTree,
 } from "@fluidframework/runtime-utils/internal";
+import { semanticVersionToMinimumVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import type {
 	IEventSampler,
 	IFluidErrorBase,
@@ -195,6 +195,8 @@ import {
 	getMinVersionForCollabDefaults,
 	type RuntimeOptionsAffectingDocSchema,
 	validateRuntimeOptions,
+	runtimeOptionKeysThatRequireExplicitSchemaControl,
+	type RuntimeOptionKeysThatRequireExplicitSchemaControl,
 } from "./containerCompatibility.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
@@ -947,6 +949,19 @@ export class ContainerRuntime
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
+		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
+		if (!explicitSchemaControl) {
+			const disallowedKeys = Object.keys(runtimeOptions).filter(
+				(key) =>
+					runtimeOptionKeysThatRequireExplicitSchemaControl.includes(
+						key as RuntimeOptionKeysThatRequireExplicitSchemaControl,
+					) && runtimeOptions[key] !== undefined,
+			);
+			if (disallowedKeys.length > 0) {
+				throw new UsageError(`explicitSchemaControl must be enabled to use ${disallowedKeys}`);
+			}
+		}
+
 		// The logic for enableRuntimeIdCompressor is a bit different. Since `undefined` represents a logical state (off)
 		// we need to check it's explicitly set in runtimeOptions. If so, we should use that value even if it's undefined.
 		const enableRuntimeIdCompressor =
@@ -1181,7 +1196,7 @@ export class ContainerRuntime
 			documentSchemaController,
 			featureGatesForTelemetry,
 			provideEntryPoint,
-			updatedMinVersionForCollab,
+			semanticVersionToMinimumVersionForCollab(updatedMinVersionForCollab),
 			requestHandler,
 			undefined, // summaryConfiguration
 			recentBatchInfo,
@@ -1503,7 +1518,7 @@ export class ContainerRuntime
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
-		private readonly minVersionForCollab: SemanticVersion,
+		public readonly minVersionForCollab: MinimumVersionForCollab,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,
