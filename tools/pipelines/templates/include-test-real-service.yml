@@ -383,7 +383,7 @@ stages:
           env:
             ${{ if and(ne(parameters.stageId, 'e2e_odsp'), ne(parameters.stageId, 'stress_tests_odsp')) }}:
               ${{ parameters.env }}
-            ${{ if or(eq(parameters.stageId, 'e2e_odsp'), eq(parameters.stageId, 'stress_tests_odsp')) }}:
+            ${{ else }}:
               login__odsp__test__tenants: $(tenantCreds)
               login__microsoft__clientId: $(appClientId)
           inputs:
