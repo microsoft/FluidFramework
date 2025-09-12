@@ -56,9 +56,14 @@ export function validatePrivateLink(
 				next();
 			}
 			const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
-			const privateLinkEnable = tenantInfo?.customData?.privateEndpoints?.accountLinkId
-				? true
-				: false;
+			const privateLinkEnable =
+				tenantInfo?.customData?.privateEndpoints &&
+				Array.isArray(tenantInfo.customData.privateEndpoints) &&
+				tenantInfo.customData.privateEndpoints?.length > 0 &&
+				tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy
+					?.properties?.remotePrivateEndpoint?.connectionDetails
+					? true
+					: false;
 			const clientIPAddress = req.ip ?? "";
 			if (privateLinkEnable && (!clientIPAddress || clientIPAddress.trim() === "")) {
 				return handleResponse(
@@ -74,12 +79,18 @@ export function validatePrivateLink(
 			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 			if (networkInfo.isPrivateLink) {
 				if (privateLinkEnable) {
-					const accountLinkId = tenantInfo?.customData?.privateEndpoints?.accountLinkId;
+					const connectionDetails =
+						tenantInfo?.customData?.privateEndpoints[0]?.privateEndpointConnectionProxy
+							?.properties?.remotePrivateEndpoint?.connectionDetails;
+					const accountLinkId = connectionDetails?.linkIdentifier;
 					if (networkInfo.privateLinkId === accountLinkId) {
-						Lumberjack.info("This is a private link request", {
-							tenantId,
-							privateLinkId: networkInfo.privateLinkId,
-						});
+						Lumberjack.info(
+							`This is a private link request with matching link ID accountLinkId ${accountLinkId}`,
+							{
+								tenantId,
+								privateLinkId: networkInfo.privateLinkId,
+							},
+						);
 					} else {
 						return handleResponse(
 							Promise.reject(

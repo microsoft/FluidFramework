@@ -19,9 +19,14 @@ export async function checkNetworkInformation(
 ): Promise<{ message: string; shouldConnect: boolean }> {
 	const tenantId = socket?.handshake?.query?.tenantId as string | undefined;
 	const tenantInfo = await tenantManager.getTenantfromRiddler(tenantId);
-	const privateLinkEnable = tenantInfo?.customData?.privateEndpoints?.accountLinkId
-		? true
-		: false;
+	const privateLinkEnable =
+		tenantInfo?.customData?.privateEndpoints &&
+		Array.isArray(tenantInfo.customData.privateEndpoints) &&
+		tenantInfo.customData.privateEndpoints?.length > 0 &&
+		tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy?.properties
+			?.remotePrivateEndpoint?.connectionDetails
+			? true
+			: false;
 	const xForwardedFor: string | undefined = socket.handshake.headers["x-forwarded-for"] as
 		| string
 		| undefined;
@@ -35,7 +40,10 @@ export async function checkNetworkInformation(
 	const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 	if (networkInfo.isPrivateLink) {
 		if (privateLinkEnable) {
-			const accountLinkId = tenantInfo?.customData?.privateEndpoints?.accountLinkId;
+			const connectionDetails =
+				tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy
+					?.properties?.remotePrivateEndpoint?.connectionDetails;
+			const accountLinkId = connectionDetails?.linkIdentifier;
 			return networkInfo.privateLinkId === accountLinkId
 				? { message: "This is a private link socket connection", shouldConnect: true }
 				: {
