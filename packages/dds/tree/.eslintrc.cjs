@@ -11,6 +11,8 @@ module.exports = {
 	rules: {
 		"@typescript-eslint/no-namespace": "off",
 		"@typescript-eslint/no-empty-interface": "off",
+		"@typescript-eslint/no-empty-object-type": "off",
+
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 
 		// This package is build with noUnusedLocals disabled for a specific use case (see note in tsconfig.json),
