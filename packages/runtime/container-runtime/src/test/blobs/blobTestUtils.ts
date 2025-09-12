@@ -5,12 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	IsoBuffer,
-	TypedEventEmitter,
-	bufferToString,
-	gitHashFile,
-} from "@fluid-internal/client-utils";
+import { IsoBuffer, TypedEventEmitter, gitHashFile } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import type {
@@ -64,8 +59,7 @@ export class DedupeStorage extends BaseMockBlobStorage {
 	public minTTL: number = MIN_TTL;
 
 	public async createBlob(blob: ArrayBufferLike): Promise<ICreateBlobResponse> {
-		const s = bufferToString(blob, "base64");
-		const id = await gitHashFile(IsoBuffer.from(s, "base64"));
+		const id = await gitHashFile(IsoBuffer.from(blob, "base64"));
 		this.blobs.set(id, blob);
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		return { id, minTTLInSeconds: this.minTTL } as ICreateBlobResponse;
