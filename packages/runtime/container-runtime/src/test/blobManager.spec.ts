@@ -1337,7 +1337,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				await runtime.processAll();
 
 				const blobHandle = await handleP;
-				const localId = getBlobIdFromAbsolutePath(blobHandle.absolutePath);
+				const { localId } = unpackHandle(blobHandle);
 				assert(redirectTable.has(localId), "blob not found in redirect table");
 				const storageId = redirectTable.get(localId);
 				assert(storageId !== undefined, "storage id not found in redirect table");
