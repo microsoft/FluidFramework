@@ -194,9 +194,9 @@ import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import {
 	getMinVersionForCollabDefaults,
 	type RuntimeOptionsAffectingDocSchema,
-	type RuntimeOptionsThatRequireExplicitSchemaControl,
 	validateRuntimeOptions,
 	runtimeOptionKeysThatRequireExplicitSchemaControl,
+	type RuntimeOptionKeysThatRequireExplicitSchemaControl,
 } from "./containerCompatibility.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
@@ -951,15 +951,14 @@ export class ContainerRuntime
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
 		if (!explicitSchemaControl) {
-			for (const key of Object.keys(runtimeOptions)) {
-				if (
+			const disallowedKeys = Object.keys(runtimeOptions).filter(
+				(key) =>
 					runtimeOptionKeysThatRequireExplicitSchemaControl.includes(
-						key as keyof RuntimeOptionsThatRequireExplicitSchemaControl,
-					) &&
-					runtimeOptions[key as keyof IContainerRuntimeOptionsInternal] !== undefined
-				) {
-					throw new UsageError(`explicitSchemaControl must be enabled to use ${key}`);
-				}
+						key as RuntimeOptionKeysThatRequireExplicitSchemaControl,
+					) && runtimeOptions[key] !== undefined,
+			);
+			if (disallowedKeys.length > 0) {
+				throw new UsageError(`explicitSchemaControl must be enabled to use ${disallowedKeys}`);
 			}
 		}
 
