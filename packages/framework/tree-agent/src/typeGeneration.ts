@@ -23,7 +23,6 @@ import { z, type ZodTypeAny } from "zod";
 
 import type { NodeSchema } from "./methodBinding.js";
 import { FunctionWrapper, getExposedMethods } from "./methodBinding.js";
-import { getFriendlySchemaName } from "./utils.js";
 import {
 	fail,
 	getOrCreate,
@@ -44,11 +43,6 @@ import {
  *
  * TODO make the Ids be "Vector-2" instead of "Vector2" (or else it gets weird when you have a type called "Vector2")
  */
-
-/**
- * This is the field we force the LLM to generate to avoid any type ambiguity (e.g. a vector and a point both have x/y and are ambiguous without the LLM telling us which it means).
- */
-const typeField = "__schemaType";
 
 /**
  * Cache used to prevent repeatedly generating the same Zod validation objects for the same {@link SimpleTreeSchema} as generate propts for repeated calls to an LLM
@@ -76,7 +70,7 @@ export function generateEditTypesForPrompt(
 		const treeNodeSchemaMap = new Map<string, NodeSchema>(
 			nodeSchemas.map((nodeSchema) => [nodeSchema.identifier, nodeSchema]),
 		);
-		return generateEditTypes(schema, false, new Map(), treeNodeSchemaMap);
+		return generateEditTypes(schema, new Map(), treeNodeSchemaMap);
 	});
 }
 
@@ -90,7 +84,6 @@ export function generateEditTypesForPrompt(
  */
 function generateEditTypes(
 	schema: SimpleTreeSchema,
-	transformForParsing: boolean,
 	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
 	treeSchemaMap: Map<string, NodeSchema> | undefined,
 ): {
@@ -98,13 +91,7 @@ function generateEditTypes(
 } {
 	const domainTypes: Record<string, ZodTypeAny> = {};
 	for (const name of schema.definitions.keys()) {
-		domainTypes[name] = getOrCreateType(
-			schema.definitions,
-			name,
-			transformForParsing,
-			objectCache,
-			treeSchemaMap,
-		);
+		domainTypes[name] = getOrCreateType(schema.definitions, name, objectCache, treeSchemaMap);
 	}
 
 	return {
@@ -115,7 +102,6 @@ function generateEditTypes(
 function getOrCreateType(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	definition: string,
-	transformForParsing: boolean,
 	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
 	treeSchemaMap: Map<string, NodeSchema> | undefined,
 ): ZodTypeAny {
@@ -127,25 +113,13 @@ function getOrCreateType(
 				const properties: Record<string, z.ZodTypeAny> = Object.fromEntries(
 					[...simpleNodeSchema.fields]
 						.map(([key, field]) => {
-							if (transformForParsing && field.kind === FieldKind.Identifier) {
-								return [key, undefined];
-							}
 							return [
 								key,
-								getOrCreateTypeForField(
-									definitionMap,
-									field,
-									transformForParsing,
-									objectCache,
-									treeSchemaMap,
-								),
+								getOrCreateTypeForField(definitionMap, field, objectCache, treeSchemaMap),
 							];
 						})
 						.filter(([, value]) => value !== undefined),
 				);
-				if (transformForParsing) {
-					properties[typeField] = z.literal(getFriendlySchemaName(definition)).optional();
-				}
 				if (treeSchemaMap) {
 					const nodeSchema = treeSchemaMap.get(definition) ?? fail("Unknown definition");
 					const methods = getExposedMethods(nodeSchema);
@@ -161,31 +135,27 @@ function getOrCreateType(
 						properties[name] = zodFunction;
 					}
 				}
-				const obj = z
-					.object(properties)
-					.describe(simpleNodeSchema.metadata?.description ?? "");
-				return transformForParsing
-					? obj.transform((value) => {
-							return {
-								...value,
-								[typeField]: definition,
-							};
-						})
-					: obj;
+				return z.object(properties).describe(simpleNodeSchema.metadata?.description ?? "");
 			}
-			case NodeKind.Array: {
-				const arr = z.array(
+			case NodeKind.Record: {
+				return z.record(
 					getTypeForAllowedTypes(
 						definitionMap,
 						simpleNodeSchema.allowedTypesIdentifiers,
-						transformForParsing,
 						objectCache,
 						treeSchemaMap,
 					),
 				);
-				return transformForParsing
-					? arr.transform((value: unknown[]) => [definition, ...value])
-					: arr;
+			}
+			case NodeKind.Array: {
+				return z.array(
+					getTypeForAllowedTypes(
+						definitionMap,
+						simpleNodeSchema.allowedTypesIdentifiers,
+						objectCache,
+						treeSchemaMap,
+					),
+				);
 			}
 			case NodeKind.Leaf: {
 				switch (simpleNodeSchema.leafKind) {
@@ -216,7 +186,6 @@ function getOrCreateType(
 function getOrCreateTypeForField(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	fieldSchema: SimpleFieldSchema,
-	transformForParsing: boolean,
 	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
 	treeSchemaMap: Map<string, NodeSchema> | undefined,
 ): ZodTypeAny {
@@ -241,7 +210,6 @@ function getOrCreateTypeForField(
 	const field = getTypeForAllowedTypes(
 		definitionMap,
 		fieldSchema.allowedTypesIdentifiers,
-		transformForParsing,
 		objectCache,
 		treeSchemaMap,
 	).describe(
@@ -255,18 +223,14 @@ function getOrCreateTypeForField(
 			return field;
 		}
 		case FieldKind.Optional: {
-			return transformForParsing
-				? field.optional().default(getDefault ?? undefined)
-				: field.optional();
+			return field.optional();
 		}
 		case FieldKind.Identifier: {
-			return transformForParsing
-				? fail("Should not be called with transformForParsing")
-				: field
-						.optional()
-						.describe(
-							"This is an ID automatically generated by the system. Do not supply it when constructing a new object.",
-						);
+			return field
+				.optional()
+				.describe(
+					"This is an ID automatically generated by the system. Do not supply it when constructing a new object.",
+				);
 		}
 		default: {
 			throw new Error(`Unsupported field kind ${NodeKind[fieldSchema.kind]}.`);
@@ -277,20 +241,19 @@ function getOrCreateTypeForField(
 function getTypeForAllowedTypes(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	allowedTypes: ReadonlySet<string>,
-	transformForParsing: boolean,
-	cache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
+	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
 	treeSchemaMap: Map<string, NodeSchema> | undefined,
 ): ZodTypeAny {
 	const single = tryGetSingleton(allowedTypes);
 	if (single === undefined) {
 		const types = [
 			...mapIterable(allowedTypes, (name) => {
-				return getOrCreateType(definitionMap, name, transformForParsing, cache, treeSchemaMap);
+				return getOrCreateType(definitionMap, name, objectCache, treeSchemaMap);
 			}),
 		];
 		assert(hasAtLeastTwo(types), 0xa7e /* Expected at least two types */);
 		return z.union(types);
 	} else {
-		return getOrCreateType(definitionMap, single, transformForParsing, cache, treeSchemaMap);
+		return getOrCreateType(definitionMap, single, objectCache, treeSchemaMap);
 	}
 }
