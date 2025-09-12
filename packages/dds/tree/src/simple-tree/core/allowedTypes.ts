@@ -17,6 +17,7 @@ import {
 	type InsertableTypedNode,
 	type NodeFromSchema,
 	type TreeNodeSchema,
+	type TreeNodeSchemaCore,
 } from "./treeNodeSchema.js";
 import { schemaAsTreeNodeValid } from "./treeNodeValid.js";
 
@@ -223,7 +224,7 @@ export type UnannotateImplicitAllowedTypes<T extends ImplicitAnnotatedAllowedTyp
 	T extends AnnotatedAllowedTypes
 		? UnannotateAllowedTypes<T>
 		: T extends AnnotatedAllowedType
-			? UnannotateAllowedTypesList<[T]>
+			? UnannotateAllowedTypesList<[T]> // TODO: add [0] to stop unnecessary array wrap
 			: T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]
 				? UnannotateAllowedTypesList<T>
 				: // This should able to just return `T` here, however doing so breaks generic code in ArrayNode.
@@ -404,7 +405,7 @@ export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>)
  * Throws a UsageError if the provided schema is undefined, most likely due to being used before it was initialized.
  */
 export function checkForUninitializedSchema(
-	schema: ImplicitAnnotatedAllowedTypes | LazyItem<TreeNodeSchema> | AnnotatedAllowedType,
+	schema: ImplicitAnnotatedAllowedTypes | LazyItem<TreeNodeSchemaCore> | AnnotatedAllowedType,
 ): void {
 	if (schema === undefined) {
 		throw new UsageError(
@@ -434,7 +435,7 @@ export function checkForUninitializedSchema(
  * pass in a base class of a schema instead of the most derived one.
  */
 export function markSchemaMostDerived(
-	schema: TreeNodeSchema,
+	schema: TreeNodeSchemaCore,
 	oneTimeInitialize = false,
 ): void {
 	// Leaf schema are not classes, and thus do not need to be marked as most derived.

@@ -23,14 +23,20 @@ import {
 	type ApplyKindInput,
 	type NodeBuilderData,
 	SchemaFactoryAlpha,
+	type UnannotateSchemaRecord,
+	type InsertableObjectFromSchemaRecord,
+	type AnnotatedAllowedType,
 } from "../../../simple-tree/index.js";
 import {
 	allowUnused,
 	type ValidateRecursiveSchema,
+	type ValidateRecursiveSchemaAlpha,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactoryRecursive.js";
 import type {
+	AnnotatedAllowedTypeUnsafe,
 	System_Unsafe,
+	UnannotateImplicitAllowedTypesUnsafe,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/typesUnsafe.js";
 import { SharedTree } from "../../../treeFactory.js";
@@ -64,6 +70,67 @@ import { validateTypeError } from "../../utils.js";
 const schemaFactory = new SchemaFactory("recursive");
 
 describe("SchemaFactory Recursive methods", () => {
+	describe("fields", () => {
+		describe("optionalRecursive", () => {
+			const field = SchemaFactoryAlpha.optional(SchemaFactoryAlpha.number);
+
+			const fieldRecursive = SchemaFactoryAlpha.optionalRecursive(SchemaFactoryAlpha.number);
+
+			const fieldArray = SchemaFactoryAlpha.optional([() => SchemaFactoryAlpha.number]);
+
+			const fieldRecursiveAnnotated = SchemaFactoryAlpha.optionalRecursive({
+				type: () => SchemaFactoryAlpha.number,
+				metadata: {},
+			});
+
+			{
+				const arrayOfAnnotated = SchemaFactoryAlpha.optionalRecursive([
+					{ type: () => SchemaFactoryAlpha.number, metadata: {} },
+				]);
+
+				const arrayOfAnnotated2 = SchemaFactoryAlpha.optionalRecursiveAlpha([
+					{ type: () => SchemaFactoryAlpha.number, metadata: {} },
+				]);
+
+				allowUnused<requireTrue<areSafelyAssignable<typeof field, typeof fieldRecursive>>>();
+				allowUnused<
+					requireTrue<areSafelyAssignable<typeof fieldArray, typeof fieldRecursiveAnnotated>>
+				>();
+				allowUnused<
+					requireTrue<areSafelyAssignable<typeof arrayOfAnnotated, typeof fieldArray>>
+				>();
+
+				allowUnused<
+					requireTrue<areSafelyAssignable<typeof arrayOfAnnotated2, typeof fieldArray>>
+				>();
+			}
+
+			{
+				const annotatedTypes = SchemaFactoryAlpha.optionalRecursive({
+					types: [{ type: () => SchemaFactoryAlpha.number, metadata: {} }],
+					metadata: {},
+				});
+
+				const annotatedTypes2 = SchemaFactoryAlpha.optionalRecursiveAlpha({
+					types: [{ type: () => SchemaFactoryAlpha.number, metadata: {} }],
+					metadata: {},
+				});
+
+				allowUnused<requireTrue<areSafelyAssignable<typeof field, typeof fieldRecursive>>>();
+				allowUnused<
+					requireTrue<areSafelyAssignable<typeof fieldArray, typeof fieldRecursiveAnnotated>>
+				>();
+				allowUnused<
+					requireTrue<areSafelyAssignable<typeof annotatedTypes, typeof fieldArray>>
+				>();
+
+				allowUnused<
+					requireTrue<areSafelyAssignable<typeof annotatedTypes2, typeof fieldArray>>
+				>();
+			}
+		});
+	});
+
 	describe("objectRecursive", () => {
 		it("End-to-end with recursive object", () => {
 			const schema = new SchemaFactory("com.example");
@@ -513,6 +580,17 @@ describe("SchemaFactory Recursive methods", () => {
 			{
 				class Test extends factoryAlpha.arrayRecursive("Test", [() => Test]) {}
 				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
+			}
+			{
+				class Test extends factoryAlpha.arrayRecursiveAlphaLimited("Test", [() => Test]) {}
+				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
+			}
+			{
+				class Test extends factoryAlpha.arrayRecursiveAlpha("Test", [() => Test]) {}
+				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
 			}
 
 			{
@@ -520,31 +598,34 @@ describe("SchemaFactory Recursive methods", () => {
 					x: factoryAlpha.optionalRecursive([() => Test]),
 				}) {}
 				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
 			}
 
 			{
 				class Test extends factoryAlpha.mapRecursive("Test", [() => Test]) {}
 				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
 			}
 		});
 
-		// TODO:AB#45711: Support annotated allowed types in recursive APIs.
 		it("Valid cases: annotated", () => {
 			const factory = new SchemaFactoryAlpha("");
 			{
-				class Test extends factory.arrayRecursive("Test", [
+				class Test extends factory.arrayRecursiveAlpha("Test", [
 					{ type: () => Test, metadata: {} },
 				]) {}
 				// @ts-expect-error Does not support annotations yet
 				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
 			}
 
 			{
 				class Test extends factory.objectRecursive("Test", {
-					x: factory.optionalRecursive([{ type: () => Test, metadata: {} }]),
+					x: SchemaFactoryAlpha.optionalRecursive([{ type: () => Test, metadata: {} }]),
 				}) {}
 				// @ts-expect-error Does not support annotations yet
 				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
 			}
 
 			{
@@ -553,10 +634,66 @@ describe("SchemaFactory Recursive methods", () => {
 				]) {}
 				// @ts-expect-error Does not support annotations yet
 				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
 			}
 		});
 
-		// TODO:AB#45711: Support annotated allowed types in recursive APIs.
+		it("Valid cases: non-recursive child", () => {
+			// While ValidateRecursiveSchema is intended only for recursive schema,
+			// it needs to be able to handle non-recursive children under a recursive schema.
+			// To simplify testing that, this test just checks some non-recursive cases.
+
+			const factory = new SchemaFactory("");
+			{
+				class Test extends factory.arrayRecursive("Test", [() => factory.null]) {}
+				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
+			}
+
+			{
+				class Test extends factory.objectRecursive("Test", {
+					x: factory.optional([() => factory.null]),
+				}) {}
+
+				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
+			}
+
+			{
+				class Test extends factory.mapRecursive("Test", [() => factory.null]) {}
+				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
+			}
+		});
+
+		it("Valid cases: alpha APIs non-recursive child", () => {
+			// While ValidateRecursiveSchema is intended only for recursive schema,
+			// it needs to be able to handle non-recursive children under a recursive schema.
+			// To simplify testing that, this test just checks some non-recursive cases.
+
+			const factory = new SchemaFactoryAlpha("");
+			{
+				class Test extends factory.arrayRecursive("Test", [() => factory.null]) {}
+				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
+			}
+
+			{
+				class Test extends factory.objectRecursive("Test", {
+					x: factory.optional([() => factory.null]),
+				}) {}
+
+				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
+			}
+
+			{
+				class Test extends factory.mapRecursive("Test", [() => factory.null]) {}
+				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
+			}
+		});
+
 		it("Valid cases: annotated non-recursive child", () => {
 			// While ValidateRecursiveSchema is intended only for recursive schema,
 			// it needs to be able to handle non-recursive children under a recursive schema.
@@ -564,27 +701,90 @@ describe("SchemaFactory Recursive methods", () => {
 
 			const factory = new SchemaFactoryAlpha("");
 			{
-				class Test extends factory.arrayAlpha("Test", [
+				class Test extends factory.arrayRecursiveAlpha("Test", [
 					{ type: () => factory.null, metadata: {} },
 				]) {}
 				// @ts-expect-error Does not support annotations
 				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
 			}
 
 			{
-				class Test extends factory.objectAlpha("Test", {
+				class Test extends factory.objectRecursive("Test", {
 					x: factory.optional([{ type: () => factory.null, metadata: {} }]),
+				}) {}
+
+				const field = Test.info.x;
+				allowUnused<requireAssignableTo<typeof field, FieldSchema>>();
+
+				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
+			}
+
+			{
+				const annotated = { type: () => factory.null, metadata: {} };
+
+				type AnnotatedArray = [typeof annotated];
+
+				type TT = UnannotateImplicitAllowedTypesUnsafe<AnnotatedArray>;
+
+				// TODO: this should not pass, and it passing results in incorrect overload getting used.
+				allowUnused<
+					requireAssignableTo<AnnotatedArray, System_Unsafe.ImplicitAllowedTypesUnsafe>
+				>();
+
+				allowUnused<
+					requireAssignableTo<AnnotatedArray, readonly AnnotatedAllowedTypeUnsafe[]>
+				>();
+
+				class Test extends factory.objectRecursive("Test", {
+					x: factory.optionalRecursive([annotated]),
+				}) {}
+
+				const field = Test.info.x;
+				allowUnused<requireAssignableTo<typeof field, FieldSchema>>();
+
+				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
+			}
+
+			{
+				class Test extends factory.objectRecursive("Test", {
+					x: factory.optionalRecursive({
+						types: [{ type: () => factory.null, metadata: {} }],
+						metadata: {},
+					}),
+				}) {}
+
+				const field = Test.info.x;
+				allowUnused<requireAssignableTo<typeof field, FieldSchema>>();
+
+				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
+			}
+
+			{
+				class Test extends factory.objectRecursive("Test", {
+					x: [{ type: () => factory.null, metadata: {} }],
 				}) {}
 				// @ts-expect-error Does not support annotations
 				type _check = ValidateRecursiveSchema<typeof Test>;
+
+				type X = UnannotateSchemaRecord<(typeof Test)["info"]>;
+				type Y = InsertableObjectFromSchemaRecord<X>;
+
+				type Y2 = (typeof Test)["createFromInsertable"];
+
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
 			}
 
 			{
-				class Test extends factory.mapAlpha("Test", [
+				class Test extends factory.mapRecursive("Test", [
 					{ type: () => factory.null, metadata: {} },
 				]) {}
 				// @ts-expect-error Does not support annotations
 				type _check = ValidateRecursiveSchema<typeof Test>;
+				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
 			}
 		});
 
@@ -597,6 +797,8 @@ describe("SchemaFactory Recursive methods", () => {
 					class Test extends schemaFactory.arrayRecursive("Test", () => Test) {}
 					// @ts-expect-error Missing [] around allowed types.
 					type _check = ValidateRecursiveSchema<typeof Test>;
+					// @ts-expect-error Missing [] around allowed types.
+					type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
 				}
 
 				{
@@ -608,6 +810,8 @@ describe("SchemaFactory Recursive methods", () => {
 					) {}
 					// @ts-expect-error Objects take a record type with fields, not a field directly.
 					type _check = ValidateRecursiveSchema<typeof Test>;
+					// @ts-expect-error Objects take a record type with fields, not a field directly.
+					type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
 				}
 
 				{
@@ -619,6 +823,8 @@ describe("SchemaFactory Recursive methods", () => {
 					) {}
 					// @ts-expect-error Maps accept allowed types, not field schema.
 					type _check = ValidateRecursiveSchema<typeof MapRecursive>;
+					// @ts-expect-error Maps accept allowed types, not field schema.
+					type _check2 = ValidateRecursiveSchemaAlpha<typeof MapRecursive>;
 				}
 
 				const factoryAlpha = new SchemaFactoryAlpha("");
@@ -628,6 +834,8 @@ describe("SchemaFactory Recursive methods", () => {
 					]) {}
 					// @ts-expect-error This is malformed, and should fail
 					type _check = ValidateRecursiveSchema<typeof Test>;
+					// @ts-expect-error This is malformed, and should fail
+					type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
 				}
 			}
 
@@ -774,14 +982,14 @@ describe("SchemaFactory Recursive methods", () => {
 		it("Node schema metadata", () => {
 			const factory = new SchemaFactoryAlpha("");
 
-			class Foo extends factory.arrayRecursive("FooList", [() => Foo], {
+			class Foo extends factory.arrayRecursiveAlphaLimited("FooList", [() => Foo], {
 				metadata: {
 					description: "A recursive list",
 					custom: { baz: true },
 				},
 			}) {}
 			{
-				type _check = ValidateRecursiveSchema<typeof Foo>;
+				type _check = ValidateRecursiveSchemaAlpha<typeof Foo>;
 			}
 
 			assert.deepEqual(Foo.metadata, {
@@ -953,7 +1161,9 @@ describe("SchemaFactory Recursive methods", () => {
 
 		// Test adding persistedMetadata to a recursive array schema
 		const factory = new SchemaFactoryAlpha("");
-		class Foos extends factory.arrayRecursive("Foos", [() => Foos], { persistedMetadata }) {}
+		class Foos extends factory.arrayRecursiveAlpha("Foos", [() => Foos], {
+			persistedMetadata,
+		}) {}
 		{
 			type _check = ValidateRecursiveSchema<typeof Foos>;
 		}
@@ -993,6 +1203,57 @@ describe("SchemaFactory Recursive methods", () => {
 
 		const r = hydrate(Root, { r: new ArrayRecursive([]) });
 		assert.deepEqual([...r.r], []);
+	});
+
+	describe("stagedRecursive", () => {
+		it("minimal use", () => {
+			const ref = {
+				type: () => SchemaFactoryAlpha.number,
+				metadata: {},
+			} satisfies AnnotatedAllowedType<() => System_Unsafe.TreeNodeSchemaUnsafe>;
+			const staged = SchemaFactoryAlpha.stagedRecursive(ref);
+			allowUnused<
+				requireAssignableTo<
+					typeof staged,
+					AnnotatedAllowedType<() => System_Unsafe.TreeNodeSchemaUnsafe>
+				>
+			>();
+		});
+
+		it("recursive annotated", () => {
+			const factory = new SchemaFactoryAlpha("");
+			class Recursive extends factory.arrayRecursiveAlpha("Recursive", [
+				{ type: () => Recursive, metadata: {} },
+			]) {}
+
+			{
+				type _check = ValidateRecursiveSchemaAlpha<typeof Recursive>;
+			}
+
+			const node = new Recursive([]);
+		});
+
+		it("recursive staged", () => {
+			const factory = new SchemaFactoryAlpha("");
+			class Recursive extends factory.arrayRecursiveAlpha("Recursive", [
+				SchemaFactoryAlpha.stagedRecursive({ type: () => Recursive, metadata: {} }),
+			]) {}
+
+			{
+				type _check = ValidateRecursiveSchemaAlpha<typeof Recursive>;
+			}
+		});
+
+		it("recursive staged2", () => {
+			const factory = new SchemaFactoryAlpha("");
+			class Recursive extends factory.arrayRecursiveAlpha("Recursive", [
+				SchemaFactoryAlpha.stagedRecursive({ type: () => Recursive, metadata: {} }),
+			]) {}
+
+			{
+				type _check = ValidateRecursiveSchemaAlpha<typeof Recursive>;
+			}
+		});
 	});
 
 	/**
