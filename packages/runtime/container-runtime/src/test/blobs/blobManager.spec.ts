@@ -53,7 +53,7 @@ import {
 	blobManagerBasePath,
 	redirectTableBlobName,
 	type IPendingBlobs,
-} from "../blobManager/index.js";
+} from "../../blobManager/index.js";
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP
 abstract class BaseMockBlobStorage

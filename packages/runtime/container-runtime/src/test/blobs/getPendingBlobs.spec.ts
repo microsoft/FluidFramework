@@ -12,7 +12,7 @@ import {
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
-import type { IPendingBlobs } from "../blobManager/index.js";
+import type { IPendingBlobs } from "../../blobManager/index.js";
 
 import { MockRuntime, getSummaryContentsWithFormatValidation } from "./blobManager.spec.js";
 
