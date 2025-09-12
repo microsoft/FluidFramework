@@ -213,7 +213,13 @@ describe("GenericField", () => {
 					]),
 					{
 						baseContext,
-						isMoveId: (id, count) => ({
+						getInputDetachId: (id, count) => ({ start: id, value: id, length: count }),
+						isAttachId: (id, count) => ({
+							start: id,
+							value: false,
+							length: count,
+						}),
+						isDetachId: (id, count) => ({
 							start: id,
 							value: false,
 							length: count,

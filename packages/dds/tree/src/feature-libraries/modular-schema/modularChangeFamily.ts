@@ -2893,11 +2893,26 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 					countToProcess,
 					this.fieldId,
 				);
+
+				const newAttachEntry = getFirstAttachField(
+					this.table.newChange.crossFieldKeys,
+					newDetachId,
+					countToProcess,
+				);
+
+				countToProcess = newAttachEntry.length;
+				if (newAttachEntry.value !== undefined) {
+					this.table.rebasedRootNodes.outputDetachLocations.set(
+						newDetachId,
+						countToProcess,
+						newAttachEntry.value,
+					);
+				}
 			}
 		}
 
 		if (newDetachId !== undefined) {
-			this.table.movedDetaches.set(newDetachId, count, true);
+			this.table.movedDetaches.set(newDetachId, countToProcess, true);
 		}
 
 		if (countToProcess < count) {
@@ -4042,6 +4057,12 @@ function rebaseRoots(
 			);
 		}
 	}
+
+	for (const entry of change.rootNodes.outputDetachLocations.entries()) {
+		// XXX: Are there any conditions where we should remove this entry?
+		rebasedRoots.outputDetachLocations.set(entry.start, entry.length, entry.value);
+	}
+
 	return rebasedRoots;
 }
 

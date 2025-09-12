@@ -393,19 +393,13 @@ function encodeRename(
 	encodeRevision: (revision: RevisionTag | undefined) => EncodedRevisionTag | undefined,
 ): Encoded.MarkEffect {
 	assert(mark.cellId !== undefined, "Rename should target empty cell");
-	const renamedNodeId = context.rootRenames.getFirst(mark.cellId, mark.count).value;
-	if (renamedNodeId !== undefined && context.isMoveId(renamedNodeId, mark.count).value) {
-		// Detached nodes which were last at this cell location have been moved.
-		return {
-			moveOut: {
-				revision: encodeRevision(renamedNodeId.revision),
-				id: renamedNodeId.localId,
-				idOverride: changeAtomIdCodec.encode(mark.idOverride, context.baseContext),
-			},
-		};
-	}
 
-	if (context.isMoveId(mark.idOverride, 1).value) {
+	const inputDetachId = context.getInputDetachId(mark.idOverride, mark.count).value;
+	const isMoveInAndDetach =
+		context.isDetachId(mark.idOverride, mark.count).value ||
+		(inputDetachId !== undefined && !areEqualChangeAtomIds(inputDetachId, mark.cellId));
+
+	if (isMoveInAndDetach) {
 		// These cells are the final detach location of moved nodes.
 		const encodedRevision = encodeRevision(mark.idOverride.revision);
 
@@ -423,6 +417,21 @@ function encodeRename(
 						id: mark.idOverride.localId,
 					},
 				},
+			},
+		};
+	}
+
+	const renamedNodeId =
+		context.rootRenames.getFirst(mark.cellId, mark.count).value ?? mark.cellId;
+	const isMoveOutAndAttach = context.isAttachId(renamedNodeId, mark.count).value;
+	const isMoveOutAndDetach = !areEqualChangeAtomIds(renamedNodeId, mark.idOverride);
+	if (isMoveOutAndAttach || isMoveOutAndDetach) {
+		// Detached nodes which were last at this cell location have been moved.
+		return {
+			moveOut: {
+				revision: encodeRevision(renamedNodeId.revision),
+				id: renamedNodeId.localId,
+				idOverride: changeAtomIdCodec.encode(mark.idOverride, context.baseContext),
 			},
 		};
 	}
@@ -449,16 +458,22 @@ function getLengthToSplitMark(mark: Mark, context: FieldChangeEncodingContext): 
 			? rangeQueryChangeAtomIdMap(context.rootNodeChanges, mark.cellId, mark.count).length
 			: mark.count;
 
-	if (isMoveMark(mark)) {
-		count = context.isMoveId(getMovedNodeId(mark), count).length;
+	if (mark.cellId !== undefined) {
+		count = context.getInputDetachId(mark.cellId, count).length;
 	}
 
-	if (mark.cellId !== undefined) {
-		const renameEntry = context.rootRenames.getFirst(mark.cellId, count);
-		count = renameEntry.length;
-		if (renameEntry.value !== undefined) {
-			count = context.isMoveId(renameEntry.value, count).length;
-		}
+	switch (mark.type) {
+		case "Insert":
+			count = context.isDetachId(getAttachedNodeId(mark), count).length;
+			break;
+		case "Remove":
+			count = context.isAttachId(getDetachedNodeId(mark), count).length;
+			break;
+		case "Rename":
+			// XXX
+			break;
+		default:
+			break;
 	}
 
 	return count;
@@ -508,8 +523,17 @@ function encodeMarkEffect(
 ): Encoded.MarkEffect {
 	const type = mark.type;
 	switch (type) {
-		case "Insert":
-			return context.isMoveId(getAttachedNodeId(mark), 1).value
+		case "Insert": {
+			const attachId = getAttachedNodeId(mark);
+			const isMove = context.isDetachId(attachId, 1).value;
+
+			// If the input context ID for these nodes is not the cell ID,
+			// then these nodes are being moved from the location at which they were last detached.
+			const inputId = context.getInputDetachId(attachId, mark.count).value ?? attachId;
+			const isInitialAttachLocation =
+				mark.cellId === undefined || areEqualChangeAtomIds(mark.cellId, inputId);
+
+			return isMove || !isInitialAttachLocation
 				? {
 						moveIn: { revision: encodeRevision(mark.revision), id: mark.id },
 					}
@@ -519,13 +543,23 @@ function encodeMarkEffect(
 							id: mark.id,
 						},
 					};
+		}
 		case "Remove": {
 			const encodedIdOverride =
 				mark.idOverride === undefined
 					? undefined
 					: changeAtomIdCodec.encode(mark.idOverride, context.baseContext);
 
-			return context.isMoveId(getDetachedNodeId(mark), 1).value
+			const detachId = getDetachedNodeId(mark);
+			const isMove = context.isAttachId(detachId, 1).value;
+
+			// If the final detach location for the nodes were here,
+			// then the output cell ID (defined by idOverride) would be the same as the detach ID.
+			// So if the cell ID is different from the detach ID, the nodes must have been moved.
+			const isFinalDetachLocation =
+				mark.idOverride === undefined || areEqualChangeAtomIds(detachId, mark.idOverride);
+
+			return isMove || !isFinalDetachLocation
 				? {
 						moveOut: {
 							revision: encodeRevision(mark.revision),

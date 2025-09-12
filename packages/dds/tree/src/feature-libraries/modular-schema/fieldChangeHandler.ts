@@ -14,7 +14,12 @@ import type {
 	RevisionMetadataSource,
 	RevisionTag,
 } from "../../core/index.js";
-import type { IdAllocator, Invariant, RangeQueryEntry } from "../../util/index.js";
+import type {
+	IdAllocator,
+	Invariant,
+	RangeQueryEntry,
+	RangeQueryResult,
+} from "../../util/index.js";
 
 import type {
 	ComposeNodeManager,
@@ -232,7 +237,12 @@ export interface FieldChangeEncodingContext {
 	readonly rootNodeChanges: ChangeAtomIdBTree<NodeId>;
 	readonly rootRenames: ChangeAtomIdRangeMap<ChangeAtomId>;
 	encodeNode(nodeId: NodeId): EncodedNodeChangeset;
-	isMoveId(id: ChangeAtomId, count: number): RangeQueryEntry<ChangeAtomId, boolean>;
+	getInputDetachId(
+		id: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId, ChangeAtomId>;
+	isAttachId(id: ChangeAtomId, count: number): RangeQueryEntry<ChangeAtomId, boolean>;
+	isDetachId(id: ChangeAtomId, count: number): RangeQueryEntry<ChangeAtomId, boolean>;
 
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
 	decodeRootNodeChange(detachId: ChangeAtomId, encodedNode: EncodedNodeChangeset): void;

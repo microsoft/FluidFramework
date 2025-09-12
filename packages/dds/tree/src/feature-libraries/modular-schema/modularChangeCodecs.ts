@@ -33,6 +33,7 @@ import {
 	type JsonCompatibleReadOnly,
 	type Mutable,
 	type RangeQueryEntry,
+	type RangeQueryResult,
 	type TupleBTree,
 	brand,
 	idAllocatorFromMaxId,
@@ -184,7 +185,8 @@ function makeModularChangeCodec(
 		fieldToRoots: FieldRootMap,
 		context: ChangeEncodingContext,
 		encodeNode: NodeEncoder,
-		isMoveId: ChangeAtomIdRangeQuery,
+		getInputDetachId: ChangeAtomMappingQuery,
+		isAttachId: ChangeAtomIdRangeQuery,
 		isDetachId: ChangeAtomIdRangeQuery,
 	): EncodedFieldChangeMap {
 		const encodedFields: EncodedFieldChangeMap = [];
@@ -199,7 +201,9 @@ function makeModularChangeCodec(
 				rootRenames: rootChanges?.renames ?? newChangeAtomIdTransform(),
 
 				encodeNode,
-				isMoveId,
+				getInputDetachId,
+				isAttachId,
+				isDetachId,
 				decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
 				decodeRootNodeChange: () => fail("Should not be called during encoding"),
 				decodeRootRename: () => fail("Should not be called during encoding"),
@@ -230,7 +234,8 @@ function makeModularChangeCodec(
 		fieldToRoots: FieldRootMap,
 		context: ChangeEncodingContext,
 		encodeNode: NodeEncoder,
-		isMoveId: ChangeAtomIdRangeQuery,
+		getInputDetachId: ChangeAtomMappingQuery,
+		isAttachId: ChangeAtomIdRangeQuery,
 		isDetachId: ChangeAtomIdRangeQuery,
 	): EncodedNodeChangeset {
 		const encodedChange: EncodedNodeChangeset = {};
@@ -243,7 +248,8 @@ function makeModularChangeCodec(
 				fieldToRoots,
 				context,
 				encodeNode,
-				isMoveId,
+				getInputDetachId,
+				isAttachId,
 				isDetachId,
 			);
 		}
@@ -282,7 +288,10 @@ function makeModularChangeCodec(
 				rootRenames: newChangeAtomIdTransform(),
 
 				encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
-				isMoveId: () => fail("Should not query move IDs during decoding"),
+				getInputDetachId: () => fail("Should not query during decoding"),
+				isAttachId: () => fail("Should not query during decoding"),
+				isDetachId: () => fail("Should not query during decoding"),
+
 				decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
 					return decodeNode(encodedNode, { field: fieldId });
 				},
@@ -447,6 +456,11 @@ function makeModularChangeCodec(
 		return map;
 	}
 
+	type ChangeAtomMappingQuery = (
+		id: ChangeAtomId,
+		count: number,
+	) => RangeQueryResult<ChangeAtomId, ChangeAtomId>;
+
 	type ChangeAtomIdRangeQuery = (
 		id: ChangeAtomId,
 		count: number,
@@ -513,25 +527,12 @@ function makeModularChangeCodec(
 	const modularChangeCodec: ModularChangeCodec = {
 		encode: (change, context) => {
 			const fieldToRoots = getFieldToRoots(change.rootNodes);
-			const isMoveId = (
+			const isAttachId = (
 				id: ChangeAtomId,
 				count: number,
 			): RangeQueryEntry<ChangeAtomId, boolean> => {
-				const detachEntry = getFirstDetachField(change.crossFieldKeys, id, count);
-				const attachEntry = getFirstAttachField(change.crossFieldKeys, id, detachEntry.length);
-
-				const isMove = detachEntry.value !== undefined && attachEntry.value !== undefined;
-				const detachedMoveEntry = change.rootNodes.outputDetachLocations.getFirst(
-					id,
-					attachEntry.length,
-				);
-
-				const isMoveOfDetachLocation = detachedMoveEntry.value !== undefined;
-				return {
-					start: id,
-					value: isMove || isMoveOfDetachLocation,
-					length: detachedMoveEntry.length,
-				};
+				const attachEntry = getFirstAttachField(change.crossFieldKeys, id, count);
+				return { ...attachEntry, value: attachEntry.value !== undefined };
 			};
 
 			const isDetachId = (
@@ -544,6 +545,13 @@ function makeModularChangeCodec(
 				return { start: id, value: isDetach, length: renameEntry.length };
 			};
 
+			const getInputDetachId = (
+				id: ChangeAtomId,
+				count: number,
+			): RangeQueryResult<ChangeAtomId, ChangeAtomId> => {
+				return change.rootNodes.newToOldId.getFirst(id, count);
+			};
+
 			const encodeNode = (nodeId: NodeId): EncodedNodeChangeset => {
 				// TODO: Handle node aliasing.
 				const node = change.nodeChanges.get([nodeId.revision, nodeId.localId]);
@@ -554,7 +562,8 @@ function makeModularChangeCodec(
 					fieldToRoots,
 					context,
 					encodeNode,
-					isMoveId,
+					getInputDetachId,
+					isAttachId,
 					isDetachId,
 				);
 			};
@@ -573,7 +582,8 @@ function makeModularChangeCodec(
 					fieldToRoots,
 					context,
 					encodeNode,
-					isMoveId,
+					getInputDetachId,
+					isAttachId,
 					isDetachId,
 				),
 				builds: encodeDetachedNodes(change.builds, context),
