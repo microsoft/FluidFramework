@@ -220,6 +220,7 @@ declare type current_as_old_for_Class_PendingBoxcar = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Class_ThrottlingError": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_ThrottlingError = requireAssignableTo<TypeOnly<old.ThrottlingError>, TypeOnly<current.ThrottlingError>>
 
 /*
