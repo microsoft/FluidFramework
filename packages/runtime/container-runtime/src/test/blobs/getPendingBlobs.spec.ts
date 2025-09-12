@@ -14,7 +14,7 @@ import {
 
 import type { IPendingBlobs } from "../../blobManager/index.js";
 
-import { MockRuntime, getSummaryContentsWithFormatValidation } from "./blobManager.spec.js";
+import { MockRuntime, getSummaryContentsWithFormatValidation } from "./blobTestUtils.js";
 
 // ADO#44999: Update for placeholder pending blob creation and getPendingLocalState
 describe.skip("getPendingLocalState with blobs", () => {
