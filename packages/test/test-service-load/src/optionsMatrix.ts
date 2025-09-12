@@ -141,15 +141,15 @@ export function generateRuntimeOptions(
 		}
 	});
 
-	// Override createBlobPayloadPending to off it if explicitSchemaControl is false
+	// Override explicitSchemaControl to enabled if createBlobPayloadPending is enabled
 	pairwiseOptions.map((options) => {
-		if (options.explicitSchemaControl === false) {
+		if (options.createBlobPayloadPending) {
 			(
 				options as {
 					// Remove readonly modifier to allow overriding
 					-readonly [P in keyof ContainerRuntimeOptionsInternal]: ContainerRuntimeOptionsInternal[P];
 				}
-			).createBlobPayloadPending = undefined;
+			).explicitSchemaControl = true;
 		}
 	});
 
