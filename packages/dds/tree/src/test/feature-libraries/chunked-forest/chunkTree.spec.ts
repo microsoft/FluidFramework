@@ -9,6 +9,7 @@ import {
 	CursorLocationType,
 	EmptyKey,
 	type FieldKey,
+	type TreeNodeSchemaIdentifier,
 	type Value,
 	mapCursorField,
 	tryGetChunk,
@@ -25,7 +26,7 @@ import {
 	insertValues,
 	polymorphic,
 	tryShapeFromFieldSchema,
-	tryShapeFromSchema,
+	tryShapeFromNodeSchema,
 	uniformChunkFromCursor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
@@ -38,9 +39,11 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
+	type IncrementalEncodingPolicy,
 	type TreeChunk,
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
+	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	jsonableTreeFromFieldCursor,
@@ -66,6 +69,7 @@ const valueField = builder.required(builder.number);
 const structValue = builder.object("structValue", { x: valueField });
 const optionalField = builder.optional(builder.number);
 const structOptional = builder.object("structOptional", { x: optionalField });
+const structValueField = builder.required(structValue);
 
 const schema = toInitialSchema([empty, builder.number, structValue, structOptional]);
 
@@ -352,31 +356,40 @@ describe("chunkTree", () => {
 		});
 	});
 
-	describe("tryShapeFromSchema", () => {
+	describe("tryShapeFromNodeSchema", () => {
 		it("leaf", () => {
-			const info = tryShapeFromSchema(
-				schema,
-				defaultSchemaPolicy,
+			const info = tryShapeFromNodeSchema(
+				{
+					schema,
+					policy: defaultSchemaPolicy,
+					shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+					shapes: new Map(),
+				},
 				brand(numberSchema.identifier),
-				new Map(),
 			);
 			expectEqual(info, new TreeShape(brand(numberSchema.identifier), true, []));
 		});
 		it("empty", () => {
-			const info = tryShapeFromSchema(
-				schema,
-				defaultSchemaPolicy,
+			const info = tryShapeFromNodeSchema(
+				{
+					schema,
+					policy: defaultSchemaPolicy,
+					shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+					shapes: new Map(),
+				},
 				brand(empty.identifier),
-				new Map(),
 			);
 			expectEqual(info, new TreeShape(brand(empty.identifier), false, []));
 		});
 		it("structValue", () => {
-			const info = tryShapeFromSchema(
-				schema,
-				defaultSchemaPolicy,
+			const info = tryShapeFromNodeSchema(
+				{
+					schema,
+					policy: defaultSchemaPolicy,
+					shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+					shapes: new Map(),
+				},
 				brand(structValue.identifier),
-				new Map(),
 			);
 			expectEqual(
 				info,
@@ -386,11 +399,35 @@ describe("chunkTree", () => {
 			);
 		});
 		it("structOptional", () => {
-			const info = tryShapeFromSchema(
-				schema,
-				defaultSchemaPolicy,
+			const info = tryShapeFromNodeSchema(
+				{
+					schema,
+					policy: defaultSchemaPolicy,
+					shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+					shapes: new Map(),
+				},
 				brand(structOptional.identifier),
-				new Map(),
+			);
+			expectEqual(info, polymorphic);
+		});
+		it("incremental", () => {
+			const shouldEncodeIncrementally: IncrementalEncodingPolicy = (
+				nodeIdentifier: TreeNodeSchemaIdentifier | undefined,
+				fieldKey: FieldKey,
+			) => {
+				if (nodeIdentifier === structValue.identifier && fieldKey === "x") {
+					return true;
+				}
+				return false;
+			};
+			const info = tryShapeFromNodeSchema(
+				{
+					schema,
+					policy: defaultSchemaPolicy,
+					shouldEncodeIncrementally,
+					shapes: new Map(),
+				},
+				brand(structValue.identifier),
 			);
 			expectEqual(info, polymorphic);
 		});
@@ -399,11 +436,17 @@ describe("chunkTree", () => {
 	describe("tryShapeFromFieldSchema", () => {
 		it("valueField", () => {
 			const info = tryShapeFromFieldSchema(
-				schema,
-				defaultSchemaPolicy,
-				toInitialSchema(valueField).rootFieldSchema,
-				brand("key"),
-				new Map(),
+				{
+					schema,
+					policy: defaultSchemaPolicy,
+					shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+					shapes: new Map(),
+				},
+				{
+					parentNodeSchema: brand("root"),
+					fieldSchema: toInitialSchema(valueField).rootFieldSchema,
+					key: brand("key"),
+				},
 			);
 			assert.deepEqual(info, [
 				"key",
@@ -413,11 +456,43 @@ describe("chunkTree", () => {
 		});
 		it("optionalField", () => {
 			const info = tryShapeFromFieldSchema(
-				schema,
-				defaultSchemaPolicy,
-				toInitialSchema(optionalField).rootFieldSchema,
-				brand("key"),
-				new Map(),
+				{
+					schema,
+					policy: defaultSchemaPolicy,
+					shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
+					shapes: new Map(),
+				},
+				{
+					parentNodeSchema: brand("root"),
+					fieldSchema: toInitialSchema(optionalField).rootFieldSchema,
+					key: brand("key"),
+				},
+			);
+			assert.equal(info, undefined);
+		});
+		it("incrementalField", () => {
+			// The shape for incremental node should be polymorphic.
+			const shouldEncodeIncrementally: IncrementalEncodingPolicy = (
+				nodeIdentifier: TreeNodeSchemaIdentifier | undefined,
+				fieldKey: FieldKey,
+			) => {
+				if (nodeIdentifier === structValue.identifier && fieldKey === "x") {
+					return true;
+				}
+				return false;
+			};
+			const info = tryShapeFromFieldSchema(
+				{
+					schema,
+					policy: defaultSchemaPolicy,
+					shouldEncodeIncrementally,
+					shapes: new Map(),
+				},
+				{
+					parentNodeSchema: brand("root"),
+					fieldSchema: toInitialSchema(structValueField).rootFieldSchema,
+					key: brand("key"),
+				},
 			);
 			assert.equal(info, undefined);
 		});

@@ -17,17 +17,14 @@ import {
 	ForestSummaryTrackingState,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/forest-summary/incrementalSummaryBuilder.js";
-import type {
-	EncodedFieldBatch,
-	ChunkReferenceId,
-	TreeChunk,
+import {
+	type EncodedFieldBatch,
+	type ChunkReferenceId,
+	type TreeChunk,
+	defaultIncrementalEncodingPolicy,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/index.js";
-import type {
-	FieldKey,
-	ITreeCursorSynchronous,
-	TreeNodeSchemaIdentifier,
-} from "../../../core/index.js";
+import type { ITreeCursorSynchronous } from "../../../core/index.js";
 import type { JsonCompatible } from "../../../util/index.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
@@ -94,7 +91,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			(cursor: ITreeCursorSynchronous) => {
 				return testChunk;
 			},
-			(nodeIdentifier: TreeNodeSchemaIdentifier, fieldKey: FieldKey) => false,
+			defaultIncrementalEncodingPolicy,
 		);
 	}
 
