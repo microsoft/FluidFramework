@@ -333,6 +333,10 @@ export function create(
 			const clientIPAddress = request.ip ? request.ip : "";
 			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 			// Tenant and document
+			Lumberjack.info(`This is the network Info for create doc with client IP as ${clientIPAddress}, networkInfo as ${JSON.stringify(
+				networkInfo,
+			)},
+			and isPrivateLink as ${networkInfo.isPrivateLink}`);
 			const documentUrls = getDocumentUrlsfromNetworkInfo(
 				tenantId,
 				externalOrdererUrl,
@@ -510,6 +514,10 @@ export function create(
 
 			const clientIPAddress = request.ip ? request.ip : "";
 			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
+			Lumberjack.info(`This is the network Info for getSession with client IP as ${clientIPAddress}, networkInfo as ${JSON.stringify(
+				networkInfo,
+			)},
+			and isPrivateLink as ${networkInfo.isPrivateLink}`);
 			const documentUrls = getDocumentUrlsfromNetworkInfo(
 				tenantId,
 				externalOrdererUrl,
