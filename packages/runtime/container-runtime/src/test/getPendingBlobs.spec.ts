@@ -14,7 +14,7 @@ import {
 
 import type { IPendingBlobs } from "../blobManager/index.js";
 
-import { MockRuntime, validateSummary } from "./blobManager.spec.js";
+import { MockRuntime, getSummaryContentsWithFormatValidation } from "./blobManager.spec.js";
 
 // ADO#44999: Update for placeholder pending blob creation and getPendingLocalState
 describe.skip("getPendingLocalState with blobs", () => {
@@ -40,7 +40,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		assert.strictEqual(Object.values(pendingBlobs)[0].acked, false);
 		assert.strictEqual(Object.values(pendingBlobs)[0].uploadTime, undefined);
 
-		const summaryData = validateSummary(runtime);
+		const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
 		assert.strictEqual(summaryData.ids?.length, 0);
 		assert.strictEqual(summaryData.redirectTable, undefined);
 
@@ -55,7 +55,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		await runtime2.connect();
 		await runtime2.processAll();
 
-		const summaryData2 = validateSummary(runtime2);
+		const summaryData2 = getSummaryContentsWithFormatValidation(runtime2.blobManager);
 		assert.strictEqual(summaryData2.ids?.length, 1);
 		assert.strictEqual(summaryData2.redirectTable?.length, 1);
 	});
@@ -75,7 +75,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		assert.strictEqual(Object.values(pendingBlobs)[0].acked, false);
 		assert.ok(Object.values(pendingBlobs)[0].uploadTime);
 
-		const summaryData = validateSummary(runtime);
+		const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
 		assert.strictEqual(summaryData.ids?.length, 0);
 		assert.strictEqual(summaryData.redirectTable, undefined);
 
@@ -90,7 +90,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		await runtime2.connect();
 		await runtime2.processAll();
 
-		const summaryData2 = validateSummary(runtime2);
+		const summaryData2 = getSummaryContentsWithFormatValidation(runtime2.blobManager);
 		assert.strictEqual(summaryData2.ids?.length, 1);
 		assert.strictEqual(summaryData2.redirectTable?.length, 1);
 	});
@@ -111,7 +111,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		const pendingBlobs = pendingState[1] ?? {};
 		assert.strictEqual(Object.keys(pendingBlobs).length, 2);
 
-		const summaryData = validateSummary(runtime);
+		const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
 		assert.strictEqual(summaryData.ids?.length, 0);
 		assert.strictEqual(summaryData.redirectTable, undefined);
 
@@ -126,7 +126,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		await runtime2.connect();
 		await runtime2.processAll();
 
-		const summaryData2 = validateSummary(runtime2);
+		const summaryData2 = getSummaryContentsWithFormatValidation(runtime2.blobManager);
 		assert.strictEqual(summaryData2.ids?.length, 2);
 		assert.strictEqual(summaryData2.redirectTable?.length, 2);
 	});
@@ -151,7 +151,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		const pendingBlobs = pendingState[1] ?? {};
 		assert.strictEqual(Object.keys(pendingBlobs).length, 3);
 
-		const summaryData = validateSummary(runtime);
+		const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
 		assert.strictEqual(summaryData.ids?.length, 0);
 		assert.strictEqual(summaryData.redirectTable, undefined);
 
@@ -166,7 +166,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		await runtime2.connect();
 		await runtime2.processAll();
 
-		const summaryData2 = validateSummary(runtime2);
+		const summaryData2 = getSummaryContentsWithFormatValidation(runtime2.blobManager);
 		assert.strictEqual(summaryData2.ids?.length, 3);
 		assert.strictEqual(summaryData2.redirectTable?.length, 3);
 	});
@@ -185,7 +185,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		assert.strictEqual(Object.values(pendingBlobs)[0].acked, false);
 		assert.strictEqual(Object.values(pendingBlobs)[0].uploadTime, undefined);
 
-		const summaryData = validateSummary(runtime);
+		const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
 		assert.strictEqual(summaryData.ids?.length, 0);
 		assert.strictEqual(summaryData.redirectTable, undefined);
 
@@ -199,7 +199,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		await runtime2.attach();
 		await runtime2.connect(0, true);
 		await runtime2.processAll();
-		const summaryData2 = validateSummary(runtime2);
+		const summaryData2 = getSummaryContentsWithFormatValidation(runtime2.blobManager);
 		assert.strictEqual(summaryData2.ids?.length, 1);
 		assert.strictEqual(summaryData2.redirectTable?.length, 1);
 	});
@@ -217,7 +217,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		const pendingBlobs = pendingState[1] ?? {};
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		assert.ok(pendingBlobs[Object.keys(pendingBlobs)[0]].storageId);
-		const summaryData = validateSummary(runtime);
+		const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
 
 		const runtime2 = new MockRuntime(
 			mc,
@@ -231,7 +231,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		await runtime2.connect();
 		await runtime2.processAll();
 
-		const summaryData2 = validateSummary(runtime2);
+		const summaryData2 = getSummaryContentsWithFormatValidation(runtime2.blobManager);
 		assert.strictEqual(summaryData2.ids?.length, 1);
 		assert.strictEqual(summaryData2.redirectTable?.length, 1);
 	});
@@ -250,7 +250,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		const pendingBlobs = pendingState[1] ?? {};
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		assert.ok(pendingBlobs[Object.keys(pendingBlobs)[0]].storageId);
-		const summaryData = validateSummary(runtime);
+		const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
 
 		const runtime2 = new MockRuntime(
 			mc,
@@ -263,7 +263,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		await runtime2.connect();
 		await runtime2.processAll();
 
-		const summaryData2 = validateSummary(runtime2);
+		const summaryData2 = getSummaryContentsWithFormatValidation(runtime2.blobManager);
 		assert.strictEqual(summaryData2.ids?.length, 1);
 		assert.strictEqual(summaryData2.redirectTable?.length, 1);
 	});
