@@ -10,8 +10,8 @@ import {
 	getKernel,
 	isTreeNode,
 	withBufferedTreeEvents,
-// TODO: test other things from "treeNodeKernel" file.
-// eslint-disable-next-line import/no-internal-modules
+	// TODO: test other things from "treeNodeKernel" file.
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/treeNodeKernel.js";
 
 import { describeHydration, hydrate } from "../utils.js";
