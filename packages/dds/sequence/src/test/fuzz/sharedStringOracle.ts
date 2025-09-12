@@ -5,8 +5,8 @@
 
 import { MergeTreeDeltaType, TextSegment } from "@fluidframework/merge-tree/internal";
 
-import type { SequenceDeltaEvent } from "./sequenceDeltaEvent.js";
-import type { SharedString } from "./sequenceFactory.js";
+import type { SequenceDeltaEvent } from "../../sequenceDeltaEvent.js";
+import type { SharedString } from "../../sequenceFactory.js";
 
 /**
  * Oracle that mirrors a single SharedString instance by listening to events

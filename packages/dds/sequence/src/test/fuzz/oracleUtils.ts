@@ -4,7 +4,8 @@
  */
 
 import type { ISharedString } from "../../sharedString.js";
-import { SharedStringOracle } from "../../sharedStringOracle.js";
+
+import { SharedStringOracle } from "./sharedStringOracle.js";
 
 /**
  * A channel decorated with one or more oracles for validation.

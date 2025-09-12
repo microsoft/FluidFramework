@@ -47,11 +47,11 @@ import {
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
 import { ISharedString, type SharedStringClass } from "../../sharedString.js";
-import { SharedStringOracle } from "../../sharedStringOracle.js";
 import { _dirname } from "../dirname.cjs";
 import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
 
 import { hasSharedStringOracle, type IChannelWithOracles } from "./oracleUtils.js";
+import { SharedStringOracle } from "./sharedStringOracle.js";
 
 export type RevertibleSharedString = ISharedString & {
 	revertibles: SharedStringRevertible[];
