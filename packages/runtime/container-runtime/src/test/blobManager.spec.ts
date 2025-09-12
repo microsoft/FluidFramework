@@ -1298,7 +1298,7 @@ for (const createBlobPayloadPending of [false, true]) {
 		});
 
 		describe("Storage ID Lookup", () => {
-			it("lookupCurrentBlobStorageId returns correct storage ID for attached blobs", async () => {
+			it("lookupTemporaryBlobStorageId returns correct storage ID for attached blobs", async () => {
 				await runtime.attach();
 				await runtime.connect();
 
@@ -1317,7 +1317,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert(expectedStorageId !== undefined, "storage id not found in redirect table");
 
 				// The blob should now have a storage ID available
-				const foundStorageId = runtime.blobManager.lookupCurrentBlobStorageId(localId);
+				const foundStorageId = runtime.blobManager.lookupTemporaryBlobStorageId(localId);
 				assert.strictEqual(
 					foundStorageId,
 					expectedStorageId,
@@ -1325,7 +1325,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				);
 			});
 
-			it("lookupCurrentBlobStorageId returns undefined for pending blobs", async () => {
+			it("lookupTemporaryBlobStorageId returns undefined for pending blobs", async () => {
 				if (!createBlobPayloadPending) {
 					// This test only applies when payload pending is enabled
 					return;
@@ -1340,8 +1340,8 @@ for (const createBlobPayloadPending of [false, true]) {
 
 				const { localId } = unpackHandle(blobHandle);
 
-				// The blob should be pending, so lookupCurrentBlobStorageId should return undefined
-				const storageId = runtime.blobManager.lookupCurrentBlobStorageId(localId);
+				// The blob should be pending, so lookupTemporaryBlobStorageId should return undefined
+				const storageId = runtime.blobManager.lookupTemporaryBlobStorageId(localId);
 				assert.strictEqual(
 					storageId,
 					undefined,
@@ -1351,16 +1351,16 @@ for (const createBlobPayloadPending of [false, true]) {
 				// After processing, it should return the storage ID
 				await runtime.processAll();
 				const storageIdAfterProcessing =
-					runtime.blobManager.lookupCurrentBlobStorageId(localId);
+					runtime.blobManager.lookupTemporaryBlobStorageId(localId);
 				assert(
 					storageIdAfterProcessing !== undefined,
 					"Storage ID should be found after processing",
 				);
 			});
 
-			it("lookupCurrentBlobStorageId returns undefined for unknown blob ID", () => {
+			it("lookupTemporaryBlobStorageId returns undefined for unknown blob ID", () => {
 				const unknownId = "unknown-blob-id";
-				const storageId = runtime.blobManager.lookupCurrentBlobStorageId(unknownId);
+				const storageId = runtime.blobManager.lookupTemporaryBlobStorageId(unknownId);
 				assert.strictEqual(
 					storageId,
 					undefined,

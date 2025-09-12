@@ -217,7 +217,7 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
  * @legacy
  * @alpha
  */
-export function lookupCurrentBlobStorageId(
+export function lookupTemporaryBlobStorageId(
 	containerRuntime: IContainerRuntime,
 	handle: IFluidHandle,
 ): string | undefined {
@@ -246,5 +246,5 @@ export function lookupCurrentBlobStorageId(
 
 	// Cast the runtime to the internal interface and call the lookup method
 	const internalRuntime = containerRuntime as IContainerRuntimeInternal;
-	return internalRuntime.lookupCurrentBlobStorageId(localId);
+	return internalRuntime.lookupTemporaryBlobStorageId(localId);
 }

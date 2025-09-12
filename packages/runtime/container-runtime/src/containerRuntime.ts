@@ -4547,8 +4547,8 @@ export class ContainerRuntime
 	 * Warning: the returned blob URL may expire and does not support permalinks.
 	 * This API is intended for temporary integration scenarios only.
 	 */
-	public lookupCurrentBlobStorageId(localId: string): string | undefined {
-		return this.blobManager.lookupCurrentBlobStorageId(localId);
+	public lookupTemporaryBlobStorageId(localId: string): string | undefined {
+		return this.blobManager.lookupTemporaryBlobStorageId(localId);
 	}
 
 	private submitIdAllocationOpIfNeeded({

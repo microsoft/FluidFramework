@@ -212,5 +212,5 @@ export interface IContainerRuntimeInternal extends IContainerRuntime, ContainerE
 	 * to understand/wait for storage ID availability.
 	 * Similarly, when the runtime is detached, this will return undefined as no blobs have been uploaded to storage.
 	 */
-	lookupCurrentBlobStorageId(localId: string): string | undefined;
+	lookupTemporaryBlobStorageId(localId: string): string | undefined;
 }
