@@ -609,7 +609,7 @@
             "error"
         ],
         "@typescript-eslint/ban-types": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/block-spacing": [
             "off"
@@ -740,6 +740,9 @@
             "off"
         ],
         "@typescript-eslint/no-empty-interface": [
+            "error"
+        ],
+        "@typescript-eslint/no-empty-object-type": [
             "error"
         ],
         "@typescript-eslint/no-explicit-any": [
@@ -875,6 +878,9 @@
         "@typescript-eslint/no-unsafe-enum-comparison": [
             "error"
         ],
+        "@typescript-eslint/no-unsafe-function-type": [
+            "error"
+        ],
         "@typescript-eslint/no-unsafe-member-access": [
             "error"
         ],
@@ -891,6 +897,9 @@
             "off"
         ],
         "@typescript-eslint/no-var-requires": [
+            "error"
+        ],
+        "@typescript-eslint/no-wrapper-object-types": [
             "error"
         ],
         "@typescript-eslint/non-nullable-type-assertion-style": [
@@ -1509,6 +1518,9 @@
         ],
         "no-new-func": [
             "error"
+        ],
+        "no-new-native-nonconstructor": [
+            "off"
         ],
         "no-new-symbol": [
             "off"

@@ -36,13 +36,17 @@ module.exports = {
 	plugins: ["import", "unicorn"],
 	reportUnusedDisableDirectives: true,
 	rules: {
+		// This rule was deprecated, then removed in `@typescript-eslint/eslint-plugin` v8.
+		// It is replaced by a set of more specific rules, which have been enabled in the list below.
+		// This explicit disable will need to be removed when this package is updated to v8+ of the plugin.
+		"@typescript-eslint/ban-types": "off",
+
 		// Please keep entries alphabetized within a group
 
 		// @typescript-eslint
 		"@typescript-eslint/adjacent-overload-signatures": "error",
 		"@typescript-eslint/array-type": "error",
 		"@typescript-eslint/await-thenable": "error",
-		"@typescript-eslint/ban-types": "error",
 		"@typescript-eslint/brace-style": "off",
 		"@typescript-eslint/comma-dangle": ["error", "always-multiline"],
 		"@typescript-eslint/comma-spacing": "off",
@@ -62,6 +66,7 @@ module.exports = {
 		"@typescript-eslint/no-dynamic-delete": "error",
 		"@typescript-eslint/no-empty-function": "off",
 		"@typescript-eslint/no-empty-interface": "error",
+		"@typescript-eslint/no-empty-object-type": "error",
 		"@typescript-eslint/no-explicit-any": "off",
 		"@typescript-eslint/no-extra-semi": "error",
 		"@typescript-eslint/no-extraneous-class": "error",
@@ -87,6 +92,7 @@ module.exports = {
 		"@typescript-eslint/no-unnecessary-qualifier": "error",
 		"@typescript-eslint/no-unnecessary-type-arguments": "error",
 		"@typescript-eslint/no-unnecessary-type-assertion": "error",
+		"@typescript-eslint/no-unsafe-function-type": "error",
 		"@typescript-eslint/no-var-requires": "error",
 		"@typescript-eslint/object-curly-spacing": "off",
 		"@typescript-eslint/prefer-for-of": "error",
@@ -126,6 +132,7 @@ module.exports = {
 			},
 		],
 		"@typescript-eslint/unified-signatures": "error",
+		"@typescript-eslint/no-wrapper-object-types": "error",
 
 		// eslint-plugin-eslint-comments
 		"eslint-comments/disable-enable-pair": [
