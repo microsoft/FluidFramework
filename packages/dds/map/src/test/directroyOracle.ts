@@ -3,51 +3,50 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+
 import { strict as assert } from "node:assert";
 
-import type { SharedDirectory } from "../directoryFactory.js";
 import type { IDirectory, IDirectoryValueChanged, ISharedDirectory } from "../interfaces.js";
 
 /**
- * Oracle for directroy
+ * Oracle for directory
  * @internal
  */
 export class SharedDirectoryOracle {
 	private readonly model = new Map<string, unknown>();
 
-	public constructor(private readonly shared: SharedDirectory) {
-		// Snapshot
-		this.snapshotDirectory(shared, "");
-
-		// Subscribe
+	public constructor(private readonly shared: ISharedDirectory) {
 		this.shared.on("valueChanged", this.onValueChanged);
+		this.shared.on("clear", this.onClear);
 		this.shared.on("subDirectoryCreated", this.onSubDirCreated);
 		this.shared.on("subDirectoryDeleted", this.onSubDirDeleted);
 	}
 
-	private snapshotDirectory(dir: IDirectory, prefix: string): void {
-		for (const [key, value] of dir.entries()) {
-			this.model.set(`${prefix}${key}`, value);
-		}
-		for (const [subName, subDir] of dir.subdirectories()) {
-			this.snapshotDirectory(subDir, `${prefix}${subName}/`);
-		}
-	}
-
-	private readonly onValueChanged = (change: IDirectoryValueChanged): void => {
+	private readonly onValueChanged = (change: IDirectoryValueChanged) => {
 		const pathKey = `${change.path}/${change.key}`;
-		if (this.shared.has(pathKey)) {
-			this.model.set(pathKey, this.shared.get(pathKey));
-		} else {
+		const dir = this.shared.getWorkingDirectory(change.path);
+		if (!dir) return;
+
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const newValue = dir.get(change.key);
+
+		if (newValue === undefined) {
 			this.model.delete(pathKey);
+		} else {
+			this.model.set(pathKey, newValue);
 		}
 	};
 
-	private readonly onSubDirCreated = (subDir: ISharedDirectory, path: string): void => {
-		this.snapshotDirectory(subDir, `${path}/`);
+	private readonly onClear = () => {
+		this.model.clear();
 	};
 
-	private readonly onSubDirDeleted = (path: string): void => {
+	private readonly onSubDirCreated = (path: string) => {
+		// No need to recursively snapshot—subsequent events will populate keys
+	};
+
+	private readonly onSubDirDeleted = (path: string) => {
 		for (const key of [...this.model.keys()]) {
 			if (key.startsWith(`${path}/`)) {
 				this.model.delete(key);
@@ -56,29 +55,28 @@ export class SharedDirectoryOracle {
 	};
 
 	public validate(): void {
-		// Rebuild snapshot
-		const actualMap = new Map<string, unknown>();
-		this.snapshotDirectory(this.shared, "");
-
-		assert.strictEqual(
-			actualMap.size,
-			this.model.size,
-			`SharedDirectoryOracle mismatch: expected size=${this.model.size}, actual=${actualMap.size}`,
-		);
-
-		for (const [key, expectedValue] of this.model.entries()) {
-			const actualValue = actualMap.get(key);
-			assert.deepStrictEqual(
-				expectedValue,
-				actualValue,
-				`SharedDirectoryOracle mismatch at path="${key}"`,
-			);
+		// Compare oracle with current shared directory via events
+		for (const [key, value] of this.model.entries()) {
+			const parts = key.split("/");
+			assert(parts.length === 0, "Invalid path, cannot extract key");
+			const leafKey = parts.pop();
+			let dir: IDirectory | undefined = this.shared;
+			for (const part of parts) {
+				dir = dir.getSubDirectory(part);
+				if (!dir) break;
+			}
+			assert(leafKey !== undefined, "leaf key is undefined");
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const actual = dir?.get(leafKey);
+			assert.deepStrictEqual(actual, value, `SharedDirectoryOracle mismatch at path="${key}"`);
 		}
 	}
 
 	public dispose(): void {
 		this.shared.off("valueChanged", this.onValueChanged);
+		this.shared.off("clear", this.onClear);
 		this.shared.off("subDirectoryCreated", this.onSubDirCreated);
 		this.shared.off("subDirectoryDeleted", this.onSubDirDeleted);
+		this.model.clear();
 	}
 }

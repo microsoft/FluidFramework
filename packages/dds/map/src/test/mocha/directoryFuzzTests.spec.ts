@@ -71,7 +71,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 			stashableClientProbability: 0.2,
 		},
 		defaultTestCount: 25,
-		// emitter: oracleEmitter,
+		emitter: oracleEmitter,
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 21,
 		saveFailures: { directory: dirPath.join(_dirname, "../../../src/test/mocha/results/1") },
