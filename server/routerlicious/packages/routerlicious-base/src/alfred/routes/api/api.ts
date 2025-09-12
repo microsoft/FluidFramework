@@ -81,7 +81,8 @@ export function create(
 		}),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
-			response.sendStatus(200);
+			const clientIp = request.ip;
+			response.status(200).send(`Your IP address is: ${clientIp}`);
 		},
 	);
 
