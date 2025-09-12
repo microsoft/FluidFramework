@@ -130,6 +130,7 @@ export class MultiFormatDataStoreFactory implements IFluidDataStoreFactory {
 			if (existing) {
 				for (const d of this.descriptors) {
 					try {
+						//* Await ensureFactoriesLoaded for the descriptor first to support delay-loading
 						const match = await d.probe(rt);
 						if (match) {
 							selected = d;
