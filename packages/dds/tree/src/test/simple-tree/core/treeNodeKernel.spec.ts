@@ -6,12 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import { SchemaFactory, TreeBeta, TreeViewConfiguration } from "../../../simple-tree/index.js";
-// TODO: test other things from "treeNodeKernel" file.
-// eslint-disable-next-line import/no-internal-modules
 import {
 	getKernel,
 	isTreeNode,
 	withBufferedTreeEvents,
+// TODO: test other things from "treeNodeKernel" file.
+// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/treeNodeKernel.js";
 
 import { describeHydration, hydrate } from "../utils.js";
