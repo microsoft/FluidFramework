@@ -329,6 +329,24 @@ export class BlobManager {
 	}
 
 	/**
+	 * Lookup the blob storage ID for a given local blob id.
+	 * @param localId - The local blob id. Likely coming from a handle.
+	 * @returns The storage ID if found and the blob is not pending, undefined otherwise.
+	 * @remarks
+	 * For blobs with pending payloads (localId exists but upload hasn't finished), this is expected to return undefined.
+	 * Consumers should use the observability APIs on the handle (handle.payloadState, payloadShared event)
+	 * to understand/wait for storage ID availability.
+	 * Similarly, when the runtime is detached, this will return undefined as no blobs have been uploaded to storage.
+	 */
+	public lookupTemporaryBlobStorageId(localId: string): string | undefined {
+		if (this.runtime.attachState === AttachState.Detached) {
+			return undefined;
+		}
+		// Get the storage ID from the redirect table
+		return this.redirectTable.get(localId);
+	}
+
+	/**
 	 * Retrieve the blob with the given local blob id.
 	 * @param localId - The local blob id.  Likely coming from a handle.
 	 * @param payloadPending - Whether we suspect the payload may be pending and not available yet.

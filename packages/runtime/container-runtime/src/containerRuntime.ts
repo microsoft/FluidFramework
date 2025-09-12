@@ -4535,6 +4535,22 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob, signal);
 	}
 
+	/**
+	 * Lookup the blob storage ID for a given local blob id.
+	 * @param localId - The local blob id. Likely coming from a handle.
+	 * @returns The storage ID if found and the blob is not pending, undefined otherwise.
+	 * @remarks
+	 * This method provides access to the BlobManager's storage ID lookup functionality.
+	 * For blobs with pending payloads (localId exists but upload hasn't finished), this returns undefined.
+	 * Consumers should use the observability APIs on the handle to understand/wait for storage ID availability.
+	 *
+	 * Warning: the returned blob URL may expire and does not support permalinks.
+	 * This API is intended for temporary integration scenarios only.
+	 */
+	public lookupTemporaryBlobStorageId(localId: string): string | undefined {
+		return this.blobManager.lookupTemporaryBlobStorageId(localId);
+	}
+
 	private submitIdAllocationOpIfNeeded({
 		resubmitOutstandingRanges = false,
 		staged,
