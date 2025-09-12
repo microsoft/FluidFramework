@@ -9361,6 +9361,9 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/local-driver':
+        specifier: workspace:~
+        version: link:../../drivers/local-driver
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -9737,6 +9740,9 @@ importers:
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../routerlicious-driver
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-definitions
       '@fluidframework/server-local-server':
         specifier: ^7.0.0
         version: 7.0.0
