@@ -113,6 +113,9 @@
 			},
 			"Interface_IFluidDataStoreContextDetached": {
 				"forwardCompat": false
+			},
+			"Interface_IFluidParentContext": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "legacy"
