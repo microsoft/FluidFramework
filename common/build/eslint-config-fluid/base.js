@@ -36,10 +36,11 @@ module.exports = {
 	plugins: ["import", "unicorn"],
 	reportUnusedDisableDirectives: true,
 	rules: {
-		// This rule was deprecated, then removed in `@typescript-eslint/eslint-plugin` v8.
-		// It is replaced by a set of more specific rules, which have been enabled in the list below.
-		// This explicit disable will need to be removed when this package is updated to v8+ of the plugin.
+		// These rules were deprecated, then removed in `@typescript-eslint/eslint-plugin` v8.
+		// They are replaced by a set of more specific rules, which have been enabled in the list below.
+		// These explicit disable will need to be removed when this package is updated to v8+ of the plugin.
 		"@typescript-eslint/ban-types": "off",
+		"@typescript-eslint/no-empty-interface": "off",
 
 		// Please keep entries alphabetized within a group
 
@@ -65,7 +66,6 @@ module.exports = {
 		"@typescript-eslint/member-delimiter-style": "off",
 		"@typescript-eslint/no-dynamic-delete": "error",
 		"@typescript-eslint/no-empty-function": "off",
-		"@typescript-eslint/no-empty-interface": "error",
 		"@typescript-eslint/no-empty-object-type": "error",
 		"@typescript-eslint/no-explicit-any": "off",
 		"@typescript-eslint/no-extra-semi": "error",

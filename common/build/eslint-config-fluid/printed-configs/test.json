@@ -730,7 +730,7 @@
             "off"
         ],
         "@typescript-eslint/no-empty-interface": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/no-empty-object-type": [
             "error"
