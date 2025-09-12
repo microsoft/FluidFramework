@@ -994,7 +994,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 				const blobHandle = await handleP;
 				const { localId } = unpackHandle(blobHandle);
-				const summaryData = validateSummary(runtime);
+				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
 				assert.strictEqual(summaryData.ids?.length, 1);
 				assert.strictEqual(summaryData.redirectTable?.length, 1);
 				const redirectTable = new Map<string, string>(summaryData.redirectTable);
