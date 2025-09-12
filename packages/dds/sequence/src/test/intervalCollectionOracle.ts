@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
+
 import type { TypedEventEmitter } from "@fluid-internal/client-utils";
-// import { assert } from "@fluidframework/core-utils/internal";
 import type { PropertySet, ReferencePosition } from "@fluidframework/merge-tree/internal";
 
-import type { ISequenceIntervalCollectionEvents } from "./intervalCollection.js";
-import type { SequenceInterval } from "./intervals/index.js";
+import type { ISequenceIntervalCollectionEvents } from "../intervalCollection.js";
+import type { SequenceInterval } from "../intervals/index.js";
 
 /**
  * Lightweight snapshot to store mutable interval info
@@ -117,11 +118,17 @@ export class IntervalCollectionOracle {
 			const actualStartOffset = actual.start.getOffset();
 			const actualEndOffset = actual.end.getOffset();
 
-			if (startOffset !== actualStartOffset || endOffset !== actualEndOffset) {
-				throw new Error(
-					`Interval ${id} endpoints mismatch: oracle=${startOffset}-${endOffset}, actual=${actualStartOffset}-${actualEndOffset}`,
-				);
-			}
+			assert.deepStrictEqual(
+				startOffset,
+				actualStartOffset,
+				`Interval ${id} start mismatch: oracle=${startOffset}, actual=${actualStartOffset}`,
+			);
+
+			assert.deepStrictEqual(
+				endOffset,
+				actualEndOffset,
+				`Interval ${id} end mismatch: oracle=${endOffset}, actual=${actualEndOffset}`,
+			);
 		}
 	}
 

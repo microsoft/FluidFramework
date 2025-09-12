@@ -22,7 +22,6 @@ export {
 	defaultDDSFuzzSuiteOptions,
 	replayTest,
 	registerOracle,
-	disposeAllOracles,
 } from "./ddsFuzzHarness.js";
 export {
 	createSquashFuzzSuite,

@@ -44,11 +44,11 @@ import {
 	type IntervalCollection,
 	type ISequenceIntervalCollection,
 } from "../../intervalCollection.js";
-import { IntervalCollectionOracle } from "../../intervalCollectionOracle.js";
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
 import { ISharedString, type SharedStringClass } from "../../sharedString.js";
 import { _dirname } from "../dirname.cjs";
+import { IntervalCollectionOracle } from "../intervalCollectionOracle.js";
 import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
 
 import { hasIntervalCollectionOracle, type IChannelWithOracles } from "./oracleUtils.js";

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IntervalCollectionOracle } from "../../intervalCollectionOracle.js";
 import type { ISharedString } from "../../sharedString.js";
+import { IntervalCollectionOracle } from "../intervalCollectionOracle.js";
 
 /**
  * A channel decorated with one or more oracles for validation.

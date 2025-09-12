@@ -1812,7 +1812,7 @@ export function registerOracle(oracle: { dispose: () => void }): void {
  * Dispose all oracles
  * @internal
  */
-export function disposeAllOracles(): void {
+function disposeAllOracles(): void {
 	for (const oracle of activeOracles) {
 		oracle.dispose();
 	}
