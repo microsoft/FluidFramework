@@ -1,5 +1,23 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v7.0_0)
+
+### Update TypeScript plugin dependencies
+
+`@typescript-eslint/eslint-plugin` and `@typescript-eslint/parser` have been updated.
+These updates includes the deprecation and replacement of a couple of rules that were included in this library.
+
+The following rules have been deprecated and disabled in this library:
+
+- [ban-types](https://typescript-eslint.io/rules/ban-types/)
+- [no-empty-interface](https://typescript-eslint.io/rules/no-empty-interface/)
+
+They are replaced by the following new rules, which are now configured as errors in this library:
+
+- [no-empty-object-type](https://typescript-eslint.io/rules/no-empty-object-type/)
+- [no-unsafe-function-type](https://typescript-eslint.io/rules/no-unsafe-function-type/)
+- [no-wrapper-object-types](https://typescript-eslint.io/rules/no-wrapper-object-types/)
+
 ## [6.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.0_0)
 
 Adds the following [@typescript-eslint/no-restricted-imports](https://typescript-eslint.io/rules/no-restricted-imports/) rules:
