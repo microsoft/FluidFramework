@@ -66,6 +66,7 @@ export {
 	getValidationForRuntimeOptions,
 	getConfigsForMinVersionForCollab,
 	isValidMinVersionForCollab,
+	semanticVersionToMinimumVersionForCollab,
 } from "./compatibilityBase.js";
 export type {
 	ConfigMap,
