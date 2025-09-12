@@ -9,18 +9,18 @@ import type {
 	ConfigTypes,
 	IConfigProviderBase,
 	IErrorBase,
-} from "@fluidframework/core-interfaces";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+	IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandlePayloadPending,
 	isLocalFluidHandle,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	MockLogger,
-	type MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
+	MockLogger,
+	type MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import Sinon from "sinon";
 import { v4 as uuid } from "uuid";
@@ -28,12 +28,12 @@ import { v4 as uuid } from "uuid";
 import { blobManagerBasePath } from "../../blobManager/index.js";
 
 import {
+	type BaseMockBlobStorage,
 	DedupeStorage,
 	getSummaryContentsWithFormatValidation,
 	MockRuntime,
 	textToBlob,
 	unpackHandle,
-	type BaseMockBlobStorage,
 } from "./blobTestUtils.js";
 
 for (const createBlobPayloadPending of [false, true]) {

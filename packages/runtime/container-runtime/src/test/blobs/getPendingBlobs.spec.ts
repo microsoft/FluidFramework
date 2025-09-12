@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { IsoBuffer } from "@fluid-internal/client-utils";
 import {
 	type MonitoringContext,
 	createChildLogger,
@@ -14,7 +13,11 @@ import {
 
 import type { IPendingBlobs } from "../../blobManager/index.js";
 
-import { MockRuntime, getSummaryContentsWithFormatValidation } from "./blobTestUtils.js";
+import {
+	getSummaryContentsWithFormatValidation,
+	MockRuntime,
+	textToBlob,
+} from "./blobTestUtils.js";
 
 // ADO#44999: Update for placeholder pending blob creation and getPendingLocalState
 describe.skip("getPendingLocalState with blobs", () => {
@@ -29,7 +32,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 	it("get blobs while uploading", async () => {
 		await runtime.attach();
 		await runtime.connect();
-		const blob = IsoBuffer.from("blob", "utf8");
+		const blob = textToBlob("blob");
 		const handleP = runtime.createBlob(blob);
 		const pendingStateP = runtime.getPendingLocalState();
 		await runtime.processHandles();
@@ -63,7 +66,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 	it("get blobs and wait for blob attach while waiting for op", async () => {
 		await runtime.attach();
 		await runtime.connect();
-		const blob = IsoBuffer.from("blob", "utf8");
+		const blob = textToBlob("blob");
 		const handleP = runtime.createBlob(blob);
 		await runtime.processBlobs(true);
 		const pendingStateP = runtime.getPendingLocalState();
@@ -98,10 +101,10 @@ describe.skip("getPendingLocalState with blobs", () => {
 	it("shutdown multiple blobs", async () => {
 		await runtime.attach();
 		await runtime.connect();
-		const blob = IsoBuffer.from("blob", "utf8");
+		const blob = textToBlob("blob");
 		const handleP = runtime.createBlob(blob);
 		await runtime.processBlobs(true);
-		const blob2 = IsoBuffer.from("blob2", "utf8");
+		const blob2 = textToBlob("blob2");
 		const handleP2 = runtime.createBlob(blob2);
 		const pendingStateP = runtime.getPendingLocalState();
 		await runtime.processHandles();
@@ -134,14 +137,14 @@ describe.skip("getPendingLocalState with blobs", () => {
 	it("upload blob while getting pending state", async () => {
 		await runtime.attach();
 		await runtime.connect();
-		const blob = IsoBuffer.from("blob", "utf8");
+		const blob = textToBlob("blob");
 		const handleP = runtime.createBlob(blob);
 		await runtime.processBlobs(true);
-		const blob2 = IsoBuffer.from("blob2", "utf8");
+		const blob2 = textToBlob("blob2");
 		const handleP2 = runtime.createBlob(blob2);
 		const pendingStateP = runtime.getPendingLocalState();
 		await runtime.processHandles();
-		const handleP3 = runtime.createBlob(IsoBuffer.from("blob3", "utf8"));
+		const handleP3 = runtime.createBlob(textToBlob("blob3"));
 		await runtime.processBlobs(true);
 		await runtime.processHandles();
 		await assert.doesNotReject(handleP);
@@ -174,7 +177,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 	it("retries blob after being rejected if it was stashed", async () => {
 		await runtime.attach();
 		await runtime.connect();
-		const blob = IsoBuffer.from("blob", "utf8");
+		const blob = textToBlob("blob");
 		const handleP = runtime.createBlob(blob);
 		const pendingStateP = runtime.getPendingLocalState();
 		await runtime.processHandles();
@@ -207,7 +210,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 	it("does not restart upload after applying stashed ops if not expired", async () => {
 		await runtime.attach();
 		await runtime.connect();
-		const blob = IsoBuffer.from("blob", "utf8");
+		const blob = textToBlob("blob");
 		const handleP = runtime.createBlob(blob);
 		await runtime.processBlobs(true);
 		const pendingStateP = runtime.getPendingLocalState();
@@ -240,7 +243,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		await runtime.attach();
 		await runtime.connect();
 		runtime.attachedStorage.minTTL = 0.001;
-		const blob = IsoBuffer.from("blob", "utf8");
+		const blob = textToBlob("blob");
 		const handleP = runtime.createBlob(blob);
 		await runtime.processBlobs(true);
 		const pendingStateP = runtime.getPendingLocalState();
