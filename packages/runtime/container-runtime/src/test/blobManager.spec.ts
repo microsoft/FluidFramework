@@ -1298,59 +1298,34 @@ for (const createBlobPayloadPending of [false, true]) {
 		});
 
 		describe("Storage ID Lookup", () => {
-			let redirectTable: Map<string, string>;
+			it("lookupCurrentBlobStorageId returns correct storage ID for attached blobs", async () => {
+				await runtime.attach();
+				await runtime.connect();
 
-			/**
-			 * Creates a blob with the given content and returns its local and storage id.
-			 */
-			async function createBlobAndGetIds(content: string) {
-				// For a given blob's GC node id, returns the blob id.
-				const getBlobIdFromAbsolutePath = (gcNodeId: string) => {
-					const pathParts = gcNodeId.split("/");
-					assert(
-						pathParts.length === 3 && pathParts[1] === blobManagerBasePath,
-						"Invalid blob node path",
-					);
-					return pathParts[2];
-				};
-
-				const blobContents = IsoBuffer.from(content, "utf8");
+				// Create a blob using the helper function
+				const blobContents = textToBlob("test blob content");
 				const handleP = runtime.createBlob(blobContents);
 				await runtime.processAll();
 
 				const blobHandle = await handleP;
 				const { localId } = unpackHandle(blobHandle);
-				assert(redirectTable.has(localId), "blob not found in redirect table");
-				const storageId = redirectTable.get(localId);
-				assert(storageId !== undefined, "storage id not found in redirect table");
-				return {
-					localId,
-					storageId,
-				};
-			}
-
-			beforeEach(() => {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- Mutating private property
-				redirectTable = (runtime.blobManager as any).redirectTable;
-			});
-
-			it("lookupBlobStorageId returns correct storage ID for attached blobs", async () => {
-				await runtime.attach();
-				await runtime.connect();
-
-				// Create a blob using the helper function
-				const blob = await createBlobAndGetIds("test blob content");
+				const summaryData = validateSummary(runtime);
+				assert.strictEqual(summaryData.ids?.length, 1);
+				assert.strictEqual(summaryData.redirectTable?.length, 1);
+				const redirectTable = new Map<string, string>(summaryData.redirectTable);
+				const expectedStorageId: string | undefined = redirectTable.get(localId);
+				assert(expectedStorageId !== undefined, "storage id not found in redirect table");
 
 				// The blob should now have a storage ID available
-				const storageId = runtime.blobManager.lookupBlobStorageId(blob.localId);
+				const foundStorageId = runtime.blobManager.lookupCurrentBlobStorageId(localId);
 				assert.strictEqual(
-					storageId,
-					blob.storageId,
+					foundStorageId,
+					expectedStorageId,
 					"Storage ID should match expected value",
 				);
 			});
 
-			it("lookupBlobStorageId returns undefined for pending blobs", async () => {
+			it("lookupCurrentBlobStorageId returns undefined for pending blobs", async () => {
 				if (!createBlobPayloadPending) {
 					// This test only applies when payload pending is enabled
 					return;
@@ -1360,18 +1335,13 @@ for (const createBlobPayloadPending of [false, true]) {
 				await runtime.connect();
 
 				// Create a blob but don't process it (keep it pending)
-				const blobContents = IsoBuffer.from("pending blob content", "utf8");
+				const blobContents = textToBlob("pending blob content");
 				const blobHandle = await runtime.createBlob(blobContents);
 
-				// Extract localId from the handle path
-				const getBlobIdFromGCNodeId = (gcNodeId: string) => {
-					const pathParts = gcNodeId.split("/");
-					return pathParts[2];
-				};
-				const localId = getBlobIdFromGCNodeId(blobHandle.absolutePath);
+				const { localId } = unpackHandle(blobHandle);
 
-				// The blob should be pending, so lookupBlobStorageId should return undefined
-				const storageId = runtime.blobManager.lookupBlobStorageId(localId);
+				// The blob should be pending, so lookupCurrentBlobStorageId should return undefined
+				const storageId = runtime.blobManager.lookupCurrentBlobStorageId(localId);
 				assert.strictEqual(
 					storageId,
 					undefined,
@@ -1380,16 +1350,17 @@ for (const createBlobPayloadPending of [false, true]) {
 
 				// After processing, it should return the storage ID
 				await runtime.processAll();
-				const storageIdAfterProcessing = runtime.blobManager.lookupBlobStorageId(localId);
+				const storageIdAfterProcessing =
+					runtime.blobManager.lookupCurrentBlobStorageId(localId);
 				assert(
 					storageIdAfterProcessing !== undefined,
 					"Storage ID should be found after processing",
 				);
 			});
 
-			it("lookupBlobStorageId returns undefined for unknown blob ID", () => {
+			it("lookupCurrentBlobStorageId returns undefined for unknown blob ID", () => {
 				const unknownId = "unknown-blob-id";
-				const storageId = runtime.blobManager.lookupBlobStorageId(unknownId);
+				const storageId = runtime.blobManager.lookupCurrentBlobStorageId(unknownId);
 				assert.strictEqual(
 					storageId,
 					undefined,

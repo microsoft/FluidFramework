@@ -338,7 +338,7 @@ export class BlobManager {
 	 * to understand/wait for storage ID availability.
 	 * Similarly, when the runtime is detached, this will return undefined as no blobs have been uploaded to storage.
 	 */
-	public lookupBlobStorageId(localId: string): string | undefined {
+	public lookupCurrentBlobStorageId(localId: string): string | undefined {
 		if (this.runtime.attachState === AttachState.Detached) {
 			return undefined;
 		}

@@ -207,13 +207,17 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
  * @returns The storage ID if found and the blob is not pending, undefined otherwise
  * @remarks
  * This is a legacy+alpha helper function that provides access to blob storage IDs.
- * For blobs with pending payloads, this returns undefined. Consumers should use
- * the observability APIs on the handle (handle.payloadState, payloadShared event)
+ * For blobs with pending payloads (localId exists but upload hasn't finished), this is expected to return undefined.
+ * Consumers should use the observability APIs on the handle (handle.payloadState, payloadShared event)
  * to understand/wait for storage ID availability.
+ * Similarly, when the runtime is detached, this will return undefined as no blobs have been uploaded to storage.
+ *
+ * Warning: the returned blob URL may expire and does not support permalinks.
+ * This API is intended for temporary integration scenarios only.
  * @legacy
  * @alpha
  */
-export function lookupBlobStorageId(
+export function lookupCurrentBlobStorageId(
 	containerRuntime: IContainerRuntime,
 	handle: IFluidHandle,
 ): string | undefined {
@@ -242,5 +246,5 @@ export function lookupBlobStorageId(
 
 	// Cast the runtime to the internal interface and call the lookup method
 	const internalRuntime = containerRuntime as IContainerRuntimeInternal;
-	return internalRuntime.lookupBlobStorageId(localId);
+	return internalRuntime.lookupCurrentBlobStorageId(localId);
 }
