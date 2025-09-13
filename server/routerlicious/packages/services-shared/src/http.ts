@@ -52,6 +52,9 @@ export function validatePrivateLink(
 	return async (req, res, next) => {
 		if (enablePrivateLinkNetworkCheck) {
 			const tenantId = req.params.tenantId;
+			Lumberjack.info(`Validating private link for req ${JSON.stringify(req)}`, {
+				tenantId,
+			});
 			if (!tenantId) {
 				next();
 			}
