@@ -137,12 +137,16 @@ describe("Presence", () => {
 				{
 					type: "Pres:DatastoreUpdate",
 					content: {
-						"sendTimestamp": 1020,
+						"sendTimestamp": clock.now,
 						"avgLatency": 10,
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+									[connectionId2]: {
+										"rev": 0,
+										"timestamp": initialTime,
+										"value": attendeeId2,
+									},
 								},
 							},
 							"n:name:testNotificationWorkspace": {
@@ -190,12 +194,16 @@ describe("Presence", () => {
 				{
 					type: "Pres:DatastoreUpdate",
 					content: {
-						"sendTimestamp": 1020,
+						"sendTimestamp": clock.now,
 						"avgLatency": 10,
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+									[connectionId2]: {
+										"rev": 0,
+										"timestamp": initialTime,
+										"value": attendeeId2,
+									},
 								},
 							},
 							"n:name:testNotificationWorkspace": {
