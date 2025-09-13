@@ -58,7 +58,7 @@ export interface IMigratableFluidDataStoreFactory extends IFluidDataStoreFactory
 	 */
 	instantiateForMigration(
 		context: IFluidDataStoreContext,
-		existing: boolean,
+		existing: boolean, //* TODO: Remove, it must be true
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		portableData: any,
 	): Promise<IFluidDataStoreChannel>;

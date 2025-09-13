@@ -69,6 +69,10 @@ import {
 	type IRuntimeStorageService,
 	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IRuntimeMigrationInfo,
+	IMigratableFluidDataStoreFactory,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
 	isSnapshotFetchRequiredForLoadingGroupId,
@@ -101,21 +105,6 @@ import {
 	hasIsolatedChannels,
 	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
-// Migration interfaces (new) imported from runtime-definitions
-// Local re-import of migration interfaces (runtime-definitions adds them). If not present in older builds,
-// declare minimal local shapes to compile.
-// Local migration interfaces (scoped to container-runtime implementation). Will move to definitions later.
-interface IRuntimeMigrationInfo {
-	readonly newPackagePath: readonly string[];
-	readonly portableData: unknown;
-}
-interface IMigratableFluidDataStoreFactory extends IFluidDataStoreFactory {
-	instantiateForMigration?(
-		context: FluidDataStoreContext,
-		existing: boolean,
-		portableData: unknown,
-	): Promise<IFluidDataStoreChannel>;
-}
 
 function createAttributes(
 	pkg: readonly string[],

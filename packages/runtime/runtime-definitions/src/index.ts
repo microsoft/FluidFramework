@@ -28,7 +28,11 @@ export type {
 	PackagePath,
 } from "./dataStoreContext.js";
 export { FlushMode, FlushModeExperimental, VisibilityState } from "./dataStoreContext.js";
-export type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
+export type {
+	IProvideFluidDataStoreFactory,
+	IRuntimeMigrationInfo,
+	IMigratableFluidDataStoreFactory,
+} from "./dataStoreFactory.js";
 export { IFluidDataStoreFactory } from "./dataStoreFactory.js";
 export type {
 	FluidDataStoreRegistryEntry,
