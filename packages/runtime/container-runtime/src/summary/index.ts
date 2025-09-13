@@ -98,6 +98,7 @@ export {
 	summarizerRequestUrl,
 	DefaultSummaryConfiguration,
 	isSummariesDisabled,
+	isSummaryOnRequest,
 } from "./summaryHelpers.js";
 export {
 	type IdCompressorMode,
