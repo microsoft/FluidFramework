@@ -70,6 +70,9 @@ export function validatePrivateLink(
 			Lumberjack.info(`privateLinkEnable ${privateLinkEnable}`, {
 				tenantId,
 			});
+			Lumberjack.info(`tenant customData ${JSON.stringify(tenantInfo.customData)}`, {
+				tenantId,
+			});
 			const clientIPAddress = req.ip ?? "";
 			if (privateLinkEnable && (!clientIPAddress || clientIPAddress.trim() === "")) {
 				Lumberjack.info(`clientIPAddress in privateLinkEnable ${clientIPAddress}`, {
