@@ -159,12 +159,16 @@ export function makeOptionalFieldCodec(
 			}
 
 			if (encoded.c !== undefined) {
-				const firstNode = encoded.c[0];
-				assert(
-					firstNode !== undefined && encoded.c.length === 1,
-					"Expected exactly one child change",
-				);
-				decoded.childChange = context.decodeNode(firstNode[1]);
+				for (const [encodedDetachId, nodeChange] of encoded.c) {
+					if (encodedDetachId !== null) {
+						context.decodeRootNodeChange(
+							changeAtomIdCodec.decode(encodedDetachId, context.baseContext),
+							nodeChange,
+						);
+					} else {
+						decoded.childChange = context.decodeNode(nodeChange);
+					}
+				}
 			}
 
 			for (const [encodedOldId, encodedNewId] of encoded.m ?? []) {
