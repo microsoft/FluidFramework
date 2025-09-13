@@ -27,7 +27,7 @@ import {
 import { summarizerClientType } from "./summarizerTypes.js";
 
 // helper types for recursive readonly.
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
 export type ImmutablePrimitives = undefined | null | boolean | string | number | Function;
 export type Immutable<T> = T extends ImmutablePrimitives
 	? T
