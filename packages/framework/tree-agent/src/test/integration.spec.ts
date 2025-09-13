@@ -5,10 +5,11 @@
 
 import type { UnsafeUnknownSchema } from "@fluidframework/tree/alpha";
 
-import { addCommentTest, smokeTest } from "./scenarios/index.js";
+import { addCommentTest, addUsersTest, smokeTest } from "./scenarios/index.js";
 import { describeIntegrationTests, type LLMIntegrationTest } from "./utils.js";
 
 describeIntegrationTests([
 	addCommentTest,
+	addUsersTest,
 	smokeTest,
 ] as unknown as LLMIntegrationTest<UnsafeUnknownSchema>[]);
