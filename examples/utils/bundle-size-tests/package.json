@@ -54,9 +54,9 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@cerner/duplicate-package-checker-webpack-plugin": "~2.3.0",
-		"@fluid-tools/version-tools": "^0.57.0",
+		"@fluid-tools/version-tools": "^0.58.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.58.1",
+		"@fluidframework/build-tools": "^0.58.3",
 		"@fluidframework/bundle-size-tools": "^0.57.0",
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
 		"@mixer/webpack-bundle-compare": "^0.1.0",
