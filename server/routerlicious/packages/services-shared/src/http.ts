@@ -52,10 +52,10 @@ export function validatePrivateLink(
 	return async (req, res, next) => {
 		if (enablePrivateLinkNetworkCheck) {
 			const tenantId = req.params.tenantId;
-			Lumberjack.info(`Validating private link for req ${JSON.stringify(req)}`, {
-				tenantId,
-			});
 			if (!tenantId) {
+				Lumberjack.info(`Validating private link for tenantId ${tenantId}`, {
+					tenantId,
+				});
 				next();
 			}
 			const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
@@ -71,9 +71,6 @@ export function validatePrivateLink(
 					? true
 					: false;
 			Lumberjack.info(`privateLinkEnable ${privateLinkEnable}`, {
-				tenantId,
-			});
-			Lumberjack.info(`tenant customData ${JSON.stringify(tenantInfo.customData)}`, {
 				tenantId,
 			});
 			const clientIPAddress = req.ip ?? "";
