@@ -56,6 +56,9 @@ export function validatePrivateLink(
 				next();
 			}
 			const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
+			Lumberjack.info(`Validating private link for tenant ${JSON.stringify(tenantInfo)}`, {
+				tenantId,
+			});
 			const privateLinkEnable =
 				tenantInfo?.customData?.privateEndpoints &&
 				Array.isArray(tenantInfo.customData.privateEndpoints) &&
@@ -64,8 +67,14 @@ export function validatePrivateLink(
 					?.properties?.remotePrivateEndpoint?.connectionDetails
 					? true
 					: false;
+			Lumberjack.info(`privateLinkEnable ${privateLinkEnable}`, {
+				tenantId,
+			});
 			const clientIPAddress = req.ip ?? "";
 			if (privateLinkEnable && (!clientIPAddress || clientIPAddress.trim() === "")) {
+				Lumberjack.info(`clientIPAddress in privateLinkEnable ${clientIPAddress}`, {
+					tenantId,
+				});
 				return handleResponse(
 					Promise.reject(
 						new NetworkError(
@@ -77,12 +86,29 @@ export function validatePrivateLink(
 				);
 			}
 			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
+			Lumberjack.info(`privateLinkEnable ${JSON.stringify(networkInfo)}`, {
+				tenantId,
+			});
 			if (networkInfo.isPrivateLink) {
 				if (privateLinkEnable) {
 					const connectionDetails =
 						tenantInfo?.customData?.privateEndpoints[0]?.privateEndpointConnectionProxy
 							?.properties?.remotePrivateEndpoint?.connectionDetails;
+					Lumberjack.info(
+						`privateLinkEnable in is privatelink dd: ${JSON.stringify(
+							connectionDetails,
+						)}`,
+						{
+							tenantId,
+						},
+					);
 					const accountLinkId = connectionDetails?.linkIdentifier;
+					Lumberjack.info(
+						`accountLinkId in ispirvatelink ${JSON.stringify(accountLinkId)}`,
+						{
+							tenantId,
+						},
+					);
 					if (networkInfo.privateLinkId === accountLinkId) {
 						Lumberjack.info(
 							`This is a private link request with matching link ID accountLinkId ${accountLinkId}`,
