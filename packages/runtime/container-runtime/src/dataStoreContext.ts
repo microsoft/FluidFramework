@@ -101,6 +101,21 @@ import {
 	hasIsolatedChannels,
 	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
+// Migration interfaces (new) imported from runtime-definitions
+// Local re-import of migration interfaces (runtime-definitions adds them). If not present in older builds,
+// declare minimal local shapes to compile.
+// Local migration interfaces (scoped to container-runtime implementation). Will move to definitions later.
+interface IRuntimeMigrationInfo {
+	readonly newPackagePath: readonly string[];
+	readonly portableData: unknown;
+}
+interface IMigratableFluidDataStoreFactory extends IFluidDataStoreFactory {
+	instantiateForMigration?(
+		context: FluidDataStoreContext,
+		existing: boolean,
+		portableData: unknown,
+	): Promise<IFluidDataStoreChannel>;
+}
 
 function createAttributes(
 	pkg: readonly string[],
@@ -693,9 +708,86 @@ export abstract class FluidDataStoreContext
 		assert(this.pkg === details.pkg, 0x13e /* "Unexpected package path" */);
 
 		const factory = await this.factoryFromPackagePath();
-
 		const channel = await factory.instantiateDataStore(this, existing);
 		assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
+
+		// Migration logic: only consider for existing data stores on first realization
+		if (existing) {
+			//* Properly use exported type
+			const migrationInfo = (channel as unknown as { migrationInfo?: IRuntimeMigrationInfo })
+				.migrationInfo;
+			if (migrationInfo !== undefined) {
+				const migrationStartTime = Date.now();
+				const oldPkg = this.pkg?.join("/");
+				// Assert no pending ops queued for old runtime (barrier design will guarantee this later)
+				assert(
+					this.pendingMessagesState?.pendingCount === 0,
+					"Pending ops present during migration; barrier not implemented yet",
+				);
+				//* This screwed up type inference, should put it in a proper type guard if needed
+				// assert(
+				// 	Array.isArray(migrationInfo.newPackagePath) &&
+				// 		migrationInfo.newPackagePath.length > 0,
+				// 	"Invalid migration newPackagePath",
+				// );
+				const newPkgJoined = migrationInfo.newPackagePath.join("/");
+				assert(newPkgJoined !== oldPkg, "No-op migration not allowed");
+				// Telemetry start
+				this.mc.logger.sendTelemetryEvent({
+					eventName: "DataStoreMigration_Start",
+					oldPkg,
+					newPkg: newPkgJoined,
+				});
+				try {
+					// Swap package path prior to looking up new factory
+					this.pkg = [...migrationInfo.newPackagePath];
+					// Dispose the unbound old channel; it was never bound so has no side-effects
+					channel.dispose();
+					// Lookup new factory with updated package path
+					const newFactory =
+						(await this.factoryFromPackagePath()) as IMigratableFluidDataStoreFactory;
+					//* TODO: Use proper type guard instead of cast
+					assert(
+						typeof newFactory.instantiateForMigration === "function",
+						"Target factory missing instantiateForMigration",
+					);
+					const migratedChannel = await newFactory.instantiateForMigration(
+						this,
+						true, //* TODO: Remove this param, it's always true
+						migrationInfo.portableData,
+					);
+					const maybeChained: IRuntimeMigrationInfo | undefined = (
+						migratedChannel as unknown as { migrationInfo?: IRuntimeMigrationInfo }
+					).migrationInfo;
+					assert(
+						maybeChained === undefined,
+						0x2d9 /* Chained migration detected; only one hop supported */,
+					);
+
+					await this.bindRuntime(migratedChannel, true);
+					if (this.disposed) {
+						migratedChannel.dispose();
+					}
+					this.mc.logger.sendTelemetryEvent({
+						eventName: "DataStoreMigration_Success",
+						oldPkg,
+						newPkg: newPkgJoined,
+						durationMs: Date.now() - migrationStartTime,
+					});
+					return migratedChannel;
+				} catch (error) {
+					this.mc.logger.sendErrorEvent(
+						{
+							eventName: "DataStoreMigration_Failure",
+							oldPkg,
+							newPkg: migrationInfo.newPackagePath.join("/"),
+						},
+						error as Error,
+					);
+					throw error; // Fatal per design
+				}
+			}
+		}
 
 		await this.bindRuntime(channel, existing);
 		// This data store may have been disposed before the channel is created during realization. If so,
@@ -703,7 +795,6 @@ export abstract class FluidDataStoreContext
 		if (this.disposed) {
 			channel.dispose();
 		}
-
 		return channel;
 	}
 
@@ -838,9 +929,13 @@ export abstract class FluidDataStoreContext
 		const pathPartsForChildren = [channelsTreeName];
 
 		// Add data store's attributes to the summary.
-		const { pkg } = await this.getInitialSnapshotDetails();
+		// NOTE: If a migration occurred during realization, this.pkg may differ from the package path
+		// stored in the original snapshot. We intentionally use the current in-memory package path so that
+		// future loads bind directly to the migrated implementation.
+		const { isRootDataStore: snapshotRootFlag } = await this.getInitialSnapshotDetails();
 		const isRoot = await this.isRoot();
-		const attributes = createAttributes(pkg, isRoot);
+		assert(this.pkg !== undefined, 0x2db /* Package path expected during summarization */);
+		const attributes = createAttributes(this.pkg, isRoot ?? snapshotRootFlag);
 		addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
 		// If we are not referenced, mark the summary tree as unreferenced. Also, update unreferenced blob

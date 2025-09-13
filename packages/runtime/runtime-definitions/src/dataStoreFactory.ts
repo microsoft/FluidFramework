@@ -6,6 +6,65 @@
 import type { IFluidDataStoreChannel, IFluidDataStoreContext } from "./dataStoreContext.js";
 
 /**
+ * Information emitted by an old implementation's runtime to request a one-hop migration
+ * into a newer implementation.
+ *
+ * The current expectation (Phase 1) is that this interface is only surfaced during the
+ * first realization load path of an existing data store. Newly created data stores should
+ * already use the latest implementation and MUST NOT request migration.
+ *
+ * The portableData is intentionally "unknown" for initial implementation so that
+ * a schema can be introduced later without creating churn now. All supported versions
+ * MUST output an identical logical portable format understood by the latest implementation.
+ *
+ * TODO: Add strong typing / versioning for portableData once the format stabilizes.
+ *
+ * @beta
+ */
+export interface IRuntimeMigrationInfo {
+	/**
+	 * The new package path (final target) to which this data store should be migrated.
+	 * This MUST differ from the current package path or migration will fail.
+	 */
+	readonly newPackagePath: readonly string[];
+	/**
+	 * Opaque portable state required by the target factory to rehydrate the runtime
+	 * in the new implementation.
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Deliberately opaque initially
+	readonly portableData: any; // unknown would force excess casting inside factories; keep broad for now
+	/**
+	 * Placeholder for future barrier op sequence number or other coordination metadata.
+	 * Not used yet.
+	 */
+	readonly barrierSequenceNumber?: number;
+}
+
+/**
+ * Extension of {@link IFluidDataStoreFactory} supporting instantiation from portable migration data.
+ *
+ * Factories that wish to be targets of migration MUST implement this interface. The context will
+ * detect the presence of `instantiateForMigration` and use it instead of the normal load path when
+ * a prior implementation exposes migration info.
+ *
+ * @beta
+ */
+export interface IMigratableFluidDataStoreFactory extends IFluidDataStoreFactory {
+	/**
+	 * Instantiate a runtime using portable migration data produced by a previous implementation.
+	 * @param context - Datastore context (same as regular instantiation).
+	 * @param existing - Always true for migration (we are loading an existing store).
+	 * @param portableData - Opaque data captured from the old runtime.
+	 */
+	instantiateForMigration(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		portableData: any,
+	): Promise<IFluidDataStoreChannel>;
+}
+
+/**
  * @legacy @beta
  */
 export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory =

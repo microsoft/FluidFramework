@@ -31,6 +31,7 @@ import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
 import type {
 	IFluidDataStoreFactory,
 	IProvideFluidDataStoreFactory,
+	IRuntimeMigrationInfo,
 } from "./dataStoreFactory.js";
 import type { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import type {
@@ -394,6 +395,19 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * These policies influence the behavior of the data store, such as its readonly state in specific modes.
 	 */
 	readonly policies?: IFluidDataStorePolicies;
+
+	/**
+	 * If defined immediately after instantiation (prior to binding), indicates that the channel wishes the
+	 * context to migrate to a newer implementation. The context will dispose this unbound channel and swap in
+	 * a new runtime produced via `instantiateForMigration` on the target factory referenced by
+	 * `migrationInfo.newPackagePath`.
+	 *
+	 * Only honored during the first realization of an existing data store (one hop per load). Newly created
+	 * data stores MUST NOT request migration.
+	 *
+	 * TODO: Strengthen typing / validation of portableData once the format is finalized.
+	 */
+	readonly migrationInfo?: IRuntimeMigrationInfo;
 
 	/**
 	 * Makes the data store channel visible in the container. Also, runs through its graph and attaches all
