@@ -129,11 +129,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	/**
 	 * @returns `change` with any empty child node changesets removed.
 	 */
-	prune(
-		change: TChangeset,
-		pruneChild: NodeChangePruner,
-		hasDetachedChanges: HasDetachedChanges,
-	): TChangeset;
+	prune(change: TChangeset, pruneChild: NodeChangePruner): TChangeset;
 
 	replaceRevisions(
 		change: TChangeset,

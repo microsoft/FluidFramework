@@ -1031,38 +1031,19 @@ export class ModularChangeFamily
 			revertConstraintState,
 		);
 
-		function hasDetachedChanges(id: ChangeAtomId, count: number): boolean {
-			for (const entry of rebasedRootNodes.oldToNewId.getAll2(id, count)) {
-				if (entry.value !== undefined) {
-					return true;
-				}
-			}
-
-			let offset = 0;
-			while (offset < count) {
-				const entry = rangeQueryChangeAtomIdMap(
-					rebasedRootNodes.nodeChanges,
-					offsetChangeAtomId(id, offset),
-					count,
-				);
-
-				if (entry.value !== undefined) {
-					return true;
-				}
-
-				offset += entry.length;
-			}
-
-			return false;
-		}
+		const fieldsWithRootChanges = getFieldsWithRootChanges(
+			crossFieldTable.rebasedRootNodes,
+			change.nodeAliases,
+		);
 
 		const rebased = makeModularChangeset({
 			fieldChanges: this.pruneFieldMap(
 				rebasedFields,
+				undefined,
 				rebasedNodes,
 				crossFieldTable.rebasedNodeToParent,
 				change.nodeAliases,
-				hasDetachedChanges,
+				fieldsWithRootChanges,
 			),
 			nodeChanges: rebasedNodes,
 			nodeToParent: crossFieldTable.rebasedNodeToParent,
@@ -1071,7 +1052,7 @@ export class ModularChangeFamily
 				rebasedNodes,
 				crossFieldTable.rebasedNodeToParent,
 				change.nodeAliases,
-				hasDetachedChanges,
+				fieldsWithRootChanges,
 			),
 			// TODO: Do we need to include aliases for node changesets added during rebasing?
 			nodeAliases: change.nodeAliases,
@@ -1680,10 +1661,11 @@ export class ModularChangeFamily
 
 	private pruneFieldMap(
 		changeset: FieldChangeMap | undefined,
+		parentId: NodeId | undefined,
 		nodeMap: ChangeAtomIdBTree<NodeChangeset>,
 		nodeToParent: ChangeAtomIdBTree<NodeLocation>,
 		aliases: ChangeAtomIdBTree<NodeId>,
-		hasDetachedChanges: HasDetachedChanges,
+		fieldsWithRootChanges: TupleBTree<FieldIdKey, boolean>,
 	): FieldChangeMap | undefined {
 		if (changeset === undefined) {
 			return undefined;
@@ -1692,14 +1674,16 @@ export class ModularChangeFamily
 		const prunedChangeset: FieldChangeMap = new Map();
 		for (const [field, fieldChange] of changeset) {
 			const handler = getChangeHandler(this.fieldKinds, fieldChange.fieldKind);
-			const prunedFieldChangeset = handler.rebaser.prune(
-				fieldChange.change,
-				(nodeId) =>
-					this.pruneNodeChange(nodeId, nodeMap, nodeToParent, aliases, hasDetachedChanges),
-				hasDetachedChanges,
+
+			const prunedFieldChangeset = handler.rebaser.prune(fieldChange.change, (nodeId) =>
+				this.pruneNodeChange(nodeId, nodeMap, nodeToParent, aliases, fieldsWithRootChanges),
 			);
 
-			if (!handler.isEmpty(prunedFieldChangeset)) {
+			const fieldId: FieldId = { nodeId: parentId, field };
+			const hasRootChanges =
+				fieldsWithRootChanges.get(fieldIdKeyFromFieldId(fieldId)) === true;
+
+			if (!handler.isEmpty(prunedFieldChangeset) || hasRootChanges) {
 				prunedChangeset.set(field, { ...fieldChange, change: brand(prunedFieldChangeset) });
 			}
 		}
@@ -1712,7 +1696,7 @@ export class ModularChangeFamily
 		nodeMap: ChangeAtomIdBTree<NodeChangeset>,
 		nodeToParent: ChangeAtomIdBTree<NodeLocation>,
 		aliases: ChangeAtomIdBTree<NodeId>,
-		hasDetachedChanges: HasDetachedChanges,
+		fieldsWithRootChanges: TupleBTree<FieldIdKey, boolean>,
 	): RootNodeTable {
 		const pruned: RootNodeTable = { ...roots, nodeChanges: newTupleBTree() };
 		for (const [rootId, nodeId] of roots.nodeChanges.entries()) {
@@ -1721,7 +1705,7 @@ export class ModularChangeFamily
 				nodeMap,
 				nodeToParent,
 				aliases,
-				hasDetachedChanges,
+				fieldsWithRootChanges,
 			);
 			if (prunedId !== undefined) {
 				pruned.nodeChanges.set(rootId, prunedId);
@@ -1736,17 +1720,18 @@ export class ModularChangeFamily
 		nodes: ChangeAtomIdBTree<NodeChangeset>,
 		nodeToParent: ChangeAtomIdBTree<NodeLocation>,
 		aliases: ChangeAtomIdBTree<NodeId>,
-		hasDetachedChanges: HasDetachedChanges,
+		fieldsWithRootChanges: TupleBTree<FieldIdKey, boolean>,
 	): NodeId | undefined {
 		const changeset = nodeChangeFromId(nodes, aliases, nodeId);
 		const prunedFields =
 			changeset.fieldChanges !== undefined
 				? this.pruneFieldMap(
 						changeset.fieldChanges,
+						nodeId,
 						nodes,
 						nodeToParent,
 						aliases,
-						hasDetachedChanges,
+						fieldsWithRootChanges,
 					)
 				: undefined;
 
@@ -4548,4 +4533,16 @@ function offsetDetachedNodeEntry(entry: DetachedNodeEntry, count: number): Detac
 	return entry.detachId !== undefined
 		? { ...entry, detachId: offsetChangeAtomId(entry.detachId, count) }
 		: entry;
+}
+
+function getFieldsWithRootChanges(
+	roots: RootNodeTable,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
+): TupleBTree<FieldIdKey, boolean> {
+	const fields: TupleBTree<FieldIdKey, boolean> = newTupleBTree();
+	for (const { value: fieldId } of roots.detachLocations.entries()) {
+		fields.set(fieldIdKeyFromFieldId(normalizeFieldId(fieldId, nodeAliases)), true);
+	}
+
+	return fields;
 }

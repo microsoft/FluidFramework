@@ -185,11 +185,7 @@ function normalizeNodeIds(change: ModularChangeset): ModularChangeset {
 			// while pruning is supposed to be an optimization which could be skipped.
 			normalizedFieldChanges.set(field, {
 				...fieldChange,
-				change: changeHandler.rebaser.prune(
-					fieldChange.change,
-					normalizeNodeChanges,
-					() => true,
-				),
+				change: changeHandler.rebaser.prune(fieldChange.change, normalizeNodeChanges),
 			});
 
 			const crossFieldKeys = changeHandler.getCrossFieldKeys(fieldChange.change);
