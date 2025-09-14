@@ -22,6 +22,7 @@ import {
 } from "../../core/index.js";
 import {
 	fieldKindConfigurations,
+	optional,
 	sequence,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
@@ -75,8 +76,12 @@ import type { SessionId } from "@fluidframework/id-compressor";
 import type { ICodecOptions } from "../../codec/index.js";
 import { ajvValidator } from "../codec/index.js";
 
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map([
+const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map<
+	FieldKindIdentifier,
+	FieldKindWithEditor
+>([
 	[sequence.identifier, sequence],
+	[optional.identifier, optional],
 ]);
 
 const codecOptions: ICodecOptions = {
@@ -1652,7 +1657,7 @@ describe("ModularChangeFamily integration", () => {
 			editor.move(fieldAPath, 1, 1, fieldAPath, 0);
 		}, tag1).change;
 
-		const editDetached = Change.build(
+		const editDetachedInSequence = Change.build(
 			{
 				family,
 				maxId: 1,
@@ -1672,6 +1677,28 @@ describe("ModularChangeFamily integration", () => {
 				revisions,
 			},
 			Change.field(fieldA, sequence.identifier, [MarkMaker.tomb(tag2, brand(0))]),
+		);
+
+		const editDetachedInOptional = Change.build(
+			{
+				family,
+				maxId: 1,
+				roots: [
+					{
+						detachId: { revision: tag2, localId: brand(0) },
+						detachLocation: fieldAId,
+						change: Change.nodeWithId(
+							0,
+							{ revision: tag1, localId: brand(1) },
+							Change.field(fieldB, sequence.identifier, [
+								MarkMaker.remove(1, { revision: tag1, localId: brand(0) }),
+							]),
+						),
+					},
+				],
+				revisions,
+			},
+			Change.field(fieldA, optional.identifier, {}),
 		);
 
 		const moveAndRemove = buildTransaction((editor) => {
@@ -1746,6 +1773,23 @@ describe("ModularChangeFamily integration", () => {
 			]),
 		);
 
+		const renameInOptional = Change.build(
+			{
+				family,
+				maxId: 1,
+				renames: [
+					{
+						oldId,
+						newId: { revision: tag1, localId: brand(0) },
+						count: 1,
+						detachLocation: fieldAId,
+					},
+				],
+				revisions,
+			},
+			Change.field(fieldA, optional.identifier, {}),
+		);
+
 		const encodingTestData: EncodingTestData<
 			ModularChangeset,
 			EncodedModularChangeset,
@@ -1758,7 +1802,9 @@ describe("ModularChangeFamily integration", () => {
 				["revive and move (separate IDs)", reviveAndMoveWithSeparateIds, context],
 				["revive and move (same ID)", reviveAndMoveWithSameId, context],
 				["revive, move, and remove", reviveMoveAndRemove, context],
-				["edit detached", editDetached, context],
+				["edit detached (sequence field)", editDetachedInSequence, context],
+				["edit detached (optional field)", editDetachedInOptional, context],
+				["rename in optional field", renameInOptional, context],
 			],
 		};
 
