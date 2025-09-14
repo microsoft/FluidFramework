@@ -67,7 +67,13 @@ export function validatePrivateLink(
 				Array.isArray(tenantInfo.customData.privateEndpoints) &&
 				tenantInfo.customData.privateEndpoints?.length > 0 &&
 				tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy
-					?.properties?.remotePrivateEndpoint?.connectionDetails
+					?.properties?.remotePrivateEndpoint?.connectionDetails &&
+				Array.isArray(
+					tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy
+						?.properties?.remotePrivateEndpoint?.connectionDetails,
+				) &&
+				tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy
+					?.properties?.remotePrivateEndpoint?.connectionDetails[0]
 					? true
 					: false;
 			Lumberjack.info(`privateLinkEnable ${privateLinkEnable}`, {
@@ -94,18 +100,18 @@ export function validatePrivateLink(
 			});
 			if (networkInfo.isPrivateLink) {
 				if (privateLinkEnable) {
-					const connectionDetails =
+					const connectionDetail =
 						tenantInfo?.customData?.privateEndpoints[0]?.privateEndpointConnectionProxy
-							?.properties?.remotePrivateEndpoint?.connectionDetails;
+							?.properties?.remotePrivateEndpoint?.connectionDetails[0];
 					Lumberjack.info(
 						`privateLinkEnable in is privatelink dd: ${JSON.stringify(
-							connectionDetails,
+							connectionDetail,
 						)}`,
 						{
 							tenantId,
 						},
 					);
-					const accountLinkId = connectionDetails?.linkIdentifier;
+					const accountLinkId = connectionDetail?.linkIdentifier;
 					Lumberjack.info(
 						`accountLinkId in ispirvatelink ${JSON.stringify(accountLinkId)}`,
 						{
