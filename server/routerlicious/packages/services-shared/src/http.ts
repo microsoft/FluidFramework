@@ -53,15 +53,9 @@ export function validatePrivateLink(
 		if (enablePrivateLinkNetworkCheck) {
 			const tenantId = req.params.tenantId;
 			if (!tenantId) {
-				Lumberjack.info(`Validating private link for tenantId ${tenantId}`, {
-					tenantId,
-				});
 				next();
 			}
 			const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
-			Lumberjack.info(`Validating private link for tenant ${JSON.stringify(tenantInfo)}`, {
-				tenantId,
-			});
 			const privateLinkEnable =
 				tenantInfo?.customData?.privateEndpoints &&
 				Array.isArray(tenantInfo.customData.privateEndpoints) &&
