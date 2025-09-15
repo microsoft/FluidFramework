@@ -11744,7 +11744,7 @@ importers:
         specifier: ^0.2.16
         version: 0.2.16(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))
       '@langchain/openai':
-        specifier: ^0.6.11
+        specifier: ^0.6.12
         version: 0.6.12(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))(ws@8.18.0)
       '@microsoft/api-extractor':
         specifier: 7.52.11
