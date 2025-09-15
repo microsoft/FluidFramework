@@ -75,7 +75,7 @@ export function validatePrivateLink(
 			});
 			const clientIPAddress = req.ip ?? "";
 			if (privateLinkEnable && (!clientIPAddress || clientIPAddress.trim() === "")) {
-				Lumberjack.info(`clientIPAddress in privateLinkEnable ${clientIPAddress}`, {
+				Lumberjack.info(`privateLinkEnable here 1`, {
 					tenantId,
 				});
 				return handleResponse(
@@ -89,7 +89,7 @@ export function validatePrivateLink(
 				);
 			}
 			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
-			Lumberjack.info(`privateLinkEnable ${JSON.stringify(networkInfo)}`, {
+			Lumberjack.info(`privateLinkEnable here 2`, {
 				tenantId,
 			});
 			if (networkInfo.isPrivateLink) {
