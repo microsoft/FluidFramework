@@ -34,6 +34,7 @@ parameters:
 # Name of the service that the tests are running against.
 - name: endpointName
   type: string
+  default: ''
 
 steps:
 - task: Bash@3
