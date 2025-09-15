@@ -36,44 +36,48 @@ export interface SharedArrayInsert<T> {
 
 /**
  * Type for the SharedArray operation
- *
+ * DEBUG_value used entirely for debugging purposes to back track
+ * operations by value in the generated json files.
  */
 export interface SharedArrayDelete {
 	type: "delete";
 	index: number;
-	value: unknown;
+	DEBUG_value: unknown;
 }
 
 /**
  * Type for the SharedArray operation
- *
+ * DEBUG_value used entirely for debugging purposes to back track
+ * operations by value in the generated json files.
  */
 export interface SharedArrayMove {
 	type: "move";
 	oldIndex: number;
 	newIndex: number;
-	value: unknown;
+	DEBUG_value: unknown;
 }
 
 /**
  * Type for the SharedArray operation
- *
+ * DEBUG_value used entirely for debugging purposes to back track
+ * operations by value in the generated json files.
  */
 export interface SharedArrayToggle {
 	type: "toggle";
 	entryId: string;
-	value: unknown;
+	DEBUG_value: unknown;
 }
 
 /**
  * Type for the SharedArray operation
- *
+ * DEBUG_value used entirely for debugging purposes to back track
+ * operations by value in the generated json files.
  */
 export interface SharedArrayToggleMove {
 	type: "toggleMove";
 	oldEntryId: string;
 	newEntryId: string;
-	value: unknown;
+	DEBUG_value: unknown;
 }
 
 /**
@@ -225,7 +229,7 @@ export function makeSharedArrayOperationGenerator(weights: {
 		return {
 			type: "delete",
 			index,
-			value: client.channel.get()[index],
+			DEBUG_value: client.channel.get()[index],
 		};
 	};
 
@@ -239,7 +243,7 @@ export function makeSharedArrayOperationGenerator(weights: {
 			type: "move",
 			oldIndex,
 			newIndex,
-			value: client.channel.get()[oldIndex],
+			DEBUG_value: client.channel.get()[oldIndex],
 		};
 	};
 
@@ -274,7 +278,7 @@ export function makeSharedArrayOperationGenerator(weights: {
 		return {
 			type: "toggle",
 			entryId,
-			value: sharedArray.insertIds.get(entryId),
+			DEBUG_value: sharedArray.insertIds.get(entryId),
 		};
 	};
 
@@ -297,7 +301,7 @@ export function makeSharedArrayOperationGenerator(weights: {
 			type: "toggleMove",
 			oldEntryId,
 			newEntryId,
-			value: sharedArray.insertIds.get(newEntryId),
+			DEBUG_value: sharedArray.insertIds.get(newEntryId),
 		};
 	};
 
