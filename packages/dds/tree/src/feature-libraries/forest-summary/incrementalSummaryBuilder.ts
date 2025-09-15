@@ -257,9 +257,6 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	public constructor(
 		private readonly enableIncrementalSummary: boolean,
 		private readonly getChunkAtCursor: (cursor: ITreeCursorSynchronous) => TreeChunk,
-		/**
-		 * {@link IncrementalEncoder.shouldEncodeIncrementally}
-		 */
 		public readonly shouldEncodeIncrementally: IncrementalEncodingPolicy,
 	) {}
 

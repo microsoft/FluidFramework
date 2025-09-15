@@ -274,7 +274,7 @@ export interface FieldSchemaWithContext {
  * single child types), returns a TreeShape that can be used for efficient uniform chunking. Otherwise,
  * returns Polymorphic to indicate the shape varies and should use basic chunking.
  *
- * @param params - {@link ShapeFromSchemaParameters}.
+ * @param context - {@link ShapeFromSchemaParameters}.
  * @param nodeSchema - The identifier of the specific node schema to analyze for shape uniformity.
  * @returns TreeShape if the schema has a uniform shape, or Polymorphic if shape varies.
  *
@@ -282,13 +282,12 @@ export interface FieldSchemaWithContext {
  * The determination here is conservative. `shouldEncodeIncrementally` is used to split up shapes so incrementally
  * encoded schema are not part of larger shapes. It also does not tolerate optional or sequence fields, nor does it
  * optimize for patterns of specific values.
- *
  */
 export function tryShapeFromNodeSchema(
-	params: ShapeFromSchemaParameters,
+	context: ShapeFromSchemaParameters,
 	nodeSchema: TreeNodeSchemaIdentifier,
 ): ShapeInfo {
-	const { schema, policy, shouldEncodeIncrementally, shapes } = params;
+	const { schema, shapes } = context;
 	return getOrCreate(shapes, nodeSchema, () => {
 		const treeSchema = schema.nodeSchema.get(nodeSchema) ?? fail(0xaf9 /* missing schema */);
 		if (treeSchema instanceof LeafNodeStoredSchema) {
@@ -303,15 +302,11 @@ export function tryShapeFromNodeSchema(
 		if (treeSchema instanceof ObjectNodeStoredSchema) {
 			const fieldsArray: FieldShape[] = [];
 			for (const [key, fieldSchema] of treeSchema.objectNodeFields) {
-				const fieldShape = tryShapeFromFieldSchema(
-					{
-						schema,
-						policy,
-						shouldEncodeIncrementally,
-						shapes,
-					},
-					{ fieldSchema, parentNodeSchema: nodeSchema, key },
-				);
+				const fieldShape = tryShapeFromFieldSchema(context, {
+					fieldSchema,
+					parentNodeSchema: nodeSchema,
+					key,
+				});
 				if (fieldShape === undefined) {
 					return polymorphic;
 				}
@@ -324,25 +319,17 @@ export function tryShapeFromNodeSchema(
 }
 
 /**
- * Analyzes a field schema to determine if it has a single, uniform shape suitable for chunking optimization.
- * Examines the field schema to check if it represents a deterministic structure with single multiplicity
- * and a single child type. Returns undefined if the field is polymorphic (optional, sequence, multiple types)
- * or should be encoded incrementally, which requires separate chunking.
+ * Same as {@link tryShapeFromNodeSchema} but for fields with {@link FieldSchemaWithContext} instead of a nodeSchema.
  *
- * @param params - {@link ShapeFromFieldSchemaParameters}.
+ * @param context - {@link ShapeFromFieldSchemaParameters}.
  * @param fieldSchemaWithContext - {@link FieldSchemaWithContext}.
  * @returns FieldShape if the field has a uniform shape, or undefined if the field is polymorphic.
- *
- * @remarks
- * The determination here is conservative. `shouldEncodeIncrementally` is used to split up shapes so incrementally
- * encoded schema are not part of larger shapes. It also does not tolerate optional or sequence fields, nor does it
- * optimize for patterns of specific values.
  */
 export function tryShapeFromFieldSchema(
-	params: ShapeFromSchemaParameters,
+	context: ShapeFromSchemaParameters,
 	fieldSchemaWithContext: FieldSchemaWithContext,
 ): FieldShape | undefined {
-	const { schema, policy, shouldEncodeIncrementally, shapes } = params;
+	const { schema, policy, shouldEncodeIncrementally, shapes } = context;
 	const { fieldSchema, parentNodeSchema, key } = fieldSchemaWithContext;
 	// If this field should be encoded incrementally, use polymorphic shape so that they
 	// are chunked separately and can be re-used across encodings if they do not change.
