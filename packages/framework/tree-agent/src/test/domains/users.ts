@@ -36,7 +36,7 @@ export class User extends sf.objectAlpha(
 	},
 ) {}
 
-export class Users extends sf.recordAlpha("Users", User, {
+export class Users extends sf.mapAlpha("Users", User, {
 	metadata: {
 		description: `A collection of users in the system. The keys are user IDs. A user ID is always the first two letters of the user's first name followed by their full last name. For example, the user ID for "Alex Pardes" is "alpardes".`,
 	},

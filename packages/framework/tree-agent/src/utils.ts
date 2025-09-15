@@ -280,6 +280,9 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 			case z.ZodFirstPartyTypeKind.ZodRecord: {
 				return appendRecordType(type);
 			}
+			case z.ZodFirstPartyTypeKind.ZodMap: {
+				return appendMapType(type);
+			}
 			case z.ZodFirstPartyTypeKind.ZodLiteral: {
 				return appendLiteral((type._def as z.ZodLiteralDef).value);
 			}
@@ -419,6 +422,14 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 		appendType((recordType._def as z.ZodRecordDef).keyType);
 		append(", ");
 		appendType((recordType._def as z.ZodRecordDef).valueType);
+		append(">");
+	}
+
+	function appendMapType(mapType: z.ZodType) {
+		append("Map<");
+		appendType((mapType._def as z.ZodMapDef).keyType);
+		append(", ");
+		appendType((mapType._def as z.ZodMapDef).valueType);
 		append(">");
 	}
 
