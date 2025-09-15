@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	FieldKind,
@@ -137,6 +137,19 @@ function getOrCreateType(
 				}
 				return z.object(properties).describe(simpleNodeSchema.metadata?.description ?? "");
 			}
+			case NodeKind.Map: {
+				return z
+					.map(
+						z.string(),
+						getTypeForAllowedTypes(
+							definitionMap,
+							simpleNodeSchema.allowedTypesIdentifiers,
+							objectCache,
+							treeSchemaMap,
+						),
+					)
+					.describe(simpleNodeSchema.metadata?.description ?? "");
+			}
 			case NodeKind.Record: {
 				return z
 					.record(
@@ -181,7 +194,7 @@ function getOrCreateType(
 				}
 			}
 			default: {
-				throw new Error(`Unsupported node kind ${NodeKind[simpleNodeSchema.kind]}.`);
+				return unreachableCase(simpleNodeSchema, "Unknown node kind");
 			}
 		}
 	});
