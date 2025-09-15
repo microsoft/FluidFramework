@@ -32,6 +32,6 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 }
 
 // @public
-export function useTree(subtreeRoot: TreeNode): void;
+export function useTree(subtreeRoot: TreeNode): number;
 
 ```
