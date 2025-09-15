@@ -425,7 +425,11 @@ describe("Tests for Epoch Tracker", () => {
 		const cacheEntry1: ICacheEntry = {
 			key: "key1",
 			type: "snapshot",
-			file: { docId: hashedDocumentId, resolvedUrl: resolvedUrlWithFileVersion },
+			file: {
+				docId: hashedDocumentId,
+				resolvedUrl: resolvedUrlWithFileVersion,
+				fileVersion: resolvedUrlWithFileVersion.fileVersion,
+			},
 		};
 
 		// eslint-disable-next-line @typescript-eslint/dot-notation
