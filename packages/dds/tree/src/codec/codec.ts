@@ -10,7 +10,6 @@ import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 
 import type { ChangeEncodingContext } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
-import { noopValidator } from "./noopValidator.js";
 
 /**
  * Translates decoded data to encoded data.
@@ -37,7 +36,6 @@ export interface IDecoder<TDecoded, TEncoded, TContext> {
 /**
  * Validates data complies with some particular schema.
  * Implementations are typically created by a {@link JsonValidator}.
- * @alpha @input
  */
 export interface SchemaValidationFunction<Schema extends TSchema> {
 	/**
@@ -65,6 +63,15 @@ export interface SchemaValidationFunction<Schema extends TSchema> {
  * @sealed @alpha
  */
 export interface FormatValidator extends ErasedType<"FormatValidator"> {}
+
+/**
+ * A {@link JsonValidator} implementation which performs no validation and accepts all data as valid.
+ * @privateRemarks Having this as an option unifies opting out of validation with selection of
+ * validators, simplifying code performing validation.
+ */
+const noopValidator: JsonValidator = {
+	compile: <Schema extends TSchema>() => ({ check: (data): data is Static<Schema> => true }),
+};
 
 /**
  * A {@link FormatValidator} which does no validation.
@@ -122,11 +129,10 @@ export interface ICodecOptions {
 	 * SharedTree users are still encouraged to use a non-trivial validator (i.e. not `FormatValidatorNoOp`)
 	 * whenever reasonable: it gives better fail-fast behavior when unexpected encoded data is found,
 	 * which reduces the risk of unrecoverable data corruption.
-	 *
-	 * Use of {@link JsonValidator} here is deprecated and will be removed:
-	 * it is recommended to use {@link FormatValidator} instead.
+	 * @privateRemarks
+	 * This property should probably be renamed to `validator` before stabilizing the API.
 	 */
-	readonly jsonValidator: JsonValidator | FormatValidator;
+	readonly jsonValidator: FormatValidator;
 }
 
 /**

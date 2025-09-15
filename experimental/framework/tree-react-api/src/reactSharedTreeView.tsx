@@ -19,7 +19,7 @@ import type {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
 } from "@fluidframework/tree";
-import { configuredSharedTree, typeboxValidator } from "@fluidframework/tree/internal";
+import { configuredSharedTree, FormatValidatorBasic } from "@fluidframework/tree/internal";
 import * as React from "react";
 
 /**
@@ -27,7 +27,7 @@ import * as React from "react";
  * As long as this is an experimental package, opting into extra validation (at a small perf and bundle size cost) seems reasonable.
  */
 const SharedTree = configuredSharedTree({
-	jsonValidator: typeboxValidator,
+	jsonValidator: FormatValidatorBasic,
 });
 
 /**

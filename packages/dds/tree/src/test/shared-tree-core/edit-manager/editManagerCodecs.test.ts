@@ -6,7 +6,7 @@
 import type { SessionId } from "@fluidframework/id-compressor";
 
 import type { ChangeEncodingContext } from "../../../core/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeEditManagerCodecs } from "../../../shared-tree-core/editManagerCodecs.js";
 import type { SummaryData } from "../../../shared-tree-core/index.js";
@@ -170,7 +170,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 export function testCodec() {
 	describe("Codec", () => {
 		const family = makeEditManagerCodecs(TestChange.codecs, testRevisionTagCodec, {
-			jsonValidator: typeboxValidator,
+			jsonValidator: FormatValidatorBasic,
 		});
 
 		makeEncodingTestSuite(family, testCases);

@@ -20,8 +20,8 @@ import {
 import {
 	type CodecWriteOptions,
 	FluidClientVersion,
+	FormatValidatorNoOp,
 	type ICodecOptions,
-	noopValidator,
 } from "../codec/index.js";
 import {
 	type FieldKey,
@@ -719,7 +719,7 @@ export function buildConfiguredForest(
 }
 
 export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
-	jsonValidator: noopValidator,
+	jsonValidator: FormatValidatorNoOp,
 	oldestCompatibleClient: FluidClientVersion.v2_0,
 	forest: ForestTypeReference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,

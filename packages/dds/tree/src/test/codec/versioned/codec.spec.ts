@@ -11,7 +11,7 @@ import {
 	type IJsonCodec,
 	makeCodecFamily,
 } from "../../../codec/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ClientVersionDispatchingCodecBuilder } from "../../../codec/versioned/codec.js";
 import { validateUsageError } from "../../utils.js";
@@ -48,11 +48,11 @@ describe("versioned Codecs", () => {
 		it("round trip", () => {
 			const codec1 = builder.build({
 				oldestCompatibleClient: 2 as FluidClientVersion,
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 			});
 			const codec2 = builder.build({
 				oldestCompatibleClient: 6 as FluidClientVersion,
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 			});
 			const v1 = codec1.encode(42);
 			const v2 = codec2.encode(42);

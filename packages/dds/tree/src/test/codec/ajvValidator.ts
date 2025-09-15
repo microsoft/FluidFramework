@@ -19,7 +19,7 @@ const Ajv =
 import type { ISharedObjectHandle } from "@fluidframework/shared-object-base/internal";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import type { JsonValidator } from "../../codec/index.js";
+import { toFormatValidator, type JsonValidator } from "../../codec/index.js";
 import { mockSerializer } from "../mockSerializer.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
@@ -47,7 +47,7 @@ const ajv = formats.default(new Ajv({ strict: false, allErrors: true }), [
  * This validator is useful for debugging issues with formats, as the error messages it produces
  * contain information about why the data is out of schema.
  */
-export const ajvValidator: JsonValidator = {
+const ajvJsonValidator: JsonValidator = {
 	compile: <Schema extends TSchema>(schema: Schema) => {
 		const validate = ajv.compile(schema);
 		return {
@@ -69,3 +69,5 @@ export const ajvValidator: JsonValidator = {
 		};
 	},
 };
+
+export const ajvValidator = toFormatValidator(ajvJsonValidator);
