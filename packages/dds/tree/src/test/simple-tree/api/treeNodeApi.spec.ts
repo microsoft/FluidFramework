@@ -97,6 +97,86 @@ const schema = new SchemaFactoryAlpha("com.example");
 class Point extends schema.object("Point", {}) {}
 
 describe("treeNodeApi", () => {
+	describe("trackObservations", () => {
+		it("no reads", () => {
+			class Point2D extends schema.object("Point", {
+				x: schema.number,
+			}) {}
+			const node = new Point2D({ x: 0 });
+
+			const out = TreeAlpha.trackObservations(
+				() => assert.fail(),
+				() => {
+					// Nothing
+					return "x";
+				},
+			);
+			node.x = 1;
+			assert.equal(out.result, "x");
+		});
+
+		it("field read, unhydrated", () => {
+			class PointX extends schema.object("Point", {
+				x: schema.number,
+			}) {}
+			const node = new PointX({ x: 0 });
+			const invalidations: string[] = [];
+
+			const out = TreeAlpha.trackObservations(
+				() => {
+					invalidations.push("Read X");
+				},
+				() => node.x,
+			);
+			assert.deepEqual(invalidations, []);
+			assert.equal(out.result, 0);
+			node.x = 2;
+			assert.deepEqual(invalidations, ["Read X"]);
+			node.x = 3;
+			assert.deepEqual(invalidations, ["Read X", "Read X"]);
+			out.unsubscribe();
+			node.x = 4;
+			assert.deepEqual(invalidations, ["Read X", "Read X"]);
+		});
+
+		it("optional field unhydrated", () => {
+			class PointX extends schema.object("Point", {
+				x: SchemaFactory.optional(schema.number),
+			}) {}
+			const node = new PointX({});
+			const invalidations: string[] = [];
+
+			const out = TreeAlpha.trackObservations(
+				() => {
+					invalidations.push("Read keys");
+				},
+				() => [...Object.keys(node)],
+			);
+			assert.deepEqual(invalidations, []);
+			assert.deepEqual(out.result, []);
+			node.x = 2;
+			assert.deepEqual(invalidations, ["Read keys"]);
+		});
+
+		it("parent unhydrated", () => {
+			class PointX extends schema.object("Point", {}) {}
+			const node = new PointX({});
+			const invalidations: string[] = [];
+
+			assert.throws(
+				() => {
+					TreeAlpha.trackObservations(
+						() => {
+							invalidations.push("Read keys");
+						},
+						() => [Tree.parent(node)],
+					);
+				},
+				validateUsageError(/parent/),
+			);
+		});
+	});
+
 	describe("is", () => {
 		it("is", () => {
 			const config = new TreeViewConfiguration({ schema: [Point, schema.number] });

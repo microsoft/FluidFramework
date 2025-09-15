@@ -17,13 +17,13 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	asIndex,
 	getKernel,
-	type TreeNode,
 	type Unhydrated,
 	TreeBeta,
 	tryGetSchema,
 	createFromCursor,
 	FieldKind,
 	normalizeFieldSchema,
+	TreeNode,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type TreeFieldFromImplicitField,
@@ -76,6 +76,9 @@ import {
 	fluidVersionToFieldBatchCodecWriteVersion,
 	type LocalNodeIdentifier,
 	type FlexTreeSequenceField,
+	type FlexTreeNode,
+	type Observer,
+	withObservation,
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
@@ -419,6 +422,14 @@ export interface TreeAlpha {
 	children(
 		node: TreeNode,
 	): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
+
+	/**
+	 * Track observations of any TreeNode content.
+	 */
+	trackObservations<TResult>(
+		onInvalidation: () => void,
+		trackDuring: () => TResult,
+	): { result: TResult; unsubscribe: () => void };
 }
 
 /**
@@ -427,6 +438,50 @@ export interface TreeAlpha {
  * @alpha
  */
 export const TreeAlpha: TreeAlpha = {
+	trackObservations<TResult>(
+		onInvalidation: () => void,
+		trackDuring: () => TResult,
+	): { result: TResult; unsubscribe: () => void } {
+		const subscriptions = new Map<FlexTreeNode | TreeBranch, () => void>();
+		const observer: Observer = {
+			observeNodeContent(flexNode: FlexTreeNode): void {
+				if (flexNode.value !== undefined) {
+					// Leaf value, nothing to observe.
+					return;
+				}
+				if (!subscriptions.has(flexNode)) {
+					const node = getOrCreateNodeFromInnerNode(flexNode);
+					assert(node instanceof TreeNode, "Unexpected leaf value");
+					const unsubscribe = treeNodeApi.on(node, "nodeChanged", () => {
+						onInvalidation();
+					});
+					subscriptions.set(flexNode, unsubscribe);
+				}
+			},
+			observeParentOf(node: FlexTreeNode): void {
+				throw new UsageError("Observation tracking for parents is currently not supported.");
+				// This is conservatively correct, but could be optimized.
+				// observer.observeNodeContent(parent);
+			},
+		};
+		const result = withObservation(observer, trackDuring);
+
+		let subscribed = true;
+
+		return {
+			result,
+			unsubscribe: () => {
+				if (!subscribed) {
+					throw new UsageError("Already unsubscribed");
+				}
+				subscribed = false;
+				for (const unsubscribe of subscriptions.values()) {
+					unsubscribe();
+				}
+			},
+		};
+	},
+
 	branch(node: TreeNode): TreeBranch | undefined {
 		const kernel = getKernel(node);
 		if (!kernel.isHydrated()) {

@@ -93,7 +93,7 @@
 		"@microsoft/api-extractor": "7.52.11",
 		"@testing-library/dom": "^10.4.0",
 		"@testing-library/jest-dom": "^5.16.5",
-		"@testing-library/react": "^16.0.1",
+		"@testing-library/react": "^16.3.0",
 		"@testing-library/user-event": "^14.4.3",
 		"@types/jest": "29.5.3",
 		"@types/mocha": "^10.0.10",

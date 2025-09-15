@@ -4,7 +4,10 @@
  */
 
 import type { ErasedType } from "@fluidframework/core-interfaces/internal";
-import { Tree, TreeNode, type TreeLeafValue } from "@fluidframework/tree";
+import type { TreeNode, TreeLeafValue } from "@fluidframework/tree";
+import { Tree } from "@fluidframework/tree";
+// eslint-disable-next-line import/no-internal-modules
+import { TreeAlpha } from "@fluidframework/tree/alpha";
 import * as React from "react";
 
 // TODO:
@@ -39,6 +42,38 @@ export function useTree(subtreeRoot: TreeNode): number {
 }
 
 /**
+ * Custom hook which invalidates a React Component when there is a change in tree content observed during `trackDuring`.
+ *
+ * This includes changes to the tree's content.
+ * Currently this will throw if observing a node's parentage, and node status changes will not cause invalidation.
+ * @public
+ */
+export function useTreeObservations<TResult>(trackDuring: () => TResult): TResult {
+	// Use a React effect hook to invalidate this component when the subtreeRoot changes.
+	// We do this by incrementing a counter, which is passed as a dependency to the effect hook.
+	const [invalidations, setInvalidations] = React.useState(0);
+
+	let invalidated = false;
+
+	const invalidate = (): void => {
+		invalidated = true;
+		out.unsubscribe();
+		setInvalidations((i) => i + 1);
+	};
+
+	const out = TreeAlpha.trackObservations(invalidate, trackDuring);
+
+	// Unsubscribe on unmount (or anytime we recompute out).
+	React.useEffect(() => () => {
+		if (!invalidated) {
+			out.unsubscribe();
+		}
+	});
+
+	return out.result;
+}
+
+/**
  * A type erased TreeNode for use in react props.
  * @remarks
  * Read content from the node using {@link usePropTreeNode}.
@@ -51,23 +86,28 @@ export interface PropTreeNode<T extends TreeNode> extends ErasedType<[T, "PropTr
 
 /**
  * Custom hook for using a prop tree node.
+ * @remarks
+ * Reads content using {@link useTreeObservations} to track dependencies.
  * @public
  */
 export function usePropTreeNode<
 	T extends TreeNode | TreeLeafValue,
 	TResult extends NodeRecord,
->(propNode: PropTreeValue<T> | T, f: (node: T) => TResult): WrapPropTreeNodeRecord<TResult> {
+>(
+	propNode: PropTreeValue<T> | T,
+	trackDuring: (node: T) => TResult,
+): WrapPropTreeNodeRecord<TResult> {
 	const node: T = unwrapPropTreeNode(propNode);
 
-	const invalidations = node instanceof TreeNode ? useTree(node) : undefined;
-
-	const result = React.useMemo(() => f(node), [node, f, invalidations]);
+	const result = useTreeObservations(() => trackDuring(node));
 
 	return result as WrapPropTreeNodeRecord<TResult>;
 }
 
 /**
- * Custom hook for using a prop tree node.
+ * Custom hook for reading contents from nodes in a PropTreeNodeRecord.
+ * @remarks
+ * Reads content using {@link useTreeObservations} to track dependencies.
  * @public
  */
 export function usePropTreeRecord<
@@ -79,18 +119,7 @@ export function usePropTreeRecord<
 ): WrapPropTreeNodeRecord<TResult> {
 	const record = unwrapPropTreeProps(props);
 
-	const entries = Object.entries(record).sort(([a], [b]) => (a < b ? -1 : 1)) as [
-		string,
-		TreeNode | TreeLeafValue | undefined,
-	][];
-
-	const keys = entries.map(([key]) => key);
-	const values = entries.map(([, node]) => node);
-	const invalidations = entries.map(([, node]) =>
-		node instanceof TreeNode ? useTree(node) : undefined,
-	);
-
-	const result = React.useMemo(() => f(record), [f, ...keys, ...values, ...invalidations]);
+	const result = useTreeObservations(() => f(record));
 
 	return result as WrapPropTreeNodeRecord<TResult>;
 }
@@ -167,4 +196,12 @@ export type PropTreeValue<T extends TreeNode | TreeLeafValue> = T extends TreeNo
  */
 export function toPropTreeNode<T extends TreeNode | TreeLeafValue>(node: T): PropTreeValue<T> {
 	return node as unknown as PropTreeValue<T>;
+}
+
+/**
+ * Type erase a NodeRecord as a {@link PropTreeNodeRecord}.
+ * @public
+ */
+export function toPropTreeRecord<T extends NodeRecord>(node: T): WrapPropTreeNodeRecord<T> {
+	return node as unknown as WrapPropTreeNodeRecord<T>;
 }
