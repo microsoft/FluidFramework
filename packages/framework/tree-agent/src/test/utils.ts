@@ -57,6 +57,12 @@ export function validateUsageError(expectedErrorMsg: string | RegExp): (error: E
 export type LlmProvider = "openai" | "anthropic" | "gemini";
 
 /**
+ * The list of LLM providers to test against. Modify this array to enable/disable providers centrally.
+ */
+// export const TEST_PROVIDERS: readonly LlmProvider[] = ["openai", "anthropic", "gemini"] as const;
+export const TEST_PROVIDERS: readonly LlmProvider[] = ["openai"] as const;
+
+/**
  * Creates a new instance of the LLM client based on the specified provider.
  */
 export function createLlmClient(provider: LlmProvider): BaseChatModel {
@@ -70,7 +76,7 @@ export function createLlmClient(provider: LlmProvider): BaseChatModel {
 				reasoning: { effort: "high" },
 				maxTokens: 20000,
 				metadata: {
-					modelName: "o3 Mini",
+					modelName: "o4 Mini",
 				},
 			});
 		}
@@ -186,7 +192,7 @@ function formatDate(date: Date): string {
 export function describeIntegrationTests(
 	tests: LLMIntegrationTest<UnsafeUnknownSchema>[],
 ): void {
-	describe.skip(`LLM integration tests`, () => {
+	describe(`LLM integration tests`, () => {
 		const results: TestResult[] = [];
 		let startTime: Date | undefined;
 		before(() => {
@@ -226,7 +232,7 @@ export function describeIntegrationTests(
 		it("RUN ALL (in parallel)", async () => {
 			const promises: Promise<void>[] = [];
 			for (const test of grouped) {
-				for (const provider of ["openai", "anthropic", "gemini"] as const) {
+				for (const provider of TEST_PROVIDERS) {
 					const result = {
 						name: test.name,
 						provider,
@@ -240,11 +246,11 @@ export function describeIntegrationTests(
 			await handleAllSettledResults(promises);
 		});
 
-		describe("sorted by scenario", () => {
+		describe.skip("sorted by scenario", () => {
 			it("RUN ALL (in parallel)", async () => {
 				const promises: Promise<void>[] = [];
 				for (const test of grouped) {
-					for (const provider of ["openai", "anthropic", "gemini"] as const) {
+					for (const provider of TEST_PROVIDERS) {
 						const result = {
 							name: test.name,
 							provider,
@@ -261,7 +267,7 @@ export function describeIntegrationTests(
 				describe(test.name, () => {
 					it("RUN ALL (in parallel)", async () => {
 						const promises: Promise<void>[] = [];
-						for (const provider of ["openai", "anthropic", "gemini"] as const) {
+						for (const provider of TEST_PROVIDERS) {
 							const result = {
 								name: test.name,
 								provider,
@@ -273,7 +279,7 @@ export function describeIntegrationTests(
 						}
 						await handleAllSettledResults(promises);
 					});
-					for (const provider of ["openai", "anthropic", "gemini"] as const) {
+					for (const provider of TEST_PROVIDERS) {
 						it(`via ${provider}`, async () => {
 							const result = {
 								name: test.name,
@@ -289,10 +295,10 @@ export function describeIntegrationTests(
 			}
 		});
 
-		describe("sorted by provider", () => {
+		describe.skip("sorted by provider", () => {
 			it("RUN ALL (in parallel)", async () => {
 				const promises: Promise<void>[] = [];
-				for (const provider of ["openai", "anthropic", "gemini"] as const) {
+				for (const provider of TEST_PROVIDERS) {
 					for (const test of grouped) {
 						const result = {
 							name: test.name,
@@ -306,7 +312,7 @@ export function describeIntegrationTests(
 				}
 				await handleAllSettledResults(promises);
 			});
-			for (const provider of ["openai", "anthropic", "gemini"] as const) {
+			for (const provider of TEST_PROVIDERS) {
 				describe(`via ${provider}`, () => {
 					it("RUN ALL (in parallel)", async () => {
 						const promises: Promise<void>[] = [];
