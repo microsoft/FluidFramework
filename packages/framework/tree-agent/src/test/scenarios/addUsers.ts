@@ -14,14 +14,14 @@ const expected: ScorableVerboseTree = {
 		if (typeof actual !== "object" || actual === null || Array.isArray(actual.fields)) {
 			return 0;
 		}
-		const required = new Map<string, string>([
-			["alpardes", "Alex Pardes"],
-			["rymagani", "Ryan Magani"],
-			["tawilliams", "Taylor Williams"],
-			["chdog", "Chewy Dog"],
+		const required = new Map<string, { firstName: string; lastName: string }>([
+			["alpardes", { firstName: "Alex", lastName: "Pardes" }],
+			["rymagani", { firstName: "Ryan", lastName: "Magani" }],
+			["tawilliams", { firstName: "Taylor", lastName: "Williams" }],
+			["chdog", { firstName: "Chewy", lastName: "Dog" }],
 		]);
 		let score = 1;
-		for (const [id, name] of required) {
+		for (const [id, { firstName, lastName }] of required) {
 			const user = actual.fields[id];
 			if (
 				typeof user !== "object" ||
@@ -33,8 +33,15 @@ const expected: ScorableVerboseTree = {
 				continue;
 			}
 			if (
-				typeof user.fields.name !== "string" ||
-				user.fields.name.toLowerCase() !== name.toLowerCase()
+				typeof user.fields.firstName !== "string" ||
+				user.fields.firstName.toLowerCase() !== firstName.toLowerCase()
+			) {
+				score -= 1 / required.size;
+				continue;
+			}
+			if (
+				typeof user.fields.lastName !== "string" ||
+				user.fields.lastName.toLowerCase() !== lastName.toLowerCase()
 			) {
 				score -= 1 / required.size;
 				continue;
@@ -58,12 +65,14 @@ export const addUsersTest = {
 	schema: Users,
 	initialTree: () => ({
 		alpardes: {
-			name: "Alex Pardes",
+			firstName: "Alex",
+			lastName: "Pardes",
 			created: "2024-01-01T00:00:00.000Z",
 			email: "pardesio@gmail.com",
 		},
 		rymagani: {
-			name: "Ryan Magani",
+			firstName: "Ryan",
+			lastName: "Magani",
 			created: "2024-02-01T00:00:00.000Z",
 			email: "ringom@gmail.com",
 		},

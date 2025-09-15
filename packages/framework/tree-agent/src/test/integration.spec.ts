@@ -9,8 +9,8 @@ import { addCommentTest, addUsersTest, smokeTest, methodUseTest } from "./scenar
 import { describeIntegrationTests, type LLMIntegrationTest } from "./utils.js";
 
 describeIntegrationTests([
-	// addCommentTest,
-	// addUsersTest,
-	// smokeTest,
+	addCommentTest,
+	addUsersTest,
+	smokeTest,
 	methodUseTest,
 ] as unknown as LLMIntegrationTest<UnsafeUnknownSchema>[]);

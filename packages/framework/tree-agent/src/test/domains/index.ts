@@ -16,4 +16,3 @@ export {
 } from "./text.js";
 export { Conference, Day, Days, Session, SessionType, Sessions } from "./conference.js";
 export { User, Users } from "./users.js";
-export { UserWithMethods } from "./usersWithMethods.js";
