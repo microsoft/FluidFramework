@@ -138,24 +138,28 @@ function getOrCreateType(
 				return z.object(properties).describe(simpleNodeSchema.metadata?.description ?? "");
 			}
 			case NodeKind.Record: {
-				return z.record(
-					getTypeForAllowedTypes(
-						definitionMap,
-						simpleNodeSchema.allowedTypesIdentifiers,
-						objectCache,
-						treeSchemaMap,
-					),
-				);
+				return z
+					.record(
+						getTypeForAllowedTypes(
+							definitionMap,
+							simpleNodeSchema.allowedTypesIdentifiers,
+							objectCache,
+							treeSchemaMap,
+						),
+					)
+					.describe(simpleNodeSchema.metadata?.description ?? "");
 			}
 			case NodeKind.Array: {
-				return z.array(
-					getTypeForAllowedTypes(
-						definitionMap,
-						simpleNodeSchema.allowedTypesIdentifiers,
-						objectCache,
-						treeSchemaMap,
-					),
-				);
+				return z
+					.array(
+						getTypeForAllowedTypes(
+							definitionMap,
+							simpleNodeSchema.allowedTypesIdentifiers,
+							objectCache,
+							treeSchemaMap,
+						),
+					)
+					.describe(simpleNodeSchema.metadata?.description ?? "");
 			}
 			case NodeKind.Leaf: {
 				switch (simpleNodeSchema.leafKind) {
