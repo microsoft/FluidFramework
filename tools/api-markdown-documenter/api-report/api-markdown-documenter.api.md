@@ -268,7 +268,7 @@ export namespace DocumentWriter {
 }
 
 // @public
-function filterItems(apiItems: readonly ApiItem[], config: ApiItemTransformationConfiguration): ApiItem[];
+function filterItems<TApiItem extends ApiItem>(apiItems: readonly TApiItem[], config: ApiItemTransformationConfiguration): TApiItem[];
 
 // @public
 export enum FolderDocumentPlacement {
