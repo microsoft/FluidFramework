@@ -241,7 +241,11 @@ export function createParametersSummaryTable(
 	apiParameters: readonly Parameter[],
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): Table {
+): Table | undefined {
+	if (apiParameters.length === 0) {
+		return undefined;
+	}
+
 	// Only display "Modifiers" column if there are any optional parameters present.
 	const hasOptionalParameters = apiParameters.some((apiParameter) => apiParameter.isOptional);
 
@@ -293,7 +297,11 @@ export function createTypeParametersSummaryTable(
 	apiTypeParameters: readonly TypeParameter[],
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): Table {
+): Table | undefined {
+	if (apiTypeParameters.length === 0) {
+		return undefined;
+	}
+
 	// Only display the "Constraint" column if there are any constraints present among the type parameters.
 	const hasAnyConstraints = apiTypeParameters.some(
 		(apiTypeParameter) => !apiTypeParameter.constraintExcerpt.isEmpty,
