@@ -195,6 +195,8 @@ import {
 	getMinVersionForCollabDefaults,
 	type RuntimeOptionsAffectingDocSchema,
 	validateRuntimeOptions,
+	runtimeOptionKeysThatRequireExplicitSchemaControl,
+	type RuntimeOptionKeysThatRequireExplicitSchemaControl,
 } from "./containerCompatibility.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
@@ -946,6 +948,19 @@ export class ContainerRuntime
 				: defaultConfigs.compressionOptions,
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
+
+		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
+		if (!explicitSchemaControl) {
+			const disallowedKeys = Object.keys(runtimeOptions).filter(
+				(key) =>
+					runtimeOptionKeysThatRequireExplicitSchemaControl.includes(
+						key as RuntimeOptionKeysThatRequireExplicitSchemaControl,
+					) && runtimeOptions[key] !== undefined,
+			);
+			if (disallowedKeys.length > 0) {
+				throw new UsageError(`explicitSchemaControl must be enabled to use ${disallowedKeys}`);
+			}
+		}
 
 		// The logic for enableRuntimeIdCompressor is a bit different. Since `undefined` represents a logical state (off)
 		// we need to check it's explicitly set in runtimeOptions. If so, we should use that value even if it's undefined.
@@ -4518,6 +4533,22 @@ export class ContainerRuntime
 	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		this.verifyNotClosed();
 		return this.blobManager.createBlob(blob, signal);
+	}
+
+	/**
+	 * Lookup the blob storage ID for a given local blob id.
+	 * @param localId - The local blob id. Likely coming from a handle.
+	 * @returns The storage ID if found and the blob is not pending, undefined otherwise.
+	 * @remarks
+	 * This method provides access to the BlobManager's storage ID lookup functionality.
+	 * For blobs with pending payloads (localId exists but upload hasn't finished), this returns undefined.
+	 * Consumers should use the observability APIs on the handle to understand/wait for storage ID availability.
+	 *
+	 * Warning: the returned blob URL may expire and does not support permalinks.
+	 * This API is intended for temporary integration scenarios only.
+	 */
+	public lookupTemporaryBlobStorageId(localId: string): string | undefined {
+		return this.blobManager.lookupTemporaryBlobStorageId(localId);
 	}
 
 	private submitIdAllocationOpIfNeeded({

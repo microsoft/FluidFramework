@@ -63,14 +63,14 @@ export function createLlmClient(provider: LlmProvider): BaseChatModel {
 	switch (provider) {
 		case "openai": {
 			return new ChatOpenAI({
-				model: "o4-mini",
+				model: "gpt-5-2025-08-07",
 				apiKey:
 					process.env.OPENAI_API_KEY ??
 					failUsage("Missing OPENAI_API_KEY environment variable"),
 				reasoning: { effort: "high" },
 				maxTokens: 20000,
 				metadata: {
-					modelName: "o3 Mini",
+					modelName: "GPT 5",
 				},
 			});
 		}

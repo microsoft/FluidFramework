@@ -10,21 +10,20 @@ import type {
 	ImplicitFieldSchema,
 	RestrictiveStringRecord,
 	TreeFieldFromImplicitField,
-	TreeNode,
 	TreeObjectNode,
 } from "@fluidframework/tree";
-import { NodeKind, Tree } from "@fluidframework/tree";
-import {
-	type TreeViewAlpha,
-	type ReadableField,
-	type TreeBranch,
-	getSimpleSchema,
-	type FactoryContentObject,
-	type ObjectNodeSchema,
-	type InsertableContent,
-	type InsertableField,
+import { TreeNode, NodeKind, Tree } from "@fluidframework/tree";
+import { getSimpleSchema } from "@fluidframework/tree/alpha";
+import type {
+	ObjectNodeSchema,
+	TreeViewAlpha,
+	ReadableField,
+	TreeBranch,
+	FactoryContentObject,
+	InsertableContent,
+	InsertableField,
 } from "@fluidframework/tree/alpha";
-import { normalizeFieldSchema } from "@fluidframework/tree/internal";
+import { normalizeFieldSchema, type TreeMapNode } from "@fluidframework/tree/internal";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models"; // eslint-disable-line import/no-internal-modules
 import { HumanMessage, SystemMessage } from "@langchain/core/messages"; // eslint-disable-line import/no-internal-modules
 import type { ToolMessage, AIMessage } from "@langchain/core/messages"; // eslint-disable-line import/no-internal-modules
@@ -316,6 +315,7 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 
 	private getSystemPrompt(view: Omit<TreeView<TRoot>, "fork" | "merge">): string {
 		const arrayInterfaceName = "TreeArray";
+		const mapInterfaceName = "TreeMap";
 		// TODO: Support for non-object roots
 		assert(
 			typeof view.root === "object" && view.root !== null && !isFluidHandle(view.root),
@@ -371,36 +371,50 @@ The tree is a JSON object with the following Typescript schema:
 ${getZodSchemaAsTypeScript(domainTypes)}
 \`\`\`
 
+The current state of the tree (a \`${getFriendlySchemaName(Tree.schema(view.root).identifier)}\`) is:
+
+\`\`\`JSON
+${stringified}
+\`\`\`
+
 If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.
-If the user asks you to edit the tree, you should use the ${this.editingTool.name} tool to accomplish the user-specified goal.
+If the user asks you to edit the tree, you should use the "${this.editingTool.name}" tool to accomplish the user-specified goal, following the instructions for editing detailed below.
 After editing the tree, review the latest state of the tree to see if it satisfies the user's request.
 If it does not, or if you receive an error, you may try again with a different approach.
 Once the tree is in the desired state, you should inform the user that the request has been completed.
 
 ### Editing
 
-If the user asks you to edit the data, you will use the ${this.editingTool.name} tool to write a JavaScript function that mutates the data in-place to achieve the user's goal.
+If the user asks you to edit the data, you will use the "${this.editingTool.name}" tool to write a JavaScript function that mutates the data in-place to achieve the user's goal.
 The function must be named "${functionName}".
 It may be synchronous or asynchronous.
-The ${functionName} function must have a first parameter which has a \`root\` property that is the JSON object you are to mutate.
-The current state of the \`root\` object is:
-
-\`\`\`JSON
-${stringified}
-\`\`\`
-
-You may set the \`root\` property to be a new root object if necessary, but you must ensure that the new object is one of the types allowed at the root of the tree (\`${rootTypes.map((t) => getFriendlySchemaName(t)).join(" | ")}\`).
+The ${functionName} function must have a first parameter which has a \`root\` property.
+This \`root\` property holds the current state of the tree as shown above.
+You may mutate any part of the tree as necessary, taking into account the caveats around arrays and maps detailed below.
+You may also set the \`root\` property to be an entirely new value as long as it is one of the types allowed at the root of the tree (\`${rootTypes.map((t) => getFriendlySchemaName(t)).join(" | ")}\`).
 
 #### Editing Arrays
 
-There is a notable restriction: the arrays in the tree cannot be mutated in the normal way.
-Instead, they must be mutated via methods on the following TypeScript interface:
+The arrays in the tree are somewhat different than normal JavaScript \`Array\`s.
+Read-only operations are generally the same - you can create them, read via index, and call non-mutating methods like \`concat\`, \`map\`, \`filter\`, \`find\`, \`forEach\`, \`indexOf\`, \`slice\`, \`join\`, etc.
+However, write operations (e.g. index assignment, \`push\`, \`pop\`, \`splice\`, etc.) are not supported.
+Instead, you must use the methods on the following interface to mutate the array:
 
 \`\`\`typescript
 ${getTreeArrayNodeDocumentation(arrayInterfaceName)}
 \`\`\`
 
-Outside of mutation, they behave like normal JavaScript arrays - you can create them, read from them, and call non-mutating methods on them (e.g. \`concat\`, \`map\`, \`filter\`, \`find\`, \`forEach\`, \`indexOf\`, \`slice\`, \`join\`, etc.).
+#### Editing Maps
+
+The maps in the tree are somewhat different than normal JavaScript \`Map\`s.
+Map keys are always strings.
+Read-only operations are generally the same - you can create them, read via \`get\`, and call non-mutating methods like \`has\`, \`forEach\`, \`entries\`, \`keys\`, \`values\`, etc. (note the subtle differences around return values and iteration order).
+However, write operations (e.g. \`set\`, \`delete\`, etc.) are not supported.
+Instead, you must use the methods on the following interface to mutate the map:
+
+\`\`\`typescript
+${getTreeMapNodeDocumentation(mapInterfaceName)}
+\`\`\`
 
 ### Additional Notes
 
@@ -417,40 +431,50 @@ ${builderExplanation}Finally, double check that the edits would accomplish the u
 	private stringifyTree(
 		root: ReadableField<TRoot>,
 		idGenerator: IdGenerator,
-		visitObject?: (
-			object: TreeObjectNode<RestrictiveStringRecord<ImplicitFieldSchema>>,
-			id: string,
-		) => void,
+		visitNode?: (object: TreeNode, id: string) => void,
 	): string {
 		const indexReplacementKey = "_27bb216b474d45e6aaee14d1ec267b96";
+		const mapReplacementKey = "_a0d98d22a1c644539f07828d3f064d71";
 		idGenerator.assignIds(root);
 		const stringified = JSON.stringify(
 			root,
-			(_, value: unknown) => {
-				// TODO: Is this array check correct? What about POJO array nodes?
-				if (typeof value === "object" && !Array.isArray(value) && value !== null) {
-					const objectNode = value as TreeObjectNode<
-						RestrictiveStringRecord<ImplicitFieldSchema>
-					>;
+			(_, node: unknown) => {
+				if (node instanceof TreeNode) {
+					const schema = Tree.schema(node);
 
-					visitObject?.(
-						objectNode,
-						idGenerator.getId(objectNode) ??
-							fail("Expected all object nodes in tree to have an ID."),
-					);
-
-					const key = Tree.key(objectNode);
-					return {
-						[indexReplacementKey]: typeof key === "number" ? key : undefined,
-						...objectNode,
-					};
+					if ([NodeKind.Object, NodeKind.Record, NodeKind.Map].includes(schema.kind)) {
+						visitNode?.(
+							node,
+							idGenerator.getId(node) ??
+								fail("Expected all non-array nodes in tree to have an ID."),
+						);
+						const key = Tree.key(node);
+						const index = typeof key === "number" ? key : undefined;
+						return schema.kind === NodeKind.Map
+							? {
+									[indexReplacementKey]: index,
+									[mapReplacementKey]: "",
+									...Object.fromEntries(node as TreeMapNode),
+								}
+							: {
+									[indexReplacementKey]: index,
+									...node,
+								};
+					}
 				}
-				return value;
+				return node;
 			},
 			2,
 		);
 
-		return stringified.replace(new RegExp(`"${indexReplacementKey}":`, "g"), `// Index:`);
+		const replaced = stringified.replace(
+			new RegExp(`"${indexReplacementKey}":`, "g"),
+			`// Index:`,
+		);
+		return replaced.replace(
+			new RegExp(`"${mapReplacementKey}": ""`, "g"),
+			`// Note: This is a map that has been serialized to JSON. It is not a key-value object/record but is being printed as such.`,
+		);
 	}
 }
 
@@ -587,6 +611,83 @@ export interface ${typeName}<T> extends ReadonlyArray<T> {
 		sourceStart: number,
 		sourceEnd: number,
 		source?: ${typeName}<T>,
+	): void;
+}`;
+}
+
+/**
+ * Retrieves the documentation for the `TreeMapNode` interface to feed to the LLM.
+ * @remarks The documentation has been simplified in various ways to make it easier for the LLM to understand.
+ * @privateRemarks TODO: How do we keep this in sync with the actual `TreeMapNode` docs if/when those docs change?
+ */
+function getTreeMapNodeDocumentation(typeName: string): string {
+	return `/**
+ * A map of string keys to tree objects.
+ */
+export interface ${typeName}<T> extends ReadonlyMap<string, T> {
+	/**
+	 * Adds or updates an entry in the map with a specified \`key\` and a \`value\`.
+	 *
+	 * @param key - The key of the element to add to the map.
+	 * @param value - The value of the element to add to the map.
+	 *
+	 * @remarks
+	 * Setting the value at a key to \`undefined\` is equivalent to calling {@link ${typeName}.delete} with that key.
+	 */
+	set(key: string, value: T | undefined): void;
+
+	/**
+	 * Removes the specified element from this map by its \`key\`.
+	 *
+	 * @remarks
+	 * Note: unlike JavaScript's Map API, this method does not return a flag indicating whether or not the value was
+	 * deleted.
+	 *
+	 * @param key - The key of the element to remove from the map.
+	 */
+	delete(key: string): void;
+
+	/**
+	 * Returns an iterable of keys in the map.
+	 *
+	 * @remarks
+	 * Note: no guarantees are made regarding the order of the keys returned.
+	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
+	 */
+	keys(): IterableIterator<string>;
+
+	/**
+	 * Returns an iterable of values in the map.
+	 *
+	 * @remarks
+	 * Note: no guarantees are made regarding the order of the values returned.
+	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
+	 */
+	values(): IterableIterator<T>;
+
+	/**
+	 * Returns an iterable of key/value pairs for every entry in the map.
+	 *
+	 * @remarks
+	 * Note: no guarantees are made regarding the order of the entries returned.
+	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
+	 */
+	entries(): IterableIterator<[string, T]>;
+
+	/**
+	 * Executes the provided function once per each key/value pair in this map.
+	 *
+	 * @remarks
+	 * Note: no guarantees are made regarding the order in which the function is called with respect to the map's entries.
+	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
+	 */
+	forEach(
+		callbackfn: (
+			value: T,
+			key: string,
+			map: ReadonlyMap<string, T>,
+		) => void,
+		thisArg?: any,
 	): void;
 }`;
 }
