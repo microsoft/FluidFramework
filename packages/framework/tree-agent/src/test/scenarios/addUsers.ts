@@ -19,6 +19,7 @@ const expected: ScorableVerboseTree = {
 			["rymagani", { firstName: "Ryan", lastName: "Magani" }],
 			["tawilliams", { firstName: "Taylor", lastName: "Williams" }],
 			["chdog", { firstName: "Chewy", lastName: "Dog" }],
+			["timagani", { firstName: "Timmy", lastName: "Magani" }],
 		]);
 		let score = 1;
 		for (const [id, { firstName, lastName }] of required) {
@@ -46,6 +47,16 @@ const expected: ScorableVerboseTree = {
 				score -= 1 / required.size;
 				continue;
 			}
+		}
+		const timmy = actual.fields.timagani;
+		if (
+			timmy !== undefined &&
+			(typeof timmy !== "object" ||
+				timmy === null ||
+				Array.isArray(timmy.fields) ||
+				timmy.fields.email !== "ringom@gmail.com")
+		) {
+			score *= 2 / 3;
 		}
 		// Penalize if there are more than 4 users (encourage precision)
 		const actualKeys = Object.keys(actual.fields);
@@ -77,6 +88,7 @@ export const addUsersTest = {
 			email: "ringom@gmail.com",
 		},
 	}),
-	prompt: "Please add two new users to this database: Taylor Williams and Chewy Dog.",
+	prompt:
+		"Please add two new users to this database: Taylor Williams and Chewy Dog. Then, add one more user for Ryan's little brother. His name is Timmy, and he has the same email as Ryan.",
 	expected,
 } as const satisfies LLMIntegrationTest<typeof Users>;
