@@ -52,7 +52,6 @@ parameters:
   default:
   - endpointName: 'local'
   - endpointName: 'odsp'
-    # lockVariableGroupName: 'perf-odsp-lock'
     timeoutInMinutes: 360
   - endpointName: 'frs'
     lockVariableGroupName: 'perf-frs-lock'
