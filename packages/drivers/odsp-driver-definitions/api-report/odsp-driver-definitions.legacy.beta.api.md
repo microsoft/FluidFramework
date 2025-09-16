@@ -56,7 +56,6 @@ export interface IEntry {
 // @beta @deprecated @legacy (undocumented)
 export interface IFileEntry {
     docId: string;
-    fileVersion?: string;
     resolvedUrl: IResolvedUrl;
 }
 

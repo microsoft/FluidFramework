@@ -330,9 +330,10 @@ export interface IEntry {
     type: string;
 }
 
-// @beta @legacy (undocumented)
+// @beta @legacy
 export interface IFileEntry {
     docId: string;
+    fileVersion?: string;
     resolvedUrl: IResolvedUrl;
 }
 
