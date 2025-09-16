@@ -297,26 +297,30 @@ export function createTypeParametersSummaryTable(
 		return undefined;
 	}
 
-	function createTypeConstraintCell(apiParameter: TypeParameter): TableCell {
+	function createTypeConstraintCell(apiParameter: TypeParameter): TableCell | undefined {
 		const constraintSpan = createExcerptSpanWithHyperlinks(
 			apiParameter.constraintExcerpt,
 			config,
 		);
-		return {
-			type: "tableCell",
-			children: constraintSpan,
-		};
+		return constraintSpan.length === 0
+			? undefined
+			: {
+					type: "tableCell",
+					children: constraintSpan,
+				};
 	}
 
-	function createTypeDefaultCell(apiParameter: TypeParameter): TableCell {
+	function createTypeDefaultCell(apiParameter: TypeParameter): TableCell | undefined {
 		const excerptSpan = createExcerptSpanWithHyperlinks(
 			apiParameter.defaultTypeExcerpt,
 			config,
 		);
-		return {
-			type: "tableCell",
-			children: excerptSpan,
-		};
+		return excerptSpan.length === 0
+			? undefined
+			: {
+					type: "tableCell",
+					children: excerptSpan,
+				};
 	}
 
 	return createTableFromItems(apiTypeParameters, {
