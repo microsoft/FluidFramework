@@ -208,7 +208,7 @@ export function createDefaultSummaryTable(
 			{
 				title: { type: "text", value: getTableHeadingTitleForApiKind(itemKind) },
 				columnKind: "required",
-				createCellContent: (item) => createApiTitleCell(item, config),
+				createCellContent: (item) => createNameCell(item, config),
 			},
 			{
 				title: { type: "text", value: "Alerts" },
@@ -246,8 +246,12 @@ export function createParametersSummaryTable(
 		return undefined;
 	}
 
-	function createModifierCell(apiParameter: Parameter): TableCell {
-		return apiParameter.isOptional ? createPlainTextTableCell("optional") : emptyTableCell;
+	function createModifierCell(apiParameter: Parameter): TableCell | undefined {
+		return apiParameter.isOptional ? createPlainTextTableCell("optional") : undefined;
+	}
+
+	function createParameterTypeCell(apiParameter: Parameter): TableCell | undefined {
+		return createTypeExcerptCell(apiParameter.parameterTypeExcerpt, config);
 	}
 
 	return createTableFromItems(apiParameters, {
@@ -265,7 +269,7 @@ export function createParametersSummaryTable(
 			{
 				title: { type: "text", value: "Type" },
 				columnKind: "required",
-				createCellContent: (item) => createParameterTypeCell(item, config),
+				createCellContent: (item) => createParameterTypeCell(item),
 			},
 			{
 				title: { type: "text", value: "Description" },
@@ -361,12 +365,18 @@ export function createFunctionLikeSummaryTable(
 		return undefined;
 	}
 
+	function createReturnTypeCell(apiItem: ApiFunctionLike): TableCell | undefined {
+		return ApiReturnTypeMixin.isBaseClassOf(apiItem)
+			? createTypeExcerptCell(apiItem.returnTypeExcerpt, config)
+			: undefined;
+	}
+
 	return createTableFromItems(apiItems, {
 		columnOptions: [
 			{
 				title: { type: "text", value: getTableHeadingTitleForApiKind(itemKind) },
 				columnKind: "required",
-				createCellContent: (item) => createApiTitleCell(item, config),
+				createCellContent: (item) => createNameCell(item, config),
 			},
 			{
 				title: { type: "text", value: "Alerts" },
@@ -381,7 +391,7 @@ export function createFunctionLikeSummaryTable(
 			{
 				title: { type: "text", value: "Return Type" },
 				columnKind: "optional",
-				createCellContent: (item) => createReturnTypeCell(item, config),
+				createCellContent: (item) => createReturnTypeCell(item),
 			},
 			{
 				title: { type: "text", value: "Description" },
@@ -409,12 +419,19 @@ export function createPropertiesTable(
 		return undefined;
 	}
 
+	function createDefaultValueCell(apiItem: ApiItem): TableCell | undefined {
+		const defaultValueSection = getDefaultValueBlock(apiItem, config.logger);
+		return defaultValueSection === undefined
+			? undefined
+			: createTableCellFromTsdocSection(defaultValueSection, apiItem, config);
+	}
+
 	return createTableFromItems(apiProperties, {
 		columnOptions: [
 			{
 				title: { type: "text", value: "Property" },
 				columnKind: "required",
-				createCellContent: (item) => createApiTitleCell(item, config),
+				createCellContent: (item) => createNameCell(item, config),
 			},
 			{
 				title: { type: "text", value: "Alerts" },
@@ -429,7 +446,7 @@ export function createPropertiesTable(
 			{
 				title: { type: "text", value: "Default Value" },
 				columnKind: "optional",
-				createCellContent: (item) => createDefaultValueCell(item, config),
+				createCellContent: (item) => createDefaultValueCell(item),
 			},
 			{
 				title: { type: "text", value: "Type" },
@@ -467,7 +484,7 @@ export function createVariablesTable(
 			{
 				title: { type: "text", value: "Variable" },
 				columnKind: "required",
-				createCellContent: (item) => createApiTitleCell(item, config),
+				createCellContent: (item) => createNameCell(item, config),
 			},
 			{
 				title: { type: "text", value: "Alerts" },
@@ -514,7 +531,7 @@ export function createPackagesTable(
 			{
 				title: { type: "text", value: "Package" },
 				columnKind: "required",
-				createCellContent: (item) => createApiTitleCell(item, config),
+				createCellContent: (item) => createNameCell(item, config),
 			},
 			{
 				title: { type: "text", value: "Alerts" },
@@ -537,10 +554,10 @@ export function createPackagesTable(
  * @param apiItem - The API item whose comment will be rendered in the cell.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createDescriptionCell(
+function createDescriptionCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): TableCell {
+): TableCell | undefined {
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
 		return createTableCellFromTsdocSection(
 			apiItem.tsdocComment.summarySection,
@@ -549,26 +566,7 @@ export function createDescriptionCell(
 		);
 	}
 
-	return emptyTableCell;
-}
-
-/**
- * Creates a table cell containing the return type information for the provided function-like API item,
- * if it specifies one. If it does not specify a type, an empty table cell will be used.
- *
- * @remarks This content will be generated as links to type signature documentation for other items local to the same
- * API suite (model).
- *
- * @param apiItem - The API item whose return type will be displayed in the cell.
- * @param config - See {@link ApiItemTransformationConfiguration}.
- */
-export function createReturnTypeCell(
-	apiItem: ApiFunctionLike,
-	config: ApiItemTransformationConfiguration,
-): TableCell {
-	return ApiReturnTypeMixin.isBaseClassOf(apiItem)
-		? createTypeExcerptCell(apiItem.returnTypeExcerpt, config)
-		: emptyTableCell;
+	return undefined;
 }
 
 /**
@@ -580,7 +578,7 @@ export function createReturnTypeCell(
  * will point.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-function createApiTitleCell(
+function createNameCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): TableCell {
@@ -597,7 +595,10 @@ function createApiTitleCell(
  * @param apiItem - The API item whose modifiers will be displayed in the cell.
  * @param modifiersToOmit - List of modifiers to omit from the generated cell, even if they apply to the item.
  */
-function createModifiersCell(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): TableCell {
+function createModifiersCell(
+	apiItem: ApiItem,
+	modifiersToOmit?: ApiModifier[],
+): TableCell | undefined {
 	const modifiers = getModifiers(apiItem, modifiersToOmit);
 
 	const contents: PhrasingContent[] = [];
@@ -611,30 +612,11 @@ function createModifiersCell(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]):
 	}
 
 	return modifiers.length === 0
-		? emptyTableCell
+		? undefined
 		: {
 				type: "tableCell",
 				children: contents,
 			};
-}
-
-/**
- * Creates a table cell containing the `@defaultValue` comment of the API item if it has one.
- *
- * @param apiItem - The API item whose `@defaultValue` comment will be displayed in the cell.
- * @param config - See {@link ApiItemTransformationConfiguration}.
- */
-function createDefaultValueCell(
-	apiItem: ApiItem,
-	config: ApiItemTransformationConfiguration,
-): TableCell {
-	const defaultValueSection = getDefaultValueBlock(apiItem, config.logger);
-
-	if (defaultValueSection === undefined) {
-		return emptyTableCell;
-	}
-
-	return createTableCellFromTsdocSection(defaultValueSection, apiItem, config);
 }
 
 /**
@@ -643,14 +625,14 @@ function createDefaultValueCell(
  * @param apiItem - The alert values to display.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-function createAlertsCell(alerts: string[]): TableCell {
+function createAlertsCell(alerts: string[]): TableCell | undefined {
 	const alertNodes: PhrasingContent[] = alerts.map((alert) => ({
 		type: "inlineCode",
 		value: alert,
 	}));
 
 	return alerts.length === 0
-		? emptyTableCell
+		? undefined
 		: {
 				type: "tableCell",
 				children: injectSeparator(alertNodes, { type: "text", value: ", " }),
@@ -667,22 +649,6 @@ function createParameterTitleCell(apiParameter: Parameter): TableCell {
 }
 
 /**
- * Creates a table cell containing the type information about the provided parameter.
- *
- * @remarks This content will be generated as links to type signature documentation for other items local to the same
- * API suite (model).
- *
- * @param apiProperty - The parameter whose type information will be displayed in the cell.
- * @param config - See {@link ApiItemTransformationConfiguration}.
- */
-function createParameterTypeCell(
-	apiParameter: Parameter,
-	config: ApiItemTransformationConfiguration,
-): TableCell {
-	return createTypeExcerptCell(apiParameter.parameterTypeExcerpt, config);
-}
-
-/**
  * Creates a table cell containing the description ({@link https://tsdoc.org/pages/tags/param/ | @param}) comment
  * of the provided parameter.
  * If the parameter has no documentation, an empty cell will be used.
@@ -695,9 +661,9 @@ function createParameterSummaryCell(
 	apiParameter: Parameter,
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): TableCell {
+): TableCell | undefined {
 	if (apiParameter.tsdocParamBlock === undefined) {
-		return emptyTableCell;
+		return undefined;
 	}
 
 	return createTableCellFromTsdocSection(
@@ -720,9 +686,9 @@ function createTypeParameterSummaryCell(
 	apiTypeParameter: TypeParameter,
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): TableCell {
+): TableCell | undefined {
 	if (apiTypeParameter.tsdocTypeParamBlock === undefined) {
-		return emptyTableCell;
+		return undefined;
 	}
 
 	return createTableCellFromTsdocSection(
@@ -743,12 +709,14 @@ function createTypeParameterSummaryCell(
 function createTypeExcerptCell(
 	typeExcerpt: Excerpt,
 	config: ApiItemTransformationConfiguration,
-): TableCell {
+): TableCell | undefined {
 	const excerptSpan = createExcerptSpanWithHyperlinks(typeExcerpt, config);
-	return {
-		type: "tableCell",
-		children: excerptSpan,
-	};
+	return excerptSpan.length === 0
+		? undefined
+		: {
+				type: "tableCell",
+				children: excerptSpan,
+			};
 }
 
 /**
@@ -782,11 +750,11 @@ function createTableCellFromTsdocSection(
 	tsdocSection: DocSection,
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): TableCell {
+): TableCell | undefined {
 	const transformed = transformTsdoc(tsdocSection, contextApiItem, config);
 
 	if (transformed.length === 0) {
-		return emptyTableCell;
+		return undefined;
 	}
 
 	// If the transformed contents consist of a single paragraph (common case), inline that paragraph's contents
@@ -810,11 +778,6 @@ function createTableCellFromTsdocSection(
 		children: htmlNodes,
 	};
 }
-
-const emptyTableCell: TableCell = {
-	type: "tableCell",
-	children: [],
-};
 
 function createPlainTextTableCell(text: string): TableCell {
 	return {
