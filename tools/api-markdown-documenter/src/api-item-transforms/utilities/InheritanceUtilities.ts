@@ -17,6 +17,13 @@ import type { ApiItemTransformationConfiguration } from "../configuration/index.
 import { filterItems } from "./ApiItemTransformUtilities.js";
 
 /**
+ * API-Extractor does not directly provide a way to get inherited members of an API item.
+ * These utilities work around that limitation to provide a best-effort approximation of inherited members.
+ *
+ * If, in the future, API-Extractor provides a better way to get inherited members, these utilities should be updated or removed as appropriate.
+ */
+
+/**
  * TODO
  */
 export interface TypeMemberBase<TApiItem extends ApiItem = ApiItem> {
