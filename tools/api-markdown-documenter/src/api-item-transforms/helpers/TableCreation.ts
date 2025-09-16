@@ -69,8 +69,8 @@ export function createTableFromItems<TItem>(
 	const tableCells: (TableCell | undefined)[][] = [];
 	for (const item of items) {
 		const currentRow: (TableCell | undefined)[] = [];
-		for (const curentColumnOptions of columnOptions) {
-			currentRow.push(curentColumnOptions.createCellContent(item));
+		for (const currentColumnOptions of columnOptions) {
+			currentRow.push(currentColumnOptions.createCellContent(item));
 		}
 		tableCells.push(currentRow);
 	}
