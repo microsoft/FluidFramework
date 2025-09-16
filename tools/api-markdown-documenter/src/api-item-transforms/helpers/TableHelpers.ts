@@ -33,7 +33,7 @@ import { transformTsdoc } from "../TsdocNodeTransforms.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 
 import { createExcerptSpanWithHyperlinks } from "./Helpers.js";
-import { createTableForApiItems } from "./TableCreation.js";
+import { createTableFromItems } from "./TableCreation.js";
 
 /**
  * Input properties for creating a table of API members
@@ -203,7 +203,7 @@ export function createDefaultSummaryTable(
 		return undefined;
 	}
 
-	return createTableForApiItems(apiItems, {
+	return createTableFromItems(apiItems, {
 		columnOptions: [
 			{
 				title: { type: "text", value: getTableHeadingTitleForApiKind(itemKind) },
@@ -324,7 +324,7 @@ export function createTypeParametersSummaryTable(
 		};
 	}
 
-	return createTableForApiItems(apiTypeParameters, {
+	return createTableFromItems(apiTypeParameters, {
 		columnOptions: [
 			{
 				title: { type: "text", value: "Parameter" },
@@ -370,7 +370,7 @@ export function createFunctionLikeSummaryTable(
 		return undefined;
 	}
 
-	return createTableForApiItems(apiItems, {
+	return createTableFromItems(apiItems, {
 		columnOptions: [
 			{
 				title: { type: "text", value: getTableHeadingTitleForApiKind(itemKind) },
@@ -418,7 +418,7 @@ export function createPropertiesTable(
 		return undefined;
 	}
 
-	return createTableForApiItems(apiProperties, {
+	return createTableFromItems(apiProperties, {
 		columnOptions: [
 			{
 				title: { type: "text", value: "Property" },
@@ -471,7 +471,7 @@ export function createVariablesTable(
 		return undefined;
 	}
 
-	return createTableForApiItems(apiVariables, {
+	return createTableFromItems(apiVariables, {
 		columnOptions: [
 			{
 				title: { type: "text", value: "Variable" },
@@ -518,7 +518,7 @@ export function createPackagesTable(
 		return undefined;
 	}
 
-	return createTableForApiItems(apiPackages, {
+	return createTableFromItems(apiPackages, {
 		columnOptions: [
 			{
 				title: { type: "text", value: "Package" },

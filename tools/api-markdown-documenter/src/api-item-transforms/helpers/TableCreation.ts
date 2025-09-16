@@ -58,7 +58,7 @@ const emptyCell: TableCell = { type: "tableCell", children: [] };
 /**
  * Creates a table from a list of API items.
  */
-export function createTableForApiItems<TItem>(
+export function createTableFromItems<TItem>(
 	items: readonly TItem[],
 	options: TableOptions<TItem>,
 ): Table {
