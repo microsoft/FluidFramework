@@ -19,12 +19,12 @@ export class SharedMapOracle {
 		for (const [k, v] of fuzzMap.entries()) {
 			this.oracle.set(k, v);
 		}
-		// Subscribe
+
 		this.fuzzMap.on("valueChanged", this.onValueChanged);
 		this.fuzzMap.on("clear", this.onClear);
 	}
 
-	private readonly onValueChanged = (change: IValueChanged): void => {
+	private readonly onValueChanged = (change: IValueChanged, local: boolean): void => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const { key, previousValue } = change;
 
@@ -35,21 +35,20 @@ export class SharedMapOracle {
 		);
 
 		if (this.fuzzMap.has(key)) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const newVal = this.fuzzMap.get(key);
-			this.oracle.set(key, newVal); // key exists, even if value is undefined
+			this.oracle.set(key, this.fuzzMap.get(key));
 		} else {
-			this.oracle.delete(key); // key was deleted
+			this.oracle.delete(key);
 		}
 	};
 
-	/**
-	 * Note: Simply clearing the oracle can leave it out of sync with the DDS, since other clients may re-populate entries immediately after a `clear`. To keep the oracle consistent, we rebuild it from the current state of the fuzzMap whenever a `clear` event is observed.
-	 */
-	private readonly onClear = (): void => {
+	private readonly onClear = (local: boolean): void => {
 		this.oracle.clear();
-		for (const [k, v] of this.fuzzMap.entries()) {
-			this.oracle.set(k, v);
+
+		// AB#48665: https://dev.azure.com/fluidframework/internal/_workitems/edit/48665
+		if (!local) {
+			for (const [k, v] of this.fuzzMap.entries()) {
+				this.oracle.set(k, v);
+			}
 		}
 	};
 
