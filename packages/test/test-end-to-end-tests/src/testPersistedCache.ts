@@ -9,7 +9,7 @@ import {
 	type ICacheEntry,
 	type IFileEntry,
 	type IPersistedCache,
-} from "@fluidframework/odsp-driver-definitions/internal";
+} from "@fluidframework/driver-definitions/internal";
 
 export interface ValueWithSnapshot {
 	value: ISnapshot;

@@ -6,12 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import { delay } from "@fluidframework/core-utils/internal";
-import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
-	type ICacheEntry,
-	type IOdspResolvedUrl,
 	maximumCacheDurationMs,
-} from "@fluidframework/odsp-driver-definitions/internal";
+	type ICacheEntry,
+	type ISnapshot,
+} from "@fluidframework/driver-definitions/internal";
+import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {

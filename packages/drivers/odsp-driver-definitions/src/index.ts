@@ -14,6 +14,10 @@ export {
 	CacheContentType,
 	snapshotKey,
 	snapshotWithLoadingGroupIdKey,
+	ICacheEntry,
+	IPersistedCache,
+	IFileEntry,
+	IEntry,
 } from "./odspCache.js";
 export {
 	IOdspResolvedUrl,

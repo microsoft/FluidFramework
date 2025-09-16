@@ -30,6 +30,11 @@ export interface HostStoragePolicy {
     snapshotOptions?: ISnapshotOptions;
 }
 
+// @beta @deprecated @legacy
+export interface ICacheEntry extends IEntry {
+    file: IFileEntry;
+}
+
 // @beta @legacy (undocumented)
 export interface ICollabSessionOptions {
     displayName?: string;
@@ -41,6 +46,18 @@ export interface ICollabSessionOptions {
 
 // @beta @legacy
 export type IdentityType = "Consumer" | "Enterprise";
+
+// @beta @deprecated @legacy
+export interface IEntry {
+    key: string;
+    type: CacheContentType;
+}
+
+// @beta @deprecated @legacy (undocumented)
+export interface IFileEntry {
+    docId: string;
+    resolvedUrl: IResolvedUrl;
+}
 
 // @beta @legacy
 export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
@@ -112,6 +129,13 @@ export interface IOpsCachingPolicy {
     batchSize?: number;
     timerGranularity?: number;
     totalOpsToCache?: number;
+}
+
+// @beta @deprecated @legacy
+export interface IPersistedCache {
+    get(entry: ICacheEntry): Promise<any>;
+    put(entry: ICacheEntry, value: any): Promise<void>;
+    removeEntries(file: IFileEntry): Promise<void>;
 }
 
 // @beta @legacy

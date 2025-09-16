@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import { Deferred } from "@fluidframework/core-utils/internal";
+import type { IEntry } from "@fluidframework/driver-definitions/internal";
 import {
-	type IEntry,
 	type IOdspResolvedUrl,
 	OdspErrorTypes,
 	snapshotKey,

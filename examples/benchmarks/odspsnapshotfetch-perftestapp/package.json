@@ -35,9 +35,9 @@
 	},
 	"dependencies": {
 		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver": "workspace:~",
-		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/odsp-urlresolver": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
