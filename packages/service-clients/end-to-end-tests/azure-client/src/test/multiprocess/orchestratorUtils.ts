@@ -18,6 +18,7 @@ import type {
 	LatestValueGetResponseEvent,
 	LatestMapValueGetResponseEvent,
 	MessageToChild,
+	EventEntry,
 } from "./messageTypes.js";
 
 /**
@@ -105,6 +106,37 @@ export async function forkChildProcesses(
 	const childErrorPromise = Promise.race(childErrorPromises);
 	await Promise.race([Promise.all(childReadyPromises), childErrorPromise]);
 	return { children, childErrorPromise };
+}
+
+export async function executeDebugReports(
+	childrenNotFullyJoined: ChildProcess[],
+): Promise<void> {
+	const debugReportPromises: Promise<EventEntry[]>[] = [];
+	for (const child of childrenNotFullyJoined) {
+		const debugReportPromise = new Promise<EventEntry[]>((resolve) => {
+			const handler = (msg: MessageFromChild): void => {
+				if (msg.event === "debugReportComplete") {
+					resolve(msg.log ?? []);
+					child.off("message", handler);
+				}
+			};
+			child.on("message", handler);
+		});
+		debugReportPromises.push(debugReportPromise);
+		child.send({ command: "debugReport", sendEventLog: true, reportAttendees: true });
+	}
+
+	const logs = await Promise.all(debugReportPromises);
+	const combinedLogs = logs.flat().sort((a, b) => a.timestamp - b.timestamp);
+	for (const entry of combinedLogs) {
+		testConsole.log(
+			`[${new Date(entry.timestamp).toISOString()}] [${entry.agentId}] [${entry.eventCategory}] ${entry.eventName}${
+				entry.details
+					? ` - ${typeof entry.details === "string" ? entry.details : JSON.stringify(entry.details)}`
+					: ""
+			}`,
+		);
+	}
 }
 
 /**

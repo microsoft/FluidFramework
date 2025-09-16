@@ -15,6 +15,7 @@ import {
 	connectAndListenForAttendees,
 	connectAndWaitForAttendees,
 	connectChildProcesses,
+	executeDebugReports,
 	forkChildProcesses,
 	getLatestMapValueResponses,
 	getLatestValueResponses,
@@ -194,10 +195,17 @@ describe(`Presence with AzureClient`, () => {
 				// Wait for all attendees to be fully joined
 				// Keep a tally for debuggability
 				let childrenFullyJoined = 0;
+				const setNotFullyJoined = new Set<number>();
+				for (let i = 0; i < children.length; i++) {
+					setNotFullyJoined.add(i);
+				}
 				const allAttendeesFullyJoined = Promise.all(
-					// eslint-disable-next-line @typescript-eslint/promise-function-async
-					connectResult.attendeeCountRequiredPromises.map((attendeeFullyJoinedPromise) =>
-						attendeeFullyJoinedPromise.then(() => childrenFullyJoined++),
+					connectResult.attendeeCountRequiredPromises.map(
+						async (attendeeFullyJoinedPromise, index) => {
+							await attendeeFullyJoinedPromise;
+							childrenFullyJoined++;
+							setNotFullyJoined.delete(index);
+						},
 					),
 				);
 				let timedout = true;
@@ -227,6 +235,23 @@ describe(`Presence with AzureClient`, () => {
 							testConsole.log("Secondary await resulted in", secondaryError);
 						}
 					}
+
+					// Gather and report debug info from children
+					// If there are less than 10 children, get all reports.
+					// Otherwise, just child 0 and those not fully joined.
+					setTimeout(this, 0); // Disable test timeout. Will throw within 20s below.
+					const childrenRequestedToReport =
+						children.length <= 10
+							? children
+							: // Just those not fully joined
+								children.filter((_, index) => index === 0 || setNotFullyJoined.has(index));
+					await timeoutAwait(
+						Promise.race([executeDebugReports(childrenRequestedToReport), childErrorPromise]),
+						{ durationMs: 20_000, errorMsg: "Debug report timeout" },
+					).catch((debugAwaitError) => {
+						testConsole.error("Debug report await resulted in", debugAwaitError);
+					});
+
 					throw error;
 				});
 				testConsole.log(
