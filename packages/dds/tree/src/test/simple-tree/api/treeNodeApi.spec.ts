@@ -165,6 +165,132 @@ describe("treeNodeApi", () => {
 				validateUsageError(/parent/),
 			);
 		});
+
+		describe("array", () => {
+			class Numbers extends schema.array("Array", schema.number) {}
+			it("read cases", () => {
+				const node = init(Numbers, []);
+				const invalidations: Set<string> = new Set();
+
+				TreeAlpha.trackObservations(
+					() => invalidations.add("length"),
+					() => node.length,
+				);
+				TreeAlpha.trackObservations(
+					() => invalidations.add("children"),
+					() => TreeAlpha.children(node),
+				);
+				TreeAlpha.trackObservations(
+					() => invalidations.add("in"),
+					() => 0 in node,
+				);
+				TreeAlpha.trackObservations(
+					() => invalidations.add("child"),
+					() => TreeAlpha.child(node, 0),
+				);
+				TreeAlpha.trackObservations(
+					() => invalidations.add("exportCompressed"),
+					() =>
+						TreeAlpha.exportCompressed(node, {
+							oldestCompatibleClient: FluidClientVersion.v2_0,
+						}),
+				);
+				TreeAlpha.trackObservations(
+					() => invalidations.add("exportConcise"),
+					() => TreeAlpha.exportConcise(node, {}),
+				);
+				TreeAlpha.trackObservations(
+					() => invalidations.add("exportVerbose"),
+					() => TreeAlpha.exportVerbose(node, {}),
+				);
+
+				// Should not invalidate:
+				TreeAlpha.trackObservations(
+					() => invalidations.add("is"),
+					() => Tree.is(node, Numbers),
+				);
+
+				assert.deepEqual(invalidations, new Set());
+				node.insertAtStart(1);
+				assert.deepEqual(
+					invalidations,
+					new Set([
+						"length",
+						"children",
+						"in",
+						"child",
+						"exportCompressed",
+						"exportConcise",
+						"exportVerbose",
+					]),
+				);
+			});
+		});
+
+		it("multiple nodes", () => {
+			class Component extends schema.object("Component", {
+				value: schema.number,
+			}) {}
+
+			class Point2d extends schema.object("Point", {
+				x: Component,
+				y: Component,
+			}) {}
+
+			const node = init(Point2d, { x: { value: 1 }, y: { value: 2 } });
+
+			const log: string[] = [];
+
+			TreeAlpha.trackObservations(
+				() => log.push("node.x"),
+				() => node.x,
+			);
+
+			TreeAlpha.trackObservations(
+				() => log.push("node.y"),
+				() => node.y,
+			);
+
+			TreeAlpha.trackObservations(
+				() => log.push("node.x.value"),
+				() => node.x.value,
+			);
+
+			TreeAlpha.trackObservations(
+				() => log.push("node.y.value"),
+				() => node.y.value,
+			);
+
+			const x = node.x;
+			const y = node.y;
+
+			TreeAlpha.trackObservations(
+				() => log.push("x.value"),
+				() => x.value,
+			);
+
+			TreeAlpha.trackObservations(
+				() => log.push("y.value"),
+				() => y.value,
+			);
+
+			log.push("change: x.value");
+			node.x.value = 3;
+
+			log.push("change: y");
+			node.y = new Component({ value: 4 });
+
+			assert.deepEqual(log, [
+				"change: x.value",
+				"node.x.value",
+				"x.value",
+				"change: y",
+				"node.x",
+				"node.y",
+				"node.x.value",
+				"node.y.value",
+			]);
+		});
 	});
 
 	describe("is", () => {
