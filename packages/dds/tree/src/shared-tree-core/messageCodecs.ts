@@ -24,7 +24,8 @@ import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 import { Message } from "./messageFormat.js";
 import type { DecodedMessage } from "./messageTypes.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor, OpSpaceCompressedId } from "@fluidframework/id-compressor";
+import type { BranchId } from "./branch.js";
 
 export interface MessageEncodingContext {
 	idCompressor: IIdCompressor;
@@ -106,7 +107,7 @@ function makeV1CodecWithVersion<TChangeset>(
 		Message(changeCodec.encodedSchema ?? Type.Any()),
 		{
 			encode: (
-				{ commit, sessionId: originatorId }: DecodedMessage<TChangeset>,
+				{ commit, sessionId: originatorId, branchId }: DecodedMessage<TChangeset>,
 				context: MessageEncodingContext,
 			) => {
 				const message: Message = {
@@ -122,6 +123,7 @@ function makeV1CodecWithVersion<TChangeset>(
 						idCompressor: context.idCompressor,
 						revision: commit.revision,
 					}),
+					branchId: encodeBranchId(context.idCompressor, branchId),
 					version,
 				};
 				return message as unknown as JsonCompatibleReadOnly;
@@ -131,13 +133,18 @@ function makeV1CodecWithVersion<TChangeset>(
 					revision: encodedRevision,
 					originatorId,
 					changeset,
+					branchId: encodedBranchId,
 				} = encoded as unknown as Message;
 
-				const revision = revisionTagCodec.decode(encodedRevision, {
+				const changeContext = {
 					originatorId,
 					revision: undefined,
 					idCompressor: context.idCompressor,
-				});
+				};
+
+				const revision = revisionTagCodec.decode(encodedRevision, changeContext);
+
+				const branchId = decodeBranchId(context.idCompressor, encodedBranchId, changeContext);
 
 				return {
 					commit: {
@@ -148,10 +155,19 @@ function makeV1CodecWithVersion<TChangeset>(
 							idCompressor: context.idCompressor,
 						}),
 					},
+					branchId,
 					sessionId: originatorId,
 				};
 			},
 		},
 		options.jsonValidator,
 	);
+}
+
+function encodeBranchId(idCompressor: IIdCompressor, branchId: BranchId): OpSpaceCompressedId | undefined {
+	return branchId === "main" ? undefined : idCompressor.normalizeToOpSpace(branchId);
+}
+
+function decodeBranchId(idCompressor: IIdCompressor, encoded: OpSpaceCompressedId | undefined, context: ChangeEncodingContext): BranchId {
+	return encoded === undefined ? "main" : idCompressor.normalizeToSessionSpace(encoded, context.originatorId);
 }

@@ -2478,4 +2478,31 @@ describe("SharedTree", () => {
 		assert.deepEqual(tree.exportVerbose(), 10);
 		assert.deepEqual(tree.exportSimpleSchema(), toSimpleTreeSchema(numberSchema, true));
 	});
+
+	it("supports multiple shared branches", () => {
+		const provider = new TestTreeProviderLite(2);
+		const tree1 = provider.trees[0];
+
+		const config = new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation });
+		const mainView1 = asTreeViewAlpha(tree1.viewWith(config));
+		mainView1.initialize(["A"]);
+		provider.synchronizeMessages();
+		const tree2 = provider.trees[1];
+		provider.synchronizeMessages();
+
+		const branchId = tree1.createSharedBranch();
+		const branchView1 = tree1.viewBranchWith(branchId, config);
+		assert.deepEqual([...branchView1.root], ["A"]);
+		provider.synchronizeMessages();
+
+		const branchView2 = tree2.viewBranchWith(branchId, config);
+		assert.deepEqual([...branchView2.root], ["A"]);
+
+		// Insert node
+		branchView1.root.insertAtEnd("B");
+		provider.synchronizeMessages();
+
+		// Validate insertion
+		assert.deepEqual([...branchView2.root], ["A", "B"]);
+	});
 });

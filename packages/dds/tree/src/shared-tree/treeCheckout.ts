@@ -310,6 +310,9 @@ export function createTreeCheckout(
 			args?.chunkCompressionStrategy,
 			idCompressor,
 		);
+
+	// XXX: If a branch is passed in, is it supposed to be local main?
+	// Otherwise shouldn't we set `isBranch` to true?
 	const branch =
 		args?.branch ??
 		new SharedTreeBranch(

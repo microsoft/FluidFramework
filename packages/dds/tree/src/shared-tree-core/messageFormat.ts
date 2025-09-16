@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { SessionId } from "@fluidframework/id-compressor";
+import type { OpSpaceCompressedId, SessionId } from "@fluidframework/id-compressor";
 import { type TSchema, Type } from "@sinclair/typebox";
 
 import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
@@ -25,6 +25,8 @@ export interface Message {
 	 * The changeset to be applied.
 	 */
 	readonly changeset: JsonCompatibleReadOnly;
+
+	readonly branchId: OpSpaceCompressedId | undefined;
 
 	/**
 	 * The version of the message. This controls how the message is encoded.

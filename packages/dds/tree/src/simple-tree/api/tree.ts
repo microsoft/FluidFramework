@@ -35,6 +35,7 @@ import type {
 	VoidTransactionCallbackStatus,
 } from "./transactionTypes.js";
 import type { VerboseTree } from "./verboseTree.js";
+import type { BranchId } from "../../shared-tree-core/index.js";
 
 /**
  * A tree from which a {@link TreeView} can be created.
@@ -99,6 +100,13 @@ export interface ITreeAlpha extends ITree {
 	 * To get the schema using property keys, use {@link getSimpleSchema} on the view schema.
 	 */
 	exportSimpleSchema(): SimpleTreeSchema;
+
+	viewBranchWith<TRoot extends ImplicitFieldSchema>(
+		branchId: BranchId,
+		config: TreeViewConfiguration<TRoot>,
+	): TreeView<TRoot>;
+
+	createSharedBranch(): BranchId;
 }
 
 /**
