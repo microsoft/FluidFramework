@@ -53,6 +53,10 @@ export interface IFileEntry {
 	 * This is IOdspResolvedUrl in case of ODSP driver.
 	 */
 	resolvedUrl: IResolvedUrl;
+	/**
+	 * Optional version of the file.
+	 */
+	fileVersion?: string;
 }
 
 /**
