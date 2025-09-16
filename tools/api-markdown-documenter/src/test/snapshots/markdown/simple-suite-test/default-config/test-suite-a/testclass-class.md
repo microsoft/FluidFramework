@@ -54,6 +54,7 @@ Here are some remarks about the class
 | [abstractPropertyGetter](/test-suite-a/testclass-class#abstractpropertygetter-property) | `readonly` | [TestMappedType](/test-suite-a/testmappedtype-typealias) | A test abstract getter property. |
 | [testClassGetterProperty](/test-suite-a/testclass-class#testclassgetterproperty-property) | `virtual` | number | Test class property with both a getter and a setter. |
 | [testClassProperty](/test-suite-a/testclass-class#testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
+| [protectedProperty](/test-suite-a/testabstractclass-class#protectedproperty-property) | `readonly` | [TestEnum](/test-suite-a/testenum-enum) | A test protected property. |
 
 ## Methods
 
@@ -62,6 +63,7 @@ Here are some remarks about the class
 | [publicAbstractMethod()](/test-suite-a/testclass-class#publicabstractmethod-method) | | void | A test public abstract method. |
 | [testClassMethod(input)](/test-suite-a/testclass-class#testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
 | [virtualMethod()](/test-suite-a/testclass-class#virtualmethod-method) | | number | Overrides [virtualMethod()](/test-suite-a/testabstractclass-class#virtualmethod-method). |
+| [sealedMethod()](/test-suite-a/testabstractclass-class#sealedmethod-method) | `sealed` | string | A test `@sealed` method. |
 
 ## Constructor Details
 

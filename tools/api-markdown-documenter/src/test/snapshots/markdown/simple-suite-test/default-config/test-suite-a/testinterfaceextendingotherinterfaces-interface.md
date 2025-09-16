@@ -16,11 +16,35 @@ export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, Te
 
 Here are some remarks about the interface
 
+## Events
+
+| Property | Modifiers | Type | Description |
+| - | - | - | - |
+| [testClassEventProperty](/test-suite-a/testinterface-interface#testclasseventproperty-propertysignature) | `readonly` | () => void | Test interface event property |
+
+## Properties
+
+| Property | Modifiers | Default Value | Type | Description |
+| - | - | - | - | - |
+| [getterProperty](/test-suite-a/testinterface-interface#getterproperty-property) | `readonly` | | boolean | A test getter-only interface property. |
+| [propertyWithBadInheritDocTarget](/test-suite-a/testinterface-interface#propertywithbadinheritdoctarget-propertysignature) | | | boolean | |
+| [setterProperty](/test-suite-a/testinterface-interface#setterproperty-property) | | | boolean | A test property with a getter and a setter. |
+| [testInterfaceProperty](/test-suite-a/testinterface-interface#testinterfaceproperty-propertysignature) | | | number | Test interface property |
+| [testOptionalInterfaceProperty](/test-suite-a/testinterface-interface#testoptionalinterfaceproperty-propertysignature) | `optional` | 0 | number | Test optional property |
+
 ## Methods
 
 | Method | Return Type | Description |
 | - | - | - |
 | [testMethod(input)](/test-suite-a/testinterfaceextendingotherinterfaces-interface#testmethod-methodsignature) | number | Test interface method accepting a string and returning a number. |
+| [testInterfaceMethod()](/test-suite-a/testinterface-interface#testinterfacemethod-methodsignature) | void | Test interface method |
+
+## Call Signatures
+
+| CallSignature | Description |
+| - | - |
+| [(event: 'testCallSignature', listener: (input: unknown) => void): any](/test-suite-a/testinterface-interface#_call_-callsignature) | Test interface event call signature |
+| [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](/test-suite-a/testinterface-interface#_call__1-callsignature) | Another example call signature |
 
 ## Method Details
 

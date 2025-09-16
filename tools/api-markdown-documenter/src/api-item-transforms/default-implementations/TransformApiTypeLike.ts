@@ -21,7 +21,7 @@ import {
 	isStatic,
 	type ApiTypeLike,
 } from "../../utilities/index.js";
-import { filterItems } from "../ApiItemTransformUtilities.js";
+import { getTypeMembers, type TypeMember } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
 
@@ -71,43 +71,49 @@ export function transformApiTypeLike(
 ): Section[] {
 	const sections: Section[] = [];
 
-	const filteredChildren = filterItems(apiItem.members, config);
-	if (filteredChildren.length > 0) {
+	// Get all of the type's members, including applicable inherited members.
+	// All of these members will be displayed in the summary tables,
+	// but only the "own" members will be displayed in the details sections.
+	// Inherited members' table entries will link to the details section of the document
+	// for the type from which they are inherited.
+	const members = getTypeMembers(apiItem, config);
+
+	if (members.length > 0) {
 		// Accumulate child items
-		const constructors: ApiConstructor[] = [];
-		const allProperties: ApiPropertyItem[] = [];
-		const callSignatures: ApiCallSignature[] = [];
-		const indexSignatures: ApiIndexSignature[] = [];
-		const allMethods: ApiMethod[] = [];
-		for (const child of filteredChildren) {
-			const childKind = getApiItemKind(child);
+		const constructors: TypeMember<ApiConstructor>[] = [];
+		const allProperties: TypeMember<ApiPropertyItem>[] = [];
+		const callSignatures: TypeMember<ApiCallSignature>[] = [];
+		const indexSignatures: TypeMember<ApiIndexSignature>[] = [];
+		const allMethods: TypeMember<ApiMethod>[] = [];
+		for (const member of members) {
+			const childKind = getApiItemKind(member.item);
 			switch (childKind) {
 				case ApiItemKind.Constructor:
 				case ApiItemKind.ConstructSignature: {
-					constructors.push(child as ApiConstructor);
+					constructors.push(member as TypeMember<ApiConstructor>);
 					break;
 				}
 				case ApiItemKind.Property:
 				case ApiItemKind.PropertySignature: {
-					allProperties.push(child as ApiPropertyItem);
+					allProperties.push(member as TypeMember<ApiPropertyItem>);
 					break;
 				}
 				case ApiItemKind.CallSignature: {
-					callSignatures.push(child as ApiCallSignature);
+					callSignatures.push(member as TypeMember<ApiCallSignature>);
 					break;
 				}
 				case ApiItemKind.IndexSignature: {
-					indexSignatures.push(child as ApiIndexSignature);
+					indexSignatures.push(member as TypeMember<ApiIndexSignature>);
 					break;
 				}
 				case ApiItemKind.Method:
 				case ApiItemKind.MethodSignature: {
-					allMethods.push(child as ApiMethod);
+					allMethods.push(member as TypeMember<ApiMethod>);
 					break;
 				}
 				default: {
 					config.logger?.error(
-						`Child item "${child.displayName}" of ${
+						`Child item "${member.item.displayName}" of ${
 							apiItem.kind
 						} "${getScopedMemberNameForDiagnostics(
 							apiItem,
@@ -120,27 +126,29 @@ export function transformApiTypeLike(
 
 		// Split properties into event properties and non-event properties
 		const standardProperties = allProperties.filter(
-			(apiProperty) => !apiProperty.isEventProperty,
+			(apiProperty) => !apiProperty.item.isEventProperty,
 		);
-		const eventProperties = allProperties.filter((apiProperty) => apiProperty.isEventProperty);
+		const eventProperties = allProperties.filter(
+			(apiProperty) => apiProperty.item.isEventProperty,
+		);
 
 		// Further split event/standard properties into static and non-static
 		const staticStandardProperties = standardProperties.filter((apiProperty) =>
-			isStatic(apiProperty),
+			isStatic(apiProperty.item),
 		);
 		const nonStaticStandardProperties = standardProperties.filter(
-			(apiProperty) => !isStatic(apiProperty),
+			(apiProperty) => !isStatic(apiProperty.item),
 		);
 		const staticEventProperties = eventProperties.filter((apiProperty) =>
-			isStatic(apiProperty),
+			isStatic(apiProperty.item),
 		);
 		const nonStaticEventProperties = eventProperties.filter(
-			(apiProperty) => !isStatic(apiProperty),
+			(apiProperty) => !isStatic(apiProperty.item),
 		);
 
 		// Split methods into static and non-static methods
-		const staticMethods = allMethods.filter((apiMethod) => isStatic(apiMethod));
-		const nonStaticMethods = allMethods.filter((apiMethod) => !isStatic(apiMethod));
+		const staticMethods = allMethods.filter((apiMethod) => isStatic(apiMethod.item));
+		const nonStaticMethods = allMethods.filter((apiMethod) => !isStatic(apiMethod.item));
 
 		// Render summary tables
 		const memberTableSections = createMemberTables(
@@ -148,12 +156,12 @@ export function transformApiTypeLike(
 				{
 					headingTitle: "Constructors",
 					itemKind: ApiItemKind.Constructor,
-					items: constructors,
+					items: constructors.map((member) => member.item),
 				},
 				{
 					headingTitle: "Static Events",
 					itemKind: ApiItemKind.Property,
-					items: staticEventProperties,
+					items: staticEventProperties.map((member) => member.item),
 					options: {
 						modifiersToOmit: [ApiModifier.Static],
 					},
@@ -161,7 +169,7 @@ export function transformApiTypeLike(
 				{
 					headingTitle: "Static Properties",
 					itemKind: ApiItemKind.Property,
-					items: staticStandardProperties,
+					items: staticStandardProperties.map((member) => member.item),
 					options: {
 						modifiersToOmit: [ApiModifier.Static],
 					},
@@ -169,7 +177,7 @@ export function transformApiTypeLike(
 				{
 					headingTitle: "Static Methods",
 					itemKind: ApiItemKind.Method,
-					items: staticMethods,
+					items: staticMethods.map((member) => member.item),
 					options: {
 						modifiersToOmit: [ApiModifier.Static],
 					},
@@ -177,7 +185,7 @@ export function transformApiTypeLike(
 				{
 					headingTitle: "Events",
 					itemKind: ApiItemKind.Property,
-					items: nonStaticEventProperties,
+					items: nonStaticEventProperties.map((member) => member.item),
 					options: {
 						modifiersToOmit: [ApiModifier.Static],
 					},
@@ -185,7 +193,7 @@ export function transformApiTypeLike(
 				{
 					headingTitle: "Properties",
 					itemKind: ApiItemKind.Property,
-					items: nonStaticStandardProperties,
+					items: nonStaticStandardProperties.map((member) => member.item),
 					options: {
 						modifiersToOmit: [ApiModifier.Static],
 					},
@@ -193,7 +201,7 @@ export function transformApiTypeLike(
 				{
 					headingTitle: "Methods",
 					itemKind: ApiItemKind.Method,
-					items: nonStaticMethods,
+					items: nonStaticMethods.map((member) => member.item),
 					options: {
 						modifiersToOmit: [ApiModifier.Static],
 					},
@@ -201,12 +209,12 @@ export function transformApiTypeLike(
 				{
 					headingTitle: "Call Signatures",
 					itemKind: ApiItemKind.CallSignature,
-					items: callSignatures,
+					items: callSignatures.map((member) => member.item),
 				},
 				{
 					headingTitle: "Index Signatures",
 					itemKind: ApiItemKind.IndexSignature,
-					items: indexSignatures,
+					items: indexSignatures.map((member) => member.item),
 				},
 			],
 			config,
@@ -222,32 +230,44 @@ export function transformApiTypeLike(
 				{
 					heading: { type: "sectionHeading", title: "Constructor Details" },
 					itemKind: ApiItemKind.Constructor,
-					items: constructors,
+					items: constructors
+						.filter((member) => member.kind === "own")
+						.map((member) => member.item),
 				},
 				{
 					heading: { type: "sectionHeading", title: "Event Details" },
 					itemKind: ApiItemKind.Property,
-					items: eventProperties,
+					items: eventProperties
+						.filter((member) => member.kind === "own")
+						.map((member) => member.item),
 				},
 				{
 					heading: { type: "sectionHeading", title: "Property Details" },
 					itemKind: ApiItemKind.Property,
-					items: standardProperties,
+					items: standardProperties
+						.filter((member) => member.kind === "own")
+						.map((member) => member.item),
 				},
 				{
 					heading: { type: "sectionHeading", title: "Method Details" },
 					itemKind: ApiItemKind.MethodSignature,
-					items: allMethods,
+					items: allMethods
+						.filter((member) => member.kind === "own")
+						.map((member) => member.item),
 				},
 				{
 					heading: { type: "sectionHeading", title: "Call Signature Details" },
 					itemKind: ApiItemKind.CallSignature,
-					items: callSignatures,
+					items: callSignatures
+						.filter((member) => member.kind === "own")
+						.map((member) => member.item),
 				},
 				{
 					heading: { type: "sectionHeading", title: "Index Signature Details" },
 					itemKind: ApiItemKind.IndexSignature,
-					items: indexSignatures,
+					items: indexSignatures
+						.filter((member) => member.kind === "own")
+						.map((member) => member.item),
 				},
 			],
 			config,
