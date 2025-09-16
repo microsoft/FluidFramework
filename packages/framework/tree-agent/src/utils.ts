@@ -316,6 +316,9 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 					return append(name);
 				}
 			}
+			case z.ZodFirstPartyTypeKind.ZodVoid: {
+				return append("void");
+			}
 			default: {
 				throw new UsageError(
 					`Unsupported type when transforming class method: ${getTypeKind(type)}`,
