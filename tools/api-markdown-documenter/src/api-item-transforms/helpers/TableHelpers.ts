@@ -589,7 +589,7 @@ export function createReturnTypeCell(
  * will point.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createApiTitleCell(
+function createApiTitleCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): TableCell {
@@ -606,10 +606,7 @@ export function createApiTitleCell(
  * @param apiItem - The API item whose modifiers will be displayed in the cell.
  * @param modifiersToOmit - List of modifiers to omit from the generated cell, even if they apply to the item.
  */
-export function createModifiersCell(
-	apiItem: ApiItem,
-	modifiersToOmit?: ApiModifier[],
-): TableCell {
+function createModifiersCell(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): TableCell {
 	const modifiers = getModifiers(apiItem, modifiersToOmit);
 
 	const contents: PhrasingContent[] = [];
@@ -636,7 +633,7 @@ export function createModifiersCell(
  * @param apiItem - The API item whose `@defaultValue` comment will be displayed in the cell.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createDefaultValueCell(
+function createDefaultValueCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): TableCell {
@@ -655,7 +652,7 @@ export function createDefaultValueCell(
  * @param apiItem - The alert values to display.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createAlertsCell(alerts: string[]): TableCell {
+function createAlertsCell(alerts: string[]): TableCell {
 	const alertNodes: PhrasingContent[] = alerts.map((alert) => ({
 		type: "inlineCode",
 		value: alert,
@@ -674,7 +671,7 @@ export function createAlertsCell(alerts: string[]): TableCell {
  *
  * @param apiParameter - The parameter whose name will be displayed in the cell.
  */
-export function createParameterTitleCell(apiParameter: Parameter): TableCell {
+function createParameterTitleCell(apiParameter: Parameter): TableCell {
 	return createPlainTextTableCell(apiParameter.name);
 }
 
@@ -687,7 +684,7 @@ export function createParameterTitleCell(apiParameter: Parameter): TableCell {
  * @param apiProperty - The parameter whose type information will be displayed in the cell.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createParameterTypeCell(
+function createParameterTypeCell(
 	apiParameter: Parameter,
 	config: ApiItemTransformationConfiguration,
 ): TableCell {
@@ -703,7 +700,7 @@ export function createParameterTypeCell(
  * @param contextApiItem - The API item with which the parameter is associated.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createParameterSummaryCell(
+function createParameterSummaryCell(
 	apiParameter: Parameter,
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
@@ -728,7 +725,7 @@ export function createParameterSummaryCell(
  * @param contextApiItem - The API item with which the parameter is associated.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createTypeParameterSummaryCell(
+function createTypeParameterSummaryCell(
 	apiTypeParameter: TypeParameter,
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
@@ -752,7 +749,7 @@ export function createTypeParameterSummaryCell(
  * @param typeExcerpt - An excerpt describing the type to be displayed in the cell.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createTypeExcerptCell(
+function createTypeExcerptCell(
 	typeExcerpt: Excerpt,
 	config: ApiItemTransformationConfiguration,
 ): TableCell {
