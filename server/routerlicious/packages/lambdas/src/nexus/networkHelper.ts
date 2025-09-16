@@ -39,7 +39,7 @@ export async function checkNetworkInformation(
 	const clientIPAddress = xForwardedFor?.split(",")[0];
 	if (privateLinkEnable && !clientIPAddress) {
 		return {
-			message: "Client IP address is required for private link in x-forwarded-for",
+			message: "Client ip address is required for private link in x-forwarded-for",
 			shouldConnect: false,
 		};
 	}

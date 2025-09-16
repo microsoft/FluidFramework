@@ -70,51 +70,28 @@ export function validatePrivateLink(
 					?.properties?.remotePrivateEndpoint?.connectionDetails[0]
 					? true
 					: false;
-			Lumberjack.info(`privateLinkEnable ${privateLinkEnable}`, {
-				tenantId,
-			});
 			const clientIPAddress = req.ip ?? "";
 			if (privateLinkEnable && (!clientIPAddress || clientIPAddress.trim() === "")) {
-				Lumberjack.info(`privateLinkEnable here 1`, {
-					tenantId,
-				});
 				return handleResponse(
 					Promise.reject(
 						new NetworkError(
 							400,
-							`Client IP address is required for private link in req.ip`,
+							`Client ip address is required for private link in req.ip`,
 						),
 					),
 					res,
 				);
 			}
 			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
-			Lumberjack.info(`privateLinkEnable here 2`, {
-				tenantId,
-			});
 			if (networkInfo.isPrivateLink) {
 				if (privateLinkEnable) {
 					const connectionDetail =
 						tenantInfo?.customData?.privateEndpoints[0]?.privateEndpointConnectionProxy
 							?.properties?.remotePrivateEndpoint?.connectionDetails[0];
-					Lumberjack.info(
-						`privateLinkEnable in is privatelink dd: ${JSON.stringify(
-							connectionDetail,
-						)}`,
-						{
-							tenantId,
-						},
-					);
 					const accountLinkId = connectionDetail?.linkIdentifier;
-					Lumberjack.info(
-						`accountLinkId in ispirvatelink ${JSON.stringify(accountLinkId)}`,
-						{
-							tenantId,
-						},
-					);
 					if (networkInfo.privateLinkId === accountLinkId) {
 						Lumberjack.info(
-							`This is a private link request with matching link ID accountLinkId ${accountLinkId}`,
+							`This is a private link request with matching link id accountLinkId ${accountLinkId}`,
 							{
 								tenantId,
 								privateLinkId: networkInfo.privateLinkId,
