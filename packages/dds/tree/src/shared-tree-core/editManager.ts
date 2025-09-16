@@ -33,7 +33,7 @@ import type {
 	SequenceId,
 	SequencedCommit,
 	SummarySessionBranch,
-} from "./editManagerFormat.js";
+} from "./editManagerFormatCommons.js";
 import {
 	getUpperBoundOfPreviousSequenceId,
 	equalSequenceIds,
@@ -625,6 +625,14 @@ export class EditManager<
  * The in-memory data that summaries contain
  */
 export interface SummaryData<TChangeset> {
+	readonly main: SharedBranchSummaryData<TChangeset>;
+	readonly branches: ReadonlyMap<string, SharedBranchSummaryData<TChangeset>>;
+}
+
+export interface SharedBranchSummaryData<TChangeset> {
+	readonly id?: string;
+	readonly name?: string;
+	readonly author?: string;
 	readonly trunk: readonly SequencedCommit<TChangeset>[];
 	readonly peerLocalBranches: ReadonlyMap<SessionId, SummarySessionBranch<TChangeset>>;
 }

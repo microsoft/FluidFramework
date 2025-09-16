@@ -25,7 +25,6 @@ import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
-	findAncestor,
 	type GraphCommit,
 	type RevisionTag,
 	RevisionTagCodec,
@@ -49,7 +48,7 @@ import { type ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./chang
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { makeEditManagerCodec } from "./editManagerCodecs.js";
-import type { SeqNumber } from "./editManagerFormat.js";
+import type { SeqNumber } from "./editManagerFormatCommons.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
 import { type MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
 import type { DecodedMessage } from "./messageTypes.js";

@@ -67,7 +67,7 @@ export type SequenceId = Static<typeof SequenceId>;
  */
 export interface SequencedCommit<TChangeset> extends Commit<TChangeset>, SequenceId {}
 
-const SequencedCommit = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+export const SequencedCommit = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Composite([CommitBase(tChange), SequenceId], noAdditionalProps);
 
 /**
@@ -86,7 +86,7 @@ export interface EncodedSummarySessionBranch<TChangeset> {
 	readonly commits: Commit<TChangeset>[];
 }
 
-const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+export const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object(
 		{
 			base: RevisionTagSchema,
@@ -95,23 +95,22 @@ const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchem
 		noAdditionalProps,
 	);
 
-export interface EncodedEditManager<TChangeset> {
+export interface EncodedSharedBranch<TChangeset> {
+	readonly id?: string;
+	readonly name?: string;
+	readonly author?: string;
 	readonly trunk: readonly Readonly<SequencedCommit<TChangeset>>[];
-	readonly branches: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
-	readonly version: 1 | 2 | 3 | 4;
+	readonly peers: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
 }
 
-export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+export const EncodedSharedBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object(
 		{
-			version: Type.Union([
-				Type.Literal(1),
-				Type.Literal(2),
-				Type.Literal(3),
-				Type.Literal(4),
-			]),
+			id: Type.Optional(Type.String()),
+			name: Type.Optional(Type.String()),
+			author: Type.Optional(Type.String()),
 			trunk: Type.Array(SequencedCommit(tChange)),
-			branches: Type.Array(Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)])),
+			peers: Type.Array(Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)])),
 		},
 		noAdditionalProps,
 	);

@@ -52,4 +52,4 @@ export type {
 	SequencedCommit,
 	SummarySessionBranch,
 	EncodedCommit,
-} from "./editManagerFormat.js";
+} from "./editManagerFormatCommons.js";
