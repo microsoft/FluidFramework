@@ -99,7 +99,7 @@ describe("useTree", () => {
 
 			function ParentComponent(props: { node: PropTreeNode<Point> }): JSX.Element {
 				log.push("parent");
-				return <PointComponent node={toPropTreeNode(point)} />;
+				return <PointComponent node={props.node} />;
 			}
 
 			const point = new Point({ x: 1, y: 1 });
@@ -116,10 +116,9 @@ describe("useTree", () => {
 			rendered.rerender(content);
 			assertLogEmpty(log);
 
-			// eslint-disable-next-line require-atomic-updates
 			point.x = 2;
 			assertLogEmpty(log);
-			const rendered2 = rendered.rerender(content);
+			rendered.rerender(content);
 			// Parent which passed node down did not rerender, but PointComponent which read from it did:
 			assert.deepEqual(log, ["render", "usePropTreeNode"]);
 			const found2 = await rendered.findAllByText("x: 2, y: 1");
@@ -132,6 +131,7 @@ describe("useTree", () => {
  * Assert that an array is empty.
  *
  * Not inlined because doing so causes TypeScript to infer the array type as never[] afterwards and breaks push.
+ * Better than asserting length is 0 as this gets a better error message on failure.
  */
 function assertLogEmpty(log: string[]): void {
 	assert.deepEqual(log, []);
