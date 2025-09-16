@@ -219,6 +219,7 @@ type WorkspaceSchema = {
 const WorkspaceSchema: WorkspaceSchema = {};
 
 class MessageHandler {
+	private msgQueue: undefined | MessageFromParent[];
 	private container: IFluidContainer | undefined;
 	private presence: Presence | undefined;
 	private readonly workspaces = new Map<string, StatesWorkspace<WorkspaceSchema>>();
@@ -318,15 +319,30 @@ class MessageHandler {
 		if (verbosity.includes("msgs")) {
 			console.log(`[${process_id}] Received`, msg);
 		}
+
+		if (msg.command === "ping") {
+			this.handlePing();
+			return;
+		}
+
+		if (msg.command === "connect") {
+			await this.handleConnect(msg);
+			return;
+		}
+
+		// All other message must wait if connect is in progress
+		if (this.msgQueue !== undefined) {
+			this.msgQueue.push(msg);
+			return;
+		}
+
+		this.processMessage(msg);
+	}
+
+	private processMessage(
+		msg: Exclude<MessageFromParent, { command: "ping" | "connect" }>,
+	): void {
 		switch (msg.command) {
-			case "ping": {
-				this.handlePing();
-				break;
-			}
-			case "connect": {
-				await this.handleConnect(msg);
-				break;
-			}
 			case "disconnectSelf": {
 				this.handleDisconnectSelf();
 				break;
@@ -376,6 +392,10 @@ class MessageHandler {
 			send({ event: "error", error: `${process_id}: Container already loaded` });
 			return;
 		}
+
+		// Prevent reentrance. Queue messages until after connect is fully processed.
+		this.msgQueue = [];
+
 		const { container, containerId, connected } = await getOrCreateContainer(
 			...msg,
 		this.container = container;
@@ -401,6 +421,14 @@ class MessageHandler {
 		}
 
 		// Listen for presence events to notify parent/orchestrator when a new attendee joins or leaves the session.
+		presence.attendees.events.on("attendeeConnected", sendAttendeeConnected);
+		presence.attendees.events.on("attendeeDisconnected", sendAttendeeDisconnected);
+
+		// Process any queued messages received while connecting
+		for (const queuedMsg of this.msgQueue) {
+			await this.onMessage(queuedMsg);
+		}
+		this.msgQueue = undefined;
 		presence.attendees.events.on("attendeeConnected", sendAttendeeConnected);
 		presence.attendees.events.on("attendeeDisconnected", sendAttendeeDisconnected);
 	}
