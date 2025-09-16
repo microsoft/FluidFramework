@@ -12,17 +12,14 @@ import * as React from "react";
 
 // TODO:
 // Expose useViewRoot
-// Hook up inval for useViewRoot and useTree
-// Detect + reject parent access
 // https://github.com/microsoft/FluidFramework/pull/18659
 
 /**
  * Custom hook which invalidates a React Component when there is a change in the subtree defined by `subtreeRoot`.
  * This includes changes to the tree's content, but not changes to its parentage.
  * See {@link @fluidframework/tree#TreeChangeEvents.treeChanged} for details.
- * @privateRemarks
- * Without a way to get invalidation callbacks for specific fields,
- * it's impractical to implement an ergonomic and efficient more fine-grained invalidation hook.
+ * @remarks
+ * Consider using {@link useTreeObservations} instead which tracks what was observed and only invalidates if it changes.
  * @public
  */
 export function useTree(subtreeRoot: TreeNode): number {
@@ -43,9 +40,11 @@ export function useTree(subtreeRoot: TreeNode): number {
 
 /**
  * Custom hook which invalidates a React Component when there is a change in tree content observed during `trackDuring`.
- *
+ * @remarks
  * This includes changes to the tree's content.
  * Currently this will throw if observing a node's parentage, and node status changes will not cause invalidation.
+ *
+ * For additional type safety to help avoid observing TreeNode content outside of this hook, see {@link PropTreeNode}.
  * @public
  */
 export function useTreeObservations<TResult>(trackDuring: () => TResult): TResult {
@@ -76,9 +75,11 @@ export function useTreeObservations<TResult>(trackDuring: () => TResult): TResul
 /**
  * A type erased TreeNode for use in react props.
  * @remarks
- * Read content from the node using {@link usePropTreeNode}.
+ * Read content from the node using {@link usePropTreeNode} or {@link usePropTreeRecord}.
  *
  * In events where tracking dependencies is not required, the node can be unwrapped using {@link unwrapPropTreeNode}.
+ *
+ * To convert a TreeNode to this type use {@link toPropTreeNode} or {@link toPropTreeRecord}.
  * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -117,7 +118,7 @@ export function usePropTreeRecord<
 	props: T,
 	f: (node: UnwrapPropTreeNodeRecord<T>) => TResult,
 ): WrapPropTreeNodeRecord<TResult> {
-	const record = unwrapPropTreeProps(props);
+	const record = unwrapPropTreeRecord(props);
 
 	const result = useTreeObservations(() => f(record));
 
@@ -125,7 +126,10 @@ export function usePropTreeRecord<
 }
 
 /**
- * Custom hook for using a prop tree node.
+ * Casts a node from a {@link PropTreeNode} back to a TreeNode.
+ * @remarks
+ * This should only be done in scenarios where tracking observations is not required (such as event handlers),
+ * or when taking care to handle invalidation manually.
  * @public
  */
 export function unwrapPropTreeNode<T extends TreeNode | TreeLeafValue>(
@@ -135,17 +139,17 @@ export function unwrapPropTreeNode<T extends TreeNode | TreeLeafValue>(
 }
 
 /**
- * Custom hook for using a prop tree node.
+ * {@link unwrapPropTreeNode} but for a {@link PropTreeNodeRecord}.
  * @public
  */
-export function unwrapPropTreeProps<T extends PropTreeNodeRecord>(
+export function unwrapPropTreeRecord<T extends PropTreeNodeRecord>(
 	props: T,
 ): UnwrapPropTreeNodeRecord<T> {
 	return props as UnwrapPropTreeNodeRecord<T>;
 }
 
 /**
- * Unwrap prop tree node.
+ * {@inheritdoc unwrapPropTreeNode}
  * @public
  */
 export type UnwrapPropTreeNode<T extends TreeLeafValue | PropTreeNode<TreeNode> | undefined> =
@@ -186,7 +190,7 @@ export type PropTreeNodeRecord = Record<
  * Type erase a `TreeNode` from a `TreeNode | TreeLeafValue` as a {@link PropTreeNode}.
  * @public
  */
-export type PropTreeValue<T extends TreeNode | TreeLeafValue> = T extends TreeNode
+export type PropTreeValue<T extends TreeNode | TreeLeafValue | undefined> = T extends TreeNode
 	? PropTreeNode<T>
 	: T;
 
@@ -199,7 +203,7 @@ export function toPropTreeNode<T extends TreeNode | TreeLeafValue>(node: T): Pro
 }
 
 /**
- * Type erase a NodeRecord as a {@link PropTreeNodeRecord}.
+ * Type erase a {@link NodeRecord} as a {@link PropTreeNodeRecord}.
  * @public
  */
 export function toPropTreeRecord<T extends NodeRecord>(node: T): WrapPropTreeNodeRecord<T> {

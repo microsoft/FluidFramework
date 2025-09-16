@@ -22,6 +22,8 @@ import type {
 import { configuredSharedTree, typeboxValidator } from "@fluidframework/tree/internal";
 import * as React from "react";
 
+import { toPropTreeNode, type PropTreeValue } from "./useTree.js";
+
 /**
  * Opt into extra validation to detect encoding bugs and data corruption.
  * As long as this is an experimental package, opting into extra validation (at a small perf and bundle size cost) seems reasonable.
@@ -154,14 +156,19 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 	/**
 	 * Component to display the tree content.
 	 */
-	readonly viewComponent: React.FC<{ root: TreeFieldFromImplicitField<TSchema> }>;
+	readonly ViewComponent: React.FC<{
+		root: PropTreeValue<TreeFieldFromImplicitField<TSchema>>;
+	}>;
+
 	/**
-	 * Component to display instead of the {@link TreeViewProps.viewComponent}
+	 * Component to display instead of the {@link TreeViewProps.ViewComponent}
 	 * when tree content is not compatible with the {@link @fluidframework/tree#TreeViewConfiguration}.
 	 *
 	 * @defaultValue Component which describes the situation (in English) and allows the user to upgrade the schema to match the {@link @fluidframework/tree#TreeViewConfiguration} if possible.
 	 */
-	readonly errorComponent?: React.FC<SchemaIncompatibleProps>;
+	readonly ErrorComponent?: React.FC<SchemaIncompatibleProps>;
+
+	// TODO: Once its possible to query the status of individual schema upgrades, provide more options here for handling such cases.
 }
 
 /**
@@ -190,13 +197,13 @@ export abstract class ReactTreeDataObject<
 
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
 	public readonly TreeViewComponent = ({
-		viewComponent,
-		errorComponent,
+		ViewComponent: viewComponent,
+		ErrorComponent: errorComponent,
 	}: TreeViewProps<TSchema>) =>
 		TreeViewComponent<TSchema>({
 			tree: this,
-			viewComponent,
-			errorComponent,
+			ViewComponent: viewComponent,
+			ErrorComponent: errorComponent,
 		});
 }
 
@@ -245,15 +252,15 @@ function useViewRoot<TSchema extends ImplicitFieldSchema>(
 /**
  * React component which handles schematizing trees.
  * This includes displaying errors when the document can not be schematized.
+ * @public
  */
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
+export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	tree,
-	viewComponent: ViewComponent,
-	errorComponent,
+	ViewComponent,
+	ErrorComponent,
 }: TreeViewProps<TSchema> & {
-	tree: ReactTreeDataObject<TSchema>;
-}) {
+	tree: Pick<IReactTreeDataObject<TSchema>, "treeView">;
+}): React.JSX.Element {
 	const view = tree.treeView;
 
 	const compatibility = useViewCompatibility(view);
@@ -267,7 +274,7 @@ function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	// code rollout is in progress.
 	// Alternative policies can be implemented, see "Schema Evolvability" in SharedTree's README for more information.
 	if (!compatibility.isEquivalent) {
-		const Error = errorComponent ?? TreeErrorComponent;
+		const Error = ErrorComponent ?? TreeErrorComponent;
 		return <Error compatibility={compatibility} upgradeSchema={upgradeSchema} />;
 	}
 
@@ -275,7 +282,7 @@ function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 		return <div>View not set</div>;
 	}
 
-	return <ViewComponent root={root} />;
+	return <ViewComponent root={toPropTreeNode(root)} />;
 }
 
 /**

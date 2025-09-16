@@ -13,6 +13,28 @@ export type {
 	TreeViewProps,
 	SchemaIncompatibleProps,
 } from "./reactSharedTreeView.js";
-export { treeDataObject, treeDataObjectInternal } from "./reactSharedTreeView.js";
-export { useTree } from "./useTree.js";
+export {
+	treeDataObject,
+	treeDataObjectInternal,
+	TreeViewComponent,
+} from "./reactSharedTreeView.js";
+export type {
+	NodeRecord,
+	PropTreeNode,
+	PropTreeNodeRecord,
+	PropTreeValue,
+	UnwrapPropTreeNode,
+	UnwrapPropTreeNodeRecord,
+	WrapPropTreeNodeRecord,
+} from "./useTree.js";
+export {
+	useTree,
+	toPropTreeNode,
+	toPropTreeRecord,
+	unwrapPropTreeNode,
+	unwrapPropTreeRecord,
+	usePropTreeNode,
+	usePropTreeRecord,
+	useTreeObservations,
+} from "./useTree.js";
 export { objectIdNumber } from "./simpleIdentifier.js";

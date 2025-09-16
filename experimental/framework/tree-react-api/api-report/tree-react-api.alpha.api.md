@@ -12,7 +12,20 @@ export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
 }
 
 // @public
+export type NodeRecord = Record<string, TreeNode | TreeLeafValue>;
+
+// @public
 export function objectIdNumber(object: object): number;
+
+// @public
+export interface PropTreeNode<T extends TreeNode> extends ErasedType<[T, "PropTreeNode"]> {
+}
+
+// @public
+export type PropTreeNodeRecord = Record<string, TreeLeafValue | PropTreeNode<TreeNode> | undefined>;
+
+// @public
+export type PropTreeValue<T extends TreeNode | TreeLeafValue | undefined> = T extends TreeNode ? PropTreeNode<T> : T;
 
 // @public
 export interface SchemaIncompatibleProps {
@@ -21,17 +34,56 @@ export interface SchemaIncompatibleProps {
 }
 
 // @public
+export function toPropTreeNode<T extends TreeNode | TreeLeafValue>(node: T): PropTreeValue<T>;
+
+// @public
+export function toPropTreeRecord<T extends NodeRecord>(node: T): WrapPropTreeNodeRecord<T>;
+
+// @public
 export function treeDataObject<TSchema extends ImplicitFieldSchema>(treeConfiguration: TreeViewConfiguration<TSchema>, createInitialTree: () => InsertableTreeFieldFromImplicitField<TSchema>): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable>;
 
 // @public
+export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({ tree, ViewComponent, ErrorComponent, }: TreeViewProps<TSchema> & {
+    tree: Pick<IReactTreeDataObject<TSchema>, "treeView">;
+}): React_2.JSX.Element;
+
+// @public
 export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
-    readonly errorComponent?: React_2.FC<SchemaIncompatibleProps>;
-    readonly viewComponent: React_2.FC<{
-        root: TreeFieldFromImplicitField<TSchema>;
+    readonly ErrorComponent?: React_2.FC<SchemaIncompatibleProps>;
+    readonly ViewComponent: React_2.FC<{
+        root: PropTreeValue<TreeFieldFromImplicitField<TSchema>>;
     }>;
 }
 
 // @public
+export type UnwrapPropTreeNode<T extends TreeLeafValue | PropTreeNode<TreeNode> | undefined> = T extends PropTreeNode<infer Node> ? Node : T;
+
+// @public
+export function unwrapPropTreeNode<T extends TreeNode | TreeLeafValue>(propNode: PropTreeValue<T> | T): T;
+
+// @public
+export type UnwrapPropTreeNodeRecord<T extends PropTreeNodeRecord> = {
+    readonly [P in keyof T]: UnwrapPropTreeNode<T[P]>;
+};
+
+// @public
+export function unwrapPropTreeRecord<T extends PropTreeNodeRecord>(props: T): UnwrapPropTreeNodeRecord<T>;
+
+// @public
+export function usePropTreeNode<T extends TreeNode | TreeLeafValue, TResult extends NodeRecord>(propNode: PropTreeValue<T> | T, trackDuring: (node: T) => TResult): WrapPropTreeNodeRecord<TResult>;
+
+// @public
+export function usePropTreeRecord<const T extends PropTreeNodeRecord, TResult extends NodeRecord>(props: T, f: (node: UnwrapPropTreeNodeRecord<T>) => TResult): WrapPropTreeNodeRecord<TResult>;
+
+// @public
 export function useTree(subtreeRoot: TreeNode): number;
+
+// @public
+export function useTreeObservations<TResult>(trackDuring: () => TResult): TResult;
+
+// @public
+export type WrapPropTreeNodeRecord<T extends NodeRecord> = {
+    readonly [P in keyof T]: PropTreeValue<T[P]>;
+};
 
 ```
