@@ -100,7 +100,7 @@ export function createMemberTables(
  * @param memberTableProperties - The table configuration.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createTableWithHeading(
+function createTableWithHeading(
 	memberTableProperties: MemberTableProperties,
 	config: ApiItemTransformationConfiguration,
 ): Section | undefined {
@@ -134,7 +134,7 @@ export function createTableWithHeading(
  * @param config - See {@link ApiItemTransformationConfiguration}.
  * @param options - Table content / formatting options.
  */
-export function createSummaryTable(
+function createSummaryTable(
 	apiItems: readonly ApiItem[],
 	itemKind: ApiItemKind,
 	config: ApiItemTransformationConfiguration,
