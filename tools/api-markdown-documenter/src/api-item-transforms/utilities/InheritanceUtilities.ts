@@ -55,6 +55,11 @@ export interface OwnTypeMember<TApiItem extends ApiItem = ApiItem>
 export interface InheritedTypeMember<TApiItem extends ApiItem = ApiItem>
 	extends TypeMemberBase<TApiItem> {
 	readonly kind: "inherited";
+
+	/**
+	 * The API item from which this member is inherited.
+	 * @remarks For example, if this member is a method inherited from a base class, this would be that base class.
+	 */
 	readonly inheritedFrom: ApiItem;
 }
 
