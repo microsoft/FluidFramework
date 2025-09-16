@@ -10,10 +10,12 @@ export {
 	filterItems,
 	getHeadingForApiItem,
 	getLinkForApiItem,
-	getTypeMembers,
 	isItemOrAncestorExcluded,
 	shouldItemBeIncluded,
-	type TypeMember,
 } from "./ApiItemTransformUtilities.js";
 export { createDocument, checkForDuplicateDocumentPaths } from "./DocumentUtilities.js";
+export {
+	getTypeMembers,
+	type TypeMember,
+} from "./InheritanceUtilities.js";
 export { resolveSymbolicLink } from "./ReferenceUtilities.js";
