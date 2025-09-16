@@ -133,13 +133,15 @@ export const exposeMethodsSymbol: unique symbol = Symbol("run");
  * An interface that SharedTree schema classes should implement to expose their methods to the LLM.
  *
  * @remarks
- * {@link getExposedMethods} will cause the method here to be called on the class passed to it.
+ * The `getExposedMethods` free function will cause the method here to be called on the class passed to it.
  *
  * @privateremarks
  * Implementing this interface correctly seems tricky?
  * To actually implement it in a way that satisfies TypeScript,
  * classes need to declare both a static version and an instance version of the method
  * (the instance one can just delegate to the static one).
+ *
+ * @alpha
  */
 export interface IExposedMethods {
 	[exposeMethodsSymbol](methods: ExposedMethods): void;
