@@ -17,7 +17,7 @@ import {
 } from "@microsoft/api-extractor-model";
 import type { DocSection } from "@microsoft/tsdoc";
 import { toHtml } from "hast-util-to-html";
-import type { Html, PhrasingContent, Table, TableCell, TableRow } from "mdast";
+import type { Html, PhrasingContent, Table, TableCell } from "mdast";
 import { toHast } from "mdast-util-to-hast";
 
 import type { Section } from "../../mdast/index.js";
@@ -246,43 +246,34 @@ export function createParametersSummaryTable(
 		return undefined;
 	}
 
-	// Only display "Modifiers" column if there are any optional parameters present.
-	const hasOptionalParameters = apiParameters.some((apiParameter) => apiParameter.isOptional);
-
-	const headerRowCells: TableCell[] = [createPlainTextTableCell("Parameter")];
-	if (hasOptionalParameters) {
-		headerRowCells.push(createPlainTextTableCell("Modifiers"));
-	}
-	headerRowCells.push(createPlainTextTableCell("Type"));
-	headerRowCells.push(createPlainTextTableCell("Description"));
-	const headerRow: TableRow = {
-		type: "tableRow",
-		children: headerRowCells,
-	};
-
 	function createModifierCell(apiParameter: Parameter): TableCell {
 		return apiParameter.isOptional ? createPlainTextTableCell("optional") : emptyTableCell;
 	}
 
-	const bodyRows: TableRow[] = [];
-	for (const apiParameter of apiParameters) {
-		const bodyRowCells: TableCell[] = [createParameterTitleCell(apiParameter)];
-		if (hasOptionalParameters) {
-			bodyRowCells.push(createModifierCell(apiParameter));
-		}
-		bodyRowCells.push(createParameterTypeCell(apiParameter, config));
-		bodyRowCells.push(createParameterSummaryCell(apiParameter, contextApiItem, config));
-
-		bodyRows.push({
-			type: "tableRow",
-			children: bodyRowCells,
-		});
-	}
-
-	return {
-		type: "table",
-		children: [headerRow, ...bodyRows],
-	};
+	return createTableFromItems(apiParameters, {
+		columnOptions: [
+			{
+				title: { type: "text", value: "Parameter" },
+				columnKind: "required",
+				createCellContent: (item) => createParameterTitleCell(item),
+			},
+			{
+				title: { type: "text", value: "Modifiers" },
+				columnKind: "optional",
+				createCellContent: (item) => createModifierCell(item),
+			},
+			{
+				title: { type: "text", value: "Type" },
+				columnKind: "required",
+				createCellContent: (item) => createParameterTypeCell(item, config),
+			},
+			{
+				title: { type: "text", value: "Description" },
+				columnKind: "required",
+				createCellContent: (item) => createParameterSummaryCell(item, contextApiItem, config),
+			},
+		],
+	});
 }
 
 /**
