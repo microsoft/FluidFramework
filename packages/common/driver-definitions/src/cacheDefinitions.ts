@@ -5,12 +5,10 @@
 
 import type { IResolvedUrl } from "./urlResolver.js";
 
-/*
+/**
  * File / container identifier.
  * There is overlapping information here - host can use all of it or parts
  * to implement storage / identify files.
- */
-/**
  * @legacy @beta
  */
 export interface IFileEntry {
@@ -26,6 +24,11 @@ export interface IFileEntry {
 	 * This is IOdspResolvedUrl in case of ODSP driver.
 	 */
 	resolvedUrl: IResolvedUrl;
+
+	/**
+	 * Optional version of the file.
+	 */
+	fileVersion?: string;
 }
 
 /**

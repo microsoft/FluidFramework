@@ -8,7 +8,7 @@ export type {
 	IEntry,
 	IFileEntry,
 	IPersistedCache,
-} from "./cache.js";
+} from "./cacheDefinitions.js";
 
 export type {
 	DriverError,
