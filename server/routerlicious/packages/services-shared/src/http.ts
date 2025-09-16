@@ -91,7 +91,7 @@ export function validatePrivateLink(
 					const accountLinkId = connectionDetail?.linkIdentifier;
 					if (networkInfo.privateLinkId === accountLinkId) {
 						Lumberjack.info(
-							`This is a private link request with matching link id accountLinkId ${accountLinkId}`,
+							`This is a private link request with matching link id.`,
 							{
 								tenantId,
 								privateLinkId: networkInfo.privateLinkId,
