@@ -21,9 +21,9 @@ import {
 	isStatic,
 	type ApiTypeLike,
 } from "../../utilities/index.js";
-import { getTypeMembers, type TypeMember } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
+import { getTypeMembers, type TypeMember } from "../utilities/index.js";
 
 /**
  * Default documentation transform for {@link ApiTypeLike | type-like} API items.

@@ -14,7 +14,7 @@ import {
 } from "@microsoft/api-extractor-model";
 import type { Link } from "mdast";
 
-import type { SectionHeading } from "../mdast/index.js";
+import type { SectionHeading } from "../../mdast/index.js";
 import {
 	getApiItemKind,
 	getFilteredParent,
@@ -23,8 +23,7 @@ import {
 	getEffectiveReleaseLevel,
 	type ApiTypeLike,
 	isTypeLike,
-} from "../utilities/index.js";
-
+} from "../../utilities/index.js";
 import {
 	FolderDocumentPlacement,
 	HierarchyKind,
@@ -33,7 +32,7 @@ import {
 	type FolderHierarchyConfiguration,
 	type DocumentationHierarchyConfiguration,
 	type HierarchyConfiguration,
-} from "./configuration/index.js";
+} from "../configuration/index.js";
 
 /**
  * This module contains `ApiItem`-related utilities for use in transformation logic.
