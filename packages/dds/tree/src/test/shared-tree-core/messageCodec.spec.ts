@@ -68,6 +68,7 @@ const testCases: EncodingTestData<
 			{
 				sessionId: testIdCompressor.localSessionId,
 				commit: commit1,
+				branchId: "main",
 			},
 			dummyContext,
 		],
@@ -76,6 +77,7 @@ const testCases: EncodingTestData<
 			{
 				sessionId: testIdCompressor.localSessionId,
 				commit: commit2,
+				branchId: "main",
 			},
 			dummyContext,
 		],
@@ -87,6 +89,7 @@ const testCases: EncodingTestData<
 				"Missing sessionId",
 				{
 					commit: commit1,
+					branchId: "main",
 				},
 				dummyContext,
 			],
@@ -94,6 +97,7 @@ const testCases: EncodingTestData<
 				"Missing commit",
 				{
 					sessionId: "session1",
+					branchId: "main",
 				},
 				dummyContext,
 			],
@@ -102,6 +106,7 @@ const testCases: EncodingTestData<
 				{
 					sessionId: 1,
 					commit: commit1,
+					branchId: "main",
 				},
 				dummyContext,
 			],
@@ -110,6 +115,7 @@ const testCases: EncodingTestData<
 				{
 					sessionId: "session1",
 					commit: commitWithoutRevision,
+					branchId: "main",
 				},
 				dummyContext,
 			],
@@ -118,6 +124,7 @@ const testCases: EncodingTestData<
 				{
 					sessionId: "session1",
 					commit: commitInvalid,
+					branchId: "main",
 				},
 				dummyContext,
 			],
@@ -153,6 +160,7 @@ describe("message codec", () => {
 					change: TestChange.mint([], 1),
 					parent: "Extra field that should be dropped" as unknown as GraphCommit<TestChange>,
 				},
+				branchId: "main",
 			};
 
 			const actual = codec.decode(codec.encode(message, { idCompressor: testIdCompressor }), {
@@ -186,6 +194,7 @@ describe("message codec", () => {
 					change: {},
 				},
 				sessionId: originatorId,
+				branchId: "main",
 			} satisfies DecodedMessage<unknown>);
 		});
 
@@ -209,6 +218,7 @@ describe("message codec", () => {
 					change: {},
 				},
 				sessionId: originatorId,
+				branchId: "main",
 			} satisfies DecodedMessage<unknown>);
 		});
 

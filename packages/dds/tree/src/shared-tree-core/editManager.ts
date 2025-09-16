@@ -302,42 +302,6 @@ export class EditManager<
 			return;
 		}
 
-		// Update any state that is derived from trunk commits
-		mainBranch.sequenceIdToCommit.editRange(
-			minimumPossibleSequenceId,
-			sequenceId,
-			false,
-			(s, commit) => {
-				Reflect.defineProperty(commit, "change", {
-					get: () =>
-						assert(
-							false,
-							0xa5e /* Should not access 'change' property of an evicted commit */,
-						),
-				});
-				Reflect.defineProperty(commit, "revision", {
-					get: () =>
-						assert(
-							false,
-							0xa5f /* Should not access 'revision' property of an evicted commit */,
-						),
-				});
-				Reflect.defineProperty(commit, "parent", {
-					get: () =>
-						assert(
-							false,
-							0xa60 /* Should not access 'parent' property of an evicted commit */,
-						),
-				});
-			},
-		);
-
-		// The minimum sequence number informs us that all peer branches are at least caught up to the tail commit,
-		// so rebase them accordingly. This is necessary to prevent peer branches from referencing any evicted commits.
-		for (const branch of this.sharedBranches.values()) {
-			branch.trimHistory(latestEvicted, sequenceId);
-		}
-
 		// This mutation is a performance hack. If commits are truly immutable, then changing the trunk's tail requires
 		// regenerating the entire commit graph. Instead, we can simply chop off the tail like this if we're certain
 		// that there are no outstanding references to any of the commits being removed (other than the references via
@@ -349,9 +313,33 @@ export class EditManager<
 		const newTrunkBase = latestEvicted as Mutable<typeof latestEvicted>;
 
 		// collect the revisions that will be trimmed to send as part of the branch trimmed event
-		const trimmedRevisions: RevisionTag[] = getPathFromBase(newTrunkBase, this.trunkBase).map(
-			(c) => c.revision,
-		);
+		const trimmedCommits = getPathFromBase(newTrunkBase, this.trunkBase);
+		const trimmedRevisions = trimmedCommits.map((c) => c.revision);
+
+		// The minimum sequence number informs us that all peer branches are at least caught up to the tail commit,
+		// so rebase them accordingly. This is necessary to prevent peer branches from referencing any evicted commits.
+		for (const branch of this.sharedBranches.values()) {
+			branch.trimHistory(latestEvicted, sequenceId);
+		}
+
+		for (const commit of trimmedCommits) {
+			Reflect.defineProperty(commit, "change", {
+				get: () =>
+					assert(false, 0xa5e /* Should not access 'change' property of an evicted commit */),
+			});
+			Reflect.defineProperty(commit, "revision", {
+				get: () =>
+					assert(
+						false,
+						0xa5f /* Should not access 'revision' property of an evicted commit */,
+					),
+			});
+			Reflect.defineProperty(commit, "parent", {
+				get: () =>
+					assert(false, 0xa60 /* Should not access 'parent' property of an evicted commit */),
+			});
+		}
+
 		// Dropping the parent field removes (transitively) all references to the evicted commits so they can be garbage collected.
 		delete newTrunkBase.parent;
 		this.trunkBase = newTrunkBase;
@@ -370,146 +358,160 @@ export class EditManager<
 	}
 
 	public getSummaryData(): SummaryData<TChangeset> {
-		// The assert below is acceptable at present because summarization only ever occurs on a client with no
-		// local/in-flight changes.
-		// In the future we may wish to relax this constraint. For that to work, the current implementation of
-		// `EditManager` would have to be amended in one of two ways:
-		// A) Changes made by the local session should be represented by a branch in `EditManager.branches`.
-		// B) The contents of such a branch should be computed on demand based on the trunk.
-		// Note that option (A) would be a simple change to `addSequencedChanges` whereas (B) would likely require
-		// rebasing trunk changes over the inverse of trunk changes.
-		for (const branch of this.sharedBranches.values()) {
-			assert(
-				branch.localBranch.getHead() === branch.trunk.getHead(),
-				0x428 /* Clients with local changes cannot be used to generate summaries */,
-			);
-		}
+		throw new Error("XXX");
+		// // The assert below is acceptable at present because summarization only ever occurs on a client with no
+		// // local/in-flight changes.
+		// // In the future we may wish to relax this constraint. For that to work, the current implementation of
+		// // `EditManager` would have to be amended in one of two ways:
+		// // A) Changes made by the local session should be represented by a branch in `EditManager.branches`.
+		// // B) The contents of such a branch should be computed on demand based on the trunk.
+		// // Note that option (A) would be a simple change to `addSequencedChanges` whereas (B) would likely require
+		// // rebasing trunk changes over the inverse of trunk changes.
+		// for (const branch of this.sharedBranches.values()) {
+		// 	assert(
+		// 		branch.localBranch.getHead() === branch.trunk.getHead(),
+		// 		0x428 /* Clients with local changes cannot be used to generate summaries */,
+		// 	);
+		// }
 
-		// Trimming the trunk before serializing ensures that the trunk data in the summary is as minimal as possible.
-		this.trimHistory();
+		// // Trimming the trunk before serializing ensures that the trunk data in the summary is as minimal as possible.
+		// this.trimHistory();
 
-		let oldestCommitInCollabWindow = this.getClosestTrunkCommit(this.minimumSequenceNumber)[1];
-		assert(
-			oldestCommitInCollabWindow.parent !== undefined ||
-				oldestCommitInCollabWindow === this.trunkBase,
-			0x8c7 /* Expected oldest commit in collab window to have a parent or be the trunk base */,
-		);
+		// let oldestCommitInCollabWindow = this.getClosestTrunkCommit(this.minimumSequenceNumber)[1];
+		// assert(
+		// 	oldestCommitInCollabWindow.parent !== undefined ||
+		// 		oldestCommitInCollabWindow === this.trunkBase,
+		// 	0x8c7 /* Expected oldest commit in collab window to have a parent or be the trunk base */,
+		// );
 
-		// Path construction is exclusive, so we need to use the parent of the oldest commit in the window if it exists
-		oldestCommitInCollabWindow =
-			oldestCommitInCollabWindow.parent ?? oldestCommitInCollabWindow;
+		// // Path construction is exclusive, so we need to use the parent of the oldest commit in the window if it exists
+		// oldestCommitInCollabWindow =
+		// 	oldestCommitInCollabWindow.parent ?? oldestCommitInCollabWindow;
 
-		const trunk = getPathFromBase(this.trunk.getHead(), oldestCommitInCollabWindow).map(
-			(c) => {
-				assert(
-					c !== this.trunkBase,
-					0xa61 /* Serialized trunk should not include the trunk base */,
-				);
-				const metadata =
-					this.commitMetadata.get(c.revision) ??
-					fail(0xad5 /* Expected metadata for trunk commit */);
-				const commit: SequencedCommit<TChangeset> = {
-					change: c.change,
-					revision: c.revision,
-					sequenceNumber: metadata.sequenceId.sequenceNumber,
-					sessionId: metadata.sessionId,
-				};
-				if (metadata.sequenceId.indexInBatch !== undefined) {
-					commit.indexInBatch = metadata.sequenceId.indexInBatch;
-				}
-				return commit;
-			},
-		);
+		// const trunk = getPathFromBase(this.trunk.getHead(), oldestCommitInCollabWindow).map(
+		// 	(c) => {
+		// 		assert(
+		// 			c !== this.trunkBase,
+		// 			0xa61 /* Serialized trunk should not include the trunk base */,
+		// 		);
+		// 		const metadata =
+		// 			this.commitMetadata.get(c.revision) ??
+		// 			fail(0xad5 /* Expected metadata for trunk commit */);
+		// 		const commit: SequencedCommit<TChangeset> = {
+		// 			change: c.change,
+		// 			revision: c.revision,
+		// 			sequenceNumber: metadata.sequenceId.sequenceNumber,
+		// 			sessionId: metadata.sessionId,
+		// 		};
+		// 		if (metadata.sequenceId.indexInBatch !== undefined) {
+		// 			commit.indexInBatch = metadata.sequenceId.indexInBatch;
+		// 		}
+		// 		return commit;
+		// 	},
+		// );
 
-		const peerLocalBranches = new Map<SessionId, SummarySessionBranch<TChangeset>>(
-			mapIterable(this.peerLocalBranches.entries(), ([sessionId, branch]) => {
-				const branchPath: GraphCommit<TChangeset>[] = [];
-				const ancestor =
-					findCommonAncestor([branch.getHead(), branchPath], this.trunk.getHead()) ??
-					fail(0xad6 /* Expected branch to be based on trunk */);
+		// const peerLocalBranches = new Map<SessionId, SummarySessionBranch<TChangeset>>(
+		// 	mapIterable(this.peerLocalBranches.entries(), ([sessionId, branch]) => {
+		// 		const branchPath: GraphCommit<TChangeset>[] = [];
+		// 		const ancestor =
+		// 			findCommonAncestor([branch.getHead(), branchPath], this.trunk.getHead()) ??
+		// 			fail(0xad6 /* Expected branch to be based on trunk */);
 
-				const base = ancestor === this.trunkBase ? rootRevision : ancestor.revision;
-				return [
-					sessionId,
-					{
-						base,
-						commits: branchPath.map((c) => {
-							assert(
-								c !== this.trunkBase,
-								0xa62 /* Serialized branch should not include the trunk base */,
-							);
-							const commit: Commit<TChangeset> = {
-								change: c.change,
-								revision: c.revision,
-								sessionId,
-							};
-							return commit;
-						}),
-					},
-				];
-			}),
-		);
+		// 		const base = ancestor === this.trunkBase ? rootRevision : ancestor.revision;
+		// 		return [
+		// 			sessionId,
+		// 			{
+		// 				base,
+		// 				commits: branchPath.map((c) => {
+		// 					assert(
+		// 						c !== this.trunkBase,
+		// 						0xa62 /* Serialized branch should not include the trunk base */,
+		// 					);
+		// 					const commit: Commit<TChangeset> = {
+		// 						change: c.change,
+		// 						revision: c.revision,
+		// 						sessionId,
+		// 					};
+		// 					return commit;
+		// 				}),
+		// 			},
+		// 		];
+		// 	}),
+		// );
 
-		return { trunk, peerLocalBranches };
+		// return { trunk, peerLocalBranches };
 	}
 
 	public loadSummaryData(data: SummaryData<TChangeset>): void {
-		assert(
-			this.isEmpty(),
-			0x68a /* Attempted to load from summary after edit manager was already mutated */,
-		);
-		// Record the tags of each trunk commit as we generate the trunk so they can be looked up quickly
-		// when hydrating the peer branches below
-		const trunkRevisionCache = new Map<RevisionTag, GraphCommit<TChangeset>>();
-		trunkRevisionCache.set(this.trunkBase.revision, this.trunkBase);
-		this.trunk.setHead(
-			data.trunk.reduce((base, c) => {
-				const sequenceId: SequenceId =
-					c.indexInBatch === undefined
-						? {
-								sequenceNumber: c.sequenceNumber,
-							}
-						: {
-								sequenceNumber: c.sequenceNumber,
-								indexInBatch: c.indexInBatch,
-							};
-				const commit = mintCommit(base, c);
-				this.sequenceIdToCommit.set(sequenceId, commit);
-				this.commitMetadata.set(c.revision, {
-					sequenceId,
-					sessionId: c.sessionId,
-				});
-				trunkRevisionCache.set(c.revision, commit);
-				return commit;
-			}, this.trunkBase),
-		);
+		throw new Error("XXX");
+		// assert(
+		// 	this.isEmpty(),
+		// 	0x68a /* Attempted to load from summary after edit manager was already mutated */,
+		// );
+		// // Record the tags of each trunk commit as we generate the trunk so they can be looked up quickly
+		// // when hydrating the peer branches below
+		// const trunkRevisionCache = new Map<RevisionTag, GraphCommit<TChangeset>>();
+		// trunkRevisionCache.set(this.trunkBase.revision, this.trunkBase);
+		// this.trunk.setHead(
+		// 	data.trunk.reduce((base, c) => {
+		// 		const sequenceId: SequenceId =
+		// 			c.indexInBatch === undefined
+		// 				? {
+		// 						sequenceNumber: c.sequenceNumber,
+		// 					}
+		// 				: {
+		// 						sequenceNumber: c.sequenceNumber,
+		// 						indexInBatch: c.indexInBatch,
+		// 					};
+		// 		const commit = mintCommit(base, c);
+		// 		this.sequenceIdToCommit.set(sequenceId, commit);
+		// 		this.commitMetadata.set(c.revision, {
+		// 			sequenceId,
+		// 			sessionId: c.sessionId,
+		// 		});
+		// 		trunkRevisionCache.set(c.revision, commit);
+		// 		return commit;
+		// 	}, this.trunkBase),
+		// );
 
-		this.localBranch.setHead(this.trunk.getHead());
+		// this.localBranch.setHead(this.trunk.getHead());
 
-		for (const [sessionId, branch] of data.peerLocalBranches) {
-			const commit =
-				trunkRevisionCache.get(branch.base) ??
-				fail(0xad7 /* Expected summary branch to be based off of a revision in the trunk */);
+		// for (const [sessionId, branch] of data.peerLocalBranches) {
+		// 	const commit =
+		// 		trunkRevisionCache.get(branch.base) ??
+		// 		fail(0xad7 /* Expected summary branch to be based off of a revision in the trunk */);
 
-			this.peerLocalBranches.set(
-				sessionId,
-				new SharedTreeBranch(
-					branch.commits.reduce(mintCommit, commit),
-					this.changeFamily,
-					this.mintRevisionTag,
-				),
-			);
-		}
+		// 	this.peerLocalBranches.set(
+		// 		sessionId,
+		// 		new SharedTreeBranch(
+		// 			branch.commits.reduce(mintCommit, commit),
+		// 			this.changeFamily,
+		// 			this.mintRevisionTag,
+		// 		),
+		// 	);
+		// }
 	}
 
 	public getTrunkHead(branchId: BranchId): GraphCommit<TChangeset> {
 		return this.getSharedBranch(branchId).trunk.getHead();
 	}
 
+	public getTrunkChanges(branchId: BranchId): TChangeset[] {
+		return this.getTrunkCommits(branchId).map((c) => c.change);
+	}
+
+	public getTrunkCommits(branchId: BranchId): GraphCommit<TChangeset>[] {
+		return getPathFromBase(this.getTrunkHead(branchId), this.trunkBase);
+	}
+
 	public getLocalChanges(): readonly TChangeset[] {
-		const changes: TChangeset[] = [];
+		return this.getLocalCommits().map((c) => c.change);
+	}
+
+	public getLocalCommits(): readonly GraphCommit<TChangeset>[] {
+		const changes: GraphCommit<TChangeset>[] = [];
 		for (const branch of this.sharedBranches.values()) {
-			changes.push(...branch.getLocalCommits().map((c) => c.change));
+			changes.push(...branch.getLocalCommits());
 		}
 
 		return changes;

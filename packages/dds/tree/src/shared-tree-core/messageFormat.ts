@@ -26,7 +26,7 @@ export interface Message {
 	 */
 	readonly changeset: JsonCompatibleReadOnly;
 
-	readonly branchId: OpSpaceCompressedId | undefined;
+	readonly branchId?: OpSpaceCompressedId;
 
 	/**
 	 * The version of the message. This controls how the message is encoded.

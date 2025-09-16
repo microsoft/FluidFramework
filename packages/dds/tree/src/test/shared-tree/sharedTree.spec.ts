@@ -1004,8 +1004,8 @@ describe("SharedTree", () => {
 			t1.kernel?.editManager !== undefined && t2.kernel?.editManager !== undefined,
 			"EditManager has moved. This test must be updated.",
 		);
-		assert(t1.kernel.editManager.getTrunkChanges().length < 10);
-		assert(t2.kernel.editManager.getTrunkChanges().length < 10);
+		assert(t1.kernel.editManager.getTrunkChanges("main").length < 10);
+		assert(t2.kernel.editManager.getTrunkChanges("main").length < 10);
 	});
 
 	it("can process changes while detached", async () => {
