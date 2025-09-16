@@ -37,6 +37,7 @@ export interface TypeMemberBase<TApiItem extends ApiItem = ApiItem> {
 export interface OwnTypeMember<TApiItem extends ApiItem = ApiItem>
 	extends TypeMemberBase<TApiItem> {
 	readonly kind: "own";
+	// TODO: for items that override some base symbol, link to that here.
 }
 
 /**

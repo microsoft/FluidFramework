@@ -78,6 +78,8 @@ export function transformApiTypeLike(
 	// for the type from which they are inherited.
 	const members = getTypeMembers(apiItem, config);
 
+	// TODO: display some sort of icon / notation for inherited members? ⤴️⤵️
+
 	if (members.length > 0) {
 		// Accumulate child items
 		const constructors: TypeMember<ApiConstructor>[] = [];
