@@ -91,6 +91,7 @@ const getOrCreateContainer = async (
 	services: AzureContainerServices;
 	client: AzureClient;
 	containerId: string;
+	connected: Promise<void>;
 }> => {
 	let container: IFluidContainer<typeof containerSchema>;
 	let containerId: string;
@@ -127,13 +128,14 @@ const getOrCreateContainer = async (
 	}
 	container.on("disconnected", onDisconnected);
 
-	// wait for 'ConnectionState.Connected' so we return with client connected to container
-	if (container.connectionState !== ConnectionState.Connected) {
-		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+	const connected =
+		container.connectionState === ConnectionState.Connected
+			? Promise.resolve()
+			: timeoutPromise((resolve) => container.once("connected", () => resolve()), {
 			durationMs: connectTimeoutMs,
 			errorMsg: "container connect() timeout",
 		});
-	}
+
 	assert.strictEqual(
 		container.attachState,
 		AttachState.Attached,
@@ -145,6 +147,7 @@ const getOrCreateContainer = async (
 		container,
 		services,
 		containerId,
+		connected,
 	};
 };
 
@@ -216,9 +219,8 @@ type WorkspaceSchema = {
 const WorkspaceSchema: WorkspaceSchema = {};
 
 class MessageHandler {
-	public presence: Presence | undefined;
-	public container: IFluidContainer | undefined;
-	public containerId: string | undefined;
+	private container: IFluidContainer | undefined;
+	private presence: Presence | undefined;
 	private readonly workspaces = new Map<string, StatesWorkspace<WorkspaceSchema>>();
 
 	private readonly onDisconnected = (): void => {
@@ -374,17 +376,14 @@ class MessageHandler {
 			send({ event: "error", error: `${process_id}: Container already loaded` });
 			return;
 		}
-		const { container, containerId } = await getOrCreateContainer(
-			this.onDisconnected,
-			msg.containerId,
-			msg.user,
-			msg.scopes,
-			msg.createScopes,
-		);
+		const { container, containerId, connected } = await getOrCreateContainer(
+			...msg,
 		this.container = container;
 		const presence = getPresence(container);
 		this.presence = presence;
-		this.containerId = containerId;
+
+		// wait for 'ConnectionState.Connected'
+		await connected;
 
 		// Acknowledge connection before sending current attendee information
 		send({
