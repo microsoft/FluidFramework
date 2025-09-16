@@ -138,21 +138,14 @@ export class EditManager<
 			);
 		}
 
-		const mainBranch = new SharedBranch(
-			this.trunkBase,
-			minimumPossibleSequenceId,
-			changeFamily,
-			mintRevisionTag,
-			this._events,
-			this.telemetryEventBatcher,
-		);
-
-		this.sharedBranches.set("main", mainBranch);
+		this.addBranch("main");
 
 		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
 		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
 		// they require and therefore we monitor them explicitly.
-		onForkTransitive(mainBranch.localBranch, (fork) => this.registerBranch(fork));
+		onForkTransitive(this.getSharedBranch("main").localBranch, (fork) =>
+			this.registerBranch(fork),
+		);
 	}
 
 	public getLocalBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChangeset> {
@@ -534,7 +527,17 @@ export class EditManager<
 	}
 
 	public addBranch(branchId: BranchId): void {
-		throw new Error("XXX");
+		this.sharedBranches.set(
+			branchId,
+			new SharedBranch(
+				this.trunkBase,
+				minimumPossibleSequenceId,
+				this.changeFamily,
+				this.mintRevisionTag,
+				this._events,
+				this.telemetryEventBatcher,
+			),
+		);
 	}
 
 	/* eslint-disable jsdoc/check-indentation */

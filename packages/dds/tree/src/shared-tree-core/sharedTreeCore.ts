@@ -393,7 +393,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	}
 
 	public getSharedBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChange> {
-		throw new Error("XXX");
+		return this.editManager.getLocalBranch(branchId);
 	}
 
 	public didAttach(): void {
