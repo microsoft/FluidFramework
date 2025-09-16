@@ -8,8 +8,9 @@ import type { DocDeclarationReference } from "@microsoft/tsdoc";
 import type { Link } from "mdast";
 
 import { resolveSymbolicReference } from "../../utilities/index.js";
-import { getLinkForApiItem, shouldItemBeIncluded } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
+
+import { getLinkForApiItem, shouldItemBeIncluded } from "./ApiItemTransformUtilities.js";
 
 /**
  * Resolves a symbolic link and creates a URL to the target.

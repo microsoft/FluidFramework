@@ -7,8 +7,9 @@ import type { ApiItem } from "@microsoft/api-extractor-model";
 
 import type { ApiDocument } from "../../ApiDocument.js";
 import { normalizeDocumentContents, type Section } from "../../mdast/index.js";
-import { getDocumentPathForApiItem } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
+
+import { getDocumentPathForApiItem } from "./ApiItemTransformUtilities.js";
 
 /**
  * Creates a {@link ApiDocument} representing the provided API item.

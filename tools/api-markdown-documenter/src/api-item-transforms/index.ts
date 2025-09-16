@@ -15,7 +15,7 @@ export {
 	getHeadingForApiItem,
 	getLinkForApiItem,
 	shouldItemBeIncluded,
-} from "./ApiItemTransformUtilities.js";
+} from "./utilities/index.js";
 export {
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationConfigurationBase,
