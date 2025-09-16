@@ -23,6 +23,7 @@ function createMockCacheEntry(
 		file: {
 			resolvedUrl: url,
 			docId: "test-doc-id",
+			fileVersion: url.fileVersion,
 		},
 	};
 }

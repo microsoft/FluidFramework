@@ -178,7 +178,11 @@ describe("Tests for prefetching snapshot", () => {
 
 		afterEach(async () => {
 			localCache
-				.removeEntries({ docId: hashedDocumentId, resolvedUrl: resolved })
+				.removeEntries({
+					docId: hashedDocumentId,
+					resolvedUrl: resolved,
+					fileVersion: resolved.fileVersion,
+				})
 				.catch(() => {});
 			snapshotPrefetchResultCache.remove(snapshotPrefetchCacheKey);
 		});
@@ -272,7 +276,11 @@ describe("Tests for prefetching snapshot", () => {
 			const cacheEntry: ICacheEntry = {
 				key: "",
 				type: "snapshot",
-				file: { docId: resolved.hashedDocumentId, resolvedUrl: resolved },
+				file: {
+					docId: resolved.hashedDocumentId,
+					resolvedUrl: resolved,
+					fileVersion: resolved.fileVersion,
+				},
 			};
 			await localCache.put(cacheEntry, value);
 
@@ -319,7 +327,11 @@ describe("Tests for prefetching snapshot", () => {
 			const cacheEntry: ICacheEntry = {
 				key: "",
 				type: "snapshot",
-				file: { docId: hashedDocumentId, resolvedUrl: resolved },
+				file: {
+					docId: hashedDocumentId,
+					resolvedUrl: resolved,
+					fileVersion: resolved.fileVersion,
+				},
 			};
 			await localCache.put(cacheEntry, value);
 
@@ -509,7 +521,11 @@ describe("Tests for prefetching snapshot", () => {
 
 		afterEach(async () => {
 			localCache
-				.removeEntries({ docId: hashedDocumentId, resolvedUrl: resolved })
+				.removeEntries({
+					docId: hashedDocumentId,
+					resolvedUrl: resolved,
+					fileVersion: resolved.fileVersion,
+				})
 				.catch(() => {});
 			snapshotPrefetchResultCache.remove(snapshotPrefetchCacheKey);
 		});
@@ -654,7 +670,11 @@ describe("Tests for prefetching snapshot", () => {
 
 		afterEach(async () => {
 			localCache
-				.removeEntries({ docId: hashedDocumentId, resolvedUrl: resolved })
+				.removeEntries({
+					docId: hashedDocumentId,
+					resolvedUrl: resolved,
+					fileVersion: resolved.fileVersion,
+				})
 				.catch(() => {});
 			snapshotPrefetchResultCache.remove(snapshotPrefetchCacheKey);
 		});
@@ -755,7 +775,11 @@ describe("Tests for prefetching snapshot", () => {
 			const cacheEntry: ICacheEntry = {
 				key: "",
 				type: "snapshot",
-				file: { docId: resolved.hashedDocumentId, resolvedUrl: resolved },
+				file: {
+					docId: resolved.hashedDocumentId,
+					resolvedUrl: resolved,
+					fileVersion: resolved.fileVersion,
+				},
 			};
 			await localCache.put(cacheEntry, valueWithGroupId);
 
@@ -806,7 +830,11 @@ describe("Tests for prefetching snapshot", () => {
 			const cacheEntry: ICacheEntry = {
 				key: "",
 				type: "snapshot",
-				file: { docId: hashedDocumentId, resolvedUrl: resolved },
+				file: {
+					docId: hashedDocumentId,
+					resolvedUrl: resolved,
+					fileVersion: resolved.fileVersion,
+				},
 			};
 			await localCache.put(cacheEntry, valueWithGroupId);
 
@@ -896,7 +924,11 @@ describe("Tests for prefetching snapshot", () => {
 
 		afterEach(async () => {
 			localCache
-				.removeEntries({ docId: hashedDocumentId, resolvedUrl: resolved })
+				.removeEntries({
+					docId: hashedDocumentId,
+					resolvedUrl: resolved,
+					fileVersion: resolved.fileVersion,
+				})
 				.catch(() => {});
 			snapshotPrefetchResultCache.remove(snapshotPrefetchCacheKey);
 		});
