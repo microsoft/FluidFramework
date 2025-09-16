@@ -26,6 +26,7 @@ export type {
 	UnwrapPropTreeNode,
 	UnwrapPropTreeNodeRecord,
 	WrapPropTreeNodeRecord,
+	WrapNodes,
 } from "./useTree.js";
 export {
 	useTree,

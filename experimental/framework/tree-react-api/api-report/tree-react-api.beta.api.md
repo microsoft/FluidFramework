@@ -70,16 +70,19 @@ export type UnwrapPropTreeNodeRecord<T extends PropTreeNodeRecord> = {
 export function unwrapPropTreeRecord<T extends PropTreeNodeRecord>(props: T): UnwrapPropTreeNodeRecord<T>;
 
 // @public
-export function usePropTreeNode<T extends TreeNode | TreeLeafValue, TResult extends NodeRecord>(propNode: PropTreeValue<T> | T, trackDuring: (node: T) => TResult): WrapPropTreeNodeRecord<TResult>;
+export function usePropTreeNode<T extends TreeNode | TreeLeafValue, TResult>(propNode: PropTreeValue<T> | T, trackDuring: (node: T) => TResult): WrapNodes<TResult>;
 
 // @public
-export function usePropTreeRecord<const T extends PropTreeNodeRecord, TResult extends NodeRecord>(props: T, f: (node: UnwrapPropTreeNodeRecord<T>) => TResult): WrapPropTreeNodeRecord<TResult>;
+export function usePropTreeRecord<const T extends PropTreeNodeRecord, TResult>(props: T, f: (node: UnwrapPropTreeNodeRecord<T>) => TResult): WrapNodes<TResult>;
 
 // @public
 export function useTree(subtreeRoot: TreeNode): number;
 
 // @public
 export function useTreeObservations<TResult>(trackDuring: () => TResult): TResult;
+
+// @public
+export type WrapNodes<T> = T extends TreeNode ? PropTreeNode<T> : T extends NodeRecord ? WrapPropTreeNodeRecord<T> : T;
 
 // @public
 export type WrapPropTreeNodeRecord<T extends NodeRecord> = {

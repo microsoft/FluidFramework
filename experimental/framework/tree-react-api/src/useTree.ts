@@ -87,42 +87,56 @@ export interface PropTreeNode<T extends TreeNode> extends ErasedType<[T, "PropTr
 
 /**
  * Custom hook for using a prop tree node.
+ *
+ * @param propNode - Input, automatically unwrapped TreeNode from a {@link PropTreeNode} if needed.
+ * @param trackDuring - Callback which reads from the node and returns a result.
+ * If the result is a TreeNode or {@link NodeRecord} it will be wrapped as a {@link PropTreeNode} or {@link PropTreeNodeRecord}, see {@link WrapNodes}.
+ * It is recommended that for improved type safety if returning nodes (or otherwise transferring them out of this function),
+ * either use a format supported by {@link WrapNodes} or wrap the nodes manually using {@link toPropTreeNode}.
+ * Note that is is fine to observe any node inside the callback, not just the provided node: all accesses will be tracked.
+ * The provided node is just provided as a way to automatically unwrap the {@link PropTreeNode}
+ *
  * @remarks
  * Reads content using {@link useTreeObservations} to track dependencies.
  * @public
  */
-export function usePropTreeNode<
-	T extends TreeNode | TreeLeafValue,
-	TResult extends NodeRecord,
->(
+export function usePropTreeNode<T extends TreeNode | TreeLeafValue, TResult>(
 	propNode: PropTreeValue<T> | T,
 	trackDuring: (node: T) => TResult,
-): WrapPropTreeNodeRecord<TResult> {
+): WrapNodes<TResult> {
 	const node: T = unwrapPropTreeNode(propNode);
 
 	const result = useTreeObservations(() => trackDuring(node));
 
-	return result as WrapPropTreeNodeRecord<TResult>;
+	return result as WrapNodes<TResult>;
 }
 
 /**
- * Custom hook for reading contents from nodes in a PropTreeNodeRecord.
+ * Type TreeNodes in T as {@link PropTreeNode}s.
  * @remarks
- * Reads content using {@link useTreeObservations} to track dependencies.
+ * This only handles a few cases (TreeNode, NodeRecord) and leaves other types as is.
+ * Users which provide other types (e.g. arrays) which contain TreeNodes will need to handle wrapping those themselves if the wrapping is desired.
  * @public
  */
-export function usePropTreeRecord<
-	const T extends PropTreeNodeRecord,
-	TResult extends NodeRecord,
->(
+export type WrapNodes<T> = T extends TreeNode
+	? PropTreeNode<T>
+	: T extends NodeRecord
+		? WrapPropTreeNodeRecord<T>
+		: T;
+
+/**
+ * {@link usePropTreeNode} but takes in a {@link PropTreeNodeRecord}.
+ * @public
+ */
+export function usePropTreeRecord<const T extends PropTreeNodeRecord, TResult>(
 	props: T,
 	f: (node: UnwrapPropTreeNodeRecord<T>) => TResult,
-): WrapPropTreeNodeRecord<TResult> {
+): WrapNodes<TResult> {
 	const record = unwrapPropTreeRecord(props);
 
 	const result = useTreeObservations(() => f(record));
 
-	return result as WrapPropTreeNodeRecord<TResult>;
+	return result as WrapNodes<TResult>;
 }
 
 /**

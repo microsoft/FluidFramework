@@ -3,34 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { useTree } from "@fluid-experimental/tree-react-api";
+import { usePropTreeNode, type PropTreeNode } from "@fluid-experimental/tree-react-api";
 import * as React from "react";
 
 import type { Inventory } from "../schema.js";
 
 import { Counter } from "./counter.js";
 
-export const MainView: React.FC<{ root: Inventory }> = ({ root: inventory }) => {
-	useTree(inventory);
-
-	const counters: JSX.Element[] = [];
-
-	for (const part of inventory.parts) {
-		counters.push(
+export const MainView: React.FC<{ root: PropTreeNode<Inventory> }> = ({ root }) =>
+	// This could use a more granular observation strategy, like having a component for each part, but such an approach is not required
+	usePropTreeNode(root, (inventory: Inventory) => {
+		const counters: JSX.Element[] = inventory.parts.map((part) => (
 			<Counter
 				key={part.name}
 				title={part.name}
 				count={part.quantity}
 				onDecrement={(): number => part.quantity--}
 				onIncrement={(): number => part.quantity++}
-			></Counter>,
-		);
-	}
+			></Counter>
+		));
 
-	return (
-		<div>
-			<h1>Inventory:</h1>
-			{counters}
-		</div>
-	);
-};
+		return (
+			<div>
+				<h1>Inventory:</h1>
+				{counters}
+			</div>
+		);
+	});
