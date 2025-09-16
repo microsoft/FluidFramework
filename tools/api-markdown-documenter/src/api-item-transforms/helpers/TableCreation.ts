@@ -118,16 +118,19 @@ export function createTableForApiItems<TApiItem extends ApiItem>(
 		rows.push(row);
 	}
 
-	// Create alignment array
-	const align: AlignType[] = includedColumnIndices.map(
-		(iColumn) =>
-			// eslint-disable-next-line unicorn/no-null -- mdast uses null to not specify alignment
-			columnOptions[iColumn].alignment ?? alignment ?? null,
-	);
-
-	return {
+	const table: Table = {
 		type: "table",
-		align,
 		children: [headerRow, ...rows],
-	} satisfies Table;
+	};
+
+	// Set alignment, but only if any was specified
+	if (alignment !== undefined || columnOptions.some((col) => col.alignment !== undefined)) {
+		table.align = includedColumnIndices.map(
+			(iColumn) =>
+				// eslint-disable-next-line unicorn/no-null -- mdast uses null to not specify alignment
+				columnOptions[iColumn].alignment ?? alignment ?? null,
+		);
+	}
+
+	return table;
 }
