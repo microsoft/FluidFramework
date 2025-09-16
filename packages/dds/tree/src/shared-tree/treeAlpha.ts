@@ -55,6 +55,7 @@ import {
 	convertField,
 	toUnhydratedSchema,
 	type TreeParsingOptions,
+	type NodeChangedData,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
@@ -63,7 +64,7 @@ import {
 	type ICodecOptions,
 	type CodecWriteOptions,
 } from "../codec/index.js";
-import { EmptyKey, type ITreeCursorSynchronous } from "../core/index.js";
+import { EmptyKey, type FieldKey, type ITreeCursorSynchronous } from "../core/index.js";
 import {
 	cursorForMapTreeField,
 	defaultSchemaPolicy,
@@ -432,6 +433,46 @@ export interface TreeAlpha {
 	): { result: TResult; unsubscribe: () => void };
 }
 
+class NodeSubscription {
+	/**
+	 * If undefined, subscribes to all keys.
+	 * Otherwise only subscribes to the keys in the set.
+	 */
+	public keys: Set<FieldKey> | undefined;
+	public readonly unsubscribe: () => void;
+	public constructor(
+		public readonly onInvalidation: () => void,
+		flexNode: FlexTreeNode,
+	) {
+		// TODO:Performance: It is possible to optimize this to not use the public TreeNode API.
+		const node = getOrCreateNodeFromInnerNode(flexNode);
+		assert(node instanceof TreeNode, "Unexpected leaf value");
+
+		const handler = (data: NodeChangedData): void => {
+			if (this.keys === undefined || data.changedProperties === undefined) {
+				this.onInvalidation();
+			} else {
+				let keyMap: ReadonlyMap<FieldKey, string> | undefined;
+				const schema = treeNodeApi.schema(node);
+				if (isObjectNodeSchema(schema)) {
+					keyMap = schema.storedKeyToPropertyKey;
+				}
+				// TODO:Performance: Ideally this would use Set.prototype.isDisjointFrom when available.
+				for (const flexKey of this.keys) {
+					// TODO:Performance: doing everything at the flex tree layer could avoid this translation
+					const key = keyMap?.get(flexKey) ?? flexKey;
+
+					if (data.changedProperties.has(key)) {
+						this.onInvalidation();
+						return;
+					}
+				}
+			}
+		};
+		this.unsubscribe = TreeBeta.on(node, "nodeChanged", handler);
+	}
+}
+
 /**
  * Extensions to {@link (Tree:variable)} and {@link (TreeBeta:variable)} which are not yet stable.
  * @see {@link (TreeAlpha:interface)}.
@@ -442,20 +483,46 @@ export const TreeAlpha: TreeAlpha = {
 		onInvalidation: () => void,
 		trackDuring: () => TResult,
 	): { result: TResult; unsubscribe: () => void } {
-		const subscriptions = new Map<FlexTreeNode | TreeBranch, () => void>();
+		let observing = true;
+
+		const invalidate = (): void => {
+			if (observing) {
+				throw new UsageError("Cannot invalidate while tracking observations");
+			}
+			onInvalidation();
+		};
+
+		const subscriptions = new Map<FlexTreeNode, NodeSubscription>();
 		const observer: Observer = {
-			observeNodeContent(flexNode: FlexTreeNode): void {
+			observeNodeFields(flexNode: FlexTreeNode): void {
 				if (flexNode.value !== undefined) {
 					// Leaf value, nothing to observe.
 					return;
 				}
-				if (!subscriptions.has(flexNode)) {
-					const node = getOrCreateNodeFromInnerNode(flexNode);
-					assert(node instanceof TreeNode, "Unexpected leaf value");
-					const unsubscribe = treeNodeApi.on(node, "nodeChanged", () => {
-						onInvalidation();
-					});
-					subscriptions.set(flexNode, unsubscribe);
+				const subscription = subscriptions.get(flexNode);
+				if (subscription !== undefined) {
+					// Already subscribed to this node.
+					subscription.keys = undefined; // Now subscribed to all keys.
+				} else {
+					const newSubscription = new NodeSubscription(invalidate, flexNode);
+					subscriptions.set(flexNode, newSubscription);
+				}
+			},
+			observeNodeField(flexNode: FlexTreeNode, key: FieldKey): void {
+				if (flexNode.value !== undefined) {
+					// Leaf value, nothing to observe.
+					return;
+				}
+				const subscription = subscriptions.get(flexNode);
+				if (subscription !== undefined) {
+					// Already subscribed to this node: if not subscribed to all keys, subscribe to this one.
+					// TODO:Performance: due to how JavaScript set ordering works,
+					// it might be faster to check `has` and only add if not present in case the same field is viewed many times.
+					subscription.keys?.add(key);
+				} else {
+					const newSubscription = new NodeSubscription(invalidate, flexNode);
+					newSubscription.keys = new Set([key]);
+					subscriptions.set(flexNode, newSubscription);
 				}
 			},
 			observeParentOf(node: FlexTreeNode): void {
@@ -465,6 +532,7 @@ export const TreeAlpha: TreeAlpha = {
 			},
 		};
 		const result = withObservation(observer, trackDuring);
+		observing = false;
 
 		let subscribed = true;
 
@@ -475,8 +543,8 @@ export const TreeAlpha: TreeAlpha = {
 					throw new UsageError("Already unsubscribed");
 				}
 				subscribed = false;
-				for (const unsubscribe of subscriptions.values()) {
-					unsubscribe();
+				for (const subscription of subscriptions.values()) {
+					subscription.unsubscribe();
 				}
 			},
 		};

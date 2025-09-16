@@ -285,11 +285,38 @@ describe("treeNodeApi", () => {
 				"node.x.value",
 				"x.value",
 				"change: y",
-				"node.x",
 				"node.y",
-				"node.x.value",
 				"node.y.value",
 			]);
+		});
+
+		it("aliased fields", () => {
+			class Point2d extends schema.object("Point", {
+				x: SchemaFactory.required(schema.number, { key: "X" }),
+				y: schema.number,
+			}) {}
+
+			const node = init(Point2d, { x: 1, y: 2 });
+
+			const log: string[] = [];
+
+			TreeAlpha.trackObservations(
+				() => log.push("x"),
+				() => node.x,
+			);
+
+			TreeAlpha.trackObservations(
+				() => log.push("y"),
+				() => node.y,
+			);
+
+			log.push("change: x");
+			node.x = 3;
+
+			log.push("change: y");
+			node.y = 4;
+
+			assert.deepEqual(log, ["change: x", "x", "change: y", "y"]);
 		});
 	});
 

@@ -5,9 +5,11 @@
 
 import { debugAssert } from "@fluidframework/core-utils/internal";
 import type { FlexTreeNode } from "./flexTreeTypes.js";
+import type { FieldKey } from "../../core/index.js";
 
 export interface Observer {
-	observeNodeContent(node: FlexTreeNode): void;
+	observeNodeFields(node: FlexTreeNode): void;
+	observeNodeField(node: FlexTreeNode, key: FieldKey): void;
 	observeParentOf(node: FlexTreeNode): void;
 }
 /**

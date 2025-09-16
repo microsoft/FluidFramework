@@ -146,7 +146,7 @@ export class UnhydratedFlexTreeNode
 	public readonly fields: MinimalFieldMap<UnhydratedFlexTreeField> = {
 		get: (key: FieldKey): UnhydratedFlexTreeField | undefined => this.tryGetField(key),
 		[Symbol.iterator]: (): IterableIterator<[FieldKey, UnhydratedFlexTreeField]> => {
-			currentObserver?.observeNodeContent(this);
+			currentObserver?.observeNodeFields(this);
 			return filterIterable(this.fieldsAll, ([, field]) => field.length > 0);
 		},
 	};
@@ -230,7 +230,7 @@ export class UnhydratedFlexTreeNode
 	}
 
 	public tryGetField(key: FieldKey): UnhydratedFlexTreeField | undefined {
-		currentObserver?.observeNodeContent(this);
+		currentObserver?.observeNodeField(this, key);
 
 		const field = this.fieldsAll.get(key);
 		// Only return the field if it is not empty, in order to fulfill the contract of `tryGetField`.
@@ -240,9 +240,10 @@ export class UnhydratedFlexTreeNode
 	}
 
 	public getBoxed(key: string): UnhydratedFlexTreeField {
-		currentObserver?.observeNodeContent(this);
-
 		const fieldKey: FieldKey = brand(key);
+
+		currentObserver?.observeNodeField(this, fieldKey);
+
 		return this.getOrCreateField(fieldKey);
 	}
 

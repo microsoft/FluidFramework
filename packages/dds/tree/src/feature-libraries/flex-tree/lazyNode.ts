@@ -120,7 +120,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 		{
 			get: (key: FieldKey): FlexTreeField | undefined => this.tryGetField(key),
 			[Symbol.iterator]: (): IterableIterator<[FieldKey, FlexTreeField]> => {
-				currentObserver?.observeNodeContent(this);
+				currentObserver?.observeNodeFields(this);
 
 				return mapCursorFields(this.cursor, (cursor) => {
 					const key: FieldKey = cursor.getFieldKey();
@@ -134,7 +134,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 		};
 
 	public tryGetField(fieldKey: FieldKey): FlexTreeField | undefined {
-		currentObserver?.observeNodeContent(this);
+		currentObserver?.observeNodeField(this, fieldKey);
 
 		const schema = this.storedSchema.getFieldSchema(fieldKey);
 		return inCursorField(this.cursor, fieldKey, (cursor) => {
@@ -146,7 +146,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 	}
 
 	public getBoxed(key: FieldKey): FlexTreeField {
-		currentObserver?.observeNodeContent(this);
+		currentObserver?.observeNodeField(this, key);
 
 		const fieldSchema = this.storedSchema.getFieldSchema(key);
 		return inCursorField(this.cursor, key, (cursor) => {
