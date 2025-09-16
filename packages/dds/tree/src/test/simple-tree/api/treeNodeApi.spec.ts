@@ -97,19 +97,16 @@ const schema = new SchemaFactoryAlpha("com.example");
 class Point extends schema.object("Point", {}) {}
 
 describe("treeNodeApi", () => {
-	describe("trackObservations", () => {
+	describeHydration("trackObservations", (init) => {
 		it("no reads", () => {
 			class Point2D extends schema.object("Point", {
 				x: schema.number,
 			}) {}
-			const node = new Point2D({ x: 0 });
+			const node = init(Point2D, { x: 0 });
 
 			const out = TreeAlpha.trackObservations(
 				() => assert.fail(),
-				() => {
-					// Nothing
-					return "x";
-				},
+				() => "x",
 			);
 			node.x = 1;
 			assert.equal(out.result, "x");
@@ -119,13 +116,11 @@ describe("treeNodeApi", () => {
 			class PointX extends schema.object("Point", {
 				x: schema.number,
 			}) {}
-			const node = new PointX({ x: 0 });
+			const node = init(PointX, { x: 0 });
 			const invalidations: string[] = [];
 
 			const out = TreeAlpha.trackObservations(
-				() => {
-					invalidations.push("Read X");
-				},
+				() => invalidations.push("Read X"),
 				() => node.x,
 			);
 			assert.deepEqual(invalidations, []);
@@ -143,13 +138,11 @@ describe("treeNodeApi", () => {
 			class PointX extends schema.object("Point", {
 				x: SchemaFactory.optional(schema.number),
 			}) {}
-			const node = new PointX({});
+			const node = init(PointX, {});
 			const invalidations: string[] = [];
 
 			const out = TreeAlpha.trackObservations(
-				() => {
-					invalidations.push("Read keys");
-				},
+				() => invalidations.push("Read keys"),
 				() => [...Object.keys(node)],
 			);
 			assert.deepEqual(invalidations, []);
@@ -160,15 +153,12 @@ describe("treeNodeApi", () => {
 
 		it("parent unhydrated", () => {
 			class PointX extends schema.object("Point", {}) {}
-			const node = new PointX({});
-			const invalidations: string[] = [];
+			const node = init(PointX, {});
 
 			assert.throws(
 				() => {
 					TreeAlpha.trackObservations(
-						() => {
-							invalidations.push("Read keys");
-						},
+						() => assert.fail(),
 						() => [Tree.parent(node)],
 					);
 				},

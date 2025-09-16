@@ -165,6 +165,8 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 	}
 
 	public get parentField(): { readonly parent: FlexTreeField; readonly index: number } {
+		currentObserver?.observeParentOf(this);
+
 		const cursor = this.cursor;
 		const index = this.anchorNode.parentIndex;
 		assert(cursor.fieldIndex === index, 0x786 /* mismatched indexes */);
