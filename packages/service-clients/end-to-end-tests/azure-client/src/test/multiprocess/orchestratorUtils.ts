@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { fork, type ChildProcess } from "node:child_process";
+import { fork } from "node:child_process";
+import type { ChildProcess as AnyChildProcess } from "node:child_process";
 
 import { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { AttendeeId } from "@fluidframework/presence/beta";
@@ -16,6 +17,7 @@ import type {
 	LatestMapValueUpdatedEvent,
 	LatestValueGetResponseEvent,
 	LatestMapValueGetResponseEvent,
+	MessageToChild,
 } from "./messageTypes.js";
 
 /**
@@ -38,6 +40,10 @@ export const testConsole = {
 	warn: console.warn,
 	error: console.error,
 };
+
+interface ChildProcess extends AnyChildProcess {
+	send(message: MessageToChild): boolean;
+}
 
 /**
  * Fork child processes to simulate multiple Fluid clients.
@@ -85,8 +91,11 @@ export async function forkChildProcesses(
 		});
 		childReadyPromises.push(readyPromise);
 		const errorPromise = new Promise<never>((_resolve, reject) => {
-			child.on("error", (error) => {
+			child.once("error", (error) => {
 				reject(new Error(`Child${i} process errored: ${error.message}`));
+			});
+			child.once("exit", (code, signal) => {
+				reject(new Error(`Child${i} process exited: code ${code}, signal ${signal}`));
 			});
 		});
 		childErrorPromises.push(errorPromise);
@@ -118,6 +127,47 @@ function composeConnectMessage(
 	};
 }
 
+/**
+ * Listens for a "connected" response from a child process
+ * allowing/handling subset of other expected messages.
+ */
+function listenForConnectedResponse({
+	child,
+	childId,
+	onConnected,
+	reject,
+}: {
+	child: ChildProcess;
+	childId: number | string;
+	/**
+	 * Will be called up to once when a "connected" message is received.
+	 */
+	onConnected: (msg: Extract<MessageFromChild, { event: "connected" }>) => void;
+	/**
+	 * Callback to reject for unexpected messages or child errors.
+	 */
+	reject: (reason?: unknown) => void;
+}): void {
+	const listener = (msg: MessageFromChild): void => {
+		if (msg.event === "connected") {
+			child.off("message", listener);
+			onConnected(msg);
+		} else if (msg.event === "error") {
+			child.off("message", listener);
+			reject(new Error(`Child ${childId} process error: ${msg.error}`));
+		} else if (msg.event !== "ack") {
+			child.off("message", listener);
+			// This is not strictly required, but is current expectation.
+			reject(
+				new Error(
+					`Unexpected message from child ${childId} while connecting: ${JSON.stringify(msg)}`,
+				),
+			);
+		}
+	};
+	child.on("message", listener);
+}
+
 interface CreatorAttendeeIdAndAttendeePromises {
 	containerCreatorAttendeeId: AttendeeId;
 	attendeeIdPromises: Promise<AttendeeId>[];
@@ -140,18 +190,27 @@ export async function connectChildProcesses(
 	const containerReadyPromise = new Promise<{
 		containerCreatorAttendeeId: AttendeeId;
 		containerId: string;
-	}>((resolve, reject) => {
-		firstChild.once("message", (msg: MessageFromChild) => {
-			if (msg.event === "connected" && msg.containerId) {
-				resolve({
-					containerCreatorAttendeeId: msg.attendeeId,
-					containerId: msg.containerId,
-				});
-			} else {
-				reject(new Error(`Non-connected message from child0: ${JSON.stringify(msg)}`));
-			}
-		});
-	});
+	}>((resolve, reject) =>
+		listenForConnectedResponse({
+			child: firstChild,
+			childId: 0,
+			onConnected: (msg) => {
+				if (msg.containerId) {
+					resolve({
+						containerCreatorAttendeeId: msg.attendeeId,
+						containerId: msg.containerId,
+					});
+				} else {
+					reject(
+						new Error(
+							`Child 0 (creator) connected without containerId: ${JSON.stringify(msg)}`,
+						),
+					);
+				}
+			},
+			reject,
+		}),
+	);
 	{
 		// Note that DocWrite is used to have this attendee be the "leader".
 		// DocRead would also be valid as DocWrite is specified for attach when there
@@ -182,15 +241,16 @@ export async function connectChildProcesses(
 		);
 		message.containerId = containerId;
 		attendeeIdPromises.push(
-			new Promise<AttendeeId>((resolve, reject) => {
-				child.once("message", (msg: MessageFromChild) => {
-					if (msg.event === "connected") {
+			new Promise<AttendeeId>((resolve, reject) =>
+				listenForConnectedResponse({
+					child,
+					childId: index,
+					onConnected: (msg) => {
 						resolve(msg.attendeeId);
-					} else if (msg.event === "error") {
-						reject(new Error(`Child process error: ${msg.error}`));
-					}
-				});
-			}),
+					},
+					reject,
+				}),
+			),
 		);
 		child.send(message);
 	}
@@ -236,6 +296,7 @@ export async function connectAndListenForAttendees(
 					if (msg.event === "attendeeConnected") {
 						attendeesJoinedEvents++;
 						if (attendeesJoinedEvents >= attendeeCountRequired) {
+							child.off("message", listenForAttendees);
 							resolve();
 						}
 					}
@@ -323,7 +384,7 @@ export async function connectAndWaitForAttendees(
 export async function registerWorkspaceOnChildren(
 	children: ChildProcess[],
 	workspaceId: string,
-	options: { latest?: boolean; latestMap?: boolean; timeoutMs: number },
+	options: { latest?: true; latestMap?: true; timeoutMs: number },
 ): Promise<void> {
 	const { latest, latestMap, timeoutMs } = options;
 	const promises = children.map(async (child, index) => {
