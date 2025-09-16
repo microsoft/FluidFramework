@@ -3,17 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type { ApiItem } from "@microsoft/api-extractor-model";
 import type { AlignType, PhrasingContent, Table, TableCell, TableRow } from "mdast";
 
 /**
  * Options for table creation, given a list of API items.
  */
-export interface TableOptions<TApiItem extends ApiItem> {
+export interface TableOptions<TItem> {
 	/**
 	 * The set of columns to be included in the table.
 	 */
-	readonly columnOptions: readonly ColumnOptions<TApiItem>[];
+	readonly columnOptions: readonly ColumnOptions<TItem>[];
 
 	/**
 	 * Optional content alignment for all columns in the table.
@@ -26,7 +25,7 @@ export interface TableOptions<TApiItem extends ApiItem> {
 /**
  * Column options for table creation.
  */
-export interface ColumnOptions<TApiItem extends ApiItem> {
+export interface ColumnOptions<TItem> {
 	/**
 	 * The title of the column.
 	 */
@@ -44,7 +43,7 @@ export interface ColumnOptions<TApiItem extends ApiItem> {
 	 *
 	 * @returns The table cell content, if any should be displayed. If `undefined` is returned, the cell will be empty.
 	 */
-	readonly createCellContent: (item: TApiItem) => TableCell | undefined;
+	readonly createCellContent: (item: TItem) => TableCell | undefined;
 
 	/**
 	 * Optional content alignment for the column.
@@ -59,9 +58,9 @@ const emptyCell: TableCell = { type: "tableCell", children: [] };
 /**
  * Creates a table from a list of API items.
  */
-export function createTableForApiItems<TApiItem extends ApiItem>(
-	items: readonly TApiItem[],
-	options: TableOptions<TApiItem>,
+export function createTableForApiItems<TItem>(
+	items: readonly TItem[],
+	options: TableOptions<TItem>,
 ): Table {
 	const { columnOptions, alignment } = options;
 
