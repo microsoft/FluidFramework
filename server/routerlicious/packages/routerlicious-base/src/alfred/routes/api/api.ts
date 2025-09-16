@@ -81,7 +81,7 @@ export function create(
 		}),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
-			response.status(200);
+			response.sendStatus(200);
 		},
 	);
 
