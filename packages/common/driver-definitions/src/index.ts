@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export {
-	type ICacheEntry,
-	type IEntry,
-	type IFileEntry,
-	type IPersistedCache,
-	getKeyForCacheEntry,
-	maximumCacheDurationMs,
+export type {
+	ICacheEntry,
+	IEntry,
+	IFileEntry,
+	IPersistedCache,
 } from "./cache.js";
 
 export type {

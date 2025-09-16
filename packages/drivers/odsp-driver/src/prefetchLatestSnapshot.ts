@@ -6,11 +6,11 @@
 import { performanceNow } from "@fluid-internal/client-utils";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import {
-	getKeyForCacheEntry,
-	type IPersistedCache,
-	type IResolvedUrl,
+import type {
+	IPersistedCache,
+	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
+import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
 import type {
 	IOdspResolvedUrl,
 	IOdspUrlParts,

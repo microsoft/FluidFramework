@@ -11,11 +11,11 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import type { PromiseCache } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
-	getKeyForCacheEntry,
 	type ICacheEntry,
 	type ISnapshot,
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
+import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
 import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 

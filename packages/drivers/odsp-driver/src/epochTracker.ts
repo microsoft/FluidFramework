@@ -4,15 +4,15 @@
  */
 
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import {
-	maximumCacheDurationMs,
-	type ICacheEntry,
-	type IEntry,
-	type IFileEntry,
-	type IPersistedCache,
+import type {
+	ICacheEntry,
+	IEntry,
+	IFileEntry,
+	IPersistedCache,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	LocationRedirectionError,
+	maximumCacheDurationMs,
 	NonRetryableError,
 	RateLimiter,
 	ThrottlingError,

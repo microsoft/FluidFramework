@@ -5,13 +5,15 @@
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IPersistedCache,
-	maximumCacheDurationMs,
 	IFileEntry,
 	ICacheEntry,
-	getKeyForCacheEntry,
 } from "@fluidframework/driver-definitions/internal";
+import {
+	getKeyForCacheEntry,
+	maximumCacheDurationMs,
+} from "@fluidframework/driver-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	UsageError,

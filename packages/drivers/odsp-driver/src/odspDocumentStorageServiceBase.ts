@@ -18,8 +18,8 @@ import {
 	type ICreateBlobResponse,
 	type IVersion,
 	type ISequencedDocumentMessage,
-	maximumCacheDurationMs,
 } from "@fluidframework/driver-definitions/internal";
+import { maximumCacheDurationMs } from "@fluidframework/driver-utils/internal";
 import type { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
 
 class BlobCache {

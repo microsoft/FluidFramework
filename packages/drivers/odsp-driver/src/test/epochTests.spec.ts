@@ -5,12 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	maximumCacheDurationMs,
-	type ICacheEntry,
-	type IDocumentStorageServicePolicies,
-	type IEntry,
+import type {
+	ICacheEntry,
+	IDocumentStorageServicePolicies,
+	IEntry,
 } from "@fluidframework/driver-definitions/internal";
+import { maximumCacheDurationMs } from "@fluidframework/driver-utils/internal";
 import {
 	type IOdspResolvedUrl,
 	OdspErrorTypes,
