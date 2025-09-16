@@ -24,15 +24,24 @@ import { filterItems } from "./ApiItemTransformUtilities.js";
  */
 
 /**
- * TODO
+ * {@link TypeMember} base interface.
  */
 export interface TypeMemberBase<TApiItem extends ApiItem = ApiItem> {
+	/**
+	 * The kind of type member.
+	 * "own" if the member is directly declared on the API item.
+	 * "inherited" if the member is inherited from a base type.
+	 */
 	readonly kind: "own" | "inherited";
+
+	/**
+	 * The API item that is the member.
+	 */
 	readonly item: TApiItem;
 }
 
 /**
- * TODO
+ * Represents a type member that is directly declared on the API item.
  */
 export interface OwnTypeMember<TApiItem extends ApiItem = ApiItem>
 	extends TypeMemberBase<TApiItem> {
@@ -41,7 +50,7 @@ export interface OwnTypeMember<TApiItem extends ApiItem = ApiItem>
 }
 
 /**
- * TODO
+ * Represents a type member that is inherited from a base type.
  */
 export interface InheritedTypeMember<TApiItem extends ApiItem = ApiItem>
 	extends TypeMemberBase<TApiItem> {
@@ -50,7 +59,7 @@ export interface InheritedTypeMember<TApiItem extends ApiItem = ApiItem>
 }
 
 /**
- * TODO
+ * A type member, which may be either directly declared on the API item or inherited from a base type.
  */
 export type TypeMember<TApiItem extends ApiItem = ApiItem> =
 	| OwnTypeMember<TApiItem>
