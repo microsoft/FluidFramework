@@ -90,13 +90,10 @@ export function validatePrivateLink(
 							?.properties?.remotePrivateEndpoint?.connectionDetails[0];
 					const accountLinkId = connectionDetail?.linkIdentifier;
 					if (networkInfo.privateLinkId === accountLinkId) {
-						Lumberjack.info(
-							`This is a private link request with matching link id.`,
-							{
-								tenantId,
-								privateLinkId: networkInfo.privateLinkId,
-							},
-						);
+						Lumberjack.info(`This is a private link request with matching link id.`, {
+							tenantId,
+							privateLinkId: networkInfo.privateLinkId,
+						});
 					} else {
 						return handleResponse(
 							Promise.reject(
