@@ -19,23 +19,37 @@ export async function checkNetworkInformation(
 ): Promise<{ message: string; shouldConnect: boolean }> {
 	const tenantId = socket?.handshake?.query?.tenantId as string | undefined;
 	const tenantInfo = await tenantManager.getTenantfromRiddler(tenantId);
-	const privateLinkEnable = tenantInfo?.customData?.privateEndpoints?.accountLinkId
-		? true
-		: false;
+	const privateLinkEnable =
+		tenantInfo?.customData?.privateEndpoints &&
+		Array.isArray(tenantInfo.customData.privateEndpoints) &&
+		tenantInfo.customData.privateEndpoints?.length > 0 &&
+		tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy?.properties
+			?.remotePrivateEndpoint?.connectionDetails &&
+		Array.isArray(
+			tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy?.properties
+				?.remotePrivateEndpoint?.connectionDetails,
+		) &&
+		tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy?.properties
+			?.remotePrivateEndpoint?.connectionDetails[0]
+			? true
+			: false;
 	const xForwardedFor: string | undefined = socket.handshake.headers["x-forwarded-for"] as
 		| string
 		| undefined;
 	const clientIPAddress = xForwardedFor?.split(",")[0];
 	if (privateLinkEnable && !clientIPAddress) {
 		return {
-			message: "Client IP address is required for private link in x-forwarded-for",
+			message: "Client ip address is required for private link in x-forwarded-for",
 			shouldConnect: false,
 		};
 	}
 	const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 	if (networkInfo.isPrivateLink) {
 		if (privateLinkEnable) {
-			const accountLinkId = tenantInfo?.customData?.privateEndpoints?.accountLinkId;
+			const connectionDetail =
+				tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy
+					?.properties?.remotePrivateEndpoint?.connectionDetails[0];
+			const accountLinkId = connectionDetail?.linkIdentifier;
 			return networkInfo.privateLinkId === accountLinkId
 				? { message: "This is a private link socket connection", shouldConnect: true }
 				: {
