@@ -302,29 +302,6 @@ export function createTypeParametersSummaryTable(
 		return undefined;
 	}
 
-	// Only display the "Constraint" column if there are any constraints present among the type parameters.
-	const hasAnyConstraints = apiTypeParameters.some(
-		(apiTypeParameter) => !apiTypeParameter.constraintExcerpt.isEmpty,
-	);
-
-	// Only display the "Default" column if there are any defaults present among the type parameters.
-	const hasAnyDefaults = apiTypeParameters.some(
-		(apiTypeParameter) => !apiTypeParameter.defaultTypeExcerpt.isEmpty,
-	);
-
-	const headerRowCells: TableCell[] = [createPlainTextTableCell("Parameter")];
-	if (hasAnyConstraints) {
-		headerRowCells.push(createPlainTextTableCell("Constraint"));
-	}
-	if (hasAnyDefaults) {
-		headerRowCells.push(createPlainTextTableCell("Default"));
-	}
-	headerRowCells.push(createPlainTextTableCell("Description"));
-	const headerRow: TableRow = {
-		type: "tableRow",
-		children: headerRowCells,
-	};
-
 	function createTypeConstraintCell(apiParameter: TypeParameter): TableCell {
 		const constraintSpan = createExcerptSpanWithHyperlinks(
 			apiParameter.constraintExcerpt,
@@ -347,29 +324,31 @@ export function createTypeParametersSummaryTable(
 		};
 	}
 
-	const bodyRows: TableRow[] = [];
-	for (const apiTypeParameter of apiTypeParameters) {
-		const bodyRowCells: TableCell[] = [createPlainTextTableCell(apiTypeParameter.name)];
-		if (hasAnyConstraints) {
-			bodyRowCells.push(createTypeConstraintCell(apiTypeParameter));
-		}
-		if (hasAnyDefaults) {
-			bodyRowCells.push(createTypeDefaultCell(apiTypeParameter));
-		}
-		bodyRowCells.push(
-			createTypeParameterSummaryCell(apiTypeParameter, contextApiItem, config),
-		);
-
-		bodyRows.push({
-			type: "tableRow",
-			children: bodyRowCells,
-		});
-	}
-
-	return {
-		type: "table",
-		children: [headerRow, ...bodyRows],
-	};
+	return createTableForApiItems(apiTypeParameters, {
+		columnOptions: [
+			{
+				title: { type: "text", value: "Parameter" },
+				columnKind: "required",
+				createCellContent: (item) => createPlainTextTableCell(item.name),
+			},
+			{
+				title: { type: "text", value: "Constraint" },
+				columnKind: "optional",
+				createCellContent: (item) => createTypeConstraintCell(item),
+			},
+			{
+				title: { type: "text", value: "Default" },
+				columnKind: "optional",
+				createCellContent: (item) => createTypeDefaultCell(item),
+			},
+			{
+				title: { type: "text", value: "Description" },
+				columnKind: "required",
+				createCellContent: (item) =>
+					createTypeParameterSummaryCell(item, contextApiItem, config),
+			},
+		],
+	});
 }
 
 /**
