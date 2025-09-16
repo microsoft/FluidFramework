@@ -6,8 +6,8 @@
 import type { ApiItem } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 
-import type { ApiItemTransformationConfiguration } from "../../api-item-transforms/index.js";
-import { isItemOrAncestorExcluded } from "../ApiItemTransformUtilities.js";
+import type { ApiItemTransformationConfiguration } from "../../index.js";
+import { isItemOrAncestorExcluded } from "../index.js";
 
 describe("ApiItemTransformUtilities", () => {
 	describe("isItemOrAncestorExcluded", () => {
