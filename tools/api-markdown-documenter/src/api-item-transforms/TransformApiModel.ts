@@ -19,13 +19,13 @@ import {
 	shouldItemBeIncluded,
 } from "./ApiItemTransformUtilities.js";
 import { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
-import { checkForDuplicateDocumentPaths, createDocument } from "./Utilities.js";
 import {
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./configuration/index.js";
 import { createBreadcrumbParagraph, createEntryPointList } from "./helpers/index.js";
+import { checkForDuplicateDocumentPaths, createDocument } from "./utilities/index.js";
 
 /**
  * Renders the provided model and its contents to a series of {@link ApiDocument}s.

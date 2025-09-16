@@ -32,9 +32,9 @@ import {
 	doesItemRequireOwnDocument,
 	shouldItemBeIncluded,
 } from "./ApiItemTransformUtilities.js";
-import { createDocument } from "./Utilities.js";
 import type { ApiItemTransformationConfiguration } from "./configuration/index.js";
 import { createBreadcrumbParagraph } from "./helpers/index.js";
+import { createDocument } from "./utilities/index.js";
 
 /**
  * Creates a {@link ApiDocument} for the specified `apiItem`.

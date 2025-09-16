@@ -53,4 +53,4 @@ export {
 export { transformTsdoc } from "./TsdocNodeTransforms.js";
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
 export { transformApiModel } from "./TransformApiModel.js";
-export { checkForDuplicateDocumentPaths } from "./Utilities.js";
+export { checkForDuplicateDocumentPaths } from "./utilities/index.js";
