@@ -54,15 +54,12 @@ import {
 	type ValidApiItemKind,
 	getFilteredParent,
 } from "../../utilities/index.js";
-import {
-	doesItemKindRequireOwnDocument,
-	getLinkForApiItem,
-} from "../ApiItemTransformUtilities.js";
 import { transformTsdoc } from "../TsdocNodeTransforms.js";
 import {
 	HierarchyKind,
 	type ApiItemTransformationConfiguration,
 } from "../configuration/index.js";
+import { doesItemKindRequireOwnDocument, getLinkForApiItem } from "../utilities/index.js";
 
 import {
 	createParametersSummaryTable,
