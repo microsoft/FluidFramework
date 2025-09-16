@@ -92,14 +92,13 @@ export function validatePrivateLink(
 					if (networkInfo.privateLinkId === accountLinkId) {
 						Lumberjack.info(`This is a private link request with matching link id.`, {
 							tenantId,
-							privateLinkId: networkInfo.privateLinkId,
 						});
 					} else {
 						return handleResponse(
 							Promise.reject(
 								new NetworkError(
 									400,
-									`This private link should not be connected since the link id ${networkInfo.privateLinkId} does not match ${accountLinkId}`,
+									`This private link should not be connected since the link id mismatch`,
 								),
 							),
 							res,
