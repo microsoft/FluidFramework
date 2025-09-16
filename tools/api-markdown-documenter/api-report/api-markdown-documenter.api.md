@@ -204,7 +204,7 @@ function createSummarySection(apiItem: ApiItem, config: ApiItemTransformationCon
 function createThrowsSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration, headingText?: string): Section | undefined;
 
 // @public
-function createTypeParametersSection(typeParameters: readonly TypeParameter[], contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): Section;
+function createTypeParametersSection(typeParameters: readonly TypeParameter[], contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): Section | undefined;
 
 // @public
 export const defaultConsoleLogger: Logger;
