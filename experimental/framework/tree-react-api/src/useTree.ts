@@ -42,7 +42,8 @@ export function useTree(subtreeRoot: TreeNode): number {
  * Custom hook which invalidates a React Component when there is a change in tree content observed during `trackDuring`.
  * @remarks
  * This includes changes to the tree's content.
- * Currently this will throw if observing a node's parentage, and node status changes will not cause invalidation.
+ * Currently this will throw if observing a node's parentage to be undefined,
+ * and node status changes will not cause invalidation.
  *
  * For additional type safety to help avoid observing TreeNode content outside of this hook, see {@link PropTreeNode}.
  * @public
@@ -56,11 +57,10 @@ export function useTreeObservations<TResult>(trackDuring: () => TResult): TResul
 
 	const invalidate = (): void => {
 		invalidated = true;
-		out.unsubscribe();
 		setInvalidations((i) => i + 1);
 	};
 
-	const out = TreeAlpha.trackObservations(invalidate, trackDuring);
+	const out = TreeAlpha.trackObservationsOnce(invalidate, trackDuring);
 
 	// Unsubscribe on unmount (or anytime we recompute out).
 	React.useEffect(() => () => {

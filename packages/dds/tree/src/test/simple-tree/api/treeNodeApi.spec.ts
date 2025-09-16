@@ -274,6 +274,16 @@ describe("treeNodeApi", () => {
 				() => y.value,
 			);
 
+			TreeAlpha.trackObservationsOnce(
+				() => log.push("x.parent"),
+				() => Tree.parent(x),
+			);
+
+			TreeAlpha.trackObservationsOnce(
+				() => log.push("y.parent"),
+				() => Tree.parent(y),
+			);
+
 			log.push("change: x.value");
 			node.x.value = 3;
 
@@ -287,6 +297,7 @@ describe("treeNodeApi", () => {
 				"change: y",
 				"node.y",
 				"node.y.value",
+				"y.parent",
 			]);
 		});
 

@@ -19,8 +19,8 @@ export interface Observer {
  */
 
 export let currentObserver: Observer | undefined;
-const observerStack: Observer[] = [];
-function setObserver(newObserver: Observer): void {
+const observerStack: (Observer | undefined)[] = [];
+function setObserver(newObserver: Observer | undefined): void {
 	observerStack.push(newObserver);
 	currentObserver = newObserver;
 }
@@ -31,7 +31,7 @@ function clearObserver(): void {
 	currentObserver = observerStack[observerStack.length - 1];
 }
 
-export function withObservation<T>(newObserver: Observer, f: () => T): T {
+export function withObservation<T>(newObserver: Observer | undefined, f: () => T): T {
 	setObserver(newObserver);
 	try {
 		return f();

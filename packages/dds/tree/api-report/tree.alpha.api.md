@@ -1283,6 +1283,10 @@ export interface TreeAlpha {
         result: TResult;
         unsubscribe: () => void;
     };
+    trackObservationsOnce<TResult>(onInvalidation: () => void, trackDuring: () => TResult): {
+        result: TResult;
+        unsubscribe: () => void;
+    };
 }
 
 // @alpha
