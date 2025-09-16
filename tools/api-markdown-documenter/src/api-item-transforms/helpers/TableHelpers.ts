@@ -223,7 +223,7 @@ export function createDefaultSummaryTable(
 			{
 				title: { type: "text", value: "Description" },
 				columnKind: "required",
-				createCellContent: (item) => createApiSummaryCell(item, config),
+				createCellContent: (item) => createDescriptionCell(item, config),
 			},
 		],
 	});
@@ -386,7 +386,7 @@ export function createFunctionLikeSummaryTable(
 			{
 				title: { type: "text", value: "Description" },
 				columnKind: "required",
-				createCellContent: (item) => createApiSummaryCell(item, config),
+				createCellContent: (item) => createDescriptionCell(item, config),
 			},
 		],
 	});
@@ -439,7 +439,7 @@ export function createPropertiesTable(
 			{
 				title: { type: "text", value: "Description" },
 				columnKind: "required",
-				createCellContent: (item) => createApiSummaryCell(item, config),
+				createCellContent: (item) => createDescriptionCell(item, config),
 			},
 		],
 	});
@@ -487,7 +487,7 @@ export function createVariablesTable(
 			{
 				title: { type: "text", value: "Description" },
 				columnKind: "required",
-				createCellContent: (item) => createApiSummaryCell(item, config),
+				createCellContent: (item) => createDescriptionCell(item, config),
 			},
 		],
 	});
@@ -524,7 +524,7 @@ export function createPackagesTable(
 			{
 				title: { type: "text", value: "Description" },
 				columnKind: "required",
-				createCellContent: (item) => createApiSummaryCell(item, config),
+				createCellContent: (item) => createDescriptionCell(item, config),
 			},
 		],
 	});
@@ -537,7 +537,7 @@ export function createPackagesTable(
  * @param apiItem - The API item whose comment will be rendered in the cell.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createApiSummaryCell(
+export function createDescriptionCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): TableCell {
