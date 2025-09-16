@@ -161,8 +161,7 @@ export const baseMapModel: DDSFuzzModel<MapFactory, MapOperation> = {
 		if (hasSharedMapOracle(b.channel)) {
 			b.channel.sharedMapOracle.validate();
 		}
-		// eslint-disable-next-line no-void
-		void assertMapsAreEquivalent(a.channel, b.channel);
+		return assertMapsAreEquivalent(a.channel, b.channel);
 	},
 };
 
