@@ -471,51 +471,35 @@ export function createVariablesTable(
 		return undefined;
 	}
 
-	// Only display "Alerts" column if there are any alerts to display.
-	const alerts = apiVariables.map((apiItem) => config.getAlertsForItem(apiItem));
-	const hasAlerts = alerts.some((itemAlerts) => itemAlerts.length > 0);
-
-	// Only display "Modifiers" column if there are any modifiers to display.
-	const hasModifiers = apiVariables.some(
-		(apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
-	);
-
-	const headerRowCells: TableCell[] = [createPlainTextTableCell("Variable")];
-	if (hasAlerts) {
-		headerRowCells.push(createPlainTextTableCell("Alerts"));
-	}
-	if (hasModifiers) {
-		headerRowCells.push(createPlainTextTableCell("Modifiers"));
-	}
-	headerRowCells.push(createPlainTextTableCell("Type"));
-	headerRowCells.push(createPlainTextTableCell("Description"));
-	const headerRow: TableRow = {
-		type: "tableRow",
-		children: headerRowCells,
-	};
-
-	const bodyRows: TableRow[] = [];
-	for (let i = 0; i < apiVariables.length; i++) {
-		const bodyRowCells: TableCell[] = [createApiTitleCell(apiVariables[i], config)];
-		if (hasAlerts) {
-			bodyRowCells.push(createAlertsCell(alerts[i]));
-		}
-		if (hasModifiers) {
-			bodyRowCells.push(createModifiersCell(apiVariables[i], options?.modifiersToOmit));
-		}
-		bodyRowCells.push(createTypeExcerptCell(apiVariables[i].variableTypeExcerpt, config));
-		bodyRowCells.push(createApiSummaryCell(apiVariables[i], config));
-
-		bodyRows.push({
-			type: "tableRow",
-			children: bodyRowCells,
-		});
-	}
-
-	return {
-		type: "table",
-		children: [headerRow, ...bodyRows],
-	};
+	return createTableForApiItems(apiVariables, {
+		columnOptions: [
+			{
+				title: { type: "text", value: "Variable" },
+				columnKind: "required",
+				createCellContent: (item) => createApiTitleCell(item, config),
+			},
+			{
+				title: { type: "text", value: "Alerts" },
+				columnKind: "optional",
+				createCellContent: (item) => createAlertsCell(config.getAlertsForItem(item)),
+			},
+			{
+				title: { type: "text", value: "Modifiers" },
+				columnKind: "optional",
+				createCellContent: (item) => createModifiersCell(item, options?.modifiersToOmit),
+			},
+			{
+				title: { type: "text", value: "Type" },
+				columnKind: "required",
+				createCellContent: (item) => createTypeExcerptCell(item.variableTypeExcerpt, config),
+			},
+			{
+				title: { type: "text", value: "Description" },
+				columnKind: "required",
+				createCellContent: (item) => createApiSummaryCell(item, config),
+			},
+		],
+	});
 }
 
 /**
@@ -534,38 +518,25 @@ export function createPackagesTable(
 		return undefined;
 	}
 
-	// Only display "Alerts" column if there are any alerts to display.
-	const alerts = apiPackages.map((apiItem) => config.getAlertsForItem(apiItem));
-	const hasAlerts = alerts.some((itemAlerts) => itemAlerts.length > 0);
-
-	const headerRowCells: TableCell[] = [createPlainTextTableCell("Package")];
-	if (hasAlerts) {
-		headerRowCells.push(createPlainTextTableCell("Alerts"));
-	}
-	headerRowCells.push(createPlainTextTableCell("Description"));
-	const headerRow: TableRow = {
-		type: "tableRow",
-		children: headerRowCells,
-	};
-
-	const bodyRows: TableRow[] = [];
-	for (let i = 0; i < apiPackages.length; i++) {
-		const bodyRowCells: TableCell[] = [createApiTitleCell(apiPackages[i], config)];
-		if (hasAlerts) {
-			bodyRowCells.push(createAlertsCell(alerts[i]));
-		}
-		bodyRowCells.push(createApiSummaryCell(apiPackages[i], config));
-
-		bodyRows.push({
-			type: "tableRow",
-			children: bodyRowCells,
-		});
-	}
-
-	return {
-		type: "table",
-		children: [headerRow, ...bodyRows],
-	};
+	return createTableForApiItems(apiPackages, {
+		columnOptions: [
+			{
+				title: { type: "text", value: "Package" },
+				columnKind: "required",
+				createCellContent: (item) => createApiTitleCell(item, config),
+			},
+			{
+				title: { type: "text", value: "Alerts" },
+				columnKind: "optional",
+				createCellContent: (item) => createAlertsCell(config.getAlertsForItem(item)),
+			},
+			{
+				title: { type: "text", value: "Description" },
+				columnKind: "required",
+				createCellContent: (item) => createApiSummaryCell(item, config),
+			},
+		],
+	});
 }
 
 /**
