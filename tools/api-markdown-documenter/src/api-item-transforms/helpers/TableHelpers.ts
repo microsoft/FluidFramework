@@ -184,6 +184,7 @@ function createSummaryTable(
 	}
 }
 
+// TODO: Remove this
 /**
  * Default summary table generation. Displays each item's name, modifiers, and description (summary) comment.
  *
@@ -202,51 +203,30 @@ export function createDefaultSummaryTable(
 		return undefined;
 	}
 
-	// Only display "Alerts" column if there are any alerts to display.
-	const alerts = apiItems.map((apiItem) => config.getAlertsForItem(apiItem));
-	const hasAlerts = alerts.some((itemAlerts) => itemAlerts.length > 0);
-
-	// Only display "Modifiers" column if there are any modifiers to display.
-	const hasModifiers = apiItems.some(
-		(apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
-	);
-
-	const headerRowCells: TableCell[] = [
-		createPlainTextTableCell(getTableHeadingTitleForApiKind(itemKind)),
-	];
-	if (hasAlerts) {
-		headerRowCells.push(createPlainTextTableCell("Alerts"));
-	}
-	if (hasModifiers) {
-		headerRowCells.push(createPlainTextTableCell("Modifiers"));
-	}
-	headerRowCells.push(createPlainTextTableCell("Description"));
-	const headerRow: TableRow = {
-		type: "tableRow",
-		children: headerRowCells,
-	};
-
-	const bodyRows: TableRow[] = [];
-	for (let i = 0; i < apiItems.length; i++) {
-		const bodyRowCells: TableCell[] = [createApiTitleCell(apiItems[i], config)];
-		if (hasAlerts) {
-			bodyRowCells.push(createAlertsCell(alerts[i]));
-		}
-		if (hasModifiers) {
-			bodyRowCells.push(createModifiersCell(apiItems[i], options?.modifiersToOmit));
-		}
-		bodyRowCells.push(createApiSummaryCell(apiItems[i], config));
-
-		bodyRows.push({
-			type: "tableRow",
-			children: bodyRowCells,
-		});
-	}
-
-	return {
-		type: "table",
-		children: [headerRow, ...bodyRows],
-	};
+	return createTableForApiItems(apiItems, {
+		columnOptions: [
+			{
+				title: { type: "text", value: getTableHeadingTitleForApiKind(itemKind) },
+				columnKind: "required",
+				createCellContent: (item) => createApiTitleCell(item, config),
+			},
+			{
+				title: { type: "text", value: "Alerts" },
+				columnKind: "optional",
+				createCellContent: (item) => createAlertsCell(config.getAlertsForItem(item)),
+			},
+			{
+				title: { type: "text", value: "Modifiers" },
+				columnKind: "optional",
+				createCellContent: (item) => createModifiersCell(item, options?.modifiersToOmit),
+			},
+			{
+				title: { type: "text", value: "Description" },
+				columnKind: "required",
+				createCellContent: (item) => createApiSummaryCell(item, config),
+			},
+		],
+	});
 }
 
 /**
