@@ -82,7 +82,7 @@ export function useTree(subtreeRoot: TreeNode): number;
 export function useTreeObservations<TResult>(trackDuring: () => TResult): TResult;
 
 // @public
-export type WrapNodes<T> = T extends TreeNode ? PropTreeNode<T> : T extends NodeRecord ? WrapPropTreeNodeRecord<T> : T;
+export type WrapNodes<T> = T extends TreeNode ? PropTreeNode<T> : T extends readonly (infer U)[] ? readonly WrapNodes<U>[] : T extends NodeRecord ? WrapPropTreeNodeRecord<T> : T;
 
 // @public
 export type WrapPropTreeNodeRecord<T extends NodeRecord> = {

@@ -114,15 +114,17 @@ export function usePropTreeNode<T extends TreeNode | TreeLeafValue, TResult>(
 /**
  * Type TreeNodes in T as {@link PropTreeNode}s.
  * @remarks
- * This only handles a few cases (TreeNode, NodeRecord) and leaves other types as is.
- * Users which provide other types (e.g. arrays) which contain TreeNodes will need to handle wrapping those themselves if the wrapping is desired.
+ * This only handles a few cases (TreeNode, NodeRecord, arrays) and leaves other types as is.
+ * Users which provide other types (e.g. maps) which contain TreeNodes will need to handle wrapping those themselves if the wrapping is desired.
  * @public
  */
 export type WrapNodes<T> = T extends TreeNode
 	? PropTreeNode<T>
-	: T extends NodeRecord
-		? WrapPropTreeNodeRecord<T>
-		: T;
+	: T extends readonly (infer U)[]
+		? readonly WrapNodes<U>[]
+		: T extends NodeRecord
+			? WrapPropTreeNodeRecord<T>
+			: T;
 
 /**
  * {@link usePropTreeNode} but takes in a {@link PropTreeNodeRecord}.
