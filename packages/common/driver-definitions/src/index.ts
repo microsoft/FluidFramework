@@ -3,6 +3,15 @@
  * Licensed under the MIT License.
  */
 
+export {
+	type ICacheEntry,
+	type IEntry,
+	type IFileEntry,
+	type IPersistedCache,
+	getKeyForCacheEntry,
+	maximumCacheDurationMs,
+} from "./cache.js";
+
 export type {
 	DriverError,
 	IAnyDriverError,

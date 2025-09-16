@@ -5,21 +5,23 @@
 
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
+	maximumCacheDurationMs,
+	type ICacheEntry,
+	type IEntry,
+	type IFileEntry,
+	type IPersistedCache,
+} from "@fluidframework/driver-definitions/internal";
+import {
 	LocationRedirectionError,
 	NonRetryableError,
 	RateLimiter,
 	ThrottlingError,
 } from "@fluidframework/driver-utils/internal";
 import {
-	type ICacheEntry,
-	type IEntry,
-	type IFileEntry,
 	type IOdspError,
 	type IOdspErrorAugmentations,
 	type IOdspResolvedUrl,
-	type IPersistedCache,
 	OdspErrorTypes,
-	maximumCacheDurationMs,
 	snapshotKey,
 	snapshotWithLoadingGroupIdKey,
 } from "@fluidframework/odsp-driver-definitions/internal";

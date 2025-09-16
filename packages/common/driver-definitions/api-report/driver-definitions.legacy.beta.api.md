@@ -113,6 +113,11 @@ export interface IBranchOrigin {
     sequenceNumber: number;
 }
 
+// @beta @legacy
+export interface ICacheEntry extends IEntry {
+    file: IFileEntry;
+}
+
 // @public
 export interface ICapabilities {
     interactive: boolean;
@@ -319,6 +324,18 @@ export interface IDriverErrorBase {
     online?: string;
 }
 
+// @beta @legacy
+export interface IEntry {
+    key: string;
+    type: string;
+}
+
+// @beta @legacy (undocumented)
+export interface IFileEntry {
+    docId: string;
+    resolvedUrl: IResolvedUrl;
+}
+
 // @beta @legacy (undocumented)
 export interface IGenericNetworkError extends IDriverErrorBase {
     // (undocumented)
@@ -348,6 +365,13 @@ export interface INackContent {
     message: string;
     retryAfter?: number;
     type: NackErrorType;
+}
+
+// @beta @legacy
+export interface IPersistedCache {
+    get(entry: ICacheEntry): Promise<unknown>;
+    put(entry: ICacheEntry, value: unknown): Promise<void>;
+    removeEntries(file: IFileEntry): Promise<void>;
 }
 
 // @beta @legacy (undocumented)

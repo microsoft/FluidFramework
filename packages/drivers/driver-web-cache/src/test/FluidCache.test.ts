@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ICacheEntry } from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	getKeyForCacheEntry,
+	type ICacheEntry,
+} from "@fluidframework/driver-definitions/internal";
 import { openDB } from "idb";
 
 import { FluidCache } from "../FluidCache.js";
@@ -11,7 +14,6 @@ import {
 	FluidDriverCacheDBName,
 	FluidDriverObjectStoreName,
 	getFluidCacheIndexedDbInstance,
-	getKeyForCacheEntry,
 } from "../FluidCacheIndexedDb.js";
 
 // eslint-disable-next-line import/no-unassigned-import, @typescript-eslint/no-require-imports, import/no-internal-modules

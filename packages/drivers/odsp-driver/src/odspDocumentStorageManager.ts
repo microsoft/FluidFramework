@@ -16,6 +16,7 @@ import {
 	type ICreateBlobResponse,
 	type IVersion,
 	type ISnapshotTree,
+	getKeyForCacheEntry,
 } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, RateLimiter } from "@fluidframework/driver-utils/internal";
 import {
@@ -23,7 +24,6 @@ import {
 	type ISnapshotOptions,
 	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
-	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,

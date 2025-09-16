@@ -4,11 +4,11 @@
  */
 
 import {
-	ICacheEntry,
-	IFileEntry,
-	IPersistedCache,
 	getKeyForCacheEntry,
-} from "@fluidframework/odsp-driver-definitions/internal";
+	type ICacheEntry,
+	type IFileEntry,
+	type IPersistedCache,
+} from "@fluidframework/driver-definitions/internal";
 
 export class OdspSampleCache implements IPersistedCache {
 	private readonly cache = new Map<string, any>();

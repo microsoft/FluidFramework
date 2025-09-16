@@ -12,12 +12,6 @@ export {
 } from "./factory.js";
 export {
 	CacheContentType,
-	maximumCacheDurationMs,
-	getKeyForCacheEntry,
-	ICacheEntry,
-	IEntry,
-	IFileEntry,
-	IPersistedCache,
 	snapshotKey,
 	snapshotWithLoadingGroupIdKey,
 } from "./odspCache.js";

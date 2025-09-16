@@ -6,11 +6,12 @@
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	ICacheEntry,
-	IFileEntry,
 	IPersistedCache,
 	maximumCacheDurationMs,
-} from "@fluidframework/odsp-driver-definitions/internal";
+	IFileEntry,
+	ICacheEntry,
+	getKeyForCacheEntry,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	UsageError,
@@ -22,7 +23,6 @@ import {
 	FluidCacheDBSchema,
 	FluidDriverObjectStoreName,
 	getFluidCacheIndexedDbInstance,
-	getKeyForCacheEntry,
 } from "./FluidCacheIndexedDb.js";
 import {
 	FluidCacheErrorEvent,
