@@ -17,6 +17,8 @@ import type { ApiTypeLike } from "../../../utilities/index.js";
 import type { ApiItemTransformationConfiguration } from "../../configuration/index.js";
 import { getTypeMembers } from "../InheritanceUtilities.js";
 
+// TODO: this needs a lot of documentation.
+
 function createMockContainerKey(displayName: string, kind: ApiItemKind): string {
 	return `${displayName}|${kind}`;
 }
