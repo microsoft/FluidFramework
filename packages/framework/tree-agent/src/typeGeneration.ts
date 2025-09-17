@@ -125,6 +125,7 @@ function getBoundMethods(
 }
 
 function addBindingIntersectionIfNeeded(
+	typeString: "array" | "map" | "record",
 	zodTypeBound: ZodTypeAny,
 	definition: string,
 	simpleNodeSchema: SimpleNodeSchema,
@@ -144,7 +145,7 @@ function addBindingIntersectionIfNeeded(
 			methods[name] = zodFunction;
 		}
 		zodType = z.intersection(zodType, z.object(methods));
-		const methodNote = "Note: this array has methods directly on it.";
+		const methodNote = `Note: this ${typeString} has custom user-defined methods directly on it.`;
 		description = description === "" ? methodNote : `${description} - ${methodNote}`;
 	}
 	return zodType.describe(description);
@@ -195,6 +196,7 @@ function getOrCreateType(
 					),
 				);
 				return addBindingIntersectionIfNeeded(
+					"map",
 					zodType,
 					definition,
 					simpleNodeSchema,
@@ -211,6 +213,7 @@ function getOrCreateType(
 					),
 				);
 				return addBindingIntersectionIfNeeded(
+					"record",
 					zodType,
 					definition,
 					simpleNodeSchema,
@@ -227,6 +230,7 @@ function getOrCreateType(
 					),
 				);
 				return addBindingIntersectionIfNeeded(
+					"array",
 					zodType,
 					definition,
 					simpleNodeSchema,

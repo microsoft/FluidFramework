@@ -151,7 +151,7 @@ describe("System prompt", () => {
 		const domainSchemaString = getZodSchemaAsTypeScript(domainTypes);
 		assert.deepEqual(
 			domainSchemaString,
-			`// Note: this array has methods directly on it.
+			`// Note: this array has custom user-defined methods directly on it.
 type Todo = string[] & {
     M2(n: string): boolean;
 };
@@ -201,7 +201,7 @@ type Todo = string[] & {
 		const domainSchemaString = getZodSchemaAsTypeScript(domainTypes);
 		assert.deepEqual(
 			domainSchemaString,
-			`// Note: this map has methods directly on it.
+			`// Note: this map has custom user-defined methods directly on it.
 type Todo = Map<string, string> & {
     M2(n: string): boolean;
 };
