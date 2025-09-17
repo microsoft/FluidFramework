@@ -162,7 +162,7 @@ function getOrCreateType(
 							definitionMap,
 							simpleNodeSchema.allowedTypesIdentifiers,
 							objectCache,
-							treeSchemaMap,
+							bindableSchemas,
 						),
 					)
 					.describe(simpleNodeSchema.metadata?.description ?? "");
