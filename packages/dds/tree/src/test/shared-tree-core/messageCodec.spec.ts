@@ -66,6 +66,7 @@ const testCases: EncodingTestData<
 		[
 			"Message with commit 1",
 			{
+				type: "commit",
 				sessionId: testIdCompressor.localSessionId,
 				commit: commit1,
 				branchId: "main",
@@ -75,6 +76,7 @@ const testCases: EncodingTestData<
 		[
 			"Message with commit 2",
 			{
+				type: "commit",
 				sessionId: testIdCompressor.localSessionId,
 				commit: commit2,
 				branchId: "main",
@@ -88,6 +90,7 @@ const testCases: EncodingTestData<
 			[
 				"Missing sessionId",
 				{
+					type: "commit",
 					commit: commit1,
 					branchId: "main",
 				},
@@ -96,6 +99,7 @@ const testCases: EncodingTestData<
 			[
 				"Missing commit",
 				{
+					type: "commit",
 					sessionId: "session1",
 					branchId: "main",
 				},
@@ -104,6 +108,7 @@ const testCases: EncodingTestData<
 			[
 				"Message with invalid sessionId",
 				{
+					type: "commit",
 					sessionId: 1,
 					commit: commit1,
 					branchId: "main",
@@ -113,6 +118,7 @@ const testCases: EncodingTestData<
 			[
 				"Message with commit without revision",
 				{
+					type: "commit",
 					sessionId: "session1",
 					commit: commitWithoutRevision,
 					branchId: "main",
@@ -122,6 +128,7 @@ const testCases: EncodingTestData<
 			[
 				"Message with invalid commit",
 				{
+					type: "commit",
 					sessionId: "session1",
 					commit: commitInvalid,
 					branchId: "main",
@@ -154,6 +161,7 @@ describe("message codec", () => {
 		it("Drops parent commit fields on encode", () => {
 			const revision = testIdCompressor.generateCompressedId();
 			const message: DecodedMessage<TestChange> = {
+				type: "commit",
 				sessionId,
 				commit: {
 					revision,
@@ -185,6 +193,7 @@ describe("message codec", () => {
 			} satisfies Message);
 			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
 			assert.deepEqual(actual, {
+				type: "commit",
 				commit: {
 					revision: testRevisionTagCodec.decode(revision, {
 						originatorId,
@@ -209,6 +218,7 @@ describe("message codec", () => {
 			} satisfies Message);
 			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
 			assert.deepEqual(actual, {
+				type: "commit",
 				commit: {
 					revision: testRevisionTagCodec.decode(revision, {
 						originatorId,

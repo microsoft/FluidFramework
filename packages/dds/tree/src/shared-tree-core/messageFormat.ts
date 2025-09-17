@@ -8,6 +8,7 @@ import { type TSchema, Type } from "@sinclair/typebox";
 
 import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
+import type { EncodedBranchId } from "./branch.js";
 
 /**
  * The format of messages that SharedTree sends and receives.
@@ -43,6 +44,7 @@ export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object({
 		revision: RevisionTagSchema,
 		originatorId: SessionIdSchema,
-		changeset: tChange,
+		changeset: Type.Optional(tChange),
+		branchId: Type.Number(),
 		version: Type.Optional(Type.Number()),
 	});

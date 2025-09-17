@@ -4,7 +4,7 @@
  */
 
 import type { IFluidLoadable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
@@ -320,23 +320,40 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			this.editManager.advanceMinimumSequenceNumber(newRevision, false);
 			return undefined;
 		}
-		const message = this.messageCodec.encode(
+
+		this.submitMessage(
 			{
+				type: "commit",
 				commit: enrichedCommit,
 				sessionId: this.editManager.localSessionId,
 				branchId,
 			},
-			{
-				idCompressor: this.idCompressor,
-				schema: schemaAndPolicy,
-			},
+			schemaAndPolicy,
 		);
-		this.submitLocalMessage(message, {
+
+		this.resubmitMachine.onCommitSubmitted(enrichedCommit);
+	}
+
+	protected submitBranchCreation(branchId: BranchId): void {
+		this.submitMessage(
+			{ type: "branch", sessionId: this.editManager.localSessionId, branchId },
+			this.schemaAndPolicy,
+		);
+	}
+
+	private submitMessage(
+		message: DecodedMessage<TChange>,
+		schemaAndPolicy: ClonableSchemaAndPolicy,
+	): void {
+		const encodedMessage = this.messageCodec.encode(message, {
+			idCompressor: this.idCompressor,
+			schema: schemaAndPolicy,
+		});
+		this.submitLocalMessage(encodedMessage, {
 			// Clone the schema to ensure that during resubmit the schema has not been mutated by later changes
 			schema: schemaAndPolicy.schema.clone(),
 			policy: schemaAndPolicy.policy,
 		});
-		this.resubmitMachine.onCommitSubmitted(enrichedCommit);
 	}
 
 	/**
@@ -350,18 +367,31 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		// Get a list of all the commits from the messages.
 		for (const messageContent of messagesContent) {
 			// Empty context object is passed in, as our decode function is schema-agnostic.
-			const { commit, sessionId } = this.messageCodec.decode(messageContent.contents, {
+			const message = this.messageCodec.decode(messageContent.contents, {
 				idCompressor: this.idCompressor,
 			});
-			commits.push(commit);
 
 			if (messagesSessionId !== undefined) {
 				assert(
-					messagesSessionId === sessionId,
+					messagesSessionId === message.sessionId,
 					0xad9 /* All messages in a bunch must have the same session ID */,
 				);
 			}
-			messagesSessionId = sessionId;
+			messagesSessionId = message.sessionId;
+
+			const type = message.type;
+			switch (type) {
+				case "commit": {
+					commits.push(message.commit);
+					break;
+				}
+				case "branch": {
+					this.editManager.addBranch(message.branchId);
+					break;
+				}
+				default:
+					unreachableCase(type);
+			}
 		}
 
 		assert(messagesSessionId !== undefined, 0xada /* Messages must have a session ID */);
@@ -388,7 +418,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	public createSharedBranch(): BranchId {
 		const branchId = this.idCompressor.generateCompressedId();
 		this.editManager.addBranch(branchId);
-
+		this.submitBranchCreation(branchId);
 		return branchId;
 	}
 
@@ -401,56 +431,58 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	}
 
 	public reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown): void {
-		// Empty context object is passed in, as our decode function is schema-agnostic.
-		const {
-			commit: { revision },
-			branchId,
-		} = this.messageCodec.decode(this.serializer.decode(content), {
-			idCompressor: this.idCompressor,
-		});
-		// If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
-		if (this.resubmitMachine.isInResubmitPhase === false) {
-			const localCommits = this.editManager.getLocalCommits();
-			const revisionIndex = localCommits.findIndex((c) => c.revision === revision);
-			assert(revisionIndex >= 0, 0xbdb /* revision must exist in local commits */);
-			const toResubmit = localCommits.slice(revisionIndex);
-			this.resubmitMachine.prepareForResubmit(toResubmit);
-		}
-		assert(
-			isClonableSchemaPolicy(localOpMetadata),
-			0x95e /* Local metadata must contain schema and policy. */,
-		);
-		assert(
-			this.resubmitMachine.isInResubmitPhase !== false,
-			0x984 /* Invalid resubmit outside of resubmit phase */,
-		);
-		const enrichedCommit = this.resubmitMachine.peekNextCommit();
-		this.submitCommit(branchId, enrichedCommit, localOpMetadata, true);
+		// XXX
+		// // Empty context object is passed in, as our decode function is schema-agnostic.
+		// const {
+		// 	commit: { revision },
+		// 	branchId,
+		// } = this.messageCodec.decode(this.serializer.decode(content), {
+		// 	idCompressor: this.idCompressor,
+		// });
+		// // If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
+		// if (this.resubmitMachine.isInResubmitPhase === false) {
+		// 	const localCommits = this.editManager.getLocalCommits();
+		// 	const revisionIndex = localCommits.findIndex((c) => c.revision === revision);
+		// 	assert(revisionIndex >= 0, 0xbdb /* revision must exist in local commits */);
+		// 	const toResubmit = localCommits.slice(revisionIndex);
+		// 	this.resubmitMachine.prepareForResubmit(toResubmit);
+		// }
+		// assert(
+		// 	isClonableSchemaPolicy(localOpMetadata),
+		// 	0x95e /* Local metadata must contain schema and policy. */,
+		// );
+		// assert(
+		// 	this.resubmitMachine.isInResubmitPhase !== false,
+		// 	0x984 /* Invalid resubmit outside of resubmit phase */,
+		// );
+		// const enrichedCommit = this.resubmitMachine.peekNextCommit();
+		// this.submitCommit(branchId, enrichedCommit, localOpMetadata, true);
 	}
 	public rollback(content: JsonCompatibleReadOnly, localOpMetadata: unknown): void {
-		// Empty context object is passed in, as our decode function is schema-agnostic.
-		const {
-			commit: { revision },
-			branchId,
-		} = this.messageCodec.decode(this.serializer.decode(content), {
-			idCompressor: this.idCompressor,
-		});
-		const branch = this.editManager.getLocalBranch(branchId);
-		const head = branch.getHead();
-		assert(head.revision === revision, "Can only rollback latest commit");
-		const newHead = head.parent ?? fail("must have parent");
-		branch.removeAfter(newHead);
-		this.resubmitMachine.onCommitRollback(newHead);
+		// XXX
+		// // Empty context object is passed in, as our decode function is schema-agnostic.
+		// const {
+		// 	commit: { revision },
+		// 	branchId,
+		// } = this.messageCodec.decode(this.serializer.decode(content), {
+		// 	idCompressor: this.idCompressor,
+		// });
+		// const branch = this.editManager.getLocalBranch(branchId);
+		// const head = branch.getHead();
+		// assert(head.revision === revision, "Can only rollback latest commit");
+		// const newHead = head.parent ?? fail("must have parent");
+		// branch.removeAfter(newHead);
+		// this.resubmitMachine.onCommitRollback(newHead);
 	}
 
 	public applyStashedOp(content: JsonCompatibleReadOnly): void {
-		// Empty context object is passed in, as our decode function is schema-agnostic.
-		const {
-			commit: { revision, change },
-			branchId,
-		} = this.messageCodec.decode(content, { idCompressor: this.idCompressor });
-
-		this.editManager.getLocalBranch(branchId).apply({ change, revision });
+		// XXX
+		// // Empty context object is passed in, as our decode function is schema-agnostic.
+		// const {
+		// 	commit: { revision, change },
+		// 	branchId,
+		// } = this.messageCodec.decode(content, { idCompressor: this.idCompressor });
+		// this.editManager.getLocalBranch(branchId).apply({ change, revision });
 	}
 }
 

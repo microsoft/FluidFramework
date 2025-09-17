@@ -26,6 +26,7 @@ import { Message } from "./messageFormat.js";
 import type { DecodedMessage } from "./messageTypes.js";
 import type { IIdCompressor, OpSpaceCompressedId } from "@fluidframework/id-compressor";
 import type { BranchId } from "./branch.js";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 export interface MessageEncodingContext {
 	idCompressor: IIdCompressor;
@@ -107,28 +108,46 @@ function makeV1CodecWithVersion<TChangeset>(
 		Message(changeCodec.encodedSchema ?? Type.Any()),
 		{
 			encode: (
-				{ commit, sessionId: originatorId, branchId }: DecodedMessage<TChangeset>,
+				message: DecodedMessage<TChangeset>,
 				context: MessageEncodingContext,
-			) => {
-				const message: Message = {
-					revision: revisionTagCodec.encode(commit.revision, {
-						originatorId,
-						idCompressor: context.idCompressor,
-						revision: undefined,
-					}),
-					originatorId,
-					changeset: changeCodec.encode(commit.change, {
-						originatorId,
-						schema: context.schema,
-						idCompressor: context.idCompressor,
-						revision: commit.revision,
-					}),
-					branchId: encodeBranchId(context.idCompressor, branchId),
-					version,
-				};
-				return message as unknown as JsonCompatibleReadOnly;
+			): JsonCompatibleReadOnly => {
+				const type = message.type;
+				switch (type) {
+					case "commit": {
+						const changeContext: ChangeEncodingContext = {
+							originatorId: message.sessionId,
+							schema: context.schema,
+							idCompressor: context.idCompressor,
+							revision: message.commit.revision,
+						};
+
+						return {
+							revision: revisionTagCodec.encode(message.commit.revision, {
+								originatorId: message.sessionId,
+								idCompressor: context.idCompressor,
+								revision: undefined,
+							}),
+							sessionId: message.sessionId,
+							changeset: changeCodec.encode(message.commit.change, changeContext),
+							branchId: encodeBranchId(context.idCompressor, message.branchId),
+							version,
+						};
+					}
+					case "branch": {
+						return {
+							sessionId: message.sessionId,
+							branchId: encodeBranchId(context.idCompressor, message.branchId),
+							version,
+						};
+					}
+					default:
+						unreachableCase(type);
+				}
 			},
-			decode: (encoded: JsonCompatibleReadOnly, context: MessageEncodingContext) => {
+			decode: (
+				encoded: JsonCompatibleReadOnly,
+				context: MessageEncodingContext,
+			): DecodedMessage<TChangeset> => {
 				const {
 					revision: encodedRevision,
 					originatorId,
@@ -146,7 +165,12 @@ function makeV1CodecWithVersion<TChangeset>(
 
 				const branchId = decodeBranchId(context.idCompressor, encodedBranchId, changeContext);
 
+				if (changeset === undefined) {
+					return { type: "branch", sessionId: originatorId, branchId };
+				}
+
 				return {
+					type: "commit",
 					commit: {
 						revision,
 						change: changeCodec.decode(changeset, {
@@ -164,10 +188,19 @@ function makeV1CodecWithVersion<TChangeset>(
 	);
 }
 
-function encodeBranchId(idCompressor: IIdCompressor, branchId: BranchId): OpSpaceCompressedId | undefined {
+function encodeBranchId(
+	idCompressor: IIdCompressor,
+	branchId: BranchId,
+): OpSpaceCompressedId | undefined {
 	return branchId === "main" ? undefined : idCompressor.normalizeToOpSpace(branchId);
 }
 
-function decodeBranchId(idCompressor: IIdCompressor, encoded: OpSpaceCompressedId | undefined, context: ChangeEncodingContext): BranchId {
-	return encoded === undefined ? "main" : idCompressor.normalizeToSessionSpace(encoded, context.originatorId);
+function decodeBranchId(
+	idCompressor: IIdCompressor,
+	encoded: OpSpaceCompressedId | undefined,
+	context: ChangeEncodingContext,
+): BranchId {
+	return encoded === undefined
+		? "main"
+		: idCompressor.normalizeToSessionSpace(encoded, context.originatorId);
 }
