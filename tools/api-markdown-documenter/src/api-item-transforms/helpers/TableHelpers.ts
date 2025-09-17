@@ -17,7 +17,7 @@ import {
 } from "@microsoft/api-extractor-model";
 import type { DocSection } from "@microsoft/tsdoc";
 import { toHtml } from "hast-util-to-html";
-import type { Html, PhrasingContent, Table, TableCell, TableRow } from "mdast";
+import type { Html, PhrasingContent, Table, TableCell } from "mdast";
 import { toHast } from "mdast-util-to-hast";
 
 import type { Section } from "../../mdast/index.js";
@@ -33,6 +33,7 @@ import type { ApiItemTransformationConfiguration } from "../configuration/index.
 import { getLinkForApiItem } from "../utilities/index.js";
 
 import { createExcerptSpanWithHyperlinks } from "./Helpers.js";
+import { createTableFromItems } from "./TableCreation.js";
 
 /**
  * Input properties for creating a table of API members
@@ -100,7 +101,7 @@ export function createMemberTables(
  * @param memberTableProperties - The table configuration.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createTableWithHeading(
+function createTableWithHeading(
 	memberTableProperties: MemberTableProperties,
 	config: ApiItemTransformationConfiguration,
 ): Section | undefined {
@@ -134,7 +135,7 @@ export function createTableWithHeading(
  * @param config - See {@link ApiItemTransformationConfiguration}.
  * @param options - Table content / formatting options.
  */
-export function createSummaryTable(
+function createSummaryTable(
 	apiItems: readonly ApiItem[],
 	itemKind: ApiItemKind,
 	config: ApiItemTransformationConfiguration,
@@ -183,6 +184,7 @@ export function createSummaryTable(
 	}
 }
 
+// TODO: Remove this
 /**
  * Default summary table generation. Displays each item's name, modifiers, and description (summary) comment.
  *
@@ -201,51 +203,30 @@ export function createDefaultSummaryTable(
 		return undefined;
 	}
 
-	// Only display "Alerts" column if there are any alerts to display.
-	const alerts = apiItems.map((apiItem) => config.getAlertsForItem(apiItem));
-	const hasAlerts = alerts.some((itemAlerts) => itemAlerts.length > 0);
-
-	// Only display "Modifiers" column if there are any modifiers to display.
-	const hasModifiers = apiItems.some(
-		(apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
-	);
-
-	const headerRowCells: TableCell[] = [
-		createPlainTextTableCell(getTableHeadingTitleForApiKind(itemKind)),
-	];
-	if (hasAlerts) {
-		headerRowCells.push(createPlainTextTableCell("Alerts"));
-	}
-	if (hasModifiers) {
-		headerRowCells.push(createPlainTextTableCell("Modifiers"));
-	}
-	headerRowCells.push(createPlainTextTableCell("Description"));
-	const headerRow: TableRow = {
-		type: "tableRow",
-		children: headerRowCells,
-	};
-
-	const bodyRows: TableRow[] = [];
-	for (let i = 0; i < apiItems.length; i++) {
-		const bodyRowCells: TableCell[] = [createApiTitleCell(apiItems[i], config)];
-		if (hasAlerts) {
-			bodyRowCells.push(createAlertsCell(alerts[i]));
-		}
-		if (hasModifiers) {
-			bodyRowCells.push(createModifiersCell(apiItems[i], options?.modifiersToOmit));
-		}
-		bodyRowCells.push(createApiSummaryCell(apiItems[i], config));
-
-		bodyRows.push({
-			type: "tableRow",
-			children: bodyRowCells,
-		});
-	}
-
-	return {
-		type: "table",
-		children: [headerRow, ...bodyRows],
-	};
+	return createTableFromItems(apiItems, {
+		columnOptions: [
+			{
+				title: { type: "text", value: getTableHeadingTitleForApiKind(itemKind) },
+				columnKind: "required",
+				createCellContent: (item) => createNameCell(item, config),
+			},
+			{
+				title: { type: "text", value: "Alerts" },
+				columnKind: "optional",
+				createCellContent: (item) => createAlertsCell(config.getAlertsForItem(item)),
+			},
+			{
+				title: { type: "text", value: "Modifiers" },
+				columnKind: "optional",
+				createCellContent: (item) => createModifiersCell(item, options?.modifiersToOmit),
+			},
+			{
+				title: { type: "text", value: "Description" },
+				columnKind: "required",
+				createCellContent: (item) => createDescriptionCell(item, config),
+			},
+		],
+	});
 }
 
 /**
@@ -260,44 +241,43 @@ export function createParametersSummaryTable(
 	apiParameters: readonly Parameter[],
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): Table {
-	// Only display "Modifiers" column if there are any optional parameters present.
-	const hasOptionalParameters = apiParameters.some((apiParameter) => apiParameter.isOptional);
-
-	const headerRowCells: TableCell[] = [createPlainTextTableCell("Parameter")];
-	if (hasOptionalParameters) {
-		headerRowCells.push(createPlainTextTableCell("Modifiers"));
-	}
-	headerRowCells.push(createPlainTextTableCell("Type"));
-	headerRowCells.push(createPlainTextTableCell("Description"));
-	const headerRow: TableRow = {
-		type: "tableRow",
-		children: headerRowCells,
-	};
-
-	function createModifierCell(apiParameter: Parameter): TableCell {
-		return apiParameter.isOptional ? createPlainTextTableCell("optional") : emptyTableCell;
+): Table | undefined {
+	if (apiParameters.length === 0) {
+		return undefined;
 	}
 
-	const bodyRows: TableRow[] = [];
-	for (const apiParameter of apiParameters) {
-		const bodyRowCells: TableCell[] = [createParameterTitleCell(apiParameter)];
-		if (hasOptionalParameters) {
-			bodyRowCells.push(createModifierCell(apiParameter));
-		}
-		bodyRowCells.push(createParameterTypeCell(apiParameter, config));
-		bodyRowCells.push(createParameterSummaryCell(apiParameter, contextApiItem, config));
-
-		bodyRows.push({
-			type: "tableRow",
-			children: bodyRowCells,
-		});
+	function createModifierCell(apiParameter: Parameter): TableCell | undefined {
+		return apiParameter.isOptional ? createPlainTextTableCell("optional") : undefined;
 	}
 
-	return {
-		type: "table",
-		children: [headerRow, ...bodyRows],
-	};
+	function createParameterTypeCell(apiParameter: Parameter): TableCell | undefined {
+		return createTypeExcerptCell(apiParameter.parameterTypeExcerpt, config);
+	}
+
+	return createTableFromItems(apiParameters, {
+		columnOptions: [
+			{
+				title: { type: "text", value: "Parameter" },
+				columnKind: "required",
+				createCellContent: (item) => createParameterTitleCell(item),
+			},
+			{
+				title: { type: "text", value: "Modifiers" },
+				columnKind: "optional",
+				createCellContent: (item) => createModifierCell(item),
+			},
+			{
+				title: { type: "text", value: "Type" },
+				columnKind: "required",
+				createCellContent: (item) => createParameterTypeCell(item),
+			},
+			{
+				title: { type: "text", value: "Description" },
+				columnKind: "required",
+				createCellContent: (item) => createParameterSummaryCell(item, contextApiItem, config),
+			},
+		],
+	});
 }
 
 /**
@@ -312,75 +292,62 @@ export function createTypeParametersSummaryTable(
 	apiTypeParameters: readonly TypeParameter[],
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): Table {
-	// Only display the "Constraint" column if there are any constraints present among the type parameters.
-	const hasAnyConstraints = apiTypeParameters.some(
-		(apiTypeParameter) => !apiTypeParameter.constraintExcerpt.isEmpty,
-	);
-
-	// Only display the "Default" column if there are any defaults present among the type parameters.
-	const hasAnyDefaults = apiTypeParameters.some(
-		(apiTypeParameter) => !apiTypeParameter.defaultTypeExcerpt.isEmpty,
-	);
-
-	const headerRowCells: TableCell[] = [createPlainTextTableCell("Parameter")];
-	if (hasAnyConstraints) {
-		headerRowCells.push(createPlainTextTableCell("Constraint"));
+): Table | undefined {
+	if (apiTypeParameters.length === 0) {
+		return undefined;
 	}
-	if (hasAnyDefaults) {
-		headerRowCells.push(createPlainTextTableCell("Default"));
-	}
-	headerRowCells.push(createPlainTextTableCell("Description"));
-	const headerRow: TableRow = {
-		type: "tableRow",
-		children: headerRowCells,
-	};
 
-	function createTypeConstraintCell(apiParameter: TypeParameter): TableCell {
+	function createTypeConstraintCell(apiParameter: TypeParameter): TableCell | undefined {
 		const constraintSpan = createExcerptSpanWithHyperlinks(
 			apiParameter.constraintExcerpt,
 			config,
 		);
-		return {
-			type: "tableCell",
-			children: constraintSpan,
-		};
+		return constraintSpan.length === 0
+			? undefined
+			: {
+					type: "tableCell",
+					children: constraintSpan,
+				};
 	}
 
-	function createTypeDefaultCell(apiParameter: TypeParameter): TableCell {
+	function createTypeDefaultCell(apiParameter: TypeParameter): TableCell | undefined {
 		const excerptSpan = createExcerptSpanWithHyperlinks(
 			apiParameter.defaultTypeExcerpt,
 			config,
 		);
-		return {
-			type: "tableCell",
-			children: excerptSpan,
-		};
+		return excerptSpan.length === 0
+			? undefined
+			: {
+					type: "tableCell",
+					children: excerptSpan,
+				};
 	}
 
-	const bodyRows: TableRow[] = [];
-	for (const apiTypeParameter of apiTypeParameters) {
-		const bodyRowCells: TableCell[] = [createPlainTextTableCell(apiTypeParameter.name)];
-		if (hasAnyConstraints) {
-			bodyRowCells.push(createTypeConstraintCell(apiTypeParameter));
-		}
-		if (hasAnyDefaults) {
-			bodyRowCells.push(createTypeDefaultCell(apiTypeParameter));
-		}
-		bodyRowCells.push(
-			createTypeParameterSummaryCell(apiTypeParameter, contextApiItem, config),
-		);
-
-		bodyRows.push({
-			type: "tableRow",
-			children: bodyRowCells,
-		});
-	}
-
-	return {
-		type: "table",
-		children: [headerRow, ...bodyRows],
-	};
+	return createTableFromItems(apiTypeParameters, {
+		columnOptions: [
+			{
+				title: { type: "text", value: "Parameter" },
+				columnKind: "required",
+				createCellContent: (item) => createPlainTextTableCell(item.name),
+			},
+			{
+				title: { type: "text", value: "Constraint" },
+				columnKind: "optional",
+				createCellContent: (item) => createTypeConstraintCell(item),
+			},
+			{
+				title: { type: "text", value: "Default" },
+				columnKind: "optional",
+				createCellContent: (item) => createTypeDefaultCell(item),
+			},
+			{
+				title: { type: "text", value: "Description" },
+				columnKind: "required",
+				createCellContent: (item) =>
+					createTypeParameterSummaryCell(item, contextApiItem, config),
+			},
+		],
+	});
 }
 
 /**
@@ -402,58 +369,41 @@ export function createFunctionLikeSummaryTable(
 		return undefined;
 	}
 
-	// Only display "Alerts" column if there are any alerts to display.
-	const alerts = apiItems.map((apiItem) => config.getAlertsForItem(apiItem));
-	const hasAlerts = alerts.some((itemAlerts) => itemAlerts.length > 0);
-
-	// Only display "Modifiers" column if there are any modifiers to display.
-	const hasModifiers = apiItems.some(
-		(apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
-	);
-	const hasReturnTypes = apiItems.some((apiItem) => ApiReturnTypeMixin.isBaseClassOf(apiItem));
-
-	const headerRowCells: TableCell[] = [
-		createPlainTextTableCell(getTableHeadingTitleForApiKind(itemKind)),
-	];
-	if (hasAlerts) {
-		headerRowCells.push(createPlainTextTableCell("Alerts"));
-	}
-	if (hasModifiers) {
-		headerRowCells.push(createPlainTextTableCell("Modifiers"));
-	}
-	if (hasReturnTypes) {
-		headerRowCells.push(createPlainTextTableCell("Return Type"));
-	}
-	headerRowCells.push(createPlainTextTableCell("Description"));
-	const headerRow: TableRow = {
-		type: "tableRow",
-		children: headerRowCells,
-	};
-
-	const bodyRows: TableRow[] = [];
-	for (let i = 0; i < apiItems.length; i++) {
-		const bodyRowCells: TableCell[] = [createApiTitleCell(apiItems[i], config)];
-		if (hasAlerts) {
-			bodyRowCells.push(createAlertsCell(alerts[i]));
-		}
-		if (hasModifiers) {
-			bodyRowCells.push(createModifiersCell(apiItems[i], options?.modifiersToOmit));
-		}
-		if (hasReturnTypes) {
-			bodyRowCells.push(createReturnTypeCell(apiItems[i], config));
-		}
-		bodyRowCells.push(createApiSummaryCell(apiItems[i], config));
-
-		bodyRows.push({
-			type: "tableRow",
-			children: bodyRowCells,
-		});
+	function createReturnTypeCell(apiItem: ApiFunctionLike): TableCell | undefined {
+		return ApiReturnTypeMixin.isBaseClassOf(apiItem)
+			? createTypeExcerptCell(apiItem.returnTypeExcerpt, config)
+			: undefined;
 	}
 
-	return {
-		type: "table",
-		children: [headerRow, ...bodyRows],
-	};
+	return createTableFromItems(apiItems, {
+		columnOptions: [
+			{
+				title: { type: "text", value: getTableHeadingTitleForApiKind(itemKind) },
+				columnKind: "required",
+				createCellContent: (item) => createNameCell(item, config),
+			},
+			{
+				title: { type: "text", value: "Alerts" },
+				columnKind: "optional",
+				createCellContent: (item) => createAlertsCell(config.getAlertsForItem(item)),
+			},
+			{
+				title: { type: "text", value: "Modifiers" },
+				columnKind: "optional",
+				createCellContent: (item) => createModifiersCell(item, options?.modifiersToOmit),
+			},
+			{
+				title: { type: "text", value: "Return Type" },
+				columnKind: "optional",
+				createCellContent: (item) => createReturnTypeCell(item),
+			},
+			{
+				title: { type: "text", value: "Description" },
+				columnKind: "required",
+				createCellContent: (item) => createDescriptionCell(item, config),
+			},
+		],
+	});
 }
 
 /**
@@ -473,60 +423,47 @@ export function createPropertiesTable(
 		return undefined;
 	}
 
-	// Only display "Alerts" column if there are any alerts to display.
-	const alerts = apiProperties.map((apiItem) => config.getAlertsForItem(apiItem));
-	const hasAlerts = alerts.some((itemAlerts) => itemAlerts.length > 0);
-
-	// Only display "Modifiers" column if there are any modifiers to display.
-	const hasModifiers = apiProperties.some(
-		(apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
-	);
-	const hasDefaultValues = apiProperties.some(
-		(apiItem) => getDefaultValueBlock(apiItem, config.logger) !== undefined,
-	);
-
-	const headerRowCells: TableCell[] = [createPlainTextTableCell("Property")];
-	if (hasAlerts) {
-		headerRowCells.push(createPlainTextTableCell("Alerts"));
-	}
-	if (hasModifiers) {
-		headerRowCells.push(createPlainTextTableCell("Modifiers"));
-	}
-	if (hasDefaultValues) {
-		headerRowCells.push(createPlainTextTableCell("Default Value"));
-	}
-	headerRowCells.push(createPlainTextTableCell("Type"));
-	headerRowCells.push(createPlainTextTableCell("Description"));
-	const headerRow: TableRow = {
-		type: "tableRow",
-		children: headerRowCells,
-	};
-
-	const bodyRows: TableRow[] = [];
-	for (let i = 0; i < apiProperties.length; i++) {
-		const bodyRowCells: TableCell[] = [createApiTitleCell(apiProperties[i], config)];
-		if (hasAlerts) {
-			bodyRowCells.push(createAlertsCell(alerts[i]));
-		}
-		if (hasModifiers) {
-			bodyRowCells.push(createModifiersCell(apiProperties[i], options?.modifiersToOmit));
-		}
-		if (hasDefaultValues) {
-			bodyRowCells.push(createDefaultValueCell(apiProperties[i], config));
-		}
-		bodyRowCells.push(createTypeExcerptCell(apiProperties[i].propertyTypeExcerpt, config));
-		bodyRowCells.push(createApiSummaryCell(apiProperties[i], config));
-
-		bodyRows.push({
-			type: "tableRow",
-			children: bodyRowCells,
-		});
+	function createDefaultValueCell(apiItem: ApiItem): TableCell | undefined {
+		const defaultValueSection = getDefaultValueBlock(apiItem, config.logger);
+		return defaultValueSection === undefined
+			? undefined
+			: createTableCellFromTsdocSection(defaultValueSection, apiItem, config);
 	}
 
-	return {
-		type: "table",
-		children: [headerRow, ...bodyRows],
-	};
+	return createTableFromItems(apiProperties, {
+		columnOptions: [
+			{
+				title: { type: "text", value: "Property" },
+				columnKind: "required",
+				createCellContent: (item) => createNameCell(item, config),
+			},
+			{
+				title: { type: "text", value: "Alerts" },
+				columnKind: "optional",
+				createCellContent: (item) => createAlertsCell(config.getAlertsForItem(item)),
+			},
+			{
+				title: { type: "text", value: "Modifiers" },
+				columnKind: "optional",
+				createCellContent: (item) => createModifiersCell(item, options?.modifiersToOmit),
+			},
+			{
+				title: { type: "text", value: "Default Value" },
+				columnKind: "optional",
+				createCellContent: (item) => createDefaultValueCell(item),
+			},
+			{
+				title: { type: "text", value: "Type" },
+				columnKind: "required",
+				createCellContent: (item) => createTypeExcerptCell(item.propertyTypeExcerpt, config),
+			},
+			{
+				title: { type: "text", value: "Description" },
+				columnKind: "required",
+				createCellContent: (item) => createDescriptionCell(item, config),
+			},
+		],
+	});
 }
 
 /**
@@ -546,51 +483,35 @@ export function createVariablesTable(
 		return undefined;
 	}
 
-	// Only display "Alerts" column if there are any alerts to display.
-	const alerts = apiVariables.map((apiItem) => config.getAlertsForItem(apiItem));
-	const hasAlerts = alerts.some((itemAlerts) => itemAlerts.length > 0);
-
-	// Only display "Modifiers" column if there are any modifiers to display.
-	const hasModifiers = apiVariables.some(
-		(apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
-	);
-
-	const headerRowCells: TableCell[] = [createPlainTextTableCell("Variable")];
-	if (hasAlerts) {
-		headerRowCells.push(createPlainTextTableCell("Alerts"));
-	}
-	if (hasModifiers) {
-		headerRowCells.push(createPlainTextTableCell("Modifiers"));
-	}
-	headerRowCells.push(createPlainTextTableCell("Type"));
-	headerRowCells.push(createPlainTextTableCell("Description"));
-	const headerRow: TableRow = {
-		type: "tableRow",
-		children: headerRowCells,
-	};
-
-	const bodyRows: TableRow[] = [];
-	for (let i = 0; i < apiVariables.length; i++) {
-		const bodyRowCells: TableCell[] = [createApiTitleCell(apiVariables[i], config)];
-		if (hasAlerts) {
-			bodyRowCells.push(createAlertsCell(alerts[i]));
-		}
-		if (hasModifiers) {
-			bodyRowCells.push(createModifiersCell(apiVariables[i], options?.modifiersToOmit));
-		}
-		bodyRowCells.push(createTypeExcerptCell(apiVariables[i].variableTypeExcerpt, config));
-		bodyRowCells.push(createApiSummaryCell(apiVariables[i], config));
-
-		bodyRows.push({
-			type: "tableRow",
-			children: bodyRowCells,
-		});
-	}
-
-	return {
-		type: "table",
-		children: [headerRow, ...bodyRows],
-	};
+	return createTableFromItems(apiVariables, {
+		columnOptions: [
+			{
+				title: { type: "text", value: "Variable" },
+				columnKind: "required",
+				createCellContent: (item) => createNameCell(item, config),
+			},
+			{
+				title: { type: "text", value: "Alerts" },
+				columnKind: "optional",
+				createCellContent: (item) => createAlertsCell(config.getAlertsForItem(item)),
+			},
+			{
+				title: { type: "text", value: "Modifiers" },
+				columnKind: "optional",
+				createCellContent: (item) => createModifiersCell(item, options?.modifiersToOmit),
+			},
+			{
+				title: { type: "text", value: "Type" },
+				columnKind: "required",
+				createCellContent: (item) => createTypeExcerptCell(item.variableTypeExcerpt, config),
+			},
+			{
+				title: { type: "text", value: "Description" },
+				columnKind: "required",
+				createCellContent: (item) => createDescriptionCell(item, config),
+			},
+		],
+	});
 }
 
 /**
@@ -609,38 +530,25 @@ export function createPackagesTable(
 		return undefined;
 	}
 
-	// Only display "Alerts" column if there are any alerts to display.
-	const alerts = apiPackages.map((apiItem) => config.getAlertsForItem(apiItem));
-	const hasAlerts = alerts.some((itemAlerts) => itemAlerts.length > 0);
-
-	const headerRowCells: TableCell[] = [createPlainTextTableCell("Package")];
-	if (hasAlerts) {
-		headerRowCells.push(createPlainTextTableCell("Alerts"));
-	}
-	headerRowCells.push(createPlainTextTableCell("Description"));
-	const headerRow: TableRow = {
-		type: "tableRow",
-		children: headerRowCells,
-	};
-
-	const bodyRows: TableRow[] = [];
-	for (let i = 0; i < apiPackages.length; i++) {
-		const bodyRowCells: TableCell[] = [createApiTitleCell(apiPackages[i], config)];
-		if (hasAlerts) {
-			bodyRowCells.push(createAlertsCell(alerts[i]));
-		}
-		bodyRowCells.push(createApiSummaryCell(apiPackages[i], config));
-
-		bodyRows.push({
-			type: "tableRow",
-			children: bodyRowCells,
-		});
-	}
-
-	return {
-		type: "table",
-		children: [headerRow, ...bodyRows],
-	};
+	return createTableFromItems(apiPackages, {
+		columnOptions: [
+			{
+				title: { type: "text", value: "Package" },
+				columnKind: "required",
+				createCellContent: (item) => createNameCell(item, config),
+			},
+			{
+				title: { type: "text", value: "Alerts" },
+				columnKind: "optional",
+				createCellContent: (item) => createAlertsCell(config.getAlertsForItem(item)),
+			},
+			{
+				title: { type: "text", value: "Description" },
+				columnKind: "required",
+				createCellContent: (item) => createDescriptionCell(item, config),
+			},
+		],
+	});
 }
 
 /**
@@ -650,10 +558,10 @@ export function createPackagesTable(
  * @param apiItem - The API item whose comment will be rendered in the cell.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createApiSummaryCell(
+function createDescriptionCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): TableCell {
+): TableCell | undefined {
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
 		return createTableCellFromTsdocSection(
 			apiItem.tsdocComment.summarySection,
@@ -662,26 +570,7 @@ export function createApiSummaryCell(
 		);
 	}
 
-	return emptyTableCell;
-}
-
-/**
- * Creates a table cell containing the return type information for the provided function-like API item,
- * if it specifies one. If it does not specify a type, an empty table cell will be used.
- *
- * @remarks This content will be generated as links to type signature documentation for other items local to the same
- * API suite (model).
- *
- * @param apiItem - The API item whose return type will be displayed in the cell.
- * @param config - See {@link ApiItemTransformationConfiguration}.
- */
-export function createReturnTypeCell(
-	apiItem: ApiFunctionLike,
-	config: ApiItemTransformationConfiguration,
-): TableCell {
-	return ApiReturnTypeMixin.isBaseClassOf(apiItem)
-		? createTypeExcerptCell(apiItem.returnTypeExcerpt, config)
-		: emptyTableCell;
+	return undefined;
 }
 
 /**
@@ -693,7 +582,7 @@ export function createReturnTypeCell(
  * will point.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createApiTitleCell(
+function createNameCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): TableCell {
@@ -710,10 +599,10 @@ export function createApiTitleCell(
  * @param apiItem - The API item whose modifiers will be displayed in the cell.
  * @param modifiersToOmit - List of modifiers to omit from the generated cell, even if they apply to the item.
  */
-export function createModifiersCell(
+function createModifiersCell(
 	apiItem: ApiItem,
 	modifiersToOmit?: ApiModifier[],
-): TableCell {
+): TableCell | undefined {
 	const modifiers = getModifiers(apiItem, modifiersToOmit);
 
 	const contents: PhrasingContent[] = [];
@@ -727,30 +616,11 @@ export function createModifiersCell(
 	}
 
 	return modifiers.length === 0
-		? emptyTableCell
+		? undefined
 		: {
 				type: "tableCell",
 				children: contents,
 			};
-}
-
-/**
- * Creates a table cell containing the `@defaultValue` comment of the API item if it has one.
- *
- * @param apiItem - The API item whose `@defaultValue` comment will be displayed in the cell.
- * @param config - See {@link ApiItemTransformationConfiguration}.
- */
-export function createDefaultValueCell(
-	apiItem: ApiItem,
-	config: ApiItemTransformationConfiguration,
-): TableCell {
-	const defaultValueSection = getDefaultValueBlock(apiItem, config.logger);
-
-	if (defaultValueSection === undefined) {
-		return emptyTableCell;
-	}
-
-	return createTableCellFromTsdocSection(defaultValueSection, apiItem, config);
 }
 
 /**
@@ -759,14 +629,14 @@ export function createDefaultValueCell(
  * @param apiItem - The alert values to display.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createAlertsCell(alerts: string[]): TableCell {
+function createAlertsCell(alerts: string[]): TableCell | undefined {
 	const alertNodes: PhrasingContent[] = alerts.map((alert) => ({
 		type: "inlineCode",
 		value: alert,
 	}));
 
 	return alerts.length === 0
-		? emptyTableCell
+		? undefined
 		: {
 				type: "tableCell",
 				children: injectSeparator(alertNodes, { type: "text", value: ", " }),
@@ -778,24 +648,8 @@ export function createAlertsCell(alerts: string[]): TableCell {
  *
  * @param apiParameter - The parameter whose name will be displayed in the cell.
  */
-export function createParameterTitleCell(apiParameter: Parameter): TableCell {
+function createParameterTitleCell(apiParameter: Parameter): TableCell {
 	return createPlainTextTableCell(apiParameter.name);
-}
-
-/**
- * Creates a table cell containing the type information about the provided parameter.
- *
- * @remarks This content will be generated as links to type signature documentation for other items local to the same
- * API suite (model).
- *
- * @param apiProperty - The parameter whose type information will be displayed in the cell.
- * @param config - See {@link ApiItemTransformationConfiguration}.
- */
-export function createParameterTypeCell(
-	apiParameter: Parameter,
-	config: ApiItemTransformationConfiguration,
-): TableCell {
-	return createTypeExcerptCell(apiParameter.parameterTypeExcerpt, config);
 }
 
 /**
@@ -807,13 +661,13 @@ export function createParameterTypeCell(
  * @param contextApiItem - The API item with which the parameter is associated.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createParameterSummaryCell(
+function createParameterSummaryCell(
 	apiParameter: Parameter,
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): TableCell {
+): TableCell | undefined {
 	if (apiParameter.tsdocParamBlock === undefined) {
-		return emptyTableCell;
+		return undefined;
 	}
 
 	return createTableCellFromTsdocSection(
@@ -832,13 +686,13 @@ export function createParameterSummaryCell(
  * @param contextApiItem - The API item with which the parameter is associated.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createTypeParameterSummaryCell(
+function createTypeParameterSummaryCell(
 	apiTypeParameter: TypeParameter,
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): TableCell {
+): TableCell | undefined {
 	if (apiTypeParameter.tsdocTypeParamBlock === undefined) {
-		return emptyTableCell;
+		return undefined;
 	}
 
 	return createTableCellFromTsdocSection(
@@ -856,15 +710,17 @@ export function createTypeParameterSummaryCell(
  * @param typeExcerpt - An excerpt describing the type to be displayed in the cell.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createTypeExcerptCell(
+function createTypeExcerptCell(
 	typeExcerpt: Excerpt,
 	config: ApiItemTransformationConfiguration,
-): TableCell {
+): TableCell | undefined {
 	const excerptSpan = createExcerptSpanWithHyperlinks(typeExcerpt, config);
-	return {
-		type: "tableCell",
-		children: excerptSpan,
-	};
+	return excerptSpan.length === 0
+		? undefined
+		: {
+				type: "tableCell",
+				children: excerptSpan,
+			};
 }
 
 /**
@@ -898,11 +754,11 @@ function createTableCellFromTsdocSection(
 	tsdocSection: DocSection,
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): TableCell {
+): TableCell | undefined {
 	const transformed = transformTsdoc(tsdocSection, contextApiItem, config);
 
 	if (transformed.length === 0) {
-		return emptyTableCell;
+		return undefined;
 	}
 
 	// If the transformed contents consist of a single paragraph (common case), inline that paragraph's contents
@@ -926,11 +782,6 @@ function createTableCellFromTsdocSection(
 		children: htmlNodes,
 	};
 }
-
-const emptyTableCell: TableCell = {
-	type: "tableCell",
-	children: [],
-};
 
 function createPlainTextTableCell(text: string): TableCell {
 	return {
