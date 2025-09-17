@@ -543,15 +543,17 @@ export function testCorrectness() {
 				const { manager } = testChangeEditManagerFactory({});
 				const revision = mintRevisionTag();
 				manager.loadSummaryData({
-					trunk: [
-						{
-							change: TestChange.mint([0], [1]),
-							revision,
-							sessionId: "0" as SessionId,
-							sequenceNumber: brand(1),
-						},
-					],
-					peerLocalBranches: new Map(),
+					main: {
+						trunk: [
+							{
+								change: TestChange.mint([0], [1]),
+								revision,
+								sessionId: "0" as SessionId,
+								sequenceNumber: brand(1),
+							},
+						],
+						peerLocalBranches: new Map(),
+					},
 				});
 				manager.addSequencedChanges(
 					[

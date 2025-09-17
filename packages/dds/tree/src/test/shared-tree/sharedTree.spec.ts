@@ -2487,6 +2487,8 @@ describe("SharedTree", () => {
 		const mainView1 = asTreeViewAlpha(tree1.viewWith(config));
 		mainView1.initialize(["A"]);
 		provider.synchronizeMessages();
+
+		assert.deepEqual([...mainView1.root], ["A"]);
 		const tree2 = provider.trees[1];
 		provider.synchronizeMessages();
 

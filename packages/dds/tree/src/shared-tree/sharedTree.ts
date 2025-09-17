@@ -228,17 +228,13 @@ export class SharedTreeKernel
 	 */
 	public readonly view: SharedTreeKernelView;
 
-	private readonly createCheckout: (
-		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
-	) => TreeCheckout;
-
 	public constructor(
 		breaker: Breakable,
 		sharedObject: IChannelView & IFluidLoadable,
 		serializer: IFluidSerializer,
 		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		lastSequenceNumber: () => number | undefined,
-		logger: ITelemetryLoggerExt | undefined,
+		private readonly logger: ITelemetryLoggerExt | undefined,
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {
@@ -333,56 +329,20 @@ export class SharedTreeKernel
 			changeEnricher,
 		);
 
-		this.createCheckout = (branch) => {
-			const checkout = createTreeCheckout(
-				idCompressor,
-				this.mintRevisionTag,
-				revisionTagCodec,
-				{
-					branch,
-					changeFamily,
-					schema,
-					forest,
-					fieldBatchCodec,
-					removedRoots,
-					chunkCompressionStrategy: options.treeEncodeType,
-					logger,
-					breaker: this.breaker,
-					disposeForksAfterTransaction: options.disposeForksAfterTransaction,
-				},
-			);
+		this.checkout = createTreeCheckout(idCompressor, this.mintRevisionTag, revisionTagCodec, {
+			branch: this.getLocalBranch(),
+			changeFamily,
+			schema,
+			forest,
+			fieldBatchCodec,
+			removedRoots,
+			chunkCompressionStrategy: options.treeEncodeType,
+			logger,
+			breaker: this.breaker,
+			disposeForksAfterTransaction: options.disposeForksAfterTransaction,
+		});
 
-			checkout.transaction.events.on("started", () => {
-				if (sharedObject.isAttached()) {
-					// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
-					this.commitEnricher.startTransaction();
-				}
-			});
-
-			checkout.transaction.events.on("aborting", () => {
-				if (sharedObject.isAttached()) {
-					// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
-					this.commitEnricher.abortTransaction();
-				}
-			});
-			checkout.transaction.events.on("committing", () => {
-				if (sharedObject.isAttached()) {
-					// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
-					this.commitEnricher.commitTransaction();
-				}
-			});
-			checkout.events.on("beforeBatch", (event) => {
-				if (event.type === "append" && sharedObject.isAttached()) {
-					if (this.checkout.transaction.isInProgress()) {
-						this.commitEnricher.addTransactionCommits(event.newCommits);
-					}
-				}
-			});
-
-			return checkout;
-		};
-
-		this.checkout = this.createCheckout(this.getLocalBranch());
+		this.registerCheckout(this.checkout);
 
 		this.view = {
 			contentSnapshot: () => this.contentSnapshot(),
@@ -393,6 +353,35 @@ export class SharedTreeKernel
 			createSharedBranch: this.createSharedBranch.bind(this),
 			kernel: this,
 		};
+	}
+
+	private registerCheckout(checkout: TreeCheckout): void {
+		checkout.transaction.events.on("started", () => {
+			if (this.sharedObject.isAttached()) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.startTransaction();
+			}
+		});
+
+		checkout.transaction.events.on("aborting", () => {
+			if (this.sharedObject.isAttached()) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.abortTransaction();
+			}
+		});
+		checkout.transaction.events.on("committing", () => {
+			if (this.sharedObject.isAttached()) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.commitTransaction();
+			}
+		});
+		checkout.events.on("beforeBatch", (event) => {
+			if (event.type === "append" && this.sharedObject.isAttached()) {
+				if (this.checkout.transaction.isInProgress()) {
+					this.commitEnricher.addTransactionCommits(event.newCommits);
+				}
+			}
+		});
 	}
 
 	public exportVerbose(): VerboseTree | undefined {
@@ -444,9 +433,18 @@ export class SharedTreeKernel
 		branchId: BranchId,
 		config: TreeViewConfiguration<ReadSchema<TRoot>>,
 	): SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>> {
-		return this.createCheckout(this.getSharedBranch(branchId)).viewWith(
+		return this.checkoutBranch(this.getSharedBranch(branchId)).viewWith(
 			config,
 		) as SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>>;
+	}
+
+	private checkoutBranch(
+		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+	): TreeCheckout {
+		const checkout = this.checkout.branch();
+		this.registerCheckout(checkout);
+		checkout.switchBranch(branch);
+		return checkout;
 	}
 
 	public override async loadCore(services: IChannelStorageService): Promise<void> {

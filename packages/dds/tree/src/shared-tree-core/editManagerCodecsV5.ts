@@ -78,7 +78,7 @@ export function makeV5CodecWithVersion<TChangeset>(
 					main: mainBranch,
 					version,
 				};
-				if (data.branches.size > 0) {
+				if (data.branches !== undefined && data.branches.size > 0) {
 					const branches: EncodedSharedBranch<TChangeset>[] = [];
 					for (const [_, branch] of data.branches) {
 						branches.push(encodeSharedBranch(changeCodec, revisionTagCodec, branch, context));

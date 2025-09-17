@@ -629,7 +629,7 @@ export class EditManager<
  */
 export interface SummaryData<TChangeset> {
 	readonly main: SharedBranchSummaryData<TChangeset>;
-	readonly branches: ReadonlyMap<string, SharedBranchSummaryData<TChangeset>>;
+	readonly branches?: ReadonlyMap<string, SharedBranchSummaryData<TChangeset>>;
 }
 
 export interface SharedBranchSummaryData<TChangeset> {

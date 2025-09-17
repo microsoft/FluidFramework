@@ -45,6 +45,7 @@ export {
 	EditManager,
 	minimumPossibleSequenceNumber,
 	type SummaryData,
+	type SharedBranchSummaryData,
 } from "./editManager.js";
 export type {
 	Commit,
