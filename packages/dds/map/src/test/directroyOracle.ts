@@ -44,7 +44,8 @@ export class SharedDirectoryOracle {
 	}
 
 	private readonly onValueChanged = (change: IDirectoryValueChanged) => {
-		const { path, key } = change;
+		const { key } = change;
+		const path = change.path ?? "";
 		const fuzzDir = this.sharedDir.getWorkingDirectory(path);
 		if (!fuzzDir) return;
 
@@ -57,10 +58,6 @@ export class SharedDirectoryOracle {
 
 	private readonly onClear = (local: boolean) => {
 		this.model.clear();
-
-		// if (!local) {
-		// 	this.captureInitialSnapshot(this.sharedDir);
-		// }
 	};
 
 	private readonly onSubDirCreated = (
@@ -68,17 +65,19 @@ export class SharedDirectoryOracle {
 		local: boolean,
 		target: ISharedDirectory,
 	) => {
-		const pathKey =
-			target.absolutePath === "" ? subdirName : `${target.absolutePath}/${subdirName}`;
-		if (!this.model.has(pathKey)) {
-			this.model.set(`${pathKey}/`, undefined);
+		if (!this.model.has(`${target.absolutePath}${subdirName}`)) {
+			this.model.set(`${target.absolutePath}${subdirName}`, undefined);
 		}
 	};
 
 	private readonly onSubDirDeleted = (path: string) => {
+		const absPath = path.startsWith("/") ? path : `/${path}`;
 		for (const key of [...this.model.keys()]) {
-			if (key.startsWith(`${path}/`)) {
-				this.model.delete(`${path}/${key}`);
+			if (key.startsWith(absPath)) {
+				const deleted = this.model.delete(key);
+				if (!deleted) {
+					assert("not deleted");
+				}
 			}
 		}
 	};
@@ -88,15 +87,13 @@ export class SharedDirectoryOracle {
 		local: boolean,
 		target: IDirectory,
 	) => {
-		const pathKey =
-			target.absolutePath === "" ? change.key : `${target.absolutePath}/${change.key}`;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const newValue = target.get(change.key);
 
 		if (newValue === undefined) {
-			this.model.delete(pathKey);
+			this.model.delete(`${target.absolutePath}${change.key}`);
 		} else {
-			this.model.set(pathKey, newValue);
+			this.model.set(`${target.absolutePath}${change.key}`, newValue);
 		}
 	};
 
@@ -105,14 +102,15 @@ export class SharedDirectoryOracle {
 			const parts = pathKey.split("/").filter((p) => p.length > 0);
 			assert(parts.length > 0, "Invalid path, cannot extract key");
 
-			const leafKey = parts.pop();
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const leafKey = parts.pop()!; // The actual key
 			let dir: IDirectory | undefined = this.sharedDir;
+
 			for (const part of parts) {
 				dir = dir.getSubDirectory(part);
 				if (!dir) break;
 			}
 
-			assert(leafKey !== undefined && leafKey.length > 0, "Leaf key is undefined");
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const actual = dir?.get(leafKey);
 			assert.deepStrictEqual(
