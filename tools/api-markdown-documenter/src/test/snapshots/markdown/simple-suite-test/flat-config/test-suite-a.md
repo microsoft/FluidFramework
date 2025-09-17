@@ -320,31 +320,31 @@ Here are some remarks about the interface
 
 | Property | Modifiers | Type | Description |
 | - | - | - | - |
-| [testClassEventProperty](docs/test-suite-a#testinterface-testclasseventproperty-propertysignature) | `readonly` | () => void | Test interface event property |
+| [testClassEventProperty](docs/test-suite-a#testinterface-testclasseventproperty-propertysignature)<br/>_(inherited from [TestInterface](docs/test-suite-a#testinterface-interface))_ | `readonly` | () => void | Test interface event property |
 
 ### Properties
 
 | Property | Modifiers | Default Value | Type | Description |
 | - | - | - | - | - |
-| [getterProperty](docs/test-suite-a#testinterface-getterproperty-property) | `readonly` | | boolean | A test getter-only interface property. |
-| [propertyWithBadInheritDocTarget](docs/test-suite-a#testinterface-propertywithbadinheritdoctarget-propertysignature) | | | boolean | |
-| [setterProperty](docs/test-suite-a#testinterface-setterproperty-property) | | | boolean | A test property with a getter and a setter. |
-| [testInterfaceProperty](docs/test-suite-a#testinterface-testinterfaceproperty-propertysignature) | | | number | Test interface property |
-| [testOptionalInterfaceProperty](docs/test-suite-a#testinterface-testoptionalinterfaceproperty-propertysignature) | `optional` | 0 | number | Test optional property |
+| [getterProperty](docs/test-suite-a#testinterface-getterproperty-property)<br/>_(inherited from [TestInterface](docs/test-suite-a#testinterface-interface))_ | `readonly` | | boolean | A test getter-only interface property. |
+| [propertyWithBadInheritDocTarget](docs/test-suite-a#testinterface-propertywithbadinheritdoctarget-propertysignature)<br/>_(inherited from [TestInterface](docs/test-suite-a#testinterface-interface))_ | | | boolean | |
+| [setterProperty](docs/test-suite-a#testinterface-setterproperty-property)<br/>_(inherited from [TestInterface](docs/test-suite-a#testinterface-interface))_ | | | boolean | A test property with a getter and a setter. |
+| [testInterfaceProperty](docs/test-suite-a#testinterface-testinterfaceproperty-propertysignature)<br/>_(inherited from [TestInterface](docs/test-suite-a#testinterface-interface))_ | | | number | Test interface property |
+| [testOptionalInterfaceProperty](docs/test-suite-a#testinterface-testoptionalinterfaceproperty-propertysignature)<br/>_(inherited from [TestInterface](docs/test-suite-a#testinterface-interface))_ | `optional` | 0 | number | Test optional property |
 
 ### Methods
 
 | Method | Return Type | Description |
 | - | - | - |
-| [testInterfaceMethod()](docs/test-suite-a#testinterface-testinterfacemethod-methodsignature) | void | Test interface method |
+| [testInterfaceMethod()](docs/test-suite-a#testinterface-testinterfacemethod-methodsignature)<br/>_(inherited from [TestInterface](docs/test-suite-a#testinterface-interface))_ | void | Test interface method |
 | [testMethod(input)](docs/test-suite-a#testinterfaceextendingotherinterfaces-testmethod-methodsignature) | number | Test interface method accepting a string and returning a number. |
 
 ### Call Signatures
 
 | Call Signature | Return Type | Description |
 | - | - | - |
-| [(event: 'testCallSignature', listener: (input: unknown) => void): any](docs/test-suite-a#testinterface-_call_-callsignature) | any | Test interface event call signature |
-| [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](docs/test-suite-a#testinterface-_call__1-callsignature) | number | Another example call signature |
+| [(event: 'testCallSignature', listener: (input: unknown) => void): any](docs/test-suite-a#testinterface-_call_-callsignature)<br/>_(inherited from [TestInterface](docs/test-suite-a#testinterface-interface))_ | any | Test interface event call signature |
+| [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](docs/test-suite-a#testinterface-_call__1-callsignature)<br/>_(inherited from [TestInterface](docs/test-suite-a#testinterface-interface))_ | number | Another example call signature |
 
 ### Method Details
 
@@ -631,8 +631,8 @@ Here are some remarks about the class
 
 | Property | Modifiers | Type | Description |
 | - | - | - | - |
-| [protectedProperty](docs/test-suite-a#testabstractclass-protectedproperty-property) | `readonly` | [TestEnum](docs/test-suite-a#testenum-enum) | A test protected property. |
-| [abstractPropertyGetter](docs/test-suite-a#testclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/test-suite-a#testmappedtype-typealias) | A test abstract getter property. |
+| [protectedProperty](docs/test-suite-a#testabstractclass-protectedproperty-property)<br/>_(inherited from [TestAbstractClass](docs/test-suite-a#testabstractclass-class))_ | `readonly` | [TestEnum](docs/test-suite-a#testenum-enum) | A test protected property. |
+| [abstractPropertyGetter](docs/test-suite-a#testclass-abstractpropertygetter-property)<br/>_(overrides [TestAbstractClass](docs/test-suite-a#testabstractclass-class).[abstractPropertyGetter](docs/test-suite-a#testabstractclass-abstractpropertygetter-property))_ | `readonly` | [TestMappedType](docs/test-suite-a#testmappedtype-typealias) | A test abstract getter property. |
 | [testClassGetterProperty](docs/test-suite-a#testclass-testclassgetterproperty-property) | `virtual` | number | Test class property with both a getter and a setter. |
 | [testClassProperty](docs/test-suite-a#testclass-testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
 
@@ -640,10 +640,10 @@ Here are some remarks about the class
 
 | Method | Modifiers | Return Type | Description |
 | - | - | - | - |
-| [sealedMethod()](docs/test-suite-a#testabstractclass-sealedmethod-method) | `sealed` | string | A test `@sealed` method. |
-| [publicAbstractMethod()](docs/test-suite-a#testclass-publicabstractmethod-method) | | void | A test public abstract method. |
+| [sealedMethod()](docs/test-suite-a#testabstractclass-sealedmethod-method)<br/>_(inherited from [TestAbstractClass](docs/test-suite-a#testabstractclass-class))_ | `sealed` | string | A test `@sealed` method. |
+| [publicAbstractMethod()](docs/test-suite-a#testclass-publicabstractmethod-method)<br/>_(overrides [TestAbstractClass](docs/test-suite-a#testabstractclass-class).[publicAbstractMethod()](docs/test-suite-a#testabstractclass-publicabstractmethod-method))_ | | void | A test public abstract method. |
 | [testClassMethod(input)](docs/test-suite-a#testclass-testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
-| [virtualMethod()](docs/test-suite-a#testclass-virtualmethod-method) | | number | Overrides [virtualMethod()](docs/test-suite-a#testabstractclass-virtualmethod-method). |
+| [virtualMethod()](docs/test-suite-a#testclass-virtualmethod-method)<br/>_(overrides [TestAbstractClass](docs/test-suite-a#testabstractclass-class).[virtualMethod()](docs/test-suite-a#testabstractclass-virtualmethod-method))_ | | number | Overrides [virtualMethod()](docs/test-suite-a#testabstractclass-virtualmethod-method). |
 
 ### Constructor Details
 

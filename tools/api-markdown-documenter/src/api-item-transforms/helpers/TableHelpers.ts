@@ -17,7 +17,7 @@ import {
 } from "@microsoft/api-extractor-model";
 import type { DocSection } from "@microsoft/tsdoc";
 import { toHtml } from "hast-util-to-html";
-import type { Html, PhrasingContent, Table, TableCell } from "mdast";
+import type { BlockContent, Html, PhrasingContent, Table, TableCell } from "mdast";
 import { toHast } from "mdast-util-to-hast";
 
 import type { Section } from "../../mdast/index.js";
@@ -564,7 +564,7 @@ export function createPackagesTable(
  * @param apiItem - The API item whose comment will be rendered in the cell.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-function createDescriptionCell(
+export function createDescriptionCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): TableCell | undefined {
@@ -588,7 +588,7 @@ function createDescriptionCell(
  * will point.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-function createNameCell(
+export function createNameCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): TableCell {
@@ -605,7 +605,7 @@ function createNameCell(
  * @param apiItem - The API item whose modifiers will be displayed in the cell.
  * @param modifiersToOmit - List of modifiers to omit from the generated cell, even if they apply to the item.
  */
-function createModifiersCell(
+export function createModifiersCell(
 	apiItem: ApiItem,
 	modifiersToOmit?: ApiModifier[],
 ): TableCell | undefined {
@@ -635,7 +635,7 @@ function createModifiersCell(
  * @param apiItem - The alert values to display.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-function createAlertsCell(alerts: string[]): TableCell | undefined {
+export function createAlertsCell(alerts: string[]): TableCell | undefined {
 	const alertNodes: PhrasingContent[] = alerts.map((alert) => ({
 		type: "inlineCode",
 		value: alert,
@@ -716,7 +716,7 @@ function createTypeParameterSummaryCell(
  * @param typeExcerpt - An excerpt describing the type to be displayed in the cell.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-function createTypeExcerptCell(
+export function createTypeExcerptCell(
 	typeExcerpt: Excerpt,
 	config: ApiItemTransformationConfiguration,
 ): TableCell | undefined {
@@ -756,29 +756,41 @@ function getTableHeadingTitleForApiKind(itemKind: ApiItemKind): string {
  * Notably, this optimizes away the generation of paragraph nodes around inner contents when there is only a
  * single paragraph.
  */
-function createTableCellFromTsdocSection(
+export function createTableCellFromTsdocSection(
 	tsdocSection: DocSection,
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): TableCell | undefined {
 	const transformed = transformTsdoc(tsdocSection, contextApiItem, config);
+	return createTableCellFromBlockContent(transformed);
+}
 
-	if (transformed.length === 0) {
+/**
+ * Transforms the contents of a TSDoc section node, and fine-tunes the output for use in a table cell.
+ *
+ * @remarks
+ * Notably, this optimizes away the generation of paragraph nodes around inner contents when there is only a
+ * single paragraph.
+ */
+function createTableCellFromBlockContent(
+	blockContent: readonly BlockContent[],
+): TableCell | undefined {
+	if (blockContent.length === 0) {
 		return undefined;
 	}
 
 	// If the transformed contents consist of a single paragraph (common case), inline that paragraph's contents
 	// directly in the cell.
-	if (transformed.length === 1 && transformed[0].type === "paragraph") {
+	if (blockContent.length === 1 && blockContent[0].type === "paragraph") {
 		return {
 			type: "tableCell",
-			children: transformed[0].children,
+			children: blockContent[0].children,
 		};
 	}
 
 	// `mdast` does not allow block content in table cells, but we want to be able to include things like fenced code blocks, etc. in our table cells.
 	// To accommodate this, we convert the contents to HTML and put that inside the table cell.
-	const htmlTrees = transformed.map((node) => toHast(node));
+	const htmlTrees = blockContent.map((node) => toHast(node));
 	const htmlNodes: Html[] = htmlTrees.map((node) => ({
 		type: "html",
 		value: toHtml(node),

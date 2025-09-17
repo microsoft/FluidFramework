@@ -20,31 +20,31 @@ Here are some remarks about the interface
 
 | Property | Modifiers | Type | Description |
 | - | - | - | - |
-| [testClassEventProperty](/test-suite-a/testinterface-interface#testclasseventproperty-propertysignature) | `readonly` | () => void | Test interface event property |
+| [testClassEventProperty](/test-suite-a/testinterface-interface#testclasseventproperty-propertysignature)<br/>_(inherited from [TestInterface](/test-suite-a/testinterface-interface))_ | `readonly` | () => void | Test interface event property |
 
 ## Properties
 
 | Property | Modifiers | Default Value | Type | Description |
 | - | - | - | - | - |
-| [getterProperty](/test-suite-a/testinterface-interface#getterproperty-property) | `readonly` | | boolean | A test getter-only interface property. |
-| [propertyWithBadInheritDocTarget](/test-suite-a/testinterface-interface#propertywithbadinheritdoctarget-propertysignature) | | | boolean | |
-| [setterProperty](/test-suite-a/testinterface-interface#setterproperty-property) | | | boolean | A test property with a getter and a setter. |
-| [testInterfaceProperty](/test-suite-a/testinterface-interface#testinterfaceproperty-propertysignature) | | | number | Test interface property |
-| [testOptionalInterfaceProperty](/test-suite-a/testinterface-interface#testoptionalinterfaceproperty-propertysignature) | `optional` | 0 | number | Test optional property |
+| [getterProperty](/test-suite-a/testinterface-interface#getterproperty-property)<br/>_(inherited from [TestInterface](/test-suite-a/testinterface-interface))_ | `readonly` | | boolean | A test getter-only interface property. |
+| [propertyWithBadInheritDocTarget](/test-suite-a/testinterface-interface#propertywithbadinheritdoctarget-propertysignature)<br/>_(inherited from [TestInterface](/test-suite-a/testinterface-interface))_ | | | boolean | |
+| [setterProperty](/test-suite-a/testinterface-interface#setterproperty-property)<br/>_(inherited from [TestInterface](/test-suite-a/testinterface-interface))_ | | | boolean | A test property with a getter and a setter. |
+| [testInterfaceProperty](/test-suite-a/testinterface-interface#testinterfaceproperty-propertysignature)<br/>_(inherited from [TestInterface](/test-suite-a/testinterface-interface))_ | | | number | Test interface property |
+| [testOptionalInterfaceProperty](/test-suite-a/testinterface-interface#testoptionalinterfaceproperty-propertysignature)<br/>_(inherited from [TestInterface](/test-suite-a/testinterface-interface))_ | `optional` | 0 | number | Test optional property |
 
 ## Methods
 
 | Method | Return Type | Description |
 | - | - | - |
-| [testInterfaceMethod()](/test-suite-a/testinterface-interface#testinterfacemethod-methodsignature) | void | Test interface method |
+| [testInterfaceMethod()](/test-suite-a/testinterface-interface#testinterfacemethod-methodsignature)<br/>_(inherited from [TestInterface](/test-suite-a/testinterface-interface))_ | void | Test interface method |
 | [testMethod(input)](/test-suite-a/testinterfaceextendingotherinterfaces-interface#testmethod-methodsignature) | number | Test interface method accepting a string and returning a number. |
 
 ## Call Signatures
 
 | Call Signature | Return Type | Description |
 | - | - | - |
-| [(event: 'testCallSignature', listener: (input: unknown) => void): any](/test-suite-a/testinterface-interface#_call_-callsignature) | any | Test interface event call signature |
-| [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](/test-suite-a/testinterface-interface#_call__1-callsignature) | number | Another example call signature |
+| [(event: 'testCallSignature', listener: (input: unknown) => void): any](/test-suite-a/testinterface-interface#_call_-callsignature)<br/>_(inherited from [TestInterface](/test-suite-a/testinterface-interface))_ | any | Test interface event call signature |
+| [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](/test-suite-a/testinterface-interface#_call__1-callsignature)<br/>_(inherited from [TestInterface](/test-suite-a/testinterface-interface))_ | number | Another example call signature |
 
 ## Method Details
 

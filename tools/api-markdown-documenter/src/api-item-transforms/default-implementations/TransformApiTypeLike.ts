@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import {
 	type ApiCallSignature,
 	type ApiConstructor,
@@ -11,26 +13,34 @@ import {
 	ApiItemKind,
 	type ApiMethod,
 	type ApiPropertyItem,
+	ApiReturnTypeMixin,
 } from "@microsoft/api-extractor-model";
-import type { Table } from "mdast";
+import type { PhrasingContent, Table, TableCell } from "mdast";
 
 import type { Section } from "../../mdast/index.js";
 import {
 	ApiModifier,
 	getApiItemKind,
+	getDefaultValueBlock,
 	getScopedMemberNameForDiagnostics,
 	isStatic,
 	type ApiConstructorLike,
+	type ApiFunctionLike,
 	type ApiTypeLike,
 } from "../../utilities/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import {
 	createChildDetailsSection,
 	createDefaultSummaryTable,
-	createFunctionLikeSummaryTable,
-	createPropertiesTable,
+	createTypeExcerptCell,
+	type TableCreationOptions,
+	createTableFromItems,
+	createAlertsCell,
+	createModifiersCell,
+	createDescriptionCell,
+	createTableCellFromTsdocSection,
 } from "../helpers/index.js";
-import { getTypeMembers, type TypeMember } from "../utilities/index.js";
+import { getLinkForApiItem, getTypeMembers, type TypeMember } from "../utilities/index.js";
 
 // TODOs:
 // - inherit type param docs from base types?
@@ -258,79 +268,42 @@ function createSummaryTables(
 	}
 
 	addTableSection(
-		createFunctionLikeSummaryTable(
-			constructors.map((member) => member.item),
-			"Constructor",
-			config,
-		),
+		createFunctionLikeSummaryTable(constructors, "Constructor", config),
 		"Constructors",
 	);
 
 	addTableSection(
-		createPropertiesTable(
-			staticEventProperties.map((member) => member.item),
-			config,
-			{
-				modifiersToOmit: [ApiModifier.Static],
-			},
-		),
+		createPropertiesTable(staticEventProperties, config, {
+			modifiersToOmit: [ApiModifier.Static],
+		}),
 		"Static Events",
 	);
 
 	addTableSection(
-		createPropertiesTable(
-			staticStandardProperties.map((member) => member.item),
-			config,
-			{
-				modifiersToOmit: [ApiModifier.Static],
-			},
-		),
+		createPropertiesTable(staticStandardProperties, config, {
+			modifiersToOmit: [ApiModifier.Static],
+		}),
 		"Static Properties",
 	);
 
 	addTableSection(
-		createFunctionLikeSummaryTable(
-			staticMethods.map((member) => member.item),
-			"Method",
-			config,
-			{
-				modifiersToOmit: [ApiModifier.Static],
-			},
-		),
+		createFunctionLikeSummaryTable(staticMethods, "Method", config, {
+			modifiersToOmit: [ApiModifier.Static],
+		}),
 		"Static Methods",
 	);
 
-	addTableSection(
-		createPropertiesTable(
-			nonStaticEventProperties.map((member) => member.item),
-			config,
-		),
-		"Events",
-	);
+	addTableSection(createPropertiesTable(nonStaticEventProperties, config), "Events");
+
+	addTableSection(createPropertiesTable(nonStaticStandardProperties, config), "Properties");
 
 	addTableSection(
-		createPropertiesTable(
-			nonStaticStandardProperties.map((member) => member.item),
-			config,
-		),
-		"Properties",
-	);
-
-	addTableSection(
-		createFunctionLikeSummaryTable(
-			nonStaticMethods.map((member) => member.item),
-			"Method",
-			config,
-		),
+		createFunctionLikeSummaryTable(nonStaticMethods, "Method", config),
 		"Methods",
 	);
 
 	addTableSection(
-		createFunctionLikeSummaryTable(
-			callSignatures.map((member) => member.item),
-			"Call Signature",
-			config,
-		),
+		createFunctionLikeSummaryTable(callSignatures, "Call Signature", config),
 		"Call Signatures",
 	);
 
@@ -344,4 +317,181 @@ function createSummaryTables(
 	);
 
 	return sections;
+}
+
+/**
+ * Creates a simple summary table for function-like API items (constructors, functions, methods).
+ * Displays each item's name, modifiers, return type, and description (summary) comment.
+ *
+ * @param members - The function-like members to be displayed.
+ * @param nameColumnLabel - The label for the "name" column in the table.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
+ * @param options - Table content / formatting options.
+ */
+function createFunctionLikeSummaryTable(
+	members: readonly TypeMember<ApiFunctionLike>[],
+	nameColumnLabel: string,
+	config: ApiItemTransformationConfiguration,
+	options?: TableCreationOptions,
+): Table | undefined {
+	if (members.length === 0) {
+		return undefined;
+	}
+
+	function createReturnTypeCell(apiItem: ApiFunctionLike): TableCell | undefined {
+		return ApiReturnTypeMixin.isBaseClassOf(apiItem)
+			? createTypeExcerptCell(apiItem.returnTypeExcerpt, config)
+			: undefined;
+	}
+
+	return createTableFromItems(members, {
+		columnOptions: [
+			{
+				title: { type: "text", value: nameColumnLabel },
+				columnKind: "required",
+				createCellContent: (member) => createNameCell(member, config),
+			},
+			{
+				title: { type: "text", value: "Alerts" },
+				columnKind: "optional",
+				createCellContent: (member) => createAlertsCell(config.getAlertsForItem(member.item)),
+			},
+			{
+				title: { type: "text", value: "Modifiers" },
+				columnKind: "optional",
+				createCellContent: (member) =>
+					createModifiersCell(member.item, options?.modifiersToOmit),
+			},
+			{
+				title: { type: "text", value: "Return Type" },
+				columnKind: "optional",
+				createCellContent: (member) => createReturnTypeCell(member.item),
+			},
+			{
+				title: { type: "text", value: "Description" },
+				columnKind: "required",
+				createCellContent: (member) => createDescriptionCell(member.item, config),
+			},
+		],
+	});
+}
+
+/**
+ * Creates a simple summary table for a series of properties.
+ * Displays each property's name, modifiers, type, and description (summary) comment.
+ *
+ * @param members - The `Property` members to be displayed.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
+ * @param options - Table content / formatting options.
+ */
+function createPropertiesTable(
+	members: readonly TypeMember<ApiPropertyItem>[],
+	config: ApiItemTransformationConfiguration,
+	options?: TableCreationOptions,
+): Table | undefined {
+	if (members.length === 0) {
+		return undefined;
+	}
+
+	function createDefaultValueCell(apiItem: ApiItem): TableCell | undefined {
+		const defaultValueSection = getDefaultValueBlock(apiItem, config.logger);
+		return defaultValueSection === undefined
+			? undefined
+			: createTableCellFromTsdocSection(defaultValueSection, apiItem, config);
+	}
+
+	return createTableFromItems(members, {
+		columnOptions: [
+			{
+				title: { type: "text", value: "Property" },
+				columnKind: "required",
+				createCellContent: (member) => createNameCell(member, config),
+			},
+			{
+				title: { type: "text", value: "Alerts" },
+				columnKind: "optional",
+				createCellContent: (member) => createAlertsCell(config.getAlertsForItem(member.item)),
+			},
+			{
+				title: { type: "text", value: "Modifiers" },
+				columnKind: "optional",
+				createCellContent: (member) =>
+					createModifiersCell(member.item, options?.modifiersToOmit),
+			},
+			{
+				title: { type: "text", value: "Default Value" },
+				columnKind: "optional",
+				createCellContent: (member) => createDefaultValueCell(member.item),
+			},
+			{
+				title: { type: "text", value: "Type" },
+				columnKind: "required",
+				createCellContent: (member) =>
+					createTypeExcerptCell(member.item.propertyTypeExcerpt, config),
+			},
+			{
+				title: { type: "text", value: "Description" },
+				columnKind: "required",
+				createCellContent: (member) => createDescriptionCell(member.item, config),
+			},
+		],
+	});
+}
+
+/**
+ * Creates a table cell containing the name of the provided API item.
+ *
+ * @remarks This content will be generated as a link to the section content describing the API item.
+ *
+ * @param member - The member whose name will be displayed in the cell, and to whose content the generate link
+ * will point.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
+ */
+function createNameCell(
+	member: TypeMember,
+	config: ApiItemTransformationConfiguration,
+): TableCell {
+	const link = getLinkForApiItem(member.item, config);
+
+	let cellContent: PhrasingContent[] = [link];
+	if (member.kind === "inherited") {
+		// If this member is inherited from a base type, note that and link to the base type.
+		const baseLink = getLinkForApiItem(member.inheritedFrom, config);
+		cellContent = [
+			link,
+			{ type: "html", value: "<br/>" },
+			{
+				type: "emphasis",
+				children: [
+					{ type: "text", value: "(inherited from " },
+					baseLink,
+					{ type: "text", value: ")" },
+				],
+			},
+		];
+	} else if (member.overrides !== undefined) {
+		// If this member overrides a member on some base type, note that and link to both the base type and the overridden member.
+		assert(member.overrides.parent !== undefined, "Overridden member must have a parent.");
+		const baseTypeLink = getLinkForApiItem(member.overrides.parent, config);
+		const baseMemberLink = getLinkForApiItem(member.overrides, config);
+		cellContent = [
+			link,
+			{ type: "html", value: "<br/>" },
+			{
+				type: "emphasis",
+				children: [
+					{ type: "text", value: "(overrides " },
+					baseTypeLink,
+					{ type: "text", value: "." },
+					baseMemberLink,
+					{ type: "text", value: ")" },
+				],
+			},
+		];
+	}
+
+	return {
+		type: "tableCell",
+		children: cellContent,
+	};
 }
