@@ -6,6 +6,7 @@
 import type { InternalUtilityTypes } from "../exposedInternalUtilityTypes.js";
 
 import type {
+	JsonDeserialized,
 	JsonTypeToOpaqueJson,
 	OpaqueJsonToJsonType,
 } from "@fluidframework/core-interfaces/internal";
@@ -35,6 +36,74 @@ export function assertIdenticalTypes<const T, const U>(
 export function createInstanceOf<T>(): T {
 	return undefined as T;
 }
+
+/**
+ * Tests if a type is `any` and returns one of two types based on the result.
+ *
+ * @remarks
+ * Use caution with this type as `TIfAny` and `TIfNotAny` are always evaluated
+ * (externally), before the `any` check is performed (internally). This means
+ * that if `TIfAny` or `TIfNotAny` are complex types, they will be evaluated
+ * regardless of whether `T` is `any` or not. That will likely lead to
+ * infinite recursion for any recursive `TIfAny` or `TIfNotAny` expressions.
+ *
+ * In such cases, test for `any` directly.
+ */
+type IfAny<T, TIfAny, TIfNotAny = never> = /* test for `any` */ boolean extends (
+	T extends never
+		? true
+		: false
+)
+	? TIfAny
+	: TIfNotAny;
+
+/**
+ * Searched for `any` types in a structure.
+ *
+ * @remarks
+ * Locations of `any` types are preserved in the structure and all other
+ * keys are removed. When there are no `any` types, the result is `never`.
+ *
+ * Use with {@link assertNever} to check that the result is `never`.
+ *
+ * @example
+ * ```ts
+ * // Error: Type '{ a: { b: "'any' found here"; }; }' does not satisfy the constraint 'never'
+ * assertNever<AnyLocations<{ a: { b: any; c: string; }; d: number; }>>();
+ * ```
+ */
+export type AnyLocations<
+	T,
+	TAncestorTypes extends unknown[] = [],
+> = /* test for `any` */ boolean extends (T extends never ? true : false)
+	? /* `any` */ "T is 'any'"
+	: /* not `any` => test for object */ T extends object
+		? /* object => test for recursion */ InternalUtilityTypes.IfExactTypeInTuple<
+				T,
+				TAncestorTypes,
+				true,
+				"no match"
+			> extends true
+			? /* recursion => no `any` */ never
+			: /* process each key */ {
+						[K in keyof T as IfAny<
+							T[K],
+							// K if `T[K]` is `any`
+							K,
+							// K only if `T[K]` has `any` locations
+							AnyLocations<T[K], [...TAncestorTypes, T]> extends never ? never : K
+						>]: IfAny<T[K], "'any' found here", AnyLocations<T[K], [...TAncestorTypes, T]>>;
+					} extends infer LevelResult
+				? /* test if any keys with `any` or nested `any */ keyof LevelResult extends never
+					? /* no keys => no `any` */ never
+					: /* keys worth reporting => */ LevelResult
+				: /* never reached infer else */ never
+		: /* not object => no `any` */ never;
+
+/**
+ * No-runtime-effect helper to check that {@link AnyLocations} results in `never`.
+ */
+export function assertNever<_ extends never>(): void {}
 
 /**
  * JSON.stringify replacer function that replaces `bigint` values with a string representation.
@@ -77,4 +146,44 @@ export function exposeFromOpaqueJson<
 	TOpaque extends OpaqueJsonSerializable<unknown> | OpaqueJsonDeserialized<unknown>,
 >(v: TOpaque): OpaqueJsonToJsonType<TOpaque> {
 	return v as unknown as OpaqueJsonToJsonType<TOpaque>;
+}
+
+/**
+ * Process structure extracting `T` from `OpaqueJsonDeserialized<T>`.
+ *
+ * @remarks
+ * Only one level of {@link OpaqueJsonDeserialized} is processed, so nested
+ * {@link OpaqueJsonDeserialized} instances are retained.
+ * Additionally, no processing done past first recursion unless `TAncestorTypes`
+ * is specified as "unlimited recursion".
+ *
+ * Only works with basic built-in stringify-parse logic (i.e. default
+ * {@link JsonDeserializedOptions}).
+ */
+type RevealOpaqueJsonDeserialized<
+	T,
+	TAncestorTypes extends unknown[] | "unlimited recursion",
+> = T extends OpaqueJsonDeserialized<infer U>
+	? JsonDeserialized<U>
+	: TAncestorTypes extends unknown[]
+		? InternalUtilityTypes.IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true
+			? T
+			: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key], [...TAncestorTypes, T]> }
+		: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key], TAncestorTypes> };
+
+/**
+ * No-runtime-effect helper to reveal the JSON type from a value's opaque JSON
+ * types throughout a structure.
+ *
+ * @see {@link RevealOpaqueJsonDeserialized}.
+ *
+ * @remarks
+ * Set `RecursionTreatment` to `[]` to prevent recursion through self-referencing
+ * types, which might lead to infinite recursion.
+ */
+export function revealOpaqueJson<
+	T,
+	RecursionTreatment extends [] | "unlimited recursion" = "unlimited recursion",
+>(value: T): RevealOpaqueJsonDeserialized<T, RecursionTreatment> {
+	return value as RevealOpaqueJsonDeserialized<T, RecursionTreatment>;
 }

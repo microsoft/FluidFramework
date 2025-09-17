@@ -31,7 +31,7 @@ import {
 } from "../../library/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { npmCheckUpdatesHomegrown } from "../../library/package.js";
-import { ReleaseGroup } from "../../releaseGroups.js";
+import type { ReleaseGroup } from "../../releaseGroups.js";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo

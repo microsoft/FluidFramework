@@ -8,11 +8,11 @@
 
 # Interface Details
 
-## Foo {#foo-interface}
+<h2 id="foo-interface">Foo</h2>
 
 Bar
 
-### Signature {#foo-signature}
+<h3 id="foo-signature">Signature</h3>
 
 ```typescript
 export interface Foo
@@ -26,11 +26,11 @@ export interface Foo
 
 ### Property Details
 
-#### bar {#foo-bar-propertysignature}
+<h4 id="foo-bar-propertysignature">bar</h4>
 
 Test Enum
 
-##### Signature {#bar-signature}
+<h5 id="bar-signature">Signature</h5>
 
 ```typescript
 bar: TestEnum;
@@ -38,6 +38,6 @@ bar: TestEnum;
 
 **Type**: [TestEnum](docs/test-suite-a#testenum-enum)
 
-##### Remarks {#bar-remarks}
+<h5 id="bar-remarks">Remarks</h5>
 
 Here are some remarks about the enum

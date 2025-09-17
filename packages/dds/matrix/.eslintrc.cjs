@@ -12,6 +12,17 @@ module.exports = {
 	rules: {
 		"@typescript-eslint/no-shadow": "off",
 		"space-before-function-paren": "off", // Off because it conflicts with typescript-formatter
+		// #region TODO: remove these once eslint-config-fluid has been updated to 5.8.0
+		"@typescript-eslint/consistent-type-exports": [
+			"error",
+			{ fixMixedExportsWithInlineTypeSpecifier: true },
+		],
+		"@typescript-eslint/consistent-type-imports": [
+			"error",
+			{ fixStyle: "inline-type-imports" },
+		],
+		"@typescript-eslint/no-import-type-side-effects": "error",
+		// #endregion
 	},
 	overrides: [
 		{

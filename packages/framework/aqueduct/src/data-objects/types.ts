@@ -13,8 +13,7 @@ import type { AsyncFluidObjectProvider } from "@fluidframework/synthesize/intern
 
 /**
  * This type is used as the base generic input to DataObject and PureDataObject.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface DataObjectTypes {
 	/**
@@ -34,8 +33,7 @@ export interface DataObjectTypes {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
 	readonly runtime: IFluidDataStoreRuntime;

@@ -4,15 +4,15 @@
  */
 
 import * as services from "@fluidframework/server-services";
-import * as core from "@fluidframework/server-services-core";
+import type * as core from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import winston from "winston";
 import { DenyList, RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import * as historianServices from "./services";
 import { normalizePort, Constants } from "./utils";
 import { HistorianRunner } from "./runner";
-import { IHistorianResourcesCustomizations } from "./customizations";
+import type { IHistorianResourcesCustomizations } from "./customizations";
 import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 import type { IDenyList } from "@fluidframework/server-services-core";
 import {

@@ -13,8 +13,8 @@ import {
 
 import {
 	GCSummaryStateTracker,
-	IGCStats,
-	IGarbageCollectionState,
+	type IGCStats,
+	type IGarbageCollectionState,
 	gcStateBlobKey,
 	nextGCVersion,
 } from "../../gc/index.js";

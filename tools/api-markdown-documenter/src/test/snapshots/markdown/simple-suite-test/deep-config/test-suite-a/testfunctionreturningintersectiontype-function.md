@@ -8,14 +8,14 @@ Test function that returns an inline type
 
 This is a test deprecation notice. Here is a [link](/test-suite-a/testfunctionreturninguniontype-function) to something else!
 
-## Signature {#testfunctionreturningintersectiontype-signature}
+<h2 id="testfunctionreturningintersectiontype-signature">Signature</h2>
 
 ```typescript
 export declare function testFunctionReturningIntersectionType(): TestEmptyInterface & TestInterfaceWithTypeParameter<number>;
 ```
 
-## Returns {#testfunctionreturningintersectiontype-returns}
+<h2 id="testfunctionreturningintersectiontype-returns">Returns</h2>
 
 an intersection type
 
-**Return type**: [TestEmptyInterface](/test-suite-a/testemptyinterface-interface/) \& [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface/)\<number>
+**Return type**: [TestEmptyInterface](/test-suite-a/testemptyinterface-interface/) & [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface/)\<number>

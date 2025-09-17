@@ -85,7 +85,8 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 		const childObject = await dataObjectFactory.createInstance(mainObject.containerRuntime);
 		mainObject._root.set("testObject2", childObject.handle);
 
-		const serializedState = await container.closeAndGetPendingLocalState?.();
+		const serializedState = await container.getPendingLocalState?.();
+		container.close();
 		assert(serializedState !== undefined, "serializedState should not be undefined");
 
 		// This should not hang

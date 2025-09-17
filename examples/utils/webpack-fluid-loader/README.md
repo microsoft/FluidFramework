@@ -99,18 +99,19 @@ npm run start:r11s --env mode=r11s \
 
 ## SharePoint
 
-To use a SharePoint server, the following environment variables must be set:
+To use a SharePoint server, run `npm run start:spo-df` if your OneDrive is on the DogFood server, and `npm run start:spo` if it is not.
+
+The following environment variables must be set:
 
 -   local\_\_testing\_\_clientId
 -   login\_\_odsp\_\_test\_\_tenants (when running against prod)
 -   login\_\_odspdf\_\_test\_\_tenants (when running against dogfood)
 
-All of these variables can be populated by running the getkeys tool.
+All of these variables can be populated by running the [getkeys](../../../tools/getkeys/README.md) tool. If you're a Microsoft developer, the recommended way to populate these variables for `start:spo` is to use the `@ff-internal/trips-setup` package.
+
 While running examples, documents will be created/loaded using the credentials found in these environment variables.
 
 Sometimes the cached tokens are out of date or incorrect, and it will not automatically refresh them. They can be manually refreshed by going navigating to http://localhost:8080/odspLogin (port may vary). To force reauth on start, the env variable `odspForceReauth` can be set. This can also be done by adding `--env forceReauth` to the end of the command. For example: `npm run start:spo-df -- --env forceReauth`.
-
-Use `spo-df` if your OneDrive is on the DogFood server, and `spo` if it is not.
 
 ---
 

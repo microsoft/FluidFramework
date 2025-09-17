@@ -6,13 +6,13 @@ Test interface
 
 **WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.**
 
-## Signature {#testinterface-signature}
+<h2 id="testinterface-signature">Signature</h2>
 
 ```typescript
 interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum>
 ```
 
-**Extends**: [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface/)\<[TestEnum](/test-suite-a/testnamespace-namespace/testenum-enum/)>
+**Extends**: [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface/)<[TestEnum](/test-suite-a/testnamespace-namespace/testenum-enum/)>
 
 ## Properties
 

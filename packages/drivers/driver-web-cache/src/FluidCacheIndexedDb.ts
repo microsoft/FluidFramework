@@ -4,7 +4,10 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ICacheEntry } from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	ICacheEntry,
+	getKeyForCacheEntry as odspGetKeyForCacheEntry,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { DBSchema, DeleteDBCallbacks, IDBPDatabase, deleteDB, openDB } from "idb";
 
@@ -25,7 +28,7 @@ export const oldVersionNameMapping: Partial<{ [key: number]: string }> = {
 };
 
 export function getKeyForCacheEntry(entry: ICacheEntry) {
-	return `${entry.file.docId}_${entry.type}_${entry.key}`;
+	return odspGetKeyForCacheEntry(entry);
 }
 
 export function getFluidCacheIndexedDbInstance(
@@ -76,8 +79,7 @@ export function getFluidCacheIndexedDbInstance(
  * Deletes the indexed DB instance.
  *
  * @remarks Warning this can throw an error in Firefox incognito, where accessing storage is prohibited.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function deleteFluidCacheIndexDbInstance(
 	deleteDBCallbacks?: DeleteDBCallbacks,

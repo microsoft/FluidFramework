@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISharedMap } from "@fluidframework/map/internal";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * - Create a new object from the passed SharedMap.

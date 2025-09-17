@@ -30,11 +30,9 @@ import {
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSharedTreeChangeCodecFamily } from "../../shared-tree/sharedTreeChangeCodecs.js";
-// eslint-disable-next-line import/no-internal-modules
-import { brand } from "../../util/brand.js";
 import { ajvValidator } from "../codec/index.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
-import { newTupleBTree } from "../../util/index.js";
+import { brand, newTupleBTree } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { newCrossFieldKeyTable } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 

@@ -142,8 +142,8 @@ describeCompat(
 			const collection = sharedString.getIntervalCollection(collectionId);
 			collection.change(id, { start: 3, end: 8 });
 
-			const pendingState: string | undefined =
-				await container.closeAndGetPendingLocalState?.();
+			const pendingState: string | undefined = await container.getPendingLocalState?.();
+			container.close();
 			provider.opProcessingController.resumeProcessing();
 			assert.ok(pendingState);
 

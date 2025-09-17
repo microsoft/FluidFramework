@@ -9,7 +9,11 @@ import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import { testSpecializedCursor, type TestTree } from "../../cursorTestSuite.js";
 
-import { SchemaFactory, type TreeEncodingOptions } from "../../../simple-tree/index.js";
+import {
+	KeyEncodingOptions,
+	SchemaFactory,
+	type TreeEncodingOptions,
+} from "../../../simple-tree/index.js";
 
 import {
 	applySchemaToParserOptions,
@@ -22,6 +26,8 @@ import {
 import type { ITreeCursor } from "../../../core/index.js";
 import { cursorForJsonableTreeNode } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 
 const schema = new SchemaFactory("Test");
 
@@ -37,7 +43,7 @@ describe("simple-tree verboseTree", () => {
 			}) {}
 			{
 				const options = applySchemaToParserOptions([A, B], {
-					useStoredKeys: false,
+					keys: KeyEncodingOptions.usePropertyKeys,
 				});
 				assert(options.keyConverter !== undefined);
 				assert.equal(options.keyConverter.parse(A.identifier, "a"), "a");
@@ -49,7 +55,7 @@ describe("simple-tree verboseTree", () => {
 			}
 			{
 				const options = applySchemaToParserOptions([A, B], {
-					useStoredKeys: true,
+					keys: KeyEncodingOptions.allStoredKeys,
 				});
 				assert(options.keyConverter === undefined);
 			}
@@ -67,7 +73,11 @@ describe("simple-tree verboseTree", () => {
 			const encodeOptions: TreeEncodingOptions = {};
 			class TestObject extends schema.object("T", {}) {}
 			const cursor = cursorForJsonableTreeNode({ type: brand("Test.T") });
-			const verbose = verboseFromCursor(cursor, TestObject, encodeOptions);
+			const verbose = verboseFromCursor(
+				cursor,
+				getUnhydratedContext(TestObject),
+				encodeOptions,
+			);
 			assert.deepEqual(verbose, { type: "Test.T", fields: {} });
 		});
 	});
@@ -114,11 +124,17 @@ describe("simple-tree verboseTree", () => {
 
 		const RootSchema = [TestMap, TestObject, schema.string, schema.null] as const;
 
-		for (const useStoredKeys of [false, true]) {
-			describe(useStoredKeys ? "stored keys" : "property keys", () => {
+		for (const keysSetting of [
+			KeyEncodingOptions.usePropertyKeys,
+			KeyEncodingOptions.allStoredKeys,
+			KeyEncodingOptions.knownStoredKeys,
+		]) {
+			describe(keysSetting, () => {
 				const testTrees: TestTree<VerboseTree>[] = [];
 
-				for (const testCase of useStoredKeys ? storedKeyCases : propertyKeyCases) {
+				for (const testCase of keysSetting === KeyEncodingOptions.usePropertyKeys
+					? propertyKeyCases
+					: storedKeyCases) {
 					testTrees.push({
 						name: JSON.stringify(testCase),
 						dataFactory: () => testCase,
@@ -126,10 +142,10 @@ describe("simple-tree verboseTree", () => {
 				}
 
 				const options: TreeEncodingOptions = {
-					useStoredKeys,
+					keys: keysSetting,
 				};
 				const encodeOptions: TreeEncodingOptions = {
-					useStoredKeys,
+					keys: keysSetting,
 				};
 
 				const finalOptions = applySchemaToParserOptions(RootSchema, options);
@@ -137,7 +153,8 @@ describe("simple-tree verboseTree", () => {
 				testSpecializedCursor<VerboseTree, ITreeCursor>({
 					cursorName: "verboseTree",
 					cursorFactory: (data) => cursorFromVerbose(data, finalOptions),
-					dataFromCursor: (cursor) => verboseFromCursor(cursor, RootSchema, encodeOptions),
+					dataFromCursor: (cursor) =>
+						verboseFromCursor(cursor, getUnhydratedContext(RootSchema), encodeOptions),
 					testData: testTrees,
 					builders: {
 						withKeys: (keys) => {

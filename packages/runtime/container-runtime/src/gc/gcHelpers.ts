@@ -4,25 +4,25 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
-	IGarbageCollectionDetailsBase,
+	type IGarbageCollectionDetailsBase,
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
-	IGarbageCollectionData,
+	type IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions/internal";
 import type { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	GCFeatureMatrix,
-	GCVersion,
-	IGCMetadata,
+	type GCFeatureMatrix,
+	type GCVersion,
+	type IGCMetadata,
 	gcVersionUpgradeToV4Key,
 	nextGCVersion,
 	stableGCVersion,
 } from "./gcDefinitions.js";
-import {
+import type {
 	IGarbageCollectionNodeData,
 	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,

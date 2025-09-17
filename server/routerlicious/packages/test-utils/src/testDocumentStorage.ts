@@ -4,30 +4,30 @@
  */
 
 import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
-import {
+import type {
 	ICommit,
 	ICommitDetails,
 	ICreateCommitParams,
 	ICreateTreeEntry,
 } from "@fluidframework/gitresources";
-import { IQuorumSnapshot, getGitMode, getGitType } from "@fluidframework/protocol-base";
+import { type IQuorumSnapshot, getGitMode, getGitType } from "@fluidframework/protocol-base";
 import {
-	ISummaryTree,
-	ICommittedProposal,
-	ITreeEntry,
+	type ISummaryTree,
+	type ICommittedProposal,
+	type ITreeEntry,
 	SummaryType,
-	ISnapshotTreeEx,
-	SummaryObject,
+	type ISnapshotTreeEx,
+	type SummaryObject,
 	FileMode,
 } from "@fluidframework/protocol-definitions";
 import {
-	IGitCache,
-	IGitManager,
-	ISession,
+	type IGitCache,
+	type IGitManager,
+	type ISession,
 	getQuorumTreeEntries,
 	mergeAppAndProtocolTree,
 } from "@fluidframework/server-services-client";
-import {
+import type {
 	IDatabaseManager,
 	IDeliState,
 	IDocument,

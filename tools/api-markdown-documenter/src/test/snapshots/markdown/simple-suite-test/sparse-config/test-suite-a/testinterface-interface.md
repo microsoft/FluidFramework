@@ -2,13 +2,13 @@
 
 Test interface
 
-### Signature {#testinterface-signature}
+<h3 id="testinterface-signature">Signature</h3>
 
 ```typescript
 export interface TestInterface
 ```
 
-### Remarks {#testinterface-remarks}
+<h3 id="testinterface-remarks">Remarks</h3>
 
 Here are some remarks about the interface
 
@@ -47,7 +47,7 @@ Here are some remarks about the interface
 | [(event: 'testCallSignature', listener: (input: unknown) => void): any](docs/test-suite-a/testinterface-_call_-callsignature) | Test interface event call signature |
 | [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](docs/test-suite-a/testinterface-_call__1-callsignature) | Another example call signature |
 
-### See Also {#testinterface-see-also}
+<h3 id="testinterface-see-also">See Also</h3>
 
 [testInterfaceMethod()](docs/test-suite-a/testinterface-testinterfacemethod-methodsignature)
 

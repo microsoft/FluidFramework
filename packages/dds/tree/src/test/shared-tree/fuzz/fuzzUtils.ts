@@ -31,16 +31,13 @@ import type {
 } from "../../../shared-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { expectEqualPaths, SharedTreeTestFactory } from "../../utils.js";
-import type {
-	NodeBuilderData,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../simple-tree/schemaTypes.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	type TreeNodeSchema,
 	type ValidateRecursiveSchema,
 	type ViewableTree,
+	type NodeBuilderData,
 } from "../../../simple-tree/index.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 

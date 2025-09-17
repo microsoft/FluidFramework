@@ -4,24 +4,24 @@
  */
 
 // eslint-disable-next-line import/no-deprecated
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { Deferred, type TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	configureWebSocketServices,
-	ICollaborationSessionEvents,
+	type ICollaborationSessionEvents,
 } from "@fluidframework/server-lambdas";
 import {
-	IDocumentStorage,
-	IOrdererManager,
-	ITenantManager,
-	IWebServer,
-	IWebServerFactory,
-	MongoManager,
+	type IDocumentStorage,
+	type IOrdererManager,
+	type ITenantManager,
+	type IWebServer,
+	type IWebServerFactory,
+	type MongoManager,
 	DefaultMetricClient,
-	IRunner,
+	type IRunner,
 } from "@fluidframework/server-services-core";
 import { TestClientManager } from "@fluidframework/server-test-utils";
 import detect from "detect-port";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import * as winston from "winston";
 
 import * as app from "./app";
@@ -90,6 +90,7 @@ export class TinyliciousRunner implements IRunner {
 			undefined /* isTokenExpiryEnabled */,
 			undefined /* isClientConnectivityCountingEnabled */,
 			undefined /* isSignalUsageCountingEnabled */,
+			undefined /* enablePrivateLinkNetworkCheck */,
 			undefined /* cache */,
 			undefined /* connectThrottlerPerTenant */,
 			undefined /* connectThrottlerPerCluster */,

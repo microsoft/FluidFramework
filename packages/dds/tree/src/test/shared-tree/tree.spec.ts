@@ -7,7 +7,6 @@ import { strict as assert } from "node:assert";
 
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
-import { CheckoutFlexTreeView } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -114,11 +113,8 @@ describe("treeApi", () => {
 
 				it("undoes and redoes entire transaction", () => {
 					const view = getTestObjectView();
-					const checkoutView = view.getView();
-					assert(checkoutView instanceof CheckoutFlexTreeView);
-					const { undoStack, redoStack } = createTestUndoRedoStacks(
-						checkoutView.checkout.events,
-					);
+
+					const { undoStack, redoStack } = createTestUndoRedoStacks(view.checkout.events);
 
 					run(view, (root) => {
 						root.content = 43;

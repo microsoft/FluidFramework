@@ -3,29 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IWholeFlatSummary,
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
-import {
+import type {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
 import {
 	denyListMiddleware,
-	IThrottleMiddlewareOptions,
+	type IThrottleMiddlewareOptions,
 	throttle,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
-import * as nconf from "nconf";
+import type * as nconf from "nconf";
 import winston from "winston";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../services";
+import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../services";
 import { parseToken, Constants } from "../utils";
 import * as utils from "./utils";
 import { ScopeType } from "@fluidframework/protocol-definitions";

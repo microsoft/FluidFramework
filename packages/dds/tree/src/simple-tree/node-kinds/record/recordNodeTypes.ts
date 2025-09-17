@@ -3,20 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { NodeKind } from "../../core/index.js";
 import type {
+	TreeNodeSchemaClass,
+	TreeNodeSchema,
+	TreeNodeSchemaNonClass,
+	WithType,
+	TreeNode,
 	ImplicitAllowedTypes,
 	ImplicitAnnotatedAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,
 	UnannotateImplicitAllowedTypes,
-} from "../../schemaTypes.js";
-import {
-	NodeKind,
-	type TreeNodeSchemaClass,
-	type TreeNodeSchema,
-	type TreeNodeSchemaNonClass,
-	type WithType,
-	type TreeNode,
 } from "../../core/index.js";
 
 import type { SimpleRecordNodeSchema } from "../../simpleSchema.js";

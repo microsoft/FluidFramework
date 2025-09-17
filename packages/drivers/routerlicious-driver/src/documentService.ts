@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
@@ -39,7 +39,6 @@ import { Historian } from "./historian.js";
 import { NullBlobStorageService } from "./nullBlobStorageService.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { IRouterliciousDriverPolicies } from "./policies.js";
-import { r11sDriverCompatDetailsForLoader } from "./r11sLayerCompatState.js";
 import {
 	RouterliciousOrdererRestWrapper,
 	RouterliciousStorageRestWrapper,
@@ -95,14 +94,6 @@ export class DocumentService
 
 	public get policies(): IDocumentServicePolicies | undefined {
 		return this._policies;
-	}
-
-	/**
-	 * The compatibility details of the Routerlicious Driver layer that is exposed to the Loader layer
-	 * for validating Loader-Driver compatibility.
-	 */
-	public get ILayerCompatDetails(): ILayerCompatDetails {
-		return r11sDriverCompatDetailsForLoader;
 	}
 
 	public dispose() {}

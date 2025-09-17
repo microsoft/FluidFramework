@@ -324,7 +324,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 		assert.strictEqual(runCount, 1);
 	});
 
-	it("closeAndGetPendingLocalState() called on container", async () => {
+	it("getPendingLocalState() called on container", async () => {
 		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
@@ -348,7 +348,8 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 
 		const container: IContainerExperimental =
 			await localTestObjectProvider.makeTestContainer(testContainerConfig);
-		const pendingString = await container.closeAndGetPendingLocalState?.();
+		const pendingString = await container.getPendingLocalState?.();
+		container.close();
 		assert.ok(pendingString);
 		const pendingLocalState: { url?: string } = JSON.parse(pendingString);
 		assert.strictEqual(container.closed, true);

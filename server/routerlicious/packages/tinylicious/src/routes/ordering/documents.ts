@@ -7,7 +7,7 @@ import {
 	defaultHash,
 	convertFirstSummaryWholeSummaryTreeToSummaryTree,
 } from "@fluidframework/server-services-client";
-import { IDocumentStorage } from "@fluidframework/server-services-core";
+import type { IDocumentStorage } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { v4 as uuid } from "uuid";
 import winston from "winston";

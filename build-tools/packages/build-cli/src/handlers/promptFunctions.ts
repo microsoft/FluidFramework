@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Machine } from "jssm";
+import type { Machine } from "jssm";
 import chalk from "picocolors";
 
 import { type InstructionalPrompt, mapADOLinks } from "../instructionalPromptWriter.js";
@@ -13,11 +13,11 @@ import {
 	getDefaultBumpTypeForBranch,
 	getPreReleaseDependencies,
 } from "../library/index.js";
-import { CommandLogger } from "../logging.js";
-import { MachineState } from "../machines/index.js";
+import type { CommandLogger } from "../logging.js";
+import type { MachineState } from "../machines/index.js";
 import { isReleaseGroup } from "../releaseGroups.js";
-import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
-import { StateHandlerFunction } from "./stateHandlers.js";
+import type { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
+import type { StateHandlerFunction } from "./stateHandlers.js";
 
 /**
  * Prompt the user to queue a release build.

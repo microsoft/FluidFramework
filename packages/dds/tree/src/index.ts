@@ -90,6 +90,7 @@ export {
 	type TreeView,
 	type TreeViewEvents,
 	SchemaFactory,
+	SchemaFactoryBeta,
 	SchemaFactoryAlpha,
 	type SchemaFactoryObjectOptions,
 	type ImplicitFieldSchema,
@@ -114,9 +115,11 @@ export {
 	type SchemaCompatibilityStatus,
 	type FieldProps,
 	type FieldPropsAlpha,
+	normalizeFieldSchema,
 	type InternalTreeNode,
 	type WithType,
 	type NodeChangedData,
+	type SchemaUpgrade,
 	// Types not really intended for public use, but used in links.
 	// Can not be moved to internalTypes since doing so causes app code to throw errors like:
 	// Error: src/simple-tree/objectNode.ts:72:1 - (ae-unresolved-link) The @link reference could not be resolved: The package "@fluidframework/tree" does not have an export "TreeNodeApi"
@@ -167,9 +170,9 @@ export {
 	type UnannotateAllowedTypes,
 	type UnannotateAllowedType,
 	type UnannotateAllowedTypesList,
-	type UnannotateAllowedTypeOrLazyItem,
 	type UnannotateImplicitFieldSchema,
 	type UnannotateSchemaRecord,
+	type SchemaStaticsAlpha,
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
@@ -214,6 +217,10 @@ export {
 	type SimpleObjectFieldSchema,
 	type SimpleRecordNodeSchema,
 	normalizeAllowedTypes,
+	walkFieldSchema,
+	walkNodeSchema,
+	walkAllowedTypes,
+	type SchemaVisitor,
 	getSimpleSchema,
 	type ReadonlyArrayNode,
 	type InsertableTreeNodeFromAllowedTypes,
@@ -258,6 +265,9 @@ export {
 	type RecordNodeInsertableData,
 	type RecordNodePojoEmulationSchema,
 	type TreeRecordNode,
+	KeyEncodingOptions,
+	type TreeParsingOptions,
+	type SchemaFactory_base,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -272,9 +282,11 @@ export {
 	type JsonValidator,
 	type SchemaValidationFunction,
 	FluidClientVersion,
+	type FormatValidator,
+	FormatValidatorNoOp,
 } from "./codec/index.js";
 export { noopValidator } from "./codec/index.js";
-export { typeboxValidator } from "./external-utilities/index.js";
+export { typeboxValidator, FormatValidatorBasic } from "./external-utilities/index.js";
 
 export type {
 	// Type Testing

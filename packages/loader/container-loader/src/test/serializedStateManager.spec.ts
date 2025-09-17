@@ -6,22 +6,22 @@
 import { strict as assert } from "node:assert";
 
 import { EventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
-import {
+import type {
 	IGetPendingLocalStateProps,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import {
-	FetchSource,
-	IResolvedUrl,
-	ISnapshot,
-	ISnapshotFetchOptions,
-	IDocumentAttributes,
-	ISnapshotTree,
-	IVersion,
+	type FetchSource,
+	type IResolvedUrl,
+	type ISnapshot,
+	type ISnapshotFetchOptions,
+	type IDocumentAttributes,
+	type ISnapshotTree,
+	type IVersion,
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
@@ -198,9 +198,6 @@ describe("serializedStateManager", () => {
 			await assert.rejects(
 				async () =>
 					serializedStateManager.getPendingLocalState(
-						{
-							notifyImminentClosure: false,
-						},
 						"clientId",
 						new MockRuntime(),
 						resolvedUrl,
@@ -231,7 +228,6 @@ describe("serializedStateManager", () => {
 				},
 			});
 			await serializedStateManager.getPendingLocalState(
-				{ notifyImminentClosure: false },
 				"clientId",
 				new MockRuntime(),
 				resolvedUrl,
@@ -257,7 +253,6 @@ describe("serializedStateManager", () => {
 			assert(baseSnapshot);
 			assert.strictEqual(version, undefined);
 			const state = await serializedStateManager.getPendingLocalState(
-				{ notifyImminentClosure: false },
 				"clientId",
 				new MockRuntime(),
 				resolvedUrl,
@@ -282,7 +277,6 @@ describe("serializedStateManager", () => {
 			assert.strictEqual(version?.id, "fromStorage");
 			assert.strictEqual(version.treeId, "fromStorage");
 			const state = await serializedStateManager.getPendingLocalState(
-				{ notifyImminentClosure: false },
 				"clientId",
 				new MockRuntime(),
 				resolvedUrl,
@@ -333,7 +327,6 @@ describe("serializedStateManager", () => {
 			// getting pending state without waiting for fetching new snapshot.
 			assert.strictEqual(getLatestSnapshotInfoP.isCompleted, false);
 			const state = await serializedStateManager.getPendingLocalState(
-				{ notifyImminentClosure: false },
 				"clientId",
 				new MockRuntime(),
 				resolvedUrl,
@@ -384,7 +377,6 @@ describe("serializedStateManager", () => {
 			}
 
 			const state = await serializedStateManager.getPendingLocalState(
-				{ notifyImminentClosure: false },
 				"clientId",
 				new MockRuntime(),
 				resolvedUrl,
@@ -442,7 +434,6 @@ describe("serializedStateManager", () => {
 			await serializedStateManager.refreshSnapshotP;
 
 			const state = await serializedStateManager.getPendingLocalState(
-				{ notifyImminentClosure: false },
 				"clientId",
 				new MockRuntime(),
 				resolvedUrl,
@@ -498,7 +489,6 @@ describe("serializedStateManager", () => {
 					},
 				]);
 				const state = await serializedStateManager.getPendingLocalState(
-					{ notifyImminentClosure: false },
 					"clientId",
 					new MockRuntime(),
 					resolvedUrl,
@@ -559,7 +549,6 @@ describe("serializedStateManager", () => {
 					},
 				]);
 				const state = await serializedStateManager.getPendingLocalState(
-					{ notifyImminentClosure: false },
 					"clientId",
 					new MockRuntime(),
 					resolvedUrl,
@@ -608,7 +597,6 @@ describe("serializedStateManager", () => {
 					eventEmitter.emit("saved");
 				}
 				const state = await serializedStateManager.getPendingLocalState(
-					{ notifyImminentClosure: false },
 					"clientId",
 					new MockRuntime(),
 					resolvedUrl,
@@ -655,7 +643,6 @@ describe("serializedStateManager", () => {
 				await serializedStateManager.fetchSnapshot(undefined);
 				await serializedStateManager.refreshSnapshotP;
 				const state = await serializedStateManager.getPendingLocalState(
-					{ notifyImminentClosure: false },
 					"clientId",
 					new MockRuntime(),
 					resolvedUrl,
@@ -710,7 +697,6 @@ describe("serializedStateManager", () => {
 				}
 
 				const state = await serializedStateManager.getPendingLocalState(
-					{ notifyImminentClosure: false },
 					"clientId",
 					new MockRuntime(),
 					resolvedUrl,
@@ -777,7 +763,6 @@ describe("serializedStateManager", () => {
 				}
 
 				const state = await serializedStateManager.getPendingLocalState(
-					{ notifyImminentClosure: false },
 					"clientId",
 					new MockRuntime(),
 					resolvedUrl,
@@ -815,7 +800,6 @@ describe("serializedStateManager", () => {
 					},
 				};
 				const state = await serializedStateManager.getPendingLocalState(
-					{ notifyImminentClosure: false },
 					"clientId",
 					mockRuntime,
 					resolvedUrl,
@@ -858,7 +842,6 @@ describe("serializedStateManager", () => {
 					},
 				};
 				const state = await serializedStateManager.getPendingLocalState(
-					{ notifyImminentClosure: false },
 					"clientId",
 					mockRuntime,
 					resolvedUrl,
@@ -913,7 +896,6 @@ describe("serializedStateManager", () => {
 					},
 				};
 				const state = await serializedStateManager.getPendingLocalState(
-					{ notifyImminentClosure: false },
 					"clientId",
 					mockRuntime,
 					resolvedUrl,
@@ -957,7 +939,6 @@ describe("serializedStateManager", () => {
 		): Promise<void> => {
 			// pending state validation
 			const state = await serializedStateManager.getPendingLocalState(
-				{ notifyImminentClosure: false },
 				"clientId",
 				new MockRuntime(),
 				resolvedUrl,

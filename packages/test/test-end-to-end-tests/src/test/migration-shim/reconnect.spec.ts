@@ -295,7 +295,8 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		updateQuantity(legacyTree1, 3);
 		updateQuantity(legacyTree1, 4);
 		updateQuantity(legacyTree1, 5);
-		const pendingState = await container1.closeAndGetPendingLocalState?.();
+		const pendingState = await container1.getPendingLocalState?.();
+		container1.close();
 		assert(pendingState !== undefined, "Pending state should be defined");
 
 		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
@@ -333,7 +334,8 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		node1.quantity = 3;
 		node1.quantity = 4;
 		node1.quantity = 5;
-		const pendingState = await container1.closeAndGetPendingLocalState?.();
+		const pendingState = await container1.getPendingLocalState?.();
+		container1.close();
 		assert(pendingState !== undefined, "Pending state should be defined");
 
 		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
@@ -395,7 +397,8 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		node2.quantity = 3;
 		node2.quantity = 4;
 		node2.quantity = 5;
-		const pendingState = await container2.closeAndGetPendingLocalState?.();
+		const pendingState = await container2.getPendingLocalState?.();
+		container2.close();
 		assert(pendingState !== undefined, "Pending state should be defined");
 
 		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
@@ -436,7 +439,8 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		updateQuantity(legacyTree1, 3);
 		updateQuantity(legacyTree1, 4);
 		updateQuantity(legacyTree1, 5);
-		const pendingState = await container1.closeAndGetPendingLocalState?.();
+		const pendingState = await container1.getPendingLocalState?.();
+		container1.close();
 		assert(pendingState !== undefined, "Pending state should be defined");
 		shim2.submitMigrateOp();
 		await promise2;
@@ -499,7 +503,8 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await toIDeltaManagerFull(container1.deltaManager).outbound.pause();
 
 		shim1.submitMigrateOp();
-		const pendingState = await container1.closeAndGetPendingLocalState?.();
+		const pendingState = await container1.getPendingLocalState?.();
+		container1.close();
 		assert(pendingState !== undefined, "Pending state should be defined");
 		updateQuantity(legacyTree2, 1);
 		updateQuantity(legacyTree2, 2);

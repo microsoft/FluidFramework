@@ -29,7 +29,6 @@ export { isIDeltaManagerFull } from "./deltas.js";
 export type { ContainerWarning, ICriticalContainerError } from "./error.js";
 export { ContainerErrorTypes } from "./error.js";
 export type {
-	ConnectionState,
 	ICodeDetailsLoader,
 	IContainer,
 	IContainerEvents,
@@ -45,7 +44,7 @@ export type {
 	IResolvedFluidCodeDetails,
 	ISnapshotTreeWithBlobContents,
 } from "./loader.js";
-export { LoaderHeader } from "./loader.js";
+export { ConnectionState, LoaderHeader } from "./loader.js";
 export type { IFluidModule } from "./fluidModule.js";
 export type {
 	IFluidPackage,
@@ -66,7 +65,7 @@ export type {
 	IRuntime,
 	IGetPendingLocalStateProps,
 } from "./runtime.js";
-export { AttachState, IRuntimeFactory } from "./runtime.js";
+export { AttachState, IRuntimeFactory, type IContainerStorageService } from "./runtime.js";
 
 export type {
 	/**

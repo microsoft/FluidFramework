@@ -4,7 +4,9 @@
 		"rootDir": "./src",
 		"outDir": "./dist",
 		"composite": true,
-		"types": ["chai", "mocha", "node"],
+		// Uses Node types to detect Node and do special case optimization for it.
+		// This package should still support browser.
+		"types": ["mocha", "node"],
 	},
 	"include": ["src/**/*"],
 	"exclude": ["src/test/**/*"],

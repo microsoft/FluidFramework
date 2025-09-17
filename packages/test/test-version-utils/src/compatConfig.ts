@@ -313,8 +313,9 @@ function genCompatConfig(versionDetails: {
  *
  * @remarks
  * Fast/slow trains refer to the different velocities that customers adopt new releases.
- * Fast train customers integrate most minor releases quickly and saturate on a roughly 3-month
- * cadence (this could be subject to change in the future).
+ * Fast train customers integrate most minor releases quickly and saturate on a roughly 2-month
+ * cadence. This currently aligns with our regular schedule for .10 minor releases (i.e. 2.10.0,
+ * 2.20.0, etc.). Note that this may change in the future, and we will have to adjust our strategy accordingly.
  * Slow train customers mainly integrate public major releases and may take much longer to saturate
  * on any given release. Ideally, the slow train releases would also be on a regular time-based cadence, but
  * public major releases are not currently on a fixed schedule. This may change in the future.

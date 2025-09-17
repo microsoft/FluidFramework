@@ -28,8 +28,7 @@
  * @privateRemarks
  * This should be deprecated (as a non internal API) then moved to purely internal.
  * When done, the `skipInProduction` reference above should be turned into a link.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function assert(
 	condition: boolean,

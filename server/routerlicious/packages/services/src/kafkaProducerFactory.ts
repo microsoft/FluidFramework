@@ -6,8 +6,8 @@
 import { inspect } from "util";
 
 import {
-	IContextErrorData,
-	IProducer,
+	type IContextErrorData,
+	type IProducer,
 	MaxKafkaMessageSize,
 } from "@fluidframework/server-services-core";
 import { KafkaNodeProducer } from "@fluidframework/server-services-ordering-kafkanode";

@@ -24,14 +24,17 @@ export type {
 	ITreeAlpha,
 } from "./tree.js";
 export { asTreeViewAlpha } from "./tree.js";
+export { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 export {
 	SchemaFactory,
 	type ScopedSchemaName,
 	type SchemaFactoryObjectOptions,
-	type SchemaStatics,
-	schemaStatics,
+	type NodeSchemaOptions,
+	type NodeSchemaOptionsAlpha,
+	type SchemaFactory_base,
 } from "./schemaFactory.js";
-export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
+export { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
+export { SchemaFactoryAlpha, type SchemaStaticsAlpha } from "./schemaFactoryAlpha.js";
 export type {
 	ValidateRecursiveSchema,
 	FixRecursiveArraySchema,
@@ -100,6 +103,8 @@ export {
 	tryStoredSchemaAsArray,
 	replaceHandles,
 	type HandleConverter,
+	KeyEncodingOptions,
+	type TreeParsingOptions,
 } from "./customTree.js";
 
 export {

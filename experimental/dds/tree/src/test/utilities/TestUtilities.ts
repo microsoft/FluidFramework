@@ -76,6 +76,7 @@ import {
 } from '../../persisted-types/index.js';
 
 import { RefreshingTestTree, SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
+import { _dirname } from './dirname.cjs';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {
@@ -505,7 +506,7 @@ export function areNodesEquivalent(...nodes: NodeData<unknown>[]): boolean {
 
 // This accounts for this file being executed after compilation. If many tests want to leverage resources, we should unify
 // resource path logic to a single place.
-export const testDocumentsPathBase = resolve(__dirname, '../../../src/test/documents/');
+export const testDocumentsPathBase = resolve(_dirname, '../../../src/test/documents/');
 
 export const versionComparator = (versionA: string, versionB: string): number => {
 	const versionASplit = versionA.split('.');
@@ -695,7 +696,8 @@ export async function withContainerOffline<TReturn>(
 	await provider.ensureSynchronized();
 	await provider.opProcessingController.pauseProcessing(container);
 	const actionReturn = action();
-	const pendingLocalState = await container.closeAndGetPendingLocalState?.();
+	const pendingLocalState = await container.getPendingLocalState?.();
+	container.close();
 	assert(pendingLocalState !== undefined, 0x726 /* pendingLocalState should be defined */);
 	return { actionReturn, pendingLocalState };
 }

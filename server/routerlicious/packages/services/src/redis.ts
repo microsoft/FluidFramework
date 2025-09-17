@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ICache } from "@fluidframework/server-services-core";
+import type { ICache } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import {
+import type {
 	IRedisParameters,
 	IRedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";

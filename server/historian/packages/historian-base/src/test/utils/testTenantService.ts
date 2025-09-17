@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITenantConfig } from "@fluidframework/server-services-core";
+import type { ITenantConfig } from "@fluidframework/server-services-core";
 import { TestDb, TestTenant } from "@fluidframework/server-test-utils";
-import { ITenantService } from "../../services";
+import type { ITenantService } from "../../services";
 
 export class TestTenantService implements ITenantService {
 	private readonly tenant = new TestTenant(

@@ -4,19 +4,19 @@
 
 Test Namespace
 
-## Signature {#testnamespace-signature}
+<h2 id="testnamespace-signature">Signature</h2>
 
 ```typescript
 export declare namespace TestNamespace
 ```
 
-## Remarks {#testnamespace-remarks}
+<h2 id="testnamespace-remarks">Remarks</h2>
 
 Here are some remarks about the namespace
 
-## Examples {#testnamespace-examples}
+<h2 id="testnamespace-examples">Examples</h2>
 
-### Example: TypeScript Example {#testnamespace-example1}
+<h3 id="testnamespace-example1">Example: TypeScript Example</h3>
 
 ```typescript
 const foo: Foo = {
@@ -25,7 +25,7 @@ const foo: Foo = {
 };
 ```
 
-### Example: JavaScript Example {#testnamespace-example2}
+<h3 id="testnamespace-example2">Example: JavaScript Example</h3>
 
 ```javascript
 const foo = {
@@ -78,41 +78,41 @@ const foo = {
 
 ## Function Details
 
-### testFunction {#testfunction-function}
+<h3 id="testfunction-function">testFunction</h3>
 
 Test function
 
-#### Signature {#testfunction-signature}
+<h4 id="testfunction-signature">Signature</h4>
 
 ```typescript
 function testFunction(testParameter: number): number;
 ```
 
-#### Parameters {#testfunction-parameters}
+<h4 id="testfunction-parameters">Parameters</h4>
 
 | Parameter | Type | Description |
 | - | - | - |
 | testParameter | number | |
 
-#### Returns {#testfunction-returns}
+<h4 id="testfunction-returns">Returns</h4>
 
 A number
 
 **Return type**: number
 
-#### Throws {#testfunction-throws}
+<h4 id="testfunction-throws">Throws</h4>
 
 An Error
 
 ## Variable Details
 
-### TestConst {#testconst-variable}
+<h3 id="testconst-variable">TestConst</h3>
 
 Test Constant
 
 **WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
 
-#### Signature {#testconst-signature}
+<h4 id="testconst-signature">Signature</h4>
 
 ```typescript
 TestConst = "Hello world!"

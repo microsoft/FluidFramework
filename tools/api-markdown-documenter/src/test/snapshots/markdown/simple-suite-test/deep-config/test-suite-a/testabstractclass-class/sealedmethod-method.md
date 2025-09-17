@@ -4,14 +4,14 @@
 
 A test `@sealed` method.
 
-## Signature {#sealedmethod-signature}
+<h2 id="sealedmethod-signature">Signature</h2>
 
 ```typescript
 /** @sealed */
 protected sealedMethod(): string;
 ```
 
-## Returns {#sealedmethod-returns}
+<h2 id="sealedmethod-returns">Returns</h2>
 
 A string!
 

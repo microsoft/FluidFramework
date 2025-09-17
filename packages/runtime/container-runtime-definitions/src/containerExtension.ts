@@ -13,6 +13,7 @@ import type {
 	JsonDeserialized,
 	JsonSerializable,
 	Listenable,
+	OpaqueJsonDeserialized,
 	TypedMessage,
 } from "@fluidframework/core-interfaces/internal";
 import type { IQuorumClients } from "@fluidframework/driver-definitions/internal";
@@ -102,7 +103,7 @@ export type RawInboundExtensionMessage<TMessage extends TypedMessage = TypedMess
 		? InternalUtilityTypes.FlattenIntersection<
 				ExtensionMessage<{
 					type: string;
-					content: JsonDeserialized<unknown>;
+					content: OpaqueJsonDeserialized<unknown>;
 				}> & {
 					/**
 					 * The client ID that submitted the message.
@@ -127,7 +128,9 @@ export type VerifiedInboundExtensionMessage<TMessage extends TypedMessage = Type
 		? InternalUtilityTypes.FlattenIntersection<
 				ExtensionMessage<{
 					type: TMessage["type"];
-					content: JsonDeserialized<TMessage["content"]>;
+					content: unknown extends TMessage["content"]
+						? OpaqueJsonDeserialized<unknown>
+						: JsonDeserialized<TMessage["content"]>;
 				}> & {
 					/**
 					 * The client ID that submitted the message.
@@ -199,13 +202,24 @@ export interface ContainerExtension<
 }
 
 /**
+ * Join status for container.
+ *
+ * @internal
+ */
+export type JoinedStatus = "disconnected" | "joinedForReading" | "joinedForWriting";
+
+/**
  * Events emitted by the {@link ExtensionHost}.
  *
+ * @remarks
+ * With loaders prior to 2.52.0, readonly clients will not get joined status or events.
+ * The only events emitted will be "joined" with canWrite = true and "disconnected".
  * @internal
  */
 export interface ExtensionHostEvents {
 	"disconnected": () => void;
-	"connected": (clientId: ClientConnectionId) => void;
+	"joined": (props: { clientId: ClientConnectionId; canWrite: boolean }) => void;
+	"connectionTypeChanged": (canWrite: boolean) => void;
 }
 
 /**
@@ -218,7 +232,21 @@ export interface ExtensionHostEvents {
  * @internal
  */
 export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProperties> {
-	readonly isConnected: () => boolean;
+	/**
+	 * Gets the current joined status of the container.
+	 *
+	 * @remarks
+	 * Returns one of three possible {@link JoinedStatus} values:
+	 * - "disconnected": The container is not connected to the service
+	 * - "joinedForReading": The container has a read-only connection
+	 * - "joinedForWriting": The container has a write connection
+	 *
+	 * Status changes are signaled through :
+	 * - {@link ExtensionHostEvents.disconnected}: Transitioning to Disconnected state
+	 * - {@link ExtensionHostEvents.joined}: Transition to Connected state (either for reading or writing)
+	 * - {@link ExtensionHostEvents.connectionTypeChanged}: When connection type has changed (e.g., write to read)
+	 */
+	readonly getJoinedStatus: () => JoinedStatus;
 	readonly getClientId: () => ClientConnectionId | undefined;
 
 	readonly events: Listenable<ExtensionHostEvents>;

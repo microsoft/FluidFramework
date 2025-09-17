@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
-import type { FluidObject } from "@fluidframework/core-interfaces";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
 	IDocumentServiceEvents,
@@ -42,22 +41,12 @@ export class ReplayDocumentService
 			await documentService.connectToDeltaStorage(),
 			controller,
 		);
-		const maybeDriverCompatDetails = documentService as FluidObject<ILayerCompatDetails>;
-		return new ReplayDocumentService(
-			controller,
-			deltaConnection,
-			maybeDriverCompatDetails.ILayerCompatDetails,
-		);
+		return new ReplayDocumentService(controller, deltaConnection);
 	}
 
 	constructor(
 		private readonly controller: IDocumentStorageService,
 		private readonly deltaStorage: IDocumentDeltaConnection,
-		/**
-		 * The compatibility details of the base Driver layer that is exposed to the Loader layer
-		 * for validating Loader-Driver compatibility.
-		 */
-		public readonly ILayerCompatDetails: ILayerCompatDetails | undefined,
 	) {
 		super();
 	}

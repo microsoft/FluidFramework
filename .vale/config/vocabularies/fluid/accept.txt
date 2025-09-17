@@ -8,3 +8,10 @@ TypeScript
 namespace
 UUID
 UUIDs
+enum
+Enum
+openable
+Datastore
+DDSes
+accessor
+accessors

@@ -6,7 +6,7 @@
 
 /// <reference types="node" />
 
-import { Test } from 'mocha';
+import type { Test } from 'mocha';
 
 // @public
 export function benchmark(args: BenchmarkArguments): Test;

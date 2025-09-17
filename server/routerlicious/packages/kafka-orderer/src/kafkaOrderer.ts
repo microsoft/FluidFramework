@@ -4,10 +4,10 @@
  */
 
 import {
-	IClient,
-	IClientJoin,
-	IDocumentMessage,
-	IDocumentSystemMessage,
+	type IClient,
+	type IClientJoin,
+	type IDocumentMessage,
+	type IDocumentSystemMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import * as core from "@fluidframework/server-services-core";

@@ -143,10 +143,11 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// Get Pending state and close
 		assert(
-			container.closeAndGetPendingLocalState !== undefined,
-			"Test can't run without closeAndGetPendingLocalState",
+			container.getPendingLocalState !== undefined,
+			"Test can't run without getPendingLocalState",
 		);
-		const pendingState = await container.closeAndGetPendingLocalState();
+		const pendingState = await container.getPendingLocalState();
+		container.close();
 
 		// Load from the pending state
 		const container3 = await provider.loadContainer(
@@ -221,6 +222,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 			{ configProvider },
 			{ [LoaderHeader.version]: summaryVersion },
 		)) as IContainerExperimental;
+		await provider.ensureSynchronized();
 		const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
 		const handleA2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
 		const handleB2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectB");
@@ -233,8 +235,9 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		dataObjectA2._root.set("A2", "A2");
 
 		// Get Pending state and close
-		assert(container2.closeAndGetPendingLocalState !== undefined, "Missing method!");
-		const pendingState = await container2.closeAndGetPendingLocalState();
+		assert(container2.getPendingLocalState !== undefined, "Missing method!");
+		const pendingState = await container2.getPendingLocalState();
+		container2.close();
 
 		// Load from the pending state
 		const container3 = await provider.loadContainer(
@@ -355,8 +358,9 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		dataObjectB2._root.set("B2", "B2");
 
 		// Get Pending state and close
-		assert(container2.closeAndGetPendingLocalState !== undefined, "Missing method!");
-		const pendingState = await container2.closeAndGetPendingLocalState();
+		assert(container2.getPendingLocalState !== undefined, "Missing method!");
+		const pendingState = await container2.getPendingLocalState();
+		container2.close();
 
 		// Load from the pending state
 		const container3 = await provider.loadContainer(

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISignalClient } from "@fluidframework/protocol-definitions";
-import {
+import type { ISignalClient } from "@fluidframework/protocol-definitions";
+import type {
 	ICollaborationSessionClient,
 	ICollaborationSession,
 	ICollaborationSessionManager,
@@ -15,6 +15,7 @@ import {
 	getLumberBaseProperties,
 	LumberEventName,
 	Lumberjack,
+	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 
 /**
@@ -111,6 +112,8 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 					existingSession?.telemetryProperties?.maxConcurrentClients ?? 0,
 					totalCurrentClients,
 				),
+				sessionOpCount: existingSession?.telemetryProperties?.sessionOpCount ?? 0,
+				sessionSignalCount: existingSession?.telemetryProperties?.sessionSignalCount ?? 0,
 			},
 		};
 		// Create a new session in the session manager
@@ -123,26 +126,37 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		client: ICollaborationSessionClient,
 		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
 		knownConnectedClients?: ISignalClient[],
+		clientMetrics?: {
+			opCount?: number;
+			signalCount?: number;
+		},
 	): Promise<void> {
-		return this.endClientSessionCore(client, sessionId, knownConnectedClients).catch(
-			(error) => {
-				Lumberjack.error(
-					"Failed to end tracking client session",
-					{
-						...getLumberBaseProperties(sessionId.documentId, sessionId.tenantId),
-						numConnectedClients: knownConnectedClients?.length,
-					},
-					error,
-				);
-				throw error;
-			},
-		);
+		return this.endClientSessionCore(
+			client,
+			sessionId,
+			knownConnectedClients,
+			clientMetrics,
+		).catch((error) => {
+			Lumberjack.error(
+				"Failed to end tracking client session",
+				{
+					...getLumberBaseProperties(sessionId.documentId, sessionId.tenantId),
+					numConnectedClients: knownConnectedClients?.length,
+				},
+				error,
+			);
+			throw error;
+		});
 	}
 
 	private async endClientSessionCore(
 		client: ICollaborationSessionClient,
 		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
 		knownConnectedClients?: ISignalClient[],
+		clientMetrics?: {
+			opCount?: number;
+			signalCount?: number;
+		},
 	): Promise<void> {
 		const sessionTimerKey = this.getSessionTimerKey(sessionId);
 		const { existingSession, otherConnectedClients } = await this.getSessionAndClients(
@@ -162,6 +176,18 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 			});
 			return;
 		}
+
+		// Update session with accumulated client metrics if provided
+		const updatedTelemetryProperties = { ...existingSession.telemetryProperties };
+		if (clientMetrics) {
+			updatedTelemetryProperties.sessionOpCount =
+				(updatedTelemetryProperties.sessionOpCount ?? 0) + (clientMetrics.opCount ?? 0);
+			updatedTelemetryProperties.sessionSignalCount =
+				(updatedTelemetryProperties.sessionSignalCount ?? 0) +
+				(clientMetrics.signalCount ?? 0);
+		}
+
+		let lastClientLeaveTime: number | undefined;
 		if (otherConnectedClients.length === 0) {
 			// Start a timer to end the session after a period of inactivity
 			const timer = setTimeout(() => {
@@ -180,18 +206,14 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 				});
 			}, this.sessionActivityTimeoutMs);
 			this.sessionEndTimers.set(sessionTimerKey, timer);
-			// Update the session to have a lastClientLeaveTime
-			await this.sessionManager.addOrUpdateSession({
-				...existingSession,
-				lastClientLeaveTime: Date.now(),
-			});
-		} else {
-			// Make sure the session manager shows lastClientLeaveTime as undefined
-			await this.sessionManager.addOrUpdateSession({
-				...existingSession,
-				lastClientLeaveTime: undefined,
-			});
+			// Update the session to have a lastClientLeaveTime if there are no other connected clients
+			lastClientLeaveTime = Date.now();
 		}
+		await this.sessionManager.addOrUpdateSession({
+			...existingSession,
+			lastClientLeaveTime,
+			telemetryProperties: updatedTelemetryProperties,
+		});
 	}
 
 	public async pruneInactiveSessions(): Promise<void> {
@@ -227,32 +249,30 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 	}
 
 	private async pruneInactiveSessionsCore(): Promise<void> {
-		const allSessions = await this.sessionManager.getAllSessions();
 		// Add a buffer to the session activity timeout to prevent pruning sessions that are already
 		// being closed or have just been closed normally.
 		const inactiveSessionPruningBuffer = Math.round(0.1 * this.sessionActivityTimeoutMs);
-		const inactiveSessionsToPrune = allSessions.filter((session) =>
-			this.isSessionExpired(session, inactiveSessionPruningBuffer),
-		);
-		const clientSessionTimeoutPs: Promise<void>[] = inactiveSessionsToPrune.map(
-			async (session) =>
-				// Depending on how frequently pruning occurs, this could cause the session's
-				// telemetry to indicate the session's duration was longer than it actually was.
-				// However, we can ignore that because it is technically correct that the session
-				// was tracked as "active" for that duration. We log lastClientLeaveTime in the
-				// telemetry so that the actual end time is known.
-				this.handleClientSessionTimeout(session, "pruning").catch((error) => {
-					Lumberjack.error(
-						"Failed to cleanup session on timeout detected by pruning",
-						{
-							...getLumberBaseProperties(session.documentId, session.tenantId),
-							...session.telemetryProperties,
-						},
-						error,
-					);
-				}),
-		);
-		await Promise.all(clientSessionTimeoutPs);
+		await this.sessionManager.iterateAllSessions(async (session: ICollaborationSession) => {
+			if (!this.isSessionExpired(session, inactiveSessionPruningBuffer)) {
+				// Session is not expired, so we don't need to prune it
+				return;
+			}
+			// Depending on how frequently pruning occurs, this could cause the session's
+			// telemetry to indicate the session's duration was longer than it actually was.
+			// However, we can ignore that because it is technically correct that the session
+			// was tracked as "active" for that duration. We log lastClientLeaveTime in the
+			// telemetry so that the actual end time is known.
+			return this.handleClientSessionTimeout(session, "pruning").catch((error) => {
+				Lumberjack.error(
+					"Failed to cleanup session on timeout detected by pruning",
+					{
+						...getLumberBaseProperties(session.documentId, session.tenantId),
+						...session.telemetryProperties,
+					},
+					error,
+				);
+			});
+		});
 	}
 
 	private async getSessionAndClients(
@@ -294,7 +314,10 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 			tenantId: session.tenantId,
 			documentId: session.documentId,
 		});
-		if (latestSessionInformation !== undefined && this.isSessionExpired(session)) {
+		if (
+			latestSessionInformation !== undefined &&
+			!this.isSessionExpired(latestSessionInformation)
+		) {
 			// Session information on this instance is stale, so don't end the session.
 			Lumberjack.verbose("Session end timer expired but session is still active", {
 				...getLumberBaseProperties(session.documentId, session.tenantId),
@@ -307,30 +330,36 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		}
 		// Session end timer expired and no clients are connected, so end the session.
 		const now = Date.now();
-		const sessionDurationInMs = now - session.firstClientJoinTime;
+		// Use the latest session information if available, otherwise use the passed session
+		const finalSession = latestSessionInformation || session;
+		const sessionDurationInMs = now - finalSession.firstClientJoinTime;
 		const metric = Lumberjack.newLumberMetric(LumberEventName.NexusSessionResult, {
-			...getLumberBaseProperties(session.documentId, session.tenantId),
+			...getLumberBaseProperties(finalSession.documentId, finalSession.tenantId),
 			// Explicitly set metric value as durationInMs because we can't use the automatic
 			// start/end time calculation for this metric since we are logging immediately on create.
 			metricValue: sessionDurationInMs,
 			durationInMs: sessionDurationInMs,
 			lastClientLeaveTimestamp:
-				session.lastClientLeaveTime !== undefined
-					? new Date(session.lastClientLeaveTime).toISOString()
+				finalSession.lastClientLeaveTime !== undefined
+					? new Date(finalSession.lastClientLeaveTime).toISOString()
 					: undefined,
 			timeSinceLastClientLeaveMs:
-				session.lastClientLeaveTime !== undefined
-					? now - session.lastClientLeaveTime
+				finalSession.lastClientLeaveTime !== undefined
+					? now - finalSession.lastClientLeaveTime
 					: undefined,
-			...session.telemetryProperties,
+			...finalSession.telemetryProperties,
+			// Explicitly include session-level metrics using CommonProperties enum values
+			[CommonProperties.sessionOpCount]: finalSession.telemetryProperties.sessionOpCount || 0,
+			[CommonProperties.sessionSignalCount]:
+				finalSession.telemetryProperties.sessionSignalCount || 0,
 		});
 		// The lumber metric is created at the end of the session, so "timestamp" is the end time, rather than the usual "start time".
 		// Override the timestamp to be the start time of the session.
-		metric.overrideTimestamp(session.firstClientJoinTime);
+		metric.overrideTimestamp(finalSession.firstClientJoinTime);
 
 		// For now, always a "success" result
 		metric.success(`Session ended due to ${reason}`);
-		return this.cleanupSessionOnEnd(session);
+		return this.cleanupSessionOnEnd(finalSession);
 	}
 
 	private async cleanupSessionOnEnd(session: ICollaborationSession): Promise<void> {

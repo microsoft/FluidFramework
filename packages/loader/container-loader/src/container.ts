@@ -12,8 +12,8 @@ import {
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
-	IAudience,
-	ICriticalContainerError,
+	type IAudience,
+	type ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import type {
 	ContainerWarning,
@@ -26,7 +26,6 @@ import type {
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IFluidModuleWithDetails,
-	IGetPendingLocalStateProps,
 	IProvideFluidCodeDetailsComparer,
 	IProvideRuntimeFactory,
 	IRuntime,
@@ -36,41 +35,41 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import { isFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
-	FluidObject,
-	IEvent,
-	IRequest,
-	ITelemetryBaseProperties,
+	type FluidObject,
+	type IEvent,
+	type IRequest,
+	type ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import type { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
-	IClient,
-	IClientDetails,
-	IQuorumClients,
-	ISequencedClient,
-	ISummaryTree,
+	type IClient,
+	type IClientDetails,
+	type IQuorumClients,
+	type ISequencedClient,
+	type ISummaryTree,
 	SummaryType,
 } from "@fluidframework/driver-definitions";
 import {
-	IDocumentService,
-	IDocumentServiceFactory,
-	IDocumentStorageService,
-	IResolvedUrl,
-	ISnapshot,
-	IThrottlingWarning,
-	IUrlResolver,
-	ICommittedProposal,
-	IDocumentAttributes,
-	IDocumentMessage,
-	IQuorumProposals,
-	ISequencedProposal,
-	ISnapshotTree,
-	ISummaryContent,
-	IVersion,
+	type IDocumentService,
+	type IDocumentServiceFactory,
+	type IDocumentStorageService,
+	type IResolvedUrl,
+	type ISnapshot,
+	type IThrottlingWarning,
+	type IUrlResolver,
+	type ICommittedProposal,
+	type IDocumentAttributes,
+	type IDocumentMessage,
+	type IQuorumProposals,
+	type ISequencedProposal,
+	type ISnapshotTree,
+	type ISummaryContent,
+	type IVersion,
 	MessageType,
-	ISequencedDocumentMessage,
-	ISignalMessage,
+	type ISequencedDocumentMessage,
+	type ISignalMessage,
 	type ConnectionMode,
 } from "@fluidframework/driver-definitions/internal";
 import {
@@ -85,11 +84,11 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import {
 	type TelemetryEventCategory,
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
 	GenericError,
-	IFluidErrorBase,
-	MonitoringContext,
+	type IFluidErrorBase,
+	type MonitoringContext,
 	PerformanceEvent,
 	UsageError,
 	connectedEventName,
@@ -106,27 +105,27 @@ import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
 
 import {
-	AttachProcessProps,
-	AttachmentData,
+	type AttachProcessProps,
+	type AttachmentData,
 	runRetriableAttachProcess,
 } from "./attachment.js";
 import { Audience } from "./audience.js";
 import { ConnectionManager } from "./connectionManager.js";
 import { ConnectionState } from "./connectionState.js";
 import {
-	IConnectionStateHandler,
+	type IConnectionStateHandler,
 	createConnectionStateHandler,
 } from "./connectionStateHandler.js";
 import { ContainerContext } from "./containerContext.js";
 import { ContainerStorageAdapter } from "./containerStorageAdapter.js";
 import {
-	IConnectionDetailsInternal,
-	IConnectionManagerFactoryArgs,
-	IConnectionStateChangeReason,
+	type IConnectionDetailsInternal,
+	type IConnectionManagerFactoryArgs,
+	type IConnectionStateChangeReason,
 	ReconnectMode,
 	getPackageName,
 } from "./contracts.js";
-import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
+import { DeltaManager, type IConnectionArgs } from "./deltaManager.js";
 import { RelativeLoader } from "./loader.js";
 import {
 	validateDriverCompatibility,
@@ -139,11 +138,11 @@ import {
 } from "./memoryBlobStorage.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
 import { pkgVersion } from "./packageVersion.js";
-import { IQuorumSnapshot } from "./protocol/index.js";
+import type { IQuorumSnapshot } from "./protocol/index.js";
 import {
-	IProtocolHandler,
+	type IProtocolHandler,
 	ProtocolHandler,
-	ProtocolHandlerBuilder,
+	type ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
 } from "./protocol.js";
 import { initQuorumValuesFromCodeDetails } from "./quorum.js";
@@ -153,7 +152,7 @@ import {
 	SerializedStateManager,
 } from "./serializedStateManager.js";
 import {
-	ISnapshotTreeWithBlobContents,
+	type ISnapshotTreeWithBlobContents,
 	combineAppAndProtocolSummary,
 	combineSnapshotTreeAndSnapshotBlobs,
 	getDetachedContainerStateFromSerializedContainer,
@@ -246,6 +245,16 @@ export interface IContainerCreateProps {
 	 * protocol implementation for handling the quorum and/or the audience.
 	 */
 	readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
+
+	/**
+	 * Optional property for specifying a timeout for retry connection loop.
+	 *
+	 * If provided, container will use this value as the maximum time to wait
+	 * for a successful connection before giving up throwing the most recent error.
+	 *
+	 * If not provided, default behavior will be to retry until non-retryable error occurs.
+	 */
+	readonly retryConnectionTimeoutMs?: number;
 }
 
 /**
@@ -263,8 +272,7 @@ export interface IContainerCreateProps {
  * but it maybe still behind.
  *
  * @throws an error beginning with `"Container closed"` if the container is closed before it catches up.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export async function waitContainerToCatchUp(container: IContainer): Promise<boolean> {
 	// Make sure we stop waiting if container is closed.
@@ -608,6 +616,7 @@ export class Container
 	private attachmentData: AttachmentData = { state: AttachState.Detached };
 	private readonly serializedStateManager: SerializedStateManager;
 	private readonly _containerId: string;
+	private readonly _retryConnectionTimeoutMs: number | undefined;
 
 	private lastVisible: number | undefined;
 	private readonly visibilityEventHandler: (() => void) | undefined;
@@ -790,12 +799,22 @@ export class Container
 			scope,
 			subLogger,
 			protocolHandlerBuilder,
+			retryConnectionTimeoutMs,
 		} = createProps;
+
+		// Validate that the Driver is compatible with this Loader.
+		const maybeDriverCompatDetails =
+			documentServiceFactory as FluidObject<ILayerCompatDetails>;
+		validateDriverCompatibility(
+			maybeDriverCompatDetails.ILayerCompatDetails,
+			(error) => {} /* disposeFn */, // There is nothing to dispose here, so just ignore the error.
+		);
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
 		const pendingLocalState = loadProps?.pendingLocalState;
 
 		this._canReconnect = canReconnect ?? true;
+		this._retryConnectionTimeoutMs = retryConnectionTimeoutMs;
 		this.clientDetailsOverride = clientDetailsOverride;
 		this.urlResolver = urlResolver;
 		this.serviceFactory = documentServiceFactory;
@@ -1178,30 +1197,12 @@ export class Container
 		}
 	}
 
-	public async closeAndGetPendingLocalState(
-		stopBlobAttachingSignal?: AbortSignal,
-	): Promise<string> {
-		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
-		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
-		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
-		const pendingState = await this.getPendingLocalStateCore({
-			notifyImminentClosure: true,
-			stopBlobAttachingSignal,
-		});
-		this.close();
-		return pendingState;
-	}
-
 	/**
 	 * Serialize current container state required to rehydrate to the same position without dataloss.
 	 * Note: The container must already be attached. For detached containers use {@link serialize}
 	 * @returns stringified {@link IPendingContainerState} for the container
 	 */
 	public async getPendingLocalState(): Promise<string> {
-		return this.getPendingLocalStateCore({ notifyImminentClosure: false });
-	}
-
-	private async getPendingLocalStateCore(props: IGetPendingLocalStateProps): Promise<string> {
 		if (this.closed || this._disposed) {
 			throw new UsageError(
 				"Pending state cannot be retried if the container is closed or disposed",
@@ -1216,7 +1217,6 @@ export class Container
 			0x0d2 /* "resolved url should be valid Fluid url" */,
 		);
 		const pendingState = await this.serializedStateManager.getPendingLocalState(
-			props,
 			this.clientId,
 			this.runtime,
 			this.resolvedUrl,
@@ -1231,7 +1231,7 @@ export class Container
 	/**
 	 * Serialize current container state required to rehydrate to the same position without dataloss.
 	 * Note: The container must be detached and not closed. For attached containers use
-	 * {@link getPendingLocalState} or {@link closeAndGetPendingLocalState}
+	 * {@link getPendingLocalState}
 	 * @returns stringified {@link IPendingDetachedContainerState} for the container
 	 */
 	public serialize(): string {
@@ -1619,13 +1619,6 @@ export class Container
 				}, // progress
 			);
 		}
-
-		// Validate that the Driver is compatible with this Loader.
-		const maybeDriverCompatDetails = service as FluidObject<ILayerCompatDetails>;
-		validateDriverCompatibility(maybeDriverCompatDetails.ILayerCompatDetails, (error) =>
-			this.dispose(error),
-		);
-
 		return service;
 	}
 
@@ -2061,6 +2054,7 @@ export class Container
 					this._canReconnect,
 					createChildLogger({ logger: this.subLogger, namespace: "ConnectionManager" }),
 					props,
+					this._retryConnectionTimeoutMs,
 				),
 		);
 
@@ -2444,37 +2438,39 @@ export class Container
 
 			const existing = snapshotTree !== undefined;
 
-			const context = new ContainerContext(
-				this.options,
-				this.scope,
-				snapshotTree,
-				this._loadedFromVersion,
-				this._deltaManager,
-				this.storageAdapter,
-				this.protocolHandler.quorum,
-				this.protocolHandler.audience,
+			const context = new ContainerContext({
+				options: this.options,
+				scope: this.scope,
+				baseSnapshot: snapshotTree,
+				version: this._loadedFromVersion,
+				deltaManager: this._deltaManager,
+				storage: this.storageAdapter,
+				quorum: this.protocolHandler.quorum,
+				audience: this.protocolHandler.audience,
 				loader,
-				(type, contents, batch, metadata) =>
+				submitFn: (type, contents, batch, metadata) =>
 					this.submitContainerMessage(type, contents, batch, metadata),
-				(summaryOp: ISummaryContent, referenceSequenceNumber?: number) =>
+				submitSummaryFn: (summaryOp: ISummaryContent, referenceSequenceNumber?: number) =>
 					this.submitSummaryMessage(summaryOp, referenceSequenceNumber),
-				(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
+				submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) =>
 					this.submitBatch(batch, referenceSequenceNumber),
-				(content, targetClientId) => this.submitSignal(content, targetClientId),
-				(error?: ICriticalContainerError) => this.dispose(error),
-				(error?: ICriticalContainerError) => this.close(error),
-				this.updateDirtyContainerState,
-				this.getAbsoluteUrl,
-				() => this.resolvedUrl?.id,
-				() => this.clientId,
-				() => this.attachState,
-				() => this.connected,
-				this._deltaManager.clientDetails,
+				submitSignalFn: (content, targetClientId) =>
+					this.submitSignal(content, targetClientId),
+				disposeFn: (error?: ICriticalContainerError) => this.dispose(error),
+				closeFn: (error?: ICriticalContainerError) => this.close(error),
+				updateDirtyContainerState: this.updateDirtyContainerState,
+				getAbsoluteUrl: this.getAbsoluteUrl,
+				getContainerDiagnosticId: () => this.resolvedUrl?.id,
+				getClientId: () => this.clientId,
+				getAttachState: () => this.attachState,
+				getConnected: () => this.connected,
+				getConnectionState: () => this.connectionState,
+				clientDetails: this._deltaManager.clientDetails,
 				existing,
-				this.subLogger,
+				taggedLogger: this.subLogger,
 				pendingLocalState,
-				snapshot,
-			);
+				snapshotWithContents: snapshot,
+			});
 
 			const runtime = await PerformanceEvent.timedExecAsync(
 				this.subLogger,
@@ -2572,10 +2568,4 @@ export interface IContainerExperimental extends IContainer {
 	 * @returns serialized blob that can be passed to Loader.resolve()
 	 */
 	getPendingLocalState?(): Promise<string>;
-
-	/**
-	 * Closes the container and returns serialized local state intended to be
-	 * given to a newly loaded container.
-	 */
-	closeAndGetPendingLocalState?(stopBlobAttachingSignal?: AbortSignal): Promise<string>;
 }

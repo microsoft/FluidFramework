@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 
-import { IContextErrorData } from "@fluidframework/server-services-core";
+import type { IContextErrorData } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import type * as kafkaTypes from "node-rdkafka";
 

@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IPubSub, LocalOrderer } from "@fluidframework/server-memory-orderer";
-import { GitManager, IHistorian } from "@fluidframework/server-services-client";
+import { type IPubSub, LocalOrderer } from "@fluidframework/server-memory-orderer";
+import { GitManager, type IHistorian } from "@fluidframework/server-services-client";
 import {
 	CheckpointService,
-	ICheckpointRepository,
-	IDatabaseManager,
-	IDocumentRepository,
-	IDocumentStorage,
-	ILogger,
-	IOrderer,
-	IOrdererManager,
-	IServiceConfiguration,
+	type ICheckpointRepository,
+	type IDatabaseManager,
+	type IDocumentRepository,
+	type IDocumentStorage,
+	type ILogger,
+	type IOrderer,
+	type IOrdererManager,
+	type IServiceConfiguration,
 	MongoCheckpointRepository,
 	MongoDocumentRepository,
 } from "@fluidframework/server-services-core";

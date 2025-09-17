@@ -21,10 +21,15 @@ import {
 	LocalResolver,
 } from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import type { IFluidContainer, ContainerSchema } from "fluid-framework";
-import { SharedMap } from "fluid-framework/legacy";
 
 import { DiceRollerController } from "../src/controller.js";
+import {
+	diceRollerContainerSchema,
+	initializeAppForNewContainer,
+	loadAppFromExistingContainer,
+	type DiceRollerContainerSchema,
+} from "../src/fluid.js";
+import type { TwoDiceApp } from "../src/schema.js";
 import { makeAppView } from "../src/view.js";
 
 // The local server needs to be shared across the Loader instances for collaboration to happen
@@ -79,59 +84,44 @@ export async function getSessionStorageContainer(
 	return { container, attach };
 }
 
-const containerConfig = {
-	name: "dice-roller-container",
-	initialObjects: {
-		/* [id]: DataObject */
-		map1: SharedMap,
-		map2: SharedMap,
-	},
-} satisfies ContainerSchema & { name: string };
-type TestContainerSchema = typeof containerConfig;
-
-async function initializeNewContainer(
-	container: IFluidContainer<TestContainerSchema>,
-): Promise<void> {
-	// We now get the first SharedMap from the container
-	const sharedMap1 = container.initialObjects.map1;
-	const sharedMap2 = container.initialObjects.map2;
-	await Promise.all([
-		DiceRollerController.initializeModel(sharedMap1),
-		DiceRollerController.initializeModel(sharedMap2),
-	]);
-}
-
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
 async function createContainerAndRenderInElement(
 	containerId: string,
-	element: HTMLDivElement,
+	elementId: string,
 	createNewFlag: boolean,
 ): Promise<void> {
+	const element = document.querySelector(`#${elementId}`);
+	if (element === null) {
+		throw new Error(`${elementId} does not exist`);
+	}
+
 	// The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
 	// to store ops.
 	const { container, attach } = await getSessionStorageContainer(
 		containerId,
 		createDOProviderContainerRuntimeFactory({
-			schema: containerConfig,
+			schema: diceRollerContainerSchema,
 			compatibilityMode: "2",
 		}),
 		createNewFlag,
 	);
 
 	// Get the Default Object from the Container
-	const fluidContainer = await createFluidContainer<TestContainerSchema>({ container });
+	const fluidContainer = await createFluidContainer<DiceRollerContainerSchema>({ container });
+
+	let appModel: TwoDiceApp;
 	if (createNewFlag) {
-		await initializeNewContainer(fluidContainer);
+		appModel = initializeAppForNewContainer(fluidContainer);
 		await attach?.();
+	} else {
+		appModel = loadAppFromExistingContainer(fluidContainer);
 	}
 
-	const sharedMap1 = fluidContainer.initialObjects.map1;
-	const sharedMap2 = fluidContainer.initialObjects.map2;
-	const diceRollerController = new DiceRollerController(sharedMap1, () => {});
-	const diceRollerController2 = new DiceRollerController(sharedMap2, () => {});
+	const diceRollerController = new DiceRollerController(appModel.dice1, () => {});
+	const diceRollerController2 = new DiceRollerController(appModel.dice2, () => {});
 
 	element.append(makeAppView([diceRollerController, diceRollerController2]));
 }
@@ -146,19 +136,12 @@ async function setup(): Promise<void> {
 	if (createNew) {
 		window.location.hash = Date.now().toString();
 	}
-	const containerId = window.location.hash.substring(1);
+	const containerId = window.location.hash.slice(1);
 
-	const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
-	if (leftElement === undefined) {
-		throw new Error("sbs-left does not exist");
-	}
-	await createContainerAndRenderInElement(containerId, leftElement, createNew);
-	const rightElement = document.getElementById("sbs-right") as HTMLDivElement;
-	if (rightElement === undefined) {
-		throw new Error("sbs-right does not exist");
-	}
+	await createContainerAndRenderInElement(containerId, "sbs-left", createNew);
+
 	// The second time we don't need to createNew because we know a Container exists.
-	await createContainerAndRenderInElement(containerId, rightElement, false);
+	await createContainerAndRenderInElement(containerId, "sbs-right", false);
 
 	// Setting "fluidStarted" is just for our test automation
 	// eslint-disable-next-line @typescript-eslint/dot-notation

@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import type {
+	ILayerCompatDetails,
+	IProvideLayerCompatDetails,
+} from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
@@ -32,6 +36,7 @@ import { ISnapshotTreeVersion } from "./definitions.js";
 import { DocumentService } from "./documentService.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { IRouterliciousDriverPolicies } from "./policies.js";
+import { r11sDriverCompatDetailsForLoader } from "./r11sLayerCompatState.js";
 import {
 	RouterliciousOrdererRestWrapper,
 	RouterliciousStorageRestWrapper,
@@ -61,7 +66,9 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
  * use the routerlicious implementation.
  * @internal
  */
-export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
+export class RouterliciousDocumentServiceFactory
+	implements IDocumentServiceFactory, IProvideLayerCompatDetails
+{
 	private readonly driverPolicies: IRouterliciousDriverPolicies;
 	private readonly blobCache: ICache<ArrayBufferLike>;
 	private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSnapshot> = new NullCache();
@@ -92,6 +99,14 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			}
 		}
 		this.sessionInfoManager = new SessionInfoManager(this.driverPolicies.enableDiscovery);
+	}
+
+	/**
+	 * The compatibility details of the Routerlicious Driver layer that is exposed to the Loader layer
+	 * for validating Loader-Driver compatibility.
+	 */
+	public get ILayerCompatDetails(): ILayerCompatDetails {
+		return r11sDriverCompatDetailsForLoader;
 	}
 
 	/**
@@ -393,8 +408,7 @@ export class DocumentPostCreateError extends Error {
 /**
  * Creates factory for creating the routerlicious document service.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function createRouterliciousDocumentServiceFactory(
 	tokenProvider: ITokenProvider,

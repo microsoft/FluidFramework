@@ -14,15 +14,16 @@ export {
 	compareFluidHandles,
 	encodeHandleForSerialization,
 	FluidHandleBase,
-	ISerializedHandle,
 	isFluidHandle,
 	isFluidHandleInternalPayloadPending,
 	isFluidHandlePayloadPending,
 	isLocalFluidHandle,
 	isSerializedHandle,
+	lookupTemporaryBlobStorageId,
 	toFluidHandleErased,
 	toFluidHandleInternal,
 } from "./handles.js";
+export type { ISerializedHandle } from "./handles.js";
 export { ObjectStoragePartition } from "./objectstoragepartition.js";
 export {
 	getNormalizedObjectStoragePathParts,
@@ -49,13 +50,27 @@ export {
 } from "./summaryUtils.js";
 export { unpackChildNodesUsedRoutes } from "./unpackUsedRoutes.js";
 export {
-	ReadAndParseBlob,
 	RuntimeHeaders,
 	seqFromTree,
 	encodeCompactIdToString,
 } from "./utils.js";
+export type { ReadAndParseBlob } from "./utils.js";
 export { isSnapshotFetchRequiredForLoadingGroupId } from "./snapshotUtils.js";
 export {
 	toDeltaManagerErased,
 	toDeltaManagerInternal,
 } from "./deltaManager.js";
+export {
+	configValueToMinVersionForCollab,
+	defaultMinVersionForCollab,
+	getValidationForRuntimeOptions,
+	getConfigsForMinVersionForCollab,
+	isValidMinVersionForCollab,
+	semanticVersionToMinimumVersionForCollab,
+} from "./compatibilityBase.js";
+export type {
+	ConfigMap,
+	ConfigValidationMap,
+	MinimumMinorSemanticVersion,
+	SemanticVersion,
+} from "./compatibilityBase.js";

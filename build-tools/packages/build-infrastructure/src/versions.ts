@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SemVer } from "semver";
+import type { SemVer } from "semver";
 
 import { updatePackageJsonFileAsync } from "./packageJsonUtils.js";
 import type { IPackage, PackageJson } from "./types.js";
