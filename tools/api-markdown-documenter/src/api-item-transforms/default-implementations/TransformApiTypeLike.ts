@@ -23,7 +23,7 @@ import {
 } from "../../utilities/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
-import { getFilteredMembers } from "../utilities/index.js";
+import { filterItems } from "../utilities/index.js";
 
 /**
  * Default documentation transform for {@link ApiTypeLike | type-like} API items.
@@ -71,7 +71,7 @@ export function transformApiTypeLike(
 ): Section[] {
 	const sections: Section[] = [];
 
-	const filteredChildren = getFilteredMembers(apiItem, config);
+	const filteredChildren = filterItems(apiItem.members, config);
 	if (filteredChildren.length > 0) {
 		// Accumulate child items
 		const constructors: ApiConstructor[] = [];

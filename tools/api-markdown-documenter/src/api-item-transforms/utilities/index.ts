@@ -8,7 +8,6 @@ export {
 	doesItemRequireOwnDocument,
 	doesItemKindRequireOwnDocument,
 	filterItems,
-	getFilteredMembers,
 	getHeadingForApiItem,
 	getLinkForApiItem,
 	isItemOrAncestorExcluded,
