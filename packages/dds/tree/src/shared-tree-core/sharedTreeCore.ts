@@ -418,6 +418,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 						brand(envelope.referenceSequenceNumber),
 						message.branchId,
 					);
+
+					this.registerSharedBranch(message.branchId);
 					break;
 				}
 				default:
