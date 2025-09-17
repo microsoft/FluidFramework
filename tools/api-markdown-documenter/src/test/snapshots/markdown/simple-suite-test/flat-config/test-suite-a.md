@@ -139,7 +139,7 @@ Here are some remarks about the interface
 
 ### Call Signatures
 
-| CallSignature | Return Type | Description |
+| Call Signature | Return Type | Description |
 | - | - | - |
 | [(event: 'testCallSignature', listener: (input: unknown) => void): any](docs/test-suite-a#testinterface-_call_-callsignature) | any | Test interface event call signature |
 | [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](docs/test-suite-a#testinterface-_call__1-callsignature) | number | Another example call signature |
@@ -368,7 +368,7 @@ export interface TestInterfaceWithIndexSignature
 
 ### Index Signatures
 
-| IndexSignature | Description |
+| Index Signature | Description |
 | - | - |
 | [\[foo: number\]: { bar: string; }](docs/test-suite-a#testinterfacewithindexsignature-_indexer_-indexsignature) | Test index signature. |
 

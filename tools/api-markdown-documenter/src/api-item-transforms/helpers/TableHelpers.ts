@@ -734,8 +734,17 @@ function createTypeExcerptCell(
  */
 function getTableHeadingTitleForApiKind(itemKind: ApiItemKind): string {
 	switch (itemKind) {
+		case ApiItemKind.CallSignature: {
+			return "Call Signature";
+		}
+		case ApiItemKind.ConstructSignature: {
+			return "Constructor";
+		}
 		case ApiItemKind.EnumMember: {
 			return "Flag";
+		}
+		case ApiItemKind.IndexSignature: {
+			return "Index Signature";
 		}
 		case ApiItemKind.MethodSignature: {
 			return ApiItemKind.Method;
