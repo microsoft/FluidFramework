@@ -3,15 +3,24 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import type { SharedDirectory } from "../../directoryFactory.js";
 import { SharedDirectoryOracle } from "../directroyOracle.js";
+import type { ISharedMap } from "../../interfaces.js";
+import type { SharedMap } from "../../mapFactory.js";
+import { SharedMapOracle } from "../mapOracle.js";
 
 /**
  * @internal
  */
 export interface ISharedDirectoryWithOracle extends SharedDirectory {
 	sharedDirectoryOracle: SharedDirectoryOracle;
+}
+
+/**
+ * @internal
+ */
+export interface ISharedMapWithOracle extends ISharedMap {
+	sharedMapOracle: SharedMapOracle;
 }
 
 /**
@@ -22,4 +31,12 @@ export function hasSharedDirectroyOracle(s: SharedDirectory): s is ISharedDirect
 	return (
 		"sharedDirectoryOracle" in s && s.sharedDirectoryOracle instanceof SharedDirectoryOracle
 	);
+}
+
+/**
+ * Type guard for map
+ * @internal
+ */
+export function hasSharedMapOracle(s: SharedMap): s is ISharedMapWithOracle {
+	return "sharedMapOracle" in s && s.sharedMapOracle instanceof SharedMapOracle;
 }

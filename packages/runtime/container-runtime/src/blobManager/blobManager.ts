@@ -129,7 +129,7 @@ export class BlobHandle
 // the contract explicit and reduces the amount of mocking required for tests.
 export type IBlobManagerRuntime = Pick<
 	IContainerRuntime,
-	"attachState" | "connected" | "baseLogger" | "clientDetails" | "disposed"
+	"attachState" | "baseLogger" | "disposed"
 > &
 	IEventProvider<IContainerRuntimeEvents>;
 
@@ -326,6 +326,24 @@ export class BlobManager {
 
 	public hasBlob(localId: string): boolean {
 		return this.redirectTable.get(localId) !== undefined;
+	}
+
+	/**
+	 * Lookup the blob storage ID for a given local blob id.
+	 * @param localId - The local blob id. Likely coming from a handle.
+	 * @returns The storage ID if found and the blob is not pending, undefined otherwise.
+	 * @remarks
+	 * For blobs with pending payloads (localId exists but upload hasn't finished), this is expected to return undefined.
+	 * Consumers should use the observability APIs on the handle (handle.payloadState, payloadShared event)
+	 * to understand/wait for storage ID availability.
+	 * Similarly, when the runtime is detached, this will return undefined as no blobs have been uploaded to storage.
+	 */
+	public lookupTemporaryBlobStorageId(localId: string): string | undefined {
+		if (this.runtime.attachState === AttachState.Detached) {
+			return undefined;
+		}
+		// Get the storage ID from the redirect table
+		return this.redirectTable.get(localId);
 	}
 
 	/**
@@ -835,7 +853,7 @@ export class BlobManager {
 	 * The provided table must have exactly the same set of pseudo storage IDs as are found in the redirect table.
 	 * @param detachedStorageTable - A map of pseudo storage IDs to real storage IDs.
 	 */
-	public patchRedirectTable(detachedStorageTable: Map<string, string>): void {
+	public readonly patchRedirectTable = (detachedStorageTable: Map<string, string>): void => {
 		assert(
 			this.runtime.attachState === AttachState.Detached,
 			0x252 /* "redirect table can only be set in detached container" */,
@@ -858,7 +876,7 @@ export class BlobManager {
 			// set identity (id -> id) entry
 			this.setRedirection(newStorageId, newStorageId);
 		}
-	}
+	};
 
 	/**
 	 * To be used in getPendingLocalState flow. Get a serializable record of the blobs that are

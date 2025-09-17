@@ -48,6 +48,14 @@ interface IShortCollaborationSession {
 		 * {@link ICollaborationSessionTelemetryProperties.maxConcurrentClients}
 		 */
 		mcc: number;
+		/**
+		 * {@link ICollaborationSessionTelemetryProperties.sessionOpCount}
+		 */
+		soc?: number;
+		/**
+		 * {@link ICollaborationSessionTelemetryProperties.sessionSignalCount}
+		 */
+		ssc?: number;
 	};
 }
 
@@ -180,6 +188,8 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 				hwc: session.telemetryProperties.hadWriteClient,
 				tlj: session.telemetryProperties.totalClientsJoined,
 				mcc: session.telemetryProperties.maxConcurrentClients,
+				soc: session.telemetryProperties.sessionOpCount,
+				ssc: session.telemetryProperties.sessionSignalCount,
 			},
 		};
 	}
@@ -197,6 +207,8 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 				hadWriteClient: shortSession.tp.hwc,
 				totalClientsJoined: shortSession.tp.tlj,
 				maxConcurrentClients: shortSession.tp.mcc,
+				sessionOpCount: shortSession.tp.soc,
+				sessionSignalCount: shortSession.tp.ssc,
 			},
 		};
 	}

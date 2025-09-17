@@ -4,8 +4,13 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
-import type { Listenable, Off } from "@fluidframework/core-interfaces";
-import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
+import type { HasListeners, Listenable, Off } from "@fluidframework/core-interfaces/internal";
+import {
+	assert,
+	fail,
+	debugAssert,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -13,6 +18,7 @@ import {
 	type AnchorEvents,
 	type AnchorNode,
 	type AnchorSet,
+	type FieldKey,
 	type TreeValue,
 	type UpPath,
 } from "../../core/index.js";
@@ -74,7 +80,6 @@ export function tryGetTreeNodeSchema(value: unknown): undefined | TreeNodeSchema
 
 /** The {@link HydrationState} of a {@link TreeNodeKernel} before the kernel is hydrated */
 interface UnhydratedState {
-	off: Off;
 	readonly innerNode: UnhydratedFlexTreeNode;
 }
 
@@ -126,7 +131,7 @@ export class TreeNodeKernel {
 	 * This means optimizations like skipping processing data in subtrees where no subtreeChanged events are subscribed to would be able to work,
 	 * since the kernel does not unconditionally subscribe to those events (like a design which simply forwards all events would).
 	 */
-	readonly #unhydratedEvents = new Lazy(createEmitter<KernelEvents>);
+	readonly #eventBuffer: KernelEventBuffer;
 
 	/**
 	 * Create a TreeNodeKernel which can be looked up with {@link getKernel}.
@@ -149,38 +154,21 @@ export class TreeNodeKernel {
 
 		if (innerNode instanceof UnhydratedFlexTreeNode) {
 			// Unhydrated case
+
 			debugAssert(() => innerNode.treeNode === undefined);
 			innerNode.treeNode = node;
-			// Register for change events from the unhydrated flex node.
-			// These will be fired if the unhydrated node is edited, and will also be forwarded later to the hydrated node.
+
 			this.#hydrationState = {
 				innerNode,
-				off: innerNode.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
-					this.#unhydratedEvents.value.emit("childrenChangedAfterBatch", {
-						changedFields,
-					});
-
-					let unhydratedNode: UnhydratedFlexTreeNode | undefined = innerNode;
-					while (unhydratedNode !== undefined) {
-						const treeNode = unhydratedNode.treeNode;
-						if (treeNode !== undefined) {
-							const kernel = getKernel(treeNode);
-							kernel.#unhydratedEvents.value.emit("subtreeChangedAfterBatch");
-						}
-						const parentNode: FlexTreeNode | undefined =
-							unhydratedNode.parentField.parent.parent;
-						assert(
-							parentNode === undefined || parentNode instanceof UnhydratedFlexTreeNode,
-							0xb76 /* Unhydrated node's parent should be an unhydrated node */,
-						);
-						unhydratedNode = parentNode;
-					}
-				}),
 			};
+
+			this.#eventBuffer = new KernelEventBuffer(innerNode.events);
 		} else {
 			// Hydrated case
 			this.#hydrationState = this.createHydratedState(innerNode.anchorNode);
 			this.#hydrationState.innerNode = innerNode;
+
+			this.#eventBuffer = new KernelEventBuffer(innerNode.anchorNode.events);
 		}
 	}
 
@@ -213,19 +201,8 @@ export class TreeNodeKernel {
 		this.#hydrationState = this.createHydratedState(anchorNode);
 		this.#hydrationState.offAnchorNode.add(() => anchors.forget(anchor));
 
-		// If needed, register forwarding emitters for events from before hydration
-		if (this.#unhydratedEvents.evaluated) {
-			const events = this.#unhydratedEvents.value;
-			for (const eventName of kernelEvents) {
-				if (events.hasListeners(eventName)) {
-					this.#hydrationState.offAnchorNode.add(
-						// Argument is forwarded between matching events, so the type should be correct.
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						anchorNode.events.on(eventName, (arg: any) => events.emit(eventName, arg)),
-					);
-				}
-			}
-		}
+		// Lazily migrate existing event listeners to the anchor node
+		this.#eventBuffer.migrateEventSource(anchorNode.events);
 	}
 
 	private createHydratedState(anchorNode: AnchorNode): HydratedState {
@@ -267,10 +244,7 @@ export class TreeNodeKernel {
 	}
 
 	public get events(): Listenable<KernelEvents> {
-		// Retrieve the correct events object based on whether this node is pre or post hydration.
-		return isHydrated(this.#hydrationState)
-			? this.#hydrationState.anchorNode.events
-			: this.#unhydratedEvents.value;
+		return this.#eventBuffer;
 	}
 
 	public dispose(): void {
@@ -281,6 +255,7 @@ export class TreeNodeKernel {
 				off();
 			}
 		}
+		this.#eventBuffer.dispose();
 		// TODO: go to the context and remove myself from withAnchors
 	}
 
@@ -353,6 +328,229 @@ export class TreeNodeKernel {
 const kernelEvents = ["childrenChangedAfterBatch", "subtreeChangedAfterBatch"] as const;
 
 type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
+
+// #region TreeNodeEventBuffer
+
+/**
+ * Whether or not events from {@link TreeNodeKernel} should be buffered instead of emitted immediately.
+ */
+let bufferTreeEvents: boolean = false;
+
+/**
+ * Call the provided callback with {@link TreeNode}s' events paused until after the callback's completion.
+ *
+ * Events that would otherwise have been emitted immediately are merged and buffered until after the
+ * provided callback has been completed.
+ *
+ * @remarks
+ * Note: this should be used with caution. User application behaviors are implicitly coupled to event timing.
+ * Disrupting this timing can lead to unexpected behavior.
+ */
+export function withBufferedTreeEvents(callback: () => void): void {
+	if (bufferTreeEvents) {
+		// Already buffering - just run the callback
+		callback();
+	} else {
+		bufferTreeEvents = true;
+		try {
+			callback();
+		} finally {
+			bufferTreeEvents = false;
+			flushEventsEmitter.emit("flush");
+		}
+	}
+}
+
+/**
+ * Event emitter to notify subscribers when tree events buffered due to {@link withBufferedTreeEvents} should be flushed.
+ */
+const flushEventsEmitter = createEmitter<{
+	flush: () => void;
+}>();
+
+/**
+ * Event emitter for {@link TreeNodeKernel}, which optionally buffers events based on {@link bufferTreeEvents}.
+ * @remarks Listens to {@link flushEventsEmitter} to know when to flush any buffered events.
+ */
+class KernelEventBuffer implements Listenable<KernelEvents> {
+	#disposed: boolean = false;
+
+	/**
+	 * Listen to {@link flushEventsEmitter} to know when to flush buffered events.
+	 */
+	readonly #disposeOnFlushListener = flushEventsEmitter.on("flush", () => {
+		this.flush();
+	});
+
+	readonly #events = createEmitter<KernelEvents>();
+
+	#eventSource: Listenable<KernelEvents> & HasListeners<KernelEvents>;
+	#disposeSourceListeners: Map<keyof KernelEvents, Off> = new Map();
+
+	/**
+	 * Buffer of fields that have changed since events were paused.
+	 * When events are flushed, a single {@link AnchorEvents.childrenChangedAfterBatch} event will be emitted
+	 * containing the accumulated set of changed fields.
+	 */
+	readonly #childrenChangedBuffer: Set<FieldKey> = new Set();
+
+	/**
+	 * Whether or not the subtree has changed since events were paused.
+	 * When events are flushed, a single {@link AnchorEvents.subTreeChanged} event will be emitted if and only
+	 * if the subtree has changed.
+	 */
+	#subTreeChangedBuffer: boolean = false;
+
+	public constructor(
+		/**
+		 * Source of the kernel events.
+		 * Subscriptions will be created on-demand when listeners are added to this.events,
+		 * and those subscriptions will be cleaned up when all corresponding listeners have been removed.
+		 */
+		eventSource: Listenable<KernelEvents> & HasListeners<KernelEvents>,
+	) {
+		this.#eventSource = eventSource;
+	}
+
+	/**
+	 * Migrate this event buffer to a new event source.
+	 *
+	 * @remarks
+	 * Cleans up any existing event subscriptions from the old source.
+	 * Binds events to the new source for each event with active listeners.
+	 */
+	public migrateEventSource(
+		newSource: Listenable<KernelEvents> & HasListeners<KernelEvents>,
+	): void {
+		// Unsubscribe from the old source
+		this.#disposeSourceListeners.forEach((off) => off());
+		this.#disposeSourceListeners.clear();
+
+		this.#eventSource = newSource;
+
+		if (this.#events.hasListeners("childrenChangedAfterBatch")) {
+			const off = this.#eventSource.on("childrenChangedAfterBatch", ({ changedFields }) =>
+				this.#emit("childrenChangedAfterBatch", { changedFields }),
+			);
+			this.#disposeSourceListeners.set("childrenChangedAfterBatch", off);
+		}
+		if (this.#events.hasListeners("subtreeChangedAfterBatch")) {
+			const off = this.#eventSource.on("subtreeChangedAfterBatch", () =>
+				this.#emit("subtreeChangedAfterBatch"),
+			);
+			this.#disposeSourceListeners.set("subtreeChangedAfterBatch", off);
+		}
+	}
+
+	public on(eventName: keyof KernelEvents, listener: KernelEvents[typeof eventName]): Off {
+		// Lazily bind event listeners to the source.
+		// If we do not have any existing listeners for this event, then we need to bind to the source.
+		if (!this.#events.hasListeners(eventName)) {
+			assert(
+				!this.#disposeSourceListeners.has(eventName),
+				"Should not have a dispose function without listeners",
+			);
+
+			const off = this.#eventSource.on(eventName, (args) => this.#emit(eventName, args));
+			this.#disposeSourceListeners.set(eventName, off);
+		}
+
+		this.#events.on(eventName, listener);
+		return () => this.off(eventName, listener);
+	}
+
+	public off(eventName: keyof KernelEvents, listener: KernelEvents[typeof eventName]): void {
+		this.#events.off(eventName, listener);
+
+		// If there are no remaining listeners for the event, unbind from the source
+		if (!this.#events.hasListeners(eventName)) {
+			const off = this.#disposeSourceListeners.get(eventName);
+			off?.();
+			this.#disposeSourceListeners.delete(eventName);
+		}
+	}
+
+	#emit(
+		eventName: keyof KernelEvents,
+		arg?: {
+			changedFields: ReadonlySet<FieldKey>;
+		},
+	): void {
+		this.#assertNotDisposed();
+		switch (eventName) {
+			case "childrenChangedAfterBatch":
+				assert(arg !== undefined, "childrenChangedAfterBatch should have arg");
+				return this.#handleChildrenChangedAfterBatch(arg.changedFields);
+			case "subtreeChangedAfterBatch":
+				return this.#handleSubtreeChangedAfterBatch();
+			default:
+				unreachableCase(eventName);
+		}
+	}
+
+	#handleChildrenChangedAfterBatch(changedFields: ReadonlySet<FieldKey>): void {
+		if (bufferTreeEvents) {
+			for (const fieldKey of changedFields) {
+				this.#childrenChangedBuffer.add(fieldKey);
+			}
+		} else {
+			this.#events.emit("childrenChangedAfterBatch", { changedFields });
+		}
+	}
+
+	#handleSubtreeChangedAfterBatch(): void {
+		if (bufferTreeEvents) {
+			this.#subTreeChangedBuffer = true;
+		} else {
+			this.#events.emit("subtreeChangedAfterBatch");
+		}
+	}
+
+	/**
+	 * Flushes any events buffered due to {@link withBufferedTreeEvents}.
+	 */
+	public flush(): void {
+		this.#assertNotDisposed();
+
+		if (this.#childrenChangedBuffer.size > 0) {
+			this.#events.emit("childrenChangedAfterBatch", {
+				changedFields: this.#childrenChangedBuffer,
+			});
+			this.#childrenChangedBuffer.clear();
+		}
+
+		if (this.#subTreeChangedBuffer) {
+			this.#events.emit("subtreeChangedAfterBatch");
+			this.#subTreeChangedBuffer = false;
+		}
+	}
+
+	#assertNotDisposed(): void {
+		assert(!this.#disposed, "Event handler disposed.");
+	}
+
+	public dispose(): void {
+		if (this.#disposed) {
+			return;
+		}
+
+		assert(
+			this.#childrenChangedBuffer.size === 0 && !this.#subTreeChangedBuffer,
+			"Buffered kernel events should have been flushed before disposing.",
+		);
+
+		this.#disposeOnFlushListener();
+		this.#disposeSourceListeners.forEach((off) => off());
+		this.#disposeSourceListeners.clear();
+
+		this.#childrenChangedBuffer.clear();
+		this.#subTreeChangedBuffer = false;
+
+		this.#disposed = true;
+	}
+}
+
+// #endregion
 
 /**
  * For "cooked" nodes this is a HydratedFlexTreeNode thats a projection of forest content.
