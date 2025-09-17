@@ -4,9 +4,9 @@
  */
 
 import type { SharedDirectory } from "../../directoryFactory.js";
-import { SharedDirectoryOracle } from "../directroyOracle.js";
 import type { ISharedMap } from "../../interfaces.js";
 import type { SharedMap } from "../../mapFactory.js";
+import { SharedDirectoryOracle } from "../directroyOracle.js";
 import { SharedMapOracle } from "../mapOracle.js";
 
 /**

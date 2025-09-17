@@ -526,8 +526,7 @@ export const baseDirModel: DDSFuzzModel<DirectoryFactory, DirOperation> = {
 		if (hasSharedDirectroyOracle(b.channel)) {
 			b.channel.sharedDirectoryOracle.validate();
 		}
-		// eslint-disable-next-line no-void
-		void assertEquivalentDirectories(a.channel, b.channel);
+		return assertEquivalentDirectories(a.channel, b.channel);
 	},
 	factory: new DirectoryFactory(),
 	minimizationTransforms: [

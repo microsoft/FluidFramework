@@ -12,7 +12,7 @@ import {
 	type DDSFuzzModel,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
-// import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { DirectoryFactory } from "../../index.js";
 import { SharedDirectoryOracle } from "../directroyOracle.js";
@@ -20,14 +20,14 @@ import { SharedDirectoryOracle } from "../directroyOracle.js";
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 import { _dirname } from "./dirname.cjs";
 import {
-	// baseDirModel,
+	baseDirModel,
 	dirDefaultOptions,
 	makeDirOperationGenerator,
 	makeDirReducer,
 	type DirOperation,
 	type DirOperationGenerationConfig,
 } from "./fuzzUtils.js";
-import type { ISharedDirectoryWithOracle } from "./oracleUtils.js";
+import { hasSharedDirectroyOracle, type ISharedDirectoryWithOracle } from "./oracleUtils.js";
 
 const oracleEmitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 
@@ -52,7 +52,16 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 		workloadName: "default directory 1",
 		generatorFactory: () => takeAsync(100, makeDirOperationGenerator(options)),
 		reducer: makeDirReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
-		validateConsistency: async (a, b) => assertEquivalentDirectories(a.channel, b.channel),
+		validateConsistency: async (a, b) => {
+			if (hasSharedDirectroyOracle(a.channel)) {
+				a.channel.sharedDirectoryOracle.validate();
+			}
+
+			if (hasSharedDirectroyOracle(b.channel)) {
+				b.channel.sharedDirectoryOracle.validate();
+			}
+			return assertEquivalentDirectories(a.channel, b.channel);
+		},
 		factory: new DirectoryFactory(),
 	};
 
@@ -77,89 +86,92 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 		saveFailures: { directory: dirPath.join(_dirname, "../../../src/test/mocha/results/1") },
 	});
 
-	// createDDSFuzzSuite(
-	// 	{ ...model, workloadName: "default directory 1 with rebasing" },
-	// 	{
-	// 		validationStrategy: {
-	// 			type: "random",
-	// 			probability: 0.4,
-	// 		},
-	// 		rebaseProbability: 0.2,
-	// 		reconnectProbability: 0.5,
-	// 		// We prevent handles from being generated on the creation/deletion tests since the set operations are disabled.
-	// 		handleGenerationDisabled: true,
-	// 		containerRuntimeOptions: {
-	// 			flushMode: FlushMode.TurnBased,
-	// 			enableGroupedBatching: true,
-	// 		},
-	// 		numberOfClients: 3,
-	// 		clientJoinOptions: {
-	// 			maxNumberOfClients: 3,
-	// 			clientAddProbability: 0.08,
-	// 			stashableClientProbability: undefined,
-	// 		},
-	// 		defaultTestCount: 200,
-	// 		// emitter: oracleEmitter,
-	// 		// Uncomment this line to replay a specific seed from its failure file:
-	// 		// replay: 0,
-	// 		saveFailures: {
-	// 			directory: dirPath.join(_dirname, "../../../src/test/mocha/results/1"),
-	// 		},
-	// 	},
-	// );
+	createDDSFuzzSuite(
+		{ ...model, workloadName: "default directory 1 with rebasing" },
+		{
+			validationStrategy: {
+				type: "random",
+				probability: 0.4,
+			},
+			rebaseProbability: 0.2,
+			reconnectProbability: 0.5,
+			// We prevent handles from being generated on the creation/deletion tests since the set operations are disabled.
+			handleGenerationDisabled: true,
+			containerRuntimeOptions: {
+				flushMode: FlushMode.TurnBased,
+				enableGroupedBatching: true,
+			},
+			numberOfClients: 3,
+			clientJoinOptions: {
+				maxNumberOfClients: 3,
+				clientAddProbability: 0.08,
+				stashableClientProbability: undefined,
+			},
+			defaultTestCount: 200,
+			emitter: oracleEmitter,
+			// emitter: oracleEmitter,
+			// Uncomment this line to replay a specific seed from its failure file:
+			// replay: 0,
+			saveFailures: {
+				directory: dirPath.join(_dirname, "../../../src/test/mocha/results/1"),
+			},
+		},
+	);
 });
 
-// describe("SharedDirectory fuzz", () => {
-// 	createDDSFuzzSuite(baseDirModel, {
-// 		validationStrategy: {
-// 			type: "fixedInterval",
-// 			interval: dirDefaultOptions.validateInterval,
-// 		},
-// 		reconnectProbability: 0.15,
-// 		numberOfClients: 3,
-// 		clientJoinOptions: {
-// 			// Note: if tests are slow, we may want to tune this down. This mimics behavior before this suite
-// 			// was refactored to use the DDS fuzz harness.
-// 			maxNumberOfClients: Number.MAX_SAFE_INTEGER,
-// 			clientAddProbability: 0.08,
-// 			stashableClientProbability: 0.2,
-// 		},
-// 		defaultTestCount: 25,
-// 		// emitter: oracleEmitter,
-// 		// Uncomment this line to replay a specific seed from its failure file:
-// 		// replay: 0,
-// 		saveFailures: { directory: dirPath.join(_dirname, "../../../src/test/mocha/results/2") },
-// 		skip: [],
-// 	});
+describe("SharedDirectory fuzz", () => {
+	createDDSFuzzSuite(baseDirModel, {
+		validationStrategy: {
+			type: "fixedInterval",
+			interval: dirDefaultOptions.validateInterval,
+		},
+		reconnectProbability: 0.15,
+		numberOfClients: 3,
+		clientJoinOptions: {
+			// Note: if tests are slow, we may want to tune this down. This mimics behavior before this suite
+			// was refactored to use the DDS fuzz harness.
+			maxNumberOfClients: Number.MAX_SAFE_INTEGER,
+			clientAddProbability: 0.08,
+			stashableClientProbability: 0.2,
+		},
+		defaultTestCount: 25,
+		emitter: oracleEmitter,
+		// emitter: oracleEmitter,
+		// Uncomment this line to replay a specific seed from its failure file:
+		// replay: 0,
+		saveFailures: { directory: dirPath.join(_dirname, "../../../src/test/mocha/results/2") },
+		skip: [],
+	});
 
-// 	createDDSFuzzSuite(
-// 		{ ...baseDirModel, workloadName: "default directory 2 with rebasing" },
-// 		{
-// 			validationStrategy: {
-// 				type: "random",
-// 				probability: 0.4,
-// 			},
-// 			rebaseProbability: 0.2,
-// 			reconnectProbability: 0.5,
-// 			containerRuntimeOptions: {
-// 				flushMode: FlushMode.TurnBased,
-// 				enableGroupedBatching: true,
-// 			},
-// 			numberOfClients: 3,
-// 			clientJoinOptions: {
-// 				// Note: if tests are slow, we may want to tune this down. This mimics behavior before this suite
-// 				// was refactored to use the DDS fuzz harness.
-// 				maxNumberOfClients: Number.MAX_SAFE_INTEGER,
-// 				clientAddProbability: 0.08,
-// 				stashableClientProbability: undefined,
-// 			},
-// 			defaultTestCount: 200,
-// 			// emitter: oracleEmitter,
-// 			// Uncomment this line to replay a specific seed from its failure file:
-// 			// replay: 0,
-// 			saveFailures: {
-// 				directory: dirPath.join(_dirname, "../../../src/test/mocha/results/2"),
-// 			},
-// 		},
-// 	);
-// });
+	createDDSFuzzSuite(
+		{ ...baseDirModel, workloadName: "default directory 2 with rebasing" },
+		{
+			validationStrategy: {
+				type: "random",
+				probability: 0.4,
+			},
+			rebaseProbability: 0.2,
+			reconnectProbability: 0.5,
+			containerRuntimeOptions: {
+				flushMode: FlushMode.TurnBased,
+				enableGroupedBatching: true,
+			},
+			numberOfClients: 3,
+			clientJoinOptions: {
+				// Note: if tests are slow, we may want to tune this down. This mimics behavior before this suite
+				// was refactored to use the DDS fuzz harness.
+				maxNumberOfClients: Number.MAX_SAFE_INTEGER,
+				clientAddProbability: 0.08,
+				stashableClientProbability: undefined,
+			},
+			defaultTestCount: 200,
+			emitter: oracleEmitter,
+			// emitter: oracleEmitter,
+			// Uncomment this line to replay a specific seed from its failure file:
+			// replay: 0,
+			saveFailures: {
+				directory: dirPath.join(_dirname, "../../../src/test/mocha/results/2"),
+			},
+		},
+	);
+});
