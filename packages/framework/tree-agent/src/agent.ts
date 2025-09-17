@@ -267,6 +267,7 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 	);
 
 	public async query(userPrompt: string): Promise<string | undefined> {
+		this.tree.branch.rebaseOnto(this.originalBranch);
 		this.setPrompting();
 		this.options?.log?.(`## User Query\n\n${userPrompt}\n\n`);
 		if (this.#treeHasChangedSinceLastQuery) {
@@ -336,7 +337,6 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 			} else {
 				this.tree.branch.merge(this.querying.tree.branch);
 				this.originalBranch.merge(this.tree.branch, false);
-				this.tree.branch.rebaseOnto(this.originalBranch);
 				this.#querying = undefined;
 				return responseMessage.text;
 			}
