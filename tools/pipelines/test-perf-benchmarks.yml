@@ -52,7 +52,6 @@ parameters:
   default:
   - endpointName: 'local'
   - endpointName: 'odsp'
-    lockVariableGroupName: 'perf-odsp-lock'
     timeoutInMinutes: 360
   - endpointName: 'frs'
     lockVariableGroupName: 'perf-frs-lock'
@@ -441,7 +440,7 @@ stages:
       displayName: Perf e2e tests - ${{ endpointObject.endpointName }}
       dependsOn: []
       # If the stage needs locking, configure the lock behavior. Note that null gets coalesced into an empty string.
-      ${{ if ne(endpointObject.lockVariableGroupName, '') }}:
+      ${{ if and(ne(endpointObject.lockVariableGroupName, ''), ne(endpointObject.endpointName, 'odsp')) }}:
         lockBehavior: sequential
       variables:
         # Use contention-lock variable groups when appropriate. Note that null gets coalesced into an empty string.
@@ -471,6 +470,7 @@ stages:
             testFilesPath: $(testFilesPath)
             testWorkspace: $(testWorkspace)
             pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
+            endpointName: ${{ endpointObject.endpointName }}
 
         # Download and install package with performance tests
         - template: /tools/pipelines/templates/include-test-perf-benchmarks-install-package.yml@self
@@ -538,9 +538,11 @@ stages:
             FLUID_BUILD_ID: $(Build.BuildId)
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
             FLUID_LOGGER_PROPS: '{ "hostName": "Benchmark", "displayName": "${{variables.pipelineIdentifierForTelemetry}}" }'
-            login__microsoft__clientId: $(login-microsoft-clientId)
-            ${{ if eq( endpointObject.endpointName, 'odsp' ) }}:
-              login__odsp__test__tenants: $(automation-perf-login-odsp-test-tenants)
+            ${{ if eq(endpointObject.endpointName, 'odsp') }}:
+              login__odsp__test__tenants: $(tenantCreds)
+              login__microsoft__clientId: $(appClientId)
+            ${{ else }}:
+              login__microsoft__clientId: $(login-microsoft-clientId)
             ${{ if eq( endpointObject.endpointName, 'frs' ) }}:
               fluid__test__driver__frs: $(automation-fluid-test-driver-frs-perf-test)
 
@@ -600,6 +602,32 @@ stages:
               ls -laR ${{ variables.memoryUsageTestOutputFolder }};
               echo "Cleanup  ${{ variables.memoryUsageTestOutputFolder }}"
               rm -rf ${{ variables.memoryUsageTestOutputFolder }};
+
+        # Cleanup of tenant credentials for odsp tests
+        - ${{ if eq( endpointObject.endpointName, 'odsp' ) }}:
+          - task: AzureCLI@2
+            displayName: 'Log in to release tenant credentials'
+            inputs:
+              azureSubscription: 'Fluid Framework Tests'
+              addSpnToEnvironment: true
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                set -eu -o pipefail
+
+                az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
+            condition: eq(variables['tenantSetupSuccess'], 'true')
+
+          # Release the tenant back to the tenant pool
+          - task: Bash@3
+            displayName: 'Release tenant credentials'
+            inputs:
+              targetType: 'inline'
+              script: |
+                set -eu -o pipefail
+
+                npx --package=@ff-internal/trips-setup@0.0.5 -- trips-cleanup --reservationId=$(stringBearerToken)
+            condition: eq(variables['tenantSetupSuccess'], 'true')
 
         - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
 
