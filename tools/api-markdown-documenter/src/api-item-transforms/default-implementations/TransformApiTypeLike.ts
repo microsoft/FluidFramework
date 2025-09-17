@@ -19,6 +19,7 @@ import {
 	getApiItemKind,
 	getScopedMemberNameForDiagnostics,
 	isStatic,
+	type ApiConstructorLike,
 	type ApiTypeLike,
 } from "../../utilities/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
@@ -82,7 +83,7 @@ export function transformApiTypeLike(
 
 	if (members.length > 0) {
 		// Accumulate child items
-		const constructors: TypeMember<ApiConstructor>[] = [];
+		const constructors: TypeMember<ApiConstructorLike>[] = [];
 		const allProperties: TypeMember<ApiPropertyItem>[] = [];
 		const callSignatures: TypeMember<ApiCallSignature>[] = [];
 		const indexSignatures: TypeMember<ApiIndexSignature>[] = [];
@@ -134,91 +135,14 @@ export function transformApiTypeLike(
 			(apiProperty) => apiProperty.item.isEventProperty,
 		);
 
-		// Further split event/standard properties into static and non-static
-		const staticStandardProperties = standardProperties.filter((apiProperty) =>
-			isStatic(apiProperty.item),
-		);
-		const nonStaticStandardProperties = standardProperties.filter(
-			(apiProperty) => !isStatic(apiProperty.item),
-		);
-		const staticEventProperties = eventProperties.filter((apiProperty) =>
-			isStatic(apiProperty.item),
-		);
-		const nonStaticEventProperties = eventProperties.filter(
-			(apiProperty) => !isStatic(apiProperty.item),
-		);
-
-		// Split methods into static and non-static methods
-		const staticMethods = allMethods.filter((apiMethod) => isStatic(apiMethod.item));
-		const nonStaticMethods = allMethods.filter((apiMethod) => !isStatic(apiMethod.item));
-
 		// Render summary tables
-		const memberTableSections = createMemberTables(
-			[
-				{
-					headingTitle: "Constructors",
-					itemKind: ApiItemKind.Constructor,
-					items: constructors.map((member) => member.item),
-				},
-				{
-					headingTitle: "Static Events",
-					itemKind: ApiItemKind.Property,
-					items: staticEventProperties.map((member) => member.item),
-					options: {
-						modifiersToOmit: [ApiModifier.Static],
-					},
-				},
-				{
-					headingTitle: "Static Properties",
-					itemKind: ApiItemKind.Property,
-					items: staticStandardProperties.map((member) => member.item),
-					options: {
-						modifiersToOmit: [ApiModifier.Static],
-					},
-				},
-				{
-					headingTitle: "Static Methods",
-					itemKind: ApiItemKind.Method,
-					items: staticMethods.map((member) => member.item),
-					options: {
-						modifiersToOmit: [ApiModifier.Static],
-					},
-				},
-				{
-					headingTitle: "Events",
-					itemKind: ApiItemKind.Property,
-					items: nonStaticEventProperties.map((member) => member.item),
-					options: {
-						modifiersToOmit: [ApiModifier.Static],
-					},
-				},
-				{
-					headingTitle: "Properties",
-					itemKind: ApiItemKind.Property,
-					items: nonStaticStandardProperties.map((member) => member.item),
-					options: {
-						modifiersToOmit: [ApiModifier.Static],
-					},
-				},
-				{
-					headingTitle: "Methods",
-					itemKind: ApiItemKind.Method,
-					items: nonStaticMethods.map((member) => member.item),
-					options: {
-						modifiersToOmit: [ApiModifier.Static],
-					},
-				},
-				{
-					headingTitle: "Call Signatures",
-					itemKind: ApiItemKind.CallSignature,
-					items: callSignatures.map((member) => member.item),
-				},
-				{
-					headingTitle: "Index Signatures",
-					itemKind: ApiItemKind.IndexSignature,
-					items: indexSignatures.map((member) => member.item),
-				},
-			],
+		const memberTableSections = createSummaryTables(
+			constructors,
+			standardProperties,
+			eventProperties,
+			callSignatures,
+			indexSignatures,
+			allMethods,
 			config,
 		);
 
@@ -282,4 +206,102 @@ export function transformApiTypeLike(
 	}
 
 	return config.defaultSectionLayout(apiItem, sections, config);
+}
+
+function createSummaryTables(
+	constructors: TypeMember<ApiConstructorLike>[],
+	standardProperties: TypeMember<ApiPropertyItem>[],
+	eventProperties: TypeMember<ApiPropertyItem>[],
+	callSignatures: TypeMember<ApiCallSignature>[],
+	indexSignatures: TypeMember<ApiIndexSignature>[],
+	methods: TypeMember<ApiMethod>[],
+	config: ApiItemTransformationConfiguration,
+): Section[] | undefined {
+	// Further split event/standard properties into static and non-static
+	const staticStandardProperties = standardProperties.filter((apiProperty) =>
+		isStatic(apiProperty.item),
+	);
+	const nonStaticStandardProperties = standardProperties.filter(
+		(apiProperty) => !isStatic(apiProperty.item),
+	);
+	const staticEventProperties = eventProperties.filter((apiProperty) =>
+		isStatic(apiProperty.item),
+	);
+	const nonStaticEventProperties = eventProperties.filter(
+		(apiProperty) => !isStatic(apiProperty.item),
+	);
+
+	// Split methods into static and non-static methods
+	const staticMethods = methods.filter((apiMethod) => isStatic(apiMethod.item));
+	const nonStaticMethods = methods.filter((apiMethod) => !isStatic(apiMethod.item));
+
+	// TODO: use new helpers to add more info to the tables
+	return createMemberTables(
+		[
+			{
+				headingTitle: "Constructors",
+				itemKind: ApiItemKind.Constructor,
+				items: constructors.map((member) => member.item),
+			},
+			{
+				headingTitle: "Static Events",
+				itemKind: ApiItemKind.Property,
+				items: staticEventProperties.map((member) => member.item),
+				options: {
+					modifiersToOmit: [ApiModifier.Static],
+				},
+			},
+			{
+				headingTitle: "Static Properties",
+				itemKind: ApiItemKind.Property,
+				items: staticStandardProperties.map((member) => member.item),
+				options: {
+					modifiersToOmit: [ApiModifier.Static],
+				},
+			},
+			{
+				headingTitle: "Static Methods",
+				itemKind: ApiItemKind.Method,
+				items: staticMethods.map((member) => member.item),
+				options: {
+					modifiersToOmit: [ApiModifier.Static],
+				},
+			},
+			{
+				headingTitle: "Events",
+				itemKind: ApiItemKind.Property,
+				items: nonStaticEventProperties.map((member) => member.item),
+				options: {
+					modifiersToOmit: [ApiModifier.Static],
+				},
+			},
+			{
+				headingTitle: "Properties",
+				itemKind: ApiItemKind.Property,
+				items: nonStaticStandardProperties.map((member) => member.item),
+				options: {
+					modifiersToOmit: [ApiModifier.Static],
+				},
+			},
+			{
+				headingTitle: "Methods",
+				itemKind: ApiItemKind.Method,
+				items: nonStaticMethods.map((member) => member.item),
+				options: {
+					modifiersToOmit: [ApiModifier.Static],
+				},
+			},
+			{
+				headingTitle: "Call Signatures",
+				itemKind: ApiItemKind.CallSignature,
+				items: callSignatures.map((member) => member.item),
+			},
+			{
+				headingTitle: "Index Signatures",
+				itemKind: ApiItemKind.IndexSignature,
+				items: indexSignatures.map((member) => member.item),
+			},
+		],
+		config,
+	);
 }
