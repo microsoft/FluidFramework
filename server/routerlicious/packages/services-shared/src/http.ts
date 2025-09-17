@@ -56,16 +56,27 @@ export function validatePrivateLink(
 				next();
 			}
 			const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
-			const privateLinkEnable = tenantInfo?.customData?.privateEndpoints?.accountLinkId
-				? true
-				: false;
+			const privateLinkEnable =
+				tenantInfo?.customData?.privateEndpoints &&
+				Array.isArray(tenantInfo.customData.privateEndpoints) &&
+				tenantInfo.customData.privateEndpoints?.length > 0 &&
+				tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy
+					?.properties?.remotePrivateEndpoint?.connectionDetails &&
+				Array.isArray(
+					tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy
+						?.properties?.remotePrivateEndpoint?.connectionDetails,
+				) &&
+				tenantInfo.customData.privateEndpoints[0]?.privateEndpointConnectionProxy
+					?.properties?.remotePrivateEndpoint?.connectionDetails[0]
+					? true
+					: false;
 			const clientIPAddress = req.ip ?? "";
 			if (privateLinkEnable && (!clientIPAddress || clientIPAddress.trim() === "")) {
 				return handleResponse(
 					Promise.reject(
 						new NetworkError(
 							400,
-							`Client IP address is required for private link in req.ip`,
+							`Client ip address is required for private link in req.ip`,
 						),
 					),
 					res,
@@ -74,18 +85,20 @@ export function validatePrivateLink(
 			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 			if (networkInfo.isPrivateLink) {
 				if (privateLinkEnable) {
-					const accountLinkId = tenantInfo?.customData?.privateEndpoints?.accountLinkId;
+					const connectionDetail =
+						tenantInfo?.customData?.privateEndpoints[0]?.privateEndpointConnectionProxy
+							?.properties?.remotePrivateEndpoint?.connectionDetails[0];
+					const accountLinkId = connectionDetail?.linkIdentifier;
 					if (networkInfo.privateLinkId === accountLinkId) {
-						Lumberjack.info("This is a private link request", {
+						Lumberjack.info(`This is a private link request with matching link id.`, {
 							tenantId,
-							privateLinkId: networkInfo.privateLinkId,
 						});
 					} else {
 						return handleResponse(
 							Promise.reject(
 								new NetworkError(
 									400,
-									`This private link should not be connected since the link id ${networkInfo.privateLinkId} does not match ${accountLinkId}`,
+									`This private link should not be connected since the link id mismatch`,
 								),
 							),
 							res,

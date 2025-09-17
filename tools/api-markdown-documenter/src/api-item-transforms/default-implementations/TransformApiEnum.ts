@@ -12,9 +12,9 @@ import {
 
 import type { Section, SectionContent } from "../../mdast/index.js";
 import { getApiItemKind, getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
-import { getFilteredMembers } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createMemberTables } from "../helpers/index.js";
+import { getFilteredMembers } from "../utilities/index.js";
 
 /**
  * Default documentation transform for `Enum` items.
