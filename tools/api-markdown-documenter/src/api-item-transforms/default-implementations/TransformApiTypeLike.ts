@@ -170,57 +170,19 @@ export function transformApiTypeLike(
 			sections.push(...memberTableSections);
 		}
 
-		// Render child item details if there are any that will not be rendered to their own documents
-		const detailsSections = createChildDetailsSection(
-			[
-				{
-					heading: { type: "sectionHeading", title: "Constructor Details" },
-					itemKind: ApiItemKind.Constructor,
-					items: constructors
-						.filter((member) => member.kind === "own")
-						.map((member) => member.item),
-				},
-				{
-					heading: { type: "sectionHeading", title: "Event Details" },
-					itemKind: ApiItemKind.Property,
-					items: eventProperties
-						.filter((member) => member.kind === "own")
-						.map((member) => member.item),
-				},
-				{
-					heading: { type: "sectionHeading", title: "Property Details" },
-					itemKind: ApiItemKind.Property,
-					items: standardProperties
-						.filter((member) => member.kind === "own")
-						.map((member) => member.item),
-				},
-				{
-					heading: { type: "sectionHeading", title: "Method Details" },
-					itemKind: ApiItemKind.MethodSignature,
-					items: allMethods
-						.filter((member) => member.kind === "own")
-						.map((member) => member.item),
-				},
-				{
-					heading: { type: "sectionHeading", title: "Call Signature Details" },
-					itemKind: ApiItemKind.CallSignature,
-					items: callSignatures
-						.filter((member) => member.kind === "own")
-						.map((member) => member.item),
-				},
-				{
-					heading: { type: "sectionHeading", title: "Index Signature Details" },
-					itemKind: ApiItemKind.IndexSignature,
-					items: indexSignatures
-						.filter((member) => member.kind === "own")
-						.map((member) => member.item),
-				},
-			],
+		// Render child item details for any items that don't get their own document
+		const detailsSections = createMemberDetailsSection(
+			constructors,
+			standardProperties,
+			eventProperties,
+			callSignatures,
+			indexSignatures,
+			allMethods,
 			config,
 			generateChildContent,
 		);
 
-		if (detailsSections !== undefined && detailsSections.length > 0) {
+		if (detailsSections !== undefined) {
 			sections.push(...detailsSections);
 		}
 	}
@@ -228,6 +190,7 @@ export function transformApiTypeLike(
 	return config.defaultSectionLayout(apiItem, sections, config);
 }
 
+// TODO: docs
 function createSummaryTables(
 	constructors: TypeMember<ApiConstructorLike>[],
 	standardProperties: TypeMember<ApiPropertyItem>[],
@@ -497,4 +460,72 @@ function createNameCell(
 		type: "tableCell",
 		children: cellContent,
 	};
+}
+
+function createMemberDetailsSection(
+	constructors: TypeMember<ApiConstructorLike>[],
+	standardProperties: TypeMember<ApiPropertyItem>[],
+	eventProperties: TypeMember<ApiPropertyItem>[],
+	callSignatures: TypeMember<ApiCallSignature>[],
+	indexSignatures: TypeMember<ApiIndexSignature>[],
+	methods: TypeMember<ApiMethod>[],
+	config: ApiItemTransformationConfiguration,
+	generateChildContent: (apiItem: ApiItem) => Section[],
+): Section[] | undefined {
+	// Only display details for "own" members, since inherited members will have docs generated from the base type.
+	const ownConstructors = constructors
+		.filter((member) => member.kind === "own")
+		.map((member) => member.item);
+	const ownEventProperties = eventProperties
+		.filter((member) => member.kind === "own")
+		.map((member) => member.item);
+	const ownStandardProperties = standardProperties
+		.filter((member) => member.kind === "own")
+		.map((member) => member.item);
+	const ownMethods = methods
+		.filter((member) => member.kind === "own")
+		.map((member) => member.item);
+	const ownCallSignatures = callSignatures
+		.filter((member) => member.kind === "own")
+		.map((member) => member.item);
+	const ownIndexSignatures = indexSignatures
+		.filter((member) => member.kind === "own")
+		.map((member) => member.item);
+
+	return createChildDetailsSection(
+		[
+			{
+				heading: { type: "sectionHeading", title: "Constructor Details" },
+				itemKind: ApiItemKind.Constructor,
+				items: ownConstructors,
+			},
+			{
+				heading: { type: "sectionHeading", title: "Event Details" },
+				itemKind: ApiItemKind.Property,
+				items: ownEventProperties,
+			},
+			{
+				heading: { type: "sectionHeading", title: "Property Details" },
+				itemKind: ApiItemKind.Property,
+				items: ownStandardProperties,
+			},
+			{
+				heading: { type: "sectionHeading", title: "Method Details" },
+				itemKind: ApiItemKind.MethodSignature,
+				items: ownMethods,
+			},
+			{
+				heading: { type: "sectionHeading", title: "Call Signature Details" },
+				itemKind: ApiItemKind.CallSignature,
+				items: ownCallSignatures,
+			},
+			{
+				heading: { type: "sectionHeading", title: "Index Signature Details" },
+				itemKind: ApiItemKind.IndexSignature,
+				items: ownIndexSignatures,
+			},
+		],
+		config,
+		generateChildContent,
+	);
 }
