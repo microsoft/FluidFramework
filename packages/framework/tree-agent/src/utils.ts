@@ -270,7 +270,10 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 			}
 			case z.ZodFirstPartyTypeKind.ZodIntersection: {
 				return appendUnionOrIntersectionTypes(
-					(type._def as z.ZodUnionDef).options,
+					[
+						(type._def as z.ZodIntersectionDef).left,
+						(type._def as z.ZodIntersectionDef).right,
+					],
 					TypePrecedence.Intersection,
 				);
 			}
@@ -321,18 +324,6 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 		}
 	}
 
-	function hasBoundMethods(boundType: z.ZodType): boolean {
-		// eslint-disable-next-line prefer-const
-		for (let type of Object.values((boundType._def as z.ZodObjectDef).shape())) {
-			// Special handling of methods on objects
-			const method = (type as unknown as { method: object | undefined }).method;
-			if (method !== undefined && method instanceof FunctionWrapper) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	function appendBoundMethods(boundType: z.ZodType): void {
 		// eslint-disable-next-line prefer-const
 		for (let [name, type] of Object.entries((boundType._def as z.ZodObjectDef).shape())) {
@@ -373,17 +364,6 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 	function appendArrayType(arrayType: z.ZodType) {
 		appendType((arrayType._def as z.ZodArrayDef).type, TypePrecedence.Object);
 		append("[]");
-		if (hasBoundMethods(arrayType)) {
-			append(" & ");
-			append("{");
-			appendNewLine();
-			append("// this is an array that also has the following methods:");
-			appendNewLine();
-			indent++;
-			appendBoundMethods(arrayType);
-			indent--;
-			append("}");
-		}
 	}
 
 	function appendObjectType(objectType: z.ZodType) {

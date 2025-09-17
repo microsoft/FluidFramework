@@ -105,6 +105,22 @@ function generateEditTypes(
 	};
 }
 
+function getBoundMethods(
+	definition: string,
+	bindableSchemas: Map<string, BindableSchema>,
+): [string, ZodTypeAny][] {
+	const methodTypes: [string, ZodTypeAny][] = [];
+	const bindableSchema = bindableSchemas.get(definition) ?? fail("Unknown definition");
+	const methods = getExposedMethods(bindableSchema);
+	for (const [name, method] of Object.entries(methods)) {
+		const zodFunction = z.instanceof(FunctionWrapper);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+		(zodFunction as any).method = method;
+		methodTypes.push([name, zodFunction]);
+	}
+	return methodTypes;
+}
+
 function getOrCreateType(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	definition: string,
@@ -127,17 +143,12 @@ function getOrCreateType(
 						.filter(([, value]) => value !== undefined),
 				);
 
-				const nodeSchema = bindableSchemas.get(definition) ?? fail("Unknown definition");
-				const methods = getExposedMethods(nodeSchema);
-				for (const [name, method] of Object.entries(methods)) {
+				for (const [name, zodFunction] of getBoundMethods(definition, bindableSchemas)) {
 					if (properties[name] !== undefined) {
 						throw new UsageError(
 							`Method ${name} conflicts with field of the same name in schema ${definition}`,
 						);
 					}
-					const zodFunction = z.instanceof(FunctionWrapper);
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					(zodFunction as any).method = method;
 					properties[name] = zodFunction;
 				}
 
@@ -156,16 +167,31 @@ function getOrCreateType(
 					.describe(simpleNodeSchema.metadata?.description ?? "");
 			}
 			case NodeKind.Array: {
-				return z
-					.array(
-						getTypeForAllowedTypes(
-							definitionMap,
-							simpleNodeSchema.allowedTypesIdentifiers,
-							objectCache,
-							bindableSchemas,
-						),
-					)
-					.describe(simpleNodeSchema.metadata?.description ?? "");
+				let zodType: ZodTypeAny = z.array(
+					getTypeForAllowedTypes(
+						definitionMap,
+						simpleNodeSchema.allowedTypesIdentifiers,
+						objectCache,
+						bindableSchemas,
+					),
+				);
+				let description = simpleNodeSchema.metadata?.description ?? "";
+				const boundMethods = getBoundMethods(definition, bindableSchemas);
+				if (boundMethods.length > 0) {
+					const methods: Record<string, z.ZodTypeAny> = {};
+					for (const [name, zodFunction] of boundMethods) {
+						if (methods[name] !== undefined) {
+							throw new UsageError(
+								`Method ${name} conflicts with field of the same name in schema ${definition}`,
+							);
+						}
+						methods[name] = zodFunction;
+					}
+					zodType = z.intersection(zodType, z.object(methods));
+					const methodNote = "Note: this array has methods directly on it.";
+					description = description === "" ? methodNote : `${description} - ${methodNote}`;
+				}
+				return zodType.describe(description);
 			}
 			case NodeKind.Leaf: {
 				switch (simpleNodeSchema.leafKind) {

@@ -149,6 +149,13 @@ describe("System prompt", () => {
 		}
 
 		const domainSchemaString = getZodSchemaAsTypeScript(domainTypes);
-		assert.deepEqual(domainSchemaString, "");
+		assert.deepEqual(
+			domainSchemaString,
+			`// Note: this array has methods directly on it.
+type Todo = string[] & {
+    M2(n: string): boolean;
+};
+`,
+		);
 	});
 });
