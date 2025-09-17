@@ -25,14 +25,19 @@ export type Ctor<T = any> = new (...args: any[]) => T;
  * A type that represents an object schema class.
  * @alpha
  */
-export type NodeSchema = TreeNodeSchema<string, NodeKind.Object>;
+export type BindableSchema = TreeNodeSchema<
+	string,
+	NodeKind.Object | NodeKind.Array | NodeKind.Map | NodeKind.Record
+>;
 
 /**
  * Get the exposed methods of a schema class.
  * @param schemaClass - The schema class to extract methods from.
  * @returns A record of method names and their corresponding Zod types.
  */
-export function getExposedMethods(schemaClass: NodeSchema): Record<string, FunctionWrapper> {
+export function getExposedMethods(
+	schemaClass: BindableSchema,
+): Record<string, FunctionWrapper> {
 	return ExposedMethodsI.getExposedMethods(schemaClass);
 }
 
@@ -118,7 +123,7 @@ export type Infer<T> = T extends FunctionDef<infer Args, infer Return, infer Res
 export interface ExposedMethods {
 	expose<
 		const K extends string & keyof MethodKeys<InstanceType<S>>,
-		S extends NodeSchema & Ctor<{ [P in K]: Infer<Z> }> & IExposedMethods,
+		S extends BindableSchema & Ctor<{ [P in K]: Infer<Z> }> & IExposedMethods,
 		Z extends FunctionDef<any, any, any>,
 	>(schema: S, methodName: K, zodFunction: Z): void;
 }
@@ -150,11 +155,11 @@ export interface IExposedMethods {
 class ExposedMethodsI implements ExposedMethods {
 	private readonly methods: Record<string, FunctionWrapper> = {};
 
-	public constructor(private readonly schemaClass: NodeSchema) {}
+	public constructor(private readonly schemaClass: BindableSchema) {}
 
 	public expose<
 		const K extends string & keyof MethodKeys<InstanceType<S>>,
-		S extends NodeSchema & Ctor<{ [P in K]: Infer<Z> }> & IExposedMethods,
+		S extends BindableSchema & Ctor<{ [P in K]: Infer<Z> }> & IExposedMethods,
 		Z extends FunctionDef<readonly Arg[], z.ZodTypeAny, z.ZodTypeAny | null>,
 	>(schema: S, methodName: K, functionDef: Z): void {
 		if (schema !== this.schemaClass) {
@@ -170,7 +175,9 @@ class ExposedMethodsI implements ExposedMethods {
 		);
 	}
 
-	public static getExposedMethods(schemaClass: NodeSchema): Record<string, FunctionWrapper> {
+	public static getExposedMethods(
+		schemaClass: BindableSchema,
+	): Record<string, FunctionWrapper> {
 		const exposedMethods = new ExposedMethodsI(schemaClass);
 		const extractable = schemaClass as unknown as IExposedMethods;
 		if (extractable[exposeMethodsSymbol] !== undefined) {

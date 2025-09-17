@@ -3,23 +3,24 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "../../utils.js";
 import { Users } from "../domains/index.js";
 import { scoreSymbol, type LLMIntegrationTest, type ScorableVerboseTree } from "../utils.js";
 
-// We start with two users (alpardes and mapardes) and add two more.
-// We only score on the presence of the four correct user IDs and their name fields; timestamps/emails are ignored.
+// We start with two users (alpardes and mapardes) and edit the alpardes user.
+// We only score on the presence of the two correct user IDs and their name fields; timestamps/emails are ignored.
 const expected: ScorableVerboseTree = {
 	type: "com.microsoft.fluid.tree-agent.users.Users",
 	[scoreSymbol]: (actual): number => {
 		if (typeof actual !== "object" || actual === null || Array.isArray(actual.fields)) {
 			return 0;
 		}
-		const required = new Map<string, { firstName: string; lastName: string }>([
-			["alpardes", { firstName: "Alex", lastName: "Pardes" }],
-			["rymagani", { firstName: "Ryan", lastName: "Magani" }],
-			["tawilliams", { firstName: "Taylor", lastName: "Williams" }],
-			["chdog", { firstName: "Chewy", lastName: "Dog" }],
-			["timagani", { firstName: "Timmy", lastName: "Magani" }],
+		const required = new Map<string, { firstName: string; lastName: string; email?: string }>([
+			[
+				"alpardes",
+				{ firstName: "Alexander", lastName: "Pardes", email: "pardesio@gmail.com" },
+			],
+			["rymagani", { firstName: "Ryan", lastName: "Magani", email: "ringom@gmail.com" }],
 		]);
 		let score = 1;
 		for (const [id, { firstName, lastName }] of required) {
@@ -48,16 +49,6 @@ const expected: ScorableVerboseTree = {
 				continue;
 			}
 		}
-		const timmy = actual.fields.timagani;
-		if (
-			timmy !== undefined &&
-			(typeof timmy !== "object" ||
-				timmy === null ||
-				Array.isArray(timmy.fields) ||
-				timmy.fields.email !== "ringom@gmail.com")
-		) {
-			score *= 2 / 3;
-		}
 		// Penalize if there are more than 4 users (encourage precision)
 		const actualKeys = Object.keys(actual.fields);
 		if (actualKeys.length > required.size) {
@@ -69,10 +60,10 @@ const expected: ScorableVerboseTree = {
 };
 
 /**
- * Scenario: Add two new users to an existing set of users.
+ * Scenario: Update a user in an existing set of users. Only the user subtree is passed to the LLM.
  */
-export const addUsersTest = {
-	name: "Add users",
+export const updateUserTest = {
+	name: "Update user",
 	schema: Users,
 	initialTree: () => ({
 		alpardes: {
@@ -88,7 +79,9 @@ export const addUsersTest = {
 			email: "ringom@gmail.com",
 		},
 	}),
-	prompt:
-		"Please add two new users to this database: Taylor Williams and Chewy Dog. Then, add one more user for Ryan's little brother. His name is Timmy, and he has the same email as Ryan.",
+	prompt: "Please update Alex's name to Alexander",
 	expected,
+	options: {
+		subtree: (root) => root.get("alpardes") ?? fail("Expected user not found."),
+	},
 } as const satisfies LLMIntegrationTest<typeof Users>;

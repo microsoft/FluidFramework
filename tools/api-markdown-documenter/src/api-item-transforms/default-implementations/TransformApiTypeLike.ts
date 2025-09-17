@@ -7,7 +7,6 @@ import { strict as assert } from "node:assert";
 
 import {
 	type ApiCallSignature,
-	type ApiConstructor,
 	type ApiIndexSignature,
 	type ApiItem,
 	ApiItemKind,
@@ -113,7 +112,7 @@ export function transformApiTypeLike(
 			switch (childKind) {
 				case ApiItemKind.Constructor:
 				case ApiItemKind.ConstructSignature: {
-					constructors.push(member as TypeMember<ApiConstructor>);
+					constructors.push(member as TypeMember<ApiConstructorLike>);
 					break;
 				}
 				case ApiItemKind.Property:
