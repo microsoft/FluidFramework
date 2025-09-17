@@ -28,9 +28,9 @@ import {
 	getModifiers,
 	injectSeparator,
 } from "../../utilities/index.js";
-import { getLinkForApiItem } from "../ApiItemTransformUtilities.js";
 import { transformTsdoc } from "../TsdocNodeTransforms.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
+import { getLinkForApiItem } from "../utilities/index.js";
 
 import { createExcerptSpanWithHyperlinks } from "./Helpers.js";
 

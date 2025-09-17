@@ -27,7 +27,7 @@ export const MainViewMonolithic: React.FC<{ root: PropTreeNode<Inventory> }> = (
 				count={part.quantity}
 				onDecrement={(): number => part.quantity--}
 				onIncrement={(): number => part.quantity++}
-			></Counter>
+			/>
 		));
 
 		return (

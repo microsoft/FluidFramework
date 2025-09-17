@@ -25,7 +25,6 @@ import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
-	findAncestor,
 	type GraphCommit,
 	type RevisionTag,
 	RevisionTagCodec,
@@ -259,18 +258,15 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			// If we are detached but loading from a summary, then we need to update our detached revision to ensure that it is ahead of all detached revisions in the summary.
 			// First, finish loading the edit manager so that we can inspect the sequence numbers of the commits on the trunk.
 			await loadEditManager;
-			// Find the most recent detached revision in the summary trunk...
-			let latestDetachedSequenceNumber: SeqNumber | undefined;
-			findAncestor(this.editManager.getTrunkHead(), (c) => {
-				const sequenceNumber = this.editManager.getSequenceNumber(c);
-				if (sequenceNumber !== undefined && sequenceNumber < 0) {
-					latestDetachedSequenceNumber = sequenceNumber;
-					return true;
-				}
-				return false;
-			});
-			// ...and set our detached revision to be as it would be if we had been already created that revision.
-			this.detachedRevision = latestDetachedSequenceNumber ?? this.detachedRevision;
+
+			const head = this.editManager.getTrunkHead();
+			const latestDetachedSequenceNumber = this.editManager.getSequenceNumber(head);
+			// When we load a summary for a tree that was never attached,
+			// latestDetachedSequenceNumber is either undefined (no commits in summary) or negative (all commits in summary were made while detached).
+			// We only need to update `this.detachedRevision` in the latter case.
+			if (latestDetachedSequenceNumber !== undefined && latestDetachedSequenceNumber < 0) {
+				this.detachedRevision = latestDetachedSequenceNumber;
+			}
 			await Promise.all(loadSummarizables);
 		} else {
 			await Promise.all([loadEditManager, ...loadSummarizables]);
