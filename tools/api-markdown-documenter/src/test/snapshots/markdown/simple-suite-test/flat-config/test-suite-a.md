@@ -139,10 +139,10 @@ Here are some remarks about the interface
 
 ### Call Signatures
 
-| CallSignature | Description |
-| - | - |
-| [(event: 'testCallSignature', listener: (input: unknown) => void): any](docs/test-suite-a#testinterface-_call_-callsignature) | Test interface event call signature |
-| [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](docs/test-suite-a#testinterface-_call__1-callsignature) | Another example call signature |
+| CallSignature | Return Type | Description |
+| - | - | - |
+| [(event: 'testCallSignature', listener: (input: unknown) => void): any](docs/test-suite-a#testinterface-_call_-callsignature) | any | Test interface event call signature |
+| [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](docs/test-suite-a#testinterface-_call__1-callsignature) | number | Another example call signature |
 
 ### Constructor Details
 

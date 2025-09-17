@@ -44,10 +44,10 @@ Here are some remarks about the interface
 
 ## Call Signatures
 
-| CallSignature | Description |
-| - | - |
-| [(event: 'testCallSignature', listener: (input: unknown) => void): any](/test-suite-a/testinterface-interface#_call_-callsignature) | Test interface event call signature |
-| [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](/test-suite-a/testinterface-interface#_call__1-callsignature) | Another example call signature |
+| CallSignature | Return Type | Description |
+| - | - | - |
+| [(event: 'testCallSignature', listener: (input: unknown) => void): any](/test-suite-a/testinterface-interface#_call_-callsignature) | any | Test interface event call signature |
+| [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](/test-suite-a/testinterface-interface#_call__1-callsignature) | number | Another example call signature |
 
 ## Constructor Details
 
