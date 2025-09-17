@@ -321,17 +321,21 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 		}
 	}
 
-	function appendArrayType(arrayType: z.ZodType) {
-		appendType((arrayType._def as z.ZodArrayDef).type, TypePrecedence.Object);
-		append("[]");
+	function hasBoundMethods(boundType: z.ZodType): boolean {
+		// eslint-disable-next-line prefer-const
+		for (let type of Object.values((boundType._def as z.ZodObjectDef).shape())) {
+			// Special handling of methods on objects
+			const method = (type as unknown as { method: object | undefined }).method;
+			if (method !== undefined && method instanceof FunctionWrapper) {
+				return true;
+			}
+		}
+		return false;
 	}
 
-	function appendObjectType(objectType: z.ZodType) {
-		append("{");
-		appendNewLine();
-		indent++;
+	function appendBoundMethods(boundType: z.ZodType): void {
 		// eslint-disable-next-line prefer-const
-		for (let [name, type] of Object.entries((objectType._def as z.ZodObjectDef).shape())) {
+		for (let [name, type] of Object.entries((boundType._def as z.ZodObjectDef).shape())) {
 			// Special handling of methods on objects
 			const method = (type as unknown as { method: object | undefined }).method;
 			if (method !== undefined && method instanceof FunctionWrapper) {
@@ -361,7 +365,35 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 				if (method.description !== undefined) {
 					append(` // ${method.description}`);
 				}
-			} else {
+				appendNewLine();
+			}
+		}
+	}
+
+	function appendArrayType(arrayType: z.ZodType) {
+		appendType((arrayType._def as z.ZodArrayDef).type, TypePrecedence.Object);
+		append("[]");
+		if (hasBoundMethods(arrayType)) {
+			append(" & ");
+			append("{");
+			appendNewLine();
+			append("// this is an array that also has the following methods:");
+			appendNewLine();
+			indent++;
+			appendBoundMethods(arrayType);
+			indent--;
+			append("}");
+		}
+	}
+
+	function appendObjectType(objectType: z.ZodType) {
+		append("{");
+		appendNewLine();
+		indent++;
+		// eslint-disable-next-line prefer-const
+		for (let [name, type] of Object.entries((objectType._def as z.ZodObjectDef).shape())) {
+			const method = (type as unknown as { method: object | undefined }).method;
+			if (method === undefined || !(method instanceof FunctionWrapper)) {
 				append(name);
 				if (getTypeKind(type) === z.ZodFirstPartyTypeKind.ZodOptional) {
 					append("?");
@@ -372,9 +404,10 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 				append(";");
 				const comment = type.description;
 				if (comment !== undefined && comment !== "") append(` // ${comment}`);
+				appendNewLine();
 			}
-			appendNewLine();
 		}
+		appendBoundMethods(objectType);
 		indent--;
 		append("}");
 	}

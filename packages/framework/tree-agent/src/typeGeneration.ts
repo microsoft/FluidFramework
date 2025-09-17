@@ -21,7 +21,7 @@ import type {
 } from "@fluidframework/tree/internal";
 import { z, type ZodTypeAny } from "zod";
 
-import type { NodeSchema } from "./methodBinding.js";
+import type { BindableSchema } from "./methodBinding.js";
 import { FunctionWrapper, getExposedMethods } from "./methodBinding.js";
 import {
 	fail,
@@ -65,12 +65,13 @@ export function generateEditTypesForPrompt(
 		const treeNodeSchemas = new Set<TreeNodeSchema>();
 		walkFieldSchema(rootSchema, {} satisfies SchemaVisitor, treeNodeSchemas);
 		const nodeSchemas = [...treeNodeSchemas.values()].filter(
-			(treeNodeSchema) => treeNodeSchema.kind === NodeKind.Object,
-		) as NodeSchema[];
-		const treeNodeSchemaMap = new Map<string, NodeSchema>(
+			(treeNodeSchema) =>
+				treeNodeSchema.kind === NodeKind.Object || treeNodeSchema.kind === NodeKind.Array,
+		) as BindableSchema[];
+		const bindableSchemas = new Map<string, BindableSchema>(
 			nodeSchemas.map((nodeSchema) => [nodeSchema.identifier, nodeSchema]),
 		);
-		return generateEditTypes(schema, new Map(), treeNodeSchemaMap);
+		return generateEditTypes(schema, new Map(), bindableSchemas);
 	});
 }
 
@@ -85,13 +86,18 @@ export function generateEditTypesForPrompt(
 function generateEditTypes(
 	schema: SimpleTreeSchema,
 	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
-	treeSchemaMap: Map<string, NodeSchema> | undefined,
+	bindableSchemas: Map<string, BindableSchema>,
 ): {
 	domainTypes: Record<string, ZodTypeAny>;
 } {
 	const domainTypes: Record<string, ZodTypeAny> = {};
 	for (const name of schema.definitions.keys()) {
-		domainTypes[name] = getOrCreateType(schema.definitions, name, objectCache, treeSchemaMap);
+		domainTypes[name] = getOrCreateType(
+			schema.definitions,
+			name,
+			objectCache,
+			bindableSchemas,
+		);
 	}
 
 	return {
@@ -103,7 +109,7 @@ function getOrCreateType(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	definition: string,
 	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
-	treeSchemaMap: Map<string, NodeSchema> | undefined,
+	bindableSchemas: Map<string, BindableSchema>,
 ): ZodTypeAny {
 	const simpleNodeSchema = definitionMap.get(definition) ?? fail("Unexpected definition");
 	return getOrCreate(objectCache, simpleNodeSchema, () => {
@@ -115,26 +121,26 @@ function getOrCreateType(
 						.map(([key, field]) => {
 							return [
 								key,
-								getOrCreateTypeForField(definitionMap, field, objectCache, treeSchemaMap),
+								getOrCreateTypeForField(definitionMap, field, objectCache, bindableSchemas),
 							];
 						})
 						.filter(([, value]) => value !== undefined),
 				);
-				if (treeSchemaMap) {
-					const nodeSchema = treeSchemaMap.get(definition) ?? fail("Unknown definition");
-					const methods = getExposedMethods(nodeSchema);
-					for (const [name, method] of Object.entries(methods)) {
-						if (properties[name] !== undefined) {
-							throw new UsageError(
-								`Method ${name} conflicts with field of the same name in schema ${definition}`,
-							);
-						}
-						const zodFunction = z.instanceof(FunctionWrapper);
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						(zodFunction as any).method = method;
-						properties[name] = zodFunction;
+
+				const nodeSchema = bindableSchemas.get(definition) ?? fail("Unknown definition");
+				const methods = getExposedMethods(nodeSchema);
+				for (const [name, method] of Object.entries(methods)) {
+					if (properties[name] !== undefined) {
+						throw new UsageError(
+							`Method ${name} conflicts with field of the same name in schema ${definition}`,
+						);
 					}
+					const zodFunction = z.instanceof(FunctionWrapper);
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+					(zodFunction as any).method = method;
+					properties[name] = zodFunction;
 				}
+
 				return z.object(properties).describe(simpleNodeSchema.metadata?.description ?? "");
 			}
 			case NodeKind.Record: {
@@ -144,7 +150,7 @@ function getOrCreateType(
 							definitionMap,
 							simpleNodeSchema.allowedTypesIdentifiers,
 							objectCache,
-							treeSchemaMap,
+							bindableSchemas,
 						),
 					)
 					.describe(simpleNodeSchema.metadata?.description ?? "");
@@ -156,7 +162,7 @@ function getOrCreateType(
 							definitionMap,
 							simpleNodeSchema.allowedTypesIdentifiers,
 							objectCache,
-							treeSchemaMap,
+							bindableSchemas,
 						),
 					)
 					.describe(simpleNodeSchema.metadata?.description ?? "");
@@ -191,7 +197,7 @@ function getOrCreateTypeForField(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	fieldSchema: SimpleFieldSchema,
 	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
-	treeSchemaMap: Map<string, NodeSchema> | undefined,
+	bindableSchemas: Map<string, BindableSchema>,
 ): ZodTypeAny {
 	const customMetadata = fieldSchema.metadata.custom as
 		| Record<string | symbol, unknown>
@@ -215,7 +221,7 @@ function getOrCreateTypeForField(
 		definitionMap,
 		fieldSchema.allowedTypesIdentifiers,
 		objectCache,
-		treeSchemaMap,
+		bindableSchemas,
 	).describe(
 		getDefault === undefined
 			? (fieldSchema.metadata?.description ?? "")
@@ -246,18 +252,18 @@ function getTypeForAllowedTypes(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	allowedTypes: ReadonlySet<string>,
 	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
-	treeSchemaMap: Map<string, NodeSchema> | undefined,
+	bindableSchemas: Map<string, BindableSchema>,
 ): ZodTypeAny {
 	const single = tryGetSingleton(allowedTypes);
 	if (single === undefined) {
 		const types = [
 			...mapIterable(allowedTypes, (name) => {
-				return getOrCreateType(definitionMap, name, objectCache, treeSchemaMap);
+				return getOrCreateType(definitionMap, name, objectCache, bindableSchemas);
 			}),
 		];
 		assert(hasAtLeastTwo(types), 0xa7e /* Expected at least two types */);
 		return z.union(types);
 	} else {
-		return getOrCreateType(definitionMap, single, objectCache, treeSchemaMap);
+		return getOrCreateType(definitionMap, single, objectCache, bindableSchemas);
 	}
 }

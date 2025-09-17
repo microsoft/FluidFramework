@@ -108,4 +108,47 @@ describe("System prompt", () => {
 		const domainSchemaString = getZodSchemaAsTypeScript(domainTypes);
 		assert.notDeepEqual(domainSchemaString, "");
 	});
+
+	it("method binding works on array nodes", () => {
+		class ArrayWithMethod extends sf.array("Todo", sf.string) {
+			public M2(n: string): boolean {
+				return false;
+			}
+
+			public static [exposeMethodsSymbol](methods: ExposedMethods): void {
+				methods.expose(
+					ArrayWithMethod,
+					"M2",
+					buildFunc({ returns: z.boolean() }, ["n", z.string()]),
+				);
+			}
+		}
+
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: ArrayWithMethod }));
+		view.initialize(["test"]);
+
+		const schema = getSimpleSchema(view.schema);
+
+		const { domainTypes } = generateEditTypesForPrompt(view.schema, schema);
+		for (const [key, value] of Object.entries(domainTypes)) {
+			const friendlyKey = getFriendlySchemaName(key);
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			delete domainTypes[key];
+			if (
+				friendlyKey !== undefined &&
+				friendlyKey !== "string" &&
+				friendlyKey !== "number" &&
+				friendlyKey !== "boolean"
+			) {
+				domainTypes[friendlyKey] = value;
+			}
+		}
+
+		const domainSchemaString = getZodSchemaAsTypeScript(domainTypes);
+		assert.deepEqual(domainSchemaString, "");
+	});
 });
