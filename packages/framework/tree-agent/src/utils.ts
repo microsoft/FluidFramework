@@ -9,15 +9,20 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { ImplicitFieldSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
+import type {
+	ImplicitFieldSchema,
+	TreeLeafValue,
+	TreeNodeSchemaClass,
+} from "@fluidframework/tree";
 import type {
 	InsertableContent,
+	TreeBranch,
 	TreeNode,
 	TreeNodeSchema,
 	TreeViewAlpha,
 	UnsafeUnknownSchema,
 } from "@fluidframework/tree/alpha";
-import { ObjectNodeSchema, TreeAlpha } from "@fluidframework/tree/alpha";
+import { ObjectNodeSchema, Tree, TreeAlpha } from "@fluidframework/tree/alpha";
 import { z } from "zod";
 
 import { FunctionWrapper } from "./methodBinding.js";
@@ -81,11 +86,13 @@ export function getOrCreate<K, V>(
 /**
  * TODO
  * @alpha
+ * @privateRemarks This is a subset of the TreeViewAlpha functionality because if take it wholesale, it causes problems with invariance of the generic parameters.
  */
-export type TreeView<TRoot extends ImplicitFieldSchema> = Pick<
+export type TreeView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> = Pick<
 	TreeViewAlpha<TRoot>,
-	"root" | "fork" | "merge" | "schema" | "events"
->;
+	"root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"
+> &
+	TreeBranch;
 
 /**
  * TODO
@@ -141,6 +148,26 @@ export function constructNode(schema: TreeNodeSchema, value: InsertableContent):
 		0xc1e /* Expected a constructed node to be an object */,
 	);
 	return node;
+}
+
+/**
+ * Get a human-readable representation of a tree value's type.
+ */
+export function getFriendlySchema(value: TreeNode | TreeLeafValue | undefined): string {
+	if (value === undefined) {
+		return "undefined";
+	}
+	if (value === null) {
+		return "null";
+	}
+	if (["string", "number", "boolean"].includes(typeof value)) {
+		return typeof value;
+	}
+	if (isFluidHandle(value)) {
+		return "FluidHandle";
+	}
+	const schema = Tree.schema(value);
+	return getFriendlySchemaName(schema.identifier) ?? schema.identifier;
 }
 
 /**

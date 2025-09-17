@@ -18,9 +18,17 @@ export function buildFunc<const Return extends z.ZodTypeAny, const Args extends 
 }, ...args: Args): FunctionDef<Args, Return, Rest>;
 
 // @alpha
-export function createSemanticAgent<TRoot extends ImplicitFieldSchema>(client: BaseChatModel, treeView: TreeView<TRoot>, options?: {
+export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(client: BaseChatModel, treeView: TreeView<TSchema>, options?: {
     readonly domainHints?: string;
-    readonly treeToString?: (root: ReadableField<TRoot>) => string;
+    readonly treeToString?: (root: ReadableField<TSchema>) => string;
+    readonly validator?: (js: string) => boolean;
+    readonly log?: Log;
+}): SharedTreeSemanticAgent;
+
+// @alpha
+export function createSemanticAgent<T extends TreeNode>(client: BaseChatModel, node: T, options?: {
+    readonly domainHints?: string;
+    readonly treeToString?: (root: T) => string;
     readonly validator?: (js: string) => boolean;
     readonly log?: Log;
 }): SharedTreeSemanticAgent;
@@ -83,6 +91,6 @@ export interface SharedTreeSemanticAgent {
 }
 
 // @alpha
-export type TreeView<TRoot extends ImplicitFieldSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "schema" | "events">;
+export type TreeView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> = Pick<TreeViewAlpha<TRoot>, "root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"> & TreeBranch;
 
 ```
