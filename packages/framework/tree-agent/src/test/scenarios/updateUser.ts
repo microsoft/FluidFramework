@@ -7,8 +7,8 @@ import { fail } from "../../utils.js";
 import { Users } from "../domains/index.js";
 import { scoreSymbol, type LLMIntegrationTest, type ScorableVerboseTree } from "../utils.js";
 
-// We start with two users (alpardes and mapardes) and add two more (jodoe and ansmith).
-// We only score on the presence of the four correct user IDs and their name fields; timestamps/emails are ignored.
+// We start with two users (alpardes and mapardes) and edit the alpardes user.
+// We only score on the presence of the two correct user IDs and their name fields; timestamps/emails are ignored.
 const expected: ScorableVerboseTree = {
 	type: "com.microsoft.fluid.tree-agent.users.Users",
 	[scoreSymbol]: (actual): number => {
