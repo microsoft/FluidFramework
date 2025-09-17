@@ -180,7 +180,12 @@ function createSummaryTable(
 		}
 
 		default: {
-			return createDefaultSummaryTable(apiItems, getTableHeadingTitleForApiKind(itemKind), config, options);
+			return createDefaultSummaryTable(
+				apiItems,
+				getTableHeadingTitleForApiKind(itemKind),
+				config,
+				options,
+			);
 		}
 	}
 }
