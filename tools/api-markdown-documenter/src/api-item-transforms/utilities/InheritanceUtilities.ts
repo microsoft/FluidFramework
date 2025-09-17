@@ -4,8 +4,8 @@
  */
 
 import {
-	ApiClass,
-	ApiInterface,
+	type ApiClass,
+	type ApiInterface,
 	type ApiItem,
 	ApiItemKind,
 	type HeritageType,
@@ -46,7 +46,12 @@ export interface TypeMemberBase<TApiItem extends ApiItem = ApiItem> {
 export interface OwnTypeMember<TApiItem extends ApiItem = ApiItem>
 	extends TypeMemberBase<TApiItem> {
 	readonly kind: "own";
-	// TODO: for items that override some base symbol, link to that here.
+
+	/**
+	 * The member on some base type that this member overrides, if any.
+	 * @remarks For example, if this member is a method that overrides a method on a base class, this would be that base method.
+	 */
+	readonly overrides: ApiItem | undefined; // TODO: optional
 }
 
 /**
@@ -79,75 +84,81 @@ export function getTypeMembers<TApiItem extends ApiTypeLike>(
 	apiItem: TApiItem,
 	config: ApiItemTransformationConfiguration,
 ): TypeMember[] {
-	const members: TypeMember[] = [];
+	// Get inherited members
+	const inheritedMembers: InheritedTypeMember[] = [];
+	if (apiItem.kind === ApiItemKind.Class) {
+		const apiClass = apiItem as ApiClass;
 
-	const ownMembers: OwnTypeMember[] = filterItems(apiItem.members, config).map((member) => ({
-		kind: "own",
-		item: member,
-	}));
-
-	members.push(...ownMembers);
-
-	// TODO: get inherited members
-	// interface, class, type-alias
-	if (apiItem instanceof ApiClass) {
 		// Inherit members from `extends` clause
-		if (apiItem.extendsType !== undefined) {
-			const inheritedMembers = getInheritedMembers(apiItem, apiItem.extendsType, config);
-			if (inheritedMembers !== undefined) {
-				members.push(...inheritedMembers);
-			}
+		if (apiClass.extendsType !== undefined) {
+			inheritedMembers.push(...getInheritedMembers(apiClass, apiClass.extendsType, config));
 		}
 
 		// Inherit members from `implements` clauses
-		for (const implementsType of apiItem.implementsTypes) {
-			const inheritedMembers = getInheritedMembers(apiItem, implementsType, config);
-			if (inheritedMembers !== undefined) {
-				members.push(...inheritedMembers);
-			}
+		for (const implementsType of apiClass.implementsTypes) {
+			inheritedMembers.push(...getInheritedMembers(apiClass, implementsType, config));
 		}
-	} else if (apiItem instanceof ApiInterface) {
+	} else if (apiItem.kind === ApiItemKind.Interface) {
+		const apiInterface = apiItem as ApiInterface;
+
 		// Inherit members from `extends` clauses
-		for (const extendsType of apiItem.extendsTypes) {
-			const inheritedMembers = getInheritedMembers(apiItem, extendsType, config);
-			if (inheritedMembers !== undefined) {
-				members.push(...inheritedMembers);
-			}
+		for (const extendsType of apiInterface.extendsTypes) {
+			inheritedMembers.push(...getInheritedMembers(apiInterface, extendsType, config));
 		}
 	} else {
 		// TODO: type-alias
 	}
 
-	return members;
+	const ownMemberItems = filterItems(apiItem.members, config);
+
+	const ownMembers: OwnTypeMember[] = [];
+	for (const ownMemberItem of ownMemberItems) {
+		const override = inheritedMembers.find(
+			// TODO: this almost certainly isn't right. Probably want to use canonicalReference.
+			(inherited) => inherited.item.containerKey === ownMemberItem.containerKey,
+		);
+
+		// If this member overrides a base member, remove that base member from the inherited members list.
+		// We only want to display our override.
+		if (override) {
+			inheritedMembers.splice(inheritedMembers.indexOf(override), 1);
+		}
+
+		ownMembers.push({
+			kind: "own",
+			item: ownMemberItem,
+			overrides: override?.item,
+		});
+	}
+
+	// TODO: document ordering
+	return [...inheritedMembers, ...ownMembers];
 }
 
 function getInheritedMembers(
 	apiItem: ApiItem,
 	extendsType: HeritageType,
 	config: ApiItemTransformationConfiguration,
-): TypeMember[] | undefined {
+): InheritedTypeMember[] {
 	const referencedItem = resolveHeritageTypeToItem(apiItem, extendsType, config);
 	if (referencedItem === undefined || !isTypeLike(referencedItem)) {
-		return undefined;
+		return [];
 	}
-	const referencedItemMembers: TypeMember[] = getTypeMembers(referencedItem, config).map(
-		(inherited) => ({
-			kind: "inherited",
-			item: inherited.item,
-			inheritedFrom: referencedItem,
-		}),
-	);
+	const referencedItemMembers: InheritedTypeMember[] = getTypeMembers(
+		referencedItem,
+		config,
+	).map((inherited) => ({
+		kind: "inherited",
+		item: inherited.item,
+		// If the item we're inheriting is itself inherited, preserve the original source.
+		// Otherwise, the source is the item we're inheriting from.
+		inheritedFrom: inherited.kind === "inherited" ? inherited.inheritedFrom : referencedItem,
+	}));
 
-	// Don't inherit constructors, or members directly declared / overrided on the item itself.
+	// Don't inherit constructors
 	return referencedItemMembers.filter((inherited) => {
 		const itemKind = getApiItemKind(inherited.item);
-		if (itemKind === ApiItemKind.Constructor || itemKind === ApiItemKind.ConstructSignature) {
-			return false;
-		}
-
-		return !apiItem.members.some(
-			(ownMember) => ownMember.containerKey === inherited.item.containerKey,
-		);
+		return itemKind !== ApiItemKind.Constructor && itemKind !== ApiItemKind.ConstructSignature;
 	});
 }
 

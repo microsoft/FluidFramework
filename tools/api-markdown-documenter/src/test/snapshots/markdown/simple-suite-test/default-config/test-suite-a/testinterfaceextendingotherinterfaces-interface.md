@@ -36,8 +36,8 @@ Here are some remarks about the interface
 
 | Method | Return Type | Description |
 | - | - | - |
-| [testMethod(input)](/test-suite-a/testinterfaceextendingotherinterfaces-interface#testmethod-methodsignature) | number | Test interface method accepting a string and returning a number. |
 | [testInterfaceMethod()](/test-suite-a/testinterface-interface#testinterfacemethod-methodsignature) | void | Test interface method |
+| [testMethod(input)](/test-suite-a/testinterfaceextendingotherinterfaces-interface#testmethod-methodsignature) | number | Test interface method accepting a string and returning a number. |
 
 ## Call Signatures
 

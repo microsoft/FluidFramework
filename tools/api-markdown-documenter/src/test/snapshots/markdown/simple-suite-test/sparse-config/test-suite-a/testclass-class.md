@@ -49,19 +49,19 @@ Here are some remarks about the class
 
 | Property | Modifiers | Type | Description |
 | - | - | - | - |
+| [protectedProperty](docs/test-suite-a/testabstractclass-protectedproperty-property) | `readonly` | [TestEnum](docs/test-suite-a/testenum-enum) | A test protected property. |
 | [abstractPropertyGetter](docs/test-suite-a/testclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/test-suite-a/testmappedtype-typealias) | A test abstract getter property. |
 | [testClassGetterProperty](docs/test-suite-a/testclass-testclassgetterproperty-property) | `virtual` | number | Test class property with both a getter and a setter. |
 | [testClassProperty](docs/test-suite-a/testclass-testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
-| [protectedProperty](docs/test-suite-a/testabstractclass-protectedproperty-property) | `readonly` | [TestEnum](docs/test-suite-a/testenum-enum) | A test protected property. |
 
 ### Methods
 
 | Method | Modifiers | Return Type | Description |
 | - | - | - | - |
+| [sealedMethod()](docs/test-suite-a/testabstractclass-sealedmethod-method) | `sealed` | string | A test `@sealed` method. |
 | [publicAbstractMethod()](docs/test-suite-a/testclass-publicabstractmethod-method) | | void | A test public abstract method. |
 | [testClassMethod(input)](docs/test-suite-a/testclass-testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
 | [virtualMethod()](docs/test-suite-a/testclass-virtualmethod-method) | | number | Overrides [virtualMethod()](docs/test-suite-a/testabstractclass-virtualmethod-method). |
-| [sealedMethod()](docs/test-suite-a/testabstractclass-sealedmethod-method) | `sealed` | string | A test `@sealed` method. |
 
 <h3 id="testclass-see-also">See Also</h3>
 
