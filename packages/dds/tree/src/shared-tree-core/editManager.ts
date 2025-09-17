@@ -138,7 +138,24 @@ export class EditManager<
 			);
 		}
 
-		this.addBranch("main");
+		const mainTrunk = new SharedTreeBranch(
+			this.trunkBase,
+			changeFamily,
+			mintRevisionTag,
+			this._events,
+			this.telemetryEventBatcher,
+		);
+
+		const main = new SharedBranch(
+			mainTrunk,
+			minimumPossibleSequenceId,
+			this.changeFamily,
+			this.mintRevisionTag,
+			this._events,
+			this.telemetryEventBatcher,
+		);
+
+		this.registerSharedBranch("main", main);
 
 		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
 		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
@@ -527,10 +544,10 @@ export class EditManager<
 	}
 
 	public addBranch(branchId: BranchId): void {
-		this.sharedBranches.set(
+		this.registerSharedBranch(
 			branchId,
 			new SharedBranch(
-				this.trunkBase,
+				this.getLocalBranch("main").fork(),
 				minimumPossibleSequenceId,
 				this.changeFamily,
 				this.mintRevisionTag,
@@ -538,6 +555,13 @@ export class EditManager<
 				this.telemetryEventBatcher,
 			),
 		);
+	}
+
+	private registerSharedBranch(
+		branchId: BranchId,
+		branch: SharedBranch<TEditor, TChangeset>,
+	): void {
+		this.sharedBranches.set(branchId, branch);
 	}
 
 	/* eslint-disable jsdoc/check-indentation */
@@ -656,9 +680,6 @@ function getPathFromBase<TCommit extends { parent?: TCommit }>(
 }
 
 class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
-	/** The "trunk" branch. The trunk represents the list of received sequenced changes. */
-	public readonly trunk: SharedTreeBranch<TEditor, TChangeset>;
-
 	/**
 	 * This branch holds the changes made by this client which have not yet been confirmed as sequenced changes.
 	 */
@@ -697,21 +718,13 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 	>();
 
 	public constructor(
-		baseCommit: GraphCommit<TChangeset>,
+		public readonly trunk: SharedTreeBranch<TEditor, TChangeset>,
 		baseCommitSequenceId: SequenceId,
 		private readonly changeFamily: ChangeFamily<TEditor, TChangeset>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		branchTrimmer: Listenable<BranchTrimmingEvents>,
 		telemetryEventBatcher: TelemetryEventBatcher<keyof RebaseStatsWithDuration> | undefined,
 	) {
-		this.trunk = new SharedTreeBranch(
-			baseCommit,
-			changeFamily,
-			mintRevisionTag,
-			branchTrimmer,
-			telemetryEventBatcher,
-		);
-
 		this.localBranch = new SharedTreeBranch(
 			this.trunk.getHead(),
 			changeFamily,
@@ -720,7 +733,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 			telemetryEventBatcher,
 		);
 
-		this.sequenceIdToCommit.set(baseCommitSequenceId, baseCommit);
+		this.sequenceIdToCommit.set(baseCommitSequenceId, this.trunk.getHead());
 
 		this.localBranch.events.on("afterChange", (event) => {
 			if (event.type === "append") {
