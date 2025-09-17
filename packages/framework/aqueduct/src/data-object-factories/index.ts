@@ -14,4 +14,8 @@ export {
 	MigrationDataObjectFactory,
 	type MigrationDataObjectFactoryProps,
 } from "./migrationDataObjectFactory.js";
-export { MultiFormatDataStoreFactory } from "./multiFormatDataStoreFactory.js";
+export {
+	MultiFormatDataStoreFactory,
+	type MultiFormatDataStoreFactoryProps,
+	type MultiFormatModelDescriptor,
+} from "./multiFormatDataStoreFactory.js";

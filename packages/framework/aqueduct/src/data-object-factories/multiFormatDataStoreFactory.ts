@@ -1,3 +1,4 @@
+/* eslint-disable import/no-internal-modules -- //* TEMP */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -17,6 +18,11 @@ import type {
 	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions/internal";
 
+import type { PureDataObject } from "../data-objects/pureDataObject.js";
+import type { DataObjectTypes } from "../data-objects/types.js";
+
+import type { DataObjectFactoryProps } from "./pureDataObjectFactory.js";
+
 /**
  * Descriptor that supplies (or can create) a model format within a multi-format data store.
  *
@@ -28,7 +34,7 @@ export interface MultiFormatModelDescriptor<TEntryPoint extends FluidObject = Fl
 	/**
 	 * Initialize a brand-new data store to this format (only invoked on descriptor[0] when !existing).
 	 */
-	create(runtime: IFluidDataStoreRuntime): Promise<void> | void;
+	create(runtime: IFluidDataStoreRuntime): Promise<void>; //* Would be nice to be able to have it synchronous?
 	/**
 	 * Return true if this descriptor's format matches the persisted contents of the runtime.
 	 */
@@ -51,24 +57,30 @@ export interface MultiFormatModelDescriptor<TEntryPoint extends FluidObject = Fl
  * Parameter object accepted by `MultiFormatDataStoreFactory` constructor (mirrors the style of
  * `DataObjectFactoryProps` while focusing only on multi-format aspects for now).
  */
-export interface MultiFormatDataStoreFactoryProps {
-	/**
-	 * Data store type identifier (must match registry entry).
-	 */
-	readonly type: string;
+export interface MultiFormatDataStoreFactoryProps<I extends DataObjectTypes = DataObjectTypes>
+	extends Omit<DataObjectFactoryProps<never, I>, "ctor" | "sharedObjects"> {
 	/**
 	 * Ordered list of model descriptors (first used for creation; probed in order for existing).
 	 */
 	readonly modelDescriptors: readonly MultiFormatModelDescriptor[];
-	/**
-	 * Optional runtime class (defaults to `FluidDataStoreRuntime`).
-	 */
-	readonly runtimeClass?: typeof FluidDataStoreRuntime;
-	/**
-	 * Optional policies to apply to the underlying data store runtime.
-	 */
-	readonly policies?: Partial<IFluidDataStorePolicies>;
 }
+
+//* WIP
+// function pureDataObjectToModelDescriptor<
+// 	TObj extends PureDataObject & TEntryPoint, //* Default Generic type param ok?
+// 	TEntryPoint extends FluidObject = FluidObject, //* Needed? This would be the union / universal type I think
+// >(
+// 	ctor: new (runtime: IFluidDataStoreRuntime) => TObj,
+// ): MultiFormatModelDescriptor<TEntryPoint> {
+// 	return {
+// 		create: async (runtime) => {
+// 			const dataObject = new ctor(runtime);
+// 			await dataObject.finishInitialization(false /* existing */);
+// 		},
+// 		probe: async (runtime) => {},
+// 		get: async (runtime) => {},
+// 	};
+// }
 
 /**
  * A minimal multi-format data store factory.
@@ -103,6 +115,7 @@ export class MultiFormatDataStoreFactory implements IFluidDataStoreFactory {
 		this.sharedObjectRegistry = new Map();
 		for (const d of modelDescriptors) {
 			for (const so of d.sharedObjects ?? []) {
+				//* BEWARE: collisions could be theoretically possible. Maybe via configuredSharedTree
 				if (!this.sharedObjectRegistry.has(so.type)) {
 					this.sharedObjectRegistry.set(so.type, so);
 				}
@@ -156,7 +169,7 @@ export class MultiFormatDataStoreFactory implements IFluidDataStoreFactory {
 			this.sharedObjectRegistry,
 			existing,
 			provideEntryPoint,
-			this.policies,
+			this.policies, //* TODO: How do we union these?
 		);
 
 		// For a new data store, initialize using the first descriptor before returning the runtime.

@@ -9,14 +9,35 @@ import {
 	SharedDirectory,
 } from "@fluidframework/map/internal";
 
+// import type { MultiFormatModelDescriptor } from "../data-object-factories/index.js";
+
 import { PureDataObject } from "./pureDataObject.js";
-import type { DataObjectTypes } from "./types.js";
+import type {
+	DataObjectTypes,
+	//* IDataObjectProps
+} from "./types.js";
 
 /**
  * ID of the root ISharedDirectory. Every DataObject contains this ISharedDirectory and adds further DDSes underneath it.
  * @internal
  */
 export const dataObjectRootDirectoryId = "root";
+
+//* WIP
+// export function DataObjectModelDescriptor<
+// 	TObj extends DataObject<I>,
+// 	I extends DataObjectTypes = DataObjectTypes,
+// >(ctor: new (props: IDataObjectProps<I>) => TObj): MultiFormatModelDescriptor<TObj> {
+// 	return {
+// 		create(runtime) {
+// 			const obj = new ctor({
+// 				runtime,
+// 				context: runtime.objectsRoutingContext,
+// 				existing: false,
+// 			});
+// 		},
+// 	};
+// }
 
 /**
  * DataObject is a base data store that is primed with a root directory. It
@@ -52,6 +73,7 @@ export abstract class DataObject<
 	 * Caller is responsible for ensuring this is only invoked once.
 	 */
 	public override async initializeInternal(existing: boolean): Promise<void> {
+		//* TODO: Reimplement in terms of intialize primitives and let super.initializeInternal do the stitching together
 		if (existing) {
 			// data store has a root directory so we just need to set it before calling initializingFromExisting
 			this.internalRoot = (await this.runtime.getChannel(
