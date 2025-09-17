@@ -26,6 +26,10 @@ import type { ApiItemTransformationConfiguration } from "../configuration/index.
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
 import { getTypeMembers, type TypeMember } from "../utilities/index.js";
 
+// TODOs:
+// - inherit type param docs from base types?
+// - inherit method param docs from base types?
+
 /**
  * Default documentation transform for {@link ApiTypeLike | type-like} API items.
  *
