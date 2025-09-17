@@ -5,7 +5,6 @@
 
 import {
 	type ApiCallSignature,
-	type ApiConstructor,
 	type ApiIndexSignature,
 	type ApiItem,
 	ApiItemKind,
@@ -19,6 +18,7 @@ import {
 	getApiItemKind,
 	getScopedMemberNameForDiagnostics,
 	isStatic,
+	type ApiConstructorLike,
 	type ApiTypeLike,
 } from "../../utilities/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
@@ -74,7 +74,7 @@ export function transformApiTypeLike(
 	const filteredChildren = filterItems(apiItem.members, config);
 	if (filteredChildren.length > 0) {
 		// Accumulate child items
-		const constructors: ApiConstructor[] = [];
+		const constructors: ApiConstructorLike[] = [];
 		const allProperties: ApiPropertyItem[] = [];
 		const callSignatures: ApiCallSignature[] = [];
 		const indexSignatures: ApiIndexSignature[] = [];
@@ -84,7 +84,7 @@ export function transformApiTypeLike(
 			switch (childKind) {
 				case ApiItemKind.Constructor:
 				case ApiItemKind.ConstructSignature: {
-					constructors.push(child as ApiConstructor);
+					constructors.push(child as ApiConstructorLike);
 					break;
 				}
 				case ApiItemKind.Property:
