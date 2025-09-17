@@ -2819,7 +2819,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       eslint-plugin-react:
-        specifier: ^7.30.1
+        specifier: ~7.33.2
         version: 7.33.2(eslint@8.55.0)
       eslint-plugin-react-hooks:
         specifier: ~4.6.0
