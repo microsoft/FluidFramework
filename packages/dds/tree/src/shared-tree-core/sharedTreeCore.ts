@@ -396,15 +396,18 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 		assert(messagesSessionId !== undefined, 0xada /* Messages must have a session ID */);
 
-		this.editManager.addSequencedChanges(
-			commits,
-			messagesSessionId,
-			brand(envelope.sequenceNumber),
-			brand(envelope.referenceSequenceNumber),
-		);
+		if (commits.length > 0) {
+			this.editManager.addSequencedChanges(
+				commits,
+				messagesSessionId,
+				brand(envelope.sequenceNumber),
+				brand(envelope.referenceSequenceNumber),
+			);
+		}
 
 		// Update the resubmit machine for each commit applied.
-		for (const _ of messagesContent) {
+		for (const _ of commits) {
+			// XXX: Review
 			this.resubmitMachine.onSequencedCommitApplied(local);
 		}
 

@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type { OpSpaceCompressedId, SessionId } from "@fluidframework/id-compressor";
+import type { SessionId } from "@fluidframework/id-compressor";
 import { type TSchema, Type } from "@sinclair/typebox";
 
 import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 import type { EncodedBranchId } from "./branch.js";
 
+// XXX: Create a new message format instead of changing the existing one.
 /**
  * The format of messages that SharedTree sends and receives.
  */
@@ -17,7 +18,7 @@ export interface Message {
 	/**
 	 * The revision tag for the change in this message
 	 */
-	readonly revision: EncodedRevisionTag;
+	readonly revision?: EncodedRevisionTag;
 	/**
 	 * The stable ID that identifies the originator of the message.
 	 */
@@ -25,9 +26,9 @@ export interface Message {
 	/**
 	 * The changeset to be applied.
 	 */
-	readonly changeset: JsonCompatibleReadOnly;
+	readonly changeset?: JsonCompatibleReadOnly;
 
-	readonly branchId?: OpSpaceCompressedId;
+	readonly branchId?: EncodedBranchId;
 
 	/**
 	 * The version of the message. This controls how the message is encoded.
@@ -42,9 +43,9 @@ export interface Message {
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object({
-		revision: RevisionTagSchema,
+		revision: Type.Optional(RevisionTagSchema),
 		originatorId: SessionIdSchema,
 		changeset: Type.Optional(tChange),
-		branchId: Type.Number(),
+		branchId: Type.Optional(Type.Number()),
 		version: Type.Optional(Type.Number()),
 	});

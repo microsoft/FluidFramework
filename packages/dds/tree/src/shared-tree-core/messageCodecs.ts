@@ -26,7 +26,7 @@ import { Message } from "./messageFormat.js";
 import type { DecodedMessage } from "./messageTypes.js";
 import type { IIdCompressor, OpSpaceCompressedId } from "@fluidframework/id-compressor";
 import type { BranchId } from "./branch.js";
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 export interface MessageEncodingContext {
 	idCompressor: IIdCompressor;
@@ -127,18 +127,18 @@ function makeV1CodecWithVersion<TChangeset>(
 								idCompressor: context.idCompressor,
 								revision: undefined,
 							}),
-							sessionId: message.sessionId,
+							originatorId: message.sessionId,
 							changeset: changeCodec.encode(message.commit.change, changeContext),
 							branchId: encodeBranchId(context.idCompressor, message.branchId),
 							version,
-						};
+						} satisfies Message & JsonCompatibleReadOnly;
 					}
 					case "branch": {
 						return {
-							sessionId: message.sessionId,
+							originatorId: message.sessionId,
 							branchId: encodeBranchId(context.idCompressor, message.branchId),
 							version,
-						};
+						} satisfies Message & JsonCompatibleReadOnly;
 					}
 					default:
 						unreachableCase(type);
@@ -161,13 +161,14 @@ function makeV1CodecWithVersion<TChangeset>(
 					idCompressor: context.idCompressor,
 				};
 
-				const revision = revisionTagCodec.decode(encodedRevision, changeContext);
-
 				const branchId = decodeBranchId(context.idCompressor, encodedBranchId, changeContext);
 
 				if (changeset === undefined) {
 					return { type: "branch", sessionId: originatorId, branchId };
 				}
+
+				assert(encodedRevision !== undefined, "Commit messages must have a revision");
+				const revision = revisionTagCodec.decode(encodedRevision, changeContext);
 
 				return {
 					type: "commit",
