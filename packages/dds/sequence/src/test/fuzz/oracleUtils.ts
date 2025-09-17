@@ -4,7 +4,6 @@
  */
 
 import type { ISharedString } from "../../sharedString.js";
-import { IntervalCollectionOracle } from "../intervalCollectionOracle.js";
 
 import { SharedStringOracle } from "./sharedStringOracle.js";
 
@@ -15,18 +14,6 @@ import { SharedStringOracle } from "./sharedStringOracle.js";
 export interface IChannelWithOracles extends ISharedString {
 	/** Oracle for validating the SharedString state */
 	sharedStringOracle: SharedStringOracle;
-	/** Oracle for validating the interval collection state */
-	intervalCollectionOracle: IntervalCollectionOracle;
-}
-
-/**
- * @internal
- */
-export function hasIntervalCollectionOracle(s: ISharedString): s is IChannelWithOracles {
-	return (
-		"intervalCollectionOracle" in s &&
-		s.intervalCollectionOracle instanceof IntervalCollectionOracle
-	);
 }
 
 /**

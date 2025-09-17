@@ -48,14 +48,9 @@ import { SharedStringRevertible, revertSharedStringRevertibles } from "../../rev
 import { SharedStringFactory } from "../../sequenceFactory.js";
 import { ISharedString, type SharedStringClass } from "../../sharedString.js";
 import { _dirname } from "../dirname.cjs";
-import { IntervalCollectionOracle } from "../intervalCollectionOracle.js";
 import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
 
-import {
-	hasSharedStringOracle,
-	hasIntervalCollectionOracle,
-	type IChannelWithOracles,
-} from "./oracleUtils.js";
+import { hasSharedStringOracle, type IChannelWithOracles } from "./oracleUtils.js";
 import { SharedStringOracle } from "./sharedStringOracle.js";
 
 export type RevertibleSharedString = ISharedString & {
@@ -485,14 +480,6 @@ export const baseModel: Omit<
 			b.channel.sharedStringOracle.validate();
 		}
 
-		if (hasIntervalCollectionOracle(a.channel)) {
-			a.channel.intervalCollectionOracle.validate();
-		}
-
-		if (hasIntervalCollectionOracle(b.channel)) {
-			b.channel.intervalCollectionOracle.validate();
-		}
-
 		void assertEquivalentSharedStrings(a.channel, b.channel);
 	},
 	factory: new SharedStringFuzzFactory(),
@@ -562,16 +549,6 @@ oracleEmitter.on("clientCreate", (client) => {
 	const sharedStringOracle = new SharedStringOracle(channel);
 	channel.sharedStringOracle = sharedStringOracle;
 	registerOracle(sharedStringOracle);
-
-	// Attach IntervalCollection oracle
-	const labels = channel.getIntervalCollectionLabels();
-	const interval = Array.from(labels)
-		.map((label) => channel.getIntervalCollection(label))
-		.find((result) => result !== undefined);
-	if (!interval) return;
-	const intervalCollectionOracle = new IntervalCollectionOracle(interval);
-	channel.intervalCollectionOracle = intervalCollectionOracle;
-	registerOracle(intervalCollectionOracle);
 });
 
 export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
