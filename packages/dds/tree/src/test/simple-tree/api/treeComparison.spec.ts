@@ -10,7 +10,7 @@ import { getTreeDiff } from "../../../simple-tree/api/treeComparison.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../../simple-tree/index.js";
 import { getView } from "../../utils.js";
 
-describe.only("getChangedNodes", () => {
+describe("getChangedNodes", () => {
 	const schema = new SchemaFactory("com.test");
 
 	class TestSchema extends schema.object("TestObject", {
