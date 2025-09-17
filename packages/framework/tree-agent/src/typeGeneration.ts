@@ -201,7 +201,7 @@ function getOrCreateType(
 						methods[name] = zodFunction;
 					}
 					zodType = z.intersection(zodType, z.object(methods));
-					const methodNote = "Note: this array has methods directly on it.";
+					const methodNote = "Note: this array has custom user-defined methods directly on it.";
 					description = description === "" ? methodNote : `${description} - ${methodNote}`;
 				}
 				return zodType.describe(description);
