@@ -469,18 +469,21 @@ function createNameCell(
 				],
 			},
 		];
-	} else if (member.overrides !== undefined) {
+	} else if (member.baseDefinition !== undefined) {
 		// If this member overrides a member on some base type, note that and link to both the base type and the overridden member.
-		assert(member.overrides.parent !== undefined, "Overridden member must have a parent.");
-		const baseTypeLink = getLinkForApiItem(member.overrides.parent, config);
-		const baseMemberLink = getLinkForApiItem(member.overrides, config);
+		assert(
+			member.baseDefinition.parent !== undefined,
+			"Overridden member must have a parent.",
+		);
+		const baseTypeLink = getLinkForApiItem(member.baseDefinition.parent, config);
+		const baseMemberLink = getLinkForApiItem(member.baseDefinition, config);
 		cellContent = [
 			link,
 			{ type: "html", value: "<br/>" },
 			{
 				type: "emphasis",
 				children: [
-					{ type: "text", value: "(overrides " },
+					{ type: "text", value: "(base definition: " },
 					baseTypeLink,
 					{ type: "text", value: "." },
 					baseMemberLink,

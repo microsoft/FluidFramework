@@ -56,7 +56,7 @@ export interface OwnTypeMember<TApiItem extends ApiItem = ApiItem>
 	 * The member on some base type that this member overrides, if any.
 	 * @remarks For example, if this member is a method that overrides a method on a base class, this would be that base method.
 	 */
-	readonly overrides: ApiItem | undefined; // TODO: optional
+	readonly baseDefinition: ApiItem | undefined;
 }
 
 /**
@@ -119,7 +119,7 @@ export function getTypeMembers<TApiItem extends ApiTypeLike>(
 	const ownMembers: OwnTypeMember[] = [];
 	for (const ownMemberItem of ownMemberItems) {
 		const override = inheritedMembers.find(
-			// TODO: this almost certainly isn't right. Probably want to use canonicalReference.
+			// TODO: verify this is a sufficient check for API match
 			(inherited) => inherited.item.containerKey === ownMemberItem.containerKey,
 		);
 
@@ -132,7 +132,7 @@ export function getTypeMembers<TApiItem extends ApiTypeLike>(
 		ownMembers.push({
 			kind: "own",
 			item: ownMemberItem,
-			overrides: override?.item,
+			baseDefinition: override?.item,
 		});
 	}
 
@@ -157,7 +157,7 @@ function getInheritedMembers(
 		item: inherited.item,
 		// If the item we're inheriting is itself inherited, preserve the original source.
 		// Otherwise, the source is the item we're inheriting from.
-		inheritedFrom: inherited.kind === "inherited" ? inherited.baseDefinition : referencedItem,
+		baseDefinition: inherited.kind === "inherited" ? inherited.baseDefinition : referencedItem,
 	}));
 
 	// Don't inherit constructors or static members

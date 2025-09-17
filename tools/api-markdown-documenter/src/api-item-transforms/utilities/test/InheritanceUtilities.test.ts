@@ -101,17 +101,17 @@ describe("InheritanceUtilities tests", () => {
 				{
 					kind: "own",
 					item: aFoo,
-					overrides: undefined,
+					baseDefinition: undefined,
 				},
 				{
 					kind: "own",
 					item: aBar,
-					overrides: undefined,
+					baseDefinition: undefined,
 				},
 				{
 					kind: "own",
 					item: aBaz,
-					overrides: undefined,
+					baseDefinition: undefined,
 				},
 			]);
 
@@ -120,22 +120,22 @@ describe("InheritanceUtilities tests", () => {
 				{
 					kind: "inherited",
 					item: aFoo,
-					inheritedFrom: a,
+					baseDefinition: a,
 				},
 				{
 					kind: "inherited",
 					item: aBar,
-					inheritedFrom: a,
+					baseDefinition: a,
 				},
 				{
 					kind: "own",
 					item: bBaz,
-					overrides: aBaz,
+					baseDefinition: aBaz,
 				},
 				{
 					kind: "own",
 					item: bQux,
-					overrides: undefined,
+					baseDefinition: undefined,
 				},
 			]);
 
@@ -144,22 +144,22 @@ describe("InheritanceUtilities tests", () => {
 				{
 					kind: "inherited",
 					item: aFoo,
-					inheritedFrom: a,
+					baseDefinition: a,
 				},
 				{
 					kind: "inherited",
 					item: bQux,
-					inheritedFrom: b,
+					baseDefinition: b,
 				},
 				{
 					kind: "own",
 					item: cBar,
-					overrides: aBar,
+					baseDefinition: aBar,
 				},
 				{
 					kind: "own",
 					item: bBaz,
-					overrides: bBaz,
+					baseDefinition: bBaz,
 				},
 			]);
 		});

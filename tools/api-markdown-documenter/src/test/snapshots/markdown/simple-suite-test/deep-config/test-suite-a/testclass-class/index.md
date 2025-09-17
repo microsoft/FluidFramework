@@ -52,7 +52,7 @@ Here are some remarks about the class
 | Property | Modifiers | Type | Description |
 | - | - | - | - |
 | [protectedProperty](/test-suite-a/testabstractclass-class/protectedproperty-property)<br/>_(inherited from [TestAbstractClass](/test-suite-a/testabstractclass-class/))_ | `readonly` | [TestEnum](/test-suite-a/testenum-enum/) | A test protected property. |
-| [abstractPropertyGetter](/test-suite-a/testclass-class/abstractpropertygetter-property)<br/>_(overrides [TestAbstractClass](/test-suite-a/testabstractclass-class/).[abstractPropertyGetter](/test-suite-a/testabstractclass-class/abstractpropertygetter-property))_ | `readonly` | [TestMappedType](/test-suite-a/testmappedtype-typealias/) | A test abstract getter property. |
+| [abstractPropertyGetter](/test-suite-a/testclass-class/abstractpropertygetter-property)<br/>_(base definition: [TestAbstractClass](/test-suite-a/testabstractclass-class/).[abstractPropertyGetter](/test-suite-a/testabstractclass-class/abstractpropertygetter-property))_ | `readonly` | [TestMappedType](/test-suite-a/testmappedtype-typealias/) | A test abstract getter property. |
 | [testClassGetterProperty](/test-suite-a/testclass-class/testclassgetterproperty-property) | `virtual` | number | Test class property with both a getter and a setter. |
 | [testClassProperty](/test-suite-a/testclass-class/testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
 
@@ -61,9 +61,9 @@ Here are some remarks about the class
 | Method | Modifiers | Return Type | Description |
 | - | - | - | - |
 | [sealedMethod()](/test-suite-a/testabstractclass-class/sealedmethod-method)<br/>_(inherited from [TestAbstractClass](/test-suite-a/testabstractclass-class/))_ | `sealed` | string | A test `@sealed` method. |
-| [publicAbstractMethod()](/test-suite-a/testclass-class/publicabstractmethod-method)<br/>_(overrides [TestAbstractClass](/test-suite-a/testabstractclass-class/).[publicAbstractMethod()](/test-suite-a/testabstractclass-class/publicabstractmethod-method))_ | | void | A test public abstract method. |
+| [publicAbstractMethod()](/test-suite-a/testclass-class/publicabstractmethod-method)<br/>_(base definition: [TestAbstractClass](/test-suite-a/testabstractclass-class/).[publicAbstractMethod()](/test-suite-a/testabstractclass-class/publicabstractmethod-method))_ | | void | A test public abstract method. |
 | [testClassMethod(input)](/test-suite-a/testclass-class/testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
-| [virtualMethod()](/test-suite-a/testclass-class/virtualmethod-method)<br/>_(overrides [TestAbstractClass](/test-suite-a/testabstractclass-class/).[virtualMethod()](/test-suite-a/testabstractclass-class/virtualmethod-method))_ | | number | Overrides [virtualMethod()](/test-suite-a/testabstractclass-class/virtualmethod-method). |
+| [virtualMethod()](/test-suite-a/testclass-class/virtualmethod-method)<br/>_(base definition: [TestAbstractClass](/test-suite-a/testabstractclass-class/).[virtualMethod()](/test-suite-a/testabstractclass-class/virtualmethod-method))_ | | number | Overrides [virtualMethod()](/test-suite-a/testabstractclass-class/virtualmethod-method). |
 
 <h2 id="testclass-see-also">See Also</h2>
 
