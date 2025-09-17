@@ -2484,7 +2484,7 @@ describe("SharedTree", () => {
 		const tree1 = provider.trees[0];
 
 		const config = new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation });
-		const mainView1 = asTreeViewAlpha(tree1.viewWith(config));
+		const mainView1 = tree1.viewWith(config);
 		mainView1.initialize(["A"]);
 		provider.synchronizeMessages();
 
@@ -2497,20 +2497,22 @@ describe("SharedTree", () => {
 		assert.deepEqual([...branchView1.root], ["A"]);
 
 		mainView1.root.insertAtEnd("X");
-		assert.deepEqual([...mainView1.root], ["A", "X"]);
-		assert.deepEqual([...branchView1.root], ["A"]);
-		provider.synchronizeMessages();
-
-		const branchView2 = tree2.viewBranchWith(branchId, config);
-		assert.deepEqual([...branchView2.root], ["A"]);
-
-		// Insert node
 		branchView1.root.insertAtEnd("B");
 		assert.deepEqual([...branchView1.root], ["A", "B"]);
 		assert.deepEqual([...mainView1.root], ["A", "X"]);
 		provider.synchronizeMessages();
 
-		// Validate insertion
+		const branchView2 = tree2.viewBranchWith(branchId, config);
 		assert.deepEqual([...branchView2.root], ["A", "B"]);
+
+		branchView2.root.insertAtEnd("C");
+		assert.deepEqual([...branchView2.root], ["A", "B", "C"]);
+		provider.synchronizeMessages();
+
+		assert.deepEqual([...branchView1.root], ["A", "B", "C"]);
+		assert.deepEqual([...mainView1.root], ["A", "X"]);
+
+		const mainView2 = tree2.viewWith(config);
+		assert.deepEqual([...mainView2.root], ["A", "X"]);
 	});
 });

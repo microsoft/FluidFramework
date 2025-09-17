@@ -19,7 +19,7 @@ import {
 	type RebaseStatsWithDuration,
 	tagChange,
 } from "../core/index.js";
-import { type Mutable, brand, getOrCreate, mapIterable } from "../util/index.js";
+import { type Mutable, brand, getOrCreate } from "../util/index.js";
 
 import {
 	SharedTreeBranch,
@@ -146,23 +146,12 @@ export class EditManager<
 			this.telemetryEventBatcher,
 		);
 
-		const main = new SharedBranch(
-			mainTrunk,
-			minimumPossibleSequenceId,
-			this.changeFamily,
-			this.mintRevisionTag,
-			this._events,
-			this.telemetryEventBatcher,
-		);
-
-		this.registerSharedBranch("main", main);
+		const mainBranch = this.createSharedBranch("main", mainTrunk);
 
 		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
 		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
 		// they require and therefore we monitor them explicitly.
-		onForkTransitive(this.getSharedBranch("main").localBranch, (fork) =>
-			this.registerBranch(fork),
-		);
+		onForkTransitive(mainBranch.localBranch, (fork) => this.registerBranch(fork));
 	}
 
 	public getLocalBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChangeset> {
@@ -543,27 +532,45 @@ export class EditManager<
 		return max;
 	}
 
-	public addBranch(branchId: BranchId): void {
-		if (!this.sharedBranches.has(branchId)) {
-			this.registerSharedBranch(
-				branchId,
-				new SharedBranch(
-					this.getLocalBranch("main").fork(),
-					minimumPossibleSequenceId,
-					this.changeFamily,
-					this.mintRevisionTag,
-					this._events,
-					this.telemetryEventBatcher,
-				),
-			);
+	public sequenceBranchCreation(
+		sessionId: SessionId,
+		referenceSequenceNumber: SeqNumber,
+		branchId: BranchId,
+	): void {
+		if (sessionId === this.localSessionId) {
+			assert(this.sharedBranches.has(branchId), "Expected branch to already exist");
+			return;
 		}
+
+		const branchTrunk = this.getSharedBranch("main")
+			.rebasePeer(sessionId, referenceSequenceNumber)
+			.fork();
+
+		const sharedBranch = this.createSharedBranch(branchId, branchTrunk);
+		this.registerBranch(sharedBranch.localBranch);
+		onForkTransitive(sharedBranch.localBranch, (fork) => this.registerBranch(fork));
 	}
 
-	private registerSharedBranch(
+	public addBranch(branchId: BranchId): void {
+		assert(!this.sharedBranches.has(branchId), "A branch with this ID already exists");
+		this.createSharedBranch(branchId, this.getLocalBranch("main").fork());
+	}
+
+	private createSharedBranch(
 		branchId: BranchId,
-		branch: SharedBranch<TEditor, TChangeset>,
-	): void {
-		this.sharedBranches.set(branchId, branch);
+		branch: SharedTreeBranch<TEditor, TChangeset>,
+	): SharedBranch<TEditor, TChangeset> {
+		const sharedBranch = new SharedBranch(
+			branch,
+			minimumPossibleSequenceId,
+			this.changeFamily,
+			this.mintRevisionTag,
+			this._events,
+			this.telemetryEventBatcher,
+		);
+
+		this.sharedBranches.set(branchId, sharedBranch);
+		return sharedBranch;
 	}
 
 	/* eslint-disable jsdoc/check-indentation */
@@ -795,13 +802,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		// Get the revision that the remote change is based on and rebase that peer local branch over the part of the
 		// trunk up to the base revision. This will be a no-op if the sending client has not advanced since the last
 		// time we received an edit from it
-		const [, baseRevisionInTrunk] = this.getClosestTrunkCommit(referenceSequenceNumber);
-		const peerLocalBranch = getOrCreate(
-			this.peerLocalBranches,
-			sessionId,
-			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
-		);
-		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
+		const peerLocalBranch = this.rebasePeer(sessionId, referenceSequenceNumber);
 
 		// Step 2 - Append the changes to the peer branch and rebase the changes to the tip of the trunk.
 		if (peerLocalBranch.getHead() === this.trunk.getHead()) {
@@ -842,6 +843,24 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 			this.peerLocalBranches.size === 0 &&
 			this.localBranch.getHead() === this.trunk.getHead()
 		);
+	}
+
+	public rebasePeer(
+		sessionId: SessionId,
+		referenceSequenceNumber: SeqNumber,
+	): SharedTreeBranch<TEditor, TChangeset> {
+		const [, baseRevisionInTrunk] = this.getClosestTrunkCommit(referenceSequenceNumber);
+		const peerLocalBranch = getOrCreate(
+			this.peerLocalBranches,
+			sessionId,
+			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
+		);
+		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
+		return peerLocalBranch;
+	}
+
+	public getPeerBranchOrTrunk(sessionId: SessionId): SharedTreeBranch<TEditor, TChangeset> {
+		return this.peerLocalBranches.get(sessionId) ?? this.trunk;
 	}
 
 	/**

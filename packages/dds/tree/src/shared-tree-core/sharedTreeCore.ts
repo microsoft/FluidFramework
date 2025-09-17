@@ -410,7 +410,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 					break;
 				}
 				case "branch": {
-					this.editManager.addBranch(message.branchId);
+					if (branchId !== undefined) {
+						processBunch(branchId);
+					}
+					this.editManager.sequenceBranchCreation(
+						messagesSessionId,
+						brand(envelope.referenceSequenceNumber),
+						message.branchId,
+					);
 					break;
 				}
 				default:
