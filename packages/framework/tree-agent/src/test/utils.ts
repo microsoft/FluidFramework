@@ -19,6 +19,7 @@ import {
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	type ReadableField,
+	type TreeNode,
 	type TreeView,
 	type UnsafeUnknownSchema,
 	type VerboseTree,
@@ -112,17 +113,18 @@ export function createLlmClient(provider: LlmProvider): BaseChatModel {
  * - `ANTHROPIC_API_KEY` for Anthropic
  * - `GEMINI_API_KEY` for Gemini
  */
-export async function queryDomain<TRoot extends ImplicitFieldSchema>(
-	schema: TRoot,
-	initialTree: InsertableTreeFieldFromImplicitField<TRoot>,
+async function queryDomain<TSchema extends ImplicitFieldSchema, T = ReadableField<TSchema>>(
+	schema: TSchema,
+	initialTree: InsertableTreeFieldFromImplicitField<TSchema>,
 	provider: LlmProvider,
 	prompt: string,
 	options?: {
+		subtree?: (root: ReadableField<TSchema>) => T & TreeNode;
 		domainHints?: string;
-		treeToString?: (root: ReadableField<TRoot>) => string;
+		treeToString?: (root: T) => string;
 		readonly log?: Log;
 	},
-): Promise<TreeView<TRoot>> {
+): Promise<TreeView<TSchema>> {
 	const tree = SharedTree.getFactory().create(
 		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 		"tree",
@@ -130,13 +132,18 @@ export async function queryDomain<TRoot extends ImplicitFieldSchema>(
 	const view = tree.viewWith(new TreeViewConfiguration({ schema }));
 	view.initialize(initialTree);
 	const client = createLlmClient(provider);
-	const agent = createSemanticAgent(client, asTreeViewAlpha(view), {
-		log: options?.log,
-		domainHints: options?.domainHints,
-		treeToString: options?.treeToString,
-	});
+	await (options?.subtree === undefined
+		? createSemanticAgent(client, asTreeViewAlpha(view), {
+				log: options?.log,
+				domainHints: options?.domainHints,
+				treeToString: options?.treeToString as (root: ReadableField<TSchema>) => string,
+			}).query(prompt)
+		: createSemanticAgent(client, options.subtree(view.root as ReadableField<TSchema>), {
+				log: options?.log,
+				domainHints: options?.domainHints,
+				treeToString: options?.treeToString,
+			}).query(prompt));
 
-	await agent.query(prompt);
 	return view;
 }
 
@@ -150,6 +157,7 @@ export interface LLMIntegrationTest<TRoot extends ImplicitFieldSchema | UnsafeUn
 	readonly prompt: string;
 	readonly expected: ScorableVerboseTree;
 	readonly options?: {
+		readonly subtree?: (root: ReadableField<TRoot>) => TreeNode;
 		readonly domainHints?: string;
 		readonly treeToString?: (root: ReadableField<TRoot>) => string;
 		readonly log?: Log;
@@ -355,6 +363,7 @@ export function describeIntegrationTests(
 				provider,
 				prompt,
 				{
+					subtree: options?.subtree,
 					domainHints: options?.domainHints,
 					treeToString: options?.treeToString,
 					log: (text) => {
