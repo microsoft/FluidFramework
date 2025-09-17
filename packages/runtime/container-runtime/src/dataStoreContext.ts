@@ -70,7 +70,7 @@ import {
 	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import type {
-	IRuntimeMigrationInfo,
+	IMigrationInfo,
 	IMigratableFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -702,8 +702,8 @@ export abstract class FluidDataStoreContext
 
 		// Migration logic: only consider for existing data stores on first realization
 		if (existing) {
-			//* Properly use exported type
-			const migrationInfo = (channel as unknown as { migrationInfo?: IRuntimeMigrationInfo })
+			//* IMPORTANT: Where does the migration info live - on the factory feels better than on the returned channel.
+			const migrationInfo = (factory as unknown as { migrationInfo?: IMigrationInfo })
 				.migrationInfo;
 			if (migrationInfo !== undefined) {
 				const migrationStartTime = Date.now();
@@ -719,6 +719,25 @@ export abstract class FluidDataStoreContext
 				// 		migrationInfo.newPackagePath.length > 0,
 				// 	"Invalid migration newPackagePath",
 				// );
+
+				// Check if we get the barrier op while loading
+				let sawBarrierOp = false;
+				const listener = (message: ISequencedDocumentMessage): void => {
+					if (message.contents === "BARRIER_OP_FOR_MIGRATION") {
+						sawBarrierOp = true;
+					}
+				};
+				this.containerRuntime.on("op", listener);
+				this.processPendingOps(channel);
+				this.containerRuntime.off("op", listener);
+
+				if (!sawBarrierOp) {
+					//* TODO: Submit barrier op (will be sent when switching to write due to user action)
+					//* and then continue with current runtime (don't migrate)
+				}
+
+				const portableData = await migrationInfo.getPortableData();
+
 				const newPkgJoined = migrationInfo.newPackagePath.join("/");
 				assert(newPkgJoined !== oldPkg, "No-op migration not allowed");
 				// Telemetry start
@@ -743,17 +762,16 @@ export abstract class FluidDataStoreContext
 					const migratedChannel = await newFactory.instantiateForMigration(
 						this,
 						true, //* TODO: Remove this param, it's always true
-						migrationInfo.portableData,
-					);
-					const maybeChained: IRuntimeMigrationInfo | undefined = (
-						migratedChannel as unknown as { migrationInfo?: IRuntimeMigrationInfo }
-					).migrationInfo;
-					assert(
-						maybeChained === undefined,
-						0x2d9 /* Chained migration detected; only one hop supported */,
+						portableData,
 					);
 
-					await this.bindRuntime(migratedChannel, true);
+					assert(
+						!("migrationInfo" in migratedChannel),
+						"Migration target should not indicate a second migration",
+					);
+
+					//* Aka All that's left of this.bindRuntime(channel)
+					this.completeBindingRuntime(migratedChannel);
 					if (this.disposed) {
 						migratedChannel.dispose();
 					}
@@ -789,7 +807,7 @@ export abstract class FluidDataStoreContext
 
 	/**
 	 * Notifies this object about changes in the connection state.
-	 * @param value - New connection state.
+	 * @param connected - New connection state. True only if this is a write connection we can send ops over.
 	 * @param clientId - ID of the client. Its old ID when in disconnected state and
 	 * its new client ID when we are connecting or connected.
 	 */
@@ -803,6 +821,10 @@ export abstract class FluidDataStoreContext
 		}
 
 		assert(this.connected === connected, 0x141 /* "Unexpected connected state" */);
+
+		if (connected) {
+			//* TODO: Send migration ops if we have any (since we can send ops now)
+		}
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this.channel!.setConnectionState(connected, clientId);
@@ -1020,6 +1042,10 @@ export abstract class FluidDataStoreContext
 		assert(!!this.channel, 0x146 /* "Channel must exist when submitting message" */);
 		// Readonly clients should not submit messages.
 		this.identifyLocalChangeIfReadonly("DataStoreMessageWhileReadonly", type);
+
+		if (!this.connected) {
+			//* TODO: Capture migration ops and hold until switch to write
+		}
 
 		this.parentContext.submitMessage(type, content, localOpMetadata);
 	}

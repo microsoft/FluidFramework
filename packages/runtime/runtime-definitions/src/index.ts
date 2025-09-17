@@ -30,7 +30,7 @@ export type {
 export { FlushMode, FlushModeExperimental, VisibilityState } from "./dataStoreContext.js";
 export type {
 	IProvideFluidDataStoreFactory,
-	IRuntimeMigrationInfo,
+	IMigrationInfo,
 	IMigratableFluidDataStoreFactory,
 } from "./dataStoreFactory.js";
 export { IFluidDataStoreFactory } from "./dataStoreFactory.js";

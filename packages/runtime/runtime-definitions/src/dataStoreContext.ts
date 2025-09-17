@@ -31,7 +31,7 @@ import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
 import type {
 	IFluidDataStoreFactory,
 	IProvideFluidDataStoreFactory,
-	IRuntimeMigrationInfo,
+	IMigrationInfo,
 } from "./dataStoreFactory.js";
 import type { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import type {
@@ -407,7 +407,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 *
 	 * TODO: Strengthen typing / validation of portableData once the format is finalized.
 	 */
-	readonly migrationInfo?: IRuntimeMigrationInfo;
+	readonly migrationInfo?: IMigrationInfo;
 
 	/**
 	 * Makes the data store channel visible in the container. Also, runs through its graph and attaches all

@@ -21,7 +21,7 @@ import type { IFluidDataStoreChannel, IFluidDataStoreContext } from "./dataStore
  *
  * @beta
  */
-export interface IRuntimeMigrationInfo {
+export interface IMigrationInfo {
 	/**
 	 * The new package path (final target) to which this data store should be migrated.
 	 * This MUST differ from the current package path or migration will fail.
@@ -31,13 +31,7 @@ export interface IRuntimeMigrationInfo {
 	 * Opaque portable state required by the target factory to rehydrate the runtime
 	 * in the new implementation.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Deliberately opaque initially
-	readonly portableData: any; // unknown would force excess casting inside factories; keep broad for now
-	/**
-	 * Placeholder for future barrier op sequence number or other coordination metadata.
-	 * Not used yet.
-	 */
-	readonly barrierSequenceNumber?: number;
+	readonly getPortableData: () => Promise<unknown>; //* Maybe can use the "initial state" generic type?
 }
 
 /**
@@ -50,6 +44,11 @@ export interface IRuntimeMigrationInfo {
  * @beta
  */
 export interface IMigratableFluidDataStoreFactory extends IFluidDataStoreFactory {
+	/**
+	 * If defined, this factory should be migrated away from according to this info.
+	 */
+	migrationInfo: IMigrationInfo | undefined;
+
 	/**
 	 * Instantiate a runtime using portable migration data produced by a previous implementation.
 	 * @param context - Datastore context (same as regular instantiation).
