@@ -18,7 +18,6 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 
 import {
 	CommitKind,
@@ -113,7 +112,6 @@ import {
 	toSimpleTreeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/api/index.js";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 // eslint-disable-next-line import/no-internal-modules
