@@ -160,7 +160,7 @@ function createSummaryTable(
 		case ApiItemKind.MethodSignature: {
 			return createFunctionLikeSummaryTable(
 				apiItems as ApiFunctionLike[],
-				itemKind,
+				getTableHeadingTitleForApiKind(itemKind),
 				config,
 				options,
 			);
@@ -180,7 +180,12 @@ function createSummaryTable(
 		}
 
 		default: {
-			return createDefaultSummaryTable(apiItems, itemKind, config, options);
+			return createDefaultSummaryTable(
+				apiItems,
+				getTableHeadingTitleForApiKind(itemKind),
+				config,
+				options,
+			);
 		}
 	}
 }
@@ -190,13 +195,13 @@ function createSummaryTable(
  * Default summary table generation. Displays each item's name, modifiers, and description (summary) comment.
  *
  * @param apiItems - The items to be displayed. All of these items must be of the kind specified via `itemKind`.
- * @param itemKind - The kind of items being displayed in the table. Used to determine the semantic shape of the table.
+ * @param nameColumnLabel - The label for the "name" column in the table.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  * @param options - Table content / formatting options.
  */
 export function createDefaultSummaryTable(
 	apiItems: readonly ApiItem[],
-	itemKind: ApiItemKind,
+	nameColumnLabel: string,
 	config: ApiItemTransformationConfiguration,
 	options?: TableCreationOptions,
 ): Table | undefined {
@@ -207,7 +212,7 @@ export function createDefaultSummaryTable(
 	return createTableFromItems(apiItems, {
 		columnOptions: [
 			{
-				title: { type: "text", value: getTableHeadingTitleForApiKind(itemKind) },
+				title: { type: "text", value: nameColumnLabel },
 				columnKind: "required",
 				createCellContent: (item) => createNameCell(item, config),
 			},
@@ -356,13 +361,13 @@ export function createTypeParametersSummaryTable(
  * Displays each item's name, modifiers, return type, and description (summary) comment.
  *
  * @param apiItems - The function-like items to be displayed.
- * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
+ * @param nameColumnLabel - The label for the "name" column in the table.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  * @param options - Table content / formatting options.
  */
 export function createFunctionLikeSummaryTable(
 	apiItems: readonly ApiFunctionLike[],
-	itemKind: ApiItemKind,
+	nameColumnLabel: string,
 	config: ApiItemTransformationConfiguration,
 	options?: TableCreationOptions,
 ): Table | undefined {
@@ -379,7 +384,7 @@ export function createFunctionLikeSummaryTable(
 	return createTableFromItems(apiItems, {
 		columnOptions: [
 			{
-				title: { type: "text", value: getTableHeadingTitleForApiKind(itemKind) },
+				title: { type: "text", value: nameColumnLabel },
 				columnKind: "required",
 				createCellContent: (item) => createNameCell(item, config),
 			},
