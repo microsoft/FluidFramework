@@ -254,24 +254,29 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 	private getAudienceInformation(selfClientId: ClientConnectionId): {
 		audience: IAudience;
-		otherMembers: Map<ClientConnectionId, IClient>;
-		othersWorthIgnoring: ClientConnectionId[];
+		interactiveMembersExcludingSelf: {
+			all: Set<ClientConnectionId>;
+			writers: Set<ClientConnectionId>;
+		};
 	} {
 		const audience = this.runtime.getAudience();
-		const otherMembers = audience.getMembers();
+		const members = audience.getMembers();
+		const all = new Set<ClientConnectionId>();
+		const writers = new Set<ClientConnectionId>();
 		// Remove self (if present)
-		otherMembers.delete(selfClientId);
-		// It is worth ignoring non-interactive clients
-		const othersWorthIgnoring: ClientConnectionId[] = [];
-		for (const [id, client] of otherMembers) {
-			if (!client.details.capabilities.interactive) {
-				othersWorthIgnoring.push(id);
+		members.delete(selfClientId);
+		// Gather interactive client IDs
+		for (const [id, client] of members) {
+			if (client.details.capabilities.interactive) {
+				all.add(id);
+				if (client.mode === "write") {
+					writers.add(id);
+				}
 			}
 		}
 		return {
 			audience,
-			otherMembers,
-			othersWorthIgnoring,
+			interactiveMembersExcludingSelf: { all, writers },
 		};
 	}
 
@@ -287,10 +292,10 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		// Lack of others might mean that this client is very freshly joined
 		// and has not received any Join Ops or Signals (type="join") from
 		// the service yet.
-		const { audience, otherMembers, othersWorthIgnoring } =
+		const { audience, interactiveMembersExcludingSelf } =
 			this.getAudienceInformation(selfClientId);
 		// When no others (and not forced), delay join until there are.
-		if (otherMembers.size === othersWorthIgnoring.length && !forceEvenWhenAlone) {
+		if (interactiveMembersExcludingSelf.all.size === 0 && !forceEvenWhenAlone) {
 			// No one else known to be present.
 			this.deferJoinUntilAudienceMember(selfClientId, audience);
 			return;
@@ -298,16 +303,11 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 
 		// Broadcast join message to all clients
 		// Select primary update providers
-		const quorumMembers = this.runtime.getQuorum().getMembers();
-		// Remove self and non-interactive members from possibilities
-		othersWorthIgnoring.push(selfClientId);
-		for (const clientIdToDelete of othersWorthIgnoring) {
-			quorumMembers.delete(clientIdToDelete);
-			otherMembers.delete(clientIdToDelete);
-		}
-		// Use quorum members if available, then fallback to audience.
+		// Use write members if any, then fallback to read-only members.
 		const updateProviders = [
-			...(quorumMembers.size > 0 ? quorumMembers : otherMembers).keys(),
+			...(interactiveMembersExcludingSelf.writers.size > 0
+				? interactiveMembersExcludingSelf.writers
+				: interactiveMembersExcludingSelf.all),
 		];
 		// Limit to three providers to prevent flooding the network.
 		// If none respond, others present will (should) after a delay.
@@ -904,8 +904,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// Check if requestor count meets or exceeds count of other audience
 			// members indicating that we effectively have a complete snapshot
 			// (once the current message being processed is processed).
-			const { otherMembers, othersWorthIgnoring } = this.getAudienceInformation(selfClientId);
-			if (this.broadcastRequests.size >= otherMembers.size - othersWorthIgnoring.length) {
+			const { interactiveMembersExcludingSelf } = this.getAudienceInformation(selfClientId);
+			if (this.broadcastRequests.size >= interactiveMembersExcludingSelf.all.size) {
 				// Note that no action is taken here specifically.
 				// We want action to be queued so that it takes place after
 				// current message is completely processed. All of the actions

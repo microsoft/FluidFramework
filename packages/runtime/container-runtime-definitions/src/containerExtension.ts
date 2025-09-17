@@ -274,6 +274,13 @@ export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProper
 	 */
 	getQuorum: () => IQuorumClients;
 
+	/**
+	 * The collection of all clients as enumerated by the service.
+	 *
+	 * @remarks This may be a include/exclude those found within the quorum.
+	 * It produces results faster than {@link ExtensionHost.getQuorum}, but
+	 * will be inaccurate if any signals are lost.
+	 */
 	getAudience: () => IAudience;
 }
 
