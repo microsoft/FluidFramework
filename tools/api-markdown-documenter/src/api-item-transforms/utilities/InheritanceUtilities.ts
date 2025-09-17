@@ -11,7 +11,12 @@ import {
 	type HeritageType,
 } from "@microsoft/api-extractor-model";
 
-import { getApiItemKind, type ApiTypeLike, isTypeLike } from "../../utilities/index.js";
+import {
+	getApiItemKind,
+	type ApiTypeLike,
+	isTypeLike,
+	isStatic,
+} from "../../utilities/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 
 import { filterItems } from "./ApiItemTransformUtilities.js";
@@ -155,10 +160,16 @@ function getInheritedMembers(
 		inheritedFrom: inherited.kind === "inherited" ? inherited.inheritedFrom : referencedItem,
 	}));
 
-	// Don't inherit constructors
+	// Don't inherit constructors or static members
 	return referencedItemMembers.filter((inherited) => {
 		const itemKind = getApiItemKind(inherited.item);
-		return itemKind !== ApiItemKind.Constructor && itemKind !== ApiItemKind.ConstructSignature;
+		if (itemKind === ApiItemKind.Constructor || itemKind === ApiItemKind.ConstructSignature) {
+			return false;
+		}
+		if (isStatic(inherited.item)) {
+			return false;
+		}
+		return true;
 	});
 }
 
