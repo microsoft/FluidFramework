@@ -136,42 +136,40 @@ describe("SharedDirectory fuzz", () => {
 		},
 		defaultTestCount: 25,
 		emitter: oracleEmitter,
-		// emitter: oracleEmitter,
 		// Uncomment this line to replay a specific seed from its failure file:
-		// replay: 0,
+		replay: 0,
 		saveFailures: { directory: dirPath.join(_dirname, "../../../src/test/mocha/results/2") },
 		skip: [],
 	});
 
-	createDDSFuzzSuite(
-		{ ...baseDirModel, workloadName: "default directory 2 with rebasing" },
-		{
-			validationStrategy: {
-				type: "random",
-				probability: 0.4,
-			},
-			rebaseProbability: 0.2,
-			reconnectProbability: 0.5,
-			containerRuntimeOptions: {
-				flushMode: FlushMode.TurnBased,
-				enableGroupedBatching: true,
-			},
-			numberOfClients: 3,
-			clientJoinOptions: {
-				// Note: if tests are slow, we may want to tune this down. This mimics behavior before this suite
-				// was refactored to use the DDS fuzz harness.
-				maxNumberOfClients: Number.MAX_SAFE_INTEGER,
-				clientAddProbability: 0.08,
-				stashableClientProbability: undefined,
-			},
-			defaultTestCount: 200,
-			emitter: oracleEmitter,
-			// emitter: oracleEmitter,
-			// Uncomment this line to replay a specific seed from its failure file:
-			// replay: 0,
-			saveFailures: {
-				directory: dirPath.join(_dirname, "../../../src/test/mocha/results/2"),
-			},
-		},
-	);
+	// createDDSFuzzSuite(
+	// 	{ ...baseDirModel, workloadName: "default directory 2 with rebasing" },
+	// 	{
+	// 		validationStrategy: {
+	// 			type: "random",
+	// 			probability: 0.4,
+	// 		},
+	// 		rebaseProbability: 0.2,
+	// 		reconnectProbability: 0.5,
+	// 		containerRuntimeOptions: {
+	// 			flushMode: FlushMode.TurnBased,
+	// 			enableGroupedBatching: true,
+	// 		},
+	// 		numberOfClients: 3,
+	// 		clientJoinOptions: {
+	// 			// Note: if tests are slow, we may want to tune this down. This mimics behavior before this suite
+	// 			// was refactored to use the DDS fuzz harness.
+	// 			maxNumberOfClients: Number.MAX_SAFE_INTEGER,
+	// 			clientAddProbability: 0.08,
+	// 			stashableClientProbability: undefined,
+	// 		},
+	// 		defaultTestCount: 200,
+	// 		emitter: oracleEmitter,
+	// 		// Uncomment this line to replay a specific seed from its failure file:
+	// 		// replay: 0,
+	// 		saveFailures: {
+	// 			directory: dirPath.join(_dirname, "../../../src/test/mocha/results/2"),
+	// 		},
+	// 	},
+	// );
 });

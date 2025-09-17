@@ -31,40 +31,36 @@ export class SharedDirectoryOracle {
 		this.captureInitialSnapshot(sharedDir);
 	}
 
-	private captureInitialSnapshot(dir: IDirectory, prefix = ""): void {
-		// Capture all keys directly in this directory
+	private captureInitialSnapshot(dir: IDirectory): void {
+		// Capture keys
 		for (const [key, value] of dir.entries()) {
-			const pathKey = prefix === "" ? key : `${prefix}/${key}`;
-			this.model.set(pathKey, value);
+			this.model.set(`${dir.absolutePath}/${key}`, value);
 		}
 
-		// Recursively capture subdirectories
-		for (const [subDirName, subDir] of dir.subdirectories()) {
-			const subPrefix = prefix === "" ? subDirName : `${prefix}/${subDirName}`;
-			this.model.set(`${subPrefix}/`, {});
-			this.captureInitialSnapshot(subDir, subPrefix);
+		for (const [, subDir] of dir.subdirectories()) {
+			// Just recurse to capture keys inside the subdir
+			this.captureInitialSnapshot(subDir);
 		}
 	}
 
 	private readonly onValueChanged = (change: IDirectoryValueChanged) => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const { path, key, previousValue } = change;
-		const pathKey = `${path}/${key}`;
-		const dir = this.sharedDir.getWorkingDirectory(path);
-		if (!dir) return;
+		const { path, key } = change;
+		const fuzzDir = this.sharedDir.getWorkingDirectory(path);
+		if (!fuzzDir) return;
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const newValue = dir.get(key);
-
-		if (newValue === undefined) {
-			this.model.delete(pathKey);
+		if (fuzzDir.has(key)) {
+			this.model.set(`${path}/${key}`, fuzzDir.get(key));
 		} else {
-			this.model.set(pathKey, newValue);
+			this.model.delete(`${path}/${key}`);
 		}
 	};
 
-	private readonly onClear = () => {
+	private readonly onClear = (local: boolean) => {
 		this.model.clear();
+
+		// if (!local) {
+		// 	this.captureInitialSnapshot(this.sharedDir);
+		// }
 	};
 
 	private readonly onSubDirCreated = (
@@ -75,14 +71,14 @@ export class SharedDirectoryOracle {
 		const pathKey =
 			target.absolutePath === "" ? subdirName : `${target.absolutePath}/${subdirName}`;
 		if (!this.model.has(pathKey)) {
-			this.model.set(`${pathKey}/`, {});
+			this.model.set(`${pathKey}/`, undefined);
 		}
 	};
 
 	private readonly onSubDirDeleted = (path: string) => {
 		for (const key of [...this.model.keys()]) {
 			if (key.startsWith(`${path}/`)) {
-				this.model.delete(key);
+				this.model.delete(`${path}/${key}`);
 			}
 		}
 	};
@@ -92,8 +88,8 @@ export class SharedDirectoryOracle {
 		local: boolean,
 		target: IDirectory,
 	) => {
-		const path = target.absolutePath;
-		const pathKey = path === "" ? change.key : `${path}/${change.key}`;
+		const pathKey =
+			target.absolutePath === "" ? change.key : `${target.absolutePath}/${change.key}`;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const newValue = target.get(change.key);
 
@@ -105,21 +101,24 @@ export class SharedDirectoryOracle {
 	};
 
 	public validate(): void {
-		// Compare oracle with current shared directory via events
-		for (const [key, value] of this.model.entries()) {
-			const parts = key.split("/");
+		for (const [pathKey, value] of this.model.entries()) {
+			const parts = pathKey.split("/").filter((p) => p.length > 0);
 			assert(parts.length > 0, "Invalid path, cannot extract key");
+
 			const leafKey = parts.pop();
 			let dir: IDirectory | undefined = this.sharedDir;
 			for (const part of parts) {
 				dir = dir.getSubDirectory(part);
 				if (!dir) break;
 			}
-			assert(leafKey !== undefined, "leaf key is undefined");
+
+			assert(leafKey !== undefined && leafKey.length > 0, "Leaf key is undefined");
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const actual = dir?.get(leafKey);
 			assert.deepStrictEqual(
-				dir?.get(leafKey),
+				actual,
 				value,
-				`SharedDirectoryOracle mismatch at path="${key}"`,
+				`SharedDirectoryOracle mismatch at path="${pathKey}" with actual value = ${actual} and oracle value = ${value}}`,
 			);
 		}
 	}
