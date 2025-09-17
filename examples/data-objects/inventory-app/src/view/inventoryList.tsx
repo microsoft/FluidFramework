@@ -54,7 +54,7 @@ export const MainView: React.FC<{ root: PropTreeNode<Inventory> }> = ({ root }) 
 	// Passing the node to the components as a PropTreeNode in its Props (as is done here)
 	// is the design pattern after which PropTreeNode was named.
 	const parts: readonly React.JSX.Element[] = partNodes.map((part) => (
-		<PartView key={objectIdNumber(part)} part={part}></PartView>
+		<PartView key={objectIdNumber(part)} part={part} />
 	));
 
 	return (
@@ -73,5 +73,5 @@ const PartView: React.FC<{ part: PropTreeNode<Part> }> = (props) =>
 			count={part.quantity}
 			onDecrement={(): number => part.quantity--}
 			onIncrement={(): number => part.quantity++}
-		></Counter>
+		/>
 	));
