@@ -163,6 +163,7 @@ export {
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type SchemaStaticsAlpha,
+	getTreeDiff,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,

@@ -172,6 +172,7 @@ export {
 	type UnannotateImplicitFieldSchema,
 	type UnannotateSchemaRecord,
 	type SchemaStaticsAlpha,
+	getTreeDiff,
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,

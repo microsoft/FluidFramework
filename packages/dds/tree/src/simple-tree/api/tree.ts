@@ -35,6 +35,7 @@ import type {
 	VoidTransactionCallbackStatus,
 } from "./transactionTypes.js";
 import type { VerboseTree } from "./verboseTree.js";
+// import type { TreeNode } from "../index.js";
 
 /**
  * A tree from which a {@link TreeView} can be created.
@@ -360,6 +361,24 @@ export interface TreeViewAlpha<
 		transaction: () => VoidTransactionCallbackStatus | void,
 		params?: RunTransactionParams,
 	): TransactionResult;
+
+	/**
+	 * Gets all tree nodes that are different between this view and another view by walking both trees.
+	 *
+	 * @param otherView - the view to compare against
+	 * @returns an array of tree nodes that exist in this view but not in the other view, or have different content
+	 *
+	 * @remarks
+	 * This function performs a deep comparison by walking both tree structures.
+	 * It returns nodes from this view that are either:
+	 * - Missing in the other view
+	 * - Different in content from the corresponding node in the other view
+	 *
+	 * Note: This comparison is based on tree structure and content, not change history.
+	 */
+	// getDiff<TOtherSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	// 	otherView: TreeViewAlpha<TOtherSchema>,
+	// ): readonly TreeNode[];
 }
 
 /**

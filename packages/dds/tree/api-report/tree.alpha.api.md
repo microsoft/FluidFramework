@@ -285,6 +285,9 @@ export function getJsonSchema(schema: ImplicitAllowedTypes, options: Required<Tr
 export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema;
 
 // @alpha
+export function getTreeDiff<TSchemaA extends ImplicitFieldSchema | UnsafeUnknownSchema, TSchemaB extends ImplicitFieldSchema | UnsafeUnknownSchema>(originalView: TreeViewAlpha<TSchemaA>, newView: TreeViewAlpha<TSchemaB>): ReadonlySet<TreeNode>;
+
+// @alpha
 export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
 
 // @alpha @input
@@ -432,7 +435,7 @@ export namespace JsonAsTree {
     }
     const // @system
     _APIExtractorWorkaroundObjectBase: TreeNodeSchemaClass<"com.fluidframework.json.object", NodeKind.Record, TreeRecordNodeUnsafe<readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array]> & WithType<"com.fluidframework.json.object", NodeKind.Record, unknown>, {
-        readonly [x: string]: string | number | JsonObject | Array | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | null;
+        readonly [x: string]: string | number | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | JsonObject | Array | null;
     }, false, readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array], undefined>;
     export type Primitive = TreeNodeFromImplicitAllowedTypes<typeof Primitive>;
     // @system
