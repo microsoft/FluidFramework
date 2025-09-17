@@ -492,9 +492,14 @@ export class SharedTreeKernel
 		// Refrain from submitting new commits until they are validated by the checkout.
 		// This is not a strict requirement for correctness in our system, but in the event that there is a bug when applying commits to the checkout
 		// that causes a crash (e.g. in the forest), this will at least prevent this client from sending the problematic commit to any other clients.
-		this.checkout.onCommitValid(commit, () =>
-			super.submitCommit(branchId, commit, schemaAndPolicy, isResubmit),
-		);
+		if (branchId === "main") {
+			this.checkout.onCommitValid(commit, () =>
+				super.submitCommit(branchId, commit, schemaAndPolicy, isResubmit),
+			);
+		} else {
+			// XXX: Should we store a cache from branch to checkout?
+			super.submitCommit(branchId, commit, schemaAndPolicy, isResubmit);
+		}
 	}
 
 	public onDisconnect(): void {}

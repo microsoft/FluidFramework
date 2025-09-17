@@ -2495,6 +2495,10 @@ describe("SharedTree", () => {
 		const branchId = tree1.createSharedBranch();
 		const branchView1 = tree1.viewBranchWith(branchId, config);
 		assert.deepEqual([...branchView1.root], ["A"]);
+
+		mainView1.root.insertAtEnd("X");
+		assert.deepEqual([...mainView1.root], ["A", "X"]);
+		assert.deepEqual([...branchView1.root], ["A"]);
 		provider.synchronizeMessages();
 
 		const branchView2 = tree2.viewBranchWith(branchId, config);
@@ -2502,6 +2506,8 @@ describe("SharedTree", () => {
 
 		// Insert node
 		branchView1.root.insertAtEnd("B");
+		assert.deepEqual([...branchView1.root], ["A", "B"]);
+		assert.deepEqual([...mainView1.root], ["A", "X"]);
 		provider.synchronizeMessages();
 
 		// Validate insertion

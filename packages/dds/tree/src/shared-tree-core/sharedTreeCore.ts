@@ -154,17 +154,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			rebaseLogger,
 		);
 
-		this.getLocalBranch().events.on("beforeChange", (change) => {
-			if (this.detachedRevision === undefined) {
-				// Commit enrichment is only necessary for changes that will be submitted as ops, and changes issued while detached are not submitted.
-				this.commitEnricher.processChange(change);
-			}
-			if (change.type === "append") {
-				for (const commit of change.newCommits) {
-					this.submitCommit("main", commit, this.schemaAndPolicy, false);
-				}
-			}
-		});
+		this.registerSharedBranch("main");
 
 		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const editManagerCodec = makeEditManagerCodec(
@@ -273,6 +263,20 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		}
 	}
 
+	private registerSharedBranch(branchId: BranchId): void {
+		this.editManager.getLocalBranch(branchId).events.on("beforeChange", (change) => {
+			if (this.detachedRevision === undefined) {
+				// Commit enrichment is only necessary for changes that will be submitted as ops, and changes issued while detached are not submitted.
+				this.commitEnricher.processChange(change);
+			}
+			if (change.type === "append") {
+				for (const commit of change.newCommits) {
+					this.submitCommit(branchId, commit, this.schemaAndPolicy, false);
+				}
+			}
+		});
+	}
+
 	private async loadSummarizable(
 		summarizable: Summarizable,
 		services: IChannelStorageService,
@@ -363,6 +367,21 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		const { envelope, local, messagesContent } = messagesCollection;
 		const commits: GraphCommit<TChange>[] = [];
 		let messagesSessionId: SessionId | undefined;
+		let branchId: BranchId | undefined;
+
+		const processBunch = (branch: BranchId): void => {
+			assert(messagesSessionId !== undefined, 0xada /* Messages must have a session ID */);
+			this.processCommits(
+				messagesSessionId,
+				brand(envelope.sequenceNumber),
+				brand(envelope.referenceSequenceNumber),
+				local,
+				branch,
+				commits,
+			);
+
+			commits.length = 0;
+		};
 
 		// Get a list of all the commits from the messages.
 		for (const messageContent of messagesContent) {
@@ -382,6 +401,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			const type = message.type;
 			switch (type) {
 				case "commit": {
+					if (branchId !== undefined && message.branchId !== branchId) {
+						processBunch(branchId);
+					}
+
+					branchId = message.branchId;
 					commits.push(message.commit);
 					break;
 				}
@@ -394,24 +418,34 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			}
 		}
 
-		assert(messagesSessionId !== undefined, 0xada /* Messages must have a session ID */);
-
-		if (commits.length > 0) {
-			this.editManager.addSequencedChanges(
-				commits,
-				messagesSessionId,
-				brand(envelope.sequenceNumber),
-				brand(envelope.referenceSequenceNumber),
-			);
+		if (branchId !== undefined) {
+			processBunch(branchId);
 		}
+
+		this.editManager.advanceMinimumSequenceNumber(brand(envelope.minimumSequenceNumber));
+	}
+
+	private processCommits(
+		sessionId: SessionId,
+		sequenceNumber: SeqNumber,
+		referenceSequenceNumber: SeqNumber,
+		isLocal: boolean,
+		branchId: BranchId,
+		commits: readonly GraphCommit<TChange>[],
+	): void {
+		this.editManager.addSequencedChanges(
+			commits,
+			sessionId,
+			sequenceNumber,
+			referenceSequenceNumber,
+			branchId,
+		);
 
 		// Update the resubmit machine for each commit applied.
 		for (const _ of commits) {
 			// XXX: Review
-			this.resubmitMachine.onSequencedCommitApplied(local);
+			this.resubmitMachine.onSequencedCommitApplied(isLocal);
 		}
-
-		this.editManager.advanceMinimumSequenceNumber(brand(envelope.minimumSequenceNumber));
 	}
 
 	public getLocalBranch(): SharedTreeBranch<TEditor, TChange> {
@@ -420,9 +454,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 	public createSharedBranch(): BranchId {
 		const branchId = this.idCompressor.generateCompressedId();
-		this.editManager.addBranch(branchId);
+		this.addBranch(branchId);
 		this.submitBranchCreation(branchId);
 		return branchId;
+	}
+
+	protected addBranch(branchId: BranchId): void {
+		this.editManager.addBranch(branchId);
+		this.registerSharedBranch(branchId);
 	}
 
 	public getSharedBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChange> {

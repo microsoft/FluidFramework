@@ -544,17 +544,19 @@ export class EditManager<
 	}
 
 	public addBranch(branchId: BranchId): void {
-		this.registerSharedBranch(
-			branchId,
-			new SharedBranch(
-				this.getLocalBranch("main").fork(),
-				minimumPossibleSequenceId,
-				this.changeFamily,
-				this.mintRevisionTag,
-				this._events,
-				this.telemetryEventBatcher,
-			),
-		);
+		if (!this.sharedBranches.has(branchId)) {
+			this.registerSharedBranch(
+				branchId,
+				new SharedBranch(
+					this.getLocalBranch("main").fork(),
+					minimumPossibleSequenceId,
+					this.changeFamily,
+					this.mintRevisionTag,
+					this._events,
+					this.telemetryEventBatcher,
+				),
+			);
+		}
 	}
 
 	private registerSharedBranch(
