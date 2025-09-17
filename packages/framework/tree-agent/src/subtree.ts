@@ -43,11 +43,11 @@ export class Subtree<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> {
 			: this.viewOrNode;
 	}
 
-	public get value(): ReadableField<TRoot> {
+	public get field(): ReadableField<TRoot> {
 		return this.viewOrNode instanceof TreeNode ? this.viewOrNode : this.viewOrNode.root;
 	}
 
-	public set value(value: TreeFieldFromImplicitField<ReadSchema<TRoot>>) {
+	public set field(value: TreeFieldFromImplicitField<ReadSchema<TRoot>>) {
 		if (this.viewOrNode instanceof TreeNode) {
 			const parent = Tree.parent(this.viewOrNode);
 			if (parent === undefined) {
