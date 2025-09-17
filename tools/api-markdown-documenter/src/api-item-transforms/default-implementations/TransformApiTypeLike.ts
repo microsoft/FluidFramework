@@ -12,6 +12,7 @@ import {
 	type ApiMethod,
 	type ApiPropertyItem,
 } from "@microsoft/api-extractor-model";
+import type { Table } from "mdast";
 
 import type { Section } from "../../mdast/index.js";
 import {
@@ -23,7 +24,12 @@ import {
 	type ApiTypeLike,
 } from "../../utilities/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
-import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
+import {
+	createChildDetailsSection,
+	createDefaultSummaryTable,
+	createFunctionLikeSummaryTable,
+	createPropertiesTable,
+} from "../helpers/index.js";
 import { getTypeMembers, type TypeMember } from "../utilities/index.js";
 
 // TODOs:
@@ -220,7 +226,7 @@ function createSummaryTables(
 	indexSignatures: TypeMember<ApiIndexSignature>[],
 	methods: TypeMember<ApiMethod>[],
 	config: ApiItemTransformationConfiguration,
-): Section[] | undefined {
+): Section[] {
 	// Further split event/standard properties into static and non-static
 	const staticStandardProperties = standardProperties.filter((apiProperty) =>
 		isStatic(apiProperty.item),
@@ -239,73 +245,103 @@ function createSummaryTables(
 	const staticMethods = methods.filter((apiMethod) => isStatic(apiMethod.item));
 	const nonStaticMethods = methods.filter((apiMethod) => !isStatic(apiMethod.item));
 
-	// TODO: use new helpers to add more info to the tables
-	return createMemberTables(
-		[
-			{
-				headingTitle: "Constructors",
-				itemKind: ApiItemKind.Constructor,
-				items: constructors.map((member) => member.item),
-			},
-			{
-				headingTitle: "Static Events",
-				itemKind: ApiItemKind.Property,
-				items: staticEventProperties.map((member) => member.item),
-				options: {
-					modifiersToOmit: [ApiModifier.Static],
-				},
-			},
-			{
-				headingTitle: "Static Properties",
-				itemKind: ApiItemKind.Property,
-				items: staticStandardProperties.map((member) => member.item),
-				options: {
-					modifiersToOmit: [ApiModifier.Static],
-				},
-			},
-			{
-				headingTitle: "Static Methods",
-				itemKind: ApiItemKind.Method,
-				items: staticMethods.map((member) => member.item),
-				options: {
-					modifiersToOmit: [ApiModifier.Static],
-				},
-			},
-			{
-				headingTitle: "Events",
-				itemKind: ApiItemKind.Property,
-				items: nonStaticEventProperties.map((member) => member.item),
-				options: {
-					modifiersToOmit: [ApiModifier.Static],
-				},
-			},
-			{
-				headingTitle: "Properties",
-				itemKind: ApiItemKind.Property,
-				items: nonStaticStandardProperties.map((member) => member.item),
-				options: {
-					modifiersToOmit: [ApiModifier.Static],
-				},
-			},
-			{
-				headingTitle: "Methods",
-				itemKind: ApiItemKind.Method,
-				items: nonStaticMethods.map((member) => member.item),
-				options: {
-					modifiersToOmit: [ApiModifier.Static],
-				},
-			},
-			{
-				headingTitle: "Call Signatures",
-				itemKind: ApiItemKind.CallSignature,
-				items: callSignatures.map((member) => member.item),
-			},
-			{
-				headingTitle: "Index Signatures",
-				itemKind: ApiItemKind.IndexSignature,
-				items: indexSignatures.map((member) => member.item),
-			},
-		],
-		config,
+	const sections: Section[] = [];
+
+	function addTableSection(table: Table | undefined, title: string): void {
+		if (table !== undefined) {
+			sections.push({
+				type: "section",
+				heading: { type: "sectionHeading", title },
+				children: [table],
+			});
+		}
+	}
+
+	addTableSection(
+		createFunctionLikeSummaryTable(
+			constructors.map((member) => member.item),
+			"Constructor",
+			config,
+		),
+		"Constructors",
 	);
+
+	addTableSection(
+		createPropertiesTable(
+			staticEventProperties.map((member) => member.item),
+			config,
+			{
+				modifiersToOmit: [ApiModifier.Static],
+			},
+		),
+		"Static Events",
+	);
+
+	addTableSection(
+		createPropertiesTable(
+			staticStandardProperties.map((member) => member.item),
+			config,
+			{
+				modifiersToOmit: [ApiModifier.Static],
+			},
+		),
+		"Static Properties",
+	);
+
+	addTableSection(
+		createFunctionLikeSummaryTable(
+			staticMethods.map((member) => member.item),
+			"Method",
+			config,
+			{
+				modifiersToOmit: [ApiModifier.Static],
+			},
+		),
+		"Static Methods",
+	);
+
+	addTableSection(
+		createPropertiesTable(
+			nonStaticEventProperties.map((member) => member.item),
+			config,
+		),
+		"Events",
+	);
+
+	addTableSection(
+		createPropertiesTable(
+			nonStaticStandardProperties.map((member) => member.item),
+			config,
+		),
+		"Properties",
+	);
+
+	addTableSection(
+		createFunctionLikeSummaryTable(
+			nonStaticMethods.map((member) => member.item),
+			"Method",
+			config,
+		),
+		"Methods",
+	);
+
+	addTableSection(
+		createFunctionLikeSummaryTable(
+			callSignatures.map((member) => member.item),
+			"Call Signature",
+			config,
+		),
+		"Call Signatures",
+	);
+
+	addTableSection(
+		createDefaultSummaryTable(
+			indexSignatures.map((member) => member.item),
+			ApiItemKind.IndexSignature,
+			config,
+		),
+		"Index Signatures",
+	);
+
+	return sections;
 }
