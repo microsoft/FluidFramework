@@ -456,7 +456,7 @@ function createNameCell(
 	let cellContent: PhrasingContent[] = [link];
 	if (member.kind === "inherited") {
 		// If this member is inherited from a base type, note that and link to the base type.
-		const baseLink = getLinkForApiItem(member.inheritedFrom, config);
+		const baseLink = getLinkForApiItem(member.baseDefinition, config);
 		cellContent = [
 			link,
 			{ type: "html", value: "<br/>" },

@@ -70,7 +70,7 @@ export interface InheritedTypeMember<TApiItem extends ApiItem = ApiItem>
 	 * The API item from which this member is inherited.
 	 * @remarks For example, if this member is a method inherited from a base class, this would be that base class.
 	 */
-	readonly inheritedFrom: ApiItem;
+	readonly baseDefinition: ApiItem;
 }
 
 /**
@@ -157,7 +157,7 @@ function getInheritedMembers(
 		item: inherited.item,
 		// If the item we're inheriting is itself inherited, preserve the original source.
 		// Otherwise, the source is the item we're inheriting from.
-		inheritedFrom: inherited.kind === "inherited" ? inherited.inheritedFrom : referencedItem,
+		inheritedFrom: inherited.kind === "inherited" ? inherited.baseDefinition : referencedItem,
 	}));
 
 	// Don't inherit constructors or static members
