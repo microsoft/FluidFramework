@@ -39,9 +39,20 @@ export const MainViewMonolithic: React.FC<{ root: PropTreeNode<Inventory> }> = (
 	});
 
 /**
- * Example of a view which consumes part of a tree, delegating some to sub-components.
+ * Top level view is an easy place to enable StrictMode if desired.
  */
 export const MainView: React.FC<{ root: PropTreeNode<Inventory> }> = ({ root }) => {
+	return (
+		// <React.StrictMode>
+		<InventoryView root={root} />
+		// </React.StrictMode>
+	);
+};
+
+/**
+ * Example of a view which consumes part of a tree, delegating some to sub-components.
+ */
+export const InventoryView: React.FC<{ root: PropTreeNode<Inventory> }> = ({ root }) => {
 	const partNodes = usePropTreeNode(root, (inventory: Inventory) =>
 		// Example manually wrapping in PropNodes, showing how types without automatic support can still be made type safe.
 		// inventory.parts.map((node) => toPropTreeNode(node)),
