@@ -41,6 +41,9 @@ import { TypeParameter } from '@microsoft/api-extractor-model';
 // @public
 function ancestryHasModifierTag(apiItem: ApiItem, tagName: string): boolean;
 
+// @public
+export type ApiConstructorLike = ApiConstructor | ApiConstructSignature;
+
 // @public @sealed
 export interface ApiDocument {
     readonly apiItem: ApiItem;
@@ -49,7 +52,7 @@ export interface ApiDocument {
 }
 
 // @public
-export type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFunction | ApiMethod | ApiMethodSignature;
+export type ApiFunctionLike = ApiConstructorLike | ApiFunction | ApiMethod | ApiMethodSignature;
 
 export { ApiItem }
 
