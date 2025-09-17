@@ -25,7 +25,10 @@ export type Ctor<T = any> = new (...args: any[]) => T;
  * A type that represents an object schema class.
  * @alpha
  */
-export type BindableSchema = TreeNodeSchema<string, NodeKind.Object | NodeKind.Array>;
+export type BindableSchema = TreeNodeSchema<
+	string,
+	NodeKind.Object | NodeKind.Array | NodeKind.Map | NodeKind.Record
+>;
 
 /**
  * Get the exposed methods of a schema class.

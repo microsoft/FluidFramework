@@ -11,7 +11,7 @@ export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = readonly [name: string,
 export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Single extends Arg] ? [Single[1]] : T extends readonly [infer Head extends Arg, ...infer Tail extends readonly Arg[]] ? [Head[1], ...ArgsTuple<Tail>] : never;
 
 // @alpha
-export type BindableSchema = TreeNodeSchema<string, NodeKind.Object | NodeKind.Array>;
+export type BindableSchema = TreeNodeSchema<string, NodeKind.Object | NodeKind.Array | NodeKind.Map | NodeKind.Record>;
 
 // @alpha
 export function buildFunc<const Return extends z.ZodTypeAny, const Args extends readonly Arg[], const Rest extends z.ZodTypeAny | null = null>(def: {

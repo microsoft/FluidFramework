@@ -158,4 +158,54 @@ type Todo = string[] & {
 `,
 		);
 	});
+
+	it("method binding works on map nodes", () => {
+		class MapWithMethod extends sf.map("Todo", sf.string) {
+			public M2(n: string): boolean {
+				return false;
+			}
+
+			public static [exposeMethodsSymbol](methods: ExposedMethods): void {
+				methods.expose(
+					MapWithMethod,
+					"M2",
+					buildFunc({ returns: z.boolean() }, ["n", z.string()]),
+				);
+			}
+		}
+
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: MapWithMethod }));
+		view.initialize(new Map());
+
+		const schema = getSimpleSchema(view.schema);
+
+		const { domainTypes } = generateEditTypesForPrompt(view.schema, schema);
+		for (const [key, value] of Object.entries(domainTypes)) {
+			const friendlyKey = getFriendlySchemaName(key);
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			delete domainTypes[key];
+			if (
+				friendlyKey !== undefined &&
+				friendlyKey !== "string" &&
+				friendlyKey !== "number" &&
+				friendlyKey !== "boolean"
+			) {
+				domainTypes[friendlyKey] = value;
+			}
+		}
+
+		const domainSchemaString = getZodSchemaAsTypeScript(domainTypes);
+		assert.deepEqual(
+			domainSchemaString,
+			`// Note: this map has methods directly on it.
+type Todo = Map<string, string> & {
+    M2(n: string): boolean;
+};
+`,
+		);
+	});
 });
