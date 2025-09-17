@@ -152,6 +152,7 @@ function createSummaryTable(
 	}
 
 	switch (itemKind) {
+		case ApiItemKind.CallSignature:
 		case ApiItemKind.ConstructSignature:
 		case ApiItemKind.Constructor:
 		case ApiItemKind.Function:
