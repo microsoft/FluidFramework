@@ -133,6 +133,8 @@ export interface ExposedMethods {
 
 	/**
 	 * Create a Zod schema for a SharedTree schema class.
+	 * @remarks
+	 * Use it to "wrap" schema types that are referenced as arguments or return types when exposing methods (with {@link ExposedMethods.expose}).	 
 	 */
 	instanceOf<T extends TreeNodeSchemaClass>(
 		schema: T,
