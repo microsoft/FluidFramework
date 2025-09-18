@@ -16,11 +16,35 @@ export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, Te
 
 Here are some remarks about the interface
 
+## Events
+
+| Property | Modifiers | Type | Description |
+| - | - | - | - |
+| [testClassEventProperty](/test-suite-a/testinterface-interface/testclasseventproperty-propertysignature)<br/>_(inherited from [TestInterface](/test-suite-a/testinterface-interface/))_ | `readonly` | () => void | Test interface event property |
+
+## Properties
+
+| Property | Modifiers | Default Value | Type | Description |
+| - | - | - | - | - |
+| [getterProperty](/test-suite-a/testinterface-interface/getterproperty-property)<br/>_(inherited from [TestInterface](/test-suite-a/testinterface-interface/))_ | `readonly` | | boolean | A test getter-only interface property. |
+| [propertyWithBadInheritDocTarget](/test-suite-a/testinterface-interface/propertywithbadinheritdoctarget-propertysignature)<br/>_(inherited from [TestInterface](/test-suite-a/testinterface-interface/))_ | | | boolean | |
+| [setterProperty](/test-suite-a/testinterface-interface/setterproperty-property)<br/>_(inherited from [TestInterface](/test-suite-a/testinterface-interface/))_ | | | boolean | A test property with a getter and a setter. |
+| [testInterfaceProperty](/test-suite-a/testinterface-interface/testinterfaceproperty-propertysignature)<br/>_(inherited from [TestInterface](/test-suite-a/testinterface-interface/))_ | | | number | Test interface property |
+| [testOptionalInterfaceProperty](/test-suite-a/testinterface-interface/testoptionalinterfaceproperty-propertysignature)<br/>_(inherited from [TestInterface](/test-suite-a/testinterface-interface/))_ | `optional` | 0 | number | Test optional property |
+
 ## Methods
 
 | Method | Return Type | Description |
 | - | - | - |
+| [testInterfaceMethod()](/test-suite-a/testinterface-interface/testinterfacemethod-methodsignature)<br/>_(inherited from [TestInterface](/test-suite-a/testinterface-interface/))_ | void | Test interface method |
 | [testMethod(input)](/test-suite-a/testinterfaceextendingotherinterfaces-interface/testmethod-methodsignature) | number | Test interface method accepting a string and returning a number. |
+
+## Call Signatures
+
+| Call Signature | Return Type | Description |
+| - | - | - |
+| [(event: 'testCallSignature', listener: (input: unknown) => void): any](/test-suite-a/testinterface-interface/_call_-callsignature)<br/>_(inherited from [TestInterface](/test-suite-a/testinterface-interface/))_ | any | Test interface event call signature |
+| [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](/test-suite-a/testinterface-interface/_call__1-callsignature)<br/>_(inherited from [TestInterface](/test-suite-a/testinterface-interface/))_ | number | Another example call signature |
 
 <h2 id="testinterfaceextendingotherinterfaces-see-also">See Also</h2>
 

@@ -14,4 +14,8 @@ export {
 	shouldItemBeIncluded,
 } from "./ApiItemTransformUtilities.js";
 export { createDocument, checkForDuplicateDocumentPaths } from "./DocumentUtilities.js";
+export {
+	getTypeMembers,
+	type TypeMember,
+} from "./InheritanceUtilities.js";
 export { resolveSymbolicLink } from "./ReferenceUtilities.js";

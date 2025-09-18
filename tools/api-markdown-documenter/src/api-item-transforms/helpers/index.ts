@@ -11,5 +11,6 @@
 
 export * from "./Helpers.js";
 export * from "./TableHelpers.js";
+export { createTableFromItems } from "./TableCreation.js";
 
 /* eslint-enable no-restricted-syntax */
