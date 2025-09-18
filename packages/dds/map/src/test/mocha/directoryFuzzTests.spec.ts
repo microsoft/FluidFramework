@@ -137,9 +137,9 @@ describe("SharedDirectory fuzz", () => {
 		defaultTestCount: 25,
 		emitter: oracleEmitter,
 		// Uncomment this line to replay a specific seed from its failure file:
-		only: 13,
+		// replay: 0,
 		saveFailures: { directory: dirPath.join(_dirname, "../../../src/test/mocha/results/2") },
-		skip: [],
+		skip: [13],
 	});
 
 	createDDSFuzzSuite(
