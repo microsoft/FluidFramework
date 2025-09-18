@@ -482,32 +482,46 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	}
 
 	public reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown): void {
-		// XXX
-		// // Empty context object is passed in, as our decode function is schema-agnostic.
-		// const {
-		// 	commit: { revision },
-		// 	branchId,
-		// } = this.messageCodec.decode(this.serializer.decode(content), {
-		// 	idCompressor: this.idCompressor,
-		// });
-		// // If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
-		// if (this.resubmitMachine.isInResubmitPhase === false) {
-		// 	const localCommits = this.editManager.getLocalCommits();
-		// 	const revisionIndex = localCommits.findIndex((c) => c.revision === revision);
-		// 	assert(revisionIndex >= 0, 0xbdb /* revision must exist in local commits */);
-		// 	const toResubmit = localCommits.slice(revisionIndex);
-		// 	this.resubmitMachine.prepareForResubmit(toResubmit);
-		// }
-		// assert(
-		// 	isClonableSchemaPolicy(localOpMetadata),
-		// 	0x95e /* Local metadata must contain schema and policy. */,
-		// );
-		// assert(
-		// 	this.resubmitMachine.isInResubmitPhase !== false,
-		// 	0x984 /* Invalid resubmit outside of resubmit phase */,
-		// );
-		// const enrichedCommit = this.resubmitMachine.peekNextCommit();
-		// this.submitCommit(branchId, enrichedCommit, localOpMetadata, true);
+		// Empty context object is passed in, as our decode function is schema-agnostic.
+		const message = this.messageCodec.decode(this.serializer.decode(content), {
+			idCompressor: this.idCompressor,
+		});
+
+		const type = message.type;
+		switch (type) {
+			case "commit": {
+				const {
+					commit: { revision },
+					branchId,
+				} = message;
+
+				// If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
+				if (this.resubmitMachine.isInResubmitPhase === false) {
+					const localCommits = this.editManager.getLocalCommits();
+					const revisionIndex = localCommits.findIndex((c) => c.revision === revision);
+					assert(revisionIndex >= 0, 0xbdb /* revision must exist in local commits */);
+					const toResubmit = localCommits.slice(revisionIndex);
+					this.resubmitMachine.prepareForResubmit(toResubmit);
+				}
+				assert(
+					isClonableSchemaPolicy(localOpMetadata),
+					0x95e /* Local metadata must contain schema and policy. */,
+				);
+				assert(
+					this.resubmitMachine.isInResubmitPhase !== false,
+					0x984 /* Invalid resubmit outside of resubmit phase */,
+				);
+				const enrichedCommit = this.resubmitMachine.peekNextCommit();
+				this.submitCommit(branchId, enrichedCommit, localOpMetadata, true);
+				break;
+			}
+			case "branch": {
+				this.submitBranchCreation(message.branchId);
+				break;
+			}
+			default:
+				unreachableCase(type);
+		}
 	}
 	public rollback(content: JsonCompatibleReadOnly, localOpMetadata: unknown): void {
 		// XXX
