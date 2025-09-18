@@ -17,13 +17,13 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	asIndex,
 	getKernel,
+	TreeNode,
 	type Unhydrated,
 	TreeBeta,
 	tryGetSchema,
 	createFromCursor,
 	FieldKind,
 	normalizeFieldSchema,
-	TreeNode,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type TreeFieldFromImplicitField,
@@ -454,15 +454,20 @@ export interface TreeAlpha {
 	): { result: TResult; unsubscribe: () => void };
 }
 
+/**
+ * Subscription to changes on a single node.
+ * @remarks
+ * Either tracks some set of fields, or all fields and can be updated to track more fields.
+ */
 class NodeSubscription {
 	/**
 	 * If undefined, subscribes to all keys.
 	 * Otherwise only subscribes to the keys in the set.
 	 */
-	public keys: Set<FieldKey> | undefined;
-	public readonly unsubscribe: () => void;
-	public constructor(
-		public readonly onInvalidation: () => void,
+	private keys: Set<FieldKey> | undefined;
+	private readonly unsubscribe: () => void;
+	private constructor(
+		private readonly onInvalidation: () => void,
 		flexNode: FlexTreeNode,
 	) {
 		// TODO:Performance: It is possible to optimize this to not use the public TreeNode API.
@@ -492,8 +497,93 @@ class NodeSubscription {
 		};
 		this.unsubscribe = TreeBeta.on(node, "nodeChanged", handler);
 	}
+
+	/**
+	 * Create an {@link Observer} which subscribes to what was observed in {@link NodeSubscription}s.
+	 */
+	public static createObserver(
+		invalidate: () => void,
+		onlyOnce = false,
+	): { observer: Observer; unsubscribe: () => void } {
+		const subscriptions = new Map<FlexTreeNode, NodeSubscription>();
+		const observer: Observer = {
+			observeNodeFields(flexNode: FlexTreeNode): void {
+				if (flexNode.value !== undefined) {
+					// Leaf value, nothing to observe.
+					return;
+				}
+				const subscription = subscriptions.get(flexNode);
+				if (subscription !== undefined) {
+					// Already subscribed to this node.
+					subscription.keys = undefined; // Now subscribed to all keys.
+				} else {
+					const newSubscription = new NodeSubscription(invalidate, flexNode);
+					subscriptions.set(flexNode, newSubscription);
+				}
+			},
+			observeNodeField(flexNode: FlexTreeNode, key: FieldKey): void {
+				if (flexNode.value !== undefined) {
+					// Leaf value, nothing to observe.
+					return;
+				}
+				const subscription = subscriptions.get(flexNode);
+				if (subscription !== undefined) {
+					// Already subscribed to this node: if not subscribed to all keys, subscribe to this one.
+					// TODO:Performance: due to how JavaScript set ordering works,
+					// it might be faster to check `has` and only add if not present in case the same field is viewed many times.
+					subscription.keys?.add(key);
+				} else {
+					const newSubscription = new NodeSubscription(invalidate, flexNode);
+					newSubscription.keys = new Set([key]);
+					subscriptions.set(flexNode, newSubscription);
+				}
+			},
+			observeParentOf(node: FlexTreeNode): void {
+				// Supporting parent tracking is more difficult that it might seem at first.
+				// There are two main complicating factors:
+				// 1. The parent may be undefined (the node is a root).
+				// 2. If tracking this by subscribing to the parent's changes, then which events are subscribed to needs to be updated after the parent changes.
+				//
+				// If not supporting the first case (undefined parents), the second case gets problematic since it would result in edits which take a node who's parent was observed,
+				// and un-parent it, could then throw a usage error.
+
+				if (!onlyOnce) {
+					// TODO: better APIS should be provided which make handling this case practical.
+					throw new UsageError("Observation tracking for parents is currently not supported.");
+				}
+
+				const parent = withObservation(undefined, () => node.parentField.parent);
+
+				if (parent.parent === undefined) {
+					// TODO: better APIS should be provided which make handling this case practical.
+					throw new UsageError(
+						"Observation tracking for parents is currently not supported when parent is undefined.",
+					);
+				}
+				observer.observeNodeField(parent.parent, parent.key);
+			},
+		};
+
+		let subscribed = true;
+
+		return {
+			observer,
+			unsubscribe: () => {
+				if (!subscribed) {
+					throw new UsageError("Already unsubscribed");
+				}
+				subscribed = false;
+				for (const subscription of subscriptions.values()) {
+					subscription.unsubscribe();
+				}
+			},
+		};
+	}
 }
 
+/**
+ * Handles both {@link (TreeAlpha:interface).trackObservations} and {@link (TreeAlpha:interface).trackObservationsOnce}.
+ */
 function trackObservations<TResult>(
 	onInvalidation: () => void,
 	trackDuring: () => TResult,
@@ -508,80 +598,13 @@ function trackObservations<TResult>(
 		onInvalidation();
 	};
 
-	const subscriptions = new Map<FlexTreeNode, NodeSubscription>();
-	const observer: Observer = {
-		observeNodeFields(flexNode: FlexTreeNode): void {
-			if (flexNode.value !== undefined) {
-				// Leaf value, nothing to observe.
-				return;
-			}
-			const subscription = subscriptions.get(flexNode);
-			if (subscription !== undefined) {
-				// Already subscribed to this node.
-				subscription.keys = undefined; // Now subscribed to all keys.
-			} else {
-				const newSubscription = new NodeSubscription(invalidate, flexNode);
-				subscriptions.set(flexNode, newSubscription);
-			}
-		},
-		observeNodeField(flexNode: FlexTreeNode, key: FieldKey): void {
-			if (flexNode.value !== undefined) {
-				// Leaf value, nothing to observe.
-				return;
-			}
-			const subscription = subscriptions.get(flexNode);
-			if (subscription !== undefined) {
-				// Already subscribed to this node: if not subscribed to all keys, subscribe to this one.
-				// TODO:Performance: due to how JavaScript set ordering works,
-				// it might be faster to check `has` and only add if not present in case the same field is viewed many times.
-				subscription.keys?.add(key);
-			} else {
-				const newSubscription = new NodeSubscription(invalidate, flexNode);
-				newSubscription.keys = new Set([key]);
-				subscriptions.set(flexNode, newSubscription);
-			}
-		},
-		observeParentOf(node: FlexTreeNode): void {
-			// Supporting parent tracking is more difficult that it might seem at first.
-			// There are two main complicating factors:
-			// 1. The parent may be undefined (the node is a root).
-			// 2. If tracking this by subscribing to the parent's changes, then which events are subscribed to needs to be updated after the parent changes.
-			//
-			// If not supporting the first case (undefined parents), the second case gets problematic since it would result in edits which take a node who's parent was observed,
-			// and un-parent it, could then throw a usage error.
-
-			if (!onlyOnce) {
-				// TODO: better APIS should be provided which make handling this case practical.
-				throw new UsageError("Observation tracking for parents is currently not supported.");
-			}
-
-			const parent = withObservation(undefined, () => node.parentField.parent);
-
-			if (parent.parent === undefined) {
-				// TODO: better APIS should be provided which make handling this case practical.
-				throw new UsageError(
-					"Observation tracking for parents is currently not supported when parent is undefined.",
-				);
-			}
-			observer.observeNodeField(parent.parent, parent.key);
-		},
-	};
+	const { observer, unsubscribe } = NodeSubscription.createObserver(invalidate, onlyOnce);
 	const result = withObservation(observer, trackDuring);
 	observing = false;
 
-	let subscribed = true;
-
 	return {
 		result,
-		unsubscribe: () => {
-			if (!subscribed) {
-				throw new UsageError("Already unsubscribed");
-			}
-			subscribed = false;
-			for (const subscription of subscriptions.values()) {
-				subscription.unsubscribe();
-			}
-		},
+		unsubscribe,
 	};
 }
 

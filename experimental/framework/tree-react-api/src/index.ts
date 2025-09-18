@@ -27,13 +27,15 @@ export type {
 	UnwrapPropTreeNodeRecord,
 	WrapPropTreeNodeRecord,
 	WrapNodes,
-} from "./useTree.js";
+} from "./propNode.js";
 export {
-	useTree,
 	toPropTreeNode,
 	toPropTreeRecord,
 	unwrapPropTreeNode,
 	unwrapPropTreeRecord,
+} from "./propNode.js";
+export {
+	useTree,
 	usePropTreeNode,
 	usePropTreeRecord,
 	useTreeObservations,

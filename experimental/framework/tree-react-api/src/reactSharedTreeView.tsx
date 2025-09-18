@@ -22,7 +22,7 @@ import type {
 import { configuredSharedTree, typeboxValidator } from "@fluidframework/tree/internal";
 import * as React from "react";
 
-import { toPropTreeNode, type PropTreeValue } from "./useTree.js";
+import { toPropTreeNode, type PropTreeValue } from "./propNode.js";
 
 /**
  * Opt into extra validation to detect encoding bugs and data corruption.
