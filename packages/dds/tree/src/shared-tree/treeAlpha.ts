@@ -627,6 +627,8 @@ export const TreeAlpha: TreeAlpha = {
 	): { result: TResult; unsubscribe: () => void } {
 		const result = trackObservations(
 			() => {
+				// trackObservations ensures no invalidation occurs while its running,
+				// so this callback can only run after trackObservations has returns and thus result is defined.
 				result.unsubscribe();
 				onInvalidation();
 			},
