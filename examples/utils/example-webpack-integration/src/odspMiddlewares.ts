@@ -8,7 +8,7 @@ import process from "node:process";
 
 // eslint-disable-next-line import/no-internal-modules
 import { OdspTokenManager } from "@fluidframework/tool-utils/internal";
-import type { Middleware } from "webpack-dev-server";
+import type { Middleware, Request, Response } from "webpack-dev-server";
 
 type TestAccounts = { UserPrincipalName: string; Password: string }[];
 const isTestAccounts = (value: unknown): value is TestAccounts =>
@@ -69,14 +69,14 @@ export const createOdspMiddlewares = (): Middleware[] => {
 		{
 			name: "get-site-url",
 			path: "/siteUrl",
-			middleware: (req, res) => {
+			middleware: (req: Request, res: Response) => {
 				res.send(siteUrl);
 			},
 		},
 		{
 			name: "get-storage-token",
 			path: "/storageToken",
-			middleware: (req, res) => {
+			middleware: (req: Request, res: Response) => {
 				storageTokenP ??= tokenManager
 					.getOdspTokens(
 						server,
@@ -100,7 +100,7 @@ export const createOdspMiddlewares = (): Middleware[] => {
 		{
 			name: "get-push-token",
 			path: "/pushToken",
-			middleware: (req, res) => {
+			middleware: (req: Request, res: Response) => {
 				pushTokenP ??= tokenManager
 					.getPushTokens(
 						server,
