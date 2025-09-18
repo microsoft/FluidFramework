@@ -302,6 +302,16 @@ export interface IContainerContext {
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly quorum: IQuorumClients;
 	readonly audience: IAudience;
+	/**
+	 * Signal-based audience provides a view of the audience that only relies
+	 * on system signals which will be updated more quickly than
+	 * {@link IContainerContext#audience} that relies on ops for write clients.
+	 * Being signal-based the write members are inherently less reliable than
+	 * {@link IContainerContext#audience}.
+	 *
+	 * @system
+	 */
+	readonly signalAudience?: IAudience;
 	readonly loader: ILoader;
 	// The logger implementation, which would support tagged events, should be provided by the loader.
 	readonly taggedLogger: ITelemetryBaseLogger;

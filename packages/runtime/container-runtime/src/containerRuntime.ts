@@ -1548,6 +1548,7 @@ export class ContainerRuntime
 			deltaManager,
 			quorum,
 			audience,
+			signalAudience,
 			pendingLocalState,
 			supportedFeatures,
 			snapshotWithContents,
@@ -2016,6 +2017,8 @@ export class ContainerRuntime
 				oldClientId = clientId;
 			});
 		}
+
+		this.signalAudience = signalAudience;
 
 		const closeSummarizerDelayOverride = this.mc.config.getNumber(
 			"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
@@ -3654,6 +3657,14 @@ export class ContainerRuntime
 	}
 
 	/**
+	 * When defined, this {@link @fluidframework/container-definitions#IAudience}
+	 * maintains member list using signals only.
+	 * Thus "write" members may be known earlier than quorum and avoid noise from
+	 * un-summarized quorum history.
+	 */
+	private readonly signalAudience?: IAudience;
+
+	/**
 	 * Returns true of container is dirty, i.e. there are some pending local changes that
 	 * either were not sent out to delta stream or were not yet acknowledged.
 	 */
@@ -5189,6 +5200,7 @@ export class ContainerRuntime
 	): T {
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
+			const audience = this.signalAudience;
 			const runtime = {
 				getJoinedStatus: this.getJoinedStatus.bind(this),
 				getClientId: () => this.clientId,
@@ -5201,7 +5213,7 @@ export class ContainerRuntime
 					this.submitExtensionSignal(id, addressChain, message);
 				},
 				getQuorum: this.getQuorum.bind(this),
-				getAudience: this.getAudience.bind(this),
+				getAudience: audience ? () => audience : this.getAudience.bind(this),
 				supportedFeatures: this.ILayerCompatDetails.supportedFeatures,
 			} satisfies ExtensionHost<TRuntimeProperties>;
 			entry = new factory(runtime, ...useContext);

@@ -140,10 +140,12 @@ import { NoopHeuristic } from "./noopHeuristic.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { IQuorumSnapshot } from "./protocol/index.js";
 import {
-	type IProtocolHandler,
+	type InternalProtocolHandlerBuilder,
 	ProtocolHandler,
 	type ProtocolHandlerBuilder,
+	type ProtocolHandlerInternal,
 	protocolHandlerShouldProcessSignal,
+	wrapProtocolHandlerBuilder,
 } from "./protocol.js";
 import { initQuorumValuesFromCodeDetails } from "./quorum.js";
 import {
@@ -495,7 +497,8 @@ export class Container
 	private readonly scope: FluidObject;
 	private readonly subLogger: ITelemetryLoggerExt;
 	private readonly detachedBlobStorage: MemoryDetachedBlobStorage | undefined;
-	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
+	private readonly protocolHandlerBuilder: InternalProtocolHandlerBuilder;
+	private readonly signalAudience = new Audience();
 	private readonly client: IClient;
 
 	private readonly mc: MonitoringContext;
@@ -597,8 +600,8 @@ export class Container
 		}
 		return this._runtime;
 	}
-	private _protocolHandler: IProtocolHandler | undefined;
-	private get protocolHandler(): IProtocolHandler {
+	private _protocolHandler: ProtocolHandlerInternal | undefined;
+	private get protocolHandler(): ProtocolHandlerInternal {
 		if (this._protocolHandler === undefined) {
 			throw new Error("Attempted to access protocolHandler before it was defined");
 		}
@@ -824,20 +827,22 @@ export class Container
 		// Tracking alternative ways to handle this in AB#4129.
 		this.options = { ...options };
 		this.scope = scope;
-		this.protocolHandlerBuilder =
+		this.protocolHandlerBuilder = wrapProtocolHandlerBuilder(
 			protocolHandlerBuilder ??
-			((
-				attributes: IDocumentAttributes,
-				quorumSnapshot: IQuorumSnapshot,
-				sendProposal: (key: string, value: unknown) => number,
-			): ProtocolHandler =>
-				new ProtocolHandler(
-					attributes,
-					quorumSnapshot,
-					sendProposal,
-					new Audience(),
-					(clientId: string) => this.clientsWhoShouldHaveLeft.has(clientId),
-				));
+				((
+					attributes: IDocumentAttributes,
+					quorumSnapshot: IQuorumSnapshot,
+					sendProposal: (key: string, value: unknown) => number,
+				): ProtocolHandlerInternal =>
+					new ProtocolHandler(
+						attributes,
+						quorumSnapshot,
+						sendProposal,
+						new Audience(),
+						(clientId: string) => this.clientsWhoShouldHaveLeft.has(clientId),
+					)),
+			this.signalAudience,
+		);
 
 		// Note that we capture the createProps here so we can replicate the creation call when we want to clone.
 		this.clone = async (
