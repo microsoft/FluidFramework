@@ -18,11 +18,17 @@ import {
 
 import type { ExampleDriver } from "./interfaces.js";
 
+/**
+ * Get the required siteUrl, storageToken, or pushToken, relying on webpack to provide these via middleware
+ * responding to get requests for those paths, respectively.  The example-webpack-integration package provides
+ * middleware to make this easy to do.
+ * @internal
+ */
 const getFromMiddleware = async (path: "siteUrl" | "storageToken" | "pushToken") => {
 	const fetchResponse = await fetch(`/${path}`);
 	if (fetchResponse.status === 404) {
 		throw new Error(
-			`Failed to fetch ${path}. Make sure you installed the example webpack-dev-server middleware.`,
+			`Failed to fetch ${path}. Make sure you installed the example-webpack-integration middleware.`,
 		);
 	} else if (!fetchResponse.ok) {
 		throw new Error(

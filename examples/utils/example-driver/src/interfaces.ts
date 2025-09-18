@@ -25,6 +25,13 @@ export interface ExampleDriver {
 	 * resolvedUrl post-attach).
 	 */
 	createCreateNewRequest: (id: string) => IRequest;
+	/**
+	 * Create a request to be used when calling loadExistingContainer().
+	 *
+	 * @privateRemarks
+	 * Odsp currently requires this to be async because it needs to make a network call to
+	 * match the file name to the driveId/itemId needed in the URL.
+	 */
 	createLoadExistingRequest: (id: string) => Promise<IRequest>;
 }
 

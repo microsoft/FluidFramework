@@ -5,17 +5,17 @@
 
 import { isExampleDriverService, type ExampleDriverService } from "./interfaces.js";
 
-// getSpecifiedServiceFromWebpack expects that webpack will provide the value for EXAMPLE_DRIVER_SERVICE
-// via DefinePlugin.
 declare const EXAMPLE_DRIVER_SERVICE: string | undefined;
 /**
+ * Determine which service was specified, relying on webpack to provide a value for EXAMPLE_DRIVER_SERVICE
+ * via DefinePlugin. The example-webpack-integration package provides a plugin to make this easy to do.
  * @internal
  */
 export const getSpecifiedServiceFromWebpack = (): ExampleDriverService => {
 	const service = EXAMPLE_DRIVER_SERVICE;
 	if (service === undefined) {
 		throw new Error(
-			"EXAMPLE_DRIVER_SERVICE not provided. Make sure you included the EXAMPLE_DRIVER_SERVICE webpack plugin.",
+			"EXAMPLE_DRIVER_SERVICE not provided. Make sure you included the example-webpack-integration plugin.",
 		);
 	}
 	if (!isExampleDriverService(service)) {
