@@ -61,8 +61,9 @@ export const getOdspMiddlewares = (): Middleware[] => {
 	const clientId = process.env.login__microsoft__clientId;
 
 	const tokenManager = new OdspTokenManager();
-	let storageToken: string;
-	let pushToken: string;
+	// Cache fetch attempts to avoid multiple calls
+	let storageTokenP: Promise<string>;
+	let pushTokenP: Promise<string>;
 
 	return [
 		{
@@ -75,45 +76,49 @@ export const getOdspMiddlewares = (): Middleware[] => {
 		{
 			name: "get-storage-token",
 			path: "/storageToken",
-			middleware: async (req, res) => {
-				try {
-					storageToken ??= (
-						await tokenManager.getOdspTokens(
-							server,
-							{ clientId },
-							{
-								type: "password",
-								username,
-								password,
-							},
-						)
-					).accessToken;
-					res.send(storageToken);
-				} catch (error) {
-					res.status(500).send((error as Error).message);
-				}
+			middleware: (req, res) => {
+				storageTokenP ??= tokenManager
+					.getOdspTokens(
+						server,
+						{ clientId },
+						{
+							type: "password",
+							username,
+							password,
+						},
+					)
+					.then((tokens) => tokens.accessToken);
+				storageTokenP
+					.then((storageToken) => {
+						res.send(storageToken);
+					})
+					.catch((error) => {
+						res.status(500).send((error as Error).message);
+					});
 			},
 		},
 		{
 			name: "get-push-token",
 			path: "/pushToken",
-			middleware: async (req, res) => {
-				try {
-					pushToken ??= (
-						await tokenManager.getPushTokens(
-							server,
-							{ clientId },
-							{
-								type: "password",
-								username,
-								password,
-							},
-						)
-					).accessToken;
-					res.send(pushToken);
-				} catch (error) {
-					res.status(500).send((error as Error).message);
-				}
+			middleware: (req, res) => {
+				pushTokenP ??= tokenManager
+					.getPushTokens(
+						server,
+						{ clientId },
+						{
+							type: "password",
+							username,
+							password,
+						},
+					)
+					.then((tokens) => tokens.accessToken);
+				pushTokenP
+					.then((pushToken) => {
+						res.send(pushToken);
+					})
+					.catch((error) => {
+						res.status(500).send((error as Error).message);
+					});
 			},
 		},
 	];
