@@ -109,11 +109,11 @@ importers:
         specifier: ~8.57.0
         version: 8.57.1
       eslint-plugin-chai-expect:
-        specifier: ^3.0.0
-        version: 3.0.0(eslint@8.57.1)
+        specifier: ^3.1.0
+        version: 3.1.0(eslint@8.57.1)
       eslint-plugin-chai-friendly:
-        specifier: ^0.7.2
-        version: 0.7.2(eslint@8.57.1)
+        specifier: ^1.1.0
+        version: 1.1.0(eslint@8.57.1)
       mocha:
         specifier: ^11.7.2
         version: 11.7.2
@@ -1426,14 +1426,14 @@ packages:
       eslint-import-resolver-webpack:
         optional: true
 
-  eslint-plugin-chai-expect@3.0.0:
-    resolution: {integrity: sha512-NS0YBcToJl+BRKBSMCwRs/oHJIX67fG5Gvb4tGked+9Wnd1/PzKijd82B2QVKcSSOwRe+pp4RAJ2AULeck4eQw==}
-    engines: {node: 10.* || 12.* || >= 14.*}
+  eslint-plugin-chai-expect@3.1.0:
+    resolution: {integrity: sha512-a9F8b38hhJsR7fgDEfyMxppZXCnCW6OOHj7cQfygsm9guXqdSzfpwrHX5FT93gSExDqD71HQglF1lLkGBwhJ+g==}
+    engines: {node: 10.* || 12.* || || 14.* || 16.* || >= 18.*}
     peerDependencies:
-      eslint: '>=2.0.0 <= 8.x'
+      eslint: '>=2.0.0 <= 9.x'
 
-  eslint-plugin-chai-friendly@0.7.2:
-    resolution: {integrity: sha512-LOIfGx5sZZ5FwM1shr2GlYAWV9Omdi+1/3byuVagvQNoGUuU0iHhp7AfjA1uR+4dJ4Isfb4+FwBJgQajIw9iAg==}
+  eslint-plugin-chai-friendly@1.1.0:
+    resolution: {integrity: sha512-+T1rClpDdXkgBAhC16vRQMI5umiWojVqkj9oUTdpma50+uByCZM/oBfxitZiOkjMRlm725mwFfz/RVgyDRvCKA==}
     engines: {node: '>=0.10.0'}
     peerDependencies:
       eslint: '>=3.0.0'
@@ -4929,11 +4929,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-chai-expect@3.0.0(eslint@8.57.1):
+  eslint-plugin-chai-expect@3.1.0(eslint@8.57.1):
     dependencies:
       eslint: 8.57.1
 
-  eslint-plugin-chai-friendly@0.7.2(eslint@8.57.1):
+  eslint-plugin-chai-friendly@1.1.0(eslint@8.57.1):
     dependencies:
       eslint: 8.57.1
 
