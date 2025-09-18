@@ -1510,6 +1510,9 @@
         "no-new-func": [
             "error"
         ],
+        "no-new-native-nonconstructor": [
+            "off"
+        ],
         "no-new-symbol": [
             "off"
         ],
