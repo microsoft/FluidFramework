@@ -97,7 +97,7 @@ describe("useTree", () => {
 			}
 
 			describe(`StrictMode: ${reactStrictMode}`, () => {
-				it("usePropTreeNode", async () => {
+				it("usePropTreeNode", () => {
 					const builder = new SchemaFactory("tree-react-api");
 
 					class Point extends builder.object("Point", {
@@ -130,8 +130,7 @@ describe("useTree", () => {
 					const content = <ParentComponent node={propPoint} />;
 
 					const rendered = render(content, { reactStrictMode });
-					const found = await rendered.findAllByText("x: 1, y: 1");
-					assert.equal(found.length, 1);
+					assert.equal(rendered.baseElement.textContent, "x: 1, y: 1");
 					checkRenderLog(log, ["parent", "render", "usePropTreeNode"]);
 
 					rendered.rerender(content);
@@ -142,8 +141,7 @@ describe("useTree", () => {
 					rendered.rerender(content);
 					// Parent which passed node down did not rerender, but PointComponent which read from it did:
 					checkRenderLog(log, ["render", "usePropTreeNode"]);
-					const found2 = await rendered.findAllByText("x: 2, y: 1");
-					assert.equal(found2.length, 1);
+					assert.equal(rendered.baseElement.textContent, "x: 2, y: 1");
 				});
 			});
 
@@ -151,7 +149,7 @@ describe("useTree", () => {
 				const builder = new SchemaFactory("tree-react-api");
 
 				class Item extends builder.object("Item", {
-					x: builder.number,
+					x: SchemaFactory.number,
 				}) {}
 
 				class Collection extends builder.array("Collection", Item) {}
@@ -163,12 +161,14 @@ describe("useTree", () => {
 
 				const log: string[] = [];
 
-				const ItemComponent = withTreeObservations(
-					(props: { item: Item }): JSX.Element => {
-						log.push(`Item: ${props.item.x}`);
-						return <span>{`${props.item.x}`}</span>;
-					},
-					() => log.push("Item invalidated"),
+				const ItemComponent = React.memo(
+					withTreeObservations(
+						(props: { item: Item }): JSX.Element => {
+							log.push(`Item: ${props.item.x}`);
+							return <span>{`${props.item.x}`}</span>;
+						},
+						() => log.push("Item invalidated"),
+					),
 				);
 
 				const CollectionComponent = withTreeObservations(
@@ -192,14 +192,27 @@ describe("useTree", () => {
 					() => log.push("Parent invalidated"),
 				);
 
-				it("empty", async () => {
+				it("empty", () => {
 					const collection = new Collection([]);
 					const content = <ParentComponent node={collection} />;
 					render(content, { reactStrictMode });
 					checkRenderLog(log, ["Parent", "Collection"]);
 				});
 
-				it("array editing", async () => {
+				it("array editing: insertion", () => {
+					const collection = new Collection([{ x: 1 }, { x: 2 }, { x: 3 }]);
+					const content = <ParentComponent node={collection} />;
+					const rendered = render(content, { reactStrictMode });
+					checkRenderLog(log, ["Parent", "Collection", "Item: 1", "Item: 2", "Item: 3"]);
+					collection.insertAtEnd(new Item({ x: 4 }));
+					checkRenderLog(log, ["Collection invalidated"]);
+					rendered.rerender(content);
+					checkRenderLog(log, ["Collection", "Item: 4"]);
+
+					assert.equal(rendered.baseElement.textContent, "1234");
+				});
+
+				it("array editing: general", () => {
 					const collection = new Collection([{ x: 1 }, { x: 2 }, { x: 3 }]);
 					const content = <ParentComponent node={collection} />;
 					const rendered = render(content, { reactStrictMode });
@@ -210,31 +223,11 @@ describe("useTree", () => {
 					checkRenderLog(log, ["Collection"]);
 					collection.removeAt(1);
 					collection.insertAtStart(new Item({ x: 4 }));
-					rendered.rerender(content);
-					checkRenderLog(log, ["Collection", "Item: 4"]);
-
-					const found = await rendered.findAllByText(/.*/);
-					assert.deepEqual(
-						found.map((e) => e.textContent),
-						["4", "3", "1"],
-					);
-				});
-
-				it("array editing2", async () => {
-					const collection = new Collection([{ x: 1 }, { x: 2 }, { x: 3 }]);
-					const content = <ParentComponent node={collection} />;
-					const rendered = render(content, { reactStrictMode });
-					checkRenderLog(log, ["Parent", "Collection", "Item: 1", "Item: 2", "Item: 3"]);
-					collection.insertAtEnd(new Item({ x: 4 }));
 					checkRenderLog(log, ["Collection invalidated"]);
 					rendered.rerender(content);
 					checkRenderLog(log, ["Collection", "Item: 4"]);
 
-					const found = await rendered.findAllByText(/.*/);
-					assert.deepEqual(
-						found.map((e) => e.textContent),
-						["1", "2", "3", "4"],
-					);
+					assert.equal(rendered.baseElement.textContent, "421");
 				});
 			});
 		}
