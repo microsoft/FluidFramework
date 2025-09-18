@@ -1,5 +1,16 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [6.0.1](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.0_1)
+
+Update dependencies on the following packages:
+
+- `@typescript-eslint/eslint-plugin` (from 7.0.0 to 7.18.0)
+- `@typescript-eslint/parser` (from 7.0.0 to 7.18.0)
+
+These updates result in the following rule changes:
+
+- `no-new-native-nonconstructor` (from `error` to `off`)
+
 ## [6.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.0_0)
 
 Adds the following [@typescript-eslint/no-restricted-imports](https://typescript-eslint.io/rules/no-restricted-imports/) rules:
