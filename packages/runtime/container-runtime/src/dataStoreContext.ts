@@ -752,7 +752,7 @@ export abstract class FluidDataStoreContext
 			return initialChannel;
 		}
 
-		const portableData = await migrationInfo.getPortableData();
+		const portableData = await migrationInfo.getPortableData(initialChannel);
 
 		const newPkgJoined = migrationInfo.newPackagePath.join("/");
 		assert(newPkgJoined !== oldPkg, "No-op migration not allowed");

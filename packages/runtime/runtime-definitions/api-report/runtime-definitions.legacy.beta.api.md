@@ -270,9 +270,9 @@ export interface IInboundSignalMessage<TMessage extends TypedMessage = TypedMess
     readonly type: TMessage["type"];
 }
 
-// @beta
+// @beta @legacy
 export interface IMigrationInfo {
-    readonly getPortableData: () => Promise<unknown>;
+    readonly getPortableData: (runtime: IFluidDataStoreChannel) => Promise<unknown>;
     readonly newPackagePath: readonly string[];
 }
 

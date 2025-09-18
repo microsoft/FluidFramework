@@ -19,7 +19,7 @@ import type { IFluidDataStoreChannel, IFluidDataStoreContext } from "./dataStore
  *
  * TODO: Add strong typing / versioning for portableData once the format stabilizes.
  *
- * @beta
+ * @legacy @beta
  */
 export interface IMigrationInfo {
 	/**
@@ -31,7 +31,7 @@ export interface IMigrationInfo {
 	 * Opaque portable state required by the target factory to rehydrate the runtime
 	 * in the new implementation.
 	 */
-	readonly getPortableData: () => Promise<unknown>; //* Maybe can use the "initial state" generic type?
+	readonly getPortableData: (runtime: IFluidDataStoreChannel) => Promise<unknown>;
 }
 
 /**
