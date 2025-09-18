@@ -37,6 +37,7 @@ const foo = bar;
 | [TestEmptyInterface](docs/test-suite-a/testemptyinterface-interface) | An empty interface |
 | [TestInterface](docs/test-suite-a/testinterface-interface) | Test interface |
 | [TestInterfaceExtendingOtherInterfaces](docs/test-suite-a/testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
+| [TestInterfaceWithCallSignature](docs/test-suite-a/testinterfacewithcallsignature-interface) | An interface with a complex call signature. |
 | [TestInterfaceWithIndexSignature](docs/test-suite-a/testinterfacewithindexsignature-interface) | An interface with an index signature. |
 | [TestInterfaceWithTypeParameter](docs/test-suite-a/testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
 

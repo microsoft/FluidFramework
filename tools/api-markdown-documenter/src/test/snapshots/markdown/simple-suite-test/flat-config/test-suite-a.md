@@ -37,6 +37,7 @@ const foo = bar;
 | [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) | An empty interface |
 | [TestInterface](docs/test-suite-a#testinterface-interface) | Test interface |
 | [TestInterfaceExtendingOtherInterfaces](docs/test-suite-a#testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
+| [TestInterfaceWithCallSignature](docs/test-suite-a#testinterfacewithcallsignature-interface) | An interface with a complex call signature. |
 | [TestInterfaceWithIndexSignature](docs/test-suite-a#testinterfacewithindexsignature-interface) | An interface with an index signature. |
 | [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
 
@@ -362,6 +363,40 @@ A number
 - [TestInterface](docs/test-suite-a#testinterface-interface)
 - [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)
 - [TestMappedType](docs/test-suite-a#testmappedtype-typealias)
+
+<h2 id="testinterfacewithcallsignature-interface">TestInterfaceWithCallSignature</h2>
+
+An interface with a complex call signature.
+
+<h3 id="testinterfacewithcallsignature-signature">Signature</h3>
+
+```typescript
+export interface TestInterfaceWithCallSignature
+```
+
+### Call Signatures
+
+| Call Signature | Return Type | Description |
+| - | - | - |
+| [\<T extends string>(foo: T): number & T](docs/test-suite-a#testinterfacewithcallsignature-_call_-callsignature) | number & T | Test call signature. |
+
+### Call Signature Details
+
+<h4 id="testinterfacewithcallsignature-_call_-callsignature"><T extends string>(foo: T): number & T</h4>
+
+Test call signature.
+
+<h5 id="_call_-signature">Signature</h5>
+
+```typescript
+<T extends string>(foo: T): number & T;
+```
+
+###### Type Parameters
+
+| Parameter | Constraint | Description |
+| - | - | - |
+| T | string | A type parameter |
 
 <h2 id="testinterfacewithindexsignature-interface">TestInterfaceWithIndexSignature</h2>
 
