@@ -497,6 +497,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 				// If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
 				if (this.resubmitMachine.isInResubmitPhase === false) {
+					// XXX: Review
 					const localCommits = this.editManager.getLocalCommits();
 					const revisionIndex = localCommits.findIndex((c) => c.revision === revision);
 					assert(revisionIndex >= 0, 0xbdb /* revision must exist in local commits */);
