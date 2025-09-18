@@ -11,6 +11,9 @@ export type Arg<T extends z.ZodTypeAny = z.ZodTypeAny> = readonly [name: string,
 export type ArgsTuple<T extends readonly Arg[]> = T extends readonly [infer Single extends Arg] ? [Single[1]] : T extends readonly [infer Head extends Arg, ...infer Tail extends readonly Arg[]] ? [Head[1], ...ArgsTuple<Tail>] : never;
 
 // @alpha
+export type BindableSchema = TreeNodeSchema<string, NodeKind.Object | NodeKind.Array | NodeKind.Map | NodeKind.Record>;
+
+// @alpha
 export function buildFunc<const Return extends z.ZodTypeAny, const Args extends readonly Arg[], const Rest extends z.ZodTypeAny | null = null>(def: {
     description?: string;
     returns: Return;
@@ -39,7 +42,7 @@ export type Ctor<T = any> = new (...args: any[]) => T;
 // @alpha
 export interface ExposedMethods {
     // (undocumented)
-    expose<const K extends string & keyof MethodKeys<InstanceType<S>>, S extends NodeSchema & Ctor<{
+    expose<const K extends string & keyof MethodKeys<InstanceType<S>>, S extends BindableSchema & Ctor<{
         [P in K]: Infer<Z>;
     }> & IExposedMethods, Z extends FunctionDef<any, any, any>>(schema: S, methodName: K, zodFunction: Z): void;
 }
@@ -81,9 +84,6 @@ export type Log = (message: string) => void;
 export type MethodKeys<T> = {
     [K in keyof T]: T[K] extends (...args: any[]) => any ? K : never;
 };
-
-// @alpha
-export type NodeSchema = TreeNodeSchema<string, NodeKind.Object>;
 
 // @alpha (undocumented)
 export interface SharedTreeSemanticAgent {
