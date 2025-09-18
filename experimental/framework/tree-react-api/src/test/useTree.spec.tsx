@@ -10,11 +10,13 @@ import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 import * as React from "react";
 
+import { objectIdNumber } from "../simpleIdentifier.js";
 import {
 	toPropTreeNode,
 	toPropTreeRecord,
 	unwrapPropTreeNode,
 	usePropTreeNode,
+	withTreeObservations,
 	type PropTreeNode,
 } from "../useTree.js";
 
@@ -78,52 +80,164 @@ describe("useTree", () => {
 			cleanup();
 		});
 
-		it("usePropTreeNode", async () => {
-			const builder = new SchemaFactory("tree-react-api");
+		for (const reactStrictMode of [false, true]) {
+			/**
+			 * Check then clear, the contents of `log`.
+			 *
+			 * When in StrictMode, React may double render, so that case is not checked for an exact match.
+			 */
+			// eslint-disable-next-line no-inner-declarations
+			function checkRenderLog(log: string[], expected: readonly string[]): void {
+				if (reactStrictMode) {
+					assert.deepEqual(new Set(log), new Set(expected));
+				} else {
+					assert.deepEqual(log, expected);
+				}
+				log.length = 0;
+			}
 
-			class Point extends builder.object("Point", { x: builder.number, y: builder.number }) {}
+			describe(`StrictMode: ${reactStrictMode}`, () => {
+				it("usePropTreeNode", async () => {
+					const builder = new SchemaFactory("tree-react-api");
 
-			const log: string[] = [];
+					class Point extends builder.object("Point", {
+						x: builder.number,
+						y: builder.number,
+					}) {}
 
-			function PointComponent(props: { node: PropTreeNode<Point> }): JSX.Element {
-				log.push("render");
-				const { x, y } = usePropTreeNode(props.node, (node) => {
-					log.push(`usePropTreeNode`);
-					return {
-						x: node.x,
-						y: node.y,
-					};
+					const log: string[] = [];
+
+					function PointComponent(props: { node: PropTreeNode<Point> }): JSX.Element {
+						log.push("render");
+						const { x, y } = usePropTreeNode(props.node, (node) => {
+							log.push(`usePropTreeNode`);
+							return {
+								x: node.x,
+								y: node.y,
+							};
+						});
+						return <span>{`x: ${x}, y: ${y}`}</span>;
+					}
+
+					function ParentComponent(props: { node: PropTreeNode<Point> }): JSX.Element {
+						log.push("parent");
+						return <PointComponent node={props.node} />;
+					}
+
+					const point = new Point({ x: 1, y: 1 });
+					const propPoint = toPropTreeNode(point);
+
+					const content = <ParentComponent node={propPoint} />;
+
+					const rendered = render(content, { reactStrictMode });
+					const found = await rendered.findAllByText("x: 1, y: 1");
+					assert.equal(found.length, 1);
+					checkRenderLog(log, ["parent", "render", "usePropTreeNode"]);
+
+					rendered.rerender(content);
+					assertLogEmpty(log);
+
+					point.x = 2;
+					assertLogEmpty(log);
+					rendered.rerender(content);
+					// Parent which passed node down did not rerender, but PointComponent which read from it did:
+					checkRenderLog(log, ["render", "usePropTreeNode"]);
+					const found2 = await rendered.findAllByText("x: 2, y: 1");
+					assert.equal(found2.length, 1);
 				});
-				return <span>{`x: ${x}, y: ${y}`}</span>;
-			}
+			});
 
-			function ParentComponent(props: { node: PropTreeNode<Point> }): JSX.Element {
-				log.push("parent");
-				return <PointComponent node={props.node} />;
-			}
+			describe("withTreeObservations and array", () => {
+				const builder = new SchemaFactory("tree-react-api");
 
-			const point = new Point({ x: 1, y: 1 });
-			const propPoint = toPropTreeNode(point);
+				class Item extends builder.object("Item", {
+					x: builder.number,
+				}) {}
 
-			const content = <ParentComponent node={propPoint} />;
+				class Collection extends builder.array("Collection", Item) {}
 
-			const rendered = render(content);
-			const found = await rendered.findAllByText("x: 1, y: 1");
-			assert.equal(found.length, 1);
-			assert.deepEqual(log, ["parent", "render", "usePropTreeNode"]);
-			log.length = 0;
+				beforeEach(() => {
+					// Ensure the log starts empty for each test.
+					log.length = 0;
+				});
 
-			rendered.rerender(content);
-			assertLogEmpty(log);
+				const log: string[] = [];
 
-			point.x = 2;
-			assertLogEmpty(log);
-			rendered.rerender(content);
-			// Parent which passed node down did not rerender, but PointComponent which read from it did:
-			assert.deepEqual(log, ["render", "usePropTreeNode"]);
-			const found2 = await rendered.findAllByText("x: 2, y: 1");
-			assert.equal(found2.length, 1);
-		});
+				const ItemComponent = withTreeObservations(
+					(props: { item: Item }): JSX.Element => {
+						log.push(`Item: ${props.item.x}`);
+						return <span>{`${props.item.x}`}</span>;
+					},
+					() => log.push("Item invalidated"),
+				);
+
+				const CollectionComponent = withTreeObservations(
+					(props: { collection: Collection }): JSX.Element => {
+						log.push("Collection");
+
+						const items = props.collection.map((item) => (
+							<ItemComponent key={objectIdNumber(item)} item={item} />
+						));
+
+						return <div>{items}</div>;
+					},
+					() => log.push("Collection invalidated"),
+				);
+
+				const ParentComponent = withTreeObservations(
+					(props: { node: Collection }): JSX.Element => {
+						log.push("Parent");
+						return <CollectionComponent collection={props.node} />;
+					},
+					() => log.push("Parent invalidated"),
+				);
+
+				it("empty", async () => {
+					const collection = new Collection([]);
+					const content = <ParentComponent node={collection} />;
+					render(content, { reactStrictMode });
+					checkRenderLog(log, ["Parent", "Collection"]);
+				});
+
+				it("array editing", async () => {
+					const collection = new Collection([{ x: 1 }, { x: 2 }, { x: 3 }]);
+					const content = <ParentComponent node={collection} />;
+					const rendered = render(content, { reactStrictMode });
+					checkRenderLog(log, ["Parent", "Collection", "Item: 1", "Item: 2", "Item: 3"]);
+					collection.moveToEnd(0);
+					checkRenderLog(log, ["Collection invalidated"]);
+					rendered.rerender(content);
+					checkRenderLog(log, ["Collection"]);
+					collection.removeAt(1);
+					collection.insertAtStart(new Item({ x: 4 }));
+					rendered.rerender(content);
+					checkRenderLog(log, ["Collection", "Item: 4"]);
+
+					const found = await rendered.findAllByText(/.*/);
+					assert.deepEqual(
+						found.map((e) => e.textContent),
+						["4", "3", "1"],
+					);
+				});
+
+				it("array editing2", async () => {
+					const collection = new Collection([{ x: 1 }, { x: 2 }, { x: 3 }]);
+					const content = <ParentComponent node={collection} />;
+					const rendered = render(content, { reactStrictMode });
+					checkRenderLog(log, ["Parent", "Collection", "Item: 1", "Item: 2", "Item: 3"]);
+					collection.insertAtEnd(new Item({ x: 4 }));
+					checkRenderLog(log, ["Collection invalidated"]);
+					rendered.rerender(content);
+					checkRenderLog(log, ["Collection", "Item: 4"]);
+
+					const found = await rendered.findAllByText(/.*/);
+					assert.deepEqual(
+						found.map((e) => e.textContent),
+						["1", "2", "3", "4"],
+					);
+				});
+			});
+		}
 	});
 });
 
