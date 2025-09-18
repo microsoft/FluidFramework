@@ -23,10 +23,3 @@ export const getSpecifiedServiceFromWebpack = (): ExampleDriverService => {
 	}
 	return service;
 };
-
-/**
- * @internal
- */
-export const getExampleDriverServiceWebpackPlugin = (service: ExampleDriverService) => {
-	return { EXAMPLE_DRIVER_SERVICE: JSON.stringify(service) };
-};

@@ -8,7 +8,4 @@ export {
 	ExampleDriver,
 } from "./createDriver.js";
 export { ExampleDriverService } from "./interfaces.js";
-export {
-	getExampleDriverServiceWebpackPlugin,
-	getSpecifiedServiceFromWebpack,
-} from "./webpackSpecifiedService.js";
+export { getSpecifiedServiceFromWebpack } from "./webpackSpecifiedService.js";
