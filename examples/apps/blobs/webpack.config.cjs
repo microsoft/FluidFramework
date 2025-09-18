@@ -9,7 +9,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
 
 module.exports = (env) => {
-	const isProduction = env?.production;
+	const { production, service } = env;
 
 	return merge(
 		{
@@ -48,6 +48,6 @@ module.exports = (env) => {
 				}),
 			],
 		},
-		isProduction ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),
+		production ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),
 	);
 };
