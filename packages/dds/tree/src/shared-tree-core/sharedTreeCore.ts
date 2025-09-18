@@ -523,31 +523,59 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				unreachableCase(type);
 		}
 	}
+
 	public rollback(content: JsonCompatibleReadOnly, localOpMetadata: unknown): void {
-		// XXX
-		// // Empty context object is passed in, as our decode function is schema-agnostic.
-		// const {
-		// 	commit: { revision },
-		// 	branchId,
-		// } = this.messageCodec.decode(this.serializer.decode(content), {
-		// 	idCompressor: this.idCompressor,
-		// });
-		// const branch = this.editManager.getLocalBranch(branchId);
-		// const head = branch.getHead();
-		// assert(head.revision === revision, "Can only rollback latest commit");
-		// const newHead = head.parent ?? fail("must have parent");
-		// branch.removeAfter(newHead);
-		// this.resubmitMachine.onCommitRollback(newHead);
+		// Empty context object is passed in, as our decode function is schema-agnostic.
+		const message = this.messageCodec.decode(this.serializer.decode(content), {
+			idCompressor: this.idCompressor,
+		});
+
+		const type = message.type;
+		switch (type) {
+			case "commit": {
+				const {
+					commit: { revision },
+					branchId,
+				} = message;
+				const branch = this.editManager.getLocalBranch(branchId);
+				const head = branch.getHead();
+				assert(head.revision === revision, "Can only rollback latest commit");
+				const newHead = head.parent ?? fail("must have parent");
+				branch.removeAfter(newHead);
+				this.resubmitMachine.onCommitRollback(newHead);
+			}
+			case "branch": {
+				this.editManager.removeBranch(message.branchId);
+				break;
+			}
+			default:
+				unreachableCase(type);
+		}
 	}
 
 	public applyStashedOp(content: JsonCompatibleReadOnly): void {
-		// XXX
-		// // Empty context object is passed in, as our decode function is schema-agnostic.
-		// const {
-		// 	commit: { revision, change },
-		// 	branchId,
-		// } = this.messageCodec.decode(content, { idCompressor: this.idCompressor });
-		// this.editManager.getLocalBranch(branchId).apply({ change, revision });
+		// Empty context object is passed in, as our decode function is schema-agnostic.
+		const message = this.messageCodec.decode(this.serializer.decode(content), {
+			idCompressor: this.idCompressor,
+		});
+
+		const type = message.type;
+		switch (type) {
+			case "commit": {
+				const {
+					commit: { revision, change },
+					branchId,
+				} = message;
+				this.editManager.getLocalBranch(branchId).apply({ change, revision });
+				break;
+			}
+			case "branch": {
+				this.editManager.addBranch(message.branchId);
+				break;
+			}
+			default:
+				unreachableCase(type);
+		}
 	}
 }
 

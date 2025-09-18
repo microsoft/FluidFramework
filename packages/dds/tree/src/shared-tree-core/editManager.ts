@@ -556,6 +556,11 @@ export class EditManager<
 		this.createSharedBranch(branchId, this.getLocalBranch("main").fork());
 	}
 
+	public removeBranch(branchId: BranchId): void {
+		const hadBranch = this.sharedBranches.delete(branchId);
+		assert(hadBranch, "Expected branch to exist");
+	}
+
 	private createSharedBranch(
 		branchId: BranchId,
 		branch: SharedTreeBranch<TEditor, TChangeset>,
