@@ -15,7 +15,7 @@ import {
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { DirectoryFactory } from "../../index.js";
-import { SharedDirectoryOracle } from "../directroyOracle.js";
+import { SharedDirectoryOracle } from "../directoryOracle.js";
 
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 import { _dirname } from "./dirname.cjs";
