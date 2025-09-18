@@ -10,6 +10,15 @@ import process from "node:process";
 import { OdspTokenManager } from "@fluidframework/tool-utils/internal";
 
 /**
+ * Construct the set of middleware required to support the odsp example driver.
+ *
+ * @remarks
+ * Relies on environment variables containing the test tenant and user information, which will be
+ * automatically configured by running trips-setup.
+ *
+ * process.env.login__odsp__test__tenants - JSON array of users/credentials with deducible tenants
+ * process.env.login__microsoft__clientId - the client ID to use
+ *
  * @internal
  */
 export const getOdspMiddlewares = () => {

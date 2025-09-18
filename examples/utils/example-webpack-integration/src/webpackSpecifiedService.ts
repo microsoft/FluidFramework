@@ -4,6 +4,7 @@
  */
 
 /**
+ * Helper to create a DefinePlugin for specifying the driver service to use.
  * @internal
  */
 export const getExampleDriverServiceWebpackPlugin = (service: string) => {
