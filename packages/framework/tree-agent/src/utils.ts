@@ -345,6 +345,9 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 
 					return append(name);
 				}
+				throw new Error(
+					"Unsupporteded zod effects type. Did you use z.instanceOf? Use ExposedMethods.instanceOf function to reference schema classes in methods.",
+				);
 			}
 			case z.ZodFirstPartyTypeKind.ZodVoid: {
 				return append("void");
