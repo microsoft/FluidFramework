@@ -57,6 +57,22 @@ class SubscriptionsWrapper {
 }
 
 /**
+ * Higher order component which wraps a component to use {@link useTreeObservations}.
+ * @remarks
+ * When passing TreeNodes in props, care must be taken to not observe their content outside of a context which does observation tracking (or manual invalidation).
+ * This wraps a component in such tracking.
+ *
+ * It is recommended that sub-components which take in TreeNodes, if not defined using this higher order components, take the nodes in as {@link PropTreeNode}s.
+ * @public
+ */
+export function withTreeObservations<TIn>(
+	component: React.FC<TIn>,
+): React.FC<TIn | WrapNodes<TIn>> {
+	return (props: TIn | WrapNodes<TIn>): React.ReactNode =>
+		useTreeObservations(() => component(props as TIn));
+}
+
+/**
  * Custom hook which invalidates a React Component when there is a change in tree content observed during `trackDuring`.
  * @remarks
  * This includes changes to the tree's content.

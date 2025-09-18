@@ -6,6 +6,7 @@
 import {
 	objectIdNumber,
 	usePropTreeNode,
+	withTreeObservations,
 	type PropTreeNode,
 } from "@fluid-experimental/tree-react-api";
 import * as React from "react";
@@ -17,10 +18,10 @@ import { Counter } from "./counter.js";
 /**
  * Example of a view which directly consumes multiple nodes from the tree.
  */
-export const MainViewMonolithic: React.FC<{ root: PropTreeNode<Inventory> }> = ({ root }) =>
+export const InventoryViewMonolithic =
 	// This could use a more granular observation strategy, like having a component for each part, but such an approach is not required
-	usePropTreeNode(root, (inventory: Inventory) => {
-		const counters: JSX.Element[] = inventory.parts.map((part) => (
+	withTreeObservations(({ root }: { root: Inventory }) => {
+		const counters: JSX.Element[] = root.parts.map((part) => (
 			<Counter
 				key={part.name}
 				title={part.name}

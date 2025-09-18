@@ -37,5 +37,6 @@ export {
 	usePropTreeNode,
 	usePropTreeRecord,
 	useTreeObservations,
+	withTreeObservations,
 } from "./useTree.js";
 export { objectIdNumber } from "./simpleIdentifier.js";
