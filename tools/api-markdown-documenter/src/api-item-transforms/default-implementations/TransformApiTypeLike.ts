@@ -272,7 +272,7 @@ function createSummaryTables(
 	addTableSection(
 		createDefaultSummaryTable(
 			indexSignatures.map((member) => member.item),
-			ApiItemKind.IndexSignature,
+			"Index Signature",
 			config,
 		),
 		"Index Signatures",
