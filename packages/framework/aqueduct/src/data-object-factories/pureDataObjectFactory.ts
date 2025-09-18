@@ -43,7 +43,13 @@ import type {
 	PureDataObject,
 } from "../data-objects/index.js";
 
-interface CreateDataObjectProps<TObj extends PureDataObject, I extends DataObjectTypes> {
+/**
+ * @legacy @beta
+ */
+export interface CreateDataObjectProps<
+	TObj extends PureDataObject,
+	I extends DataObjectTypes,
+> {
 	ctor: new (props: IDataObjectProps<I>) => TObj;
 	context: IFluidDataStoreContext;
 	sharedObjectRegistry: ISharedObjectRegistry;
@@ -204,14 +210,10 @@ export interface DataObjectFactoryProps<
 export class PureDataObjectFactory<
 	TObj extends PureDataObject<I>,
 	I extends DataObjectTypes = DataObjectTypes,
-	//* TODO: Add 2 new subclasses that implement IMigrationSourceFluidDataStoreFactory and IMigrationTargetFluidDataStoreFactory respectively
-> implements
-		IMigrationSourceFluidDataStoreFactory,
-		IMigrationTargetFluidDataStoreFactory,
-		Partial<IProvideFluidDataStoreRegistry>
+> implements Partial<IProvideFluidDataStoreRegistry>
 {
 	private readonly registry: IFluidDataStoreRegistry | undefined;
-	private readonly createProps: Omit<CreateDataObjectProps<TObj, I>, "existing" | "context">;
+	protected readonly createProps: Omit<CreateDataObjectProps<TObj, I>, "existing" | "context">;
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreFactory."type"}
@@ -231,14 +233,9 @@ export class PureDataObjectFactory<
 		registryEntries?: NamedFluidDataStoreRegistryEntries,
 		runtimeClass?: typeof FluidDataStoreRuntime,
 	);
+	public constructor(props: DataObjectFactoryProps<TObj, I>);
 	public constructor(
-		//* TODO: Define a MigrationSourceProps or something rather than inline this ammendment
-		props: DataObjectFactoryProps<TObj, I> & { migrationInfo?: IMigrationInfo },
-	);
-	public constructor(
-		propsOrType:
-			| (DataObjectFactoryProps<TObj, I> & { migrationInfo?: IMigrationInfo })
-			| string,
+		propsOrType: DataObjectFactoryProps<TObj, I> | string,
 		maybeCtor?: new (doProps: IDataObjectProps<I>) => TObj,
 		maybeSharedObjects?: readonly IChannelFactory[],
 		maybeOptionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>,
@@ -263,8 +260,6 @@ export class PureDataObjectFactory<
 			throw new Error("undefined type member");
 		}
 		this.type = newProps.type;
-
-		this.migrationInfo = newProps.migrationInfo;
 
 		this.createProps = {
 			ctor: newProps.ctor,
@@ -303,12 +298,6 @@ export class PureDataObjectFactory<
 		return [this.type, Promise.resolve(this)];
 	}
 
-	//* TODO: Move this to a "Migration Source" subclass.  No factory should be both a source and target.
-	/**
-	 * If defined, this factory should be migrated away from according to this info.
-	 */
-	public readonly migrationInfo: IMigrationInfo | undefined;
-
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreFactory.instantiateDataStore}
 	 */
@@ -317,21 +306,6 @@ export class PureDataObjectFactory<
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
 		const { runtime } = await createDataObject({ ...this.createProps, context, existing });
-
-		return runtime;
-	}
-
-	//* TODO: Move this to a "Migration Target" subclass.  No factory should be both a source and target.
-	public async instantiateForMigration(
-		context: IFluidDataStoreContext,
-		portableData: I["InitialState"],
-	): Promise<IFluidDataStoreChannel> {
-		const { runtime } = await createDataObject({
-			...this.createProps,
-			context,
-			existing: true,
-			initialState: portableData, //* A bit hacky: Overloading the InitialState, would be distinguished from the type used for creating new ones by the value of 'existing'
-		});
 
 		return runtime;
 	}
@@ -496,5 +470,51 @@ export class PureDataObjectFactory<
 		await context.attachRuntime(this, runtime);
 
 		return instance;
+	}
+}
+
+/**
+ * Migration source factory variant that carries migrationInfo metadata.
+ */
+export class MigrationSourcePureDataObjectFactory<
+		TObj extends PureDataObject<I>,
+		I extends DataObjectTypes = DataObjectTypes,
+	>
+	extends PureDataObjectFactory<TObj, I>
+	implements IMigrationSourceFluidDataStoreFactory
+{
+	public readonly migrationInfo: IMigrationInfo | undefined;
+
+	public constructor(
+		props: DataObjectFactoryProps<TObj, I> & { migrationInfo?: IMigrationInfo },
+	) {
+		// Call base constructor to configure the factory; reuse the same overloads as the base.
+		super(props);
+		this.migrationInfo = props.migrationInfo;
+	}
+}
+
+/**
+ * Migration target factory variant that can instantiate for migration.
+ */
+export class MigrationTargetPureDataObjectFactory<
+		TObj extends PureDataObject<I>,
+		I extends DataObjectTypes = DataObjectTypes,
+	>
+	extends PureDataObjectFactory<TObj, I>
+	implements IMigrationTargetFluidDataStoreFactory
+{
+	public async instantiateForMigration(
+		context: IFluidDataStoreContext,
+		portableData: I["InitialState"],
+	): Promise<IFluidDataStoreChannel> {
+		const { runtime } = await createDataObject({
+			...this.createProps,
+			context,
+			existing: true,
+			initialState: portableData, //* A bit hacky: Overloading the InitialState, would be distinguished from the type used for creating new ones by the value of 'existing'
+		});
+
+		return runtime;
 	}
 }

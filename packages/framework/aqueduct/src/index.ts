@@ -20,6 +20,7 @@
 
 export {
 	DataObjectFactory,
+	type CreateDataObjectProps,
 	type DataObjectFactoryProps,
 	PureDataObjectFactory,
 	TreeDataObjectFactory,
