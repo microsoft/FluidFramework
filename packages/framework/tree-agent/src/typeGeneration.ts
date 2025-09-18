@@ -21,7 +21,7 @@ import type {
 } from "@fluidframework/tree/internal";
 import { z, type ZodTypeAny } from "zod";
 
-import type { NodeSchema } from "./methodBinding.js";
+import type { BindableSchema } from "./methodBinding.js";
 import { FunctionWrapper, getExposedMethods } from "./methodBinding.js";
 import {
 	fail,
@@ -65,12 +65,16 @@ export function generateEditTypesForPrompt(
 		const treeNodeSchemas = new Set<TreeNodeSchema>();
 		walkFieldSchema(rootSchema, {} satisfies SchemaVisitor, treeNodeSchemas);
 		const nodeSchemas = [...treeNodeSchemas.values()].filter(
-			(treeNodeSchema) => treeNodeSchema.kind === NodeKind.Object,
-		) as NodeSchema[];
-		const treeNodeSchemaMap = new Map<string, NodeSchema>(
+			(treeNodeSchema) =>
+				treeNodeSchema.kind === NodeKind.Object ||
+				treeNodeSchema.kind === NodeKind.Array ||
+				treeNodeSchema.kind === NodeKind.Map ||
+				treeNodeSchema.kind === NodeKind.Record,
+		) as BindableSchema[];
+		const bindableSchemas = new Map<string, BindableSchema>(
 			nodeSchemas.map((nodeSchema) => [nodeSchema.identifier, nodeSchema]),
 		);
-		return generateEditTypes(schema, new Map(), treeNodeSchemaMap);
+		return generateEditTypes(schema, new Map(), bindableSchemas);
 	});
 }
 
@@ -85,13 +89,18 @@ export function generateEditTypesForPrompt(
 function generateEditTypes(
 	schema: SimpleTreeSchema,
 	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
-	treeSchemaMap: Map<string, NodeSchema> | undefined,
+	bindableSchemas: Map<string, BindableSchema>,
 ): {
 	domainTypes: Record<string, ZodTypeAny>;
 } {
 	const domainTypes: Record<string, ZodTypeAny> = {};
 	for (const name of schema.definitions.keys()) {
-		domainTypes[name] = getOrCreateType(schema.definitions, name, objectCache, treeSchemaMap);
+		domainTypes[name] = getOrCreateType(
+			schema.definitions,
+			name,
+			objectCache,
+			bindableSchemas,
+		);
 	}
 
 	return {
@@ -99,11 +108,54 @@ function generateEditTypes(
 	};
 }
 
+function getBoundMethods(
+	definition: string,
+	bindableSchemas: Map<string, BindableSchema>,
+): [string, ZodTypeAny][] {
+	const methodTypes: [string, ZodTypeAny][] = [];
+	const bindableSchema = bindableSchemas.get(definition) ?? fail("Unknown definition");
+	const methods = getExposedMethods(bindableSchema);
+	for (const [name, method] of Object.entries(methods)) {
+		const zodFunction = z.instanceof(FunctionWrapper);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+		(zodFunction as any).method = method;
+		methodTypes.push([name, zodFunction]);
+	}
+	return methodTypes;
+}
+
+function addBindingIntersectionIfNeeded(
+	typeString: "array" | "map" | "record",
+	zodTypeBound: ZodTypeAny,
+	definition: string,
+	simpleNodeSchema: SimpleNodeSchema,
+	bindableSchemas: Map<string, BindableSchema>,
+): ZodTypeAny {
+	let zodType = zodTypeBound;
+	let description = simpleNodeSchema.metadata?.description ?? "";
+	const boundMethods = getBoundMethods(definition, bindableSchemas);
+	if (boundMethods.length > 0) {
+		const methods: Record<string, z.ZodTypeAny> = {};
+		for (const [name, zodFunction] of boundMethods) {
+			if (methods[name] !== undefined) {
+				throw new UsageError(
+					`Method ${name} conflicts with field of the same name in schema ${definition}`,
+				);
+			}
+			methods[name] = zodFunction;
+		}
+		zodType = z.intersection(zodType, z.object(methods));
+		const methodNote = `Note: this ${typeString} has custom user-defined methods directly on it.`;
+		description = description === "" ? methodNote : `${description} - ${methodNote}`;
+	}
+	return zodType.describe(description);
+}
+
 function getOrCreateType(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	definition: string,
 	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
-	treeSchemaMap: Map<string, NodeSchema> | undefined,
+	bindableSchemas: Map<string, BindableSchema>,
 ): ZodTypeAny {
 	const simpleNodeSchema = definitionMap.get(definition) ?? fail("Unexpected definition");
 	return getOrCreate(objectCache, simpleNodeSchema, () => {
@@ -115,64 +167,75 @@ function getOrCreateType(
 						.map(([key, field]) => {
 							return [
 								key,
-								getOrCreateTypeForField(definitionMap, field, objectCache, treeSchemaMap),
+								getOrCreateTypeForField(definitionMap, field, objectCache, bindableSchemas),
 							];
 						})
 						.filter(([, value]) => value !== undefined),
 				);
-				if (treeSchemaMap) {
-					const nodeSchema = treeSchemaMap.get(definition) ?? fail("Unknown definition");
-					const methods = getExposedMethods(nodeSchema);
-					for (const [name, method] of Object.entries(methods)) {
-						if (properties[name] !== undefined) {
-							throw new UsageError(
-								`Method ${name} conflicts with field of the same name in schema ${definition}`,
-							);
-						}
-						const zodFunction = z.instanceof(FunctionWrapper);
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						(zodFunction as any).method = method;
-						properties[name] = zodFunction;
+
+				// Unlike arrays/maps/records, object nodes include methods directly on them rather than using an intersection
+				for (const [name, zodFunction] of getBoundMethods(definition, bindableSchemas)) {
+					if (properties[name] !== undefined) {
+						throw new UsageError(
+							`Method ${name} conflicts with field of the same name in schema ${definition}`,
+						);
 					}
+					properties[name] = zodFunction;
 				}
+
 				return z.object(properties).describe(simpleNodeSchema.metadata?.description ?? "");
 			}
 			case NodeKind.Map: {
-				return z
-					.map(
-						z.string(),
-						getTypeForAllowedTypes(
-							definitionMap,
-							simpleNodeSchema.allowedTypesIdentifiers,
-							objectCache,
-							treeSchemaMap,
-						),
-					)
-					.describe(simpleNodeSchema.metadata?.description ?? "");
+				const zodType = z.map(
+					z.string(),
+					getTypeForAllowedTypes(
+						definitionMap,
+						simpleNodeSchema.allowedTypesIdentifiers,
+						objectCache,
+						bindableSchemas,
+					),
+				);
+				return addBindingIntersectionIfNeeded(
+					"map",
+					zodType,
+					definition,
+					simpleNodeSchema,
+					bindableSchemas,
+				);
 			}
 			case NodeKind.Record: {
-				return z
-					.record(
-						getTypeForAllowedTypes(
-							definitionMap,
-							simpleNodeSchema.allowedTypesIdentifiers,
-							objectCache,
-							treeSchemaMap,
-						),
-					)
-					.describe(simpleNodeSchema.metadata?.description ?? "");
+				const zodType = z.record(
+					getTypeForAllowedTypes(
+						definitionMap,
+						simpleNodeSchema.allowedTypesIdentifiers,
+						objectCache,
+						bindableSchemas,
+					),
+				);
+				return addBindingIntersectionIfNeeded(
+					"record",
+					zodType,
+					definition,
+					simpleNodeSchema,
+					bindableSchemas,
+				);
 			}
 			case NodeKind.Array: {
-				return z
-					.array(
-						getTypeForAllowedTypes(
-							definitionMap,
-							simpleNodeSchema.allowedTypesIdentifiers,
-							objectCache,
-							treeSchemaMap,
-						),
-					)
-					.describe(simpleNodeSchema.metadata?.description ?? "");
+				const zodType = z.array(
+					getTypeForAllowedTypes(
+						definitionMap,
+						simpleNodeSchema.allowedTypesIdentifiers,
+						objectCache,
+						bindableSchemas,
+					),
+				);
+				return addBindingIntersectionIfNeeded(
+					"array",
+					zodType,
+					definition,
+					simpleNodeSchema,
+					bindableSchemas,
+				);
 			}
 			case NodeKind.Leaf: {
 				switch (simpleNodeSchema.leafKind) {
@@ -204,7 +267,7 @@ function getOrCreateTypeForField(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	fieldSchema: SimpleFieldSchema,
 	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
-	treeSchemaMap: Map<string, NodeSchema> | undefined,
+	bindableSchemas: Map<string, BindableSchema>,
 ): ZodTypeAny {
 	const customMetadata = fieldSchema.metadata.custom as
 		| Record<string | symbol, unknown>
@@ -228,7 +291,7 @@ function getOrCreateTypeForField(
 		definitionMap,
 		fieldSchema.allowedTypesIdentifiers,
 		objectCache,
-		treeSchemaMap,
+		bindableSchemas,
 	).describe(
 		getDefault === undefined
 			? (fieldSchema.metadata?.description ?? "")
@@ -259,18 +322,18 @@ function getTypeForAllowedTypes(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	allowedTypes: ReadonlySet<string>,
 	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
-	treeSchemaMap: Map<string, NodeSchema> | undefined,
+	bindableSchemas: Map<string, BindableSchema>,
 ): ZodTypeAny {
 	const single = tryGetSingleton(allowedTypes);
 	if (single === undefined) {
 		const types = [
 			...mapIterable(allowedTypes, (name) => {
-				return getOrCreateType(definitionMap, name, objectCache, treeSchemaMap);
+				return getOrCreateType(definitionMap, name, objectCache, bindableSchemas);
 			}),
 		];
 		assert(hasAtLeastTwo(types), 0xa7e /* Expected at least two types */);
 		return z.union(types);
 	} else {
-		return getOrCreateType(definitionMap, single, objectCache, treeSchemaMap);
+		return getOrCreateType(definitionMap, single, objectCache, bindableSchemas);
 	}
 }
