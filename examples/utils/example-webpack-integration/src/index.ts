@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { getOdspMiddlewares } from "./odspMiddlewares.js";
-export { getExampleDriverServiceWebpackPlugin } from "./webpackSpecifiedService.js";
+export { createOdspMiddlewares } from "./odspMiddlewares.js";
+export { createExampleDriverServiceWebpackPlugin } from "./webpackSpecifiedService.js";

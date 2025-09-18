@@ -48,6 +48,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/tool-utils": "workspace:~",
+		"webpack": "^5.94.0",
 		"webpack-dev-server": "~4.15.2"
 	},
 	"devDependencies": {

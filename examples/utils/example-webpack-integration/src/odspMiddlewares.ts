@@ -19,8 +19,8 @@ const isTestAccounts = (value: unknown): value is TestAccounts =>
 			account !== null &&
 			"UserPrincipalName" in account &&
 			"Password" in account &&
-			typeof account.UserPrincipalName === "string" &&
-			typeof account.Password === "string",
+			typeof (account as { UserPrincipalName: unknown }).UserPrincipalName === "string" &&
+			typeof (account as { Password: unknown }).Password === "string",
 	);
 
 /**
@@ -35,7 +35,7 @@ const isTestAccounts = (value: unknown): value is TestAccounts =>
  *
  * @internal
  */
-export const getOdspMiddlewares = (): Middleware[] => {
+export const createOdspMiddlewares = (): Middleware[] => {
 	if (process.env.login__odsp__test__tenants === undefined) {
 		throw new Error(
 			"process.env.login__odsp__test__tenants is missing. Make sure you ran trips-setup and restarted your terminal.",
@@ -46,15 +46,15 @@ export const getOdspMiddlewares = (): Middleware[] => {
 			"process.env.login__microsoft__clientId is missing. Make sure you ran trips-setup and restarted your terminal.",
 		);
 	}
-	const testAccounts: TestAccounts = JSON.parse(process.env.login__odsp__test__tenants);
+	const testAccounts: unknown = JSON.parse(process.env.login__odsp__test__tenants);
 	if (!isTestAccounts(testAccounts) || testAccounts[0] === undefined) {
 		throw new Error(
 			"process.env.login__odsp__test__tenants is not a valid array of test accounts.",
 		);
 	}
 	const { UserPrincipalName: username, Password: password } = testAccounts[0];
-	const emailServer = username.substring(username.indexOf("@") + 1);
-	const tenantName = emailServer.substring(0, emailServer.indexOf("."));
+	const emailServer = username.slice(username.indexOf("@") + 1);
+	const tenantName = emailServer.slice(0, emailServer.indexOf("."));
 	const siteUrl = `https://${tenantName}.sharepoint.com`;
 	const server = new URL(siteUrl).host;
 

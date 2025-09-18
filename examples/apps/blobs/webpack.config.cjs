@@ -4,8 +4,8 @@
  */
 
 const {
-	getExampleDriverServiceWebpackPlugin,
-	getOdspMiddlewares,
+	createExampleDriverServiceWebpackPlugin,
+	createOdspMiddlewares,
 } = require("@fluid-example/example-webpack-integration");
 const path = require("path");
 const { merge } = require("webpack-merge");
@@ -50,14 +50,12 @@ module.exports = (env) => {
 				new HtmlWebpackPlugin({
 					template: "./src/index.html",
 				}),
-				new webpack.DefinePlugin({
-					...getExampleDriverServiceWebpackPlugin(service),
-				}),
+				createExampleDriverServiceWebpackPlugin(service),
 			],
 			devServer: {
 				setupMiddlewares: (middlewares) => {
 					if (service === "odsp") {
-						middlewares.push(...getOdspMiddlewares());
+						middlewares.push(...createOdspMiddlewares());
 					}
 					return middlewares;
 				},
