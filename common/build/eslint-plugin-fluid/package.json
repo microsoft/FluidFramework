@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/eslint-plugin-fluid",
-	"version": "0.1.5",
+	"version": "0.1.6",
 	"description": "Custom ESLint rules for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -22,8 +22,8 @@
 		"test": "mocha \"src/test/**/*.test.*js\""
 	},
 	"dependencies": {
-		"@microsoft/tsdoc": "^0.14.2",
-		"@typescript-eslint/parser": "^6.21.0",
+		"@microsoft/tsdoc": "^0.15.1",
+		"@typescript-eslint/parser": "~7.18.0",
 		"ts-morph": "^22.0.0"
 	},
 	"devDependencies": {
