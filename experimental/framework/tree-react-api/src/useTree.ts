@@ -17,9 +17,6 @@ import {
 	type WrapNodes,
 } from "./propNode.js";
 
-// TODO:
-// Expose useViewRoot
-
 /**
  * Custom hook which invalidates a React Component when there is a change in the subtree defined by `subtreeRoot`.
  * This includes changes to the tree's content, but not changes to its parentage.
