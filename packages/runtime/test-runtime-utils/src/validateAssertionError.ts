@@ -43,10 +43,7 @@ export function validateAssertionError(
 	) {
 		// This throws an Error instead of an AssertionError because AssertionError would require a dependency on the
 		// node assert library, which we don't want to do for this library because it's used in the browser.
-		const message =
-			possibleShortCode in shortCodeMap
-				? `Unexpected assertion thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`
-				: `Unexpected assertion thrown\nActual: ${error.message} ('${mappedMsg}')\nExpected: ${expectedErrorMsg}`;
+		const message = `Unexpected assertion thrown\nActual: ${error.message === mappedMsg ? error.message : `${error.message} ('${mappedMsg}')}`}\nExpected: ${expectedErrorMsg}`;
 		throw new Error(message);
 	}
 	return true;
