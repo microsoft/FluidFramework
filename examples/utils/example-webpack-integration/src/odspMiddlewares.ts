@@ -8,6 +8,20 @@ import process from "node:process";
 
 // eslint-disable-next-line import/no-internal-modules
 import { OdspTokenManager } from "@fluidframework/tool-utils/internal";
+import type { Middleware } from "webpack-dev-server";
+
+type TestAccounts = { UserPrincipalName: string; Password: string }[];
+const isTestAccounts = (value: unknown): value is TestAccounts =>
+	Array.isArray(value) &&
+	value.every(
+		(account) =>
+			typeof account === "object" &&
+			account !== null &&
+			"UserPrincipalName" in account &&
+			"Password" in account &&
+			typeof account.UserPrincipalName === "string" &&
+			typeof account.Password === "string",
+	);
 
 /**
  * Construct the set of middleware required to support the odsp example driver.
@@ -21,7 +35,7 @@ import { OdspTokenManager } from "@fluidframework/tool-utils/internal";
  *
  * @internal
  */
-export const getOdspMiddlewares = () => {
+export const getOdspMiddlewares = (): Middleware[] => {
 	if (process.env.login__odsp__test__tenants === undefined) {
 		throw new Error(
 			"process.env.login__odsp__test__tenants is missing. Make sure you ran trips-setup and restarted your terminal.",
@@ -32,7 +46,12 @@ export const getOdspMiddlewares = () => {
 			"process.env.login__microsoft__clientId is missing. Make sure you ran trips-setup and restarted your terminal.",
 		);
 	}
-	const testAccounts = JSON.parse(process.env.login__odsp__test__tenants);
+	const testAccounts: TestAccounts = JSON.parse(process.env.login__odsp__test__tenants);
+	if (!isTestAccounts(testAccounts) || testAccounts[0] === undefined) {
+		throw new Error(
+			"process.env.login__odsp__test__tenants is not a valid array of test accounts.",
+		);
+	}
 	const { UserPrincipalName: username, Password: password } = testAccounts[0];
 	const emailServer = username.substring(username.indexOf("@") + 1);
 	const tenantName = emailServer.substring(0, emailServer.indexOf("."));
@@ -49,7 +68,7 @@ export const getOdspMiddlewares = () => {
 		{
 			name: "get-site-url",
 			path: "/siteUrl",
-			middleware: async (req, res) => {
+			middleware: (req, res) => {
 				res.send(siteUrl);
 			},
 		},

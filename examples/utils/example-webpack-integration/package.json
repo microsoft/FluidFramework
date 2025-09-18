@@ -47,7 +47,8 @@
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
-		"@fluidframework/tool-utils": "workspace:~"
+		"@fluidframework/tool-utils": "workspace:~",
+		"webpack-dev-server": "~4.15.2"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
