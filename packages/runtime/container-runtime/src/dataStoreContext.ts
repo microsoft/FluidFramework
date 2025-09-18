@@ -55,6 +55,8 @@ import {
 	type IFluidDataStoreContextDetached,
 	type IFluidDataStoreRegistry,
 	type IGarbageCollectionDetailsBase,
+	type IMigrationSourceFluidDataStoreFactory,
+	type IMigrationTargetFluidDataStoreFactory,
 	type IProvideFluidDataStoreFactory,
 	type ISummarizeInternalResult,
 	type ISummarizeResult,
@@ -68,10 +70,6 @@ import {
 	type PackagePath,
 	type IRuntimeStorageService,
 	type MinimumVersionForCollab,
-} from "@fluidframework/runtime-definitions/internal";
-import type {
-	IMigrationInfo,
-	IMigratableFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -727,8 +725,7 @@ export abstract class FluidDataStoreContext
 			return initialChannel;
 		}
 
-		const migrationInfo = (factory as unknown as { migrationInfo?: IMigrationInfo })
-			.migrationInfo;
+		const migrationInfo = (factory as IMigrationSourceFluidDataStoreFactory).migrationInfo;
 		if (migrationInfo === undefined) {
 			// No migration needed if factory doesn't request it
 			return initialChannel;
@@ -771,9 +768,9 @@ export abstract class FluidDataStoreContext
 				initialChannel.dispose();
 
 				// Lookup new factory with updated package path
-				//* TODO: Use proper type guard instead of cast
+				//* TODO: Use proper type guard (that asserts) instead of cast
 				const newFactory =
-					(await this.factoryFromPackagePath()) as IMigratableFluidDataStoreFactory;
+					(await this.factoryFromPackagePath()) as IMigrationTargetFluidDataStoreFactory;
 
 				const migratedChannel = await newFactory.instantiateForMigration(this, portableData);
 

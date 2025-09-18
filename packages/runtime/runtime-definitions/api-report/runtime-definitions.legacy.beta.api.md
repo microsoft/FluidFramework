@@ -142,6 +142,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     makeVisibleAndAttachGraph(): void;
+    readonly migrationInfo?: IMigrationInfo;
     notifyReadOnlyState?(readonly: boolean): void;
     readonly policies?: IFluidDataStorePolicies;
     processMessages(messageCollection: IRuntimeMessageCollection): void;
@@ -267,6 +268,22 @@ export interface IGarbageCollectionDetailsBase {
 export interface IInboundSignalMessage<TMessage extends TypedMessage = TypedMessage> extends ISignalMessage<TMessage> {
     // (undocumented)
     readonly type: TMessage["type"];
+}
+
+// @beta
+export interface IMigrationInfo {
+    readonly getPortableData: () => Promise<unknown>;
+    readonly newPackagePath: readonly string[];
+}
+
+// @beta @legacy
+export interface IMigrationSourceFluidDataStoreFactory extends IFluidDataStoreFactory {
+    migrationInfo: IMigrationInfo | undefined;
+}
+
+// @beta @legacy
+export interface IMigrationTargetFluidDataStoreFactory extends IFluidDataStoreFactory {
+    instantiateForMigration(context: IFluidDataStoreContext, portableData: unknown): Promise<IFluidDataStoreChannel>;
 }
 
 // @beta @legacy

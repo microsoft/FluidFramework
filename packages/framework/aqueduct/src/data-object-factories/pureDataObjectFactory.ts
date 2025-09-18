@@ -24,11 +24,12 @@ import type {
 	IFluidDataStoreContextDetached,
 	IFluidDataStorePolicies,
 	IFluidDataStoreRegistry,
-	IMigratableFluidDataStoreFactory,
 	IProvideFluidDataStoreRegistry,
 	IMigrationInfo,
 	NamedFluidDataStoreRegistryEntries,
 	NamedFluidDataStoreRegistryEntry,
+	IMigrationSourceFluidDataStoreFactory,
+	IMigrationTargetFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
 import type {
 	AsyncFluidObjectProvider,
@@ -203,8 +204,11 @@ export interface DataObjectFactoryProps<
 export class PureDataObjectFactory<
 	TObj extends PureDataObject<I>,
 	I extends DataObjectTypes = DataObjectTypes,
-	//* TODO: Insert new subclass that implements IMigratableFluidDataStoreFactory rather than modifying PureDataObjectFactory
-> implements IMigratableFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
+	//* TODO: Add 2 new subclasses that implement IMigrationSourceFluidDataStoreFactory and IMigrationTargetFluidDataStoreFactory respectively
+> implements
+		IMigrationSourceFluidDataStoreFactory,
+		IMigrationTargetFluidDataStoreFactory,
+		Partial<IProvideFluidDataStoreRegistry>
 {
 	private readonly registry: IFluidDataStoreRegistry | undefined;
 	private readonly createProps: Omit<CreateDataObjectProps<TObj, I>, "existing" | "context">;
@@ -299,7 +303,7 @@ export class PureDataObjectFactory<
 		return [this.type, Promise.resolve(this)];
 	}
 
-	//* TODO: Once IMigratableFluidDataStoreFactory is split, move this to a "Migration Source" subclass
+	//* TODO: Move this to a "Migration Source" subclass.  No factory should be both a source and target.
 	/**
 	 * If defined, this factory should be migrated away from according to this info.
 	 */
@@ -317,7 +321,7 @@ export class PureDataObjectFactory<
 		return runtime;
 	}
 
-	//* TODO: Once IMigratableFluidDataStoreFactory is split, move this to a "Migration Target" subclass
+	//* TODO: Move this to a "Migration Target" subclass.  No factory should be both a source and target.
 	public async instantiateForMigration(
 		context: IFluidDataStoreContext,
 		portableData: I["InitialState"],

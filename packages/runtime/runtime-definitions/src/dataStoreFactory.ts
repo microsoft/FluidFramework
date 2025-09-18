@@ -34,17 +34,27 @@ export interface IMigrationInfo {
 	readonly getPortableData: () => Promise<unknown>; //* Maybe can use the "initial state" generic type?
 }
 
-//* TODO:  Split this into:
-// - IMigrationSourceFluidDataStoreFactory (with migrationInfo)
-// - IMigrationTargetFluidDataStoreFactory (with instantiateForMigration)
-// This would clarify the intent and make it less likely that a single factory
-// tries to be both a source and target of migration.
-export interface IMigratableFluidDataStoreFactory extends IFluidDataStoreFactory {
+/**
+ * A factory that indicates it should be migrated away from.
+ *
+ * This interface carries the migration metadata produced by an older implementation.
+ *
+ * @legacy @beta
+ */
+export interface IMigrationSourceFluidDataStoreFactory extends IFluidDataStoreFactory {
 	/**
 	 * If defined, this factory should be migrated away from according to this info.
 	 */
 	migrationInfo: IMigrationInfo | undefined;
+}
 
+/**
+ * A factory that can act as a migration target by instantiating a runtime from
+ * portable migration data produced by a previous implementation.
+ *
+ * @legacy @beta
+ */
+export interface IMigrationTargetFluidDataStoreFactory extends IFluidDataStoreFactory {
 	/**
 	 * Instantiate a runtime using portable migration data produced by a previous implementation.
 	 * @param context - Datastore context (same as regular instantiation).
