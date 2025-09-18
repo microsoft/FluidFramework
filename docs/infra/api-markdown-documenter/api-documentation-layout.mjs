@@ -8,6 +8,7 @@
 /** @typedef {import("@fluid-tools/api-markdown-documenter").ApiItemTransformationConfiguration} ApiItemTransformationConfiguration */
 /** @typedef {import("@fluid-tools/api-markdown-documenter").Section} Section */
 /** @typedef {import("mdast").BlockContent} BlockContent */
+/** @typedef {import("mdast").Paragraph} Paragraph */
 
 import {
 	ApiItemKind,
@@ -23,7 +24,8 @@ const customExamplesSectionTitle = "Usage";
 const customThrowsSectionTitle = "Error Handling";
 
 /**
- * @type BlockContent
+ * A paragraph containing a link to the Fluid Framework API support documentation.
+ * @type Paragraph
  */
 const supportDocsLinkParagraph = { type: "paragraph", children: [
 	{type: "text", value: "For more information about our API support guarantees, see "},
@@ -41,7 +43,7 @@ const supportDocsLinkParagraph = { type: "paragraph", children: [
 const systemNotice = createAdmonition(
 	[supportDocsLinkParagraph],
 	/* admonitionKind: */ "warning",
-	"This API is reserved for internal system use and should not be imported directly. It may change at any time without notice.",
+	/* title: */ "This API is reserved for internal system use and should not be imported directly. It may change at any time without notice.",
 );
 
 /**
@@ -60,7 +62,7 @@ const sealedNotice = createAdmonition(
 		},
 	],
 	/* admonitionKind: */ "info",
-	"Sealed",
+	/* title: */ "Sealed",
 );
 
 /**
@@ -79,7 +81,7 @@ const inputNotice = createAdmonition(
 		},
 	],
 	/* admonitionKind: */ "info",
-	"Input",
+	/* title: */ "Input",
 );
 
 /**
