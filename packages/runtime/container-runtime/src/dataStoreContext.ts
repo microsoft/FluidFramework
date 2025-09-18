@@ -697,112 +697,107 @@ export abstract class FluidDataStoreContext
 		assert(this.pkg === details.pkg, 0x13e /* "Unexpected package path" */);
 
 		const factory = await this.factoryFromPackagePath();
+
 		const channel = await factory.instantiateDataStore(this, existing);
 		assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
-
-		// Migration logic: only consider for existing data stores on first realization
-		if (existing) {
-			//* IMPORTANT: Where does the migration info live - on the factory feels better than on the returned channel.
-			const migrationInfo = (factory as unknown as { migrationInfo?: IMigrationInfo })
-				.migrationInfo;
-			if (migrationInfo !== undefined) {
-				const migrationStartTime = Date.now();
-				const oldPkg = this.pkg?.join("/");
-				// Assert no pending ops queued for old runtime (barrier design will guarantee this later)
-				assert(
-					this.pendingMessagesState?.pendingCount === 0,
-					"Pending ops present during migration; barrier not implemented yet",
-				);
-				//* This screwed up type inference, should put it in a proper type guard if needed
-				// assert(
-				// 	Array.isArray(migrationInfo.newPackagePath) &&
-				// 		migrationInfo.newPackagePath.length > 0,
-				// 	"Invalid migration newPackagePath",
-				// );
-
-				// Check if we get the barrier op while loading
-				let sawBarrierOp = false;
-				const listener = (message: ISequencedDocumentMessage): void => {
-					if (message.contents === "BARRIER_OP_FOR_MIGRATION") {
-						sawBarrierOp = true;
-					}
-				};
-				this.containerRuntime.on("op", listener);
-				this.processPendingOps(channel);
-				this.containerRuntime.off("op", listener);
-
-				if (!sawBarrierOp) {
-					//* TODO: Submit barrier op (will be sent when switching to write due to user action)
-					//* and then continue with current runtime (don't migrate)
-				}
-
-				const portableData = await migrationInfo.getPortableData();
-
-				const newPkgJoined = migrationInfo.newPackagePath.join("/");
-				assert(newPkgJoined !== oldPkg, "No-op migration not allowed");
-				// Telemetry start
-				this.mc.logger.sendTelemetryEvent({
-					eventName: "DataStoreMigration_Start",
-					oldPkg,
-					newPkg: newPkgJoined,
-				});
-				try {
-					// Swap package path prior to looking up new factory
-					this.pkg = [...migrationInfo.newPackagePath];
-					// Dispose the unbound old channel; it was never bound so has no side-effects
-					channel.dispose();
-					// Lookup new factory with updated package path
-					const newFactory =
-						(await this.factoryFromPackagePath()) as IMigratableFluidDataStoreFactory;
-					//* TODO: Use proper type guard instead of cast
-					assert(
-						typeof newFactory.instantiateForMigration === "function",
-						"Target factory missing instantiateForMigration",
-					);
-					const migratedChannel = await newFactory.instantiateForMigration(
-						this,
-						true, //* TODO: Remove this param, it's always true
-						portableData,
-					);
-
-					assert(
-						!("migrationInfo" in migratedChannel),
-						"Migration target should not indicate a second migration",
-					);
-
-					//* Aka All that's left of this.bindRuntime(channel)
-					this.completeBindingRuntime(migratedChannel);
-					if (this.disposed) {
-						migratedChannel.dispose();
-					}
-					this.mc.logger.sendTelemetryEvent({
-						eventName: "DataStoreMigration_Success",
-						oldPkg,
-						newPkg: newPkgJoined,
-						durationMs: Date.now() - migrationStartTime,
-					});
-					return migratedChannel;
-				} catch (error) {
-					this.mc.logger.sendErrorEvent(
-						{
-							eventName: "DataStoreMigration_Failure",
-							oldPkg,
-							newPkg: migrationInfo.newPackagePath.join("/"),
-						},
-						error as Error,
-					);
-					throw error; // Fatal per design
-				}
-			}
-		}
-
-		await this.bindRuntime(channel, existing);
+		// Run migration (if needed) and return the active channel.
+		const activeChannel = await this.migrateChannelIfNeeded(channel, existing, factory);
+		await this.bindRuntime(activeChannel, existing);
 		// This data store may have been disposed before the channel is created during realization. If so,
 		// dispose the channel now.
 		if (this.disposed) {
-			channel.dispose();
+			activeChannel.dispose();
 		}
-		return channel;
+
+		return activeChannel;
+	}
+
+	/**
+	 * If the factory indicates a migration is needed for an existing datastore, perform it and return
+	 * the migrated channel. Otherwise, return the provided initialChannel.
+	 */
+	private async migrateChannelIfNeeded(
+		initialChannel: IFluidDataStoreChannel,
+		existing: boolean,
+		factory: IFluidDataStoreFactory,
+	): Promise<IFluidDataStoreChannel> {
+		if (!existing) {
+			// No migration needed when creating a new DataStore
+			return initialChannel;
+		}
+
+		const migrationInfo = (factory as unknown as { migrationInfo?: IMigrationInfo })
+			.migrationInfo;
+		if (migrationInfo === undefined) {
+			// No migration needed if factory doesn't request it
+			return initialChannel;
+		}
+
+		const migrationStartTime = Date.now();
+		const oldPkg = this.pkg?.join("/");
+
+		// Process pending ops and check if we get the barrier op while loading
+		let sawBarrierOp = false;
+		const listener = (message: ISequencedDocumentMessage): void => {
+			if (message.contents === "BARRIER_OP_FOR_MIGRATION") {
+				sawBarrierOp = true;
+			}
+		};
+		this.containerRuntime.on("op", listener);
+		this.processPendingOps(initialChannel);
+		this.containerRuntime.off("op", listener);
+
+		if (!sawBarrierOp) {
+			//* TODO: Submit barrier op (will be sent when switching to write due to user action)
+
+			// For this session, continue with the old format.
+			// We'll migrate in a future session after the Barrier Op roundtrips
+			return initialChannel;
+		}
+
+		const portableData = await migrationInfo.getPortableData();
+
+		const newPkgJoined = migrationInfo.newPackagePath.join("/");
+		assert(newPkgJoined !== oldPkg, "No-op migration not allowed");
+		// Telemetry start
+		this.mc.logger.sendTelemetryEvent({
+			eventName: "DataStoreMigration_Start",
+			oldPkg,
+			newPkg: newPkgJoined,
+		});
+		try {
+			// Swap package path prior to looking up new factory
+			this.pkg = [...migrationInfo.newPackagePath];
+
+			// Dispose the unbound old channel; it was never bound so has no side-effects
+			initialChannel.dispose();
+
+			// Lookup new factory with updated package path
+			//* TODO: Use proper type guard instead of cast
+			const newFactory =
+				(await this.factoryFromPackagePath()) as IMigratableFluidDataStoreFactory;
+
+			const migratedChannel = await newFactory.instantiateForMigration(this, portableData);
+
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "DataStoreMigration_Success",
+				oldPkg,
+				newPkg: newPkgJoined,
+				durationMs: Date.now() - migrationStartTime,
+			});
+
+			return migratedChannel;
+		} catch (error) {
+			this.mc.logger.sendErrorEvent(
+				{
+					eventName: "DataStoreMigration_Failure",
+					oldPkg,
+					newPkg: migrationInfo.newPackagePath.join("/"),
+				},
+				error as Error,
+			);
+			throw error; // Fatal
+		}
 	}
 
 	/**

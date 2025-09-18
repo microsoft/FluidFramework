@@ -34,15 +34,11 @@ export interface IMigrationInfo {
 	readonly getPortableData: () => Promise<unknown>; //* Maybe can use the "initial state" generic type?
 }
 
-/**
- * Extension of {@link IFluidDataStoreFactory} supporting instantiation from portable migration data.
- *
- * Factories that wish to be targets of migration MUST implement this interface. The context will
- * detect the presence of `instantiateForMigration` and use it instead of the normal load path when
- * a prior implementation exposes migration info.
- *
- * @beta
- */
+//* TODO:  Split this into:
+// - IMigrationSourceFluidDataStoreFactory (with migrationInfo)
+// - IMigrationTargetFluidDataStoreFactory (with instantiateForMigration)
+// This would clarify the intent and make it less likely that a single factory
+// tries to be both a source and target of migration.
 export interface IMigratableFluidDataStoreFactory extends IFluidDataStoreFactory {
 	/**
 	 * If defined, this factory should be migrated away from according to this info.
@@ -52,14 +48,11 @@ export interface IMigratableFluidDataStoreFactory extends IFluidDataStoreFactory
 	/**
 	 * Instantiate a runtime using portable migration data produced by a previous implementation.
 	 * @param context - Datastore context (same as regular instantiation).
-	 * @param existing - Always true for migration (we are loading an existing store).
 	 * @param portableData - Opaque data captured from the old runtime.
 	 */
 	instantiateForMigration(
 		context: IFluidDataStoreContext,
-		existing: boolean, //* TODO: Remove, it must be true
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		portableData: any,
+		portableData: unknown,
 	): Promise<IFluidDataStoreChannel>;
 }
 

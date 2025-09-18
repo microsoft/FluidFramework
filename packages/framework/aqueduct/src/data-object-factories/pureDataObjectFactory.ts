@@ -228,6 +228,7 @@ export class PureDataObjectFactory<
 		runtimeClass?: typeof FluidDataStoreRuntime,
 	);
 	public constructor(
+		//* TODO: Define a MigrationSourceProps or something rather than inline this ammendment
 		props: DataObjectFactoryProps<TObj, I> & { migrationInfo?: IMigrationInfo },
 	);
 	public constructor(
@@ -298,6 +299,10 @@ export class PureDataObjectFactory<
 		return [this.type, Promise.resolve(this)];
 	}
 
+	//* TODO: Once IMigratableFluidDataStoreFactory is split, move this to a "Migration Source" subclass
+	/**
+	 * If defined, this factory should be migrated away from according to this info.
+	 */
 	public readonly migrationInfo: IMigrationInfo | undefined;
 
 	/**
@@ -312,17 +317,16 @@ export class PureDataObjectFactory<
 		return runtime;
 	}
 
-	//* NOTE: impls should _either_ use migrationInfo _or_ be ready to initialize from portableData
+	//* TODO: Once IMigratableFluidDataStoreFactory is split, move this to a "Migration Target" subclass
 	public async instantiateForMigration(
 		context: IFluidDataStoreContext,
-		_existing: true,
 		portableData: I["InitialState"],
 	): Promise<IFluidDataStoreChannel> {
 		const { runtime } = await createDataObject({
 			...this.createProps,
 			context,
 			existing: true,
-			initialState: portableData, //* A bit hacky: Overloading the InitialState, distinguished from InitialState for create by the 'existing' param
+			initialState: portableData, //* A bit hacky: Overloading the InitialState, would be distinguished from the type used for creating new ones by the value of 'existing'
 		});
 
 		return runtime;
