@@ -69,7 +69,7 @@ export interface IFluidErrorBase extends Error {
 	 * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause
 	 *
 	 * @privateRemarks
-	 * The "cause" field is added in ES2022, but using if even without that built in support, it is still helpful.
+	 * The "cause" field is added in ES2022. Using it even without that built-in support, is still helpful.
 	 * TODO: remove this declaration (use `Error.cause` property) when targeting ES2022 lib or later.
 	 */
 	cause?: unknown;
