@@ -2,6 +2,16 @@
 
 This package contains simplified driver implementations used by Fluid examples in the FluidFramework repo. These may only be used in the examples, and are not intended for use in production scenarios.
 
+To use this package in an example, you must first integrate the `@fluid-example/example-webpack-integration` package as described in its README. Then follow these steps:
+
+1. When constructing your driver, first call `getSpecifiedServiceFromWebpack()` to determine the requested service (one of `"t9s"`, `"odsp"`, or `"local"`).
+2. Then call `createExampleDriver(service)` using the value obtained from 1. This will return an `ExampleDriver`.
+3. Use the `ExampleDriver`'s `urlResolver` and `documentServiceFactory` directly in your calls to `createDetachedContainer()` and `loadExistingContainer()`.
+4. Use the `ExampleDriver`'s `createCreateNewRequest(id)` to generate an `IRequest` for your `container.attach(request)` call. Provide it with a unique id.
+    * If you are using the odsp service, the passed id will be used when loading the container in the future. Otherwise, inspect the `container.resolvedUrl.id` after attach has completed to discover the container id to use for loading.
+5. Use the `ExampleDriver`'s `createLoadExistingRequest(id)` to generate an `IRequest` for your `loadExistingContainer()` call. Note that `createLoadExistingRequest` returns a `Promise<IRequest>` and must be `await`ed.
+
+
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->

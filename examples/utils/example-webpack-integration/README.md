@@ -53,6 +53,8 @@ module.exports = (env) => {
 }
 ```
 
+Then, follow the instructions from the `@fluidexample/example-driver` package's README to complete the integration.
+
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
