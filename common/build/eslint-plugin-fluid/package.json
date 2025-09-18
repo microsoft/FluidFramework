@@ -32,7 +32,7 @@
 		"eslint": "^8.57.0",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
-		"prettier": "~3.2.5",
+		"prettier": "~3.6.2",
 		"rimraf": "^5.0.7",
 		"typescript": "~5.4.5"
 	},
