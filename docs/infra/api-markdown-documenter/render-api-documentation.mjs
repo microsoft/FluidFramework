@@ -218,7 +218,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 						// Ensure the `mdast-util-directive` plugin is included so we can render admonitions.
 						extensions: [directiveToMarkdown()],
 					},
-				});
+				}).contents;
 
 				const frontMatter = createFrontMatter(documentApiItem, config);
 
