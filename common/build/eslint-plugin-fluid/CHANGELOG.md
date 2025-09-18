@@ -1,5 +1,12 @@
 # @fluidframework/eslint-plugin-fluid Changelog
 
+## [0.1.6](https://github.com/microsoft/FluidFramework/releases/tag/eslint-plugin-fluid_v0.1.6)
+
+Dependency updates:
+
+- `@microsoft/tsdoc` from `0.14.2` to `0.15.1`
+- `@typescript-eslint/parser` from `6.21.0` to `7.18.0`
+
 ## [0.1.5](https://github.com/microsoft/FluidFramework/releases/tag/eslint-plugin-fluid_v0.1.5)
 
 ### Safe Record Access Improvements
