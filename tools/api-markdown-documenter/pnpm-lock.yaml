@@ -15,8 +15,8 @@ importers:
         specifier: ^0.15.1
         version: 0.15.1
       '@rushstack/node-core-library':
-        specifier: ^3.55.2
-        version: 3.63.0(@types/node@18.19.76)
+        specifier: ^5.14.0
+        version: 5.14.0(@types/node@18.19.76)
       chalk:
         specifier: ^5.6.2
         version: 5.6.2
