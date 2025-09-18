@@ -2,6 +2,57 @@
 
 This package contains webpack configuration used by Fluid examples in the FluidFramework repo. These may only be used in the examples, and are not intended for use in production scenarios.
 
+To use this package in an example, you must integrate the following into the webpack config:
+
+1. Call `createExampleDriverServiceWebpackPlugin(service)`, which will return a webpack plugin to include. Service must be one of `"t9s"`, `"odsp"`, or `"local"`.  You may want to take this from the environment, such that you can choose the service when starting the dev server.
+
+`webpack.config.cjs`:
+```cjs
+module.exports = (env) => {
+	const { service } = env;
+
+	return {
+		// ...
+		plugins: [
+			// ...
+			createExampleDriverServiceWebpackPlugin(service),
+		],
+		// ...
+	};
+}
+```
+
+`package.json`:
+```json
+"start": "npm run start:t9s",
+"start:local": "webpack serve --env service=local",
+"start:odsp": "webpack serve --env service=odsp",
+"start:t9s": "webpack serve --env service=t9s",
+```
+
+2. If using odsp, also call `createOdspMiddlewares()` which will return an array of additional middlewares to include in `setupMiddlewares`. Push these on to the middleware array.
+
+`webpack.config.cjs`:
+```cjs
+module.exports = (env) => {
+	const { service } = env;
+
+	return {
+		// ...
+		devServer: {
+			// ...
+			setupMiddlewares: (middlewares) => {
+				if (service === "odsp") {
+					middlewares.push(...createOdspMiddlewares());
+				}
+				return middlewares;
+			},
+		},
+		// ...
+	};
+}
+```
+
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
