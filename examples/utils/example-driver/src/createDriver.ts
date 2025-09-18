@@ -3,27 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IRequest } from "@fluidframework/core-interfaces";
-import type {
-	IDocumentServiceFactory,
-	IUrlResolver,
-	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/driver-definitions/internal";
-
-import type { ExampleDriverService } from "./interfaces.js";
+import type { ExampleDriver, ExampleDriverService } from "./interfaces.js";
 import { createLocalDriver } from "./localDriver.js";
 import { createOdspDriver } from "./odspDriver.js";
 import { createTinyliciousDriver } from "./tinyliciousDriver.js";
-
-/**
- * @internal
- */
-export interface ExampleDriver {
-	urlResolver: IUrlResolver;
-	documentServiceFactory: IDocumentServiceFactory;
-	createCreateNewRequest: (id: string) => Promise<IRequest>;
-	createLoadExistingRequest: (id: string) => Promise<IRequest>;
-}
 
 /**
  * Creates the set of driver functionality needed to create/load a container for the given

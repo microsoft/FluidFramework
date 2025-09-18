@@ -5,7 +5,7 @@
 
 import { isExampleDriverService, type ExampleDriverService } from "./interfaces.js";
 
-// getServiceFromWebpack expects that webpack will provide the value for EXAMPLE_DRIVER_SERVICE
+// getSpecifiedServiceFromWebpack expects that webpack will provide the value for EXAMPLE_DRIVER_SERVICE
 // via DefinePlugin.
 declare const EXAMPLE_DRIVER_SERVICE: string | undefined;
 /**

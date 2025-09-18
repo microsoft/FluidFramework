@@ -12,12 +12,14 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tinylicious-driver/internal";
 
-export const createTinyliciousDriver = async () => {
+import type { ExampleDriver } from "./interfaces.js";
+
+export const createTinyliciousDriver = async (): Promise<ExampleDriver> => {
 	const tokenProvider = new InsecureTinyliciousTokenProvider();
 	return {
 		urlResolver: new InsecureTinyliciousUrlResolver(),
 		documentServiceFactory: new RouterliciousDocumentServiceFactory(tokenProvider),
-		createCreateNewRequest: async (id: string) => createTinyliciousCreateNewRequest(),
+		createCreateNewRequest: (id: string) => createTinyliciousCreateNewRequest(),
 		createLoadExistingRequest: async (id: string) => {
 			return { url: id };
 		},

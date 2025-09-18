@@ -3,6 +3,31 @@
  * Licensed under the MIT License.
  */
 
+import type { IRequest } from "@fluidframework/core-interfaces";
+import type {
+	IDocumentServiceFactory,
+	IUrlResolver,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/driver-definitions/internal";
+
+/**
+ * @internal
+ */
+export interface ExampleDriver {
+	urlResolver: IUrlResolver;
+	documentServiceFactory: IDocumentServiceFactory;
+	/**
+	 * Create a request to be used when calling container.attach().
+	 *
+	 * @remarks
+	 * Not all services respect the passed id parameter. T9s will ignore it and generate
+	 * an id that will be provided in the response (and is discoverable from the container's
+	 * resolvedUrl post-attach).
+	 */
+	createCreateNewRequest: (id: string) => IRequest;
+	createLoadExistingRequest: (id: string) => Promise<IRequest>;
+}
+
 /**
  * @internal
  */

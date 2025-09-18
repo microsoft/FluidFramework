@@ -48,7 +48,7 @@ const doAttach = async (): Promise<void> => {
 	// Some services support or require specifying the container id at attach time (local, odsp). For
 	// services that do not (t9s), the passed id will be ignored.
 	let id = Date.now().toString();
-	const createNewRequest = await createCreateNewRequest(id);
+	const createNewRequest = createCreateNewRequest(id);
 	await container.attach(createNewRequest);
 	// For most services, the id on the resolvedUrl is the authoritative source for the container id
 	// (regardless of whether the id passed in createCreateNewRequest is respected or not). However,

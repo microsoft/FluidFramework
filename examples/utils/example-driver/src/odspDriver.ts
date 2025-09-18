@@ -16,6 +16,8 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/odsp-driver/internal";
 
+import type { ExampleDriver } from "./interfaces.js";
+
 const getFromMiddleware = async (path: "siteUrl" | "storageToken" | "pushToken") => {
 	const fetchResponse = await fetch(`/${path}`);
 	if (fetchResponse.status === 404) {
@@ -32,7 +34,11 @@ const getFromMiddleware = async (path: "siteUrl" | "storageToken" | "pushToken")
 
 const directory = "examples";
 
-export const createOdspDriver = async () => {
+export const createOdspDriver = async (): Promise<ExampleDriver> => {
+	// We proactively fetch and retain the tokens and site URL - we want to avoid repeated calls to the middleware
+	// which would result in repeated calls to fetch the token (which is slow). We could be lazier about making the
+	// request which would get the request out of the critical path for detached container creation, but the performance
+	// difference doesn't really matter for our examples currently.
 	const storageToken = await getFromMiddleware("storageToken");
 	const pushToken = await getFromMiddleware("pushToken");
 	const siteUrl = await getFromMiddleware("siteUrl");
@@ -45,7 +51,7 @@ export const createOdspDriver = async () => {
 			async () => storageToken,
 			async () => pushToken,
 		),
-		createCreateNewRequest: async (id: string) =>
+		createCreateNewRequest: (id: string) =>
 			createOdspCreateContainerRequest(siteUrl, driveId, directory, `${id}.tstFluid`),
 		createLoadExistingRequest: async (id: string) => {
 			const driveItem = await getDriveItemByRootFileName(

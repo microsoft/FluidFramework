@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export {
-	createExampleDriver,
-	ExampleDriver,
-} from "./createDriver.js";
-export { ExampleDriverService } from "./interfaces.js";
+export { createExampleDriver } from "./createDriver.js";
+export { ExampleDriver, ExampleDriverService } from "./interfaces.js";
 export { getSpecifiedServiceFromWebpack } from "./webpackSpecifiedService.js";
