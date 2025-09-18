@@ -4,5 +4,5 @@
  */
 
 export { createExampleDriver } from "./createDriver.js";
-export { ExampleDriver, ExampleDriverService } from "./interfaces.js";
+export type { ExampleDriver, ExampleDriverService } from "./interfaces.js";
 export { getSpecifiedServiceFromWebpack } from "./webpackSpecifiedService.js";

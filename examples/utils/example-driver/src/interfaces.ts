@@ -11,10 +11,17 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 
 /**
+ * The collection of per-service functionality required to create and/or load a Fluid container.
  * @internal
  */
 export interface ExampleDriver {
+	/**
+	 * The url resolver for the service.
+	 */
 	urlResolver: IUrlResolver;
+	/**
+	 * The document service factory for the service.
+	 */
 	documentServiceFactory: IDocumentServiceFactory;
 	/**
 	 * Create a request to be used when calling container.attach().
@@ -36,6 +43,7 @@ export interface ExampleDriver {
 }
 
 /**
+ * The supported services for the example driver.
  * @internal
  */
 export type ExampleDriverService = "odsp" | "t9s" | "local";

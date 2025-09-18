@@ -24,7 +24,9 @@ import type { ExampleDriver } from "./interfaces.js";
  * middleware to make this easy to do.
  * @internal
  */
-const getFromMiddleware = async (path: "siteUrl" | "storageToken" | "pushToken") => {
+const getFromMiddleware = async (
+	path: "siteUrl" | "storageToken" | "pushToken",
+): Promise<string> => {
 	const fetchResponse = await fetch(`/${path}`);
 	if (fetchResponse.status === 404) {
 		throw new Error(
