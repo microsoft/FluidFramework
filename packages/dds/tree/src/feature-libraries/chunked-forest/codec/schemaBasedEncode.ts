@@ -16,7 +16,6 @@ import {
 	ValueSchema,
 	Multiplicity,
 	identifierFieldKindIdentifier,
-	type FieldKey,
 } from "../../../core/index.js";
 import type { FullSchemaPolicy } from "../../modular-schema/index.js";
 
@@ -35,6 +34,7 @@ import type { FieldBatch } from "./fieldBatch.js";
 import { type EncodedFieldBatch, type EncodedValueShape, SpecialField } from "./format.js";
 import type { IncrementalEncoder } from "./codecs.js";
 import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
+import { defaultIncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk`.
@@ -134,14 +134,11 @@ export function getNodeEncoder(
 		// consider moving some optional and sequence fields to extra fields if they are commonly empty
 		// to reduce encoded size.
 
-		const shouldEncodeFieldIncrementallyLocal = (
-			nodeIdentifier: TreeNodeSchemaIdentifier,
-			fieldKey: FieldKey,
-		): boolean =>
-			incrementalEncoder?.shouldEncodeFieldIncrementally(nodeIdentifier, fieldKey) ?? false;
+		const shouldEncodeIncrementally =
+			incrementalEncoder?.shouldEncodeIncrementally ?? defaultIncrementalEncodingPolicy;
 		const objectNodeFields: KeyedFieldEncoder[] = [];
 		for (const [key, field] of schema.objectNodeFields ?? []) {
-			const fieldEncoder = shouldEncodeFieldIncrementallyLocal(schemaName, key)
+			const fieldEncoder = shouldEncodeIncrementally(schemaName, key)
 				? incrementalFieldEncoder
 				: fieldBuilder.fieldEncoderFromSchema(field);
 			objectNodeFields.push({

@@ -26,6 +26,7 @@ import {
 	type FieldBatchEncodingContext,
 	defaultSchemaPolicy,
 	TreeCompressionStrategy,
+	defaultIncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../feature-libraries/schema-index/formatV1.js";
@@ -67,6 +68,7 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
 		options.forest ?? defaultSharedTreeOptions.forest,
 		schema,
 		idCompressor,
+		defaultIncrementalEncodingPolicy,
 	);
 	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
 		forest,
@@ -144,6 +146,7 @@ export function independentInitializedViewInternal<const TSchema extends Implici
 		options.forest ?? defaultSharedTreeOptions.forest,
 		schemaRepository,
 		idCompressor,
+		defaultIncrementalEncodingPolicy,
 	);
 
 	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
