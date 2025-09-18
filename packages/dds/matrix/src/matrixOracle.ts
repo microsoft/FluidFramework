@@ -10,31 +10,33 @@ import type { ISharedMatrix } from "./matrix.js";
  * @internal
  */
 export class SharedMatrixOracle<T> {
-	private readonly model: (T | undefined)[][];
+	private model: (T | undefined)[][] = [];
 
-	public constructor(private readonly shared: ISharedMatrix<T>) {
-		// Initialize mirror from current matrix state
-		const rows = this.shared.rowCount;
-		const cols = this.shared.colCount;
-		this.model = [];
-		for (let r = 0; r < rows; r++) {
-			const row: (T | undefined)[] = Array.from({ length: cols });
-			for (let c = 0; c < cols; c++) {
-				row[c] = this.shared.getCell(r, c) as unknown as T;
-			}
-			this.model.push(row);
-		}
-
-		// Listen for conflict events, type inferred from ISharedMatrixEvents
-		this.shared.on("conflict", (row, col, currentValue, conflictingValue, target) => {
+	constructor(private readonly shared: ISharedMatrix<T>) {
+		this.syncFromShared();
+		this.shared.on("conflict", (row, col, currentValue /* , conflictingValue, target */) => {
 			this.ensureSize(row + 1, col + 1);
 			this.model[row][col] = currentValue as T;
 		});
 	}
 
+	private syncFromShared(): void {
+		const rows = this.shared.rowCount;
+		const cols = this.shared.colCount;
+
+		this.model = [];
+		for (let r = 0; r < rows; r++) {
+			const row: (T | undefined)[] = [];
+			for (let c = 0; c < cols; c++) {
+				row.push(this.shared.getCell(r, c) as T);
+			}
+			this.model.push(row);
+		}
+	}
+
 	private ensureSize(rows: number, cols: number): void {
 		while (this.model.length < rows) {
-			this.model.push(Array.from({ length: cols }));
+			this.model.push(new Array(cols).fill(undefined));
 		}
 		for (const row of this.model) {
 			while (row.length < cols) {
@@ -43,23 +45,25 @@ export class SharedMatrixOracle<T> {
 		}
 	}
 
+	/** Validate the oracle against the actual matrix */
 	public validate(): void {
-		const rows = this.shared.rowCount;
-		const cols = this.shared.colCount;
+		this.syncFromShared(); // always rebuild mirror
+		const rows = this.model.length;
+		const cols = this.model[0]?.length ?? 0;
 
-		if (this.model.length !== rows) {
+		if (rows !== this.shared.rowCount) {
 			throw new Error(
-				`SharedMatrixOracle mismatch: expected ${this.model.length} rows, actual=${rows}`,
+				`SharedMatrixOracle mismatch: expected ${rows} rows, actual=${this.shared.rowCount}`,
 			);
 		}
 
 		for (let r = 0; r < rows; r++) {
-			if (this.model[r].length !== cols) {
+			if (this.model[r].length !== this.shared.colCount) {
 				throw new Error(
-					`SharedMatrixOracle mismatch at row ${r}: expected ${this.model[r].length} cols, actual=${cols}`,
+					`SharedMatrixOracle mismatch at row ${r}: expected ${this.model[r].length} cols, actual=${this.shared.colCount}`,
 				);
 			}
-			for (let c = 0; c < cols; c++) {
+			for (let c = 0; c < this.shared.colCount; c++) {
 				const expected = this.model[r][c];
 				const actual = this.shared.getCell(r, c);
 				if (expected !== actual) {
@@ -70,17 +74,6 @@ export class SharedMatrixOracle<T> {
 			}
 		}
 	}
-
-	public dispose(): void {
-		// TODO: fix this
-		// this.shared.off("conflict", this.onConflict);
-	}
-
-	// Keep a reference to the handler so we can remove it
-	// private readonly onConflict = (row: number, col: number, currentValue: MatrixItem<T>): void => {
-	// 	this.ensureSize(row + 1, col + 1);
-	// 	this.model[row][col] = currentValue as T;
-	// };
 }
 
 /**

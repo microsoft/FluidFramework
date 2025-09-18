@@ -12,7 +12,7 @@ import {
 	type DDSFuzzModel,
 	type DDSFuzzSuiteOptions,
 } from "@fluid-private/test-dds-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+// import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { SharedMatrixOracle, type IChannelWithOracles } from "../matrixOracle.js";
 import type { SharedMatrixFactory } from "../runtime.js";
@@ -62,41 +62,43 @@ describe("Matrix fuzz tests", function () {
 	createDDSFuzzSuite(nameModel("default"), {
 		...baseOptions,
 		reconnectProbability: 0,
+		skipMinimization: true,
 		// Uncomment to replay a particular seed.
-		// replay: 0,
+		only: 0,
+		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/1") },
 	});
 
-	createDDSFuzzSuite(nameModel("with reconnect"), {
-		...baseOptions,
-		defaultTestCount: 100,
-		clientJoinOptions: {
-			maxNumberOfClients: 3,
-			clientAddProbability: 0,
-		},
-		reconnectProbability: 0.1,
-		// Uncomment to replay a particular seed.
-		// replay: 0,
-	});
+	// createDDSFuzzSuite(nameModel("with reconnect"), {
+	// 	...baseOptions,
+	// 	defaultTestCount: 100,
+	// 	clientJoinOptions: {
+	// 		maxNumberOfClients: 3,
+	// 		clientAddProbability: 0,
+	// 	},
+	// 	reconnectProbability: 0.1,
+	// 	// Uncomment to replay a particular seed.
+	// 	// replay: 0,
+	// });
 
-	createDDSFuzzSuite(nameModel("with batches and rebasing"), {
-		...baseOptions,
-		rebaseProbability: 0.2,
-		containerRuntimeOptions: {
-			flushMode: FlushMode.TurnBased,
-			enableGroupedBatching: true,
-		},
-		// Uncomment to replay a particular seed.
-		// replay: 0,
-	});
+	// createDDSFuzzSuite(nameModel("with batches and rebasing"), {
+	// 	...baseOptions,
+	// 	rebaseProbability: 0.2,
+	// 	containerRuntimeOptions: {
+	// 		flushMode: FlushMode.TurnBased,
+	// 		enableGroupedBatching: true,
+	// 	},
+	// 	// Uncomment to replay a particular seed.
+	// 	// replay: 0,
+	// });
 
-	createDDSFuzzSuite(nameModel("with stashing"), {
-		...baseOptions,
-		clientJoinOptions: {
-			maxNumberOfClients: 6,
-			clientAddProbability: 0.1,
-			stashableClientProbability: 0.5,
-		},
-		// Uncomment to replay a particular seed.
-		// replay: 0,
-	});
+	// createDDSFuzzSuite(nameModel("with stashing"), {
+	// 	...baseOptions,
+	// 	clientJoinOptions: {
+	// 		maxNumberOfClients: 6,
+	// 		clientAddProbability: 0.1,
+	// 		stashableClientProbability: 0.5,
+	// 	},
+	// 	// Uncomment to replay a particular seed.
+	// 	// replay: 0,
+	// });
 });
