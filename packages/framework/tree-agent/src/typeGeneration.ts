@@ -68,28 +68,24 @@ export function generateEditTypesForPrompt(
 	return getOrCreate(promptSchemaCache, schema, () => {
 		const allSchemas = new Set<TreeNodeSchema>();
 		const objectTypeSchemas = new Set<TreeNodeSchema>();
-		walkFieldSchema(
-			rootSchema,
-			{
-				node: (n) => {
-					allSchemas.add(n);
-					if (
-						n instanceof ObjectNodeSchema ||
-						n instanceof MapNodeSchema ||
-						n instanceof ArrayNodeSchema ||
-						n instanceof RecordNodeSchema
-					) {
-						objectTypeSchemas.add(n);
-						const exposedMethods = getExposedMethods(n);
-						for (const t of exposedMethods.referencedTypes) {
-							allSchemas.add(t);
-							objectTypeSchemas.add(t);
-						}
+		walkFieldSchema(rootSchema, {
+			node: (n) => {
+				allSchemas.add(n);
+				if (
+					n instanceof ObjectNodeSchema ||
+					n instanceof MapNodeSchema ||
+					n instanceof ArrayNodeSchema ||
+					n instanceof RecordNodeSchema
+				) {
+					objectTypeSchemas.add(n);
+					const exposedMethods = getExposedMethods(n);
+					for (const t of exposedMethods.referencedTypes) {
+						allSchemas.add(t);
+						objectTypeSchemas.add(t);
 					}
-				},
+				}
 			},
-			new Set<TreeNodeSchema>(),
-		);
+		});
 		const nodeSchemas = [...objectTypeSchemas.values()] as BindableSchema[];
 		const bindableSchemas = new Map<string, BindableSchema>(
 			nodeSchemas.map((nodeSchema) => [nodeSchema.identifier, nodeSchema]),
@@ -120,6 +116,7 @@ function generateEditTypes(
 	const domainTypes: Record<string, ZodTypeAny> = {};
 	for (const schema of schemas) {
 		for (const name of schema.definitions.keys()) {
+			// If this does overwrite anything in domainTypes, it is guaranteed to be overwritten with an identical value due to the getOrCreate
 			domainTypes[name] = getOrCreateType(
 				schema.definitions,
 				name,
