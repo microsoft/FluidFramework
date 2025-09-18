@@ -1,5 +1,10 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.23.0
+
+`LayoutUtilities.createTypeParametersSection` now returns `undefined` when the item has no type paramters.
+This aligns the behavior of this function with other section creation helpers.
+
 ## 0.22.0
 
 ### Documentation Domain has been removed

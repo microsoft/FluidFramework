@@ -154,7 +154,7 @@ function treeTestFactory(): ISharedTree {
 
 describe("SharedTree", () => {
 	describe("viewWith", () => {
-		it("initialize tree", () => {
+		it("@Smoke initialize tree", () => {
 			const tree = treeTestFactory();
 			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
 

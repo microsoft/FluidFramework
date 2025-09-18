@@ -20,7 +20,7 @@ export {
 	type Arg,
 	type FunctionDef,
 	type MethodKeys,
-	type NodeSchema,
+	type BindableSchema,
 	type Ctor,
 	type Infer,
 	type IExposedMethods,
