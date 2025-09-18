@@ -59,10 +59,10 @@ const doAttach = async (): Promise<void> => {
 			throw new Error("Resolved Url unexpectedly missing!");
 		}
 		id = container.resolvedUrl.id;
-		// Update url and tab title
-		location.hash = id;
-		document.title = id;
 	}
+	// Update url and tab title
+	location.hash = id;
+	document.title = id;
 };
 
 let container: IContainer;
