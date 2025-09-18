@@ -191,6 +191,10 @@ const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersio
 		5,
 		{ forest: 1, schema: 2, detachedFieldIndex: 1, editManager: 4, message: 4, fieldBatch: 1 },
 	],
+	[
+		100, // SharedTreeFormatVersion.vSharedBranches
+		{ forest: 1, schema: 2, detachedFieldIndex: 1, editManager: 5, message: 5, fieldBatch: 1 },
+	],
 ]);
 
 function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
@@ -599,6 +603,11 @@ export const SharedTreeFormatVersion = {
 	 * Requires \@fluidframework/tree \>= 2.0.0.
 	 */
 	v5: 5,
+
+	/**
+	 * For testing purposes only.
+	 */
+	vSharedBranches: 100,
 } as const;
 
 /**

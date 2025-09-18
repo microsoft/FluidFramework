@@ -2480,7 +2480,13 @@ describe("SharedTree", () => {
 	});
 
 	it("supports multiple shared branches", () => {
-		const provider = new TestTreeProviderLite(2);
+		const provider = new TestTreeProviderLite(
+			2,
+			configuredSharedTree({
+				jsonValidator: typeboxValidator,
+				formatVersion: SharedTreeFormatVersion.vSharedBranches,
+			}).getFactory(),
+		);
 		const tree1 = provider.trees[0];
 
 		const config = new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation });
