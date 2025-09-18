@@ -11,4 +11,4 @@ export { ExampleDriverService } from "./interfaces.js";
 export {
 	getExampleDriverServiceWebpackPlugin,
 	getSpecifiedServiceFromWebpack,
-} from "./webpackIntegration.js";
+} from "./webpackSpecifiedService.js";
