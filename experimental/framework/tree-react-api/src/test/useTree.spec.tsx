@@ -199,6 +199,7 @@ describe("useTree", () => {
 					checkRenderLog(log, ["Parent", "Collection"]);
 				});
 
+				// This confirms that modifying an array does not needlessly invalid parents and reuses children (if they use memo)
 				it("array editing: insertion", () => {
 					const collection = new Collection([{ x: 1 }, { x: 2 }, { x: 3 }]);
 					const content = <ParentComponent node={collection} />;
@@ -212,6 +213,8 @@ describe("useTree", () => {
 					assert.equal(rendered.baseElement.textContent, "1234");
 				});
 
+				// This confirms the same as the above, but testes some harder cases.
+				// For example this one depends on stable keys to reusing children due to indexes changing.
 				it("array editing: general", () => {
 					const collection = new Collection([{ x: 1 }, { x: 2 }, { x: 3 }]);
 					const content = <ParentComponent node={collection} />;
