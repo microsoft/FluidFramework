@@ -67,6 +67,7 @@ import {
 	type IFluidDataStoreFactory,
 	type PackagePath,
 	type IRuntimeStorageService,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -351,6 +352,11 @@ export abstract class FluidDataStoreContext
 		return runtimeCompatDetailsForDataStore;
 	}
 
+	/**
+	 * {@inheritdoc IFluidDataStoreContext.minVersionForCollab}
+	 */
+	public readonly minVersionForCollab: MinimumVersionForCollab;
+
 	private baseSnapshotSequenceNumber: number | undefined;
 
 	/**
@@ -460,6 +466,7 @@ export abstract class FluidDataStoreContext
 
 		this._containerRuntime = props.parentContext.containerRuntime;
 		this.parentContext = props.parentContext;
+		this.minVersionForCollab = props.parentContext.minVersionForCollab;
 		this.id = props.id;
 		this.storage = props.storage;
 		this.scope = props.scope;
