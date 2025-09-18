@@ -9,11 +9,11 @@ importers:
   .:
     dependencies:
       '@microsoft/api-extractor-model':
-        specifier: ~7.28.2
-        version: 7.28.2(@types/node@18.19.76)
+        specifier: ~7.30.7
+        version: 7.30.7(@types/node@18.19.76)
       '@microsoft/tsdoc':
-        specifier: ^0.14.2
-        version: 0.14.2
+        specifier: ^0.15.1
+        version: 0.15.1
       '@rushstack/node-core-library':
         specifier: ^3.55.2
         version: 3.63.0(@types/node@18.19.76)
@@ -443,9 +443,6 @@ packages:
     resolution: {integrity: sha512-3lBouSuF7CqlseLB+FKES0K4FQ02JrbEoRtJhxnsyB1s5v4AP03gsoohN8jp7DcOImhaR9scYdztq3/sLfk/qQ==}
     engines: {node: '>=14.18.0'}
 
-  '@microsoft/api-extractor-model@7.28.2':
-    resolution: {integrity: sha512-vkojrM2fo3q4n4oPh4uUZdjJ2DxQ2+RnDQL/xhTWSRUNPF6P4QyrvY357HBxbnltKcYu+nNNolVqc6TIGQ73Ig==}
-
   '@microsoft/api-extractor-model@7.30.7':
     resolution: {integrity: sha512-TBbmSI2/BHpfR9YhQA7nH0nqVmGgJ0xH0Ex4D99/qBDAUpnhA2oikGmdXanbw9AWWY/ExBYIpkmY8dBHdla3YQ==}
 
@@ -521,14 +518,6 @@ packages:
     resolution: {integrity: sha512-qQ6iPCm8SFuY+bpcSv5hlYtdwDHcFlE6wlpUHa0ywG9tGVBYM5But8S4qVRFq1iejAuFX+ubNUOyFJHvxpox+A==}
     peerDependencies:
       eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
-
-  '@rushstack/node-core-library@3.61.0':
-    resolution: {integrity: sha512-tdOjdErme+/YOu4gPed3sFS72GhtWCgNV9oDsHDnoLY5oDfwjKUc9Z+JOZZ37uAxcm/OCahDHfuu2ugqrfWAVQ==}
-    peerDependencies:
-      '@types/node': '*'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
 
   '@rushstack/node-core-library@3.63.0':
     resolution: {integrity: sha512-Q7B3dVpBQF1v+mUfxNcNZh5uHVR8ntcnkN5GYjbBLrxUYHBGKbnCM+OdcN+hzCpFlLBH6Ob0dEHhZ0spQwf24A==}
@@ -3745,14 +3734,6 @@ snapshots:
       jju: 1.4.0
       js-yaml: 4.1.0
 
-  '@microsoft/api-extractor-model@7.28.2(@types/node@18.19.76)':
-    dependencies:
-      '@microsoft/tsdoc': 0.14.2
-      '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.61.0(@types/node@18.19.76)
-    transitivePeerDependencies:
-      - '@types/node'
-
   '@microsoft/api-extractor-model@7.30.7(@types/node@18.19.76)':
     dependencies:
       '@microsoft/tsdoc': 0.15.1
@@ -3903,18 +3884,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
       - typescript
-
-  '@rushstack/node-core-library@3.61.0(@types/node@18.19.76)':
-    dependencies:
-      colors: 1.2.5
-      fs-extra: 7.0.1
-      import-lazy: 4.0.0
-      jju: 1.4.0
-      resolve: 1.22.8
-      semver: 7.5.4
-      z-schema: 5.0.5
-    optionalDependencies:
-      '@types/node': 18.19.76
 
   '@rushstack/node-core-library@3.63.0(@types/node@18.19.76)':
     dependencies:
