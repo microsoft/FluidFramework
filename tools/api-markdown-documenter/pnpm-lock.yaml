@@ -103,8 +103,8 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       dir-compare:
-        specifier: ^4.0.0
-        version: 4.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       eslint:
         specifier: ~8.57.0
         version: 8.57.1
@@ -1245,8 +1245,8 @@ packages:
     resolution: {integrity: sha512-uIFDxqpRZGZ6ThOk84hEfqWoHx2devRFvpTZcTHur85vImfaxUbTW9Ryh4CpCuDnToOP1CEtXKIgytHBPVff5A==}
     engines: {node: '>=0.3.1'}
 
-  dir-compare@4.0.0:
-    resolution: {integrity: sha512-wC7thVKL3V656tO61rbEDE4LTeeYrUC2pAUL00AaXYghBhjjVNRyBlpH6POzb44ZuK23OSrqF6TbSC/QYeqfAg==}
+  dir-compare@5.0.0:
+    resolution: {integrity: sha512-/GCjdixGQyJ9sj/HiMTYaNGztXqHnj0kWuKDfrGU6fCvZzQBihMBQLToG/dwg5cSs7lm5707iwbKOdsJh5VV4g==}
 
   dir-glob@3.0.1:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
@@ -4686,7 +4686,7 @@ snapshots:
 
   diff@5.2.0: {}
 
-  dir-compare@4.0.0:
+  dir-compare@5.0.0:
     dependencies:
       minimatch: 3.1.2
       p-limit: 3.1.0
