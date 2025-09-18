@@ -5,10 +5,10 @@
 
 import { expect } from "chai";
 
-import type { ApiDocument } from "../../ApiDocument.js";
-import { checkForDuplicateDocumentPaths } from "../Utilities.js";
+import type { ApiDocument } from "../../../ApiDocument.js";
+import { checkForDuplicateDocumentPaths } from "../index.js";
 
-describe("ApiItem to Documentation transformation utilities tests", () => {
+describe("DocumentUtilities tests", () => {
 	describe("checkForDuplicateDocumentPaths", () => {
 		it("Empty list", () => {
 			expect(() => checkForDuplicateDocumentPaths([])).to.not.throw();

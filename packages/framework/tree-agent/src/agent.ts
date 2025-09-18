@@ -16,12 +16,12 @@ import { TreeNode, NodeKind, Tree } from "@fluidframework/tree";
 import { getSimpleSchema } from "@fluidframework/tree/alpha";
 import type {
 	ObjectNodeSchema,
-	TreeViewAlpha,
 	ReadableField,
 	TreeBranch,
 	FactoryContentObject,
 	InsertableContent,
-	InsertableField,
+	UnsafeUnknownSchema,
+	ReadSchema,
 } from "@fluidframework/tree/alpha";
 import { normalizeFieldSchema, type TreeMapNode } from "@fluidframework/tree/internal";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models"; // eslint-disable-line import/no-internal-modules
@@ -31,11 +31,13 @@ import { tool } from "@langchain/core/tools"; // eslint-disable-line import/no-i
 import { z } from "zod";
 
 import { IdGenerator } from "./idGenerator.js";
+import { Subtree } from "./subtree.js";
 import { generateEditTypesForPrompt } from "./typeGeneration.js";
 import {
 	constructNode,
 	fail,
 	failUsage,
+	getFriendlySchema,
 	getFriendlySchemaName,
 	getZodSchemaAsTypeScript,
 	llmDefault,
@@ -49,12 +51,37 @@ const paramsName = "params";
  * TODO doc
  * @alpha
  */
-export function createSemanticAgent<TRoot extends ImplicitFieldSchema>(
+export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(
 	client: BaseChatModel,
-	treeView: TreeView<TRoot>,
+	treeView: TreeView<TSchema>,
 	options?: {
 		readonly domainHints?: string;
-		readonly treeToString?: (root: ReadableField<TRoot>) => string;
+		readonly treeToString?: (root: ReadableField<TSchema>) => string;
+		readonly validator?: (js: string) => boolean;
+		readonly log?: Log;
+	},
+): SharedTreeSemanticAgent;
+/**
+ * TODO doc
+ * @alpha
+ */
+export function createSemanticAgent<T extends TreeNode>(
+	client: BaseChatModel,
+	node: T,
+	options?: {
+		readonly domainHints?: string;
+		readonly treeToString?: (root: T) => string;
+		readonly validator?: (js: string) => boolean;
+		readonly log?: Log;
+	},
+): SharedTreeSemanticAgent;
+// eslint-disable-next-line jsdoc/require-jsdoc
+export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(
+	client: BaseChatModel,
+	treeView: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode),
+	options?: {
+		readonly domainHints?: string;
+		readonly treeToString?: (root: ReadableField<TSchema>) => string;
 		readonly validator?: (js: string) => boolean;
 		readonly log?: Log;
 	},
@@ -86,32 +113,36 @@ export type Log = (message: string) => void;
 export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 	implements SharedTreeSemanticAgent
 {
-	#prompting: typeof this.prompting | undefined;
+	#querying: typeof this.querying | undefined;
 	#messages: (HumanMessage | AIMessage | ToolMessage)[] = [];
 	#treeHasChangedSinceLastQuery = false;
 
-	private get prompting(): {
-		readonly branch: TreeViewAlpha<TRoot> & TreeBranch;
+	private get querying(): {
+		readonly tree: Subtree<TRoot>;
 		readonly idGenerator: IdGenerator;
 	} {
-		return this.#prompting ?? fail("Not currently processing a prompt");
+		return this.#querying ?? fail("Not currently processing a prompt");
 	}
 
-	// TODO: it's weird that this is called by subclasses. Refactor to make it more robust.
 	private setPrompting(): void {
-		if (this.#prompting !== undefined) {
-			this.prompting.branch.dispose();
+		if (this.#querying !== undefined) {
+			this.#querying.tree.branch.dispose();
 		}
-		this.#prompting = {
-			branch: this.treeView.fork(),
+
+		this.#querying = {
+			tree: this.tree.fork(),
 			idGenerator: new IdGenerator(),
 		};
-		this.#prompting.idGenerator.assignIds(this.#prompting.branch.root);
+
+		this.#querying.idGenerator.assignIds(this.querying.tree.field);
 	}
+
+	private readonly originalBranch: TreeBranch;
+	private readonly tree: Subtree<TRoot>;
 
 	public constructor(
 		public readonly client: BaseChatModel,
-		public readonly treeView: TreeView<TRoot>,
+		tree: TreeView<TRoot> | (ReadableField<TRoot> & TreeNode),
 		private readonly options?: {
 			readonly domainHints?: string;
 			readonly treeToString?: (root: ReadableField<TRoot>) => string;
@@ -119,7 +150,10 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 			readonly log?: Log;
 		},
 	) {
-		const systemPrompt = this.getSystemPrompt(this.treeView);
+		const originalSubtree = new Subtree(tree);
+		this.originalBranch = originalSubtree.branch;
+		this.tree = originalSubtree.fork();
+		const systemPrompt = this.getSystemPrompt(this.tree);
 		this.options?.log?.(`# Fluid Framework SharedTree AI Agent Log\n\n`);
 		const now = new Date();
 		const formattedDate = now.toLocaleString(undefined, {
@@ -152,9 +186,9 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 		this.options?.log?.(
 			`#### Generated Code\n\n\`\`\`javascript\n${functionCode}\n\`\`\`\n\n`,
 		);
-		const { branch, idGenerator } = this.prompting;
+		const { idGenerator, tree } = this.querying;
 		const create: Record<string, (input: FactoryContentObject) => TreeNode> = {};
-		visitObjectNodeSchema(this.treeView.schema, (schema) => {
+		visitObjectNodeSchema(tree.schema, (schema) => {
 			const name =
 				getFriendlySchemaName(schema.identifier) ??
 				fail("Expected friendly name for object node schema");
@@ -165,12 +199,13 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 			this.options?.log?.(`#### Code Validation Failed\n\n`);
 			return "Code validation failed";
 		}
+
 		const params = {
-			get root(): TreeFieldFromImplicitField<TRoot> {
-				return branch.root;
+			get root(): TreeNode | ReadableField<TRoot> {
+				return tree.field;
 			},
-			set root(value: InsertableField<TRoot>) {
-				branch.root = value;
+			set root(value: TreeFieldFromImplicitField<ReadSchema<TRoot>>) {
+				tree.field = value;
 			},
 			create,
 		};
@@ -189,11 +224,11 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 		this.options?.log?.(`#### New Tree State\n\n`);
 		this.options?.log?.(
 			`${
-				this.options.treeToString?.(branch.root) ??
-				`\`\`\`JSON\n${this.stringifyTree(branch.root, idGenerator)}\n\`\`\``
+				this.options.treeToString?.(tree.field) ??
+				`\`\`\`JSON\n${this.stringifyTree(tree.field, idGenerator)}\n\`\`\``
 			}\n\n`,
 		);
-		return `After running the function, the new state of the tree is:\n\n\`\`\`JSON\n${this.stringifyTree(branch.root, idGenerator)}\n\`\`\``;
+		return `After running the function, the new state of the tree is:\n\n\`\`\`JSON\n${this.stringifyTree(tree.field, idGenerator)}\n\`\`\``;
 	}
 
 	// eslint-disable-next-line unicorn/consistent-function-scoping
@@ -211,12 +246,12 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 		// eslint-disable-next-line unicorn/consistent-function-scoping
 		() => {
 			const stringified = this.stringifyTree(
-				this.prompting?.branch.root,
-				this.prompting.idGenerator,
+				this.querying.tree.field,
+				this.querying.idGenerator,
 			);
 			this.options?.log?.(
 				`${
-					this.options?.treeToString?.(this.prompting.branch.root) ??
+					this.options?.treeToString?.(this.querying.tree.field) ??
 					`\`\`\`JSON\n${stringified}\n\`\`\``
 				}\n\n`,
 			);
@@ -232,13 +267,11 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 	);
 
 	public async query(userPrompt: string): Promise<string | undefined> {
+		this.tree.branch.rebaseOnto(this.originalBranch);
 		this.setPrompting();
 		this.options?.log?.(`## User Query\n\n${userPrompt}\n\n`);
 		if (this.#treeHasChangedSinceLastQuery) {
-			const stringified = this.stringifyTree(
-				this.prompting.branch.root,
-				this.prompting.idGenerator,
-			);
+			const stringified = this.stringifyTree(this.tree.field, this.querying.idGenerator);
 			this.#messages.push(
 				new HumanMessage(
 					`The tree has changed since the last message. The new state of the tree is: \n\n\`\`\`JSON\n${stringified}\n\`\`\``,
@@ -302,28 +335,26 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 					}
 				}
 			} else {
-				this.treeView.merge(this.prompting.branch);
-				this.#prompting = undefined;
+				this.tree.branch.merge(this.querying.tree.branch);
+				this.originalBranch.merge(this.tree.branch, false);
+				this.#querying = undefined;
 				return responseMessage.text;
 			}
 		} while (iterations <= maxMessages);
 
-		this.#prompting?.branch.dispose();
-		this.#prompting = undefined;
+		this.querying.tree.branch.dispose();
+		this.#querying = undefined;
 		throw new UsageError("LLM exceeded maximum number of messages");
 	}
 
-	private getSystemPrompt(view: Omit<TreeView<TRoot>, "fork" | "merge">): string {
+	private getSystemPrompt({ field, schema }: Subtree<TRoot>): string {
 		const arrayInterfaceName = "TreeArray";
 		const mapInterfaceName = "TreeMap";
-		// TODO: Support for non-object roots
-		assert(
-			typeof view.root === "object" && view.root !== null && !isFluidHandle(view.root),
-			0xc1c /*  */,
-		);
-		const schema = getSimpleSchema(view.schema);
+		// TODO: Support for primitive values
+		assert(typeof field === "object" && field !== null && !isFluidHandle(field), 0xc1c /*  */);
+		const simpleSchema = getSimpleSchema(schema);
 
-		const { domainTypes } = generateEditTypesForPrompt(view.schema, schema);
+		const { domainTypes } = generateEditTypesForPrompt(schema, simpleSchema);
 		for (const [key, value] of Object.entries(domainTypes)) {
 			const friendlyKey = getFriendlySchemaName(key);
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
@@ -339,7 +370,7 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 		}
 
 		const treeObjects: { type: string; id: string }[] = [];
-		const stringified = this.stringifyTree(view.root, new IdGenerator(), (object, id) => {
+		const stringified = this.stringifyTree(field, new IdGenerator(), (object, id) => {
 			const type =
 				getFriendlySchemaName(Tree.schema(object).identifier) ??
 				fail("Expected object schema to have a friendly name.");
@@ -363,7 +394,7 @@ function ${functionName}({ root, create }) {
 }
 \`\`\`\n\n`;
 
-		const rootTypes = [...schema.root.allowedTypesIdentifiers];
+		const rootTypes = [...simpleSchema.root.allowedTypesIdentifiers];
 		const prompt = `You are a collaborative agent who assists a user with editing and analyzing a JSON tree.
 The tree is a JSON object with the following Typescript schema:
 
@@ -371,7 +402,7 @@ The tree is a JSON object with the following Typescript schema:
 ${getZodSchemaAsTypeScript(domainTypes)}
 \`\`\`
 
-The current state of the tree (a \`${getFriendlySchemaName(Tree.schema(view.root).identifier)}\`) is:
+The current state of the tree (a \`${getFriendlySchema(field)}\`) is:
 
 \`\`\`JSON
 ${stringified}
@@ -429,15 +460,15 @@ ${builderExplanation}Finally, double check that the edits would accomplish the u
 	}
 
 	private stringifyTree(
-		root: ReadableField<TRoot>,
+		tree: ReadableField<UnsafeUnknownSchema>,
 		idGenerator: IdGenerator,
 		visitNode?: (object: TreeNode, id: string) => void,
 	): string {
 		const indexReplacementKey = "_27bb216b474d45e6aaee14d1ec267b96";
 		const mapReplacementKey = "_a0d98d22a1c644539f07828d3f064d71";
-		idGenerator.assignIds(root);
+		idGenerator.assignIds(tree);
 		const stringified = JSON.stringify(
-			root,
+			tree,
 			(_, node: unknown) => {
 				if (node instanceof TreeNode) {
 					const schema = Tree.schema(node);

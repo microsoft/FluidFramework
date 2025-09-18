@@ -23,7 +23,7 @@ export const MainView: React.FC<{ root: Inventory }> = ({ root: inventory }) => 
 				count={part.quantity}
 				onDecrement={(): number => part.quantity--}
 				onIncrement={(): number => part.quantity++}
-			></Counter>,
+			/>,
 		);
 	}
 
