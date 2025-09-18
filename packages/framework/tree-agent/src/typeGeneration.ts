@@ -12,6 +12,7 @@ import {
 	MapNodeSchema,
 	NodeKind,
 	ObjectNodeSchema,
+	RecordNodeSchema,
 	ValueSchema,
 	walkFieldSchema,
 } from "@fluidframework/tree/internal";
@@ -76,7 +77,7 @@ export function generateEditTypesForPrompt(
 						n instanceof ObjectNodeSchema ||
 						n instanceof MapNodeSchema ||
 						n instanceof ArrayNodeSchema ||
-						n instanceof MapNodeSchema
+						n instanceof RecordNodeSchema
 					) {
 						objectTypeSchemas.add(n);
 						const exposedMethods = getExposedMethods(n);
