@@ -345,6 +345,9 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 
 					return append(name);
 				}
+				throw new Error(
+					"Unsupported zod effects type. Did you use z.instanceOf? Use ExposedMethods.instanceOf function to reference schema classes in methods.",
+				);
 			}
 			case z.ZodFirstPartyTypeKind.ZodVoid: {
 				return append("void");
@@ -541,18 +544,12 @@ function getTypePrecendece(type: z.ZodType): TypePrecedence {
 export function instanceOf<T extends TreeNodeSchemaClass>(
 	schema: T,
 ): z.ZodType<InstanceType<T>, z.ZodTypeDef, InstanceType<T>> {
-	const existing = instanceZods.get(schema.identifier);
-	if (existing !== undefined) {
-		return existing as z.ZodType<InstanceType<T>, z.ZodTypeDef, InstanceType<T>>;
-	}
 	if (!(schema instanceof ObjectNodeSchema)) {
 		throw new UsageError(`${schema.identifier} must be an instance of ObjectNodeSchema.`);
 	}
 	const effect = z.instanceof(schema);
-	instanceZods.set(schema.identifier, effect);
 	instanceOfs.set(effect, schema);
 	return effect;
 }
 
 const instanceOfs = new WeakMap<z.ZodTypeAny, ObjectNodeSchema>();
-const instanceZods = new Map<string, z.ZodTypeAny>();
