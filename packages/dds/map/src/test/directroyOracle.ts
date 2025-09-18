@@ -34,7 +34,9 @@ export class SharedDirectoryOracle {
 	private captureInitialSnapshot(dir: IDirectory): void {
 		// Capture keys
 		for (const [key, value] of dir.entries()) {
-			this.model.set(`${dir.absolutePath}/${key}`, value);
+			const pathKey = dir.absolutePath === "/" ? `/${key}` : `${dir.absolutePath}/${key}`;
+
+			this.model.set(pathKey, value);
 		}
 
 		for (const [, subDir] of dir.subdirectories()) {
@@ -44,15 +46,25 @@ export class SharedDirectoryOracle {
 	}
 
 	private readonly onValueChanged = (change: IDirectoryValueChanged) => {
-		const { key } = change;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const { key, previousValue } = change;
 		const path = change.path ?? "";
+
+		const pathKey = path === "/" ? `/${key}` : `${path}/${key}`;
+
+		assert.strictEqual(
+			previousValue,
+			this.model.get(pathKey),
+			`Mismatch on previous value for key="${key}"`,
+		);
+
 		const fuzzDir = this.sharedDir.getWorkingDirectory(path);
 		if (!fuzzDir) return;
 
 		if (fuzzDir.has(key)) {
-			this.model.set(`${path}/${key}`, fuzzDir.get(key));
+			this.model.set(pathKey, fuzzDir.get(key));
 		} else {
-			this.model.delete(`${path}/${key}`);
+			this.model.delete(pathKey);
 		}
 	};
 
@@ -65,8 +77,9 @@ export class SharedDirectoryOracle {
 		local: boolean,
 		target: ISharedDirectory,
 	) => {
-		if (!this.model.has(`${target.absolutePath}${subdirName}`)) {
-			this.model.set(`${target.absolutePath}${subdirName}`, undefined);
+		const { absolutePath } = target;
+		if (!this.model.has(`${absolutePath}${subdirName}`)) {
+			this.model.set(`${absolutePath}${subdirName}`, undefined);
 		}
 	};
 
@@ -88,12 +101,24 @@ export class SharedDirectoryOracle {
 		target: IDirectory,
 	) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const newValue = target.get(change.key);
+		const { key, previousValue } = change;
+		const { absolutePath } = target;
+
+		const pathKey = absolutePath === "/" ? `/${key}` : `${absolutePath}/${key}`;
+
+		assert.strictEqual(
+			previousValue,
+			this.model.get(pathKey),
+			`Mismatch on previous value for key="${key}"`,
+		);
+
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const newValue = target.get(key);
 
 		if (newValue === undefined) {
-			this.model.delete(`${target.absolutePath}${change.key}`);
+			this.model.delete(pathKey);
 		} else {
-			this.model.set(`${target.absolutePath}${change.key}`, newValue);
+			this.model.set(pathKey, newValue);
 		}
 	};
 
@@ -116,7 +141,7 @@ export class SharedDirectoryOracle {
 			assert.deepStrictEqual(
 				actual,
 				value,
-				`SharedDirectoryOracle mismatch at path="${pathKey}" with actual value = ${actual} and oracle value = ${value}}`,
+				`SharedDirectoryOracle mismatch at path="${pathKey}" with actual value = ${actual} and oracle value = ${value} with model entries = ${JSON.stringify(this.model.entries())}}`,
 			);
 		}
 	}

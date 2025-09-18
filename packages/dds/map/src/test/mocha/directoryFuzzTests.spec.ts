@@ -125,6 +125,7 @@ describe("SharedDirectory fuzz", () => {
 			type: "fixedInterval",
 			interval: dirDefaultOptions.validateInterval,
 		},
+		skipMinimization: true,
 		reconnectProbability: 0.15,
 		numberOfClients: 3,
 		clientJoinOptions: {
@@ -139,7 +140,7 @@ describe("SharedDirectory fuzz", () => {
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 		saveFailures: { directory: dirPath.join(_dirname, "../../../src/test/mocha/results/2") },
-		skip: [13],
+		skip: [],
 	});
 
 	createDDSFuzzSuite(
