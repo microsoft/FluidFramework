@@ -81,6 +81,7 @@ import {
 	DataProcessingError,
 	LoggingError,
 	type MonitoringContext,
+	PerformanceEvent,
 	ThresholdCounter,
 	UsageError,
 	createChildMonitoringContext,
@@ -733,7 +734,6 @@ export abstract class FluidDataStoreContext
 			return initialChannel;
 		}
 
-		const migrationStartTime = Date.now();
 		const oldPkg = this.pkg?.join("/");
 
 		// Process pending ops and check if we get the barrier op while loading
@@ -759,45 +759,27 @@ export abstract class FluidDataStoreContext
 
 		const newPkgJoined = migrationInfo.newPackagePath.join("/");
 		assert(newPkgJoined !== oldPkg, "No-op migration not allowed");
-		// Telemetry start
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "DataStoreMigration_Start",
-			oldPkg,
-			newPkg: newPkgJoined,
-		});
-		try {
-			// Swap package path prior to looking up new factory
-			this.pkg = [...migrationInfo.newPackagePath];
+		return PerformanceEvent.timedExecAsync(
+			this.mc.logger,
+			//* TODO: Tag pkg's as CodeArtifact
+			{ eventName: "DataStoreMigration", oldPkg, newPkg: newPkgJoined },
+			async () => {
+				// Swap package path prior to looking up new factory
+				this.pkg = [...migrationInfo.newPackagePath];
 
-			// Dispose the unbound old channel; it was never bound so has no side-effects
-			initialChannel.dispose();
+				// Dispose the unbound old channel; it was never bound so has no side-effects
+				initialChannel.dispose();
 
-			// Lookup new factory with updated package path
-			//* TODO: Use proper type guard instead of cast
-			const newFactory =
-				(await this.factoryFromPackagePath()) as IMigratableFluidDataStoreFactory;
+				// Lookup new factory with updated package path
+				//* TODO: Use proper type guard instead of cast
+				const newFactory =
+					(await this.factoryFromPackagePath()) as IMigratableFluidDataStoreFactory;
 
-			const migratedChannel = await newFactory.instantiateForMigration(this, portableData);
+				const migratedChannel = await newFactory.instantiateForMigration(this, portableData);
 
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "DataStoreMigration_Success",
-				oldPkg,
-				newPkg: newPkgJoined,
-				durationMs: Date.now() - migrationStartTime,
-			});
-
-			return migratedChannel;
-		} catch (error) {
-			this.mc.logger.sendErrorEvent(
-				{
-					eventName: "DataStoreMigration_Failure",
-					oldPkg,
-					newPkg: migrationInfo.newPackagePath.join("/"),
-				},
-				error as Error,
-			);
-			throw error; // Fatal
-		}
+				return migratedChannel;
+			},
+		);
 	}
 
 	/**
