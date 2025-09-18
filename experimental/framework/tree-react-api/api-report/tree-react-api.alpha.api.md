@@ -79,7 +79,10 @@ export function usePropTreeRecord<const T extends PropTreeNodeRecord, TResult>(p
 export function useTree(subtreeRoot: TreeNode): number;
 
 // @public
-export function useTreeObservations<TResult>(trackDuring: () => TResult): TResult;
+export function useTreeObservations<TResult>(trackDuring: () => TResult, onInvalidation?: () => void): TResult;
+
+// @public
+export function withTreeObservations<TIn>(component: React_2.FC<TIn>, onInvalidation?: () => void): React_2.FC<TIn | WrapNodes<TIn>>;
 
 // @public
 export type WrapNodes<T> = T extends TreeNode ? PropTreeNode<T> : T extends readonly (infer U)[] ? readonly WrapNodes<U>[] : T extends NodeRecord ? WrapPropTreeNodeRecord<T> : T;

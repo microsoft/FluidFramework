@@ -58,6 +58,10 @@ class SubscriptionsWrapper {
 
 /**
  * Higher order component which wraps a component to use {@link useTreeObservations}.
+ *
+ * @param onInvalidation - Called when the tracked tree observations are invalidated.
+ * This is not expected to have production use cases, but it useful for testing and debugging.
+ *
  * @remarks
  * When passing TreeNodes in props, care must be taken to not observe their content outside of a context which does observation tracking (or manual invalidation).
  * This wraps a component in such tracking.
@@ -67,13 +71,19 @@ class SubscriptionsWrapper {
  */
 export function withTreeObservations<TIn>(
 	component: React.FC<TIn>,
+	onInvalidation?: () => void,
 ): React.FC<TIn | WrapNodes<TIn>> {
 	return (props: TIn | WrapNodes<TIn>): React.ReactNode =>
-		useTreeObservations(() => component(props as TIn));
+		useTreeObservations(() => component(props as TIn), onInvalidation);
 }
 
 /**
  * Custom hook which invalidates a React Component when there is a change in tree content observed during `trackDuring`.
+ *
+ * @param trackDuring - Called synchronously, and will have its tree observations tracked.
+ * @param onInvalidation - Called when the tracked tree observations are invalidated.
+ * This is not expected to have production use cases, but it useful for testing and debugging.
+ *
  * @remarks
  * This includes changes to the tree's content.
  * Currently this will throw if observing a node's parentage to be undefined,
@@ -82,7 +92,10 @@ export function withTreeObservations<TIn>(
  * For additional type safety to help avoid observing TreeNode content outside of this hook, see {@link PropTreeNode}.
  * @public
  */
-export function useTreeObservations<TResult>(trackDuring: () => TResult): TResult {
+export function useTreeObservations<TResult>(
+	trackDuring: () => TResult,
+	onInvalidation?: () => void,
+): TResult {
 	// Use a React effect hook to invalidate this component when the subtreeRoot changes.
 	// We do this by incrementing a counter, which is passed as a dependency to the effect hook.
 	const [subscriptions, setSubscriptions] = React.useState<SubscriptionsWrapper>(
@@ -103,6 +116,8 @@ export function useTreeObservations<TResult>(trackDuring: () => TResult): TResul
 		// Skipping such an unregestration is fine so long as we ensure the registry does not redundantly unsubscribe.
 		// Since trackObservationsOnce already unsubscribed, just clear out the unsubscribe function to ensure it is not called again.
 		inner.unsubscribe = undefined;
+
+		onInvalidation?.();
 	};
 
 	// If there was a previous rendering of this instance of this hook in the current component, unsubscribe from it.
