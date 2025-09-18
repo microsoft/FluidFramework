@@ -234,7 +234,7 @@ export const baseSharedMatrixModel: Omit<
 		if (hasSharedMatrixOracle(b.channel)) {
 			b.channel.matrixOracle.validate();
 		}
-		void assertMatricesAreEquivalent(a.channel, b.channel);
+		return assertMatricesAreEquivalent(a.channel, b.channel);
 	},
 	minimizationTransforms: ["count", "start", "row", "col"].map((p) => (op) => {
 		if (p in op && typeof op[p] === "number" && op[p] > 0) {
