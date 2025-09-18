@@ -117,8 +117,12 @@ describe(`Presence with AzureClient`, () => {
 		const allAttendeesJoinedTimeoutMs = (1000 + 200 * numClients) * timeoutMultiplier;
 
 		for (const writeClients of [numClients, 1]) {
-			// AB#48866: Fix intermittently failing presence tests
-			it.skip(`announces 'attendeeConnected' when remote client joins session [${numClients} clients, ${writeClients} writers]`, async function () {
+			it(`announces 'attendeeConnected' when remote client joins session [${numClients} clients, ${writeClients} writers]`, async function () {
+				// AB#48866: Fix intermittently failing presence tests
+				if (useAzure) {
+					this.skip();
+				}
+
 				setTimeout(this, childConnectTimeoutMs + allAttendeesJoinedTimeoutMs + 1000);
 
 				// Setup
@@ -140,8 +144,11 @@ describe(`Presence with AzureClient`, () => {
 				);
 			});
 
-			// AB#48866: Fix intermittently failing presence tests
-			it.skip(`announces 'attendeeDisconnected' when remote client disconnects [${numClients} clients, ${writeClients} writers]`, async function () {
+			it(`announces 'attendeeDisconnected' when remote client disconnects [${numClients} clients, ${writeClients} writers]`, async function () {
+				// AB#48866: Fix intermittently failing presence tests
+				if (useAzure) {
+					this.skip();
+				}
 				// TODO: AB#45620: "Presence: perf: update Join pattern for scale" can handle
 				// larger counts of read-only attendees. Without protocol changes tests with
 				// 20+ attendees exceed current limits.
@@ -271,7 +278,11 @@ describe(`Presence with AzureClient`, () => {
 					});
 				});
 
-				it(`allows clients to read Latest state from other clients [${numClients} clients]`, async () => {
+				it(`allows clients to read Latest state from other clients [${numClients} clients]`, async function () {
+					// AB#48866: Fix intermittently failing presence tests
+					if (useAzure) {
+						this.skip();
+					}
 					// Setup
 					const updateEventsPromise = waitForLatestValueUpdates(
 						remoteClients,
@@ -409,8 +420,11 @@ describe(`Presence with AzureClient`, () => {
 					}
 				});
 
-				// AB#48866: Fix intermittently failing presence tests
-				it.skip(`returns per-key values on read [${numClients} clients]`, async () => {
+				it(`returns per-key values on read [${numClients} clients]`, async function () {
+					// AB#48866: Fix intermittently failing presence tests
+					if (useAzure) {
+						this.skip();
+					}
 					// Setup
 					const allAttendeeIds = await Promise.all(attendeeIdPromises);
 					const attendee0Id = containerCreatorAttendeeId;
