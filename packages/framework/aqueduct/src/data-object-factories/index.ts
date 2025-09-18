@@ -19,3 +19,4 @@ export {
 	type MultiFormatDataStoreFactoryProps,
 	type MultiFormatModelDescriptor,
 } from "./multiFormatDataStoreFactory.js";
+export { pureDataObjectModelDescriptor } from "./pureDataObjectModelDescriptor.js";

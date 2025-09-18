@@ -9,35 +9,14 @@ import {
 	SharedDirectory,
 } from "@fluidframework/map/internal";
 
-// import type { MultiFormatModelDescriptor } from "../data-object-factories/index.js";
-
 import { PureDataObject } from "./pureDataObject.js";
-import type {
-	DataObjectTypes,
-	//* IDataObjectProps
-} from "./types.js";
+import type { DataObjectTypes } from "./types.js";
 
 /**
  * ID of the root ISharedDirectory. Every DataObject contains this ISharedDirectory and adds further DDSes underneath it.
  * @internal
  */
 export const dataObjectRootDirectoryId = "root";
-
-//* WIP
-// export function DataObjectModelDescriptor<
-// 	TObj extends DataObject<I>,
-// 	I extends DataObjectTypes = DataObjectTypes,
-// >(ctor: new (props: IDataObjectProps<I>) => TObj): MultiFormatModelDescriptor<TObj> {
-// 	return {
-// 		create(runtime) {
-// 			const obj = new ctor({
-// 				runtime,
-// 				context: runtime.objectsRoutingContext,
-// 				existing: false,
-// 			});
-// 		},
-// 	};
-// }
 
 /**
  * DataObject is a base data store that is primed with a root directory. It

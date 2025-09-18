@@ -18,10 +18,13 @@ import type {
 	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions/internal";
 
-import type { PureDataObject } from "../data-objects/pureDataObject.js";
-import type { DataObjectTypes } from "../data-objects/types.js";
+import type { DataObjectTypes, IDataObjectProps } from "../data-objects/types.js";
 
 import type { DataObjectFactoryProps } from "./pureDataObjectFactory.js";
+
+//* TODO: Do a thorough pass over PureDataObjectFactory and MultiFormatDataStoreFactory to ensure feature parity
+//* e.g. MFDSF is missing the Runtime mixin
+//* The idea is that if you use a single pureDataObjectModelDescriptor with this Factory, it's equivalent to PureDataObjectFactory
 
 /**
  * Descriptor that supplies (or can create) a model format within a multi-format data store.
@@ -30,11 +33,14 @@ import type { DataObjectFactoryProps } from "./pureDataObjectFactory.js";
  * - `probe`: Used when loading an existing data store; first descriptor whose probe returns true is selected.
  * - `get`: Returns (or produces) the entry point Fluid object after selection.
  */
-export interface MultiFormatModelDescriptor<TEntryPoint extends FluidObject = FluidObject> {
+export interface MultiFormatModelDescriptor<
+	TEntryPoint extends FluidObject = FluidObject,
+	I extends DataObjectTypes = DataObjectTypes,
+> {
 	/**
 	 * Initialize a brand-new data store to this format (only invoked on descriptor[0] when !existing).
 	 */
-	create(runtime: IFluidDataStoreRuntime): Promise<void>; //* Would be nice to be able to have it synchronous?
+	create(props: IDataObjectProps<I>): Promise<void>; //* Would be nice to be able to have it synchronous?
 	/**
 	 * Return true if this descriptor's format matches the persisted contents of the runtime.
 	 */
@@ -42,7 +48,7 @@ export interface MultiFormatModelDescriptor<TEntryPoint extends FluidObject = Fl
 	/**
 	 * Provide the entry point object for this model.
 	 */
-	get(runtime: IFluidDataStoreRuntime): Promise<TEntryPoint> | TEntryPoint;
+	get(props: IDataObjectProps<I>): Promise<TEntryPoint> | TEntryPoint;
 	/**
 	 * Shared object (DDS) factories required specifically for this model format. Multiple descriptors can
 	 * contribute shared objects; duplicates (by type) are ignored with first-wins semantics.
@@ -65,23 +71,6 @@ export interface MultiFormatDataStoreFactoryProps<I extends DataObjectTypes = Da
 	readonly modelDescriptors: readonly MultiFormatModelDescriptor[];
 }
 
-//* WIP
-// function pureDataObjectToModelDescriptor<
-// 	TObj extends PureDataObject & TEntryPoint, //* Default Generic type param ok?
-// 	TEntryPoint extends FluidObject = FluidObject, //* Needed? This would be the union / universal type I think
-// >(
-// 	ctor: new (runtime: IFluidDataStoreRuntime) => TObj,
-// ): MultiFormatModelDescriptor<TEntryPoint> {
-// 	return {
-// 		create: async (runtime) => {
-// 			const dataObject = new ctor(runtime);
-// 			await dataObject.finishInitialization(false /* existing */);
-// 		},
-// 		probe: async (runtime) => {},
-// 		get: async (runtime) => {},
-// 	};
-// }
-
 /**
  * A minimal multi-format data store factory.
  *
@@ -98,9 +87,10 @@ export class MultiFormatDataStoreFactory implements IFluidDataStoreFactory {
 	private readonly sharedObjectRegistry: Map<string, IChannelFactory>;
 	private readonly runtimeClass: typeof FluidDataStoreRuntime;
 	private readonly policies?: Partial<IFluidDataStorePolicies>;
+	private readonly optionalProviders?: FluidObject; //* TODO: Figure out how to express this
 
 	public constructor(props: MultiFormatDataStoreFactoryProps) {
-		const { type, modelDescriptors, runtimeClass, policies } = props;
+		const { type, modelDescriptors, runtimeClass, policies, optionalProviders } = props;
 		if (type === "") {
 			throw new Error("type must be a non-empty string");
 		}
@@ -111,6 +101,7 @@ export class MultiFormatDataStoreFactory implements IFluidDataStoreFactory {
 		this.descriptors = modelDescriptors;
 		this.runtimeClass = runtimeClass ?? FluidDataStoreRuntime;
 		this.policies = policies;
+		this.optionalProviders = optionalProviders;
 		// Build combined shared object registry (first descriptor wins on duplicates)
 		this.sharedObjectRegistry = new Map();
 		for (const d of modelDescriptors) {
@@ -137,7 +128,12 @@ export class MultiFormatDataStoreFactory implements IFluidDataStoreFactory {
 			// Select descriptor lazily when entry point requested.
 			if (selected !== undefined) {
 				// Already selected for this runtime; return its entry point immediately.
-				return selected.get(rt);
+				return selected.get({
+					context,
+					runtime: rt,
+					providers: this.optionalProviders ?? {},
+					initProps: {}, //* TODO: Plumb this through
+				});
 			}
 
 			if (existing) {
@@ -161,7 +157,12 @@ export class MultiFormatDataStoreFactory implements IFluidDataStoreFactory {
 			assert(selected !== undefined, "Should have found a model selector");
 
 			//* TODO: Switch probe style to return the object directly rather than a boolean followed by this .get call?
-			return selected.get(rt);
+			return selected.get({
+				context,
+				runtime: rt,
+				providers: this.optionalProviders ?? {},
+				initProps: {}, //* TODO: Plumb this through
+			});
 		};
 
 		const runtime = new this.runtimeClass(
@@ -179,7 +180,12 @@ export class MultiFormatDataStoreFactory implements IFluidDataStoreFactory {
 			if (first === undefined) {
 				throw new Error("Invariant: descriptors array unexpectedly empty");
 			}
-			await first.create(runtime);
+			await first.create({
+				context,
+				runtime,
+				providers: this.optionalProviders ?? {},
+				initProps: {}, //* TODO: Plumb this through
+			});
 		}
 
 		return runtime;
