@@ -12,7 +12,11 @@ import * as React from "react";
 
 import { toPropTreeNode, type PropTreeNode } from "../propNode.js";
 import { objectIdNumber } from "../simpleIdentifier.js";
-import { usePropTreeNode, withTreeObservations } from "../useTree.js";
+import {
+	usePropTreeNode,
+	withMemoizedTreeObservations,
+	withTreeObservations,
+} from "../useTree.js";
 
 describe("useTree", () => {
 	describe("dom tests", () => {
@@ -107,14 +111,12 @@ describe("useTree", () => {
 
 				const log: string[] = [];
 
-				const ItemComponent = React.memo(
-					withTreeObservations(
-						(props: { item: Item }): JSX.Element => {
-							log.push(`Item: ${props.item.x}`);
-							return <span>{`${props.item.x}`}</span>;
-						},
-						() => log.push("Item invalidated"),
-					),
+				const ItemComponent = withMemoizedTreeObservations(
+					(props: { item: Item }): JSX.Element => {
+						log.push(`Item: ${props.item.x}`);
+						return <span>{`${props.item.x}`}</span>;
+					},
+					{ onInvalidation: () => log.push("Item invalidated") },
 				);
 
 				const CollectionComponent = withTreeObservations(
@@ -127,7 +129,7 @@ describe("useTree", () => {
 
 						return <div>{items}</div>;
 					},
-					() => log.push("Collection invalidated"),
+					{ onInvalidation: () => log.push("Collection invalidated") },
 				);
 
 				const ParentComponent = withTreeObservations(
@@ -135,7 +137,7 @@ describe("useTree", () => {
 						log.push("Parent");
 						return <CollectionComponent collection={props.node} />;
 					},
-					() => log.push("Parent invalidated"),
+					{ onInvalidation: () => log.push("Parent invalidated") },
 				);
 
 				it("empty", () => {

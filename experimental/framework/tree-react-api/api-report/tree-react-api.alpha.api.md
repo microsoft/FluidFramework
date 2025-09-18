@@ -17,6 +17,11 @@ export type NodeRecord = Record<string, TreeNode | TreeLeafValue>;
 // @public
 export function objectIdNumber(object: object): number;
 
+// @public @input
+export interface ObservationOptions {
+    onInvalidation?: () => void;
+}
+
 // @public
 export interface PropTreeNode<T extends TreeNode> extends ErasedType<[T, "PropTreeNode"]> {
 }
@@ -79,10 +84,15 @@ export function usePropTreeRecord<const T extends PropTreeNodeRecord, TResult>(p
 export function useTree(subtreeRoot: TreeNode): number;
 
 // @public
-export function useTreeObservations<TResult>(trackDuring: () => TResult, onInvalidation?: () => void): TResult;
+export function useTreeObservations<TResult>(trackDuring: () => TResult, options?: ObservationOptions): TResult;
 
 // @public
-export function withTreeObservations<TIn>(component: React_2.FC<TIn>, onInvalidation?: () => void): React_2.FC<TIn | WrapNodes<TIn>>;
+export function withMemoizedTreeObservations<TIn>(component: React_2.FC<TIn>, options?: ObservationOptions & {
+    readonly propsAreEqual?: Parameters<typeof React_2.memo>[1];
+}): React_2.MemoExoticComponent<ReturnType<typeof withTreeObservations<TIn>>>;
+
+// @public
+export function withTreeObservations<TIn>(component: React_2.FC<TIn>, options?: ObservationOptions): React_2.FC<TIn> & React_2.FC<WrapNodes<TIn>> & React_2.FC<TIn | WrapNodes<TIn>>;
 
 // @public
 export type WrapNodes<T> = T extends TreeNode ? PropTreeNode<T> : T extends readonly (infer U)[] ? readonly WrapNodes<U>[] : T extends NodeRecord ? WrapPropTreeNodeRecord<T> : T;

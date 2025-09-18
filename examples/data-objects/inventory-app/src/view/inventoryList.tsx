@@ -7,6 +7,7 @@ import {
 	objectIdNumber,
 	usePropTreeNode,
 	withTreeObservations,
+	withMemoizedTreeObservations,
 	type PropTreeNode,
 } from "@fluid-experimental/tree-react-api";
 import * as React from "react";
@@ -52,8 +53,12 @@ export const MainView: React.FC<{ root: PropTreeNode<Inventory> }> = ({ root }) 
 
 /**
  * Example of a view which consumes part of a tree, delegating some to sub-components.
+ *
+ * This version uses usePropTreeNode. See InventoryView2 for a version using withMemoizedTreeObservations.
  */
-export const InventoryView: React.FC<{ root: PropTreeNode<Inventory> }> = ({ root }) => {
+export const InventoryViewWithHook: React.FC<{ root: PropTreeNode<Inventory> }> = ({
+	root,
+}) => {
 	const partNodes = usePropTreeNode(root, (inventory: Inventory) =>
 		// Example manually wrapping in PropNodes, showing how types without automatic support can still be made type safe.
 		// inventory.parts.map((node) => toPropTreeNode(node)),
@@ -77,13 +82,29 @@ export const InventoryView: React.FC<{ root: PropTreeNode<Inventory> }> = ({ roo
 	);
 };
 
-const PartView: React.FC<{ part: PropTreeNode<Part> }> = (props) =>
-	usePropTreeNode(props.part, (part: Part) => (
-		<Counter
-			key={part.name}
-			title={part.name}
-			count={part.quantity}
-			onDecrement={(): number => part.quantity--}
-			onIncrement={(): number => part.quantity++}
-		/>
-	));
+/**
+ * View which consumes part of a tree, delegating some to sub-components.
+ */
+const InventoryView: React.FC<{ root: PropTreeNode<Inventory> }> =
+	withMemoizedTreeObservations(({ root }: { root: Inventory }) => {
+		const parts = root.parts.map((part) => (
+			<PartView key={objectIdNumber(part)} part={part} />
+		));
+
+		return (
+			<div>
+				<h1>Inventory:</h1>
+				{parts}
+			</div>
+		);
+	});
+
+const PartView = withMemoizedTreeObservations(({ part }: { part: Part }) => (
+	<Counter
+		key={part.name}
+		title={part.name}
+		count={part.quantity}
+		onDecrement={(): number => part.quantity--}
+		onIncrement={(): number => part.quantity++}
+	/>
+));

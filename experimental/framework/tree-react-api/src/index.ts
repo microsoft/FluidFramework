@@ -34,11 +34,13 @@ export {
 	unwrapPropTreeNode,
 	unwrapPropTreeRecord,
 } from "./propNode.js";
+export type { ObservationOptions } from "./useTree.js";
 export {
 	useTree,
 	usePropTreeNode,
 	usePropTreeRecord,
 	useTreeObservations,
 	withTreeObservations,
+	withMemoizedTreeObservations,
 } from "./useTree.js";
 export { objectIdNumber } from "./simpleIdentifier.js";

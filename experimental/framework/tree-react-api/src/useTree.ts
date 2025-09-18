@@ -67,22 +67,50 @@ class SubscriptionsWrapper {
 /**
  * Higher order component which wraps a component to use {@link useTreeObservations}.
  *
- * @param onInvalidation - Called when the tracked tree observations are invalidated.
- * This is not expected to have production use cases, but it useful for testing and debugging.
- *
  * @remarks
  * When passing TreeNodes in props, care must be taken to not observe their content outside of a context which does observation tracking (or manual invalidation).
  * This wraps a component in such tracking.
  *
  * It is recommended that sub-components which take in TreeNodes, if not defined using this higher order components, take the nodes in as {@link PropTreeNode}s.
+ * @privateRemarks
+ * `React.FC` does not seem to be covariant over its input type, so to make use of this more ergonomic,
+ * the return type intersects the various ways this could be used (with or without PropTreeNode wrapping).
  * @public
  */
 export function withTreeObservations<TIn>(
 	component: React.FC<TIn>,
-	onInvalidation?: () => void,
-): React.FC<TIn | WrapNodes<TIn>> {
+	options?: ObservationOptions,
+): React.FC<TIn> & React.FC<WrapNodes<TIn>> & React.FC<TIn | WrapNodes<TIn>> {
 	return (props: TIn | WrapNodes<TIn>): React.ReactNode =>
-		useTreeObservations(() => component(props as TIn), onInvalidation);
+		useTreeObservations(() => component(props as TIn), options);
+}
+
+/**
+ * {@link withTreeObservations} wrapped with React.memo.
+ * @remarks
+ * There is no special logic here, just a convenience wrapper.
+ * @public
+ */
+export function withMemoizedTreeObservations<TIn>(
+	component: React.FC<TIn>,
+	options?: ObservationOptions & {
+		readonly propsAreEqual?: Parameters<typeof React.memo>[1];
+	},
+): React.MemoExoticComponent<ReturnType<typeof withTreeObservations<TIn>>> {
+	return React.memo(withTreeObservations(component, options), options?.propsAreEqual);
+}
+
+/**
+ * Options for {@link useTreeObservations}.
+ * @input
+ * @public
+ */
+export interface ObservationOptions {
+	/**
+	 * Called when the tracked tree observations are invalidated.
+	 * This is not expected to have production use cases, but it useful for testing and debugging.
+	 */
+	onInvalidation?: () => void;
 }
 
 /**
@@ -102,7 +130,7 @@ export function withTreeObservations<TIn>(
  */
 export function useTreeObservations<TResult>(
 	trackDuring: () => TResult,
-	onInvalidation?: () => void,
+	options?: ObservationOptions,
 ): TResult {
 	// Use a React state hook to invalidate this component some aspect of a tree that `trackDuring` observed changes.
 
@@ -129,7 +157,7 @@ export function useTreeObservations<TResult>(
 		// Since trackObservationsOnce already unsubscribed, just clear out the unsubscribe function to ensure it is not called again by the finalizer.
 		inner.unsubscribe = undefined;
 
-		onInvalidation?.();
+		options?.onInvalidation?.();
 	};
 
 	// If there was a previous rendering of this instance of this hook in the current component, unsubscribe from it.
