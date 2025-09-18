@@ -5,17 +5,18 @@
 
 import { strict as assert } from "node:assert";
 
-import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type { IRuntimeStorageService } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { BlobManager, type IBlobManagerRuntime } from "../blobManager/index.js";
+import { BlobManager, type IBlobManagerRuntime } from "../../blobManager/index.js";
 import {
 	ContainerFluidHandleContext,
 	type IContainerHandleContextRuntime,
-} from "../containerHandleContext.js";
+} from "../../containerHandleContext.js";
+
+import { blobToText, textToBlob } from "./blobTestUtils.js";
 
 export const failProxy = <T extends object>(handler: Partial<T> = {}): T => {
 	const proxy: T = new Proxy<T>(handler as T, {
@@ -85,11 +86,11 @@ describe("BlobHandles", () => {
 					return { id: "blobId" };
 				},
 				readBlob: async () => {
-					return stringToBuffer("contentFromStorage", "utf8");
+					return textToBlob("contentFromStorage");
 				},
 			}),
 		});
-		const blob: ArrayBufferLike = stringToBuffer("content", "utf8");
+		const blob: ArrayBufferLike = textToBlob("content");
 		const blobHandleP = blobManager.createBlob(blob);
 		await d.promise;
 		blobManager.processBlobAttachMessage(
@@ -104,10 +105,10 @@ describe("BlobHandles", () => {
 		);
 		const blobHandle = await blobHandleP;
 		// getting blob handle before attaching from the pending blob list
-		assert.strictEqual(bufferToString(await blobHandle.get(), "utf8"), "content");
+		assert.strictEqual(blobToText(await blobHandle.get()), "content");
 		blobHandle.attachGraph();
 		// getting blob handle after attaching from storage
-		assert.strictEqual(bufferToString(await blobHandle.get(), "utf8"), "contentFromStorage");
+		assert.strictEqual(blobToText(await blobHandle.get()), "contentFromStorage");
 	});
 
 	it("Reupload expired blob", async () => {
@@ -125,11 +126,11 @@ describe("BlobHandles", () => {
 					return { id: "blobId", minTTLInSeconds: count < 3 ? -1 : undefined };
 				},
 				readBlob: async () => {
-					return stringToBuffer("content", "utf8");
+					return textToBlob("content");
 				},
 			}),
 		});
-		const blob: ArrayBufferLike = stringToBuffer("content", "utf8");
+		const blob: ArrayBufferLike = textToBlob("content");
 		const blobHandleP = blobManager.createBlob(blob);
 		await d.promise;
 		assert.strictEqual(count, 3, "test did not try to reupload");
@@ -145,6 +146,6 @@ describe("BlobHandles", () => {
 		);
 		const blobHandle = await blobHandleP;
 		blobHandle.attachGraph();
-		assert.strictEqual(bufferToString(await blobHandle.get(), "utf8"), "content");
+		assert.strictEqual(blobToText(await blobHandle.get()), "content");
 	});
 });

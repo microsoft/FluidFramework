@@ -232,7 +232,7 @@ export interface RootDirectoryView {
 // @beta @legacy
 export interface RootTreeView {
     // (undocumented)
-    tree: ITree;
+    tree: ITree_2;
 }
 
 // @beta @legacy
@@ -241,7 +241,7 @@ export abstract class TreeDataObject<TDataObjectTypes extends DataObjectTypes = 
     ModelDescriptor<RootTreeView>,
     ...ModelDescriptor<RootTreeView>[]
     ];
-    protected get tree(): ITree;
+    protected get tree(): ITree_2;
 }
 
 // @beta @legacy
