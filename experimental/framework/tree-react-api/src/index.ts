@@ -18,6 +18,7 @@ export {
 	treeDataObjectInternal,
 	TreeViewComponent,
 } from "./reactSharedTreeView.js";
+export type { ObservationOptions } from "./useObservation.js";
 export type {
 	NodeRecord,
 	PropTreeNode,
@@ -34,7 +35,6 @@ export {
 	unwrapPropTreeNode,
 	unwrapPropTreeRecord,
 } from "./propNode.js";
-export type { ObservationOptions } from "./useTree.js";
 export {
 	useTree,
 	usePropTreeNode,
