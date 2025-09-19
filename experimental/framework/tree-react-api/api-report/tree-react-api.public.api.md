@@ -54,8 +54,8 @@ export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({ tree, v
 
 // @public
 export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
-    readonly ErrorComponent?: React_2.FC<SchemaIncompatibleProps>;
-    readonly ViewComponent: React_2.FC<{
+    readonly errorComponent?: React_2.FC<SchemaIncompatibleProps>;
+    readonly viewComponent: React_2.FC<{
         root: PropTreeValue<TreeFieldFromImplicitField<TSchema>>;
     }>;
 }
