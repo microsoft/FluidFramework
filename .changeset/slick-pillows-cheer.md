@@ -14,7 +14,7 @@ It is now possible to use these utilities to implement React applications which 
 The recommended pattern for doing this is to use `treeDataObject` or `TreeViewComponent` at the root, then `withTreeObservations` or `withMemoizedTreeObservations` for any sub-components which read from TreeNodes.
 Alternatively more localized changes can be made by using `PropNode` to type erase TreeNodes passed in props, then use one of the `usePropTreeNode` or `usePropTreeRecord` hooks to read from them.
 
-All of these APIs work with both hydrated and [un-hydrated](https://fluidframework.com/docs/api/tree/unhydrated-typealias) TreeNodes.
+These APIs work with both hydrated and [un-hydrated](https://fluidframework.com/docs/api/tree/unhydrated-typealias) TreeNodes.
 
 Here is a simple example of a React components which would have an invalidation bug if not using `withTreeObservations`:
 
@@ -34,8 +34,8 @@ const ItemParentComponent = ({ item }: { item: PropTreeNode<Item> }): JSX.Elemen
 );
 ```
 
-If such a component accidentally reads from the TreeNode, it gets a compile error instead of an invalidation bug.
-In this case the invalidation bug would be that if `item.text` is modified, the component would not rerender.
+If such a component reads from the TreeNode, it gets a compile error instead of an invalidation bug.
+In this case the invalidation bug would be that if `item.text` is modified, the component would not re-render.
 
 ```typescript
 const InvalidItemParentComponent = ({
