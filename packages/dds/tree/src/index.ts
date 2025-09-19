@@ -145,6 +145,9 @@ export {
 	type IdentifierIndex,
 	createSimpleTreeIndex,
 	createIdentifierIndex,
+	type DirtyTreeStatus,
+	trackDirtyNodes,
+	type DirtyTreeMap,
 	// experimental @alpha APIs:
 	adaptEnum,
 	enumFromStrings,
