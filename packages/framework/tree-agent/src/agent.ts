@@ -141,6 +141,8 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 	private readonly originalBranch: TreeBranch;
 	private readonly tree: Subtree<TRoot>;
 
+	public readonly systemPrompt: string;
+
 	public constructor(
 		public readonly client: BaseChatModel,
 		tree: TreeView<TRoot> | (ReadableField<TRoot> & TreeNode),
@@ -154,7 +156,7 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 		const originalSubtree = new Subtree(tree);
 		this.originalBranch = originalSubtree.branch;
 		this.tree = originalSubtree.fork();
-		const systemPrompt = this.getSystemPrompt(this.tree);
+		this.systemPrompt = this.getSystemPrompt(this.tree);
 		this.options?.log?.(`# Fluid Framework SharedTree AI Agent Log\n\n`);
 		const now = new Date();
 		const formattedDate = now.toLocaleString(undefined, {
@@ -170,8 +172,8 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 		if (this.client.metadata?.modelName !== undefined) {
 			this.options?.log?.(`Model: **${this.client.metadata?.modelName}**\n\n`);
 		}
-		this.#messages.push(new SystemMessage(systemPrompt));
-		this.options?.log?.(`## System Prompt\n\n${systemPrompt}\n\n`);
+		this.#messages.push(new SystemMessage(this.systemPrompt));
+		this.options?.log?.(`## System Prompt\n\n${this.systemPrompt}\n\n`);
 		if (this.options?.domainHints !== undefined) {
 			this.#messages.push(
 				new HumanMessage(
@@ -383,9 +385,9 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 		const typescriptSchemaTypes = getZodSchemaAsTypeScript(domainTypes, details);
 
 		const helperMethodExplanation = details.hasHelperMethods
-			? ""
-			: `Manipulating the data using the APIs described below is allowed, but when possible ALWAYS prefer to use the application helper methods exposed on the schema TypeScript types if the goal can be accomplished that way.
-It will often not be possible to fully accomplish the goal using those helpers. When this is the case, use the following APIs.`;
+			? `Manipulating the data using the APIs described below is allowed, but when possible ALWAYS prefer to use the application helper methods exposed on the schema TypeScript types if the goal can be accomplished that way.
+It will often not be possible to fully accomplish the goal using those helpers. When this is the case, use the following APIs.`
+			: "";
 
 		const builderExplanation =
 			treeObjects[0] === undefined
