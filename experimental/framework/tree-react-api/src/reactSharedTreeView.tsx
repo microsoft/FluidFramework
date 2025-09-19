@@ -154,7 +154,7 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 	}>;
 
 	/**
-	 * Component to display instead of the {@link TreeViewProps.ViewComponent}
+	 * Component to display instead of the {@link TreeViewProps.viewComponent}
 	 * when tree content is not compatible with the {@link @fluidframework/tree#TreeViewConfiguration}.
 	 *
 	 * @defaultValue Component which describes the situation (in English) and allows the user to upgrade the schema to match the {@link @fluidframework/tree#TreeViewConfiguration} if possible.
@@ -190,13 +190,13 @@ export abstract class ReactTreeDataObject<
 
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
 	public readonly TreeViewComponent = ({
-		ViewComponent: viewComponent,
-		ErrorComponent: errorComponent,
+		viewComponent,
+		errorComponent,
 	}: TreeViewProps<TSchema>) =>
 		TreeViewComponent<TSchema>({
 			tree: this,
-			ViewComponent: viewComponent,
-			ErrorComponent: errorComponent,
+			viewComponent,
+			errorComponent,
 		});
 }
 
@@ -249,8 +249,8 @@ function useViewRoot<TSchema extends ImplicitFieldSchema>(
  */
 export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	tree,
-	ViewComponent,
-	ErrorComponent,
+	viewComponent: ViewComponent,
+	errorComponent,
 }: TreeViewProps<TSchema> & {
 	tree: Pick<IReactTreeDataObject<TSchema>, "treeView">;
 }): React.JSX.Element {
@@ -267,7 +267,7 @@ export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	// code rollout is in progress.
 	// Alternative policies can be implemented, see "Schema Evolvability" in SharedTree's README for more information.
 	if (!compatibility.isEquivalent) {
-		const Error = ErrorComponent ?? TreeErrorComponent;
+		const Error = errorComponent ?? TreeErrorComponent;
 		return <Error compatibility={compatibility} upgradeSchema={upgradeSchema} />;
 	}
 
