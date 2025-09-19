@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import type { ISharedMatrix } from "../matrix.js";
-// import type { MatrixItem } from "./ops.js";
 
 /**
  * @internal

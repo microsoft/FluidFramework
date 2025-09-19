@@ -16,9 +16,10 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
-import { hasSharedMatrixOracle } from "./matrixOracle.js";
 import type { MatrixItem } from "../ops.js";
 import { SharedMatrix, type SharedMatrixFactory } from "../runtime.js";
+
+import { hasSharedMatrixOracle } from "./matrixOracle.js";
 
 /**
  * Supported cell values used within the fuzz model.

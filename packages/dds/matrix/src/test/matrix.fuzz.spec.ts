@@ -14,11 +14,11 @@ import {
 } from "@fluid-private/test-dds-utils";
 // import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { SharedMatrixOracle, type IChannelWithOracles } from "./matrixOracle.js";
 import type { SharedMatrixFactory } from "../runtime.js";
 
 import { _dirname } from "./dirname.cjs";
 import { baseSharedMatrixModel, type Operation } from "./fuzz.js";
+import { SharedMatrixOracle, type IChannelWithOracles } from "./matrixOracle.js";
 
 const oracleEmitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 
@@ -64,7 +64,7 @@ describe("Matrix fuzz tests", function () {
 		reconnectProbability: 0,
 		skipMinimization: true,
 		// Uncomment to replay a particular seed.
-		only: 0,
+		// only: 0,
 		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/1") },
 	});
 
