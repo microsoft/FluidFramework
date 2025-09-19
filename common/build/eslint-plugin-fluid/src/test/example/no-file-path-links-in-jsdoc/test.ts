@@ -7,14 +7,14 @@
 
 // TSDoc comment with a relative path link should be flagged.
 /**
- * TSDoc comment with link using a relative file path: {@link ./relative/path|text}.
+ * TSDoc comment with link using a relative file path: {@link	./relative/path|text}.
  * And another: {@link ../relative-path}.
  */
 const tsdocCommentWithRelativePathLinks = "invalid";
 
 /**
  * TSDoc comment with link using an absolute file path: {@link /absolute/path|text}.
- * And another: {@link /absolute-path}.
+ * And another: {@link  /absolute-path}.
  */
 const tsdocCommentWithAbsolutePathLinks = "invalid";
 

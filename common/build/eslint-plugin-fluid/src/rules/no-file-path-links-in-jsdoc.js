@@ -38,7 +38,7 @@ module.exports = {
 				for (const comment of comments) {
 					// JSDoc/TSDoc link syntax: {@link target|text} or {@link target}
 					// Find links where the `target` component is a file path (starts with `/`, `./`, or `../`)
-					const matches = comment.value.matchAll(/{@link (\/|\.\/|\.\.\/).*}/g);
+					const matches = comment.value.matchAll(/{@link\s+(\/|\.\/|\.\.\/).*}/g);
 					for (const match of matches) {
 						const startIndex = comment.range[0] + match.index;
 						const endIndex = startIndex + match[0].length;
