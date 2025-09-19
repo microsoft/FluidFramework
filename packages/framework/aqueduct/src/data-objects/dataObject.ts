@@ -10,7 +10,7 @@ import {
 	SharedMap,
 } from "@fluidframework/map/internal";
 
-import { MigrationDataObject, type ModelDescriptor } from "./migrationDataObject.js";
+import { MultiFormatDataObject, type ModelDescriptor } from "./migrationDataObject.js";
 import type { DataObjectTypes } from "./types.js";
 
 /**
@@ -80,7 +80,7 @@ export const rootDirectoryDescriptor: ModelDescriptor<RootDirectoryView> = {
  */
 export abstract class DataObject<
 	I extends DataObjectTypes = DataObjectTypes,
-> extends MigrationDataObject<RootDirectoryView, I> {
+> extends MultiFormatDataObject<RootDirectoryView, I> {
 	//* QUESTION: What happens if a subclass tries to overwrite this> Is this a design concern?
 	/**
 	 * Probeable candidate roots the implementer expects for existing stores.

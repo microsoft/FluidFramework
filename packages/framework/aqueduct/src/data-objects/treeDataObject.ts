@@ -9,7 +9,7 @@ import { SharedTree, type ITree } from "@fluidframework/tree/internal";
 
 import type { IDelayLoadChannelFactory } from "../channel-factories/index.js";
 
-import { MigrationDataObject, type ModelDescriptor } from "./migrationDataObject.js";
+import { MultiFormatDataObject, type ModelDescriptor } from "./migrationDataObject.js";
 import type { DataObjectTypes } from "./types.js";
 
 /**
@@ -72,7 +72,7 @@ const uninitializedErrorString =
  */
 export abstract class TreeDataObject<
 	TDataObjectTypes extends DataObjectTypes = DataObjectTypes,
-> extends MigrationDataObject<RootTreeView, TDataObjectTypes> {
+> extends MultiFormatDataObject<RootTreeView, TDataObjectTypes> {
 	/**
 	 * Probeable candidate roots the implementer expects for existing stores.
 	 * The order defines probing priority.

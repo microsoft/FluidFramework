@@ -61,7 +61,7 @@ export interface ModelDescriptor<TModel = unknown> {
  * @legacy
  * @beta
  */
-export abstract class MigrationDataObject<
+export abstract class MultiFormatDataObject<
 	TUniversalView,
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObject<I> {
