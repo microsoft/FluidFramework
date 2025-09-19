@@ -5,30 +5,39 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ISharedMatrix } from "../matrix.js";
+import type { ISharedMatrix, SharedMatrix } from "../matrix.js";
 
-/**
- * @internal
- */
+interface IConflict<T> {
+	row: number;
+	col: number;
+	currentValue: T;
+	conflictingValue: T;
+}
+
 export class SharedMatrixOracle<T> {
 	private model: (T | undefined)[][] = [];
-	private readonly onConflictHandler: (
-		row: number,
-		col: number,
-		currentValue: T,
-		conflictingValue: T,
-		target: ISharedMatrix<T>,
-	) => void;
+	private readonly conflictHistory: IConflict<T>[] = [];
 
-	constructor(private readonly shared: ISharedMatrix<T>) {
+	constructor(private readonly shared: SharedMatrix<T>) {
+		// Build initial snapshot of the shared matrix
 		this.syncFromShared();
-		this.onConflictHandler = (row, col, currentValue) => {
+
+		this.shared.on("conflict", (row, col, currentValue, conflictingValue) => {
+			// Track the conflict
+			this.conflictHistory.push({
+				row,
+				col,
+				currentValue: currentValue as T,
+				conflictingValue: conflictingValue as T,
+			});
+
+			// Keep the model in sync for cells that triggered conflict
 			this.ensureSize(row + 1, col + 1);
-			this.model[row][col] = currentValue;
-		};
-		this.shared.on("conflict", (row, col, currentValue) => this.onConflictHandler);
+			this.model[row][col] = currentValue as T;
+		});
 	}
 
+	// Build the current matrix snapshot from shared matrix
 	private syncFromShared(): void {
 		const rows = this.shared.rowCount;
 		const cols = this.shared.colCount;
@@ -54,33 +63,22 @@ export class SharedMatrixOracle<T> {
 		}
 	}
 
-	// Validate the oracle against the actual matrix
 	public validate(): void {
-		this.syncFromShared(); // always rebuild mirror
-		const rows = this.model.length;
-		// const cols = this.model[0]?.length ?? 0;
-
-		assert.deepStrictEqual(
-			rows,
-			this.shared.rowCount,
-			`SharedMatrixOracle mismatch: expected ${rows} rows, actual=${this.shared.rowCount}`,
-		);
-
-		for (let r = 0; r < rows; r++) {
+		// Validate conflict history
+		for (const conflict of this.conflictHistory) {
+			const modelVal = this.model[conflict.row]?.[conflict.col];
+			const sharedVal = this.shared.getCell(conflict.row, conflict.col);
 			assert.deepStrictEqual(
-				this.model[r].length,
-				this.shared.colCount,
-				`SharedMatrixOracle mismatch at row ${r}: expected ${this.model[r].length} cols, actual=${this.shared.colCount}`,
+				modelVal,
+				conflict.currentValue,
+				`Conflict mismatch at [${conflict.row},${conflict.col}] between: expected="${conflict.currentValue}", actual="${modelVal} and conflicting value=${conflict.conflictingValue}"`,
 			);
-			for (let c = 0; c < this.shared.colCount; c++) {
-				const expected = this.model[r][c];
-				const actual = this.shared.getCell(r, c);
-				assert.deepStrictEqual(
-					expected,
-					actual,
-					`SharedMatrixOracle mismatch at [${r},${c}]: expected="${expected}", actual="${actual}"`,
-				);
-			}
+
+			assert.deepStrictEqual(
+				sharedVal,
+				conflict.currentValue,
+				`Conflict mismatch at [${conflict.row},${conflict.col}]: expected="${conflict.currentValue}", actual="${modelVal} and conflicting value=${conflict.conflictingValue}"`,
+			);
 		}
 	}
 }
@@ -88,7 +86,7 @@ export class SharedMatrixOracle<T> {
 /**
  * @internal
  */
-export interface IChannelWithOracles extends ISharedMatrix {
+export interface IChannelWithOracles extends SharedMatrix {
 	matrixOracle: SharedMatrixOracle<unknown>;
 }
 

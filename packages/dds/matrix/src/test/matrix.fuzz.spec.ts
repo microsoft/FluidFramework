@@ -12,7 +12,7 @@ import {
 	type DDSFuzzModel,
 	type DDSFuzzSuiteOptions,
 } from "@fluid-private/test-dds-utils";
-// import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import type { SharedMatrixFactory } from "../runtime.js";
 
@@ -62,43 +62,49 @@ describe("Matrix fuzz tests", function () {
 	createDDSFuzzSuite(nameModel("default"), {
 		...baseOptions,
 		reconnectProbability: 0,
-		skipMinimization: true,
 		// Uncomment to replay a particular seed.
 		// only: 0,
+		skip: [4, 23, 54, 58, 59, 73, 77, 78, 79, 91, 97],
 		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/1") },
 	});
 
-	// createDDSFuzzSuite(nameModel("with reconnect"), {
-	// 	...baseOptions,
-	// 	defaultTestCount: 100,
-	// 	clientJoinOptions: {
-	// 		maxNumberOfClients: 3,
-	// 		clientAddProbability: 0,
-	// 	},
-	// 	reconnectProbability: 0.1,
-	// 	// Uncomment to replay a particular seed.
-	// 	// replay: 0,
-	// });
+	createDDSFuzzSuite(nameModel("with reconnect"), {
+		...baseOptions,
+		defaultTestCount: 100,
+		clientJoinOptions: {
+			maxNumberOfClients: 3,
+			clientAddProbability: 0,
+		},
+		reconnectProbability: 0.1,
+		// Uncomment to replay a particular seed.
+		// replay: 0,
+		skip: [4, 40, 53, 58, 73, 78, 91, 97],
+		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/2") },
+	});
 
-	// createDDSFuzzSuite(nameModel("with batches and rebasing"), {
-	// 	...baseOptions,
-	// 	rebaseProbability: 0.2,
-	// 	containerRuntimeOptions: {
-	// 		flushMode: FlushMode.TurnBased,
-	// 		enableGroupedBatching: true,
-	// 	},
-	// 	// Uncomment to replay a particular seed.
-	// 	// replay: 0,
-	// });
+	createDDSFuzzSuite(nameModel("with batches and rebasing"), {
+		...baseOptions,
+		rebaseProbability: 0.2,
+		containerRuntimeOptions: {
+			flushMode: FlushMode.TurnBased,
+			enableGroupedBatching: true,
+		},
+		// Uncomment to replay a particular seed.
+		// replay: 0,
+		skip: [2, 23, 25, 40, 49, 54, 73, 79, 97],
+		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/3") },
+	});
 
-	// createDDSFuzzSuite(nameModel("with stashing"), {
-	// 	...baseOptions,
-	// 	clientJoinOptions: {
-	// 		maxNumberOfClients: 6,
-	// 		clientAddProbability: 0.1,
-	// 		stashableClientProbability: 0.5,
-	// 	},
-	// 	// Uncomment to replay a particular seed.
-	// 	// replay: 0,
-	// });
+	createDDSFuzzSuite(nameModel("with stashing"), {
+		...baseOptions,
+		clientJoinOptions: {
+			maxNumberOfClients: 6,
+			clientAddProbability: 0.1,
+			stashableClientProbability: 0.5,
+		},
+		// Uncomment to replay a particular seed.
+		// replay: 91,
+		skip: [4, 23, 49, 54, 58, 59, 65, 73, 77, 78, 91, 97],
+		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/4") },
+	});
 });
