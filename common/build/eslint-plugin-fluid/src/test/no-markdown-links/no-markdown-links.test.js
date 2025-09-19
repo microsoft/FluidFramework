@@ -35,5 +35,12 @@ describe("Do not allow Markdown links in JSDoc/TSDoc comments", function () {
 			"Markdown link syntax (`[text](url)`) is not allowed in JSDoc/TSDoc comments. Use `{@link url|text}` syntax instead.",
 		);
 		assert.strictEqual(result.messages[0].line, 12);
+
+		// Test auto-fix
+		assert.notEqual(result.messages[0].fix, undefined);
+		assert.deepEqual(result.messages[0].fix, {
+			range: [312, 336],
+			text: "{@link https://bing.com | bing}",
+		});
 	});
 });
