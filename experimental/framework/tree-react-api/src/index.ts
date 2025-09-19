@@ -12,6 +12,7 @@ export type {
 	IReactTreeDataObject,
 	TreeViewProps,
 	SchemaIncompatibleProps,
+	TreeViewComponent,
 } from "./reactSharedTreeView.js";
 export { treeDataObject, treeDataObjectInternal } from "./reactSharedTreeView.js";
 export { useTree } from "./useTree.js";
