@@ -175,6 +175,8 @@ describe("message codec", () => {
 				idCompressor: testIdCompressor,
 			});
 			assert.deepEqual(actual, {
+				type: "commit",
+				branchId: "main",
 				sessionId,
 				commit: {
 					revision,
