@@ -362,11 +362,17 @@ export class EditManager<
 		this.trimHistory();
 
 		const mainBranch = this.getSharedBranch("main") ?? fail("Main branch must exist");
-		const mainSummary = mainBranch.getSummaryData(this.minimumSequenceNumber);
+		const mainSummary = mainBranch.getSummaryData(
+			this.minimumSequenceNumber,
+			this.trunkBase.revision,
+		);
 		const branches = new Map<BranchId, SharedBranchSummaryData<TChangeset>>();
 		for (const [branchId, branch] of this.sharedBranches) {
 			if (branchId !== "main") {
-				const branchSummary = branch.getSummaryData(this.minimumSequenceNumber);
+				const branchSummary = branch.getSummaryData(
+					this.minimumSequenceNumber,
+					this.trunkBase.revision,
+				);
 				branches.set(branchId, branchSummary);
 			}
 		}
@@ -948,7 +954,10 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		return this.sequenceIdToCommit.getRange(startSequenceId, endSequenceId, false).length;
 	}
 
-	public getSummaryData(minSeqNumber: SeqNumber): SharedBranchSummaryData<TChangeset> {
+	public getSummaryData(
+		minSeqNumber: SeqNumber,
+		trunkBaseRevision: RevisionTag,
+	): SharedBranchSummaryData<TChangeset> {
 		// The assert below is acceptable at present because summarization only ever occurs on a client with no
 		// local/in-flight changes.
 		// In the future we may wish to relax this constraint. For that to work, the current implementation of
@@ -1004,7 +1013,8 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 					findCommonAncestor([branch.getHead(), branchPath], this.trunk.getHead()) ??
 					fail(0xad6 /* Expected branch to be based on trunk */);
 
-				const base = ancestor.revision;
+				const base =
+					ancestor.revision === trunkBaseRevision ? rootRevision : ancestor.revision;
 				return [
 					sessionId,
 					{
