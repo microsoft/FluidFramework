@@ -7301,7 +7301,7 @@ importers:
         version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
       '@testing-library/react':
         specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 16.3.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10

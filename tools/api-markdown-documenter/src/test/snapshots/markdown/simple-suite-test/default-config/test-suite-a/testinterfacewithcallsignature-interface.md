@@ -18,7 +18,7 @@ export interface TestInterfaceWithCallSignature
 
 ## Call Signature Details
 
-<h3 id="_call_-callsignature"><T extends string>(foo: T): number & T</h3>
+<h3 id="_call_-callsignature">&#x3C;T extends string>(foo: T): number &#x26; T</h3>
 
 Test call signature.
 

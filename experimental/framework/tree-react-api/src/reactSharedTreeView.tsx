@@ -149,7 +149,7 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 	/**
 	 * Component to display the tree content.
 	 */
-	readonly ViewComponent: React.FC<{
+	readonly viewComponent: React.FC<{
 		root: PropTreeValue<TreeFieldFromImplicitField<TSchema>>;
 	}>;
 
@@ -159,7 +159,7 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 	 *
 	 * @defaultValue Component which describes the situation (in English) and allows the user to upgrade the schema to match the {@link @fluidframework/tree#TreeViewConfiguration} if possible.
 	 */
-	readonly ErrorComponent?: React.FC<SchemaIncompatibleProps>;
+	readonly errorComponent?: React.FC<SchemaIncompatibleProps>;
 
 	// TODO: Once its possible to query the status of individual schema upgrades, provide more options here for handling such cases.
 }

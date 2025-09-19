@@ -48,7 +48,7 @@ export function toPropTreeRecord<T extends NodeRecord>(node: T): WrapPropTreeNod
 export function treeDataObject<TSchema extends ImplicitFieldSchema>(treeConfiguration: TreeViewConfiguration<TSchema>, createInitialTree: () => InsertableTreeFieldFromImplicitField<TSchema>): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable>;
 
 // @public
-export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({ tree, ViewComponent, ErrorComponent, }: TreeViewProps<TSchema> & {
+export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({ tree, viewComponent: ViewComponent, errorComponent, }: TreeViewProps<TSchema> & {
     tree: Pick<IReactTreeDataObject<TSchema>, "treeView">;
 }): React_2.JSX.Element;
 

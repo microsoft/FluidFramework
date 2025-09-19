@@ -9,13 +9,17 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import type { ImplicitFieldSchema } from "@fluidframework/tree";
 import {
+	asTreeViewAlpha,
 	getSimpleSchema,
 	SchemaFactory,
 	SharedTree,
 	TreeViewConfiguration,
 } from "@fluidframework/tree/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { FakeListChatModel } from "langchain/embeddings/fake";
 import { z } from "zod";
 
+import { createSemanticAgent, type FunctioningSemanticAgent } from "../agent.js";
 import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
 import { generateEditTypesForPrompt } from "../typeGeneration.js";
 import { getFriendlySchemaName, getZodSchemaAsTypeScript } from "../utils.js";
@@ -136,6 +140,41 @@ describe("System prompt", () => {
 
 		const domainSchemaString = getZodSchemaAsTypeScript(domainTypes);
 		assert.notDeepEqual(domainSchemaString, "");
+	});
+
+	it("helper methods being present shows up in the system prompt", () => {
+		class ArrayWithMethod extends sf.array("Todo", sf.string) {
+			public M2(n: string): boolean {
+				return false;
+			}
+
+			public static [exposeMethodsSymbol](methods: ExposedMethods): void {
+				methods.expose(
+					ArrayWithMethod,
+					"M2",
+					buildFunc({ returns: z.boolean() }, ["n", z.string()]),
+				);
+			}
+		}
+
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: ArrayWithMethod }));
+		view.initialize([]);
+		const chat = new FakeListChatModel({
+			responses: ["pong", "second", "third"],
+		});
+
+		const agent = createSemanticAgent(chat, asTreeViewAlpha(view)) as FunctioningSemanticAgent<
+			typeof ArrayWithMethod
+		>;
+
+		assert.equal(
+			agent.systemPrompt.includes("ALWAYS prefer to use the application helper methods"),
+			true,
+		);
 	});
 
 	it("method binding works on array nodes", () => {
