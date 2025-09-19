@@ -1,5 +1,21 @@
 # @fluid-experimental/presence
 
+## 2.60.0
+
+Dependency updates only.
+
+## 2.53.0
+
+### Minor Changes
+
+- StateFactory.latestMap now accepts a validator parameter ([#25172](https://github.com/microsoft/FluidFramework/pull/25172)) [cac39eb33d0](https://github.com/microsoft/FluidFramework/commit/cac39eb33d0c5371c9fce34ce45a299e5f51d194)
+
+  The StateFactory.latestMap API now accepts a `validator` argument.
+  The `validator` is a function that will be called at runtime to verify that the data is valid.
+  This is especially useful when changing the schema of presence data.
+
+  See [the presence documentation](https://fluidframework.com/docs/build/presence) for more details.
+
 ## 2.52.0
 
 Dependency updates only.

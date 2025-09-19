@@ -98,6 +98,12 @@ import {
 	createSessionId,
 	deserializeIdCompressor,
 } from "@fluidframework/id-compressor/internal";
+import {
+	FlushMode,
+	FlushModeExperimental,
+	channelsTreeName,
+	gcTreeKey,
+} from "@fluidframework/runtime-definitions/internal";
 import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -119,18 +125,11 @@ import type {
 	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeBaseExperimental,
 	IFluidParentContext,
-} from "@fluidframework/runtime-definitions/internal";
-import {
-	FlushMode,
-	FlushModeExperimental,
-	channelsTreeName,
-	gcTreeKey,
-	type MinimumVersionForCollab,
+	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	defaultMinVersionForCollab,
 	isValidMinVersionForCollab,
-	type SemanticVersion,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	GCDataBuilder,
@@ -144,6 +143,7 @@ import {
 	exceptionToResponse,
 	seqFromTree,
 } from "@fluidframework/runtime-utils/internal";
+import { semanticVersionToMinimumVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import type {
 	IEventSampler,
 	IFluidErrorBase,
@@ -176,7 +176,7 @@ import { v4 as uuid } from "uuid";
 import { BindBatchTracker } from "./batchTracker.js";
 import {
 	BlobManager,
-	IPendingBlobs,
+	type IPendingBlobs,
 	blobManagerBasePath,
 	blobsTreeName,
 	isBlobPath,
@@ -195,6 +195,8 @@ import {
 	getMinVersionForCollabDefaults,
 	type RuntimeOptionsAffectingDocSchema,
 	validateRuntimeOptions,
+	runtimeOptionKeysThatRequireExplicitSchemaControl,
+	type RuntimeOptionKeysThatRequireExplicitSchemaControl,
 } from "./containerCompatibility.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
@@ -208,9 +210,9 @@ import { DeltaScheduler } from "./deltaScheduler.js";
 import {
 	GCNodeType,
 	GarbageCollector,
-	IGCRuntimeOptions,
-	IGCStats,
-	IGarbageCollector,
+	type IGCRuntimeOptions,
+	type IGCStats,
+	type IGarbageCollector,
 	gcGenerationOptionName,
 	type GarbageCollectionMessage,
 	type IGarbageCollectionRuntime,
@@ -219,19 +221,19 @@ import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
 import {
 	ContainerMessageType,
 	type OutboundContainerRuntimeDocumentSchemaMessage,
-	ContainerRuntimeGCMessage,
+	type ContainerRuntimeGCMessage,
 	type ContainerRuntimeIdAllocationMessage,
 	type InboundSequencedContainerRuntimeMessage,
 	type LocalContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
-import { ISavedOpMetadata } from "./metadata.js";
+import type { ISavedOpMetadata } from "./metadata.js";
 import {
-	LocalBatchMessage,
-	BatchStartInfo,
+	type LocalBatchMessage,
+	type BatchStartInfo,
 	DuplicateBatchDetector,
 	ensureContentsDeserialized,
-	IBatchCheckpoint,
+	type IBatchCheckpoint,
 	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
@@ -243,8 +245,8 @@ import {
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import {
-	PendingMessageResubmitData,
-	IPendingLocalState,
+	type PendingMessageResubmitData,
+	type IPendingLocalState,
 	PendingStateManager,
 	type PendingBatchResubmitMetadata,
 } from "./pendingStateManager.js";
@@ -266,24 +268,24 @@ import type {
 } from "./summary/index.js";
 import {
 	DocumentsSchemaController,
-	IBaseSummarizeResult,
-	IConnectableRuntime,
-	IContainerRuntimeMetadata,
-	ICreateContainerMetadata,
-	IEnqueueSummarizeOptions,
-	IGenerateSummaryTreeResult,
-	IGeneratedSummaryStats,
-	IOnDemandSummarizeOptions,
-	IRefreshSummaryAckOptions,
-	IRootSummarizerNodeWithGC,
-	ISubmitSummaryOptions,
-	ISummarizerInternalsProvider,
-	ISummarizerRuntime,
-	ISummaryMetadataMessage,
-	IdCompressorMode,
+	type IBaseSummarizeResult,
+	type IConnectableRuntime,
+	type IContainerRuntimeMetadata,
+	type ICreateContainerMetadata,
+	type IEnqueueSummarizeOptions,
+	type IGenerateSummaryTreeResult,
+	type IGeneratedSummaryStats,
+	type IOnDemandSummarizeOptions,
+	type IRefreshSummaryAckOptions,
+	type IRootSummarizerNodeWithGC,
+	type ISubmitSummaryOptions,
+	type ISummarizerInternalsProvider,
+	type ISummarizerRuntime,
+	type ISummaryMetadataMessage,
+	type IdCompressorMode,
 	OrderedClientElection,
 	RetriableSummaryError,
-	SubmitSummaryResult,
+	type SubmitSummaryResult,
 	aliasBlobName,
 	chunksBlobName,
 	recentBatchInfoBlobName,
@@ -301,7 +303,7 @@ import {
 	SummaryCollection,
 	OrderedClientCollection,
 	validateSummaryHeuristicConfiguration,
-	ISummaryConfiguration,
+	type ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 	isSummariesDisabled,
 	summarizerClientType,
@@ -348,8 +350,7 @@ function getUnknownMessageTypeError(
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryRuntimeOptions {
 	/**
@@ -382,8 +383,7 @@ export interface ISummaryRuntimeOptions {
  * compat configuration info.
  * If neither of the above is done, then the build will fail to compile.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ContainerRuntimeOptions {
 	readonly summaryOptions: ISummaryRuntimeOptions;
@@ -463,8 +463,7 @@ export interface ContainerRuntimeOptions {
 /**
  * Options for container runtime.
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type IContainerRuntimeOptions = Partial<ContainerRuntimeOptions>;
 
@@ -512,14 +511,12 @@ export type IContainerRuntimeOptionsInternal = Partial<ContainerRuntimeOptionsIn
 export const DeletedResponseHeaderKey = "wasDeleted";
 /**
  * Tombstone error responses will have this header set to true
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const TombstoneResponseHeaderKey = "isTombstoned";
 /**
  * Inactive error responses will have this header set to true
- * @legacy
- * @alpha
+ * @legacy @beta
  *
  * @deprecated this header is deprecated and will be removed in the future. The functionality corresponding
  * to this was experimental and is no longer supported.
@@ -727,8 +724,7 @@ type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSeq
 
 /**
  * This object holds the parameters necessary for the {@link loadContainerRuntime} function.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface LoadContainerRuntimeParams {
 	/**
@@ -788,8 +784,7 @@ export interface LoadContainerRuntimeParams {
  * This is meant to be used by a {@link @fluidframework/container-definitions#IRuntimeFactory} to instantiate a container runtime.
  * @param params - An object which specifies all required and optional params necessary to instantiate a runtime.
  * @returns A runtime which provides all the functionality necessary to bind with the loader layer via the {@link @fluidframework/container-definitions#IRuntime} interface and provide a runtime environment via the {@link @fluidframework/container-runtime-definitions#IContainerRuntime} interface.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export async function loadContainerRuntime(
 	params: LoadContainerRuntimeParams,
@@ -953,6 +948,19 @@ export class ContainerRuntime
 				: defaultConfigs.compressionOptions,
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
+
+		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
+		if (!explicitSchemaControl) {
+			const disallowedKeys = Object.keys(runtimeOptions).filter(
+				(key) =>
+					runtimeOptionKeysThatRequireExplicitSchemaControl.includes(
+						key as RuntimeOptionKeysThatRequireExplicitSchemaControl,
+					) && runtimeOptions[key] !== undefined,
+			);
+			if (disallowedKeys.length > 0) {
+				throw new UsageError(`explicitSchemaControl must be enabled to use ${disallowedKeys}`);
+			}
+		}
 
 		// The logic for enableRuntimeIdCompressor is a bit different. Since `undefined` represents a logical state (off)
 		// we need to check it's explicitly set in runtimeOptions. If so, we should use that value even if it's undefined.
@@ -1188,7 +1196,7 @@ export class ContainerRuntime
 			documentSchemaController,
 			featureGatesForTelemetry,
 			provideEntryPoint,
-			updatedMinVersionForCollab,
+			semanticVersionToMinimumVersionForCollab(updatedMinVersionForCollab),
 			requestHandler,
 			undefined, // summaryConfiguration
 			recentBatchInfo,
@@ -1510,7 +1518,7 @@ export class ContainerRuntime
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
-		private readonly minVersionForCollab: SemanticVersion,
+		public readonly minVersionForCollab: MinimumVersionForCollab,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,
@@ -3715,7 +3723,7 @@ export class ContainerRuntime
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTree {
 		if (blobRedirectTable) {
-			this.blobManager.setRedirectTable(blobRedirectTable);
+			this.blobManager.patchRedirectTable(blobRedirectTable);
 		}
 
 		// We can finalize any allocated IDs since we're the only client
@@ -4527,6 +4535,22 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob, signal);
 	}
 
+	/**
+	 * Lookup the blob storage ID for a given local blob id.
+	 * @param localId - The local blob id. Likely coming from a handle.
+	 * @returns The storage ID if found and the blob is not pending, undefined otherwise.
+	 * @remarks
+	 * This method provides access to the BlobManager's storage ID lookup functionality.
+	 * For blobs with pending payloads (localId exists but upload hasn't finished), this returns undefined.
+	 * Consumers should use the observability APIs on the handle to understand/wait for storage ID availability.
+	 *
+	 * Warning: the returned blob URL may expire and does not support permalinks.
+	 * This API is intended for temporary integration scenarios only.
+	 */
+	public lookupTemporaryBlobStorageId(localId: string): string | undefined {
+		return this.blobManager.lookupTemporaryBlobStorageId(localId);
+	}
+
 	private submitIdAllocationOpIfNeeded({
 		resubmitOutstandingRanges = false,
 		staged,
@@ -5040,6 +5064,11 @@ export class ContainerRuntime
 	}
 
 	public getPendingLocalState(props?: IGetPendingLocalStateProps): unknown {
+		// AB#46464 - Add support for serializing pending state while in staging mode
+		if (this.inStagingMode) {
+			throw new UsageError("getPendingLocalState is not yet supported in staging mode");
+		}
+
 		this.verifyNotClosed();
 		if (props?.notifyImminentClosure) {
 			throw new UsageError("notifyImminentClosure is no longer supported in ContainerRuntime");

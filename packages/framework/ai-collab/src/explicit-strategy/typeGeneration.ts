@@ -379,7 +379,7 @@ function getTypeForAllowedTypes(
 				);
 			}),
 		];
-		assert(hasAtLeastTwo(types), 0xa7e /* Expected at least two types */);
+		assert(hasAtLeastTwo(types), 0xc1b /* Expected at least two types */);
 		return z.union(types);
 	} else {
 		return getOrCreateType(

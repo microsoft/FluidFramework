@@ -32,21 +32,16 @@ describe("Local Server Stress", () => {
 	};
 
 	createLocalServerStressSuite(model, {
-		defaultTestCount: 100,
-		// skipMinimization: true,
-		// Uncomment to replay a particular seed.
-		// replay: 93,
-		// only: [9],
+		defaultTestCount: 200,
 		saveFailures,
-		// saveSuccesses,
-		configurations: { "Fluid.Container.enableOfflineLoad": true },
+		configurations: {
+			"Fluid.Container.enableOfflineLoad": true,
+			"Fluid.ContainerRuntime.EnableRollback": true,
+		},
+		// skipMinimization: true,
+		// Use skip, replay, and only properties to control which seeds run.
 		skip: [
-			...[34, 46, 79], // Number of keys not same
-			...[6, 9], // Number of subDirectories not same,
-			...[26], // Unexpected pending data for set/delete op
-			...[13], // 0xb85
-			...[30, 69], // timeout
-			...[21], // Got a local set message we weren't expecting
+			124, // directory 0xc38
 		],
 	});
 });

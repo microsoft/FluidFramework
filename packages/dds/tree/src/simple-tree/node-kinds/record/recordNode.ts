@@ -126,7 +126,10 @@ function createRecordNodeProxy(
 			const field = innerNode.getBoxed(brand(key)) as FlexTreeOptionalField;
 			const kernel = getKernel(receiver);
 			const innerSchema = innerNode.context.schema.nodeSchema.get(brand(schema.identifier));
-			assert(innerSchema instanceof MapNodeStoredSchema, "Expected MapNodeStoredSchema");
+			assert(
+				innerSchema instanceof MapNodeStoredSchema,
+				0xc1a /* Expected MapNodeStoredSchema */,
+			);
 
 			const mapTree = prepareForInsertion(
 				value,
@@ -181,11 +184,10 @@ function createRecordNodeProxy(
 
 			const innerNode = getOrCreateInnerNode(proxy);
 			const field = innerNode.tryGetField(brand(key)) as FlexTreeOptionalField | undefined;
-			if (field === undefined) {
-				return false;
+			if (field !== undefined) {
+				field.editor.set(undefined, field.length === 0);
 			}
 
-			field.editor.set(undefined, field.length === 0);
 			return true;
 		},
 	});

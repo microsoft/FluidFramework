@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { SummaryObject } from "@fluidframework/driver-definitions";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import {
+import type { SummaryObject } from "@fluidframework/driver-definitions";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
 	ITelemetryLoggerExt,
 	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils/internal";

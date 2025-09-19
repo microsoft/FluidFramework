@@ -1395,15 +1395,12 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 			state: LocalServerStressState,
 		): Promise<TOperation | RestartClientFromPendingState | typeof done> => {
 			const { clients, random, validationClient } = state;
-			const anyClientInStaging = clients.some((c) => c.entryPoint.inStagingMode());
 
 			if (
-				options.clientJoinOptions !== undefined &&
-				validationClient.container.attachState !== AttachState.Detached &&
 				clients.length > 0 &&
-				random.bool(options.clientJoinOptions.clientRestartFromPendingProbability) &&
-				// AB#45904: Clarify restart-from-pending behavior in staging mode
-				!anyClientInStaging
+				validationClient.container.attachState !== AttachState.Detached &&
+				options.clientJoinOptions !== undefined &&
+				random.bool(options.clientJoinOptions.clientRestartFromPendingProbability)
 			) {
 				return {
 					type: "restartClientFromPendingState",
@@ -1431,12 +1428,23 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 			assert(sourceClientIndex !== -1, `Client ${op.sourceClientTag} not found`);
 			const sourceClient = state.clients[sourceClientIndex];
 
+			// AB#46464: Add support for serializing pending state while in staging mode
+			if (sourceClient.entryPoint.inStagingMode()) {
+				sourceClient.entryPoint.exitStagingMode(true);
+			}
+
 			assert(
 				typeof sourceClient.container.getPendingLocalState === "function",
 				`Client ${op.sourceClientTag} does not support getPendingLocalState`,
 			);
 
 			const pendingLocalState = await sourceClient.container.getPendingLocalState();
+
+			const removed = state.clients.splice(
+				state.clients.findIndex((c) => c.tag === op.sourceClientTag),
+				1,
+			);
+			removed[0].container.dispose();
 
 			const url = await sourceClient.container.getAbsoluteUrl("");
 			assert(url !== undefined, "url of container must be available");
@@ -1451,11 +1459,6 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 				pendingLocalState,
 			);
 
-			const removed = state.clients.splice(
-				state.clients.findIndex((c) => c.tag === op.sourceClientTag),
-				1,
-			);
-			removed[0].container.dispose();
 			state.clients.push(newClient);
 			return state;
 		}

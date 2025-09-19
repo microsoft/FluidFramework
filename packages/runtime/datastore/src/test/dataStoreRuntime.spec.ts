@@ -6,20 +6,21 @@
 import { strict as assert } from "node:assert";
 
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
-import { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
-import {
+import type { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
+import type {
 	IChannel,
 	IFluidDataStoreRuntime,
-	type IFluidDataStoreRuntimeExperimental,
+	IFluidDataStoreRuntimeExperimental,
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import {
+import type {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IGarbageCollectionData,
-	type IRuntimeMessageCollection,
-	type IRuntimeMessagesContent,
-	type ISequencedMessageEnvelope,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreContext,
@@ -30,14 +31,19 @@ import sinon from "sinon";
 import {
 	DataStoreMessageType,
 	FluidDataStoreRuntime,
-	ISharedObjectRegistry,
+	type ISharedObjectRegistry,
 } from "../dataStoreRuntime.js";
 
 type Patch<T, U> = Omit<T, keyof U> & U;
 
+// This patching exposes FluidDataStoreRuntime private properties as public for
+// testing purposes. The patching is in no way type safe and is not recommended.
 type FluidDataStoreRuntime_ForTesting = Patch<
 	FluidDataStoreRuntime,
-	IFluidDataStoreRuntimeExperimental & { contexts: Map<unknown, unknown> }
+	IFluidDataStoreRuntimeExperimental & {
+		contexts: Map<unknown, unknown>;
+		submit(type: DataStoreMessageType, content: unknown, localOpMetadata?: unknown): void;
+	}
 >;
 
 describe("FluidDataStoreRuntime Tests", () => {
@@ -240,12 +246,12 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 
 		assert.strictEqual(runtime.isDirty, false, "Runtime should start clean");
 
-		runtime.submitMessage(DataStoreMessageType.ChannelOp, {}, undefined);
+		runtime.submit(DataStoreMessageType.ChannelOp, {}, undefined);
 		assert.strictEqual(runtime.isDirty, true, "Runtime should be dirty after local op");
 
 		// Submit a few more
-		runtime.submitMessage(DataStoreMessageType.ChannelOp, {}, undefined);
-		runtime.submitMessage(DataStoreMessageType.ChannelOp, {}, undefined);
+		runtime.submit(DataStoreMessageType.ChannelOp, {}, undefined);
+		runtime.submit(DataStoreMessageType.ChannelOp, {}, undefined);
 
 		// Non-local ops should not affect isDirty
 		const nonLocalOps = ack({ local: false, messageCount: 4 });
@@ -280,7 +286,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		assert.strictEqual(runtime.isDirty, false, "Runtime should start clean");
 
 		const submitSingleMessage = (): void =>
-			runtime.submitMessage(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
+			runtime.submit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
 
 		// Simulate a channel context with a reSubmit method for internals of runtime.reSubmit call below
 		sinon
@@ -288,7 +294,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 			.get(() => new Map([["foo", { reSubmit: submitSingleMessage }]]));
 
 		// Initial local op
-		runtime.submitMessage(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
+		runtime.submit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
 		assert.strictEqual(
 			runtime.isDirty,
 			true,
@@ -320,7 +326,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		sinon.stub(runtime, "contexts").get(() => new Map([["foo", { reSubmit: () => {} }]]));
 
 		// Initial local op
-		runtime.submitMessage(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
+		runtime.submit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
 		assert.strictEqual(
 			runtime.isDirty,
 			true,
@@ -346,7 +352,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 			type: "SomeType",
 			snapshot: { type: SummaryType.Tree, tree: {} },
 		};
-		runtime.submitMessage(DataStoreMessageType.Attach, attachMessage, undefined);
+		runtime.submit(DataStoreMessageType.Attach, attachMessage, undefined);
 		assert.strictEqual(runtime.isDirty, true, "Runtime should be dirty after attach op");
 
 		// Resubmit same attach op
@@ -402,7 +408,7 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		// Simulate a channel context with a rollback method (don't need to implement them though)
 		sinon.stub(runtime, "contexts").get(() => new Map([["foo", { rollback: () => {} }]]));
 
-		runtime.submitMessage(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
+		runtime.submit(DataStoreMessageType.ChannelOp, { address: "foo" }, undefined);
 		assert.strictEqual(runtime.isDirty, true, "Runtime should be dirty after local op");
 
 		// Roll back the op
@@ -413,5 +419,26 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		);
 
 		assert.strictEqual(runtime.isDirty, false, "Runtime should be clean after rollback");
+	});
+});
+
+describe("FluidDataStoreRuntime.minVersionForCollab", () => {
+	function createRuntime(
+		id: string,
+		minVersionForCollab: MinimumVersionForCollab,
+	): FluidDataStoreRuntime_ForTesting {
+		const context = new MockFluidDataStoreContext(id);
+		context.minVersionForCollab = minVersionForCollab;
+		return new FluidDataStoreRuntime(
+			context,
+			{} as unknown as ISharedObjectRegistry,
+			/* existing */ false,
+			async (rt) => rt,
+		) as unknown as FluidDataStoreRuntime_ForTesting;
+	}
+
+	it("minVersionForCollab is read from the FluidDataStoreContext and stored on FluidDataStoreRuntime", () => {
+		const runtime = createRuntime("minVersionTest", "1.2.3");
+		assert.deepStrictEqual(runtime.minVersionForCollab, "1.2.3");
 	});
 });

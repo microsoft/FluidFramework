@@ -57,8 +57,7 @@ const defaultCodeDetails: IFluidCodeDetails = {
 /**
  * Exposes fine-grained control over the Container's inbound and outbound op queues
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IOpProcessingController {
 	/**
@@ -270,8 +269,8 @@ export interface ITestContainerConfig {
 	loaderProps?: Partial<ILoaderProps>;
 
 	/**
-	 * The minVersionForCollab passed to the ContainerRuntime when instantiating it.
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details on this property.
+	 * Minimum version of the FF runtime that is required to collaborate on new documents.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
 	minVersionForCollab?: MinimumVersionForCollab | undefined;
 }

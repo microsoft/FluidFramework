@@ -8,28 +8,28 @@ import {
 	type ILayerCompatDetails,
 	type IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
-import { AttachState, IAudience } from "@fluidframework/container-definitions";
+import { AttachState, type IAudience } from "@fluidframework/container-definitions";
 import {
-	IDeltaManager,
+	type IDeltaManager,
 	isIDeltaManagerFull,
 	type IDeltaManagerFull,
 	type ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	FluidObject,
 	IDisposable,
 	ITelemetryBaseProperties,
-	type IEvent,
+	IEvent,
 } from "@fluidframework/core-interfaces";
-import {
-	type IFluidHandleContext,
-	type IFluidHandleInternal,
-	type ITelemetryBaseLogger,
+import type {
+	IFluidHandleContext,
+	IFluidHandleInternal,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
-import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
-import {
-	type ISnapshot,
+import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
+import type {
+	ISnapshot,
 	IDocumentMessage,
 	ISnapshotTree,
 	ITreeEntry,
@@ -42,31 +42,32 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
-	ISummaryTreeWithStats,
-	ITelemetryContext,
-	IGarbageCollectionData,
-	CreateChildSummarizerNodeFn,
-	CreateChildSummarizerNodeParam,
-	FluidDataStoreRegistryEntry,
-	IContainerRuntimeBase,
-	IDataStore,
-	IFluidDataStoreChannel,
-	IFluidDataStoreContext,
-	IFluidDataStoreContextDetached,
-	IFluidDataStoreRegistry,
-	IGarbageCollectionDetailsBase,
-	IProvideFluidDataStoreFactory,
-	ISummarizeInternalResult,
-	ISummarizeResult,
-	ISummarizerNodeWithGC,
-	SummarizeInternalFn,
+	type ISummaryTreeWithStats,
+	type ITelemetryContext,
+	type IGarbageCollectionData,
+	type CreateChildSummarizerNodeFn,
+	type CreateChildSummarizerNodeParam,
+	type FluidDataStoreRegistryEntry,
+	type IContainerRuntimeBase,
+	type IDataStore,
+	type IFluidDataStoreChannel,
+	type IFluidDataStoreContext,
+	type IFluidDataStoreContextDetached,
+	type IFluidDataStoreRegistry,
+	type IGarbageCollectionDetailsBase,
+	type IProvideFluidDataStoreFactory,
+	type ISummarizeInternalResult,
+	type ISummarizeResult,
+	type ISummarizerNodeWithGC,
+	type SummarizeInternalFn,
 	channelsTreeName,
-	IInboundSignalMessage,
+	type IInboundSignalMessage,
 	type IPendingMessagesState,
 	type IRuntimeMessageCollection,
 	type IFluidDataStoreFactory,
 	type PackagePath,
 	type IRuntimeStorageService,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -75,7 +76,7 @@ import {
 import {
 	DataProcessingError,
 	LoggingError,
-	MonitoringContext,
+	type MonitoringContext,
 	ThresholdCounter,
 	UsageError,
 	createChildMonitoringContext,
@@ -92,8 +93,8 @@ import {
 } from "./runtimeLayerCompatState.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
-	ReadFluidDataStoreAttributes,
-	WriteFluidDataStoreAttributes,
+	type ReadFluidDataStoreAttributes,
+	type WriteFluidDataStoreAttributes,
 	dataStoreAttributesBlobName,
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
@@ -351,6 +352,11 @@ export abstract class FluidDataStoreContext
 		return runtimeCompatDetailsForDataStore;
 	}
 
+	/**
+	 * {@inheritdoc IFluidDataStoreContext.minVersionForCollab}
+	 */
+	public readonly minVersionForCollab: MinimumVersionForCollab;
+
 	private baseSnapshotSequenceNumber: number | undefined;
 
 	/**
@@ -460,6 +466,7 @@ export abstract class FluidDataStoreContext
 
 		this._containerRuntime = props.parentContext.containerRuntime;
 		this.parentContext = props.parentContext;
+		this.minVersionForCollab = props.parentContext.minVersionForCollab;
 		this.id = props.id;
 		this.storage = props.storage;
 		this.scope = props.scope;

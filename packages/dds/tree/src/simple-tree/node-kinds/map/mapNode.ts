@@ -215,7 +215,10 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		const innerSchema = this.innerNode.context.schema.nodeSchema.get(
 			brand(kernel.schema.identifier),
 		);
-		assert(innerSchema instanceof MapNodeStoredSchema, "Expected MapNodeStoredSchema");
+		assert(
+			innerSchema instanceof MapNodeStoredSchema,
+			0xc17 /* Expected MapNodeStoredSchema */,
+		);
 
 		const mapTree = prepareForInsertion(
 			value as InsertableContent | undefined,

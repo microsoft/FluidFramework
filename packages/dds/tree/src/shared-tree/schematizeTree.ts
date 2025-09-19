@@ -115,7 +115,7 @@ function initializeFromChunk(
 	const field = { field: rootFieldKey, parent: undefined };
 	assert(
 		checkout.storedSchema.rootFieldSchema.kind === FieldKinds.optional.identifier,
-		"initializerFromChunk only supports optional roots",
+		0xc11 /* initializerFromChunk only supports optional roots */,
 	);
 	const fieldEditor = checkout.editor.optionalField(field);
 	assert(

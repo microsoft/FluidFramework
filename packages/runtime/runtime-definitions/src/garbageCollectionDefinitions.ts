@@ -37,8 +37,7 @@ export const gcDataBlobKey = ".gcdata";
 /**
  * Garbage collection data returned by nodes in a Container.
  * Used for running GC in the Container.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IGarbageCollectionData {
 	/**
@@ -49,8 +48,7 @@ export interface IGarbageCollectionData {
 
 /**
  * GC details provided to each node during creation.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IGarbageCollectionDetailsBase {
 	/**

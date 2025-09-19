@@ -13,12 +13,12 @@ import type {
 /**
  * Casts the public API for delta manager into the internal one,
  * exposing access to APIs needed by the implementation of Fluid Framework but not its users.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function toDeltaManagerInternal(
 	deltaManager: IDeltaManagerErased,
 ): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
+	// Type assertion is safe as IDeltaManagerErased is specifically designed to be a type-erased version of IDeltaManager
 	return deltaManager as unknown as IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 }
 
@@ -29,5 +29,6 @@ export function toDeltaManagerInternal(
 export function toDeltaManagerErased(
 	deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 ): IDeltaManagerErased {
+	// Type assertion is safe as we're intentionally erasing the type information for public API safety
 	return deltaManager as unknown as IDeltaManagerErased;
 }

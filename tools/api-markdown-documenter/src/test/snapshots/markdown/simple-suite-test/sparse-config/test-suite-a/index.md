@@ -1,6 +1,6 @@
 ## test-suite-a
 
-Test package
+Test package Contains a suite of test cases for validation API documentation generation.
 
 <h3 id="test-suite-a-remarks">Remarks</h3>
 
@@ -37,6 +37,7 @@ const foo = bar;
 | [TestEmptyInterface](docs/test-suite-a/testemptyinterface-interface) | An empty interface |
 | [TestInterface](docs/test-suite-a/testinterface-interface) | Test interface |
 | [TestInterfaceExtendingOtherInterfaces](docs/test-suite-a/testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
+| [TestInterfaceWithCallSignature](docs/test-suite-a/testinterfacewithcallsignature-interface) | An interface with a complex call signature. |
 | [TestInterfaceWithIndexSignature](docs/test-suite-a/testinterfacewithindexsignature-interface) | An interface with an index signature. |
 | [TestInterfaceWithTypeParameter](docs/test-suite-a/testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
 
@@ -57,13 +58,20 @@ const foo = bar;
 
 | TypeAlias | Description |
 | - | - |
+| [IntersectionType](docs/test-suite-a/intersectiontype-typealias) | An intersection type combining [TypeWithProperties](docs/test-suite-a/typewithproperties-typealias) and [TypeWithConstructSignature](docs/test-suite-a/typewithconstructsignature-typealias). |
 | [TestMappedType](docs/test-suite-a/testmappedtype-typealias) | Test Mapped Type, using [TestEnum](docs/test-suite-a/testenum-enum) |
 | [TypeAlias](docs/test-suite-a/typealias-typealias) | Test Type-Alias |
+| [TypeWithConstructSignature](docs/test-suite-a/typewithconstructsignature-typealias) | A test type with a construct signature. |
+| [TypeWithProperties](docs/test-suite-a/typewithproperties-typealias) | A test type with properties. |
+| [UnionType](docs/test-suite-a/uniontype-typealias) | A union type combining [TypeWithProperties](docs/test-suite-a/typewithproperties-typealias) and [TypeWithConstructSignature](docs/test-suite-a/typewithconstructsignature-typealias). |
 
 ### Functions
 
 | Function | Alerts | Return Type | Description |
 | - | - | - | - |
+| [functionWithOverloads(value)](docs/test-suite-a/functionwithoverloads-function) | | string | Takes a number and returns a string. |
+| [functionWithOverloads(value)](docs/test-suite-a/functionwithoverloads_1-function) | | boolean | Takes a string and returns a boolean. |
+| [functionWithOverloads(value)](docs/test-suite-a/functionwithoverloads_2-function) | | number | Takes a boolean and returns a number. |
 | [testFunctionReturningInlineType()](docs/test-suite-a/testfunctionreturninginlinetype-function) | | {     foo: number;     bar: [TestEnum](docs/test-suite-a/testenum-enum); } | Test function that returns an inline type |
 | [testFunctionReturningIntersectionType()](docs/test-suite-a/testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](docs/test-suite-a/testemptyinterface-interface) & [TestInterfaceWithTypeParameter](docs/test-suite-a/testinterfacewithtypeparameter-interface)\<number> | Test function that returns an inline type |
 | [testFunctionReturningUnionType()](docs/test-suite-a/testfunctionreturninguniontype-function) | | string \| [TestInterface](docs/test-suite-a/testinterface-interface) | Test function that returns an inline type |

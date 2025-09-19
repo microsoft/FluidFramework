@@ -45,19 +45,17 @@ import {
 	viewCheckout,
 } from "../utils.js";
 import { brand } from "../../util/index.js";
-import {
-	SchemaFactory,
-	TreeViewConfiguration,
-	type ImplicitFieldSchema,
-	type InsertableTreeFieldFromImplicitField,
-} from "../../index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import {
 	asTreeViewAlpha,
 	getOrCreateInnerNode,
+	SchemaFactory,
 	toUpgradeSchema,
+	TreeViewConfiguration,
+	type ImplicitFieldSchema,
 	type InsertableField,
+	type InsertableTreeFieldFromImplicitField,
 	type TreeBranch,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -1338,6 +1336,22 @@ describe("sharedTreeView", () => {
 			expectErrorDuringEdit({
 				duringEdit: (view) => view.merge(view),
 				error: "Merging is forbidden during a nodeChanged or treeChanged event",
+			});
+		});
+
+		it("revert a commit", () => {
+			let revertible: Revertible | undefined;
+			expectErrorDuringEdit({
+				setup: (view) => {
+					const unsubscribe = view.events.on("changed", (_, getRevertible) => {
+						revertible = getRevertible?.();
+					});
+					view.root.number = 4;
+					unsubscribe();
+					assert(revertible !== undefined, "Expected revertible to be created.");
+				},
+				duringEdit: (view) => revertible?.revert(),
+				error: "Reverting a commit is forbidden during a nodeChanged or treeChanged event",
 			});
 		});
 

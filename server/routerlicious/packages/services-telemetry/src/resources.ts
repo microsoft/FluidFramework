@@ -108,6 +108,10 @@ export enum CommonProperties {
 	maxOpsSinceLastSummary = "maxOpsSinceLastSummary",
 	lastSummarySequenceNumber = "lastSummarySequenceNumber",
 
+	// Session-level operation and signal counts
+	sessionOpCount = "sessionOpCount",
+	sessionSignalCount = "sessionSignalCount",
+
 	// Logtail properties
 	minLogtailSequenceNumber = "minLogtailSequenceNumber",
 	maxLogtailSequenceNumber = "maxLogtailSequenceNumber",

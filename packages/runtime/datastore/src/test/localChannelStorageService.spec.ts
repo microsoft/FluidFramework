@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { FileMode, ITree, TreeEntry } from "@fluidframework/driver-definitions/internal";
+import { FileMode, type ITree, TreeEntry } from "@fluidframework/driver-definitions/internal";
 
 import { LocalChannelStorageService } from "../localChannelStorageService.js";
 

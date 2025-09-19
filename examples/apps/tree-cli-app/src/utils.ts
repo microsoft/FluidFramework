@@ -29,6 +29,7 @@ import {
 	type ViewContent,
 	type ConciseTree,
 	TreeAlpha,
+	KeyEncodingOptions,
 } from "@fluidframework/tree/alpha";
 import { type Static, Type } from "@sinclair/typebox";
 
@@ -67,7 +68,7 @@ export function loadDocument(source: string | undefined): List {
 		}
 		case "verbose-stored": {
 			return TreeAlpha.importVerbose(List, fileData as VerboseTree, {
-				useStoredKeys: true,
+				keys: KeyEncodingOptions.knownStoredKeys,
 			});
 		}
 		case "compressed": {
@@ -143,10 +144,14 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 			return TreeAlpha.exportVerbose(tree) as JsonCompatible;
 		}
 		case "concise-stored": {
-			return TreeAlpha.exportConcise(tree, { useStoredKeys: true }) as JsonCompatible;
+			return TreeAlpha.exportConcise(tree, {
+				keys: KeyEncodingOptions.knownStoredKeys,
+			}) as JsonCompatible;
 		}
 		case "verbose-stored": {
-			return TreeAlpha.exportVerbose(tree, { useStoredKeys: true }) as JsonCompatible;
+			return TreeAlpha.exportVerbose(tree, {
+				keys: KeyEncodingOptions.knownStoredKeys,
+			}) as JsonCompatible;
 		}
 		case "compressed": {
 			return TreeAlpha.exportCompressed(tree, {

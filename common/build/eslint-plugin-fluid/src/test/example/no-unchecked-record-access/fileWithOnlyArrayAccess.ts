@@ -35,10 +35,10 @@ const tupleByVar = tuple[index]; // ok: Accessing tuple with variable
 
 /* Array-like objects */
 const arrayLike = {
-    length: 3,
-    0: "zero",
-    1: "one",
-    2: "two"
+	length: 3,
+	0: "zero",
+	1: "one",
+	2: "two",
 };
 const arrayLikeFirst = arrayLike[0]; // ok: Accessing array-like object with numeric index
 
@@ -47,7 +47,10 @@ const slicedArray = numberArray.slice(1); // Creates new array
 const slicedElement = slicedArray[0]; // ok: Accessing sliced array
 
 /* Nested arrays */
-const nested = [[1, 2], [3, 4]];
+const nested = [
+	[1, 2],
+	[3, 4],
+];
 const nestedElement = nested[0][1]; // ok: Accessing nested array
 const nestedByVar = nested[index][index]; // ok: Accessing nested array with variables
 
@@ -74,7 +77,7 @@ const customElement = customArray[0]; // ok: Accessing custom array subclass
 
 /* Generic array types */
 function accessGenericArray<T>(arr: T[], index: number): T {
-    return arr[index]; // ok: Accessing generic array
+	return arr[index]; // ok: Accessing generic array
 }
 
 /* String access (string is array-like) */
@@ -87,7 +90,7 @@ const firstElement = htmlCollection[0]; // ok: Accessing HTML collection
 
 /* Iterator-based access */
 for (let i = 0; i < numberArray.length; i++) {
-    const element = numberArray[i]; // ok: Accessing in loop
+	const element = numberArray[i]; // ok: Accessing in loop
 }
 
 /* Array with union type */

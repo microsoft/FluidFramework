@@ -39,8 +39,7 @@ interface StorageQuotaUsageDetails {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface FluidCacheConfig {
 	/**
@@ -73,8 +72,7 @@ export interface FluidCacheConfig {
 
 /**
  * A cache that can be used by the Fluid ODSP driver to cache data for faster performance.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class FluidCache implements IPersistedCache {
 	private readonly logger: ITelemetryLoggerExt;

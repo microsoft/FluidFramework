@@ -49,6 +49,7 @@ import {
 	type FlexContent,
 	type TreeNodeSchemaPrivateData,
 	convertAllowedTypes,
+	withBufferedTreeEvents,
 } from "../../core/index.js";
 import {
 	type FactoryContent,
@@ -889,11 +890,17 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 		const kernel = getKernel(this);
 		const flexContext = kernel.getOrCreateInnerNode().context;
-		assert(flexContext === kernel.context.flexContext, "Expected flexContext to match");
+		assert(
+			flexContext === kernel.context.flexContext,
+			0xc14 /* Expected flexContext to match */,
+		);
 		const innerSchema = kernel.context.flexContext.schema.nodeSchema.get(
 			brand(kernel.schema.identifier),
 		);
-		assert(innerSchema instanceof ObjectNodeStoredSchema, "Expected ObjectNodeStoredSchema");
+		assert(
+			innerSchema instanceof ObjectNodeStoredSchema,
+			0xc15 /* Expected ObjectNodeStoredSchema */,
+		);
 		const fieldSchema = innerSchema.getFieldSchema(EmptyKey);
 
 		const mapTrees = prepareArrayContentForInsertion(
@@ -1034,7 +1041,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		const kernel = getKernel(this);
 		const destinationStored = (
 			kernel.context.flexContext.schema.nodeSchema.get(brand(kernel.schema.identifier)) ??
-			fail("missing schema for array node")
+			fail(0xc16 /* missing schema for array node */)
 		).getFieldSchema(EmptyKey).types;
 		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
 
@@ -1074,17 +1081,24 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 				);
 			}
 
-			if (sourceField !== destinationField || destinationGap < sourceStart) {
-				destinationField.editor.insert(
-					destinationGap,
-					sourceField.editor.remove(sourceStart, movedCount),
-				);
-			} else if (destinationGap > sourceStart + movedCount) {
-				destinationField.editor.insert(
-					destinationGap - movedCount,
-					sourceField.editor.remove(sourceStart, movedCount),
-				);
-			}
+			// We implement move here via subsequent `remove` and `insert`.
+			// This is strictly an implementation detail and should not be observable by the user.
+			// TODO:AB#47457: Implement proper move support for unhydrated trees.
+			// As a temporary mitigation, we will pause tree events until both edits have been completed.
+			// That way, users will only see a single change event for the array instead of 2.
+			withBufferedTreeEvents(() => {
+				if (sourceField !== destinationField || destinationGap < sourceStart) {
+					destinationField.editor.insert(
+						destinationGap,
+						sourceField.editor.remove(sourceStart, movedCount),
+					);
+				} else if (destinationGap > sourceStart + movedCount) {
+					destinationField.editor.insert(
+						destinationGap - movedCount,
+						sourceField.editor.remove(sourceStart, movedCount),
+					);
+				}
+			});
 		} else {
 			if (!sourceField.context.isHydrated()) {
 				throw new UsageError(
