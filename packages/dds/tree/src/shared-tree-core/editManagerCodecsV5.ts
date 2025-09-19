@@ -98,8 +98,13 @@ export function makeV5CodecWithVersion<TChangeset>(
 					json.main,
 					context,
 				);
-				const branches = new Map<BranchId, SharedBranchSummaryData<TChangeset>>();
+
+				const decoded: Mutable<SummaryData<TChangeset>> = {
+					main: mainBranch,
+				};
+
 				if (json.branches !== undefined) {
+					const branches = new Map<BranchId, SharedBranchSummaryData<TChangeset>>();
 					for (const branch of json.branches) {
 						const decodedBranch = decodeSharedBranch(
 							changeCodec,
@@ -111,11 +116,10 @@ export function makeV5CodecWithVersion<TChangeset>(
 						assert(!branches.has(decodedBranch.id), "Duplicate shared branch id");
 						branches.set(decodedBranch.id, decodedBranch);
 					}
+
+					decoded.branches = branches;
 				}
-				return {
-					main: mainBranch,
-					branches,
-				};
+				return decoded;
 			},
 		},
 		options.jsonValidator,
