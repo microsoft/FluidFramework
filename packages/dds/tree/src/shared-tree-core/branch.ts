@@ -29,6 +29,7 @@ import type {
 	SessionSpaceCompressedId,
 } from "@fluidframework/id-compressor";
 
+/** @alpha */
 export type BranchId = SessionSpaceCompressedId | "main";
 export type EncodedBranchId = OpSpaceCompressedId;
 

@@ -89,6 +89,9 @@ export interface BranchableTree extends ViewableTree {
     rebase(branch: TreeBranchFork): void;
 }
 
+// @alpha (undocumented)
+export type BranchId = SessionSpaceCompressedId | "main";
+
 // @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {
     clone: boolean;
@@ -411,8 +414,12 @@ export interface ITree extends ViewableTree, IFluidLoadable {
 
 // @alpha @sealed
 export interface ITreeAlpha extends ITree {
+    // (undocumented)
+    createSharedBranch(): BranchId;
     exportSimpleSchema(): SimpleTreeSchema;
     exportVerbose(): VerboseTree | undefined;
+    // (undocumented)
+    viewBranchWith<TRoot extends ImplicitFieldSchema>(branchId: BranchId, config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 
 // @public
@@ -913,6 +920,7 @@ export const SharedTreeFormatVersion: {
     readonly v2: 2;
     readonly v3: 3;
     readonly v5: 5;
+    readonly vSharedBranches: 100;
 };
 
 // @alpha

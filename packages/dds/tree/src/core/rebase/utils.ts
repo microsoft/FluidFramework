@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import { defineLazyCachedProperty, hasSome, type Mutable } from "../../util/index.js";
 
