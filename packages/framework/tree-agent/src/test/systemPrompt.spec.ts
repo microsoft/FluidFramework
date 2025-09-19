@@ -164,9 +164,7 @@ describe("System prompt", () => {
 		const view = tree.viewWith(new TreeViewConfiguration({ schema: ArrayWithMethod }));
 		view.initialize([]);
 		const chat = new FakeListChatModel({
-			// returns these in order for successive calls
 			responses: ["pong", "second", "third"],
-			// optional: sleep: 25, name: "my-mock"
 		});
 
 		const agent = createSemanticAgent(chat, asTreeViewAlpha(view)) as FunctioningSemanticAgent<
