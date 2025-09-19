@@ -7,6 +7,8 @@ This aligns the behavior of this function with other section creation helpers.
 
 ### 🐞 Bug Fixes
 
+- Fixed an issue where HTML headings were being generated with unescaped child content.
+  This caused headings for signatures with generic type parameters to be interpreted like HTML rather than as plain text.
 - Fixed an issue where HTML table cell content was generated with line breaks for formatting.
   This would break Markdown table syntax.
   Line breaks are now omitted in this context.

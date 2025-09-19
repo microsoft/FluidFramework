@@ -41,6 +41,7 @@ import {
 	getFriendlySchemaName,
 	getZodSchemaAsTypeScript,
 	llmDefault,
+	type SchemaDetails,
 	type TreeView,
 } from "./utils.js";
 
@@ -140,6 +141,8 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 	private readonly originalBranch: TreeBranch;
 	private readonly tree: Subtree<TRoot>;
 
+	public readonly systemPrompt: string;
+
 	public constructor(
 		public readonly client: BaseChatModel,
 		tree: TreeView<TRoot> | (ReadableField<TRoot> & TreeNode),
@@ -153,7 +156,7 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 		const originalSubtree = new Subtree(tree);
 		this.originalBranch = originalSubtree.branch;
 		this.tree = originalSubtree.fork();
-		const systemPrompt = this.getSystemPrompt(this.tree);
+		this.systemPrompt = this.getSystemPrompt(this.tree);
 		this.options?.log?.(`# Fluid Framework SharedTree AI Agent Log\n\n`);
 		const now = new Date();
 		const formattedDate = now.toLocaleString(undefined, {
@@ -169,8 +172,8 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 		if (this.client.metadata?.modelName !== undefined) {
 			this.options?.log?.(`Model: **${this.client.metadata?.modelName}**\n\n`);
 		}
-		this.#messages.push(new SystemMessage(systemPrompt));
-		this.options?.log?.(`## System Prompt\n\n${systemPrompt}\n\n`);
+		this.#messages.push(new SystemMessage(this.systemPrompt));
+		this.options?.log?.(`## System Prompt\n\n${this.systemPrompt}\n\n`);
 		if (this.options?.domainHints !== undefined) {
 			this.#messages.push(
 				new HumanMessage(
@@ -378,13 +381,21 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 			treeObjects.push({ type, id });
 		});
 
+		const details: SchemaDetails = { hasHelperMethods: false };
+		const typescriptSchemaTypes = getZodSchemaAsTypeScript(domainTypes, details);
+
+		const helperMethodExplanation = details.hasHelperMethods
+			? `Manipulating the data using the APIs described below is allowed, but when possible ALWAYS prefer to use the application helper methods exposed on the schema TypeScript types if the goal can be accomplished that way.
+It will often not be possible to fully accomplish the goal using those helpers. When this is the case, mutate the objects as normal, taking into account the following guidance.`
+			: "";
+
 		const builderExplanation =
 			treeObjects[0] === undefined
 				? ""
 				: `When constructing new objects, you should wrap them in the appropriate builder function rather than simply making a javascript object.
 The builders are available on the "create" property on the first argument of the \`${functionName}\` function and are named according to the type that they create.
 For example:
-		
+
 \`\`\`javascript
 function ${functionName}({ root, create }) {
 	// This creates a new ${treeObjects[0].type} object:
@@ -395,11 +406,11 @@ function ${functionName}({ root, create }) {
 \`\`\`\n\n`;
 
 		const rootTypes = [...simpleSchema.root.allowedTypesIdentifiers];
-		const prompt = `You are a collaborative agent who assists a user with editing and analyzing a JSON tree.
-The tree is a JSON object with the following Typescript schema:
+		const prompt = `You are a helpful assistant collaborating with the user on a document. The document state is a JSON tree, and you are able to analyze and edit it.
+The JSON tree adheres to the following Typescript schema:
 
 \`\`\`typescript
-${getZodSchemaAsTypeScript(domainTypes)}
+${typescriptSchemaTypes}
 \`\`\`
 
 The current state of the tree (a \`${getFriendlySchema(field)}\`) is:
@@ -408,7 +419,7 @@ The current state of the tree (a \`${getFriendlySchema(field)}\`) is:
 ${stringified}
 \`\`\`
 
-If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.
+If the user asks you a question about the tree, you should inspect the state of the tree and answer the question. When answering such a question, DO NOT answer with information that is not part of the document unless requested to do so.
 If the user asks you to edit the tree, you should use the "${this.editingTool.name}" tool to accomplish the user-specified goal, following the instructions for editing detailed below.
 After editing the tree, review the latest state of the tree to see if it satisfies the user's request.
 If it does not, or if you receive an error, you may try again with a different approach.
@@ -416,13 +427,14 @@ Once the tree is in the desired state, you should inform the user that the reque
 
 ### Editing
 
-If the user asks you to edit the data, you will use the "${this.editingTool.name}" tool to write a JavaScript function that mutates the data in-place to achieve the user's goal.
+If the user asks you to edit the document, you will use the "${this.editingTool.name}" tool to write a JavaScript function that mutates the data in-place to achieve the user's goal.
 The function must be named "${functionName}".
 It may be synchronous or asynchronous.
 The ${functionName} function must have a first parameter which has a \`root\` property.
 This \`root\` property holds the current state of the tree as shown above.
 You may mutate any part of the tree as necessary, taking into account the caveats around arrays and maps detailed below.
 You may also set the \`root\` property to be an entirely new value as long as it is one of the types allowed at the root of the tree (\`${rootTypes.map((t) => getFriendlySchemaName(t)).join(" | ")}\`).
+${helperMethodExplanation}
 
 #### Editing Arrays
 
@@ -440,7 +452,7 @@ ${getTreeArrayNodeDocumentation(arrayInterfaceName)}
 The maps in the tree are somewhat different than normal JavaScript \`Map\`s.
 Map keys are always strings.
 Read-only operations are generally the same - you can create them, read via \`get\`, and call non-mutating methods like \`has\`, \`forEach\`, \`entries\`, \`keys\`, \`values\`, etc. (note the subtle differences around return values and iteration order).
-However, write operations (e.g. \`set\`, \`delete\`, etc.) are not supported.
+However, standard write operations (e.g. \`set\`, \`delete\`, etc.) are not supported.
 Instead, you must use the methods on the following interface to mutate the map:
 
 \`\`\`typescript
@@ -449,7 +461,7 @@ ${getTreeMapNodeDocumentation(mapInterfaceName)}
 
 ### Additional Notes
 
-Before outputting the ${functionName} function, you should check that it is valid according to both the application tree's schema and the restrictions of the editing language (e.g. the array methods you are allowed to use).
+Before outputting the ${functionName} function, you should check that it is valid according to both the application TypeScript schema and the restrictions of the editing language (e.g. the array methods you are allowed to use).
 
 When possible, ensure that the edits preserve the identity of objects already in the tree (for example, prefer \`array.moveToIndex\` or \`array.moveRange\` over \`array.removeAt\` + \`array.insertAt\`).
 

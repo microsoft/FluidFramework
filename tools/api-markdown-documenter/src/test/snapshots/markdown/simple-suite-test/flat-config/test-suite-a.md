@@ -382,7 +382,7 @@ export interface TestInterfaceWithCallSignature
 
 ### Call Signature Details
 
-<h4 id="testinterfacewithcallsignature-_call_-callsignature"><T extends string>(foo: T): number & T</h4>
+<h4 id="testinterfacewithcallsignature-_call_-callsignature">&#x3C;T extends string>(foo: T): number &#x26; T</h4>
 
 Test call signature.
 
