@@ -26,7 +26,9 @@ module.exports = {
 				const sourceCode = context.getSourceCode();
 				const comments = sourceCode
 					.getAllComments()
-					// Filter to only JSDoc/TSDoc style block comments
+					// Filter to only JSDoc/TSDoc style block comments.
+					// `getAllComments` returns the body of the block comments only (i.e. without the leading `/*` and trailing `*/`).
+					// To filter only to JSDoc/TSDoc style comments (which start with `/**`), we check that the body starts with "*".
 					.filter((comment) => comment.type === "Block" && comment.value.startsWith("*"));
 
 				for (const comment of comments) {
