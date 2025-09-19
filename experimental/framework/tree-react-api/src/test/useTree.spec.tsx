@@ -95,6 +95,25 @@ describe("useTree", () => {
 				});
 			});
 
+			it("withTreeObservations example", () => {
+				const builder = new SchemaFactory("example");
+				class Item extends builder.object("Item", { text: SchemaFactory.string }) {}
+				const ItemComponent = withTreeObservations(
+					({ item }: { item: Item }): JSX.Element => <span>{item.text}</span>,
+				);
+
+				const ItemParentComponent = ({ item }: { item: PropTreeNode<Item> }): JSX.Element => (
+					<ItemComponent item={item} />
+				);
+
+				const InvalidItemParentComponent = ({
+					item,
+				}: { item: PropTreeNode<Item> }): JSX.Element => (
+					// @ts-expect-error PropTreeNode turns this invalidation bug into a compile error
+					<span>{item.text}</span>
+				);
+			});
+
 			describe("withTreeObservations and array", () => {
 				const builder = new SchemaFactory("tree-react-api");
 

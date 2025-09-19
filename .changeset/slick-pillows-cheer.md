@@ -15,3 +15,33 @@ The recommended pattern for doing this is to use `treeDataObject` or `TreeViewCo
 Alternatively more localized changes can be made by using `PropNode` to type erase TreeNodes passed in props, then of of the `usePropTreeNode` or `usePropTreeRecord` hooks to read from them.
 
 All of these APIs work with both hydrated and [un-hydrated](https://fluidframework.com/docs/api/tree/unhydrated-typealias) TreeNodes.
+
+Here is a simple example of a React components which would have an invalidation bug if not using `withTreeObservations`:
+
+```typescript
+const builder = new SchemaFactory("example");
+class Item extends builder.object("Item", { text: SchemaFactory.string }) {}
+const ItemComponent = withTreeObservations(
+	({ item }: { item: Item }): JSX.Element => <span>{item.text}</span>,
+);
+```
+
+For components which take in TreeNodes, but should not read from them, they can use `PropTreeNode` as shown:
+
+```typescript
+const ItemParentComponent = ({ item }: { item: PropTreeNode<Item> }): JSX.Element => (
+	<ItemComponent item={item} />
+);
+```
+
+If such a components accidentally reads from the TreeNode, it gets a compile error instead of an invalidation bug.
+In this case the invalidation bug would be that if `item.text` is modified, the component would not rerender.
+
+```typescript
+const InvalidItemParentComponent = ({
+	item,
+}: { item: PropTreeNode<Item> }): JSX.Element => (
+	// @ts-expect-error PropTreeNode turns this invalidation bug into a compile error
+	<span>{item.text}</span>
+);
+```
