@@ -321,7 +321,8 @@ export class EditManager<
 			branch.trimHistory(latestEvicted, sequenceId);
 		}
 
-		for (const commit of trimmedCommits) {
+		// Only the last trimmed commit, which is the new trunk base, should remain accessible.
+		for (const commit of trimmedCommits.slice(0, -1)) {
 			Reflect.defineProperty(commit, "change", {
 				get: () =>
 					assert(false, 0xa5e /* Should not access 'change' property of an evicted commit */),
@@ -703,11 +704,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		// the trunk.
 		if (areLocalCommits) {
 			for (const _ of newCommits) {
-				this.registerSequencedCommit(
-					nextSequenceId,
-					sessionId,
-					this.sequenceLocalCommit(nextSequenceId, onSequenceLocalCommit),
-				);
+				this.sequenceLocalCommit(nextSequenceId, sessionId, onSequenceLocalCommit);
 				nextSequenceId = getNextSequenceId(nextSequenceId);
 			}
 			return;
@@ -857,6 +854,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 	 */
 	private sequenceLocalCommit(
 		sequenceId: SequenceId,
+		sessionId: SessionId,
 		onSequenceLocalCommit: OnSequenceCommit<TChangeset>,
 	): GraphCommit<TChangeset> {
 		// First, push the local commit to the trunk.
@@ -867,8 +865,8 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 			0x6b5 /* Received a sequenced change from the local session despite having no local changes */,
 		);
 
-		const prevSequenceId = this.getCommitSequenceId(firstLocalCommit);
-		this.pushGraphCommitToTrunk(firstLocalCommit);
+		const prevSequenceId = this.getCommitSequenceId(this.trunk.getHead());
+		this.pushGraphCommitToTrunk(sequenceId, firstLocalCommit, sessionId);
 		onSequenceLocalCommit(firstLocalCommit, sequenceId, prevSequenceId);
 		return firstLocalCommit;
 	}
@@ -900,14 +898,18 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		return commit;
 	}
 
-	private pushGraphCommitToTrunk(graphCommit: GraphCommit<TChangeset>): void {
+	private pushGraphCommitToTrunk(
+		sequenceId: SequenceId,
+		graphCommit: GraphCommit<TChangeset>,
+		sessionId: SessionId,
+	): void {
 		this.trunk.setHead(graphCommit);
+		this.registerSequencedCommit(sequenceId, sessionId, graphCommit);
 	}
 
 	private pushCommitToTrunk(sequenceId: SequenceId, commit: Commit<TChangeset>): void {
 		const mintedCommit = mintCommit(this.trunk.getHead(), commit);
-		this.registerSequencedCommit(sequenceId, commit.sessionId, mintedCommit);
-		this.pushGraphCommitToTrunk(mintedCommit);
+		this.pushGraphCommitToTrunk(sequenceId, mintedCommit, commit.sessionId);
 	}
 
 	private registerSequencedCommit(
