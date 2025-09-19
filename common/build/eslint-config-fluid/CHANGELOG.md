@@ -1,6 +1,6 @@
 # @fluidframework/eslint-config-fluid Changelog
 
-## [6.0.2](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.0_2)
+## [6.1.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.1.0)
 
 Update dependencies on the following packages:
 
