@@ -140,6 +140,7 @@ export class MigrationDataObjectFactory<
 	// ! TODO: add new DataStoreMessageType.Conversion
 	private static readonly conversionContent = "conversion";
 
+	//* TODO: add default values for migration-related props
 	public constructor(
 		private readonly props: MigrationDataObjectFactoryProps<
 			TObj,
