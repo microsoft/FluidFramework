@@ -1,5 +1,20 @@
 # @fluidframework/eslint-plugin-fluid Changelog
 
+## [0.2.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-plugin-fluid_v0.2.0)
+
+New rules added:
+
+- `@fluid-internal/fluid/no-markdown-links-in-jsdoc`: Forbids the use of Markdown link syntax in JSDoc/TSDoc comments.
+    - Such links are not supported by TSDoc spec and are not supported by some of our tooling.
+      `{@link}` syntax should be used instead.
+
+## [0.1.6](https://github.com/microsoft/FluidFramework/releases/tag/eslint-plugin-fluid_v0.1.6)
+
+Dependency updates:
+
+- `@microsoft/tsdoc` from `0.14.2` to `0.15.1`
+- `@typescript-eslint/parser` from `6.21.0` to `7.18.0`
+
 ## [0.1.5](https://github.com/microsoft/FluidFramework/releases/tag/eslint-plugin-fluid_v0.1.5)
 
 ### Safe Record Access Improvements
@@ -7,19 +22,19 @@
 Added support for two new patterns in the no-unchecked-record-access ESLint rule:
 
 1. **Nullish Coalescing Assignment Recognition**
-   - The rule now recognizes nullish coalescing assignment (`??=`) as a valid safety check
-   - Properties accessed after a nullish coalescing assignment will not trigger warnings
+    - The rule now recognizes nullish coalescing assignment (`??=`) as a valid safety check
+    - Properties accessed after a nullish coalescing assignment will not trigger warnings
 
 2. **Else Block Assignment Handling**
-   - Added detection for property assignments in else blocks of existence checks
-   - Example pattern now supported:
-     ```typescript
-     if ("key" in obj) {
-       // use obj.key
-     } else {
-       obj.key = defaultValue;
-       // use obj.key
-     }
-     ```
-   - The rule understands that after the else block assignment, the property is safe to use
-   - Works with both direct property access and computed property access
+    - Added detection for property assignments in else blocks of existence checks
+    - Example pattern now supported:
+        ```typescript
+        if ("key" in obj) {
+        	// use obj.key
+        } else {
+        	obj.key = defaultValue;
+        	// use obj.key
+        }
+        ```
+    - The rule understands that after the else block assignment, the property is safe to use
+    - Works with both direct property access and computed property access
