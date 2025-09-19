@@ -794,7 +794,7 @@ function createTableCellFromTsdocSection(
 		// In some circumstances, `hast-util-to-html` seems to insert newlines presumably for formatting purposes,
 		// though it is unclear exactly what scenarios cause this behavior.
 		// Remove any such newlines here.
-		value: toHtml(node).replace(/\n/g, "" /* omit newlines */),
+		value: toHtml(node).replace(/\r?\n/g, "" /* omit newlines */),
 	}));
 	return {
 		type: "tableCell",
