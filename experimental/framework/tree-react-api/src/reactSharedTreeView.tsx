@@ -91,18 +91,11 @@ export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 
 		protected override async initializingFirstTime(): Promise<void> {
 			this.initializeView();
-			if (!this.treeView.compatibility.canInitialize) {
-				throw new Error("Incompatible schema");
-			}
-
 			this.treeView.initialize(createInitialTree());
 		}
 
 		protected override async initializingFromExisting(): Promise<void> {
 			this.initializeView();
-			if (!this.treeView.compatibility.canView) {
-				throw new Error("Incompatible schema");
-			}
 		}
 	}
 	return createDataObjectKind(SchemaAwareTreeDataObject);
