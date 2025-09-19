@@ -28,7 +28,7 @@ module.exports = {
 					const matches = comment.value.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g);
 					for (const match of matches) {
 						const [fullMatch, text, url] = match;
-						const startIndex = comment.range[0] + comment.value.indexOf(fullMatch);
+						const startIndex = comment.range[0] + match.index;
 						const endIndex = startIndex + fullMatch.length;
 
 						context.report({
