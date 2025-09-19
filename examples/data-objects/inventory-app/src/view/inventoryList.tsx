@@ -12,9 +12,77 @@ import {
 } from "@fluid-experimental/tree-react-api";
 import * as React from "react";
 
-import type { Inventory, Part } from "../schema.js";
+import type { Inventory } from "../schema.js";
+import { Part } from "../schema.js";
 
 import { Counter } from "./counter.js";
+
+/**
+ * Top level view is an easy place to enable StrictMode if desired.
+ *
+ * This component does not use any of the tree invalidation logic.
+ * This is safe because the node is passed in as a PropTreeNode:
+ * the type system will not allow this component to access any of the contents of the node that can change
+ * and thus no custom invalidation is needed.
+ */
+export const MainView: React.FC<{ root: PropTreeNode<Inventory> }> = ({ root }) => {
+	return (
+		// <React.StrictMode>
+		<InventoryView root={root} />
+		// </React.StrictMode>
+	);
+};
+
+/**
+ * View which consumes part of a tree, delegating some to sub-components.
+ *
+ * This demonstrates how arrays can be handled efficiently and easily.
+ */
+const InventoryView: React.FC<{ root: PropTreeNode<Inventory> }> =
+	withMemoizedTreeObservations(({ root }: { root: Inventory }) => {
+		const parts = root.parts.map((part) => (
+			// Note the use of `objectIdNumber` here to get a stable key from the TreeNode.
+			// This pattern can be used when ever a React key is needed for a component which corresponds to a TreeNode.
+			<PartView key={objectIdNumber(part)} part={part} />
+		));
+
+		return (
+			<div>
+				<h1>Inventory:</h1>
+				{parts}
+				<hr />
+				<button
+					onClick={() => root.parts.insertAtEnd(new Part({ name: "New Part", quantity: 0 }))}
+				>
+					Add Part
+				</button>
+			</div>
+		);
+	});
+
+/**
+ * A memoized auto-invalidated {@link Part}
+ */
+const PartView = withMemoizedTreeObservations(({ part }: { part: Part }) => (
+	<span>
+		<Counter
+			key={part.name}
+			title={part.name}
+			count={part.quantity}
+			onDecrement={(): number => part.quantity--}
+			onIncrement={(): number => part.quantity++}
+		/>
+		{/* Add an ability to edit the array of parts.
+		 This allows hitting a lot more edge cases
+		 and shows off the ability to call methods on the nodes.
+		 */}
+		<button onClick={() => part.remove()}>Remove Part</button>
+	</span>
+));
+
+//
+// Below here are some unused examples of other ways to use the react tree utilities:
+//
 
 /**
  * Example of a view which directly consumes multiple nodes from the tree.
@@ -39,17 +107,6 @@ export const InventoryViewMonolithic =
 			</div>
 		);
 	});
-
-/**
- * Top level view is an easy place to enable StrictMode if desired.
- */
-export const MainView: React.FC<{ root: PropTreeNode<Inventory> }> = ({ root }) => {
-	return (
-		// <React.StrictMode>
-		<InventoryView root={root} />
-		// </React.StrictMode>
-	);
-};
 
 /**
  * Example of a view which consumes part of a tree, delegating some to sub-components.
@@ -81,30 +138,3 @@ export const InventoryViewWithHook: React.FC<{ root: PropTreeNode<Inventory> }> 
 		</div>
 	);
 };
-
-/**
- * View which consumes part of a tree, delegating some to sub-components.
- */
-const InventoryView: React.FC<{ root: PropTreeNode<Inventory> }> =
-	withMemoizedTreeObservations(({ root }: { root: Inventory }) => {
-		const parts = root.parts.map((part) => (
-			<PartView key={objectIdNumber(part)} part={part} />
-		));
-
-		return (
-			<div>
-				<h1>Inventory:</h1>
-				{parts}
-			</div>
-		);
-	});
-
-const PartView = withMemoizedTreeObservations(({ part }: { part: Part }) => (
-	<Counter
-		key={part.name}
-		title={part.name}
-		count={part.quantity}
-		onDecrement={(): number => part.quantity--}
-		onIncrement={(): number => part.quantity++}
-	/>
-));

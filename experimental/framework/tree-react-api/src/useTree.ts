@@ -69,6 +69,7 @@ class SubscriptionsWrapper {
  * This wraps a component in such tracking.
  *
  * It is recommended that sub-components which take in TreeNodes, if not defined using this higher order components, take the nodes in as {@link PropTreeNode}s.
+ * Components defined using this higher order component can take in either raw TreeNodes or {@link PropTreeNode}s: the latter will be automatically unwrapped.
  * @privateRemarks
  * `React.FC` does not seem to be covariant over its input type, so to make use of this more ergonomic,
  * the return type intersects the various ways this could be used (with or without PropTreeNode wrapping).
