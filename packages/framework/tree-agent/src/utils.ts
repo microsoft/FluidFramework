@@ -190,15 +190,32 @@ export function getFriendlySchemaName(schemaName: string): string | undefined {
 }
 
 /**
+ * Details about the properties of a TypeScript schema represented as Zod.
+ */
+export interface SchemaDetails {
+	hasHelperMethods: boolean;
+}
+
+// TODO: yuck, this entire file has too many statics. we should rewrite it as a generic zod schema walk.
+let detailsI: SchemaDetails = {
+	hasHelperMethods: false,
+};
+
+/**
  * Returns the TypeScript source code corresponding to a Zod schema. The schema is supplied as an object where each
  * property provides a name for an associated Zod type. The return value is a string containing the TypeScript source
  * code corresponding to the schema. Each property of the schema object is emitted as a named `interface` or `type`
  * declaration for the associated type and is referenced by that name in the emitted type declarations. Other types
  * referenced in the schema are emitted in their structural form.
  * @param schema - A schema object where each property provides a name for an associated Zod type.
+ * @param details - Optional details about the schema. The fields will be set according to the details in the given schema.
  * @returns The TypeScript source code corresponding to the schema.
  */
-export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): string {
+export function getZodSchemaAsTypeScript(
+	schema: Record<string, z.ZodType>,
+	details?: SchemaDetails,
+): string {
+	detailsI = details ?? { hasHelperMethods: false };
 	let result = "";
 	let startOfLine = true;
 	let indent = 0;
@@ -366,6 +383,7 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 			// Special handling of methods on objects
 			const method = (type as unknown as { method: object | undefined }).method;
 			if (method !== undefined && method instanceof FunctionWrapper) {
+				detailsI.hasHelperMethods = true;
 				append(name);
 				append("(");
 				let first = true;
