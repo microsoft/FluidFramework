@@ -16,10 +16,9 @@ import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 import { Message } from "./messageFormatV5.js";
 import type { DecodedMessage } from "./messageTypes.js";
-import type { IIdCompressor, OpSpaceCompressedId } from "@fluidframework/id-compressor";
-import type { BranchId } from "./branch.js";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { MessageEncodingContext } from "./messageCodecs.js";
+import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
 
 export function makeV5CodecWithVersion<TChangeset>(
 	changeCodec: ChangeFamilyCodec<TChangeset>,
@@ -126,21 +125,4 @@ export function makeV5CodecWithVersion<TChangeset>(
 		},
 		options.jsonValidator,
 	);
-}
-
-function encodeBranchId(
-	idCompressor: IIdCompressor,
-	branchId: BranchId,
-): OpSpaceCompressedId | undefined {
-	return branchId === "main" ? undefined : idCompressor.normalizeToOpSpace(branchId);
-}
-
-function decodeBranchId(
-	idCompressor: IIdCompressor,
-	encoded: OpSpaceCompressedId | undefined,
-	context: ChangeEncodingContext,
-): BranchId {
-	return encoded === undefined
-		? "main"
-		: idCompressor.normalizeToSessionSpace(encoded, context.originatorId);
 }

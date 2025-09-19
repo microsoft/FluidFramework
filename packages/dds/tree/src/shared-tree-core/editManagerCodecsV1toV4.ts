@@ -89,7 +89,6 @@ export function makeV1CodecWithVersion<TChangeset>(
 						},
 						context,
 					),
-					branches: new Map(),
 				};
 			},
 		},

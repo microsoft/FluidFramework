@@ -28,6 +28,7 @@ import type { SharedBranchSummaryData, SummaryData } from "./editManager.js";
 import { EncodedEditManager } from "./editManagerFormatV5.js";
 import { decodeSharedBranch, encodeSharedBranch } from "./editManagerCodecsCommons.js";
 import type { EncodedSharedBranch } from "./editManagerFormatCommons.js";
+import type { BranchId } from "./branch.js";
 
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
@@ -97,7 +98,7 @@ export function makeV5CodecWithVersion<TChangeset>(
 					json.main,
 					context,
 				);
-				const branches = new Map<string, SharedBranchSummaryData<TChangeset>>();
+				const branches = new Map<BranchId, SharedBranchSummaryData<TChangeset>>();
 				if (json.branches !== undefined) {
 					for (const branch of json.branches) {
 						const decodedBranch = decodeSharedBranch(

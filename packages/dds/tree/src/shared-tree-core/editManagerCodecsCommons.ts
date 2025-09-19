@@ -20,6 +20,7 @@ import type {
 	SequencedCommit,
 } from "./editManagerFormatCommons.js";
 import type { SharedBranchSummaryData } from "./editManager.js";
+import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
 
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
@@ -128,8 +129,11 @@ export function encodeSharedBranch<TChangeset>(
 			},
 		]),
 	};
-	if (data.id !== undefined) {
-		json.id = data.id;
+	if (data.session !== undefined) {
+		json.session = data.session;
+		if (data.id !== undefined) {
+			json.id = encodeBranchId(context.idCompressor, data.id);
+		}
 	}
 	if (data.name !== undefined) {
 		json.name = data.name;
@@ -196,8 +200,15 @@ export function decodeSharedBranch<TChangeset>(
 			]),
 		),
 	};
-	if (json.id !== undefined) {
-		data.id = json.id;
+	if (json.session !== undefined) {
+		data.session = json.session;
+		if (json.id !== undefined) {
+			data.id = decodeBranchId(context.idCompressor, json.id, {
+				originatorId: json.session,
+				idCompressor: context.idCompressor,
+				revision: undefined,
+			});
+		}
 	}
 	if (json.name !== undefined) {
 		data.name = json.name;

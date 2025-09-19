@@ -13,6 +13,7 @@ import {
 	SessionIdSchema,
 } from "../core/index.js";
 import { type Brand, brandedNumberType } from "../util/index.js";
+import type { EncodedBranchId } from "./branch.js";
 
 /**
  * Contains a single change to the `SharedTree` and associated metadata.
@@ -96,9 +97,11 @@ export const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: Chan
 	);
 
 export interface EncodedSharedBranch<TChangeset> {
-	readonly id?: string;
+	readonly id?: EncodedBranchId;
 	readonly name?: string;
 	readonly author?: string;
+	readonly session?: SessionId;
+	readonly base?: EncodedRevisionTag;
 	readonly trunk: readonly Readonly<SequencedCommit<TChangeset>>[];
 	readonly peers: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
 }
@@ -106,9 +109,11 @@ export interface EncodedSharedBranch<TChangeset> {
 export const EncodedSharedBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object(
 		{
-			id: Type.Optional(Type.String()),
+			id: Type.Optional(Type.Number()),
 			name: Type.Optional(Type.String()),
+			session: Type.Optional(SessionIdSchema),
 			author: Type.Optional(Type.String()),
+			base: Type.Optional(RevisionTagSchema),
 			trunk: Type.Array(SequencedCommit(tChange)),
 			peers: Type.Array(Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)])),
 		},
