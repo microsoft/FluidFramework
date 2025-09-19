@@ -21,7 +21,7 @@ module.exports = {
 		},
 		messages: {
 			filePathLink:
-				"File path links are not allowed in JSDoc/TSDoc comments. Link to a stable, user-accessible resource (like a GitHub URL) instead.",
+				"File path links are not allowed in JSDoc/TSDoc comments. Link to a stable, user-accessible resource (like an API reference or a GitHub URL) instead.",
 		},
 		schema: [],
 	},

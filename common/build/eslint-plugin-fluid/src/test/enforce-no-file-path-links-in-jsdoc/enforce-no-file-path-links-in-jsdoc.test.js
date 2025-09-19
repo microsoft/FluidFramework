@@ -29,7 +29,7 @@ describe("Do not allow file path links in JSDoc/TSDoc comments", function () {
 	}
 
 	const expectedErrorMessage =
-		"File path links are not allowed in JSDoc/TSDoc comments. Link to a stable, user-accessible resource (like a GitHub URL) instead.";
+		"File path links are not allowed in JSDoc/TSDoc comments. Link to a stable, user-accessible resource (like an API reference or a GitHub URL) instead.";
 
 	it("Should report errors for file path links in block comments", async function () {
 		const result = await lintFile("test.ts");
