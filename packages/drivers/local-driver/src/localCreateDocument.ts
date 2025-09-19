@@ -17,7 +17,7 @@ export async function createDocument(
 	localDeltaConnectionServer,
 	resolvedUrl: IResolvedUrl,
 	summary: ISummaryTree,
-) {
+): Promise<void> {
 	const pathName = new URL(resolvedUrl.url).pathname;
 	const pathArr = pathName.split("/");
 	// TODO Why are we non null asserting here
