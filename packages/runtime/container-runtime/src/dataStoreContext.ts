@@ -76,6 +76,7 @@ import {
 	DataProcessingError,
 	LoggingError,
 	type MonitoringContext,
+	PerformanceEvent,
 	ThresholdCounter,
 	UsageError,
 	createChildMonitoringContext,
@@ -100,6 +101,69 @@ import {
 	hasIsolatedChannels,
 	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
+
+//* TODO: Move to runtime-definitions
+
+/**
+ * Information emitted by an old implementation's runtime to request a one-hop migration
+ * into a newer implementation.
+ *
+ * The current expectation (Phase 1) is that this interface is only surfaced during the
+ * first realization load path of an existing data store. Newly created data stores should
+ * already use the latest implementation and MUST NOT request migration.
+ *
+ * The portableData is intentionally "unknown" for initial implementation so that
+ * a schema can be introduced later without creating churn now. All supported versions
+ * MUST output an identical logical portable format understood by the latest implementation.
+ *
+ * TODO: Add strong typing / versioning for portableData once the format stabilizes.
+ *
+ * @legacy @beta
+ */
+export interface IMigrationInfo {
+	/**
+	 * The new package path (final target) to which this data store should be migrated.
+	 * This MUST differ from the current package path or migration will fail.
+	 */
+	readonly newPackagePath: readonly string[];
+	/**
+	 * Opaque portable state required by the target factory to rehydrate the runtime
+	 * in the new implementation.
+	 */
+	readonly getPortableData: (runtime: IFluidDataStoreChannel) => Promise<unknown>;
+}
+
+/**
+ * A factory that indicates it should be migrated away from.
+ *
+ * This interface carries the migration metadata produced by an older implementation.
+ *
+ * @legacy @beta
+ */
+export interface IMigrationSourceFluidDataStoreFactory extends IFluidDataStoreFactory {
+	/**
+	 * If defined, this factory should be migrated away from according to this info.
+	 */
+	migrationInfo: IMigrationInfo | undefined;
+}
+
+/**
+ * A factory that can act as a migration target by instantiating a runtime from
+ * portable migration data produced by a previous implementation.
+ *
+ * @legacy @beta
+ */
+export interface IMigrationTargetFluidDataStoreFactory extends IFluidDataStoreFactory {
+	/**
+	 * Instantiate a runtime using portable migration data produced by a previous implementation.
+	 * @param context - Datastore context (same as regular instantiation).
+	 * @param portableData - Opaque data captured from the old runtime.
+	 */
+	instantiateForMigration(
+		context: IFluidDataStoreContext,
+		portableData: unknown,
+	): Promise<IFluidDataStoreChannel>;
+}
 
 function createAttributes(
 	pkg: readonly string[],
@@ -690,16 +754,85 @@ export abstract class FluidDataStoreContext
 		const channel = await factory.instantiateDataStore(this, existing);
 		assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
 
-		await this.bindRuntime(channel, existing);
+		// Run migration (if needed) and return the active channel.
+		const activeChannel = existing
+			? await this.migrateChannelIfNeeded(channel, factory)
+			: channel;
+
+		await this.bindRuntime(activeChannel, existing);
 		// This data store may have been disposed before the channel is created during realization. If so,
 		// dispose the channel now.
 		if (this.disposed) {
-			channel.dispose();
+			activeChannel.dispose();
 		}
 
-		await factory.afterBindRuntime?.(channel);
+		//* await factory.afterBindRuntime?.(activeChannel);
 
-		return channel;
+		return activeChannel;
+	}
+
+	/**
+	 * If the factory indicates a migration is needed for an existing datastore, perform it and return
+	 * the migrated channel. Otherwise, return the provided initialChannel.
+	 */
+	private async migrateChannelIfNeeded(
+		initialChannel: IFluidDataStoreChannel,
+		factory: IFluidDataStoreFactory,
+	): Promise<IFluidDataStoreChannel> {
+		//* NOPE - migrationInfo has to be on the runtime (maybe on EntryPoint not IFDSChannel), not the factory
+		//* Since it depends on configs which can't be read when the factory is statically created
+		const migrationInfo = (factory as IMigrationSourceFluidDataStoreFactory).migrationInfo;
+		if (migrationInfo === undefined) {
+			// No migration needed if factory doesn't request it
+			return initialChannel;
+		}
+
+		const oldPkg = this.pkg?.join("/");
+
+		// Process pending ops and check if we get the barrier op while loading
+		let sawBarrierOp = false;
+		const listener = (message: ISequencedDocumentMessage): void => {
+			if (message.contents === "BARRIER_OP_FOR_MIGRATION") {
+				sawBarrierOp = true;
+			}
+		};
+		this.containerRuntime.on("op", listener);
+		this.processPendingOps(initialChannel);
+		this.containerRuntime.off("op", listener);
+
+		if (!sawBarrierOp) {
+			//* TODO: Submit barrier op (will be sent when switching to write due to user action)
+
+			// For this session, continue with the old format.
+			// We'll migrate in a future session after the Barrier Op roundtrips
+			return initialChannel;
+		}
+
+		const portableData = await migrationInfo.getPortableData(initialChannel);
+
+		const newPkgJoined = migrationInfo.newPackagePath.join("/");
+		assert(newPkgJoined !== oldPkg, "No-op migration not allowed");
+		return PerformanceEvent.timedExecAsync(
+			this.mc.logger,
+			//* TODO: Tag pkg's as CodeArtifact
+			{ eventName: "DataStoreMigration", oldPkg, newPkg: newPkgJoined },
+			async () => {
+				// Swap package path prior to looking up new factory
+				this.pkg = [...migrationInfo.newPackagePath];
+
+				// Dispose the unbound old channel; it was never bound so has no side-effects
+				initialChannel.dispose();
+
+				// Lookup new factory with updated package path
+				//* TODO: Use proper type guard (that asserts) instead of cast
+				const newFactory =
+					(await this.factoryFromPackagePath()) as IMigrationTargetFluidDataStoreFactory;
+
+				const migratedChannel = await newFactory.instantiateForMigration(this, portableData);
+
+				return migratedChannel;
+			},
+		);
 	}
 
 	/**
