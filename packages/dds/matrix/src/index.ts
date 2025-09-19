@@ -14,4 +14,4 @@ export {
 	SharedMatrixOracle,
 	type IChannelWithOracles,
 	hasSharedMatrixOracle,
-} from "./matrixOracle.js";
+} from "./test/matrixOracle.js";

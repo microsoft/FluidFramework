@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { ISharedMatrix } from "./matrix.js";
+import { strict as assert } from "node:assert";
+
+import type { ISharedMatrix } from "../matrix.js";
 // import type { MatrixItem } from "./ops.js";
 
 /**
@@ -59,26 +61,26 @@ export class SharedMatrixOracle<T> {
 		const rows = this.model.length;
 		// const cols = this.model[0]?.length ?? 0;
 
-		if (rows !== this.shared.rowCount) {
-			throw new Error(
-				`SharedMatrixOracle mismatch: expected ${rows} rows, actual=${this.shared.rowCount}`,
-			);
-		}
+		assert.deepStrictEqual(
+			rows,
+			this.shared.rowCount,
+			`SharedMatrixOracle mismatch: expected ${rows} rows, actual=${this.shared.rowCount}`,
+		);
 
 		for (let r = 0; r < rows; r++) {
-			if (this.model[r].length !== this.shared.colCount) {
-				throw new Error(
-					`SharedMatrixOracle mismatch at row ${r}: expected ${this.model[r].length} cols, actual=${this.shared.colCount}`,
-				);
-			}
+			assert.deepStrictEqual(
+				this.model[r].length,
+				this.shared.colCount,
+				`SharedMatrixOracle mismatch at row ${r}: expected ${this.model[r].length} cols, actual=${this.shared.colCount}`,
+			);
 			for (let c = 0; c < this.shared.colCount; c++) {
 				const expected = this.model[r][c];
 				const actual = this.shared.getCell(r, c);
-				if (expected !== actual) {
-					throw new Error(
-						`SharedMatrixOracle mismatch at [${r},${c}]: expected="${expected}", actual="${actual}"`,
-					);
-				}
+				assert.deepStrictEqual(
+					expected,
+					actual,
+					`SharedMatrixOracle mismatch at [${r},${c}]: expected="${expected}", actual="${actual}"`,
+				);
 			}
 		}
 	}

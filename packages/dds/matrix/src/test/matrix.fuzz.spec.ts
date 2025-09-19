@@ -14,7 +14,7 @@ import {
 } from "@fluid-private/test-dds-utils";
 // import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { SharedMatrixOracle, type IChannelWithOracles } from "../matrixOracle.js";
+import { SharedMatrixOracle, type IChannelWithOracles } from "./matrixOracle.js";
 import type { SharedMatrixFactory } from "../runtime.js";
 
 import { _dirname } from "./dirname.cjs";
