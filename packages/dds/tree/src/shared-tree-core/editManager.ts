@@ -688,16 +688,16 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 			0xa64 /* Attempted to sequence change with an outdated sequence number */,
 		);
 
-		const commitsSequenceNumber = this.getBatch(sequenceNumber);
+		const batchSize = this.getBatchSize(sequenceNumber);
 		// The sequence id for the next commit to be processed in the bunch.
 		let nextSequenceId =
-			commitsSequenceNumber.length === 0
+			batchSize === 0
 				? {
 						sequenceNumber,
 					}
 				: {
 						sequenceNumber,
-						indexInBatch: 0,
+						indexInBatch: batchSize,
 					};
 
 		// Local changes, i.e., changes from this client are applied by fast forwarding the local branch commit onto
@@ -936,7 +936,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 
 	// TODO: Document that this is to handle receiving separate commits with the same sequence ID,
 	// as a batch of changes are not guaranteed to be processed as one bunch.
-	private getBatch(sequenceNumber: SeqNumber): [SequenceId, GraphCommit<TChangeset>][] {
+	private getBatchSize(sequenceNumber: SeqNumber): number {
 		const startSequenceId: SequenceId = {
 			sequenceNumber,
 		};
@@ -944,7 +944,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 			sequenceNumber: brand((sequenceNumber as number) + 1),
 		};
 
-		return this.sequenceIdToCommit.getRange(startSequenceId, endSequenceId, false);
+		return this.sequenceIdToCommit.getRange(startSequenceId, endSequenceId, false).length;
 	}
 
 	public getSummaryData(minSeqNumber: SeqNumber): SharedBranchSummaryData<TChangeset> {
