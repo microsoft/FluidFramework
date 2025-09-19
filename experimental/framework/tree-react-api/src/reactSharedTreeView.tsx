@@ -22,6 +22,8 @@ import type {
 import { configuredSharedTree, typeboxValidator } from "@fluidframework/tree/internal";
 import * as React from "react";
 
+import { toPropTreeNode, type PropTreeValue } from "./propNode.js";
+
 /**
  * Opt into extra validation to detect encoding bugs and data corruption.
  * As long as this is an experimental package, opting into extra validation (at a small perf and bundle size cost) seems reasonable.
@@ -147,7 +149,9 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 	/**
 	 * Component to display the tree content.
 	 */
-	readonly viewComponent: React.FC<{ root: TreeFieldFromImplicitField<TSchema> }>;
+	readonly viewComponent: React.FC<{
+		root: PropTreeValue<TreeFieldFromImplicitField<TSchema>>;
+	}>;
 
 	/**
 	 * Component to display instead of the {@link TreeViewProps.viewComponent}
@@ -271,7 +275,7 @@ export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 		return <div>View not set</div>;
 	}
 
-	return <ViewComponent root={root} />;
+	return <ViewComponent root={toPropTreeNode(root)} />;
 }
 
 /**

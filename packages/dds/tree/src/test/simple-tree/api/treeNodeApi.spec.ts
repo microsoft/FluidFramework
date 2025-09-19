@@ -97,6 +97,240 @@ const schema = new SchemaFactoryAlpha("com.example");
 class Point extends schema.object("Point", {}) {}
 
 describe("treeNodeApi", () => {
+	describeHydration("trackObservations", (init) => {
+		it("no reads", () => {
+			class Point2D extends schema.object("Point", {
+				x: schema.number,
+			}) {}
+			const node = init(Point2D, { x: 0 });
+
+			const out = TreeAlpha.trackObservations(
+				() => assert.fail(),
+				() => "x",
+			);
+			node.x = 1;
+			assert.equal(out.result, "x");
+		});
+
+		it("field read, unhydrated", () => {
+			class PointX extends schema.object("Point", {
+				x: schema.number,
+			}) {}
+			const node = init(PointX, { x: 0 });
+			const invalidations: string[] = [];
+
+			const out = TreeAlpha.trackObservations(
+				() => invalidations.push("Read X"),
+				() => node.x,
+			);
+			assert.deepEqual(invalidations, []);
+			assert.equal(out.result, 0);
+			node.x = 2;
+			assert.deepEqual(invalidations, ["Read X"]);
+			node.x = 3;
+			assert.deepEqual(invalidations, ["Read X", "Read X"]);
+			out.unsubscribe();
+			node.x = 4;
+			assert.deepEqual(invalidations, ["Read X", "Read X"]);
+		});
+
+		it("optional field unhydrated", () => {
+			class PointX extends schema.object("Point", {
+				x: SchemaFactory.optional(schema.number),
+			}) {}
+			const node = init(PointX, {});
+			const invalidations: string[] = [];
+
+			const out = TreeAlpha.trackObservations(
+				() => invalidations.push("Read keys"),
+				() => [...Object.keys(node)],
+			);
+			assert.deepEqual(invalidations, []);
+			assert.deepEqual(out.result, []);
+			node.x = 2;
+			assert.deepEqual(invalidations, ["Read keys"]);
+		});
+
+		it("parent unhydrated", () => {
+			class PointX extends schema.object("Point", {}) {}
+			const node = init(PointX, {});
+
+			assert.throws(
+				() => {
+					TreeAlpha.trackObservations(
+						() => assert.fail(),
+						() => [Tree.parent(node)],
+					);
+				},
+				validateUsageError(/parent/),
+			);
+		});
+
+		describe("array", () => {
+			class Numbers extends schema.array("Array", schema.number) {}
+			it("read cases", () => {
+				const node = init(Numbers, []);
+				const invalidations: Set<string> = new Set();
+
+				TreeAlpha.trackObservations(
+					() => invalidations.add("length"),
+					() => node.length,
+				);
+				TreeAlpha.trackObservations(
+					() => invalidations.add("children"),
+					() => TreeAlpha.children(node),
+				);
+				TreeAlpha.trackObservations(
+					() => invalidations.add("in"),
+					() => 0 in node,
+				);
+				TreeAlpha.trackObservations(
+					() => invalidations.add("child"),
+					() => TreeAlpha.child(node, 0),
+				);
+				TreeAlpha.trackObservations(
+					() => invalidations.add("exportCompressed"),
+					() =>
+						TreeAlpha.exportCompressed(node, {
+							oldestCompatibleClient: FluidClientVersion.v2_0,
+						}),
+				);
+				TreeAlpha.trackObservations(
+					() => invalidations.add("exportConcise"),
+					() => TreeAlpha.exportConcise(node, {}),
+				);
+				TreeAlpha.trackObservations(
+					() => invalidations.add("exportVerbose"),
+					() => TreeAlpha.exportVerbose(node, {}),
+				);
+
+				// Should not invalidate:
+				TreeAlpha.trackObservations(
+					() => invalidations.add("is"),
+					() => Tree.is(node, Numbers),
+				);
+
+				assert.deepEqual(invalidations, new Set());
+				node.insertAtStart(1);
+				assert.deepEqual(
+					invalidations,
+					new Set([
+						"length",
+						"children",
+						"in",
+						"child",
+						"exportCompressed",
+						"exportConcise",
+						"exportVerbose",
+					]),
+				);
+			});
+		});
+
+		it("multiple nodes", () => {
+			class Component extends schema.object("Component", {
+				value: schema.number,
+			}) {}
+
+			class Point2d extends schema.object("Point", {
+				x: Component,
+				y: Component,
+			}) {}
+
+			const node = init(Point2d, { x: { value: 1 }, y: { value: 2 } });
+
+			const log: string[] = [];
+
+			TreeAlpha.trackObservations(
+				() => log.push("node.x"),
+				() => node.x,
+			);
+
+			TreeAlpha.trackObservations(
+				() => log.push("node.y"),
+				() => node.y,
+			);
+
+			TreeAlpha.trackObservations(
+				() => log.push("node.x.value"),
+				() => node.x.value,
+			);
+
+			TreeAlpha.trackObservations(
+				() => log.push("node.y.value"),
+				() => node.y.value,
+			);
+
+			const x = node.x;
+			const y = node.y;
+
+			TreeAlpha.trackObservations(
+				() => log.push("x.value"),
+				() => x.value,
+			);
+
+			TreeAlpha.trackObservations(
+				() => log.push("y.value"),
+				() => y.value,
+			);
+
+			TreeAlpha.trackObservationsOnce(
+				() => log.push("x.parent"),
+				() => Tree.parent(x),
+			);
+
+			TreeAlpha.trackObservationsOnce(
+				() => log.push("y.parent"),
+				() => Tree.parent(y),
+			);
+
+			log.push("change: x.value");
+			node.x.value = 3;
+
+			log.push("change: y");
+			node.y = new Component({ value: 4 });
+
+			assert.deepEqual(log, [
+				"change: x.value",
+				"node.x.value",
+				"x.value",
+				"change: y",
+				"node.y",
+				"node.y.value",
+				"y.parent",
+			]);
+		});
+
+		it("aliased fields", () => {
+			class Point2d extends schema.object("Point", {
+				x: SchemaFactory.required(schema.number, { key: "X" }),
+				y: schema.number,
+			}) {}
+
+			const node = init(Point2d, { x: 1, y: 2 });
+
+			const log: string[] = [];
+
+			TreeAlpha.trackObservations(
+				() => log.push("x"),
+				() => node.x,
+			);
+
+			TreeAlpha.trackObservations(
+				() => log.push("y"),
+				() => node.y,
+			);
+
+			log.push("change: x");
+			node.x = 3;
+
+			log.push("change: y");
+			node.y = 4;
+
+			assert.deepEqual(log, ["change: x", "x", "change: y", "y"]);
+		});
+	});
+
 	describe("is", () => {
 		it("is", () => {
 			const config = new TreeViewConfiguration({ schema: [Point, schema.number] });

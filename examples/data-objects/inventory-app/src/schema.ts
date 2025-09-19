@@ -3,16 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SchemaFactory, Tree, TreeViewConfiguration } from "@fluidframework/tree";
 
 const builder = new SchemaFactory("com.contoso.app.inventory");
 
 export class Part extends builder.object("Part", {
 	name: builder.string,
 	quantity: builder.number,
-}) {}
+}) {
+	public remove(): void {
+		const parent = Tree.parent(this);
+		if (parent instanceof PartList) {
+			parent.removeAt(Tree.key(this) as number);
+		}
+	}
+}
+
+export class PartList extends builder.array("PartList", Part) {}
+
 export class Inventory extends builder.object("Inventory", {
-	parts: builder.array(Part),
+	parts: PartList,
 }) {}
 
 export const treeConfiguration = new TreeViewConfiguration({ schema: Inventory });
