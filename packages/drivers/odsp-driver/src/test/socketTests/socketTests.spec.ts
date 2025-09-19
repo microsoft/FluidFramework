@@ -72,6 +72,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			{
 				docId: hashedDocumentId,
 				resolvedUrl,
+				fileVersion: undefined,
 			},
 			logger,
 		);

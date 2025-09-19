@@ -68,6 +68,7 @@ describe("Tests for Epoch Tracker With Redemption", () => {
 			{
 				docId: hashedDocumentId,
 				resolvedUrl,
+				fileVersion: undefined,
 			},
 			logger.toTelemetryLogger(),
 		);
