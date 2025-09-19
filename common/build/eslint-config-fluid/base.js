@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Base configuration from which all of our exported configs extends.
+ */
 module.exports = {
 	env: {
 		browser: true,
@@ -37,6 +40,20 @@ module.exports = {
 	reportUnusedDisableDirectives: true,
 	rules: {
 		// Please keep entries alphabetized within a group
+
+		// #region TODO: Bump to error in next major version increment
+
+		/**
+		 * Disallow file path based links in JSDoc/TSDoc comments.
+		 */
+		"@fluid-internal/fluid/no-file-path-links-in-jsdoc": "warn",
+
+		/**
+		 * Disallow the use of Markdown-syntax links in JSDoc/TSDoc comments.
+		 */
+		"@fluid-internal/fluid/no-markdown-links-in-jsdoc": "warn",
+
+		// #endregion
 
 		// @typescript-eslint
 		"@typescript-eslint/adjacent-overload-signatures": "error",

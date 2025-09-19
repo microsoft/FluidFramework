@@ -43,6 +43,12 @@
         "@babel/semi": [
             "off"
         ],
+        "@fluid-internal/fluid/no-file-path-links-in-jsdoc": [
+            "warn"
+        ],
+        "@fluid-internal/fluid/no-markdown-links-in-jsdoc": [
+            "warn"
+        ],
         "@fluid-internal/fluid/no-member-release-tags": [
             "error"
         ],

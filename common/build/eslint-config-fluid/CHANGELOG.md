@@ -1,5 +1,16 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [6.1.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.1.0)
+
+Update dependencies on the following packages:
+
+- `@fluid-tools/eslint-plugin-fluid` (from 0.1.5 to 0.2.0)
+
+Enables the following new rules as warnings (they will be promoted to errors in the next major release):
+
+- `@fluid-internal/fluid/no-file-path-links-in-jsdoc`
+- `@fluid-internal/fluid/no-markdown-links-in-jsdoc`
+
 ## [6.0.1](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.0_1)
 
 Update dependencies on the following packages:

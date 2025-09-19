@@ -44,6 +44,12 @@
         "@eslint-community/eslint-plugin-mysticatea/no-this-in-static": [
             "off"
         ],
+        "@fluid-internal/fluid/no-file-path-links-in-jsdoc": [
+            "warn"
+        ],
+        "@fluid-internal/fluid/no-markdown-links-in-jsdoc": [
+            "warn"
+        ],
         "@fluid-internal/fluid/no-member-release-tags": [
             "error"
         ],
