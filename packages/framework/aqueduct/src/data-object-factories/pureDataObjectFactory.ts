@@ -41,7 +41,15 @@ import type {
 	PureDataObject,
 } from "../data-objects/index.js";
 
-interface CreateDataObjectProps<TObj extends PureDataObject, I extends DataObjectTypes> {
+/**
+ * ! TODO
+ * @legacy
+ * @beta
+ */
+export interface CreateDataObjectProps<
+	TObj extends PureDataObject,
+	I extends DataObjectTypes,
+> {
 	ctor: new (props: IDataObjectProps<I>) => TObj;
 	context: IFluidDataStoreContext;
 	sharedObjectRegistry: ISharedObjectRegistry;
@@ -188,6 +196,11 @@ export interface DataObjectFactoryProps<
 	 * These policies define specific behaviors or constraints for the data object.
 	 */
 	readonly policies?: Partial<IFluidDataStorePolicies>;
+
+	/**
+	 * If provided, this function is to be run after the data store becomes bound to the runtime (i.e. finished initializing).
+	 */
+	readonly afterBindRuntime?: (runtime: IFluidDataStoreChannel) => Promise<void>;
 }
 
 /**
@@ -211,6 +224,11 @@ export class PureDataObjectFactory<
 	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreFactory."type"}
 	 */
 	public readonly type: string;
+
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreFactory."afterBindRuntime"}
+	 */
+	public readonly afterBindRuntime?: (runtime: IFluidDataStoreChannel) => Promise<void>;
 
 	/**
 	 * @remarks Use the props object based constructor instead.
@@ -264,6 +282,8 @@ export class PureDataObjectFactory<
 		if (newProps.registryEntries !== undefined) {
 			this.registry = new FluidDataStoreRegistry(newProps.registryEntries);
 		}
+
+		this.afterBindRuntime = newProps.afterBindRuntime;
 	}
 
 	/**
@@ -297,7 +317,9 @@ export class PureDataObjectFactory<
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
-		const { runtime } = await createDataObject({ ...this.createProps, context, existing });
+		const props = { ...this.createProps, context, existing };
+		await this.observeCreateDataObject(props);
+		const { runtime } = await createDataObject(props);
 
 		return runtime;
 	}
@@ -392,12 +414,14 @@ export class PureDataObjectFactory<
 			packagePath ?? [this.type],
 			loadingGroupId,
 		);
-		const { instance, runtime } = await createDataObject({
+		const props = {
 			...this.createProps,
 			context,
 			existing: false,
 			initialState,
-		});
+		};
+		await this.observeCreateDataObject(props);
+		const { instance, runtime } = await createDataObject(props);
 		const dataStore = await context.attachRuntime(this, runtime);
 
 		return [instance, dataStore];
@@ -422,12 +446,14 @@ export class PureDataObjectFactory<
 		initialState?: I["InitialState"],
 	): Promise<TObj> {
 		const context = runtime.createDetachedDataStore([this.type]);
-		const { instance, runtime: dataStoreRuntime } = await createDataObject({
+		const props = {
 			...this.createProps,
 			context,
 			existing: false,
 			initialState,
-		});
+		};
+		await this.observeCreateDataObject(props);
+		const { instance, runtime: dataStoreRuntime } = await createDataObject(props);
 		const dataStore = await context.attachRuntime(this, dataStoreRuntime);
 		const result = await dataStore.trySetAlias(rootDataStoreId);
 		if (result !== "Success") {
@@ -452,15 +478,21 @@ export class PureDataObjectFactory<
 		context: IFluidDataStoreContextDetached,
 		initialState?: I["InitialState"],
 	): Promise<TObj> {
-		const { instance, runtime } = await createDataObject({
+		const props = {
 			...this.createProps,
 			context,
 			existing: false,
 			initialState,
-		});
+		};
+		await this.observeCreateDataObject(props);
+		const { instance, runtime } = await createDataObject(props);
 
 		await context.attachRuntime(this, runtime);
 
 		return instance;
 	}
+
+	protected async observeCreateDataObject(
+		createProps: CreateDataObjectProps<TObj, I>,
+	): Promise<void> {}
 }
