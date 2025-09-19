@@ -36,11 +36,11 @@
 		"./internal": {
 			"import": {
 				"types": "./lib/internal.d.ts",
-				"default": "./lib/index.js"
+				"default": "./lib/internal.js"
 			},
 			"require": {
 				"types": "./dist/internal.d.ts",
-				"default": "./dist/index.js"
+				"default": "./dist/internal.js"
 			}
 		},
 		"./internal/exposedUtilityTypes": {
