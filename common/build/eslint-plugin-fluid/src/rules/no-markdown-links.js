@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 // eslint-plugin-no-markdown-comments/lib/rules/no-markdown-links-in-comments.js
 module.exports = {
 	meta: {
