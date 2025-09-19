@@ -23,6 +23,35 @@ const isTestAccounts = (value: unknown): value is TestAccounts =>
 			typeof (account as { Password: unknown }).Password === "string",
 	);
 
+const parseTestAccounts = (
+	stringAccounts: string,
+): { username: string; password: string; siteUrl: string; server: string } => {
+	const testAccounts: unknown = JSON.parse(stringAccounts);
+	if (!isTestAccounts(testAccounts) || testAccounts[0] === undefined) {
+		throw new Error(
+			"process.env.login__odsp__test__tenants is not a valid array of test accounts.",
+		);
+	}
+	const { UserPrincipalName: username, Password: password } = testAccounts[0];
+	const atIndex = username.indexOf("@");
+	if (atIndex === -1) {
+		throw new Error(
+			`UserPrincipalName "${username}" is not a valid email address (missing "@").`,
+		);
+	}
+	const emailServer = username.slice(atIndex + 1);
+	const dotIndex = emailServer.indexOf(".");
+	if (dotIndex === -1) {
+		throw new Error(
+			`Couldn't find tenantName from emailServer: "${emailServer}". Expected a domain containing a dot ('.').`,
+		);
+	}
+	const tenantName = emailServer.slice(0, dotIndex);
+	const siteUrl = `https://${tenantName}.sharepoint.com`;
+	const server = new URL(siteUrl).host;
+
+	return { username, password, siteUrl, server };
+};
 /**
  * Construct the set of middleware required to support the odsp example driver.
  *
@@ -46,17 +75,10 @@ export const createOdspMiddlewares = (): Middleware[] => {
 			"process.env.login__microsoft__clientId is missing. Make sure you ran trips-setup and restarted your terminal.",
 		);
 	}
-	const testAccounts: unknown = JSON.parse(process.env.login__odsp__test__tenants);
-	if (!isTestAccounts(testAccounts) || testAccounts[0] === undefined) {
-		throw new Error(
-			"process.env.login__odsp__test__tenants is not a valid array of test accounts.",
-		);
-	}
-	const { UserPrincipalName: username, Password: password } = testAccounts[0];
-	const emailServer = username.slice(username.indexOf("@") + 1);
-	const tenantName = emailServer.slice(0, emailServer.indexOf("."));
-	const siteUrl = `https://${tenantName}.sharepoint.com`;
-	const server = new URL(siteUrl).host;
+
+	const { username, password, siteUrl, server } = parseTestAccounts(
+		process.env.login__odsp__test__tenants,
+	);
 
 	const clientId = process.env.login__microsoft__clientId;
 
