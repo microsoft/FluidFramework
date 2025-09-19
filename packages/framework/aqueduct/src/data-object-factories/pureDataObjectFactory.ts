@@ -22,12 +22,14 @@ import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreContextDetached,
-	IFluidDataStoreFactory,
 	IFluidDataStorePolicies,
 	IFluidDataStoreRegistry,
 	IProvideFluidDataStoreRegistry,
+	IMigrationInfo,
 	NamedFluidDataStoreRegistryEntries,
 	NamedFluidDataStoreRegistryEntry,
+	IMigrationSourceFluidDataStoreFactory,
+	IMigrationTargetFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
 import type {
 	AsyncFluidObjectProvider,
@@ -41,7 +43,13 @@ import type {
 	PureDataObject,
 } from "../data-objects/index.js";
 
-interface CreateDataObjectProps<TObj extends PureDataObject, I extends DataObjectTypes> {
+/**
+ * @legacy @beta
+ */
+export interface CreateDataObjectProps<
+	TObj extends PureDataObject,
+	I extends DataObjectTypes,
+> {
 	ctor: new (props: IDataObjectProps<I>) => TObj;
 	context: IFluidDataStoreContext;
 	sharedObjectRegistry: ISharedObjectRegistry;
@@ -202,10 +210,10 @@ export interface DataObjectFactoryProps<
 export class PureDataObjectFactory<
 	TObj extends PureDataObject<I>,
 	I extends DataObjectTypes = DataObjectTypes,
-> implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
+> implements Partial<IProvideFluidDataStoreRegistry>
 {
 	private readonly registry: IFluidDataStoreRegistry | undefined;
-	private readonly createProps: Omit<CreateDataObjectProps<TObj, I>, "existing" | "context">;
+	protected readonly createProps: Omit<CreateDataObjectProps<TObj, I>, "existing" | "context">;
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreFactory."type"}
@@ -462,5 +470,51 @@ export class PureDataObjectFactory<
 		await context.attachRuntime(this, runtime);
 
 		return instance;
+	}
+}
+
+/**
+ * Migration source factory variant that carries migrationInfo metadata.
+ */
+export class MigrationSourcePureDataObjectFactory<
+		TObj extends PureDataObject<I>,
+		I extends DataObjectTypes = DataObjectTypes,
+	>
+	extends PureDataObjectFactory<TObj, I>
+	implements IMigrationSourceFluidDataStoreFactory
+{
+	public readonly migrationInfo: IMigrationInfo | undefined;
+
+	public constructor(
+		props: DataObjectFactoryProps<TObj, I> & { migrationInfo?: IMigrationInfo },
+	) {
+		// Call base constructor to configure the factory; reuse the same overloads as the base.
+		super(props);
+		this.migrationInfo = props.migrationInfo;
+	}
+}
+
+/**
+ * Migration target factory variant that can instantiate for migration.
+ */
+export class MigrationTargetPureDataObjectFactory<
+		TObj extends PureDataObject<I>,
+		I extends DataObjectTypes = DataObjectTypes,
+	>
+	extends PureDataObjectFactory<TObj, I>
+	implements IMigrationTargetFluidDataStoreFactory
+{
+	public async instantiateForMigration(
+		context: IFluidDataStoreContext,
+		portableData: I["InitialState"],
+	): Promise<IFluidDataStoreChannel> {
+		const { runtime } = await createDataObject({
+			...this.createProps,
+			context,
+			existing: true,
+			initialState: portableData, //* A bit hacky: Overloading the InitialState, would be distinguished from the type used for creating new ones by the value of 'existing'
+		});
+
+		return runtime;
 	}
 }

@@ -55,6 +55,8 @@ import {
 	type IFluidDataStoreContextDetached,
 	type IFluidDataStoreRegistry,
 	type IGarbageCollectionDetailsBase,
+	type IMigrationSourceFluidDataStoreFactory,
+	type IMigrationTargetFluidDataStoreFactory,
 	type IProvideFluidDataStoreFactory,
 	type ISummarizeInternalResult,
 	type ISummarizeResult,
@@ -77,6 +79,7 @@ import {
 	DataProcessingError,
 	LoggingError,
 	type MonitoringContext,
+	PerformanceEvent,
 	ThresholdCounter,
 	UsageError,
 	createChildMonitoringContext,
@@ -696,20 +699,89 @@ export abstract class FluidDataStoreContext
 
 		const channel = await factory.instantiateDataStore(this, existing);
 		assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
-
-		await this.bindRuntime(channel, existing);
+		// Run migration (if needed) and return the active channel.
+		const activeChannel = await this.migrateChannelIfNeeded(channel, existing, factory);
+		await this.bindRuntime(activeChannel, existing);
 		// This data store may have been disposed before the channel is created during realization. If so,
 		// dispose the channel now.
 		if (this.disposed) {
-			channel.dispose();
+			activeChannel.dispose();
 		}
 
-		return channel;
+		return activeChannel;
+	}
+
+	/**
+	 * If the factory indicates a migration is needed for an existing datastore, perform it and return
+	 * the migrated channel. Otherwise, return the provided initialChannel.
+	 */
+	private async migrateChannelIfNeeded(
+		initialChannel: IFluidDataStoreChannel,
+		existing: boolean,
+		factory: IFluidDataStoreFactory,
+	): Promise<IFluidDataStoreChannel> {
+		if (!existing) {
+			// No migration needed when creating a new DataStore
+			return initialChannel;
+		}
+
+		const migrationInfo = (factory as IMigrationSourceFluidDataStoreFactory).migrationInfo;
+		if (migrationInfo === undefined) {
+			// No migration needed if factory doesn't request it
+			return initialChannel;
+		}
+
+		const oldPkg = this.pkg?.join("/");
+
+		// Process pending ops and check if we get the barrier op while loading
+		let sawBarrierOp = false;
+		const listener = (message: ISequencedDocumentMessage): void => {
+			if (message.contents === "BARRIER_OP_FOR_MIGRATION") {
+				sawBarrierOp = true;
+			}
+		};
+		this.containerRuntime.on("op", listener);
+		this.processPendingOps(initialChannel);
+		this.containerRuntime.off("op", listener);
+
+		if (!sawBarrierOp) {
+			//* TODO: Submit barrier op (will be sent when switching to write due to user action)
+
+			// For this session, continue with the old format.
+			// We'll migrate in a future session after the Barrier Op roundtrips
+			return initialChannel;
+		}
+
+		const portableData = await migrationInfo.getPortableData(initialChannel);
+
+		const newPkgJoined = migrationInfo.newPackagePath.join("/");
+		assert(newPkgJoined !== oldPkg, "No-op migration not allowed");
+		return PerformanceEvent.timedExecAsync(
+			this.mc.logger,
+			//* TODO: Tag pkg's as CodeArtifact
+			{ eventName: "DataStoreMigration", oldPkg, newPkg: newPkgJoined },
+			async () => {
+				// Swap package path prior to looking up new factory
+				this.pkg = [...migrationInfo.newPackagePath];
+
+				// Dispose the unbound old channel; it was never bound so has no side-effects
+				initialChannel.dispose();
+
+				// Lookup new factory with updated package path
+				//* TODO: Use proper type guard (that asserts) instead of cast
+				const newFactory =
+					(await this.factoryFromPackagePath()) as IMigrationTargetFluidDataStoreFactory;
+
+				const migratedChannel = await newFactory.instantiateForMigration(this, portableData);
+
+				return migratedChannel;
+			},
+		);
 	}
 
 	/**
 	 * Notifies this object about changes in the connection state.
-	 * @param value - New connection state.
+	 * @param connected - New connection state. True only if this is a write connection we can send ops over.
 	 * @param clientId - ID of the client. Its old ID when in disconnected state and
 	 * its new client ID when we are connecting or connected.
 	 */
@@ -723,6 +795,10 @@ export abstract class FluidDataStoreContext
 		}
 
 		assert(this.connected === connected, 0x141 /* "Unexpected connected state" */);
+
+		if (connected) {
+			//* TODO: Send migration ops if we have any (since we can send ops now)
+		}
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this.channel!.setConnectionState(connected, clientId);
@@ -838,9 +914,13 @@ export abstract class FluidDataStoreContext
 		const pathPartsForChildren = [channelsTreeName];
 
 		// Add data store's attributes to the summary.
-		const { pkg } = await this.getInitialSnapshotDetails();
+		// NOTE: If a migration occurred during realization, this.pkg may differ from the package path
+		// stored in the original snapshot. We intentionally use the current in-memory package path so that
+		// future loads bind directly to the migrated implementation.
+		const { isRootDataStore: snapshotRootFlag } = await this.getInitialSnapshotDetails();
 		const isRoot = await this.isRoot();
-		const attributes = createAttributes(pkg, isRoot);
+		assert(this.pkg !== undefined, 0x2db /* Package path expected during summarization */);
+		const attributes = createAttributes(this.pkg, isRoot ?? snapshotRootFlag);
 		addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
 		// If we are not referenced, mark the summary tree as unreferenced. Also, update unreferenced blob
@@ -936,6 +1016,10 @@ export abstract class FluidDataStoreContext
 		assert(!!this.channel, 0x146 /* "Channel must exist when submitting message" */);
 		// Readonly clients should not submit messages.
 		this.identifyLocalChangeIfReadonly("DataStoreMessageWhileReadonly", type);
+
+		if (!this.connected) {
+			//* TODO: Capture migration ops and hold until switch to write
+		}
 
 		this.parentContext.submitMessage(type, content, localOpMetadata);
 	}

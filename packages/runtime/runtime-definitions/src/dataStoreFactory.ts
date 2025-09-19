@@ -6,6 +6,67 @@
 import type { IFluidDataStoreChannel, IFluidDataStoreContext } from "./dataStoreContext.js";
 
 /**
+ * Information emitted by an old implementation's runtime to request a one-hop migration
+ * into a newer implementation.
+ *
+ * The current expectation (Phase 1) is that this interface is only surfaced during the
+ * first realization load path of an existing data store. Newly created data stores should
+ * already use the latest implementation and MUST NOT request migration.
+ *
+ * The portableData is intentionally "unknown" for initial implementation so that
+ * a schema can be introduced later without creating churn now. All supported versions
+ * MUST output an identical logical portable format understood by the latest implementation.
+ *
+ * TODO: Add strong typing / versioning for portableData once the format stabilizes.
+ *
+ * @legacy @beta
+ */
+export interface IMigrationInfo {
+	/**
+	 * The new package path (final target) to which this data store should be migrated.
+	 * This MUST differ from the current package path or migration will fail.
+	 */
+	readonly newPackagePath: readonly string[];
+	/**
+	 * Opaque portable state required by the target factory to rehydrate the runtime
+	 * in the new implementation.
+	 */
+	readonly getPortableData: (runtime: IFluidDataStoreChannel) => Promise<unknown>;
+}
+
+/**
+ * A factory that indicates it should be migrated away from.
+ *
+ * This interface carries the migration metadata produced by an older implementation.
+ *
+ * @legacy @beta
+ */
+export interface IMigrationSourceFluidDataStoreFactory extends IFluidDataStoreFactory {
+	/**
+	 * If defined, this factory should be migrated away from according to this info.
+	 */
+	migrationInfo: IMigrationInfo | undefined;
+}
+
+/**
+ * A factory that can act as a migration target by instantiating a runtime from
+ * portable migration data produced by a previous implementation.
+ *
+ * @legacy @beta
+ */
+export interface IMigrationTargetFluidDataStoreFactory extends IFluidDataStoreFactory {
+	/**
+	 * Instantiate a runtime using portable migration data produced by a previous implementation.
+	 * @param context - Datastore context (same as regular instantiation).
+	 * @param portableData - Opaque data captured from the old runtime.
+	 */
+	instantiateForMigration(
+		context: IFluidDataStoreContext,
+		portableData: unknown,
+	): Promise<IFluidDataStoreChannel>;
+}
+
+/**
  * @legacy @beta
  */
 export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory =
