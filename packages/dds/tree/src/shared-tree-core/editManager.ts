@@ -460,6 +460,7 @@ export class EditManager<
 	}
 
 	public removeBranch(branchId: BranchId): void {
+		assert(branchId !== "main", "Cannot remove main branch");
 		const hadBranch = this.sharedBranches.delete(branchId);
 		assert(hadBranch, "Expected branch to exist");
 	}

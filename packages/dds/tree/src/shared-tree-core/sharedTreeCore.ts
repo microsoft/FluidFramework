@@ -542,7 +542,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				assert(head.revision === revision, "Can only rollback latest commit");
 				const newHead = head.parent ?? fail("must have parent");
 				branch.removeAfter(newHead);
-				this.resubmitMachine.onCommitRollback(newHead);
+				this.resubmitMachine.onCommitRollback(head);
+				break;
 			}
 			case "branch": {
 				this.editManager.removeBranch(message.branchId);
