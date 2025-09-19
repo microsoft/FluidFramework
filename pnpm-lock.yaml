@@ -315,6 +315,9 @@ importers:
 
   examples/apps/blobs:
     dependencies:
+      '@fluid-example/example-driver':
+        specifier: workspace:~
+        version: link:../../utils/example-driver
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils
@@ -348,9 +351,6 @@ importers:
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../packages/dds/map
-      '@fluidframework/routerlicious-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/routerlicious-driver
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
@@ -360,9 +360,6 @@ importers:
       '@fluidframework/server-local-server':
         specifier: ^7.0.0
         version: 7.0.0
-      '@fluidframework/tinylicious-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/tinylicious-driver
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -376,6 +373,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.58.3
         version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -4827,6 +4827,67 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack@5.97.1)
 
+  examples/utils/example-driver:
+    dependencies:
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-interfaces
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/common/driver-definitions
+      '@fluidframework/local-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/local-driver
+      '@fluidframework/odsp-doclib-utils':
+        specifier: workspace:~
+        version: link:../../../packages/utils/odsp-doclib-utils
+      '@fluidframework/odsp-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/odsp-driver
+      '@fluidframework/routerlicious-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/routerlicious-driver
+      '@fluidframework/server-local-server':
+        specifier: ^7.0.0
+        version: 7.0.0
+      '@fluidframework/tinylicious-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/tinylicious-driver
+    devDependencies:
+      '@arethetypeswrong/cli':
+        specifier: ^0.17.1
+        version: 0.17.1
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
+      '@fluid-tools/build-cli':
+        specifier: ^0.58.3
+        version: 0.58.3(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.58.3
+        version: 0.58.3(@types/node@22.14.1)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
+      '@microsoft/api-extractor':
+        specifier: 7.52.11
+        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
+      copyfiles:
+        specifier: ^2.4.1
+        version: 2.4.1
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
   examples/utils/example-utils:
     dependencies:
       '@fluid-experimental/pact-map':
@@ -4938,6 +4999,55 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
+      copyfiles:
+        specifier: ^2.4.1
+        version: 2.4.1
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
+  examples/utils/example-webpack-integration:
+    dependencies:
+      '@fluidframework/tool-utils':
+        specifier: workspace:~
+        version: link:../../../packages/utils/tool-utils
+      webpack:
+        specifier: ^5.94.0
+        version: 5.97.1(webpack-cli@5.1.4)
+      webpack-dev-server:
+        specifier: ~4.15.2
+        version: 4.15.2(webpack-cli@5.1.4)(webpack@5.97.1)
+    devDependencies:
+      '@arethetypeswrong/cli':
+        specifier: ^0.17.1
+        version: 0.17.1
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
+      '@fluid-tools/build-cli':
+        specifier: ^0.58.3
+        version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.58.3
+        version: 0.58.3(@types/node@18.19.86)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
+      '@microsoft/api-extractor':
+        specifier: 7.52.11
+        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.86
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
