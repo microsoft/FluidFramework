@@ -386,7 +386,7 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 
 		const helperMethodExplanation = details.hasHelperMethods
 			? `Manipulating the data using the APIs described below is allowed, but when possible ALWAYS prefer to use the application helper methods exposed on the schema TypeScript types if the goal can be accomplished that way.
-It will often not be possible to fully accomplish the goal using those helpers. When this is the case, use the following APIs.`
+It will often not be possible to fully accomplish the goal using those helpers. When this is the case, mutate the objects as normal, taking into account the following guidance.`
 			: "";
 
 		const builderExplanation =
