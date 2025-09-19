@@ -6,7 +6,7 @@
 import { Users } from "../domains/index.js";
 import { scoreSymbol, type LLMIntegrationTest, type ScorableVerboseTree } from "../utils.js";
 
-// We start with two users (alpardes and mapardes) and add two more (jodoe and ansmith).
+// We start with two users (alpardes and mapardes) and add two more.
 // We only score on the presence of the four correct user IDs and their name fields; timestamps/emails are ignored.
 const expected: ScorableVerboseTree = {
 	type: "com.microsoft.fluid.tree-agent.users.Users",
@@ -14,14 +14,15 @@ const expected: ScorableVerboseTree = {
 		if (typeof actual !== "object" || actual === null || Array.isArray(actual.fields)) {
 			return 0;
 		}
-		const required = new Map<string, string>([
-			["alpardes", "Alex Pardes"],
-			["rymagani", "Ryan Magani"],
-			["tawilliams", "Taylor Williams"],
-			["chdog", "Chewy Dog"],
+		const required = new Map<string, { firstName: string; lastName: string }>([
+			["alpardes", { firstName: "Alex", lastName: "Pardes" }],
+			["rymagani", { firstName: "Ryan", lastName: "Magani" }],
+			["tawilliams", { firstName: "Taylor", lastName: "Williams" }],
+			["chdog", { firstName: "Chewy", lastName: "Dog" }],
+			["timagani", { firstName: "Timmy", lastName: "Magani" }],
 		]);
 		let score = 1;
-		for (const [id, name] of required) {
+		for (const [id, { firstName, lastName }] of required) {
 			const user = actual.fields[id];
 			if (
 				typeof user !== "object" ||
@@ -33,12 +34,29 @@ const expected: ScorableVerboseTree = {
 				continue;
 			}
 			if (
-				typeof user.fields.name !== "string" ||
-				user.fields.name.toLowerCase() !== name.toLowerCase()
+				typeof user.fields.firstName !== "string" ||
+				user.fields.firstName.toLowerCase() !== firstName.toLowerCase()
 			) {
 				score -= 1 / required.size;
 				continue;
 			}
+			if (
+				typeof user.fields.lastName !== "string" ||
+				user.fields.lastName.toLowerCase() !== lastName.toLowerCase()
+			) {
+				score -= 1 / required.size;
+				continue;
+			}
+		}
+		const timmy = actual.fields.timagani;
+		if (
+			timmy !== undefined &&
+			(typeof timmy !== "object" ||
+				timmy === null ||
+				Array.isArray(timmy.fields) ||
+				timmy.fields.email !== "ringom@gmail.com")
+		) {
+			score *= 2 / 3;
 		}
 		// Penalize if there are more than 4 users (encourage precision)
 		const actualKeys = Object.keys(actual.fields);
@@ -58,16 +76,19 @@ export const addUsersTest = {
 	schema: Users,
 	initialTree: () => ({
 		alpardes: {
-			name: "Alex Pardes",
+			firstName: "Alex",
+			lastName: "Pardes",
 			created: "2024-01-01T00:00:00.000Z",
 			email: "pardesio@gmail.com",
 		},
 		rymagani: {
-			name: "Ryan Magani",
+			firstName: "Ryan",
+			lastName: "Magani",
 			created: "2024-02-01T00:00:00.000Z",
 			email: "ringom@gmail.com",
 		},
 	}),
-	prompt: "Please add two new users to this database: Taylor Williams and Chewy Dog.",
+	prompt:
+		"Please add two new users to this database: Taylor Williams and Chewy Dog. Then, add one more user for Ryan's little brother. His name is Timmy, and he has the same email as Ryan.",
 	expected,
 } as const satisfies LLMIntegrationTest<typeof Users>;
