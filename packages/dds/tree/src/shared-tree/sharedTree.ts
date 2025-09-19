@@ -62,9 +62,11 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import type { FormatV1 } from "../feature-libraries/schema-index/index.js";
 import {
+	type BranchId,
 	type ClonableSchemaAndPolicy,
 	DefaultResubmitMachine,
 	type ExplicitCoreCodecVersions,
+	type SharedTreeBranch,
 	SharedTreeCore,
 } from "../shared-tree-core/index.js";
 import {
@@ -189,6 +191,10 @@ const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersio
 		5,
 		{ forest: 1, schema: 2, detachedFieldIndex: 1, editManager: 4, message: 4, fieldBatch: 1 },
 	],
+	[
+		100, // SharedTreeFormatVersion.vSharedBranches
+		{ forest: 1, schema: 2, detachedFieldIndex: 1, editManager: 5, message: 5, fieldBatch: 1 },
+	],
 ]);
 
 function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
@@ -232,7 +238,7 @@ export class SharedTreeKernel
 		serializer: IFluidSerializer,
 		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		lastSequenceNumber: () => number | undefined,
-		logger: ITelemetryLoggerExt | undefined,
+		private readonly logger: ITelemetryLoggerExt | undefined,
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {
@@ -326,9 +332,9 @@ export class SharedTreeKernel
 			),
 			changeEnricher,
 		);
-		const localBranch = this.getLocalBranch();
+
 		this.checkout = createTreeCheckout(idCompressor, this.mintRevisionTag, revisionTagCodec, {
-			branch: localBranch,
+			branch: this.getLocalBranch(),
 			changeFamily,
 			schema,
 			forest,
@@ -340,39 +346,46 @@ export class SharedTreeKernel
 			disposeForksAfterTransaction: options.disposeForksAfterTransaction,
 		});
 
-		this.checkout.transaction.events.on("started", () => {
-			if (sharedObject.isAttached()) {
-				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
-				this.commitEnricher.startTransaction();
-			}
-		});
-		this.checkout.transaction.events.on("aborting", () => {
-			if (sharedObject.isAttached()) {
-				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
-				this.commitEnricher.abortTransaction();
-			}
-		});
-		this.checkout.transaction.events.on("committing", () => {
-			if (sharedObject.isAttached()) {
-				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
-				this.commitEnricher.commitTransaction();
-			}
-		});
-		this.checkout.events.on("beforeBatch", (event) => {
-			if (event.type === "append" && sharedObject.isAttached()) {
-				if (this.checkout.transaction.isInProgress()) {
-					this.commitEnricher.addTransactionCommits(event.newCommits);
-				}
-			}
-		});
+		this.registerCheckout(this.checkout);
 
 		this.view = {
 			contentSnapshot: () => this.contentSnapshot(),
 			exportSimpleSchema: () => this.exportSimpleSchema(),
 			exportVerbose: () => this.exportVerbose(),
 			viewWith: this.viewWith.bind(this),
+			viewBranchWith: this.viewBranchWith.bind(this),
+			createSharedBranch: this.createSharedBranch.bind(this),
 			kernel: this,
 		};
+	}
+
+	private registerCheckout(checkout: TreeCheckout): void {
+		checkout.transaction.events.on("started", () => {
+			if (this.sharedObject.isAttached()) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.startTransaction();
+			}
+		});
+
+		checkout.transaction.events.on("aborting", () => {
+			if (this.sharedObject.isAttached()) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.abortTransaction();
+			}
+		});
+		checkout.transaction.events.on("committing", () => {
+			if (this.sharedObject.isAttached()) {
+				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
+				this.commitEnricher.commitTransaction();
+			}
+		});
+		checkout.events.on("beforeBatch", (event) => {
+			if (event.type === "append" && this.sharedObject.isAttached()) {
+				if (this.checkout.transaction.isInProgress()) {
+					this.commitEnricher.addTransactionCommits(event.newCommits);
+				}
+			}
+		});
 	}
 
 	public exportVerbose(): VerboseTree | undefined {
@@ -415,6 +428,29 @@ export class SharedTreeKernel
 			TreeView<ReadSchema<TRoot>>;
 	}
 
+	public viewBranchWith<TRoot extends ImplicitFieldSchema>(
+		branchId: BranchId,
+		config: TreeViewConfiguration<TRoot>,
+	): TreeView<TRoot>;
+
+	public viewBranchWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		branchId: BranchId,
+		config: TreeViewConfiguration<ReadSchema<TRoot>>,
+	): SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>> {
+		return this.checkoutBranch(this.getSharedBranch(branchId)).viewWith(
+			config,
+		) as SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>>;
+	}
+
+	private checkoutBranch(
+		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+	): TreeCheckout {
+		const checkout = this.checkout.branch();
+		this.registerCheckout(checkout);
+		checkout.switchBranch(branch);
+		return checkout;
+	}
+
 	public override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
 		this.checkout.load();
@@ -444,6 +480,7 @@ export class SharedTreeKernel
 	}
 
 	protected override submitCommit(
+		branchId: BranchId,
 		commit: GraphCommit<SharedTreeChange>,
 		schemaAndPolicy: ClonableSchemaAndPolicy,
 		isResubmit: boolean,
@@ -453,15 +490,20 @@ export class SharedTreeKernel
 			0xaa6 /* Cannot submit a commit while a transaction is in progress */,
 		);
 		if (isResubmit) {
-			return super.submitCommit(commit, schemaAndPolicy, isResubmit);
+			return super.submitCommit(branchId, commit, schemaAndPolicy, isResubmit);
 		}
 
 		// Refrain from submitting new commits until they are validated by the checkout.
 		// This is not a strict requirement for correctness in our system, but in the event that there is a bug when applying commits to the checkout
 		// that causes a crash (e.g. in the forest), this will at least prevent this client from sending the problematic commit to any other clients.
-		this.checkout.onCommitValid(commit, () =>
-			super.submitCommit(commit, schemaAndPolicy, isResubmit),
-		);
+		if (branchId === "main") {
+			this.checkout.onCommitValid(commit, () =>
+				super.submitCommit(branchId, commit, schemaAndPolicy, isResubmit),
+			);
+		} else {
+			// XXX: Should we store a cache from branch to checkout?
+			super.submitCommit(branchId, commit, schemaAndPolicy, isResubmit);
+		}
 	}
 
 	public onDisconnect(): void {}
@@ -561,6 +603,11 @@ export const SharedTreeFormatVersion = {
 	 * Requires \@fluidframework/tree \>= 2.0.0.
 	 */
 	v5: 5,
+
+	/**
+	 * For testing purposes only.
+	 */
+	vSharedBranches: 100,
 } as const;
 
 /**

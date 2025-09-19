@@ -9,7 +9,7 @@ import type { ChangeEncodingContext } from "../../../core/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeEditManagerCodecs } from "../../../shared-tree-core/editManagerCodecs.js";
-import type { SummaryData } from "../../../shared-tree-core/index.js";
+import type { SharedBranchSummaryData, SummaryData } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import {
@@ -22,7 +22,7 @@ import {
 
 const tags = Array.from({ length: 3 }, mintRevisionTag);
 
-const trunkCommits: SummaryData<TestChange>["trunk"] = [
+const trunkCommits: SharedBranchSummaryData<TestChange>["trunk"] = [
 	{
 		revision: tags[0],
 		sessionId: "1" as SessionId,
@@ -51,87 +51,97 @@ const dummyContext = {
 };
 const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodingContext> = {
 	successes: [
-		["empty", { trunk: [], peerLocalBranches: new Map() }, dummyContext],
+		["empty", { main: { trunk: [], peerLocalBranches: new Map() } }, dummyContext],
 		[
 			"single commit",
 			{
-				trunk: trunkCommits.slice(0, 1),
-				peerLocalBranches: new Map(),
+				main: {
+					trunk: trunkCommits.slice(0, 1),
+					peerLocalBranches: new Map(),
+				},
 			},
 			dummyContext,
 		],
 		[
 			"multiple commits",
 			{
-				trunk: trunkCommits,
-				peerLocalBranches: new Map(),
+				main: {
+					trunk: trunkCommits,
+					peerLocalBranches: new Map(),
+				},
 			},
 			dummyContext,
 		],
 		[
 			"empty branch",
 			{
-				trunk: trunkCommits,
-				peerLocalBranches: new Map([
-					[
-						"3",
-						{
-							base: tags[1],
-							commits: [],
-						},
-					],
-				]),
+				main: {
+					trunk: trunkCommits,
+					peerLocalBranches: new Map([
+						[
+							"3" as SessionId,
+							{
+								base: tags[1],
+								commits: [],
+							},
+						],
+					]),
+				},
 			},
 			dummyContext,
 		],
 		[
 			"non-empty branch",
 			{
-				trunk: trunkCommits,
-				peerLocalBranches: new Map([
-					[
-						"4",
-						{
-							base: tags[1],
-							commits: [
-								{
-									sessionId: "4",
-									revision: mintRevisionTag(),
-									change: TestChange.mint([0, 1], 4),
-								},
-							],
-						},
-					],
-				]),
+				main: {
+					trunk: trunkCommits,
+					peerLocalBranches: new Map([
+						[
+							"4" as SessionId,
+							{
+								base: tags[1],
+								commits: [
+									{
+										sessionId: "4" as SessionId,
+										revision: mintRevisionTag(),
+										change: TestChange.mint([0, 1], 4),
+									},
+								],
+							},
+						],
+					]),
+				},
 			},
 			dummyContext,
 		],
 		[
 			"multiple branches",
 			{
-				trunk: trunkCommits,
-				peerLocalBranches: new Map([
-					[
-						"3",
-						{
-							base: tags[0],
-							commits: [],
-						},
-					],
-					[
-						"4",
-						{
-							base: tags[1],
-							commits: [
-								{
-									sessionId: "4",
-									revision: mintRevisionTag(),
-									change: TestChange.mint([0, 1], 4),
-								},
-							],
-						},
-					],
-				]),
+				main: {
+					trunk: trunkCommits,
+					peerLocalBranches: new Map([
+						[
+							"3",
+							{
+								base: tags[0],
+								commits: [],
+							},
+						],
+						[
+							"4",
+							{
+								base: tags[1],
+								commits: [
+									{
+										sessionId: "4",
+										revision: mintRevisionTag(),
+										change: TestChange.mint([0, 1], 4),
+									},
+								],
+							},
+						],
+					]),
+				},
 			},
 			dummyContext,
 		],
@@ -158,8 +168,10 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 			[
 				"commit with parent field",
 				{
-					trunk: trunkCommits.slice(0, 1).map((commit) => ({ ...commit, parent: 0 })),
-					branches: [],
+					main: {
+						trunk: trunkCommits.slice(0, 1).map((commit) => ({ ...commit, parent: 0 })),
+						peerLocalBranches: [],
+					},
 				},
 				dummyContext,
 			],

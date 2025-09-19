@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import { brand } from "../util/index.js";
 
-import type { SequenceId } from "./editManagerFormat.js";
+import type { SequenceId } from "./editManagerFormatCommons.js";
 
 /**
  * Compares two sequenceIds. Returns a negative number if a \< b, a positive number if a \> b, and 0 if a === b.

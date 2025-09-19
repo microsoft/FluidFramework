@@ -1004,8 +1004,8 @@ describe("SharedTree", () => {
 			t1.kernel?.editManager !== undefined && t2.kernel?.editManager !== undefined,
 			"EditManager has moved. This test must be updated.",
 		);
-		assert(t1.kernel.editManager.getTrunkChanges().length < 10);
-		assert(t2.kernel.editManager.getTrunkChanges().length < 10);
+		assert(t1.kernel.editManager.getTrunkChanges("main").length < 10);
+		assert(t2.kernel.editManager.getTrunkChanges("main").length < 10);
 	});
 
 	it("can process changes while detached", async () => {
@@ -2477,5 +2477,48 @@ describe("SharedTree", () => {
 
 		assert.deepEqual(tree.exportVerbose(), 10);
 		assert.deepEqual(tree.exportSimpleSchema(), toSimpleTreeSchema(numberSchema, true));
+	});
+
+	it("supports multiple shared branches", () => {
+		const provider = new TestTreeProviderLite(
+			2,
+			configuredSharedTree({
+				jsonValidator: typeboxValidator,
+				formatVersion: SharedTreeFormatVersion.vSharedBranches,
+			}).getFactory(),
+		);
+		const tree1 = provider.trees[0];
+
+		const config = new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation });
+		const mainView1 = tree1.viewWith(config);
+		mainView1.initialize(["A"]);
+		provider.synchronizeMessages();
+
+		assert.deepEqual([...mainView1.root], ["A"]);
+		const tree2 = provider.trees[1];
+		provider.synchronizeMessages();
+
+		const branchId = tree1.createSharedBranch();
+		const branchView1 = tree1.viewBranchWith(branchId, config);
+		assert.deepEqual([...branchView1.root], ["A"]);
+
+		mainView1.root.insertAtEnd("X");
+		branchView1.root.insertAtEnd("B");
+		assert.deepEqual([...branchView1.root], ["A", "B"]);
+		assert.deepEqual([...mainView1.root], ["A", "X"]);
+		provider.synchronizeMessages();
+
+		const branchView2 = tree2.viewBranchWith(branchId, config);
+		assert.deepEqual([...branchView2.root], ["A", "B"]);
+
+		branchView2.root.insertAtEnd("C");
+		assert.deepEqual([...branchView2.root], ["A", "B", "C"]);
+		provider.synchronizeMessages();
+
+		assert.deepEqual([...branchView1.root], ["A", "B", "C"]);
+		assert.deepEqual([...mainView1.root], ["A", "X"]);
+
+		const mainView2 = tree2.viewWith(config);
+		assert.deepEqual([...mainView2.root], ["A", "X"]);
 	});
 });

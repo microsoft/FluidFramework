@@ -678,3 +678,21 @@ export function isAncestor<TNode extends { readonly parent?: TNode }>(
 
 	return false;
 }
+
+export function diffHistories<TChange>(
+	changeRebaser: ChangeRebaser<TChange>,
+	sourceCommit: GraphCommit<TChange>,
+	targetCommit: GraphCommit<TChange>,
+	mintRevisionTag: () => RevisionTag,
+): TChange {
+	const sourcePath: GraphCommit<TChange>[] = [];
+	const targetPath: GraphCommit<TChange>[] = [];
+	const ancestor = findCommonAncestor([sourceCommit, sourcePath], [targetCommit, targetPath]);
+	assert(ancestor !== undefined, "Branches must be related");
+	const inverses = sourcePath.map((commit) =>
+		rollbackFromCommit(changeRebaser, commit, mintRevisionTag),
+	);
+
+	inverses.reverse();
+	return changeRebaser.compose([...inverses, ...targetPath]);
+}

@@ -76,6 +76,8 @@ export {
 	ForestTypeReference,
 } from "./shared-tree/index.js";
 
+export { type BranchId } from "./shared-tree-core/index.js";
+
 export {
 	TreeArrayNode,
 	type Unhydrated,
