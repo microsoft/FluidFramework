@@ -9,7 +9,7 @@ import { SchemaFactory } from "@fluidframework/tree";
 
 import { toPropTreeNode, toPropTreeRecord, unwrapPropTreeNode } from "../propNode.js";
 
-describe("useTree", () => {
+describe("propNode", () => {
 	it("PropTreeNode", () => {
 		const builder = new SchemaFactory("tree-react-api");
 
