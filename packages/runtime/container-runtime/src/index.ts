@@ -124,3 +124,8 @@ export {
 	loaderSupportRequirementsForRuntime,
 	dataStoreSupportRequirementsForRuntime,
 } from "./runtimeLayerCompatState.js";
+export type {
+	IProvideMigrationInfo,
+	IMigrationInfo,
+	IMigrationTargetFluidDataStoreFactory,
+} from "./dataStoreContext.js";

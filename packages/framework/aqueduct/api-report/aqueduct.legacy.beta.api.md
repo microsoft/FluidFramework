@@ -125,24 +125,26 @@ export interface IDelayLoadChannelFactory<T = unknown> extends IChannelFactory<T
 }
 
 // @beta @legacy
-export abstract class MigrationDataObject<TUniversalView, I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
+export abstract class MigrationDataObject<TUniversalView, I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> implements IProvideMigrationInfo {
     get dataModel(): {
         descriptor: ModelDescriptor<TUniversalView>;
         view: TUniversalView;
     } | undefined;
     protected getUninitializedErrorString(item: string): string;
     // (undocumented)
+    get IMigrationInfo(): IMigrationInfo | undefined;
+    // (undocumented)
     initializeInternal(existing: boolean): Promise<void>;
 }
 
 // @beta @legacy
 export class MigrationDataObjectFactory<TObj extends MigrationDataObject<TUniversalView, I>, TUniversalView, I extends DataObjectTypes = DataObjectTypes, TNewModel extends TUniversalView = TUniversalView, // default case works for a single model descriptor
-TMigrationData = never> extends PureDataObjectFactory<TObj, I> {
+TMigrationData = never> extends PureDataObjectFactory<TObj, I> implements IMigrationTargetFluidDataStoreFactory {
     constructor(props: MigrationDataObjectFactoryProps<TObj, TUniversalView, I, TNewModel, TMigrationData>);
-    protected observeCreateDataObject(createProps: {
-        context: IFluidDataStoreContext;
-        optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>;
-    }): Promise<void>;
+    // (undocumented)
+    instantiateForMigration(context: IFluidDataStoreContext, portableData: unknown): Promise<IFluidDataStoreChannel>;
+    // (undocumented)
+    migrate(context: IFluidDataStoreContext, runtime: IFluidDataStoreChannel, portableData: TMigrationData): Promise<IFluidDataStoreChannel>;
 }
 
 // @beta @legacy
@@ -166,6 +168,8 @@ export interface ModelDescriptor<TModel = unknown> {
     ensureFactoriesLoaded: () => Promise<void>;
     // (undocumented)
     is?: (m: unknown) => m is TModel;
+    // (undocumented)
+    name?: string;
     // (undocumented)
     probe: (runtime: IFluidDataStoreRuntime) => Promise<TModel | undefined>;
     sharedObjects: {

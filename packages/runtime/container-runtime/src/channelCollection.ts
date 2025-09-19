@@ -129,6 +129,16 @@ interface FluidDataStoreMessage {
  */
 export interface IFluidParentContextPrivate extends Omit<IFluidParentContext, "isReadOnly"> {
 	readonly isReadOnly: () => boolean;
+
+	//* NEEDS WORK: This is an incomplete experimental abstraction. Shape of this abstraction TBD.
+	//* Could be implemented using DocSchema and/or PactMap
+	readonly migrationProtocolBroker: {
+		/**
+		 * Notifiying the broker that the data store is ready to migrate
+		 * @returns true if the data store should proceed with migration
+		 */
+		readyToMigrate(id: string): boolean;
+	};
 }
 
 /**
@@ -136,6 +146,7 @@ export interface IFluidParentContextPrivate extends Omit<IFluidParentContext, "i
  */
 export function wrapContext(context: IFluidParentContextPrivate): IFluidParentContextPrivate {
 	return {
+		migrationProtocolBroker: context.migrationProtocolBroker,
 		get IFluidDataStoreRegistry() {
 			return context.IFluidDataStoreRegistry;
 		},

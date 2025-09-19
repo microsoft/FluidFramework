@@ -124,7 +124,6 @@ import type {
 	StageControlsExperimental,
 	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeBaseExperimental,
-	IFluidParentContext,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -187,6 +186,7 @@ import {
 	ChannelCollection,
 	getSummaryForDatastores,
 	wrapContext,
+	type IFluidParentContextPrivate,
 } from "./channelCollection.js";
 import type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
@@ -831,7 +831,7 @@ export class ContainerRuntime
 		IGarbageCollectionRuntime,
 		ISummarizerRuntime,
 		ISummarizerInternalsProvider,
-		IFluidParentContext,
+		IFluidParentContextPrivate,
 		IProvideFluidHandleContext,
 		IProvideLayerCompatDetails
 {
@@ -2065,6 +2065,14 @@ export class ContainerRuntime
 		// saved state, i.e. all the ops marked by Loader layer sa savedOp === true.
 		this.skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
 	}
+	loadingGroupId?: string | undefined;
+
+	//* TODO: Implement this somehow, could be with an augmented DocumentSchemaController
+	migrationProtocolBroker = {
+		readyToMigrate(id: string): boolean {
+			return false;
+		},
+	};
 
 	public onSchemaChange(schema: IDocumentSchemaCurrent): void {
 		this.mc.logger.sendTelemetryEvent({

@@ -4,6 +4,10 @@
  */
 
 import type {
+	IProvideMigrationInfo,
+	IMigrationInfo,
+} from "@fluidframework/container-runtime/internal";
+import type {
 	IFluidDataStoreRuntime,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
@@ -22,6 +26,8 @@ import type { DataObjectTypes } from "./types.js";
  * @beta
  */
 export interface ModelDescriptor<TModel = unknown> {
+	//* TODO: Added this for format tag, it's subject to change
+	name?: string;
 	//* Consider if we want something more formal here or if "duck typing" the runtime channel structure is sufficient.
 	//* See Craig's DDS shim branch for an example of tagging migrations
 	// Probe runtime for an existing model based on which channels exist. Return the model instance or undefined if not found.
@@ -62,9 +68,32 @@ export interface ModelDescriptor<TModel = unknown> {
  * @beta
  */
 export abstract class MultiFormatDataObject<
-	TUniversalView,
-	I extends DataObjectTypes = DataObjectTypes,
-> extends PureDataObject<I> {
+		TUniversalView,
+		I extends DataObjectTypes = DataObjectTypes,
+	>
+	extends PureDataObject<I>
+	implements IProvideMigrationInfo
+{
+	public get IMigrationInfo(): IMigrationInfo | undefined {
+		//* TODO: Check canPerformMigration. Should be doable since we're initialized
+
+		const targetDescriptor = this.modelCandidates[0];
+		//* TODO: Fix this up
+		if (targetDescriptor.is?.(this.#activeModel?.view)) {
+			// We're on the latest model, no migration needed
+			return undefined;
+		}
+
+		return {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- //*  Too lazy to make it required at the moment
+			targetFormatTag: targetDescriptor.name!,
+			getPortableData: async () => {
+				//* TODO: This needs app logic to transform into an actual portable format
+				return this.#activeModel?.view;
+			},
+		};
+	}
+
 	// The currently active model and its descriptor, if discovered or created.
 	#activeModel:
 		| { descriptor: ModelDescriptor<TUniversalView>; view: TUniversalView }
