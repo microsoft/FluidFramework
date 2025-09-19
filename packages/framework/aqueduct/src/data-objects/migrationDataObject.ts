@@ -7,6 +7,7 @@ import type {
 	IProvideMigrationInfo,
 	IMigrationInfo,
 } from "@fluidframework/container-runtime/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IFluidDataStoreRuntime,
 	IChannelFactory,
@@ -75,24 +76,41 @@ export abstract class MultiFormatDataObject<
 	implements IProvideMigrationInfo
 {
 	public get IMigrationInfo(): IMigrationInfo | undefined {
-		//* TODO: Check canPerformMigration. Should be doable since we're initialized
+		assert(this.#activeModel !== undefined, "Data model not initialized");
+		if (!this.canPerformMigration()) {
+			return undefined;
+		}
 
 		const targetDescriptor = this.modelCandidates[0];
-		//* TODO: Fix this up
+		//* TODO: Make 'is' required or implement this check some other way
 		if (targetDescriptor.is?.(this.#activeModel?.view)) {
 			// We're on the latest model, no migration needed
 			return undefined;
 		}
 
 		return {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- //*  Too lazy to make it required at the moment
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- //* TODO: make 'name' required
 			targetFormatTag: targetDescriptor.name!,
 			getPortableData: async () => {
-				//* TODO: This needs app logic to transform into an actual portable format
-				return this.#activeModel?.view;
+				return this.portableMigrationData;
 			},
 		};
 	}
+
+	/**
+	 * Inject logic to indicate whether it's time to migrate
+	 * e.g. using this.providers to get app-level config
+	 * @remarks
+	 * This is called after initialization when loading an existing object.
+	 * If it returns true, the container will call IMigrationInfo.getPortableData()
+	 * and then create a new instance of this data object with the target model
+	 * and call migrateDataObject() to allow the implementer to move data from
+	 * the old model to the new one.
+	 */
+	protected abstract canPerformMigration(): boolean;
+
+	//* TODO: Can we get the types plumbed around here?
+	protected abstract get portableMigrationData(): unknown;
 
 	// The currently active model and its descriptor, if discovered or created.
 	#activeModel:

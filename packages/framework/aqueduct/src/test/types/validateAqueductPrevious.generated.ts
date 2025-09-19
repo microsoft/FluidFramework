@@ -77,6 +77,7 @@ declare type current_as_old_for_Class_DataObject = requireAssignableTo<TypeOnly<
  * typeValidation.broken:
  * "Class_DataObjectFactory": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_DataObjectFactory = requireAssignableTo<TypeOnly<old.DataObjectFactory<never>>, TypeOnly<current.DataObjectFactory<never>>>
 
 /*
@@ -150,6 +151,7 @@ declare type current_as_old_for_Class_TreeDataObject = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Class_TreeDataObjectFactory": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_TreeDataObjectFactory = requireAssignableTo<TypeOnly<old.TreeDataObjectFactory<never>>, TypeOnly<current.TreeDataObjectFactory<never>>>
 
 /*

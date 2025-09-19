@@ -767,6 +767,11 @@ export abstract class FluidDataStoreContext
 		return created;
 	}
 
+	/**
+	 * Flag indicating we're migrating, during which time ops need to be buffered and held until we connect
+	 */
+	#migrating = false;
+
 	private async realizeCore(existing: boolean): Promise<IFluidDataStoreChannel> {
 		const details = await this.getInitialSnapshotDetails();
 		// Base snapshot is the baseline where pending ops are applied to.
@@ -782,12 +787,18 @@ export abstract class FluidDataStoreContext
 		assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
 
 		// Run migration (if needed/supported) and return the active channel.
+		assert(!this.#migrating, "reentrancy");
+		this.#migrating = true;
 		const activeChannel =
 			existing && isMigrationTarget(factory)
-				? await this.migrateChannelIfNeeded(channel, factory)
+				? await this.migrateChannelIfNeeded(channel, factory).finally(() => {
+						this.#migrating = false;
+					})
 				: channel;
+		this.#migrating = false;
 
 		await this.bindRuntime(activeChannel, existing);
+
 		// This data store may have been disposed before the channel is created during realization. If so,
 		// dispose the channel now.
 		if (this.disposed) {
@@ -807,6 +818,7 @@ export abstract class FluidDataStoreContext
 		initialChannel: IFluidDataStoreChannel,
 		factory: IMigrationTargetFluidDataStoreFactory,
 	): Promise<IFluidDataStoreChannel> {
+		// The old EntryPoint being migrated away from needs to provide IMigrationInfo
 		const maybeMigrationSource: FluidObject<IProvideMigrationInfo> =
 			await initialChannel.entryPoint.get();
 
@@ -816,14 +828,17 @@ export abstract class FluidDataStoreContext
 			return initialChannel;
 		}
 
-		//* TBD how this works - But it covers things like checking if we saw the barrier op in trailing ops
-		//* It will also count on us having caught up sufficiently before loading. (e.g. if we submitted the Barrier Op then reloaded)
+		//* TBD how this works - But it covers things like checking if we saw the barrier op in trailing ops.
+		//* This could be implemented via some new functionality on DocumentSchema.
+		// Note: This counts on us having caught up sufficiently before loading. (e.g. if we submitted the Barrier Op then reloaded)
 		if (!this.parentContext.migrationProtocolBroker.readyToMigrate(this.id)) {
 			// For this session, continue with the old format.
 			// We'll migrate in a future session after the Barrier Op roundtrips
 			return initialChannel;
 		}
 
+		//* Future-looking for Approach 3 aka Whole-Factory Migration
+		//* I'm leaving it here in the prototype to show that this code is ready for that.
 		let targetFactory: IMigrationTargetFluidDataStoreFactory = factory;
 		if (migrationInfo.newPackagePath !== undefined) {
 			// Swap package path and look up new factory if needed
@@ -832,15 +847,10 @@ export abstract class FluidDataStoreContext
 				(await this.factoryFromPackagePath()) as IMigrationTargetFluidDataStoreFactory;
 		}
 
-		//* TODO: All ops submitted at this point must be held up here in the DataStoreContext
-		//* until we're connected (to avoid submitting ops apart from user input)
-
 		const portableData = await migrationInfo.getPortableData();
-
-		//* TODO: How can we ensure all the ops go synchronously together?
-		//* TODO: binding needs to happen on the Runtime before migration starts (can't submit ops otws)?
 		const newChannel = await targetFactory.migrate(this, initialChannel, portableData);
 
+		//* Future-looking for Approach 3 aka Whole-Factory Migration
 		if (newChannel !== initialChannel) {
 			// Dispose the unbound old channel; it was never bound so has no side-effects
 			initialChannel.dispose();
@@ -865,6 +875,13 @@ export abstract class FluidDataStoreContext
 		}
 
 		assert(this.connected === connected, 0x141 /* "Unexpected connected state" */);
+
+		// Submit migration ops now that we're connected
+		if (connected) {
+			for (const { type, content, localOpMetadata } of this.#migrationOps) {
+				this.submitMessage(type, content, localOpMetadata);
+			}
+		}
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this.channel!.setConnectionState(connected, clientId);
@@ -1073,8 +1090,20 @@ export abstract class FluidDataStoreContext
 		this.parentContext.addedGCOutboundRoute(fromPath, toPath, messageTimestampMs);
 	}
 
+	/**
+	 * Ops submitted during migration are buffered and submitted after migration is complete.
+	 */
+	#migrationOps: { type: string; content: unknown; localOpMetadata: unknown }[] = [];
+
 	public submitMessage(type: string, content: unknown, localOpMetadata: unknown): void {
 		this.verifyNotClosed("submitMessage");
+
+		if (this.#migrating) {
+			// During migration, buffer ops to submit after migration is complete
+			this.#migrationOps.push({ type, content, localOpMetadata });
+			return;
+		}
+
 		assert(!!this.channel, 0x146 /* "Channel must exist when submitting message" */);
 		// Readonly clients should not submit messages.
 		this.identifyLocalChangeIfReadonly("DataStoreMessageWhileReadonly", type);

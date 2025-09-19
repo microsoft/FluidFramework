@@ -160,6 +160,12 @@
 			},
 			"Class_DataObject": {
 				"forwardCompat": false
+			},
+			"Class_DataObjectFactory": {
+				"forwardCompat": false
+			},
+			"Class_TreeDataObjectFactory": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "legacy"

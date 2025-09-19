@@ -15,7 +15,6 @@ import type {
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
-import type { AsyncFluidObjectProvider } from "@fluidframework/synthesize/internal";
 
 import type { IDelayLoadChannelFactory } from "../channel-factories/index.js";
 import type {
@@ -56,6 +55,8 @@ export interface MigrationDataObjectFactoryProps<
 		];
 	};
 
+	//* TODO: How can we support the app's ability to specify which is "Latest" model via config?
+
 	/**
 	 * Used for determining whether or not a migration can be performed based on providers and/or feature gates.
 	 *
@@ -67,9 +68,11 @@ export interface MigrationDataObjectFactoryProps<
 	 * }
 	 * ```
 	 */
-	canPerformMigration: (
-		providers: AsyncFluidObjectProvider<I["OptionalProviders"]>,
-	) => Promise<boolean>;
+	// canPerformMigration: (
+	// 	providers: AsyncFluidObjectProvider<I["OptionalProviders"]>,
+	// ) => Promise<boolean>;
+	//* MOVED TO MIGRATION DATA OBJECT - stubbed out for the moment (TODO: clean up)
+	canPerformMigration?: unknown;
 
 	/**
 	 * Data required for running migration. This is necessary because the migration must happen synchronously.
@@ -81,7 +84,9 @@ export interface MigrationDataObjectFactoryProps<
 	 * }
 	 * ```
 	 */
-	asyncGetDataForMigration: (existingModel: TUniversalView) => Promise<TMigrationData>;
+	// asyncGetDataForMigration: (existingModel: TUniversalView) => Promise<TMigrationData>;
+	//* MOVED TO MIGRATION DATA OBJECT - stubbed out for the moment (TODO: clean up)
+	asyncGetDataForMigration?: unknown;
 
 	/**
 	 * Migrate the DataObject upon resolve (i.e. on retrieval of the DataStore).
@@ -321,6 +326,7 @@ export class MigrationDataObjectFactory<
 			},
 		});
 	}
+
 	public async instantiateForMigration(
 		context: IFluidDataStoreContext,
 		portableData: unknown,
@@ -331,26 +337,19 @@ export class MigrationDataObjectFactory<
 	public async migrate(
 		context: IFluidDataStoreContext,
 		runtime: IFluidDataStoreChannel,
-		portableData: TMigrationData, //* TODO: Revisit typing of this throughout
+		portableData: unknown, //* TODO: Revisit typing of this throughout
 	): Promise<IFluidDataStoreChannel> {
 		//* TODO: Avoid this cast?
 		const realRuntime = runtime as FluidDataStoreRuntime;
 
-		// Read the model descriptors from the DataObject ctor (single source of truth).
+		// Get the first model descriptor, which is the target of migration
 		const modelDescriptors = this.props.ctor.modelDescriptors;
-
-		// Destructure the target/first descriptor and probe it first. If it's present,
-		// the object already uses the target model and we're done.
 		const [targetDescriptor, ..._otherDescriptors] = modelDescriptors;
 
-		// Download the code in parallel with async operations happening on the existing model
-		await targetDescriptor.ensureFactoriesLoaded();
-
 		// Create the target model and run migration.
+		await targetDescriptor.ensureFactoriesLoaded();
 		const newModel = targetDescriptor.create(realRuntime);
-
-		// Call consumer-provided migration implementation
-		this.props.migrateDataObject(realRuntime, newModel, portableData);
+		this.props.migrateDataObject(realRuntime, newModel, portableData as TMigrationData);
 
 		//* TODO: evacuate old model
 		//* i.e. delete unused root contexts, but not only that.  GC doesn't run sub-DataStore.

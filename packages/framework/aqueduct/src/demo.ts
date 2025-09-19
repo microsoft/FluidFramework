@@ -172,6 +172,19 @@ interface MigrationData {
 class DirToTreeDataObject extends MigrationDataObject<ViewWithDirOrTree> {
 	// Single source of truth for descriptors: static on the DataObject class
 	public static modelDescriptors = [treeDesc, dirDesc] as const;
+	protected canPerformMigration(): boolean {
+		return true;
+	}
+	protected get portableMigrationData(): unknown {
+		// existingModel will be { root: ISharedDirectory } when present
+		const existingRoot = this.dataModel?.view.getRoot();
+		if (existingRoot?.isDirectory) {
+			const dir = existingRoot.root;
+			return { entries: [...dir.entries()] };
+		}
+		// else -- No need to migrate from tree, so don't implement that fork
+		return { entries: [] };
+	}
 }
 
 const props: MigrationDataObjectFactoryProps<
@@ -183,18 +196,6 @@ const props: MigrationDataObjectFactoryProps<
 > = {
 	type: "DirToTree",
 	ctor: DirToTreeDataObject,
-	canPerformMigration: async () => true,
-	asyncGetDataForMigration: async (existingModel: ViewWithDirOrTree) => {
-		// existingModel will be { root: ISharedDirectory } when present
-		const existingRoot = existingModel.getRoot();
-		if (existingRoot.isDirectory) {
-			const dir = existingRoot.root;
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			return { entries: [...dir.entries()] };
-		}
-		// else -- No need to migrate from tree, so don't implement that fork
-		return { entries: [] };
-	},
 	migrateDataObject: (
 		_runtime: IFluidDataStoreRuntime,
 		newModel: TreeModel,

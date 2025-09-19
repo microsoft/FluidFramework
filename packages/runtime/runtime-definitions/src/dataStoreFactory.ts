@@ -83,5 +83,6 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
 	/**
 	 * Function to be run after the data store becomes bound to the runtime (i.e. finished initializing).
 	 */
-	afterBindRuntime?(runtime: IFluidDataStoreChannel): Promise<void>;
+	// afterBindRuntime?(runtime: IFluidDataStoreChannel): Promise<void>;
+	//* TODO: Cleanup if refactor is valid
 }

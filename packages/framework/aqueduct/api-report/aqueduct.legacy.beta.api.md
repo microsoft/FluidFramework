@@ -87,7 +87,6 @@ export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectT
 
 // @beta @legacy
 export interface DataObjectFactoryProps<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> {
-    readonly afterBindRuntime?: (runtime: IFluidDataStoreChannel) => Promise<void>;
     readonly ctor: new (props: IDataObjectProps<I>) => TObj;
     readonly optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>;
     readonly policies?: Partial<IFluidDataStorePolicies>;
@@ -126,6 +125,7 @@ export interface IDelayLoadChannelFactory<T = unknown> extends IChannelFactory<T
 
 // @beta @legacy
 export abstract class MigrationDataObject<TUniversalView, I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> implements IProvideMigrationInfo {
+    protected abstract canPerformMigration(): boolean;
     get dataModel(): {
         descriptor: ModelDescriptor<TUniversalView>;
         view: TUniversalView;
@@ -135,6 +135,8 @@ export abstract class MigrationDataObject<TUniversalView, I extends DataObjectTy
     get IMigrationInfo(): IMigrationInfo | undefined;
     // (undocumented)
     initializeInternal(existing: boolean): Promise<void>;
+    // (undocumented)
+    protected abstract get portableMigrationData(): unknown;
 }
 
 // @beta @legacy
@@ -144,14 +146,14 @@ TMigrationData = never> extends PureDataObjectFactory<TObj, I> implements IMigra
     // (undocumented)
     instantiateForMigration(context: IFluidDataStoreContext, portableData: unknown): Promise<IFluidDataStoreChannel>;
     // (undocumented)
-    migrate(context: IFluidDataStoreContext, runtime: IFluidDataStoreChannel, portableData: TMigrationData): Promise<IFluidDataStoreChannel>;
+    migrate(context: IFluidDataStoreContext, runtime: IFluidDataStoreChannel, portableData: unknown): Promise<IFluidDataStoreChannel>;
 }
 
 // @beta @legacy
 export interface MigrationDataObjectFactoryProps<TObj extends MigrationDataObject<TUniversalView, I>, TUniversalView, I extends DataObjectTypes = DataObjectTypes, TNewModel extends TUniversalView = TUniversalView, // default case works for a single model descriptor
 TMigrationData = never> extends DataObjectFactoryProps<TObj, I> {
-    asyncGetDataForMigration: (existingModel: TUniversalView) => Promise<TMigrationData>;
-    canPerformMigration: (providers: AsyncFluidObjectProvider<I["OptionalProviders"]>) => Promise<boolean>;
+    asyncGetDataForMigration?: unknown;
+    canPerformMigration?: unknown;
     ctor: (new (props: IDataObjectProps<I>) => TObj) & {
         modelDescriptors: readonly [
         ModelDescriptor<TNewModel>,
@@ -207,7 +209,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry> {
     constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects?: readonly IChannelFactory[], optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeClass?: typeof FluidDataStoreRuntime);
     constructor(props: DataObjectFactoryProps<TObj, I>);
-    readonly afterBindRuntime?: (runtime: IFluidDataStoreChannel) => Promise<void>;
     createChildInstance(parentContext: IFluidDataStoreContext, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
     createInstance(runtime: IContainerRuntimeBase, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
     // (undocumented)
@@ -221,8 +222,6 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     get IFluidDataStoreFactory(): this;
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined;
     instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
-    // (undocumented)
-    protected observeCreateDataObject(createProps: CreateDataObjectProps<TObj, I>): Promise<void>;
     get registryEntry(): NamedFluidDataStoreRegistryEntry;
     readonly type: string;
 }
