@@ -790,7 +790,11 @@ function createTableCellFromTsdocSection(
 	const htmlTrees = transformed.map((node) => toHast(node));
 	const htmlNodes: Html[] = htmlTrees.map((node) => ({
 		type: "html",
-		value: toHtml(node),
+		// In order for the Markdown syntax to be correct, the body of the cell must not contain any newlines.
+		// In some circumstances, `hast-util-to-html` seems to insert newlines presumably for formatting purposes,
+		// though it is unclear exactly what scenarios cause this behavior.
+		// Remove any such newlines here.
+		value: toHtml(node).replace(/\r?\n/g, "" /* omit newlines */),
 	}));
 	return {
 		type: "tableCell",
