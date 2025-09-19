@@ -42,7 +42,8 @@ export interface ObservationOptions {
  * Custom hook which invalidates a React Component based on changes to what was observed during `trackDuring`.
  *
  * @param trackDuring - Called synchronously: can make event subscriptions which call the provided `invalidate` function.
- * Any such subscriptions should be cleaned up via the returned `unsubscribe` function.
+ * Any such subscriptions should be cleaned up via the returned `unsubscribe` function which will only be invoked if `invalidate` is not called.
+ * If `invalidate` is called, the code calling it should remove any subscriptions before calling it.
  */
 export function useObservation<TResult>(
 	trackDuring: (invalidate: () => void) => { result: TResult; unsubscribe: () => void },
