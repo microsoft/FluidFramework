@@ -25,7 +25,7 @@ module.exports = {
 					.filter((comment) => comment.type === "Block" && comment.value.startsWith("*"));
 
 				for (const comment of comments) {
-					const matches = comment.value.matchAll(/\[[^\]]+\]\([^)]+\)/g);
+					const matches = comment.value.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g);
 					for (const match of matches) {
 						const [fullMatch, text, url] = match;
 						const startIndex = comment.range[0] + comment.value.indexOf(fullMatch);
