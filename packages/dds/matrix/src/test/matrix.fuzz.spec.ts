@@ -64,7 +64,7 @@ describe("Matrix fuzz tests", function () {
 		reconnectProbability: 0,
 		// Uncomment to replay a particular seed.
 		// only: 0,
-		skip: [4, 23, 54, 58, 59, 73, 77, 78, 79, 91, 97],
+		skip: [4, 23, 54, 58, 59, 73, 79, 91, 97],
 		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/1") },
 	});
 
@@ -78,7 +78,7 @@ describe("Matrix fuzz tests", function () {
 		reconnectProbability: 0.1,
 		// Uncomment to replay a particular seed.
 		// replay: 0,
-		skip: [4, 40, 53, 58, 73, 78, 91, 97],
+		skip: [4, 40, 53, 58, 73, 91],
 		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/2") },
 	});
 
@@ -104,7 +104,7 @@ describe("Matrix fuzz tests", function () {
 		},
 		// Uncomment to replay a particular seed.
 		// replay: 91,
-		skip: [4, 23, 49, 54, 58, 59, 65, 73, 77, 78, 91, 97],
+		skip: [4, 23, 49, 54, 58, 59, 65, 73, 91, 97],
 		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/4") },
 	});
 });

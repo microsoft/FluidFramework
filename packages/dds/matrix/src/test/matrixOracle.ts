@@ -10,74 +10,60 @@ import type { ISharedMatrix, SharedMatrix } from "../matrix.js";
 interface IConflict<T> {
 	row: number;
 	col: number;
-	currentValue: T;
-	conflictingValue: T;
+	currentValue: T | undefined;
+	conflictingValue: T | undefined;
 }
 
 export class SharedMatrixOracle<T> {
-	private model: (T | undefined)[][] = [];
-	private readonly conflictHistory: IConflict<T>[] = [];
+	private readonly model: Map<string, T | undefined> = new Map();
+	private readonly conflictHistory = new Map<string, IConflict<T>>();
 
 	constructor(private readonly shared: SharedMatrix<T>) {
-		// Build initial snapshot of the shared matrix
-		this.syncFromShared();
-
 		this.shared.on("conflict", (row, col, currentValue, conflictingValue) => {
-			// Track the conflict
-			this.conflictHistory.push({
+			const key = `${row},${col}`;
+			this.conflictHistory.set(key, {
 				row,
 				col,
 				currentValue: currentValue as T,
 				conflictingValue: conflictingValue as T,
 			});
-
-			// Keep the model in sync for cells that triggered conflict
-			this.ensureSize(row + 1, col + 1);
-			this.model[row][col] = currentValue as T;
+			this.rebuildModel();
 		});
 	}
 
-	// Build the current matrix snapshot from shared matrix
-	private syncFromShared(): void {
+	private rebuildModel(): void {
+		this.model.clear();
 		const rows = this.shared.rowCount;
 		const cols = this.shared.colCount;
 
-		this.model = [];
 		for (let r = 0; r < rows; r++) {
-			const row: (T | undefined)[] = [];
 			for (let c = 0; c < cols; c++) {
-				row.push(this.shared.getCell(r, c) as T);
-			}
-			this.model.push(row);
-		}
-	}
-
-	private ensureSize(rows: number, cols: number): void {
-		while (this.model.length < rows) {
-			this.model.push(Array.from({ length: cols }, () => undefined));
-		}
-		for (const row of this.model) {
-			while (row.length < cols) {
-				row.push(undefined);
+				this.model.set(`${r},${c}`, this.shared.getCell(r, c) as T);
 			}
 		}
 	}
 
 	public validate(): void {
-		// Validate conflict history
-		for (const conflict of this.conflictHistory) {
-			const modelVal = this.model[conflict.row]?.[conflict.col];
-			const sharedVal = this.shared.getCell(conflict.row, conflict.col);
-			assert.deepStrictEqual(
+		const sharedRows = this.shared.rowCount;
+		const sharedCols = this.shared.colCount;
+
+		for (const { row, col, currentValue, conflictingValue } of this.conflictHistory.values()) {
+			// Skip conflicts outside current bounds
+			if (row >= sharedRows || col >= sharedCols) continue;
+
+			const modelVal = this.model.get(`${row},${col}`);
+
+			assert.strictEqual(
 				modelVal,
-				conflict.currentValue,
-				`Conflict mismatch at [${conflict.row},${conflict.col}] between: expected="${conflict.currentValue}", actual="${modelVal} and conflicting value=${conflict.conflictingValue}"`,
+				currentValue,
+				`Conflict mismatch at [${row},${col}] in model: expected="${currentValue}", actual="${modelVal}" (conflictingValue=${conflictingValue})`,
 			);
 
-			assert.deepStrictEqual(
+			const sharedVal = this.shared.getCell(row, col);
+			assert.strictEqual(
 				sharedVal,
-				conflict.currentValue,
-				`Conflict mismatch at [${conflict.row},${conflict.col}]: expected="${conflict.currentValue}", actual="${modelVal} and conflicting value=${conflict.conflictingValue}"`,
+				currentValue,
+				`Conflict mismatch at [${row},${col}] in shared matrix: expected="${currentValue}", actual="${sharedVal}" (conflictingValue=${conflictingValue})`,
 			);
 		}
 	}
