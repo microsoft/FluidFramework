@@ -13,7 +13,7 @@ describe("Do not allow Markdown links in JSDoc/TSDoc comments", function () {
 			useEslintrc: false,
 			overrideConfig: {
 				rules: {
-					"no-markdown-links": "error",
+					"no-markdown-links-in-jsdoc": "error",
 				},
 				parser: "@typescript-eslint/parser",
 				parserOptions: {
@@ -22,7 +22,7 @@ describe("Do not allow Markdown links in JSDoc/TSDoc comments", function () {
 			},
 			rulePaths: [path.join(__dirname, "../../rules")],
 		});
-		const fileToLint = path.join(__dirname, "../example/no-markdown-links", file);
+		const fileToLint = path.join(__dirname, "../example/no-markdown-links-in-jsdoc", file);
 		const results = await eslint.lintFiles([fileToLint]);
 		return results[0];
 	}
