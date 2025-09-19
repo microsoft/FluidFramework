@@ -8,8 +8,12 @@ import { strict as assert } from "node:assert";
 import type { ContainerSchema } from "@fluidframework/fluid-static";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { independentView } from "@fluidframework/tree/internal";
+import { render } from "@testing-library/react";
+import globalJsdom from "global-jsdom";
+import * as React from "react";
 
-import { treeDataObject } from "../reactSharedTreeView.js";
+import { treeDataObject, TreeViewComponent } from "../reactSharedTreeView.js";
 
 describe("reactSharedTreeView", () => {
 	it("treeDataObject", async () => {
@@ -40,5 +44,37 @@ describe("reactSharedTreeView", () => {
 		assert.equal(dataObject.treeView.root.nuts, 5);
 		dataObject.treeView.root.nuts += 1;
 		assert.equal(dataObject.treeView.root.bolts, 6);
+	});
+
+	describe("dom tests", () => {
+		let cleanup: () => void;
+
+		before(() => {
+			cleanup = globalJsdom();
+		});
+
+		after(() => {
+			cleanup();
+		});
+
+		for (const reactStrictMode of [false, true]) {
+			describe(`StrictMode: ${reactStrictMode}`, () => {
+				const builder = new SchemaFactory("tree-react-api");
+
+				class Item extends builder.object("Item", {}) {}
+
+				const View = ({ root }: { root: Item }): React.JSX.Element => <span>View</span>;
+
+				it("TreeViewComponent", () => {
+					const view = independentView(new TreeViewConfiguration({ schema: Item }), {});
+					const content = <TreeViewComponent viewComponent={View} tree={{ treeView: view }} />;
+					const rendered = render(content, { reactStrictMode });
+					assert.match(rendered.baseElement.textContent ?? "", /Document is incompatible/);
+					view.initialize(new Item({}));
+					rendered.rerender(content);
+					assert.equal(rendered.baseElement.textContent, "View");
+				});
+			});
+		}
 	});
 });

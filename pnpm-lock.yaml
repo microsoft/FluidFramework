@@ -2265,8 +2265,8 @@ importers:
         specifier: ^5.16.5
         version: 5.17.0
       '@testing-library/react':
-        specifier: ^16.0.1
-        version: 16.1.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^16.3.0
+        version: 16.3.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@testing-library/user-event':
         specifier: ^14.4.3
         version: 14.5.2(@testing-library/dom@10.4.0)
@@ -7299,6 +7299,9 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+      '@testing-library/react':
+        specifier: ^16.3.0
+        version: 16.3.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -7326,6 +7329,9 @@ importers:
       eslint-config-prettier:
         specifier: ~9.0.0
         version: 9.0.0(eslint@8.55.0)
+      global-jsdom:
+        specifier: ^26.0.0
+        version: 26.0.0(jsdom@20.0.3)
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -15527,8 +15533,8 @@ importers:
         specifier: ^5.16.5
         version: 5.17.0
       '@testing-library/react':
-        specifier: ^16.0.1
-        version: 16.1.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^16.3.0
+        version: 16.3.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@testing-library/user-event':
         specifier: ^14.4.3
         version: 14.5.2(@testing-library/dom@10.4.0)
@@ -15699,8 +15705,8 @@ importers:
         specifier: ^5.16.5
         version: 5.17.0
       '@testing-library/react':
-        specifier: ^16.0.1
-        version: 16.1.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^16.3.0
+        version: 16.3.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@testing-library/user-event':
         specifier: ^14.4.3
         version: 14.5.2(@testing-library/dom@10.4.0)
@@ -18987,8 +18993,8 @@ packages:
     resolution: {integrity: sha512-ynmNeT7asXyH3aSVv4vvX4Rb+0qjOhdNHnO/3vuZNqPmhDpV/+rCSGwQ7bLcmU2cJ4dvoheIO85LQj0IbJHEtg==}
     engines: {node: '>=8', npm: '>=6', yarn: '>=1'}
 
-  '@testing-library/react@16.1.0':
-    resolution: {integrity: sha512-Q2ToPvg0KsVL0ohND9A3zLJWcOXXcO8IDu3fj11KhNt0UlCWyFyvnCIBkd12tidB2lkiVRG8VFqdhcqhqnAQtg==}
+  '@testing-library/react@16.3.0':
+    resolution: {integrity: sha512-kFSyxiEDwv1WLl2fgsq6pPBbw5aWKrsY2/noi1Id0TK0UParSF62oFQFGHXIyaG4pp2tEub/Zlel+fjjZILDsw==}
     engines: {node: '>=18'}
     peerDependencies:
       '@testing-library/dom': ^10.0.0
@@ -22328,6 +22334,12 @@ packages:
   global-dirs@3.0.1:
     resolution: {integrity: sha512-NBcGGFbBA9s1VzD41QXDG+3++t9Mn5t1FpLdhESY6oKY4gYTFpX4wO3sqGUa0Srjtbfj3szX0RnemmrVRUdULA==}
     engines: {node: '>=10'}
+
+  global-jsdom@26.0.0:
+    resolution: {integrity: sha512-BqXpTNZFjP40N+s4k8Bk9HS8GFVPJB/+TKtwcShM84wLv6C5dH9o1dydI3pL6potanhfDiIAVDbaaGj/uSdRSA==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      jsdom: '>=26 <27'
 
   global-modules@0.2.3:
     resolution: {integrity: sha512-JeXuCbvYzYXcwE6acL9V2bAOeSIGl4dD+iwLY9iUx2VBJJ80R18HCn+JCwHM9Oegdfya3lEkGCdaRkSyc10hDA==}
@@ -33186,7 +33198,7 @@ snapshots:
       lodash: 4.17.21
       redent: 3.0.0
 
-  '@testing-library/react@16.1.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@testing-library/react@16.3.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.27.0
       '@testing-library/dom': 10.4.0
@@ -37086,6 +37098,10 @@ snapshots:
   global-dirs@3.0.1:
     dependencies:
       ini: 2.0.0
+
+  global-jsdom@26.0.0(jsdom@20.0.3):
+    dependencies:
+      jsdom: 20.0.3
 
   global-modules@0.2.3:
     dependencies:
