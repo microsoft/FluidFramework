@@ -148,6 +148,7 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 	 * Component to display the tree content.
 	 */
 	readonly viewComponent: React.FC<{ root: TreeFieldFromImplicitField<TSchema> }>;
+
 	/**
 	 * Component to display instead of the {@link TreeViewProps.viewComponent}
 	 * when tree content is not compatible with the {@link @fluidframework/tree#TreeViewConfiguration}.
@@ -155,6 +156,8 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 	 * @defaultValue Component which describes the situation (in English) and allows the user to upgrade the schema to match the {@link @fluidframework/tree#TreeViewConfiguration} if possible.
 	 */
 	readonly errorComponent?: React.FC<SchemaIncompatibleProps>;
+
+	// TODO: Once its possible to query the status of individual schema upgrades, provide more options here for handling such cases.
 }
 
 /**
@@ -238,15 +241,15 @@ function useViewRoot<TSchema extends ImplicitFieldSchema>(
 /**
  * React component which handles schematizing trees.
  * This includes displaying errors when the document can not be schematized.
+ * @public
  */
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
+export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	tree,
 	viewComponent: ViewComponent,
 	errorComponent,
 }: TreeViewProps<TSchema> & {
-	tree: ReactTreeDataObject<TSchema>;
-}) {
+	tree: Pick<IReactTreeDataObject<TSchema>, "treeView">;
+}): React.JSX.Element {
 	const view = tree.treeView;
 
 	const compatibility = useViewCompatibility(view);
