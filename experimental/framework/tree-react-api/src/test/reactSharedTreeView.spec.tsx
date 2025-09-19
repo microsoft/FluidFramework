@@ -57,6 +57,10 @@ describe("reactSharedTreeView", () => {
 			cleanup();
 		});
 
+		// Run without strict mode to make sure it works in a normal production setup.
+		// Run with strict mode to potentially detect additional issues.
+		// Note that React's strict mode is not more strict,
+		// but instead drastically changes when the component code and its effects run to exercise more edge cases and detect certain kinds of bugs.
 		for (const reactStrictMode of [false, true]) {
 			describe(`StrictMode: ${reactStrictMode}`, () => {
 				const builder = new SchemaFactory("tree-react-api");
@@ -69,7 +73,11 @@ describe("reactSharedTreeView", () => {
 					const view = independentView(new TreeViewConfiguration({ schema: Item }), {});
 					const content = <TreeViewComponent viewComponent={View} tree={{ treeView: view }} />;
 					const rendered = render(content, { reactStrictMode });
+
+					// Ensure that viewing an incompatible document displays an error.
 					assert.match(rendered.baseElement.textContent ?? "", /Document is incompatible/);
+					// Ensure that changes in compatibility are detected and invalidate the view,
+					// and that compatible documents show the content from `viewComponent`
 					view.initialize(new Item({}));
 					rendered.rerender(content);
 					assert.equal(rendered.baseElement.textContent, "View");
