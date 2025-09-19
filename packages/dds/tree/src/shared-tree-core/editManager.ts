@@ -546,8 +546,9 @@ export class EditManager<
 		const areLocalCommits = sessionId === this.localSessionId;
 		branch.addSequencedChanges(
 			newCommits,
-			areLocalCommits ? undefined : sessionId,
+			sessionId,
 			sequenceNumber,
+			areLocalCommits,
 			referenceSequenceNumber,
 			onSequenceLocalCommit,
 		);
@@ -674,8 +675,9 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 
 	public addSequencedChanges(
 		newCommits: readonly GraphCommit<TChangeset>[],
-		sessionId: SessionId | undefined,
+		sessionId: SessionId,
 		sequenceNumber: SeqNumber,
+		areLocalCommits: boolean,
 		referenceSequenceNumber: SeqNumber,
 		onSequenceLocalCommit: OnSequenceCommit<TChangeset>,
 	): void {
@@ -699,10 +701,11 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 
 		// Local changes, i.e., changes from this client are applied by fast forwarding the local branch commit onto
 		// the trunk.
-		if (sessionId === undefined) {
+		if (areLocalCommits) {
 			for (const _ of newCommits) {
 				this.registerSequencedCommit(
 					nextSequenceId,
+					sessionId,
 					this.sequenceLocalCommit(nextSequenceId, onSequenceLocalCommit),
 				);
 				nextSequenceId = getNextSequenceId(nextSequenceId);
@@ -903,15 +906,17 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 
 	private pushCommitToTrunk(sequenceId: SequenceId, commit: Commit<TChangeset>): void {
 		const mintedCommit = mintCommit(this.trunk.getHead(), commit);
-		this.registerSequencedCommit(sequenceId, mintedCommit);
+		this.registerSequencedCommit(sequenceId, commit.sessionId, mintedCommit);
 		this.pushGraphCommitToTrunk(mintedCommit);
 	}
 
 	private registerSequencedCommit(
 		sequenceId: SequenceId,
+		sessionId: SessionId,
 		commit: GraphCommit<TChangeset>,
 	): void {
 		this.sequenceIdToCommit.set(sequenceId, commit);
+		this.commitMetadata.set(commit.revision, { sequenceId, sessionId });
 	}
 
 	public getCommitSequenceId(trunkCommitOrTrunkBase: GraphCommit<TChangeset>): SequenceId {
