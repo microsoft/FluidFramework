@@ -5,8 +5,8 @@
 New rules added:
 
 - `@fluid-internal/fluid/no-file-path-links-in-jsdoc`: Forbids the use of file paths in `{@link}` tags in JSDoc/TSDoc comments.
-  - Such links are not portable and will cause problems for external users.
-    Stable, externally accessible link targets should be used instead (for example, other APIs or GitHub URLs).
+    - Such links are not portable and will cause problems for external users.
+      Stable, externally accessible link targets should be used instead (for example, other APIs or GitHub URLs).
 
 ## [0.1.6](https://github.com/microsoft/FluidFramework/releases/tag/eslint-plugin-fluid_v0.1.6)
 
