@@ -24,6 +24,7 @@ describe("Do not allow file path links in JSDoc/TSDoc comments", function () {
 		});
 		const fileToLint = path.join(__dirname, "../example/no-file-path-links-in-jsdoc", file);
 		const results = await eslint.lintFiles([fileToLint]);
+		assert.equal(results.length, 1, "Expected a single result for linting a single file.");
 		return results[0];
 	}
 
