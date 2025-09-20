@@ -131,7 +131,7 @@
 		"test:memory": "mocha --perfMode --config ./src/test/memory/.mocharc.cjs",
 		"test:memory-profiling:report": "mocha --config ./src/test/memory/.mocharc.cjs",
 		"test:mocha": "echo skipping non-smoke cjs to avoid overhead && npm run test:mocha:cjs -- --fgrep @Smoke && npm run test:mocha:esm",
-		"test:mocha:cjs": "cross-env MOCHA_SPEC=dist/test mocha",
+		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:snapshots:regen": "pnpm test:mocha:esm --snapshot",
