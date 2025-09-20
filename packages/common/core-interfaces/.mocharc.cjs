@@ -11,10 +11,12 @@ const testCJS = process.env.FLUID_TEST_MODULE_SYSTEM === "CJS";
 const outputFilePrefix = testCJS ? "CJS-" : "";
 const suiteName = "@fluidframework/core-interfaces" + (testCJS ? " - CJS" : "");
 module.exports = {
-	spec: testCJS ? "dist/test/**/*.spec.*js" : "lib/test/**/*.spec.*js",
+	spec: testCJS ? "dist/test" : "lib/test",
+	// Ignore "spec" to find misnamed test files.
+	ignore: ["**/*.spec.{js,cjs,mjs}"],
 	recursive: true,
 	require: [testCJS ? "./dist/test/mochaHooks.js" : "./lib/test/mochaHooks.js"],
-	reporter: "mocha-multi-reporters",
+	// reporter: "mocha-multi-reporters",
 	"reporter-options": [
 		`configFile=test-config.json,cmrOutput=xunit+output+${outputFilePrefix}:xunit+suiteName+${suiteName}`,
 	],

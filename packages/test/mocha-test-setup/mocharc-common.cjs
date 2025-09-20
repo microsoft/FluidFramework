@@ -68,6 +68,11 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		testReportPrefix = testReportPrefix !== undefined ? `${testReportPrefix}-CJS` : "CJS";
 	}
 
+	process.env.FLUID_TEST_VARIANT =
+		process.env.FLUID_TEST_VARIANT !== undefined
+			? `bad test filename,${process.env.FLUID_TEST_VARIANT}`
+			: "bad test filename";
+
 	const config = {
 		"recursive": true,
 		"require": requiredModulePaths,
@@ -75,6 +80,8 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		ignore: [
 			// Ignore "tools" which are scripts intended to be run, not part of the test suite.
 			"**/*.tool.{js,cjs,mjs}",
+			// Ignore "spec" to find misnamed test files.
+			"**/*.spec.{js,cjs,mjs}",
 		],
 		"node-option": [
 			// Allow test-only indexes to be imported. Search the FF repo for package.json files with this condition to see example usage.
