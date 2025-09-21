@@ -7,67 +7,91 @@ import { strict as assert } from "node:assert";
 
 import type { ISharedMatrix, SharedMatrix } from "../matrix.js";
 
-interface IConflict<T> {
+export interface IConflict<T> {
 	row: number;
 	col: number;
-	currentValue: T | undefined;
-	conflictingValue: T | undefined;
+	currentValue: T;
+	conflictingValue: T;
+	fwwPolicy: boolean;
 }
 
+/**
+ * @internal
+ */
 export class SharedMatrixOracle<T> {
-	private readonly model: Map<string, T | undefined> = new Map();
-	private readonly conflictHistory = new Map<string, IConflict<T>>();
+	private readonly conflictHistory = new Map<string, IConflict<T>[]>();
 
-	constructor(private readonly shared: SharedMatrix<T>) {
+	constructor(private readonly shared: ISharedMatrix<T>) {
 		this.shared.on("conflict", (row, col, currentValue, conflictingValue) => {
 			const key = `${row},${col}`;
-			this.conflictHistory.set(key, {
+			const record: IConflict<T> = {
 				row,
 				col,
 				currentValue: currentValue as T,
 				conflictingValue: conflictingValue as T,
-			});
-			this.rebuildModel();
+				fwwPolicy: this.shared.isSetCellConflictResolutionPolicyFWW(),
+			};
+			(this.conflictHistory.get(key) ?? this.conflictHistory.set(key, []).get(key))?.push(
+				record,
+			);
+
+			// Immediate validation
+			if (row < this.shared.rowCount && col < this.shared.colCount) {
+				const actual = this.shared.getCell(row, col);
+				assert.strictEqual(
+					actual,
+					currentValue,
+					`Conflict mismatch at [${row},${col}]: expected="${currentValue}", actual="${actual}"`,
+				);
+			}
 		});
 	}
-
-	private rebuildModel(): void {
-		this.model.clear();
-		const rows = this.shared.rowCount;
-		const cols = this.shared.colCount;
-
-		for (let r = 0; r < rows; r++) {
-			for (let c = 0; c < cols; c++) {
-				this.model.set(`${r},${c}`, this.shared.getCell(r, c) as T);
-			}
-		}
-	}
-
-	public validate(): void {
-		const sharedRows = this.shared.rowCount;
-		const sharedCols = this.shared.colCount;
-
-		for (const { row, col, currentValue, conflictingValue } of this.conflictHistory.values()) {
-			// Skip conflicts outside current bounds
-			if (row >= sharedRows || col >= sharedCols) continue;
-
-			const modelVal = this.model.get(`${row},${col}`);
-
-			assert.strictEqual(
-				modelVal,
-				currentValue,
-				`Conflict mismatch at [${row},${col}] in model: expected="${currentValue}", actual="${modelVal}" (conflictingValue=${conflictingValue})`,
-			);
-
-			const sharedVal = this.shared.getCell(row, col);
-			assert.strictEqual(
-				sharedVal,
-				currentValue,
-				`Conflict mismatch at [${row},${col}] in shared matrix: expected="${currentValue}", actual="${sharedVal}" (conflictingValue=${conflictingValue})`,
-			);
-		}
-	}
 }
+
+// export class SharedMatrixOracle<T> {
+// 	private readonly conflictHistory = new Map<string, IConflict<T>[]>();
+
+// 	constructor(private readonly shared: SharedMatrix<T>) {
+// 		this.shared.on("conflict", (row, col, currentValue, conflictingValue) => {
+// 			const key = `${row},${col}`;
+// 			const conflict: IConflict<T> = {
+// 				row,
+// 				col,
+// 				currentValue: currentValue as T,
+// 				conflictingValue: conflictingValue as T,
+// 				fwwPolicy: this.shared.isSetCellConflictResolutionPolicyFWW(),
+// 			};
+
+// 			const list = this.conflictHistory.get(key);
+// 			if (list) {
+// 				list.push(conflict);
+// 			} else {
+// 				this.conflictHistory.set(key, [conflict]);
+// 			}
+// 		});
+// 	}
+
+// 	public validate(): void {
+// 		if (!this.shared.isSetCellConflictResolutionPolicyFWW()) return;
+
+// 		for (const conflicts of this.conflictHistory.values()) {
+// 			for (const { row, col, currentValue, fwwPolicy } of conflicts) {
+// 				// Ignore if policy was off at the time
+// 				if (!fwwPolicy) continue;
+
+// 				// Ignore if row/col were removed
+// 				if (row >= this.shared.rowCount || col >= this.shared.colCount) continue;
+
+// 				const sharedVal = this.shared.getCell(row, col);
+// 				assert.strictEqual(
+// 					sharedVal,
+// 					currentValue,
+// 					`Conflict mismatch at [${row},${col}]: expected="${currentValue}", actual="${sharedVal}"`,
+// 				);
+// 			}
+// 		}
+// 	}
+// }
 
 /**
  * @internal

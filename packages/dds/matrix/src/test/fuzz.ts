@@ -19,7 +19,7 @@ import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-ut
 import type { MatrixItem } from "../ops.js";
 import { SharedMatrix, type SharedMatrixFactory } from "../runtime.js";
 
-import { hasSharedMatrixOracle } from "./matrixOracle.js";
+// import { hasSharedMatrixOracle } from "./matrixOracle.js";
 
 /**
  * Supported cell values used within the fuzz model.
@@ -228,13 +228,13 @@ export const baseSharedMatrixModel: Omit<
 	generatorFactory: () => takeAsync(50, makeGenerator()),
 	reducer: (state, operation) => reducer(state, operation),
 	validateConsistency: async (a, b) => {
-		if (hasSharedMatrixOracle(a.channel)) {
-			a.channel.matrixOracle.validate();
-		}
+		// if (hasSharedMatrixOracle(a.channel)) {
+		// 	a.channel.matrixOracle.validate();
+		// }
 
-		if (hasSharedMatrixOracle(b.channel)) {
-			b.channel.matrixOracle.validate();
-		}
+		// if (hasSharedMatrixOracle(b.channel)) {
+		// 	b.channel.matrixOracle.validate();
+		// }
 		return assertMatricesAreEquivalent(a.channel, b.channel);
 	},
 	minimizationTransforms: ["count", "start", "row", "col"].map((p) => (op) => {
