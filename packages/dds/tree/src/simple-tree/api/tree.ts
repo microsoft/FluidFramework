@@ -257,11 +257,12 @@ export interface TreeBranch extends IDisposable {
 /**
  * An editable view of a (version control style) branch of a shared tree based on some schema.
  *
- * This schema--known as the view schema--may or may not align the stored schema of the document.
+ * @remarks
+ * This schema (known as the view schema) may or may not align with the stored schema of the document.
  * Information about discrepancies between the two schemas is available via {@link TreeView.compatibility | compatibility}.
  *
- * Application authors are encouraged to read [schema-evolution.md](../../docs/user-facing/schema-evolution.md) and
- * choose a schema compatibility policy that aligns with their application's needs.
+ * Application authors are encouraged to read {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/schema-evolution.md | schema-evolution.md}
+ * and choose a schema compatibility policy that aligns with their application's needs.
  *
  * @privateRemarks
  * From an API design perspective, `upgradeSchema` could be merged into `viewWith` and/or `viewWith` could return errors explicitly on incompatible documents.

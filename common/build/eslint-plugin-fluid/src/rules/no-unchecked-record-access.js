@@ -409,10 +409,10 @@ function propertyHasBeenChecked(node, context) {
 }
 
 function isUndefinedNode(node) {
-    return (
-        (node.type === "Identifier" && node.name === "undefined") ||
-        (node.type === "UnaryExpression" && node.operator === "void")  // Accept any void expression
-    );
+	return (
+		(node.type === "Identifier" && node.name === "undefined") ||
+		(node.type === "UnaryExpression" && node.operator === "void") // Accept any void expression
+	);
 }
 
 /**

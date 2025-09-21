@@ -28,7 +28,7 @@ export class SharedMatrixOracle {
 				assert.deepStrictEqual(
 					actual,
 					currentValue,
-					`FWW: Conflict mismatch at [${row},${col}]: expected winner=${currentValue}, actual=${actual} with conflicting value=${conflictingValue}`,
+					`Conflict mismatch at [${row},${col}]: expected winner=${currentValue}, actual=${actual} with conflicting value=${conflictingValue}`,
 				);
 			}
 		});
