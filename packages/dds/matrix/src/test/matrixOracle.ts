@@ -48,51 +48,6 @@ export class SharedMatrixOracle<T> {
 	}
 }
 
-// export class SharedMatrixOracle<T> {
-// 	private readonly conflictHistory = new Map<string, IConflict<T>[]>();
-
-// 	constructor(private readonly shared: SharedMatrix<T>) {
-// 		this.shared.on("conflict", (row, col, currentValue, conflictingValue) => {
-// 			const key = `${row},${col}`;
-// 			const conflict: IConflict<T> = {
-// 				row,
-// 				col,
-// 				currentValue: currentValue as T,
-// 				conflictingValue: conflictingValue as T,
-// 				fwwPolicy: this.shared.isSetCellConflictResolutionPolicyFWW(),
-// 			};
-
-// 			const list = this.conflictHistory.get(key);
-// 			if (list) {
-// 				list.push(conflict);
-// 			} else {
-// 				this.conflictHistory.set(key, [conflict]);
-// 			}
-// 		});
-// 	}
-
-// 	public validate(): void {
-// 		if (!this.shared.isSetCellConflictResolutionPolicyFWW()) return;
-
-// 		for (const conflicts of this.conflictHistory.values()) {
-// 			for (const { row, col, currentValue, fwwPolicy } of conflicts) {
-// 				// Ignore if policy was off at the time
-// 				if (!fwwPolicy) continue;
-
-// 				// Ignore if row/col were removed
-// 				if (row >= this.shared.rowCount || col >= this.shared.colCount) continue;
-
-// 				const sharedVal = this.shared.getCell(row, col);
-// 				assert.strictEqual(
-// 					sharedVal,
-// 					currentValue,
-// 					`Conflict mismatch at [${row},${col}]: expected="${currentValue}", actual="${sharedVal}"`,
-// 				);
-// 			}
-// 		}
-// 	}
-// }
-
 /**
  * @internal
  */
