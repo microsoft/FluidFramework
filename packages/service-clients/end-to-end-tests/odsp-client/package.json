@@ -25,11 +25,11 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"test": "npm run test:realsvc:odsp:run",
+		"test": "npm run test:realsvc:odsp",
 		"test:coverage": "c8 npm test",
-		"test:realsvc:odsp": "cross-env npm run test:realsvc:odsp:run -- --driver=odsp --odspEndpointName=odsp",
+		"test:realsvc:odsp": "npm run test:realsvc:odsp:run -- --driver=odsp --odspEndpointName=odsp",
 		"test:realsvc:odsp:run": "mocha --exit --timeout 20000 --config src/test/.mocharc.cjs",
-		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc"
+		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc:odsp"
 	},
 	"c8": {
 		"all": true,
