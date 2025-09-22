@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha @sealed @legacy
+// @alpha @legacy
 export function asLegacyAlpha(base: IContainer): ContainerAlpha;
 
 // @public
