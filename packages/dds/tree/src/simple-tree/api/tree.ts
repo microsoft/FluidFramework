@@ -101,12 +101,20 @@ export interface ITreeAlpha extends ITree {
 	 */
 	exportSimpleSchema(): SimpleTreeSchema;
 
-	viewBranchWith<TRoot extends ImplicitFieldSchema>(
+	/**
+	 * Creates a fork of the current state of the main branch.
+	 * This new branch will be shared with and editable by all clients.
+	 */
+	createSharedBranch(): BranchId;
+
+	/**
+	 * Returns a view of the tree on the specified shared branch, using the provided schema.
+	 * See {@link ViewableTree.viewWith}.
+	 */
+	viewSharedBranchWith<TRoot extends ImplicitFieldSchema>(
 		branchId: BranchId,
 		config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot>;
-
-	createSharedBranch(): BranchId;
 }
 
 /**

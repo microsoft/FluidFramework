@@ -757,12 +757,10 @@ export interface ITree extends ViewableTree, IFluidLoadable {
 
 // @alpha @sealed
 export interface ITreeAlpha extends ITree {
-    // (undocumented)
     createSharedBranch(): BranchId;
     exportSimpleSchema(): SimpleTreeSchema;
     exportVerbose(): VerboseTree | undefined;
-    // (undocumented)
-    viewBranchWith<TRoot extends ImplicitFieldSchema>(branchId: BranchId, config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
+    viewSharedBranchWith<TRoot extends ImplicitFieldSchema>(branchId: BranchId, config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 
 // @public

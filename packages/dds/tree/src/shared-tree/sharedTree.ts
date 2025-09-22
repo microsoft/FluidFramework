@@ -33,7 +33,6 @@ import {
 	ObjectNodeStoredSchema,
 	RevisionTagCodec,
 	SchemaVersion,
-	type TaggedChange,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
@@ -64,7 +63,6 @@ import type { FormatV1 } from "../feature-libraries/schema-index/index.js";
 import {
 	type BranchId,
 	type ClonableSchemaAndPolicy,
-	DefaultResubmitMachine,
 	type ExplicitCoreCodecVersions,
 	SharedTreeCore,
 } from "../shared-tree-core/index.js";
@@ -326,12 +324,7 @@ export class SharedTreeKernel
 			idCompressor,
 			schema,
 			defaultSchemaPolicy,
-			// XXX: SharedTreeCore would construct the same resubmit machine if we passed undefined.
-			new DefaultResubmitMachine(
-				(change: TaggedChange<SharedTreeChange>) =>
-					changeFamily.rebaser.invert(change, true, this.mintRevisionTag()),
-				changeEnricher,
-			),
+			undefined,
 			changeEnricher,
 		);
 
@@ -355,7 +348,7 @@ export class SharedTreeKernel
 			exportSimpleSchema: () => this.exportSimpleSchema(),
 			exportVerbose: () => this.exportVerbose(),
 			viewWith: this.viewWith.bind(this),
-			viewBranchWith: this.viewBranchWith.bind(this),
+			viewSharedBranchWith: this.viewBranchWith.bind(this),
 			createSharedBranch: this.createSharedBranch.bind(this),
 			kernel: this,
 		};
