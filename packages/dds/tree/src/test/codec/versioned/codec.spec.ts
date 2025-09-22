@@ -45,7 +45,7 @@ describe("versioned Codecs", () => {
 
 		it("round trip", () => {
 			const codec1 = builder.build({
-				oldestCompatibleClient: "2.0.0" as MinimumVersionForCollab,
+				oldestCompatibleClient: "2.0.0",
 				jsonValidator: typeboxValidator,
 			});
 			const codec2 = builder.build({

@@ -306,9 +306,8 @@ type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 // @alpha
 export const FluidClientVersion: {
-    v2_0: "2.0.0-defaults";
-    v2_52: MinimumVersionForCollab;
-    EnableUnstableFeatures: MinimumVersionForCollab;
+    readonly v2_0: "2.0.0-defaults";
+    readonly v2_52: "2.52.0";
 };
 
 // @public

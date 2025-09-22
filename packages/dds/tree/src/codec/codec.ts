@@ -12,7 +12,6 @@ import type { ChangeEncodingContext } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 import { noopValidator } from "./noopValidator.js";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-import { pkgVersion } from "../packageVersion.js";
 import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 /**
@@ -452,21 +451,8 @@ export const FluidClientVersion = {
 	/** Fluid Framework Client 2.52 and newer. */
 	// New formats introduced in 2.52:
 	// - DetachedFieldIndex FormatV2
-	v2_52: "2.52.0" as MinimumVersionForCollab,
-
-	/**
-	 * Enable unreleased and unfinished features.
-	 * @remarks
-	 * pkgVersion will always be the latest version, therefore the version that enables all features.
-	 *
-	 * Using this value can result in documents which can not be opened in future versions of the framework.
-	 * It can also result in data corruption by enabling unfinished features which may not handle all cases correctly.
-	 *
-	 * This can be used with specific APIs when the caller has knowledge of what specific features those APIs will be opted into with it.
-	 * This is useful for testing features before they are released, but should not be used in production code.
-	 */
-	EnableUnstableFeatures: pkgVersion as MinimumVersionForCollab,
-};
+	v2_52: "2.52.0",
+} as const satisfies Record<string, MinimumVersionForCollab>;
 
 /**
  * An up to date version which includes all the important stable features.
