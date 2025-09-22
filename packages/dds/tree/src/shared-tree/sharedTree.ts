@@ -6,7 +6,7 @@
 import type { ErasedType, IFluidLoadable } from "@fluidframework/core-interfaces/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
 import type {
 	IChannelView,
 	IFluidSerializer,
@@ -426,16 +426,21 @@ export class SharedTreeKernel
 	}
 
 	public viewBranchWith<TRoot extends ImplicitFieldSchema>(
-		branchId: BranchId,
+		branchId: string,
 		config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot>;
 
 	public viewBranchWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
-		branchId: BranchId,
+		branchId: string,
 		config: TreeViewConfiguration<ReadSchema<TRoot>>,
 	): SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>> {
-		return this.getCheckout(branchId).viewWith(config) as SchematizingSimpleTreeView<TRoot> &
-			TreeView<ReadSchema<TRoot>>;
+		const compressedId = this.idCompressor.tryRecompress(branchId as StableId);
+		if (compressedId === undefined) {
+			throw new UsageError(`No branch found with id: ${branchId}`);
+		}
+		return this.getCheckout(compressedId).viewWith(
+			config,
+		) as SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>>;
 	}
 
 	private getCheckout(branchId: BranchId): TreeCheckout {

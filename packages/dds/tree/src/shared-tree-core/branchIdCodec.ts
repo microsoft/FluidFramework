@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { IIdCompressor, OpSpaceCompressedId } from "@fluidframework/id-compressor";
-import type { ChangeEncodingContext } from "../core/index.js";
+import type {
+	IIdCompressor,
+	OpSpaceCompressedId,
+	SessionId,
+} from "@fluidframework/id-compressor";
 import type { BranchId } from "./branch.js";
 
 export function encodeBranchId(
@@ -17,7 +20,7 @@ export function encodeBranchId(
 export function decodeBranchId(
 	idCompressor: IIdCompressor,
 	encoded: OpSpaceCompressedId | undefined,
-	context: ChangeEncodingContext,
+	context: { readonly originatorId: SessionId },
 ): BranchId {
 	return encoded === undefined
 		? "main"

@@ -456,11 +456,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		return this.editManager.getLocalBranch("main");
 	}
 
-	public createSharedBranch(): BranchId {
+	public createSharedBranch(): string {
 		const branchId = this.idCompressor.generateCompressedId();
 		this.addBranch(branchId);
 		this.submitBranchCreation(branchId);
-		return branchId;
+		return this.idCompressor.decompress(branchId);
 	}
 
 	protected addBranch(branchId: BranchId): void {

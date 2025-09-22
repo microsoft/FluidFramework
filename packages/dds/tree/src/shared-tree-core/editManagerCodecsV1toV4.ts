@@ -67,6 +67,7 @@ export function makeV1CodecWithVersion<TChangeset>(
 					revisionTagCodec,
 					data.main,
 					context,
+					data.originator,
 				);
 				const json: EncodedEditManager<TChangeset> = {
 					trunk: mainBranch.trunk,
@@ -88,6 +89,7 @@ export function makeV1CodecWithVersion<TChangeset>(
 							peers: json.branches,
 						},
 						context,
+						undefined, // originatorId is not encoded in v1
 					),
 				};
 			},

@@ -35,7 +35,6 @@ import type {
 	VoidTransactionCallbackStatus,
 } from "./transactionTypes.js";
 import type { VerboseTree } from "./verboseTree.js";
-import type { BranchId } from "../../shared-tree-core/index.js";
 
 /**
  * A tree from which a {@link TreeView} can be created.
@@ -105,14 +104,14 @@ export interface ITreeAlpha extends ITree {
 	 * Creates a fork of the current state of the main branch.
 	 * This new branch will be shared with and editable by all clients.
 	 */
-	createSharedBranch(): BranchId;
+	createSharedBranch(): string;
 
 	/**
 	 * Returns a view of the tree on the specified shared branch, using the provided schema.
 	 * See {@link ViewableTree.viewWith}.
 	 */
 	viewSharedBranchWith<TRoot extends ImplicitFieldSchema>(
-		branchId: BranchId,
+		branchId: string,
 		config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot>;
 }

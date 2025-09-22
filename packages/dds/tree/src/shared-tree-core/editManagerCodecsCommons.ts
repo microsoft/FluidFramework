@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import type { IJsonCodec, IMultiFormatCodec } from "../codec/index.js";
 import type {
@@ -100,6 +101,7 @@ export function encodeSharedBranch<TChangeset>(
 	>,
 	data: SharedBranchSummaryData<TChangeset>,
 	context: EditManagerEncodingContext,
+	originatorId: SessionId | undefined,
 ): EncodedSharedBranch<TChangeset> {
 	const json: Mutable<EncodedSharedBranch<TChangeset>> = {
 		trunk: data.trunk.map((commit) =>
@@ -141,6 +143,14 @@ export function encodeSharedBranch<TChangeset>(
 	if (data.author !== undefined) {
 		json.author = data.author;
 	}
+	if (data.base !== undefined) {
+		assert(originatorId !== undefined, "Cannot encode branch base without originatorId");
+		json.base = revisionTagCodec.encode(data.base, {
+			originatorId,
+			idCompressor: context.idCompressor,
+			revision: undefined,
+		});
+	}
 	return json;
 }
 
@@ -159,6 +169,7 @@ export function decodeSharedBranch<TChangeset>(
 	>,
 	json: EncodedSharedBranch<TChangeset>,
 	context: EditManagerEncodingContext,
+	originatorId: SessionId | undefined,
 ): SharedBranchSummaryData<TChangeset> {
 	// TODO: sort out EncodedCommit vs Commit, and make this type check without `any`.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -202,19 +213,24 @@ export function decodeSharedBranch<TChangeset>(
 	};
 	if (json.session !== undefined) {
 		data.session = json.session;
-		if (json.id !== undefined) {
-			data.id = decodeBranchId(context.idCompressor, json.id, {
-				originatorId: json.session,
-				idCompressor: context.idCompressor,
-				revision: undefined,
-			});
-		}
 	}
 	if (json.name !== undefined) {
 		data.name = json.name;
 	}
 	if (json.author !== undefined) {
 		data.author = json.author;
+	}
+	if (json.id !== undefined) {
+		assert(originatorId !== undefined, "Cannot decode branch id without originatorId");
+		data.id = decodeBranchId(context.idCompressor, json.id, { originatorId });
+	}
+	if (json.base !== undefined) {
+		assert(originatorId !== undefined, "Cannot decode branch base without originatorId");
+		data.base = revisionTagCodec.decode(json.base, {
+			originatorId,
+			idCompressor: context.idCompressor,
+			revision: undefined,
+		});
 	}
 	return data;
 }
