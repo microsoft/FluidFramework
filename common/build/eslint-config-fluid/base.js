@@ -41,7 +41,17 @@ module.exports = {
 	rules: {
 		// #region TODO: promote these rules to errors in 7.0.0
 
-		// (Also move into the alphabetized list below)
+		// (Also move into the alphabetized lists below)
+
+		/**
+		 * Disallow file path based links in JSDoc/TSDoc comments.
+		 */
+		"@fluid-internal/fluid/no-file-path-links-in-jsdoc": "warn",
+
+		/**
+		 * Disallow the use of Markdown-syntax links in JSDoc/TSDoc comments.
+		 */
+		"@fluid-internal/fluid/no-markdown-links-in-jsdoc": "warn",
 
 		/** See {@link https://typescript-eslint.io/rules/no-empty-object-type} */
 		"@typescript-eslint/no-empty-object-type": "warn",
@@ -55,20 +65,6 @@ module.exports = {
 		// #endregion
 
 		// Please keep entries alphabetized within a group
-
-		// #region TODO: Bump to error in next major version increment
-
-		/**
-		 * Disallow file path based links in JSDoc/TSDoc comments.
-		 */
-		"@fluid-internal/fluid/no-file-path-links-in-jsdoc": "warn",
-
-		/**
-		 * Disallow the use of Markdown-syntax links in JSDoc/TSDoc comments.
-		 */
-		"@fluid-internal/fluid/no-markdown-links-in-jsdoc": "warn",
-
-		// #endregion
 
 		// @typescript-eslint
 		"@typescript-eslint/adjacent-overload-signatures": "error",
