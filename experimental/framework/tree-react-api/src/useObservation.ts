@@ -17,7 +17,7 @@ interface Subscriptions {
 /**
  * Wrapper around subscriptions to give it an object identity which can be used with FinalizationRegistry.
  * @remarks
- * This indirection is need so inner can be provided to finalizationRegistry as the heldValue and avoid having that cause a leak.
+ * This indirection is needed so inner can be provided to finalizationRegistry as the heldValue and avoid having that cause a leak.
  * @privateRemarks
  * This is a named class to make looking for leaks of it in heap snapshots easier.
  */
@@ -33,7 +33,7 @@ class SubscriptionsWrapper {
 export interface ObservationOptions {
 	/**
 	 * Called when the tracked observations are invalidated.
-	 * This is not expected to have production use cases, but it useful for testing and debugging.
+	 * This is not expected to have production use cases, but is useful for testing and debugging.
 	 */
 	onInvalidation?: () => void;
 }

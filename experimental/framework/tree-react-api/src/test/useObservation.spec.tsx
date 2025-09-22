@@ -138,6 +138,7 @@ describe("useObservation", () => {
 /**
  * Assert that an array is empty.
  *
+ * @remarks
  * Not inlined because doing so causes TypeScript to infer the array type as never[] afterwards and breaks push.
  * Better than asserting length is 0 as this gets a better error message on failure.
  */
