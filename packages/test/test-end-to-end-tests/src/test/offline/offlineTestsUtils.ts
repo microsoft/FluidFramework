@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import { asAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
@@ -35,8 +35,9 @@ export const generatePendingState = async (
 	send: false | true | "afterReconnect",
 	cb: SharedObjCallback = () => undefined,
 ) => {
-	const container: IContainerExperimental =
-		await testObjectProvider.loadTestContainer(testContainerConfig);
+	const container: ContainerAlpha = asAlpha(
+		await testObjectProvider.loadTestContainer(testContainerConfig),
+	);
 	await waitForContainerConnection(container);
 	const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 
@@ -91,7 +92,7 @@ export async function loadContainerOffline(
 	testObjectProvider: ITestObjectProvider,
 	request: IRequest,
 	pendingLocalState?: string,
-): Promise<{ container: IContainerExperimental; connect: () => void }> {
+): Promise<{ container: ContainerAlpha; connect: () => void }> {
 	const p = new Deferred();
 	// This documentServiceFactory will wait for the promise p to resolve before connecting to the service
 	const documentServiceFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
@@ -123,10 +124,16 @@ export async function loadContainerOffline(
 		],
 		{ ...testContainerConfig.loaderProps, documentServiceFactory },
 	);
-	const container = await loader.resolve(
-		request,
-		pendingLocalState ??
-			(await generatePendingState(testContainerConfig, testObjectProvider, false /* send */)),
+	const container = asAlpha(
+		await loader.resolve(
+			request,
+			pendingLocalState ??
+				(await generatePendingState(
+					testContainerConfig,
+					testObjectProvider,
+					false /* send */,
+				)),
+		),
 	);
 	return { container, connect: () => p.resolve(undefined) };
 }

@@ -21,7 +21,8 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
-	IContainerExperimental,
+	asAlpha,
+	ContainerAlpha,
 	ILoaderProps,
 	Loader,
 	waitContainerToCatchUp,
@@ -346,8 +347,9 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			runtimeFactory,
 		);
 
-		const container: IContainerExperimental =
-			await localTestObjectProvider.makeTestContainer(testContainerConfig);
+		const container: ContainerAlpha = asAlpha(
+			await localTestObjectProvider.makeTestContainer(testContainerConfig),
+		);
 		const pendingString = await container.getPendingLocalState?.();
 		container.close();
 		assert.ok(pendingString);

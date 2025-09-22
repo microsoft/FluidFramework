@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import type { ContainerAlpha } from "@fluidframework/container-loader/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
@@ -109,7 +109,7 @@ describeCompat("Offline and Blobs", "NoCompat", (getTestObjectProvider, apis) =>
 	it.skip("Slow blob create request before container closes", async () => {
 		const container = (await provider.createContainer(runtimeFactory, {
 			configProvider,
-		})) as IContainerExperimental;
+		})) as ContainerAlpha;
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 
 		await provider.ensureSynchronized();

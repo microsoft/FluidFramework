@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import type { ContainerAlpha } from "@fluidframework/container-loader/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -118,7 +118,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		// Load basic container stuff
 		const container = (await provider.createContainer(runtimeFactory, {
 			configProvider,
-		})) as IContainerExperimental;
+		})) as ContainerAlpha;
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 		const containerRuntime = mainObject.containerRuntime;
 
@@ -221,7 +221,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 			runtimeFactory,
 			{ configProvider },
 			{ [LoaderHeader.version]: summaryVersion },
-		)) as IContainerExperimental;
+		)) as ContainerAlpha;
 		await provider.ensureSynchronized();
 		const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
 		const handleA2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
@@ -275,7 +275,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		// Load basic container stuff
 		const container = (await provider.createContainer(runtimeFactory, {
 			configProvider,
-		})) as IContainerExperimental;
+		})) as ContainerAlpha;
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 		const containerRuntime = mainObject.containerRuntime;
 
@@ -317,7 +317,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 			runtimeFactory,
 			{ configProvider },
 			{ [LoaderHeader.version]: summaryVersion },
-		)) as IContainerExperimental;
+		)) as ContainerAlpha;
 		await provider.ensureSynchronized();
 		const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
 		const handleA2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");

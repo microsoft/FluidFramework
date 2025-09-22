@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, type ITestDataObject } from "@fluid-private/test-version-utils";
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import type { ContainerAlpha } from "@fluidframework/container-loader/internal";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
 	type ITestObjectProvider,
@@ -45,7 +45,7 @@ describeCompat(
 		it("Can create loadingGroupId", async () => {
 			const container = (await provider.makeTestContainer(
 				testContainerConfig,
-			)) as IContainerExperimental;
+			)) as ContainerAlpha;
 			const mainObject = (await container.getEntryPoint()) as ITestDataObject;
 			mainObject._root.set("1", "1");
 			mainObject._root.set("2", "2");
@@ -67,7 +67,7 @@ describeCompat(
 				testContainerConfig,
 				undefined,
 				pendingState,
-			)) as IContainerExperimental;
+			)) as ContainerAlpha;
 
 			// Container2 to have the same initial sequence number as container as they loaded from the same base snapshot
 			assert(
