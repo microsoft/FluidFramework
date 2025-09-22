@@ -89,5 +89,5 @@ export {
 	type CommitStagedChangesOptionsExperimental,
 	type IContainerRuntimeBaseExperimental,
 	type StageControlsExperimental,
-	asAlpha,
+	asLegacyAlpha,
 } from "./stagingMode.js";

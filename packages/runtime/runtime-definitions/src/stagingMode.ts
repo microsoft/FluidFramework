@@ -122,6 +122,6 @@ export interface ContainerRuntimeBaseAlpha extends IContainerRuntimeBase {
  * @legacy @alpha
  * @sealed
  */
-export function asAlpha(base: IContainerRuntimeBase): ContainerRuntimeBaseAlpha {
+export function asLegacyAlpha(base: IContainerRuntimeBase): ContainerRuntimeBaseAlpha {
 	return base as ContainerRuntimeBaseAlpha;
 }

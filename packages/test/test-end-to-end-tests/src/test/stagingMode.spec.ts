@@ -10,7 +10,7 @@ import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
-	asAlpha,
+	asLegacyAlpha,
 	type IFluidDataStoreChannel,
 	type IFluidDataStoreContext,
 	type IFluidDataStorePolicies,
@@ -74,7 +74,7 @@ describeCompat(
 			const { _context, _runtime, _root } =
 				await getContainerEntryPointBackCompat<ITestDataObject>(container);
 
-			const containerRuntime = asAlpha(_context.containerRuntime);
+			const containerRuntime = asLegacyAlpha(_context.containerRuntime);
 			return {
 				container,
 				containerRuntime,

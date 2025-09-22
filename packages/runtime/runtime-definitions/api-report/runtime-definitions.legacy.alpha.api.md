@@ -8,7 +8,7 @@
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
 // @alpha @sealed @legacy
-export function asAlpha(base: IContainerRuntimeBase): ContainerRuntimeBaseAlpha;
+export function asLegacyAlpha(base: IContainerRuntimeBase): ContainerRuntimeBaseAlpha;
 
 // @beta @legacy
 export interface AttributionInfo {
