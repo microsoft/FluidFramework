@@ -207,10 +207,11 @@ export async function loadExistingContainer(
 export async function loadSummarizerContainerAndMakeSummary(
 	loadExistingContainerProps: ILoadExistingContainerProps,
 ): Promise<{ success: true } | { success: false; error: Error }> {
+	const { logger, configProvider, request: originalRequest } = loadExistingContainerProps;
 	const loader = new Loader(loadExistingContainerProps);
-	const baseHeaders = loadExistingContainerProps.request.headers;
+	const baseHeaders = originalRequest.headers;
 	const request = {
-		...loadExistingContainerProps.request,
+		...originalRequest,
 		headers: {
 			...baseHeaders,
 			[LoaderHeader.cache]: false,
@@ -225,10 +226,10 @@ export async function loadSummarizerContainerAndMakeSummary(
 
 	const container = await loader.resolve(request);
 
-	loadExistingContainerProps.logger?.send({
+	logger?.send({
 		category: "generic",
 		eventName: "summarizerContainer_created",
-		requestUrl: loadExistingContainerProps.request.url,
+		requestUrl: originalRequest.url,
 	});
 
 	let success = false;
@@ -258,10 +259,9 @@ export async function loadSummarizerContainerAndMakeSummary(
 		}
 		// Host controlled feature gate for fullTree
 		// Default value will be false
-		const raw: ConfigTypes | undefined =
-			loadExistingContainerProps.configProvider?.getRawConfig?.(
-				"Fluid.Summarizer.FullTree.OnDemand",
-			);
+		const raw: ConfigTypes | undefined = configProvider?.getRawConfig?.(
+			"Fluid.Summarizer.FullTree.OnDemand",
+		);
 		const fullTreeGate = typeof raw === "boolean" ? raw : false;
 
 		await summarizer.summarizeOnDemand({
@@ -276,10 +276,10 @@ export async function loadSummarizerContainerAndMakeSummary(
 		return { success: false, error: caughtError };
 	} finally {
 		container.dispose();
-		loadExistingContainerProps.logger?.send({
+		logger?.send({
 			category: "generic",
 			eventName: "summarizerContainer_closed",
-			requestUrl: loadExistingContainerProps.request.url,
+			requestUrl: originalRequest.url,
 			success,
 			error: success ? undefined : caughtError?.message,
 		});
