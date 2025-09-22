@@ -24,7 +24,11 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
-import { GenericError, normalizeError } from "@fluidframework/telemetry-utils/internal";
+import {
+	GenericError,
+	normalizeError,
+	type IFluidErrorBase,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { Loader } from "./loader.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
@@ -228,7 +232,7 @@ export async function loadSummarizerContainerAndMakeSummary(
 	});
 
 	let success = false;
-	let caughtError: Error | undefined;
+	let caughtError: IFluidErrorBase | undefined;
 	try {
 		if (container.connectionState !== ConnectionState.Connected) {
 			await new Promise<void>((resolve) => container.once("connected", () => resolve()));
