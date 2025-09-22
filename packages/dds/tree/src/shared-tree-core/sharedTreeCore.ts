@@ -98,8 +98,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		MessageEncodingContext
 	>;
 
-	private readonly resubmitMachine: ResubmitMachine<TChange>;
-	public readonly commitEnricher: BranchCommitEnricher<TChange>;
+	private readonly enrichers: Map<BranchId, EnricherState<TChange>> = new Map();
 
 	public readonly mintRevisionTag: () => RevisionTag;
 
@@ -120,7 +119,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		public readonly submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		logger: ITelemetryBaseLogger | undefined,
 		summarizables: readonly Summarizable[],
-		changeFamily: ChangeFamily<TEditor, TChange>,
+		protected readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		options: ICodecOptions,
 		formatOptions: ExplicitCoreCodecVersions,
 		protected readonly idCompressor: IIdCompressor,
@@ -184,15 +183,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			formatOptions.message,
 		);
 
-		const changeEnricher = enricher ?? new NoOpChangeEnricher();
-		this.resubmitMachine =
-			resubmitMachine ??
-			new DefaultResubmitMachine(
-				(change: TaggedChange<TChange>) =>
-					changeFamily.rebaser.invert(change, true, this.mintRevisionTag()),
-				changeEnricher,
-			);
-		this.commitEnricher = new BranchCommitEnricher(changeFamily.rebaser, changeEnricher);
+		this.registerSharedBranchForEditing(
+			"main",
+			enricher ?? new NoOpChangeEnricher(),
+			resubmitMachine,
+		);
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -264,11 +259,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 	private registerSharedBranch(branchId: BranchId): void {
 		this.editManager.getLocalBranch(branchId).events.on("beforeChange", (change) => {
-			if (this.detachedRevision === undefined) {
-				// Commit enrichment is only necessary for changes that will be submitted as ops, and changes issued while detached are not submitted.
-				this.commitEnricher.processChange(change);
-			}
 			if (change.type === "append") {
+				if (this.detachedRevision === undefined) {
+					// Commit enrichment is only necessary for changes that will be submitted as ops, and changes issued while detached are not submitted.
+					this.getCommitEnricher(branchId).processChange(change);
+				}
+
 				for (const commit of change.newCommits) {
 					this.submitCommit(branchId, commit, this.schemaAndPolicy, false);
 				}
@@ -303,9 +299,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			0x95a /* Detached revision should only be set when not attached */,
 		);
 
+		// XXX: Get commit enricher for the right branch
 		const enrichedCommit =
 			this.detachedRevision === undefined && !isResubmit
-				? this.commitEnricher.enrich(commit)
+				? this.getCommitEnricher(branchId).enrich(commit)
 				: commit;
 
 		// Edits submitted before the first attach are treated as sequenced because they will be included
@@ -334,7 +331,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			schemaAndPolicy,
 		);
 
-		this.resubmitMachine.onCommitSubmitted(enrichedCommit);
+		this.getResubmitMachine(branchId).onCommitSubmitted(enrichedCommit);
 	}
 
 	protected submitBranchCreation(branchId: BranchId): void {
@@ -451,8 +448,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 		// Update the resubmit machine for each commit applied.
 		for (const _ of commits) {
-			// XXX: Review
-			this.resubmitMachine.onSequencedCommitApplied(isLocal);
+			this.tryGetResubmitMachine(branchId)?.onSequencedCommitApplied(isLocal);
 		}
 	}
 
@@ -494,24 +490,24 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 					branchId,
 				} = message;
 
+				const resubmitMachine = this.getResubmitMachine(branchId);
 				// If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
-				if (this.resubmitMachine.isInResubmitPhase === false) {
-					// XXX: Review
+				if (resubmitMachine.isInResubmitPhase === false) {
 					const localCommits = this.editManager.getLocalCommits();
 					const revisionIndex = localCommits.findIndex((c) => c.revision === revision);
 					assert(revisionIndex >= 0, 0xbdb /* revision must exist in local commits */);
 					const toResubmit = localCommits.slice(revisionIndex);
-					this.resubmitMachine.prepareForResubmit(toResubmit);
+					resubmitMachine.prepareForResubmit(toResubmit);
 				}
 				assert(
 					isClonableSchemaPolicy(localOpMetadata),
 					0x95e /* Local metadata must contain schema and policy. */,
 				);
 				assert(
-					this.resubmitMachine.isInResubmitPhase !== false,
+					resubmitMachine.isInResubmitPhase !== false,
 					0x984 /* Invalid resubmit outside of resubmit phase */,
 				);
-				const enrichedCommit = this.resubmitMachine.peekNextCommit();
+				const enrichedCommit = resubmitMachine.peekNextCommit();
 				this.submitCommit(branchId, enrichedCommit, localOpMetadata, true);
 				break;
 			}
@@ -542,7 +538,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				assert(head.revision === revision, "Can only rollback latest commit");
 				const newHead = head.parent ?? fail("must have parent");
 				branch.removeAfter(newHead);
-				this.resubmitMachine.onCommitRollback(head);
+				this.getResubmitMachine(branchId).onCommitRollback(head);
 				break;
 			}
 			case "branch": {
@@ -578,6 +574,54 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				unreachableCase(type);
 		}
 	}
+
+	protected registerSharedBranchForEditing(
+		branchId: BranchId,
+		enricher: ChangeEnricherReadonlyCheckout<TChange>,
+		resubmitMachine?: ResubmitMachine<TChange>,
+	): void {
+		const changeEnricher = enricher ?? new NoOpChangeEnricher();
+		const commitEnricher = new BranchCommitEnricher(this.changeFamily.rebaser, changeEnricher);
+		assert(!this.enrichers.has(branchId), "Branch already registered");
+		this.enrichers.set(branchId, {
+			enricher: commitEnricher,
+			resubmitMachine:
+				resubmitMachine ??
+				new DefaultResubmitMachine(
+					(change: TaggedChange<TChange>) =>
+						this.changeFamily.rebaser.invert(change, true, this.mintRevisionTag()),
+					changeEnricher,
+				),
+		});
+	}
+
+	private getResubmitMachine(branchId: BranchId): ResubmitMachine<TChange> {
+		return this.getEnricherState(branchId).resubmitMachine;
+	}
+
+	private tryGetResubmitMachine(branchId: BranchId): ResubmitMachine<TChange> | undefined {
+		return this.tryGetEnricherState(branchId)?.resubmitMachine;
+	}
+
+	public getCommitEnricher(branchId: BranchId): BranchCommitEnricher<TChange> {
+		return this.getEnricherState(branchId).enricher;
+	}
+
+	private getEnricherState(branchId: BranchId): EnricherState<TChange> {
+		return (
+			this.tryGetEnricherState(branchId) ??
+			fail("Expected to have a resubmit machine for this branch")
+		);
+	}
+
+	private tryGetEnricherState(branchId: BranchId): EnricherState<TChange> | undefined {
+		return this.enrichers.get(branchId);
+	}
+}
+
+interface EnricherState<TChange> {
+	readonly enricher: BranchCommitEnricher<TChange>;
+	readonly resubmitMachine: ResubmitMachine<TChange>;
 }
 
 function isClonableSchemaPolicy(

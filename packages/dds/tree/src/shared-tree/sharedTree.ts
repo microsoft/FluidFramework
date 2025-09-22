@@ -66,7 +66,6 @@ import {
 	type ClonableSchemaAndPolicy,
 	DefaultResubmitMachine,
 	type ExplicitCoreCodecVersions,
-	type SharedTreeBranch,
 	SharedTreeCore,
 } from "../shared-tree-core/index.js";
 import {
@@ -325,6 +324,7 @@ export class SharedTreeKernel
 			idCompressor,
 			schema,
 			defaultSchemaPolicy,
+			// XXX: SharedTreeCore would construct the same resubmit machine if we passed undefined.
 			new DefaultResubmitMachine(
 				(change: TaggedChange<SharedTreeChange>) =>
 					changeFamily.rebaser.invert(change, true, this.mintRevisionTag()),
@@ -346,7 +346,7 @@ export class SharedTreeKernel
 			disposeForksAfterTransaction: options.disposeForksAfterTransaction,
 		});
 
-		this.registerCheckout(this.checkout);
+		this.registerCheckout("main", this.checkout);
 
 		this.view = {
 			contentSnapshot: () => this.contentSnapshot(),
@@ -359,30 +359,31 @@ export class SharedTreeKernel
 		};
 	}
 
-	private registerCheckout(checkout: TreeCheckout): void {
+	private registerCheckout(branchId: BranchId, checkout: TreeCheckout): void {
+		const enricher = this.getCommitEnricher(branchId);
 		checkout.transaction.events.on("started", () => {
 			if (this.sharedObject.isAttached()) {
 				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
-				this.commitEnricher.startTransaction();
+				enricher.startTransaction();
 			}
 		});
 
 		checkout.transaction.events.on("aborting", () => {
 			if (this.sharedObject.isAttached()) {
 				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
-				this.commitEnricher.abortTransaction();
+				enricher.abortTransaction();
 			}
 		});
 		checkout.transaction.events.on("committing", () => {
 			if (this.sharedObject.isAttached()) {
 				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
-				this.commitEnricher.commitTransaction();
+				enricher.commitTransaction();
 			}
 		});
 		checkout.events.on("beforeBatch", (event) => {
 			if (event.type === "append" && this.sharedObject.isAttached()) {
 				if (this.checkout.transaction.isInProgress()) {
-					this.commitEnricher.addTransactionCommits(event.newCommits);
+					enricher.addTransactionCommits(event.newCommits);
 				}
 			}
 		});
@@ -437,17 +438,22 @@ export class SharedTreeKernel
 		branchId: BranchId,
 		config: TreeViewConfiguration<ReadSchema<TRoot>>,
 	): SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>> {
-		return this.checkoutBranch(this.getSharedBranch(branchId)).viewWith(
+		return this.checkoutBranch(branchId).viewWith(
 			config,
 		) as SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>>;
 	}
 
-	private checkoutBranch(
-		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
-	): TreeCheckout {
+	private checkoutBranch(branchId: BranchId): TreeCheckout {
 		const checkout = this.checkout.branch();
-		this.registerCheckout(checkout);
-		checkout.switchBranch(branch);
+		checkout.switchBranch(this.getSharedBranch(branchId));
+		const enricher = new SharedTreeReadonlyChangeEnricher(
+			checkout.forest,
+			checkout.storedSchema,
+			checkout.removedRoots,
+		);
+
+		this.registerSharedBranchForEditing(branchId, enricher);
+		this.registerCheckout(branchId, checkout);
 		return checkout;
 	}
 
