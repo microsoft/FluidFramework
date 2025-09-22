@@ -48,8 +48,8 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		const props = await buildLoadProps();
 		const result = await loadSummarizerContainerAndMakeSummary(props);
 		assert(result.success, "expected summarization success");
-		const created = logger.events.filter((e) => e.eventName === "summarizerContainer_created");
-		const closed = logger.events.filter((e) => e.eventName === "summarizerContainer_closed");
+		const created = logger.events.filter((e) => e.eventName === "fluid:telemetry:SummarizerOnDemand:summarizerContainer_created");
+		const closed = logger.events.filter((e) => e.eventName === "fluid:telemetry:SummarizerOnDemand:summarizerContainer_closed");
 		assert.strictEqual(created.length, 1, "created telemetry missing");
 		assert.strictEqual(closed.length, 1, "closed telemetry missing");
 		assert.strictEqual(closed[0].success, true, "closed event should indicate success");
@@ -67,7 +67,7 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 			configProvider,
 		});
 		assert(result.success, "expected summarization success with gate");
-		const closed = logger.events.filter((e) => e.eventName === "summarizerContainer_closed");
+		const closed = logger.events.filter((e) => e.eventName === "fluid:telemetry:SummarizerOnDemand:summarizerContainer_closed");
 		assert.strictEqual(closed.length, 1, "closed telemetry missing (gate)");
 		assert.strictEqual(closed[0].success, true, "closed event should indicate success (gate)");
 	});
