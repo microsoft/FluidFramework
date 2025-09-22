@@ -291,7 +291,7 @@ export class OdspDocumentServiceFactoryCore
 				{
 					resolvedUrl: odspResolvedUrl,
 					docId: odspResolvedUrl.hashedDocumentId,
-					fileVersion: undefined,
+					fileVersion: odspResolvedUrl.fileVersion,
 				},
 				extLogger,
 				clientIsSummarizer,
