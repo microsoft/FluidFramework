@@ -36,6 +36,21 @@ module.exports = {
 	plugins: ["import", "unicorn"],
 	reportUnusedDisableDirectives: true,
 	rules: {
+		// #region TODO: promote these rules to errors in 7.0.0
+
+		// (Also move into the alphabetized list below)
+
+		/** See {@link https://typescript-eslint.io/rules/no-empty-object-type} */
+		"@typescript-eslint/no-empty-object-type": "warn",
+
+		/** See {@link https://typescript-eslint.io/rules/no-unsafe-function-type} */
+		"@typescript-eslint/no-unsafe-function-type": "warn",
+
+		/** See {@link https://typescript-eslint.io/rules/no-wrapper-object-types/} */
+		"@typescript-eslint/no-wrapper-object-types": "warn",
+
+		// #endregion
+
 		// Please keep entries alphabetized within a group
 
 		// @typescript-eslint
