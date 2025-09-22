@@ -36,7 +36,7 @@ export const MainView: React.FC<{ root: PropTreeNode<Inventory> }> = ({ root }) 
 /**
  * View which consumes part of a tree, delegating some to sub-components.
  *
- * This demonstrates how arrays can be handled efficiently and easily.
+ * @remarks This demonstrates how arrays can be handled efficiently and easily.
  */
 const InventoryView: React.FC<{ root: PropTreeNode<Inventory> }> =
 	withMemoizedTreeObservations(({ root }: { root: Inventory }) => {
