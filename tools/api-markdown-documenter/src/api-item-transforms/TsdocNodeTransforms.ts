@@ -34,8 +34,8 @@ import type {
 
 import type { LoggingConfiguration } from "../LoggingConfiguration.js";
 
-import { resolveSymbolicLink } from "./Utilities.js";
 import type { ApiItemTransformationConfiguration } from "./configuration/index.js";
+import { resolveSymbolicLink } from "./utilities/index.js";
 
 /**
  * Library of transformations from {@link https://github.com/microsoft/tsdoc/blob/main/tsdoc/src/nodes/DocNode.ts| DocNode}s

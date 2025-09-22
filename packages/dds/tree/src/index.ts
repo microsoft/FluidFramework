@@ -145,6 +145,9 @@ export {
 	type IdentifierIndex,
 	createSimpleTreeIndex,
 	createIdentifierIndex,
+	type DirtyTreeStatus,
+	trackDirtyNodes,
+	type DirtyTreeMap,
 	// experimental @alpha APIs:
 	adaptEnum,
 	enumFromStrings,
@@ -267,6 +270,7 @@ export {
 	type TreeRecordNode,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
+	type SchemaFactory_base,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

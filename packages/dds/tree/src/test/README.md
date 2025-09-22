@@ -25,6 +25,17 @@ Note that the fact that this approach is always possible does not make it the be
 
 Any other kinds of test files should be documented when created by adding them to this list.
 
+## Test Tagging
+
+Tests can be [tagged](https://mochajs.org/next/explainers/tagging/).
+
+This currently has a few uses:
+
+- The `@fluid-tools/benchmark` uses tags to identify its benchmarks.
+- `@Smoke` is used to identify a small number of cheap to run tests which can be included in [smoke tests](https://en.wikipedia.org/wiki/Smoke_testing_(software)) and run when its not worth running all the tests.
+Currently this is applied to the CJS tests to ensure that the CJS build functions at all while avoiding running the full mostly redundant suite for it.
+This may be applied to other configuration in the future.
+
 ## Document Status
 
 This is written aspirationalally: much of our current test suite only roughly approximates the patterns described above.

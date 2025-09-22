@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	TreeNodeSchema,
-	TreeNode,
 	TreeArrayNode,
 	TreeFieldFromImplicitField,
+	TreeMapNode,
 } from "@fluidframework/tree";
+import { TreeNode } from "@fluidframework/tree";
 import { Tree, NodeKind } from "@fluidframework/tree/internal";
 
 /**
@@ -25,22 +26,37 @@ export class IdGenerator {
 		return this.nodeToIdMap.get(node);
 	}
 
+	// Assigns IDs to all node types except arrays and primitives
 	public assignIds<T extends TreeFieldFromImplicitField>(node: T): T {
-		if (typeof node === "object" && node !== null) {
-			const schema = Tree.schema(node as unknown as TreeNode);
-			if (schema.kind === NodeKind.Array) {
-				for (const element of node as unknown as TreeArrayNode) {
-					this.assignIds(element);
+		if (node instanceof TreeNode) {
+			const schema = Tree.schema(node);
+			switch (schema.kind) {
+				case NodeKind.Array: {
+					for (const element of node as unknown as TreeArrayNode) {
+						this.assignIds(element);
+					}
+					break;
 				}
-			} else {
-				// TODO: SharedTree Team needs to either publish TreeNode as a class to use .instanceof() or a typeguard.
-				// Uncomment this assertion back once we have a typeguard ready.
-				// assert(isTreeNode(node), "Non-TreeNode value in tree.");
-				this.getOrCreateId(node as TreeNode);
-				for (const key of Object.keys(node)) {
-					// biome-ignore lint/suspicious/noExplicitAny: Any
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.assignIds((node as Record<string, any>)[key]);
+				case NodeKind.Map: {
+					this.getOrCreateId(node);
+					for (const value of (node as TreeMapNode).values()) {
+						this.assignIds(value);
+					}
+					break;
+				}
+				case NodeKind.Object:
+				case NodeKind.Record: {
+					this.getOrCreateId(node);
+					for (const value of Object.values(node)) {
+						this.assignIds(value);
+					}
+					break;
+				}
+				case NodeKind.Leaf: {
+					break;
+				}
+				default: {
+					return unreachableCase(schema.kind, "Unexpected node kind");
 				}
 			}
 		}

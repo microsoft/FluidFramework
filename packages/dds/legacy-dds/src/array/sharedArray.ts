@@ -444,9 +444,35 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				this.emitValueChangedEvent(moveOp, true /* isLocal */);
 				break;
 			}
-			case OperationType.toggle:
+			case OperationType.toggle: {
+				const entryId = arrayOp.entryId;
+				const liveEntry = this.getLiveEntry(entryId);
+				const isDeleted = liveEntry.isDeleted;
+
+				// Toggling the isDeleted flag to undo the last operation for the skip list payload/value
+				liveEntry.isDeleted = !isDeleted;
+				liveEntry.isLocalPendingDelete -= 1;
+
+				const toggleOp: IToggleOperation = {
+					type: OperationType.toggle,
+					entryId,
+					isDeleted: liveEntry.isDeleted,
+				};
+				this.emitValueChangedEvent(toggleOp, true /* isLocal */);
+				break;
+			}
 			case OperationType.toggleMove: {
-				throw new Error(`Rollback not implemented for ${arrayOp.type} operations`);
+				const { entryId: oldEntryId, changedToEntryId: newEntryId } = arrayOp;
+				this.getEntryForId(oldEntryId).isLocalPendingMove -= 1;
+				this.updateLiveEntry(oldEntryId, newEntryId);
+
+				const toggleMoveOp: IToggleMoveOperation = {
+					type: OperationType.toggleMove,
+					entryId: newEntryId,
+					changedToEntryId: oldEntryId,
+				};
+				this.emitValueChangedEvent(toggleMoveOp, true /* isLocal */);
+				break;
 			}
 			default: {
 				unreachableCase(arrayOp);
@@ -676,7 +702,8 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			}
 		} else if (
 			!this.isLocalPending(op.entryId, "isLocalPendingDelete") &&
-			!this.isLocalPending(op.entryId, "isLocalPendingMove")
+			!this.isLocalPending(op.entryId, "isLocalPendingMove") &&
+			this.getLiveEntry(op.entryId).isDeleted === false
 		) {
 			this.updateLiveEntry(this.getLiveEntry(op.entryId).entryId, op.entryId);
 		}
@@ -967,7 +994,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 						newElement.isDeleted = isDeleted;
 					}
 				}
-				newElement.isLocalPendingMove += 1;
+				opEntry.isLocalPendingMove += 1;
 				break;
 			}
 			case OperationType.toggle: {
