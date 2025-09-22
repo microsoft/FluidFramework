@@ -7,6 +7,9 @@
 // @beta @legacy
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
+// @alpha @sealed @legacy
+export function asAlpha(base: IContainerRuntimeBase): ContainerRuntimeBaseAlpha;
+
 // @beta @legacy
 export interface AttributionInfo {
     timestamp: number;

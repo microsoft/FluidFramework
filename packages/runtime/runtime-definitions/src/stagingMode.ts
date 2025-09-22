@@ -116,3 +116,12 @@ export interface ContainerRuntimeBaseAlpha extends IContainerRuntimeBase {
 	 */
 	readonly inStagingMode: boolean;
 }
+
+/**
+ * Converts types to their alpha counterparts to expose alpha functionality.
+ * @legacy @alpha
+ * @sealed
+ */
+export function asAlpha(base: IContainerRuntimeBase): ContainerRuntimeBaseAlpha {
+	return base as ContainerRuntimeBaseAlpha;
+}

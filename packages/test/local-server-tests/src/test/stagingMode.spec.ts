@@ -28,9 +28,9 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map/internal";
-import type {
-	ContainerRuntimeBaseAlpha,
-	StageControlsExperimental,
+import {
+	asAlpha,
+	type StageControlsExperimental,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	encodeHandleForSerialization,
@@ -58,8 +58,7 @@ class DataObjectWithStagingMode extends DataObject {
 			? -1
 			: DataObjectWithStagingMode.instanceCount++;
 
-	private readonly containerRuntimeExp = this.context
-		.containerRuntime as ContainerRuntimeBaseAlpha;
+	private readonly containerRuntimeExp = asAlpha(this.context.containerRuntime);
 	get DataObjectWithStagingMode() {
 		return this;
 	}

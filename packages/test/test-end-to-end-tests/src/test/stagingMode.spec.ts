@@ -9,11 +9,11 @@ import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-
 import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
-import type {
-	ContainerRuntimeBaseAlpha,
-	IFluidDataStoreChannel,
-	IFluidDataStoreContext,
-	IFluidDataStorePolicies,
+import {
+	asAlpha,
+	type IFluidDataStoreChannel,
+	type IFluidDataStoreContext,
+	type IFluidDataStorePolicies,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getContainerEntryPointBackCompat,
@@ -74,7 +74,7 @@ describeCompat(
 			const { _context, _runtime, _root } =
 				await getContainerEntryPointBackCompat<ITestDataObject>(container);
 
-			const containerRuntime = _context.containerRuntime as ContainerRuntimeBaseAlpha;
+			const containerRuntime = asAlpha(_context.containerRuntime);
 			return {
 				container,
 				containerRuntime,
