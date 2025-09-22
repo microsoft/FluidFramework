@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import { asAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
+import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
@@ -35,7 +35,7 @@ export const generatePendingState = async (
 	send: false | true | "afterReconnect",
 	cb: SharedObjCallback = () => undefined,
 ) => {
-	const container: ContainerAlpha = asAlpha(
+	const container: ContainerAlpha = asLegacyAlpha(
 		await testObjectProvider.loadTestContainer(testContainerConfig),
 	);
 	await waitForContainerConnection(container);
@@ -124,7 +124,7 @@ export async function loadContainerOffline(
 		],
 		{ ...testContainerConfig.loaderProps, documentServiceFactory },
 	);
-	const container = asAlpha(
+	const container = asLegacyAlpha(
 		await loader.resolve(
 			request,
 			pendingLocalState ??

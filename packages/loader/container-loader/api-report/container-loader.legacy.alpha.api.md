@@ -5,7 +5,7 @@
 ```ts
 
 // @alpha @sealed @legacy
-export function asAlpha(base: IContainer): ContainerAlpha;
+export function asLegacyAlpha(base: IContainer): ContainerAlpha;
 
 // @public
 export enum ConnectionState {

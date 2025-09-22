@@ -37,7 +37,7 @@ import {
 	type IFluidCodeDetails,
 } from "@fluidframework/container-definitions/internal";
 import {
-	asAlpha,
+	asLegacyAlpha,
 	ConnectionState,
 	createDetachedContainer,
 	loadExistingContainer,
@@ -765,7 +765,7 @@ async function createDetachedClient(
 	seed: number,
 	options: LocalServerStressOptions,
 ): Promise<Client> {
-	const container = asAlpha(
+	const container = asLegacyAlpha(
 		await createDetachedContainer({
 			codeLoader,
 			documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
@@ -799,7 +799,7 @@ async function loadClient(
 	options: LocalServerStressOptions,
 	pendingLocalState?: string,
 ): Promise<Client> {
-	const container = asAlpha(
+	const container = asLegacyAlpha(
 		await timeoutAwait(
 			loadExistingContainer({
 				documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),

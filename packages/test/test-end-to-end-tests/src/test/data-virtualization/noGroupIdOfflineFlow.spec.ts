@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { asAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
+import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -74,7 +74,7 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 	});
 
 	it("Can create loadingGroupId", async () => {
-		const container: ContainerAlpha = asAlpha(
+		const container: ContainerAlpha = asLegacyAlpha(
 			await provider.createContainer(runtimeFactory, {
 				configProvider,
 			}),

@@ -12,7 +12,7 @@ import {
 	type IFluidCodeDetails,
 	type IHostLoader,
 } from '@fluidframework/container-definitions/internal';
-import { asAlpha, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
+import { asLegacyAlpha, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
 import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime/internal';
 import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -696,7 +696,7 @@ export async function withContainerOffline<TReturn>(
 	await provider.ensureSynchronized();
 	await provider.opProcessingController.pauseProcessing(container);
 	const actionReturn = action();
-	const pendingLocalState = await asAlpha(container).getPendingLocalState();
+	const pendingLocalState = await asLegacyAlpha(container).getPendingLocalState();
 	container.close();
 	assert(pendingLocalState !== undefined, 0x726 /* pendingLocalState should be defined */);
 	return { actionReturn, pendingLocalState };

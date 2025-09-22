@@ -2575,6 +2575,6 @@ export interface ContainerAlpha extends IContainer {
  * @legacy @alpha
  * @sealed
  */
-export function asAlpha(base: IContainer): ContainerAlpha {
+export function asLegacyAlpha(base: IContainer): ContainerAlpha {
 	return base as ContainerAlpha;
 }

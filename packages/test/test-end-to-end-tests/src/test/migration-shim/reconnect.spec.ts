@@ -18,7 +18,7 @@ import {
 } from "@fluid-experimental/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { asAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
+import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type ConfigTypes, type IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions/internal";
@@ -276,7 +276,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("MigrationShim can apply stashed v1 ops to v1 state", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
-		const container1: ContainerAlpha = asAlpha(
+		const container1: ContainerAlpha = asLegacyAlpha(
 			await provider.loadContainer(runtimeFactory2, loaderProps),
 		);
 		const url = await container1.getAbsoluteUrl("");
@@ -310,7 +310,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("MigrationShim can apply stashed v2 ops to v2 state", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
-		const container1: ContainerAlpha = asAlpha(
+		const container1: ContainerAlpha = asLegacyAlpha(
 			await provider.loadContainer(runtimeFactory2, loaderProps),
 		);
 		const url = await container1.getAbsoluteUrl("");
@@ -372,7 +372,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 		await provider.ensureSynchronized();
 		const { summaryVersion } = await summarizeNow(summarizer);
-		const container2: ContainerAlpha = asAlpha(
+		const container2: ContainerAlpha = asLegacyAlpha(
 			await provider.loadContainer(runtimeFactory2, loaderProps, {
 				[LoaderHeader.version]: summaryVersion,
 			}),
@@ -410,7 +410,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("Shims drop stashed v1 ops to v2 state", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
-		const container1: ContainerAlpha = asAlpha(
+		const container1: ContainerAlpha = asLegacyAlpha(
 			await provider.loadContainer(runtimeFactory2, loaderProps),
 		);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
@@ -478,7 +478,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("MigrationShim apply stashed v1 migrate ops in v1 state", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
-		const container1: ContainerAlpha = asAlpha(
+		const container1: ContainerAlpha = asLegacyAlpha(
 			await provider.loadContainer(runtimeFactory2, loaderProps),
 		);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;

@@ -15,7 +15,7 @@ import {
 	type ILoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { asAlpha, ContainerAlpha } from "@fluidframework/container-loader/internal";
+import { asLegacyAlpha, ContainerAlpha } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
 	DefaultSummaryConfiguration,
@@ -217,7 +217,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		loader = provider.makeTestLoader(testContainerConfig);
-		container1 = asAlpha(
+		container1 = asLegacyAlpha(
 			await createAndAttachContainer(
 				provider.defaultCodeDetails,
 				loader,
@@ -1317,7 +1317,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		"waits for previous container's leave message",
 		[{ eventName: "fluid:telemetry:Container:connectedStateRejected" }],
 		async () => {
-			const container: ContainerAlpha = asAlpha(
+			const container: ContainerAlpha = asLegacyAlpha(
 				await provider.loadTestContainer(testContainerConfig),
 			);
 			const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
@@ -1518,7 +1518,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				},
 			);
 
-			const container2: ContainerAlpha = asAlpha(await loader.resolve({ url }, pendingOps));
+			const container2: ContainerAlpha = asLegacyAlpha(
+				await loader.resolve({ url }, pendingOps),
+			);
 			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 			await waitForContainerConnection(container2);
@@ -1832,7 +1834,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("works for detached container", async function () {
 		const loader2 = provider.makeTestLoader(testContainerConfig);
-		const detachedContainer: ContainerAlpha = asAlpha(
+		const detachedContainer: ContainerAlpha = asLegacyAlpha(
 			await loader2.createDetachedContainer(provider.defaultCodeDetails),
 		);
 		const dataStore = (await detachedContainer.getEntryPoint()) as ITestFluidObject;
@@ -1864,7 +1866,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const summary = detachedContainer.serialize();
 		detachedContainer.close();
-		const rehydratedContainer: ContainerAlpha = asAlpha(
+		const rehydratedContainer: ContainerAlpha = asLegacyAlpha(
 			await loader2.rehydrateDetachedContainerFromSnapshot(summary),
 		);
 		const dataStore2 = (await rehydratedContainer.getEntryPoint()) as ITestFluidObject;
@@ -2342,7 +2344,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	it("handles stashed ops with reference sequence number of 0", async function () {
 		const provider2 = getTestObjectProvider();
 		const loader2 = provider2.makeTestLoader(testContainerConfig);
-		const container: ContainerAlpha = asAlpha(
+		const container: ContainerAlpha = asLegacyAlpha(
 			await createAndAttachContainer(
 				provider2.defaultCodeDetails,
 				loader2,

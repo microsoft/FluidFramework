@@ -15,7 +15,7 @@ import {
 	type IContainer,
 	type IHostLoader,
 } from "@fluidframework/container-definitions/internal";
-import { asAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
+import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import type {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -137,7 +137,7 @@ describeCompat(
 		async function initialize(initializeMap: (d: ITestFluidObject) => Promise<MinimalMap>) {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			loader = provider.makeTestLoader(mainContainerConfig);
-			container = asAlpha(
+			container = asLegacyAlpha(
 				await createAndAttachContainer(
 					provider.defaultCodeDetails,
 					loader,
@@ -257,7 +257,9 @@ describeCompat(
 					[LoaderHeader.loadMode]: { deltaConnection: "none" },
 					[LoaderHeader.version]: summaryVersion,
 				};
-				const container2: ContainerAlpha = asAlpha(await loader.resolve({ url, headers }));
+				const container2: ContainerAlpha = asLegacyAlpha(
+					await loader.resolve({ url, headers }),
+				);
 				const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 				const map2 = await getMap(dataStore2);
 				// generate ops with RSN === summary SN
