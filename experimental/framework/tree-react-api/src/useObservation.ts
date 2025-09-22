@@ -5,6 +5,9 @@
 
 import * as React from "react";
 
+/**
+ * Tracks and subscriptions from the latests render of a given instance of the {@link useObservation} hook.
+ */
 interface Subscriptions {
 	/**
 	 * If defined, still needs to be called at some point.
