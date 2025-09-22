@@ -123,7 +123,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
 		await waitForSummary(container);
-		const pendingOps = await container.getPendingLocalState?.();
+		const pendingOps = await container.getPendingLocalState();
 		container.close();
 		assert.ok(pendingOps);
 		// make sure we got stashed ops with seqnum === 0,
@@ -135,7 +135,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		await timeoutAwait(getLatestSnapshotInfoP.promise, {
 			errorMsg: "Timeout on waiting for getLatestSnapshotInfo",
 		});
-		const pendingOps2 = await container1.getPendingLocalState?.();
+		const pendingOps2 = await container1.getPendingLocalState();
 		container1.close();
 		const container2: ContainerAlpha = asLegacyAlpha(
 			await loader.resolve({ url }, pendingOps2),
@@ -202,7 +202,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		await timeoutAwait(getLatestSnapshotInfoP.promise, {
 			errorMsg: "Timeout on waiting for getLatestSnapshotInfo",
 		});
-		const pendingOps = await container.getPendingLocalState?.();
+		const pendingOps = await container.getPendingLocalState();
 		container.close();
 		assert.ok(pendingOps);
 
@@ -268,7 +268,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
 		// not waiting for summary to reuse the stashed snapshot for new loaded containers
-		const pendingOps = await container.getPendingLocalState?.();
+		const pendingOps = await container.getPendingLocalState();
 		container.close();
 		assert.ok(pendingOps);
 		// make sure we got stashed ops with seqnum === 0,
@@ -280,7 +280,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 		await timeoutAwait(getLatestSnapshotInfoP.promise, {
 			errorMsg: "Timeout on waiting for getLatestSnapshotInfo",
 		});
-		const pendingOps2 = await container1.getPendingLocalState?.();
+		const pendingOps2 = await container1.getPendingLocalState();
 		container1.close();
 		const container2: ContainerAlpha = asLegacyAlpha(
 			await loader.resolve({ url }, pendingOps2),

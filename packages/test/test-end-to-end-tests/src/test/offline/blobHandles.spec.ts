@@ -124,7 +124,7 @@ describeCompat("Offline and Blobs", "NoCompat", (getTestObjectProvider, apis) =>
 		// Start closing the container and get the pending local state before blob creation through the network completes
 		// TODO: This portion was using closeAndGetPendingLocalState - using getPendingLocalState instead to allow compilation
 		// const serializedStatePromise = container.closeAndGetPendingLocalState?.();
-		const serializedStatePromise = container.getPendingLocalState?.();
+		const serializedStatePromise = container.getPendingLocalState();
 		// wait for blob creation to finish first so that the handle op is created
 		await storeBlobHandlePromise;
 		// Let the rest of the close and get pending local state finish.

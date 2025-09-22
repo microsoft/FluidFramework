@@ -1790,7 +1790,7 @@ describe("SharedTree", () => {
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			pausedTree.root.insertAt(1, "b");
 			pausedTree.root.insertAt(2, "c");
-			const pendingOps = await pausedContainer.getPendingLocalState?.();
+			const pendingOps = await pausedContainer.getPendingLocalState();
 			pausedContainer.close();
 			provider.opProcessingController.resumeProcessing();
 
@@ -2103,7 +2103,7 @@ describe("SharedTree", () => {
 				}),
 			);
 			pausedView.initialize([]);
-			const pendingOps = await pausedContainer.getPendingLocalState?.();
+			const pendingOps = await pausedContainer.getPendingLocalState();
 			pausedContainer.close();
 			provider.opProcessingController.resumeProcessing();
 

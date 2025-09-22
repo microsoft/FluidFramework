@@ -264,7 +264,7 @@ describeCompat(
 				const map2 = await getMap(dataStore2);
 				// generate ops with RSN === summary SN
 				map2.set("2", "2");
-				const stashBlob = await container2.getPendingLocalState?.();
+				const stashBlob = await container2.getPendingLocalState();
 				container2.close();
 				assert(stashBlob);
 				const pendingState = JSON.parse(stashBlob);

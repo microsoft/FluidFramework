@@ -59,7 +59,7 @@ describeCompat(
 			mainObject._root.set("4", "4");
 
 			// Generate pending state
-			const pendingState = await container.getPendingLocalState?.();
+			const pendingState = await container.getPendingLocalState();
 			container.close();
 
 			// Load from the pending state

@@ -210,7 +210,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 				await provider.ensureSynchronized(container);
 			}
 
-			const pendingOps = await container1.getPendingLocalState?.();
+			const pendingOps = await container1.getPendingLocalState();
 			container1.close();
 			assert.ok(pendingOps);
 
@@ -272,7 +272,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 				groupIdDataObject2.root.set(`${j}`, j++);
 			}
 
-			const pendingOps2 = await container2.getPendingLocalState?.();
+			const pendingOps2 = await container2.getPendingLocalState();
 			container2.close();
 			// first container which loads from a snapshot with groupId
 			const container3: ContainerAlpha = asLegacyAlpha(
@@ -293,7 +293,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			map3.set(`${i}`, i++);
 			groupIdDataObject3.root.set(`${j}`, j++);
 
-			const pendingOps3 = await container3.getPendingLocalState?.();
+			const pendingOps3 = await container3.getPendingLocalState();
 			container3.close();
 			// container created just for validation.
 			const container4: ContainerAlpha = asLegacyAlpha(

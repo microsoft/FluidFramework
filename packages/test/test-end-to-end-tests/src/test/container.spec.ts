@@ -350,7 +350,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 		const container: ContainerAlpha = asLegacyAlpha(
 			await localTestObjectProvider.makeTestContainer(testContainerConfig),
 		);
-		const pendingString = await container.getPendingLocalState?.();
+		const pendingString = await container.getPendingLocalState();
 		container.close();
 		assert.ok(pendingString);
 		const pendingLocalState: { url?: string } = JSON.parse(pendingString);

@@ -57,17 +57,17 @@ export const generatePendingState = async (
 
 	let pendingState: string | undefined;
 	if (send === true) {
-		pendingState = await container.getPendingLocalState?.();
+		pendingState = await container.getPendingLocalState();
 		await testObjectProvider.ensureSynchronized(); // Note: This will resume processing to get synchronized
 		container.close();
 	} else if (send === "afterReconnect") {
-		pendingState = await container.getPendingLocalState?.();
+		pendingState = await container.getPendingLocalState();
 		container.disconnect();
 		container.connect();
 		await testObjectProvider.ensureSynchronized(); // Note: This will have a different clientId than in pendingState
 		container.close();
 	} else {
-		pendingState = await container.getPendingLocalState?.();
+		pendingState = await container.getPendingLocalState();
 		container.close();
 	}
 

@@ -1238,7 +1238,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				// of how small this window is.
 				if (JSON.stringify(op).includes("attach")) {
 					(container as any).processRemoteMessage = (message) => null;
-					const pendingStateP = container.getPendingLocalState?.();
+					const pendingStateP = container.getPendingLocalState();
 					container.close();
 					assert.ok(pendingStateP);
 					resolve(pendingStateP);
@@ -1282,7 +1282,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				if (op.clientId === container.clientId) {
 					// hacky; but we need to make sure we don't process further ops
 					(container as any).processRemoteMessage = (message) => null;
-					const pendingStateP = container.getPendingLocalState?.();
+					const pendingStateP = container.getPendingLocalState();
 					container.close();
 					assert.ok(pendingStateP);
 					resolve(pendingStateP);
@@ -1336,7 +1336,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 			[...Array(lots).keys()].map((i) => dataStore.root.set(`test op #${i}`, i));
 
-			const pendingState = await container.getPendingLocalState?.();
+			const pendingState = await container.getPendingLocalState();
 
 			const container2 = await loader.resolve({ url }, pendingState);
 
@@ -1462,7 +1462,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
 		// get stashed ops from this container without connecting.  Superset of pendingOps
-		const morePendingOps = await container2.getPendingLocalState?.();
+		const morePendingOps = await container2.getPendingLocalState();
 		container2.close();
 
 		const { container: container3, connect: connect3 } = await loadContainerOffline(
@@ -1549,7 +1549,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			assert(deltaManagerFull.outbound.paused);
 			[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
-			const morePendingOps = await container2.getPendingLocalState?.();
+			const morePendingOps = await container2.getPendingLocalState();
 			assert.ok(morePendingOps);
 
 			const container3 = await loader.resolve({ url }, morePendingOps);
@@ -1642,7 +1642,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const blobP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
 		// TODO: This portion was using closeAndGetPendingLocalState - using getPendingLocalState instead to allow compilation
 		// const pendingOpsP = container1.closeAndGetPendingLocalState?.();
-		const pendingOpsP = container1.getPendingLocalState?.();
+		const pendingOpsP = container1.getPendingLocalState();
 		const handle = await blobP;
 		map.set("blob handle", handle);
 		const pendingOps = await pendingOpsP;
@@ -1672,7 +1672,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const blobP3 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 3", "utf8"));
 		// TODO: This portion was using closeAndGetPendingLocalState - using getPendingLocalState instead to allow compilation
 		// const pendingOpsP = container1.closeAndGetPendingLocalState?.();
-		const pendingOpsP = container1.getPendingLocalState?.();
+		const pendingOpsP = container1.getPendingLocalState();
 		map.set("blob handle 1", await blobP1);
 		map.set("blob handle 2", await blobP2);
 		map.set("blob handle 3", await blobP3);
@@ -1703,7 +1703,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
 		// TODO: This portion was using closeAndGetPendingLocalState - using getPendingLocalState instead to allow compilation
 		// const stashedChangesP = container.container.closeAndGetPendingLocalState?.();
-		const stashedChangesP = container.container.getPendingLocalState?.();
+		const stashedChangesP = container.container.getPendingLocalState();
 		const handle = await handleP;
 		map.set("blob handle 1", handle);
 
@@ -1746,7 +1746,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
 		// TODO: This portion was using closeAndGetPendingLocalState - using getPendingLocalState instead to allow compilation
 		// const stashedChangesP = container.container.closeAndGetPendingLocalState?.();
-		const stashedChangesP = container.container.getPendingLocalState?.();
+		const stashedChangesP = container.container.getPendingLocalState();
 		const handle = await handleP;
 		map.set("blob handle 1", handle);
 
@@ -1844,7 +1844,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await detachedContainer.attach(
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		const pendingOps = await detachedContainer.getPendingLocalState?.();
+		const pendingOps = await detachedContainer.getPendingLocalState();
 		detachedContainer.close();
 
 		const url2 = await detachedContainer.getAbsoluteUrl("");
@@ -1876,7 +1876,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await rehydratedContainer.attach(
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		const pendingOps = await rehydratedContainer.getPendingLocalState?.();
+		const pendingOps = await rehydratedContainer.getPendingLocalState();
 		rehydratedContainer.close();
 
 		const url2 = await rehydratedContainer.getAbsoluteUrl("");
@@ -1907,7 +1907,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			pendingStateP = await new Promise<string>((resolve) => {
 				container.once("connected", (clientId: string) => resolve(clientId));
 			}).then(async (clientId: string) => {
-				pendingState = await container.getPendingLocalState?.();
+				pendingState = await container.getPendingLocalState();
 				assert(typeof pendingState === "string");
 
 				// the pending data in the stash blob may not have changed, but the clientId should match our new
@@ -1953,7 +1953,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			pendingStateP = await new Promise<string>((resolve) => {
 				container.once("connected", (clientId: string) => resolve(clientId));
 			}).then(async (clientId: string) => {
-				pendingState = await container.getPendingLocalState?.();
+				pendingState = await container.getPendingLocalState();
 				assert(typeof pendingState === "string");
 
 				// the pending data in the stash blob may not have changed, but the clientId should match our new
@@ -2360,7 +2360,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
-		const pendingOps = await container.getPendingLocalState?.();
+		const pendingOps = await container.getPendingLocalState();
 		container.close();
 		assert.ok(pendingOps);
 		// make sure we got stashed ops with refseqnum === 0, otherwise we are not testing the scenario we want to
