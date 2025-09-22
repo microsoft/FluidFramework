@@ -30,6 +30,29 @@ describe("useTree", () => {
 			cleanup();
 		});
 
+		it("withTreeObservations example", () => {
+			const builder = new SchemaFactory("example");
+			class Item extends builder.object("Item", { text: SchemaFactory.string }) {}
+			const ItemComponentBug = ({ item }: { item: Item }): JSX.Element => (
+				<span>{item.text}</span> // Reading `text`, a mutable value from a React prop, causes an invalidation bug.
+			);
+
+			const ItemComponent = withTreeObservations(
+				({ item }: { item: Item }): JSX.Element => <span>{item.text}</span>,
+			);
+
+			const ItemParentComponent = ({ item }: { item: PropTreeNode<Item> }): JSX.Element => (
+				<ItemComponent item={item} />
+			);
+
+			const InvalidItemParentComponent = ({
+				item,
+			}: { item: PropTreeNode<Item> }): JSX.Element => (
+				// @ts-expect-error PropTreeNode turns this invalidation bug into a compile error
+				<span>{item.text}</span>
+			);
+		});
+
 		for (const reactStrictMode of [false, true]) {
 			/**
 			 * Check then clear, the contents of `log`.
@@ -93,25 +116,6 @@ describe("useTree", () => {
 					checkRenderLog(log, ["render", "usePropTreeNode"]);
 					assert.equal(rendered.baseElement.textContent, "x: 2, y: 1");
 				});
-			});
-
-			it("withTreeObservations example", () => {
-				const builder = new SchemaFactory("example");
-				class Item extends builder.object("Item", { text: SchemaFactory.string }) {}
-				const ItemComponent = withTreeObservations(
-					({ item }: { item: Item }): JSX.Element => <span>{item.text}</span>,
-				);
-
-				const ItemParentComponent = ({ item }: { item: PropTreeNode<Item> }): JSX.Element => (
-					<ItemComponent item={item} />
-				);
-
-				const InvalidItemParentComponent = ({
-					item,
-				}: { item: PropTreeNode<Item> }): JSX.Element => (
-					// @ts-expect-error PropTreeNode turns this invalidation bug into a compile error
-					<span>{item.text}</span>
-				);
 			});
 
 			describe("withTreeObservations and array", () => {

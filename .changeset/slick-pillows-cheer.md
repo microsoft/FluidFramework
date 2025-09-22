@@ -16,11 +16,18 @@ Alternatively more localized changes can be made by using `PropNode` to type era
 
 These APIs work with both hydrated and [un-hydrated](https://fluidframework.com/docs/api/tree/unhydrated-typealias) TreeNodes.
 
-Here is a simple example of a React components which would have an invalidation bug if not using `withTreeObservations`:
+Here is a simple example of a React components which has an invalidation bug due to reading a mutable field from a TreeNode that was provided in a prop:
 
 ```typescript
 const builder = new SchemaFactory("example");
 class Item extends builder.object("Item", { text: SchemaFactory.string }) {}
+const ItemComponentBug = ({ item }: { item: Item }): JSX.Element => (
+	<span>{item.text}</span> // Reading `text`, a mutable value from a React prop, causes an invalidation bug.
+);
+```
+This bug can now easily be fixed using `withTreeObservations` or ``withMemoizedTreeObservations`:
+
+```typescript
 const ItemComponent = withTreeObservations(
 	({ item }: { item: Item }): JSX.Element => <span>{item.text}</span>,
 );
