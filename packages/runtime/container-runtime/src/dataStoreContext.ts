@@ -847,6 +847,7 @@ export abstract class FluidDataStoreContext
 				(await this.factoryFromPackagePath()) as IMigrationTargetFluidDataStoreFactory;
 		}
 
+		// Note: ops generated during migration will be buffered and submitted after we connect (see #migrationOps)
 		const portableData = await migrationInfo.getPortableData();
 		const newChannel = await targetFactory.migrate(this, initialChannel, portableData);
 

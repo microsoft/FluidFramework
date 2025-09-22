@@ -159,69 +159,6 @@ export class MigrationDataObjectFactory<
 			);
 		};
 
-		// const fullMigrateDataObject = async (runtime: IFluidDataStoreChannel): Promise<void> => {
-		// 	assert(this.canPerformMigration !== undefined, "canPerformMigration should be defined");
-		// 	const realRuntime = runtime as FluidDataStoreRuntime;
-		// 	// Descriptor-driven migration flow (no backwards compatibility path)
-		// 	if (!this.canPerformMigration || this.migrateLock) {
-		// 		return;
-		// 	}
-
-		// 	//* Should this move down a bit lower, to have less code in the lock zone?
-		// 	this.migrateLock = true;
-
-		// 	try {
-		// 		// Read the model descriptors from the DataObject ctor (single source of truth).
-		// 		const modelDescriptors = this.props.ctor.modelDescriptors;
-
-		// 		// Destructure the target/first descriptor and probe it first. If it's present,
-		// 		// the object already uses the target model and we're done.
-		// 		const [targetDescriptor, ...otherDescriptors] = modelDescriptors;
-		// 		//* TODO: Wrap error here with a proper error type?
-		// 		const maybeTarget = await targetDescriptor.probe(realRuntime);
-		// 		if (maybeTarget !== undefined) {
-		// 			// Already on target model; nothing to do.
-		// 			return;
-		// 		}
-		// 		// Download the code in parallel with async operations happening on the existing model
-		// 		const targetFactoriesP = targetDescriptor.ensureFactoriesLoaded();
-
-		// 		// Find the first model that probes successfully.
-		// 		let existingModel: TUniversalView | undefined;
-		// 		for (const desc of otherDescriptors) {
-		// 			//* Should probe errors be fatal?
-		// 			existingModel = await desc.probe(realRuntime).catch(() => undefined);
-		// 			if (existingModel !== undefined) {
-		// 				break;
-		// 			}
-		// 		}
-		// 		assert(
-		// 			existingModel !== undefined,
-		// 			"Unable to match runtime structure to any known data model",
-		// 		);
-
-		// 		// Retrieve any async data required for migration using the discovered existing model (may be undefined)
-		// 		// In parallel, we are waiting for the target factories to load
-		// 		const data = await this.props.asyncGetDataForMigration(existingModel);
-		// 		await targetFactoriesP;
-
-		// 		// ! TODO: ensure these ops aren't sent immediately AB#41625
-		// 		submitConversionOp(realRuntime);
-
-		// 		// Create the target model and run migration.
-		// 		const newModel = targetDescriptor.create(realRuntime);
-
-		// 		// Call consumer-provided migration implementation
-		// 		this.props.migrateDataObject(realRuntime, newModel, data);
-
-		// 		//* TODO: evacuate old model
-		// 		//* i.e. delete unused root contexts, but not only that.  GC doesn't run sub-DataStore.
-		// 		//* So we will need to plumb through now-unused channels to here.  Can be a follow-up.
-		// 	} finally {
-		// 		this.migrateLock = false;
-		// 	}
-		// };
-
 		const runtimeClass = props.runtimeClass ?? FluidDataStoreRuntime;
 
 		// Shallow copy since the input array is typed as a readonly array
@@ -260,6 +197,9 @@ export class MigrationDataObjectFactory<
 			}
 		}
 
+		//* TODO: Since we're looking up to the ContainerRuntime to handle the "migration protocol" (barrier ops, etc),
+		//* we probably will drop these mixins here.
+		//* See comments around call to this.parentContext.migrationProtocolBroker.readyToMigrate in DataStoreContext
 		super({
 			...props,
 			sharedObjects,
