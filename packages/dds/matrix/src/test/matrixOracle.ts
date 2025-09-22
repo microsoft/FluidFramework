@@ -7,31 +7,79 @@ import { strict as assert } from "node:assert";
 
 import type { ISharedMatrix, SharedMatrix } from "../matrix.js";
 
-/**
- * @internal
- */
+import { TestConsumer } from "./testconsumer.js";
+
 export class SharedMatrixOracle {
-	constructor(private readonly shared: ISharedMatrix) {
-		this.shared.on("conflict", (row, col, currentValue, conflictingValue, target) => {
-			if (row < this.shared.rowCount && col < this.shared.colCount) {
-				assert(
-					this.shared.isSetCellConflictResolutionPolicyFWW(),
-					"Conflict should only fire in FWW mode",
-				);
+	private readonly testConsumer: TestConsumer;
+	private readonly conflictListener: (
+		row: number,
+		col: number,
+		currentValue: unknown,
+		conflictingValue: unknown,
+	) => void;
 
-				const actual = this.shared.getCell(row, col);
+	constructor(private readonly shared: SharedMatrix) {
+		this.testConsumer = new TestConsumer(shared);
 
-				// The loser must be different
-				assert.notDeepStrictEqual(currentValue, conflictingValue);
+		this.conflictListener = (row, col, currentValue, conflictingValue) => {
+			this.onConflict(row, col, currentValue, conflictingValue);
+		};
 
-				// The cell contains the winner
-				assert.deepStrictEqual(
+		this.shared.on("conflict", this.conflictListener);
+	}
+
+	private onConflict(
+		row: number,
+		col: number,
+		currentValue: unknown,
+		conflictingValue: unknown,
+	): void {
+		assert.ok(
+			this.shared.isSetCellConflictResolutionPolicyFWW(),
+			"Conflict should only fire in FWW mode",
+		);
+
+		if (row < this.shared.rowCount && col < this.shared.colCount) {
+			assert(
+				this.shared.isSetCellConflictResolutionPolicyFWW(),
+				"Conflict should only fire in FWW mode",
+			);
+
+			const actual = this.testConsumer.getCell(row, col);
+
+			// The loser must be different
+			assert.notDeepStrictEqual(currentValue, conflictingValue);
+
+			// The cell contains the winner
+			assert.deepStrictEqual(
+				actual,
+				currentValue,
+				`Conflict mismatch at [${row},${col}]: expected winner=${currentValue}, actual=${actual} with conflicting value=${conflictingValue}`,
+			);
+		}
+	}
+
+	public validate(): void {
+		const rows = this.shared.rowCount;
+		const cols = this.shared.colCount;
+
+		// Validate the entire matrix
+		for (let r = 0; r < rows; r++) {
+			for (let c = 0; c < cols; c++) {
+				const expected = this.testConsumer.getCell(r, c);
+				const actual = this.shared.getCell(r, c);
+				assert.strictEqual(
 					actual,
-					currentValue,
-					`Conflict mismatch at [${row},${col}]: expected winner=${currentValue}, actual=${actual} with conflicting value=${conflictingValue}`,
+					expected,
+					`Mismatch at [${r},${c}]: expected="${expected}", actual="${actual}"`,
 				);
 			}
-		});
+		}
+	}
+
+	public dispose(): void {
+		this.shared.off("conflict", this.conflictListener);
+		this.shared.matrixProducer.closeMatrix(this.testConsumer);
 	}
 }
 
@@ -40,4 +88,12 @@ export class SharedMatrixOracle {
  */
 export interface IChannelWithOracles extends SharedMatrix {
 	matrixOracle: SharedMatrixOracle;
+}
+
+/**
+ * Type guard for SharedMatrix with an oracle
+ * @internal
+ */
+export function hasSharedMatrixOracle(s: ISharedMatrix): s is IChannelWithOracles {
+	return "matrixOracle" in s && s.matrixOracle instanceof SharedMatrixOracle;
 }

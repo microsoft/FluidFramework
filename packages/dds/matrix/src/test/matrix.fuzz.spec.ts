@@ -8,6 +8,7 @@ import * as path from "node:path";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	createDDSFuzzSuite,
+	registerOracle,
 	type DDSFuzzHarnessEvents,
 	type DDSFuzzModel,
 	type DDSFuzzSuiteOptions,
@@ -26,6 +27,7 @@ oracleEmitter.on("clientCreate", (client) => {
 	const channel = client.channel as IChannelWithOracles;
 	const sharedMatrixOracle = new SharedMatrixOracle(channel);
 	channel.matrixOracle = sharedMatrixOracle;
+	registerOracle(sharedMatrixOracle);
 });
 
 describe("Matrix fuzz tests", function () {
@@ -63,7 +65,7 @@ describe("Matrix fuzz tests", function () {
 		...baseOptions,
 		reconnectProbability: 0,
 		// Uncomment to replay a particular seed.
-		// replay: 0,
+		// only: 97,
 		skip: [4, 54, 73, 97],
 		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/1") },
 	});
