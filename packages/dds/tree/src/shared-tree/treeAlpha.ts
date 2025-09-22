@@ -435,7 +435,7 @@ export interface TreeAlpha {
 	 * This also does not track node status changes (e.g. whether a node is attached to a view or not).
 	 * The current behavior of checking status is unspecified: future versions may track it, error, or ignore it.
 	 *
-	 * Even after onInvalidation is called, these subscriptions remain active until `unsubscribe` is called.
+	 * Even after `onInvalidation` is called, these subscriptions remain active until `unsubscribe` is called.
 	 * See {@link (TreeAlpha:interface).trackObservationsOnce} for a version which automatically unsubscribes on the first invalidation.
 	 */
 	trackObservations<TResult>(

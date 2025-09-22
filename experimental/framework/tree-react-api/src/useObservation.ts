@@ -20,7 +20,7 @@ interface Subscriptions {
 /**
  * Wrapper around subscriptions to give it an object identity which can be used with FinalizationRegistry.
  * @remarks
- * This indirection is need so inner can be provided to finalizationRegistry as the heldValue and avoid having that cause a leak.
+ * This indirection is needed so inner can be provided to finalizationRegistry as the heldValue and avoid having that cause a leak.
  * @privateRemarks
  * This is a named class to make looking for leaks of it in heap snapshots easier.
  */
@@ -36,7 +36,7 @@ class SubscriptionsWrapper {
 export interface ObservationOptions {
 	/**
 	 * Called when the tracked observations are invalidated.
-	 * This is not expected to have production use cases, but it useful for testing and debugging.
+	 * This is not expected to have production use cases, but is useful for testing and debugging.
 	 */
 	onInvalidation?: () => void;
 }
@@ -84,7 +84,7 @@ export function useObservation<TResult>(
 	inner.unsubscribe?.();
 	inner.unsubscribe = undefined;
 
-	// This is logically pure other than the sideeffect of registering for invalidation if the observed content changes.
+	// This is logically pure other than the side effect of registering for invalidation if the observed content changes.
 	// This is safe from a React perspective since when the observed content changes, that is reflected in the `useState` above.
 	// What is more problematic is avoiding of leaking the event registrations since React does not provide an easy way to do that for code run outside of a hook.
 	// That leak is avoided via two separate approaches: the un-subscription for events from previous renders above,
@@ -97,7 +97,7 @@ export function useObservation<TResult>(
 	// This can almost be done using a React effect hook with an empty dependency list.
 	// Unfortunately that would have a hard time getting the correct subscriptions to unsubscribe,
 	// and if run before unmount, like in StrictMode, it would cause an invalidation bug.
-	// Suppressing that invalidation bug with aan extra call to setSubscriptions could work, but would produce incorrect warnings about leaks,
+	// Suppressing that invalidation bug with an extra call to setSubscriptions could work, but would produce incorrect warnings about leaks,
 	// and might cause infinite rerender depending on how StrictMode works.
 	// Such an Effect would look like this:
 	// React.useEffect(
