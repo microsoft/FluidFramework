@@ -313,7 +313,7 @@ export function createTreeCheckout(
 		);
 
 	// XXX: If a branch is passed in, is it supposed to be local main?
-	// Otherwise shouldn't we set `isBranch` to true?
+	// Otherwise shouldn't we set `isSharedBranch` to false?
 	const branch =
 		args?.branch ??
 		new SharedTreeBranch(
@@ -327,7 +327,7 @@ export function createTreeCheckout(
 
 	return new TreeCheckout(
 		branch,
-		false,
+		true,
 		changeFamily,
 		schema,
 		forest,
@@ -400,8 +400,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	public constructor(
 		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
-		/** True if and only if this checkout is for a forked branch and not the "main branch" of the tree. */
-		public readonly isBranch: boolean,
+		/** True if and only if this checkout is for a branch which is persisted and shared with other clients. */
+		public readonly isSharedBranch: boolean,
 		private readonly changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
 		public readonly storedSchema: TreeStoredSchemaRepository,
 		public readonly forest: IEditableForest,
@@ -769,7 +769,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		const forest = this.forest.clone(storedSchema, anchors);
 		const checkout = new TreeCheckout(
 			branch,
-			true,
+			false,
 			this.changeFamily,
 			storedSchema,
 			forest,
@@ -821,8 +821,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			0x9af /* A view cannot be rebased while it has a pending transaction */,
 		);
 		assert(
-			checkout.isBranch,
-			0xa5d /* The main branch cannot be rebased onto another branch. */,
+			!checkout.isSharedBranch,
+			0xa5d /* Shared branches cannot be rebased onto another branch. */,
 		);
 
 		checkout.#transaction.activeBranch.rebaseOnto(this.#transaction.activeBranch);
@@ -853,8 +853,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			checkout.transaction.commit();
 		}
 		this.#transaction.activeBranch.merge(checkout.#transaction.activeBranch);
-		if (disposeMerged && checkout.isBranch) {
-			// Dispose the merged checkout unless it is the main branch.
+		if (disposeMerged && !checkout.isSharedBranch) {
+			// Dispose the merged checkout unless it is a shared branch.
 			checkout[disposeSymbol]();
 		}
 	}
@@ -1010,10 +1010,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	 */
 	private isRemoteChangeEvent(event: SharedTreeBranchChange<SharedTreeChange>): boolean {
 		return (
-			// Remote changes are only ever applied to the main branch
-			!this.isBranch &&
-			// Remote changes are applied to the main branch by rebasing it onto the trunk.
-			// No other rebases are allowed on the main branch, so we can use this to detect remote changes.
+			// Remote changes are only ever applied to shared branches
+			this.isSharedBranch &&
+			// Remote changes are applied to the branch by rebasing it onto the trunk.
+			// No other rebases are allowed on shared branches, so we can use this to detect remote changes.
 			event.type === "rebase"
 		);
 	}
