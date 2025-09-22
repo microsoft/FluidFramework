@@ -27,9 +27,9 @@ describe("useObservation", () => {
 
 		for (const reactStrictMode of [false, true]) {
 			/**
-			 * Check then clear, the contents of `log`.
+			 * Check then clear the contents of `log`.
 			 *
-			 * When in StrictMode, React may double render, so that case is not checked for an exact match.
+			 * @remarks When in StrictMode, React may double render, so that case is not checked for an exact match.
 			 */
 			// eslint-disable-next-line no-inner-declarations
 			function checkRenderLog(log: string[], expected: readonly string[]): void {
