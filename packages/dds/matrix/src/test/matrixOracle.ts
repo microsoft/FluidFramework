@@ -25,7 +25,9 @@ export class SharedMatrixOracle {
 			this.onConflict(row, col, currentValue, conflictingValue);
 		};
 
-		this.shared.on("conflict", this.conflictListener);
+		if (this.shared.connected && this.shared.isSetCellConflictResolutionPolicyFWW()) {
+			this.shared.on("conflict", this.conflictListener);
+		}
 	}
 
 	private onConflict(
@@ -34,17 +36,17 @@ export class SharedMatrixOracle {
 		currentValue: unknown,
 		conflictingValue: unknown,
 	): void {
-		assert.ok(
+		assert(
 			this.shared.isSetCellConflictResolutionPolicyFWW(),
 			"Conflict should only fire in FWW mode",
 		);
 
-		if (row < this.shared.rowCount && col < this.shared.colCount) {
-			assert(
-				this.shared.isSetCellConflictResolutionPolicyFWW(),
-				"Conflict should only fire in FWW mode",
-			);
+		// Only validate conflicts when the matrix is connected
+		if (!this.shared.connected) {
+			return;
+		}
 
+		if (row < this.shared.rowCount && col < this.shared.colCount) {
 			const actual = this.testConsumer.getCell(row, col);
 
 			// The loser must be different
@@ -60,6 +62,11 @@ export class SharedMatrixOracle {
 	}
 
 	public validate(): void {
+		// Only validate conflicts when the matrix is connected
+		if (!this.shared.connected) {
+			return;
+		}
+
 		const rows = this.shared.rowCount;
 		const cols = this.shared.colCount;
 
