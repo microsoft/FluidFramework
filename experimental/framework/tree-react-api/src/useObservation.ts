@@ -80,9 +80,9 @@ export function useObservation<TResult>(
 		// Since below uses trackObservationsOnce, the un-subscription is done before calling this callback,
 		// and therefore this must ensure that no further un-subscriptions occur, as well as that the render is invalidated.
 		//
-		// Note referencing `setSubscriptions` here will hold onto if React's implementation of `setSubscriptions`:
-		// if that holds onto `subscriptions` it would cause a leak (by preventing finalizationRegistry from running and thus preventing un-subscription after unmount).
-		// Experimentally this has been observed not to be the case.
+		// Note referencing `setSubscriptions` risks transitively holding onto a reference to `subscriptions` depending on how React implements `useState`.
+		// If such a transitive reference does exist, it would cause a leak (by preventing finalizationRegistry from running and thus preventing un-subscription after unmount).
+		// Experimentally this has been observed not to be the case, and is validated by the "unsubscribe on unmount" tests.
 		setSubscriptions(new SubscriptionsWrapper());
 
 		// This cannot do `registry.unregister(subscriptions);` as that would cause a leak by holding onto `subscriptions`
