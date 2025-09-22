@@ -32,7 +32,7 @@ import type {
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
-	asAlpha,
+	asLegacyAlpha,
 	type StageControlsAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import { RuntimeHeaders, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
@@ -304,7 +304,7 @@ export class DefaultStressDataObject extends StressDataObject {
 	}
 
 	private stageControls: StageControlsAlpha | undefined;
-	private readonly containerRuntimeExp = asAlpha(this.context.containerRuntime);
+	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
 	public enterStagingMode() {
 		assert(
 			this.containerRuntimeExp.enterStagingMode !== undefined,
