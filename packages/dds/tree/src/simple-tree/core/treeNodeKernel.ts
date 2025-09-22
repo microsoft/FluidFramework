@@ -448,7 +448,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		if (!this.#events.hasListeners(eventName)) {
 			assert(
 				!this.#disposeSourceListeners.has(eventName),
-				"Should not have a dispose function without listeners",
+				0xc4f /* Should not have a dispose function without listeners */,
 			);
 
 			const off = this.#eventSource.on(eventName, (args) => this.#emit(eventName, args));
@@ -479,7 +479,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		this.#assertNotDisposed();
 		switch (eventName) {
 			case "childrenChangedAfterBatch":
-				assert(arg !== undefined, "childrenChangedAfterBatch should have arg");
+				assert(arg !== undefined, 0xc50 /* childrenChangedAfterBatch should have arg */);
 				return this.#handleChildrenChangedAfterBatch(arg.changedFields);
 			case "subtreeChangedAfterBatch":
 				return this.#handleSubtreeChangedAfterBatch();
@@ -526,7 +526,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	}
 
 	#assertNotDisposed(): void {
-		assert(!this.#disposed, "Event handler disposed.");
+		assert(!this.#disposed, 0xc51 /* Event handler disposed. */);
 	}
 
 	public dispose(): void {
@@ -536,7 +536,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 
 		assert(
 			this.#childrenChangedBuffer.size === 0 && !this.#subTreeChangedBuffer,
-			"Buffered kernel events should have been flushed before disposing.",
+			0xc52 /* Buffered kernel events should have been flushed before disposing. */,
 		);
 
 		this.#disposeOnFlushListener();
