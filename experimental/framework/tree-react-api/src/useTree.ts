@@ -42,26 +42,6 @@ export function useTree(subtreeRoot: TreeNode): number {
 	return invalidations;
 }
 
-interface Subscriptions {
-	/**
-	 * If defined, still needs to be called at some point.
-	 * @remarks
-	 * Clear when called.
-	 */
-	unsubscribe?: () => void;
-}
-
-/**
- * Wrapper around subscriptions to give it an object identity which can be used with FinalizationRegistry.
- * @remarks
- * This indirection is need so inner can be provided to finalizationRegistry as the heldValue and avoid having that cause a leak.
- * @privateRemarks
- * This is a named class to make looking for leaks of it in heap snapshots easier.
- */
-class SubscriptionsWrapper {
-	public readonly inner: Subscriptions = {};
-}
-
 /**
  * Higher order component which wraps a component to use {@link useTreeObservations}.
  *

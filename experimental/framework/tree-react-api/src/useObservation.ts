@@ -36,6 +36,7 @@ class SubscriptionsWrapper {
 export interface ObservationOptions {
 	/**
 	 * Called when the tracked observations are invalidated.
+	 * @remarks
 	 * This is not expected to have production use cases, but is useful for testing and debugging.
 	 */
 	onInvalidation?: () => void;
@@ -47,6 +48,20 @@ export interface ObservationOptions {
  * @param trackDuring - Called synchronously: can make event subscriptions which call the provided `invalidate` function.
  * Any such subscriptions should be cleaned up via the returned `unsubscribe` function which will only be invoked if `invalidate` is not called.
  * If `invalidate` is called, the code calling it should remove any subscriptions before calling it.
+ * @remarks
+ * React strongly discourages "render" from having side-effects other than idempotent lazy initialization.
+ *
+ * Tracking observations made during render to subscribe to events for automatic invalidation is a side-effect.
+ * This makes the behavior of this hook somewhat unusual from a React perspective, and also rather poorly supported by React.
+ *
+ * That said, the alternatives more aligned with how React expects things to work have much less friendly APIs, or have gaps where they risk invalidation bugs.
+ *
+ * For example, this hook could record which observations were made during render, then pass them into a `useEffect` hook to do the subscription.
+ * This would be more aligned with React's expectations, but would have a number of issues:
+ * - The effect would run after render, so if the observed content changed between render and the effect running, there could be an invalidation bug.
+ * - It would require changes to `TreeAlpha.trackObservationsOnce` to support a two phase approach (first track, then subscribe) which would have the same risk of missed invalidation.
+ * - It would have slightly higher cost due to the extra effect.
+ * Such an approach is implemented in {@link useObservationPure}.
  */
 export function useObservation<TResult>(
 	trackDuring: (invalidate: () => void) => { result: TResult; unsubscribe: () => void },
@@ -129,3 +144,233 @@ const finalizationRegistry = new FinalizationRegistry((subscriptions: Subscripti
 	// This should not be needed, but maintains the invariant that unsubscribe should be removed after being called.
 	subscriptions.unsubscribe = undefined;
 });
+
+//
+// Below here are some alternative approaches.
+// Should issues arise with the above, one of these could be used instead.
+// These alternatives have user facing downsides (mainly performance and/or gaps where they could miss invalidations)
+// so are not being used as long as the above setup seems to be working well enough.
+//
+
+/**
+ * Options for {@link useTreeObservations}.
+ * @input
+ */
+export interface ObservationPureOptions {
+	onSubscribe?: () => void;
+	onUnsubscribe?: () => void;
+	onPureInvalidation?: () => void;
+}
+
+/**
+ * Variant of {@link useObservation} where render behaves in a more pure functional way.
+ * @remarks
+ * Subscriptions are only created in effects, which leaves a gap between when the observations are tracked and the subscriptions are created.
+ * @privateRemarks
+ * If impureness of the other approaches becomes a problem, this could be used directly instead.
+ * Doing so would require changing `TreeAlpha.trackObservationsOnce` return a function to subscribe to the tracked observations instead of subscribing directly.
+ * This would be less robust (edits could be missed between render and the effect running) but would avoid the impure aspects of the other approaches.
+ * This would remove the need for a finalizationRegistry, and would avoid relying on React not doing something unexpected like rendering a component twice and throwing away the second render instead of the first.
+ *
+ * If using this directly, ensure it has tests other than via the other hooks which use it.
+ */
+function useObservationPure<TResult>(
+	trackDuring: () => { result: TResult; subscribe: (invalidate: () => void) => () => void },
+	options?: ObservationPureOptions,
+): TResult {
+	// Dummy state used to trigger invalidations.
+	const [_subscriptions, setSubscriptions] = React.useState(0);
+
+	const { result, subscribe } = trackDuring();
+
+	React.useEffect(() => {
+		// Subscribe to events from the latest render
+
+		const invalidate = (): void => {
+			setSubscriptions((n) => n + 1);
+			inner.unsubscribe = undefined;
+			options?.onPureInvalidation?.();
+		};
+
+		options?.onSubscribe?.();
+		const inner: Subscriptions = { unsubscribe: subscribe(invalidate) };
+
+		return () => {
+			inner.unsubscribe?.();
+			inner.unsubscribe = undefined;
+			options?.onUnsubscribe?.();
+		};
+	});
+	return result;
+}
+
+/**
+ * Manages subscription to a one-shot invalidation event (unsubscribes when sent) event where multiple parties may want to subscribe to the event.
+ * @remarks
+ * When the event occurs, all subscribers are called.
+ * Any subscribers added after the event has occurred are immediately called.
+ *
+ * Since new subscriptions can be added any any time, this can not unsubscribe from the source after the last destination has unsubscribed.
+ *
+ * Instead the finalizationRegistry is used.
+ * @privateRemarks
+ * This is a named class to make looking for leaks of it in heap snapshots easier.
+ */
+class SubscriptionTracker {
+	/**
+	 * Subscriptions to underlying events.
+	 */
+	private readonly inner: Subscriptions;
+	/**
+	 * Hook subscriptions to be trigger by `inner`.
+	 */
+	private readonly toInvalidate = new Set<() => void>();
+
+	private disposed: boolean = false;
+
+	private constructor(unsubscribe: () => void) {
+		this.inner = { unsubscribe };
+	}
+
+	private assertNotDisposed(): void {
+		if (this.disposed) {
+			throw new Error("Already disposed");
+		}
+	}
+
+	public readonly invalidate = (): void => {
+		this.assertNotDisposed();
+		if (this.inner.unsubscribe === undefined) {
+			throw new Error("Already invalidated");
+		}
+
+		this.inner.unsubscribe = undefined;
+
+		for (const invalidate of this.toInvalidate) {
+			invalidate();
+		}
+		this.toInvalidate.clear();
+	};
+
+	public static create(unsubscribe: () => void): SubscriptionTracker {
+		const tracker = new SubscriptionTracker(unsubscribe);
+		finalizationRegistry.register(tracker, tracker.inner);
+		return tracker;
+	}
+
+	public subscribe(callback: () => void): () => void {
+		this.assertNotDisposed();
+		if (this.toInvalidate.has(callback)) {
+			throw new Error("Already subscribed");
+		}
+
+		if (this.inner.unsubscribe === undefined) {
+			// Already invalidated, so immediately call back.
+			callback();
+			return () => {};
+		}
+
+		this.toInvalidate.add(callback);
+
+		return () => {
+			this.assertNotDisposed();
+			if (!this.toInvalidate.has(callback)) {
+				throw new Error("Not subscribed");
+			}
+			this.toInvalidate.delete(callback);
+		};
+	}
+
+	public dispose(): void {
+		this.assertNotDisposed();
+		this.disposed = true;
+		this.inner.unsubscribe?.();
+		this.inner.unsubscribe = undefined;
+
+		if (this.toInvalidate.size > 0) {
+			throw new Error("Invalid disposal before unsubscribing all listeners");
+		}
+
+		finalizationRegistry.unregister(this.inner);
+	}
+}
+
+/**
+ * {@link useObservation} but more aligned with React expectations.
+ * @remarks
+ * This is more expensive than {@link useObservation}, and also leaks subscriptions longer.
+ * When rendering a component, relies on a finalizer to clean up subscriptions from the previous render.
+ *
+ * Unlike {@link useObservation}, this behave correctly even if React does something unexpected, like Rendering a component twice, and throwing away the second render instead of the first.
+ * {@link useObservation} relies on React not doing such things, assuming that when re-rendering a component, it will be the older render which is discarded.
+ *
+ * This should also avoid calling `setState` after unmount, which can avoid a React warning.
+ *
+ * This does not however avoid the finalizer based cleanup: it actually relies on it much more (for rerender and unmount, not just unmount).
+ * This simply adds a layer of indirection to the invalidation through useEffect.
+ */
+export function useObservationWithEffects<TResult>(
+	trackDuring: (invalidate: () => void) => { result: TResult; unsubscribe: () => void },
+	options?: ObservationOptions & ObservationPureOptions,
+): TResult {
+	const pureResult = useObservationPure(observationAdapter(trackDuring, options), options);
+	return pureResult.innerResult;
+}
+
+/**
+ * An adapter wrapping `trackDuring` to help implement the {@link useObservation} using {@link useObservationPure}.
+ */
+function observationAdapter<TResult>(
+	trackDuring: (invalidate: () => void) => { result: TResult; unsubscribe: () => void },
+	options?: ObservationOptions & ObservationPureOptions,
+): () => {
+	result: {
+		tracker: SubscriptionTracker;
+		innerResult: TResult;
+	};
+	subscribe: (invalidate: () => void) => () => void;
+} {
+	return () => {
+		// The main invalidation function, which only runs once, and is used to create the SubscriptionTracker.
+		const invalidateMain = (): void => {
+			tracker.invalidate();
+			options?.onInvalidation?.();
+		};
+		const result2 = trackDuring(invalidateMain);
+		const tracker = SubscriptionTracker.create(result2.unsubscribe);
+
+		return {
+			result: { tracker, innerResult: result2.result },
+			subscribe: (invalidate) => {
+				return tracker.subscribe(invalidate);
+			},
+		};
+	};
+}
+
+/**
+ * {@link useObservation} but more strict with its behavior.
+ * @remarks
+ * This has the eager cleanup on re-render of {@link useObservation}, but has the effect based subscriptions and cleanup on unmount of {@link useObservationWithEffects}.
+ *
+ * If React behaves in a way which breaks the assumptions of {@link useObservation} (and thus would require the leakier {@link useObservationWithEffects}), this will throw an error.
+ * @privateRemarks
+ * This is just a {@link useObservationPure}, except with the eager cleanup on re-render from {@link useObservation}.
+ */
+export function useObservationStrict<TResult>(
+	trackDuring: (invalidate: () => void) => { result: TResult; unsubscribe: () => void },
+	options?: ObservationOptions & ObservationPureOptions,
+): TResult {
+	// Used to unsubscribe from the previous render's subscriptions.
+	// See `useObservation` for a more documented explanation of this pattern.
+	const [subscriptions] = React.useState<{
+		previousTracker: SubscriptionTracker | undefined;
+	}>({ previousTracker: undefined });
+
+	const pureResult = useObservationPure(observationAdapter(trackDuring, options), options);
+
+	subscriptions.previousTracker?.dispose();
+	subscriptions.previousTracker = pureResult.tracker;
+
+	return pureResult.innerResult;
+}
