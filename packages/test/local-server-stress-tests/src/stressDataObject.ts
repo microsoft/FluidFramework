@@ -31,9 +31,9 @@ import type {
 // eslint-disable-next-line import/no-internal-modules
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import type {
-	ContainerRuntimeBaseAlpha,
-	StageControlsAlpha,
+import {
+	asAlpha,
+	type StageControlsAlpha,
 } from "@fluidframework/runtime-definitions/internal";
 import { RuntimeHeaders, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-utils/internal";
@@ -304,8 +304,7 @@ export class DefaultStressDataObject extends StressDataObject {
 	}
 
 	private stageControls: StageControlsAlpha | undefined;
-	private readonly containerRuntimeExp = this.context
-		.containerRuntime as ContainerRuntimeBaseAlpha;
+	private readonly containerRuntimeExp = asAlpha(this.context.containerRuntime);
 	public enterStagingMode() {
 		assert(
 			this.containerRuntimeExp.enterStagingMode !== undefined,

@@ -83,10 +83,11 @@ export {
 } from "./summary.js";
 export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
 
-export type {
-	ContainerRuntimeBaseAlpha,
-	StageControlsAlpha,
-	CommitStagedChangesOptionsExperimental,
-	IContainerRuntimeBaseExperimental,
-	StageControlsExperimental,
+export {
+	type ContainerRuntimeBaseAlpha,
+	type StageControlsAlpha,
+	type CommitStagedChangesOptionsExperimental,
+	type IContainerRuntimeBaseExperimental,
+	type StageControlsExperimental,
+	asAlpha,
 } from "./stagingMode.js";
