@@ -1791,7 +1791,32 @@ export function createSuite<
 				}
 			});
 		}
+
+		afterEach(() => {
+			disposeAllOracles();
+		});
 	});
+}
+
+const activeOracles: Set<{ dispose: () => void }> = new Set();
+
+/**
+ * Tracks oracles created during fuzz runs so they can be disposed after each test.
+ * @internal
+ */
+export function registerOracle(oracle: { dispose: () => void }): void {
+	activeOracles.add(oracle);
+}
+
+/**
+ * Dispose all oracles
+ * @internal
+ */
+function disposeAllOracles(): void {
+	for (const oracle of activeOracles) {
+		oracle.dispose();
+	}
+	activeOracles.clear();
 }
 
 const getFullModel = <

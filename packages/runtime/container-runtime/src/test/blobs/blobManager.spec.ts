@@ -5,339 +5,36 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	IsoBuffer,
-	TypedEventEmitter,
-	bufferToString,
-	gitHashFile,
-} from "@fluid-internal/client-utils";
-import { AttachState } from "@fluidframework/container-definitions/internal";
-import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	ConfigTypes,
 	IConfigProviderBase,
 	IErrorBase,
-} from "@fluidframework/core-interfaces";
-import type {
-	IFluidHandleContext,
 	IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
-import { Deferred } from "@fluidframework/core-utils/internal";
-import { type IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
-import type {
-	IRuntimeStorageService,
-	ISequencedMessageEnvelope,
-} from "@fluidframework/runtime-definitions/internal";
+import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
 import {
-	isFluidHandleInternalPayloadPending,
 	isFluidHandlePayloadPending,
 	isLocalFluidHandle,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	LoggingError,
-	MockLogger,
-	type MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
-	type ITelemetryLoggerExt,
+	MockLogger,
+	type MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import Sinon from "sinon";
 import { v4 as uuid } from "uuid";
 
+import { blobManagerBasePath } from "../../blobManager/index.js";
+
 import {
-	BlobManager,
-	type IBlobManagerLoadInfo,
-	type IBlobManagerRuntime,
-	blobManagerBasePath,
-	redirectTableBlobName,
-	type IPendingBlobs,
-} from "../blobManager/index.js";
-
-const MIN_TTL = 24 * 60 * 60; // same as ODSP
-abstract class BaseMockBlobStorage
-	implements Pick<IRuntimeStorageService, "readBlob" | "createBlob">
-{
-	public blobs: Map<string, ArrayBufferLike> = new Map();
-	public abstract createBlob(blob: ArrayBufferLike);
-	public async readBlob(id: string) {
-		const blob = this.blobs.get(id);
-		assert(!!blob);
-		return blob;
-	}
-}
-
-class DedupeStorage extends BaseMockBlobStorage {
-	public minTTL: number = MIN_TTL;
-
-	public async createBlob(blob: ArrayBufferLike) {
-		const s = bufferToString(blob, "base64");
-		const id = await gitHashFile(IsoBuffer.from(s, "base64"));
-		this.blobs.set(id, blob);
-		return { id, minTTLInSeconds: this.minTTL };
-	}
-}
-
-class NonDedupeStorage extends BaseMockBlobStorage {
-	public async createBlob(blob: ArrayBufferLike) {
-		const id = this.blobs.size.toString();
-		this.blobs.set(id, blob);
-		return { id, minTTLInSeconds: MIN_TTL };
-	}
-}
-
-export class MockRuntime
-	extends TypedEventEmitter<IContainerRuntimeEvents>
-	implements IBlobManagerRuntime
-{
-	public readonly clientDetails: IClientDetails = { capabilities: { interactive: true } };
-	constructor(
-		public mc: MonitoringContext,
-		createBlobPayloadPending: boolean,
-		blobManagerLoadInfo: IBlobManagerLoadInfo = {},
-		attached = false,
-		stashed: unknown[] = [[], {}],
-	) {
-		super();
-		this.attachState = attached ? AttachState.Attached : AttachState.Detached;
-		this.ops = stashed[0] as unknown[];
-		this.baseLogger = mc.logger;
-		this.blobManager = new BlobManager({
-			routeContext: undefined as unknown as IFluidHandleContext,
-			blobManagerLoadInfo,
-			storage: this.getStorage(),
-			sendBlobAttachOp: (localId: string, blobId?: string) =>
-				this.sendBlobAttachOp(localId, blobId),
-			blobRequested: () => undefined,
-			isBlobDeleted: (blobPath: string) => this.isBlobDeleted(blobPath),
-			runtime: this,
-			stashedBlobs: stashed[1] as IPendingBlobs | undefined,
-			createBlobPayloadPending,
-		});
-	}
-
-	public disposed: boolean = false;
-
-	public get storage(): IRuntimeStorageService {
-		return (this.attachState === AttachState.Detached
-			? this.detachedStorage
-			: this.attachedStorage) as unknown as IRuntimeStorageService;
-	}
-
-	private processing = false;
-	public unprocessedBlobs = new Set();
-
-	public getStorage(): IRuntimeStorageService {
-		return {
-			createBlob: async (blob: ArrayBufferLike) => {
-				if (this.processing) {
-					return this.storage.createBlob(blob);
-				}
-				const P = this.processBlobsP.promise.then(async () => {
-					if (!this.connected && this.attachState === AttachState.Attached) {
-						this.unprocessedBlobs.delete(blob);
-						throw new Error("fake error due to having no connection to storage service");
-					} else {
-						this.unprocessedBlobs.delete(blob);
-						return this.storage.createBlob(blob);
-					}
-				});
-				this.unprocessedBlobs.add(blob);
-				this.emit("blob");
-				this.blobPs.push(P);
-				return P;
-			},
-			readBlob: async (id: string) => this.storage.readBlob(id),
-		} as unknown as IRuntimeStorageService;
-	}
-
-	public sendBlobAttachOp(localId: string, blobId?: string): void {
-		this.ops.push({ metadata: { localId, blobId } });
-	}
-
-	public async createBlob(
-		blob: ArrayBufferLike,
-		signal?: AbortSignal,
-	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
-		const P = this.blobManager.createBlob(blob, signal);
-		this.handlePs.push(P);
-		return P;
-	}
-
-	public async getBlob(
-		blobHandle: IFluidHandleInternal<ArrayBufferLike>,
-	): Promise<ArrayBufferLike> {
-		const pathParts = blobHandle.absolutePath.split("/");
-		const blobId = pathParts[2];
-		const payloadPending = isFluidHandleInternalPayloadPending(blobHandle)
-			? blobHandle.payloadPending
-			: false;
-		return this.blobManager.getBlob(blobId, payloadPending);
-	}
-
-	public async getPendingLocalState(): Promise<(unknown[] | IPendingBlobs | undefined)[]> {
-		const pendingBlobs = await this.blobManager.attachAndGetPendingBlobs();
-		return [[...this.ops], pendingBlobs];
-	}
-
-	public blobManager: BlobManager;
-	public connected = false;
-	public closed = false;
-	public attachState: AttachState;
-	public attachedStorage = new DedupeStorage();
-	public detachedStorage = new NonDedupeStorage();
-	public baseLogger: ITelemetryLoggerExt;
-
-	private ops: unknown[] = [];
-	private processBlobsP = new Deferred<void>();
-	private blobPs: Promise<unknown>[] = [];
-	private handlePs: Promise<unknown>[] = [];
-	private readonly deletedBlobs: string[] = [];
-
-	public processOps(): void {
-		assert(this.connected || this.ops.length === 0);
-		for (const op of this.ops) {
-			this.blobManager.processBlobAttachMessage(op as ISequencedMessageEnvelope, true);
-		}
-		this.ops = [];
-	}
-
-	public async processBlobs(
-		resolve: boolean,
-		canRetry: boolean = false,
-		retryAfterSeconds?: number,
-	): Promise<void> {
-		const blobPs = this.blobPs;
-		this.blobPs = [];
-		if (resolve) {
-			this.processBlobsP.resolve();
-		} else {
-			this.processBlobsP.reject(
-				new LoggingError("fake driver error", { canRetry, retryAfterSeconds }),
-			);
-		}
-		this.processBlobsP = new Deferred<void>();
-		await Promise.allSettled(blobPs).catch(() => {});
-	}
-
-	public async processHandles(): Promise<void> {
-		const handlePs = this.handlePs;
-		this.handlePs = [];
-		const handles = (await Promise.all(handlePs)) as IFluidHandleInternal<ArrayBufferLike>[];
-		for (const handle of handles) {
-			handle.attachGraph();
-		}
-	}
-
-	public async processAll(): Promise<void> {
-		while (this.blobPs.length + this.handlePs.length + this.ops.length > 0) {
-			const p1 = this.processBlobs(true);
-			const p2 = this.processHandles();
-			this.processOps();
-			await Promise.race([p1, p2]);
-			this.processOps();
-			await Promise.all([p1, p2]);
-		}
-	}
-
-	public async attach(): Promise<{
-		ids: string[];
-		redirectTable: [string, string][] | undefined;
-	}> {
-		if (this.detachedStorage.blobs.size > 0) {
-			const table = new Map<string, string>();
-			for (const [detachedId, blob] of this.detachedStorage.blobs) {
-				const { id } = await this.attachedStorage.createBlob(blob);
-				table.set(detachedId, id);
-			}
-			this.detachedStorage.blobs.clear();
-			this.blobManager.patchRedirectTable(table);
-		}
-		const summary = validateSummary(this);
-		this.attachState = AttachState.Attached;
-		this.emit("attached");
-		return summary;
-	}
-
-	public async connect(delay = 0, processStashedWithRetry?: boolean): Promise<void> {
-		assert(!this.connected);
-		await new Promise<void>((resolve) => setTimeout(resolve, delay));
-		this.connected = true;
-		this.emit("connected", "client ID");
-		await this.processStashed(processStashedWithRetry);
-		const ops = this.ops;
-		this.ops = [];
-		for (const op of ops) {
-			// TODO: better typing
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-			this.blobManager.reSubmit((op as any).metadata as Record<string, unknown> | undefined);
-		}
-	}
-
-	public async processStashed(processStashedWithRetry?: boolean): Promise<void> {
-		// const uploadP = this.blobManager.stashedBlobsUploadP;
-		this.processing = true;
-		if (processStashedWithRetry) {
-			await this.processBlobs(false, false, 0);
-			// wait till next retry
-			await new Promise<void>((resolve) => setTimeout(resolve, 1));
-			// try again successfully
-			await this.processBlobs(true);
-		} else {
-			await this.processBlobs(true);
-		}
-		// await uploadP;
-		this.processing = false;
-	}
-
-	public disconnect(): void {
-		assert(this.connected);
-		this.connected = false;
-		this.emit("disconnected");
-	}
-
-	public async remoteUpload(
-		blob: ArrayBufferLike,
-	): Promise<{ metadata: { localId: string; blobId: string } }> {
-		const response = await this.storage.createBlob(blob);
-		const op = { metadata: { localId: uuid(), blobId: response.id } };
-		this.blobManager.processBlobAttachMessage(op as ISequencedMessageEnvelope, false);
-		return op;
-	}
-
-	public deleteBlob(blobHandle: IFluidHandleInternal<ArrayBufferLike>): void {
-		this.deletedBlobs.push(blobHandle.absolutePath);
-	}
-
-	public isBlobDeleted(blobPath: string): boolean {
-		return this.deletedBlobs.includes(blobPath);
-	}
-}
-
-export const validateSummary = (
-	runtime: MockRuntime,
-): {
-	ids: string[];
-	redirectTable: [string, string][] | undefined;
-} => {
-	const summary = runtime.blobManager.summarize();
-	const ids: string[] = [];
-	let redirectTable: [string, string][] | undefined;
-	for (const [key, attachment] of Object.entries(summary.summary.tree)) {
-		if (attachment.type === SummaryType.Attachment) {
-			ids.push(attachment.id);
-		} else {
-			assert.strictEqual(key, redirectTableBlobName);
-			assert(attachment.type === SummaryType.Blob);
-			assert(typeof attachment.content === "string");
-			redirectTable = [
-				...new Map<string, string>(
-					JSON.parse(attachment.content) as [string, string][],
-				).entries(),
-			];
-		}
-	}
-	return { ids, redirectTable };
-};
+	type BaseMockBlobStorage,
+	DedupeStorage,
+	getSummaryContentsWithFormatValidation,
+	MockRuntime,
+	textToBlob,
+	unpackHandle,
+} from "./blobTestUtils.js";
 
 for (const createBlobPayloadPending of [false, true]) {
 	describe(`BlobManager (pending payloads): ${createBlobPayloadPending}`, () => {
@@ -402,8 +99,8 @@ for (const createBlobPayloadPending of [false, true]) {
 		});
 
 		it("empty snapshot", () => {
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 0);
+			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+			assert.strictEqual(summaryData.ids, undefined);
 			assert.strictEqual(summaryData.redirectTable, undefined);
 		});
 
@@ -411,11 +108,11 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.attach();
 			await runtime.connect();
 
-			await createBlob(IsoBuffer.from("blob", "utf8"));
+			await createBlob(textToBlob("blob"));
 			await runtime.processAll();
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 1);
 		});
 
@@ -424,13 +121,13 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.connect();
 
 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
-			await createBlob(IsoBuffer.from("blob", "utf8"));
-			await createBlob(IsoBuffer.from("blob2", "utf8"));
+			await createBlob(textToBlob("blob"));
+			await createBlob(textToBlob("blob2"));
 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, true);
 			await runtime.processAll();
 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 2);
+			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+			assert.strictEqual(summaryData.ids?.length, 2);
 			assert.strictEqual(summaryData.redirectTable?.length, 2);
 		});
 
@@ -440,49 +137,49 @@ for (const createBlobPayloadPending of [false, true]) {
 			let count = 0;
 			runtime.blobManager.events.on("noPendingBlobs", () => count++);
 
-			await createBlob(IsoBuffer.from("blob", "utf8"));
+			await createBlob(textToBlob("blob"));
 			await runtime.processAll();
 			assert.strictEqual(count, 1);
-			await createBlob(IsoBuffer.from("blob2", "utf8"));
-			await createBlob(IsoBuffer.from("blob3", "utf8"));
+			await createBlob(textToBlob("blob2"));
+			await createBlob(textToBlob("blob3"));
 			await runtime.processAll();
 			assert.strictEqual(count, 2);
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 3);
+			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+			assert.strictEqual(summaryData.ids?.length, 3);
 			assert.strictEqual(summaryData.redirectTable?.length, 3);
 		});
 
 		it("detached snapshot", async () => {
 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
-			await createBlob(IsoBuffer.from("blob", "utf8"));
+			await createBlob(textToBlob("blob"));
 			await runtime.processAll();
 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, true);
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 1);
 		});
 
 		it("detached->attached snapshot", async () => {
-			await createBlob(IsoBuffer.from("blob", "utf8"));
+			await createBlob(textToBlob("blob"));
 			await runtime.processAll();
 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, true);
 			await runtime.attach();
 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 1);
 		});
 
 		it("uploads while disconnected", async () => {
 			await runtime.attach();
-			const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+			const handleP = runtime.createBlob(textToBlob("blob"));
 			await runtime.connect();
 			await runtime.processAll();
 			await assert.doesNotReject(handleP);
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 1);
 		});
 
@@ -490,7 +187,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.attach();
 			await runtime.connect();
 			runtime.attachedStorage.minTTL = 0.001; // force expired TTL being less than connection time (50ms)
-			await createBlob(IsoBuffer.from("blob", "utf8"));
+			await createBlob(textToBlob("blob"));
 			await runtime.processBlobs(true);
 			runtime.disconnect();
 			await new Promise<void>((resolve) => setTimeout(resolve, 50));
@@ -502,14 +199,14 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.attach();
 			await runtime.connect();
 
-			const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+			const handleP = runtime.createBlob(textToBlob("blob"));
 			runtime.disconnect();
 			await runtime.connect(10); // adding some delay to reconnection
 			await runtime.processAll();
 			await assert.doesNotReject(handleP);
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 1);
 		});
 
@@ -518,7 +215,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.connect();
 
 			if (createBlobPayloadPending) {
-				const handle = await runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+				const handle = await runtime.createBlob(textToBlob("blob"));
 				assert.strict(isFluidHandlePayloadPending(handle));
 				assert.strict(isLocalFluidHandle(handle));
 				assert.strictEqual(
@@ -559,7 +256,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			} else {
 				// If the blobs are created without pending payloads, we don't get to see the handle at
 				// all so we can't inspect its state.
-				const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+				const handleP = runtime.createBlob(textToBlob("blob"));
 				await runtime.processBlobs(false);
 				runtime.processOps();
 				try {
@@ -570,8 +267,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				}
 				await assert.rejects(handleP);
 			}
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 0);
+			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+			assert.strictEqual(summaryData.ids, undefined);
 			assert.strictEqual(summaryData.redirectTable, undefined);
 		});
 
@@ -580,7 +277,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.connect();
 
 			if (createBlobPayloadPending) {
-				const handle = await runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+				const handle = await runtime.createBlob(textToBlob("blob"));
 				assert.strict(isFluidHandlePayloadPending(handle));
 				assert.strictEqual(
 					handle.payloadState,
@@ -601,33 +298,14 @@ for (const createBlobPayloadPending of [false, true]) {
 			} else {
 				// Without placeholder blobs, we don't get to see the handle before it reaches "shared" state
 				// but we can still verify it's in the expected state when we get it.
-				const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+				const handleP = runtime.createBlob(textToBlob("blob"));
 				await runtime.processAll();
 				const handle = await handleP;
 				assert.strict(isFluidHandlePayloadPending(handle));
 				assert.strictEqual(handle.payloadState, "shared", "Handle should be in shared state");
 			}
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable?.length, 1);
-		});
-
-		it.skip("upload fails and retries for retriable errors", async () => {
-			// Needs to use some sort of fake timer or write test in a different way as it is waiting
-			// for actual time which is causing timeouts.
-			await runtime.attach();
-			await runtime.connect();
-			const handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-			await runtime.processBlobs(false, true, 0);
-			// wait till next retry
-			await new Promise<void>((resolve) => setTimeout(resolve, 1));
-			// try again successfully
-			await runtime.processBlobs(true);
-			runtime.processOps();
-			await runtime.processHandles();
-			assert(handleP);
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 1);
 		});
 
@@ -635,16 +313,16 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.attach();
 			await runtime.connect();
 
-			await createBlob(IsoBuffer.from("blob", "utf8"));
-			await createBlob(IsoBuffer.from("blob", "utf8"));
+			await createBlob(textToBlob("blob"));
+			await createBlob(textToBlob("blob"));
 			await runtime.processBlobs(true);
 
 			runtime.disconnect();
 			await runtime.connect();
 			await runtime.processAll();
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 2);
 		});
 
@@ -652,12 +330,12 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.attach();
 			await runtime.connect();
 
-			const blob = IsoBuffer.from("blob", "utf8");
+			const blob = textToBlob("blob");
 			const handleP = runtime.createBlob(blob);
 			runtime.disconnect();
 			await runtime.connect(10);
 
-			const blob2 = IsoBuffer.from("blob2", "utf8");
+			const blob2 = textToBlob("blob2");
 			const handleP2 = runtime.createBlob(blob2);
 			runtime.disconnect();
 
@@ -665,8 +343,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.processAll();
 			await assert.doesNotReject(handleP);
 			await assert.doesNotReject(handleP2);
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 2);
+			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+			assert.strictEqual(summaryData.ids?.length, 2);
 			assert.strictEqual(summaryData.redirectTable?.length, 2);
 		});
 
@@ -674,85 +352,85 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.attach();
 			await runtime.connect();
 
-			await createBlob(IsoBuffer.from("blob", "utf8"));
-			await createBlob(IsoBuffer.from("blob", "utf8"));
+			await createBlob(textToBlob("blob"));
+			await createBlob(textToBlob("blob"));
 			runtime.disconnect();
 			await runtime.connect();
 
-			await createBlob(IsoBuffer.from("blob", "utf8"));
-			await createBlob(IsoBuffer.from("blob", "utf8"));
+			await createBlob(textToBlob("blob"));
+			await createBlob(textToBlob("blob"));
 			await runtime.processBlobs(true);
 
 			runtime.disconnect();
 			await runtime.connect();
 
-			await createBlob(IsoBuffer.from("blob", "utf8"));
-			await createBlob(IsoBuffer.from("blob", "utf8"));
+			await createBlob(textToBlob("blob"));
+			await createBlob(textToBlob("blob"));
 			await runtime.processAll();
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 6);
 		});
 
 		it("handles deduped IDs in detached", async () => {
 			runtime.detachedStorage = new DedupeStorage();
 
-			await createBlob(IsoBuffer.from("blob", "utf8"));
-			await createBlob(IsoBuffer.from("blob", "utf8"));
+			await createBlob(textToBlob("blob"));
+			await createBlob(textToBlob("blob"));
 			await runtime.processAll();
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 2);
 		});
 
 		it("handles deduped IDs in detached->attached", async () => {
 			runtime.detachedStorage = new DedupeStorage();
 
-			await createBlob(IsoBuffer.from("blob", "utf8"));
-			await createBlob(IsoBuffer.from("blob", "utf8"));
+			await createBlob(textToBlob("blob"));
+			await createBlob(textToBlob("blob"));
 			await runtime.processAll();
 
 			await runtime.attach();
 			await runtime.connect();
-			await createBlob(IsoBuffer.from("blob", "utf8"));
-			await createBlob(IsoBuffer.from("blob", "utf8"));
+			await createBlob(textToBlob("blob"));
+			await createBlob(textToBlob("blob"));
 
 			runtime.disconnect();
 			await runtime.connect();
 
-			await createBlob(IsoBuffer.from("blob", "utf8"));
-			await createBlob(IsoBuffer.from("blob", "utf8"));
+			await createBlob(textToBlob("blob"));
+			await createBlob(textToBlob("blob"));
 
 			await runtime.processAll();
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 6);
 		});
 
 		it("can load from summary", async () => {
-			await createBlob(IsoBuffer.from("blob", "utf8"));
+			await createBlob(textToBlob("blob"));
 			await runtime.processAll();
 
 			await runtime.attach();
-			const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+			const handle = runtime.createBlob(textToBlob("blob"));
 			await runtime.connect();
 
 			await runtime.processAll();
 			await assert.doesNotReject(handle);
 
-			await createBlob(IsoBuffer.from("blob", "utf8"));
+			await createBlob(textToBlob("blob"));
 			await runtime.processAll();
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 3);
 
 			const runtime2 = new MockRuntime(mc, createBlobPayloadPending, summaryData, true);
-			const summaryData2 = validateSummary(runtime2);
-			assert.strictEqual(summaryData2.ids.length, 1);
+			const summaryData2 = getSummaryContentsWithFormatValidation(runtime2.blobManager);
+			assert.strictEqual(summaryData2.ids?.length, 1);
 			assert.strictEqual(summaryData2.redirectTable?.length, 3);
 		});
 
@@ -760,18 +438,18 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.attach();
 			await runtime.connect();
 
-			const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+			const handle = runtime.createBlob(textToBlob("blob"));
 			await runtime.processAll();
 
 			await assert.doesNotReject(handle);
 
 			// Using the summary as a simple way to grab the storage ID of the blob we just created
-			const {
-				redirectTable,
-				ids: [storageId],
-			} = validateSummary(runtime);
+			const { redirectTable, ids: ids1 } = getSummaryContentsWithFormatValidation(
+				runtime.blobManager,
+			);
+			const storageId = ids1?.[0];
 			assert.strictEqual(redirectTable?.length, 1);
-			assert.strictEqual(typeof storageId, "string", "Expect storage ID to be in the summary");
+			assert(typeof storageId === "string", "Expect storage ID to be in the summary");
 
 			const blob = await runtime.blobManager.getBlob(storageId, createBlobPayloadPending);
 
@@ -787,10 +465,9 @@ for (const createBlobPayloadPending of [false, true]) {
 			await assert.doesNotReject(
 				runtime2.blobManager.getBlob(storageId, createBlobPayloadPending),
 			);
-			const {
-				redirectTable: redirectTable2,
-				ids: [storageId2],
-			} = validateSummary(runtime2);
+			const { redirectTable: redirectTable2, ids: ids2 } =
+				getSummaryContentsWithFormatValidation(runtime2.blobManager);
+			const storageId2 = ids2?.[0];
 			assert.strictEqual(redirectTable2, undefined);
 			assert.strictEqual(storageId2, storageId, "Expect storage ID to be in the summary");
 		});
@@ -799,12 +476,12 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.attach();
 			await runtime.connect();
 
-			await createBlob(IsoBuffer.from("blob", "utf8"));
-			await runtime.remoteUpload(IsoBuffer.from("blob", "utf8"));
+			await createBlob(textToBlob("blob"));
+			await runtime.remoteUpload(textToBlob("blob"));
 			await runtime.processAll();
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 2);
 		});
 
@@ -812,58 +489,58 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.attach();
 			await runtime.connect();
 
-			await createBlob(IsoBuffer.from("blob", "utf8"));
+			await createBlob(textToBlob("blob"));
 			await runtime.processBlobs(true);
-			await runtime.remoteUpload(IsoBuffer.from("blob", "utf8"));
+			await runtime.remoteUpload(textToBlob("blob"));
 			await runtime.processAll();
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 2);
 		});
 
 		it("handles duplicate remote upload with local ID", async () => {
 			await runtime.attach();
 
-			await createBlob(IsoBuffer.from("blob", "utf8"));
+			await createBlob(textToBlob("blob"));
 			await runtime.connect();
 			await runtime.processBlobs(true);
-			await runtime.remoteUpload(IsoBuffer.from("blob", "utf8"));
+			await runtime.remoteUpload(textToBlob("blob"));
 			await runtime.processAll();
 
-			const summaryData = validateSummary(runtime);
-			assert.strictEqual(summaryData.ids.length, 1);
+			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+			assert.strictEqual(summaryData.ids?.length, 1);
 			assert.strictEqual(summaryData.redirectTable?.length, 2);
 		});
 
 		it("includes blob IDs in summary while attaching", async () => {
-			await createBlob(IsoBuffer.from("blob1", "utf8"));
-			await createBlob(IsoBuffer.from("blob2", "utf8"));
-			await createBlob(IsoBuffer.from("blob3", "utf8"));
+			await createBlob(textToBlob("blob1"));
+			await createBlob(textToBlob("blob2"));
+			await createBlob(textToBlob("blob3"));
 			await runtime.processAll();
 
 			// While attaching with blobs, Container takes a summary while still in "Detached"
 			// state. BlobManager should know to include the list of attached blob
 			// IDs since this summary will be used to create the document
 			const summaryData = await runtime.attach();
-			assert.strictEqual(summaryData?.ids.length, 3);
-			assert.strictEqual(summaryData?.redirectTable?.length, 3);
+			assert.strictEqual(summaryData.ids?.length, 3);
+			assert.strictEqual(summaryData.redirectTable?.length, 3);
 		});
 
 		it("all blobs attached", async () => {
 			await runtime.attach();
 			await runtime.connect();
 			assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
-			await createBlob(IsoBuffer.from("blob1", "utf8"));
+			await createBlob(textToBlob("blob1"));
 			// We immediately attach the handle in createBlob if pending payloads are enabled
 			assert.strictEqual(runtime.blobManager.allBlobsAttached, createBlobPayloadPending);
 			await runtime.processBlobs(true);
 			assert.strictEqual(runtime.blobManager.allBlobsAttached, createBlobPayloadPending);
 			await runtime.processAll();
 			assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
-			await createBlob(IsoBuffer.from("blob1", "utf8"));
-			await createBlob(IsoBuffer.from("blob2", "utf8"));
-			await createBlob(IsoBuffer.from("blob3", "utf8"));
+			await createBlob(textToBlob("blob1"));
+			await createBlob(textToBlob("blob2"));
+			await createBlob(textToBlob("blob3"));
 			assert.strictEqual(runtime.blobManager.allBlobsAttached, createBlobPayloadPending);
 			await runtime.processAll();
 			assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
@@ -903,7 +580,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			await runtime.attach();
 
 			// Part of remoteUpload, but stop short of processing the message
-			const response = await runtime.storage.createBlob(IsoBuffer.from("blob", "utf8"));
+			const response = await runtime.storage.createBlob(textToBlob("blob"));
 			const op = { metadata: { localId: uuid(), blobId: response.id } };
 
 			await assert.rejects(
@@ -933,7 +610,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				const ac = new AbortController();
 				ac.abort("abort test");
 				try {
-					const blob = IsoBuffer.from("blob", "utf8");
+					const blob = textToBlob("blob");
 					await runtime.createBlob(blob, ac.signal);
 					assert.fail("Should not succeed");
 
@@ -949,8 +626,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					assert.strictEqual(error.message, "uploadBlob aborted");
 				}
-				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 0);
+				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+				assert.strictEqual(summaryData.ids, undefined);
 				assert.strictEqual(summaryData.redirectTable, undefined);
 			});
 
@@ -962,7 +639,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				await runtime.attach();
 				await runtime.connect();
 				const ac = new AbortController();
-				const blob = IsoBuffer.from("blob", "utf8");
+				const blob = textToBlob("blob");
 				const handleP = runtime.createBlob(blob, ac.signal);
 				ac.abort("abort test");
 				assert.strictEqual(runtime.unprocessedBlobs.size, 1);
@@ -982,8 +659,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				}
 				assert(handleP);
 				await assert.rejects(handleP);
-				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 0);
+				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+				assert.strictEqual(summaryData.ids, undefined);
 				assert.strictEqual(summaryData.redirectTable, undefined);
 			});
 
@@ -995,9 +672,9 @@ for (const createBlobPayloadPending of [false, true]) {
 				await runtime.attach();
 				await runtime.connect();
 				const ac = new AbortController();
-				const blob = IsoBuffer.from("blob", "utf8");
+				const blob = textToBlob("blob");
 				const handleP = runtime.createBlob(blob, ac.signal);
-				const handleP2 = runtime.createBlob(IsoBuffer.from("blob2", "utf8"));
+				const handleP2 = runtime.createBlob(textToBlob("blob2"));
 				ac.abort("abort test");
 				assert.strictEqual(runtime.unprocessedBlobs.size, 2);
 				await runtime.processBlobs(false);
@@ -1015,8 +692,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				}
 				await assert.rejects(handleP);
 				await assert.rejects(handleP2);
-				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 0);
+				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+				assert.strictEqual(summaryData.ids, undefined);
 				assert.strictEqual(summaryData.redirectTable, undefined);
 			});
 
@@ -1028,7 +705,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				await runtime.attach();
 				await runtime.connect();
 				const ac = new AbortController();
-				const blob = IsoBuffer.from("blob", "utf8");
+				const blob = textToBlob("blob");
 				const handleP = runtime.createBlob(blob, ac.signal);
 				runtime.disconnect();
 				ac.abort();
@@ -1040,8 +717,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert.strictEqual((error as Error).message, "uploadBlob aborted");
 				}
 				await assert.rejects(handleP);
-				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 0);
+				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+				assert.strictEqual(summaryData.ids, undefined);
 				assert.strictEqual(summaryData.redirectTable, undefined);
 			});
 
@@ -1055,7 +732,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				const ac = new AbortController();
 				let handleP: Promise<IFluidHandleInternal<ArrayBufferLike>> | undefined;
 				try {
-					const blob = IsoBuffer.from("blob", "utf8");
+					const blob = textToBlob("blob");
 					handleP = runtime.createBlob(blob, ac.signal);
 					await runtime.processAll();
 					ac.abort();
@@ -1064,8 +741,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				}
 				assert(handleP);
 				await assert.doesNotReject(handleP);
-				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 1);
+				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+				assert.strictEqual(summaryData.ids?.length, 1);
 				assert.strictEqual(summaryData.redirectTable?.length, 1);
 			});
 
@@ -1077,7 +754,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				await runtime.attach();
 				await runtime.connect();
 				const ac = new AbortController();
-				const blob = IsoBuffer.from("blob", "utf8");
+				const blob = textToBlob("blob");
 				const handleP = runtime.createBlob(blob, ac.signal);
 				const p1 = runtime.processBlobs(true);
 				const p2 = runtime.processHandles();
@@ -1101,8 +778,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert.strictEqual(error.acked, false);
 				}
 				await assert.rejects(handleP);
-				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 0);
+				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+				assert.strictEqual(summaryData.ids, undefined);
 				assert.strictEqual(summaryData.redirectTable, undefined);
 			});
 
@@ -1116,7 +793,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				const ac = new AbortController();
 				let handleP: Promise<IFluidHandleInternal<ArrayBufferLike>> | undefined;
 				try {
-					handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"), ac.signal);
+					handleP = runtime.createBlob(textToBlob("blob"), ac.signal);
 					const p1 = runtime.processBlobs(true);
 					const p2 = runtime.processHandles();
 					// finish upload
@@ -1140,8 +817,8 @@ for (const createBlobPayloadPending of [false, true]) {
 
 				// TODO: `handleP` can be `undefined`; this should be made safer.
 				await assert.rejects(handleP as Promise<IFluidHandleInternal<ArrayBufferLike>>);
-				const summaryData = validateSummary(runtime);
-				assert.strictEqual(summaryData.ids.length, 0);
+				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+				assert.strictEqual(summaryData.ids, undefined);
 				assert.strictEqual(summaryData.redirectTable, undefined);
 			});
 		});
@@ -1153,27 +830,17 @@ for (const createBlobPayloadPending of [false, true]) {
 			 * Creates a blob with the given content and returns its local and storage id.
 			 */
 			async function createBlobAndGetIds(content: string) {
-				// For a given blob's GC node id, returns the blob id.
-				const getBlobIdFromGCNodeId = (gcNodeId: string) => {
-					const pathParts = gcNodeId.split("/");
-					assert(
-						pathParts.length === 3 && pathParts[1] === blobManagerBasePath,
-						"Invalid blob node path",
-					);
-					return pathParts[2];
-				};
-
 				// For a given blob's id, returns the GC node id.
 				const getGCNodeIdFromBlobId = (blobId: string) => {
 					return `/${blobManagerBasePath}/${blobId}`;
 				};
 
-				const blobContents = IsoBuffer.from(content, "utf8");
+				const blobContents = textToBlob(content);
 				const handleP = runtime.createBlob(blobContents);
 				await runtime.processAll();
 
 				const blobHandle = await handleP;
-				const localId = getBlobIdFromGCNodeId(blobHandle.absolutePath);
+				const { localId } = unpackHandle(blobHandle);
 				assert(redirectTable.has(localId), "blob not found in redirect table");
 				const storageId = redirectTable.get(localId);
 				assert(storageId !== undefined, "storage id not found in redirect table");
@@ -1193,8 +860,8 @@ for (const createBlobPayloadPending of [false, true]) {
 			it("fetching deleted blob fails", async () => {
 				await runtime.attach();
 				await runtime.connect();
-				const blob1Contents = IsoBuffer.from("blob1", "utf8");
-				const blob2Contents = IsoBuffer.from("blob2", "utf8");
+				const blob1Contents = textToBlob("blob1");
+				const blob2Contents = textToBlob("blob2");
 				const handle1P = runtime.createBlob(blob1Contents);
 				const handle2P = runtime.createBlob(blob2Contents);
 				await runtime.processAll();
@@ -1311,6 +978,78 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert(
 					!redirectTable.has(blob2.storageId),
 					"blob2 storageId should have been deleted",
+				);
+			});
+		});
+
+		describe("Storage ID Lookup", () => {
+			it("lookupTemporaryBlobStorageId returns correct storage ID for attached blobs", async () => {
+				await runtime.attach();
+				await runtime.connect();
+
+				// Create a blob using the helper function
+				const blobContents = textToBlob("test blob content");
+				const handleP = runtime.createBlob(blobContents);
+				await runtime.processAll();
+
+				const blobHandle = await handleP;
+				const { localId } = unpackHandle(blobHandle);
+				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
+				assert.strictEqual(summaryData.ids?.length, 1);
+				assert.strictEqual(summaryData.redirectTable?.length, 1);
+				const redirectTable = new Map<string, string>(summaryData.redirectTable);
+				const expectedStorageId: string | undefined = redirectTable.get(localId);
+				assert(expectedStorageId !== undefined, "storage id not found in redirect table");
+
+				// The blob should now have a storage ID available
+				const foundStorageId = runtime.blobManager.lookupTemporaryBlobStorageId(localId);
+				assert.strictEqual(
+					foundStorageId,
+					expectedStorageId,
+					"Storage ID should match expected value",
+				);
+			});
+
+			it("lookupTemporaryBlobStorageId returns undefined for pending blobs", async () => {
+				if (!createBlobPayloadPending) {
+					// This test only applies when payload pending is enabled
+					return;
+				}
+
+				await runtime.attach();
+				await runtime.connect();
+
+				// Create a blob but don't process it (keep it pending)
+				const blobContents = textToBlob("pending blob content");
+				const blobHandle = await runtime.createBlob(blobContents);
+
+				const { localId } = unpackHandle(blobHandle);
+
+				// The blob should be pending, so lookupTemporaryBlobStorageId should return undefined
+				const storageId = runtime.blobManager.lookupTemporaryBlobStorageId(localId);
+				assert.strictEqual(
+					storageId,
+					undefined,
+					"Storage ID should be undefined for pending blob",
+				);
+
+				// After processing, it should return the storage ID
+				await runtime.processAll();
+				const storageIdAfterProcessing =
+					runtime.blobManager.lookupTemporaryBlobStorageId(localId);
+				assert(
+					storageIdAfterProcessing !== undefined,
+					"Storage ID should be found after processing",
+				);
+			});
+
+			it("lookupTemporaryBlobStorageId returns undefined for unknown blob ID", () => {
+				const unknownId = "unknown-blob-id";
+				const storageId = runtime.blobManager.lookupTemporaryBlobStorageId(unknownId);
+				assert.strictEqual(
+					storageId,
+					undefined,
+					"Storage ID should be undefined for unknown blob ID",
 				);
 			});
 		});

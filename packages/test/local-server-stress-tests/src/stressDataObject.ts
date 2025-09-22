@@ -351,6 +351,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 		},
 		enableRuntimeIdCompressor: "on",
 		createBlobPayloadPending: true,
+		explicitSchemaControl: true,
 	};
 
 	return {

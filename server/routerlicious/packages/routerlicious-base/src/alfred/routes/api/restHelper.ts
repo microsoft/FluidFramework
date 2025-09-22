@@ -137,7 +137,7 @@ export function getDocumentUrlsfromNetworkInfo(
 	externalHistorianUrl: string,
 	externalDeltaStreamUrl: string,
 	enablePrivateLinkNetworkCheck: boolean = false,
-	isPrivateLink?: boolean | false,
+	isPrivateLink: boolean = false,
 	privateServiceHost?: string | undefined,
 ): {
 	documentOrdererUrl: string;
