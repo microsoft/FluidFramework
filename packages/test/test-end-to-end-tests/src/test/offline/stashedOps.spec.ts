@@ -1212,9 +1212,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("handles stashed ops for local DDS", async function () {
 		const newCounterId = "newCounter";
-		const container = (await provider.loadTestContainer(
-			testContainerConfig,
-		)) as ContainerAlpha;
+		const container = asLegacyAlpha(await provider.loadTestContainer(testContainerConfig));
 		const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
 
 		await provider.opProcessingController.pauseProcessing(container);
@@ -1256,9 +1254,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("handles stashed ops created on top of sequenced local ops", async function () {
-		const container = (await provider.loadTestContainer(
-			testContainerConfig,
-		)) as ContainerAlpha;
+		const container = asLegacyAlpha(await provider.loadTestContainer(testContainerConfig));
 		const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const string = await defaultDataStore.getSharedObject<SharedString>(stringId);
 
@@ -1890,9 +1886,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("get pending state without close resends ops", async () => {
-		const container = (await provider.loadTestContainer(
-			testContainerConfig,
-		)) as ContainerAlpha;
+		const container = asLegacyAlpha(await provider.loadTestContainer(testContainerConfig));
 
 		// pause outgoing ops so we can detect dropped stashed changes
 		await toIDeltaManagerFull(container.deltaManager).outbound.pause();
@@ -1937,9 +1931,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("repeated getPendingLocalState across multiple connections doesn't duplicate ops", async () => {
-		const container = (await provider.loadTestContainer(
-			testContainerConfig,
-		)) as ContainerAlpha;
+		const container = asLegacyAlpha(await provider.loadTestContainer(testContainerConfig));
 
 		let pendingState;
 		let pendingStateP;
