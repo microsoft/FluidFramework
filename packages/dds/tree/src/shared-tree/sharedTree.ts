@@ -222,6 +222,8 @@ export class SharedTreeKernel
 		return this.checkout.storedSchema;
 	}
 
+	private readonly checkouts: Map<BranchId, TreeCheckout> = new Map();
+
 	/**
 	 * The app-facing API for SharedTree implemented by this Kernel.
 	 * @remarks
@@ -360,6 +362,7 @@ export class SharedTreeKernel
 	}
 
 	private registerCheckout(branchId: BranchId, checkout: TreeCheckout): void {
+		this.checkouts.set(branchId, checkout);
 		const enricher = this.getCommitEnricher(branchId);
 		checkout.transaction.events.on("started", () => {
 			if (this.sharedObject.isAttached()) {
@@ -382,7 +385,7 @@ export class SharedTreeKernel
 		});
 		checkout.events.on("beforeBatch", (event) => {
 			if (event.type === "append" && this.sharedObject.isAttached()) {
-				if (this.checkout.transaction.isInProgress()) {
+				if (checkout.transaction.isInProgress()) {
 					enricher.addTransactionCommits(event.newCommits);
 				}
 			}
@@ -438,9 +441,12 @@ export class SharedTreeKernel
 		branchId: BranchId,
 		config: TreeViewConfiguration<ReadSchema<TRoot>>,
 	): SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>> {
-		return this.checkoutBranch(branchId).viewWith(
-			config,
-		) as SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>>;
+		return this.getCheckout(branchId).viewWith(config) as SchematizingSimpleTreeView<TRoot> &
+			TreeView<ReadSchema<TRoot>>;
+	}
+
+	private getCheckout(branchId: BranchId): TreeCheckout {
+		return this.checkouts.get(branchId) ?? this.checkoutBranch(branchId);
 	}
 
 	private checkoutBranch(branchId: BranchId): TreeCheckout {
@@ -463,12 +469,14 @@ export class SharedTreeKernel
 	}
 
 	public override didAttach(): void {
-		if (this.checkout.transaction.isInProgress()) {
-			// Attaching during a transaction is not currently supported.
-			// At least part of of the system is known to not handle this case correctly - commit enrichment - and there may be others.
-			throw new UsageError(
-				"Cannot attach while a transaction is in progress. Commit or abort the transaction before attaching.",
-			);
+		for (const checkout of this.checkouts.values()) {
+			if (checkout.transaction.isInProgress()) {
+				// Attaching during a transaction is not currently supported.
+				// At least part of of the system is known to not handle this case correctly - commit enrichment - and there may be others.
+				throw new UsageError(
+					"Cannot attach while a transaction is in progress. Commit or abort the transaction before attaching.",
+				);
+			}
 		}
 		super.didAttach();
 	}
@@ -478,10 +486,12 @@ export class SharedTreeKernel
 			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["applyStashedOp"]
 		>
 	): void {
-		assert(
-			!this.checkout.transaction.isInProgress(),
-			0x674 /* Unexpected transaction is open while applying stashed ops */,
-		);
+		for (const checkout of this.checkouts.values()) {
+			assert(
+				!checkout.transaction.isInProgress(),
+				0x674 /* Unexpected transaction is open while applying stashed ops */,
+			);
+		}
 		super.applyStashedOp(...args);
 	}
 
@@ -491,8 +501,9 @@ export class SharedTreeKernel
 		schemaAndPolicy: ClonableSchemaAndPolicy,
 		isResubmit: boolean,
 	): void {
+		const checkout = this.getCheckout(branchId);
 		assert(
-			!this.checkout.transaction.isInProgress(),
+			!checkout.transaction.isInProgress(),
 			0xaa6 /* Cannot submit a commit while a transaction is in progress */,
 		);
 		if (isResubmit) {
@@ -502,14 +513,9 @@ export class SharedTreeKernel
 		// Refrain from submitting new commits until they are validated by the checkout.
 		// This is not a strict requirement for correctness in our system, but in the event that there is a bug when applying commits to the checkout
 		// that causes a crash (e.g. in the forest), this will at least prevent this client from sending the problematic commit to any other clients.
-		if (branchId === "main") {
-			this.checkout.onCommitValid(commit, () =>
-				super.submitCommit(branchId, commit, schemaAndPolicy, isResubmit),
-			);
-		} else {
-			// XXX: Should we store a cache from branch to checkout?
-			super.submitCommit(branchId, commit, schemaAndPolicy, isResubmit);
-		}
+		checkout.onCommitValid(commit, () =>
+			super.submitCommit(branchId, commit, schemaAndPolicy, isResubmit),
+		);
 	}
 
 	public onDisconnect(): void {}
