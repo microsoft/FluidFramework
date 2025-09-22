@@ -28,9 +28,15 @@ import {
 	GenericError,
 	normalizeError,
 	type IFluidErrorBase,
+	createChildMonitoringContext,
+	mixinMonitoringContext,
+	sessionStorageConfigProvider,
 } from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
 
+import { DebugLogger } from "./debugLogger.js";
 import { Loader } from "./loader.js";
+import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
 
 interface OnDemandSummarizeOptions {
@@ -208,6 +214,22 @@ export async function loadSummarizerContainerAndMakeSummary(
 	loadExistingContainerProps: ILoadExistingContainerProps,
 ): Promise<{ success: true } | { success: false; error: Error }> {
 	const { logger, configProvider, request: originalRequest } = loadExistingContainerProps;
+	const telemetryProps = {
+		loaderId: uuid(),
+		loaderVersion: pkgVersion,
+	};
+
+	const subMc = mixinMonitoringContext(
+		DebugLogger.mixinDebugLogger("fluid:telemetry", logger, {
+			all: telemetryProps,
+		}),
+		sessionStorageConfigProvider.value,
+		configProvider,
+	);
+	const mc = createChildMonitoringContext({
+		logger: subMc.logger,
+		namespace: "SummarizerOnDemand",
+	});
 	const loader = new Loader(loadExistingContainerProps);
 	const baseHeaders = originalRequest.headers;
 	const request = {
@@ -226,7 +248,7 @@ export async function loadSummarizerContainerAndMakeSummary(
 
 	const container = await loader.resolve(request);
 
-	logger?.send({
+	mc.logger.send({
 		category: "generic",
 		eventName: "summarizerContainer_created",
 		requestUrl: originalRequest.url,
@@ -259,7 +281,7 @@ export async function loadSummarizerContainerAndMakeSummary(
 		}
 		// Host controlled feature gate for fullTree
 		// Default value will be false
-		const raw: ConfigTypes | undefined = configProvider?.getRawConfig?.(
+		const raw: ConfigTypes | undefined = mc.config.getRawConfig?.(
 			"Fluid.Summarizer.FullTree.OnDemand",
 		);
 		const fullTreeGate = typeof raw === "boolean" ? raw : false;
@@ -276,7 +298,7 @@ export async function loadSummarizerContainerAndMakeSummary(
 		return { success: false, error: caughtError };
 	} finally {
 		container.dispose();
-		logger?.send({
+		mc.logger.send({
 			category: "generic",
 			eventName: "summarizerContainer_closed",
 			requestUrl: originalRequest.url,
