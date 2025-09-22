@@ -5,5 +5,6 @@
 
 export { addCommentTest } from "./addComment.js";
 export { addUsersTest } from "./addUsers.js";
+export { updateUserTest } from "./updateUser.js";
 export { smokeTest } from "./whiteSmoke.js";
 export { methodUseTest } from "./setUserDisplayNameWithMethods.js";

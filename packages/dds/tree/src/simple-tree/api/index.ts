@@ -57,6 +57,11 @@ export {
 } from "./treeNodeApi.js";
 export { createFromCursor } from "./create.js";
 export {
+	type DirtyTreeStatus,
+	trackDirtyNodes,
+	type DirtyTreeMap,
+} from "./dirtyIndex.js";
+export {
 	type JsonSchemaId,
 	type JsonSchemaType,
 	type JsonObjectNodeSchema,
