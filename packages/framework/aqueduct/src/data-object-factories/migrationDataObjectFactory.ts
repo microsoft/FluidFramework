@@ -43,17 +43,25 @@ export interface MigrationDataObjectFactoryProps<
 	TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
 > extends DataObjectFactoryProps<TObj, I> {
 	/**
-	 * The constructor for the data object, which must also include static `modelDescriptors` property.
+	 * The constructor for the data object.
 	 */
-	ctor: (new (
+	ctor: new (
 		props: IDataObjectProps<I>,
-	) => TObj) & {
-		//* TODO: Add type alias for this array type
-		modelDescriptors: readonly [
-			ModelDescriptor<TNewModel>,
+		//* TODO: Add type alias for this tuple type
+		modelDescriptors?: readonly [
+			ModelDescriptor<TUniversalView>,
 			...ModelDescriptor<TUniversalView>[],
-		];
-	};
+		],
+	) => TObj;
+
+	/**
+	 * Ordered list of model descriptors participating in migration. The first entry is treated as the migration
+	 * target ("latest") that will be instantiated and populated during `migrate`.
+	 */
+	modelDescriptors: readonly [
+		ModelDescriptor<TNewModel>,
+		...ModelDescriptor<TUniversalView>[],
+	];
 
 	//* TODO: How can we support the app's ability to specify which is "Latest" model via config?
 
@@ -169,7 +177,7 @@ export class MigrationDataObjectFactory<
 			alwaysLoaded: Map<string, IChannelFactory>;
 			delayLoaded: Map<string, IDelayLoadChannelFactory>;
 			// eslint-disable-next-line unicorn/no-array-reduce
-		} = props.ctor.modelDescriptors.reduce(
+		} = props.modelDescriptors.reduce(
 			(acc, curr) => {
 				for (const factory of curr.sharedObjects.alwaysLoaded ?? []) {
 					acc.alwaysLoaded.set(factory.type, factory);
@@ -197,11 +205,25 @@ export class MigrationDataObjectFactory<
 			}
 		}
 
+		// Wrap the provided ctor so we can inject modelDescriptors into MultiFormatDataObject-derived classes
+		// without changing the expected single-arg constructor signature seen by PureDataObjectFactory.
+		const originalCtor = props.ctor;
+		function forwardingCtor(p: IDataObjectProps<I>): TObj {
+			return new originalCtor(p, props.modelDescriptors);
+		}
+		// Forward 'new' calls while producing an instance of originalCtor.
+		(forwardingCtor as unknown as { prototype: object }).prototype = (
+			originalCtor as unknown as { prototype: object }
+		).prototype;
+		// Cast through unknown so the callable wrapper can satisfy the construct signature with optional second param.
+		const typedForwardingCtor = forwardingCtor as unknown as typeof props.ctor;
+
 		//* TODO: Since we're looking up to the ContainerRuntime to handle the "migration protocol" (barrier ops, etc),
 		//* we probably will drop these mixins here.
 		//* See comments around call to this.parentContext.migrationProtocolBroker.readyToMigrate in DataStoreContext
 		super({
 			...props,
+			ctor: typedForwardingCtor,
 			sharedObjects,
 			//* afterBindRuntime: fullMigrateDataObject,
 			runtimeClass: class MigratorDataStoreRuntime extends runtimeClass {
@@ -283,7 +305,7 @@ export class MigrationDataObjectFactory<
 		const realRuntime = runtime as FluidDataStoreRuntime;
 
 		// Get the first model descriptor, which is the target of migration
-		const modelDescriptors = this.props.ctor.modelDescriptors;
+		const modelDescriptors = this.props.modelDescriptors;
 		const [targetDescriptor, ..._otherDescriptors] = modelDescriptors;
 
 		// Create the target model and run migration.

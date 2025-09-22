@@ -170,8 +170,6 @@ interface MigrationData {
  * Access the data via dirToTreeDataObject.dataModel?.view
  */
 class DirToTreeDataObject extends MigrationDataObject<ViewWithDirOrTree> {
-	// Single source of truth for descriptors: static on the DataObject class
-	public static modelDescriptors = [treeDesc, dirDesc] as const;
 	protected canPerformMigration(): boolean {
 		return true;
 	}
@@ -196,6 +194,7 @@ const props: MigrationDataObjectFactoryProps<
 > = {
 	type: "DirToTree",
 	ctor: DirToTreeDataObject,
+	modelDescriptors: [treeDesc, dirDesc],
 	migrateDataObject: (
 		_runtime: IFluidDataStoreRuntime,
 		newModel: TreeModel,

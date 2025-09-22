@@ -14,10 +14,9 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 
 import type { IDelayLoadChannelFactory } from "../channel-factories/index.js";
-import type { MigrationDataObjectFactoryProps } from "../data-object-factories/index.js";
 
 import { PureDataObject } from "./pureDataObject.js";
-import type { DataObjectTypes } from "./types.js";
+import type { DataObjectTypes, IDataObjectProps } from "./types.js";
 
 /**
  * Descriptor for a model shape (arbitrary schema) the migration data object can probe for
@@ -75,6 +74,22 @@ export abstract class MultiFormatDataObject<
 	extends PureDataObject<I>
 	implements IProvideMigrationInfo
 {
+	private readonly _modelDescriptors?: readonly [
+		ModelDescriptor<TUniversalView>,
+		...ModelDescriptor<TUniversalView>[],
+	];
+
+	public constructor(
+		props: IDataObjectProps<I>,
+		modelDescriptors?: readonly [
+			ModelDescriptor<TUniversalView>,
+			...ModelDescriptor<TUniversalView>[],
+		],
+	) {
+		super(props);
+		this._modelDescriptors = modelDescriptors;
+	}
+
 	public get IMigrationInfo(): IMigrationInfo | undefined {
 		assert(this.#activeModel !== undefined, "Data model not initialized");
 		if (!this.canPerformMigration()) {
@@ -129,15 +144,8 @@ export abstract class MultiFormatDataObject<
 		ModelDescriptor<TUniversalView>,
 		...ModelDescriptor<TUniversalView>[],
 	] {
-		// Pull the static modelDescriptors off the subclass
-		const { modelDescriptors } = this.constructor as MigrationDataObjectFactoryProps<
-			this,
-			TUniversalView,
-			I
-		>["ctor"];
-
-		//* TODO: Add runtime type guards? Or is type system sufficient here?
-		return modelDescriptors;
+		assert(this._modelDescriptors !== undefined, "No model descriptors provided");
+		return this._modelDescriptors;
 	}
 
 	/**
