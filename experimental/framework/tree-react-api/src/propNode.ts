@@ -24,6 +24,10 @@ export interface PropTreeNode<T extends TreeNode> extends ErasedType<[T, "PropTr
  * @remarks
  * This only handles a few cases (TreeNode, NodeRecord, arrays) and leaves other types as is.
  * Users which provide other types (e.g. maps) which contain TreeNodes will need to handle wrapping those themselves if the wrapping is desired.
+ * @privateRemarks
+ * Covering all cases is impossible, and trying to cover more with recursive mapped types can break some of the types by losing methods, private members, etc.
+ * This is intended to cover the common cases, and users can handle other cases manually.
+ * See the tests for this for more details.
  * @public
  */
 export type WrapNodes<T> = T extends TreeNode
