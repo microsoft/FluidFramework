@@ -775,6 +775,9 @@
         "@typescript-eslint/no-empty-interface": [
             "off"
         ],
+        "@typescript-eslint/no-empty-object-type": [
+            "warn"
+        ],
         "@typescript-eslint/no-explicit-any": [
             "off",
             {
@@ -914,6 +917,9 @@
         "@typescript-eslint/no-unsafe-enum-comparison": [
             "error"
         ],
+        "@typescript-eslint/no-unsafe-function-type": [
+            "warn"
+        ],
         "@typescript-eslint/no-unsafe-member-access": [
             "error"
         ],
@@ -940,6 +946,9 @@
         ],
         "@typescript-eslint/no-var-requires": [
             "error"
+        ],
+        "@typescript-eslint/no-wrapper-object-types": [
+            "warn"
         ],
         "@typescript-eslint/non-nullable-type-assertion-style": [
             "off"

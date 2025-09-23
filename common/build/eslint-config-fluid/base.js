@@ -39,9 +39,9 @@ module.exports = {
 	plugins: ["import", "unicorn"],
 	reportUnusedDisableDirectives: true,
 	rules: {
-		// Please keep entries alphabetized within a group
+		// #region TODO: promote these rules to errors in 7.0.0
 
-		// #region TODO: Bump to error in next major version increment
+		// (Also move into the alphabetized lists below)
 
 		/**
 		 * Disallow file path based links in JSDoc/TSDoc comments.
@@ -53,7 +53,18 @@ module.exports = {
 		 */
 		"@fluid-internal/fluid/no-markdown-links-in-jsdoc": "warn",
 
+		/** See {@link https://typescript-eslint.io/rules/no-empty-object-type} */
+		"@typescript-eslint/no-empty-object-type": "warn",
+
+		/** See {@link https://typescript-eslint.io/rules/no-unsafe-function-type} */
+		"@typescript-eslint/no-unsafe-function-type": "warn",
+
+		/** See {@link https://typescript-eslint.io/rules/no-wrapper-object-types/} */
+		"@typescript-eslint/no-wrapper-object-types": "warn",
+
 		// #endregion
+
+		// Please keep entries alphabetized within a group
 
 		// @typescript-eslint
 		"@typescript-eslint/adjacent-overload-signatures": "error",
