@@ -2541,6 +2541,7 @@ describe("SharedTree", () => {
 				mainView1.root.insertAtEnd("A");
 				const branchId = tree1.createSharedBranch();
 				mainView1.root.insertAtEnd("B");
+				await provider.ensureSynchronized();
 
 				const branchView1 = tree1.viewSharedBranchWith(branchId, config);
 				branchView1.root.insertAtEnd("X");

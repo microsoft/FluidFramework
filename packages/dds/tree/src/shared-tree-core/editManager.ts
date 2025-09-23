@@ -115,11 +115,14 @@ export class EditManager<
 	/**
 	 * @param changeFamily - the change family of changes on the trunk and local branch
 	 * @param localSessionId - the id of the local session that will be used for local commits
+	 * @param mintRevisionTag - a function which generates globally unique revision tags
+	 * @param onSharedBranchCreated - called when a new shared branch is created. This is not called for the main branch.
 	 */
 	public constructor(
 		public readonly changeFamily: TChangeFamily,
 		public readonly localSessionId: SessionId,
 		private readonly mintRevisionTag: () => RevisionTag,
+		private readonly onSharedBranchCreated?: (branchId: BranchId) => void,
 		logger?: ITelemetryLoggerExt,
 	) {
 		this.trunkBase = {
@@ -146,12 +149,7 @@ export class EditManager<
 			this.telemetryEventBatcher,
 		);
 
-		const mainBranch = this.createSharedBranch("main", undefined, undefined, mainTrunk);
-
-		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
-		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
-		// they require and therefore we monitor them explicitly.
-		onForkTransitive(mainBranch.localBranch, (fork) => this.registerBranch(fork));
+		this.createSharedBranch("main", undefined, undefined, mainTrunk);
 	}
 
 	public getLocalBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChangeset> {
@@ -452,10 +450,7 @@ export class EditManager<
 
 		const mainBranch = this.getSharedBranch("main");
 		const branchTrunk = mainBranch.rebasePeer(sessionId, referenceSequenceNumber).fork();
-
-		const sharedBranch = this.createSharedBranch(branchId, sessionId, mainBranch, branchTrunk);
-		this.registerBranch(sharedBranch.localBranch);
-		onForkTransitive(sharedBranch.localBranch, (fork) => this.registerBranch(fork));
+		this.createSharedBranch(branchId, sessionId, mainBranch, branchTrunk);
 	}
 
 	public addBranch(branchId: BranchId): void {
@@ -494,6 +489,17 @@ export class EditManager<
 
 		assert(!this.sharedBranches.has(branchId), "A branch with this ID already exists");
 		this.sharedBranches.set(branchId, sharedBranch);
+
+		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
+		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
+		// they require and therefore we monitor them explicitly.
+		onForkTransitive(sharedBranch.localBranch, (fork) => this.registerBranch(fork));
+
+		if (branchId !== "main") {
+			this.registerBranch(sharedBranch.localBranch);
+			this.onSharedBranchCreated?.(branchId);
+		}
+
 		return sharedBranch;
 	}
 
