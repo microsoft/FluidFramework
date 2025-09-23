@@ -108,10 +108,13 @@ export function useTreeObservations<TResult>(
  * @param propNode - Input, automatically unwrapped TreeNode from a {@link PropTreeNode} if needed.
  * @param trackDuring - Callback which reads from the node and returns a result.
  * If the result is a TreeNode or {@link NodeRecord} it will be wrapped as a {@link PropTreeNode} or {@link PropTreeNodeRecord}, see {@link WrapNodes}.
- * It is recommended that for improved type safety if returning nodes (or otherwise transferring them out of this function),
- * either use a format supported by {@link WrapNodes} or wrap the nodes manually using {@link toPropTreeNode}.
+ *
+ * It is recommended that when returning data containing {@link TreeNode}s,
+ * use a format supported by {@link WrapNodes} or wrap the nodes manually using {@link toPropTreeNode}.
+ * This improves the type safety, reducing the risk of invalidation bugs due to untracked access of tree content contained in the return value.
+ *
  * Note that is is fine to observe any node inside the callback, not just the provided node: all accesses will be tracked.
- * The provided node is just provided as a way to automatically unwrap the {@link PropTreeNode}
+ * The input node is just provided as a way to automatically unwrap the {@link PropTreeNode}
  *
  * @remarks
  * Reads content using {@link useTreeObservations} to track dependencies.
