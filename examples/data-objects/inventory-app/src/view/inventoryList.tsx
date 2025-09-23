@@ -43,18 +43,18 @@ export const MainView: React.FC<{ root: PropTreeNode<Inventory> }> = ({ root }) 
  */
 const InventoryView: React.FC<{ root: PropTreeNode<Inventory> }> =
 	withMemoizedTreeObservations(({ root }: { root: Inventory }) => {
-		const partsList = root.parts;
+		const parts = root.parts;
 
 		// Callback to remove a part, passed down to the PartView.
 		// This callback is memoized to avoid unnecessary re-renders of the PartView.
 		// This approach is better than adding a remove method to the Part
 		// schema since it does not cause potential misbehavior if the part schema is reused with other parents.
 		const removeChild = React.useCallback(
-			(part: Part) => partsList.removeAt(Tree.key(part) as number),
-			[partsList],
+			(part: Part) => parts.removeAt(Tree.key(part) as number),
+			[parts],
 		);
 
-		const parts = partsList.map((part) => (
+		const partViews = parts.map((part) => (
 			// Note the use of `objectIdNumber` here to get a stable key from the TreeNode.
 			// This pattern can be used when ever a React key is needed for a component which corresponds to a TreeNode.
 			<PartView key={objectIdNumber(part)} part={part} remove={removeChild} />
@@ -63,7 +63,7 @@ const InventoryView: React.FC<{ root: PropTreeNode<Inventory> }> =
 		return (
 			<div>
 				<h1>Inventory:</h1>
-				{parts}
+				{partViews}
 				<hr />
 				<button
 					onClick={() => root.parts.insertAtEnd(new Part({ name: "New Part", quantity: 0 }))}
