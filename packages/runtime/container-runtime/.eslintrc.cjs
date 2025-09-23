@@ -16,10 +16,6 @@ module.exports = {
 		"require-atomic-updates": "warn",
 		"unicorn/no-array-reduce": "warn",
 
-		// False positives on non-array `push` methods.
-		// TODO:AB#28686: remove this override once this rule has been disabled in the root config.
-		"unicorn/no-array-push-push": "off",
-
 		// #region TODO:AB#3027: remove overrides and upgrade config to `recommended`
 
 		"@typescript-eslint/explicit-function-return-type": [
