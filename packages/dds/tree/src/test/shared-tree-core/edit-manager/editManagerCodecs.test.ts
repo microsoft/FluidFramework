@@ -19,6 +19,7 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
+import { strict as assert } from "node:assert";
 
 const tags = Array.from({ length: 3 }, mintRevisionTag);
 
@@ -51,10 +52,18 @@ const dummyContext = {
 };
 const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodingContext> = {
 	successes: [
-		["empty", { main: { trunk: [], peerLocalBranches: new Map() } }, dummyContext],
+		[
+			"empty",
+			{
+				originator: dummyContext.originatorId,
+				main: { trunk: [], peerLocalBranches: new Map() },
+			},
+			dummyContext,
+		],
 		[
 			"single commit",
 			{
+				originator: dummyContext.originatorId,
 				main: {
 					trunk: trunkCommits.slice(0, 1),
 					peerLocalBranches: new Map(),
@@ -65,6 +74,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 		[
 			"multiple commits",
 			{
+				originator: dummyContext.originatorId,
 				main: {
 					trunk: trunkCommits,
 					peerLocalBranches: new Map(),
@@ -75,6 +85,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 		[
 			"empty branch",
 			{
+				originator: dummyContext.originatorId,
 				main: {
 					trunk: trunkCommits,
 					peerLocalBranches: new Map([
@@ -93,6 +104,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 		[
 			"non-empty branch",
 			{
+				originator: dummyContext.originatorId,
 				main: {
 					trunk: trunkCommits,
 					peerLocalBranches: new Map([
@@ -117,6 +129,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 		[
 			"multiple branches",
 			{
+				originator: dummyContext.originatorId,
 				main: {
 					trunk: trunkCommits,
 					peerLocalBranches: new Map([
@@ -146,6 +159,8 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 			dummyContext,
 		],
 	],
+
+	// TODO: Update these failures to ensure they satisfy SummaryData<TestChange>.
 	failures: {
 		1: [
 			[
@@ -185,9 +200,28 @@ export function testCodec() {
 			jsonValidator: typeboxValidator,
 		});
 
-		makeEncodingTestSuite(family, testCases);
+		// Versions 1 through 4 do not encode the summary originator ID.
+		makeEncodingTestSuite(
+			family,
+			testCases,
+			assertEquivalentSummaryDataIgnoreOriginator,
+			[1, 2, 3, 4],
+		);
+
+		makeEncodingTestSuite(family, testCases, undefined, [5]);
 
 		// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
 		// TODO: format compatibility tests to detect breaking of existing documents.
 	});
+}
+
+function assertEquivalentSummaryDataIgnoreOriginator(
+	a: SummaryData<TestChange>,
+	b: SummaryData<TestChange>,
+): void {
+	const aWithoutOriginator = { ...a };
+	const bWithoutOriginator = { ...b };
+	delete aWithoutOriginator.originator;
+	delete bWithoutOriginator.originator;
+	assert.deepStrictEqual(aWithoutOriginator, bWithoutOriginator);
 }

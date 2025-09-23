@@ -299,7 +299,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			0x95a /* Detached revision should only be set when not attached */,
 		);
 
-		// XXX: Get commit enricher for the right branch
 		const enrichedCommit =
 			this.detachedRevision === undefined && !isResubmit
 				? this.getCommitEnricher(branchId).enrich(commit)

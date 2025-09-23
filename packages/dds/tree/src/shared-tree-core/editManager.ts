@@ -948,11 +948,6 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 	public getCommitSequenceId(commitRevision: RevisionTag): SequenceId {
 		const id = this.commitMetadata.get(commitRevision)?.sequenceId;
 		if (id === undefined) {
-			// XXX
-			// assert(
-			// 	trunkCommitOrTrunkBase === this.trunkBase,
-			// 	0xa63 /* Commit must be either be on the trunk or be the trunk base */,
-			// );
 			return minimumPossibleSequenceId;
 		}
 		return id;

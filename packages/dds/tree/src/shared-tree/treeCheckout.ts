@@ -312,7 +312,7 @@ export function createTreeCheckout(
 			idCompressor,
 		);
 
-	// XXX: If a branch is passed in, is it supposed to be local main?
+	// TODO: If a branch is passed in, is it supposed to be local main?
 	// Otherwise shouldn't we set `isSharedBranch` to false?
 	const branch =
 		args?.branch ??

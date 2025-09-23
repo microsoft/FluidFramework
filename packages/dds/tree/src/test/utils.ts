@@ -48,7 +48,12 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
-import { type ICodecFamily, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
+import {
+	type FormatVersion,
+	type ICodecFamily,
+	type IJsonCodec,
+	withSchemaValidation,
+} from "../codec/index.js";
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
@@ -1041,8 +1046,10 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
 	encodingTestData: EncodingTestData<TDecoded, TEncoded, TContext>,
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
+	versions?: FormatVersion[],
 ): void {
-	for (const version of family.getSupportedFormats()) {
+	const versionsToTest = versions ?? family.getSupportedFormats();
+	for (const version of versionsToTest) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
 			// A common pattern to avoid validating the same portion of encoded data multiple times
