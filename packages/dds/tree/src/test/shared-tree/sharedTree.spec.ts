@@ -2479,7 +2479,7 @@ describe("SharedTree", () => {
 		const provider = new TestTreeProviderLite(
 			2,
 			configuredSharedTree({
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 				formatVersion: SharedTreeFormatVersion.vSharedBranches,
 			}).getFactory(),
 		);
