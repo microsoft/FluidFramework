@@ -54,6 +54,7 @@ import {
 	type ITreePrivate,
 	SharedTreeFormatVersion,
 	Tree,
+	TreeAlpha,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import {
@@ -67,7 +68,6 @@ import {
 	type TreeViewAlpha,
 	TreeViewConfiguration,
 	type ValidateRecursiveSchema,
-	asTreeViewAlpha,
 	SchemaFactoryAlpha,
 	type ITree,
 	toInitialSchema,
@@ -117,6 +117,7 @@ import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
 import { FluidClientVersion } from "../../codec/index.js";
+import { asAlpha } from "../../api.js";
 
 const enableSchemaValidation = true;
 
@@ -163,7 +164,7 @@ describe("SharedTree", () => {
 	});
 
 	describe("viewWith", () => {
-		it("initialize tree", () => {
+		it("@Smoke initialize tree", () => {
 			const tree = treeTestFactory();
 			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
 
@@ -1003,8 +1004,8 @@ describe("SharedTree", () => {
 			t1.kernel?.editManager !== undefined && t2.kernel?.editManager !== undefined,
 			"EditManager has moved. This test must be updated.",
 		);
-		assert(t1.kernel.editManager.getTrunkChanges().length < 10);
-		assert(t2.kernel.editManager.getTrunkChanges().length < 10);
+		assert(t1.kernel.editManager.getTrunkChanges("main").length < 10);
+		assert(t2.kernel.editManager.getTrunkChanges("main").length < 10);
 	});
 
 	it("can process changes while detached", async () => {
@@ -1641,6 +1642,52 @@ describe("SharedTree", () => {
 				resubmitter.assertOuterListEquals(finalState);
 				submitter.assertOuterListEquals(finalState);
 			});
+		});
+
+		it("revert constraint", () => {
+			// This test ensures that the feature works across peers as opposed to solely across branches.
+			const provider = new TestTreeProviderLite(2);
+			const config = new TreeViewConfiguration({ schema: JsonAsTree.JsonObject });
+			const viewA = asAlpha(provider.trees[0].viewWith(config));
+			const viewB = provider.trees[1].viewWith(config);
+			viewA.initialize(
+				new JsonAsTree.JsonObject({ child: new JsonAsTree.JsonObject({ id: "A" }) }),
+			);
+			provider.synchronizeMessages();
+
+			const stack = createTestUndoRedoStacks(provider.trees[0].kernel.checkout.events);
+
+			// Make transaction on a branch that does the following:
+			// 1. Changes value of "foo" to a new child.
+			// 2. Adds inverse constraint on existence of node "B" on field "foo".
+			viewA.runTransaction(() => {
+				viewA.root.child = new JsonAsTree.JsonObject({ id: "B" });
+				return {
+					preconditionsOnRevert: [{ type: "nodeInDocument", node: viewA.root.child }],
+				};
+			});
+			provider.synchronizeMessages();
+
+			assert.deepEqual(TreeAlpha.exportConcise(viewA.root), { child: { id: "B" } });
+			assert.deepEqual(TreeAlpha.exportConcise(viewB.root), { child: { id: "B" } });
+
+			const restoreChildA = stack.undoStack[0] ?? assert.fail("Missing undo");
+
+			// This change should violate the inverse constraint because it changes the
+			// child node from B to C
+			viewB.root.child = new JsonAsTree.JsonObject({ id: "C" });
+			provider.synchronizeMessages();
+
+			assert.deepEqual(TreeAlpha.exportConcise(viewA.root), { child: { id: "C" } });
+			assert.deepEqual(TreeAlpha.exportConcise(viewB.root), { child: { id: "C" } });
+
+			// This revert should do nothing since its constraint on the undo has been violated.
+			restoreChildA.revert();
+
+			assert.deepEqual(TreeAlpha.exportConcise(viewA.root), { child: { id: "C" } });
+			assert.deepEqual(TreeAlpha.exportConcise(viewB.root), { child: { id: "C" } });
+
+			stack.unsubscribe();
 		});
 	});
 
@@ -2345,9 +2392,7 @@ describe("SharedTree", () => {
 		const tree = DefaultTestSharedTreeKind.getFactory().create(runtime, "tree");
 		const runtimeFactory = new MockContainerRuntimeFactory();
 		runtimeFactory.createContainerRuntime(runtime);
-		const view = asTreeViewAlpha(
-			tree.viewWith(new TreeViewConfiguration({ schema: StringArray })),
-		);
+		const view = asAlpha(tree.viewWith(new TreeViewConfiguration({ schema: StringArray })));
 		view.initialize([]);
 		assert.throws(
 			() => {
@@ -2372,9 +2417,7 @@ describe("SharedTree", () => {
 		const tree = sharedObject.getFactory().create(runtime, "tree");
 		const runtimeFactory = new MockContainerRuntimeFactory();
 		runtimeFactory.createContainerRuntime(runtime);
-		const view = asTreeViewAlpha(
-			tree.viewWith(new TreeViewConfiguration({ schema: StringArray })),
-		);
+		const view = asAlpha(tree.viewWith(new TreeViewConfiguration({ schema: StringArray })));
 		view.initialize(["A"]);
 		view.root.removeAt(0);
 		// The fork prevents the trimming of the commit that removes "A"
@@ -2430,5 +2473,102 @@ describe("SharedTree", () => {
 
 		assert.deepEqual(tree.exportVerbose(), 10);
 		assert.deepEqual(tree.exportSimpleSchema(), toSimpleTreeSchema(numberSchema, true));
+	});
+
+	it("supports multiple shared branches", () => {
+		const provider = new TestTreeProviderLite(
+			2,
+			configuredSharedTree({
+				jsonValidator: typeboxValidator,
+				formatVersion: SharedTreeFormatVersion.vSharedBranches,
+			}).getFactory(),
+		);
+		const tree1 = provider.trees[0];
+
+		const config = new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation });
+		const mainView1 = tree1.viewWith(config);
+		mainView1.initialize(["A"]);
+		provider.synchronizeMessages();
+
+		assert.deepEqual([...mainView1.root], ["A"]);
+		const tree2 = provider.trees[1];
+		provider.synchronizeMessages();
+
+		const branchId = tree1.createSharedBranch();
+		const branchView1 = tree1.viewSharedBranchWith(branchId, config);
+		assert.deepEqual([...branchView1.root], ["A"]);
+
+		mainView1.root.insertAtEnd("X");
+		branchView1.root.insertAtEnd("B");
+		assert.deepEqual([...branchView1.root], ["A", "B"]);
+		assert.deepEqual([...mainView1.root], ["A", "X"]);
+		provider.synchronizeMessages();
+
+		const branchView2 = tree2.viewSharedBranchWith(branchId, config);
+		assert.deepEqual([...branchView2.root], ["A", "B"]);
+
+		branchView2.root.insertAtEnd("C");
+		assert.deepEqual([...branchView2.root], ["A", "B", "C"]);
+		provider.synchronizeMessages();
+
+		assert.deepEqual([...branchView1.root], ["A", "B", "C"]);
+		assert.deepEqual([...mainView1.root], ["A", "X"]);
+
+		const mainView2 = tree2.viewWith(config);
+		assert.deepEqual([...mainView2.root], ["A", "X"]);
+	});
+
+	describe("can load a shared branch from summary", () => {
+		for (const subCase of [
+			"based on a commit in the collab window",
+			"based on a commit outside the collab window",
+		] as const) {
+			it(subCase, async () => {
+				const provider = await TestTreeProvider.create(
+					1,
+					SummarizeType.onDemand,
+					new SharedTreeTestFactory(() => {}, undefined, {
+						formatVersion: SharedTreeFormatVersion.vSharedBranches,
+					}),
+				);
+				const tree1 = provider.trees[0];
+				const config = new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				});
+				const mainView1 = tree1.viewWith(config);
+				mainView1.initialize([]);
+				mainView1.root.insertAtEnd("A");
+				const branchId = tree1.createSharedBranch();
+				mainView1.root.insertAtEnd("B");
+				await provider.ensureSynchronized();
+
+				const branchView1 = tree1.viewSharedBranchWith(branchId, config);
+				branchView1.root.insertAtEnd("X");
+
+				await provider.ensureSynchronized();
+
+				if (subCase === "based on a commit outside the collab window") {
+					const seqNumber = provider.containers[0].deltaManager.lastSequenceNumber;
+					while (provider.containers[0].deltaManager.minimumSequenceNumber < seqNumber) {
+						mainView1.root.insertAtEnd("C");
+						await provider.ensureSynchronized();
+					}
+					mainView1.root.insertAtEnd("C");
+					await provider.ensureSynchronized();
+				}
+
+				const lengthOnMainBranch = mainView1.root.length;
+
+				// The summary created here should include the shared branch
+				await provider.summarize();
+				await provider.ensureSynchronized();
+				const loadingTree = await provider.createTree();
+				const loadingMainView = loadingTree.viewWith(config);
+				assert.equal(loadingMainView.root.length, lengthOnMainBranch);
+				const loadingBranchView = loadingTree.viewSharedBranchWith(branchId, config);
+				assert.deepEqual([...loadingBranchView.root], ["A", "X"]);
+			});
+		}
 	});
 });

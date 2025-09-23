@@ -39,8 +39,7 @@ export function serializeHandles(
  * @param context - The handle context for the container
  * @param bind - Bind any other handles we find in the object against this given handle.
  * @returns The fully-plain object
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function makeHandlesSerializable(
 	value: unknown,
@@ -58,8 +57,7 @@ export function makeHandlesSerializable(
  * @param serializer - The serializer that knows how to convert serializable-form handles into handle objects
  * @param context - The handle context for the container
  * @returns The mostly-plain object with handle objects within
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export function parseHandles(value: unknown, serializer: IFluidSerializer): unknown {
 	return serializer.decode(value);

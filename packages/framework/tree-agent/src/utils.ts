@@ -9,15 +9,20 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { ImplicitFieldSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
+import type {
+	ImplicitFieldSchema,
+	TreeLeafValue,
+	TreeNodeSchemaClass,
+} from "@fluidframework/tree";
 import type {
 	InsertableContent,
+	TreeBranch,
 	TreeNode,
 	TreeNodeSchema,
 	TreeViewAlpha,
 	UnsafeUnknownSchema,
 } from "@fluidframework/tree/alpha";
-import { ObjectNodeSchema, TreeAlpha } from "@fluidframework/tree/alpha";
+import { ObjectNodeSchema, Tree, TreeAlpha } from "@fluidframework/tree/alpha";
 import { z } from "zod";
 
 import { FunctionWrapper } from "./methodBinding.js";
@@ -81,11 +86,13 @@ export function getOrCreate<K, V>(
 /**
  * TODO
  * @alpha
+ * @privateRemarks This is a subset of the TreeViewAlpha functionality because if take it wholesale, it causes problems with invariance of the generic parameters.
  */
-export type TreeView<TRoot extends ImplicitFieldSchema> = Pick<
+export type TreeView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema> = Pick<
 	TreeViewAlpha<TRoot>,
-	"root" | "fork" | "merge" | "schema" | "events"
->;
+	"root" | "fork" | "merge" | "rebaseOnto" | "schema" | "events"
+> &
+	TreeBranch;
 
 /**
  * TODO
@@ -138,9 +145,29 @@ export function constructNode(schema: TreeNodeSchema, value: InsertableContent):
 	const node = TreeAlpha.create<UnsafeUnknownSchema>(schema, value);
 	assert(
 		node !== undefined && node !== null && typeof node === "object" && !isFluidHandle(node),
-		"Expected a constructed node to be an object",
+		0xc1e /* Expected a constructed node to be an object */,
 	);
 	return node;
+}
+
+/**
+ * Get a human-readable representation of a tree value's type.
+ */
+export function getFriendlySchema(value: TreeNode | TreeLeafValue | undefined): string {
+	if (value === undefined) {
+		return "undefined";
+	}
+	if (value === null) {
+		return "null";
+	}
+	if (["string", "number", "boolean"].includes(typeof value)) {
+		return typeof value;
+	}
+	if (isFluidHandle(value)) {
+		return "FluidHandle";
+	}
+	const schema = Tree.schema(value);
+	return getFriendlySchemaName(schema.identifier) ?? schema.identifier;
 }
 
 /**
@@ -163,15 +190,32 @@ export function getFriendlySchemaName(schemaName: string): string | undefined {
 }
 
 /**
+ * Details about the properties of a TypeScript schema represented as Zod.
+ */
+export interface SchemaDetails {
+	hasHelperMethods: boolean;
+}
+
+// TODO: yuck, this entire file has too many statics. we should rewrite it as a generic zod schema walk.
+let detailsI: SchemaDetails = {
+	hasHelperMethods: false,
+};
+
+/**
  * Returns the TypeScript source code corresponding to a Zod schema. The schema is supplied as an object where each
  * property provides a name for an associated Zod type. The return value is a string containing the TypeScript source
  * code corresponding to the schema. Each property of the schema object is emitted as a named `interface` or `type`
  * declaration for the associated type and is referenced by that name in the emitted type declarations. Other types
  * referenced in the schema are emitted in their structural form.
  * @param schema - A schema object where each property provides a name for an associated Zod type.
+ * @param details - Optional details about the schema. The fields will be set according to the details in the given schema.
  * @returns The TypeScript source code corresponding to the schema.
  */
-export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): string {
+export function getZodSchemaAsTypeScript(
+	schema: Record<string, z.ZodType>,
+	details?: SchemaDetails,
+): string {
+	detailsI = details ?? { hasHelperMethods: false };
 	let result = "";
 	let startOfLine = true;
 	let indent = 0;
@@ -270,7 +314,10 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 			}
 			case z.ZodFirstPartyTypeKind.ZodIntersection: {
 				return appendUnionOrIntersectionTypes(
-					(type._def as z.ZodUnionDef).options,
+					[
+						(type._def as z.ZodIntersectionDef).left,
+						(type._def as z.ZodIntersectionDef).right,
+					],
 					TypePrecedence.Intersection,
 				);
 			}
@@ -279,6 +326,9 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 			}
 			case z.ZodFirstPartyTypeKind.ZodRecord: {
 				return appendRecordType(type);
+			}
+			case z.ZodFirstPartyTypeKind.ZodMap: {
+				return appendMapType(type);
 			}
 			case z.ZodFirstPartyTypeKind.ZodLiteral: {
 				return appendLiteral((type._def as z.ZodLiteralDef).value);
@@ -312,6 +362,12 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 
 					return append(name);
 				}
+				throw new Error(
+					"Unsupported zod effects type. Did you use z.instanceOf? Use ExposedMethods.instanceOf function to reference schema classes in methods.",
+				);
+			}
+			case z.ZodFirstPartyTypeKind.ZodVoid: {
+				return append("void");
 			}
 			default: {
 				throw new UsageError(
@@ -321,20 +377,13 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 		}
 	}
 
-	function appendArrayType(arrayType: z.ZodType) {
-		appendType((arrayType._def as z.ZodArrayDef).type, TypePrecedence.Object);
-		append("[]");
-	}
-
-	function appendObjectType(objectType: z.ZodType) {
-		append("{");
-		appendNewLine();
-		indent++;
+	function appendBoundMethods(boundType: z.ZodType): void {
 		// eslint-disable-next-line prefer-const
-		for (let [name, type] of Object.entries((objectType._def as z.ZodObjectDef).shape())) {
+		for (let [name, type] of Object.entries((boundType._def as z.ZodObjectDef).shape())) {
 			// Special handling of methods on objects
 			const method = (type as unknown as { method: object | undefined }).method;
 			if (method !== undefined && method instanceof FunctionWrapper) {
+				detailsI.hasHelperMethods = true;
 				append(name);
 				append("(");
 				let first = true;
@@ -361,7 +410,24 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 				if (method.description !== undefined) {
 					append(` // ${method.description}`);
 				}
-			} else {
+				appendNewLine();
+			}
+		}
+	}
+
+	function appendArrayType(arrayType: z.ZodType) {
+		appendType((arrayType._def as z.ZodArrayDef).type, TypePrecedence.Object);
+		append("[]");
+	}
+
+	function appendObjectType(objectType: z.ZodType) {
+		append("{");
+		appendNewLine();
+		indent++;
+		// eslint-disable-next-line prefer-const
+		for (let [name, type] of Object.entries((objectType._def as z.ZodObjectDef).shape())) {
+			const method = (type as unknown as { method: object | undefined }).method;
+			if (method === undefined || !(method instanceof FunctionWrapper)) {
 				append(name);
 				if (getTypeKind(type) === z.ZodFirstPartyTypeKind.ZodOptional) {
 					append("?");
@@ -372,9 +438,10 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 				append(";");
 				const comment = type.description;
 				if (comment !== undefined && comment !== "") append(` // ${comment}`);
+				appendNewLine();
 			}
-			appendNewLine();
 		}
+		appendBoundMethods(objectType);
 		indent--;
 		append("}");
 	}
@@ -419,6 +486,14 @@ export function getZodSchemaAsTypeScript(schema: Record<string, z.ZodType>): str
 		appendType((recordType._def as z.ZodRecordDef).keyType);
 		append(", ");
 		appendType((recordType._def as z.ZodRecordDef).valueType);
+		append(">");
+	}
+
+	function appendMapType(mapType: z.ZodType) {
+		append("Map<");
+		appendType((mapType._def as z.ZodMapDef).keyType);
+		append(", ");
+		appendType((mapType._def as z.ZodMapDef).valueType);
 		append(">");
 	}
 
@@ -487,18 +562,12 @@ function getTypePrecendece(type: z.ZodType): TypePrecedence {
 export function instanceOf<T extends TreeNodeSchemaClass>(
 	schema: T,
 ): z.ZodType<InstanceType<T>, z.ZodTypeDef, InstanceType<T>> {
-	const existing = instanceZods.get(schema.identifier);
-	if (existing !== undefined) {
-		return existing as z.ZodType<InstanceType<T>, z.ZodTypeDef, InstanceType<T>>;
-	}
 	if (!(schema instanceof ObjectNodeSchema)) {
 		throw new UsageError(`${schema.identifier} must be an instance of ObjectNodeSchema.`);
 	}
 	const effect = z.instanceof(schema);
-	instanceZods.set(schema.identifier, effect);
 	instanceOfs.set(effect, schema);
 	return effect;
 }
 
 const instanceOfs = new WeakMap<z.ZodTypeAny, ObjectNodeSchema>();
-const instanceZods = new Map<string, z.ZodTypeAny>();

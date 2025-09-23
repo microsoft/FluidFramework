@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "node:assert";
+import { strict as assert } from "node:assert";
 
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	type ITreeCursorSynchronous,
 	type JsonableTree,
-	Multiplicity,
 	ObjectNodeStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
@@ -19,18 +17,14 @@ import {
 } from "../core/index.js";
 import {
 	FieldKinds,
-	type FlexFieldKind,
 	type FullSchemaPolicy,
 	cursorForJsonableTreeField,
-	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
-	fieldKinds,
 	jsonableTreeFromFieldCursor,
 } from "../feature-libraries/index.js";
 import {
 	ForestTypeExpensiveDebug,
 	type SchematizingSimpleTreeView,
-	type TreeStoredContent,
 } from "../shared-tree/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
@@ -134,30 +128,6 @@ function test(name: string, schemaData: TreeStoredSchema, data: JsonableTree[]):
 		schemaData,
 		treeFactory: () => data,
 		policy: defaultSchemaPolicy,
-	};
-}
-
-function cursorsToFieldContent(
-	cursors: readonly ITreeCursorSynchronous[],
-	schema: FlexFieldKind,
-): readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined {
-	if (schema.multiplicity === Multiplicity.Sequence) {
-		return cursors;
-	}
-	if (cursors.length === 1) {
-		return cursors[0];
-	}
-	assert(cursors.length === 0);
-	return undefined;
-}
-
-export function treeContentFromTestTree(testData: TestTree): TreeStoredContent {
-	return {
-		schema: testData.schemaData,
-		initialTree: cursorsToFieldContent(
-			testData.treeFactory().map(cursorForJsonableTreeNode),
-			fieldKinds.get(testData.schemaData.rootFieldSchema.kind) ?? fail("missing kind"),
-		),
 	};
 }
 

@@ -139,6 +139,21 @@ export function createTreeSharedObject<TIndexes extends readonly Summarizable[]>
 	);
 }
 
+export function makeTestDefaultChangeFamily(options?: {
+	idCompressor?: IIdCompressor;
+	chunkCompressionStrategy?: TreeCompressionStrategy;
+}) {
+	return new DefaultChangeFamily(
+		makeModularChangeCodecFamily(
+			fieldKindConfigurations,
+			new RevisionTagCodec(options?.idCompressor ?? testIdCompressor),
+			makeFieldBatchCodec(codecOptions, formatVersions.fieldBatch),
+			codecOptions,
+			options?.chunkCompressionStrategy ?? TreeCompressionStrategy.Compressed,
+		),
+	);
+}
+
 function createTreeInner(
 	sharedObject: IChannelView & IFluidLoadable,
 	serializer: IFluidSerializer,
@@ -152,15 +167,7 @@ function createTreeInner(
 	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
 	editor?: () => DefaultEditBuilder,
 ): [SharedTreeCore<DefaultEditBuilder, DefaultChangeset>, DefaultChangeFamily] {
-	const codec = makeModularChangeCodecFamily(
-		fieldKindConfigurations,
-		new RevisionTagCodec(idCompressor),
-		makeFieldBatchCodec(codecOptions, formatVersions.fieldBatch),
-		codecOptions,
-		chunkCompressionStrategy,
-	);
-	const changeFamily = new DefaultChangeFamily(codec);
-
+	const changeFamily = makeTestDefaultChangeFamily({ idCompressor, chunkCompressionStrategy });
 	return [
 		new SharedTreeCore(
 			new Breakable("createTreeInner"),
@@ -253,24 +260,25 @@ export class TestSharedTreeCore extends SharedObject {
 			},
 		);
 
+		const commitEnricher = this.kernel.getCommitEnricher("main");
 		this.transaction.events.on("started", () => {
 			if (this.isAttached()) {
-				this.kernel.commitEnricher.startTransaction();
+				commitEnricher.startTransaction();
 			}
 		});
 		this.transaction.events.on("aborting", () => {
 			if (this.isAttached()) {
-				this.kernel.commitEnricher.abortTransaction();
+				commitEnricher.abortTransaction();
 			}
 		});
 		this.transaction.events.on("committing", () => {
 			if (this.isAttached()) {
-				this.kernel.commitEnricher.commitTransaction();
+				commitEnricher.commitTransaction();
 			}
 		});
 		this.transaction.activeBranchEvents.on("afterChange", (event) => {
 			if (event.type === "append" && this.isAttached() && this.transaction.isInProgress()) {
-				this.kernel.commitEnricher.addTransactionCommits(event.newCommits);
+				commitEnricher.addTransactionCommits(event.newCommits);
 			}
 		});
 	}

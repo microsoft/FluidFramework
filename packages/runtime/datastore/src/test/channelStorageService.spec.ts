@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type { IRuntimeStorageService } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 

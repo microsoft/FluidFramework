@@ -11,7 +11,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import { ContainerMessageType } from "../../index.js";
 import {
-	OutboundBatchMessage,
+	type OutboundBatchMessage,
 	OpGroupingManager,
 	isGroupedBatch,
 	type OutboundBatch,

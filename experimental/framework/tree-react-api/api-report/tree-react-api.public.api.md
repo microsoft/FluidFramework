@@ -24,6 +24,11 @@ export interface SchemaIncompatibleProps {
 export function treeDataObject<TSchema extends ImplicitFieldSchema>(treeConfiguration: TreeViewConfiguration<TSchema>, createInitialTree: () => InsertableTreeFieldFromImplicitField<TSchema>): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable>;
 
 // @public
+export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({ tree, viewComponent: ViewComponent, errorComponent, }: TreeViewProps<TSchema> & {
+    tree: Pick<IReactTreeDataObject<TSchema>, "treeView">;
+}): React_2.JSX.Element;
+
+// @public
 export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
     readonly errorComponent?: React_2.FC<SchemaIncompatibleProps>;
     readonly viewComponent: React_2.FC<{

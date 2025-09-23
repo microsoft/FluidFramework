@@ -14,10 +14,11 @@ import {
 import {
 	typeNameSymbol,
 	typeSchemaSymbol,
-	// Used to test that TreeNode is a type only export.
-	TreeNode as TreeNodePublic,
+	type TreeNodeSchema,
+	SchemaFactory,
 } from "../../../simple-tree/index.js";
 import { validateUsageError } from "../../utils.js";
+import { Tree } from "../../../shared-tree/index.js";
 
 describe("simple-tree core types", () => {
 	describe("TreeNode", () => {
@@ -52,21 +53,29 @@ describe("simple-tree core types", () => {
 				}
 			}
 
-			assert.throws(() => new Subclass(), validateUsageError(/SchemaFactory/));
+			// Instances are rejected
+			assert.throws(
+				() => new Subclass(),
+				validateUsageError("TreeNodes must extend schema classes created by SchemaFactory"),
+			);
+
+			// Use as schema is rejected
+			assert.throws(
+				() => {
+					Tree.is(0, Subclass as unknown as TreeNodeSchema);
+				},
+				validateUsageError(/does not extend a SchemaFactory generated class/),
+			);
 		});
 
-		it("subclassing from public API", () => {
-			assert.throws(() => {
-				// @ts-expect-error TreeNode is only type exported, preventing external code from extending it.
-				abstract class Subclass extends TreeNodePublic {}
-			});
-		});
-
-		it("instanceof public", () => {
-			assert.throws(() => {
-				// @ts-expect-error TreeNode is only type exported, preventing external code from extending it.
-				const x = {} instanceof TreeNodePublic;
-			});
+		it("instanceof", () => {
+			const factory = new SchemaFactory("Test");
+			class Customizable extends factory.object("o", {}) {}
+			const Pojo = factory.array([]);
+			assert.equal({} instanceof TreeNode, false);
+			assert.equal(new Customizable({}) instanceof TreeNode, true);
+			assert.equal(Pojo.create() instanceof TreeNode, true);
+			assert.equal([] instanceof TreeNode, false);
 		});
 	});
 

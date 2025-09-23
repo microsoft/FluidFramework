@@ -8,8 +8,7 @@ import type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
 /**
  * A single registry entry that may be used to create data stores
  * It has to have either factory or registry, or both.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type FluidDataStoreRegistryEntry = Readonly<
 	Partial<IProvideFluidDataStoreRegistry & IProvideFluidDataStoreFactory>
@@ -17,16 +16,14 @@ export type FluidDataStoreRegistryEntry = Readonly<
 /**
  * An associated pair of an identifier and registry entry.
  * Registry entries may be dynamically loaded.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
 
 /**
  * An associated pair of an identifier and registry entry.
  * Registry entries may be dynamically loaded.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type NamedFluidDataStoreRegistryEntry2 = [
 	string,
@@ -34,21 +31,18 @@ export type NamedFluidDataStoreRegistryEntry2 = [
 ];
 /**
  * An iterable identifier/registry entry pair list
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry2>;
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const IFluidDataStoreRegistry: keyof IProvideFluidDataStoreRegistry =
 	"IFluidDataStoreRegistry";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IProvideFluidDataStoreRegistry {
 	readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
@@ -57,8 +51,7 @@ export interface IProvideFluidDataStoreRegistry {
 /**
  * An association of identifiers to data store registry entries, where the
  * entries can be used to create data stores.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
 	/**

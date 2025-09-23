@@ -42,6 +42,7 @@ describe("nodeShape", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 
 			const buffer = checkNodeEncode(shape, context, {
@@ -60,6 +61,7 @@ describe("nodeShape", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 
 			const encodedChunk = checkNodeEncode(shape, context, {
@@ -75,6 +77,7 @@ describe("nodeShape", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 
 			const fieldShapeLocal = context.nestedArrayEncoder(
@@ -111,6 +114,7 @@ describe("nodeShape", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 
 			// Shape which encodes to nothing.

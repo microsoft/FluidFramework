@@ -4,18 +4,18 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import { IClientDetails } from "@fluidframework/driver-definitions";
+import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+import type { IClientDetails } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import {
+import type {
 	IOrderedClientElection,
 	ISerializedElection,
 	ITrackedClient,
 } from "./orderedClientElection.js";
 import { summarizerClientType } from "./summarizerTypes.js";
-import { ISummaryCollectionOpEvents } from "./summaryCollection.js";
+import type { ISummaryCollectionOpEvents } from "./summaryCollection.js";
 
 export interface ISummarizerClientElectionEvents extends IEvent {
 	(event: "electedSummarizerChanged", handler: () => void): void;

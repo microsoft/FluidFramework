@@ -10,14 +10,17 @@ import {
 	type ILayerCompatDetails,
 	type IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
-import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
+import {
+	AttachState,
+	type ICriticalContainerError,
+} from "@fluidframework/container-definitions";
 import {
 	ContainerErrorTypes,
-	IContainerContext,
+	type IContainerContext,
 	type IBatchMessage,
 } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import {
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type {
 	ConfigTypes,
 	FluidObject,
 	IConfigProviderBase,
@@ -29,27 +32,27 @@ import type {
 	ITelemetryBaseLogger,
 	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	ISnapshot,
-	ISummaryContext,
+	type ISnapshot,
+	type ISummaryContext,
 	type ISnapshotTree,
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 	type IVersion,
 	type FetchSource,
 	type IDocumentAttributes,
 	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	ISummaryTreeWithStats,
-	FluidDataStoreRegistryEntry,
+	type ISummaryTreeWithStats,
+	type FluidDataStoreRegistryEntry,
 	FlushMode,
 	FlushModeExperimental,
-	IFluidDataStoreContext,
-	IFluidDataStoreFactory,
-	IFluidDataStoreRegistry,
-	NamedFluidDataStoreRegistryEntries,
+	type IFluidDataStoreContext,
+	type IFluidDataStoreFactory,
+	type IFluidDataStoreRegistry,
+	type NamedFluidDataStoreRegistryEntries,
 	type IRuntimeMessageCollection,
 	type ISequencedMessageEnvelope,
 	type IEnvelope,
@@ -59,7 +62,7 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
-	IFluidErrorBase,
+	type IFluidErrorBase,
 	MockLogger,
 	createChildLogger,
 	isFluidError,
@@ -78,8 +81,8 @@ import { ChannelCollection } from "../channelCollection.js";
 import { CompressionAlgorithms, enabledCompressionConfig } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
-	IContainerRuntimeOptions,
-	IPendingRuntimeState,
+	type IContainerRuntimeOptions,
+	type IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
 	getSingleUseLegacyLogCallback,
 	type ContainerRuntimeOptionsInternal,
@@ -98,13 +101,13 @@ import type {
 	LocalBatchMessage,
 } from "../opLifecycle/index.js";
 import { pkgVersion } from "../packageVersion.js";
-import {
+import type {
 	IPendingLocalState,
 	IPendingMessage,
 	PendingStateManager,
 } from "../pendingStateManager.js";
 import {
-	ISummaryCancellationToken,
+	type ISummaryCancellationToken,
 	neverCancelledSummaryToken,
 	recentBatchInfoBlobName,
 	type IRefreshSummaryAckOptions,
@@ -3736,6 +3739,29 @@ describe("Runtime", () => {
 						"Container should throw when op compression is on and op grouping is off",
 					);
 				});
+
+				it("Throws when createBlobPayloadPending is on and explicitSchemaControl is not enabled", async () => {
+					await assert.rejects(
+						async () =>
+							ContainerRuntime.loadRuntime({
+								context: getMockContext() as IContainerContext,
+								registryEntries: [],
+								existing: false,
+								runtimeOptions: {
+									createBlobPayloadPending: true,
+								},
+								provideEntryPoint: mockProvideEntryPoint,
+							}),
+						(error: IErrorBase) => {
+							return (
+								error.errorType === ContainerErrorTypes.usageError &&
+								error.message ===
+									"explicitSchemaControl must be enabled to use createBlobPayloadPending"
+							);
+						},
+						"Container should throw when createBlobPayloadPending is on and explicitSchemaControl is not enabled",
+					);
+				});
 			});
 		});
 
@@ -4131,7 +4157,7 @@ describe("Runtime", () => {
 						existing: false,
 						// We would normally throw (since `createBlobPayloadPending` requires 2.40), but since we did
 						// not explicity set minVersionForCollab, we allow it.
-						runtimeOptions: { createBlobPayloadPending: true },
+						runtimeOptions: { createBlobPayloadPending: true, explicitSchemaControl: true },
 						provideEntryPoint: mockProvideEntryPoint,
 					});
 				});

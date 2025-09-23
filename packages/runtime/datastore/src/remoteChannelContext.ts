@@ -5,12 +5,12 @@
 
 import { AttachState } from "@fluidframework/container-definitions/internal";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannel,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import {
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
 	IGarbageCollectionData,
@@ -19,25 +19,25 @@ import {
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
-	type IPendingMessagesState,
-	type IRuntimeMessageCollection,
-	type IRuntimeStorageService,
+	IPendingMessagesState,
+	IRuntimeMessageCollection,
+	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	ThresholdCounter,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	ChannelServiceEndpoints,
-	IChannelContext,
+	type ChannelServiceEndpoints,
+	type IChannelContext,
 	createChannelServiceEndpoints,
 	loadChannel,
 	loadChannelFactoryAndAttributes,
 	summarizeChannelAsync,
 } from "./channelContext.js";
-import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
+import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export class RemoteChannelContext implements IChannelContext {
 	private isLoaded = false;

@@ -98,6 +98,7 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 /**
  * Options when declaring an {@link SchemaFactory.object|object node}'s schema
  *
+ * @input
  * @alpha
  */
 export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
@@ -147,7 +148,7 @@ export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
 	 * It's only when application code reaches into a node
 	 * (either by accessing its fields, spreading it, or some other means) that this problem arises.
 	 */
-	allowUnknownOptionalFields?: boolean;
+	readonly allowUnknownOptionalFields?: boolean;
 }
 
 /**
@@ -172,6 +173,33 @@ export type ScopedSchemaName<
 // > = `${TScope extends undefined ? "" : `${TScope}.`}${TName}`;
 
 const schemaStaticsPublic: SchemaStatics = schemaStatics;
+
+/**
+ * Create a class with `Statics` as both static properties and member properties.
+ * @privateRemarks
+ * An attempt was made to let this take in a base class so it could be used again on SchemaFactoryAlpha.
+ * This was unsuccessful, mostly due to issues with trying to manipulate constructor types.
+ */
+function classWithStatics<Statics extends object>(
+	statics: Statics,
+): Statics & (new () => Statics) {
+	// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+	class WithStatics {}
+
+	Object.assign(WithStatics.prototype, statics);
+	Object.assign(WithStatics, statics);
+	return WithStatics as Statics & (new () => Statics);
+}
+
+/**
+ * Base class for SchemaFactory, exposes {@link SchemaStatics} as both static properties and member properties.
+ * @remarks
+ * Do not use this directly, use {@link SchemaFactory} instead.
+ * @privateRemarks
+ * Exported only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
+ * @system @public
+ */
+export const SchemaFactory_base = classWithStatics(schemaStaticsPublic);
 
 // TODO:
 // SchemaFactory.array references should link to the correct overloads, however the syntax for this does not seems to work currently for methods unless the they are not qualified with the class.
@@ -288,8 +316,7 @@ const schemaStaticsPublic: SchemaStatics = schemaStatics;
 export class SchemaFactory<
 	out TScope extends string | undefined = string | undefined,
 	TName extends number | string = string,
-> implements SchemaStatics
-{
+> extends SchemaFactory_base {
 	/**
 	 * TODO:
 	 * If users of this generate the same name because two different schema with the same identifier were used,
@@ -338,73 +365,9 @@ export class SchemaFactory<
 		 * ```
 		 */
 		public readonly scope: TScope,
-	) {}
-
-	private scoped<Name extends TName | string>(name: Name): ScopedSchemaName<TScope, Name> {
-		return (
-			this.scope === undefined ? `${name}` : `${this.scope}.${name}`
-		) as ScopedSchemaName<TScope, Name>;
+	) {
+		super();
 	}
-
-	/**
-	 * {@inheritDoc SchemaStatics.string}
-	 */
-	public readonly string = schemaStaticsPublic.string;
-
-	/**
-	 * {@inheritDoc SchemaStatics.number}
-	 */
-	public readonly number = schemaStaticsPublic.number;
-
-	/**
-	 * {@inheritDoc SchemaStatics.boolean}
-	 */
-	public readonly boolean = schemaStaticsPublic.boolean;
-
-	/**
-	 * {@inheritDoc SchemaStatics.null}
-	 */
-	public readonly null = schemaStaticsPublic.null;
-
-	/**
-	 * {@inheritDoc SchemaStatics.handle}
-	 */
-	public readonly handle = schemaStaticsPublic.handle;
-
-	/**
-	 * {@inheritDoc SchemaStatics.leaves}
-	 */
-	public readonly leaves = schemaStaticsPublic.leaves;
-
-	/**
-	 * {@inheritDoc SchemaStatics.string}
-	 */
-	public static readonly string = schemaStaticsPublic.string;
-
-	/**
-	 * {@inheritDoc SchemaStatics.number}
-	 */
-	public static readonly number = schemaStaticsPublic.number;
-
-	/**
-	 * {@inheritDoc SchemaStatics.boolean}
-	 */
-	public static readonly boolean = schemaStaticsPublic.boolean;
-
-	/**
-	 * {@inheritDoc SchemaStatics.null}
-	 */
-	public static readonly null = schemaStaticsPublic.null;
-
-	/**
-	 * {@inheritDoc SchemaStatics.handle}
-	 */
-	public static readonly handle = schemaStaticsPublic.handle;
-
-	/**
-	 * {@inheritDoc SchemaStatics.leaves}
-	 */
-	public static readonly leaves = schemaStaticsPublic.leaves;
 
 	/**
 	 * Define a {@link TreeNodeSchemaClass} for a {@link TreeObjectNode}.
@@ -435,7 +398,7 @@ export class SchemaFactory<
 			true,
 			T
 		> = objectSchema(
-			this.scoped(name),
+			scoped(this, name),
 			fields,
 			true,
 			defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
@@ -593,7 +556,7 @@ export class SchemaFactory<
 			T,
 			undefined
 		> = mapSchema(
-			this.scoped(name),
+			scoped(this, name),
 			allowedTypes,
 			implicitlyConstructable,
 			// The current policy is customizable nodes don't get fake prototypes.
@@ -669,7 +632,7 @@ export class SchemaFactory<
 	>;
 
 	/**
-	 * Define (and add to this library) a {@link TreeNodeSchemaClass} for a {@link (TreeArrayNode:interface)}.
+	 * Define a {@link TreeNodeSchemaClass} for a {@link (TreeArrayNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param allowedTypes - The types that may appear in the array.
@@ -795,7 +758,7 @@ export class SchemaFactory<
 		undefined
 	> {
 		const array = arraySchema(
-			this.scoped(name),
+			scoped(this, name),
 			allowedTypes,
 			implicitlyConstructable,
 			customizable,
@@ -811,46 +774,6 @@ export class SchemaFactory<
 			undefined
 		>;
 	}
-
-	/**
-	 * {@inheritDoc SchemaStatics.optional}
-	 */
-	public readonly optional = schemaStaticsPublic.optional;
-
-	/**
-	 * {@inheritDoc SchemaStatics.required}
-	 */
-	public readonly required = schemaStaticsPublic.required;
-
-	/**
-	 * {@inheritDoc SchemaStatics.optionalRecursive}
-	 */
-	public readonly optionalRecursive = schemaStaticsPublic.optionalRecursive;
-
-	/**
-	 * {@inheritDoc SchemaStatics.requiredRecursive}
-	 */
-	public readonly requiredRecursive = schemaStaticsPublic.requiredRecursive;
-
-	/**
-	 * {@inheritDoc SchemaStatics.optional}
-	 */
-	public static readonly optional = schemaStaticsPublic.optional;
-
-	/**
-	 * {@inheritDoc SchemaStatics.required}
-	 */
-	public static readonly required = schemaStaticsPublic.required;
-
-	/**
-	 * {@inheritDoc SchemaStatics.optionalRecursive}
-	 */
-	public static readonly optionalRecursive = schemaStaticsPublic.optionalRecursive;
-
-	/**
-	 * {@inheritDoc SchemaStatics.requiredRecursive}
-	 */
-	public static readonly requiredRecursive = schemaStaticsPublic.requiredRecursive;
 
 	/**
 	 * A special readonly field which holds an identifier string for an object node.
@@ -1063,6 +986,16 @@ export function structuralName<const T extends string>(
 	return `${collectionName}<${inner}>`;
 }
 
+export function scoped<
+	TScope extends string | undefined,
+	TName extends number | string,
+	Name extends TName | string,
+>(factory: SchemaFactory<TScope, TName>, name: Name): ScopedSchemaName<TScope, Name> {
+	return (
+		factory.scope === undefined ? `${name}` : `${factory.scope}.${name}`
+	) as ScopedSchemaName<TScope, Name>;
+}
+
 /**
  * Used to allocate default identifiers for unhydrated nodes when no context is available.
  * @remarks
@@ -1077,7 +1010,7 @@ const globalIdentifierAllocator: IIdCompressor = createIdCompressor();
  * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
  * See {@link NodeSchemaMetadata.custom}.
  *
- * @sealed
+ * @input
  * @public
  */
 export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
@@ -1085,8 +1018,7 @@ export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
 	 * Optional metadata to associate with the Node Schema.
 	 *
 	 * @remarks
-	 * Note: this metadata is not persisted nor made part of the collaborative state; it is strictly client-local.
-	 * Different clients in the same collaborative session may see different metadata for the same field.
+	 * This specifies {@link SimpleNodeSchemaBase.metadata} which has more details about its use.
 	 */
 	readonly metadata?: NodeSchemaMetadata<TCustomMetadata> | undefined;
 }
@@ -1097,12 +1029,15 @@ export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
  * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
  * See {@link NodeSchemaMetadata.custom}.
  *
+ * @input
  * @alpha
  */
 export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown>
 	extends NodeSchemaOptions<TCustomMetadata> {
 	/**
 	 * The persisted metadata for this schema element.
+	 * @remarks
+	 * This gets exposed via {@link SimpleNodeSchemaBaseAlpha.persistedMetadata}.
 	 */
 	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }

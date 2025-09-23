@@ -65,11 +65,13 @@ export {
 	verboseConsoleLogger,
 } from "./Logging.js";
 export type {
+	ApiConstructorLike,
 	ApiFunctionLike,
 	ApiMemberKind,
 	ApiModifier,
 	ApiModuleLike,
 	ApiSignatureLike,
+	ApiTypeLike,
 	ReleaseLevel,
 	ValidApiItemKind,
 } from "./utilities/index.js";

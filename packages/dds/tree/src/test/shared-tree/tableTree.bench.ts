@@ -3,24 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
+import { strict as assert } from "node:assert";
 import {
 	benchmark,
 	BenchmarkType,
 	isInPerformanceTestingMode,
 	type BenchmarkTimer,
+	type BenchmarkTimingOptions,
 } from "@fluid-tools/benchmark";
 
 import {
 	Column,
 	Row,
-	UndoRedoManager,
 	createTableTree,
-	removeColumnAndCells,
-	type Table,
-	type TableTreeDefinition,
+	type TableBenchmarkOptions,
 } from "../tablePerformanceTestUtilities.js";
-import type { TreeNodeFromImplicitAllowedTypes } from "../../simple-tree/index.js";
 
 /**
  * Note: These benchmarks are designed to closely match the benchmarks in SharedMatrix.
@@ -28,24 +25,32 @@ import type { TreeNodeFromImplicitAllowedTypes } from "../../simple-tree/index.j
  * to ensure consistency and comparability between the two implementations.
  */
 
+// TODOs (AB#46340):
+// - unify with memory measurement tests (in terms of API)
+
+/**
+ * {@link runBenchmark} configuration.
+ */
+interface BenchmarkConfig extends BenchmarkTimingOptions, TableBenchmarkOptions {
+	/**
+	 * {@inheritDoc @fluid-tools/benchmark#BenchmarkTimingOptions.maxBenchmarkDurationSeconds}
+	 */
+	readonly maxBenchmarkDurationSeconds: number;
+}
+
 /**
  * Runs a benchmark for a specific operation on a table tree.
  */
 function runBenchmark({
 	title,
 	tableSize,
-	cellValue,
+	initialCellValue,
+	beforeOperation,
 	operation,
+	afterOperation,
 	minBatchDurationSeconds = 0,
 	maxBenchmarkDurationSeconds,
-}: {
-	title: string;
-	tableSize: number;
-	cellValue: string;
-	operation: (table: TreeNodeFromImplicitAllowedTypes<typeof Table>) => void;
-	minBatchDurationSeconds?: number;
-	maxBenchmarkDurationSeconds: number;
-}): void {
+}: BenchmarkConfig): void {
 	benchmark({
 		type: BenchmarkType.Measurement,
 		title,
@@ -55,77 +60,26 @@ function runBenchmark({
 				// Since this setup one collects data from one iteration, assert that this is what is expected.
 				assert.equal(state.iterationsPerBatch, 1, "Expected exactly one iteration per batch");
 
-				// Setup
-				const localTree: TableTreeDefinition = createTableTree(tableSize, cellValue);
+				// Create table tree
+				const { table, undoRedoStack, cleanUp } = createTableTree({
+					tableSize,
+					initialCellValue,
+				});
+
+				beforeOperation?.(table, undoRedoStack);
 
 				// Operation
 				const before = state.timer.now();
-				operation(localTree.table);
+				operation(table, undoRedoStack);
 				const after = state.timer.now();
 
 				// Measure
 				duration = state.timer.toSeconds(before, after);
-			} while (state.recordBatch(duration));
-		},
-		minBatchDurationSeconds,
-		maxBenchmarkDurationSeconds,
-	});
-}
 
-/**
- * This function runs a benchmark for undo/redo operations on a SharedTree.
- */
-function runUndoRedoBenchmark({
-	title,
-	tableSize,
-	cellValue,
-	setupOperation,
-	stackOperation,
-	minBatchDurationSeconds = 0,
-	maxBenchmarkDurationSeconds,
-}: {
-	title: string;
-	tableSize: number;
-	cellValue: string;
-	/**
-	 * A function that sets up the operation to be performed on the tree.
-	 */
-	setupOperation: (
-		table: TreeNodeFromImplicitAllowedTypes<typeof Table>,
-		undoRedoManager: UndoRedoManager,
-	) => void;
-	/**
-	 * The operation to perform on the stack. This should be a function that takes an UndoRedoStackManager
-	 * and performs the desired operation.
-	 */
-	stackOperation: (undoRedoManager: UndoRedoManager) => void;
-	minBatchDurationSeconds?: number;
-	maxBenchmarkDurationSeconds: number;
-}): void {
-	benchmark({
-		type: BenchmarkType.Measurement,
-		title,
-		benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
-			let duration: number;
-			do {
-				// Since this setup one collects data from one iteration, assert that this is what is expected.
-				assert.equal(state.iterationsPerBatch, 1, "Expected exactly one iteration per batch");
-
-				// Setup
-				const localTree: TableTreeDefinition = createTableTree(tableSize, cellValue);
-				const undoRedoManager = new UndoRedoManager(localTree.treeView);
-				setupOperation(localTree.table, undoRedoManager);
-
-				// Operation
-				const before = state.timer.now();
-				stackOperation(undoRedoManager);
-				const after = state.timer.now();
-
-				// Measure
-				duration = state.timer.toSeconds(before, after);
+				afterOperation?.(table, undoRedoStack);
 
 				// Clean up
-				undoRedoManager.dispose();
+				cleanUp();
 			} while (state.recordBatch(duration));
 		},
 		minBatchDurationSeconds,
@@ -135,188 +89,339 @@ function runUndoRedoBenchmark({
 
 describe("SharedTree table APIs execution time", () => {
 	// The value to be set in the cells of the tree.
-	const cellValue = "cellValue";
-	// The test tree's size will be 10*10, 100*100.
+	const initialCellValue = "cellValue";
+
+	// The test tree's size will be 5*5, 50*50.
 	// Table size 1000 benchmarks removed due to high overhead and unreliable results.
 	const tableSizes = isInPerformanceTestingMode
-		? [10, 100]
+		? [5, 50]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
-			[10];
+			[5];
 
 	// The number of operations to perform on the tree.
 	// Operation counts 1000 removed due to high overhead and unreliable results.
 	const operationCounts = isInPerformanceTestingMode
-		? [10, 100]
+		? [5, 50]
 		: // When not measuring perf, use a single smaller data size so the tests run faster.
 			[5];
+
 	// The maximum duration for each benchmark, in seconds.
 	let maxBenchmarkDurationSeconds: number;
 
 	for (const tableSize of tableSizes) {
-		maxBenchmarkDurationSeconds = tableSize === 100 ? 10 : 5;
+		maxBenchmarkDurationSeconds = tableSize === 50 ? 10 : 5;
 
 		// Filter counts to ensure remove operation do not exceed tableSize
 		const validRemoveCounts = operationCounts.filter((count) => count <= tableSize);
 
 		// Insert-related tests that are not limited by tableSize
 		for (const count of operationCounts) {
-			describe(`Column Insertion`, () => {
-				// Test the execute time of the SharedTree for inserting a column in the middle for a given number of times.
-				runBenchmark({
-					title: `Insert a column in the middle ${count} times`,
-					tableSize,
-					cellValue,
-					operation: (table) => {
-						for (let i = 0; i < count; i++) {
-							const column = new Column({});
-							table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
-						}
-					},
-					maxBenchmarkDurationSeconds,
+			describe("Column insertion", () => {
+				describe("Single column insertion", () => {
+					const scenarioName = `Insert a column in the middle ${count} times`;
+					runBenchmark({
+						title: scenarioName,
+						tableSize,
+						initialCellValue,
+						operation: (table) => {
+							for (let i = 0; i < count; i++) {
+								const column = new Column({});
+								table.insertColumns({
+									index: Math.floor(table.columns.length / 2),
+									columns: [column],
+								});
+							}
+						},
+						maxBenchmarkDurationSeconds,
+					});
+
+					runBenchmark({
+						title: `Undo: ${scenarioName}`,
+						tableSize,
+						initialCellValue,
+						beforeOperation: (table, undoRedoManager) => {
+							for (let i = 0; i < count; i++) {
+								const column = new Column({});
+								table.insertColumns({
+									index: Math.floor(table.columns.length / 2),
+									columns: [column],
+								});
+							}
+							assert(undoRedoManager.canUndo);
+						},
+						operation: (table, undoRedoManager) => {
+							for (let i = 0; i < count; i++) {
+								undoRedoManager.undo();
+							}
+						},
+						afterOperation: (table, undoRedoManager) => {
+							assert(!undoRedoManager.canUndo);
+						},
+						maxBenchmarkDurationSeconds,
+					});
+
+					runBenchmark({
+						title: `Redo: ${scenarioName}`,
+						tableSize,
+						initialCellValue,
+						beforeOperation: (table, undoRedoManager) => {
+							for (let i = 0; i < count; i++) {
+								const column = new Column({});
+								table.insertColumns({
+									index: Math.floor(table.columns.length / 2),
+									columns: [column],
+								});
+							}
+							for (let i = 0; i < count; i++) {
+								undoRedoManager.undo();
+							}
+							assert(!undoRedoManager.canUndo);
+							assert(undoRedoManager.canRedo);
+						},
+						operation: (table, undoRedoManager) => {
+							for (let i = 0; i < count; i++) {
+								undoRedoManager.redo();
+							}
+						},
+						afterOperation: (table, undoRedoManager) => {
+							assert(!undoRedoManager.canRedo);
+						},
+						maxBenchmarkDurationSeconds,
+					});
 				});
 
-				// Test the execute time of undoing insert a column in the middle for a given number of times.
-				runUndoRedoBenchmark({
-					title: `Undo insert the middle column ${count} times`,
-					tableSize,
-					cellValue,
-					setupOperation: (table) => {
-						for (let i = 0; i < count; i++) {
-							const column = new Column({});
-							table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
-						}
-					},
-					stackOperation: (undoRedoManager) => {
-						for (let i = 0; i < count; i++) {
-							undoRedoManager.undo();
-						}
-						assert(!undoRedoManager.canUndo);
-					},
-					maxBenchmarkDurationSeconds,
-				});
+				describe("Batch column insertion", () => {
+					const scenarioName = `Insert ${count} columns in the middle of the table`;
+					runBenchmark({
+						title: scenarioName,
+						tableSize,
+						initialCellValue,
+						operation: (table) => {
+							table.insertColumns({
+								index: Math.floor(table.columns.length / 2),
+								columns: Array.from({ length: count }, () => new Column({})),
+							});
+						},
+						maxBenchmarkDurationSeconds,
+					});
 
-				// Test the execute time of the SharedTree for redoing an insert column in the middle for a given number of times.
-				runUndoRedoBenchmark({
-					title: `Redo insert the middle column ${count} times`,
-					tableSize,
-					cellValue,
-					setupOperation: (table, undoRedoManager) => {
-						for (let i = 0; i < count; i++) {
-							const column = new Column({});
-							table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
-						}
-						for (let i = 0; i < count; i++) {
+					runBenchmark({
+						title: `Undo: ${scenarioName}`,
+						tableSize,
+						initialCellValue,
+						beforeOperation: (table, undoRedoManager) => {
+							table.insertColumns({
+								index: Math.floor(table.columns.length / 2),
+								columns: Array.from({ length: count }, () => new Column({})),
+							});
+							assert(undoRedoManager.canUndo);
+						},
+						operation: (table, undoRedoManager) => {
 							undoRedoManager.undo();
-						}
-						assert(!undoRedoManager.canUndo);
-					},
-					stackOperation: (undoRedoManager) => {
-						for (let i = 0; i < count; i++) {
+						},
+						afterOperation: (table, undoRedoManager) => {
+							assert(!undoRedoManager.canUndo);
+							assert(undoRedoManager.canRedo);
+						},
+						maxBenchmarkDurationSeconds,
+					});
+
+					runBenchmark({
+						title: `Redo: ${scenarioName}`,
+						tableSize,
+						initialCellValue,
+						beforeOperation: (table, undoRedoManager) => {
+							table.insertColumns({
+								index: Math.floor(table.columns.length / 2),
+								columns: Array.from({ length: count }, () => new Column({})),
+							});
+							undoRedoManager.undo();
+							assert(!undoRedoManager.canUndo);
+							assert(undoRedoManager.canRedo);
+						},
+						operation: (table, undoRedoManager) => {
 							undoRedoManager.redo();
-						}
-						assert(!undoRedoManager.canRedo);
-					},
-					maxBenchmarkDurationSeconds,
+						},
+						afterOperation: (table, undoRedoManager) => {
+							assert(!undoRedoManager.canRedo);
+						},
+						maxBenchmarkDurationSeconds,
+					});
 				});
 			});
 
-			describe(`Row Insertion`, () => {
-				// Test the execute time of the SharedTree for inserting a row in the middle for a given number of times.
-				runBenchmark({
-					title: `Insert a row in the middle ${count} times`,
-					tableSize,
-					cellValue,
-					operation: (table) => {
-						for (let i = 0; i < count; i++) {
-							const row = new Row({ cells: {} });
-							table.insertRow({ index: Math.floor(table.rows.length / 2), row });
-						}
-					},
-					maxBenchmarkDurationSeconds,
+			describe("Row insertion", () => {
+				describe("Single row insertion", () => {
+					const scenarioName = `Insert a row in the middle ${count} times`;
+					runBenchmark({
+						title: scenarioName,
+						tableSize,
+						initialCellValue,
+						operation: (table) => {
+							for (let i = 0; i < count; i++) {
+								const row = new Row({ cells: {} });
+								table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
+							}
+						},
+						maxBenchmarkDurationSeconds,
+					});
+
+					runBenchmark({
+						title: `Undo: ${scenarioName}`,
+						tableSize,
+						initialCellValue,
+						beforeOperation: (table, undoRedoManager) => {
+							for (let i = 0; i < count; i++) {
+								const row = new Row({ cells: {} });
+								table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
+							}
+							assert(undoRedoManager.canUndo);
+						},
+						operation: (table, undoRedoManager) => {
+							for (let i = 0; i < count; i++) {
+								undoRedoManager.undo();
+							}
+						},
+						afterOperation: (table, undoRedoManager) => {
+							assert(!undoRedoManager.canUndo);
+						},
+						maxBenchmarkDurationSeconds,
+					});
+
+					runBenchmark({
+						title: `Redo: ${scenarioName}`,
+						tableSize,
+						initialCellValue,
+						beforeOperation: (table, undoRedoManager) => {
+							for (let i = 0; i < count; i++) {
+								const row = new Row({ cells: {} });
+								table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
+							}
+							for (let i = 0; i < count; i++) {
+								undoRedoManager.undo();
+							}
+							assert(!undoRedoManager.canUndo);
+							assert(undoRedoManager.canRedo);
+						},
+						operation: (table, undoRedoManager) => {
+							for (let i = 0; i < count; i++) {
+								undoRedoManager.redo();
+							}
+						},
+						afterOperation: (table, undoRedoManager) => {
+							assert(!undoRedoManager.canRedo);
+						},
+						maxBenchmarkDurationSeconds,
+					});
 				});
 
-				// Test the execute time of undoing insert a row in the middle for a given number of times.
-				runUndoRedoBenchmark({
-					title: `Undo insert the middle row ${count} times`,
-					tableSize,
-					cellValue,
-					setupOperation: (table) => {
-						for (let i = 0; i < count; i++) {
-							const row = new Row({ cells: {} });
-							table.insertRow({ index: Math.floor(table.rows.length / 2), row });
-						}
-					},
-					stackOperation: (undoRedoManager) => {
-						for (let i = 0; i < count; i++) {
-							undoRedoManager.undo();
-						}
-						assert(!undoRedoManager.canUndo);
-					},
-					maxBenchmarkDurationSeconds,
-				});
+				describe("Batch row insertion", () => {
+					const scenarioName = `Insert ${count} rows in the middle of the table`;
+					runBenchmark({
+						title: scenarioName,
+						tableSize,
+						initialCellValue,
+						operation: (table) => {
+							table.insertRows({
+								index: Math.floor(table.rows.length / 2),
+								rows: Array.from({ length: count }, () => new Row({ cells: {} })),
+							});
+						},
+						maxBenchmarkDurationSeconds,
+					});
 
-				// Test the execute time of the SharedTree for redoing an insert row in the middle for a given number of times.
-				runUndoRedoBenchmark({
-					title: `Redo insert the middle row ${count} times`,
-					tableSize,
-					cellValue,
-					setupOperation: (table, undoRedoManager) => {
-						for (let i = 0; i < count; i++) {
-							const row = new Row({ cells: {} });
-							table.insertRow({ index: Math.floor(table.rows.length / 2), row });
-						}
-						for (let i = 0; i < count; i++) {
+					runBenchmark({
+						title: `Undo: ${scenarioName}`,
+						tableSize,
+						initialCellValue,
+						beforeOperation: (table, undoRedoManager) => {
+							table.insertRows({
+								index: Math.floor(table.rows.length / 2),
+								rows: Array.from({ length: count }, () => new Row({ cells: {} })),
+							});
+							assert(undoRedoManager.canUndo);
+						},
+						operation: (table, undoRedoManager) => {
 							undoRedoManager.undo();
-						}
-						assert(!undoRedoManager.canUndo);
-					},
-					stackOperation: (undoRedoManager) => {
-						for (let i = 0; i < count; i++) {
+						},
+						afterOperation: (table, undoRedoManager) => {
+							assert(!undoRedoManager.canUndo);
+							assert(undoRedoManager.canRedo);
+						},
+						maxBenchmarkDurationSeconds,
+					});
+
+					runBenchmark({
+						title: `Redo: ${scenarioName}`,
+						tableSize,
+						initialCellValue,
+						beforeOperation: (table, undoRedoManager) => {
+							table.insertRows({
+								index: Math.floor(table.rows.length / 2),
+								rows: Array.from({ length: count }, () => new Row({ cells: {} })),
+							});
+							undoRedoManager.undo();
+							assert(!undoRedoManager.canUndo);
+							assert(undoRedoManager.canRedo);
+						},
+						operation: (table, undoRedoManager) => {
 							undoRedoManager.redo();
-						}
-						assert(!undoRedoManager.canRedo);
-					},
-					maxBenchmarkDurationSeconds,
+						},
+						afterOperation: (table, undoRedoManager) => {
+							assert(!undoRedoManager.canRedo);
+						},
+						maxBenchmarkDurationSeconds,
+					});
 				});
 			});
 
-			describe(`Column and Row Insertion`, () => {
+			describe(`Single column and row insertion`, () => {
+				const scenarioName = `Insert a column and a row in the middle ${count} times`;
 				// Test the execute time of the SharedTree for inserting a row and a column in the middle for a given number of times.
 				runBenchmark({
-					title: `Insert a column and a row in the middle ${count} times`,
+					title: scenarioName,
 					tableSize,
-					cellValue,
+					initialCellValue,
 					operation: (table) => {
 						for (let i = 0; i < count; i++) {
 							const column = new Column({});
 							const row = new Row({ cells: {} });
-							table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
-							table.insertRow({ index: Math.floor(table.rows.length / 2), row });
+							table.insertColumns({
+								index: Math.floor(table.columns.length / 2),
+								columns: [column],
+							});
+							table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 						}
 					},
 					maxBenchmarkDurationSeconds,
 				});
 
 				// Test the execute time of undoing insert a row and a column in the middle for a given number of times.
-				runUndoRedoBenchmark({
-					title: `Undo insert the middle column and row ${count} times`,
+				runBenchmark({
+					title: `Undo: ${scenarioName}`,
 					tableSize,
-					cellValue,
-					setupOperation: (table) => {
+					initialCellValue,
+					beforeOperation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							const column = new Column({});
 							const row = new Row({ cells: {} });
-							table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
-							table.insertRow({ index: Math.floor(table.rows.length / 2), row });
+							table.insertColumns({
+								index: Math.floor(table.columns.length / 2),
+								columns: [column],
+							});
+							table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
 						}
+						assert(undoRedoManager.canUndo);
 					},
-					stackOperation: (undoRedoManager) => {
+					operation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							// Undo insert row
 							undoRedoManager.undo();
 							// Undo insert column
 							undoRedoManager.undo();
 						}
+					},
+					afterOperation: (table, undoRedoManager) => {
 						assert(!undoRedoManager.canUndo);
 					},
 					maxBenchmarkDurationSeconds,
@@ -324,16 +429,16 @@ describe("SharedTree table APIs execution time", () => {
 
 				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
 				// Test the execute time of the SharedTree for redoing a remove row and a column in the middle for a given number of times.
-				// runUndoRedoBenchmark({
-				// 	title: `Redo remove the middle column and row ${count} times`,
+				// runBenchmark({
+				// 	title: `Redo: ${scenarioName}`,
 				// 	tableSize,
-				// 	cellValue,
-				// 	setupOperation: (table, undoRedoManager) => {
+				// 	initialCellValue,
+				// 	beforeOperation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			const column = table.columns[Math.floor(table.columns.length / 2)];
 				// 			const row = table.rows[Math.floor(table.rows.length / 2)];
-				// 			removeColumnAndCells(table, column);
-				// 			table.removeRow(row);
+				// 			table.removeColumns([column]);
+				// 			table.removeRows([row]);
 				// 		}
 				// 		for (let i = 0; i < count; i++) {
 				// 			// Undo remove row
@@ -342,14 +447,17 @@ describe("SharedTree table APIs execution time", () => {
 				// 			undoRedoManager.undo();
 				// 		}
 				// 		assert(!undoRedoManager.canUndo);
+				// 		assert(undoRedoManager.canRedo);
 				// 	},
-				// 	stackOperation: (undoRedoManager) => {
+				// 	operation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			// Redo insert row
 				// 			undoRedoManager.redo();
 				// 			// Redo insert column
 				// 			undoRedoManager.redo();
 				// 		}
+				// 	},
+				// 	afterOperation: (table, undoRedoManager) => {
 				// 		assert(!undoRedoManager.canRedo);
 				// 	},
 				// 	maxBenchmarkDurationSeconds,
@@ -357,19 +465,23 @@ describe("SharedTree table APIs execution time", () => {
 			});
 
 			describe(`Insert a column and a row and remove right away`, () => {
+				const scenarioName = `Insert a column and a row and remove them right away ${count} times`;
 				// Test the execute time of the SharedTree for inserting a row and a column and removing them right away for a given number of times.
 				runBenchmark({
-					title: `Insert a column and a row and remove them right away ${count} times`,
+					title: scenarioName,
 					tableSize,
-					cellValue,
+					initialCellValue,
 					operation: (table) => {
 						for (let i = 0; i < count; i++) {
 							const column = new Column({});
 							const row = new Row({ cells: {} });
-							table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
-							table.insertRow({ index: Math.floor(table.rows.length / 2), row });
-							removeColumnAndCells(table, column);
-							table.removeRow(row);
+							table.insertColumns({
+								index: Math.floor(table.columns.length / 2),
+								columns: [column],
+							});
+							table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
+							table.removeColumns([column]);
+							table.removeRows([row]);
 						}
 					},
 					maxBenchmarkDurationSeconds,
@@ -377,21 +489,22 @@ describe("SharedTree table APIs execution time", () => {
 
 				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
 				// Test the execute time of undoing insert a row and a column and removing them right away for a given number of times.
-				// runUndoRedoBenchmark({
-				// 	title: `Undo insert the middle column and row ${count} times`,
+				// runBenchmark({
+				// 	title: `Undo: ${scenarioName}`,
 				// 	tableSize,
-				// 	cellValue,
-				// 	setupOperation: (table) => {
+				// 	initialCellValue,
+				// 	beforeOperation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			const column = new Column({});
 				// 			const row = new Row({ cells: {} });
-				// 			table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
-				// 			table.insertRow({ index: Math.floor(table.rows.length / 2), row });
-				// 			removeColumnAndCells(table, column);
-				// 			table.removeRow(row);
+				// 			table.insertColumns({ index: Math.floor(table.columns.length / 2), columns: [column] });
+				// 			table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
+				// 			table.removeColumns([column]);
+				// 			table.removeRows([row]);
 				// 		}
+				// 		assert(undoRedoManager.canUndo);
 				// 	},
-				// 	stackOperation: (undoRedoManager) => {
+				// 	operation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			// Undo remove row
 				// 			undoRedoManager.undo();
@@ -402,23 +515,27 @@ describe("SharedTree table APIs execution time", () => {
 				// 			// Undo insert column
 				// 			undoRedoManager.undo();
 				// 		}
+				// 	},
+				// 	afterOperation: (table, undoRedoManager) => {
 				// 		assert(!undoRedoManager.canUndo);
 				// 	},
 				// 	maxBenchmarkDurationSeconds,
 				// });
-				// // Test the execute time of the SharedTree for redoing an insert row and a column and removing them right away for a given number of times.
-				// runUndoRedoBenchmark({
-				// 	title: `Redo insert the middle column and row ${count} times`,
+
+				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
+				// Test the execute time of the SharedTree for redoing an insert row and a column and removing them right away for a given number of times.
+				// runBenchmark({
+				// 	title: `Redo: ${scenarioName}`,
 				// 	tableSize,
-				// 	cellValue,
-				// 	setupOperation: (table, undoRedoManager) => {
+				// 	initialCellValue,
+				// 	beforeOperation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			const column = new Column({});
 				// 			const row = new Row({ cells: {} });
-				// 			table.insertColumn({ index: Math.floor(table.columns.length / 2), column });
-				// 			table.insertRow({ index: Math.floor(table.rows.length / 2), row });
-				// 			removeColumnAndCells(table, column);
-				// 			table.removeRow(row);
+				// 			table.insertColumns({ index: Math.floor(table.columns.length / 2), columns: [column] });
+				// 			table.insertRows({ index: Math.floor(table.rows.length / 2), rows: [row] });
+				// 			table.removeColumns([column]);
+				// 			table.removeRows([row]);
 				// 		}
 				// 		for (let i = 0; i < count; i++) {
 				// 			undoRedoManager.undo();
@@ -428,7 +545,7 @@ describe("SharedTree table APIs execution time", () => {
 				// 		}
 				// 		assert(!undoRedoManager.canUndo);
 				// 	},
-				// 	stackOperation: (undoRedoManager) => {
+				// 	operation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			// Redo insert row
 				// 			undoRedoManager.redo();
@@ -448,141 +565,269 @@ describe("SharedTree table APIs execution time", () => {
 
 		// Set/Remove-related tests that are limited by tableSize
 		for (const count of validRemoveCounts) {
-			describe(`Column Removal`, () => {
-				// Test the execute time of the SharedTree for removing a column in the middle for a given number of times.
-				runBenchmark({
-					title: `Remove a column in the middle ${count} times`,
-					tableSize,
-					cellValue,
-					operation: (table) => {
-						for (let i = 0; i < count; i++) {
-							const column = table.columns[Math.floor(table.columns.length / 2)];
-							removeColumnAndCells(table, column);
-						}
-					},
-					maxBenchmarkDurationSeconds,
+			describe("Column removal", () => {
+				describe("Single column removal", () => {
+					const scenarioName = `Remove a column in the middle ${count} times`;
+					runBenchmark({
+						title: scenarioName,
+						tableSize,
+						initialCellValue,
+						operation: (table) => {
+							for (let i = 0; i < count; i++) {
+								const column = table.columns[Math.floor(table.columns.length / 2)];
+								table.removeColumns([column]);
+							}
+						},
+						maxBenchmarkDurationSeconds,
+					});
+
+					// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
+					// runBenchmark({
+					// 	title: `Undo: ${scenarioName}`,
+					// 	tableSize,
+					// 	initialCellValue,
+					// 	beforeOperation: (table, undoRedoManager) => {
+					// 		for (let i = 0; i < count; i++) {
+					// 			const column = table.columns[Math.floor(table.columns.length / 2)];
+					// 			table.removeColumns([column]);
+					// 		}
+					// 		assert(undoRedoManager.canUndo);
+					// 	},
+					// 	operation: (table, undoRedoManager) => {
+					// 		for (let i = 0; i < count; i++) {
+					// 			undoRedoManager.undo();
+					// 		}
+					// 	},
+					// 	afterOperation: (table, undoRedoManager) => {
+					// 		assert(!undoRedoManager.canUndo);
+					// 	},
+					// 	maxBenchmarkDurationSeconds,
+					// });
+
+					// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
+					// runBenchmark({
+					// 	title: `Redo: ${scenarioName}`,
+					// 	tableSize,
+					// 	initialCellValue,
+					// 	beforeOperation: (table, undoRedoManager) => {
+					// 		for (let i = 0; i < count; i++) {
+					// 			const column = table.columns[Math.floor(table.columns.length / 2)];
+					// 			table.removeColumns([column]);
+					// 		}
+					// 		for (let i = 0; i < count; i++) {
+					// 			undoRedoManager.undo();
+					// 		}
+					// 		assert(!undoRedoManager.canUndo);
+					// 		assert(undoRedoManager.canRedo);
+					// 	},
+					// 	operation: (table, undoRedoManager) => {
+					// 		for (let i = 0; i < count; i++) {
+					// 			undoRedoManager.redo();
+					// 		}
+					// 	},
+					// 	afterOperation: (table, undoRedoManager) => {
+					// 		assert(!undoRedoManager.canRedo);
+					// 	},
+					// 	maxBenchmarkDurationSeconds,
+					// });
 				});
 
-				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
-				// Test the execute time of undoing insert a row and a column and removing them right away for a given number of times.
-				// Test the execute time of undoing remove a column in the middle for a given number of times.
-				// runUndoRedoBenchmark({
-				// 	title: `Undo remove the middle column ${count} times`,
-				// 	tableSize,
-				// 	cellValue,
-				// 	setupOperation: (table) => {
-				// 		for (let i = 0; i < count; i++) {
-				// 			const column = table.columns[Math.floor(table.columns.length / 2)];
-				// 			removeColumnAndCells(table, column);
-				// 		}
-				// 	},
-				// 	stackOperation: (undoRedoManager) => {
-				// 		for (let i = 0; i < count; i++) {
-				// 			undoRedoManager.undo();
-				// 		}
-				// 		assert(!undoRedoManager.canUndo);
-				// 	},
-				// 	maxBenchmarkDurationSeconds,
-				// });
+				describe("Batch column removal", () => {
+					const scenarioName = `Remove ${count} columns from the middle of the table`;
+					runBenchmark({
+						title: scenarioName,
+						tableSize,
+						initialCellValue,
+						operation: (table) => {
+							table.removeColumns(
+								Math.floor(table.columns.length / 2) - Math.floor(count / 2),
+								count,
+							);
+						},
+						maxBenchmarkDurationSeconds,
+					});
 
-				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
-				// Test the execute time of the SharedTree for redoing a remove column in the middle for a given number of times.
-				// runUndoRedoBenchmark({
-				// 	title: `Redo remove the middle column ${count} times`,
-				// 	tableSize,
-				// 	cellValue,
-				// 	setupOperation: (table, undoRedoManager) => {
-				// 		for (let i = 0; i < count; i++) {
-				// 			const column = table.columns[Math.floor(table.columns.length / 2)];
-				// 			removeColumnAndCells(table, column);
-				// 		}
-				// 		for (let i = 0; i < count; i++) {
-				// 			undoRedoManager.undo();
-				// 		}
-				// 		assert(!undoRedoManager.canUndo);
-				// 	},
-				// 	stackOperation: (undoRedoManager) => {
-				// 		for (let i = 0; i < count; i++) {
-				// 			undoRedoManager.redo();
-				// 		}
-				// 		assert(!undoRedoManager.canRedo);
-				// 	},
-				// 	maxBenchmarkDurationSeconds,
-				// });
+					runBenchmark({
+						title: `Undo: ${scenarioName}`,
+						tableSize,
+						initialCellValue,
+						beforeOperation: (table, undoRedoManager) => {
+							table.removeColumns(
+								Math.floor(table.columns.length / 2) - Math.floor(count / 2),
+								count,
+							);
+							assert(undoRedoManager.canUndo);
+						},
+						operation: (table, undoRedoManager) => {
+							undoRedoManager.undo();
+						},
+						afterOperation: (table, undoRedoManager) => {
+							assert(!undoRedoManager.canUndo);
+						},
+						maxBenchmarkDurationSeconds,
+					});
+
+					runBenchmark({
+						title: `Redo: ${scenarioName}`,
+						tableSize,
+						initialCellValue,
+						beforeOperation: (table, undoRedoManager) => {
+							table.removeColumns(
+								Math.floor(table.columns.length / 2) - Math.floor(count / 2),
+								count,
+							);
+							undoRedoManager.undo();
+							assert(!undoRedoManager.canUndo);
+							assert(undoRedoManager.canRedo);
+						},
+						operation: (table, undoRedoManager) => {
+							undoRedoManager.redo();
+						},
+						afterOperation: (table, undoRedoManager) => {
+							assert(!undoRedoManager.canRedo);
+						},
+						maxBenchmarkDurationSeconds,
+					});
+				});
 			});
 
-			describe(`Row Removal`, () => {
-				// Test the execute time of the SharedTree for removing a row in the middle for a given number of times.
-				runBenchmark({
-					title: `Remove a row in the middle ${count} times`,
-					tableSize,
-					cellValue,
-					operation: (table) => {
-						for (let i = 0; i < count; i++) {
-							const row = table.rows[Math.floor(table.rows.length / 2)];
-							table.removeRow(row);
-						}
-					},
-					maxBenchmarkDurationSeconds,
+			describe("Row removal", () => {
+				describe("Single row removal", () => {
+					const scenarioName = `Remove a row in the middle ${count} times`;
+					runBenchmark({
+						title: scenarioName,
+						tableSize,
+						initialCellValue,
+						operation: (table) => {
+							for (let i = 0; i < count; i++) {
+								const row = table.rows[Math.floor(table.rows.length / 2)];
+								table.removeRows([row]);
+							}
+						},
+						maxBenchmarkDurationSeconds,
+					});
+
+					runBenchmark({
+						title: `Undo: ${scenarioName}`,
+						tableSize,
+						initialCellValue,
+						beforeOperation: (table, undoRedoManager) => {
+							for (let i = 0; i < count; i++) {
+								const row = table.rows[Math.floor(table.rows.length / 2)];
+								table.removeRows([row]);
+							}
+							assert(undoRedoManager.canUndo);
+						},
+						operation: (table, undoRedoManager) => {
+							for (let i = 0; i < count; i++) {
+								undoRedoManager.undo();
+							}
+						},
+						afterOperation: (table, undoRedoManager) => {
+							assert(!undoRedoManager.canUndo);
+						},
+						maxBenchmarkDurationSeconds,
+					});
+
+					runBenchmark({
+						title: `Redo: ${scenarioName}`,
+						tableSize,
+						initialCellValue,
+						beforeOperation: (table, undoRedoManager) => {
+							for (let i = 0; i < count; i++) {
+								const row = table.rows[Math.floor(table.rows.length / 2)];
+								table.removeRows([row]);
+							}
+							for (let i = 0; i < count; i++) {
+								undoRedoManager.undo();
+							}
+							assert(!undoRedoManager.canUndo);
+							assert(undoRedoManager.canRedo);
+						},
+						operation: (table, undoRedoManager) => {
+							for (let i = 0; i < count; i++) {
+								undoRedoManager.redo();
+							}
+						},
+						afterOperation: (table, undoRedoManager) => {
+							assert(!undoRedoManager.canRedo);
+						},
+						maxBenchmarkDurationSeconds,
+					});
 				});
 
-				// Test the execute time of undoing remove a row in the middle for a given number of times.
-				runUndoRedoBenchmark({
-					title: `Undo remove the middle row ${count} times`,
-					tableSize,
-					cellValue,
-					setupOperation: (table) => {
-						for (let i = 0; i < count; i++) {
-							const row = table.rows[Math.floor(table.rows.length / 2)];
-							table.removeRow(row);
-						}
-					},
-					stackOperation: (undoRedoManager) => {
-						for (let i = 0; i < count; i++) {
-							undoRedoManager.undo();
-						}
-						assert(!undoRedoManager.canUndo);
-					},
-					maxBenchmarkDurationSeconds,
-				});
+				describe("Batch row removal", () => {
+					const scenarioName = `Remove ${count} rows from the middle of the table`;
+					runBenchmark({
+						title: scenarioName,
+						tableSize,
+						initialCellValue,
+						operation: (table) => {
+							table.removeRows(
+								Math.floor(table.rows.length / 2) - Math.floor(count / 2),
+								count,
+							);
+						},
+						maxBenchmarkDurationSeconds,
+					});
 
-				// Test the execute time of the SharedTree for redoing a remove row in the middle for a given number of times.
-				runUndoRedoBenchmark({
-					title: `Redo remove the middle row ${count} times`,
-					tableSize,
-					cellValue,
-					setupOperation: (table, undoRedoManager) => {
-						for (let i = 0; i < count; i++) {
-							const row = table.rows[Math.floor(table.rows.length / 2)];
-							table.removeRow(row);
-						}
-						for (let i = 0; i < count; i++) {
+					runBenchmark({
+						title: `Undo: ${scenarioName}`,
+						tableSize,
+						initialCellValue,
+						beforeOperation: (table, undoRedoManager) => {
+							table.removeRows(
+								Math.floor(table.rows.length / 2) - Math.floor(count / 2),
+								count,
+							);
+							assert(undoRedoManager.canUndo);
+						},
+						operation: (table, undoRedoManager) => {
 							undoRedoManager.undo();
-						}
-						assert(!undoRedoManager.canUndo);
-					},
-					stackOperation: (undoRedoManager) => {
-						for (let i = 0; i < count; i++) {
+						},
+						afterOperation: (table, undoRedoManager) => {
+							assert(!undoRedoManager.canUndo);
+						},
+						maxBenchmarkDurationSeconds,
+					});
+
+					runBenchmark({
+						title: `Redo: ${scenarioName}`,
+						tableSize,
+						initialCellValue,
+						beforeOperation: (table, undoRedoManager) => {
+							table.removeRows(
+								Math.floor(table.rows.length / 2) - Math.floor(count / 2),
+								count,
+							);
+							undoRedoManager.undo();
+							assert(!undoRedoManager.canUndo);
+							assert(undoRedoManager.canRedo);
+						},
+						operation: (table, undoRedoManager) => {
 							undoRedoManager.redo();
-						}
-						assert(!undoRedoManager.canRedo);
-					},
-					maxBenchmarkDurationSeconds,
+						},
+						afterOperation: (table, undoRedoManager) => {
+							assert(!undoRedoManager.canRedo);
+						},
+						maxBenchmarkDurationSeconds,
+					});
 				});
 			});
 
 			describe(`Column and Row Removal`, () => {
+				const scenarioName = `Remove a single column and a row in the middle ${count} times`;
 				// Test the execute time of the SharedTree for removing a row and a column in the middle for a given number of times.
 				runBenchmark({
-					title: `Remove a column and a row in the middle ${count} times`,
+					title: scenarioName,
 					tableSize,
-					cellValue,
+					initialCellValue,
 					operation: (table) => {
 						for (let i = 0; i < count; i++) {
 							const column = table.columns[Math.floor(table.columns.length / 2)];
-							removeColumnAndCells(table, column);
+							table.removeColumns([column]);
 							const row = table.rows[Math.floor(table.rows.length / 2)];
-							table.removeRow(row);
+							table.removeRows([row]);
 						}
 					},
 					maxBenchmarkDurationSeconds,
@@ -591,25 +836,28 @@ describe("SharedTree table APIs execution time", () => {
 				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
 				// Test the execute time of undoing insert a row and a column and removing them right away for a given number of times.
 				// Test the execute time of undoing remove a row and a column in the middle for a given number of times.
-				// runUndoRedoBenchmark({
-				// 	title: `Undo remove the middle column and row ${count} times`,
+				// runBenchmark({
+				// 	title: `Undo: ${scenarioName}`,
 				// 	tableSize,
-				// 	cellValue,
-				// 	setupOperation: (table) => {
+				// 	initialCellValue,
+				// 	beforeOperation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			const column = table.columns[Math.floor(table.columns.length / 2)];
-				// 			removeColumnAndCells(table, column);
+				// 			table.removeColumn(column);
 				// 			const row = table.rows[Math.floor(table.rows.length / 2)];
 				// 			table.removeRow(row);
 				// 		}
+				// 		assert(undoRedoManager.canUndo);
 				// 	},
-				// 	stackOperation: (undoRedoManager) => {
+				// 	operation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			// Undo remove row
 				// 			undoRedoManager.undo();
 				// 			// Undo remove column
 				// 			undoRedoManager.undo();
 				// 		}
+				// 	},
+				// 	afterOperation: (table, undoRedoManager) => {
 				// 		assert(!undoRedoManager.canUndo);
 				// 	},
 				// 	maxBenchmarkDurationSeconds,
@@ -617,14 +865,14 @@ describe("SharedTree table APIs execution time", () => {
 
 				// TODO: AB#43364: Enable these tests back after allowing SharedTree to support undo/redo for removing cells when a column is removed.
 				// Test the execute time of the SharedTree for redoing a remove row and a column in the middle for a given number of times.
-				// runUndoRedoBenchmark({
-				// 	title: `Redo remove the middle column and row ${count} times`,
+				// runBenchmark({
+				// 	title: `Redo: ${scenarioName}`,
 				// 	tableSize,
-				// 	cellValue,
-				// 	setupOperation: (table, undoRedoManager) => {
+				// 	initialCellValue,
+				// 	beforeOperation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			const column = table.columns[Math.floor(table.columns.length / 2)];
-				// 			removeColumnAndCells(table, column);
+				// 			table.removeColumn(column);
 				// 			const row = table.rows[Math.floor(table.rows.length / 2)];
 				// 			table.removeRow(row);
 				// 		}
@@ -633,14 +881,17 @@ describe("SharedTree table APIs execution time", () => {
 				// 			undoRedoManager.undo();
 				// 		}
 				// 		assert(!undoRedoManager.canUndo);
+				// 		assert(undoRedoManager.canRedo);
 				// 	},
-				// 	stackOperation: (undoRedoManager) => {
+				// 	operation: (table, undoRedoManager) => {
 				// 		for (let i = 0; i < count; i++) {
 				// 			// Redo remove row
 				// 			undoRedoManager.redo();
 				// 			// Redo remove column
 				// 			undoRedoManager.redo();
 				// 		}
+				// 	},
+				// 	afterOperation: (table, undoRedoManager) => {
 				// 		assert(!undoRedoManager.canRedo);
 				// 	},
 				// 	maxBenchmarkDurationSeconds,
@@ -648,11 +899,12 @@ describe("SharedTree table APIs execution time", () => {
 			});
 
 			describe(`Cell Value Setting`, () => {
+				const scenarioName = `Set a cell value ${count} times`;
 				// Test the execute time of the SharedTree for setting a string in a cell for a given number of times.
 				runBenchmark({
-					title: `Set a cell value ${count} times`,
+					title: scenarioName,
 					tableSize,
-					cellValue: "abc",
+					initialCellValue: "abc",
 					operation: (table) => {
 						for (let i = 0; i < count; i++) {
 							const row = table.rows[Math.floor(table.rows.length / 2)];
@@ -662,7 +914,7 @@ describe("SharedTree table APIs execution time", () => {
 									row: row.id,
 									column: column.id,
 								},
-								cell: cellValue,
+								cell: initialCellValue,
 							});
 						}
 					},
@@ -670,11 +922,11 @@ describe("SharedTree table APIs execution time", () => {
 				});
 
 				// Test the execute time of undoing set a cell value for a given number of times.
-				runUndoRedoBenchmark({
-					title: `Undo set a cell value ${count} times`,
+				runBenchmark({
+					title: `Undo: ${scenarioName}`,
 					tableSize,
-					cellValue: "abc",
-					setupOperation: (table) => {
+					initialCellValue: "abc",
+					beforeOperation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							const row = table.rows[Math.floor(table.rows.length / 2)];
 							const column = table.columns[Math.floor(table.columns.length / 2)];
@@ -683,25 +935,28 @@ describe("SharedTree table APIs execution time", () => {
 									row: row.id,
 									column: column.id,
 								},
-								cell: cellValue,
+								cell: initialCellValue,
 							});
 						}
+						assert(undoRedoManager.canUndo);
 					},
-					stackOperation: (undoRedoManager) => {
+					operation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							undoRedoManager.undo();
 						}
+					},
+					afterOperation: (table, undoRedoManager) => {
 						assert(!undoRedoManager.canUndo);
 					},
 					maxBenchmarkDurationSeconds,
 				});
 
 				// Test the execute time of the SharedTree for redoing a set cell value for a given number of times.
-				runUndoRedoBenchmark({
-					title: `Redo set a cell value ${count} times`,
+				runBenchmark({
+					title: `Redo: ${scenarioName}`,
 					tableSize,
-					cellValue: "abc",
-					setupOperation: (table, undoRedoManager) => {
+					initialCellValue: "abc",
+					beforeOperation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							const row = table.rows[Math.floor(table.rows.length / 2)];
 							const column = table.columns[Math.floor(table.columns.length / 2)];
@@ -710,18 +965,21 @@ describe("SharedTree table APIs execution time", () => {
 									row: row.id,
 									column: column.id,
 								},
-								cell: cellValue,
+								cell: initialCellValue,
 							});
 						}
 						for (let i = 0; i < count; i++) {
 							undoRedoManager.undo();
 						}
 						assert(!undoRedoManager.canUndo);
+						assert(undoRedoManager.canRedo);
 					},
-					stackOperation: (undoRedoManager) => {
+					operation: (table, undoRedoManager) => {
 						for (let i = 0; i < count; i++) {
 							undoRedoManager.redo();
 						}
+					},
+					afterOperation: (table, undoRedoManager) => {
 						assert(!undoRedoManager.canRedo);
 					},
 					maxBenchmarkDurationSeconds,

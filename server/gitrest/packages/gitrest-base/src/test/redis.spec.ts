@@ -6,7 +6,7 @@
 import { TestRedisClientConnectionManagerWithInvalidation } from "./testRedisClientConnectionManagerWithInvalidation";
 import { Redis, HashMapRedis } from "../utils/redisFs/redis";
 import { RedisOptions } from "ioredis-mock";
-import assert from "assert";
+import { strict as assert } from "assert";
 
 type GitRedisFileSystem = "redisfs" | "hashmap-redisfs";
 

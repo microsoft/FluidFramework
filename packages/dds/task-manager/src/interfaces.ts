@@ -12,21 +12,19 @@ import type {
  * Describes the event listener format for {@link ITaskManagerEvents} events.
  *
  * @param taskId - The unique identifier of the related task.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type TaskEventListener = (taskId: string) => void;
 
 /**
  * Events emitted by {@link ITaskManager}.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ITaskManagerEvents extends ISharedObjectEvents {
 	/**
 	 * Fires when a task has been exclusively assigned to the client.
 	 *
-	 * @remarks Does not account for known pending ops, but instead only reflects the current state.
+	 * @remarks Does not account for known pending ops, but instead only reflects the current consensus state.
 	 *
 	 * @eventProperty
 	 */
@@ -138,8 +136,7 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
  * when using {@link ITaskManager.subscribeToTask}.
  *
  * See {@link ITaskManagerEvents} for more details.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
 	/**
@@ -164,15 +161,13 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
 	abandon(taskId: string): void;
 
 	/**
-	 * Check whether this client is the current assignee for the task and there is no outstanding abandon op that
-	 * would abandon the assignment.
+	 * Check whether this client is the current assignee for the task based on the consensus state.
 	 * @param taskId - Identifier for the task
 	 */
 	assigned(taskId: string): boolean;
 
 	/**
-	 * Check whether this client is either the current assignee, in queue, or we expect they will be in queue after
-	 * outstanding ops have been ack'd.
+	 * Check whether this client is either the current assignee or in queue to become the assignee.
 	 * @param taskId - Identifier for the task
 	 */
 	queued(taskId: string): boolean;

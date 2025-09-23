@@ -6,9 +6,9 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 // eslint-disable-next-line import/no-internal-modules -- #26903: `cell` internals used in examples
-import { ISharedCell, SharedCell } from "@fluidframework/cell/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IResolvedUrl } from "@fluidframework/driver-definitions/legacy";
+import { type ISharedCell, SharedCell } from "@fluidframework/cell/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/legacy";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/legacy";
 import { SharedString } from "@fluidframework/sequence/legacy";
 
