@@ -347,6 +347,7 @@ stages:
             env:
               SYSTEM_ACCESSTOKEN: $(System.AccessToken)
             inputs:
+              workingDirectory: $(Build.SourcesDirectory)
               targetType: 'inline'
               script: |
                 set -eu -o pipefail
@@ -438,6 +439,7 @@ stages:
             displayName: 'Release tenant credentials'
             inputs:
               targetType: 'inline'
+              workingDirectory: $(Build.SourcesDirectory)
               script: |
                 set -eu -o pipefail
                 npm run trips-cleanup -- --reservationId=$(stringBearerToken)
