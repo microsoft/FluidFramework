@@ -8,6 +8,7 @@ export {
 	SharedTreeBranch,
 	type SharedTreeBranchChange,
 	type SharedTreeBranchEvents,
+	type BranchId,
 } from "./branch.js";
 
 export {
@@ -44,6 +45,7 @@ export {
 	EditManager,
 	minimumPossibleSequenceNumber,
 	type SummaryData,
+	type SharedBranchSummaryData,
 } from "./editManager.js";
 export type {
 	Commit,
@@ -51,4 +53,4 @@ export type {
 	SequencedCommit,
 	SummarySessionBranch,
 	EncodedCommit,
-} from "./editManagerFormat.js";
+} from "./editManagerFormatCommons.js";

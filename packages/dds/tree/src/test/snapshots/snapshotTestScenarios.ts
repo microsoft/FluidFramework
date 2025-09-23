@@ -380,7 +380,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 					new MockFluidDataStoreRuntime({
 						clientId: "test-client",
 						id: "test",
-						idCompressor: createSnapshotCompressor(),
+						idCompressor: createSnapshotCompressor(0xdeadbeef),
 					}),
 					"tree",
 				);

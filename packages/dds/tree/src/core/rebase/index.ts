@@ -56,4 +56,5 @@ export {
 	type RebaseStatsWithDuration,
 	replaceChange,
 	isAncestor,
+	diffHistories,
 } from "./utils.js";

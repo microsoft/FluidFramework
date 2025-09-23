@@ -99,6 +99,21 @@ export interface ITreeAlpha extends ITree {
 	 * To get the schema using property keys, use {@link getSimpleSchema} on the view schema.
 	 */
 	exportSimpleSchema(): SimpleTreeSchema;
+
+	/**
+	 * Creates a fork of the current state of the main branch.
+	 * This new branch will be shared with and editable by all clients.
+	 */
+	createSharedBranch(): string;
+
+	/**
+	 * Returns a view of the tree on the specified shared branch, using the provided schema.
+	 * See {@link ViewableTree.viewWith}.
+	 */
+	viewSharedBranchWith<TRoot extends ImplicitFieldSchema>(
+		branchId: string,
+		config: TreeViewConfiguration<TRoot>,
+	): TreeView<TRoot>;
 }
 
 /**
@@ -257,11 +272,12 @@ export interface TreeBranch extends IDisposable {
 /**
  * An editable view of a (version control style) branch of a shared tree based on some schema.
  *
- * This schema--known as the view schema--may or may not align the stored schema of the document.
+ * @remarks
+ * This schema (known as the view schema) may or may not align with the stored schema of the document.
  * Information about discrepancies between the two schemas is available via {@link TreeView.compatibility | compatibility}.
  *
- * Application authors are encouraged to read [schema-evolution.md](../../docs/user-facing/schema-evolution.md) and
- * choose a schema compatibility policy that aligns with their application's needs.
+ * Application authors are encouraged to read {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/schema-evolution.md | schema-evolution.md}
+ * and choose a schema compatibility policy that aligns with their application's needs.
  *
  * @privateRemarks
  * From an API design perspective, `upgradeSchema` could be merged into `viewWith` and/or `viewWith` could return errors explicitly on incompatible documents.
@@ -516,6 +532,8 @@ export interface TreeViewEvents {
 /**
  * Retrieve the {@link TreeViewAlpha | alpha API} for a {@link TreeView}.
  * @alpha
+ * @deprecated Use {@link asAlpha} instead.
+ * @privateRemarks Despite being deprecated, this function should be used within the tree package (outside of tests) rather than `asAlpha` in order to avoid circular import dependencies.
  */
 export function asTreeViewAlpha<TSchema extends ImplicitFieldSchema>(
 	view: TreeView<TSchema>,
