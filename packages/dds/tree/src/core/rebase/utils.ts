@@ -678,3 +678,30 @@ export function isAncestor<TNode extends { readonly parent?: TNode }>(
 
 	return false;
 }
+
+/**
+ * Returns a change that represents the different between two places in a commit graph.
+ * Applying this change to the state at `sourceCommit` will yield the state at `targetCommit`.
+ * @param changeRebaser - the change rebaser responsible for providing inverses to the changes in the commits.
+ * @param sourceCommit - the commit representing the initial state.
+ * @param targetCommit - the commit representing the final state.
+ * @param mintRevisionTag - a function which can be called to create revision tags for any rollback changes that need to be generated.
+ * @returns a change representing the difference between `sourceCommit` and `targetCommit`.
+ */
+export function diffHistories<TChange>(
+	changeRebaser: ChangeRebaser<TChange>,
+	sourceCommit: GraphCommit<TChange>,
+	targetCommit: GraphCommit<TChange>,
+	mintRevisionTag: () => RevisionTag,
+): TChange {
+	const sourcePath: GraphCommit<TChange>[] = [];
+	const targetPath: GraphCommit<TChange>[] = [];
+	const ancestor = findCommonAncestor([sourceCommit, sourcePath], [targetCommit, targetPath]);
+	assert(ancestor !== undefined, "Branches must be related");
+	const inverses = sourcePath.map((commit) =>
+		rollbackFromCommit(changeRebaser, commit, mintRevisionTag),
+	);
+
+	inverses.reverse();
+	return changeRebaser.compose([...inverses, ...targetPath]);
+}

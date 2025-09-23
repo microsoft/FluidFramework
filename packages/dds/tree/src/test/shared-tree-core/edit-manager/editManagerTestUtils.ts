@@ -126,7 +126,7 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	subscribeToLocalBranch(manager);
 	for (let iChange = 0; iChange < localEditCount; iChange++) {
 		const revision = mintRevisionTag();
-		manager.localBranch.apply({ change: mintChange(undefined), revision });
+		manager.getLocalBranch("main").apply({ change: mintChange(undefined), revision });
 	}
 	const trunkSessionId = "trunk" as SessionId;
 	const trunkEdits = makeArray(trunkEditCount, () => {
@@ -459,7 +459,7 @@ export function checkChangeList(manager: TestEditManager, intentions: number[]):
 }
 
 export function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChange>[] {
-	return manager.getTrunkChanges().concat(manager.getLocalChanges());
+	return manager.getTrunkChanges("main").concat(manager.getLocalChanges("main"));
 }
 
 /** Adds a sequenced change to an `EditManager` and returns the delta that was caused by the change */
@@ -468,11 +468,13 @@ export function addSequencedChanges(
 	...args: Parameters<(typeof editManager)["addSequencedChanges"]>
 ): DeltaRoot {
 	let delta: DeltaRoot = emptyDelta;
-	const offChange = editManager.localBranch.events.on("afterChange", ({ change }) => {
-		if (change !== undefined) {
-			delta = asDelta(change.change.intentions);
-		}
-	});
+	const offChange = editManager
+		.getLocalBranch("main")
+		.events.on("afterChange", ({ change }) => {
+			if (change !== undefined) {
+				delta = asDelta(change.change.intentions);
+			}
+		});
 	editManager.addSequencedChanges(...args);
 	offChange();
 	return delta;
@@ -482,7 +484,7 @@ export function addSequencedChanges(
 function subscribeToLocalBranch<TChange>(
 	manager: EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>>,
 ): void {
-	manager.localBranch.events.on("afterChange", (branchChange) => {
+	manager.getLocalBranch("main").events.on("afterChange", (branchChange) => {
 		// Reading the change property causes lazy computation to occur, and is important to accurately emulate SharedTree behavior
 		const _change = branchChange.change;
 	});

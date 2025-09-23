@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Base configuration from which all of our exported configs extends.
+ */
 module.exports = {
 	env: {
 		browser: true,
@@ -44,7 +47,22 @@ module.exports = {
 
 		// Please keep entries alphabetized within a group
 
-		// @typescript-eslint
+		// #region Fluid Custom Rules
+
+		/**
+		 * Disallow file path based links in JSDoc/TSDoc comments.
+		 */
+		"@fluid-internal/fluid/no-file-path-links-in-jsdoc": "error",
+
+		/**
+		 * Disallow the use of Markdown-syntax links in JSDoc/TSDoc comments.
+		 */
+		"@fluid-internal/fluid/no-markdown-links-in-jsdoc": "error",
+
+		// #endregion
+
+		// #region @typescript-eslint
+
 		"@typescript-eslint/adjacent-overload-signatures": "error",
 		"@typescript-eslint/array-type": "error",
 		"@typescript-eslint/await-thenable": "error",
@@ -133,6 +151,8 @@ module.exports = {
 		],
 		"@typescript-eslint/unified-signatures": "error",
 		"@typescript-eslint/no-wrapper-object-types": "error",
+
+		// #endregion
 
 		// eslint-plugin-eslint-comments
 		"eslint-comments/disable-enable-pair": [
