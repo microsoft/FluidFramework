@@ -7,6 +7,9 @@ New rules added:
 - `@fluid-internal/fluid/no-markdown-links-in-jsdoc`: Forbids the use of Markdown link syntax in JSDoc/TSDoc comments.
     - Such links are not supported by TSDoc spec and are not supported by some of our tooling.
       `{@link}` syntax should be used instead.
+- `@fluid-internal/fluid/no-file-path-links-in-jsdoc`: Forbids the use of file paths in `{@link}` tags in JSDoc/TSDoc comments.
+    - Such links are not portable and will cause problems for external users.
+      Stable, externally accessible link targets should be used instead (for example, other APIs or GitHub URLs).
 
 ## [0.1.6](https://github.com/microsoft/FluidFramework/releases/tag/eslint-plugin-fluid_v0.1.6)
 
