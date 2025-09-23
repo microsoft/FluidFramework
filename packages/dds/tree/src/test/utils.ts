@@ -1310,8 +1310,8 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
  */
 export const snapshotSessionId = assertIsSessionId("beefbeef-beef-4000-8000-000000000001");
 
-export function createSnapshotCompressor() {
-	return createAlwaysFinalizedIdCompressor(snapshotSessionId);
+export function createSnapshotCompressor(seed?: number) {
+	return createAlwaysFinalizedIdCompressor(snapshotSessionId, undefined, seed);
 }
 
 /**
