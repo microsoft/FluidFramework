@@ -455,8 +455,10 @@ stages:
               targetType: 'inline'
               script: |
                 set -eu -o pipefail
-                npm run release-test-tenant -- --reservationId=$(stringBearerToken)
+                npm run release-test-tenant -- --reservationId=$BEARER_TOKEN
             condition: eq(variables['tenantSetupSuccess'], 'true')
+            env:
+              BEARER_TOKEN: $(stringBearerToken)
 
         # Log Test Failures
         # - template: /tools/pipelines/templates/include-process-test-results.yml@self
