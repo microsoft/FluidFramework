@@ -12,7 +12,7 @@ import {
 	configuredSharedTreeBeta,
 	ForestTypeExpensiveDebug,
 } from "fluid-framework/beta";
-const SharedTree = configuredSharedTree({
+const SharedTree = configuredSharedTreeBeta({
 	forest: ForestTypeExpensiveDebug,
 });
 ```
