@@ -5,6 +5,8 @@
 
 export { DataObjectFactory } from "./dataObjectFactory.js";
 export {
+	//* TODO: Can we avoid adding this new export?
+	type CreateDataObjectProps,
 	type DataObjectFactoryProps,
 	PureDataObjectFactory,
 } from "./pureDataObjectFactory.js";
