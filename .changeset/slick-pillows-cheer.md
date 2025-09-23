@@ -72,6 +72,42 @@ cachedFoo ??= TreeAlpha.trackObservationsOnce(
 ).result;
 ```
 
+That is equivalent to doing the following:
+
+```typescript
+if (cachedFoo === undefined) {
+	cachedFoo = nodeA.someChild.bar + nodeB.someChild.baz;
+	const invalidate = (): void => {
+		cachedFoo = undefined;
+		for (const u of unsubscribe) {
+			u();
+		}
+	};
+	const unsubscribe: (() => void)[] = [
+		TreeBeta.on(nodeA, "nodeChanged", (data) => {
+			if (data.changedProperties.has("someChild")) {
+				invalidate();
+			}
+		}),
+		TreeBeta.on(nodeB, "nodeChanged", (data) => {
+			if (data.changedProperties.has("someChild")) {
+				invalidate();
+			}
+		}),
+		TreeBeta.on(nodeA.someChild, "nodeChanged", (data) => {
+			if (data.changedProperties.has("bar")) {
+				invalidate();
+			}
+		}),
+		TreeBeta.on(nodeB.someChild, "nodeChanged", (data) => {
+			if (data.changedProperties.has("baz")) {
+				invalidate();
+			}
+		}),
+	];
+}
+```
+
 Here is more complete example showing how to use `TreeAlpha.trackObservationsOnce` invalidate a property derived from its tree fields.
 
 ```typescript

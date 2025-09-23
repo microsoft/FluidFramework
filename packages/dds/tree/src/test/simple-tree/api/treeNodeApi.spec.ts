@@ -366,6 +366,50 @@ describe("treeNodeApi", () => {
 				nodeA.someChild.bar = 0;
 				assert.equal(cachedFoo, undefined);
 				assert.equal(foo(), 4);
+
+				function fooManual(): number {
+					// Compute and cache this "foo" value, and clear the cache when the fields read in the callback to compute it change.
+					if (cachedFoo === undefined) {
+						cachedFoo = nodeA.someChild.bar + nodeB.someChild.baz;
+						const invalidate = (): void => {
+							cachedFoo = undefined;
+							for (const u of unsubscribe) {
+								u();
+							}
+						};
+						const unsubscribe: (() => void)[] = [
+							TreeBeta.on(nodeA, "nodeChanged", (data) => {
+								if (data.changedProperties.has("someChild")) {
+									invalidate();
+								}
+							}),
+							TreeBeta.on(nodeB, "nodeChanged", (data) => {
+								if (data.changedProperties.has("someChild")) {
+									invalidate();
+								}
+							}),
+							TreeBeta.on(nodeA.someChild, "nodeChanged", (data) => {
+								if (data.changedProperties.has("bar")) {
+									invalidate();
+								}
+							}),
+							TreeBeta.on(nodeB.someChild, "nodeChanged", (data) => {
+								if (data.changedProperties.has("baz")) {
+									invalidate();
+								}
+							}),
+						];
+					}
+					return cachedFoo;
+				}
+
+				nodeA.someChild.bar = 4;
+				assert.equal(cachedFoo, undefined);
+				assert.equal(fooManual(), 7);
+				assert.equal(cachedFoo, 7);
+				nodeA.someChild.bar = 0;
+				assert.equal(cachedFoo, undefined);
+				assert.equal(fooManual(), 4);
 			});
 
 			it("example 2", () => {
