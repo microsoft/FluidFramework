@@ -419,10 +419,6 @@ export class EditManager<
 		return getPathFromBase(this.getTrunkHead(branchId), this.trunkBase);
 	}
 
-	public getLocalChanges(branchId: BranchId): readonly TChangeset[] {
-		return this.getLocalCommits(branchId).map((c) => c.change);
-	}
-
 	public getLocalCommits(branchId: BranchId): readonly GraphCommit<TChangeset>[] {
 		const branch = this.getSharedBranch(branchId);
 		return branch.getLocalCommits();
