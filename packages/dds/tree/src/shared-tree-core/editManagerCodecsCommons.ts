@@ -133,9 +133,9 @@ export function encodeSharedBranch<TChangeset>(
 	};
 	if (data.session !== undefined) {
 		json.session = data.session;
-		if (data.id !== undefined) {
-			json.id = encodeBranchId(context.idCompressor, data.id);
-		}
+	}
+	if (data.id !== undefined) {
+		json.id = encodeBranchId(context.idCompressor, data.id);
 	}
 	if (data.name !== undefined) {
 		json.name = data.name;
