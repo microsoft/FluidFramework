@@ -379,6 +379,7 @@ describe("OpSplitter", () => {
 							) as ContainerRuntimeChunkedOpMessage
 						).contents.contents,
 				);
+				// eslint-disable-next-line unicorn/no-array-reduce
 				const sentContent = [...contentSentSeparately, lastChunk.contents].reduce(
 					(accumulator, current) => `${accumulator}${current}`,
 				);

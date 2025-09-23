@@ -160,6 +160,7 @@ function buildPendingMessageContent(message: InboundSequencedContainerRuntimeMes
 }
 
 function typesOfKeys<T extends object>(obj: T): Record<keyof T, string> {
+	// eslint-disable-next-line unicorn/no-array-reduce
 	return Object.keys(obj).reduce((acc, key) => {
 		acc[key] = typeof obj[key];
 		return acc;

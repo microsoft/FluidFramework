@@ -14,7 +14,6 @@ module.exports = {
 		// TODO: fix violations and remove overrides
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 		"require-atomic-updates": "warn",
-		"unicorn/no-array-reduce": "warn",
 	},
 	overrides: [
 		{
