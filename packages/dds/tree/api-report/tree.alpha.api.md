@@ -278,13 +278,13 @@ export interface ForestOptions {
 export interface ForestType extends ErasedType<"ForestType"> {
 }
 
-// @alpha
+// @beta
 export const ForestTypeExpensiveDebug: ForestType;
 
-// @alpha
+// @beta
 export const ForestTypeOptimized: ForestType;
 
-// @alpha
+// @beta
 export const ForestTypeReference: ForestType;
 
 // @alpha @sealed

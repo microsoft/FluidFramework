@@ -180,6 +180,15 @@ export interface ForestOptions {
 export interface ForestType extends ErasedType<"ForestType"> {
 }
 
+// @beta
+export const ForestTypeExpensiveDebug: ForestType;
+
+// @beta
+export const ForestTypeOptimized: ForestType;
+
+// @beta
+export const ForestTypeReference: ForestType;
+
 // @beta @legacy
 export interface IBranchOrigin {
     id: string;
