@@ -302,6 +302,13 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		Lumberjack.info(`Document is ephemeral.`, getLumberBaseProperties(documentId, tenantId));
 	}
 
+	let postIsEphemeral: boolean = isEphemeral;
+	if (!postIsEphemeral) {
+		const document = await documentManager.readDocument(tenantId, documentId);
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		postIsEphemeral = document && document["sync"] === "pending" ? true : false;
+	}
+
 	const calculatedStorageName =
 		initialUpload && storageName
 			? storageName
@@ -314,7 +321,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		cache,
 		calculatedStorageName,
 		storageUrl,
-		isEphemeral,
+		postIsEphemeral,
 		maxCacheableSummarySize,
 		simplifiedCustomData,
 	);

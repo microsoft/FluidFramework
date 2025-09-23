@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ScribeLambdaFactory } from "@fluidframework/server-lambdas";
+import {
+	ISummaryWriterFactory,
+	ScribeLambdaFactory,
+	SummaryWriterFactory,
+} from "@fluidframework/server-lambdas";
 import { createDocumentRouter } from "@fluidframework/server-routerlicious-base";
 import {
 	createProducer,
@@ -180,6 +184,9 @@ export async function scribeCreate(
 		localCheckpointEnabled,
 	);
 
+	const summaryWriterFactory: ISummaryWriterFactory =
+		customizations?.summaryWriterFactory ?? new SummaryWriterFactory();
+
 	return new ScribeLambdaFactory(
 		operationsDbManager,
 		documentRepository,
@@ -198,6 +205,7 @@ export async function scribeCreate(
 		kafkaCheckpointOnReprocessingOp,
 		maxLogtailLength,
 		maxPendingCheckpointMessagesLength,
+		summaryWriterFactory,
 	);
 }
 
