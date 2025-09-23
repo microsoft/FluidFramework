@@ -660,5 +660,5 @@ function getTrunkLength<TEditor extends ChangeFamilyEditor, TChange>(
 		editManager !== undefined,
 		"EditManager in SharedTreeCore has been moved/deleted. Please update glass box tests.",
 	);
-	return editManager.getTrunkChanges().length;
+	return editManager.getTrunkChanges("main").length;
 }

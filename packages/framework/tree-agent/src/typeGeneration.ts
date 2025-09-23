@@ -6,14 +6,18 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
+	ArrayNodeSchema,
 	FieldKind,
+	getSimpleSchema,
+	MapNodeSchema,
 	NodeKind,
+	ObjectNodeSchema,
+	RecordNodeSchema,
 	ValueSchema,
 	walkFieldSchema,
 } from "@fluidframework/tree/internal";
 import type {
 	ImplicitFieldSchema,
-	SchemaVisitor,
 	SimpleFieldSchema,
 	SimpleNodeSchema,
 	SimpleTreeSchema,
@@ -62,19 +66,35 @@ export function generateEditTypesForPrompt(
 	domainTypes: Record<string, ZodTypeAny>;
 } {
 	return getOrCreate(promptSchemaCache, schema, () => {
-		const treeNodeSchemas = new Set<TreeNodeSchema>();
-		walkFieldSchema(rootSchema, {} satisfies SchemaVisitor, treeNodeSchemas);
-		const nodeSchemas = [...treeNodeSchemas.values()].filter(
-			(treeNodeSchema) =>
-				treeNodeSchema.kind === NodeKind.Object ||
-				treeNodeSchema.kind === NodeKind.Array ||
-				treeNodeSchema.kind === NodeKind.Map ||
-				treeNodeSchema.kind === NodeKind.Record,
-		) as BindableSchema[];
+		const allSchemas = new Set<TreeNodeSchema>();
+		const objectTypeSchemas = new Set<TreeNodeSchema>();
+		walkFieldSchema(rootSchema, {
+			node: (n) => {
+				allSchemas.add(n);
+				if (
+					n instanceof ObjectNodeSchema ||
+					n instanceof MapNodeSchema ||
+					n instanceof ArrayNodeSchema ||
+					n instanceof RecordNodeSchema
+				) {
+					objectTypeSchemas.add(n);
+					const exposedMethods = getExposedMethods(n);
+					for (const t of exposedMethods.referencedTypes) {
+						allSchemas.add(t);
+						objectTypeSchemas.add(t);
+					}
+				}
+			},
+		});
+		const nodeSchemas = [...objectTypeSchemas.values()] as BindableSchema[];
 		const bindableSchemas = new Map<string, BindableSchema>(
 			nodeSchemas.map((nodeSchema) => [nodeSchema.identifier, nodeSchema]),
 		);
-		return generateEditTypes(schema, new Map(), bindableSchemas);
+		return generateEditTypes(
+			[...allSchemas.values()].map((s) => getSimpleSchema(s)),
+			new Map(),
+			bindableSchemas,
+		);
 	});
 }
 
@@ -87,20 +107,23 @@ export function generateEditTypesForPrompt(
  * @remarks The return type of this function is designed to work with Typechat's createZodJsonValidator as well as be used as the JSON schema for OpenAi's structured output response format.
  */
 function generateEditTypes(
-	schema: SimpleTreeSchema,
+	schemas: Iterable<SimpleTreeSchema>,
 	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
 	bindableSchemas: Map<string, BindableSchema>,
 ): {
 	domainTypes: Record<string, ZodTypeAny>;
 } {
 	const domainTypes: Record<string, ZodTypeAny> = {};
-	for (const name of schema.definitions.keys()) {
-		domainTypes[name] = getOrCreateType(
-			schema.definitions,
-			name,
-			objectCache,
-			bindableSchemas,
-		);
+	for (const schema of schemas) {
+		for (const name of schema.definitions.keys()) {
+			// If this does overwrite anything in domainTypes, it is guaranteed to be overwritten with an identical value due to the getOrCreate
+			domainTypes[name] = getOrCreateType(
+				schema.definitions,
+				name,
+				objectCache,
+				bindableSchemas,
+			);
+		}
 	}
 
 	return {
@@ -108,20 +131,27 @@ function generateEditTypes(
 	};
 }
 
-function getBoundMethods(
-	definition: string,
-	bindableSchemas: Map<string, BindableSchema>,
-): [string, ZodTypeAny][] {
+function getBoundMethodsForBindable(bindableSchema: BindableSchema): {
+	referencedTypes: Set<TreeNodeSchema>;
+	methods: [string, ZodTypeAny][];
+} {
 	const methodTypes: [string, ZodTypeAny][] = [];
-	const bindableSchema = bindableSchemas.get(definition) ?? fail("Unknown definition");
 	const methods = getExposedMethods(bindableSchema);
-	for (const [name, method] of Object.entries(methods)) {
+	for (const [name, method] of Object.entries(methods.methods)) {
 		const zodFunction = z.instanceof(FunctionWrapper);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		(zodFunction as any).method = method;
 		methodTypes.push([name, zodFunction]);
 	}
-	return methodTypes;
+	return { methods: methodTypes, referencedTypes: methods.referencedTypes };
+}
+
+function getBoundMethods(
+	definition: string,
+	bindableSchemas: Map<string, BindableSchema>,
+): [string, ZodTypeAny][] {
+	const bindableSchema = bindableSchemas.get(definition) ?? fail("Unknown definition");
+	return getBoundMethodsForBindable(bindableSchema).methods;
 }
 
 function addBindingIntersectionIfNeeded(

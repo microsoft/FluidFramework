@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-view",
-	"version": "2.61.0",
+	"version": "2.62.0",
 	"private": true,
 	"description": "Contains a visualization suite for use alongside the Fluid Devtools",
 	"homepage": "https://fluidframework.com",
@@ -93,7 +93,7 @@
 		"@microsoft/api-extractor": "7.52.11",
 		"@testing-library/dom": "^10.4.0",
 		"@testing-library/jest-dom": "^5.16.5",
-		"@testing-library/react": "^16.0.1",
+		"@testing-library/react": "^16.3.0",
 		"@testing-library/user-event": "^14.4.3",
 		"@types/jest": "29.5.3",
 		"@types/mocha": "^10.0.10",
