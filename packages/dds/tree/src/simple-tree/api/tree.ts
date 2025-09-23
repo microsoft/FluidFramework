@@ -99,6 +99,21 @@ export interface ITreeAlpha extends ITree {
 	 * To get the schema using property keys, use {@link getSimpleSchema} on the view schema.
 	 */
 	exportSimpleSchema(): SimpleTreeSchema;
+
+	/**
+	 * Creates a fork of the current state of the main branch.
+	 * This new branch will be shared with and editable by all clients.
+	 */
+	createSharedBranch(): string;
+
+	/**
+	 * Returns a view of the tree on the specified shared branch, using the provided schema.
+	 * See {@link ViewableTree.viewWith}.
+	 */
+	viewSharedBranchWith<TRoot extends ImplicitFieldSchema>(
+		branchId: string,
+		config: TreeViewConfiguration<TRoot>,
+	): TreeView<TRoot>;
 }
 
 /**

@@ -53,7 +53,7 @@ describe("DeltaStorageService", () => {
 		itemId,
 		odspResolvedUrl: true,
 	} as unknown as IOdspResolvedUrl;
-	const fileEntry = { docId: "docId", resolvedUrl };
+	const fileEntry = { docId: "docId", resolvedUrl, fileVersion: undefined };
 
 	it("Should build the correct sharepoint delta url with auth", async () => {
 		const logger = new MockLogger();
