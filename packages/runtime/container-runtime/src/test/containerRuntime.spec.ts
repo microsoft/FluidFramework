@@ -32,7 +32,7 @@ import type {
 	ITelemetryBaseLogger,
 	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
-import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ISummaryTree, SummaryObject } from "@fluidframework/driver-definitions";
 import {
 	type ISnapshot,
 	type ISummaryContext,
@@ -2443,8 +2443,8 @@ describe("Runtime", () => {
 					false,
 				);
 				const { summary } = await containerRuntime.summarize({ fullTree: true });
-				const blob = summary.tree[recentBatchInfoBlobName];
-				assert(blob.type === SummaryType.Blob, "Expected blob");
+				const blob: SummaryObject | undefined = summary.tree[recentBatchInfoBlobName];
+				assert(blob?.type === SummaryType.Blob, "Expected blob");
 				assert.equal(blob.content, '[[123,"batchId1"]]', "Expected single batchId mapping");
 
 				// Load a new ContainerRuntime with the serialized DuplicateBatchDetector state.
@@ -2617,6 +2617,7 @@ describe("Runtime", () => {
 
 			function createSnapshot(addMissingDatastore: boolean, setGroupId: boolean = true): void {
 				if (addMissingDatastore) {
+					// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 					snapshotTree.trees[".channels"].trees.missingDataStore = {
 						blobs: { ".component": "id" },
 						trees: {
@@ -2777,7 +2778,7 @@ describe("Runtime", () => {
 					["missingDataStore"],
 				);
 				assert.deepStrictEqual(
-					snapshotTree.trees[".channels"].trees.missingDataStore,
+					snapshotTree.trees[".channels"]?.trees.missingDataStore,
 					snapshot.snapshotTree,
 					"snapshot should be equal",
 				);

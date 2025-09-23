@@ -278,6 +278,7 @@ describe("Garbage Collection Stats", () => {
 			);
 
 			// Add 2 new nodes and make one of them unreferenced.
+			// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 			defaultGCData.gcNodes["/"].push(nodes[4]);
 			defaultGCData.gcNodes[nodes[4]] = [];
 			defaultGCData.gcNodes[nodes[5]] = [];

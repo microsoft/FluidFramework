@@ -83,6 +83,7 @@ import type {
 	ISnapshotTree,
 	ISummaryContent,
 	ISummaryContext,
+	SummaryObject,
 } from "@fluidframework/driver-definitions/internal";
 import { FetchSource, MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
@@ -128,20 +129,18 @@ import type {
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	defaultMinVersionForCollab,
-	isValidMinVersionForCollab,
-} from "@fluidframework/runtime-utils/internal";
-import {
-	GCDataBuilder,
-	RequestParser,
-	RuntimeHeaders,
-	TelemetryContext,
 	addBlobToSummary,
 	addSummarizeResultToSummary,
 	calculateStats,
 	create404Response,
+	defaultMinVersionForCollab,
 	exceptionToResponse,
+	GCDataBuilder,
+	isValidMinVersionForCollab,
+	RequestParser,
+	RuntimeHeaders,
 	seqFromTree,
+	TelemetryContext,
 } from "@fluidframework/runtime-utils/internal";
 import { semanticVersionToMinimumVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import type {
@@ -257,56 +256,54 @@ import {
 } from "./runtimeLayerCompatState.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
 // These types are imported as types here because they are present in summaryDelayLoadedModule, which is loaded dynamically when required.
-import type {
-	IDocumentSchemaChangeMessageIncoming,
-	IDocumentSchemaCurrent,
-	Summarizer,
-	IDocumentSchemaFeatures,
-	EnqueueSummarizeResult,
-	ISerializedElection,
-	ISummarizeResults,
-} from "./summary/index.js";
 import {
+	aliasBlobName,
+	chunksBlobName,
+	createRootSummarizerNodeWithGC,
+	DefaultSummaryConfiguration,
 	DocumentsSchemaController,
+	electedSummarizerBlobName,
+	type EnqueueSummarizeResult,
+	extractSummaryMetadataMessage,
+	formCreateSummarizerFn,
 	type IBaseSummarizeResult,
 	type IConnectableRuntime,
 	type IContainerRuntimeMetadata,
 	type ICreateContainerMetadata,
+	idCompressorBlobName,
+	type IdCompressorMode,
+	type IDocumentSchemaChangeMessageIncoming,
+	type IDocumentSchemaCurrent,
+	type IDocumentSchemaFeatures,
 	type IEnqueueSummarizeOptions,
-	type IGenerateSummaryTreeResult,
 	type IGeneratedSummaryStats,
+	type IGenerateSummaryTreeResult,
 	type IOnDemandSummarizeOptions,
 	type IRefreshSummaryAckOptions,
 	type IRootSummarizerNodeWithGC,
+	type ISerializedElection,
+	isSummariesDisabled,
 	type ISubmitSummaryOptions,
+	type ISummarizeResults,
 	type ISummarizerInternalsProvider,
 	type ISummarizerRuntime,
-	type ISummaryMetadataMessage,
-	type IdCompressorMode,
-	OrderedClientElection,
-	RetriableSummaryError,
-	type SubmitSummaryResult,
-	aliasBlobName,
-	chunksBlobName,
-	recentBatchInfoBlobName,
-	createRootSummarizerNodeWithGC,
-	electedSummarizerBlobName,
-	extractSummaryMetadataMessage,
-	idCompressorBlobName,
-	metadataBlobName,
-	rootHasIsolatedChannels,
-	wrapSummaryInChannelsTree,
-	formCreateSummarizerFn,
-	summarizerRequestUrl,
-	SummaryManager,
-	SummarizerClientElection,
-	SummaryCollection,
-	OrderedClientCollection,
-	validateSummaryHeuristicConfiguration,
 	type ISummaryConfiguration,
-	DefaultSummaryConfiguration,
-	isSummariesDisabled,
+	type ISummaryMetadataMessage,
+	metadataBlobName,
+	OrderedClientCollection,
+	OrderedClientElection,
+	recentBatchInfoBlobName,
+	RetriableSummaryError,
+	rootHasIsolatedChannels,
+	type SubmitSummaryResult,
+	type Summarizer,
+	SummarizerClientElection,
 	summarizerClientType,
+	summarizerRequestUrl,
+	SummaryCollection,
+	SummaryManager,
+	validateSummaryHeuristicConfiguration,
+	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
 
@@ -4299,9 +4296,9 @@ export class ContainerRuntime
 			// Counting dataStores and handles
 			// Because handles are unchanged dataStores in the current logic,
 			// summarized dataStore count is total dataStore count minus handle count
-			const dataStoreTree = summaryTree.tree[channelsTreeName];
+			const dataStoreTree: SummaryObject | undefined = summaryTree.tree[channelsTreeName];
 
-			assert(dataStoreTree.type === SummaryType.Tree, 0x1fc /* "summary is not a tree" */);
+			assert(dataStoreTree?.type === SummaryType.Tree, 0x1fc /* "summary is not a tree" */);
 			const handleCount = Object.values(dataStoreTree.tree).filter(
 				(value) => value.type === SummaryType.Handle,
 			).length;

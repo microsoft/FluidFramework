@@ -10,7 +10,10 @@ import { ContainerErrorTypes } from "@fluidframework/container-definitions/inter
 import type { IErrorBase, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import type { Timer } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
+	ISnapshotTree,
+	SummaryObject,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	type IGarbageCollectionDetailsBase,
 	type ISummarizeResult,
@@ -1511,9 +1514,10 @@ describe("Garbage Collection Tests", () => {
 			assert(summaryTree?.summary.type === SummaryType.Tree, "The summary should be a tree");
 
 			// Get the deleted node ids from summary and validate that its the same as the one GC loaded from.
-			const deletedNodesBlob = summaryTree.summary.tree[gcDeletedBlobKey];
+			const deletedNodesBlob: SummaryObject | undefined =
+				summaryTree.summary.tree[gcDeletedBlobKey];
 			assert(
-				deletedNodesBlob.type === SummaryType.Blob,
+				deletedNodesBlob?.type === SummaryType.Blob,
 				"Deleted blob not present in summary",
 			);
 			const deletedNodeIdsInSummary = JSON.parse(
@@ -1560,9 +1564,10 @@ describe("Garbage Collection Tests", () => {
 			assert(gcSummary?.summary.type === SummaryType.Tree, "The summary should be a tree");
 
 			// Get the deleted node ids from summary and validate that its the same as the one GC loaded from.
-			const deletedNodesBlob = gcSummary.summary.tree[gcDeletedBlobKey];
+			const deletedNodesBlob: SummaryObject | undefined =
+				gcSummary.summary.tree[gcDeletedBlobKey];
 			assert(
-				deletedNodesBlob.type === SummaryType.Handle,
+				deletedNodesBlob?.type === SummaryType.Handle,
 				"Deleted nodes state should be a handle",
 			);
 
@@ -1955,6 +1960,7 @@ describe("Garbage Collection Tests", () => {
 				defaultGCData.gcNodes[nodeE] = [nodeA];
 
 				// 4. Add reference from A to D with calling addedOutboundReference
+				// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 				defaultGCData.gcNodes[nodeA].push(nodeD);
 				garbageCollector.addedOutboundReference(nodeA, nodeD, Date.now());
 

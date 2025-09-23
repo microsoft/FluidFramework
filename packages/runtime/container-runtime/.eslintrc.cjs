@@ -10,9 +10,6 @@ module.exports = {
 	},
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
-
-		// TODO: fix violations and remove overrides
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 	overrides: [
 		{
