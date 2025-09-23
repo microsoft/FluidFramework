@@ -544,8 +544,8 @@ class NodeSubscription {
 				// 1. The parent may be undefined (the node is a root).
 				// 2. If tracking this by subscribing to the parent's changes, then which events are subscribed to needs to be updated after the parent changes.
 				//
-				// If not supporting the first case (undefined parents), the second case gets problematic since it would result in edits which take a node who's parent was observed,
-				// and un-parent it, could then throw a usage error.
+				// If not supporting the first case (undefined parents), the second case gets problematic: edits which un-parent a node could error due to being unable to update the event subscription.
+				// For now this is mitigated by only supporting one of tracking (non-undefined) parents or maintaining event subscriptions across edits.
 
 				if (!onlyOnce) {
 					// TODO: better APIS should be provided which make handling this case practical.
