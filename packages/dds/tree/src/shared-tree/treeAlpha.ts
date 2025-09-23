@@ -452,8 +452,8 @@ export interface TreeAlpha {
 	 * @remarks
 	 * This also supports tracking parentage, unlike {@link (TreeAlpha:interface).trackObservations}, as long as the parent is not undefined.
 	 *
-	 * @example
-	 * ```ts
+	 * @example Simple cached value invalidation
+	 * ```typescript
 	 * // Compute and cache this "foo" value, and clear the cache when the fields read in the callback to compute it change.
 	 * cachedFoo ??= TreeAlpha.trackObservationsOnce(
 	 * 	() => {
@@ -463,8 +463,8 @@ export interface TreeAlpha {
 	 * ).result;
 	 * ```
 	 *
-	 * @example
-	 * ```ts
+	 * @example Cached derived schema property
+	 * ```typescript
 	 * const factory = new SchemaFactory("com.example");
 	 * class Vector extends factory.object("Vector", {
 	 * 	x: SchemaFactory.number,
