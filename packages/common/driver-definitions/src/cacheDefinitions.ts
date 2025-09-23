@@ -90,7 +90,7 @@ export interface IPersistedCache {
 	put(entry: ICacheEntry, value: unknown): Promise<void>;
 
 	/**
-	 * Removes the entries from the cache for given parametres.
+	 * Removes the entries from the cache for given parameters.
 	 * @param file - file entry to be deleted.
 	 */
 	removeEntries(file: IFileEntry): Promise<void>;
