@@ -376,6 +376,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			);
 
 			commits.length = 0;
+			branchId = undefined;
 		};
 
 		// Get a list of all the commits from the messages.
