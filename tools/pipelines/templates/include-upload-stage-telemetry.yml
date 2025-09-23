@@ -51,6 +51,7 @@ stages:
     - task: Bash@3
       displayName: 'Install dependencies'
       inputs:
+        targetType: 'inline'
         script: |
           set -eu -o pipefail
           pnpm install
