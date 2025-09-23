@@ -307,6 +307,10 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		const document = await documentManager.readDocument(tenantId, documentId);
 		// eslint-disable-next-line @typescript-eslint/dot-notation
 		postIsEphemeral = document && document["sync"] === "pending" ? true : false;
+		Lumberjack.info(
+			`Document postIsEphemeral: ${postIsEphemeral}.`,
+			getLumberBaseProperties(documentId, tenantId),
+		);
 	}
 
 	const calculatedStorageName =
