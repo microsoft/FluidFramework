@@ -50,6 +50,9 @@ export interface CommitMetadata {
     readonly kind: CommitKind;
 }
 
+// @beta
+export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
+
 // @public
 export enum ConnectionState {
     CatchingUp = 1,
@@ -760,6 +763,9 @@ export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedTyp
 
 // @public
 export const SharedTree: SharedObjectKind<ITree>;
+
+// @beta @input
+export type SharedTreeOptionsBeta = ForestOptions;
 
 // @public @sealed @system
 export interface SimpleNodeSchemaBase<out TNodeKind extends NodeKind, out TCustomMetadata = unknown> {

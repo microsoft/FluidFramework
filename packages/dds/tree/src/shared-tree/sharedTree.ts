@@ -636,11 +636,17 @@ export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 
 /**
  * Configuration options for SharedTree.
+ * @beta @input
+ */
+export type SharedTreeOptionsBeta = ForestOptions;
+
+/**
+ * Configuration options for SharedTree.
  * @alpha @input
  */
 export type SharedTreeOptions = Partial<CodecWriteOptions> &
 	Partial<SharedTreeFormatOptions> &
-	ForestOptions;
+	SharedTreeOptionsBeta;
 
 export interface SharedTreeOptionsInternal
 	extends Omit<SharedTreeOptions, "treeEncodeType">,
