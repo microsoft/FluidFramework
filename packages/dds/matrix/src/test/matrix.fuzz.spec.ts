@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "node:path";
-
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	createDDSFuzzSuite,
@@ -17,7 +15,6 @@ import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import type { SharedMatrixFactory } from "../runtime.js";
 
-import { _dirname } from "./dirname.cjs";
 import { baseSharedMatrixModel, type Operation } from "./fuzz.js";
 import { SharedMatrixOracle, type IChannelWithOracles } from "./matrixOracle.js";
 
@@ -53,7 +50,6 @@ describe("Matrix fuzz tests", function () {
 		},
 		reconnectProbability: 0,
 		emitter: oracleEmitter,
-		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
 	};
 
 	const nameModel = (workloadName: string): DDSFuzzModel<SharedMatrixFactory, Operation> => ({
@@ -65,9 +61,7 @@ describe("Matrix fuzz tests", function () {
 		...baseOptions,
 		reconnectProbability: 0,
 		// Uncomment to replay a particular seed.
-		// only: 97,
-		skip: [4, 23],
-		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/1") },
+		// replay: 0,
 	});
 
 	createDDSFuzzSuite(nameModel("with reconnect"), {
@@ -79,9 +73,7 @@ describe("Matrix fuzz tests", function () {
 		},
 		reconnectProbability: 0.1,
 		// Uncomment to replay a particular seed.
-		// only: 40,
-		skip: [4],
-		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/2") },
+		// replay: 0,
 	});
 
 	createDDSFuzzSuite(nameModel("with batches and rebasing"), {
@@ -93,8 +85,6 @@ describe("Matrix fuzz tests", function () {
 		},
 		// Uncomment to replay a particular seed.
 		// replay: 0,
-		skip: [2, 23, 40, 49],
-		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/3") },
 	});
 
 	createDDSFuzzSuite(nameModel("with stashing"), {
@@ -104,10 +94,7 @@ describe("Matrix fuzz tests", function () {
 			clientAddProbability: 0.1,
 			stashableClientProbability: 0.5,
 		},
-		skipMinimization: true,
 		// Uncomment to replay a particular seed.
-		// replay: 97,
-		skip: [4, 23],
-		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/4") },
+		// replay: 0,
 	});
 });

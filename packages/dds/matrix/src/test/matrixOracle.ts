@@ -9,12 +9,15 @@ import type { IMatrixConsumer } from "@tiny-calc/nano";
 
 import type { ISharedMatrix, SharedMatrix } from "../matrix.js";
 
+import { TestConsumer } from "./testconsumer.js";
+
 interface IConflict<T> {
 	row: number;
 	col: number;
 	currentValue: T;
 	conflictingValue: T;
 	cellValue: T | undefined;
+	lastEvent: "conflict" | "rowChange" | "colChange" | "cellChange";
 }
 
 export class SharedMatrixOracle {
@@ -25,10 +28,11 @@ export class SharedMatrixOracle {
 		conflictingValue: unknown,
 	) => void;
 	private latestConflict = new Map<string, IConflict<unknown>>();
-	private readonly eventListeners: IMatrixConsumer<string>;
+	private readonly matrixConsumer: IMatrixConsumer<string>;
+	private readonly testConsumer: TestConsumer;
 
 	constructor(private readonly shared: SharedMatrix) {
-		this.eventListeners = {
+		this.matrixConsumer = {
 			rowsChanged: (start, removed, inserted) => {
 				this.updateLatestHistory("row", start, removed, inserted);
 			},
@@ -52,6 +56,7 @@ export class SharedMatrixOracle {
 							this.latestConflict.set(key, {
 								...existing,
 								cellValue, // capture current cell value
+								lastEvent: "cellChange",
 							});
 						}
 					}
@@ -59,7 +64,8 @@ export class SharedMatrixOracle {
 			},
 		};
 
-		this.shared.openMatrix(this.eventListeners);
+		this.shared.openMatrix(this.matrixConsumer);
+		this.testConsumer = new TestConsumer(this.shared);
 
 		this.conflictListener = (row, col, currentValue, conflictingValue) => {
 			this.onConflict(row, col, currentValue, conflictingValue);
@@ -93,7 +99,12 @@ export class SharedMatrixOracle {
 
 			if (keep) {
 				const key = `${row},${col}`;
-				newMap.set(key, { ...record, row, col });
+				newMap.set(key, {
+					...record,
+					row,
+					col,
+					lastEvent: type === "row" ? "rowChange" : "colChange",
+				});
 			}
 		}
 		this.latestConflict.clear();
@@ -118,45 +129,77 @@ export class SharedMatrixOracle {
 				col,
 				currentValue,
 				conflictingValue,
-				cellValue: this.shared.getCell(row, col),
+				cellValue: this.testConsumer.getCell(row, col),
+				lastEvent: "conflict",
 			});
 		}
 	}
 
 	public validate(): void {
+		// validate matrix
+		for (let r = 0; r < this.shared.rowCount; r++) {
+			for (let c = 0; c < this.shared.colCount; c++) {
+				const expected = this.testConsumer.getCell(r, c);
+				const actual = this.shared.getCell(r, c);
+				assert.deepStrictEqual(actual, expected, `Mismatch at [${r},${c}]`);
+			}
+		}
+
 		// Validate conflict history
 		for (const [, conflict] of this.latestConflict) {
-			const { row, col, currentValue, conflictingValue, cellValue } = conflict;
+			const { row, col, currentValue, conflictingValue, cellValue, lastEvent } = conflict;
+			const inBounds = row < this.shared.rowCount && col < this.shared.colCount;
+			const actual = inBounds ? this.shared.getCell(row, col) : undefined;
 
-			// Make sure the coordinates are still in-bounds
-			if (row < this.shared.rowCount && col < this.shared.colCount) {
-				const actual = this.shared.getCell(row, col);
-
-				if (actual === undefined) {
-					assert.deepStrictEqual(
-						actual,
-						cellValue,
-						`cell value at [${row},${col}] is ${actual}, latest history: ${cellValue}`,
-					);
-					continue;
+			switch (lastEvent) {
+				case "conflict": {
+					// Probably cell is not yet set
+					if (actual === undefined) return;
+					// Winner must be present in the matrix
+					if (inBounds) {
+						assert.deepStrictEqual(
+							actual,
+							currentValue,
+							`Conflict mismatch at [${row},${col}]:
+					 expected winner=${currentValue},
+					 actual=${actual},
+					 loser=${conflictingValue} with cellValue=${cellValue}`,
+						);
+					}
+					break;
 				}
-
-				// Winner must be present in the matrix
-				assert.deepStrictEqual(
-					actual,
-					currentValue,
-					`Conflict history mismatch at [${row},${col}]:
-				 expected winner=${currentValue},
-				 actual=${actual},
-				 loser=${conflictingValue} with cell value=${cellValue}`,
-				);
+				case "rowChange":
+				case "colChange": {
+					// Just check entry is still valid
+					assert.ok(
+						inBounds,
+						`Conflict entry at [${row},${col}] is out-of-bounds after ${lastEvent}`,
+					);
+					break;
+				}
+				case "cellChange": {
+					// Ensure what we recorded matched the matrix state at the time
+					if (inBounds) {
+						assert.deepStrictEqual(
+							actual,
+							cellValue,
+							`Cell change mismatch at [${row},${col}]:
+					 expected=${cellValue},
+					 actual=${actual}`,
+						);
+					}
+					break;
+				}
+				default: {
+					assert.fail(`Unexpected lastEvent type: ${lastEvent}`);
+				}
 			}
 		}
 	}
 
 	public dispose(): void {
 		this.shared.off("conflict", this.conflictListener);
-		this.shared.matrixProducer.closeMatrix(this.eventListeners);
+		this.shared.matrixProducer.closeMatrix(this.matrixConsumer);
 	}
 }
 
