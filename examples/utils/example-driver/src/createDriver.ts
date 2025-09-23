@@ -16,8 +16,6 @@ import { createTinyliciousDriver } from "./tinyliciousDriver.js";
  * This pattern should not be used in production since it pulls all driver types into the bundle.
  * This is just done for convenience in our examples. Instead a specific driver should be selected
  * and used for production.
- *
- * @internal
  */
 export const createExampleDriver = async (
 	type: ExampleDriverService,

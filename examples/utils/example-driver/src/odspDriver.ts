@@ -22,7 +22,6 @@ import type { ExampleDriver } from "./interfaces.js";
  * Get the required siteUrl, storageToken, or pushToken, relying on webpack to provide these via middleware
  * responding to get requests for those paths, respectively.  The example-webpack-integration package provides
  * middleware to make this easy to do.
- * @internal
  */
 const getFromMiddleware = async (
 	path: "siteUrl" | "storageToken" | "pushToken",

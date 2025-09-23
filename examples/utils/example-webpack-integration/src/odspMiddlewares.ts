@@ -61,8 +61,6 @@ const parseTestAccounts = (
  *
  * process.env.login__odsp__test__tenants - JSON array of users/credentials with deducible tenants
  * process.env.login__microsoft__clientId - the client ID to use
- *
- * @internal
  */
 export const createOdspMiddlewares = (): Middleware[] => {
 	if (process.env.login__odsp__test__tenants === undefined) {

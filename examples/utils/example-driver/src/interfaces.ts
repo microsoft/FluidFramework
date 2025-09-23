@@ -12,7 +12,6 @@ import type {
 
 /**
  * The collection of per-service functionality required to create and/or load a Fluid container.
- * @internal
  */
 export interface ExampleDriver {
 	/**
@@ -44,7 +43,6 @@ export interface ExampleDriver {
 
 /**
  * The supported services for the example driver.
- * @internal
  */
 export type ExampleDriverService = "odsp" | "t9s" | "local";
 

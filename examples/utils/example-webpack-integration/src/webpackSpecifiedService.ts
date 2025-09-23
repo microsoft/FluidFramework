@@ -7,7 +7,6 @@ import { DefinePlugin } from "webpack";
 
 /**
  * Helper to create a DefinePlugin for specifying the driver service to use.
- * @internal
  */
 export const createExampleDriverServiceWebpackPlugin = (service: string): DefinePlugin =>
 	new DefinePlugin({
