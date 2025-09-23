@@ -245,7 +245,7 @@ stages:
           displayName: Initialize
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ parameters.testWorkspace }}
+            workingDirectory: $(Build.SourcesDirectory)
             script: |
               set -eu -o pipefail
               if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
