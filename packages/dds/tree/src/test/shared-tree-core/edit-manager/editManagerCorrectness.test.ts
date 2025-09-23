@@ -574,19 +574,19 @@ export function testCorrectness() {
 					const { manager } = testChangeEditManagerFactory({});
 					const local1 = applyLocalCommit(manager, [], 1);
 					const local2 = applyLocalCommit(manager, [1], 2);
-					const [commit1, commit2] = manager.getLocalCommits();
+					const [commit1, commit2] = manager.getLocalCommits("main");
 
 					manager.addSequencedChanges([local1], local1.sessionId, brand(1), brand(0));
 					assert.deepEqual([commit1], manager.getTrunkCommits("main"));
-					assert.deepEqual([commit2], manager.getLocalCommits());
+					assert.deepEqual([commit2], manager.getLocalCommits("main"));
 
 					const local3 = applyLocalCommit(manager, [1, 2], 3);
-					const [_, commit3] = manager.getLocalCommits();
+					const [_, commit3] = manager.getLocalCommits("main");
 
 					manager.addSequencedChanges([local2], local2.sessionId, brand(2), brand(0));
 					manager.addSequencedChanges([local3], local3.sessionId, brand(3), brand(1));
 					assert.deepEqual([commit1, commit2, commit3], manager.getTrunkCommits("main"));
-					assert.deepEqual([], manager.getLocalCommits());
+					assert.deepEqual([], manager.getLocalCommits("main"));
 				});
 
 				it("nested local branches do not prevent and are not perturbed by fast-forwarding", () => {
@@ -598,7 +598,7 @@ export function testCorrectness() {
 					const forkC = manager.getLocalBranch("main").fork();
 					const local3 = applyLocalCommit(manager, [1, 2], 3);
 					const forkD = manager.getLocalBranch("main").fork();
-					const [commit1, commit2, commit3] = manager.getLocalCommits();
+					const [commit1, commit2, commit3] = manager.getLocalCommits("main");
 
 					// The code above defines the following relationships between commits:
 					//   (r) <- forkA
@@ -618,7 +618,7 @@ export function testCorrectness() {
 					//     └─ <- forkA
 
 					assert.deepEqual([commit1, commit2, commit3], manager.getTrunkCommits("main"));
-					assert.deepEqual([], manager.getLocalCommits());
+					assert.deepEqual([], manager.getLocalCommits("main"));
 
 					assert.equal(forkA.getHead(), commit1.parent);
 					assert.equal(forkB.getHead(), commit1);

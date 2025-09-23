@@ -2522,71 +2522,56 @@ describe("SharedTree", () => {
 		assert.deepEqual([...mainView2.root], ["A", "X"]);
 	});
 
-	// it("can load a shared branch from summary made while the base commit was in the collab window", async () => {
-	// 	const provider = await TestTreeProvider.create(
-	// 		1,
-	// 		SummarizeType.onDemand,
-	// 		new SharedTreeTestFactory(() => {}, undefined, {
-	// 			formatVersion: SharedTreeFormatVersion.vSharedBranches,
-	// 		}),
-	// 	);
-	// 	const tree1 = provider.trees[0];
-	// 	const config = new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation });
-	// 	const view1 = tree1.viewWith(config);
-	// 	view1.initialize([]);
-	// 	view1.root.insertAtEnd("A");
-	// 	const branchId = tree1.createSharedBranch();
-	// 	view1.root.insertAtEnd("B");
-	// 	await provider.ensureSynchronized();
+	describe("can load a shared branch from summary", () => {
+		for (const subCase of [
+			"based on a commit in the collab window",
+			"based on a commit outside the collab window",
+		] as const) {
+			it(subCase, async () => {
+				const provider = await TestTreeProvider.create(
+					1,
+					SummarizeType.onDemand,
+					new SharedTreeTestFactory(() => {}, undefined, {
+						formatVersion: SharedTreeFormatVersion.vSharedBranches,
+					}),
+				);
+				const tree1 = provider.trees[0];
+				const config = new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				});
+				const mainView1 = tree1.viewWith(config);
+				mainView1.initialize([]);
+				mainView1.root.insertAtEnd("A");
+				const branchId = tree1.createSharedBranch();
+				mainView1.root.insertAtEnd("B");
 
-	// 	// The summary created here should include the shared branch
-	// 	await provider.summarize();
-	// 	await provider.ensureSynchronized();
-	// 	const loadingTree = await provider.createTree();
-	// 	const loadingMainView = loadingTree.viewWith(config);
-	// 	assert.deepEqual([...loadingMainView.root], ["A", "B"]);
-	// 	const loadingBranchView = loadingTree.viewBranchWith(branchId, config);
-	// 	assert.deepEqual([...loadingBranchView.root], ["A"]);
-	// });
+				const branchView1 = tree1.viewSharedBranchWith(branchId, config);
+				branchView1.root.insertAtEnd("X");
 
-	it("can load a shared branch from summary", async () => {
-		const provider = await TestTreeProvider.create(
-			1,
-			SummarizeType.onDemand,
-			new SharedTreeTestFactory(() => {}, undefined, {
-				formatVersion: SharedTreeFormatVersion.vSharedBranches,
-			}),
-		);
-		const tree1 = provider.trees[0];
-		const config = new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation });
-		const view1 = tree1.viewWith(config);
-		view1.initialize([]);
-		view1.root.insertAtEnd("A");
-		const branchId = tree1.createSharedBranch();
-		view1.root.insertAtEnd("B");
-		const branchView = tree1.viewSharedBranchWith(branchId, config);
-		branchView.root.insertAtEnd("X");
+				await provider.ensureSynchronized();
 
-		await provider.ensureSynchronized();
+				if (subCase === "based on a commit outside the collab window") {
+					const seqNumber = provider.containers[0].deltaManager.lastSequenceNumber;
+					while (provider.containers[0].deltaManager.minimumSequenceNumber < seqNumber) {
+						mainView1.root.insertAtEnd("C");
+						await provider.ensureSynchronized();
+					}
+					mainView1.root.insertAtEnd("C");
+					await provider.ensureSynchronized();
+				}
 
-		const seqNumber = provider.containers[0].deltaManager.lastSequenceNumber;
-		while (provider.containers[0].deltaManager.minimumSequenceNumber < seqNumber) {
-			view1.root.insertAtEnd("C");
-			await provider.ensureSynchronized();
+				const lengthOnMainBranch = mainView1.root.length;
+
+				// The summary created here should include the shared branch
+				await provider.summarize();
+				await provider.ensureSynchronized();
+				const loadingTree = await provider.createTree();
+				const loadingMainView = loadingTree.viewWith(config);
+				assert.equal(loadingMainView.root.length, lengthOnMainBranch);
+				const loadingBranchView = loadingTree.viewSharedBranchWith(branchId, config);
+				assert.deepEqual([...loadingBranchView.root], ["A", "X"]);
+			});
 		}
-		provider.containers[0].deltaManager.flush();
-		view1.root.insertAtEnd("C");
-		await provider.ensureSynchronized();
-
-		const lengthOnMainBranch = view1.root.length;
-
-		// The summary created here should include the shared branch
-		await provider.summarize();
-		await provider.ensureSynchronized();
-		const loadingTree = await provider.createTree();
-		const loadingMainView = loadingTree.viewWith(config);
-		assert.equal(loadingMainView.root.length, lengthOnMainBranch);
-		const loadingBranchView = loadingTree.viewSharedBranchWith(branchId, config);
-		assert.deepEqual([...loadingBranchView.root], ["A", "X"]);
 	});
 });

@@ -419,17 +419,13 @@ export class EditManager<
 		return getPathFromBase(this.getTrunkHead(branchId), this.trunkBase);
 	}
 
-	public getLocalChanges(): readonly TChangeset[] {
-		return this.getLocalCommits().map((c) => c.change);
+	public getLocalChanges(branchId: BranchId): readonly TChangeset[] {
+		return this.getLocalCommits(branchId).map((c) => c.change);
 	}
 
-	public getLocalCommits(): readonly GraphCommit<TChangeset>[] {
-		const changes: GraphCommit<TChangeset>[] = [];
-		for (const branch of this.sharedBranches.values()) {
-			changes.push(...branch.getLocalCommits());
-		}
-
-		return changes;
+	public getLocalCommits(branchId: BranchId): readonly GraphCommit<TChangeset>[] {
+		const branch = this.getSharedBranch(branchId);
+		return branch.getLocalCommits();
 	}
 
 	/**

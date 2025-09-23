@@ -492,7 +492,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				const resubmitMachine = this.getResubmitMachine(branchId);
 				// If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
 				if (resubmitMachine.isInResubmitPhase === false) {
-					const localCommits = this.editManager.getLocalCommits();
+					const localCommits = this.editManager.getLocalCommits(branchId);
 					const revisionIndex = localCommits.findIndex((c) => c.revision === revision);
 					assert(revisionIndex >= 0, 0xbdb /* revision must exist in local commits */);
 					const toResubmit = localCommits.slice(revisionIndex);
