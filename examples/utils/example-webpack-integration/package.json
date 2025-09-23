@@ -30,14 +30,11 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack .",
 		"check:biome": "biome check .",
-		"check:exports": "api-extractor run --config ./api-extractor-lint.json",
 		"check:format": "npm run check:biome",
-		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
@@ -58,19 +55,11 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.58.3",
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
-		"@microsoft/api-extractor": "7.52.11",
 		"@types/node": "^18.19.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
-	},
-	"fluidBuild": {
-		"tasks": {
-			"check:exports": [
-				"build:esnext"
-			]
-		}
 	},
 	"typeValidation": {
 		"disabled": true,
