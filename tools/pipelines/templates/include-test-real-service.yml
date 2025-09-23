@@ -210,9 +210,11 @@ stages:
 
         - task: Bash@3
           displayName: Install base dependencies
-          script: |
-            set -eu -o pipefail
-            pnpm install
+          inputs:
+            targetType: 'inline'
+            script: |
+              set -eu -o pipefail
+              pnpm install
 
         # Download artifact
         - task: DownloadPipelineArtifact@2
