@@ -6109,6 +6109,9 @@ importers:
 
   examples/view-integration/external-views:
     dependencies:
+      '@fluid-example/example-driver':
+        specifier: workspace:~
+        version: link:../../utils/example-driver
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils
@@ -6170,6 +6173,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.58.3
         version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
