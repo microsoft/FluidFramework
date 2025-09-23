@@ -103,7 +103,7 @@ export const SharedTree = configuredSharedTree({});
  * import {
  * 	configuredSharedTreeBeta,
  * 	ForestTypeReference,
- * } from "@fluidframework/tree/internal";
+ * } from "fluid-framework/beta";
  * const SharedTree = configuredSharedTree({
  * 	forest: ForestTypeReference,
  * });
