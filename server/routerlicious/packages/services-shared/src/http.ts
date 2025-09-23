@@ -121,10 +121,15 @@ export function validatePrivateLink(
 					tenantInfo.customData.publicNetworkAccessEnabled !== undefined &&
 					tenantInfo.customData.publicNetworkAccessEnabled === false
 				) {
-					return {
-						message: "The public network access is disabled",
-						shouldConnect: false,
-					};
+					return handleResponse(
+						Promise.reject(
+							new NetworkError(
+								400,
+								`The public network access is disabled for tenant ${tenantId}`,
+							),
+						),
+						res,
+					);
 				}
 				if (privateLinkEnable) {
 					return handleResponse(
