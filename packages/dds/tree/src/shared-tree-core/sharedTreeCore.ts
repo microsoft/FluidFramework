@@ -150,6 +150,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			changeFamily,
 			localSessionId,
 			this.mintRevisionTag,
+			(branchId) => this.registerSharedBranch(branchId),
 			rebaseLogger,
 		);
 
@@ -376,6 +377,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			);
 
 			commits.length = 0;
+			branchId = undefined;
 		};
 
 		// Get a list of all the commits from the messages.
@@ -413,8 +415,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 						brand(envelope.referenceSequenceNumber),
 						message.branchId,
 					);
-
-					this.registerSharedBranch(message.branchId);
 					break;
 				}
 				default:
@@ -464,7 +464,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 	protected addBranch(branchId: BranchId): void {
 		this.editManager.addBranch(branchId);
-		this.registerSharedBranch(branchId);
 	}
 
 	public getSharedBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChange> {
