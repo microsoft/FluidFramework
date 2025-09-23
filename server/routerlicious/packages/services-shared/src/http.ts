@@ -116,6 +116,16 @@ export function validatePrivateLink(
 					);
 				}
 			} else {
+				if (
+					tenantInfo?.customData &&
+					tenantInfo.customData.publicNetworkAccessEnabled !== undefined &&
+					tenantInfo.customData.publicNetworkAccessEnabled === false
+				) {
+					return {
+						message: "The public network access is disabled",
+						shouldConnect: false,
+					};
+				}
 				if (privateLinkEnable) {
 					return handleResponse(
 						Promise.reject(

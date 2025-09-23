@@ -65,6 +65,12 @@ export async function checkNetworkInformation(
 			};
 		}
 	} else {
+		if (tenantInfo?.customData && tenantInfo.customData.publicNetworkAccessEnabled === false) {
+			return {
+				message: "The public network access is disabled",
+				shouldConnect: false,
+			};
+		}
 		return privateLinkEnable
 			? {
 					message:
