@@ -10,6 +10,15 @@ import {
 	loadSummarizerContainerAndMakeSummary,
 	ILoadExistingContainerProps,
 } from "@fluidframework/container-loader/internal";
+import type {
+	SubmitSummaryResult,
+	SubmitSummaryFailureData,
+	ISubmitSummaryOpResult,
+	IBroadcastSummaryResult,
+	IAckSummaryResult,
+	INackSummaryResult,
+	SummarizeResultPart,
+} from "@fluidframework/container-runtime/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	createLoaderProps,
@@ -17,6 +26,15 @@ import {
 	ITestFluidObject,
 	DataObjectFactoryType,
 } from "@fluidframework/test-utils/internal";
+
+function isSubmitOpResult(data: SubmitSummaryResult): data is ISubmitSummaryOpResult {
+	return data.stage === "submit";
+}
+function isAckSuccess(
+	data: IAckSummaryResult | INackSummaryResult,
+): data is IAckSummaryResult {
+	return (data as IAckSummaryResult).summaryAckOp !== undefined;
+}
 
 describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, apis) => {
 	let logger: MockLogger;
@@ -48,6 +66,25 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		const props = await buildLoadProps();
 		const result = await loadSummarizerContainerAndMakeSummary(props);
 		assert(result.success, "expected summarization success");
+		assert(result.summaryResults !== undefined, "expected summaryResults");
+		const submit = result.summaryResults.summarySubmitted as SummarizeResultPart<
+			SubmitSummaryResult,
+			SubmitSummaryFailureData
+		>;
+		assert(submit.success, "expected submit stage success");
+		assert(submit.data.stage === "submit", "submit stage value");
+		assert(isSubmitOpResult(submit.data), "expected submit op result");
+		assert(submit.data.summaryTree !== undefined, "summary tree should exist");
+		const broadcast = result.summaryResults
+			.summaryOpBroadcasted as SummarizeResultPart<IBroadcastSummaryResult>;
+		assert(broadcast.success, "expected broadcast stage success");
+		const ackNack = result.summaryResults.receivedSummaryAckOrNack as SummarizeResultPart<
+			IAckSummaryResult,
+			INackSummaryResult
+		>;
+		assert(ackNack.success, "expected ack/nack stage success");
+		assert(isAckSuccess(ackNack.data), "expected ack variant (no summaryAckOp)");
+		assert(ackNack.data.summaryAckOp.contents.handle, "ack should have summaryAckOp handle");
 		const created = logger.events.filter(
 			(e) => e.eventName === "fluid:telemetry:SummarizerOnDemand:summarizerContainer_created",
 		);
@@ -71,6 +108,28 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 			configProvider,
 		});
 		assert(result.success, "expected summarization success with gate");
+		assert(result.summaryResults !== undefined, "expected summaryResults with gate");
+		const submit = result.summaryResults.summarySubmitted as SummarizeResultPart<
+			SubmitSummaryResult,
+			SubmitSummaryFailureData
+		>;
+		assert(submit.success, "expected submit stage success (gate)");
+		assert(submit.data.stage === "submit", "submit stage value (gate)");
+		assert(isSubmitOpResult(submit.data), "expected submit op result (gate)");
+		assert(submit.data.summaryTree !== undefined, "summary tree should exist (gate)");
+		const broadcast = result.summaryResults
+			.summaryOpBroadcasted as SummarizeResultPart<IBroadcastSummaryResult>;
+		assert(broadcast.success, "expected broadcast stage success (gate)");
+		const ackNack = result.summaryResults.receivedSummaryAckOrNack as SummarizeResultPart<
+			IAckSummaryResult,
+			INackSummaryResult
+		>;
+		assert(ackNack.success, "expected ack/nack stage success (gate)");
+		assert(isAckSuccess(ackNack.data), "expected ack success variant (gate)");
+		assert(
+			ackNack.data.summaryAckOp.contents.handle,
+			"ack should have summaryAckOp handle (gate)",
+		);
 		const closed = logger.events.filter(
 			(e) => e.eventName === "fluid:telemetry:SummarizerOnDemand:summarizerContainer_closed",
 		);

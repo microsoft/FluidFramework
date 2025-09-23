@@ -44,12 +44,16 @@ interface OnDemandSummarizeOptions {
 	readonly retryOnFailure?: boolean | undefined;
 	readonly fullTree?: boolean | undefined;
 }
-interface SummarizeResultsLike {
+// Local copy of summarize stage promises returned by summarizeOnDemand (avoid runtime dependency)
+interface SummarizeResultsPromisesLike {
 	readonly summarySubmitted: Promise<unknown>;
+	readonly summaryOpBroadcasted: Promise<unknown>;
+	readonly receivedSummaryAckOrNack: Promise<unknown>;
 }
+
 interface SummarizerLike {
 	readonly ISummarizer?: SummarizerLike;
-	summarizeOnDemand(options: OnDemandSummarizeOptions): SummarizeResultsLike;
+	summarizeOnDemand(options: OnDemandSummarizeOptions): SummarizeResultsPromisesLike;
 }
 
 const summarizerRequestUrl = "_summarizer";
@@ -212,7 +216,17 @@ export async function loadExistingContainer(
  */
 export async function loadSummarizerContainerAndMakeSummary(
 	loadExistingContainerProps: ILoadExistingContainerProps,
-): Promise<{ success: true } | { success: false; error: Error }> {
+): Promise<
+	| {
+			success: true;
+			summaryResults: {
+				readonly summarySubmitted: unknown;
+				readonly summaryOpBroadcasted: unknown;
+				readonly receivedSummaryAckOrNack: unknown;
+			};
+	  }
+	| { success: false; error: Error }
+> {
 	const { logger, configProvider, request: originalRequest } = loadExistingContainerProps;
 	const telemetryProps = {
 		loaderId: uuid(),
@@ -256,6 +270,9 @@ export async function loadSummarizerContainerAndMakeSummary(
 
 	let success = false;
 	let caughtError: IFluidErrorBase | undefined;
+	let summarySubmitted: unknown;
+	let summaryOpBroadcasted: unknown;
+	let receivedSummaryAckOrNack: unknown;
 	try {
 		if (container.connectionState !== ConnectionState.Connected) {
 			await new Promise<void>((resolve) => container.once("connected", () => resolve()));
@@ -286,13 +303,25 @@ export async function loadSummarizerContainerAndMakeSummary(
 		);
 		const fullTreeGate = typeof raw === "boolean" ? raw : false;
 
-		await summarizer.summarizeOnDemand({
+		const summarizeResults: SummarizeResultsPromisesLike = summarizer.summarizeOnDemand({
 			reason: "summaryOnRequest",
 			retryOnFailure: true,
 			fullTree: fullTreeGate,
-		}).summarySubmitted;
+		});
+		[summarySubmitted, summaryOpBroadcasted, receivedSummaryAckOrNack] = await Promise.all([
+			summarizeResults.summarySubmitted,
+			summarizeResults.summaryOpBroadcasted,
+			summarizeResults.receivedSummaryAckOrNack,
+		]);
 		success = true;
-		return { success: true };
+		return {
+			success: true,
+			summaryResults: {
+				summarySubmitted,
+				summaryOpBroadcasted,
+				receivedSummaryAckOrNack,
+			},
+		};
 	} catch (error) {
 		caughtError = normalizeError(error);
 		return { success: false, error: caughtError };

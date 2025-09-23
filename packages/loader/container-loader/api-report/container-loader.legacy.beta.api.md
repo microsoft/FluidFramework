@@ -162,6 +162,11 @@ export function loadExistingContainer(loadExistingContainerProps: ILoadExistingC
 // @beta
 export function loadSummarizerContainerAndMakeSummary(loadExistingContainerProps: ILoadExistingContainerProps): Promise<{
     success: true;
+    summaryResults: {
+        readonly summarySubmitted: unknown;
+        readonly summaryOpBroadcasted: unknown;
+        readonly receivedSummaryAckOrNack: unknown;
+    };
 } | {
     success: false;
     error: Error;
