@@ -112,7 +112,8 @@ describe("useObservation", () => {
 							]);
 						});
 
-						// This requires waiting for finalizers, and thus is slow, so skipped for now.
+						// This requires waiting for finalizers.
+						// Forcing two async GCs seems to work robustly, so this is enabled, but if it becomes flakey, it can be tweaked and/or skipped.
 						it(`unsubscribe on unmount`, async () => {
 							assert(global.gc);
 
@@ -122,7 +123,7 @@ describe("useObservation", () => {
 								log.push("unsubscribe");
 							};
 
-							function TestComponent(): JSX.Element {
+							function TestComponent(this: unknown): JSX.Element {
 								return useObservationHook((invalidate) => ({
 									result: <br />,
 									unsubscribe,
@@ -135,10 +136,10 @@ describe("useObservation", () => {
 							rendered.unmount();
 
 							// Unsubscribe on unmount is done via FinalizationRegistry, so force a GC and wait for it.
-							// For this to pass on NodeJs experimentally is has been found that either:
-							// 1. a sync GC then a wait of 8 seconds (but this sometimes fails after multiple runs unless a debugger takes a heap snapshot, possible due to some JIT optimization that breaks it)
-							// 2. Two async GCs in a row.
-
+							// For this to pass on NodeJs experimentally is has been found that this must either do:
+							// 1. a sync GC then a wait of 8 seconds (but this sometimes fails after multiple runs unless a debugger takes a heap snapshot, possible due to some JIT optimization that breaks it).
+							// 2. two async GCs in a row.
+							// Since the second option is both more robust and faster, that is what is used here.
 							for (let index = 0; index < 2; index++) {
 								await global.gc({ type: "major", execution: "async" });
 								if (log.length > 0) {
@@ -149,40 +150,52 @@ describe("useObservation", () => {
 							checkRenderLog(log, ["unsubscribe"]);
 						});
 
-						// This requires finalizers to not have run as a certain point, so might be fragile.
 						it("invalidate after unmount", () => {
 							const log: string[] = [];
 
+							let logUnsubscribe = true;
+
 							const unsubscribe = (): void => {
-								log.push("unsubscribe");
+								if (logUnsubscribe) log.push("unsubscribe");
 							};
 
 							const invalidateCallbacks: (() => void)[] = [];
 
 							function TestComponent(): JSX.Element {
-								return useObservationHook((invalidate) => {
-									invalidateCallbacks.push(invalidate);
-									return {
-										result: <br />,
-										unsubscribe,
-									};
-								});
+								log.push("render");
+								return useObservationHook(
+									(invalidate) => {
+										invalidateCallbacks.push(invalidate);
+										return {
+											result: <br />,
+											unsubscribe,
+										};
+									},
+									{ onInvalidation: () => log.push("invalidated") },
+								);
 							}
 
 							const rendered = render(<TestComponent />, { reactStrictMode });
 
-							assertLogEmpty(log);
+							checkRenderLog(log, ["render"]);
+
+							// After unmount, unsubscribe could happen at any time due to finalizer,so suppress logging it to prevent the test from possibly becoming flaky.
+							logUnsubscribe = false;
+
 							rendered.unmount();
 
 							assert(invalidateCallbacks.length === (reactStrictMode ? 2 : 1));
 
 							// Invalidate after unmount.
+							// Since this can happen in real use, due to unsubscribe delay while waiting for finalizer, ensure it does not cause issues.
+							// This should be a no-op, but since it does a React SetState after unmount, React could object to it.
 							for (const callback of invalidateCallbacks) {
 								callback();
 							}
 
-							// If finalizer has run already, this will fail.
-							assertLogEmpty(log);
+							// Confirm the invalidation happened..
+							// If we didn't suppress unsubscribe logging, and the finalizer had run, this could fail (which is why we suppress it).
+							checkRenderLog(log, ["invalidated"]);
 						});
 					});
 				}
