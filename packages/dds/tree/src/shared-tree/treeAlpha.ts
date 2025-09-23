@@ -435,23 +435,83 @@ export interface TreeAlpha {
 	 * This also does not track node status changes (e.g. whether a node is attached to a view or not).
 	 * The current behavior of checking status is unspecified: future versions may track it, error, or ignore it.
 	 *
-	 * Even after `onInvalidation` is called, these subscriptions remain active until `unsubscribe` is called.
+	 * These subscriptions remain active until `unsubscribe` is called: `onInvalidation` may be called multiple times.
 	 * See {@link (TreeAlpha:interface).trackObservationsOnce} for a version which automatically unsubscribes on the first invalidation.
+	 * @privateRemarks
+	 * This version, while more general than {@link (TreeAlpha:interface).trackObservationsOnce}, might be unnecessary.
+	 * Maybe this should be removed and only `trackObservationsOnce` kept.
+	 * Reevaluate this before stabilizing.
 	 */
 	trackObservations<TResult>(
 		onInvalidation: () => void,
 		trackDuring: () => TResult,
-	): { result: TResult; unsubscribe: () => void };
+	): ObservationResults<TResult>;
 
 	/**
 	 * {@link (TreeAlpha:interface).trackObservations} except automatically unsubscribes when the first invalidation occurs.
 	 * @remarks
 	 * This also supports tracking parentage, unlike {@link (TreeAlpha:interface).trackObservations}, as long as the parent is not undefined.
+	 *
+	 * @example
+	 * ```ts
+	 * // Compute and cache this "foo" value, and clear the cache when the fields read in the callback to compute it change.
+	 * cachedFoo ??= TreeAlpha.trackObservationsOnce(
+	 * 	() => {
+	 * 		cachedFoo = undefined;
+	 * 	},
+	 * 	() => nodeA.someChild.bar + nodeB.someChild.baz,
+	 * ).result;
+	 * ```
+	 *
+	 * @example
+	 * ```ts
+	 * const factory = new SchemaFactory("com.example");
+	 * class Vector extends factory.object("Vector", {
+	 * 	x: SchemaFactory.number,
+	 * 	y: SchemaFactory.number,
+	 * }) {
+	 * 	#length: number | undefined = undefined;
+	 * 	public length(): number {
+	 * 		if (this.#length === undefined) {
+	 * 			const result = TreeAlpha.trackObservationsOnce(
+	 * 				() => {
+	 * 					this.#length = undefined;
+	 * 				},
+	 * 				() => Math.hypot(this.x, this.y),
+	 * 			);
+	 * 			this.#length = result.result;
+	 * 		}
+	 * 		return this.#length;
+	 * 	}
+	 * }
+	 * const vec = new Vector({ x: 3, y: 4 });
+	 * assert.equal(vec.length(), 5);
+	 * vec.x = 0;
+	 * assert.equal(vec.length(), 4);
+	 * ```
 	 */
 	trackObservationsOnce<TResult>(
 		onInvalidation: () => void,
 		trackDuring: () => TResult,
-	): { result: TResult; unsubscribe: () => void };
+	): ObservationResults<TResult>;
+}
+
+/**
+ * Results from an operation with tracked observations.
+ * @remarks
+ * Results from {@link (TreeAlpha:interface).trackObservations} or {@link (TreeAlpha:interface).trackObservationsOnce}.
+ * @sealed @alpha
+ */
+export interface ObservationResults<TResult> {
+	/**
+	 * The result of the operation which had its observations tracked.
+	 */
+	readonly result: TResult;
+
+	/**
+	 * Call to unsubscribe from further invalidations.
+	 */
+	readonly unsubscribe: () => void;
 }
 
 /**
@@ -588,7 +648,7 @@ function trackObservations<TResult>(
 	onInvalidation: () => void,
 	trackDuring: () => TResult,
 	onlyOnce = false,
-): { result: TResult; unsubscribe: () => void } {
+): ObservationResults<TResult> {
 	let observing = true;
 
 	const invalidate = (): void => {
@@ -617,14 +677,14 @@ export const TreeAlpha: TreeAlpha = {
 	trackObservations<TResult>(
 		onInvalidation: () => void,
 		trackDuring: () => TResult,
-	): { result: TResult; unsubscribe: () => void } {
+	): ObservationResults<TResult> {
 		return trackObservations(onInvalidation, trackDuring);
 	},
 
 	trackObservationsOnce<TResult>(
 		onInvalidation: () => void,
 		trackDuring: () => TResult,
-	): { result: TResult; unsubscribe: () => void } {
+	): ObservationResults<TResult> {
 		const result = trackObservations(
 			() => {
 				// trackObservations ensures no invalidation occurs while its running,

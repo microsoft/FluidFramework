@@ -1027,6 +1027,12 @@ export const ObjectNodeSchema: {
     readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is ObjectNodeSchema<string, RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>, boolean, unknown>;
 };
 
+// @alpha @sealed
+export interface ObservationResults<TResult> {
+    readonly result: TResult;
+    readonly unsubscribe: () => void;
+}
+
 // @public
 export type Off = () => void;
 
@@ -1679,14 +1685,8 @@ export interface TreeAlpha {
     importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: ConciseTree | undefined): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     importVerbose<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: VerboseTree | undefined, options?: TreeParsingOptions): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     key2(node: TreeNode): string | number | undefined;
-    trackObservations<TResult>(onInvalidation: () => void, trackDuring: () => TResult): {
-        result: TResult;
-        unsubscribe: () => void;
-    };
-    trackObservationsOnce<TResult>(onInvalidation: () => void, trackDuring: () => TResult): {
-        result: TResult;
-        unsubscribe: () => void;
-    };
+    trackObservations<TResult>(onInvalidation: () => void, trackDuring: () => TResult): ObservationResults<TResult>;
+    trackObservationsOnce<TResult>(onInvalidation: () => void, trackDuring: () => TResult): ObservationResults<TResult>;
 }
 
 // @alpha

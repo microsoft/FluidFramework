@@ -109,7 +109,7 @@ export function useTreeObservations<TResult>(
  * @param trackDuring - Callback which reads from the node and returns a result.
  * If the result is a TreeNode or {@link NodeRecord} it will be wrapped as a {@link PropTreeNode} or {@link PropTreeNodeRecord}, see {@link WrapNodes}.
  *
- * It is recommended that when returning data containing {@link TreeNode}s,
+ * It is recommended that when returning data containing TreeNodes,
  * use a format supported by {@link WrapNodes} or wrap the nodes manually using {@link toPropTreeNode}.
  * This improves the type safety, reducing the risk of invalidation bugs due to untracked access of tree content contained in the return value.
  *
