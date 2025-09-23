@@ -149,6 +149,7 @@ export class OdspDocumentServiceFactoryCore
 		const fileEntry: IFileEntry = {
 			resolvedUrl: odspResolvedUrl,
 			docId: odspResolvedUrl.hashedDocumentId,
+			fileVersion: undefined,
 		};
 		const cacheAndTracker = createOdspCacheAndTracker(
 			this.persistedCache,
@@ -287,7 +288,11 @@ export class OdspDocumentServiceFactoryCore
 			createOdspCacheAndTracker(
 				this.persistedCache,
 				this.nonPersistentCache,
-				{ resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
+				{
+					resolvedUrl: odspResolvedUrl,
+					docId: odspResolvedUrl.hashedDocumentId,
+					fileVersion: odspResolvedUrl.fileVersion,
+				},
 				extLogger,
 				clientIsSummarizer,
 			);

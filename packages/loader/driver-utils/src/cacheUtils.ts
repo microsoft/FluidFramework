@@ -22,5 +22,6 @@ export const maximumCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
  * @internal
  */
 export function getKeyForCacheEntry(entry: ICacheEntry): string {
-	return `${entry.file.docId}_${entry.type}_${entry.key}`;
+	const version = entry.file.fileVersion !== undefined ? `_${entry.file.fileVersion}` : "";
+	return `${entry.file.docId}${version}_${entry.type}_${entry.key}`;
 }

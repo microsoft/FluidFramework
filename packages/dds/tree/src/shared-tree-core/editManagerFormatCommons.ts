@@ -13,6 +13,7 @@ import {
 	SessionIdSchema,
 } from "../core/index.js";
 import { type Brand, brandedNumberType } from "../util/index.js";
+import type { EncodedBranchId } from "./branch.js";
 
 /**
  * Contains a single change to the `SharedTree` and associated metadata.
@@ -67,7 +68,7 @@ export type SequenceId = Static<typeof SequenceId>;
  */
 export interface SequencedCommit<TChangeset> extends Commit<TChangeset>, SequenceId {}
 
-const SequencedCommit = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+export const SequencedCommit = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Composite([CommitBase(tChange), SequenceId], noAdditionalProps);
 
 /**
@@ -86,7 +87,7 @@ export interface EncodedSummarySessionBranch<TChangeset> {
 	readonly commits: Commit<TChangeset>[];
 }
 
-const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+export const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object(
 		{
 			base: RevisionTagSchema,
@@ -95,23 +96,26 @@ const SummarySessionBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchem
 		noAdditionalProps,
 	);
 
-export interface EncodedEditManager<TChangeset> {
+export interface EncodedSharedBranch<TChangeset> {
+	readonly id?: EncodedBranchId;
+	readonly name?: string;
+	readonly author?: string;
+	readonly session?: SessionId;
+	readonly base?: EncodedRevisionTag;
 	readonly trunk: readonly Readonly<SequencedCommit<TChangeset>>[];
-	readonly branches: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
-	readonly version: 1 | 2 | 3 | 4;
+	readonly peers: readonly [SessionId, Readonly<EncodedSummarySessionBranch<TChangeset>>][];
 }
 
-export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
+export const EncodedSharedBranch = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object(
 		{
-			version: Type.Union([
-				Type.Literal(1),
-				Type.Literal(2),
-				Type.Literal(3),
-				Type.Literal(4),
-			]),
+			id: Type.Optional(Type.Number()),
+			name: Type.Optional(Type.String()),
+			session: Type.Optional(SessionIdSchema),
+			author: Type.Optional(Type.String()),
+			base: Type.Optional(RevisionTagSchema),
 			trunk: Type.Array(SequencedCommit(tChange)),
-			branches: Type.Array(Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)])),
+			peers: Type.Array(Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange)])),
 		},
 		noAdditionalProps,
 	);
