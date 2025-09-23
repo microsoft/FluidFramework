@@ -438,11 +438,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
                     if (kd.key) {
                         _node.key = kd.key;
                     }
-                    if (kd.data) {
-                        _node.data = kd.data;
-                    } else {
-                        _node.data = data;
-                    }
+                    _node.data = kd.data ? kd.data : data;
                 } else {
                     _node.data = data;
                 }
@@ -564,11 +560,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
                 return this.nodeFloor(node.left, key);
             } else {
                 const rightFloor = this.nodeFloor(node.right, key);
-                if (rightFloor) {
-                    return rightFloor;
-                } else {
-                    return node;
-                }
+                return rightFloor ? rightFloor : node;
             }
         }
     }
@@ -588,11 +580,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
                 return this.nodeCeil(node.right, key);
             } else {
                 const leftCeil = this.nodeCeil(node.left, key);
-                if (leftCeil) {
-                    return leftCeil;
-                } else {
-                    return node;
-                }
+                return leftCeil ? leftCeil : node;
             }
         }
     }
@@ -604,11 +592,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     }
 
     private nodeMin(node: RBNode<TKey, TData>): RBNode<TKey, TData> {
-        if (!node.left) {
-            return node;
-        } else {
-            return this.nodeMin(node.left);
-        }
+        return !node.left ? node : this.nodeMin(node.left);
     }
 
     public max() {
@@ -618,11 +602,7 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
     }
 
     private nodeMax(node: RBNode<TKey, TData>): RBNode<TKey, TData> {
-        if (!node.right) {
-            return node;
-        } else {
-            return this.nodeMax(node.right);
-        }
+        return !node.right ? node : this.nodeMax(node.right);
     }
 
     private rotateRight(node: RBNode<TKey, TData>) {

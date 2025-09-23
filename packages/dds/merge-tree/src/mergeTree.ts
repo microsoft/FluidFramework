@@ -5,6 +5,8 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
+/* eslint-disable max-len */
+/* eslint-disable prefer-const */
 
 /* eslint-disable @typescript-eslint/prefer-optional-chain, no-bitwise */
 
@@ -263,7 +265,7 @@ export class MergeNode implements IMergeNodeCommon {
     parent?: IMergeBlock;
     cachedLength: number = 0;
 
-    isLeaf() {
+    isLeaf(): this is ISegment {
         return false;
     }
 }
@@ -522,7 +524,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         return !!this.properties && (this.properties[key] !== undefined);
     }
 
-    public isLeaf() {
+    public isLeaf(): this is ISegment {
         return true;
     }
 
@@ -982,11 +984,7 @@ function tileShift(
     } else {
         const block = <IHierBlock>node;
         let marker: Marker;
-        if (searchInfo.posPrecedesTile) {
-            marker = <Marker>block.rightmostTiles[searchInfo.tileLabel];
-        } else {
-            marker = <Marker>block.leftmostTiles[searchInfo.tileLabel];
-        }
+        marker = searchInfo.posPrecedesTile ? <Marker>block.rightmostTiles[searchInfo.tileLabel] : <Marker>block.leftmostTiles[searchInfo.tileLabel];
         if (marker !== undefined) {
             searchInfo.tile = marker;
         }
@@ -1074,11 +1072,7 @@ export class MergeTree {
 
     public localNetLength(segment: ISegment) {
         const removalInfo = toRemovalInfo(segment);
-        if (removalInfo !== undefined) {
-            return 0;
-        } else {
-            return segment.cachedLength;
-        }
+        return removalInfo !== undefined ? 0 : segment.cachedLength;
     }
 
     // TODO: remove id when segment removed
@@ -1092,7 +1086,6 @@ export class MergeTree {
         return index;
     }
 
-    /* eslint-disable max-len */
     public reloadFromSegments(segments: ISegment[]) {
         // This code assumes that a later call to `startCollaboration()` will initialize partial lengths.
         assert(!this.collabWindow.collaborating, 0x049 /* "Trying to reload from segments while collaborating!" */);
@@ -1139,7 +1132,6 @@ export class MergeTree {
             this.root = this.makeBlock(0);
         }
     }
-    /* eslint-enable max-len */
 
     // For now assume min starts at zero
     public startCollaboration(localClientId: number, minSeq: number, currentSeq: number) {
@@ -1218,11 +1210,7 @@ export class MergeTree {
                                 segment.trackingCollection.trackingGroups.forEach((tg) => tg.unlink(segment));
                             } else {
                                 holdNodes.push(segment);
-                                if (this.localNetLength(segment) > 0) {
-                                    prevSegment = segment;
-                                } else {
-                                    prevSegment = undefined;
-                                }
+                                prevSegment = this.localNetLength(segment) > 0 ? segment : undefined;
                             }
                         } else {
                             holdNodes.push(segment);
@@ -1527,21 +1515,13 @@ export class MergeTree {
     }
 
     private blockLength(node: IMergeBlock, refSeq: number, clientId: number) {
-        if ((this.collabWindow.collaborating) && (clientId !== this.collabWindow.clientId)) {
-            return node.partialLengths!.getPartialLength(refSeq, clientId);
-        } else {
-            return node.cachedLength;
-        }
+        return (this.collabWindow.collaborating) && (clientId !== this.collabWindow.clientId) ? node.partialLengths!.getPartialLength(refSeq, clientId) : node.cachedLength;
     }
 
     private nodeLength(node: IMergeNode, refSeq: number, clientId: number) {
         if ((!this.collabWindow.collaborating) || (this.collabWindow.clientId === clientId)) {
             // Local client sees all segments, even when collaborating
-            if (!node.isLeaf()) {
-                return node.cachedLength;
-            } else {
-                return this.localNetLength(node);
-            }
+            return !node.isLeaf() ? node.cachedLength : this.localNetLength(node);
         } else {
             // Sequence number within window
             if (!node.isLeaf()) {
@@ -1562,11 +1542,7 @@ export class MergeTree {
                     ((segment.seq !== UnassignedSequenceNumber) && (segment.seq! <= refSeq)))) {
                     // Segment happened by reference sequence number or segment from requesting client
                     if (removalInfo !== undefined) {
-                        if (removalInfo.removedClientIds.includes(clientId)) {
-                            return 0;
-                        } else {
-                            return segment.cachedLength;
-                        }
+                        return removalInfo.removedClientIds.includes(clientId) ? 0 : segment.cachedLength;
                     } else {
                         return segment.cachedLength;
                     }

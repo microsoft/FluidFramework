@@ -138,8 +138,8 @@ export class StringProperty extends ValueArrayProperty {
     /**
      * inserts a string starting at a position and shifts the rest of
      * the String to the right. Will not overwrite existing values.
-     * @param {number} in_position target index
-     * @param {string} in_value value to be inserted
+     * @param {number} in_position - target index
+     * @param {string} in_value - value to be inserted
      * @throws if in_position is smaller than zero, larger than the length of the string or not a number
      * @throws if in_value is not a string
      */
@@ -150,7 +150,7 @@ export class StringProperty extends ValueArrayProperty {
 
     /**
      * Adds letters to the end of the string
-     * @param {string} in_value the string to be pushed
+     * @param {string} in_value - the string to be pushed
      * @throws if in_value is not a string
      * @return {number} the new length of the string.
      */
@@ -162,8 +162,8 @@ export class StringProperty extends ValueArrayProperty {
 
     /**
      * inserts values
-     * @param {number} in_position target index
-     * @param {string} in_value the string to be inserted
+     * @param {number} in_position - target index
+     * @param {string} in_value - the string to be inserted
      */
     _insertRange(in_position, in_value) {
         this._checkIsNotReadOnly(true);
@@ -191,8 +191,8 @@ export class StringProperty extends ValueArrayProperty {
     /**
      * removes a given number of elements from the array property and shifts
      * remaining values to the left.
-     * @param {number} in_offset target start index
-     * @param {number} in_deleteCount number of elements to be deleted
+     * @param {number} in_offset - target start index
+     * @param {number} in_deleteCount - number of elements to be deleted
      * @throws if in_offset is not a number
      * @throws if in_deleteCount is not a number
      * @throws if trying to remove an item with a parent
@@ -234,11 +234,7 @@ export class StringProperty extends ValueArrayProperty {
         var oldStringLength = this._dataArrayRef.length;
         var newStringData;
         if (_.isString(in_serializedObj)) {
-            if (this._setValue(in_serializedObj, in_reportToView)) {
-                return in_serializedObj;
-            } else {
-                return {};
-            }
+            return this._setValue(in_serializedObj, in_reportToView) ? in_serializedObj : {};
         } else {
             if (!in_serializedObj.insert ||
                 !in_serializedObj.insert[0]) {
@@ -304,16 +300,11 @@ export class StringProperty extends ValueArrayProperty {
      */
     _serialize(in_dirtyOnly, in_includeRootTypeid,
         in_dirtinessType, in_includeReferencedRepositories) {
-        if (in_dirtyOnly) {
-            return ArrayProperty.prototype._serialize.call(this, in_dirtyOnly, in_includeRootTypeid, in_dirtinessType);
-        } else {
-            // returns just the current data
-            return this._dataArrayRef;
-        }
+        return in_dirtyOnly ? ArrayProperty.prototype._serialize.call(this, in_dirtyOnly, in_includeRootTypeid, in_dirtinessType) : this._dataArrayRef;
     }
 
     /**
-     * @param {string} in_value the new value
+     * @param {string} in_value - the new value
      * @throws if string property is read only
      */
     setValue(in_value) {
@@ -323,7 +314,7 @@ export class StringProperty extends ValueArrayProperty {
 
     /**
      * See {@link StringProperty.setValues}
-     * @param {string} in_values the new values
+     * @param {string} in_values - the new values
      * @param {Bool} in_initial  - Whether we are setting default/initial values
      *   or if the function is called directly with the values to set.
      */
@@ -332,7 +323,7 @@ export class StringProperty extends ValueArrayProperty {
     }
 
     /**
-     * @param {string} in_values the new values
+     * @param {string} in_values - the new values
      * @throws always - cannot use .setValues on a StringProperty. Use .setValue() instead.
      */
     setValues(in_values) {
@@ -349,7 +340,7 @@ export class StringProperty extends ValueArrayProperty {
     /**
      * Internal function to update the value of a property
      *
-     * @param {string} in_value the new value
+     * @param {string} in_value - the new value
      * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
      *                                             and trigger a modified event there. When batching updates, this
      *                                             can be prevented via this flag.
@@ -383,10 +374,10 @@ export class StringProperty extends ValueArrayProperty {
     /**
      * Sets the pending and dirty changesets
      *
-     * @param {property-properties.SerializedChangeSet|undefined|null} in_pending
+     * @param {property-properties.SerializedChangeSet|undefined|null} in_pending -
      *     The pending changeset. If null is passed, no change will be
      *     applied. undefined indicates that the changes should be reset
-     * @param {property-properties.SerializedChangeSet|undefined|null} in_dirty
+     * @param {property-properties.SerializedChangeSet|undefined|null} in_dirty -
      *     The dirty changeset. If null is passed, no change will be
      *     applied. undefined indicates that the changes should be reset
      */
@@ -409,7 +400,7 @@ export class StringProperty extends ValueArrayProperty {
 
     /**
      * Sets the dirty flags for this property
-     * @param {Number} in_flags The dirty flags
+     * @param {Number} in_flags - The dirty flags
      */
     _setDirtyFlags(in_flags) {
         if (this._dirty === PENDING_AND_DIRTY_SET_TO_PROPERTY_VALUE ||
@@ -487,8 +478,8 @@ export class StringProperty extends ValueArrayProperty {
     /**
      * Sets the value of a character at a single index.
      * For example, if you have a string of value 'AAAA' and do .set(1, 'a') => 'AaAA'
-     * @param {number} in_index the index you wish to set
-     * @param {string} in_character the character you wish to set
+     * @param {number} in_index - the index you wish to set
+     * @param {string} in_character - the character you wish to set
      * @throws if length of in_character is longer than one character
      */
     set(in_index, in_character) {
@@ -505,8 +496,8 @@ export class StringProperty extends ValueArrayProperty {
      * sets values in a string starting at an index.
      * For example, if you have a string of Value 'AAAA' and do .setRange(1, 'aa') => AaaA
      * It will set as many letters as are in in_string.
-     * @param {number} in_index the index at which you wish to start setting
-     * @param {string} in_string the string you wish to set
+     * @param {number} in_index - the index at which you wish to start setting
+     * @param {string} in_string - the string you wish to set
      * @throws if in_index  + length of in_string is longer than the original string
      */
     setRange(in_index, in_string) {
@@ -515,7 +506,7 @@ export class StringProperty extends ValueArrayProperty {
 
     /**
      * get a letter at a given index
-     * @param {number} in_index the index
+     * @param {number} in_index - the index
      * @return {string} the single letter found at in_index
      */
     get(in_index) {
@@ -527,8 +518,8 @@ export class StringProperty extends ValueArrayProperty {
      * Will not overwrite existing values.
      * For StringProperty, insert and insertRange work the same, except that .insert
      * checks that in_value is a string and .insertRange will accept an array of strings.
-     * @param {number} in_position target index
-     * @param {string | array<string>} in_value value to be inserted
+     * @param {number} in_position - target index
+     * @param {string | array<string>} in_value - value to be inserted
      * @throws if in_position is smaller than zero, larger than the length of the string or not a number
      */
     insertRange(in_position, in_value) {
@@ -540,7 +531,7 @@ export class StringProperty extends ValueArrayProperty {
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param {Number} in_length - the initial length of the array
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = '';
@@ -597,7 +588,7 @@ export class StringProperty extends ValueArrayProperty {
     /**
      * Removes a range from the data array
      * @param {Number} in_position - Position at which to start the removal
-     * @param {Number} in_length   - The number of entries to remove
+     * @param {Number} in_length - The number of entries to remove
      */
     _dataArrayRemoveRange(in_position, in_length) {
         if (in_position + in_length < this._dataArrayRef.length + 1) {

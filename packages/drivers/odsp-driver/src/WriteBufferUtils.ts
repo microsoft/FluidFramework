@@ -157,12 +157,9 @@ function serializeBlob(buffer: WriteBuffer, blob: BlobCore, dictionary: Map<stri
             id = dictionary.size + 1;
             idLength = calcLength(id);
             dictionary.set(content, id);
-            let code: number;
-            if (lengthOfDataLen > 1 || idLength > 1) {
-                code = MarkerCodes.ConstStringDeclareBig;
-            } else {
-                code = MarkerCodes.ConstStringDeclare;
-            }
+            const code = lengthOfDataLen > 1 || idLength > 1
+                ? MarkerCodes.ConstStringDeclareBig
+                : MarkerCodes.ConstStringDeclare;
             // Write marker code for const string.
             buffer.write(code);
             const bytes = getValueSafely(codeToBytesMap, code);

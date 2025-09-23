@@ -4,7 +4,6 @@
  */
 
 /* eslint-disable @typescript-eslint/no-unused-expressions */
-import * as crypto from "crypto";
 import { expect } from "chai";
 import { v5 as uuidv5 } from "uuid";
 import { IContainer, IHostLoader, ILoaderOptions, IFluidCodeDetails } from "@fluidframework/container-definitions";

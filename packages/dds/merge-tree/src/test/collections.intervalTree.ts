@@ -17,11 +17,7 @@ class TestInterval implements IInterval {
 
     public compare(b: TestInterval) {
         const startResult = this.compareStart(b);
-        if (startResult === 0) {
-            return this.compareEnd(b);
-        } else {
-            return startResult;
-        }
+        return startResult === 0 ? this.compareEnd(b) : startResult;
     }
 
     public compareStart(b: TestInterval) {

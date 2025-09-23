@@ -389,7 +389,6 @@ stages:
 - ${{ if and(eq(variables.publish, true), ne(parameters.releaseKind, 'docker')) }}:
   - template: include-publish-npm-package.yml
     parameters:
-      namespace: true
       tagName: ${{ parameters.tagName }}
 
 - ${{ if eq(variables.releaseImage, true) }}:

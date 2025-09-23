@@ -4,4 +4,5 @@
         "outDir": "./lib",
         "module": "esnext"
     },
+    "skipLibCheck": true
 }

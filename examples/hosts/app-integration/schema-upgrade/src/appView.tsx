@@ -83,6 +83,7 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
     };
 
     let importedDataView;
+
     if (importedStringData !== undefined) {
         importedDataView = (
             <div>

@@ -6,7 +6,7 @@
 import { expect } from 'chai';
 import { revert } from '../HistoryEditFactory';
 import { DetachedSequenceId, TraitLabel } from '../Identifiers';
-import { ChangeInternal, DetachInternal, Side, StablePlaceInternal, StableRangeInternal } from '../persisted-types';
+import { ChangeInternal, DetachInternal, StablePlaceInternal, StableRangeInternal } from '../persisted-types';
 import { expectDefined } from './utilities/TestCommon';
 import { refreshTestTree } from './utilities/TestUtilities';
 

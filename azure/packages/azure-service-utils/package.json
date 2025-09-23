@@ -35,7 +35,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"tsc": "tsc",
-		"typetests:gen": "flub generate typetests --generate --dir .",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
 	"dependencies": {
@@ -44,23 +44,24 @@
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.10.0",
+		"@fluid-tools/build-cli": "^0.55.0",
 		"@fluidframework/azure-service-utils-previous": "npm:@fluidframework/azure-service-utils@1.1.1",
 		"@fluidframework/build-common": "^1.2.0",
-		"@fluidframework/build-tools": "^0.10.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/build-tools": "^0.55.0",
+		"@fluidframework/eslint-config-fluid": "^0.28.2000",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/jsrsasign": "^10.5.12",
 		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
-		"eslint": "~8.6.0",
+		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~8.5.0",
-		"eslint-plugin-jsdoc": "~39.3.0",
+		"eslint-plugin-jsdoc": "~46.8.2",
 		"prettier": "~2.6.2",
 		"rimraf": "^2.6.2",
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {},
+		"entrypoint": "public"
 	}
 }

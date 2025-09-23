@@ -103,10 +103,9 @@ export type OperationRange = OperationRangeNoneNOP | OperationRangeNOP;
 
 /**
  * compute a range for an operation of the current change set
- * @param io_operation input
- * @param in_aOffset the offset that needs to be added to transform the operation
- * @param io_resultingRange
- * the computed range
+ * @param io_operation - input
+ * @param in_aOffset - the offset that needs to be added to transform the operation
+ * @param io_resultingRange - the computed range
  */
 const getRangeForCurrentStateOperation = function(io_operation: GenericOperation, in_aOffset: number, io_resultingRange: OperationRange) {
     if (!io_operation) {
@@ -154,9 +153,9 @@ const getOpLength = (op: arrayRemoveList) => isNumber(op[1]) ? op[1] : op[1].len
 
 /**
  * computes the impact range for a given operation of the applied change set
- * @param in_operation the op
- * @param io_resultingRange the computed range
- * @param in_flag the flag for the resulting range, default is 'complete B'
+ * @param in_operation - the op
+ * @param io_resultingRange - the computed range
+ * @param in_flag - the flag for the resulting range, default is 'complete B'
  * @param in_options - Optional additional parameters
  */
 const getRangeForAppliedOperation = function(
@@ -184,11 +183,7 @@ const getRangeForAppliedOperation = function(
 
     io_resultingRange.begin = in_operation.operation[0];
     io_resultingRange.op._absoluteBegin = in_operation.operation[0];
-    if (in_flag !== undefined) {
-        io_resultingRange.flag = in_flag;
-    } else {
-        io_resultingRange.flag = ArrayChangeSetRangeType.completeB;
-    }
+    io_resultingRange.flag = in_flag !== undefined ? in_flag : ArrayChangeSetRangeType.completeB;
 
     switch (in_operation.type) {
         case ArrayChangeSetIterator.types.INSERT:
@@ -205,11 +200,7 @@ const getRangeForAppliedOperation = function(
             let numberOfRemovedElements = getOpLength(in_operation.operation);
 
             io_resultingRange.end = in_operation.operation[0] + numberOfRemovedElements;
-            if (Array.isArray(in_operation.operation[1])) {
-                io_resultingRange.op.operation[1] = in_operation.operation[1].slice();
-            } else {
-                io_resultingRange.op.operation[1] = in_operation.operation[1];
-            }
+            io_resultingRange.op.operation[1] = Array.isArray(in_operation.operation[1]) ? in_operation.operation[1].slice() : in_operation.operation[1];
             io_resultingRange.removeInsertOperation = in_operation.removeInsertOperation;
             return;
         case ArrayChangeSetIterator.types.MODIFY:
@@ -321,10 +312,10 @@ const _copyOperation = function(in_sourceOperation: NoneNOPOperation, in_targetO
 /**
  * cut overlapping ranges in non-overlapping and completely overlapping segments
  * ranges of length 0 just cut lengthy ranges
- * @param io_rangeA input A
- * @param io_rangeB input B
- * @param io_resultingSegment the resulting overlapping segment
- * @param in_rebasing is this function called for rebasing - we have to implement two different
+ * @param io_rangeA - input A
+ * @param io_rangeB - input B
+ * @param io_resultingSegment - the resulting overlapping segment
+ * @param in_rebasing - is this function called for rebasing - we have to implement two different
  *     behaviors of this function: one for squashing and one for rebasing, because an insert-insert
  *     operation in squashing should be separte segments, while for rebasing, we need one segment
  *     for both inserts to be able to report a conflict.
@@ -503,19 +494,9 @@ const splitOverlapping = function(
                 io_resultingSegment.op = undefined; // This is used to indicate that we don't need any operation
 
                 if (io_rangeB.op.operation[1].length === rangeLength) {
-                    if (io_rangeA.op.operation[1].length === rangeLength) {
-                        // We consume both A and B
-                        io_resultingSegment.flag = ArrayChangeSetRangeType.completeAcompleteB;
-                    } else {
-                        io_resultingSegment.flag = ArrayChangeSetRangeType.completeBpartOfA;
-                    }
+                    io_resultingSegment.flag = io_rangeA.op.operation[1].length === rangeLength ? ArrayChangeSetRangeType.completeAcompleteB : ArrayChangeSetRangeType.completeBpartOfA;
                 } else {
-                    if (io_rangeA.op.operation[1].length === rangeLength) {
-                        // We consume A and leave a part of B
-                        io_resultingSegment.flag = ArrayChangeSetRangeType.completeApartOfB;
-                    } else {
-                        io_resultingSegment.flag = ArrayChangeSetRangeType.partOfApartOfB;
-                    }
+                    io_resultingSegment.flag = io_rangeA.op.operation[1].length === rangeLength ? ArrayChangeSetRangeType.completeApartOfB : ArrayChangeSetRangeType.partOfApartOfB;
                 }
                 // cut the remaining segment entry
                 if (io_resultingSegment.flag === ArrayChangeSetRangeType.partOfApartOfB ||
@@ -678,7 +659,7 @@ const splitOverlapping = function(
  * e.g. merge an delete [1,3] with delete [3,2] to delete [1,5]
  * @param in_op - the op to merge
  * @param io_changeset - the changeset to merge the op to
- * @param in_targetIndex the transformed target index offset
+ * @param in_targetIndex - the transformed target index offset
  * @returns true if the merge was possible and executed
  */
 const mergeWithLastIfPossible = function(
@@ -779,9 +760,9 @@ interface RemoveOpInfo {
 
 /**
  * push an operation to a changeset, will try to merge the op if possible
- * @param in_op the operation we want to push
- * @param io_changeset target
- * @param the current offset
+ * @param in_op - the operation we want to push
+ * @param io_changeset - target
+ * @param the - current offset
  * @param in_options - Optional additional parameters
  * @param in_lastIteratorARemove - Information about the last remove operation in iterator A
  * @param in_segment - Segment this operation is part of
@@ -871,8 +852,8 @@ const pushOp = function(
 /**
  * handle combinations of range operations
  * e.g. an insert and delete at the same place and same length nullify each other
- * @param in_segment the two ops to be combined
- * @param in_isPrimitiveType is it an array of primitive types
+ * @param in_segment - the two ops to be combined
+ * @param in_isPrimitiveType - is it an array of primitive types
  * ATTENTION: We overwrite opB to save garbage (instead of creating a result OP)
  */
 const handleCombinations = function(in_segment: SegmentType, in_isPrimitiveType: boolean) {
@@ -889,11 +870,7 @@ const handleCombinations = function(in_segment: SegmentType, in_isPrimitiveType:
                 case ArrayChangeSetIterator.types.REMOVE: {
                     // Attention: B removes A completely, kill A to avoid zero inserts
                     let opBLen;
-                    if (isNumber(opB.operation[1])) {
-                        opBLen = opB.operation[1];
-                    } else {
-                        opBLen = opB.operation[1].length;
-                    }
+                    opBLen = isNumber(opB.operation[1]) ? opB.operation[1] : opB.operation[1].length;
                     if (opBLen !== opA.operation[1].length) {
                         throw new Error("handleCombinations: insert-remove: unequal number of affected entries");
                     }
@@ -1042,12 +1019,12 @@ const arraysHaveSameValues = function(in_arr1: arrayModifyList[1], in_arr2: arra
  *        | [rem orig. data]| (note the user)  | [rem dupl. rem]  |
  * -------|-----------------+------------------+------------------|
  *
- * @param {{opA:{}, opB:{}}} in_segment the two ops to be combined
+ * @param {{opA:{}, opB:{}}} in_segment - the two ops to be combined
  * @param {Array.<property-changeset.ChangeSet.ConflictInfo>} out_conflicts -
  *     A list of paths that resulted in conflicts together with the type of the conflict
  * @param {string} in_basePath -
  *     Base path to get to the property processed by this function
- * @param {boolean} in_isPrimitiveType is it an array of primitive types
+ * @param {boolean} in_isPrimitiveType - is it an array of primitive types
  * @param {Object} [in_options] - Optional additional parameters
  * @param {Map} [in_options.applyAfterMetaInformation] - Additional meta information which help later to obtain
  *                                                       more compact changeset during the apply operation
@@ -1137,16 +1114,8 @@ const handleRebaseCombinations = function(
                     // Remove already in A, no need to add the same again -> write nop
 
                     let opBLen; let opALen;
-                    if (isNumber(opB.operation[1])) {
-                        opBLen = opB.operation[1];
-                    } else {
-                        opBLen = opB.operation[1].length;
-                    }
-                    if (isNumber(opA.operation[1])) {
-                        opALen = opA.operation[1];
-                    } else {
-                        opALen = opA.operation[1].length;
-                    }
+                    opBLen = isNumber(opB.operation[1]) ? opB.operation[1] : opB.operation[1].length;
+                    opALen = isNumber(opA.operation[1]) ? opA.operation[1] : opA.operation[1].length;
 
                     if (opBLen !== opALen) {
                         throw new Error("handleRebaseCombinations: remove-remove: unequal number of affected entries, " +
@@ -1244,10 +1213,10 @@ const handleRebaseCombinations = function(
 
 /**
  * apply a range's operation to the changeset
- * @param in_segment to be applied
- * @param io_changeset target
- * @param in_currentIndexOffset current offset
- * @param in_isPrimitiveType is it an array of primitive types
+ * @param in_segment - to be applied
+ * @param io_changeset - target
+ * @param in_currentIndexOffset - current offset
+ * @param in_isPrimitiveType - is it an array of primitive types
  */
 const applySegment = function(
     in_segment: SegmentType,
@@ -1280,12 +1249,12 @@ const applySegment = function(
 
 /**
  * apply a range's operation to the rebased changeset
- * @param in_segment to be applied
- * @param io_changeset target
- * @param in_currentIndexOffset current offset
+ * @param in_segment - to be applied
+ * @param io_changeset - target
+ * @param in_currentIndexOffset - current offset
  * @param out_conflicts - A list of paths that resulted in conflicts together with the type of the conflict
  * @param in_basePath - Base path to get to the property processed by this function
- * @param in_isPrimitiveType is it an array of primitive types
+ * @param in_isPrimitiveType - is it an array of primitive types
  */
 const applyRebaseSegment = function(
     in_segment: SegmentType,
@@ -1647,7 +1616,7 @@ export namespace ChangeSetArrayFunctions {
      *
      * @param in_ownPropertyChangeSet - The ChangeSet for the property stored in this object
      * @param io_rebasePropertyChangeSetParent - The Array containing the ChangeSet for the property to be rebased
-     * @param in_key the key to the ChangeSet in io_rebasePropertyChangeSetParent we are rebasing on
+     * @param in_key - the key to the ChangeSet in io_rebasePropertyChangeSetParent we are rebasing on
      * @param in_basePath - Base path to get to the property processed by this function
      * @param out_conflicts - A list of paths that resulted in conflicts together with the type of the conflict
      */

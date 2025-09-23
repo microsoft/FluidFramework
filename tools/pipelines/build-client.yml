@@ -25,12 +25,23 @@ parameters:
 - name: buildToolsVersionToInstall
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
-  default: "^0.5.0"
+  default: "^0.55.0"
 - name: nonScopedPackages
   displayName: Non-scoped packages to publish
   type: object
   default:
   - fluid-framework
+- name: interdependencyRange
+  displayName: Range to use for interdependencies (only affects releases) (default = ~)
+  type: string
+  default: "~"
+  # The " " value (a space) is a hacky workaround. ADO doesn't support empty string, but we ultimately use this value as
+  # an environment variable in a bash script (the 'update package versions' step), where it gets coerced back to the
+  # empty string.
+  values:
+    - "^"
+    - "~"
+    - " "
 
 trigger:
   branches:
@@ -46,13 +57,14 @@ trigger:
     - experimental
     - package.json
     - package-lock.json
-    - lerna.json
-    - lerna-package-lock.json
+    - pnpm-lock.json
+    - pnpm-workspace.yaml
     - tools/pipelines/build-client.yml
     - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
@@ -72,13 +84,14 @@ pr:
     - experimental
     - package.json
     - package-lock.json
-    - lerna.json
-    - lerna-package-lock.json
+    - pnpm-lock.json
+    - pnpm-workspace.yaml
     - tools/pipelines/build-client.yml
     - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
 
 schedules:
 - cron: "00 09 * * *" # every day at 9:00 UTC
@@ -89,43 +102,17 @@ schedules:
   always: true
 
 extends:
-  template: templates/build-npm-package.yml
+  template: templates/build-npm-package.yml@self
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: .
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    packageManager: pnpm
     tagName: client
     poolBuild: Large-eastus2
     cgSubDirectory: packages
     checkoutSubmodules: true
     taskBundleAnalysis: true
-
-    preCG:
-    - task: UseNode@1
-      displayName: Use Node 18.17.1
-      inputs:
-        version: 18.17.1
-    - task: Npm@1
-      displayName: Install npm 6
-      retryCountOnTaskFailure: 4
-      inputs:
-        command: 'custom'
-        customCommand: 'install --global npm@^6'
-        customRegistry: 'useNpmrc'
-    - task: Npm@1
-      displayName: npm ci
-      inputs:
-        command: 'custom'
-        customCommand: 'ci --ignore-scripts'
-        customRegistry: 'useNpmrc'
-    - task: Bash@3
-      displayName: 'Generate Mono repo package json'
-      inputs:
-        targetType: 'inline'
-        script: |
-          # Generate the package/package lock for the lerna project so we would scan it.
-          node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
-          cp repo-package.json packages/package.json
-          cp repo-package-lock.json packages/package-lock.json

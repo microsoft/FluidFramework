@@ -5,8 +5,8 @@ parameters:
 - name: buildDirectory
   type: string
 - name: buildNumberInPatch
-  type: string
-  default:
+  type: boolean
+  default: false
 - name: tagName
   type: string
 - name: includeInternalVersions
@@ -14,7 +14,11 @@ parameters:
   default: false
 - name: buildToolsVersionToInstall
   type: string
-  default: "^0.5.0"
+  default: "^0.55.0"
+# The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
+# group
+- name: interdependencyRange
+  type: string
 
 # Set version
 steps:
@@ -86,7 +90,7 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
-      # expect lerna.json and package.json be in the current working directory
+      # expect release group root package.json be in the current working directory
 
       echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
       echo TEST_BUILD=$TEST_BUILD
@@ -98,22 +102,12 @@ steps:
       flub generate buildVersion
 
 - task: Bash@3
-  displayName: Update Package Version
+  displayName: Update Package Version (flub)
   env:
     VERSION_RELEASE: $(release)
+    RELEASE_GROUP: ${{ parameters.tagName }}
+    INTERDEPENDENCY_RANGE: ${{ parameters.interdependencyRange }}
   inputs:
-    targetType: 'inline'
+    targetType: 'filePath'
     workingDirectory: ${{ parameters.buildDirectory }}
-    script: |
-      echo SETVERSION_VERSION=$SETVERSION_VERSION
-      echo SETVERSION_CODEVERSION=$SETVERSION_CODEVERSION
-
-      if [ -f "lerna.json" ]; then
-        if [ "$VERSION_RELEASE" = "release" ]; then
-          npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes
-        else
-          npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes --exact
-        fi
-      else
-        npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
-      fi
+    filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh

@@ -31,25 +31,25 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^1.4.0",
+    "@fluidframework/aqueduct": "workspace:~",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.2",
-    "@fluidframework/datastore-definitions": "^1.4.0",
-    "@fluidframework/map": "^1.4.0",
-    "@fluidframework/runtime-definitions": "^1.4.0",
+    "@fluidframework/datastore-definitions": "workspace:~",
+    "@fluidframework/map": "workspace:~",
+    "@fluidframework/runtime-definitions": "workspace:~",
     "events": "^3.1.0"
   },
   "devDependencies": {
     "@fluid-experimental/data-objects-previous": "npm:@fluid-experimental/data-objects@1.3.1",
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@microsoft/api-extractor": "^7.22.2",
+    "@microsoft/api-extractor": "~7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/node": "^14.18.0",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
     "cross-env": "^7.0.2",
-    "eslint": "~8.6.0",
+    "eslint": "~8.55.0",
     "rimraf": "^2.6.2",
     "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0"

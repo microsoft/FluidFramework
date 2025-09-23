@@ -36,7 +36,6 @@
 /packages/utils/telemetry-utils/                                          @microsoft/fluid-cr-telemetry
 /server/                                                                  @microsoft/fluid-cr-server
 /tools/                                                                   @microsoft/fluid-cr-infra
-/tools/pipelines/build-azure.yml                                          @microsoft/fluid-cr-framework
 
 # PUBLIC API REPORTS
 # All packages are assumed to have public APIs unless defined otherwise in the sections below.
