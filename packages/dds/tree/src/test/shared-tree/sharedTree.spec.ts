@@ -68,7 +68,6 @@ import {
 	type TreeViewAlpha,
 	TreeViewConfiguration,
 	type ValidateRecursiveSchema,
-	asTreeViewAlpha,
 	SchemaFactoryAlpha,
 	type ITree,
 	toInitialSchema,
@@ -118,6 +117,7 @@ import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
 import { FluidClientVersion } from "../../codec/index.js";
+import { asAlpha } from "../../api.js";
 
 const enableSchemaValidation = true;
 
@@ -1648,7 +1648,7 @@ describe("SharedTree", () => {
 			// This test ensures that the feature works across peers as opposed to solely across branches.
 			const provider = new TestTreeProviderLite(2);
 			const config = new TreeViewConfiguration({ schema: JsonAsTree.JsonObject });
-			const viewA = asTreeViewAlpha(provider.trees[0].viewWith(config));
+			const viewA = asAlpha(provider.trees[0].viewWith(config));
 			const viewB = provider.trees[1].viewWith(config);
 			viewA.initialize(
 				new JsonAsTree.JsonObject({ child: new JsonAsTree.JsonObject({ id: "A" }) }),
@@ -2392,9 +2392,7 @@ describe("SharedTree", () => {
 		const tree = DefaultTestSharedTreeKind.getFactory().create(runtime, "tree");
 		const runtimeFactory = new MockContainerRuntimeFactory();
 		runtimeFactory.createContainerRuntime(runtime);
-		const view = asTreeViewAlpha(
-			tree.viewWith(new TreeViewConfiguration({ schema: StringArray })),
-		);
+		const view = asAlpha(tree.viewWith(new TreeViewConfiguration({ schema: StringArray })));
 		view.initialize([]);
 		assert.throws(
 			() => {
@@ -2419,9 +2417,7 @@ describe("SharedTree", () => {
 		const tree = sharedObject.getFactory().create(runtime, "tree");
 		const runtimeFactory = new MockContainerRuntimeFactory();
 		runtimeFactory.createContainerRuntime(runtime);
-		const view = asTreeViewAlpha(
-			tree.viewWith(new TreeViewConfiguration({ schema: StringArray })),
-		);
+		const view = asAlpha(tree.viewWith(new TreeViewConfiguration({ schema: StringArray })));
 		view.initialize(["A"]);
 		view.root.removeAt(0);
 		// The fork prevents the trimming of the commit that removes "A"
