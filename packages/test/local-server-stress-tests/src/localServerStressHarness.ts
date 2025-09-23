@@ -40,6 +40,7 @@ import {
 	ConnectionState,
 	createDetachedContainer,
 	loadExistingContainer,
+	loadFrozenContainerFromPendingState,
 	type IContainerExperimental,
 } from "@fluidframework/container-loader/internal";
 import type { ConfigTypes, FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
@@ -65,6 +66,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import { saveFluidOps } from "./baseModel.js";
+import { validateConsistencyOfAllDDS } from "./ddsOperations.js";
 import {
 	createRuntimeFactory,
 	StressDataObject,
@@ -1368,6 +1370,7 @@ interface RestartClientFromPendingState {
 	type: "restartClientFromPendingState";
 	sourceClientTag: `client-${number}`;
 	newClientTag: `client-${number}`;
+	validatePendingState: boolean;
 }
 
 /**
@@ -1406,6 +1409,7 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 					type: "restartClientFromPendingState",
 					sourceClientTag: random.pick(clients).tag,
 					newClientTag: state.tag("client"),
+					validatePendingState: random.bool(),
 				} satisfies RestartClientFromPendingState;
 			}
 			return baseGenerator(state);
@@ -1433,6 +1437,13 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 				sourceClient.entryPoint.exitStagingMode(true);
 			}
 
+			if (op.validatePendingState) {
+				// in order to validate we need to disconnect to ensure
+				// no changes arrive between capturing the state and validating
+				// the said against the source container
+				sourceClient.container.disconnect();
+			}
+
 			assert(
 				typeof sourceClient.container.getPendingLocalState === "function",
 				`Client ${op.sourceClientTag} does not support getPendingLocalState`,
@@ -1440,15 +1451,34 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 
 			const pendingLocalState = await sourceClient.container.getPendingLocalState();
 
-			const removed = state.clients.splice(
-				state.clients.findIndex((c) => c.tag === op.sourceClientTag),
-				1,
-			);
-			removed[0].container.dispose();
-
 			const url = await sourceClient.container.getAbsoluteUrl("");
 			assert(url !== undefined, "url of container must be available");
 
+			if (op.validatePendingState) {
+				const frozenContainer = await loadFrozenContainerFromPendingState({
+					codeLoader: state.codeLoader,
+					pendingLocalState,
+					request: { url },
+					urlResolver: new LocalResolver(),
+				});
+
+				const { DefaultStressDataObject }: FluidObject<DefaultStressDataObject> | undefined =
+					(await frozenContainer.getEntryPoint()) ?? {};
+				assert(DefaultStressDataObject !== undefined, "must have entrypoint");
+
+				await validateConsistencyOfAllDDS(sourceClient, {
+					container: frozenContainer,
+					entryPoint: DefaultStressDataObject,
+					tag: `client-${Number.NaN}`,
+				});
+				frozenContainer.dispose();
+			}
+			sourceClient.container.dispose();
+
+			state.clients.splice(
+				state.clients.findIndex((c) => c.tag === op.sourceClientTag),
+				1,
+			);
 			const newClient = await loadClient(
 				state.localDeltaConnectionServer,
 				state.codeLoader,

@@ -9,6 +9,7 @@ export {
 	createDetachedContainer,
 	loadExistingContainer,
 	rehydrateDetachedContainer,
+	loadFrozenContainerFromPendingState,
 	type ICreateAndLoadContainerProps,
 	type ICreateDetachedContainerProps,
 	type ILoadExistingContainerProps,
