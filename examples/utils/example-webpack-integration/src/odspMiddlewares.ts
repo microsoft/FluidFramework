@@ -29,7 +29,7 @@ const parseTestAccounts = (
 	const testAccounts: unknown = JSON.parse(stringAccounts);
 	if (!isTestAccounts(testAccounts) || testAccounts[0] === undefined) {
 		throw new Error(
-			"process.env.login__odsp__test__tenants is not a valid array of test accounts.",
+			`stringAccounts did not parse to a valid array of test accounts: ${stringAccounts}`,
 		);
 	}
 	const { UserPrincipalName: username, Password: password } = testAccounts[0];
