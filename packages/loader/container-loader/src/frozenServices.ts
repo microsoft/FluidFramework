@@ -4,13 +4,12 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IDisposable } from "@fluidframework/core-interfaces";
 import {
 	ScopeType,
 	type ConnectionMode,
 	type IClient,
 	type IClientConfiguration,
-	type ICreateBlobResponse,
 	type IDocumentDeltaConnection,
 	type IDocumentDeltaConnectionEvents,
 	type IDocumentDeltaStorageService,
@@ -20,29 +19,30 @@ import {
 	type IDocumentServiceFactory,
 	type IDocumentServicePolicies,
 	type IDocumentStorageService,
-	type IDocumentStorageServicePolicies,
 	type IResolvedUrl,
 	type ISequencedDocumentMessage,
 	type ISignalClient,
 	type ISignalMessage,
-	type ISnapshotTree,
-	type IStream,
-	type ISummaryTree,
 	type ITokenClaims,
-	type IVersion,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IConnectionStateChangeReason } from "./contracts.js";
 
+/**
+ *
+ */
 export class FrozenDocumentServiceFactory implements IDocumentServiceFactory {
 	async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
 		return new FrozenDocumentService(resolvedUrl);
 	}
 	async createContainer(): Promise<IDocumentService> {
-		throw new Error("Method not implemented.");
+		throw new Error("The FrozenDocumentServiceFactory cannot be used to create containers.");
 	}
 }
 
+/**
+ *
+ */
 class FrozenDocumentService
 	extends TypedEventEmitter<IDocumentServiceEvents>
 	implements IDocumentService
@@ -55,10 +55,10 @@ class FrozenDocumentService
 		storageOnly: true,
 	};
 	async connectToStorage(): Promise<IDocumentStorageService> {
-		return new FrozenDocumentStorageService();
+		return frozenDocumentStorageService;
 	}
 	async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
-		return new FrozenDocumentDeltaStorageService();
+		return frozenDocumentDeltaStorageService;
 	}
 	async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
 		return new FrozenDeltaStream();
@@ -66,39 +66,26 @@ class FrozenDocumentService
 	dispose(): void {}
 }
 
-class FrozenDocumentStorageService implements IDocumentStorageService {
-	policies?: IDocumentStorageServicePolicies | undefined;
-	async getSnapshotTree(
-		// eslint-disable-next-line @rushstack/no-new-null
-	): Promise<ISnapshotTree | null> {
-		throw new Error("Method not implemented.");
-	}
-	async getVersions(): Promise<IVersion[]> {
-		throw new Error("Method not implemented.");
-	}
-	async createBlob(): Promise<ICreateBlobResponse> {
-		throw new Error("Method not implemented.");
-	}
-	async readBlob(): Promise<ArrayBufferLike> {
-		throw new Error("Method not implemented.");
-	}
-	async uploadSummaryWithContext(): Promise<string> {
-		throw new Error("Method not implemented.");
-	}
-	async downloadSummary(): Promise<ISummaryTree> {
-		throw new Error("Method not implemented.");
-	}
-}
+const frozenDocumentStorageServiceHandler = (): never => {
+	throw new Error("Operations are not supported on the FrozenDocumentStorageService.");
+};
+const frozenDocumentStorageService: IDocumentStorageService = {
+	getSnapshotTree: frozenDocumentStorageServiceHandler,
+	getSnapshot: frozenDocumentStorageServiceHandler,
+	getVersions: frozenDocumentStorageServiceHandler,
+	createBlob: frozenDocumentStorageServiceHandler,
+	readBlob: frozenDocumentStorageServiceHandler,
+	uploadSummaryWithContext: frozenDocumentStorageServiceHandler,
+	downloadSummary: frozenDocumentStorageServiceHandler,
+};
 
-class FrozenDocumentDeltaStorageService implements IDocumentDeltaStorageService {
-	fetchMessages(): IStream<ISequencedDocumentMessage[]> {
-		return {
-			read: async () => ({
-				done: true,
-			}),
-		};
-	}
-}
+const frozenDocumentDeltaStorageService: IDocumentDeltaStorageService = {
+	fetchMessages: () => ({
+		read: async () => ({
+			done: true,
+		}),
+	}),
+};
 
 /**
  * Implementation of IDocumentDeltaConnection that does not support submitting
@@ -174,7 +161,6 @@ export class FrozenDeltaStream
 		this._disposed = true;
 	}
 }
-
 export function isFrozenDeltaStreamConnection(
 	connection: unknown,
 ): connection is FrozenDeltaStream {
