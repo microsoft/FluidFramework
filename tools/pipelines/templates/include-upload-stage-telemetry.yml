@@ -83,7 +83,7 @@ stages:
         WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTimingAndResult
       inputs:
         targetType: 'inline'
-        workingDirectory: $(pathToTelemetryGenerator)
+        workingDirectory: $(Build.SourcesDirectory)
         script: |
           set -eu -o pipefail
 
@@ -116,10 +116,10 @@ stages:
           WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTestPassRate
         inputs:
           targetType: 'inline'
-          workingDirectory: $(pathToTelemetryGenerator)
+          workingDirectory: $(Build.SourcesDirectory)
           script: |
             set -eu -o pipefail
             echo "Listing files in '$WORK_FOLDER'"
             ls -laR $WORK_FOLDER;
 
-            npm run telemetry-generator -- --handlerModule "$(pathToTelemetryGeneratorHandlers)/testPassRate.js" --dir "$WORK_FOLDER"
+            npm run telemetry-generator -- --handlerModule "$(pathToTelemetryGeneratorHandlersNew)/testPassRate.js" --dir "$WORK_FOLDER"
