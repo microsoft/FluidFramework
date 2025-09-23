@@ -376,6 +376,7 @@ export class BlobManager {
 			// eventually and wait. We do this even if the local client doesn't have the blob payloadPending flag
 			// enabled, in case a remote client does have it enabled. This wait may be infinite if the uploading
 			// client failed the upload and doesn't exist anymore.
+			// eslint-disable-next-line require-atomic-updates
 			storageId = await new Promise<string>((resolve) => {
 				const onProcessBlobAttach = (_localId: string, _storageId: string): void => {
 					if (_localId === localId) {

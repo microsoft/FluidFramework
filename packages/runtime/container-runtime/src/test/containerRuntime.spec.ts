@@ -2784,6 +2784,7 @@ describe("Runtime", () => {
 				assert(getSnapshotCalledTimes === 1, "second time should be from cache");
 
 				// Set api to undefined to see that it should not be called again.
+				// eslint-disable-next-line require-atomic-updates
 				containerContext.storage.getSnapshot = undefined;
 				const datastore2 = await containerRuntime.resolveHandle({
 					url: "/missingDataStore",

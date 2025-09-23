@@ -242,6 +242,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 	it("does restart upload after applying stashed ops if expired", async () => {
 		await runtime.attach();
 		await runtime.connect();
+		// eslint-disable-next-line require-atomic-updates
 		runtime.attachedStorage.minTTL = 0.001;
 		const blob = textToBlob("blob");
 		const handleP = runtime.createBlob(blob);
