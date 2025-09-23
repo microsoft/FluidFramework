@@ -79,6 +79,9 @@ export const ArrayNodeSchema: {
 };
 
 // @alpha
+export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewAlpha<TSchema>;
+
+// @alpha @deprecated
 export function asTreeViewAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewAlpha<TSchema>;
 
 // @alpha @sealed
