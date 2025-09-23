@@ -5,19 +5,19 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ICacheEntry } from "@fluidframework/driver-definitions/internal";
+import type { ICacheEntry, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 import { getKeyForCacheEntry } from "../cacheUtils.js";
 
-function createMockCacheEntry(type: string, key: string): ICacheEntry {
+function createMockCacheEntry(type: string, key: string, fileVersion?: string): ICacheEntry {
 	const resolvedUrl = {
 		endpoints: {},
 		id: "test-doc-id",
 		tokens: {},
 		type: "fluid",
 		url: "fluid://resolved-url",
-		fileVersion: "3.0",
-	} as const;
+		fileVersion,
+	} satisfies IResolvedUrl & { fileVersion?: string };
 	return {
 		type,
 		key,
@@ -40,7 +40,7 @@ describe("getKeyForCacheEntry", () => {
 		assert.equal(key, "test-doc-id_snapshot_");
 	});
 	it("creates a versioned snapshot cache entry", () => {
-		const entry = createMockCacheEntry(snapshotType, "");
+		const entry = createMockCacheEntry(snapshotType, "", "3.0");
 		const key = getKeyForCacheEntry(entry);
 		assert.equal(key, "test-doc-id_3.0_snapshot_");
 	});
@@ -51,7 +51,7 @@ describe("getKeyForCacheEntry", () => {
 		assert.equal(key, "test-doc-id_ops_100_5");
 	});
 	it("creates a versioned op cache entry", () => {
-		const entry = createMockCacheEntry(opType, "100_5");
+		const entry = createMockCacheEntry(opType, "100_5", "3.0");
 		const key = getKeyForCacheEntry(entry);
 		assert.equal(key, "test-doc-id_3.0_ops_100_5");
 	});
