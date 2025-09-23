@@ -18,7 +18,7 @@ class Note extends factory.object("Note", {
 
 ## Compatible Changes
 
-The following changes are [backwards compatible](index.mdx#backwards-compatibility).
+The following changes are [backwards compatible](./index.mdx#backwards-compatibility).
 However, it's important that applications carefully review whether the change is [forwards compatible](./index.mdx#forwards-compatibility) inherently or if a [staged rollout](./index.mdx#staged-rollouts) is necessary.
 
 ### Adding Optional Fields
@@ -36,7 +36,7 @@ class Note extends factory.object("Note", {
 }) {}
 ```
 
-To ensure [forwards compatibility](./index.mdx#understanding-compatibility), use [`allowUnknownOptionalFields`](../../../api/fluid-framework/objectnodeschema-interface#allowunknownoptionalfields-property) to handle new optional fields added by newer clients.
+To ensure [forwards compatibility](./index.mdx#understanding-compatibility), use [`allowUnknownOptionalFields`](../../../api/fluid-framework/schemafactoryobjectoptions-interface#allowunknownoptionalfields-propertysignature) to handle new optional fields added by newer clients.
 Note that this needs to already be set on the old clients before the field is added.
 If it's not already set, then this degenerates into an un-forwards compatible change and requires a [staged rollout](./index.mdx#staged-rollouts) - because the app has to stage the enabling of allowUnknownOptionalFields.
 
@@ -55,7 +55,7 @@ BC | FC
 ---| ---
 ✅ | ❌
 
-**Note**: There is currently no way to make this change is a [forwards compatible](index.mdx#forwards-compatibility) way.
+**Note**: There is currently no way to make this change is a [forwards compatible](./index.mdx#forwards-compatibility) way.
 
 ```typescript
 class Note extends factory.object("Note", {

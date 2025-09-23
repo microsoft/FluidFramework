@@ -47,7 +47,7 @@ Therefore, a Fluid application should be prepared to encounter any version of a 
 When you open a document, SharedTree compares your application's view schema with the document's stored schema to determine compatibility:
 
 - **Compatible**: Document can be opened and used normally
-- **Upgradeable**: Document can be upgraded to match your view schema using [`view.upgradeSchema()`](../../../api/fluid-framework/treeview-interface#upgradeschema-method)
+- **Upgradeable**: Document can be upgraded to match your view schema using [`view.upgradeSchema()`](../../../api/fluid-framework/treeview-interface#upgradeschema-methodsignature)
 - **Incompatible**: Document cannot be opened with or upgraded to match your current view schema
 
 They must be compatible or upgradeable in order for the application to work - otherwise, it cannot read or write data from/to the document.
@@ -105,7 +105,7 @@ To prevent this, the application can employ a [staged rollout](./index.mdx#stage
 
 ### Checking Compatibility
 
-Use [`TreeView.compatibility`](../../../api/fluid-framework/treeview-interface#compatibility-property) to check if your schema changes are compatible with existing documents.
+Use [`TreeView.compatibility`](../../../api/fluid-framework/treeview-interface#compatibility-propertysignature) to check if your schema changes are compatible with existing documents.
 
 Generally, the most important properties of the `compatibility` object to monitor are [`canView`](../../../api/fluid-framework/schemacompatibilitystatus-interface#canview-propertysignature) and [`canUpgrade`](../../../api/fluid-framework/schemacompatibilitystatus-interface#canupgrade-propertysignature).
 `canView` indicates that the view schema is [compatible](./index.mdx#schema-compatibility) with the stored schema while `canUpgrade` indicates that it is valid to [upgrade the schema](./index.mdx#schema-upgrade-process).
@@ -124,7 +124,7 @@ view.events.on("schemaChanged", () => {
 
 ## Schema Upgrade Process
 
-When you make [backwards compatible](./index.mdx#understanding-compatibility) changes to your schema, you can upgrade existing documents to use the new schema using [`view.upgradeSchema()`](../../../api/fluid-framework/treeview-interface#upgradeschema-method):
+When you make [backwards compatible](./index.mdx#understanding-compatibility) changes to your schema, you can upgrade existing documents to use the new schema using [`view.upgradeSchema()`](../../../api/fluid-framework/treeview-interface#upgradeschema-methodsignature):
 
 ```typescript
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
