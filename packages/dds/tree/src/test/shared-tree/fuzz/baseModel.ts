@@ -11,7 +11,11 @@ import type { Operation } from "./operationTypes.js";
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import { type EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
 import { FluidClientVersion } from "../../../codec/index.js";
-import { ForestTypeOptimized, ForestTypeReference } from "../../../shared-tree/index.js";
+import {
+	ForestTypeOptimized,
+	ForestTypeReference,
+	SharedTreeFormatVersion,
+} from "../../../shared-tree/index.js";
 
 export const runsPerBatch = 50;
 // TODO: Enable other types of ops.
@@ -31,6 +35,10 @@ const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 	nodeConstraint: 3,
 	fork: 1,
 	merge: 1,
+	createSharedBranch: 6,
+	checkoutSharedBranch: 9,
+	checkoutMainBranch: 6,
+	mergeSharedBranch: 6,
 };
 const generatorFactory = () => takeAsync(100, makeOpGenerator(editGeneratorOpWeights));
 
@@ -42,6 +50,7 @@ export const baseTreeModel: DDSFuzzModel<
 	workloadName: "SharedTree (Reference Forest)",
 	factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined), undefined, {
 		oldestCompatibleClient: FluidClientVersion.EnableUnstableFeatures,
+		formatVersion: SharedTreeFormatVersion.vSharedBranches,
 		forest: ForestTypeReference,
 	}),
 	generatorFactory,

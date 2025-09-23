@@ -15,7 +15,8 @@ export type TreeOperation =
 	| UndoRedo
 	| SchemaChange
 	| Constraint
-	| ForkMergeOperation;
+	| ForkMergeOperation
+	| SharedBranchOperation;
 
 export interface TreeEdit {
 	type: "treeEdit";
@@ -51,6 +52,37 @@ export interface SchemaChange {
 export interface ForkMergeOperation {
 	type: "forkMergeOperation";
 	contents: ForkBranch | MergeBranch;
+}
+
+export interface SharedBranchOperation {
+	type: "sharedBranchOperation";
+	contents: CreateSharedBranch | CheckoutSharedBranch | MergeSharedBranch | CheckoutMainBranch;
+}
+
+export interface CreateSharedBranch {
+	type: "createSharedBranch";
+}
+
+export interface CheckoutSharedBranch {
+	type: "checkoutSharedBranch";
+	branchId: string;
+}
+
+/**
+ * Only allowed on clients which have another shared branch checked out.
+ */
+export interface CheckoutMainBranch {
+	type: "checkoutMainBranch";
+}
+
+/**
+ * Always merges the shared branch into the main branch.
+ * Only allowed on clients which have checked out this shared branch in the past.
+ * This includes clients that do not currently have that shared branch checked out.
+ */
+export interface MergeSharedBranch {
+	type: "mergeSharedBranch";
+	branchId: string;
 }
 
 export interface ForkBranch {
