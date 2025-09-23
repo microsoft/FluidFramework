@@ -264,7 +264,7 @@ stages:
           retryCountOnTaskFailure: 10
           inputs:
             targetType: 'inline'
-            script: 'pnpm install $(Initialize.testPackageTgz) --no-frozen-lockfile'
+            script: 'pnpm install $(Initialize.testPackageTgz)'
 
         # Download Test Files & Install Extra Dependencies
         # These steps are intended to include extra dependencies that are not available as
