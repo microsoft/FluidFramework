@@ -118,6 +118,7 @@ export function validatePrivateLink(
 			} else {
 				if (
 					tenantInfo?.customData &&
+					tenantInfo.customData.publicNetworkAccessEnabled !== undefined &&
 					tenantInfo.customData.publicNetworkAccessEnabled === false
 				) {
 					return {
