@@ -474,7 +474,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	}
 
 	protected addBranch(branchId: BranchId): void {
-		this.editManager.addBranch(branchId);
+		this.editManager.addNewBranch(branchId);
 	}
 
 	public getSharedBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChange> {
@@ -576,7 +576,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				break;
 			}
 			case "branch": {
-				this.editManager.addBranch(message.branchId);
+				this.editManager.addNewBranch(message.branchId);
 				break;
 			}
 			default:

@@ -149,7 +149,7 @@ export class EditManager<
 			this.telemetryEventBatcher,
 		);
 
-		this.createSharedBranch("main", undefined, undefined, mainTrunk);
+		this.createAndAddSharedBranch("main", undefined, undefined, mainTrunk);
 	}
 
 	public getLocalBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChangeset> {
@@ -401,6 +401,7 @@ export class EditManager<
 					mainBranch.trunk.fork(),
 				);
 				branch.loadSummaryData(branchData, trunkRevisionCache);
+				this.addSharedBranch(branchId, branch);
 			}
 		}
 	}
@@ -450,12 +451,12 @@ export class EditManager<
 
 		const mainBranch = this.getSharedBranch("main");
 		const branchTrunk = mainBranch.rebasePeer(sessionId, referenceSequenceNumber).fork();
-		this.createSharedBranch(branchId, sessionId, mainBranch, branchTrunk);
+		this.createAndAddSharedBranch(branchId, sessionId, mainBranch, branchTrunk);
 	}
 
-	public addBranch(branchId: BranchId): void {
+	public addNewBranch(branchId: BranchId): void {
 		const main = this.getSharedBranch("main") ?? fail("Main branch must exist");
-		this.createSharedBranch(
+		this.createAndAddSharedBranch(
 			branchId,
 			this.localSessionId,
 			main,
@@ -471,6 +472,35 @@ export class EditManager<
 		assert(branchId !== "main", "Cannot remove main branch");
 		const hadBranch = this.sharedBranches.delete(branchId);
 		assert(hadBranch, "Expected branch to exist");
+	}
+
+	private createAndAddSharedBranch(
+		branchId: BranchId,
+		sessionId: SessionId | undefined,
+		parent: SharedBranch<TEditor, TChangeset> | undefined,
+		branch: SharedTreeBranch<TEditor, TChangeset>,
+	): SharedBranch<TEditor, TChangeset> {
+		const sharedBranch = this.createSharedBranch(branchId, sessionId, parent, branch);
+		this.addSharedBranch(branchId, sharedBranch);
+		return sharedBranch;
+	}
+
+	private addSharedBranch(
+		branchId: BranchId,
+		branch: SharedBranch<TEditor, TChangeset>,
+	): void {
+		assert(!this.sharedBranches.has(branchId), "A branch with this ID already exists");
+		this.sharedBranches.set(branchId, branch);
+
+		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
+		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
+		// they require and therefore we monitor them explicitly.
+		onForkTransitive(branch.localBranch, (fork) => this.registerBranch(fork));
+
+		if (branchId !== "main") {
+			this.registerBranch(branch.localBranch);
+			this.onSharedBranchCreated?.(branchId);
+		}
 	}
 
 	private createSharedBranch(
@@ -490,19 +520,6 @@ export class EditManager<
 			this._events,
 			this.telemetryEventBatcher,
 		);
-
-		assert(!this.sharedBranches.has(branchId), "A branch with this ID already exists");
-		this.sharedBranches.set(branchId, sharedBranch);
-
-		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
-		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
-		// they require and therefore we monitor them explicitly.
-		onForkTransitive(sharedBranch.localBranch, (fork) => this.registerBranch(fork));
-
-		if (branchId !== "main") {
-			this.registerBranch(sharedBranch.localBranch);
-			this.onSharedBranchCreated?.(branchId);
-		}
 
 		return sharedBranch;
 	}
