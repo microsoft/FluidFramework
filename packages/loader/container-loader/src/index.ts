@@ -20,14 +20,19 @@ export {
 } from "./createAndLoadContainerUtils.js";
 export type {
 	IAckSummaryResult,
+	IBaseSummarizeResult,
 	IBroadcastSummaryResult,
+	IGenerateSummaryTreeResult,
 	INackSummaryResult,
 	IRetriableFailureError,
 	ISubmitSummaryOpResult,
+	IUploadSummaryResult,
 	OnDemandSummarizeResults,
 	SubmitSummaryFailureData,
 	SubmitSummaryResult,
 	SummarizeResultPart,
+	SummaryAckMessage,
+	SummaryOpContents,
 	SummaryStage,
 } from "./onDemandSummaryTypes.js";
 export {

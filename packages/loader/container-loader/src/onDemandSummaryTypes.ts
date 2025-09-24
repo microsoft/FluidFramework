@@ -3,12 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
-
+/**
+ * @beta
+ */
 export interface IRetriableFailureError extends Error {
 	readonly retryAfterSeconds?: number;
 }
 
+/**
+ * @beta
+ */
 export interface IBaseSummarizeResult {
 	readonly stage: "base";
 	readonly error: IRetriableFailureError | undefined;
@@ -16,6 +20,9 @@ export interface IBaseSummarizeResult {
 	readonly minimumSequenceNumber: number;
 }
 
+/**
+ * @beta
+ */
 export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
 	readonly stage: "generate";
 	readonly summaryTree: unknown;
@@ -23,30 +30,48 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
 	readonly generateDuration: number;
 }
 
+/**
+ * @beta
+ */
 export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "stage"> {
 	readonly stage: "upload";
 	readonly handle: string;
 	readonly uploadDuration: number;
 }
 
+/**
+ * @beta
+ */
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
 	readonly stage: "submit";
 	readonly clientSequenceNumber: number;
 	readonly submitOpDuration: number;
 }
 
+/**
+ * @beta
+ */
 export type SubmitSummaryResult =
 	| IBaseSummarizeResult
 	| IGenerateSummaryTreeResult
 	| IUploadSummaryResult
 	| ISubmitSummaryOpResult;
 
+/**
+ * @beta
+ */
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 
+/**
+ * @beta
+ */
 export interface SubmitSummaryFailureData {
 	readonly stage: SummaryStage;
 }
 
+/**
+ * @beta
+ */
 export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 	| {
 			readonly success: true;
@@ -59,31 +84,49 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 			readonly error: IRetriableFailureError;
 	  };
 
+/**
+ * @beta
+ */
 export interface IBroadcastSummaryResult {
 	readonly summarizeOp: Record<string, unknown>;
 	readonly broadcastDuration: number;
 }
 
-interface SummaryOpContents {
+/**
+ * @beta
+ */
+export interface SummaryOpContents {
 	readonly handle?: string;
 	readonly [key: string]: unknown;
 }
 
-interface SummaryAckMessage {
+/**
+ * @beta
+ */
+export interface SummaryAckMessage {
 	readonly contents: SummaryOpContents;
 	readonly [key: string]: unknown;
 }
 
+/**
+ * @beta
+ */
 export interface IAckSummaryResult {
 	readonly summaryAckOp: SummaryAckMessage;
 	readonly ackNackDuration: number;
 }
 
+/**
+ * @beta
+ */
 export interface INackSummaryResult {
 	readonly summaryNackOp: Record<string, unknown>;
 	readonly ackNackDuration: number;
 }
 
+/**
+ * @beta
+ */
 export interface OnDemandSummarizeResults {
 	readonly summarySubmitted: SummarizeResultPart<
 		SubmitSummaryResult,
@@ -117,16 +160,25 @@ export interface SummarizerLike {
 
 export const summarizerRequestUrl = "_summarizer";
 
+/**
+ * @beta
+ */
 export interface ISummarizerSummarySuccess {
 	readonly success: true;
 	readonly summaryResults: OnDemandSummarizeResults;
 }
 
+/**
+ * @beta
+ */
 export interface ISummarizerSummaryFailure {
 	readonly success: false;
-	readonly error: IFluidErrorBase;
+	readonly error: Error;
 }
 
+/**
+ * @beta
+ */
 export type LoadSummarizerSummaryResult =
 	| ISummarizerSummarySuccess
 	| ISummarizerSummaryFailure;
