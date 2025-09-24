@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/bubblebench-experimental-tree",
-	"version": "2.61.0",
+	"version": "2.61.1",
 	"private": true,
 	"description": "Bubblemark inspired DDS benchmark",
 	"homepage": "https://fluidframework.com",
@@ -88,8 +88,6 @@
 		}
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

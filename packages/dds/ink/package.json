@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/ink",
-	"version": "2.61.0",
+	"version": "2.61.1",
 	"description": "Ink DDS",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -116,8 +116,6 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

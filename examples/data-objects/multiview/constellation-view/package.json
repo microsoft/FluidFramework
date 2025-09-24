@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/multiview-constellation-view",
-	"version": "2.61.0",
+	"version": "2.61.1",
 	"private": true,
 	"description": "View for multiview sample",
 	"homepage": "https://fluidframework.com",
@@ -78,8 +78,6 @@
 		}
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }
