@@ -320,6 +320,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				this.editManager.localSessionId,
 				newRevision,
 				this.detachedRevision,
+				branchId,
 			);
 			this.editManager.advanceMinimumSequenceNumber(newRevision, false);
 			return undefined;

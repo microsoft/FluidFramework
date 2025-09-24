@@ -540,7 +540,7 @@ export class EditManager<
 		sessionId: SessionId,
 		sequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
-		branchId: BranchId = "main",
+		branchId: BranchId,
 	): void {
 		assert(newCommits.length > 0, 0xad8 /* Expected at least one sequenced change */);
 		assert(
