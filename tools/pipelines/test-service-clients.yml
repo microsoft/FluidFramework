@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 # test-service-clients pipeline
+# pipeline: https://dev.azure.com/fluidframework/internal/_build?definitionId=80
 
 name: $(Build.BuildId)
 
@@ -82,7 +83,7 @@ stages:
       poolBuild: Small-eastus2
       testPackage: ${{ variables.testOdspPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
-      testCommand: test:realsvc:odsp:run
+      testCommand: test:realsvc:odsp
       artifactBuildId: $(resources.pipeline.client.runID)
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
