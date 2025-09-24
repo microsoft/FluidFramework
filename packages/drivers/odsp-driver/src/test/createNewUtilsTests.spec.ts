@@ -118,6 +118,7 @@ describe("Create New Utils Tests", () => {
 		fileEntry = {
 			docId: hashedDocumentId,
 			resolvedUrl,
+			fileVersion: undefined,
 		};
 	});
 
@@ -129,6 +130,7 @@ describe("Create New Utils Tests", () => {
 			{
 				docId: hashedDocumentId,
 				resolvedUrl,
+				fileVersion: undefined,
 			},
 			createChildLogger(),
 		);
