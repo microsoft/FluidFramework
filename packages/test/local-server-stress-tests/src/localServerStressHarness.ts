@@ -1442,7 +1442,7 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 
 			// in order to validate we need to disconnect to ensure
 			// no changes arrive between capturing the state and validating
-			// the said against the source container
+			// the state against the source container
 			sourceClient.container.disconnect();
 
 			const pendingLocalState = await sourceClient.container.getPendingLocalState();
