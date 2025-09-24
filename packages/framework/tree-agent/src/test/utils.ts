@@ -15,7 +15,7 @@ import { type ImplicitFieldSchema, TreeViewConfiguration } from "@fluidframework
 import {
 	SharedTree,
 	TreeAlpha,
-	asTreeViewAlpha,
+	asAlpha,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	type ReadableField,
@@ -133,7 +133,7 @@ async function queryDomain<TSchema extends ImplicitFieldSchema, T = ReadableFiel
 	view.initialize(initialTree);
 	const client = createLlmClient(provider);
 	await (options?.subtree === undefined
-		? createSemanticAgent(client, asTreeViewAlpha(view), {
+		? createSemanticAgent(client, asAlpha(view), {
 				log: options?.log,
 				domainHints: options?.domainHints,
 				treeToString: options?.treeToString as (root: ReadableField<TSchema>) => string,

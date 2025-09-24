@@ -174,14 +174,6 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 		}
 		this.#messages.push(new SystemMessage(this.systemPrompt));
 		this.options?.log?.(`## System Prompt\n\n${this.systemPrompt}\n\n`);
-		if (this.options?.domainHints !== undefined) {
-			this.#messages.push(
-				new HumanMessage(
-					`Here is some information about my application domain: ${this.options.domainHints}\n\n`,
-				),
-			);
-			this.options?.log?.(`## Domain Hints\n\n"${this.options.domainHints}"\n\n`);
-		}
 	}
 
 	private async edit(functionCode: string): Promise<string> {
@@ -384,6 +376,11 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 		const details: SchemaDetails = { hasHelperMethods: false };
 		const typescriptSchemaTypes = getZodSchemaAsTypeScript(domainTypes, details);
 
+		const domainHints =
+			this.options?.domainHints === undefined
+				? ""
+				: `\nThe application supplied the following additional instructions: ${this.options.domainHints}`;
+
 		const helperMethodExplanation = details.hasHelperMethods
 			? `Manipulating the data using the APIs described below is allowed, but when possible ALWAYS prefer to use the application helper methods exposed on the schema TypeScript types if the goal can be accomplished that way.
 It will often not be possible to fully accomplish the goal using those helpers. When this is the case, mutate the objects as normal, taking into account the following guidance.`
@@ -411,12 +408,6 @@ The JSON tree adheres to the following Typescript schema:
 
 \`\`\`typescript
 ${typescriptSchemaTypes}
-\`\`\`
-
-The current state of the tree (a \`${getFriendlySchema(field)}\`) is:
-
-\`\`\`JSON
-${stringified}
 \`\`\`
 
 If the user asks you a question about the tree, you should inspect the state of the tree and answer the question. When answering such a question, DO NOT answer with information that is not part of the document unless requested to do so.
@@ -467,7 +458,16 @@ When possible, ensure that the edits preserve the identity of objects already in
 
 Once data has been removed from the tree (e.g. replaced via assignment, or removed from an array), that data cannot be re-inserted into the tree - instead, it must be deep cloned and recreated.
 
-${builderExplanation}Finally, double check that the edits would accomplish the user's request (if it is possible).`;
+${builderExplanation}Finally, double check that the edits would accomplish the user's request (if it is possible).
+
+### Application data
+
+${domainHints}
+The current state of the application tree (a \`${getFriendlySchema(field)}\`) is:
+
+\`\`\`JSON
+${stringified}
+\`\`\``;
 		return prompt;
 	}
 
