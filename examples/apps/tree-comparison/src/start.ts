@@ -3,7 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
+import {
+	createExampleDriver,
+	getSpecifiedServiceFromWebpack,
+} from "@fluid-example/example-driver";
+import { StaticCodeLoader } from "@fluid-example/example-utils";
+import type { IContainer } from "@fluidframework/container-definitions";
+import {
+	createDetachedContainer,
+	loadExistingContainer,
+} from "@fluidframework/container-loader/legacy";
 import React from "react";
 import ReactDOM from "react-dom";
 
@@ -36,24 +45,64 @@ const render = (model: IInventoryListAppModel) => {
 };
 
 async function start(): Promise<void> {
-	const modelLoader = new TinyliciousModelLoader<IInventoryListAppModel>(
-		new StaticCodeLoader(new InventoryListContainerRuntimeFactory()),
-	);
+	const service = getSpecifiedServiceFromWebpack();
+	const {
+		urlResolver,
+		documentServiceFactory,
+		createCreateNewRequest,
+		createLoadExistingRequest,
+	} = await createExampleDriver(service);
+
+	const codeLoader = new StaticCodeLoader(new InventoryListContainerRuntimeFactory());
 
 	let id: string;
-	let model: IInventoryListAppModel;
+	let container: IContainer;
 
 	if (location.hash.length === 0) {
-		const createResponse = await modelLoader.createDetached("1.0");
-		model = createResponse.model;
-		id = await createResponse.attach();
+		// Some services support or require specifying the container id at attach time (local, odsp). For
+		// services that do not (t9s), the passed id will be ignored.
+		id = Date.now().toString();
+		const createNewRequest = createCreateNewRequest(id);
+		container = await createDetachedContainer({
+			codeDetails: { package: "1.0" },
+			urlResolver,
+			documentServiceFactory,
+			codeLoader,
+		});
+		await container.attach(createNewRequest);
+		// For most services, the id on the resolvedUrl is the authoritative source for the container id
+		// (regardless of whether the id passed in createCreateNewRequest is respected or not). However,
+		// for odsp the id is a hashed combination of drive and container ID which we can't use. Instead,
+		// we retain the id we generated above.
+		if (service !== "odsp") {
+			if (container.resolvedUrl === undefined) {
+				throw new Error("Resolved Url unexpectedly missing!");
+			}
+			id = container.resolvedUrl.id;
+		}
 	} else {
 		id = location.hash.substring(1);
-		model = await modelLoader.loadExisting(id);
+		container = await loadExistingContainer({
+			request: await createLoadExistingRequest(id),
+			urlResolver,
+			documentServiceFactory,
+			codeLoader,
+		});
 	}
+
+	// Get the model from the container
+	const model = (await container.getEntryPoint()) as IInventoryListAppModel;
 
 	render(model);
 	updateTabForId(id);
 }
 
-start().catch((error) => console.error(error));
+try {
+	await start();
+} catch (error) {
+	console.error(error);
+	console.log(
+		"%cEnsure you are running the appropriate Fluid Server for the selected service\nUse:`npm run start:server` for local, or configure ODSP for odsp",
+		"font-size:30px",
+	);
+}
