@@ -176,27 +176,37 @@ export async function loadExistingContainer(
 }
 
 /**
- * todo
+ * Properties required to load a frozen container from pending state.
  * @legacy @alpha
  */
-export async function loadFrozenContainerFromPendingState(props: {
+export interface ILoadFrozenContainerFromPendingStateProps {
+	/**
+	 * The code loader handles loading the necessary code for running a container once it is loaded.
+	 */
 	readonly codeLoader: ICodeDetailsLoader;
+
+	/**
+	 * The url resolver used by the loader for resolving external urls into Fluid urls.
+	 */
 	readonly urlResolver: IUrlResolver;
+
+	/**
+	 * The request to resolve the container.
+	 */
 	readonly request: IRequest;
 
 	/**
 	 * Pending local state to be applied to the container.
 	 */
 	readonly pendingLocalState: string;
+
 	/**
-	 * A property bag of options/policies used by various layers
-	 * to control features
+	 * A property bag of options/policies used by various layers to control features.
 	 */
 	readonly options?: IContainerPolicies | undefined;
 
 	/**
-	 * Scope is provided to all container and is a set of shared
-	 * services for container's to integrate with their host environment.
+	 * Scope is provided to all container and is a set of shared services for container's to integrate with their host environment.
 	 */
 	readonly scope?: FluidObject | undefined;
 
@@ -214,7 +224,16 @@ export async function loadFrozenContainerFromPendingState(props: {
 	 * Client details provided in the override will be merged over the default client.
 	 */
 	readonly clientDetailsOverride?: IClientDetails | undefined;
-}): Promise<IContainer> {
+}
+
+/**
+ * Loads a frozen container from pending local state.
+ * @param props - Properties required to load a frozen container from pending state.
+ * @legacy @alpha
+ */
+export async function loadFrozenContainerFromPendingState(
+	props: ILoadFrozenContainerFromPendingStateProps,
+): Promise<IContainer> {
 	return loadExistingContainer({
 		...props,
 		documentServiceFactory: new FrozenDocumentServiceFactory(),

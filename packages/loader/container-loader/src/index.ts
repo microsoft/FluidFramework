@@ -14,6 +14,7 @@ export {
 	type ICreateDetachedContainerProps,
 	type ILoadExistingContainerProps,
 	type IRehydrateDetachedContainerProps,
+	type ILoadFrozenContainerFromPendingStateProps,
 } from "./createAndLoadContainerUtils.js";
 export {
 	type ICodeDetailsLoader,
