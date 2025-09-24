@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { getSpecifiedServiceFromWebpack } from "@fluid-example/example-driver";
 import {
 	getPresence,
 	// eslint-disable-next-line import/no-deprecated
@@ -35,12 +36,47 @@ const containerSchema = {
 export type PresenceTrackerSchema = typeof containerSchema;
 
 /**
+ * Create appropriate client based on the service type
+ */
+function createClient() {
+	const service = getSpecifiedServiceFromWebpack();
+	switch (service) {
+		case "t9s":
+			return new TinyliciousClient();
+		case "odsp":
+			// For ODSP support with the client pattern, you'll need to configure OdspClient
+			// with appropriate tokenProvider, siteUrl, driveId, etc. based on your setup.
+			// This example focuses on the TinyliciousClient pattern.
+			throw new Error(
+				"ODSP service requires additional configuration for the client pattern. " +
+					"Please refer to OdspClient documentation or use t9s service instead.",
+			);
+		case "local":
+			throw new Error(
+				"Local service is not supported with the client pattern used by this example. Use t9s service instead.",
+			);
+		default:
+			throw new Error(`Unsupported service: ${service}`);
+	}
+}
+// data object requires 2.41 or later.
+const containerSchema = {
+	initialObjects: {
+		// Optional Presence Manager object placed within container schema for experimental presence access
+		// eslint-disable-next-line import/no-deprecated
+		presence: ExperimentalPresenceManager,
+	},
+} satisfies ContainerSchema;
+
+export type PresenceTrackerSchema = typeof containerSchema;
+
+/**
  * Start the app and render.
  *
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
 async function start() {
-	const client = new TinyliciousClient();
+	const client = createClient();
 	let container: IFluidContainer<PresenceTrackerSchema>;
 
 	let id: string;
