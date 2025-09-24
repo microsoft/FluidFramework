@@ -107,6 +107,12 @@ export interface ITreeAlpha extends ITree {
 	createSharedBranch(): string;
 
 	/**
+	 * Returns a list of all shared branches that currently exist on this tree.
+	 * Any one of them can be checked out using {@link ITreeAlpha.viewSharedBranchWith}.
+	 */
+	getSharedBranchIds(): string[];
+
+	/**
 	 * Returns a view of the tree on the specified shared branch, using the provided schema.
 	 * See {@link ViewableTree.viewWith}.
 	 */
@@ -532,6 +538,8 @@ export interface TreeViewEvents {
 /**
  * Retrieve the {@link TreeViewAlpha | alpha API} for a {@link TreeView}.
  * @alpha
+ * @deprecated Use {@link asAlpha} instead.
+ * @privateRemarks Despite being deprecated, this function should be used within the tree package (outside of tests) rather than `asAlpha` in order to avoid circular import dependencies.
  */
 export function asTreeViewAlpha<TSchema extends ImplicitFieldSchema>(
 	view: TreeView<TSchema>,

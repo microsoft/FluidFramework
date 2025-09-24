@@ -31,14 +31,11 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 import { strict as assert } from "node:assert";
-import {
-	asTreeViewAlpha,
-	SchemaFactory,
-	TreeViewConfiguration,
-} from "../../simple-tree/index.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { initialize } from "../../shared-tree/schematizeTree.js";
 import { FieldKinds } from "../../feature-libraries/index.js";
+import { asAlpha } from "../../api.js";
 
 const rootPath: NormalizedUpPath = {
 	detachedNodeId: undefined,
@@ -190,7 +187,7 @@ function createInitializedView() {
 		child: factory.optional(ChildNodeSchema),
 	}) {}
 	const provider = new TestTreeProviderLite();
-	const view = asTreeViewAlpha(
+	const view = asAlpha(
 		provider.trees[0].viewWith(
 			new TreeViewConfiguration({
 				schema: RootNodeSchema,
@@ -493,7 +490,7 @@ describe("Undo and redo", () => {
 		class Schema extends sf.object("Object", { foo: sf.number }) {}
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const tree = DefaultTestSharedTreeKind.getFactory().create(runtime, "tree");
-		const view = asTreeViewAlpha(tree.viewWith(new TreeViewConfiguration({ schema: Schema })));
+		const view = asAlpha(tree.viewWith(new TreeViewConfiguration({ schema: Schema })));
 		view.initialize({ foo: 1 });
 		assert.equal(tree.isAttached(), false);
 		let revertible: Revertible | undefined;

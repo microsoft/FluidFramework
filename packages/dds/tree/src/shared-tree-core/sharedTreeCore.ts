@@ -7,7 +7,11 @@ import type { IFluidLoadable, ITelemetryBaseLogger } from "@fluidframework/core-
 import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import type {
+	IIdCompressor,
+	SessionId,
+	SessionSpaceCompressedId,
+} from "@fluidframework/id-compressor";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	IRuntimeMessageCollection,
@@ -150,6 +154,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			changeFamily,
 			localSessionId,
 			this.mintRevisionTag,
+			(branchId) => this.registerSharedBranch(branchId),
 			rebaseLogger,
 		);
 
@@ -376,6 +381,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			);
 
 			commits.length = 0;
+			branchId = undefined;
 		};
 
 		// Get a list of all the commits from the messages.
@@ -413,8 +419,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 						brand(envelope.referenceSequenceNumber),
 						message.branchId,
 					);
-
-					this.registerSharedBranch(message.branchId);
 					break;
 				}
 				default:
@@ -455,6 +459,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		return this.editManager.getLocalBranch("main");
 	}
 
+	public getSharedBranchIds(): string[] {
+		return this.editManager
+			.getSharedBranchIds()
+			.filter((id): id is SessionSpaceCompressedId => id !== "main")
+			.map((id) => this.idCompressor.decompress(id));
+	}
 	public createSharedBranch(): string {
 		const branchId = this.idCompressor.generateCompressedId();
 		this.addBranch(branchId);
@@ -464,7 +474,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 	protected addBranch(branchId: BranchId): void {
 		this.editManager.addBranch(branchId);
-		this.registerSharedBranch(branchId);
 	}
 
 	public getSharedBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChange> {
