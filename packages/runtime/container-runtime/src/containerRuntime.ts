@@ -139,10 +139,10 @@ import {
 	isValidMinVersionForCollab,
 	RequestParser,
 	RuntimeHeaders,
+	semanticVersionToMinimumVersionForCollab,
 	seqFromTree,
 	TelemetryContext,
 } from "@fluidframework/runtime-utils/internal";
-import { semanticVersionToMinimumVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import type {
 	IEventSampler,
 	IFluidErrorBase,
