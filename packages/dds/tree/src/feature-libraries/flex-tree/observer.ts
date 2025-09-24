@@ -24,10 +24,16 @@ export interface Observer {
 	observeNodeField(node: FlexTreeNode, key: FieldKey): void;
 	observeParentOf(node: FlexTreeNode): void;
 }
+
 /**
  * The current observer, if any.
  * @remarks
  * Set via {@link setObserver} as used by {@link withObservation}.
+ * It should not be assigned in any other way.
+ * @privateRemarks
+ * This is exported directly as a property instead of via a getter for reduced overhead (less code, faster access) as this is used on some hot paths and its performance matters.
+ * The case where this is undefined (no observation) is particularly important for performance as we do not want to regress code which is not using this feature very much.
+ * Since it is not exported outside the package, this seems like a fine tradeoff, but could be reevaluated with some benchmarking if needed.
  */
 export let currentObserver: Observer | undefined;
 
