@@ -3,33 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { IResolvedUrl } from "./urlResolver.js";
 
 /**
- * Describes what kind of content is stored in cache entry.
- * @internal
- */
-export const snapshotKey = "snapshot";
-
-/**
- * Describes key for partial snapshot with loading GroupId in cache entry.
- * @internal
- */
-export const snapshotWithLoadingGroupIdKey = "snapshotWithLoadingGroupId";
-
-/**
- * @legacy @beta
- */
-export type CacheContentType = "snapshot" | "ops" | "snapshotWithLoadingGroupId";
-
-/*
  * File / container identifier.
  * There is overlapping information here - host can use all of it or parts
  * to implement storage / identify files.
- */
-/**
  * @legacy @beta
- * @deprecated This interface was move to `@fluidframework/driver-definitions`. Please update your references.
  */
 export interface IFileEntry {
 	/**
@@ -44,6 +24,7 @@ export interface IFileEntry {
 	 * This is IOdspResolvedUrl in case of ODSP driver.
 	 */
 	resolvedUrl: IResolvedUrl;
+
 	/**
 	 * Optional version of the file.
 	 */
@@ -53,7 +34,6 @@ export interface IFileEntry {
 /**
  * Cache entry. Identifies file that this entry belongs to, and type of content stored in it.
  * @legacy @beta
- * @deprecated This interface was move to `@fluidframework/driver-definitions`. Please update your references.
  */
 export interface IEntry {
 	/**
@@ -61,7 +41,7 @@ export interface IEntry {
 	 * Each file can have multiple types of entries associated with it.
 	 * For example, it can be snapshot, blob, ops, etc.
 	 */
-	type: CacheContentType;
+	type: string;
 
 	/**
 	 * Identifies individual entry for a given file and type.
@@ -77,7 +57,6 @@ export interface IEntry {
 /**
  * Cache entry. Identifies file that this entry belongs to, and type of content stored in it.
  * @legacy @beta
- * @deprecated This interface was move to `@fluidframework/driver-definitions`. Please update your references.
  */
 export interface ICacheEntry extends IEntry {
 	/**
@@ -93,7 +72,6 @@ export interface ICacheEntry extends IEntry {
  * IPersistedCache will be considered stale and removed after 2 days. Read the README for more
  * information.
  * @legacy @beta
- * @deprecated This interface was move to `@fluidframework/driver-definitions`. Please update your references.
  */
 export interface IPersistedCache {
 	/**
@@ -101,7 +79,7 @@ export interface IPersistedCache {
 	 * @param entry - cache entry, identifies file and particular key for this file.
 	 * @returns Cached value. undefined if nothing is cached.
 	 */
-	get(entry: ICacheEntry): Promise<any>;
+	get(entry: ICacheEntry): Promise<unknown>;
 
 	/**
 	 * Put the value into cache.
@@ -109,7 +87,7 @@ export interface IPersistedCache {
 	 * @param entry - cache entry.
 	 * @param value - JSON-serializable content.
 	 */
-	put(entry: ICacheEntry, value: any): Promise<void>;
+	put(entry: ICacheEntry, value: unknown): Promise<void>;
 
 	/**
 	 * Removes the entries from the cache for given parameters.

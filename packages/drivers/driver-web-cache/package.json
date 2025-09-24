@@ -91,7 +91,8 @@
 	"dependencies": {
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/odsp-driver-definitions": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"idb": "^6.1.2"
 	},

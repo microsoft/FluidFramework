@@ -2015,15 +2015,18 @@ importers:
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../../packages/common/core-utils
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/common/driver-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../../packages/loader/driver-utils
       '@fluidframework/odsp-doclib-utils':
         specifier: workspace:~
         version: link:../../../packages/utils/odsp-doclib-utils
       '@fluidframework/odsp-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/odsp-driver
-      '@fluidframework/odsp-driver-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/odsp-driver-definitions
       '@fluidframework/odsp-urlresolver':
         specifier: workspace:~
         version: link:../../../packages/drivers/odsp-urlResolver
@@ -9701,9 +9704,12 @@ importers:
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../common/core-utils
-      '@fluidframework/odsp-driver-definitions':
+      '@fluidframework/driver-definitions':
         specifier: workspace:~
-        version: link:../odsp-driver-definitions
+        version: link:../../common/driver-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../loader/driver-utils
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -14949,9 +14955,6 @@ importers:
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../dds/matrix
-      '@fluidframework/odsp-driver-definitions':
-        specifier: workspace:~
-        version: link:../../drivers/odsp-driver-definitions
       '@fluidframework/ordered-collection':
         specifier: workspace:~
         version: link:../../dds/ordered-collection
