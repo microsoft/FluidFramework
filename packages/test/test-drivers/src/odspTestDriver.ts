@@ -11,6 +11,7 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	IDocumentServiceFactory,
 	IUrlResolver,
+	type IPersistedCache,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	IPublicClientConfig,
@@ -19,7 +20,6 @@ import {
 } from "@fluidframework/odsp-doclib-utils/internal";
 import type {
 	HostStoragePolicy,
-	IPersistedCache,
 	OdspResourceTokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {

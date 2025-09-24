@@ -18,5 +18,30 @@ export {
 	treeDataObjectInternal,
 	TreeViewComponent,
 } from "./reactSharedTreeView.js";
-export { useTree } from "./useTree.js";
+export type { ObservationOptions } from "./useObservation.js";
+export type {
+	NodeRecord,
+	PropTreeNode,
+	PropTreeNodeRecord,
+	PropTreeValue,
+	UnwrapPropTreeNode,
+	UnwrapPropTreeNodeRecord,
+	WrapPropTreeNodeRecord,
+	WrapNodes,
+	IsMappableObjectType,
+} from "./propNode.js";
+export {
+	toPropTreeNode,
+	toPropTreeRecord,
+	unwrapPropTreeNode,
+	unwrapPropTreeRecord,
+} from "./propNode.js";
+export {
+	useTree,
+	usePropTreeNode,
+	usePropTreeRecord,
+	useTreeObservations,
+	withTreeObservations,
+	withMemoizedTreeObservations,
+} from "./useTree.js";
 export { objectIdNumber } from "./simpleIdentifier.js";

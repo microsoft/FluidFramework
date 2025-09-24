@@ -4,7 +4,7 @@
  */
 
 export { ConnectionState } from "./connectionState.js";
-export { type IContainerExperimental, waitContainerToCatchUp } from "./container.js";
+export { type ContainerAlpha, waitContainerToCatchUp, asLegacyAlpha } from "./container.js";
 export {
 	createDetachedContainer,
 	loadExistingContainer,
