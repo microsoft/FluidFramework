@@ -87,7 +87,7 @@
     "@types/sinon": "^9.0.9",
     "@types/uuid": "^8.3.0",
     "concurrently": "^6.2.0",
-    "eslint": "~8.55.0",
+    "eslint": "~8.6.0",
     "ioredis-mock": "^5.2.5",
     "mocha": "^10.0.0",
     "nyc": "^15.0.0",
