@@ -871,7 +871,7 @@ export class BlobManager {
 		const redirectTableEntries = [...this.redirectTable.entries()];
 		for (const [localId, detachedStorageId] of redirectTableEntries) {
 			const newStorageId = detachedStorageTable.get(detachedStorageId);
-			assert(newStorageId !== undefined, "Couldn't find a matching storage ID");
+			assert(newStorageId !== undefined, 0xc53 /* Couldn't find a matching storage ID */);
 			this.setRedirection(localId, newStorageId);
 			// set identity (id -> id) entry
 			this.setRedirection(newStorageId, newStorageId);

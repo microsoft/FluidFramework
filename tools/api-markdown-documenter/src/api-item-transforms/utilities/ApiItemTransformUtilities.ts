@@ -454,23 +454,9 @@ export function shouldItemBeIncluded(
  *
  * @public
  */
-export function filterItems(
-	apiItems: readonly ApiItem[],
+export function filterItems<TApiItem extends ApiItem>(
+	apiItems: readonly TApiItem[],
 	config: ApiItemTransformationConfiguration,
-): ApiItem[] {
+): TApiItem[] {
 	return apiItems.filter((member) => shouldItemBeIncluded(member, config));
-}
-
-/**
- * Filters and returns the child members of the provided `apiItem` to include only those desired by the user configuration.
- * Accounts for {@link DocumentationSuiteConfiguration.minimumReleaseLevel} and {@link DocumentationSuiteConfiguration.exclude}.
- *
- * @param apiItem - The API item being queried.
- * @param config - See {@link ApiItemTransformationConfiguration}.
- */
-export function getFilteredMembers(
-	apiItem: ApiItem,
-	config: ApiItemTransformationConfiguration,
-): ApiItem[] {
-	return filterItems(apiItem.members, config);
 }

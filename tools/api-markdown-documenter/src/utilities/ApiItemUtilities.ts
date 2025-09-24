@@ -90,13 +90,19 @@ export type ApiMemberKind = Exclude<
 >;
 
 /**
+ * `ApiItem` union type representing constructor-like API kinds.
+ *
+ * @public
+ */
+export type ApiConstructorLike = ApiConstructor | ApiConstructSignature;
+
+/**
  * `ApiItem` union type representing function-like API kinds.
  *
  * @public
  */
 export type ApiFunctionLike =
-	| ApiConstructSignature
-	| ApiConstructor
+	| ApiConstructorLike
 	| ApiFunction
 	| ApiMethod
 	| ApiMethodSignature;

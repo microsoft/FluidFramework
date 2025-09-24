@@ -136,7 +136,7 @@ stages:
         - name: FORCE_COLOR
           value: 1
         - name: testPackageDir
-          value: '${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}'
+          value: '$(Build.SourcesDirectory)/node_modules/${{ parameters.testPackage }}'
         - name: testPackageFilePattern
           value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-[0-9]*.tgz
         # Note that this path must match the path that the packed packages are saved to in the build pipeline.
@@ -150,7 +150,7 @@ stages:
 
         steps:
         # Setup
-        - checkout: none
+        - checkout: git://internal/ff_pipeline_host
           clean: true
 
         # Install self-signed cert for R11s deployment in local cert store
@@ -206,7 +206,19 @@ stages:
 
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
+        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+          parameters:
+            buildDirectory: $(Build.SourcesDirectory)
+
         - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
+
+        - task: Bash@3
+          displayName: Install base dependencies
+          inputs:
+            targetType: 'inline'
+            script: |
+              set -eu -o pipefail
+              pnpm install
 
         # Download artifact
         - task: DownloadPipelineArtifact@2
@@ -229,26 +241,13 @@ stages:
             # preferTriggeringPipeline: true
 
         - task: Bash@3
-          displayName: Create test directory
-          inputs:
-            targetType: 'inline'
-            script: |
-              set -eu -o pipefail
-
-              mkdir ${{ parameters.testWorkspace }}
-
-        - task: Bash@3
           name: Initialize
           displayName: Initialize
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ parameters.testWorkspace }}
+            workingDirectory: $(Build.SourcesDirectory)
             script: |
               set -eu -o pipefail
-
-              echo Initialize package
-              npm init --yes
-
               if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
                 echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls ${{ variables.testPackagePathPattern }}`"
               else
@@ -256,18 +255,16 @@ stages:
                 echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more than one found"
                 exit -1
               fi
-
-        # Install test and logger packages
+        # Install test package
         - task: Bash@3
-          displayName: 'npm install'
+          displayName: 'pnpm install'
           # ADO feeds have latency on the order of minutes before packages are available downstream. See:
           # https://learn.microsoft.com/en-us/azure/devops/artifacts/concepts/upstream-sources?view=azure-devops#upstream-sources-health-status
           # This pipeline installs packages which were published very recently relative to its runtime, hence the rather high retry count here.
           retryCountOnTaskFailure: 10
           inputs:
-            workingDirectory: ${{ parameters.testWorkspace }}
             targetType: 'inline'
-            script: 'npm install $(Initialize.testPackageTgz) ${{ parameters.loggerPackage }}'
+            script: 'pnpm install $(Initialize.testPackageTgz)'
 
         # Download Test Files & Install Extra Dependencies
         # These steps are intended to include extra dependencies that are not available as
@@ -296,7 +293,7 @@ stages:
           - task: Bash@3
             displayName: Unpack test files
             inputs:
-              workingDirectory: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
+              workingDirectory: $(Build.SourcesDirectory)/node_modules/${{ parameters.testPackage }}
               targetType: 'inline'
               script: |
                 set -eu -o pipefail
@@ -315,13 +312,12 @@ stages:
           - task: Bash@3
             displayName: Copy devDependencies
             inputs:
-              workingDirectory: ${{ parameters.testWorkspace }}
               targetType: 'inline'
               script: |
                 set -eu -o pipefail
 
-                testPkgJsonPath=${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/package.json
-                pkgJsonPath=${{ parameters.testWorkspace }}/package.json
+                testPkgJsonPath=$(Build.SourcesDirectory)/node_modules/${{ parameters.testPackage }}/package.json
+                pkgJsonPath=$(Build.SourcesDirectory)/package.json
                 node -e "
                   const { devDependencies } = require('$testPkgJsonPath');
                   const pkg = require('$pkgJsonPath');
@@ -330,12 +326,11 @@ stages:
                 "
 
           - task: Bash@3
-            displayName: 'npm install - extra dependencies for test files'
+            displayName: 'pnpm install - extra dependencies for test files'
             retryCountOnTaskFailure: 10
             inputs:
-              workingDirectory: ${{ parameters.testWorkspace }}
               targetType: 'inline'
-              script: 'npm install'
+              script: 'pnpm install --no-frozen-lockfile'
 
         - ${{ if eq(parameters.cacheCompatVersionsInstalls, true) }}:
           - task: Cache@2
@@ -344,7 +339,7 @@ stages:
             continueOnError: true
             inputs:
               key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}"'
-              path: ${{ parameters.testWorkspace }}/node_modules/@fluid-private/test-version-utils/node_modules/.legacy/
+              path: $(Build.SourcesDirectory)/node_modules/@fluid-private/test-version-utils/node_modules/.legacy/
 
         # Only check out tenants from the tenant pool if we are running tests against ODSP
         - ${{ if or(eq(parameters.stageId, 'e2e_odsp'), eq(parameters.stageId, 'stress_tests_odsp')) }}:
@@ -367,13 +362,12 @@ stages:
             env:
               SYSTEM_ACCESSTOKEN: $(System.AccessToken)
             inputs:
-              workingDirectory: ${{ parameters.testWorkspace }}
               targetType: 'inline'
               script: |
                 set -eu -o pipefail
 
                 # Increase the maximum time to wait for a tenant to 1 hour to accommodate multiple test runs at the same time.
-                npx --package=@ff-internal/trips-setup@0.0.5 -- trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN
+                pnpm exec trips-setup -- --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN
                 echo "##vso[task.setvariable variable=tenantSetupSuccess;]true"
 
         # run the test
@@ -388,7 +382,7 @@ stages:
               login__microsoft__clientId: $(appClientId)
           inputs:
             command: 'custom'
-            workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
+            workingDir: $(Build.SourcesDirectory)/node_modules/${{ parameters.testPackage }}
             customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
         - ${{ if eq(parameters.skipTestResultPublishing, false) }}:
@@ -430,7 +424,7 @@ stages:
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - Tinylicious Log
             inputs:
-              targetPath: '${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/tinylicious.log'
+              targetPath: '$(Build.SourcesDirectory)/node_modules/${{ parameters.testPackage }}/tinylicious.log'
               artifactName: 'tinyliciousLog_attempt-$(System.JobAttempt)'
               publishLocation: 'pipeline'
             condition: always()
@@ -461,8 +455,7 @@ stages:
               targetType: 'inline'
               script: |
                 set -eu -o pipefail
-
-                npx --package=@ff-internal/trips-setup@0.0.5 -- trips-cleanup --reservationId=$(stringBearerToken)
+                pnpm exec trips-cleanup -- --reservationId=$(stringBearerToken)
             condition: eq(variables['tenantSetupSuccess'], 'true')
 
         # Log Test Failures
@@ -479,4 +472,4 @@ stages:
     stageId: ${{ parameters.stageId }}
     uploadTestPassRateTelemetry: ${{ parameters.uploadTestPassRateTelemetry }}
     pipelineIdentifierForTelemetry: ${{ parameters.pipelineIdentifierForTelemetry }}
-    testWorkspace: ${{ parameters.testWorkspace }}
+    testWorkspace: $(Build.SourcesDirectory)

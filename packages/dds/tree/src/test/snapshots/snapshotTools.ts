@@ -98,7 +98,8 @@ export function useSnapshotDirectory(dirPath: string = "files"): void {
 
 	beforeEach(function (): void {
 		currentTestName = this.currentTest?.title ?? assert.fail();
-		currentTestFile = path.join(normalizedDir, currentTestName);
+		// .replace removes variant prefixes like "[CJS] ".
+		currentTestFile = path.join(normalizedDir, currentTestName.replace(/^\[.*?] /g, ""));
 	});
 
 	afterEach(() => {

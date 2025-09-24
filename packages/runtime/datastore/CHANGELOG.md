@@ -1,5 +1,30 @@
 # @fluidframework/datastore
 
+## 2.61.0
+
+### Minor Changes
+
+- `minVersionForCollab` is now available on `IFluidDataStoreContext` ([#25130](https://github.com/microsoft/FluidFramework/pull/25130)) [2566772d24](https://github.com/microsoft/FluidFramework/commit/2566772d24a9bcffbb613c6b88517145c2d0ea32)
+
+  `minVersionForCollab` is now passed down from the `ContainerRuntime` to the Datastore layer where it is made available for
+  `SharedObject` construction.
+  DDSes may optionally consume this value and use it to determine which sets of feature flags should be enabled.
+
+  #### Public type changes
+
+  - **@fluidframework/datastore: `FluidDataStoreRuntime`** - Exposes `minVersionForCollab`.
+  - **@fluidframework/runtime-definitions: `IFluidDataStoreContext`** - Exposes optional member `minVersionForCollab`.
+    See `FluidDataStoreContext` for an example implementation.
+  - **@fluidframework/test-runtime-utils: `MockFluidDataStoreContext`, `MockFluidDataStoreRuntime`** - Exposes `minVersionForCollab`
+    either via a getter or as a readonly field.
+
+  Note that the new implementations are optional fields and in some cases accept `undefined`.
+  This is needed for layer compatibility, and in a future release these members will no longer be optional.
+
+- Deprecate submitMessage on FluidDataStoreRuntime and MockFluidDataStoreRuntime ([#25332](https://github.com/microsoft/FluidFramework/pull/25332)) [687378ab1c](https://github.com/microsoft/FluidFramework/commit/687378ab1c02fe8798a5c01153da5aa35ccdc5ae)
+
+  As needed, access `submitMessage` via `IFluidDataStoreContext`/`IFluidParentContext`. See https://github.com/microsoft/FluidFramework/issues/24406 for details.
+
 ## 2.60.0
 
 Dependency updates only.

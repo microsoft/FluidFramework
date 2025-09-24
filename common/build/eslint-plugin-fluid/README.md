@@ -10,7 +10,7 @@ See [ESLint: Name a Plugin](https://eslint.org/docs/latest/extend/plugins) for m
 
 The `@fluid-internal/eslint-plugin-fluid` is directly consumed by the `@fluidframework/eslint-config-fluid` package. Although, it is a best practice to avoid multiple packages which serve similar purpose, this decision was inevitably induced by the `ESLint`'s requirements which enforce:
 
--   Each plugin to be an npm module with a name in the format of `eslint-plugin-foo` or `@scope/eslint-plugin-foo`.
+- Each plugin to be an npm module with a name in the format of `eslint-plugin-foo` or `@scope/eslint-plugin-foo`.
 
 See [ESLint: Name a Plugin](https://eslint.org/docs/latest/extend/plugins#name-a-plugin) for more details. If there is a development in unifying the separate package structure, it should be done to ensure stronger package maintainability.
 

@@ -7,7 +7,6 @@ This guide outlines the steps required to add new ESLint rules, update dependenc
 ### 1. Add New Rule to `eslint-plugin-fluid` (PR 1)
 
 1. **Create the Rule**: Write the new rule following best practices for ESLint. If you need guidance, refer to [ESLint's rule documentation](https://eslint.org/docs/latest/developer-guide/working-with-rules).
-
     - [List of Custom Rules](https://github.com/microsoft/FluidFramework/tree/main/common/build/eslint-plugin-fluid/src/rules)
 
 2. **Testing**: Ensure the rule is thoroughly tested. Tests help validate that the rule behaves as expected across various code scenarios.
@@ -57,9 +56,9 @@ In `@fluidframework/eslint-config-fluid`, update the version of `@fluid-internal
 
 Depending on the scope of the rule, add it to one of the following configurations (NOTE: `recommended.js` extends `minimal-deprecated.js`, and `strict.js` extends `recommended.js`):
 
--   `minimal-deprecated.js`
--   `recommended.js`
--   `strict.js`
+- `minimal-deprecated.js`
+- `recommended.js`
+- `strict.js`
 
 1. **Update Changelog**: Record the change in `eslint-config-fluid`'s `CHANGELOG.md`.
 

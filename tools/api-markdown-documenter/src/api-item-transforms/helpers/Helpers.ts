@@ -74,7 +74,7 @@ import {
  * @param apiItem - The API item whose signature will be rendered.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
- * @returns The doc section if there was any signature content to render, otherwise `undefined`.
+ * @returns The doc section if there was any signature content to render. Otherwise, `undefined`.
  *
  * @public
  */
@@ -204,7 +204,9 @@ function createHeritageTypesContent(
 			apiItem,
 			config,
 		);
-		contents.push(renderedTypeParameters);
+		if (renderedTypeParameters !== undefined) {
+			contents.push(renderedTypeParameters);
+		}
 	}
 
 	if (contents.length === 0) {
@@ -315,7 +317,7 @@ function createHeritageTypeListSpan(
  * @param apiItem - The API item whose `@see` comment blocks will be rendered.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
- * @returns The doc section if there was any signature content to render, otherwise `undefined`.
+ * @returns The doc section if there was any "see also" content to render. Otherwise `undefined`.
  *
  * @public
  */
@@ -355,18 +357,24 @@ export function createSeeAlsoSection(
  * @param contextApiItem - The API item with which the example is associated.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
+ * @returns The doc section, if any type parameters were present. Otherwise, `undefined`.
+ *
  * @public
  */
 export function createTypeParametersSection(
 	typeParameters: readonly TypeParameter[],
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): Section {
+): Section | undefined {
 	const typeParametersTable = createTypeParametersSummaryTable(
 		typeParameters,
 		contextApiItem,
 		config,
 	);
+
+	if (typeParametersTable === undefined) {
+		return undefined;
+	}
 
 	return {
 		type: "section",
@@ -970,15 +978,19 @@ export function createParametersSection(
 	apiFunctionLike: ApiFunctionLike,
 	config: ApiItemTransformationConfiguration,
 ): Section | undefined {
-	if (apiFunctionLike.parameters.length === 0) {
+	const table = createParametersSummaryTable(
+		apiFunctionLike.parameters,
+		apiFunctionLike,
+		config,
+	);
+
+	if (table === undefined) {
 		return undefined;
 	}
 
 	return {
 		type: "section",
-		children: [
-			createParametersSummaryTable(apiFunctionLike.parameters, apiFunctionLike, config),
-		],
+		children: [table],
 		heading: {
 			type: "sectionHeading",
 			title: "Parameters",
