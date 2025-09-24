@@ -14,7 +14,22 @@ export {
 	type ICreateDetachedContainerProps,
 	type ILoadExistingContainerProps,
 	type IRehydrateDetachedContainerProps,
+	type ISummarizerSummaryFailure,
+	type ISummarizerSummarySuccess,
+	type LoadSummarizerSummaryResult,
 } from "./createAndLoadContainerUtils.js";
+export type {
+	IAckSummaryResult,
+	IBroadcastSummaryResult,
+	INackSummaryResult,
+	IRetriableFailureError,
+	ISubmitSummaryOpResult,
+	OnDemandSummarizeResults,
+	SubmitSummaryFailureData,
+	SubmitSummaryResult,
+	SummarizeResultPart,
+	SummaryStage,
+} from "./onDemandSummaryTypes.js";
 export {
 	type ICodeDetailsLoader,
 	type IFluidModuleWithDetails,

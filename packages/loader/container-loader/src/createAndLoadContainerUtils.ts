@@ -36,27 +36,21 @@ import { v4 as uuid } from "uuid";
 
 import { DebugLogger } from "./debugLogger.js";
 import { Loader } from "./loader.js";
+import {
+	summarizerRequestUrl,
+	type LoadSummarizerSummaryResult,
+	type OnDemandSummarizeResults,
+	type SummarizeResultsPromisesLike,
+	type SummarizerLike,
+} from "./onDemandSummaryTypes.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
 
-interface OnDemandSummarizeOptions {
-	readonly reason?: string | undefined;
-	readonly retryOnFailure?: boolean | undefined;
-	readonly fullTree?: boolean | undefined;
-}
-// Local copy of summarize stage promises returned by summarizeOnDemand (avoid runtime dependency)
-interface SummarizeResultsPromisesLike {
-	readonly summarySubmitted: Promise<unknown>;
-	readonly summaryOpBroadcasted: Promise<unknown>;
-	readonly receivedSummaryAckOrNack: Promise<unknown>;
-}
-
-interface SummarizerLike {
-	readonly ISummarizer?: SummarizerLike;
-	summarizeOnDemand(options: OnDemandSummarizeOptions): SummarizeResultsPromisesLike;
-}
-
-const summarizerRequestUrl = "_summarizer";
+export type {
+	ISummarizerSummaryFailure,
+	ISummarizerSummarySuccess,
+	LoadSummarizerSummaryResult,
+} from "./onDemandSummaryTypes.js";
 
 /**
  * Properties necessary for creating and loading a container.
@@ -216,17 +210,7 @@ export async function loadExistingContainer(
  */
 export async function loadSummarizerContainerAndMakeSummary(
 	loadExistingContainerProps: ILoadExistingContainerProps,
-): Promise<
-	| {
-			success: true;
-			summaryResults: {
-				readonly summarySubmitted: unknown;
-				readonly summaryOpBroadcasted: unknown;
-				readonly receivedSummaryAckOrNack: unknown;
-			};
-	  }
-	| { success: false; error: Error }
-> {
+): Promise<LoadSummarizerSummaryResult> {
 	const { logger, configProvider, request: originalRequest } = loadExistingContainerProps;
 	const telemetryProps = {
 		loaderId: uuid(),
@@ -270,9 +254,9 @@ export async function loadSummarizerContainerAndMakeSummary(
 
 	let success = false;
 	let caughtError: IFluidErrorBase | undefined;
-	let summarySubmitted: unknown;
-	let summaryOpBroadcasted: unknown;
-	let receivedSummaryAckOrNack: unknown;
+	let summarySubmitted: OnDemandSummarizeResults["summarySubmitted"];
+	let summaryOpBroadcasted: OnDemandSummarizeResults["summaryOpBroadcasted"];
+	let receivedSummaryAckOrNack: OnDemandSummarizeResults["receivedSummaryAckOrNack"];
 	try {
 		if (container.connectionState !== ConnectionState.Connected) {
 			await new Promise<void>((resolve) => container.once("connected", () => resolve()));
