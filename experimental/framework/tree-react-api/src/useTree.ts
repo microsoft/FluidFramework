@@ -24,7 +24,7 @@ import { useObservation, type ObservationOptions } from "./useObservation.js";
  * See {@link @fluidframework/tree#TreeChangeEvents.treeChanged} for details.
  * @remarks
  * Consider using {@link useTreeObservations} instead which tracks what was observed and only invalidates if it changes.
- * @public
+ * @alpha
  */
 export function useTree(subtreeRoot: TreeNode): number {
 	// Use a React effect hook to invalidate this component when the subtreeRoot changes.
@@ -54,7 +54,7 @@ export function useTree(subtreeRoot: TreeNode): number {
  * @privateRemarks
  * `React.FC` does not seem to be covariant over its input type, so to make use of this more ergonomic,
  * the return type intersects the various ways this could be used (with or without PropTreeNode wrapping).
- * @public
+ * @alpha
  */
 export function withTreeObservations<TIn>(
 	component: React.FC<TIn>,
@@ -68,7 +68,7 @@ export function withTreeObservations<TIn>(
  * {@link withTreeObservations} wrapped with React.memo.
  * @remarks
  * There is no special logic here, just a convenience wrapper.
- * @public
+ * @alpha
  */
 export function withMemoizedTreeObservations<TIn>(
 	component: React.FC<TIn>,
@@ -90,7 +90,7 @@ export function withMemoizedTreeObservations<TIn>(
  * and node status changes will not cause invalidation.
  *
  * For additional type safety to help avoid observing TreeNode content outside of this hook, see {@link PropTreeNode}.
- * @public
+ * @alpha
  */
 export function useTreeObservations<TResult>(
 	trackDuring: () => TResult,
@@ -118,7 +118,7 @@ export function useTreeObservations<TResult>(
  *
  * @remarks
  * Reads content using {@link useTreeObservations} to track dependencies.
- * @public
+ * @alpha
  */
 export function usePropTreeNode<T extends TreeNode | TreeLeafValue, TResult>(
 	propNode: PropTreeValue<T> | T,
@@ -133,7 +133,7 @@ export function usePropTreeNode<T extends TreeNode | TreeLeafValue, TResult>(
 
 /**
  * {@link usePropTreeNode} but takes in a {@link PropTreeNodeRecord}.
- * @public
+ * @alpha
  */
 export function usePropTreeRecord<const T extends PropTreeNodeRecord, TResult>(
 	props: T,
