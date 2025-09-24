@@ -11,6 +11,11 @@ export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
     readonly TreeViewComponent: (props: TreeViewProps<TSchema>) => React_2.JSX.Element;
 }
 
+// @public @system
+export type IsMappableObjectType<T, True = true, False = false, Mapped = {
+    [P in keyof T]: T[P];
+}> = [Mapped] extends [T] ? ([T] extends [Mapped] ? True : False) : False;
+
 // @public
 export type NodeRecord = Record<string, TreeNode | TreeLeafValue>;
 
@@ -95,7 +100,11 @@ export function withMemoizedTreeObservations<TIn>(component: React_2.FC<TIn>, op
 export function withTreeObservations<TIn>(component: React_2.FC<TIn>, options?: ObservationOptions): React_2.FC<TIn> & React_2.FC<WrapNodes<TIn>> & React_2.FC<TIn | WrapNodes<TIn>>;
 
 // @public
-export type WrapNodes<T> = T extends TreeNode ? PropTreeNode<T> : T extends readonly (infer U)[] ? readonly WrapNodes<U>[] : T extends NodeRecord ? WrapPropTreeNodeRecord<T> : T;
+export type WrapNodes<T> = T extends TreeNode ? PropTreeNode<T> : T extends readonly (infer U)[] ? readonly WrapNodes<U>[] : T extends infer U ? IsMappableObjectType<U, {
+    [P in keyof U]: WrapNodes<U[P]>;
+} extends U ? U : {
+    [P in keyof U]: WrapNodes<U[P]>;
+}, T> : T;
 
 // @public
 export type WrapPropTreeNodeRecord<T extends NodeRecord> = {

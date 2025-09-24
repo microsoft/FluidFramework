@@ -28,6 +28,7 @@ export type {
 	UnwrapPropTreeNodeRecord,
 	WrapPropTreeNodeRecord,
 	WrapNodes,
+	IsMappableObjectType,
 } from "./propNode.js";
 export {
 	toPropTreeNode,

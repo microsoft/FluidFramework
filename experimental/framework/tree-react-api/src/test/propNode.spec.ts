@@ -13,6 +13,7 @@ import {
 	toPropTreeNode,
 	toPropTreeRecord,
 	unwrapPropTreeNode,
+	type IsMappableObjectType,
 	type PropTreeNode,
 	type WrapNodes,
 	type WrapPropTreeNodeRecord,
@@ -75,6 +76,68 @@ describe("propNode", () => {
 		allowUnused<requireAssignableTo<Wrapped, { a: 1; b: PropTreeNode<Node> }>>();
 	});
 
+	it("IsMappableObjectType", () => {
+		allowUnused<requireAssignableTo<IsMappableObjectType<{ x: number }>, true>>();
+		allowUnused<requireAssignableTo<IsMappableObjectType<{ readonly x: number }>, true>>();
+		allowUnused<requireAssignableTo<IsMappableObjectType<Record<string, number>>, true>>();
+		allowUnused<requireAssignableTo<IsMappableObjectType<number[]>, true>>();
+
+		// Interestingly, maps are not nominally typed:
+		allowUnused<requireAssignableTo<IsMappableObjectType<Map<number, number>>, true>>();
+		// Constructors are not mappable:
+		allowUnused<requireAssignableTo<IsMappableObjectType<typeof Map>, false>>();
+		// Nor are functions
+		allowUnused<requireAssignableTo<IsMappableObjectType<() => number>, false>>();
+
+		class Nominal {
+			public constructor(x: number) {}
+			protected readonly _nominal = undefined;
+		}
+
+		// Instances of classes with private or protected fields are also not mappable:
+		allowUnused<requireAssignableTo<IsMappableObjectType<Nominal>, false>>();
+		// TreeNode is nominally type so not mappable:
+		allowUnused<requireAssignableTo<IsMappableObjectType<TreeNode>, false>>();
+
+		// Primitives are mappable since mapping over them leaves them unchanged in a generic context:
+		allowUnused<requireAssignableTo<IsMappableObjectType<number>, true>>();
+
+		type Mapped<T> = {
+			[P in keyof T]: T[P];
+		};
+
+		type MappedNumberGeneric = Mapped<number>;
+
+		allowUnused<requireAssignableTo<MappedNumberGeneric, number>>();
+		allowUnused<requireAssignableTo<number, MappedNumberGeneric>>();
+
+		// Oddly, mapping over a primitive type does change its type if done non-generically
+
+		type MappedNumberDirect = {
+			[P in keyof number]: number[P];
+		};
+
+		// @ts-expect-error MappedNumberDirect is not a number:
+		allowUnused<requireAssignableTo<MappedNumberDirect, number>>();
+
+		// Unions:
+		// True Case: All members are mappable
+		type SimpleUnion = { a: 1 } | { b: 2 };
+		type MappedSimpleUnion = Mapped<SimpleUnion>;
+		allowUnused<requireAssignableTo<MappedSimpleUnion, SimpleUnion>>();
+		allowUnused<requireAssignableTo<SimpleUnion, MappedSimpleUnion>>();
+		allowUnused<requireAssignableTo<IsMappableObjectType<SimpleUnion>, true>>();
+
+		// False Case: Not all members are mappable
+		type Union = { a: 1 } | { b: 2 } | number | Nominal;
+		type MappedUnion = Mapped<Union>;
+
+		// @ts-expect-error Union is lossy when mapped due to having lossy members:
+		allowUnused<requireAssignableTo<MappedUnion, Union>>();
+		allowUnused<requireAssignableTo<Union, MappedUnion>>();
+		allowUnused<requireAssignableTo<IsMappableObjectType<Union>, false>>();
+	});
+
 	it("WrapNodes", () => {
 		const builder = new SchemaFactory("tree-react-api");
 
@@ -91,12 +154,29 @@ describe("propNode", () => {
 		allowUnused<
 			requireAssignableTo<WrapNodes<{ a: 1; b: Node }>, { a: 1; b: PropTreeNode<Node> }>
 		>();
+		// Must not break existing PropTreeNode types:
+		allowUnused<requireAssignableTo<WrapNodes<PropTreeNode<Node>>, PropTreeNode<Node>>>();
 
-		// Trying to wrap the nodes in this case could likely cause issues
+		// Does not break maps, though also doesn't wrap the values:
+		// Note: WrappedMap intentionally preserves the named type here: intellisense for this should be `type WrappedMap = Map<number, Node>`.
+		// We have no known way to test that is preserved, since a flattened mapped type would assignable in both directions.
+		type WrappedMap = WrapNodes<Map<number, Node>>;
+		allowUnused<requireAssignableTo<WrappedMap, Map<number, Node>>>();
+
+		// Does not break maps
+		allowUnused<requireAssignableTo<WrapNodes<Map<number, number>>, Map<number, number>>>();
+
+		// Avoids breaking nominal types while recursing into objects:
 		allowUnused<
 			requireAssignableTo<
-				WrapNodes<{ a: 1; b: Node; c: Nominal; d: typeof Nominal }>,
-				{ a: 1; b: Node; c: Nominal; d: typeof Nominal }
+				WrapNodes<{ a: 1; b: Node; c: Nominal; d: typeof Nominal; e: { inner: Node } }>,
+				{
+					a: 1;
+					b: PropTreeNode<Node>;
+					c: Nominal;
+					d: typeof Nominal;
+					e: { inner: PropTreeNode<Node> };
+				}
 			>
 		>();
 
@@ -107,6 +187,14 @@ describe("propNode", () => {
 
 		type WrappedNominal2 = WrapNodes<Nominal2>;
 		allowUnused<requireAssignableTo<WrappedNominal2, Nominal2>>();
+
+		// Does not break unions
+		allowUnused<
+			requireAssignableTo<
+				WrapNodes<{ a: 1 } | { b: Node } | number | Nominal | Node>,
+				{ a: 1 } | { b: PropTreeNode<Node> } | number | Nominal | PropTreeNode<Node>
+			>
+		>();
 
 		/**
 		 * Example deep mapped type which wraps TreeNodes in PropTreeNodes:

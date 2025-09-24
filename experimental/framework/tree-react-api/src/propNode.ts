@@ -22,10 +22,15 @@ export interface PropTreeNode<T extends TreeNode> extends ErasedType<[T, "PropTr
 /**
  * Type TreeNodes in T as {@link PropTreeNode}s.
  * @remarks
- * This only handles a few cases (TreeNode, NodeRecord, arrays) and leaves other types as is.
+ * This only handles a few cases (TreeNode, structurally typed objects fields and arrays) and leaves other types as is.
  * Users which provide other types (e.g. maps) which contain TreeNodes will need to handle wrapping those themselves if the wrapping is desired.
+ *
+ * Users of this should not rely on a given use of TreeNode not being wrapped:
+ * future changes to this API may add more cases which are wrapped, and this will be considered a non-breaking change.
  * @privateRemarks
  * Covering all cases is impossible, and trying to cover more with recursive mapped types can break some of the types by losing methods, private members, etc.
+ * To mitigate this IsMappableObjectType is used for objects, and only mappable types, where the mapping actually impacted the type are modified.
+ *
  * This is intended to cover the common cases, and users can handle other cases manually.
  * See the tests for this for more details.
  * @public
@@ -34,9 +39,44 @@ export type WrapNodes<T> = T extends TreeNode
 	? PropTreeNode<T>
 	: T extends readonly (infer U)[]
 		? readonly WrapNodes<U>[]
-		: T extends NodeRecord
-			? WrapPropTreeNodeRecord<T>
+		: // `T extends (infer U)` distributes over unions, allowing WrapNodes<A|B> to be WrapNodes<A> | WrapNodes<B>.
+			T extends infer U
+			? IsMappableObjectType<
+					U,
+					{
+						[P in keyof U]: WrapNodes<U[P]>;
+					} extends U
+						? // Returning U in this case (when assignable to the mapped type) avoids flatting named interfaces when they are unchanged.
+							U
+						: {
+								[P in keyof U]: WrapNodes<U[P]>;
+							},
+					T
+				>
 			: T;
+
+/**
+ * Detect if a type is a simple structural object.
+ * @remarks
+ * This returns the true case if the type is entirely defined by its set of public properties.
+ * More concretely, this indicates if creating a mapped type based on `T`
+ * will be lossy due to details mapped types cannot access.
+ *
+ * This is shallow, and distributes over unions.
+ *
+ * This also returns the true case for primitive types since mapping over them leaves them unchanged if doing so in a generic context:
+ * Mapping over a primitive does not leave them unchanged if done directly (not to a generic type parameter), but this can not detect that behavior.
+ * This is fine as the use for this is to detect when making a mapped type from a generic type parameter would be lossy.
+ * @system @public
+ */
+export type IsMappableObjectType<
+	T,
+	True = true,
+	False = false,
+	Mapped = {
+		[P in keyof T]: T[P];
+	},
+> = [Mapped] extends [T] ? ([T] extends [Mapped] ? True : False) : False;
 
 /**
  * Casts a node from a {@link PropTreeNode} back to a TreeNode.

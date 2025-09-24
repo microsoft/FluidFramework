@@ -131,22 +131,23 @@ export const InventoryViewMonolithic =
 export const InventoryViewWithHook: React.FC<{ root: PropTreeNode<Inventory> }> = ({
 	root,
 }) => {
-	const data = usePropTreeNode(root, (inventory: Inventory) => {
-		const partsList = inventory.parts;
-		// Example manually wrapping in PropNodes, showing how types without automatic support can still be made type safe.
-		// partsList.map((node) => toPropTreeNode(node)),
-		// Note that Array support is built in now, so this can just be:
-		const nodes = [...partsList];
+	const data: { nodes: readonly PropTreeNode<Part>[]; removeChild: (part: Part) => void } =
+		usePropTreeNode(root, (inventory: Inventory) => {
+			const partsList = inventory.parts;
+			// Example manually wrapping in PropNodes, showing how types without automatic support can still be made type safe.
+			// partsList.map((node) => toPropTreeNode(node)),
+			// Note that Array support is built in now, so this can just be:
+			const nodes = [...partsList];
 
-		// React's linter does not allow hooks in callbacks, but it is safe to suppress this for usePropTreeNode since it runs the callback immediately.
-		// eslint-disable-next-line react-hooks/rules-of-hooks
-		const removeChild = React.useCallback(
-			(part: Part) => partsList.removeAt(Tree.key(part) as number),
-			[partsList],
-		);
+			// React's linter does not allow hooks in callbacks, but it is safe to suppress this for usePropTreeNode since it runs the callback immediately.
+			// eslint-disable-next-line react-hooks/rules-of-hooks
+			const removeChild = React.useCallback(
+				(part: Part) => partsList.removeAt(Tree.key(part) as number),
+				[partsList],
+			);
 
-		return { nodes, removeChild };
-	});
+			return { nodes, removeChild };
+		});
 
 	// Since usePropTreeNode is a hook, we can't use it on each item in this array.
 	// We can however use a component which uses the hook internally.
