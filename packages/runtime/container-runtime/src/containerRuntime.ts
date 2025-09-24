@@ -679,7 +679,7 @@ export const makeLegacySendBatchFn =
 function lastMessageFromMetadata(
 	metadata: IContainerRuntimeMetadata | undefined,
 ): ISummaryMetadataMessage | undefined {
-	return metadata?.documentSchema?.runtime?.explicitSchemaControl
+	return metadata?.documentSchema?.runtime?.explicitSchemaControl === true
 		? metadata?.lastMessage
 		: metadata?.message;
 }
@@ -970,7 +970,7 @@ export class ContainerRuntime
 
 		const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
 			const blobId = context.baseSnapshot?.blobs[blobName];
-			if (context.baseSnapshot && blobId) {
+			if (context.baseSnapshot !== undefined && blobId !== undefined) {
 				// IContainerContext storage api return type still has undefined in 0.39 package version.
 				// So once we release 0.40 container-defn package we can remove this check.
 				assert(
@@ -1010,7 +1010,7 @@ export class ContainerRuntime
 		const runtimeSequenceNumber = messageAtLastSummary?.sequenceNumber;
 		const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
 		// When we load with pending state, we reuse an old snapshot so we don't expect these numbers to match
-		if (!context.pendingLocalState && runtimeSequenceNumber !== undefined) {
+		if (context.pendingLocalState !== undefined && runtimeSequenceNumber !== undefined) {
 			// Unless bypass is explicitly set, then take action when sequence numbers mismatch.
 			// eslint-disable-next-line unicorn/no-lonely-if -- Separate if statements make flow easier to parse
 			if (
@@ -1604,7 +1604,7 @@ export class ContainerRuntime
 			submitSignalFn(envelope, targetClientId);
 		};
 		this.submitSignalFn = (envelope: UnsequencedSignalEnvelope, targetClientId?: string) => {
-			if (envelope.address?.startsWith("/")) {
+			if (envelope.address?.startsWith("/") === true) {
 				throw new Error("General path based addressing is not implemented");
 			}
 			sequenceAndSubmitSignal(envelope, targetClientId);
@@ -2545,7 +2545,7 @@ export class ContainerRuntime
 		);
 
 		// Is document schema explicit control on?
-		const explicitSchemaControl = documentSchema?.runtime.explicitSchemaControl;
+		const explicitSchemaControl = documentSchema?.runtime.explicitSchemaControl === true;
 
 		const metadata: IContainerRuntimeMetadata = {
 			...this.createContainerMetadata,
@@ -2556,7 +2556,7 @@ export class ContainerRuntime
 			telemetryDocumentId: this.telemetryDocumentId,
 			// If explicit document schema control is not on, use legacy way to supply last message (using 'message' property).
 			// Otherwise use new 'lastMessage' property, but also put content into the 'message' property that cases old
-			// runtimes (that preceed document schema control capabilities) to close container on load due to mismatch in
+			// runtimes (that preceded document schema control capabilities) to close container on load due to mismatch in
 			// last message's sequence number.
 			// See also lastMessageFromMetadata()
 			message: explicitSchemaControl
@@ -2957,7 +2957,7 @@ export class ContainerRuntime
 			if ("batchStart" in inboundResult) {
 				const batchStart: BatchStartInfo = inboundResult.batchStart;
 				const result = this.duplicateBatchDetector?.processInboundBatch(batchStart);
-				if (result?.duplicate) {
+				if (result?.duplicate === true) {
 					const error = new DataCorruptionError(
 						"Duplicate batch - The same batch was sequenced twice",
 						{ batchId: batchStart.batchId },
@@ -3427,7 +3427,7 @@ export class ContainerRuntime
 		let checkpoint: IBatchCheckpoint | undefined;
 		// eslint-disable-next-line import/no-deprecated
 		let stageControls: StageControlsExperimental | undefined;
-		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
+		if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback") === true) {
 			if (!this.batchRunner.running && !this.inStagingMode) {
 				stageControls = this.enterStagingMode();
 			}
@@ -3637,7 +3637,7 @@ export class ContainerRuntime
 	private shouldSendOps(): boolean {
 		// Note that the real (non-proxy) delta manager is needed here to get the readonly info. This is because
 		// container runtime's ability to send ops depend on the actual readonly state of the delta manager.
-		return this.connected && !this.innerDeltaManager.readOnlyInfo.readonly;
+		return this.connected && this.innerDeltaManager.readOnlyInfo.readonly !== true;
 	}
 
 	private readonly _quorum: IQuorumClients;
@@ -4302,9 +4302,10 @@ export class ContainerRuntime
 			const handleCount = Object.values(dataStoreTree.tree).filter(
 				(value) => value.type === SummaryType.Handle,
 			).length;
-			const gcSummaryTreeStats = summaryTree.tree[gcTreeKey]
-				? calculateStats(summaryTree.tree[gcTreeKey])
-				: undefined;
+			const gcSummaryTreeStats =
+				summaryTree.tree[gcTreeKey] === undefined
+					? undefined
+					: calculateStats(summaryTree.tree[gcTreeKey]);
 
 			const summaryStats: IGeneratedSummaryStats = {
 				dataStoreCount: this.channelCollection.size,
@@ -4355,7 +4356,7 @@ export class ContainerRuntime
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				head: parent!,
 				message,
-				parents: parent ? [parent] : [],
+				parents: parent === undefined ? [] : [parent],
 			};
 			const uploadData = {
 				...generateSummaryData,
@@ -4441,7 +4442,7 @@ export class ContainerRuntime
 		// the summarizer.
 		if (
 			finalAttempt &&
-			this.mc.config.getBoolean("Fluid.Summarizer.SkipFailingIncorrectSummary")
+			this.mc.config.getBoolean("Fluid.Summarizer.SkipFailingIncorrectSummary") === true
 		) {
 			const error = DataProcessingError.create(
 				"Pending ops during summarization",
@@ -4596,7 +4597,7 @@ export class ContainerRuntime
 
 		// Note that the real (non-proxy) delta manager is used here to get the readonly info. This is because
 		// container runtime's ability to submit ops depend on the actual readonly state of the delta manager.
-		if (this.innerDeltaManager.readOnlyInfo.readonly) {
+		if (this.innerDeltaManager.readOnlyInfo.readonly === true) {
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SubmitOpInReadonly",
 				connected: this.connected,
@@ -5007,7 +5008,7 @@ export class ContainerRuntime
 				// new API, otherwise it will reduce the service performance because the service will need to recalculate the full snapshot
 				// in case previously getSnapshotApi was used and now we use the getVersions API.
 				if (
-					this.isSnapshotInstanceOfISnapshot &&
+					this.isSnapshotInstanceOfISnapshot === true &&
 					this.storage.getSnapshot !== undefined &&
 					this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch2") ===
 						true
@@ -5028,10 +5029,7 @@ export class ContainerRuntime
 						scenarioName,
 						FetchSource.noCache,
 					);
-					assert(
-						!!versions && !!versions[0],
-						0x137 /* "Failed to get version from storage" */,
-					);
+					assert(versions[0] !== undefined, 0x137 /* "Failed to get version from storage" */);
 					snapshotTree = await this.storage.getSnapshotTree(versions[0]);
 					assert(!!snapshotTree, 0x138 /* "Failed to get snapshot from storage" */);
 					props.snapshotVersion = versions[0].id;
@@ -5067,7 +5065,7 @@ export class ContainerRuntime
 		}
 
 		this.verifyNotClosed();
-		if (props?.notifyImminentClosure) {
+		if (props?.notifyImminentClosure === true) {
 			throw new UsageError("notifyImminentClosure is no longer supported in ContainerRuntime");
 		}
 

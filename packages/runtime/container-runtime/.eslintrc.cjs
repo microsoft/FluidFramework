@@ -8,9 +8,7 @@ module.exports = {
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
-	rules: {
-		"@typescript-eslint/strict-boolean-expressions": "off",
-	},
+	rules: {},
 	overrides: [
 		{
 			// Rules only for test files

@@ -468,7 +468,7 @@ describe("Runtime", () => {
 						);
 					}
 
-					if (enableOfflineLoad) {
+					if (enableOfflineLoad === true) {
 						assert(
 							batchIdMatchesUnsentFormat(
 								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -541,7 +541,7 @@ describe("Runtime", () => {
 						contents: "test content",
 					});
 
-					const expectedSubmitCount = skipSafetyFlushDuringProcessStack ? 0 : 1;
+					const expectedSubmitCount = skipSafetyFlushDuringProcessStack === true ? 0 : 1;
 					assert.equal(
 						submittedOps.length,
 						expectedSubmitCount,
@@ -2369,7 +2369,7 @@ describe("Runtime", () => {
 
 		describe("Duplicate Batch Detection", () => {
 			for (const enableOfflineLoad of [undefined, true]) {
-				it(`DuplicateBatchDetector enablement matches Offline load (${enableOfflineLoad ? "ENABLED" : "DISABLED"})`, async () => {
+				it(`DuplicateBatchDetector enablement matches Offline load (${enableOfflineLoad === true ? "ENABLED" : "DISABLED"})`, async () => {
 					const containerRuntime = await ContainerRuntime.loadRuntime({
 						context: getMockContext({
 							settings: { "Fluid.Container.enableOfflineLoad": enableOfflineLoad },
@@ -2393,9 +2393,8 @@ describe("Runtime", () => {
 						false,
 					);
 					// Process a duplicate batch "batchId1" with different seqNum 234
-					const assertThrowsOnlyIfExpected = enableOfflineLoad
-						? assert.throws
-						: assert.doesNotThrow;
+					const assertThrowsOnlyIfExpected =
+						enableOfflineLoad === true ? assert.throws : assert.doesNotThrow;
 					const errorPredicate = (e: Error) =>
 						e.message === "Duplicate batch - The same batch was sequenced twice";
 					assertThrowsOnlyIfExpected(

@@ -1275,7 +1275,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		if (
 			this.snapshotFetchRequired === undefined &&
 			this._baseSnapshot?.groupId !== undefined &&
-			this.isSnapshotInISnapshotFormat
+			this.isSnapshotInISnapshotFormat === true
 		) {
 			assert(
 				this.blobContents !== undefined,
@@ -1290,7 +1290,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 				this.blobContents,
 			);
 		}
-		if (this.snapshotFetchRequired) {
+		if (this.snapshotFetchRequired === true) {
 			assert(
 				this.loadingGroupId !== undefined,
 				0x8f5 /* groupId should be present to fetch snapshot */,

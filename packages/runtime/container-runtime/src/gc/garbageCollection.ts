@@ -191,7 +191,7 @@ export class GarbageCollector implements IGarbageCollector {
 			);
 			let timeoutMs = this.configs.sessionExpiryTimeoutMs;
 
-			if (pendingSessionExpiryTimerStarted) {
+			if (pendingSessionExpiryTimerStarted !== undefined) {
 				// NOTE: This assumes the client clock hasn't been tampered with since the original session
 				const timeLapsedSincePendingTimer = Date.now() - pendingSessionExpiryTimerStarted;
 				timeoutMs -= timeLapsedSincePendingTimer;

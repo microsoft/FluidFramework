@@ -264,7 +264,7 @@ describe("Summary Manager", () => {
 	}
 
 	function assertRequests(count: number, message?: string) {
-		const prefix = message ? `${message} - ` : "";
+		const prefix = message === undefined ? "" : `${message} - `;
 		assert.strictEqual(requestCalls, count, `${prefix}Unexpected request count`);
 	}
 

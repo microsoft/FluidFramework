@@ -222,7 +222,7 @@ describe("Runtime", () => {
 				errorMessage?: string,
 				expectedStopCount = 0,
 			) {
-				const errorPrefix = errorMessage ? `${errorMessage}: ` : "";
+				const errorPrefix = errorMessage === undefined ? "" : `${errorMessage}: `;
 				assert.strictEqual(
 					runCount,
 					expectedTotalRunCount,
@@ -281,7 +281,7 @@ describe("Runtime", () => {
 				summarizer = await RunningSummarizer.start(
 					mockLogger,
 					summaryCollection.createWatcher(summarizerClientId),
-					disableHeuristics ? summaryConfigDisableHeuristics : summaryConfig,
+					disableHeuristics === true ? summaryConfigDisableHeuristics : summaryConfig,
 					async (options) => {
 						runCount++;
 						heuristicData.recordAttempt(lastRefSeq);
@@ -629,7 +629,7 @@ describe("Runtime", () => {
 						expectedEvents.push({
 							eventName: "Running:SummarizeAttemptDelay",
 							...retryProps1,
-							duration: retryAfterSeconds ? retryAfterSeconds * 1000 : undefined,
+							duration: retryAfterSeconds === undefined ? undefined : retryAfterSeconds * 1000,
 						});
 					}
 					mockLogger.assertMatch(

@@ -52,7 +52,8 @@ export interface IBlobMetadata {
 
 export const isBlobMetadata = (metadata: unknown): metadata is IBlobMetadata => {
 	return (
-		!!metadata &&
+		typeof metadata === "object" &&
+		metadata !== null &&
 		typeof (metadata as IBlobMetadata).blobId === "string" &&
 		typeof (metadata as IBlobMetadata).localId === "string"
 	);

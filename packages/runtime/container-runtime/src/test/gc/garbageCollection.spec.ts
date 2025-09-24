@@ -477,7 +477,7 @@ describe("Garbage Collection Tests", () => {
 			gc = createGarbageCollector({
 				createParams: { gcOptions: { enableGCSweep: true } }, // Required to run AutoRecovery
 				getGCData: async (fullGC?: boolean) => {
-					return fullGC ? defaultGCData : corruptedGCData;
+					return fullGC === true ? defaultGCData : corruptedGCData;
 				},
 			});
 
