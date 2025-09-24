@@ -70,4 +70,7 @@ const ajvJsonValidator: JsonValidator = {
 	},
 };
 
+/**
+ * A {@link FormatValidator} powered by {@link ajvJsonValidator}.
+ */
 export const ajvValidator = toFormatValidator(ajvJsonValidator);
