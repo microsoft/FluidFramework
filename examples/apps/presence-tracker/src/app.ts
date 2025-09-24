@@ -37,27 +37,21 @@ export type PresenceTrackerSchema = typeof containerSchema;
 
 /**
  * Create appropriate client based on the service type
+ * Note: This example currently only supports t9s service due to TinyliciousClient usage
  */
 function createClient() {
 	const service = getSpecifiedServiceFromWebpack();
-	switch (service) {
-		case "t9s":
-			return new TinyliciousClient();
-		case "odsp":
-			// For ODSP support with the client pattern, you'll need to configure OdspClient
-			// with appropriate tokenProvider, siteUrl, driveId, etc. based on your setup.
-			// This example focuses on the TinyliciousClient pattern.
-			throw new Error(
-				"ODSP service requires additional configuration for the client pattern. " +
-					"Please refer to OdspClient documentation or use t9s service instead.",
-			);
-		case "local":
-			throw new Error(
-				"Local service is not supported with the client pattern used by this example. Use t9s service instead.",
-			);
-		default:
-			throw new Error(`Unsupported service: ${service}`);
+	
+	// Only TinyliciousClient is supported for this example pattern
+	if (service !== "t9s") {
+		throw new Error(
+			`Service "${service}" is not supported by this example. ` +
+			`This example uses TinyliciousClient and only supports t9s service. ` +
+			`Please use "npm run start:t9s" instead.`
+		);
 	}
+	
+	return new TinyliciousClient();
 }
 // data object requires 2.41 or later.
 const containerSchema = {
@@ -173,4 +167,4 @@ async function start() {
 	/* eslint-enable @typescript-eslint/dot-notation */
 }
 
-start().catch(console.error);
+await start();

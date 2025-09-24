@@ -28,8 +28,8 @@
 		"prepack": "npm run webpack",
 		"start": "npm run start:t9s",
 		"start:client": "webpack serve --env service=t9s",
-		"start:local": "echo 'Local service not supported for this example. Use start:t9s instead.'",
-		"start:odsp": "echo 'ODSP service not fully supported for this example. Use start:t9s instead.'",
+		"start:local": "echo 'Local service not supported for this example pattern. Use npm run start:t9s instead.'",
+		"start:odsp": "echo 'ODSP service not supported for this example pattern. Use npm run start:t9s instead.'",
 		"start:t9s": "start-server-and-test start:tinylicious 7070 start:client",
 		"start:tinylicious": "tinylicious",
 		"test": "npm run test:jest",
@@ -58,8 +58,8 @@
 		"process": "^0.11.10"
 	},
 	"devDependencies": {
-		"@fluid-example/example-webpack-integration": "workspace:~",
 		"@biomejs/biome": "~1.9.3",
+		"@fluid-example/example-webpack-integration": "workspace:~",
 		"@fluid-tools/build-cli": "^0.58.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.58.3",

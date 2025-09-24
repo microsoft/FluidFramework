@@ -119,31 +119,4 @@ async function start(): Promise<void> {
 	}
 }
 
-try {
-	await start();
-} catch (error) {
-	console.error(error);
-	console.log(
-		"%cEnsure you are running the appropriate Fluid Server for the selected service\nUse:`npm run start:server` for local, or configure ODSP for odsp",
-		"font-size:30px",
-	);
-}
-	if (specifiedContact === undefined) {
-		// If a contact was not specified, we'll render the full collection.
-		const contactCollection = model.contactCollection;
-		renderContactCollection(contactCollection, getContactUrl, contentDiv);
-	} else {
-		// If a contact was specified, we'll render just that contact.
-		const contact = model.contactCollection.getContact(specifiedContact);
-		if (contact === undefined) {
-			throw new Error("Contact not found");
-		}
-		renderContact(contact, contentDiv);
-	}
-}
-
-try {
-	await start();
-} catch (error) {
-	console.error(error);
-}
+await start();

@@ -93,24 +93,4 @@ async function start(): Promise<void> {
 	updateTabForId(id);
 }
 
-try {
-	await start();
-} catch (error) {
-	console.error(error);
-	console.log(
-		"%cEnsure you are running the appropriate Fluid Server for the selected service\nUse:`npm run start:server` for local, or configure ODSP for odsp",
-		"font-size:30px",
-	);
-}
-			urlResolver,
-			documentServiceFactory: createRouterliciousDocumentServiceFactory(tokenProvider),
-			codeLoader,
-		});
-		groceryList = (await container.getEntryPoint()) as ISuggestionGroceryList;
-	}
-
-	render(groceryList);
-	updateTabForId(id);
-}
-
-start().catch((error) => console.error(error));
+await start();
