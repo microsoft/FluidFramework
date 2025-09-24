@@ -28,7 +28,10 @@
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"prepack": "npm run webpack",
-		"start": "webpack serve",
+		"start": "npm run start:t9s",
+		"start:local": "webpack serve --env service=local",
+		"start:odsp": "webpack serve --env service=odsp",
+		"start:t9s": "webpack serve --env service=t9s",
 		"start:test": "webpack serve --config webpack.test.cjs",
 		"test": "npm run test:jest",
 		"test:jest": "jest --ci",
@@ -37,6 +40,7 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
+		"@fluid-example/example-driver": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
@@ -48,17 +52,16 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/map": "workspace:~",
-		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/server-local-server": "^7.0.0",
-		"@fluidframework/tinylicious-driver": "workspace:~",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
+		"@fluid-example/example-webpack-integration": "workspace:~",
 		"@fluid-tools/build-cli": "^0.58.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.58.3",
