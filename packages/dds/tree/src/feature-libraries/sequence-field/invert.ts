@@ -88,17 +88,27 @@ function invertMark(
 		case "Rename": {
 			const inputId = getInputCellId(mark);
 			assert(inputId !== undefined, 0x9f5 /* Rename mark must have cell ID */);
-			const inverse: Mutable<CellMark<Rename>> = {
-				type: "Rename",
-				count: mark.count,
-				cellId: mark.idOverride,
-				// Unlike a remove or move-out, which follow a node, there is no way for this mark to assign the original input cell ID to another cell.
-				// This means it should be safe to always restore the input cell ID (as opposed to only doing it on rollbacks).
-				// Despite that, we still only do it on rollback for the sake of consistency: once a cell has been assigned an ID,
-				// the only way for that cell to be assigned that ID again is if it is rolled back to that state.
-				idOverride: isRollback ? inputId : { revision, localId: inputId.localId },
-			};
-			return [withNodeChange(inverse, mark.changes)];
+
+			// In older client versions, the ID of a detached root was the same as the ID of the cell it was last detached from.
+			// To preserve compatibility with those versions, we must make sure that we do not rename the cell if we are not also
+			// renaming the associated detached root, if there is one.
+			if (isRollback) {
+				// A rollback inverse inverts any associated root rename, so we should also invert the cell rename.
+				const inverse: Mutable<CellMark<Rename>> = {
+					type: "Rename",
+					count: mark.count,
+					cellId: mark.idOverride,
+					// Unlike a remove or move-out, which follow a node, there is no way for this mark to assign the original input cell ID to another cell.
+					// This means it should be safe to always restore the input cell ID (as opposed to only doing it on rollbacks).
+					// Despite that, we still only do it on rollback for the sake of consistency: once a cell has been assigned an ID,
+					// the only way for that cell to be assigned that ID again is if it is rolled back to that state.
+					idOverride: inputId,
+				};
+				return [withNodeChange(inverse, mark.changes)];
+			} else {
+				// An undo does not invert root renames, so we should not invert cell renames.
+				return [invertNodeChangeOrSkip(mark.count, mark.changes, mark.idOverride)];
+			}
 		}
 		case "Remove": {
 			assert(mark.revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);

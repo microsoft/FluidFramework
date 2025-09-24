@@ -763,24 +763,27 @@ describe("ModularChangeFamily integration", () => {
 				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
 			);
 
-			const expected = Change.build({
-				family,
-				maxId: 2,
-				revisions: [{ revision: tag2 }],
-				roots: [
-					{
-						detachId: { revision: tag1, localId: brand(0) },
-						change: Change.nodeWithId(
-							0,
-							{ revision: tag2, localId: brand(2) },
-							Change.field(fieldB, sequence.identifier, [
-								MarkMaker.remove(1, { revision: tag2, localId: brand(1) }),
-							]),
-						),
-						detachLocation: { nodeId: undefined, field: fieldA },
-					},
-				],
-			});
+			const expected = Change.build(
+				{
+					family,
+					maxId: 2,
+					revisions: [{ revision: tag2 }],
+					roots: [
+						{
+							detachId: { revision: tag1, localId: brand(0) },
+							change: Change.nodeWithId(
+								0,
+								{ revision: tag2, localId: brand(2) },
+								Change.field(fieldB, sequence.identifier, [
+									MarkMaker.remove(1, { revision: tag2, localId: brand(1) }),
+								]),
+							),
+							detachLocation: { nodeId: undefined, field: fieldA },
+						},
+					],
+				},
+				Change.field(fieldA, sequence.identifier, [MarkMaker.tomb(tag1, brand(0), 1)]),
+			);
 
 			assertEqual(rebased, expected);
 		});
@@ -832,24 +835,30 @@ describe("ModularChangeFamily integration", () => {
 				revisionMetadataSourceFromInfo([{ revision: tag2 }, { revision: tag3 }]),
 			);
 
-			const expected = Change.build({
-				family,
-				maxId: 4,
-				revisions: [{ revision: tag3 }],
-				roots: [
-					{
-						detachId: { revision: tag1, localId: brand(0) },
-						change: Change.nodeWithId(
-							0,
-							{ revision: tag2, localId: brand(3) },
-							Change.field(fieldB, sequence.identifier, [
-								MarkMaker.remove(1, { revision: tag3, localId: brand(4) }),
-							]),
-						),
-						detachLocation: { nodeId: undefined, field: fieldA },
-					},
-				],
-			});
+			const expected = Change.build(
+				{
+					family,
+					maxId: 4,
+					revisions: [{ revision: tag3 }],
+					roots: [
+						{
+							detachId: { revision: tag1, localId: brand(0) },
+							change: Change.nodeWithId(
+								0,
+								{ revision: tag2, localId: brand(3) },
+								Change.field(fieldB, sequence.identifier, [
+									MarkMaker.remove(1, { revision: tag3, localId: brand(4) }),
+								]),
+							),
+							detachLocation: { nodeId: undefined, field: fieldA },
+						},
+					],
+				},
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.tomb(tag1, brand(0), 1),
+					MarkMaker.tomb(tag2, brand(1), 1),
+				]),
+			);
 
 			assertEqual(rebased, expected);
 		});
@@ -899,24 +908,27 @@ describe("ModularChangeFamily integration", () => {
 				revisionMetadataSourceFromInfo([{ revision: tag2 }, { revision: tag3 }]),
 			);
 
-			const expected = Change.build({
-				family,
-				maxId: 4,
-				revisions: [{ revision: tag3 }],
-				roots: [
-					{
-						detachId: newRootId,
-						change: Change.nodeWithId(
-							0,
-							{ revision: tag2, localId: brand(3) },
-							Change.field(fieldB, sequence.identifier, [
-								MarkMaker.remove(1, { revision: tag3, localId: brand(4) }),
-							]),
-						),
-						detachLocation: { nodeId: undefined, field: fieldA },
-					},
-				],
-			});
+			const expected = Change.build(
+				{
+					family,
+					maxId: 4,
+					revisions: [{ revision: tag3 }],
+					roots: [
+						{
+							detachId: newRootId,
+							change: Change.nodeWithId(
+								0,
+								{ revision: tag2, localId: brand(3) },
+								Change.field(fieldB, sequence.identifier, [
+									MarkMaker.remove(1, { revision: tag3, localId: brand(4) }),
+								]),
+							),
+							detachLocation: { nodeId: undefined, field: fieldA },
+						},
+					],
+				},
+				Change.field(fieldA, sequence.identifier, [MarkMaker.tomb(tag2, brand(0), 1)]),
+			);
 
 			assertEqual(rebased, expected);
 		});
@@ -1492,7 +1504,7 @@ describe("ModularChangeFamily integration", () => {
 				},
 				Change.field(fieldA, sequence.identifier, [
 					MarkMaker.insert(1, id2Undo, { cellId: originalDetachCellId }),
-					MarkMaker.rename(1, id2Original, { revision: tag4, localId: brand(1) }),
+					MarkMaker.tomb(id2Original.revision, id2Original.localId, 1),
 					MarkMaker.remove(1, id2Undo),
 				]),
 			);

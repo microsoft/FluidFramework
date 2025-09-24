@@ -307,7 +307,7 @@ function rebaseMarkIgnoreChild(
 		rebasedMark = { ...(remains ?? {}), count: baseMark.count };
 		return makeDetachedMark(rebasedMark, cloneCellId(baseCellId));
 	} else if (markFillsCells(baseMark)) {
-		// XXX: This seems wrong if currMark is a rename
+		assert(currMark.type !== "Rename", "XXX");
 		return withCellId(currMark, undefined);
 	} else if (isRename(baseMark)) {
 		if (isNoopMark(currMark)) {
