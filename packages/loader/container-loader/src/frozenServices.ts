@@ -28,9 +28,6 @@ import {
 
 import type { IConnectionStateChangeReason } from "./contracts.js";
 
-/**
- *
- */
 export class FrozenDocumentServiceFactory implements IDocumentServiceFactory {
 	async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
 		return new FrozenDocumentService(resolvedUrl);
@@ -40,9 +37,6 @@ export class FrozenDocumentServiceFactory implements IDocumentServiceFactory {
 	}
 }
 
-/**
- *
- */
 class FrozenDocumentService
 	extends TypedEventEmitter<IDocumentServiceEvents>
 	implements IDocumentService
@@ -87,10 +81,6 @@ const frozenDocumentDeltaStorageService: IDocumentDeltaStorageService = {
 	}),
 };
 
-/**
- * Implementation of IDocumentDeltaConnection that does not support submitting
- * or receiving ops. Used in storage-only mode.
- */
 const clientFrozenDeltaStream: IClient = {
 	mode: "read",
 	details: { capabilities: { interactive: true } },
@@ -100,6 +90,10 @@ const clientFrozenDeltaStream: IClient = {
 };
 const clientIdFrozenDeltaStream: string = "storage-only client";
 
+/**
+ * Implementation of IDocumentDeltaConnection that does not support submitting
+ * or receiving ops. Used in storage-only mode and in frozen loads.
+ */
 export class FrozenDeltaStream
 	extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
 	implements IDocumentDeltaConnection, IDisposable
