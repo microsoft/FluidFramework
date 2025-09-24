@@ -1370,7 +1370,6 @@ interface RestartClientFromPendingState {
 	type: "restartClientFromPendingState";
 	sourceClientTag: `client-${number}`;
 	newClientTag: `client-${number}`;
-	validatePendingState: boolean;
 }
 
 /**
@@ -1409,7 +1408,6 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 					type: "restartClientFromPendingState",
 					sourceClientTag: random.pick(clients).tag,
 					newClientTag: state.tag("client"),
-					validatePendingState: random.bool(),
 				} satisfies RestartClientFromPendingState;
 			}
 			return baseGenerator(state);
@@ -1437,12 +1435,10 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 				sourceClient.entryPoint.exitStagingMode(true);
 			}
 
-			if (op.validatePendingState) {
-				// in order to validate we need to disconnect to ensure
-				// no changes arrive between capturing the state and validating
-				// the said against the source container
-				sourceClient.container.disconnect();
-			}
+			// in order to validate we need to disconnect to ensure
+			// no changes arrive between capturing the state and validating
+			// the said against the source container
+			sourceClient.container.disconnect();
 
 			assert(
 				typeof sourceClient.container.getPendingLocalState === "function",
@@ -1454,25 +1450,23 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 			const url = await sourceClient.container.getAbsoluteUrl("");
 			assert(url !== undefined, "url of container must be available");
 
-			if (op.validatePendingState) {
-				const frozenContainer = await loadFrozenContainerFromPendingState({
-					codeLoader: state.codeLoader,
-					pendingLocalState,
-					request: { url },
-					urlResolver: new LocalResolver(),
-				});
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader: state.codeLoader,
+				pendingLocalState,
+				request: { url },
+				urlResolver: new LocalResolver(),
+			});
 
-				const { DefaultStressDataObject }: FluidObject<DefaultStressDataObject> | undefined =
-					(await frozenContainer.getEntryPoint()) ?? {};
-				assert(DefaultStressDataObject !== undefined, "must have entrypoint");
+			const { DefaultStressDataObject }: FluidObject<DefaultStressDataObject> | undefined =
+				(await frozenContainer.getEntryPoint()) ?? {};
+			assert(DefaultStressDataObject !== undefined, "must have entrypoint");
 
-				await validateConsistencyOfAllDDS(sourceClient, {
-					container: frozenContainer,
-					entryPoint: DefaultStressDataObject,
-					tag: `client-${Number.NaN}`,
-				});
-				frozenContainer.dispose();
-			}
+			await validateConsistencyOfAllDDS(sourceClient, {
+				container: frozenContainer,
+				entryPoint: DefaultStressDataObject,
+				tag: `client-${Number.NaN}`,
+			});
+			frozenContainer.dispose();
 			sourceClient.container.dispose();
 
 			state.clients.splice(

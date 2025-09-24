@@ -11,15 +11,12 @@ import {
 import type { FluidObject } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import {
-	waitForContainerConnection,
-	type TestFluidObject,
-} from "@fluidframework/test-utils/internal";
+import { timeoutPromise, type TestFluidObject } from "@fluidframework/test-utils/internal";
 
 import { createLoader } from "../utils.js";
 
-describe("asdsad", () => {
-	it("asdsadsd", async () => {
+describe("loadFrozenContainerFromPendingState", () => {
+	it("loadFrozenContainerFromPendingState", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 
 		const { urlResolver, codeDetails, codeLoader, loaderProps } = createLoader({
@@ -79,11 +76,23 @@ describe("asdsad", () => {
 		assert(frozenEntryPoint.ITestFluidObject !== undefined, "entrypoint must be test object");
 
 		const frozenEntries = [...frozenEntryPoint.ITestFluidObject.root.entries()];
-		assert(frozenEntries === ITestFluidObject.root.entries(), "Must match");
+		assert(frozenEntries.length === [...ITestFluidObject.root.entries()].length, "Must match");
 
 		container.connect();
 		for (let i = 0; i < 10; i++) {
 			ITestFluidObject.root.set(`afterGetPendingLocalState-${i}`, i);
 		}
+
+		if (container.isDirty) {
+			await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+		}
+		assert(
+			frozenEntries.length !== [...ITestFluidObject.root.entries()].length,
+			"Must not match after new changes",
+		);
+		assert(
+			frozenEntries.length === [...frozenEntryPoint.ITestFluidObject.root.entries()].length,
+			"Must match as frozen container shouldn't get any new changes",
+		);
 	});
 });
