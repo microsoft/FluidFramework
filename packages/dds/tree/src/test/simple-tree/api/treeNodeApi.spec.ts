@@ -403,7 +403,7 @@ describe("treeNodeApi", () => {
 					return cachedFoo;
 				}
 
-				nodeA.someChild.bar = 4;
+				nodeA.someChild.bar = 3;
 				assert.equal(cachedFoo, undefined);
 				assert.equal(fooManual(), 7);
 				assert.equal(cachedFoo, 7);
