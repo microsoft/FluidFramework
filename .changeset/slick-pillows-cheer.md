@@ -36,7 +36,7 @@ const ItemComponent = withTreeObservations(
 );
 ```
 
-For components which take in TreeNodes, but should not read from them, they can use `PropTreeNode` as shown:
+For components which take in TreeNodes, but merely forward them and do not read their properties, they can use `PropTreeNode` as shown:
 
 ```typescript
 const ItemParentComponent = ({ item }: { item: PropTreeNode<Item> }): JSX.Element => (
