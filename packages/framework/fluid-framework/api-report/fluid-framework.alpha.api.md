@@ -771,6 +771,7 @@ export interface ITreeAlpha extends ITree {
     createSharedBranch(): string;
     exportSimpleSchema(): SimpleTreeSchema;
     exportVerbose(): VerboseTree | undefined;
+    getSharedBranchIds(): string[];
     viewSharedBranchWith<TRoot extends ImplicitFieldSchema>(branchId: string, config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 
