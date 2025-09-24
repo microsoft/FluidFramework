@@ -8,6 +8,7 @@ import { strict as assert } from "assert";
 import type { PropertySet, ReferencePosition } from "@fluidframework/merge-tree/internal";
 
 import type { ISequenceIntervalCollection } from "../intervalCollection.js";
+import type { SequenceInterval } from "../intervals/index.js";
 import type { SharedString } from "../sequenceFactory.js";
 
 // import { assertSequenceIntervals } from "./intervalTestUtils.js";
@@ -42,7 +43,7 @@ export class IntervalCollectionOracle {
 		}
 	}
 
-	private readonly addInterval = (interval: any) => {
+	private readonly addInterval = (interval: SequenceInterval) => {
 		this.intervals.set(interval.getIntervalId(), {
 			id: interval.getIntervalId(),
 			start: interval.start,
@@ -51,19 +52,20 @@ export class IntervalCollectionOracle {
 		});
 	};
 
-	private readonly deleteInterval = (interval: any) => {
+	private readonly deleteInterval = (interval: SequenceInterval) => {
 		this.intervals.delete(interval.getIntervalId());
 	};
 
-	private readonly changeInterval = (interval: any) => {
+	private readonly changeInterval = (interval: SequenceInterval) => {
 		const existing = this.intervals.get(interval.getIntervalId());
 		if (existing) {
 			existing.start = interval.start;
 			existing.end = interval.end;
+			existing.properties = interval.properties;
 		}
 	};
 
-	private readonly propertyChanged = (interval: any, propertyDeltas: any) => {
+	private readonly propertyChanged = (interval: SequenceInterval, propertyDeltas: any) => {
 		if (!interval) return;
 		const existing = this.intervals.get(interval.getIntervalId());
 		if (existing && propertyDeltas) {
@@ -73,7 +75,11 @@ export class IntervalCollectionOracle {
 		}
 	};
 
-	private readonly changed = (interval, propertyDeltas, previousInterval, local, slide) => {
+	private readonly changed = (
+		interval: SequenceInterval,
+		propertyDeltas: any,
+		previousInterval: any,
+	) => {
 		if (!interval) return;
 		const existing = this.intervals.get(interval.getIntervalId());
 		if (existing) {
@@ -102,7 +108,27 @@ export class IntervalCollectionOracle {
 
 			assert.strictEqual(expectedStart, actualStart, `Interval ${id} start mismatch`);
 			assert.strictEqual(expectedEnd, actualEnd, `Interval ${id} end mismatch`);
+
+			// compare properties structurally
+			assert.deepStrictEqual(
+				this.normalizeProps(snapshot.properties),
+				this.normalizeProps(actual.properties),
+				`Interval ${id} properties mismatch\n  oracle=${JSON.stringify(
+					snapshot.properties,
+				)}\n  actual=${JSON.stringify(actual.properties)}`,
+			);
 		}
+	}
+
+	normalizeProps(props: Record<string, any> | undefined) {
+		if (!props) return {};
+		const clean: Record<string, any> = {};
+		for (const [k, v] of Object.entries(props)) {
+			if (v !== undefined) {
+				clean[k] = v;
+			}
+		}
+		return clean;
 	}
 
 	dispose() {
