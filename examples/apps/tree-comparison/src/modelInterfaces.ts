@@ -4,7 +4,7 @@
  */
 
 import type { EventEmitter } from "@fluid-example/example-utils";
-import { TypedEmitter } from "tiny-typed-emitter";
+import type { TypedEmitter } from "tiny-typed-emitter";
 
 /**
  * For demo purposes this is a super-simple interface, but in a real scenario this should have all relevant surface

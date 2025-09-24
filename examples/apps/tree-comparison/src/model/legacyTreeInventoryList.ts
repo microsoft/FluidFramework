@@ -4,18 +4,18 @@
  */
 
 import {
-	BuildNode,
+	type BuildNode,
 	Change,
 	EagerCheckout,
 	SharedTree as LegacySharedTree,
 	StablePlace,
 	StableRange,
-	TraitLabel,
-	TreeView,
-	TreeViewNode,
+	type TraitLabel,
+	type TreeView,
+	type TreeViewNode,
 } from "@fluid-experimental/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 

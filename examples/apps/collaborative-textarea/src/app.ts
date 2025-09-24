@@ -8,7 +8,7 @@ import {
 	getSpecifiedServiceFromWebpack,
 } from "@fluid-example/example-driver";
 import { StaticCodeLoader } from "@fluid-example/example-utils";
-import type { IContainer } from "@fluidframework/container-definitions";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import {
 	createDetachedContainer,
 	loadExistingContainer,
@@ -63,7 +63,7 @@ async function start(): Promise<void> {
 			id = container.resolvedUrl.id;
 		}
 	} else {
-		id = location.hash.substring(1);
+		id = location.hash.slice(1);
 		container = await loadExistingContainer({
 			request: await createLoadExistingRequest(id),
 			urlResolver,

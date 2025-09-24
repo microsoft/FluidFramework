@@ -61,8 +61,8 @@
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
-		"@fluid-example/example-webpack-integration": "workspace:~",
 		"@biomejs/biome": "~1.9.3",
+		"@fluid-example/example-webpack-integration": "workspace:~",
 		"@fluid-tools/build-cli": "^0.58.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.58.3",

@@ -40,18 +40,19 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluid-example/example-driver": "workspace:~",
 		"@fluentui/react-components": "^9.47.5",
 		"@fluentui/react-icons": "^2.0.233",
 		"@fluid-example/clicker": "workspace:~",
 		"@fluid-example/codemirror": "workspace:~",
 		"@fluid-example/collaborative-textarea": "workspace:~",
+		"@fluid-example/example-driver": "workspace:~",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-example/multiview-coordinate-model": "workspace:~",
 		"@fluid-example/multiview-slider-coordinate-view": "workspace:~",
 		"@fluid-example/prosemirror": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
@@ -66,8 +67,8 @@
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
-		"@fluid-example/example-webpack-integration": "workspace:~",
 		"@biomejs/biome": "~1.9.3",
+		"@fluid-example/example-webpack-integration": "workspace:~",
 		"@fluid-tools/build-cli": "^0.58.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.58.3",

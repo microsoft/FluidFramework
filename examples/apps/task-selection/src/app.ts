@@ -8,14 +8,14 @@ import {
 	getSpecifiedServiceFromWebpack,
 } from "@fluid-example/example-driver";
 import { StaticCodeLoader } from "@fluid-example/example-utils";
-import type { IContainer } from "@fluidframework/container-definitions";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/legacy";
 
 import {
-	ITaskSelectionAppModel,
+	type ITaskSelectionAppModel,
 	TaskSelectionContainerRuntimeFactory,
 } from "./containerCode.js";
 import { renderDiceRoller } from "./view.js";
@@ -62,7 +62,7 @@ async function start() {
 			id = container.resolvedUrl.id;
 		}
 	} else {
-		id = location.hash.substring(1);
+		id = location.hash.slice(1);
 		container = await loadExistingContainer({
 			request: await createLoadExistingRequest(id),
 			urlResolver,
@@ -101,7 +101,7 @@ async function start() {
 	renderDiceRoller(model.oldestClientDiceRoller, oldestClientViewDiv);
 	oldestClientDiv.append(oldestClientHeaderDiv, oldestClientViewDiv);
 
-	const div = document.getElementById("content") as HTMLDivElement;
+	const div = document.querySelector("#content") as HTMLDivElement;
 	div.append(taskManagerDiv, divider, oldestClientDiv);
 }
 

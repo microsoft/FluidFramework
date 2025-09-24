@@ -9,8 +9,8 @@ const {
 } = require("@fluid-example/example-webpack-integration");
 const path = require("path");
 const { merge } = require("webpack-merge");
-const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const webpack = require("webpack");
 
 module.exports = (env) => {
 	const { production, service } = env;

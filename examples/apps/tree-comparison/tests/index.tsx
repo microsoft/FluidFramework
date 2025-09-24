@@ -41,7 +41,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		// Should be the same as the uuid we generated above.
 		id = await createResponse.attach();
 	} else {
-		id = location.hash.substring(1);
+		id = location.hash.slice(1);
 		model = await modelLoader.loadExisting(id);
 	}
 

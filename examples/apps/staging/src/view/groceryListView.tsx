@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React, { FC, useEffect, useRef, useState } from "react";
+import React, { type FC, useEffect, useRef, useState } from "react";
 
 import type { ISuggestionGroceryList, ISuggestionGroceryItem } from "../container/index.js";
 
@@ -35,7 +35,7 @@ const GroceryItemView: FC<IGroceryItemViewProps> = ({
 			</button>
 		);
 	return (
-		<tr style={backgroundColor !== undefined ? { backgroundColor } : undefined}>
+		<tr style={backgroundColor === undefined ? undefined : { backgroundColor }}>
 			<td>{groceryItem.name}</td>
 			<td>{action}</td>
 		</tr>

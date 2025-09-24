@@ -134,6 +134,7 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 	};
 
 	public readonly getSuggestions = () => {
+		// eslint-disable-next-line unicorn/consistent-function-scoping
 		const asyncGetSuggestions = async () => {
 			const { adds, removals } = await getChangesFromHealthBot(this.groceryList);
 			// Check to make sure we are still in staging mode after we get the results - if not, then just

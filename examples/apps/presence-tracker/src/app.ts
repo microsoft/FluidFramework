@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { getSpecifiedServiceFromWebpack } from "@fluid-example/example-driver";
 import {
 	getPresence,
 	// eslint-disable-next-line import/no-deprecated
@@ -36,41 +35,12 @@ const containerSchema = {
 export type PresenceTrackerSchema = typeof containerSchema;
 
 /**
- * Create appropriate client based on the service type
- * Note: This example currently only supports t9s service due to TinyliciousClient usage
- */
-function createClient() {
-	const service = getSpecifiedServiceFromWebpack();
-	
-	// Only TinyliciousClient is supported for this example pattern
-	if (service !== "t9s") {
-		throw new Error(
-			`Service "${service}" is not supported by this example. ` +
-			`This example uses TinyliciousClient and only supports t9s service. ` +
-			`Please use "npm run start:t9s" instead.`
-		);
-	}
-	
-	return new TinyliciousClient();
-}
-// data object requires 2.41 or later.
-const containerSchema = {
-	initialObjects: {
-		// Optional Presence Manager object placed within container schema for experimental presence access
-		// eslint-disable-next-line import/no-deprecated
-		presence: ExperimentalPresenceManager,
-	},
-} satisfies ContainerSchema;
-
-export type PresenceTrackerSchema = typeof containerSchema;
-
-/**
  * Start the app and render.
  *
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
 async function start() {
-	const client = createClient();
+	const client = new TinyliciousClient();
 	let container: IFluidContainer<PresenceTrackerSchema>;
 
 	let id: string;
@@ -167,4 +137,4 @@ async function start() {
 	/* eslint-enable @typescript-eslint/dot-notation */
 }
 
-await start();
+start().catch(console.error);

@@ -5,7 +5,7 @@
 
 import { Button } from "@fluentui/react-components";
 import { ChevronDownFilled, ChevronUpFilled, TargetEditFilled } from "@fluentui/react-icons";
-import React from "react";
+import React, { type FC, type PropsWithChildren, type ReactElement, useState } from "react";
 
 import { Collapsible } from "./collapsible.cjs";
 import type { IDataObjectGridItemEntry, ISingleHandleItem } from "./dataObjectRegistry.js";
@@ -26,11 +26,11 @@ interface IDataObjectGridToolbarAddItemPickerProps {
 	toolbarOptions: IToolbarOption[];
 }
 
-const DataObjectGridToolbarAddItemPicker: React.FC<
-	IDataObjectGridToolbarAddItemPickerProps
-> = (props: React.PropsWithChildren<IDataObjectGridToolbarAddItemPickerProps>) => {
+const DataObjectGridToolbarAddItemPicker: FC<IDataObjectGridToolbarAddItemPickerProps> = (
+	props: PropsWithChildren<IDataObjectGridToolbarAddItemPickerProps>,
+) => {
 	const { toolbarOptions } = props;
-	const [open, setOpen] = React.useState<boolean>(false);
+	const [open, setOpen] = useState<boolean>(false);
 
 	const itemsButton = (
 		<Button
@@ -42,7 +42,7 @@ const DataObjectGridToolbarAddItemPicker: React.FC<
 		</Button>
 	);
 	const itemButtonList = toolbarOptions.map((toolbarOption: IToolbarOption) => {
-		const icon = iconMap[toolbarOption.fabricIconName] as React.ReactElement;
+		const icon = iconMap[toolbarOption.fabricIconName] as ReactElement;
 		return (
 			<Button
 				className="data-grid-toolbar-option-button"
@@ -77,8 +77,8 @@ interface IDataObjectGridToolbarProps {
 	registry: Map<string, IDataObjectGridItemEntry<ISingleHandleItem>>;
 }
 
-export const DataObjectGridToolbar: React.FC<IDataObjectGridToolbarProps> = (
-	props: React.PropsWithChildren<IDataObjectGridToolbarProps>,
+export const DataObjectGridToolbar: FC<IDataObjectGridToolbarProps> = (
+	props: PropsWithChildren<IDataObjectGridToolbarProps>,
 ) => {
 	const { editable, setEditable, addItem, registry } = props;
 

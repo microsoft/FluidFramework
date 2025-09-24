@@ -45,6 +45,7 @@
 		"@fluid-experimental/oldest-client-observer": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
@@ -55,8 +56,8 @@
 		"style-loader": "^4.0.0"
 	},
 	"devDependencies": {
-		"@fluid-example/example-webpack-integration": "workspace:~",
 		"@biomejs/biome": "~1.9.3",
+		"@fluid-example/example-webpack-integration": "workspace:~",
 		"@fluid-tools/build-cli": "^0.58.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.58.3",

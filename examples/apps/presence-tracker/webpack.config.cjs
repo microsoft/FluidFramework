@@ -3,17 +3,13 @@
  * Licensed under the MIT License.
  */
 
-const {
-	createExampleDriverServiceWebpackPlugin,
-	createOdspMiddlewares,
-} = require("@fluid-example/example-webpack-integration");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
 const { merge } = require("webpack-merge");
 const webpack = require("webpack");
 
 module.exports = (env) => {
-	const { production, service } = env;
+	const isProduction = env?.production;
 
 	return merge(
 		{
@@ -54,17 +50,8 @@ module.exports = (env) => {
 				new webpack.ProvidePlugin({
 					process: "process/browser.js",
 				}),
-				createExampleDriverServiceWebpackPlugin(service),
 			],
-			devServer: {
-				setupMiddlewares: (middlewares) => {
-					if (service === "odsp") {
-						middlewares.push(...createOdspMiddlewares());
-					}
-					return middlewares;
-				},
-			},
 		},
-		production ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),
+		isProduction ? require("./webpack.prod.cjs") : require("./webpack.dev.cjs"),
 	);
 };

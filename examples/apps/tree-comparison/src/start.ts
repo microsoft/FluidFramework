@@ -8,12 +8,12 @@ import {
 	getSpecifiedServiceFromWebpack,
 } from "@fluid-example/example-driver";
 import { StaticCodeLoader } from "@fluid-example/example-utils";
-import type { IContainer } from "@fluidframework/container-definitions";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/legacy";
-import React from "react";
+import { createElement } from "react";
 import ReactDOM from "react-dom";
 
 import { InventoryListContainerRuntimeFactory } from "./model/index.js";
@@ -29,15 +29,15 @@ const updateTabForId = (id: string) => {
 };
 
 const render = (model: IInventoryListAppModel) => {
-	const appDiv = document.getElementById("app") as HTMLDivElement;
+	const appDiv = document.querySelector("#app") as HTMLDivElement;
 	ReactDOM.unmountComponentAtNode(appDiv);
-	ReactDOM.render(React.createElement(InventoryListAppView, { model }), appDiv);
+	ReactDOM.render(createElement(InventoryListAppView, { model }), appDiv);
 
 	// The DebugView is just for demo purposes, in case we want to access internal state or have debug controls.
-	const debugDiv = document.getElementById("debug") as HTMLDivElement;
+	const debugDiv = document.querySelector("#debug") as HTMLDivElement;
 	ReactDOM.unmountComponentAtNode(debugDiv);
 	ReactDOM.render(
-		React.createElement(DebugView, {
+		createElement(DebugView, {
 			model,
 		}),
 		debugDiv,
@@ -81,7 +81,7 @@ async function start(): Promise<void> {
 			id = container.resolvedUrl.id;
 		}
 	} else {
-		id = location.hash.substring(1);
+		id = location.hash.slice(1);
 		container = await loadExistingContainer({
 			request: await createLoadExistingRequest(id),
 			urlResolver,

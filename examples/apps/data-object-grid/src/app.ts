@@ -8,12 +8,12 @@ import {
 	getSpecifiedServiceFromWebpack,
 } from "@fluid-example/example-driver";
 import { StaticCodeLoader } from "@fluid-example/example-utils";
-import type { IContainer } from "@fluidframework/container-definitions";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/legacy";
-import React from "react";
+import { createElement } from "react";
 import ReactDOM from "react-dom";
 
 import {
@@ -61,12 +61,11 @@ async function start(): Promise<void> {
 			if (container.resolvedUrl === undefined) {
 				throw new Error("Resolved Url unexpectedly missing!");
 			}
+			// eslint-disable-next-line require-atomic-updates
 			id = container.resolvedUrl.id;
 		}
 	} else {
-		// Extract container ID from hash (removing any item-specific portion)
-		const hashContent = location.hash.slice(1);
-		id = hashContent.split("/")[0];
+		id = location.hash.slice(1);
 		container = await loadExistingContainer({
 			request: await createLoadExistingRequest(id),
 			urlResolver,
@@ -89,7 +88,7 @@ async function start(): Promise<void> {
 	const requestedItemId = parsedUrl.searchParams.get("item") ?? undefined;
 	if (requestedItemId === undefined) {
 		ReactDOM.render(
-			React.createElement(DataObjectGridAppView, {
+			createElement(DataObjectGridAppView, {
 				model: model.dataObjectGrid,
 				getDirectUrl: (itemId: string) => `?item=${itemId}#${id}`,
 			}),
