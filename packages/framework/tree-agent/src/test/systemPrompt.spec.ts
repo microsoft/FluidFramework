@@ -9,7 +9,7 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import type { ImplicitFieldSchema } from "@fluidframework/tree";
 import {
-	asTreeViewAlpha,
+	asAlpha,
 	getSimpleSchema,
 	SchemaFactory,
 	SharedTree,
@@ -167,7 +167,7 @@ describe("System prompt", () => {
 			responses: ["pong", "second", "third"],
 		});
 
-		const agent = createSemanticAgent(chat, asTreeViewAlpha(view)) as FunctioningSemanticAgent<
+		const agent = createSemanticAgent(chat, asAlpha(view)) as FunctioningSemanticAgent<
 			typeof ArrayWithMethod
 		>;
 

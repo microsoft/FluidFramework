@@ -10,6 +10,9 @@ Enables the following new rules as warnings (they will be promoted to errors in 
 
 - `@fluid-internal/fluid/no-file-path-links-in-jsdoc`
 - `@fluid-internal/fluid/no-markdown-links-in-jsdoc`
+- [@typescript-eslint/no-empty-object-type](https://typescript-eslint.io/rules/no-empty-object-type/)
+- [@typescript-eslint/no-unsafe-function-type](https://typescript-eslint.io/rules/no-unsafe-function-type/)
+- [@typescript-eslint/no-wrapper-object-types](https://typescript-eslint.io/rules/no-wrapper-object-types/)
 
 ## [6.0.1](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.0_1)
 
