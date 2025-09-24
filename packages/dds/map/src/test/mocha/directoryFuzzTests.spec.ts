@@ -11,6 +11,7 @@ import {
 	type DDSFuzzHarnessEvents,
 	type DDSFuzzModel,
 	createDDSFuzzSuite,
+	registerOracle,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
@@ -35,6 +36,7 @@ oracleEmitter.on("clientCreate", (client) => {
 	const channel = client.channel as ISharedDirectoryWithOracle;
 	const directroyOracle = new SharedDirectoryOracle(channel);
 	channel.sharedDirectoryOracle = directroyOracle;
+	registerOracle(directroyOracle);
 });
 
 describe("SharedDirectory fuzz Create/Delete concentrated", () => {
@@ -109,7 +111,6 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 			},
 			defaultTestCount: 200,
 			emitter: oracleEmitter,
-			// emitter: oracleEmitter,
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
 			saveFailures: {
@@ -125,7 +126,6 @@ describe("SharedDirectory fuzz", () => {
 			type: "fixedInterval",
 			interval: dirDefaultOptions.validateInterval,
 		},
-		skipMinimization: true,
 		reconnectProbability: 0.15,
 		numberOfClients: 3,
 		clientJoinOptions: {

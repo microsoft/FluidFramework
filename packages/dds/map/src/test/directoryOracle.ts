@@ -2,10 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-
 import { strict as assert } from "node:assert";
+
+import type { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 
 import type {
 	IDirectory,
@@ -28,97 +27,87 @@ export class SharedDirectoryOracle {
 		this.sharedDir.on("subDirectoryDeleted", this.onSubDirDeleted);
 		this.sharedDir.on("containedValueChanged", this.onContainedValueChanged);
 
-		this.captureInitialSnapshot(sharedDir);
+		this.takeSnapshot(sharedDir);
 	}
 
-	private captureInitialSnapshot(dir: IDirectory): void {
-		// Capture keys
-		for (const [key, value] of dir.entries()) {
-			const pathKey = dir.absolutePath === "/" ? `/${key}` : `${dir.absolutePath}/${key}`;
-
-			this.model.set(pathKey, value);
-		}
-
-		for (const [, subDir] of dir.subdirectories()) {
-			// Just recurse to capture keys inside the subdir
-			this.captureInitialSnapshot(subDir);
+	private takeSnapshot(dir: ISharedDirectory | IDirectory): void {
+		for (const [k, v] of this.sharedDir.entries()) {
+			this.model.set(k, v);
 		}
 	}
 
-	private readonly onValueChanged = (change: IDirectoryValueChanged) => {
+	private readonly onValueChanged = (
+		changed: IDirectoryValueChanged,
+		local: boolean,
+		target: IEventThisPlaceHolder,
+	): void => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const { key, previousValue } = change;
-		const path = change.path ?? "";
+		const { path, key, previousValue } = changed;
+		const fullPath = path === "/" ? `/${key}` : `${path}/${key}`;
 
-		const pathKey = path === "/" ? `/${key}` : `${path}/${key}`;
+		if (this.model.has(fullPath)) {
+			const prevVal = this.model.get(fullPath);
+			assert.strictEqual(
+				prevVal,
+				previousValue,
+				`previous value mismatch at ${fullPath}: expected: ${prevVal}, actual: ${previousValue}`,
+			);
+		}
 
-		assert.strictEqual(
-			previousValue,
-			this.model.get(pathKey),
-			`Mismatch on previous value for key="${key}"`,
-		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const newVal = this.sharedDir.get(fullPath);
 
-		const fuzzDir = this.sharedDir.getWorkingDirectory(path);
-		if (!fuzzDir) return;
-
-		if (fuzzDir.has(key)) {
-			this.model.set(pathKey, fuzzDir.get(key));
+		if (newVal === undefined) {
+			// deletion
+			this.model.delete(fullPath);
 		} else {
-			this.model.delete(pathKey);
+			this.model.set(fullPath, newVal);
 		}
 	};
 
-	private readonly onClear = (local: boolean) => {
+	private readonly onClear = (local: boolean, target: IEventThisPlaceHolder): void => {
 		this.model.clear();
 	};
 
 	private readonly onSubDirCreated = (
-		subdirName: string,
+		path: string,
 		local: boolean,
-		target: ISharedDirectory,
-	) => {
-		const { absolutePath } = target;
-		if (!this.model.has(`${absolutePath}${subdirName}`)) {
-			this.model.set(`${absolutePath}${subdirName}`, undefined);
-		}
+		target: IEventThisPlaceHolder,
+	): void => {
+		this.model.set(path, undefined);
 	};
 
-	private readonly onSubDirDeleted = (path: string) => {
-		const absPath = path.startsWith("/") ? path : `/${path}`;
-		for (const key of [...this.model.keys()]) {
-			if (key.startsWith(absPath)) {
-				const deleted = this.model.delete(key);
-				if (!deleted) {
-					assert("not deleted");
-				}
-			}
-		}
+	private readonly onSubDirDeleted = (
+		path: string,
+		local: boolean,
+		target: IEventThisPlaceHolder,
+	): void => {
+		this.model.delete(path);
 	};
 
 	private readonly onContainedValueChanged = (
-		change: IValueChanged,
+		changed: IValueChanged,
 		local: boolean,
-		target: IDirectory,
-	) => {
+		target: IEventThisPlaceHolder,
+	): void => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const { key, previousValue } = change;
-		const { absolutePath } = target;
+		const { key, previousValue } = changed;
 
-		const pathKey = absolutePath === "/" ? `/${key}` : `${absolutePath}/${key}`;
-
-		assert.strictEqual(
-			previousValue,
-			this.model.get(pathKey),
-			`Mismatch on previous value for key="${key}"`,
-		);
+		if (this.model.has(key)) {
+			const prevVal = this.model.get(key);
+			assert.strictEqual(
+				prevVal,
+				previousValue,
+				`contained previous value mismatch at ${key}: expected: ${prevVal}, actual: ${previousValue}`,
+			);
+		}
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const newValue = target.get(key);
-
-		if (newValue === undefined) {
-			this.model.delete(pathKey);
+		const newVal = this.sharedDir.get(key);
+		if (newVal === undefined) {
+			this.model.delete(key);
 		} else {
-			this.model.set(pathKey, newValue);
+			this.model.set(key, newVal);
 		}
 	};
 
