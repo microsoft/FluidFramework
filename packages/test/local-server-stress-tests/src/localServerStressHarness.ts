@@ -37,10 +37,11 @@ import {
 	type IFluidCodeDetails,
 } from "@fluidframework/container-definitions/internal";
 import {
+	asLegacyAlpha,
 	ConnectionState,
 	createDetachedContainer,
 	loadExistingContainer,
-	type IContainerExperimental,
+	type ContainerAlpha,
 } from "@fluidframework/container-loader/internal";
 import type { ConfigTypes, FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
@@ -73,7 +74,7 @@ import {
 import { makeUnreachableCodePathProxy } from "./utils.js";
 
 export interface Client {
-	container: IContainerExperimental;
+	container: ContainerAlpha;
 	tag: `client-${number}`;
 	entryPoint: DefaultStressDataObject;
 }
@@ -764,16 +765,18 @@ async function createDetachedClient(
 	seed: number,
 	options: LocalServerStressOptions,
 ): Promise<Client> {
-	const container = await createDetachedContainer({
-		codeLoader,
-		documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
-		urlResolver: new LocalResolver(),
-		codeDetails,
-		logger: createStressLogger(seed),
-		configProvider: {
-			getRawConfig: (name) => options.configurations?.[name],
-		},
-	});
+	const container = asLegacyAlpha(
+		await createDetachedContainer({
+			codeLoader,
+			documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
+			urlResolver: new LocalResolver(),
+			codeDetails,
+			logger: createStressLogger(seed),
+			configProvider: {
+				getRawConfig: (name) => options.configurations?.[name],
+			},
+		}),
+	);
 
 	const maybe: FluidObject<DefaultStressDataObject> | undefined =
 		await container.getEntryPoint();
@@ -796,21 +799,23 @@ async function loadClient(
 	options: LocalServerStressOptions,
 	pendingLocalState?: string,
 ): Promise<Client> {
-	const container = await timeoutAwait(
-		loadExistingContainer({
-			documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
-			request: { url },
-			urlResolver: new LocalResolver(),
-			codeLoader,
-			logger: createStressLogger(seed),
-			configProvider: {
-				getRawConfig: (name) => options.configurations?.[name],
+	const container = asLegacyAlpha(
+		await timeoutAwait(
+			loadExistingContainer({
+				documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
+				request: { url },
+				urlResolver: new LocalResolver(),
+				codeLoader,
+				logger: createStressLogger(seed),
+				configProvider: {
+					getRawConfig: (name) => options.configurations?.[name],
+				},
+				pendingLocalState,
+			}),
+			{
+				errorMsg: `Timed out waiting for client to load ${tag}`,
 			},
-			pendingLocalState,
-		}),
-		{
-			errorMsg: `Timed out waiting for client to load ${tag}`,
-		},
+		),
 	);
 
 	const maybe: FluidObject<DefaultStressDataObject> | undefined = await timeoutAwait(
