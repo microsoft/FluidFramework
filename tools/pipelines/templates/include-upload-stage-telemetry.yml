@@ -44,6 +44,8 @@ stages:
     steps:
     - checkout: git://internal/ff_pipeline_host
 
+    - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
     - template: /tools/pipelines/templates/include-install-pnpm.yml@self
       parameters:
         buildDirectory: $(Build.SourcesDirectory)
@@ -90,7 +92,7 @@ stages:
           echo "Listing files in '$WORK_FOLDER'"
           ls -laR $WORK_FOLDER;
 
-          npm run telemetry-generator -- --handlerModule "$(pathToTelemetryGeneratorHandlersNew)/stageTimingRetriever.js" --dir "$WORK_FOLDER";
+          pnpm exec telemetry-generator -- --handlerModule "$(pathToTelemetryGeneratorHandlersNew)/stageTimingRetriever.js" --dir "$WORK_FOLDER";
 
     - ${{ if parameters.uploadTestPassRateTelemetry }}:
       - task: Bash@3
@@ -122,4 +124,4 @@ stages:
             echo "Listing files in '$WORK_FOLDER'"
             ls -laR $WORK_FOLDER;
 
-            npm run telemetry-generator -- --handlerModule "$(pathToTelemetryGeneratorHandlersNew)/testPassRate.js" --dir "$WORK_FOLDER"
+            pnpm exec telemetry-generator -- --handlerModule "$(pathToTelemetryGeneratorHandlersNew)/testPassRate.js" --dir "$WORK_FOLDER"
