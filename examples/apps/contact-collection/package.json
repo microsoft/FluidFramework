@@ -26,7 +26,10 @@
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"prepack": "npm run webpack",
-		"start": "webpack serve",
+		"start": "npm run start:t9s",
+		"start:local": "webpack serve --config webpack.config.cjs --env service=local",
+		"start:odsp": "webpack serve --config webpack.config.cjs --env service=odsp",
+		"start:t9s": "webpack serve --config webpack.config.cjs --env service=t9s",
 		"start:test": "webpack serve --config webpack.test.cjs",
 		"test": "npm run test:jest",
 		"test:jest": "jest --ci",
@@ -35,6 +38,7 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
+		"@fluid-example/example-driver": "workspace:~",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
@@ -48,6 +52,7 @@
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
+		"@fluid-example/example-webpack-integration": "workspace:~",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-tools/build-cli": "^0.58.3",
 		"@fluidframework/build-common": "^2.0.3",

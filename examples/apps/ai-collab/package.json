@@ -30,6 +30,7 @@
 		"start:server": "tinylicious"
 	},
 	"devDependencies": {
+		"@fluid-example/example-webpack-integration": "workspace:~",
 		"@azure/identity": "^4.4.1",
 		"@azure/msal-browser": "^3.25.0",
 		"@biomejs/biome": "~1.9.3",

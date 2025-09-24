@@ -38,6 +38,7 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
+		"@fluid-example/example-driver": "workspace:~",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/data-objects": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
@@ -54,6 +55,7 @@
 		"process": "^0.11.10"
 	},
 	"devDependencies": {
+		"@fluid-example/example-webpack-integration": "workspace:~",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-tools/build-cli": "^0.58.3",
 		"@fluidframework/build-common": "^2.0.3",
