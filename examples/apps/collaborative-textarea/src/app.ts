@@ -3,7 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
+import {
+	createExampleDriver,
+	getSpecifiedServiceFromWebpack,
+} from "@fluid-example/example-driver";
+import { StaticCodeLoader } from "@fluid-example/example-utils";
+import type { IContainer } from "@fluidframework/container-definitions";
+import {
+	createDetachedContainer,
+	loadExistingContainer,
+} from "@fluidframework/container-loader/legacy";
 import React from "react";
 import ReactDOM from "react-dom";
 
@@ -18,24 +27,53 @@ import { CollaborativeTextView } from "./view.js";
  * requires making async calls.
  */
 async function start(): Promise<void> {
-	const tinyliciousModelLoader = new TinyliciousModelLoader<ICollaborativeTextAppModel>(
-		new StaticCodeLoader(new CollaborativeTextContainerRuntimeFactory()),
-	);
+	const service = getSpecifiedServiceFromWebpack();
+	const {
+		urlResolver,
+		documentServiceFactory,
+		createCreateNewRequest,
+		createLoadExistingRequest,
+	} = await createExampleDriver(service);
+
+	const codeLoader = new StaticCodeLoader(new CollaborativeTextContainerRuntimeFactory());
 
 	let id: string;
-	let model: ICollaborativeTextAppModel;
+	let container: IContainer;
 
 	if (location.hash.length === 0) {
-		// Normally our code loader is expected to match up with the version passed here.
-		// But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
-		// the version doesn't actually matter.
-		const createResponse = await tinyliciousModelLoader.createDetached("1.0");
-		model = createResponse.model;
-		id = await createResponse.attach();
+		// Some services support or require specifying the container id at attach time (local, odsp). For
+		// services that do not (t9s), the passed id will be ignored.
+		id = Date.now().toString();
+		const createNewRequest = createCreateNewRequest(id);
+		container = await createDetachedContainer({
+			codeDetails: { package: "1.0" },
+			urlResolver,
+			documentServiceFactory,
+			codeLoader,
+		});
+		await container.attach(createNewRequest);
+		// For most services, the id on the resolvedUrl is the authoritative source for the container id
+		// (regardless of whether the id passed in createCreateNewRequest is respected or not). However,
+		// for odsp the id is a hashed combination of drive and container ID which we can't use. Instead,
+		// we retain the id we generated above.
+		if (service !== "odsp") {
+			if (container.resolvedUrl === undefined) {
+				throw new Error("Resolved Url unexpectedly missing!");
+			}
+			id = container.resolvedUrl.id;
+		}
 	} else {
-		id = location.hash.slice(1);
-		model = await tinyliciousModelLoader.loadExisting(id);
+		id = location.hash.substring(1);
+		container = await loadExistingContainer({
+			request: await createLoadExistingRequest(id),
+			urlResolver,
+			documentServiceFactory,
+			codeLoader,
+		});
 	}
+
+	// Get the model from the container
+	const model = (await container.getEntryPoint()) as ICollaborativeTextAppModel;
 
 	// update the browser URL and the window title with the actual container ID
 	// eslint-disable-next-line require-atomic-updates
@@ -57,7 +95,7 @@ try {
 } catch (error) {
 	console.error(error);
 	console.log(
-		"%cEnsure you are running the Tinylicious Fluid Server\nUse:`npm run start:server`",
+		"%cEnsure you are running the appropriate Fluid Server for the selected service\nUse:`npm run start:server` for local, or configure ODSP for odsp",
 		"font-size:30px",
 	);
 }
