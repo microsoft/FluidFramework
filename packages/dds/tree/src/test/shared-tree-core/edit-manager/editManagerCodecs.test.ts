@@ -9,7 +9,7 @@ import type { ChangeEncodingContext } from "../../../core/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeEditManagerCodecs } from "../../../shared-tree-core/editManagerCodecs.js";
-import type { SummaryData } from "../../../shared-tree-core/index.js";
+import type { SharedBranchSummaryData, SummaryData } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import {
@@ -19,10 +19,11 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
+import { strict as assert } from "node:assert";
 
 const tags = Array.from({ length: 3 }, mintRevisionTag);
 
-const trunkCommits: SummaryData<TestChange>["trunk"] = [
+const trunkCommits: SharedBranchSummaryData<TestChange>["trunk"] = [
 	{
 		revision: tags[0],
 		sessionId: "1" as SessionId,
@@ -51,91 +52,115 @@ const dummyContext = {
 };
 const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodingContext> = {
 	successes: [
-		["empty", { trunk: [], peerLocalBranches: new Map() }, dummyContext],
+		[
+			"empty",
+			{
+				originator: dummyContext.originatorId,
+				main: { trunk: [], peerLocalBranches: new Map() },
+			},
+			dummyContext,
+		],
 		[
 			"single commit",
 			{
-				trunk: trunkCommits.slice(0, 1),
-				peerLocalBranches: new Map(),
+				originator: dummyContext.originatorId,
+				main: {
+					trunk: trunkCommits.slice(0, 1),
+					peerLocalBranches: new Map(),
+				},
 			},
 			dummyContext,
 		],
 		[
 			"multiple commits",
 			{
-				trunk: trunkCommits,
-				peerLocalBranches: new Map(),
+				originator: dummyContext.originatorId,
+				main: {
+					trunk: trunkCommits,
+					peerLocalBranches: new Map(),
+				},
 			},
 			dummyContext,
 		],
 		[
 			"empty branch",
 			{
-				trunk: trunkCommits,
-				peerLocalBranches: new Map([
-					[
-						"3",
-						{
-							base: tags[1],
-							commits: [],
-						},
-					],
-				]),
+				originator: dummyContext.originatorId,
+				main: {
+					trunk: trunkCommits,
+					peerLocalBranches: new Map([
+						[
+							"3" as SessionId,
+							{
+								base: tags[1],
+								commits: [],
+							},
+						],
+					]),
+				},
 			},
 			dummyContext,
 		],
 		[
 			"non-empty branch",
 			{
-				trunk: trunkCommits,
-				peerLocalBranches: new Map([
-					[
-						"4",
-						{
-							base: tags[1],
-							commits: [
-								{
-									sessionId: "4",
-									revision: mintRevisionTag(),
-									change: TestChange.mint([0, 1], 4),
-								},
-							],
-						},
-					],
-				]),
+				originator: dummyContext.originatorId,
+				main: {
+					trunk: trunkCommits,
+					peerLocalBranches: new Map([
+						[
+							"4" as SessionId,
+							{
+								base: tags[1],
+								commits: [
+									{
+										sessionId: "4" as SessionId,
+										revision: mintRevisionTag(),
+										change: TestChange.mint([0, 1], 4),
+									},
+								],
+							},
+						],
+					]),
+				},
 			},
 			dummyContext,
 		],
 		[
 			"multiple branches",
 			{
-				trunk: trunkCommits,
-				peerLocalBranches: new Map([
-					[
-						"3",
-						{
-							base: tags[0],
-							commits: [],
-						},
-					],
-					[
-						"4",
-						{
-							base: tags[1],
-							commits: [
-								{
-									sessionId: "4",
-									revision: mintRevisionTag(),
-									change: TestChange.mint([0, 1], 4),
-								},
-							],
-						},
-					],
-				]),
+				originator: dummyContext.originatorId,
+				main: {
+					trunk: trunkCommits,
+					peerLocalBranches: new Map([
+						[
+							"3",
+							{
+								base: tags[0],
+								commits: [],
+							},
+						],
+						[
+							"4",
+							{
+								base: tags[1],
+								commits: [
+									{
+										sessionId: "4",
+										revision: mintRevisionTag(),
+										change: TestChange.mint([0, 1], 4),
+									},
+								],
+							},
+						],
+					]),
+				},
 			},
 			dummyContext,
 		],
 	],
+
+	// TODO: Update these failures to ensure they satisfy SummaryData<TestChange>.
 	failures: {
 		1: [
 			[
@@ -158,8 +183,10 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 			[
 				"commit with parent field",
 				{
-					trunk: trunkCommits.slice(0, 1).map((commit) => ({ ...commit, parent: 0 })),
-					branches: [],
+					main: {
+						trunk: trunkCommits.slice(0, 1).map((commit) => ({ ...commit, parent: 0 })),
+						peerLocalBranches: [],
+					},
 				},
 				dummyContext,
 			],
@@ -173,9 +200,28 @@ export function testCodec() {
 			jsonValidator: typeboxValidator,
 		});
 
-		makeEncodingTestSuite(family, testCases);
+		// Versions 1 through 4 do not encode the summary originator ID.
+		makeEncodingTestSuite(
+			family,
+			testCases,
+			assertEquivalentSummaryDataIgnoreOriginator,
+			[1, 2, 3, 4],
+		);
+
+		makeEncodingTestSuite(family, testCases, undefined, [5]);
 
 		// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
 		// TODO: format compatibility tests to detect breaking of existing documents.
 	});
+}
+
+function assertEquivalentSummaryDataIgnoreOriginator(
+	a: SummaryData<TestChange>,
+	b: SummaryData<TestChange>,
+): void {
+	const aWithoutOriginator = { ...a };
+	const bWithoutOriginator = { ...b };
+	delete aWithoutOriginator.originator;
+	delete bWithoutOriginator.originator;
+	assert.deepStrictEqual(aWithoutOriginator, bWithoutOriginator);
 }
