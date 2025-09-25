@@ -141,13 +141,10 @@ stages:
               tar --extract --verbose --file $TAR_PATH ./src/test
 
         # Install package dependencies (this gets devDependencies installed so we can then run the package's tests).
-        - task: Bash@3
-          displayName: Install dependencies - ${{ testPackage }}
-          retryCountOnTaskFailure: 4
-          inputs:
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            targetType: 'inline'
-            script: 'npm install'
+        - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
+          parameters:
+            sourcePackageLocation: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            destPackageLocation: $(Build.SourcesDirectory)
 
         # Run tests
         - task: Npm@1
