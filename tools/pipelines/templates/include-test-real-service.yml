@@ -321,7 +321,7 @@ stages:
             continueOnError: true
             inputs:
               key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}"'
-              path: $(Build.SourcesDirectory)/node_modules/@fluid-private/test-version-utils/node_modules/.legacy/
+              path: $(Build.SourcesDirectory)/node_modules/@fluid-private/test-end-to-end-tests/node_modules/@fluid-private/test-version-utils/node_modules/.legacy/
 
         # Only check out tenants from the tenant pool if we are running tests against ODSP
         - ${{ if or(eq(parameters.stageId, 'e2e_odsp'), eq(parameters.stageId, 'stress_tests_odsp')) }}:
