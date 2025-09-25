@@ -3,16 +3,23 @@
  * Licensed under the MIT License.
  */
 
+import type { FluidObject } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { DataStoreMessageType } from "@fluidframework/datastore/internal";
 import type {
 	IFluidDataStoreRuntime,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
+import type {
+	AsyncFluidObjectProvider,
+	IFluidDependencySynthesizer,
+} from "@fluidframework/synthesize/internal";
 
 import type { IDelayLoadChannelFactory } from "../channel-factories/index.js";
 import type { MigrationDataObjectFactoryProps } from "../data-object-factories/index.js";
 
 import { PureDataObject } from "./pureDataObject.js";
-import type { DataObjectTypes } from "./types.js";
+import type { DataObjectTypes, IDataObjectProps } from "./types.js";
 
 /**
  * Descriptor for a model shape (arbitrary schema) the migration data object can probe for
@@ -64,7 +71,26 @@ export interface ModelDescriptor<TModel = unknown> {
 export abstract class MigrationDataObject<
 	TUniversalView,
 	I extends DataObjectTypes = DataObjectTypes,
+	TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
 > extends PureDataObject<I> {
+	/**
+	 * Optional providers synthesized for this data object.
+	 */
+	protected readonly synthesizedProviders: I["OptionalProviders"] | undefined;
+
+	public constructor(props: IDataObjectProps<I>) {
+		super(props);
+
+		const scope: FluidObject<IFluidDependencySynthesizer> = this.context.scope;
+		this.synthesizedProviders =
+			scope.IFluidDependencySynthesizer?.synthesize<I["OptionalProviders"]>(
+				this.providers,
+				{},
+			) ??
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+			({} as AsyncFluidObjectProvider<never>);
+	}
+
 	// The currently active model and its descriptor, if discovered or created.
 	#activeModel:
 		| { descriptor: ModelDescriptor<TUniversalView>; view: TUniversalView }
@@ -86,7 +112,9 @@ export abstract class MigrationDataObject<
 		const { modelDescriptors } = this.constructor as MigrationDataObjectFactoryProps<
 			this,
 			TUniversalView,
-			I
+			I,
+			TUniversalView, //* BYE BYE
+			TMigrationData
 		>["ctor"];
 
 		//* TODO: Add runtime type guards? Or is type system sufficient here?
@@ -125,16 +153,147 @@ export abstract class MigrationDataObject<
 		//* TODO: Throw if we reach here?  It means no expected models were found
 	}
 
+	/**
+	 * Whether migration is supported by this data object at this time.
+	 * May depend on flighting or other dynamic configuration.
+	 */
+	protected abstract canPerformMigration(): boolean;
+
+	/**
+	 * Data required for running migration. This is necessary because the migration must happen synchronously.
+	 *
+	 * An example of what to asynchronously retrieve could be getting the "old" DDS that you want to migrate the data of:
+	 * ```
+	 * async (root) => {
+	 *     root.get<IFluidHandle<SharedMap>>("mapKey").get();
+	 * }
+	 * ```
+	 */
+	protected abstract asyncGetDataForMigration: (
+		existingModel: TUniversalView,
+	) => Promise<TMigrationData>;
+
+	/**
+	 * Migrate the DataObject upon resolve (i.e. on retrieval of the DataStore).
+	 *
+	 * An example implementation could be changing which underlying DDS is used to represent the DataObject's data:
+	 * ```
+	 * (runtime, treeRoot, data) => {
+	 *     // ! These are not all real APIs and are simply used to convey the purpose of this method
+	 *     const mapContent = data.getContent();
+	 *     const view = treeRoot.viewWith(treeConfiguration);
+	 *     view.initialize(
+	 *         new MyTreeSchema({
+	 *             arbitraryMap: mapContent,
+	 *         }),
+	 *     );
+	 *     view.dispose();
+	 * }
+	 * ```
+	 * @param newModel - New model which is ready to be populated with the data
+	 * @param data - Provided by the "asyncGetDataForMigration" function
+	 */
+	protected abstract migrateDataObject: (
+		newModel: TUniversalView,
+		data: TMigrationData,
+	) => void;
+
+	//* TBD exact shape (probably does more than this)
+	public shouldMigrateBeforeInitialized(): boolean {
+		//* TODO: Also inspect the data itself to see if migration is needed?
+		return this.canPerformMigration();
+	}
+
+	//* TODO: add new DataStoreMessageType.Conversion
+	private static readonly conversionContent = "conversion";
+
+	private submitConversionOp(): void {
+		this.context.submitMessage(
+			DataStoreMessageType.ChannelOp,
+			MigrationDataObject.conversionContent,
+			undefined,
+		);
+	}
+
+	#migrateLock = false;
+
+	public async migrate(): Promise<void> {
+		if (!this.canPerformMigration || this.#migrateLock) {
+			return;
+		}
+
+		//* Should this move down a bit lower, to have less code in the lock zone?
+		this.#migrateLock = true;
+
+		try {
+			// Read the model descriptors from the DataObject ctor (single source of truth).
+			const modelDescriptors = this.modelCandidates;
+
+			//* NEXT: Get target based on SettingsProvider
+			// Destructure the target/first descriptor and probe it first. If it's present,
+			// the object already uses the target model and we're done.
+			const [targetDescriptor, ...otherDescriptors] = modelDescriptors;
+			const maybeTarget = await targetDescriptor.probe(this.runtime);
+			if (maybeTarget !== undefined) {
+				// Already on target model; nothing to do.
+				return;
+			}
+			// Download the code in parallel with async operations happening on the existing model
+			const targetFactoriesP = targetDescriptor.ensureFactoriesLoaded();
+
+			// Find the first model that probes successfully.
+			let existingModel: TUniversalView | undefined;
+			for (const desc of otherDescriptors) {
+				//* Should probe errors be fatal?
+				existingModel = await desc.probe(this.runtime).catch(() => undefined);
+				if (existingModel !== undefined) {
+					break;
+				}
+			}
+			assert(
+				existingModel !== undefined,
+				"Unable to match runtime structure to any known data model",
+			);
+
+			// Retrieve any async data required for migration using the discovered existing model (may be undefined)
+			// In parallel, we are waiting for the target factories to load
+			const data = await this.asyncGetDataForMigration(existingModel);
+			await targetFactoriesP;
+
+			// ! TODO: ensure these ops aren't sent immediately AB#41625
+			this.submitConversionOp();
+
+			// Create the target model and run migration.
+			const newModel = targetDescriptor.create(this.runtime);
+
+			// Call consumer-provided migration implementation
+			this.migrateDataObject(newModel, data);
+
+			//* TODO: evacuate old model
+			//* i.e. delete unused root contexts, but not only that.  GC doesn't run sub-DataStore.
+			//* So we will need to plumb through now-unused channels to here.  Can be a follow-up.
+		} finally {
+			this.#migrateLock = false;
+		}
+	}
+
+	//* FUTURE: Can we prevent subclasses from overriding this?
 	public override async initializeInternal(existing: boolean): Promise<void> {
 		if (existing) {
 			await this.inferModelFromRuntime();
 		} else {
+			//* NEXT: Pick the right model based on SettingsProvider
 			const creator = this.modelCandidates[0];
 			await creator.ensureFactoriesLoaded();
 
 			// Note: implementer is responsible for binding any root channels and populating initial content on the created model
 			const created = creator.create(this.runtime);
 			this.#activeModel = { descriptor: creator, view: created };
+		}
+
+		if (this.shouldMigrateBeforeInitialized()) {
+			// initializeInternal will be called after migration is complete instead of now
+			return;
 		}
 
 		await super.initializeInternal(existing);
