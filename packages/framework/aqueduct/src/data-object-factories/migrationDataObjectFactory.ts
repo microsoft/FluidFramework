@@ -59,16 +59,12 @@ export class MigrationDataObjectFactory<
 	TObj extends MigrationDataObject<TUniversalView, I>,
 	TUniversalView,
 	I extends DataObjectTypes = DataObjectTypes,
-	TNewModel extends TUniversalView = TUniversalView, // default case works for a single model descriptor
-	TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
 > extends PureDataObjectFactory<TObj, I> {
 	public constructor(
-		props: MigrationDataObjectFactoryProps<TObj, TUniversalView, I, TNewModel, TMigrationData>,
+		props: DataObjectFactoryProps<TObj, I>,
+		modelDescriptors: readonly ModelDescriptor<TUniversalView>[],
 	) {
-		const alteredProps = getAlteredPropsSupportingMigrationDataObject(
-			props,
-			props.ctor.modelDescriptors,
-		);
+		const alteredProps = getAlteredPropsSupportingMigrationDataObject(props, modelDescriptors);
 		super(alteredProps);
 	}
 }

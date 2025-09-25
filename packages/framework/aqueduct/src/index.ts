@@ -24,7 +24,6 @@ export {
 	PureDataObjectFactory,
 	TreeDataObjectFactory,
 	MigrationDataObjectFactory,
-	type MigrationDataObjectFactoryProps,
 	type CreateDataObjectProps,
 } from "./data-object-factories/index.js";
 export {
@@ -38,6 +37,8 @@ export {
 	MigrationDataObject,
 } from "./data-objects/index.js";
 export type {
+	IMigrationInfo,
+	IProvideMigrationInfo,
 	ModelDescriptor,
 	RootDirectoryView,
 	RootTreeView,
