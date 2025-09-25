@@ -2768,7 +2768,7 @@ importers:
         version: link:../../utils/example-utils
       '@fluidframework/react':
         specifier: workspace:~
-        version: link:../../../experimental/framework/tree-react-api
+        version: link:../../../packages/framework/react
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../packages/framework/aqueduct
@@ -4471,7 +4471,7 @@ importers:
         version: link:../../../utils/example-utils
       '@fluidframework/react':
         specifier: workspace:~
-        version: link:../../../../experimental/framework/tree-react-api
+        version: link:../../../../packages/framework/react
       '@fluidframework/azure-client':
         specifier: workspace:~
         version: link:../../../../packages/service-clients/azure-client
@@ -7352,7 +7352,7 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
 
-  experimental/framework/tree-react-api:
+  packages/framework/react:
     dependencies:
       '@fluidframework/aqueduct':
         specifier: workspace:~
@@ -15541,7 +15541,7 @@ importers:
         version: link:../../../../examples/utils/example-utils
       '@fluidframework/react':
         specifier: workspace:~
-        version: link:../../../../experimental/framework/tree-react-api
+        version: link:../../../../packages/framework/react
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../common/client-utils
