@@ -4,7 +4,7 @@
 ---
 The exports of @fluid-experimental/tree-react-api have been moved under /alpha
 
-`@fluid-experimental/tree-react-api` has been adjusted to aline with Fluid Framework's [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+`@fluid-experimental/tree-react-api` has been adjusted to align with Fluid Framework's [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
 
 Since this package is under `@fluid-experimental`, previously it implicitly made no guarantees.
 Now all the APIs are `@alpha`, which also amounts to making no guarantees but makes it possible to promote APIs to `@beta` in the future to offer some stability.
