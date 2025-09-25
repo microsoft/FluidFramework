@@ -96,8 +96,6 @@
 		}
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "legacy"
+		"disabled": true
 	}
 }

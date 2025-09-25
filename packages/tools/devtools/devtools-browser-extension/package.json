@@ -143,8 +143,6 @@
 		"webpack-cli": "^5.1.4"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }
