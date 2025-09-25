@@ -420,8 +420,8 @@ export class SchematizingSimpleTreeView<
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
 		this.onDispose?.();
-		if (this.checkout.isBranch && !this.checkout.disposed) {
-			// All (non-main) branches are 1:1 with views, so if a user manually disposes a view, we should also dispose the checkout/branch.
+		if (!this.checkout.isSharedBranch && !this.checkout.disposed) {
+			// All non-shared branches are 1:1 with views, so if a user manually disposes a view, we should also dispose the checkout/branch.
 			this.checkout.dispose();
 		}
 	}

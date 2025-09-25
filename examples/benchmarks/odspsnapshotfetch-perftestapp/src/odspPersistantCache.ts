@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ICacheEntry,
 	IFileEntry,
 	IPersistedCache,
-	getKeyForCacheEntry,
-} from "@fluidframework/odsp-driver-definitions/internal";
+} from "@fluidframework/driver-definitions/internal";
+import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
 
 export class OdspSampleCache implements IPersistedCache {
 	private readonly cache = new Map<string, any>();

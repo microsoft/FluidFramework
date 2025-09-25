@@ -48,6 +48,17 @@ To get started, install the package by running the following command:
 npm i @fluid-experimental/tree-react-api
 ```
 
+## Importing from this package
+
+This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
+For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+
+To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluid-experimental/tree-react-api` like normal.
+
+To access the `beta` APIs, import via `@fluid-experimental/tree-react-api/beta`.
+
+To access the `alpha` APIs, import via `@fluid-experimental/tree-react-api/alpha`.
+
 ## API Documentation
 
 API documentation for **@fluid-experimental/tree-react-api** is available at <https://fluidframework.com/docs/apis/tree-react-api>.

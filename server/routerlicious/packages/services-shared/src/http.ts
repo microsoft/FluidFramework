@@ -116,6 +116,21 @@ export function validatePrivateLink(
 					);
 				}
 			} else {
+				if (
+					tenantInfo?.customData &&
+					tenantInfo.customData.publicNetworkAccessEnabled !== undefined &&
+					tenantInfo.customData.publicNetworkAccessEnabled === false
+				) {
+					return handleResponse(
+						Promise.reject(
+							new NetworkError(
+								400,
+								`The public network access is disabled for tenant ${tenantId}`,
+							),
+						),
+						res,
+					);
+				}
 				if (privateLinkEnable) {
 					return handleResponse(
 						Promise.reject(
