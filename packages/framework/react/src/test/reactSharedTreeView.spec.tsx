@@ -13,6 +13,7 @@ import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 import * as React from "react";
 
+import type { PropTreeNode } from "../propNode.js";
 import { treeDataObject, TreeViewComponent } from "../reactSharedTreeView.js";
 
 describe("reactSharedTreeView", () => {
@@ -67,7 +68,9 @@ describe("reactSharedTreeView", () => {
 
 				class Item extends builder.object("Item", {}) {}
 
-				const View = ({ root }: { root: Item }): React.JSX.Element => <span>View</span>;
+				const View = ({ root }: { root: PropTreeNode<Item> }): React.JSX.Element => (
+					<span>View</span>
+				);
 
 				it("TreeViewComponent", () => {
 					const view = independentView(new TreeViewConfiguration({ schema: Item }), {});

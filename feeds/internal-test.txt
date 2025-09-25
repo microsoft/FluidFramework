@@ -34,6 +34,7 @@
 @fluidframework/tree-agent
 @fluidframework/synthesize
 @fluidframework/request-handler
+@fluidframework/react
 @fluidframework/presence
 @fluid-experimental/oldest-client-observer
 @fluidframework/fluid-static
@@ -79,7 +80,6 @@ fluid-framework
 @fluidframework/core-interfaces
 @fluidframework/container-definitions
 @fluid-internal/client-utils
-@fluid-experimental/tree-react-api
 @fluid-experimental/last-edited
 @fluid-experimental/data-objects
 @fluid-experimental/tree

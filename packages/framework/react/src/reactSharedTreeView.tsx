@@ -22,6 +22,8 @@ import type {
 import { configuredSharedTree, FormatValidatorBasic } from "@fluidframework/tree/internal";
 import * as React from "react";
 
+import { toPropTreeNode, type PropTreeValue } from "./propNode.js";
+
 /**
  * Opt into extra validation to detect encoding bugs and data corruption.
  * As long as this is an experimental package, opting into extra validation (at a small perf and bundle size cost) seems reasonable.
@@ -35,7 +37,7 @@ const SharedTree = configuredSharedTree({
  * @param treeConfiguration - See {@link IReactTreeDataObject.config}.
  * @param createInitialTree - Function which populates the tree with initial data on document create.
  * @returns A {@link @fluidframework/fluid-static#DataObjectClass} to allow easy use of a SharedTree in a ContainerSchema.
- * @public
+ * @alpha
  */
 export function treeDataObject<TSchema extends ImplicitFieldSchema>(
 	treeConfiguration: TreeViewConfiguration<TSchema>,
@@ -104,7 +106,7 @@ export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 /**
  * A schema-aware tree-backed DataObject, extended with a React Component to view the tree.
  * @remarks Allows for the Tree's schema to be baked into the container schema.
- * @public
+ * @sealed @alpha
  */
 export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
 	/**
@@ -141,13 +143,15 @@ export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
 
 /**
  * React props for viewing a tree.
- * @public
+ * @input @alpha
  */
 export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 	/**
 	 * Component to display the tree content.
 	 */
-	readonly viewComponent: React.FC<{ root: TreeFieldFromImplicitField<TSchema> }>;
+	readonly viewComponent: React.FC<{
+		root: PropTreeValue<TreeFieldFromImplicitField<TSchema>>;
+	}>;
 
 	/**
 	 * Component to display instead of the {@link TreeViewProps.viewComponent}
@@ -241,7 +245,7 @@ function useViewRoot<TSchema extends ImplicitFieldSchema>(
 /**
  * React component which handles schematizing trees.
  * This includes displaying errors when the document can not be schematized.
- * @public
+ * @alpha
  */
 export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	tree,
@@ -271,12 +275,12 @@ export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 		return <div>View not set</div>;
 	}
 
-	return <ViewComponent root={root} />;
+	return <ViewComponent root={toPropTreeNode(root)} />;
 }
 
 /**
  * React Props for displaying when the opened document is incompatible with the required view schema.
- * @public
+ * @alpha
  */
 export interface SchemaIncompatibleProps {
 	/**

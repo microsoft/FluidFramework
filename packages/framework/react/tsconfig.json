@@ -7,5 +7,7 @@
 		"outDir": "./lib",
 		"exactOptionalPropertyTypes": false,
 		"noUnusedLocals": false,
+		// ES2021 needed for FinalizationRegistry
+		"lib": ["ES2021", "DOM", "DOM.Iterable"],
 	},
 }
