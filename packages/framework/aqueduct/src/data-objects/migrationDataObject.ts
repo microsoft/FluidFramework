@@ -73,24 +73,6 @@ export abstract class MigrationDataObject<
 	I extends DataObjectTypes = DataObjectTypes,
 	TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
 > extends PureDataObject<I> {
-	/**
-	 * Optional providers synthesized for this data object.
-	 */
-	protected readonly synthesizedProviders: I["OptionalProviders"] | undefined;
-
-	public constructor(props: IDataObjectProps<I>) {
-		super(props);
-
-		const scope: FluidObject<IFluidDependencySynthesizer> = this.context.scope;
-		this.synthesizedProviders =
-			scope.IFluidDependencySynthesizer?.synthesize<I["OptionalProviders"]>(
-				this.providers,
-				{},
-			) ??
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			({} as AsyncFluidObjectProvider<never>);
-	}
-
 	// The currently active model and its descriptor, if discovered or created.
 	#activeModel:
 		| { descriptor: ModelDescriptor<TUniversalView>; view: TUniversalView }

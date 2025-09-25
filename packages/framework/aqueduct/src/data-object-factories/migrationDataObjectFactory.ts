@@ -14,6 +14,7 @@ import type {
 	IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 
+//* TEST only, will remove
 // eslint-disable-next-line import/no-internal-modules
 import { rootDirectoryDescriptor } from "../data-objects/dataObject.js";
 import {
@@ -22,16 +23,11 @@ import {
 	type IDataObjectProps,
 	type MigrationDataObject,
 	type ModelDescriptor,
-	type PureDataObject,
 } from "../data-objects/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rootSharedTreeDescriptor } from "../data-objects/treeDataObject.js";
 
-import { DataObjectFactory } from "./dataObjectFactory.js";
-import type {
-	PureDataObjectFactory,
-	DataObjectFactoryProps,
-} from "./pureDataObjectFactory.js";
+import type { DataObjectFactoryProps } from "./pureDataObjectFactory.js";
 
 /**
  * Represents the properties required to create a MigrationDataObjectFactory.
@@ -90,21 +86,18 @@ const fullMigrateDataObject = async (runtime: IFluidDataStoreChannel): Promise<v
 
 const conversionContent = "conversion";
 
-// eslint-disable-next-line jsdoc/require-jsdoc -- //*
-export function makeFactoryForMigration<
-	TFactory extends PureDataObjectFactory<TObj, I>,
-	// TProps extends DataObjectFactoryProps<TObj, I>,
-	TProps extends Pick<
-		DataObjectFactoryProps<TObj, I>,
-		"sharedObjects" | "runtimeClass" | "afterBindRuntime"
-	>,
-	TObj extends PureDataObject<I>,
+/**
+ * Shallow copies the props making necesssary alterations so PureDataObjectFactory can be used to create a MigrationDataObject
+ */
+export function getAlteredPropsSupportingMigrationDataObject<
+	TObj extends MigrationDataObject<TUniversalView, I, TMigrationData>,
+	TUniversalView = unknown,
 	I extends DataObjectTypes = DataObjectTypes,
+	TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
 >(
-	factoryConstructor: (p: TProps) => TFactory,
-	props: TProps,
+	props: DataObjectFactoryProps<TObj, I>,
 	modelDescriptors: readonly ModelDescriptor[],
-): TFactory {
+): DataObjectFactoryProps<TObj, I> {
 	const allSharedObjects = modelDescriptors.flatMap(
 		(desc) => desc.sharedObjects.alwaysLoaded ?? [],
 	); //* PSUEDO-CODE (see BONEYARD below for more complex version)
@@ -115,7 +108,6 @@ export function makeFactoryForMigration<
 		...props,
 		sharedObjects: [...allSharedObjects, ...(props.sharedObjects ?? [])],
 		afterBindRuntime: fullMigrateDataObject,
-		// eslint-disable-next-line jsdoc/require-jsdoc
 		runtimeClass: class MigratorDataStoreRuntime extends runtimeClass {
 			private migrationOpSeqNum = -1;
 			private readonly seqNumsToSkip = new Set<number>();
@@ -173,14 +165,12 @@ export function makeFactoryForMigration<
 		}, //* Mixin the Migration op processing stuff
 	};
 
-	const f = factoryConstructor(transformedProps);
-	return f;
+	return transformedProps;
 }
 
 class MyDataObject extends DataObject {}
 
-makeFactoryForMigration(
-	(props) => new DataObjectFactory(props),
+getAlteredPropsSupportingMigrationDataObject(
 	{ type: "test", ctor: MyDataObject, sharedObjects: [] /* ...other props... */ },
 	[rootSharedTreeDescriptor(), rootDirectoryDescriptor],
 );
