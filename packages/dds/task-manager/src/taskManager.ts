@@ -62,7 +62,7 @@ function assertIsTaskManagerOperation(op: unknown): asserts op is ITaskManagerOp
 			typeof op.taskId === "string" &&
 			"type" in op &&
 			(op.type === "volunteer" || op.type === "abandon" || op.type === "complete"),
-		"Not a TaskManager operation",
+		0xc3b /* Not a TaskManager operation */,
 	);
 }
 
@@ -146,11 +146,11 @@ export class TaskManagerClass
 			(taskId: string, clientId: string, local: boolean, messageId: number | undefined) => {
 				if (local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
-					assert(latestPendingOps !== undefined, "No pending ops for task");
+					assert(latestPendingOps !== undefined, 0xc3c /* No pending ops for task */);
 					const pendingOp = latestPendingOps.shift();
 					assert(
 						pendingOp !== undefined && pendingOp.messageId === messageId,
-						"Unexpected op",
+						0xc3d /* Unexpected op */,
 					);
 					assert(pendingOp.type === "volunteer", 0x07c /* "Unexpected op type" */);
 					if (latestPendingOps.length === 0) {
@@ -167,11 +167,11 @@ export class TaskManagerClass
 			(taskId: string, clientId: string, local: boolean, messageId: number | undefined) => {
 				if (local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
-					assert(latestPendingOps !== undefined, "No pending ops for task");
+					assert(latestPendingOps !== undefined, 0xc3e /* No pending ops for task */);
 					const pendingOp = latestPendingOps.shift();
 					assert(
 						pendingOp !== undefined && pendingOp.messageId === messageId,
-						"Unexpected op",
+						0xc3f /* Unexpected op */,
 					);
 					assert(pendingOp.type === "abandon", 0x07e /* "Unexpected op type" */);
 					if (latestPendingOps.length === 0) {
@@ -189,11 +189,11 @@ export class TaskManagerClass
 			(taskId: string, clientId: string, local: boolean, messageId: number | undefined) => {
 				if (local) {
 					const latestPendingOps = this.latestPendingOps.get(taskId);
-					assert(latestPendingOps !== undefined, "No pending ops for task");
+					assert(latestPendingOps !== undefined, 0xc40 /* No pending ops for task */);
 					const pendingOp = latestPendingOps.shift();
 					assert(
 						pendingOp !== undefined && pendingOp.messageId === messageId,
-						"Unexpected op",
+						0xc41 /* Unexpected op */,
 					);
 					assert(pendingOp.type === "complete", 0x401 /* Unexpected op type */);
 					if (latestPendingOps.length === 0) {
@@ -682,11 +682,11 @@ export class TaskManagerClass
 	protected reSubmitCore(content: unknown, localOpMetadata: number): void {
 		assertIsTaskManagerOperation(content);
 		const pendingOps = this.latestPendingOps.get(content.taskId);
-		assert(pendingOps !== undefined, "No pending ops for task on resubmit attempt");
+		assert(pendingOps !== undefined, 0xc42 /* No pending ops for task on resubmit attempt */);
 		const pendingOpIndex = pendingOps.findIndex(
 			(op) => op.messageId === localOpMetadata && op.type === content.type,
 		);
-		assert(pendingOpIndex !== -1, "Could not match pending op on resubmit attempt");
+		assert(pendingOpIndex !== -1, 0xc43 /* Could not match pending op on resubmit attempt */);
 		pendingOps.splice(pendingOpIndex, 1);
 		if (pendingOps.length === 0) {
 			this.latestPendingOps.delete(content.taskId);
@@ -841,7 +841,7 @@ export class TaskManagerClass
 			return false;
 		}
 
-		assert(this.clientId !== undefined, 0x07f /* "clientId undefined" */);
+		assert(this.clientId !== undefined, 0xc44 /* clientId undefined */);
 
 		const inQueue = this.taskQueues.get(taskId)?.includes(this.clientId) ?? false;
 		const latestPendingOps = this.latestPendingOps.get(taskId);
@@ -879,14 +879,17 @@ export class TaskManagerClass
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
 	 */
 	protected rollback(content: unknown, localOpMetadata: unknown): void {
-		assert(typeof localOpMetadata === "number", "Expect localOpMetadata to be a number");
+		assert(
+			typeof localOpMetadata === "number",
+			0xc45 /* Expect localOpMetadata to be a number */,
+		);
 		assertIsTaskManagerOperation(content);
 		const latestPendingOps = this.latestPendingOps.get(content.taskId);
-		assert(latestPendingOps !== undefined, "No pending ops when trying to rollback");
+		assert(latestPendingOps !== undefined, 0xc46 /* No pending ops when trying to rollback */);
 		const pendingOpToRollback = latestPendingOps.pop();
 		assert(
 			pendingOpToRollback !== undefined && pendingOpToRollback.messageId === localOpMetadata,
-			"pending op mismatch",
+			0xc47 /* pending op mismatch */,
 		);
 		if (latestPendingOps.length === 0) {
 			this.latestPendingOps.delete(content.taskId);

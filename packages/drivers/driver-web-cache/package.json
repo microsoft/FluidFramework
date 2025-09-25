@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-web-cache",
-	"version": "2.61.0",
+	"version": "2.62.0",
 	"description": "Implementation of the driver caching API for a web browser",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -91,7 +91,8 @@
 	"dependencies": {
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/odsp-driver-definitions": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"idb": "^6.1.2"
 	},

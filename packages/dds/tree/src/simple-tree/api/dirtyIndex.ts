@@ -73,8 +73,8 @@ function createDirtyVisitor(forest: IEditableForest, dirty: DirtyTreeMap): Annou
 
 	return createAnnouncedVisitor({
 		beforeDetach: (src) => {
-			assert(parent !== undefined, "Expected node");
-			assert(parentField !== undefined, "Expected field");
+			assert(parent !== undefined, 0xc48 /* Expected node */);
+			assert(parentField !== undefined, 0xc49 /* Expected field */);
 			for (let parentIndex = src.start; parentIndex < src.end; parentIndex++) {
 				const path: UpPath = {
 					parent,
@@ -95,8 +95,8 @@ function createDirtyVisitor(forest: IEditableForest, dirty: DirtyTreeMap): Annou
 			}
 		},
 		afterAttach: (_, dst) => {
-			assert(parent !== undefined, "Expected node");
-			assert(parentField !== undefined, "Expected field");
+			assert(parent !== undefined, 0xc4a /* Expected node */);
+			assert(parentField !== undefined, 0xc4b /* Expected field */);
 			for (let parentIndex = dst.start; parentIndex < dst.end; parentIndex++) {
 				const path: UpPath = {
 					parent,
@@ -116,7 +116,7 @@ function createDirtyVisitor(forest: IEditableForest, dirty: DirtyTreeMap): Annou
 			}
 		},
 		enterNode(index: number): void {
-			assert(parentField !== undefined, "Expected field");
+			assert(parentField !== undefined, 0xc4c /* Expected field */);
 			parent = {
 				parent,
 				parentField,
@@ -125,7 +125,7 @@ function createDirtyVisitor(forest: IEditableForest, dirty: DirtyTreeMap): Annou
 			parentField = undefined;
 		},
 		exitNode(): void {
-			assert(parent !== undefined, "Expected node");
+			assert(parent !== undefined, 0xc4d /* Expected node */);
 			parentField = parent.parentField;
 			parent = parent.parent;
 		},
@@ -141,7 +141,7 @@ function createDirtyVisitor(forest: IEditableForest, dirty: DirtyTreeMap): Annou
 function getNodeAtPath(forest: IEditableForest, path: UpPath): TreeNode | undefined {
 	const cursor = forest.allocateCursor();
 	forest.moveCursorToPath(path, cursor);
-	assert(cursor.mode === CursorLocationType.Nodes, 0xa9c /* attach should happen in a node */);
+	assert(cursor.mode === CursorLocationType.Nodes, 0xc4e /* attach should happen in a node */);
 	const anchor = cursor.buildAnchor();
 	const anchorNode = forest.anchors.locate(anchor);
 	cursor.free();
