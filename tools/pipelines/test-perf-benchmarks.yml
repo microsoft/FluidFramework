@@ -107,7 +107,6 @@ stages:
           artifactBuildId: $(artifactBuildId)
           artifactPipeline: $(artifactPipeline)
           testFilesPath: $(testFilesPath)
-          testWorkspace: $(testWorkspace)
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.executionTestPackages }}:
@@ -221,7 +220,6 @@ stages:
           artifactBuildId: $(artifactBuildId)
           artifactPipeline: $(artifactPipeline)
           testFilesPath: $(testFilesPath)
-          testWorkspace: $(testWorkspace)
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.memoryTestPackages }}:
@@ -334,7 +332,6 @@ stages:
           artifactBuildId: $(artifactBuildId)
           artifactPipeline: $(artifactPipeline)
           testFilesPath: $(testFilesPath)
-          testWorkspace: $(testWorkspace)
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.customBenchmarkTestPackages }}:
