@@ -126,11 +126,11 @@ const fullMigrateDataObject = async (runtime: IFluidDataStoreChannel): Promise<v
 
 	const migrationInfo = maybeMigrationSource.IMigrationInfo;
 	if (migrationInfo === undefined) {
-		// No migration needed if MigrationInfo not provided
+		// Migration definitely not supported, nothing to do
 		return;
 	}
 
-	await migrationInfo.migrate();
+	await migrationInfo.tryMigrate();
 };
 
 const ConversionContent = "conversion";

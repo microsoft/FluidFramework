@@ -16,6 +16,7 @@ import type { IDelayLoadChannelFactory } from "../channel-factories/index.js";
 import { PureDataObject } from "./pureDataObject.js";
 import type { DataObjectTypes } from "./types.js";
 
+//* Update comment
 /**
  * Information emitted by an old implementation's runtime to request a one-hop migration
  * into a newer implementation.
@@ -27,14 +28,14 @@ import type { DataObjectTypes } from "./types.js";
  * @legacy @beta
  */
 export interface IMigrationInfo extends IProvideMigrationInfo {
+	//* TODO: We may want to return additional info (like the target format tag) when we do migrate
+	readonly readyToMigrate: () => Promise<boolean>;
+
 	/**
-	 * The tag (arbitrary string) that identifies the data format to migrate to
+	 * Migrate the data to the new format if allowed and necessary. Otherwise do nothing.
+	 * @returns true if migration was performed, false if not (e.g. because the object is already in the target format)
 	 */
-	readonly targetFormatTag: string;
-	/**
-	 * Migrate the data to the new format
-	 */
-	readonly migrate: () => Promise<void>;
+	readonly tryMigrate: () => Promise<boolean>;
 }
 
 /**
@@ -104,11 +105,37 @@ export abstract class MigrationDataObject<
 	extends PureDataObject<I>
 	implements IProvideMigrationInfo
 {
+	private readonly readyToMigrate = async (): Promise<boolean> => {
+		assert(this.#activeModel !== undefined, "Data model not initialized");
+
+		if (!(await this.canPerformMigration())) {
+			return false;
+		}
+
+		const [targetDescriptor] = await this.getModelDescriptors();
+		//* TODO: Make 'is' required or implement this check some other way
+		if (targetDescriptor.is?.(this.#activeModel?.view)) {
+			// We're on the latest model, no migration needed
+			return false;
+		}
+
+		return true;
+	};
+
 	public get IMigrationInfo(): IMigrationInfo | undefined {
 		return {
-			targetFormatTag: "TBD", //* TODO
-			migrate: async () => {
-				return this.migrate();
+			readyToMigrate: async () => {
+				return this.readyToMigrate();
+			},
+			tryMigrate: async () => {
+				const ready = await this.readyToMigrate();
+
+				if (!ready) {
+					return false;
+				}
+
+				await this.migrate();
+				return true;
 			},
 		};
 	}
@@ -201,10 +228,8 @@ export abstract class MigrationDataObject<
 	 */
 	protected abstract migrateDataObject(newModel: TUniversalView, data: TMigrationData): void;
 
-	//* TBD exact shape (probably does more than this)
 	public async shouldMigrateBeforeInitialized(): Promise<boolean> {
-		//* TODO: Also inspect the data itself to see if migration is needed?
-		return this.canPerformMigration();
+		return this.readyToMigrate();
 	}
 
 	//* TODO: add new DataStoreMessageType.Conversion
@@ -272,9 +297,14 @@ export abstract class MigrationDataObject<
 			// Call consumer-provided migration implementation
 			this.migrateDataObject(newModel, data);
 
+			// We deferred full initialization while migration was pending.
+			// This will complete initialization now that migration has finished.
+			assert(!(await this.readyToMigrate()), "Migration did not complete successfully");
+			await this.finishInitialization(true /* existing */);
+
 			//* TODO: evacuate old model
-			//* i.e. delete unused root contexts, but not only that.  GC doesn't run sub-DataStore.
-			//* So we will need to plumb through now-unused channels to here.  Can be a follow-up.
+			//* i.e. delete unused root contexts, and ensure Summarizer does full-tree summary here next time.
+			//* Can be a follow-up.
 		} finally {
 			this.#migrateLock = false;
 		}
