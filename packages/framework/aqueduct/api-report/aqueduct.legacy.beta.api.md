@@ -163,7 +163,7 @@ export abstract class MigrationDataObject<TUniversalView, I extends DataObjectTy
 }
 
 // @beta @legacy
-export class MigrationDataObjectFactory<TObj extends MigrationDataObject<TUniversalView, I>, TUniversalView, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
+export class MigrationDataObjectFactory<TObj extends MigrationDataObject<TUniversalView, I, TMigrationData>, TUniversalView, I extends DataObjectTypes = DataObjectTypes, TMigrationData = never> extends PureDataObjectFactory<TObj, I> {
     constructor(props: DataObjectFactoryProps<TObj, I>, modelDescriptors: readonly ModelDescriptor<TUniversalView>[]);
 }
 

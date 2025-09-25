@@ -37,16 +37,21 @@ import {
  * @beta
  */
 export class MigrationDataObjectFactory<
-	TObj extends MigrationDataObject<TUniversalView, I>,
+	TObj extends MigrationDataObject<TUniversalView, I, TMigrationData>,
 	TUniversalView,
 	I extends DataObjectTypes = DataObjectTypes,
+	TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
 > extends PureDataObjectFactory<TObj, I> {
 	public constructor(
 		props: DataObjectFactoryProps<TObj, I>,
 		modelDescriptors: readonly ModelDescriptor<TUniversalView>[],
 	) {
-		const alteredProps = getAlteredPropsSupportingMigrationDataObject(props, modelDescriptors);
-		super(alteredProps);
+		const alteredProps = getAlteredPropsSupportingMigrationDataObject(
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any -- //* FIX THE TYPES
+			props as any,
+			modelDescriptors,
+		);
+		super(alteredProps as unknown as DataObjectFactoryProps<TObj, I>);
 	}
 }
 
