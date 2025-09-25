@@ -1,6 +1,6 @@
 # @fluidframework/react
 
-Utilities for integrating content powered by the Fluid Framework into React applications.
+Utilities for integrating content powered by the Fluid Framework into [React](https://react.dev/) applications.
 
 This package currently has some experimental APIs focused on integrating SharedTree content into React.
 
