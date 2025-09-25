@@ -181,7 +181,7 @@ stages:
             set -eu -o pipefail
             echo "Write the following benchmark output to Aria/Kusto"
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
+            pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlersNew)/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
 
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifact - Perf tests output - execution time
@@ -291,7 +291,7 @@ stages:
             set -eu -o pipefail
             echo "Write the following benchmark output to Aria/Kusto";
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/memoryUsageTestHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
+            pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlersNew)/memoryUsageTestHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
 
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifact - Perf tests output - memory usage
@@ -399,7 +399,7 @@ stages:
             set -eu -o pipefail
             echo "Write the following benchmark output to Aria/Kusto";
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/customBenchmarkHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
+            pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlersNew)/customBenchmarkHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
 
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifact - Perf tests output - custom data usage
@@ -533,7 +533,7 @@ stages:
               set -eu -o pipefail
               echo "Writing the following performance tests results to Aria/Kusto - ${{ endpointObject.endpointName }}"
               ls -la ${{ variables.executionTimeTestOutputFolder }};
-              pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
+              pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlersNew)/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
           env:
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
 
@@ -546,7 +546,7 @@ stages:
               set -eu -o pipefail
               echo "Writing the following performance tests results to Aria/Kusto - ${{ endpointObject.endpointName }}"
               ls -la ${{ variables.memoryUsageTestOutputFolder }};
-              pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
+              pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlersNew)/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
           env:
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
 
