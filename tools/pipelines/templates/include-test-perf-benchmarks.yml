@@ -51,7 +51,7 @@ steps:
 # base .npmrc file in ff_pipeline_host which could be cleaned up.
 - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
   parameters:
-    userNpmrcPath: ${{ parameters.userNpmrcDirectory }}
+    userNpmrcDirectory: ${{ parameters.userNpmrcDirectory }}
 
 - template: /tools/pipelines/templates/include-install.yml@self
   parameters:
