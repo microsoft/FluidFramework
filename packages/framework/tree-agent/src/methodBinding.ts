@@ -4,8 +4,10 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { NodeKind, TreeNodeSchema } from "@fluidframework/tree";
+import type { NodeKind, TreeNodeSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
 import type { z } from "zod";
+
+import { instanceOf } from "./utils.js";
 
 /**
  * A utility type that extracts the method keys from a given type.
@@ -25,19 +27,21 @@ export type Ctor<T = any> = new (...args: any[]) => T;
  * A type that represents an object schema class.
  * @alpha
  */
-export type BindableSchema = TreeNodeSchema<
-	string,
-	NodeKind.Object | NodeKind.Array | NodeKind.Map | NodeKind.Record
->;
+export type BindableSchema =
+	| TreeNodeSchema<string, NodeKind.Object>
+	| TreeNodeSchema<string, NodeKind.Record>
+	| TreeNodeSchema<string, NodeKind.Array>
+	| TreeNodeSchema<string, NodeKind.Map>;
 
 /**
  * Get the exposed methods of a schema class.
  * @param schemaClass - The schema class to extract methods from.
  * @returns A record of method names and their corresponding Zod types.
  */
-export function getExposedMethods(
-	schemaClass: BindableSchema,
-): Record<string, FunctionWrapper> {
+export function getExposedMethods(schemaClass: BindableSchema): {
+	methods: Record<string, FunctionWrapper>;
+	referencedTypes: Set<TreeNodeSchema>;
+} {
 	return ExposedMethodsI.getExposedMethods(schemaClass);
 }
 
@@ -126,6 +130,15 @@ export interface ExposedMethods {
 		S extends BindableSchema & Ctor<{ [P in K]: Infer<Z> }> & IExposedMethods,
 		Z extends FunctionDef<any, any, any>,
 	>(schema: S, methodName: K, zodFunction: Z): void;
+
+	/**
+	 * Create a Zod schema for a SharedTree schema class.
+	 * @remarks
+	 * Use it to "wrap" schema types that are referenced as arguments or return types when exposing methods (with {@link ExposedMethods.expose}).
+	 */
+	instanceOf<T extends TreeNodeSchemaClass>(
+		schema: T,
+	): z.ZodType<InstanceType<T>, z.ZodTypeDef, InstanceType<T>>;
 }
 
 /**
@@ -154,6 +167,7 @@ export interface IExposedMethods {
 
 class ExposedMethodsI implements ExposedMethods {
 	private readonly methods: Record<string, FunctionWrapper> = {};
+	private readonly referencedTypes = new Set<TreeNodeSchema>();
 
 	public constructor(private readonly schemaClass: BindableSchema) {}
 
@@ -175,14 +189,25 @@ class ExposedMethodsI implements ExposedMethods {
 		);
 	}
 
-	public static getExposedMethods(
-		schemaClass: BindableSchema,
-	): Record<string, FunctionWrapper> {
+	public instanceOf<T extends TreeNodeSchemaClass>(
+		schema: T,
+	): z.ZodType<InstanceType<T>, z.ZodTypeDef, InstanceType<T>> {
+		this.referencedTypes.add(schema);
+		return instanceOf(schema);
+	}
+
+	public static getExposedMethods(schemaClass: BindableSchema): {
+		methods: Record<string, FunctionWrapper>;
+		referencedTypes: Set<TreeNodeSchema>;
+	} {
 		const exposedMethods = new ExposedMethodsI(schemaClass);
 		const extractable = schemaClass as unknown as IExposedMethods;
 		if (extractable[exposeMethodsSymbol] !== undefined) {
 			extractable[exposeMethodsSymbol](exposedMethods);
 		}
-		return exposedMethods.methods;
+		return {
+			methods: exposedMethods.methods,
+			referencedTypes: exposedMethods.referencedTypes,
+		};
 	}
 }

@@ -30,7 +30,7 @@ describe("Runtime", () => {
 
 		emitter.emit("batchBegin", batchMessage(1));
 		ticks += 20;
-		emitter.emit("batchEnd", new Error(), batchMessage(8));
+		emitter.emit("batchEnd", new Error("test error"), batchMessage(8));
 
 		mockLogger.assertMatch([
 			{

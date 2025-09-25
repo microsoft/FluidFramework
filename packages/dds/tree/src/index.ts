@@ -69,6 +69,7 @@ export {
 	independentInitializedView,
 	type ViewContent,
 	TreeAlpha,
+	type ObservationResults,
 	type TreeIdentifierUtils,
 	independentView,
 	ForestTypeOptimized,
@@ -145,6 +146,9 @@ export {
 	type IdentifierIndex,
 	createSimpleTreeIndex,
 	createIdentifierIndex,
+	type DirtyTreeStatus,
+	trackDirtyNodes,
+	type DirtyTreeMap,
 	// experimental @alpha APIs:
 	adaptEnum,
 	enumFromStrings,
@@ -329,3 +333,4 @@ export type { MapNodeInsertableData } from "./simple-tree/index.js";
 export { JsonAsTree } from "./jsonDomainSchema.js";
 export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
 export { TableSchema, type System_TableSchema } from "./tableSchema.js";
+export { asAlpha } from "./api.js";
