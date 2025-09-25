@@ -48,7 +48,10 @@ describe("Do not allow `-` following JSDoc/TSDoc tags", function () {
 		// Error 2
 		assert.strictEqual(result.messages[1].message, expectedErrorMessage);
 		assert.strictEqual(result.messages[1].line, 9);
-		assert.strictEqual(result.messages[1].fix?.text, "@deprecated This function is deprecated, use something else.");
+		assert.strictEqual(
+			result.messages[1].fix?.text,
+			"@deprecated This function is deprecated, use something else.",
+		);
 
 		// Error 3
 		assert.strictEqual(result.messages[2].message, expectedErrorMessage);
