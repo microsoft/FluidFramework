@@ -14,13 +14,14 @@ import type {
 	IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 
-// eslint-disable-next-line import/no-internal-modules
-import { rootDirectoryDescriptor } from "../data-objects/dataObject.js";
+import {
+	rootDirectoryDescriptor,
+	type RootDirectoryView,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../data-objects/dataObject.js";
 import {
 	DataObject,
 	type DataObjectTypes,
-	type IDataObjectProps,
-	type MigrationDataObject,
 	type ModelDescriptor,
 	type PureDataObject,
 } from "../data-objects/index.js";
@@ -32,33 +33,6 @@ import type {
 	PureDataObjectFactory,
 	DataObjectFactoryProps,
 } from "./pureDataObjectFactory.js";
-
-/**
- * Represents the properties required to create a MigrationDataObjectFactory.
- * @experimental
- * @legacy
- * @beta
- */
-export interface MigrationDataObjectFactoryProps<
-	TObj extends MigrationDataObject<TUniversalView, I, TMigrationData>,
-	TUniversalView,
-	I extends DataObjectTypes = DataObjectTypes,
-	TNewModel extends TUniversalView = TUniversalView, // default case works for a single model descriptor
-	TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
-> extends DataObjectFactoryProps<TObj, I> {
-	/**
-	 * The constructor for the data object, which must also include static `modelDescriptors` property.
-	 */
-	ctor: (new (
-		props: IDataObjectProps<I>,
-	) => TObj) & {
-		//* TODO: Add type alias for this array type
-		modelDescriptors: readonly [
-			ModelDescriptor<TNewModel>,
-			...ModelDescriptor<TUniversalView>[],
-		];
-	};
-}
 
 //* STUB
 interface IProvideMigrationInfo {
@@ -177,7 +151,14 @@ export function makeFactoryForMigration<
 	return f;
 }
 
-class MyDataObject extends DataObject {}
+class MyDataObject extends DataObject {
+	//* TODO
+	protected async getModelDescriptors(): Promise<
+		readonly [ModelDescriptor<RootDirectoryView>, ...ModelDescriptor<RootDirectoryView>[]]
+	> {
+		throw new Error("Method not implemented.");
+	}
+}
 
 makeFactoryForMigration(
 	(props) => new DataObjectFactory(props),
