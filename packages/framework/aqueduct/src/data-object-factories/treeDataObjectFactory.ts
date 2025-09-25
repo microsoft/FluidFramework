@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { SharedTree } from "@fluidframework/tree/internal";
+
 import type { DataObjectTypes, TreeDataObject } from "../data-objects/index.js";
 
 import {
@@ -24,8 +26,20 @@ export class TreeDataObjectFactory<
 > extends PureDataObjectFactory<TDataObject, TDataObjectTypes> {
 	public constructor(props: DataObjectFactoryProps<TDataObject, TDataObjectTypes>) {
 		//* BROKEN - WILL FIX LATER
-		super({
+		const newProps = {
 			...props,
-		});
+			sharedObjects: props.sharedObjects ? [...props.sharedObjects] : [],
+		};
+
+		// If the user did not specify a SharedTree factory, add it to the shared objects.
+		if (
+			!newProps.sharedObjects.some(
+				(sharedObject) => sharedObject.type === SharedTree.getFactory().type,
+			)
+		) {
+			newProps.sharedObjects.push(SharedTree.getFactory());
+		}
+
+		super(newProps);
 	}
 }
