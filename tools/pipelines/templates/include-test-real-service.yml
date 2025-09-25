@@ -324,9 +324,8 @@ stages:
               script: |
                 set -eu -o pipefail
                 node --input-type=module -e "
-                  const path = await import('path');
-                  const versionUtilsPath = await import.meta.resolve('@fluid-private/test-version-utils');
-                  const absolutePath = path.join(versionUtilsPath, './node_modules/.legacy/');
+                  const versionUtilsIndexPath = await import.meta.resolve('@fluid-private/test-version-utils');
+                  const absolutePath = versionUtilsIndexPath.replace('/lib/index.js', '/node_modules/.legacy/');
                   console.log('Resolved @fluid-private/test-version-utils to ' + absolutePath);
                   console.log('##vso[task.setvariable variable=compatVersionInstallsPath]' + absolutePath);
                 "
