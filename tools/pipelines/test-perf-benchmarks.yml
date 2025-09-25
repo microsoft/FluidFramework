@@ -463,7 +463,7 @@ stages:
         # Install package dependencies (this gets devDependencies installed so we can then run the package's tests).
         - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
           parameters:
-            sourcePackageLocation: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            sourcePackageLocation: ${{ variables.testWorkspace }}/node_modules/$(testPackage)
             destPackageLocation: $(Build.SourcesDirectory)
 
         # We run both types of tests in the same bash step so we can make sure to run the second set even if the first
