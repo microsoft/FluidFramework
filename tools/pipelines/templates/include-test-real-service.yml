@@ -129,9 +129,9 @@ jobs:
 
       # Install
       - task: UseNode@1
-        displayName: Use Node 18.17.1
+        displayName: Use Node 20.15.1
         inputs:
-          version: 18.17.1
+          version: 20.15.1
       - task: Npm@1
         displayName: Install npm 6
         retryCountOnTaskFailure: 4

@@ -171,11 +171,9 @@ function incrementalGatherText(segment: ISegment, state: IncrementalMapState<Tex
         if ((state.start <= 0) && (state.end >= segment.text.length)) {
             state.context.text += segment.text;
         } else {
-            if (state.end >= segment.text.length) {
-                state.context.text += segment.text.substring(state.start);
-            } else {
-                state.context.text += segment.text.substring(state.start, state.end);
-            }
+            state.context.text += state.end >= segment.text.length
+                ? segment.text.substring(state.start)
+                : segment.text.substring(state.start, state.end);
         }
     }
     state.op = IncrementalExecOp.Go;

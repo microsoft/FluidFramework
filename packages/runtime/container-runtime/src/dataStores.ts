@@ -464,12 +464,9 @@ export class DataStores implements IDisposable {
     }
 
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
-        let eventName: "attaching" | "attached";
-        if (attachState === AttachState.Attaching) {
-            eventName = "attaching";
-        } else {
-            eventName = "attached";
-        }
+        const eventName: "attaching" | "attached" = attachState === AttachState.Attaching
+            ? "attaching"
+            : "attached";
         for (const [,context] of this.contexts) {
             // Fire only for bounded stores.
             if (!this.contexts.isNotBound(context.id)) {

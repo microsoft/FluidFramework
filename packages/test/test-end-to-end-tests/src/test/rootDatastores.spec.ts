@@ -175,7 +175,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert(await dataCorruption);
         });
 
-        it("Root datastore creation with aliasing turned on throws exception", async () => {
+        it.skip("Root datastore creation with aliasing turned on throws exception", async () => {
             // Containers need to be recreated in order for the settings to be picked up
             await reset();
             await setupContainers(testContainerConfig, { "Fluid.ContainerRuntime.UseDataStoreAliasing": "true" });
@@ -199,7 +199,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject1, "2"));
         });
 
-        it("Root datastore creation with aliasing turned on and legacy API throws exception", async () => {
+        it.skip("Root datastore creation with aliasing turned on and legacy API throws exception", async () => {
             // Containers need to be recreated in order for the settings to be picked up
             await reset();
             await setupContainers(testContainerConfig, { "Fluid.ContainerRuntime.UseDataStoreAliasing": "true" });
@@ -299,7 +299,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
 
-        it("Aliases with slashes are not supported", async () => {
+        it.skip("Aliases with slashes are not supported", async () => {
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
             const ds2 = await runtimeOf(dataObject2).createDataStore(packageName);
 

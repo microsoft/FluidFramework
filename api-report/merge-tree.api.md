@@ -44,7 +44,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     hasProperty(key: string): boolean;
     // (undocumented)
-    isLeaf(): boolean;
+    isLeaf(): this is ISegment;
     // (undocumented)
     localRefs?: LocalReferenceCollection;
     // (undocumented)
@@ -219,7 +219,7 @@ export class Client {
     // (undocumented)
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start: number | undefined, end: number | undefined, accum: TClientData, splitRange?: boolean): void;
     // (undocumented)
-    walkSegments<undefined>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
+    walkSegments(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
 }
 
 // @public (undocumented)
@@ -845,7 +845,7 @@ export class LocalReference implements LocalReferencePosition {
     // @deprecated (undocumented)
     hasTileLabels(): boolean;
     // (undocumented)
-    isLeaf(): boolean;
+    isLeaf(): this is ISegment;
     // @deprecated (undocumented)
     max(b: LocalReference): LocalReference;
     // @deprecated (undocumented)
@@ -1007,7 +1007,7 @@ export class MergeNode implements IMergeNodeCommon {
     // (undocumented)
     index: number;
     // (undocumented)
-    isLeaf(): boolean;
+    isLeaf(): this is ISegment;
     // (undocumented)
     ordinal: string;
     // (undocumented)

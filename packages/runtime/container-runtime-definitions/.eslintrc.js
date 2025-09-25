@@ -4,10 +4,19 @@
  */
 
 module.exports = {
-    "parserOptions": {
-        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
+    parserOptions: {
+        project: ["./tsconfig.json", "./src/test/tsconfig.json"],
     },
-    "extends": [
-        "@fluidframework/eslint-config-fluid"
-    ]
-}
+    extends: ["@fluidframework/eslint-config-fluid"],
+    overrides: [
+        {
+            // Rules only for type validation files
+            files: ["**/test/types/*.generated.*"],
+            rules: {
+                "max-len": "off",
+                "@typescript-eslint/semi": "off",
+                "@typescript-eslint/comma-spacing": "off",
+            },
+        },
+    ],
+};

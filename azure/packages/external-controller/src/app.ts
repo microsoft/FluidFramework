@@ -37,6 +37,7 @@ const azureUser = {
 	additionalDetails: userDetails,
 };
 
+/* eslint-disable no-mixed-spaces-and-tabs */
 const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
 	? {
 			type: "remote",
@@ -49,6 +50,7 @@ const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig
 			tokenProvider: new InsecureTokenProvider("fooBar", user),
 			endpoint: "http://localhost:7070",
 	  };
+/* eslint-enable no-mixed-spaces-and-tabs */
 
 // Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created

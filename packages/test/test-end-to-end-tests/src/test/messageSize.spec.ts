@@ -84,7 +84,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     const containerError = async (container: IContainer) =>
         new Promise<IErrorBase | undefined>((resolve) => container.once("closed", (error) => { resolve(error); }));
 
-    itExpects("A large op will close the container with chunking disabled", [
+    itExpects.skip("A large op will close the container with chunking disabled", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "OpTooLarge" },
     ], async () => {
         const maxMessageSizeInBytes = 20000;

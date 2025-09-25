@@ -20,8 +20,8 @@ trigger:
     - examples
     - package.json
     - package-lock.json
-    - lerna.json
-    - lerna-package-lock.json
+    - pnpm-lock.json
+    - pnpm-workspace.yaml
     - tools/pipelines/build-bundle-size-artifacts.yml
     - tools/pipelines/build-client.yml
     - tools/pipelines/scripts/build-version.js

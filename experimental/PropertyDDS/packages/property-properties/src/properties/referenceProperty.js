@@ -59,13 +59,13 @@ export class ReferenceProperty extends ValueProperty {
     /**
      * Resolves the referenced property
      *
-     * @param  {string|number|array<string|number>} in_ids the ID of the property or an array of IDs
+     * @param  {string|number|array<string|number>} in_ids -  the ID of the property or an array of IDs
      *     if an array is passed, the .get function will be performed on each id in sequence
      *     for example .get(['position','x']) is equivalent to .get('position').get('x').
      *     If .get resolves to a ReferenceProperty, it will return the property that the ReferenceProperty
      *     refers to.
      * @param {Object} in_options - parameter object
-     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
+     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] -
      *     How should this function behave during reference resolution?
      * @return {property-properties.BaseProperty|undefined} The property object the reference points to or undefined if it
      *    could not be resolved
@@ -95,20 +95,15 @@ export class ReferenceProperty extends ValueProperty {
         var resolvedProperty = this.getParent().resolvePath(this.value,
             { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.ALWAYS });
 
-        if (resolvedProperty !== undefined && _.isArray(in_ids)) {
-            // Forward handling of arrays to the BaseProperty function
-            return resolvedProperty.get(in_ids, in_options);
-        } else {
-            return resolvedProperty;
-        }
+        return resolvedProperty !== undefined && _.isArray(in_ids) ? resolvedProperty.get(in_ids, in_options) : resolvedProperty;
     }
 
     /**
      * Expand a path returning the value or property at the end.
      *
-     * @param {string} in_path the path
+     * @param {string} in_path - the path
      * @param {Object} in_options - parameter object
-     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
+     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] -
      *     How should this function behave during reference resolution?
      * @return {property-properties.BaseProperty|undefined} resolved path
      * @throws if the path resolves to a primitive value
@@ -166,12 +161,8 @@ export class ReferenceProperty extends ValueProperty {
      */
     _resolvePathSegment(in_segment, in_segmentType) {
         // path segments and array tokens are no longer automatically forwarded to the referenced node
-        if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN ||
-            in_segmentType === PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN) {
-            return undefined;
-        } else {
-            return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
-        }
+        return in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN ||
+            in_segmentType === PathHelper.TOKEN_TYPES.PATH_SEGMENT_TOKEN ? undefined : AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
     }
 
     // Define a property to simplify accessing the referenced path

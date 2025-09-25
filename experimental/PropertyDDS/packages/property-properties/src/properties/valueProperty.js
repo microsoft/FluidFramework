@@ -16,10 +16,10 @@ export class ValueProperty extends BaseProperty {
     /**
      * @virtual
      * @param {Object=} in_params - the parameters
-     * @param {Object=} in_params.dataObj optional argument containing an object
+     * @param {Object=} in_params.dataObj - optional argument containing an object
      *                  that should be used as the backing store of this value
      *                  property
-     * @param {Object=} in_params.dataId optional argument must be provided when
+     * @param {Object=} in_params.dataId - optional argument must be provided when
      *                  in_params.dataObj is passed. Must contain a valid member
      *                  name of dataObj. This member will be used to set/get
      *                  values of this value property
@@ -64,7 +64,7 @@ export class ValueProperty extends BaseProperty {
     }
 
     /**
-     * @param {*} in_value the new value
+     * @param {*} in_value - the new value
      * @throws if property is read only
      */
     setValue(in_value) {
@@ -75,7 +75,7 @@ export class ValueProperty extends BaseProperty {
     /**
      * Internal function to update the value of a property
      *
-     * @param {*} in_value the new value
+     * @param {*} in_value - the new value
      * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
      *                                             and trigger a modified event there. When batching updates, this
      *                                             can be prevented via this flag.
@@ -156,11 +156,7 @@ export class ValueProperty extends BaseProperty {
     _serialize(in_dirtyOnly, in_includeRootTypeid,
         in_dirtinessType, in_includeReferencedRepositories) {
         if (in_dirtyOnly) {
-            if (this._isDirty(in_dirtinessType)) {
-                return this._data;
-            } else {
-                return {};
-            }
+            return this._isDirty(in_dirtinessType) ? this._data : {};
         } else {
             return this._data;
         }
