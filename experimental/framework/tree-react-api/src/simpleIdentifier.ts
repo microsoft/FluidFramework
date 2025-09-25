@@ -18,7 +18,7 @@ const idMap = new WeakMap<object, number>();
  * For example, if storing data associated with the objects in a map, using the object as the key is more efficient than getting an ID from it and using that.
  * This functions exists to deal with the edge case where you would like to use object identity, but you can't.
  * React keys are an examples of such a case, since React does not allow objects as keys.
- * @public
+ * @alpha
  */
 export function objectIdNumber(object: object): number {
 	const id = idMap.get(object);
