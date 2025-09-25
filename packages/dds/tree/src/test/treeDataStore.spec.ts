@@ -13,7 +13,6 @@ import {
 
 import { dataStoreKind, treeDataStoreKind } from "../treeDataStore.js";
 import { createEphemeralServiceClient } from "@fluidframework/local-driver/internal";
-import { createContainer } from "@fluidframework/runtime-definitions/internal";
 import { SharedTree } from "../treeFactory.js";
 
 describe("treeDataStore", () => {
@@ -26,17 +25,20 @@ describe("treeDataStore", () => {
 
 		const service = createEphemeralServiceClient();
 
-		const container1 = await service.attachContainer(createContainer(myFactory));
+		// Someday it would be nice to support this pattern, but that is longer term.
+		// const container1 = await service.attachContainer(createContainer(myFactory));
 
-		assert.equal(container1.root.root, 1);
+		const container1 = await service.createContainer(myFactory).attach();
+
+		assert.equal(container1.data.root, 1);
 
 		const container2 = await service.loadContainer(container1.id, myFactory);
 
-		assert.equal(container2.root.root, 1);
+		assert.equal(container2.data.root, 1);
 
-		container2.root.root = 2;
-		assert.equal(container1.root.root, 2);
-		assert.equal(container2.root.root, 1);
+		container2.data.root = 2;
+		assert.equal(container1.data.root, 2);
+		assert.equal(container2.data.root, 1);
 	});
 
 	it("schema evolution example", async () => {
@@ -53,7 +55,7 @@ describe("treeDataStore", () => {
 				initializer: () => 1,
 			});
 
-			const container = await service.attachContainer(createContainer(myFactory));
+			const container = await service.createContainer(myFactory).attach();
 			id = container.id;
 		}
 
@@ -67,9 +69,9 @@ describe("treeDataStore", () => {
 			});
 
 			const container = await service.loadContainer(id, myFactory);
-			assert.equal(container.root.compatibility.canView, false);
-			container.root.upgradeSchema();
-			assert.equal(container.root.root, 1);
+			assert.equal(container.data.compatibility.canView, false);
+			container.data.upgradeSchema();
+			assert.equal(container.data.root, 1);
 		}
 	});
 
@@ -83,16 +85,16 @@ describe("treeDataStore", () => {
 			view: (tree) => tree,
 		});
 
-		const container = createContainer(myFactory);
-
-		assert(SharedTree.is(container.root));
-
 		const service = createEphemeralServiceClient();
-		const attached = await service.attachContainer(container);
+		const container = service.createContainer(myFactory);
+
+		assert(SharedTree.is(container.data));
+
+		const attached = await container.attach();
 
 		// Example using a registry which could (though in this case does not), lazy load the actual DataStoreKind as well.
 		const lazyContainer = await service.loadContainer(attached.id, async () => myFactory);
 
-		assert(SharedTree.is(lazyContainer.root));
+		assert(SharedTree.is(lazyContainer.data));
 	});
 });

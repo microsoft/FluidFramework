@@ -59,7 +59,23 @@ export interface FluidContainer<T = unknown> {
 	 * @remarks
 	 * The type of the root data store is defined by the {@link DataStoreKind} used to create the container.
 	 */
-	readonly root: T;
+	readonly data: T;
+}
+
+/**
+ * A Fluid container with an associated {@link ServiceClient} it can attach to.
+ * @sealed
+ * @alpha
+ */
+export interface FluidContainerWithService<T = unknown> extends FluidContainer<T> {
+	/**
+	 * Attaches this container to the associated service client.
+	 *
+	 * The returned promise resolves once the container is attached: the container from the promise is the same one passed in as the argument.
+	 */
+	attach(): Promise<FluidContainerAttached<T>>;
+
+	// This could expose access to the ServiceClient if needed.
 }
 
 /**
@@ -95,7 +111,12 @@ export interface ServiceClient {
 	 *
 	 * The returned promise resolves once the container is attached: the container from the promise is the same one passed in as the argument.
 	 */
-	attachContainer<T>(detached: FluidContainer<T>): Promise<FluidContainerAttached<T>>;
+	// TODO: supporting this and a service independent createContainer would be nice, but is current impractical. Can be added later.
+	// attachContainer<T>(detached: FluidContainer<T>): Promise<FluidContainerAttached<T>>;
+	/**
+	 * Creates a detached container associated with this service client.
+	 */
+	createContainer<T>(root: DataStoreKind<T>): FluidContainerWithService<T>;
 
 	/**
 	 * Loads an existing container from the service.
@@ -109,6 +130,8 @@ export interface ServiceClient {
 	 * 1. Load a container which might have a few different possible roots, for example because of versioning.
 	 * 2. Generate the DataStoreKind on demand based on the type: this approach could be used for things like debug tools which can load any possible container.
 	 * 3. Generating the DataStoreKind if the type is unrecognized, for example to provide a placeholder which might support some minimal functionality (like debug inspection, and summary).
+	 *
+	 * The ability to provide just a single DataStoreKind<T> is purely a convenience to make it cleaner to use this in simple cases.
 	 */
 	loadContainer<T>(
 		id: string,
@@ -123,7 +146,7 @@ export interface ServiceClient {
  * When implemented, this function likely will need to move elsewhere for dependency reasons.
  *
  * # Implementation challenges
- * The current fluid code (Mainly IContainer and Container.createDetached packages/loader/container-loader/src/container.ts)
+ * The current Fluid code (Mainly IContainer and Container.createDetached packages/loader/container-loader/src/container.ts)
  * seem to follow patterns that would make implementing this difficult.
  *
  * Container.createDetached is currently async, which seems unnecessary and undesirable as creation of detached content should be able to be done synchronously.
@@ -136,6 +159,8 @@ export interface ServiceClient {
  *
  * @alpha
  */
-export function createContainer<T>(root: DataStoreKind<T>): FluidContainer<T> {
-	throw new Error("TODO: Not implemented: createContainer");
-}
+// // TODO: support this as an alternative to ServiceClient.createContainer.
+// // This would be nice to have even if there was no way to attach it for non collaborative non persisted use cases.
+// export function createContainer<T>(root: DataStoreKind<T>): FluidContainer<T> {
+// 	throw new Error("TODO: Not implemented: createContainer");
+// }

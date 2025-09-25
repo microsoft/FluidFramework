@@ -936,7 +936,7 @@ export interface SchemaValidationFunction<Schema extends TSchema> {
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
 // @alpha @input
-export type SharedObjectRegistry = Registry<() => Promise<SharedObjectKind>>;
+export type SharedObjectRegistry = Registry<Promise<SharedObjectKind<IFluidLoadable>>>;
 
 // @alpha @input
 export interface SharedTreeFormatOptions {
@@ -1404,9 +1404,8 @@ export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(opt
 export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> {
     // (undocumented)
     readonly config: TreeViewConfiguration<TSchema>;
-    // (undocumented)
     readonly initializer?: () => InsertableTreeFieldFromImplicitField<TSchema>;
-    readonly registry?: Iterable<SharedObjectKind>;
+    readonly registry?: Iterable<SharedObjectKind<IFluidLoadable>> | SharedObjectRegistry;
     readonly type: string;
 }
 
