@@ -1460,7 +1460,7 @@ export class ContainerRuntime
 	 */
 	private readonly loadedFromVersionId: string | undefined;
 
-	private readonly isSnapshotInstanceOfISnapshot: boolean | undefined;
+	private readonly isSnapshotInstanceOfISnapshot: boolean;
 
 	/**
 	 * The summary context of the last acked summary. The properties from this as used when uploading a summary.
@@ -1555,6 +1555,8 @@ export class ContainerRuntime
 
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
+
+		this.isSnapshotInstanceOfISnapshot = snapshotWithContents !== undefined;
 
 		// Validate that the Loader is compatible with this Runtime.
 		const maybeLoaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
@@ -1870,10 +1872,6 @@ export class ContainerRuntime
 		);
 
 		const parentContext = wrapContext(this);
-
-		if (snapshotWithContents !== undefined) {
-			this.isSnapshotInstanceOfISnapshot = true;
-		}
 
 		// Due to a mismatch between different layers in terms of
 		// what is the interface of passing signals, we need the
@@ -5008,7 +5006,7 @@ export class ContainerRuntime
 				// new API, otherwise it will reduce the service performance because the service will need to recalculate the full snapshot
 				// in case previously getSnapshotApi was used and now we use the getVersions API.
 				if (
-					this.isSnapshotInstanceOfISnapshot === true &&
+					this.isSnapshotInstanceOfISnapshot &&
 					this.storage.getSnapshot !== undefined &&
 					this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch2") ===
 						true
