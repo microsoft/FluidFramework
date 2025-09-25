@@ -66,7 +66,7 @@ variables:
     value: 1
     readonly: true
   - name: testWorkspace
-    value: $(Pipeline.Workspace)/test
+    value: $(Build.SourcesDirectory)
     readonly: true
   - name: testFilesPath
     value: $(Pipeline.Workspace)/test-files
@@ -108,7 +108,6 @@ stages:
           artifactPipeline: $(artifactPipeline)
           testFilesPath: $(testFilesPath)
           testWorkspace: $(testWorkspace)
-          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.executionTestPackages }}:
@@ -182,12 +181,11 @@ stages:
         displayName: Write measurements to Aria/Kusto
         inputs:
           targetType: 'inline'
-          workingDirectory: $(pathToTelemetryGenerator)
           script: |
             set -eu -o pipefail
             echo "Write the following benchmark output to Aria/Kusto"
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
+            pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
 
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifact - Perf tests output - execution time
@@ -224,7 +222,6 @@ stages:
           artifactPipeline: $(artifactPipeline)
           testFilesPath: $(testFilesPath)
           testWorkspace: $(testWorkspace)
-          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.memoryTestPackages }}:
@@ -298,12 +295,11 @@ stages:
         displayName: Write measurements to Aria/Kusto
         inputs:
           targetType: 'inline'
-          workingDirectory: $(pathToTelemetryGenerator)
           script: |
             set -eu -o pipefail
             echo "Write the following benchmark output to Aria/Kusto";
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/memoryUsageTestHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
+            pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/memoryUsageTestHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
 
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifact - Perf tests output - memory usage
@@ -339,7 +335,6 @@ stages:
           artifactPipeline: $(artifactPipeline)
           testFilesPath: $(testFilesPath)
           testWorkspace: $(testWorkspace)
-          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.customBenchmarkTestPackages }}:
@@ -412,12 +407,11 @@ stages:
         displayName: Write measurements to Aria/Kusto
         inputs:
           targetType: 'inline'
-          workingDirectory: $(pathToTelemetryGenerator)
           script: |
             set -eu -o pipefail
             echo "Write the following benchmark output to Aria/Kusto";
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/customBenchmarkHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
+            pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/customBenchmarkHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
 
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifact - Perf tests output - custom data usage
@@ -468,8 +462,6 @@ stages:
             artifactBuildId: $(artifactBuildId)
             artifactPipeline: $(artifactPipeline)
             testFilesPath: $(testFilesPath)
-            testWorkspace: $(testWorkspace)
-            pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
             endpointName: ${{ endpointObject.endpointName }}
 
         # Download and install package with performance tests
@@ -551,12 +543,11 @@ stages:
           condition: succeededOrFailed()
           inputs:
             targetType: 'inline'
-            workingDirectory: $(pathToTelemetryGenerator)
             script: |
               set -eu -o pipefail
               echo "Writing the following performance tests results to Aria/Kusto - ${{ endpointObject.endpointName }}"
               ls -la ${{ variables.executionTimeTestOutputFolder }};
-              npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
+              pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
           env:
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
 
@@ -565,12 +556,11 @@ stages:
           condition: succeededOrFailed()
           inputs:
             targetType: 'inline'
-            workingDirectory: $(pathToTelemetryGenerator)
             script: |
               set -eu -o pipefail
               echo "Writing the following performance tests results to Aria/Kusto - ${{ endpointObject.endpointName }}"
               ls -la ${{ variables.memoryUsageTestOutputFolder }};
-              npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
+              pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
           env:
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
 
@@ -626,7 +616,7 @@ stages:
               script: |
                 set -eu -o pipefail
 
-                npx --package=@ff-internal/trips-setup@0.0.5 -- trips-cleanup --reservationId=$(stringBearerToken)
+                pnpm exec trips-cleanup --reservationId=$(stringBearerToken)
             condition: eq(variables['tenantSetupSuccess'], 'true')
 
         - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
