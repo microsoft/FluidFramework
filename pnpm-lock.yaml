@@ -2015,15 +2015,18 @@ importers:
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../../packages/common/core-utils
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/common/driver-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../../packages/loader/driver-utils
       '@fluidframework/odsp-doclib-utils':
         specifier: workspace:~
         version: link:../../../packages/utils/odsp-doclib-utils
       '@fluidframework/odsp-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/odsp-driver
-      '@fluidframework/odsp-driver-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/odsp-driver-definitions
       '@fluidframework/odsp-urlresolver':
         specifier: workspace:~
         version: link:../../../packages/drivers/odsp-urlResolver
@@ -9701,9 +9704,12 @@ importers:
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../common/core-utils
-      '@fluidframework/odsp-driver-definitions':
+      '@fluidframework/driver-definitions':
         specifier: workspace:~
-        version: link:../odsp-driver-definitions
+        version: link:../../common/driver-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../loader/driver-utils
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -14949,9 +14955,6 @@ importers:
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../dds/matrix
-      '@fluidframework/odsp-driver-definitions':
-        specifier: workspace:~
-        version: link:../../drivers/odsp-driver-definitions
       '@fluidframework/ordered-collection':
         specifier: workspace:~
         version: link:../../dds/ordered-collection
@@ -19102,6 +19105,10 @@ packages:
 
   '@testing-library/dom@10.4.0':
     resolution: {integrity: sha512-pemlzrSESWbdAloYml3bAJMEfNh1Z7EduzqPKprCH5S341frlpYnUEW0H72dLxa6IsYr+mPno20GiSm+h9dEdQ==}
+    engines: {node: '>=18'}
+
+  '@testing-library/dom@10.4.1':
+    resolution: {integrity: sha512-o4PXJQidqJl82ckFaXUeoAW+XysPLauYI43Abki5hABd853iMhitooc6znOnczgbTYmEP6U6/y1ZyKAIsvMKGg==}
     engines: {node: '>=18'}
 
   '@testing-library/jest-dom@5.17.0':
@@ -33559,6 +33566,17 @@ snapshots:
       lz-string: 1.5.0
       pretty-format: 27.5.1
 
+  '@testing-library/dom@10.4.1':
+    dependencies:
+      '@babel/code-frame': 7.26.2
+      '@babel/runtime': 7.27.0
+      '@types/aria-query': 5.0.4
+      aria-query: 5.3.0
+      dom-accessibility-api: 0.5.16
+      lz-string: 1.5.0
+      picocolors: 1.1.1
+      pretty-format: 27.5.1
+
   '@testing-library/jest-dom@5.17.0':
     dependencies:
       '@adobe/css-tools': 4.4.1
@@ -33575,6 +33593,16 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.27.0
       '@testing-library/dom': 10.4.0
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+    optionalDependencies:
+      '@types/react': 18.3.15
+      '@types/react-dom': 18.3.3(@types/react@18.3.15)
+
+  '@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@babel/runtime': 7.27.0
+      '@testing-library/dom': 10.4.1
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
     optionalDependencies:

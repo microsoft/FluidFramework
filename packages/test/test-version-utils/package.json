@@ -92,7 +92,6 @@
 		"@fluidframework/legacy-dds": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
-		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",

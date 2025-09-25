@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import { asLegacyAlpha } from "@fluidframework/container-loader/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
@@ -107,9 +107,11 @@ describeCompat("Offline and Blobs", "NoCompat", (getTestObjectProvider, apis) =>
 
 	// ADO#44999: Update for placeholder pending blob creation and getPendingLocalState
 	it.skip("Slow blob create request before container closes", async () => {
-		const container = (await provider.createContainer(runtimeFactory, {
-			configProvider,
-		})) as IContainerExperimental;
+		const container = asLegacyAlpha(
+			await provider.createContainer(runtimeFactory, {
+				configProvider,
+			}),
+		);
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 
 		await provider.ensureSynchronized();
@@ -124,7 +126,7 @@ describeCompat("Offline and Blobs", "NoCompat", (getTestObjectProvider, apis) =>
 		// Start closing the container and get the pending local state before blob creation through the network completes
 		// TODO: This portion was using closeAndGetPendingLocalState - using getPendingLocalState instead to allow compilation
 		// const serializedStatePromise = container.closeAndGetPendingLocalState?.();
-		const serializedStatePromise = container.getPendingLocalState?.();
+		const serializedStatePromise = container.getPendingLocalState();
 		// wait for blob creation to finish first so that the handle op is created
 		await storeBlobHandlePromise;
 		// Let the rest of the close and get pending local state finish.
