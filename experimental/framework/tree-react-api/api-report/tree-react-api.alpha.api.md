@@ -4,60 +4,60 @@
 
 ```ts
 
-// @public
+// @alpha @sealed
 export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
     readonly config: TreeViewConfiguration<TSchema>;
     readonly treeView: TreeView<TSchema>;
     readonly TreeViewComponent: (props: TreeViewProps<TSchema>) => React_2.JSX.Element;
 }
 
-// @public @system
+// @alpha @system
 export type IsMappableObjectType<T, True = true, False = false, Mapped = {
     [P in keyof T]: T[P];
 }> = [Mapped] extends [T] ? ([T] extends [Mapped] ? True : False) : False;
 
-// @public
+// @alpha
 export type NodeRecord = Record<string, TreeNode | TreeLeafValue>;
 
-// @public
+// @alpha
 export function objectIdNumber(object: object): number;
 
-// @public @input
+// @alpha @input
 export interface ObservationOptions {
     onInvalidation?: () => void;
 }
 
-// @public
+// @alpha
 export interface PropTreeNode<T extends TreeNode> extends ErasedType<[T, "PropTreeNode"]> {
 }
 
-// @public
+// @alpha
 export type PropTreeNodeRecord = Record<string, TreeLeafValue | PropTreeNode<TreeNode> | undefined>;
 
-// @public
+// @alpha
 export type PropTreeValue<T extends TreeNode | TreeLeafValue | undefined> = T extends TreeNode ? PropTreeNode<T> : T;
 
-// @public
+// @alpha
 export interface SchemaIncompatibleProps {
     readonly compatibility: SchemaCompatibilityStatus;
     readonly upgradeSchema: () => void;
 }
 
-// @public
+// @alpha
 export function toPropTreeNode<T extends TreeNode | TreeLeafValue>(node: T): PropTreeValue<T>;
 
-// @public
+// @alpha
 export function toPropTreeRecord<T extends NodeRecord>(node: T): WrapPropTreeNodeRecord<T>;
 
-// @public
+// @alpha
 export function treeDataObject<TSchema extends ImplicitFieldSchema>(treeConfiguration: TreeViewConfiguration<TSchema>, createInitialTree: () => InsertableTreeFieldFromImplicitField<TSchema>): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable>;
 
-// @public
+// @alpha
 export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({ tree, viewComponent: ViewComponent, errorComponent, }: TreeViewProps<TSchema> & {
     tree: Pick<IReactTreeDataObject<TSchema>, "treeView">;
 }): React_2.JSX.Element;
 
-// @public
+// @alpha @input
 export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
     readonly errorComponent?: React_2.FC<SchemaIncompatibleProps>;
     readonly viewComponent: React_2.FC<{
@@ -65,48 +65,48 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
     }>;
 }
 
-// @public
+// @alpha
 export type UnwrapPropTreeNode<T extends TreeLeafValue | PropTreeNode<TreeNode> | undefined> = T extends PropTreeNode<infer Node> ? Node : T;
 
-// @public
+// @alpha
 export function unwrapPropTreeNode<T extends TreeNode | TreeLeafValue>(propNode: PropTreeValue<T> | T): T;
 
-// @public
+// @alpha
 export type UnwrapPropTreeNodeRecord<T extends PropTreeNodeRecord> = {
     readonly [P in keyof T]: UnwrapPropTreeNode<T[P]>;
 };
 
-// @public
+// @alpha
 export function unwrapPropTreeRecord<T extends PropTreeNodeRecord>(props: T): UnwrapPropTreeNodeRecord<T>;
 
-// @public
+// @alpha
 export function usePropTreeNode<T extends TreeNode | TreeLeafValue, TResult>(propNode: PropTreeValue<T> | T, trackDuring: (node: T) => TResult): WrapNodes<TResult>;
 
-// @public
+// @alpha
 export function usePropTreeRecord<const T extends PropTreeNodeRecord, TResult>(props: T, f: (node: UnwrapPropTreeNodeRecord<T>) => TResult): WrapNodes<TResult>;
 
-// @public
+// @alpha
 export function useTree(subtreeRoot: TreeNode): number;
 
-// @public
+// @alpha
 export function useTreeObservations<TResult>(trackDuring: () => TResult, options?: ObservationOptions): TResult;
 
-// @public
+// @alpha
 export function withMemoizedTreeObservations<TIn>(component: React_2.FC<TIn>, options?: ObservationOptions & {
     readonly propsAreEqual?: Parameters<typeof React_2.memo>[1];
 }): React_2.MemoExoticComponent<ReturnType<typeof withTreeObservations<TIn>>>;
 
-// @public
+// @alpha
 export function withTreeObservations<TIn>(component: React_2.FC<TIn>, options?: ObservationOptions): React_2.FC<TIn> & React_2.FC<WrapNodes<TIn>> & React_2.FC<TIn | WrapNodes<TIn>>;
 
-// @public
+// @alpha
 export type WrapNodes<T> = T extends TreeNode ? PropTreeNode<T> : T extends readonly (infer U)[] ? readonly WrapNodes<U>[] : T extends infer U ? IsMappableObjectType<U, {
     [P in keyof U]: WrapNodes<U[P]>;
 } extends U ? U : {
     [P in keyof U]: WrapNodes<U[P]>;
 }, T> : T;
 
-// @public
+// @alpha
 export type WrapPropTreeNodeRecord<T extends NodeRecord> = {
     readonly [P in keyof T]: PropTreeValue<T[P]>;
 };
