@@ -3,23 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import type { FluidObject } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { DataStoreMessageType } from "@fluidframework/datastore/internal";
 import type {
 	IFluidDataStoreRuntime,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
-import type {
-	AsyncFluidObjectProvider,
-	IFluidDependencySynthesizer,
-} from "@fluidframework/synthesize/internal";
 
 import type { IDelayLoadChannelFactory } from "../channel-factories/index.js";
-import type { MigrationDataObjectFactoryProps } from "../data-object-factories/index.js";
 
 import { PureDataObject } from "./pureDataObject.js";
-import type { DataObjectTypes, IDataObjectProps } from "./types.js";
+import type { DataObjectTypes } from "./types.js";
 
 /**
  * Descriptor for a model shape (arbitrary schema) the migration data object can probe for
@@ -73,53 +67,10 @@ export abstract class MigrationDataObject<
 	I extends DataObjectTypes = DataObjectTypes,
 	TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
 > extends PureDataObject<I> {
-	/**
-	 * Optional providers synthesized for this data object.
-	 */
-	protected readonly synthesizedProviders: I["OptionalProviders"] | undefined;
-
-	public constructor(props: IDataObjectProps<I>) {
-		super(props);
-
-		const scope: FluidObject<IFluidDependencySynthesizer> = this.context.scope;
-		this.synthesizedProviders =
-			scope.IFluidDependencySynthesizer?.synthesize<I["OptionalProviders"]>(
-				this.providers,
-				{},
-			) ??
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			({} as AsyncFluidObjectProvider<never>);
-	}
-
 	// The currently active model and its descriptor, if discovered or created.
 	#activeModel:
 		| { descriptor: ModelDescriptor<TUniversalView>; view: TUniversalView }
 		| undefined;
-
-	/**
-	 * Probeable candidate roots the implementer expects for existing stores.
-	 * The order defines probing priority.
-	 * The first one will also be used for creation.
-	 *
-	 * @privateremarks
-	 * IMPORTANT: This accesses a static member on the subclass, so beware of class initialization order issues
-	 */
-	private get modelCandidates(): readonly [
-		ModelDescriptor<TUniversalView>,
-		...ModelDescriptor<TUniversalView>[],
-	] {
-		// Pull the static modelDescriptors off the subclass
-		const { modelDescriptors } = this.constructor as MigrationDataObjectFactoryProps<
-			this,
-			TUniversalView,
-			I,
-			TUniversalView, //* BYE BYE
-			TMigrationData
-		>["ctor"];
-
-		//* TODO: Add runtime type guards? Or is type system sufficient here?
-		return modelDescriptors;
-	}
 
 	/**
 	 * Returns the active model descriptor and channel after initialization.
@@ -138,7 +89,7 @@ export abstract class MigrationDataObject<
 	private async inferModelFromRuntime(): Promise<void> {
 		this.#activeModel = undefined;
 
-		for (const descriptor of this.modelCandidates) {
+		for (const descriptor of await this.getModelDescriptors()) {
 			try {
 				const maybe = await descriptor.probe(this.runtime);
 				if (maybe !== undefined) {
@@ -154,10 +105,20 @@ export abstract class MigrationDataObject<
 	}
 
 	/**
+	 * Probeable candidate roots the implementer expects for existing stores.
+	 * The order defines probing priority.
+	 * The first one will also be used for creation.
+	 */
+	protected abstract getModelDescriptors(): Promise<readonly [
+		ModelDescriptor<TUniversalView>,
+		...ModelDescriptor<TUniversalView>[],
+	]>;
+
+	/**
 	 * Whether migration is supported by this data object at this time.
 	 * May depend on flighting or other dynamic configuration.
 	 */
-	protected abstract canPerformMigration(): boolean;
+	protected abstract canPerformMigration(): Promise<boolean>;
 
 	/**
 	 * Data required for running migration. This is necessary because the migration must happen synchronously.
@@ -196,9 +157,9 @@ export abstract class MigrationDataObject<
 	protected abstract migrateDataObject(newModel: TUniversalView, data: TMigrationData): void;
 
 	//* TBD exact shape (probably does more than this)
-	public shouldMigrateBeforeInitialized(): boolean {
+	public async shouldMigrateBeforeInitialized(): Promise<boolean> {
 		//* TODO: Also inspect the data itself to see if migration is needed?
-		return this.canPerformMigration();
+		return await this.canPerformMigration();
 	}
 
 	//* TODO: add new DataStoreMessageType.Conversion
@@ -215,7 +176,7 @@ export abstract class MigrationDataObject<
 	#migrateLock = false;
 
 	public async migrate(): Promise<void> {
-		if (!this.canPerformMigration || this.#migrateLock) {
+		if (!(await this.canPerformMigration()) || this.#migrateLock) {
 			return;
 		}
 
@@ -224,7 +185,7 @@ export abstract class MigrationDataObject<
 
 		try {
 			// Read the model descriptors from the DataObject ctor (single source of truth).
-			const modelDescriptors = this.modelCandidates;
+			const modelDescriptors = await this.getModelDescriptors();
 
 			//* NEXT: Get target based on SettingsProvider
 			// Destructure the target/first descriptor and probe it first. If it's present,
@@ -280,7 +241,7 @@ export abstract class MigrationDataObject<
 			await this.inferModelFromRuntime();
 		} else {
 			//* NEXT: Pick the right model based on SettingsProvider
-			const creator = this.modelCandidates[0];
+			const creator = (await this.getModelDescriptors())[0];
 			await creator.ensureFactoriesLoaded();
 
 			// Note: implementer is responsible for binding any root channels and populating initial content on the created model
@@ -288,7 +249,7 @@ export abstract class MigrationDataObject<
 			this.#activeModel = { descriptor: creator, view: created };
 		}
 
-		if (this.shouldMigrateBeforeInitialized()) {
+		if (await this.shouldMigrateBeforeInitialized()) {
 			// initializeInternal will be called after migration is complete instead of now
 			return;
 		}

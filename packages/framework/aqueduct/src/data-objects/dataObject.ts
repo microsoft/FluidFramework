@@ -110,7 +110,7 @@ export abstract class DataObject<
 		throw new Error("DataObject does not support migration");
 	}
 
-	protected canPerformMigration(): boolean {
+	protected async canPerformMigration(): Promise<boolean> {
 		return false;
 	}
 

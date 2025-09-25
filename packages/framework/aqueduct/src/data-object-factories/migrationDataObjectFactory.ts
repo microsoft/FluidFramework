@@ -15,7 +15,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 
 // eslint-disable-next-line import/no-internal-modules
-import { rootDirectoryDescriptor } from "../data-objects/dataObject.js";
+import { rootDirectoryDescriptor, type RootDirectoryView } from "../data-objects/dataObject.js";
 import {
 	DataObject,
 	type DataObjectTypes,
@@ -43,7 +43,6 @@ export interface MigrationDataObjectFactoryProps<
 	TObj extends MigrationDataObject<TUniversalView, I, TMigrationData>,
 	TUniversalView,
 	I extends DataObjectTypes = DataObjectTypes,
-	TNewModel extends TUniversalView = TUniversalView, // default case works for a single model descriptor
 	TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
 > extends DataObjectFactoryProps<TObj, I> {
 	/**
@@ -51,13 +50,7 @@ export interface MigrationDataObjectFactoryProps<
 	 */
 	ctor: (new (
 		props: IDataObjectProps<I>,
-	) => TObj) & {
-		//* TODO: Add type alias for this array type
-		modelDescriptors: readonly [
-			ModelDescriptor<TNewModel>,
-			...ModelDescriptor<TUniversalView>[],
-		];
-	};
+	) => TObj);
 }
 
 //* STUB
@@ -177,7 +170,12 @@ export function makeFactoryForMigration<
 	return f;
 }
 
-class MyDataObject extends DataObject {}
+class MyDataObject extends DataObject {
+	//* TODO
+	protected getModelDescriptors(): Promise<readonly [ModelDescriptor<RootDirectoryView>, ...ModelDescriptor<RootDirectoryView>[]]> {
+		throw new Error("Method not implemented.");
+	}
+}
 
 makeFactoryForMigration(
 	(props) => new DataObjectFactory(props),
