@@ -151,6 +151,8 @@ export enum TreeStatus {
  *
  * @remarks
  * All editing is actually done via {@link FlexTreeField}s: the nodes are immutable other than that they contain mutable fields.
+ *
+ * All implementations should track read access in {@link currentObserver}'s observation methods as appropriate.
  */
 export interface FlexTreeNode extends FlexTreeEntity, MapTreeNodeViewGeneric<FlexTreeNode> {
 	readonly [flexTreeMarker]: FlexTreeEntityKind.Node;

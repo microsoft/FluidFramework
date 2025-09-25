@@ -5,10 +5,9 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
-import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import type { IFileEntry, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
-	type IFileEntry,
 	type IOdspResolvedUrl,
 	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
