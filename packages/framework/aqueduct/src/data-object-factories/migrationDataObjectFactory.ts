@@ -14,8 +14,11 @@ import type {
 	IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 
-// eslint-disable-next-line import/no-internal-modules
-import { rootDirectoryDescriptor, type RootDirectoryView } from "../data-objects/dataObject.js";
+import {
+	rootDirectoryDescriptor,
+	type RootDirectoryView,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../data-objects/dataObject.js";
 import {
 	DataObject,
 	type DataObjectTypes,
@@ -48,9 +51,9 @@ export interface MigrationDataObjectFactoryProps<
 	/**
 	 * The constructor for the data object, which must also include static `modelDescriptors` property.
 	 */
-	ctor: (new (
+	ctor: new (
 		props: IDataObjectProps<I>,
-	) => TObj);
+	) => TObj;
 }
 
 //* STUB
@@ -172,7 +175,9 @@ export function makeFactoryForMigration<
 
 class MyDataObject extends DataObject {
 	//* TODO
-	protected getModelDescriptors(): Promise<readonly [ModelDescriptor<RootDirectoryView>, ...ModelDescriptor<RootDirectoryView>[]]> {
+	protected async getModelDescriptors(): Promise<
+		readonly [ModelDescriptor<RootDirectoryView>, ...ModelDescriptor<RootDirectoryView>[]]
+	> {
 		throw new Error("Method not implemented.");
 	}
 }

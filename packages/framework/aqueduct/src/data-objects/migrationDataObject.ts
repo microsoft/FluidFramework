@@ -109,10 +109,9 @@ export abstract class MigrationDataObject<
 	 * The order defines probing priority.
 	 * The first one will also be used for creation.
 	 */
-	protected abstract getModelDescriptors(): Promise<readonly [
-		ModelDescriptor<TUniversalView>,
-		...ModelDescriptor<TUniversalView>[],
-	]>;
+	protected abstract getModelDescriptors(): Promise<
+		readonly [ModelDescriptor<TUniversalView>, ...ModelDescriptor<TUniversalView>[]]
+	>;
 
 	/**
 	 * Whether migration is supported by this data object at this time.
@@ -159,7 +158,7 @@ export abstract class MigrationDataObject<
 	//* TBD exact shape (probably does more than this)
 	public async shouldMigrateBeforeInitialized(): Promise<boolean> {
 		//* TODO: Also inspect the data itself to see if migration is needed?
-		return await this.canPerformMigration();
+		return this.canPerformMigration();
 	}
 
 	//* TODO: add new DataStoreMessageType.Conversion
@@ -241,7 +240,8 @@ export abstract class MigrationDataObject<
 			await this.inferModelFromRuntime();
 		} else {
 			//* NEXT: Pick the right model based on SettingsProvider
-			const creator = (await this.getModelDescriptors())[0];
+			const modelDescriptors = await this.getModelDescriptors();
+			const creator = modelDescriptors[0];
 			await creator.ensureFactoriesLoaded();
 
 			// Note: implementer is responsible for binding any root channels and populating initial content on the created model

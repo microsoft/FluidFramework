@@ -75,7 +75,7 @@ export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> ex
     // (undocumented)
     protected asyncGetDataForMigration(existingModel: RootDirectoryView): Promise<never>;
     // (undocumented)
-    protected canPerformMigration(): boolean;
+    protected canPerformMigration(): Promise<boolean>;
     // (undocumented)
     protected migrateDataObject(newModel: RootDirectoryView, data: never): void;
     protected static modelDescriptors: [
@@ -132,13 +132,13 @@ export interface IDelayLoadChannelFactory<T = unknown> extends IChannelFactory<T
 
 // @beta @legacy
 export abstract class MigrationDataObject<TUniversalView, I extends DataObjectTypes = DataObjectTypes, TMigrationData = never> extends PureDataObject<I> {
-    constructor(props: IDataObjectProps<I>);
     protected abstract asyncGetDataForMigration(existingModel: TUniversalView): Promise<TMigrationData>;
-    protected abstract canPerformMigration(): boolean;
+    protected abstract canPerformMigration(): Promise<boolean>;
     get dataModel(): {
         descriptor: ModelDescriptor<TUniversalView>;
         view: TUniversalView;
     } | undefined;
+    protected abstract getModelDescriptors(): Promise<readonly [ModelDescriptor<TUniversalView>, ...ModelDescriptor<TUniversalView>[]]>;
     protected getUninitializedErrorString(item: string): string;
     // (undocumented)
     initializeInternal(existing: boolean): Promise<void>;
@@ -146,19 +146,12 @@ export abstract class MigrationDataObject<TUniversalView, I extends DataObjectTy
     migrate(): Promise<void>;
     protected abstract migrateDataObject(newModel: TUniversalView, data: TMigrationData): void;
     // (undocumented)
-    shouldMigrateBeforeInitialized(): boolean;
-    protected readonly synthesizedProviders: I["OptionalProviders"] | undefined;
+    shouldMigrateBeforeInitialized(): Promise<boolean>;
 }
 
 // @beta @legacy
-export interface MigrationDataObjectFactoryProps<TObj extends MigrationDataObject<TUniversalView, I, TMigrationData>, TUniversalView, I extends DataObjectTypes = DataObjectTypes, TNewModel extends TUniversalView = TUniversalView, // default case works for a single model descriptor
-TMigrationData = never> extends DataObjectFactoryProps<TObj, I> {
-    ctor: (new (props: IDataObjectProps<I>) => TObj) & {
-        modelDescriptors: readonly [
-        ModelDescriptor<TNewModel>,
-        ...ModelDescriptor<TUniversalView>[]
-        ];
-    };
+export interface MigrationDataObjectFactoryProps<TObj extends MigrationDataObject<TUniversalView, I, TMigrationData>, TUniversalView, I extends DataObjectTypes = DataObjectTypes, TMigrationData = never> extends DataObjectFactoryProps<TObj, I> {
+    ctor: new (props: IDataObjectProps<I>) => TObj;
 }
 
 // @beta @legacy
