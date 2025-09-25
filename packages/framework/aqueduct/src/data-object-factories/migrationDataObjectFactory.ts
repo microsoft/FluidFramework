@@ -16,7 +16,6 @@ import type {
 
 import type {
 	DataObjectTypes,
-	IDataObjectProps,
 	IProvideMigrationInfo,
 	MigrationDataObject,
 	ModelDescriptor,
@@ -26,33 +25,6 @@ import {
 	PureDataObjectFactory,
 	type DataObjectFactoryProps,
 } from "./pureDataObjectFactory.js";
-
-/**
- * Represents the properties required to create a MigrationDataObjectFactory.
- * @experimental
- * @legacy
- * @beta
- */
-export interface MigrationDataObjectFactoryProps<
-	TObj extends MigrationDataObject<TUniversalView, I, TMigrationData>,
-	TUniversalView,
-	I extends DataObjectTypes = DataObjectTypes,
-	TNewModel extends TUniversalView = TUniversalView, // default case works for a single model descriptor
-	TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
-> extends DataObjectFactoryProps<TObj, I> {
-	/**
-	 * The constructor for the data object, which must also include static `modelDescriptors` property.
-	 */
-	ctor: (new (
-		props: IDataObjectProps<I>,
-	) => TObj) & {
-		//* TODO: Add type alias for this array type
-		modelDescriptors: readonly [
-			ModelDescriptor<TNewModel>,
-			...ModelDescriptor<TUniversalView>[],
-		];
-	};
-}
 
 const fullMigrateDataObject = async (runtime: IFluidDataStoreChannel): Promise<void> => {
 	// The old EntryPoint being migrated away from needs to provide IMigrationInfo
