@@ -80,10 +80,6 @@ export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> ex
     protected getModelDescriptors(): Promise<readonly [ModelDescriptor<RootDirectoryView>, ...ModelDescriptor<RootDirectoryView>[]]>;
     // (undocumented)
     protected migrateDataObject(newModel: RootDirectoryView, data: never): void;
-    protected static modelDescriptors: [
-    ModelDescriptor<RootDirectoryView>,
-    ...ModelDescriptor<RootDirectoryView>[]
-    ];
     protected get root(): ISharedDirectory;
 }
 
@@ -255,10 +251,6 @@ export abstract class TreeDataObject<TDataObjectTypes extends DataObjectTypes = 
     protected getModelDescriptors(): Promise<readonly [ModelDescriptor<RootTreeView>, ...ModelDescriptor<RootTreeView>[]]>;
     // (undocumented)
     protected migrateDataObject(newModel: RootTreeView, data: never): void;
-    protected static modelDescriptors: [
-    ModelDescriptor<RootTreeView>,
-    ...ModelDescriptor<RootTreeView>[]
-    ];
     protected get tree(): ITree_2;
 }
 

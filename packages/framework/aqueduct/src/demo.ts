@@ -232,9 +232,6 @@ class DirToTreeDataObject extends MigrationDataObject<
 			}
 		});
 	}
-
-	// Single source of truth for descriptors: static on the DataObject class
-	public static modelDescriptors = [treeDesc, dirDesc] as const;
 }
 
 const props: DataObjectFactoryProps<DirToTreeDataObject> = {
