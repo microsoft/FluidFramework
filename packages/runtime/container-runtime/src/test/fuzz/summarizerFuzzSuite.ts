@@ -249,7 +249,7 @@ function runTest(
 ): void {
 	const itFn = options.only.has(seed) ? it.only : options.skip.has(seed) ? it.skip : it;
 	itFn(`seed ${seed}`, async () => {
-		const inCi = !!process.env.TF_BUILD;
+		const inCi = process.env.TF_BUILD !== undefined;
 		await runTestForSeed(model, options, seed, inCi ? undefined : saveInfo);
 	});
 }

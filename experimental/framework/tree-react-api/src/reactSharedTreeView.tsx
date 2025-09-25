@@ -37,7 +37,7 @@ const SharedTree = configuredSharedTree({
  * @param treeConfiguration - See {@link IReactTreeDataObject.config}.
  * @param createInitialTree - Function which populates the tree with initial data on document create.
  * @returns A {@link @fluidframework/fluid-static#DataObjectClass} to allow easy use of a SharedTree in a ContainerSchema.
- * @public
+ * @alpha
  */
 export function treeDataObject<TSchema extends ImplicitFieldSchema>(
 	treeConfiguration: TreeViewConfiguration<TSchema>,
@@ -106,7 +106,7 @@ export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 /**
  * A schema-aware tree-backed DataObject, extended with a React Component to view the tree.
  * @remarks Allows for the Tree's schema to be baked into the container schema.
- * @public
+ * @sealed @alpha
  */
 export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
 	/**
@@ -143,7 +143,7 @@ export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
 
 /**
  * React props for viewing a tree.
- * @public
+ * @input @alpha
  */
 export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 	/**
@@ -245,7 +245,7 @@ function useViewRoot<TSchema extends ImplicitFieldSchema>(
 /**
  * React component which handles schematizing trees.
  * This includes displaying errors when the document can not be schematized.
- * @public
+ * @alpha
  */
 export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	tree,
@@ -280,7 +280,7 @@ export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 
 /**
  * React Props for displaying when the opened document is incompatible with the required view schema.
- * @public
+ * @alpha
  */
 export interface SchemaIncompatibleProps {
 	/**
