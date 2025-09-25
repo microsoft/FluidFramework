@@ -315,13 +315,29 @@ stages:
               destPackageLocation: $(Build.SourcesDirectory)
 
         - ${{ if eq(parameters.cacheCompatVersionsInstalls, true) }}:
+          - task: Bash@3
+            displayName: Compute compat versions install location
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(Build.SourcesDirectory)/node_modules/@fluid-private/test-end-to-end-tests
+              # Using require.resolve to compute this is more resilient to different install tree types.
+              script: |
+                set -eu -o pipefail
+                node -e "
+                  const path = require('path');
+                  const versionUtilsPath = require.resolve('@fluid-private/test-version-utils');
+                  const absolutePath = path.join(versionUtilsPath, './node_modules/.legacy/');
+                  console.log(`Resolved @fluid-private/test-version-utils to \${absolutePath}`);
+                  console.log(`##vso[task.setvariable variable=compatVersionInstallsPath]\${absolutePath}`);
+                "
+
           - task: Cache@2
             displayName: Cache compat versions install location
             timeoutInMinutes: 3
             continueOnError: true
             inputs:
               key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}" | generation-1'
-              path: $(Build.SourcesDirectory)/node_modules/@fluid-private/test-end-to-end-tests/node_modules/@fluid-private/test-version-utils/node_modules/.legacy/
+              path: $(compatVersionInstallsPath)
 
         # Only check out tenants from the tenant pool if we are running tests against ODSP
         - ${{ if or(eq(parameters.stageId, 'e2e_odsp'), eq(parameters.stageId, 'stress_tests_odsp')) }}:
