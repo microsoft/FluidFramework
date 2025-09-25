@@ -81,17 +81,6 @@ export const rootDirectoryDescriptor: ModelDescriptor<RootDirectoryView> = {
 export abstract class DataObject<
 	I extends DataObjectTypes = DataObjectTypes,
 > extends MigrationDataObject<RootDirectoryView, I> {
-	//* TODO: Remove this static
-	/**
-	 * Probeable candidate roots the implementer expects for existing stores.
-	 * The order defines probing priority.
-	 * The first one will also be used for creation.
-	 */
-	protected static modelDescriptors: [
-		ModelDescriptor<RootDirectoryView>,
-		...ModelDescriptor<RootDirectoryView>[],
-	] = [rootDirectoryDescriptor];
-
 	/**
 	 * Access the root directory.
 	 *
@@ -121,6 +110,6 @@ export abstract class DataObject<
 	protected async getModelDescriptors(): Promise<
 		readonly [ModelDescriptor<RootDirectoryView>, ...ModelDescriptor<RootDirectoryView>[]]
 	> {
-		return (this.constructor as typeof DataObject).modelDescriptors;
+		return [rootDirectoryDescriptor];
 	}
 }

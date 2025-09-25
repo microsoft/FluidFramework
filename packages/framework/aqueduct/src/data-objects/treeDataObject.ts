@@ -74,16 +74,6 @@ export abstract class TreeDataObject<
 	TDataObjectTypes extends DataObjectTypes = DataObjectTypes,
 > extends MigrationDataObject<RootTreeView, TDataObjectTypes> {
 	/**
-	 * Probeable candidate roots the implementer expects for existing stores.
-	 * The order defines probing priority.
-	 * The first one will also be used for creation.
-	 */
-	protected static modelDescriptors: [
-		ModelDescriptor<RootTreeView>,
-		...ModelDescriptor<RootTreeView>[],
-	] = [rootSharedTreeDescriptor()];
-
-	/**
 	 * The underlying {@link @fluidframework/tree#ITree | tree}.
 	 * @remarks Created once during initialization.
 	 */
@@ -111,7 +101,7 @@ export abstract class TreeDataObject<
 	protected async getModelDescriptors(): Promise<
 		readonly [ModelDescriptor<RootTreeView>, ...ModelDescriptor<RootTreeView>[]]
 	> {
-		return (this.constructor as typeof TreeDataObject).modelDescriptors;
+		return [rootSharedTreeDescriptor()];
 	}
 }
 
