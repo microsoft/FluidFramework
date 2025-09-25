@@ -150,11 +150,6 @@ export abstract class MigrationDataObject<TUniversalView, I extends DataObjectTy
 }
 
 // @beta @legacy
-export interface MigrationDataObjectFactoryProps<TObj extends MigrationDataObject<TUniversalView, I, TMigrationData>, TUniversalView, I extends DataObjectTypes = DataObjectTypes, TMigrationData = never> extends DataObjectFactoryProps<TObj, I> {
-    ctor: new (props: IDataObjectProps<I>) => TObj;
-}
-
-// @beta @legacy
 export interface ModelDescriptor<TModel = unknown> {
     create: (runtime: IFluidDataStoreRuntime) => TModel;
     ensureFactoriesLoaded: () => Promise<void>;
