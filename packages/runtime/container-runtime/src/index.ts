@@ -113,6 +113,7 @@ export {
 	type ISummaryConfigurationHeuristics,
 	type ISummaryConfigurationDisableSummarizer,
 	type ISummaryConfigurationDisableHeuristics,
+	type ISummaryConfigurationWithSummaryOnRequest,
 	type ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 } from "./summary/index.js";

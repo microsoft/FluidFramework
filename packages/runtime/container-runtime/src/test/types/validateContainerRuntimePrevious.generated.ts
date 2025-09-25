@@ -103,6 +103,7 @@ declare type old_as_current_for_Interface_ContainerRuntimeOptions = requireAssig
  * typeValidation.broken:
  * "Interface_ContainerRuntimeOptions": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ContainerRuntimeOptions = requireAssignableTo<TypeOnly<current.ContainerRuntimeOptions>, TypeOnly<old.ContainerRuntimeOptions>>
 
 /*
@@ -643,6 +644,7 @@ declare type old_as_current_for_Interface_ISummaryRuntimeOptions = requireAssign
  * typeValidation.broken:
  * "Interface_ISummaryRuntimeOptions": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ISummaryRuntimeOptions = requireAssignableTo<TypeOnly<current.ISummaryRuntimeOptions>, TypeOnly<old.ISummaryRuntimeOptions>>
 
 /*
@@ -679,6 +681,7 @@ declare type old_as_current_for_Interface_LoadContainerRuntimeParams = requireAs
  * typeValidation.broken:
  * "Interface_LoadContainerRuntimeParams": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_LoadContainerRuntimeParams = requireAssignableTo<TypeOnly<current.LoadContainerRuntimeParams>, TypeOnly<old.LoadContainerRuntimeParams>>
 
 /*
@@ -733,6 +736,7 @@ declare type old_as_current_for_TypeAlias_IContainerRuntimeOptions = requireAssi
  * typeValidation.broken:
  * "TypeAlias_IContainerRuntimeOptions": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_IContainerRuntimeOptions = requireAssignableTo<TypeOnly<current.IContainerRuntimeOptions>, TypeOnly<old.IContainerRuntimeOptions>>
 
 /*
@@ -769,6 +773,7 @@ declare type old_as_current_for_TypeAlias_ISummaryConfiguration = requireAssigna
  * typeValidation.broken:
  * "TypeAlias_ISummaryConfiguration": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_ISummaryConfiguration = requireAssignableTo<TypeOnly<current.ISummaryConfiguration>, TypeOnly<old.ISummaryConfiguration>>
 
 /*
@@ -931,6 +936,7 @@ declare type current_as_old_for_Variable_AllowTombstoneRequestHeaderKey = requir
  * typeValidation.broken:
  * "Variable_DefaultSummaryConfiguration": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Variable_DefaultSummaryConfiguration = requireAssignableTo<TypeOnly<typeof current.DefaultSummaryConfiguration>, TypeOnly<typeof old.DefaultSummaryConfiguration>>
 
 /*
