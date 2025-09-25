@@ -14,20 +14,18 @@ import type {
 	IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 
-//* TEST only, will remove
-// eslint-disable-next-line import/no-internal-modules
-import { rootDirectoryDescriptor } from "../data-objects/dataObject.js";
-import {
-	DataObject,
-	type DataObjectTypes,
-	type IDataObjectProps,
-	type MigrationDataObject,
-	type ModelDescriptor,
+import type {
+	DataObjectTypes,
+	IDataObjectProps,
+	IProvideMigrationInfo,
+	MigrationDataObject,
+	ModelDescriptor,
 } from "../data-objects/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { rootSharedTreeDescriptor } from "../data-objects/treeDataObject.js";
 
-import type { DataObjectFactoryProps } from "./pureDataObjectFactory.js";
+import {
+	PureDataObjectFactory,
+	type DataObjectFactoryProps,
+} from "./pureDataObjectFactory.js";
 
 /**
  * Represents the properties required to create a MigrationDataObjectFactory.
@@ -56,20 +54,7 @@ export interface MigrationDataObjectFactoryProps<
 	};
 }
 
-//* STUB
-interface IProvideMigrationInfo {
-	IMigrationInfo?: IProvideMigrationInfo;
-	migrate: () => Promise<void>;
-}
-
 const fullMigrateDataObject = async (runtime: IFluidDataStoreChannel): Promise<void> => {
-	//* 1. Get the entrypoint (it will not fully init if pending migration)
-	//* 2. Tell it to migrate if needed.
-	//     a. Check if we're ready to migrate per barrier op
-	//     b. It will prepare for migration async
-	//     c. It will submit a "conversion" op and do the migration in a synchronous callback using runtime helper to hold ops in PSM
-	//     d. At the end, it should finish initializing.
-
 	// The old EntryPoint being migrated away from needs to provide IMigrationInfo
 	const maybeMigrationSource: FluidObject<IProvideMigrationInfo> =
 		await runtime.entryPoint.get();
@@ -80,11 +65,41 @@ const fullMigrateDataObject = async (runtime: IFluidDataStoreChannel): Promise<v
 		return;
 	}
 
-	//* Pseudo-code
 	await migrationInfo.migrate();
 };
 
-const conversionContent = "conversion";
+const ConversionContent = "conversion";
+
+//* TODO: Dedupe as much as possible with MigrationDataObject's version
+const submitConversionOp = (runtime: FluidDataStoreRuntime): void => {
+	runtime.submitMessage(DataStoreMessageType.ChannelOp, ConversionContent, undefined);
+};
+
+/**
+ * MigrationDataObjectFactory is the IFluidDataStoreFactory for migrating DataObjects.
+ * See MigrationDataObjectFactoryProps for more information on how to utilize this factory.
+ *
+ * @experimental
+ * @legacy
+ * @beta
+ */
+export class MigrationDataObjectFactory<
+	TObj extends MigrationDataObject<TUniversalView, I>,
+	TUniversalView,
+	I extends DataObjectTypes = DataObjectTypes,
+	TNewModel extends TUniversalView = TUniversalView, // default case works for a single model descriptor
+	TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
+> extends PureDataObjectFactory<TObj, I> {
+	public constructor(
+		props: MigrationDataObjectFactoryProps<TObj, TUniversalView, I, TNewModel, TMigrationData>,
+	) {
+		const alteredProps = getAlteredPropsSupportingMigrationDataObject(
+			props,
+			props.ctor.modelDescriptors,
+		);
+		super(alteredProps);
+	}
+}
 
 /**
  * Shallow copies the props making necesssary alterations so PureDataObjectFactory can be used to create a MigrationDataObject
@@ -120,7 +135,7 @@ export function getAlteredPropsSupportingMigrationDataObject<
 				if (
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 					messageCollection.envelope.type === DataStoreMessageType.ChannelOp &&
-					messageCollection.messagesContent.some((val) => val.contents === conversionContent)
+					messageCollection.messagesContent.some((val) => val.contents === ConversionContent)
 				) {
 					if (this.migrationOpSeqNum === -1) {
 						// This is the first migration op we've seen
@@ -132,7 +147,7 @@ export function getAlteredPropsSupportingMigrationDataObject<
 				}
 
 				contents = messageCollection.messagesContent.filter(
-					(val) => val.contents !== conversionContent,
+					(val) => val.contents !== ConversionContent,
 				);
 
 				if (this.seqNumsToSkip.has(sequenceNumber) || contents.length === 0) {
@@ -151,8 +166,8 @@ export function getAlteredPropsSupportingMigrationDataObject<
 				content: any,
 				localOpMetadata: unknown,
 			): void {
-				if (type === DataStoreMessageType.ChannelOp && content === conversionContent) {
-					//* submitConversionOp(this);
+				if (type === DataStoreMessageType.ChannelOp && content === ConversionContent) {
+					submitConversionOp(this);
 					return;
 				}
 				super.reSubmit(type, content, localOpMetadata);
@@ -162,18 +177,11 @@ export function getAlteredPropsSupportingMigrationDataObject<
 			public removeRoot(): void {
 				//* this.contexts.delete(dataObjectRootDirectoryId);
 			}
-		}, //* Mixin the Migration op processing stuff
+		},
 	};
 
 	return transformedProps;
 }
-
-class MyDataObject extends DataObject {}
-
-getAlteredPropsSupportingMigrationDataObject(
-	{ type: "test", ctor: MyDataObject, sharedObjects: [] /* ...other props... */ },
-	[rootSharedTreeDescriptor(), rootDirectoryDescriptor],
-);
 
 //* BONEYARD
 // //* TODO: Maybe we don't need to split by delay-loaded here (and in ModelDescriptor type)

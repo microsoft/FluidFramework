@@ -9,5 +9,5 @@ export { PureDataObject } from "./pureDataObject.js";
 export { TreeDataObject, treeChannelId, type RootTreeView } from "./treeDataObject.js";
 export type { DataObjectKind, DataObjectTypes, IDataObjectProps } from "./types.js";
 export { MigrationDataObject } from "./migrationDataObject.js";
-export type { ModelDescriptor } from "./migrationDataObject.js";
+export type { ModelDescriptor, IProvideMigrationInfo } from "./migrationDataObject.js";
 export type { RootDirectoryView } from "./dataObject.js";

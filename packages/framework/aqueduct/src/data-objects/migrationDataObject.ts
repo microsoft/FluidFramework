@@ -10,16 +10,45 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
-import type {
-	AsyncFluidObjectProvider,
-	IFluidDependencySynthesizer,
-} from "@fluidframework/synthesize/internal";
 
 import type { IDelayLoadChannelFactory } from "../channel-factories/index.js";
 import type { MigrationDataObjectFactoryProps } from "../data-object-factories/index.js";
 
 import { PureDataObject } from "./pureDataObject.js";
-import type { DataObjectTypes, IDataObjectProps } from "./types.js";
+import type { DataObjectTypes } from "./types.js";
+
+/**
+ * Information emitted by an old implementation's runtime to request a one-hop migration
+ * into a newer implementation.
+ *
+ * The current expectation (Phase 1) is that this interface is only surfaced during the
+ * first realization load path of an existing data store. Newly created data stores should
+ * already use the latest implementation and MUST NOT request migration.
+ *
+ * @legacy @beta
+ */
+export interface IMigrationInfo extends IProvideMigrationInfo {
+	/**
+	 * The tag (arbitrary string) that identifies the data format to migrate to
+	 */
+	readonly targetFormatTag: string;
+	/**
+	 * Migrate the data to the new format
+	 */
+	readonly migrate: () => Promise<void>;
+}
+
+/**
+ * If migration info is present, indicates the object should be migrated away from.
+ *
+ * @legacy @beta
+ */
+export interface IProvideMigrationInfo extends FluidObject {
+	/**
+	 * For FluidObject discovery
+	 */
+	IMigrationInfo?: IMigrationInfo | undefined;
+}
 
 /**
  * Descriptor for a model shape (arbitrary schema) the migration data object can probe for
@@ -69,10 +98,22 @@ export interface ModelDescriptor<TModel = unknown> {
  * @beta
  */
 export abstract class MigrationDataObject<
-	TUniversalView,
-	I extends DataObjectTypes = DataObjectTypes,
-	TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
-> extends PureDataObject<I> {
+		TUniversalView,
+		I extends DataObjectTypes = DataObjectTypes,
+		TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
+	>
+	extends PureDataObject<I>
+	implements IProvideMigrationInfo
+{
+	public get IMigrationInfo(): IMigrationInfo | undefined {
+		return {
+			targetFormatTag: "TBD", //* TODO
+			migrate: async () => {
+				return this.migrate();
+			},
+		};
+	}
+
 	// The currently active model and its descriptor, if discovered or created.
 	#activeModel:
 		| { descriptor: ModelDescriptor<TUniversalView>; view: TUniversalView }

@@ -23,6 +23,7 @@ export {
 	type DataObjectFactoryProps,
 	PureDataObjectFactory,
 	TreeDataObjectFactory,
+	MigrationDataObjectFactory,
 	type MigrationDataObjectFactoryProps,
 	type CreateDataObjectProps,
 } from "./data-object-factories/index.js";
