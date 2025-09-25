@@ -95,6 +95,24 @@ export abstract class TreeDataObject<
 
 		return tree;
 	}
+
+	protected async asyncGetDataForMigration(existingModel: RootTreeView): Promise<never> {
+		throw new Error("TreeDataObject does not support migration");
+	}
+
+	protected async canPerformMigration(): Promise<boolean> {
+		return false;
+	}
+
+	protected migrateDataObject(newModel: RootTreeView, data: never): void {
+		throw new Error("TreeDataObject does not support migration");
+	}
+
+	protected async getModelDescriptors(): Promise<
+		readonly [ModelDescriptor<RootTreeView>, ...ModelDescriptor<RootTreeView>[]]
+	> {
+		return (this.constructor as typeof TreeDataObject).modelDescriptors;
+	}
 }
 
 /**
