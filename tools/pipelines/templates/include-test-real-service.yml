@@ -339,7 +339,8 @@ stages:
                   ]);
                   for (const [k, v] of Object.entries(devDependencies)) {
                     if (!pkg.devDependencies[k] && !avoidCopying.has(k)) {
-                      console.log(`Adding devDependency ${k}@${v}`);
+                      // Note that if you use string interpolation, bash interpreting the dollar sign takes precedence.
+                      console.log('Adding devDependency ' + k + '@' + v);
                       pkg.devDependencies[k] = v;
                     }
                   }
