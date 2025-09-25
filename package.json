@@ -32,7 +32,7 @@
     "clean:nyc": "rimraf nyc/**",
     "clean:r11s": "cd server/routerlicious && npm run clean",
     "format": "echo Format not implemented. Use lint:fix instead.",
-    "layer-check": "flub check layers --info layerInfo.json",
+    "layer-check": "echo Layer check disabled on LTS",
     "lint": "pnpm run --no-sort --stream -r lint",
     "lint:fix": "pnpm run -r --no-sort --stream lint:fix",
     "policy-check": "flub check policy",

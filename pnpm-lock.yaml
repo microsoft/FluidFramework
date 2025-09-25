@@ -6125,8 +6125,8 @@ importers:
         specifier: ^0.55.0
         version: 0.55.0(@types/node@22.18.1)
       '@fluidframework/container-definitions-previous':
-        specifier: npm:@fluidframework/container-definitions@1.3.0
-        version: '@fluidframework/container-definitions@1.3.0'
+        specifier: npm:@fluidframework/container-definitions@1.3.1
+        version: '@fluidframework/container-definitions@1.3.1'
       '@fluidframework/eslint-config-fluid':
         specifier: ^0.28.2000
         version: 0.28.2000(eslint@8.55.0)(typescript@4.5.5)
@@ -13250,8 +13250,8 @@ packages:
   '@fluidframework/common-utils@1.1.1':
     resolution: {integrity: sha512-XCPEFE1JAg+juQZYQQVZjHZJlM5+Wm9NxRbsnsix05M1tSq0p3SLqwgfaSGssXhLLX5QtG+aF1QD5a3LA1qtNQ==}
 
-  '@fluidframework/container-definitions@1.3.0':
-    resolution: {integrity: sha512-Ib9RQoMncKl/cFIHznH0aQMOMUbqILbfU2x7tMrL9av9X9MXWEQMODhtWa/dTgb5nJ/Bni4ECBiGVHceZOw7BA==}
+  '@fluidframework/container-definitions@1.3.1':
+    resolution: {integrity: sha512-5iL0RqtoKmXwSGWMsO1aPP5nGDZRsBtrDYVStN+OtSLkur4vmQMKPlYKz1XrrR9Bulr0or4VPWPVT8m1d+hZtQ==}
 
   '@fluidframework/container-definitions@1.4.0':
     resolution: {integrity: sha512-UwyxdX739ltQhQ9Zr2n7mBKN2eYEVnY7GCsV60ZfLUawb021eeL0rVZZgT0t3BiTCCilBMl4Bw4KQ8XyYu2g/w==}
@@ -23200,7 +23200,7 @@ snapshots:
       lodash: 4.17.21
       sha.js: 2.4.12
 
-  '@fluidframework/container-definitions@1.3.0':
+  '@fluidframework/container-definitions@1.3.1':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/core-interfaces': 1.4.0
