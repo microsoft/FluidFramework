@@ -131,7 +131,18 @@ export interface IDelayLoadChannelFactory<T = unknown> extends IChannelFactory<T
 }
 
 // @beta @legacy
-export abstract class MigrationDataObject<TUniversalView, I extends DataObjectTypes = DataObjectTypes, TMigrationData = never> extends PureDataObject<I> {
+export interface IMigrationInfo extends IProvideMigrationInfo {
+    readonly migrate: () => Promise<void>;
+    readonly targetFormatTag: string;
+}
+
+// @beta @legacy
+export interface IProvideMigrationInfo extends FluidObject {
+    IMigrationInfo?: IMigrationInfo | undefined;
+}
+
+// @beta @legacy
+export abstract class MigrationDataObject<TUniversalView, I extends DataObjectTypes = DataObjectTypes, TMigrationData = never> extends PureDataObject<I> implements IProvideMigrationInfo {
     protected abstract asyncGetDataForMigration(existingModel: TUniversalView): Promise<TMigrationData>;
     protected abstract canPerformMigration(): Promise<boolean>;
     get dataModel(): {
@@ -141,12 +152,19 @@ export abstract class MigrationDataObject<TUniversalView, I extends DataObjectTy
     protected abstract getModelDescriptors(): Promise<readonly [ModelDescriptor<TUniversalView>, ...ModelDescriptor<TUniversalView>[]]>;
     protected getUninitializedErrorString(item: string): string;
     // (undocumented)
+    get IMigrationInfo(): IMigrationInfo | undefined;
+    // (undocumented)
     initializeInternal(existing: boolean): Promise<void>;
     // (undocumented)
     migrate(): Promise<void>;
     protected abstract migrateDataObject(newModel: TUniversalView, data: TMigrationData): void;
     // (undocumented)
     shouldMigrateBeforeInitialized(): Promise<boolean>;
+}
+
+// @beta @legacy
+export class MigrationDataObjectFactory<TObj extends MigrationDataObject<TUniversalView, I, TMigrationData>, TUniversalView, I extends DataObjectTypes = DataObjectTypes, TMigrationData = never> extends PureDataObjectFactory<TObj, I> {
+    constructor(props: DataObjectFactoryProps<TObj, I>, modelDescriptors: readonly ModelDescriptor<TUniversalView>[]);
 }
 
 // @beta @legacy
