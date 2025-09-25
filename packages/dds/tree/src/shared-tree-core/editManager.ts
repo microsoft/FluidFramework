@@ -746,8 +746,8 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		// Local changes, i.e., changes from this client are applied by fast forwarding the local branch commit onto
 		// the trunk.
 		if (areLocalCommits) {
-			for (const _ of newCommits) {
-				this.sequenceLocalCommit(nextSequenceId, sessionId, onSequenceLocalCommit);
+			for (const { revision } of newCommits) {
+				this.sequenceLocalCommit(revision, nextSequenceId, sessionId, onSequenceLocalCommit);
 				nextSequenceId = getNextSequenceId(nextSequenceId);
 			}
 			return;
@@ -896,19 +896,24 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 	 * Avoiding the overhead of the rebase process, even when it's a no-op, has real measured performance benefits and is worth the added complexity here.
 	 */
 	private sequenceLocalCommit(
+		revision: RevisionTag,
 		sequenceId: SequenceId,
 		sessionId: SessionId,
 		onSequenceLocalCommit: OnSequenceCommit<TChangeset>,
 	): void {
-		// First, push the local commit to the trunk.
-		// We are mutating our `localCommits` cache here,but there is no need to actually change the `localBranch` itself because it will simply catch up later if/when it next rebases.
-		const firstLocalCommit = this.localCommits.shift();
-
-		if (firstLocalCommit === undefined) {
+		if (this.commitMetadata.has(revision)) {
 			// This can happen if the commit came from a shared branch and was concurrently merged by another client.
 			// In this case, the newly sequenced commit is redundant and should therefore be ignored.
 			return;
 		}
+
+		// First, push the local commit to the trunk.
+		// We are mutating our `localCommits` cache here,but there is no need to actually change the `localBranch` itself because it will simply catch up later if/when it next rebases.
+		const firstLocalCommit = this.localCommits.shift();
+		assert(
+			firstLocalCommit !== undefined,
+			0x6b5 /* Received a sequenced change from the local session despite having no local changes */,
+		);
 
 		const prevSequenceId = this.getCommitSequenceId(this.trunk.getHead().revision);
 		this.pushGraphCommitToTrunk(sequenceId, firstLocalCommit, sessionId);
