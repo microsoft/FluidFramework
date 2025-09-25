@@ -51,6 +51,7 @@ import {
 	type GUIDNodeValue,
 	type ForkMergeOperation,
 	type SharedBranchOperation,
+	type SharedBranchNumber,
 } from "./operationTypes.js";
 
 import { getOrCreateInnerNode } from "../../../simple-tree/index.js";
@@ -107,7 +108,10 @@ const syncFuzzReducer = combineReducers<
 export const fuzzReducer: Reducer<
 	Operation,
 	DDSFuzzTestState<IChannelFactory<ISharedTree>>
-> = (state, operation) => syncFuzzReducer(state, operation);
+> = (state, operation) => {
+	// This is a good place to put a breakpoint when debugging a scenario
+	return syncFuzzReducer(state, operation);
+};
 
 export function checkTreesAreSynchronized(
 	trees: readonly Client<IChannelFactory<ISharedTree>>[],
@@ -201,25 +205,28 @@ export function applySharedBranchOperation(
 	state: FuzzTestState,
 	sharedBranchOp: SharedBranchOperation,
 ) {
-	state.sharedBranches ??= new Set<string>();
+	state.sharedBranchIdToNumber ??= new Map<string, SharedBranchNumber>();
+	state.sharedBranchNumberToId ??= new Map<SharedBranchNumber, string>();
 	state.activeSharedBranch ??= new Map();
 	state.sharedBranchViews ??= new Map();
 
 	switch (sharedBranchOp.contents.type) {
 		case "createSharedBranch": {
 			const branchId = state.client.channel.createSharedBranch();
-			state.sharedBranches.add(branchId);
+			state.sharedBranchIdToNumber.set(branchId, sharedBranchOp.contents.branchNumber);
+			state.sharedBranchNumberToId.set(sharedBranchOp.contents.branchNumber, branchId);
 			break;
 		}
 		case "checkoutSharedBranch": {
-			const branchId = sharedBranchOp.contents.branchId;
-			assert(state.sharedBranches.has(branchId), "Branch does not exist");
+			const branchNumber = sharedBranchOp.contents.branchNumber;
+			const branchId =
+				state.sharedBranchNumberToId.get(branchNumber) ?? fail("Branch does not exist");
 			let sharedViewMap = state.sharedBranchViews.get(state.client.channel);
 			if (sharedViewMap === undefined) {
-				sharedViewMap = new Map<string, FuzzView>();
+				sharedViewMap = new Map<SharedBranchNumber, FuzzView>();
 				state.sharedBranchViews.set(state.client.channel, sharedViewMap);
 			}
-			let branchView = sharedViewMap.get(branchId);
+			let branchView = sharedViewMap.get(branchNumber);
 			if (branchView === undefined) {
 				const mainBranchView = viewFromState(state, state.client);
 				branchView = state.client.channel.viewSharedBranchWith(
@@ -232,10 +239,10 @@ export function applySharedBranchOperation(
 					treeSchema ?? assert.fail("nodeSchema should not be undefined");
 
 				convertToFuzzView(branchView, branchView.currentSchema);
-				sharedViewMap.set(branchId, branchView);
+				sharedViewMap.set(branchNumber, branchView);
 			}
 			state.activeSharedBranch.set(state.client.channel, {
-				branchId,
+				branchNumber,
 				view: branchView,
 			});
 			break;
@@ -255,7 +262,8 @@ export function applySharedBranchOperation(
 			const branchView =
 				state.sharedBranchViews
 					.get(state.client.channel)
-					?.get(sharedBranchOp.contents.branchId) ?? fail("Branch view should be defined.");
+					?.get(sharedBranchOp.contents.branchNumber) ??
+				fail("Branch view should be defined.");
 
 			mainBranchView.merge(branchView, false);
 			break;

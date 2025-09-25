@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { fail } from "@fluidframework/core-utils/internal";
 import {
 	type AsyncGenerator,
 	type BaseFuzzTestState,
@@ -56,6 +57,7 @@ import {
 	type NodeRange,
 	type ForkMergeOperation,
 	type SharedBranchOperation,
+	type SharedBranchNumber,
 } from "./operationTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
@@ -123,9 +125,10 @@ export interface FuzzTestState extends DDSFuzzTestState<IChannelFactory<ISharedT
 	 */
 	forkedViews?: Map<ISharedTree, FuzzView[]>;
 
-	sharedBranches?: Set<string>;
-	activeSharedBranch?: Map<ISharedTree, { branchId: string; view: FuzzView }>;
-	sharedBranchViews?: Map<ISharedTree, Map<string, FuzzView>>;
+	sharedBranchIdToNumber?: Map<string, SharedBranchNumber>;
+	sharedBranchNumberToId?: Map<SharedBranchNumber, string>;
+	activeSharedBranch?: Map<ISharedTree, { branchNumber: SharedBranchNumber; view: FuzzView }>;
+	sharedBranchViews?: Map<ISharedTree, Map<SharedBranchNumber, FuzzView>>;
 }
 
 export function viewFromState(
@@ -616,12 +619,13 @@ export const makeSharedBranchOpGenerator = (
 
 	return createWeightedGenerator<SharedBranchOperation, FuzzTestState>([
 		[
-			{
+			(state) => ({
 				type: "sharedBranchOperation",
 				contents: {
 					type: "createSharedBranch",
+					branchNumber: (state.sharedBranchIdToNumber?.size ?? 0) + 1,
 				},
-			},
+			}),
 			opWeights.createSharedBranch,
 		],
 		[
@@ -629,7 +633,10 @@ export const makeSharedBranchOpGenerator = (
 				type: "sharedBranchOperation",
 				contents: {
 					type: "checkoutSharedBranch",
-					branchId: state.random.pick(state.client.channel.getSharedBranchIds()),
+					branchNumber:
+						state.sharedBranchIdToNumber?.get(
+							state.random.pick(state.client.channel.getSharedBranchIds()),
+						) ?? fail("Missing branch number"),
 				},
 			}),
 			opWeights.checkoutSharedBranch,
@@ -650,12 +657,8 @@ export const makeSharedBranchOpGenerator = (
 				type: "sharedBranchOperation",
 				contents: {
 					type: "mergeSharedBranch",
-					branchId: state.random.pick(
-						Array.from(
-							state.sharedBranchViews?.get(state.client.channel)?.keys() ?? [
-								"NO SHARED BRANCHES CHECKED OUT",
-							],
-						),
+					branchNumber: state.random.pick(
+						Array.from(state.sharedBranchViews?.get(state.client.channel)?.keys() ?? []),
 					),
 				},
 			}),

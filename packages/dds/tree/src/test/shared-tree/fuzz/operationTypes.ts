@@ -59,13 +59,22 @@ export interface SharedBranchOperation {
 	contents: CreateSharedBranch | CheckoutSharedBranch | MergeSharedBranch | CheckoutMainBranch;
 }
 
+/**
+ * An ordinal number associated with a shared branch created during a test, used in operations to refer to that branch.
+ * This is different from the branch ID used internally by SharedTree.
+ * The reason this is used instead of branch IDs is that branch IDs are not stable, which in some cases prevents replay and minification.
+ * SharedBranchNumber also has the advantage that it can be decided at operation generation time, which allows us to include it in CreateSharedBranch and helps test log readability.
+ */
+export type SharedBranchNumber = number;
+
 export interface CreateSharedBranch {
 	type: "createSharedBranch";
+	branchNumber: SharedBranchNumber;
 }
 
 export interface CheckoutSharedBranch {
 	type: "checkoutSharedBranch";
-	branchId: string;
+	branchNumber: SharedBranchNumber;
 }
 
 /**
@@ -82,7 +91,7 @@ export interface CheckoutMainBranch {
  */
 export interface MergeSharedBranch {
 	type: "mergeSharedBranch";
-	branchId: string;
+	branchNumber: SharedBranchNumber;
 }
 
 export interface ForkBranch {
