@@ -76,7 +76,12 @@ export class SharedMatrixOracle {
 		}
 	}
 
-	private updateLatestHistory(type: "row" | "col", start, removed, inserted): void {
+	private updateLatestHistory(
+		type: "row" | "col",
+		start: number,
+		removed: number,
+		inserted: number,
+	): void {
 		const newMap = new Map<string, IConflict<unknown>>();
 
 		for (const [key, record] of this.latestConflict) {
@@ -107,7 +112,6 @@ export class SharedMatrixOracle {
 				});
 			}
 		}
-		this.latestConflict.clear();
 		this.latestConflict = newMap;
 	}
 
@@ -154,7 +158,7 @@ export class SharedMatrixOracle {
 			switch (lastEvent) {
 				case "conflict": {
 					// Probably cell is not yet set
-					if (actual === undefined) return;
+					if (actual === undefined) continue;
 					// Winner must be present in the matrix
 					if (inBounds) {
 						assert.deepStrictEqual(
@@ -200,6 +204,7 @@ export class SharedMatrixOracle {
 	public dispose(): void {
 		this.shared.off("conflict", this.conflictListener);
 		this.shared.matrixProducer.closeMatrix(this.matrixConsumer);
+		this.shared.matrixProducer.closeMatrix(this.testConsumer);
 	}
 }
 
