@@ -12,7 +12,7 @@
 
 parameters:
 # Location for the .npmrc file.
-- name: userNpmrcPath
+- name: userNpmrcDirectory
   type: string
   default: $(Agent.TempDirectory)/global-download-npmrc
 

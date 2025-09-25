@@ -24,9 +24,9 @@ parameters:
   type: string
   default: ''
 
-- name: userNpmrcPath
+- name: userNpmrcDirectory
   type: string
-  default: $(Agent.TempDirectory)/.npmrc
+  default: $(Agent.TempDirectory)
 
 steps:
 - checkout: git://internal/ff_pipeline_host
@@ -51,7 +51,7 @@ steps:
 # base .npmrc file in ff_pipeline_host which could be cleaned up.
 - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
   parameters:
-    userNpmrcPath: ${{ parameters.userNpmrcPath }}
+    userNpmrcPath: ${{ parameters.userNpmrcDirectory }}
 
 - template: /tools/pipelines/templates/include-install.yml@self
   parameters:
@@ -59,7 +59,7 @@ steps:
     buildDirectory: $(Build.SourcesDirectory)
     packageManagerInstallCommand: pnpm install
     primaryRegistry: $(ado-feeds-ff-download-only)
-    userNpmrcPath: ${{ parameters.userNpmrcPath }}
+    userNpmrcPath: ${{ parameters.userNpmrcDirectory }}/.npmrc
 
 # Download artifact with test files
 - task: DownloadPipelineArtifact@2
