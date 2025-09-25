@@ -116,6 +116,7 @@ describe("Tests1 for snapshot fetch", () => {
 			{
 				docId: hashedDocumentId,
 				resolvedUrl,
+				fileVersion: undefined,
 			},
 			logger,
 		);

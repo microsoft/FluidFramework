@@ -31,6 +31,11 @@ parameters:
 - name: pathForTelemetryGeneratorInstall
   type: string
 
+# Name of the service that the tests are running against.
+- name: endpointName
+  type: string
+  default: ''
+
 steps:
 - task: Bash@3
   displayName: Print parameter/variable values for troubleshooting
@@ -90,3 +95,33 @@ steps:
     workingDirectory: ${{ parameters.testWorkspace }}
     targetType: 'inline'
     script: 'npm install @ff-internal/aria-logger'
+
+- ${{ if eq(parameters.endpointName, 'odsp') }}:
+  # Log in to Azure to retrieve tenant credentials
+  - task: AzureCLI@2
+    displayName: 'Log in to retrieve tenant credentials'
+    inputs:
+      azureSubscription: 'Fluid Framework Tests'
+      # This injects environment variables into the below script. See https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/azure-cli-v2?view=azure-pipelines
+      addSpnToEnvironment: true
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        set -eu -o pipefail
+
+        az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
+
+  # Obtain tenant credentials and store them in environment variables
+  - task: Bash@3
+    displayName: 'Run tenant setup script'
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+    inputs:
+      workingDirectory: ${{ parameters.testWorkspace }}
+      targetType: 'inline'
+      script: |
+        set -eu -o pipefail
+
+        # Increase the maximum time to wait for a tenant to 1 hour to accommodate multiple test runs at the same time.
+        npx --package=@ff-internal/trips-setup@0.0.5 -- trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN
+        echo "##vso[task.setvariable variable=tenantSetupSuccess;]true"

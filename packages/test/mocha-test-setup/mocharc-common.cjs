@@ -60,6 +60,14 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		}
 	}
 
+	let defaultSpec = "lib/test";
+	if (process.env.FLUID_TEST_MODULE_SYSTEM === "CJS") {
+		defaultSpec = "dist/test";
+		const testVariant = process.env.FLUID_TEST_VARIANT;
+		process.env.FLUID_TEST_VARIANT = testVariant !== undefined ? `CJS,${testVariant}` : "CJS";
+		testReportPrefix = testReportPrefix !== undefined ? `${testReportPrefix}-CJS` : "CJS";
+	}
+
 	const config = {
 		"recursive": true,
 		"require": requiredModulePaths,
@@ -77,7 +85,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 			// these must be provided here and not via mocha's --v8-expose-gc.
 			"expose-gc",
 		],
-		spec: process.env.MOCHA_SPEC ?? "lib/test",
+		spec: process.env.MOCHA_SPEC ?? defaultSpec,
 	};
 
 	if (process.env.FLUID_TEST_TIMEOUT !== undefined) {

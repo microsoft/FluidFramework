@@ -1,5 +1,13 @@
 # @fluidframework/telemetry-utils
 
+## 2.61.0
+
+### Minor Changes
+
+- Wrapped errors preserved as `cause` property ([#25485](https://github.com/microsoft/FluidFramework/pull/25485)) [c69d56d2b2](https://github.com/microsoft/FluidFramework/commit/c69d56d2b210e82cb42cb4ec8f8b6d3f8ce6c9db)
+
+  `IFluidErrorBase` (internal basis for FluidFramework client errors) declares `cause` property matching ES2022 lib (whether targeted or not). When an error is wrapped, `cause` will be set to the originating error (which may or may not itself be an `Error`).
+
 ## 2.60.0
 
 Dependency updates only.

@@ -1,0 +1,220 @@
+---
+title: Types of Schema Changes
+sidebar_position: 2
+---
+
+# Types of Schema Changes
+
+Understanding which types of schema changes are safe versus breaking is crucial for evolving your [SharedTree](../index.mdx) schemas without disrupting existing applications.
+
+All the examples below are modifying this schema:
+```typescript
+class Note extends factory.object("Note", {
+    id: factory.string,
+    text: factory.string,
+    color: factory.optional([factory.string, factory.number]),
+}) {}
+```
+
+## Compatible Changes
+
+The following changes are [backwards compatible](./index.mdx#backwards-compatibility).
+However, it's important that applications carefully review whether the change is [forwards compatible](./index.mdx#forwards-compatibility) inherently or if a [staged rollout](./index.mdx#staged-rollouts) is necessary.
+
+### Adding Optional Fields
+
+BC | FC
+---| ---
+✅ | ❌
+
+```typescript
+class Note extends factory.object("Note", {
+    id: factory.string,
+    text: factory.string,
+    color: factory.optional([factory.string, factory.number]),
+    height: factory.optional(factory.number), // New optional field
+}) {}
+```
+
+To ensure [forwards compatibility](./index.mdx#understanding-compatibility), use [`allowUnknownOptionalFields`](../../../api/fluid-framework/schemafactoryobjectoptions-interface#allowunknownoptionalfields-propertysignature) to handle new optional fields added by newer clients.
+Note that this needs to already be set on the old clients before the field is added.
+If it's not already set, then this degenerates into an un-forwards compatible change and requires a [staged rollout](./index.mdx#staged-rollouts) - because the app has to stage the enabling of allowUnknownOptionalFields.
+
+```typescript
+class Note extends factory.object("Note", {
+    id: factory.string,
+    text: factory.string,
+    color: factory.optional([factory.string, factory.number]),
+    // Existing optional fields
+}, { allowUnknownOptionalFields: true }) {}
+```
+
+### Making Required Fields Optional
+
+BC | FC
+---| ---
+✅ | ❌
+
+**Note**: There is currently no way to make this change is a [forwards compatible](./index.mdx#forwards-compatibility) way.
+
+```typescript
+class Note extends factory.object("Note", {
+    id: factory.string,
+    text: factory.optional(factory.string), // previously required
+    color: factory.optional([factory.string, factory.number]),
+}) {}
+```
+
+### Adding New Allowed Types
+
+BC | FC
+---| ---
+✅ | ❌
+
+```typescript
+class Note extends factory.object("Note", {
+    id: factory.string,
+    text: [factory.string, factory.array(factory.string)],
+    color: factory.optional([factory.string, factory.number]),
+}) {}
+```
+
+To achieve [forwards compatibility](./index.mdx#forwards-compatibility), staged allowed types can be used to [roll out](./index.mdx#staged-rollouts) support for reading before writing, allowing older clients to read data created with new types (TODO add a guide on this process).
+
+## Incompatible Changes
+
+These changes will break compatibility with existing data and require careful migration:
+
+### Removing Fields
+
+Removing fields from node types breaks older clients and newer clients opening older documents:
+
+```typescript
+// Breaking: Removing field
+class Note extends factory.object("Note", {
+    id: factory.string,
+    // text: factory.string, // REMOVED
+    color: factory.optional([factory.string, factory.number]),
+}) {}
+```
+
+### Making Optional Fields Required
+
+Making an optional field required breaks documents whose stored schema does not know about that field:
+
+```typescript
+// Breaking: Making optional field required
+class Note extends factory.object("Note", {
+    id: factory.string,
+    text: factory.string,
+    color: [factory.string, factory.number], // Was optional, now required - BREAKING!
+}) {}
+```
+
+### Changing Field Types
+
+Changing field types breaks existing data:
+
+```typescript
+// Breaking: Changing field type
+class Note extends factory.object("Note", {
+    id: factory.number, // Was factory.string - BREAKING!
+    text: factory.string,
+    color: factory.optional([factory.string, factory.number]),
+}) {}
+```
+
+### Removing Allowed Types
+
+Removing allowed types from fields breaks documents containing those types:
+
+```typescript
+// Breaking: Removing allowed type
+class Note extends factory.object("Note", {
+    id: factory.string,
+    text: factory.string,
+    color: factory.optional([factory.string]), // removed factory.number
+}) {}
+```
+
+## Best Practices
+
+### Avoid Optional Maps and Arrays
+
+In many cases, optional maps and optional arrays are an anti-pattern.
+This is because maps and arrays already have an empty state (e.g. a map with no entries, or an empty array []).
+For most applications, there is no meaningful difference between an empty map and a lack of a map, or between an empty array and a lack of an array.
+Unless you have a good reason (for example, when adding a map or array to an existing type), make maps and arrays required.
+
+When maps and arrays are optional, the application must check if the the map or array is undefined at all read sites.
+Even worse, the application must do extra work when writing.
+If the map/array is not present, then the application must first create the map/array, and only then may populate it.
+
+```typescript
+const map = myNode.myMap;
+if (map === undefined) {
+  myNode.myMap = new MyMap({});
+}
+
+myNode.myMap.set("key", "value");
+```
+
+Not only does this incur an extra write, but it is also lossy in the face of concurrent edits.
+If two users each create the map concurrently, then only one of their maps will end up in the document.
+The other map, and subsequent concurrent edits made to that map, will be lost.
+
+### Avoid Redundant Data
+
+It's undesirable to have the same data stored twice in multiple places in the document.
+This is because it requires multiple edits (or larger edits) to update the data rather than a single, scoped edit.
+Not only is this inefficient but it increases the chance of merge conflicts and it introduces an additional invariant into the document data: these two pieces of data must "stay in sync".
+
+The following is an example of redundant data in the schema.
+Users are looked up in a map via their ID, but each user also contains its ID as a property.
+This is redundant.
+It's not necessary for the user to have the ID field, because to look up the user in the first place, you must already know that user's ID.
+
+```typescript
+class User extends sf.object("User", {
+  id: sf.string,
+}) {}
+
+/** A map from ID to user */
+class Users extends sf.map("Users", sf.string, User) {}
+```
+
+Data redundancy also applies to derived data.
+For example, suppose the document has a list of users, where each user has a score property.
+It might also be tempting to store a global "total score" property at the root of the document which is the sum of the scores of all users.
+However, this data is completely derived - it is fully computable from other data that is already in the document.
+Therefore (if not prohibitively expensive), it should be computed at runtime by the client - and possibly cached in memory if desired - but not cached in the document.
+
+### Factor Out Map and Array Value Types
+
+It is good practice to create named classes for the types that are stored in maps and arrays.
+
+```typescript
+class MyFoo extends sf.object("MyFoo", { foo: sf.string }) {}
+
+class MyObject extends sf.object("MyObject", {
+  listA: sf.array(MyFoo), // Named (preferred)
+  listB: sf.array(sf.object({ foo: sf.string })) // Inlined/unnamed
+}) {}
+```
+
+Note that the two objects in the example above are structurally equivalent, but only one of them is given a name.
+In actuality, both have names, but the inlined one is given a name automatically generated by the system.
+Factoring out your type into a class with an explicit name has a few benefits:
+
+- You have more control over what kind of elements are allowed in your structures.
+For example, when moving elements between lists, the lists must contain elements with the same type name.
+By controlling the type name, you can control which elements can be moved across which lists, even when they are structurally equivalent.
+- It reduces the size of the generated .d.ts file.
+Because of the way that SharedTree schema types expand in the compiler, output files can grow to very large sizes if too many types are inlined.
+By giving the types names, the compiler can reference them via their name string rather than as the composition of all their inner data types.
+
+## See Also
+
+- [Schema Evolution](./index.mdx) - Overview and upgrade process
+- [Schema Definition](../schema-definition.mdx) - How to define schemas
+- [Node Types](../node-types.mdx) - Understanding different node types

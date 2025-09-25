@@ -133,7 +133,7 @@ export const SharedArray: ISharedObjectKind<ISharedArray<SerializableTypeForShar
 export const SharedArrayBuilder: <T extends SerializableTypeForSharedArray>() => ISharedObjectKind<ISharedArray<T>> & SharedObjectKind<ISharedArray<T>>;
 
 // @beta @legacy
-export const SharedSignal: ISharedObjectKind<ISharedSignal<any>> & SharedObjectKind<ISharedSignal<any>>;
+export const SharedSignal: ISharedObjectKind_2<ISharedSignal<any>> & SharedObjectKind_2<ISharedSignal<any>>;
 
 // (No @packageDocumentation comment for this package)
 

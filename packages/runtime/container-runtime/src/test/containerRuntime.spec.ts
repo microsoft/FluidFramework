@@ -3739,6 +3739,29 @@ describe("Runtime", () => {
 						"Container should throw when op compression is on and op grouping is off",
 					);
 				});
+
+				it("Throws when createBlobPayloadPending is on and explicitSchemaControl is not enabled", async () => {
+					await assert.rejects(
+						async () =>
+							ContainerRuntime.loadRuntime({
+								context: getMockContext() as IContainerContext,
+								registryEntries: [],
+								existing: false,
+								runtimeOptions: {
+									createBlobPayloadPending: true,
+								},
+								provideEntryPoint: mockProvideEntryPoint,
+							}),
+						(error: IErrorBase) => {
+							return (
+								error.errorType === ContainerErrorTypes.usageError &&
+								error.message ===
+									"explicitSchemaControl must be enabled to use createBlobPayloadPending"
+							);
+						},
+						"Container should throw when createBlobPayloadPending is on and explicitSchemaControl is not enabled",
+					);
+				});
 			});
 		});
 
@@ -4134,7 +4157,7 @@ describe("Runtime", () => {
 						existing: false,
 						// We would normally throw (since `createBlobPayloadPending` requires 2.40), but since we did
 						// not explicity set minVersionForCollab, we allow it.
-						runtimeOptions: { createBlobPayloadPending: true },
+						runtimeOptions: { createBlobPayloadPending: true, explicitSchemaControl: true },
 						provideEntryPoint: mockProvideEntryPoint,
 					});
 				});

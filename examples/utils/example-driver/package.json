@@ -1,0 +1,73 @@
+{
+	"name": "@fluid-example/example-driver",
+	"version": "2.62.0",
+	"private": true,
+	"description": "Simplified drivers used by examples in the FluidFramework repo.",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "examples/utils/example-driver"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"sideEffects": false,
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
+	"main": "lib/index.js",
+	"types": "lib/index.d.ts",
+	"scripts": {
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack .",
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"eslint": "eslint --format stylish src",
+		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
+	},
+	"dependencies": {
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/local-driver": "workspace:~",
+		"@fluidframework/odsp-doclib-utils": "workspace:~",
+		"@fluidframework/odsp-driver": "workspace:~",
+		"@fluidframework/routerlicious-driver": "workspace:~",
+		"@fluidframework/server-local-server": "^7.0.0",
+		"@fluidframework/tinylicious-driver": "workspace:~"
+	},
+	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.17.1",
+		"@biomejs/biome": "~1.9.3",
+		"@fluid-tools/build-cli": "^0.58.3",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "^0.58.3",
+		"@fluidframework/eslint-config-fluid": "^6.0.0",
+		"copyfiles": "^2.4.1",
+		"eslint": "~8.55.0",
+		"rimraf": "^4.4.0",
+		"typescript": "~5.4.5"
+	},
+	"typeValidation": {
+		"disabled": true,
+		"broken": {},
+		"entrypoint": "internal"
+	}
+}

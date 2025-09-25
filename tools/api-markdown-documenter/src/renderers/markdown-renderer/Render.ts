@@ -56,16 +56,18 @@ export function renderDocument(
  * @param config - Markdown transformation configuration.
  */
 function renderMarkdown(tree: MdastTree, config: RenderMarkdownConfiguration): string {
+	const extensions = [
+		gfmToMarkdown({
+			tablePipeAlign: false,
+		}),
+		...(config.mdastToMarkdownOptions?.extensions ?? []),
+	];
 	const options: MdastToMarkdownOptions = {
 		emphasis: "_",
 		bullet: "-",
 		incrementListMarker: false,
-		extensions: [
-			gfmToMarkdown({
-				tablePipeAlign: false,
-			}),
-		],
 		...config.mdastToMarkdownOptions,
+		extensions,
 	};
 	return toMarkdownString(tree, options);
 }

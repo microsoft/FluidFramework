@@ -143,7 +143,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
 export abstract class TreeDataObject<TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObject<TDataObjectTypes> {
     // (undocumented)
     initializeInternal(existing: boolean): Promise<void>;
-    protected get tree(): ITree;
+    protected get tree(): ITree_2;
 }
 
 // @beta @legacy

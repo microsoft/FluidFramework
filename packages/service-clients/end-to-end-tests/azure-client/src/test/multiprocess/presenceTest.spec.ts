@@ -336,7 +336,7 @@ describe(`Presence with AzureClient`, () => {
 					});
 				});
 
-				it(`allows clients to read Latest state from other clients [${numClients} clients]`, async () => {
+				it(`allows clients to read Latest state from other clients [${numClients} clients]`, async function () {
 					// Setup
 					const updateEventsPromise = waitForLatestValueUpdates(
 						remoteClients,
@@ -474,7 +474,7 @@ describe(`Presence with AzureClient`, () => {
 					}
 				});
 
-				it(`returns per-key values on read [${numClients} clients]`, async () => {
+				it(`returns per-key values on read [${numClients} clients]`, async function () {
 					// Setup
 					const allAttendeeIds = await Promise.all(attendeeIdPromises);
 					const attendee0Id = containerCreatorAttendeeId;

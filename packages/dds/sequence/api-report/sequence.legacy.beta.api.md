@@ -19,7 +19,40 @@ export function appendIntervalPropertyChangedToRevertibles(interval: SequenceInt
 // @beta @legacy
 export function appendSharedStringDeltaToRevertibles(string: ISharedString, delta: SequenceDeltaEvent, revertibles: SharedStringRevertible[]): void;
 
-export { BaseSegment }
+// @beta @legacy (undocumented)
+export abstract class BaseSegment implements ISegment {
+    constructor(properties?: PropertySet);
+    // (undocumented)
+    protected addSerializedProps(jseg: IJSONSegment): void;
+    // (undocumented)
+    append(other: ISegment): void;
+    // (undocumented)
+    attribution?: IAttributionCollection<AttributionKey>;
+    // (undocumented)
+    cachedLength: number;
+    // (undocumented)
+    canAppend(segment: ISegment): boolean;
+    // (undocumented)
+    abstract clone(): ISegment;
+    // (undocumented)
+    protected cloneInto(b: ISegment): void;
+    // (undocumented)
+    protected abstract createSplitSegmentAt(pos: number): BaseSegment | undefined;
+    // (undocumented)
+    hasProperty(key: string): boolean;
+    // (undocumented)
+    isLeaf(): this is ISegment;
+    // (undocumented)
+    properties?: PropertySet;
+    // (undocumented)
+    splitAt(pos: number): ISegment | undefined;
+    // (undocumented)
+    abstract toJSONObject(): any;
+    // (undocumented)
+    readonly trackingCollection: TrackingGroupCollection;
+    // (undocumented)
+    abstract readonly type: string;
+}
 
 // @beta @legacy (undocumented)
 export function createOverlappingIntervalsIndex(sharedString: ISharedString): ISequenceOverlappingIntervalsIndex;
@@ -39,7 +72,13 @@ export interface IInterval {
     overlaps(b: IInterval): boolean;
 }
 
-export { InteriorSequencePlace }
+// @beta @legacy
+export interface InteriorSequencePlace {
+    // (undocumented)
+    pos: number;
+    // (undocumented)
+    side: Side;
+}
 
 // @beta @legacy
 export const IntervalOpType: {
@@ -105,7 +144,28 @@ export enum IntervalType {
     SlideOnRemove = 2,// SlideOnRemove is default behavior - all intervals are SlideOnRemove
 }
 
-export { ISegment }
+// @beta @legacy
+export interface ISegment {
+    // (undocumented)
+    append(segment: ISegment): void;
+    attribution?: IAttributionCollection<AttributionKey>;
+    cachedLength: number;
+    // (undocumented)
+    canAppend(segment: ISegment): boolean;
+    // (undocumented)
+    clone(): ISegment;
+    // (undocumented)
+    isLeaf(): this is ISegment;
+    properties?: PropertySet;
+    // (undocumented)
+    splitAt(pos: number): ISegment | undefined;
+    // (undocumented)
+    toJSONObject(): any;
+    // (undocumented)
+    readonly trackingCollection: TrackingGroupCollection;
+    // (undocumented)
+    readonly type: string;
+}
 
 // @beta @legacy
 export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
@@ -250,21 +310,102 @@ export interface ISharedString extends ISharedSegmentSequence<SharedStringSegmen
     searchForMarker(startPos: number, markerLabel: string, forwards?: boolean): Marker | undefined;
 }
 
-export { LocalReferencePosition }
+// @beta @sealed @legacy (undocumented)
+export interface LocalReferencePosition extends ReferencePosition {
+    // (undocumented)
+    addProperties(newProps: PropertySet): void;
+    // (undocumented)
+    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", (ref: LocalReferencePosition) => void>>;
+    readonly canSlideToEndpoint?: boolean;
+    // (undocumented)
+    readonly trackingCollection: TrackingGroupCollection;
+}
 
-export { MapLike }
+// @beta @legacy
+export interface MapLike<T> {
+    // (undocumented)
+    [index: string]: T;
+}
 
-export { Marker }
+// @beta @legacy
+export class Marker extends BaseSegment implements ReferencePosition, ISegment {
+    constructor(refType: ReferenceType, props?: PropertySet);
+    // (undocumented)
+    append(): void;
+    // (undocumented)
+    canAppend(segment: ISegment): boolean;
+    // (undocumented)
+    clone(): Marker;
+    // (undocumented)
+    protected createSplitSegmentAt(pos: number): undefined;
+    // (undocumented)
+    static fromJSONObject(spec: IJSONSegment): Marker | undefined;
+    // (undocumented)
+    getId(): string | undefined;
+    // (undocumented)
+    getOffset(): number;
+    // (undocumented)
+    getProperties(): PropertySet | undefined;
+    // (undocumented)
+    getSegment(): Marker;
+    // (undocumented)
+    static is(segment: ISegment): segment is Marker;
+    // (undocumented)
+    static make(refType: ReferenceType, props?: PropertySet): Marker;
+    // (undocumented)
+    refType: ReferenceType;
+    // (undocumented)
+    toJSONObject(): IJSONMarkerSegment;
+    // (undocumented)
+    toString(): string;
+    // (undocumented)
+    static readonly type = "Marker";
+    // (undocumented)
+    readonly type = "Marker";
+}
 
-export { MergeTreeDeltaType }
+// @beta @legacy (undocumented)
+export const MergeTreeDeltaType: {
+    readonly INSERT: 0;
+    readonly REMOVE: 1;
+    readonly ANNOTATE: 2;
+    readonly GROUP: 3;
+    readonly OBLITERATE: 4;
+    readonly OBLITERATE_SIDED: 5;
+};
 
-export { PropertySet }
+// @beta @legacy (undocumented)
+export type MergeTreeDeltaType = (typeof MergeTreeDeltaType)[keyof typeof MergeTreeDeltaType];
 
-export { ReferencePosition }
+// @beta @legacy
+export type PropertySet = MapLike<any>;
 
-export { ReferenceType }
+// @beta @legacy
+export interface ReferencePosition {
+    getOffset(): number;
+    getSegment(): ISegment | undefined;
+    // (undocumented)
+    isLeaf(): this is ISegment;
+    properties?: PropertySet;
+    // (undocumented)
+    refType: ReferenceType;
+    slidingPreference?: SlidingPreference;
+}
 
-export { reservedMarkerIdKey }
+// @beta @legacy
+export enum ReferenceType {
+    RangeBegin = 16,
+    RangeEnd = 32,
+    // (undocumented)
+    Simple = 0,
+    SlideOnRemove = 64,
+    StayOnRemove = 128,
+    Tile = 1,
+    Transient = 256
+}
+
+// @beta @legacy
+export const reservedMarkerIdKey = "markerId";
 
 // @beta @legacy
 export function revertSharedStringRevertibles(sharedString: ISharedString, revertibles: SharedStringRevertible[]): void;
@@ -324,7 +465,8 @@ export interface SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMainten
     readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
 }
 
-export { SequencePlace }
+// @beta @legacy
+export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
 
 // @beta @legacy
 export const SharedString: ISharedObjectKind<ISharedString> & SharedObjectKind<ISharedString>;
@@ -338,10 +480,56 @@ export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertib
 // @beta @legacy (undocumented)
 export type SharedStringSegment = TextSegment | Marker;
 
-export { Side }
+// @beta @legacy
+export enum Side {
+    // (undocumented)
+    After = 1,
+    // (undocumented)
+    Before = 0
+}
 
-export { TextSegment }
+// @beta @legacy (undocumented)
+export class TextSegment extends BaseSegment {
+    constructor(text: string, props?: PropertySet);
+    // (undocumented)
+    append(segment: ISegment): void;
+    // (undocumented)
+    canAppend(segment: ISegment): boolean;
+    // (undocumented)
+    clone(start?: number, end?: number): TextSegment;
+    // (undocumented)
+    protected createSplitSegmentAt(pos: number): TextSegment | undefined;
+    // (undocumented)
+    static fromJSONObject(spec: string | IJSONSegment): TextSegment | undefined;
+    // (undocumented)
+    static is(segment: ISegment): segment is TextSegment;
+    // (undocumented)
+    static make(text: string, props?: PropertySet): TextSegment;
+    // (undocumented)
+    text: string;
+    // (undocumented)
+    toJSONObject(): IJSONTextSegment | string;
+    // (undocumented)
+    toString(): string;
+    // (undocumented)
+    static readonly type = "TextSegment";
+    // (undocumented)
+    readonly type = "TextSegment";
+}
 
-export { TrackingGroup }
+// @beta @legacy (undocumented)
+export class TrackingGroup implements ITrackingGroup {
+    constructor();
+    // (undocumented)
+    has(trackable: Trackable): boolean;
+    // (undocumented)
+    link(trackable: Trackable): void;
+    // (undocumented)
+    get size(): number;
+    // (undocumented)
+    get tracked(): readonly Trackable[];
+    // (undocumented)
+    unlink(trackable: Trackable): boolean;
+}
 
 ```

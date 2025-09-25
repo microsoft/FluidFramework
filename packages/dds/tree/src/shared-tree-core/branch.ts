@@ -24,6 +24,13 @@ import {
 	type RebaseStatsWithDuration,
 } from "../core/index.js";
 import { hasSome, defineLazyCachedProperty } from "../util/index.js";
+import type {
+	OpSpaceCompressedId,
+	SessionSpaceCompressedId,
+} from "@fluidframework/id-compressor";
+
+export type BranchId = SessionSpaceCompressedId | "main";
+export type EncodedBranchId = OpSpaceCompressedId;
 
 /**
  * Describes a change to a `SharedTreeBranch`. Each of the following event types provides a `change` which contains the net change to the branch (or is undefined if there was no net change):

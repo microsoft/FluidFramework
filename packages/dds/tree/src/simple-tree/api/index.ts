@@ -31,6 +31,7 @@ export {
 	type SchemaFactoryObjectOptions,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
+	type SchemaFactory_base,
 } from "./schemaFactory.js";
 export { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
 export { SchemaFactoryAlpha, type SchemaStaticsAlpha } from "./schemaFactoryAlpha.js";
@@ -55,6 +56,11 @@ export {
 	tryGetSchema,
 } from "./treeNodeApi.js";
 export { createFromCursor } from "./create.js";
+export {
+	type DirtyTreeStatus,
+	trackDirtyNodes,
+	type DirtyTreeMap,
+} from "./dirtyIndex.js";
 export {
 	type JsonSchemaId,
 	type JsonSchemaType,

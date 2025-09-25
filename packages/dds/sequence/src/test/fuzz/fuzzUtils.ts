@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import * as path from "path";
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
@@ -18,6 +19,8 @@ import {
 	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
+	registerOracle,
+	type DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
 import {
 	IChannelAttributes,
@@ -46,6 +49,9 @@ import { SharedStringFactory } from "../../sequenceFactory.js";
 import { ISharedString, type SharedStringClass } from "../../sharedString.js";
 import { _dirname } from "../dirname.cjs";
 import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
+
+import { hasSharedStringOracle, type IChannelWithOracles } from "./oracleUtils.js";
+import { SharedStringOracle } from "./sharedStringOracle.js";
 
 export type RevertibleSharedString = ISharedString & {
 	revertibles: SharedStringRevertible[];
@@ -465,7 +471,17 @@ export const baseModel: Omit<
 		// makeReducer supports a param for logging output which tracks the provided intervalId over time:
 		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
 		makeReducer(),
-	validateConsistency: async (a, b) => assertEquivalentSharedStrings(a.channel, b.channel),
+	validateConsistency: async (a, b) => {
+		if (hasSharedStringOracle(a.channel)) {
+			a.channel.sharedStringOracle.validate();
+		}
+
+		if (hasSharedStringOracle(b.channel)) {
+			b.channel.sharedStringOracle.validate();
+		}
+
+		void assertEquivalentSharedStrings(a.channel, b.channel);
+	},
 	factory: new SharedStringFuzzFactory(),
 	minimizationTransforms: [
 		(op) => {
@@ -524,6 +540,17 @@ export const baseModel: Omit<
 	],
 };
 
+const oracleEmitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+
+oracleEmitter.on("clientCreate", (client) => {
+	const channel = client.channel as IChannelWithOracles;
+
+	// Attach SharedString oracle
+	const sharedStringOracle = new SharedStringOracle(channel);
+	channel.sharedStringOracle = sharedStringOracle;
+	registerOracle(sharedStringOracle);
+});
+
 export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 	validationStrategy: { type: "fixedInterval", interval: 10 },
 	reconnectProbability: 0.1,
@@ -535,6 +562,7 @@ export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 	defaultTestCount: 100,
 	saveFailures: { directory: path.join(_dirname, "../../src/test/fuzz/results") },
 	testSquashResubmit: true,
+	emitter: oracleEmitter,
 };
 
 export function makeIntervalOperationGenerator(

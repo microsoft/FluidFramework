@@ -52,6 +52,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 				fluidDataObjectType: DataObjectFactoryType.Test,
 				registry,
 				runtimeOptions: {
+					explicitSchemaControl: true,
 					createBlobPayloadPending,
 				},
 			};

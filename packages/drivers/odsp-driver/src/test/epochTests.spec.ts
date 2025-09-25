@@ -5,13 +5,15 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions/internal";
+import type {
+	ICacheEntry,
+	IDocumentStorageServicePolicies,
+	IEntry,
+} from "@fluidframework/driver-definitions/internal";
+import { maximumCacheDurationMs } from "@fluidframework/driver-utils/internal";
 import {
-	type ICacheEntry,
-	type IEntry,
 	type IOdspResolvedUrl,
 	OdspErrorTypes,
-	maximumCacheDurationMs,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type IFluidErrorBase,
@@ -53,6 +55,7 @@ describe("Tests for Epoch Tracker", () => {
 			{
 				docId: hashedDocumentId,
 				resolvedUrl,
+				fileVersion: undefined,
 			},
 			createChildLogger(),
 		);
@@ -79,7 +82,7 @@ describe("Tests for Epoch Tracker", () => {
 		const cacheEntry1: ICacheEntry = {
 			key: "key1",
 			type: "snapshot",
-			file: { docId: hashedDocumentId, resolvedUrl },
+			file: { docId: hashedDocumentId, resolvedUrl, fileVersion: undefined },
 		};
 		const cacheEntry2: ICacheEntry = { ...cacheEntry1, key: "key2" };
 		const cacheValue1 = { val: "val1", cacheEntryTime: Date.now() };
@@ -115,7 +118,7 @@ describe("Tests for Epoch Tracker", () => {
 		const cacheEntry1: ICacheEntry = {
 			key: "key1",
 			type: "snapshot",
-			file: { docId: hashedDocumentId, resolvedUrl },
+			file: { docId: hashedDocumentId, resolvedUrl, fileVersion: undefined },
 		};
 		const cacheEntry2: ICacheEntry = { ...cacheEntry1, key: "key2" };
 		const cacheValue1 = { val: "val1", cacheEntryTime: Date.now() };

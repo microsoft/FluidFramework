@@ -14,6 +14,7 @@ import {
 	baseSharedStringModel,
 	baseIntervalModel,
 } from "@fluidframework/sequence/internal/test";
+import { baseTaskManagerModel } from "@fluidframework/task-manager/internal/test";
 import { baseTreeModel } from "@fluidframework/tree/internal/test";
 
 function repeatFactoryAsync<T, TState = void>(
@@ -70,4 +71,5 @@ export const ddsModelMap = generateSubModelMap(
 	baseSharedMatrixModel,
 	baseTreeModel,
 	baseSharedArrayModel,
+	baseTaskManagerModel,
 );

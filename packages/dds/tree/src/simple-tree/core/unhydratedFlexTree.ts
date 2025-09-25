@@ -4,7 +4,7 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
-import type { Listenable } from "@fluidframework/core-interfaces";
+import type { HasListeners, Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert, oob, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -50,6 +50,7 @@ import {
 	type HydratedFlexTreeNode,
 	cursorForMapTreeField,
 	type MinimalFieldMap,
+	currentObserver,
 } from "../../feature-libraries/index.js";
 import { brand, filterIterable, getOrCreate, mapIterable } from "../../util/index.js";
 
@@ -60,7 +61,10 @@ import type { TreeNode } from "./treeNode.js";
 interface UnhydratedTreeSequenceFieldEditBuilder
 	extends SequenceFieldEditBuilder<FlexibleFieldContent, UnhydratedFlexTreeNode[]> {}
 
-type UnhydratedFlexTreeNodeEvents = Pick<AnchorEvents, "childrenChangedAfterBatch">;
+type UnhydratedFlexTreeNodeEvents = Pick<
+	AnchorEvents,
+	"childrenChangedAfterBatch" | "subtreeChangedAfterBatch"
+>;
 
 /** A node's parent field and its index in that field */
 type LocationInField = FlexTreeNode["parentField"];
@@ -96,7 +100,8 @@ export class UnhydratedFlexTreeNode
 	public readonly [flexTreeMarker] = FlexTreeEntityKind.Node as const;
 
 	private readonly _events = createEmitter<UnhydratedFlexTreeNodeEvents>();
-	public get events(): Listenable<UnhydratedFlexTreeNodeEvents> {
+	public get events(): Listenable<UnhydratedFlexTreeNodeEvents> &
+		HasListeners<UnhydratedFlexTreeNodeEvents> {
 		return this._events;
 	}
 
@@ -140,8 +145,10 @@ export class UnhydratedFlexTreeNode
 	 */
 	public readonly fields: MinimalFieldMap<UnhydratedFlexTreeField> = {
 		get: (key: FieldKey): UnhydratedFlexTreeField | undefined => this.tryGetField(key),
-		[Symbol.iterator]: (): IterableIterator<[FieldKey, UnhydratedFlexTreeField]> =>
-			filterIterable(this.fieldsAll, ([, field]) => field.length > 0),
+		[Symbol.iterator]: (): IterableIterator<[FieldKey, UnhydratedFlexTreeField]> => {
+			currentObserver?.observeNodeFields(this);
+			return filterIterable(this.fieldsAll, ([, field]) => field.length > 0);
+		},
 	};
 
 	public [Symbol.iterator](): IterableIterator<UnhydratedFlexTreeField> {
@@ -214,6 +221,7 @@ export class UnhydratedFlexTreeNode
 	 * @remarks If this node is unparented, this method will return the special {@link unparentedLocation} as the parent.
 	 */
 	public get parentField(): LocationInField {
+		currentObserver?.observeParentOf(this);
 		return this.location;
 	}
 
@@ -222,6 +230,8 @@ export class UnhydratedFlexTreeNode
 	}
 
 	public tryGetField(key: FieldKey): UnhydratedFlexTreeField | undefined {
+		currentObserver?.observeNodeField(this, key);
+
 		const field = this.fieldsAll.get(key);
 		// Only return the field if it is not empty, in order to fulfill the contract of `tryGetField`.
 		if (field !== undefined && field.length > 0) {
@@ -231,6 +241,9 @@ export class UnhydratedFlexTreeNode
 
 	public getBoxed(key: string): UnhydratedFlexTreeField {
 		const fieldKey: FieldKey = brand(key);
+
+		currentObserver?.observeNodeField(this, fieldKey);
+
 		return this.getOrCreateField(fieldKey);
 	}
 
@@ -244,6 +257,25 @@ export class UnhydratedFlexTreeNode
 
 	public emitChangedEvent(key: FieldKey): void {
 		this._events.emit("childrenChangedAfterBatch", { changedFields: new Set([key]) });
+
+		// Also emit subtree changed event for this node and all ancestors.
+		this.#emitSubtreeChangedEvents();
+	}
+
+	/**
+	 * Emit subtree changed events for this node and all ancestors.
+	 */
+	#emitSubtreeChangedEvents(): void {
+		this._events.emit("subtreeChangedAfterBatch");
+
+		const parent = this.parentField.parent.parent;
+		assert(
+			parent === undefined || parent instanceof UnhydratedFlexTreeNode,
+			0xb76 /* Unhydrated node's parent should be an unhydrated node */,
+		);
+		if (parent !== undefined) {
+			parent.#emitSubtreeChangedEvents();
+		}
 	}
 }
 

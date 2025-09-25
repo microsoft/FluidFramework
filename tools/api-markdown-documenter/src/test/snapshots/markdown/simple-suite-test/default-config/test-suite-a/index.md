@@ -2,7 +2,7 @@
 
 [Packages](/) > [test-suite-a](/test-suite-a/)
 
-Test package
+Test package Contains a suite of test cases for validation API documentation generation.
 
 <h2 id="test-suite-a-remarks">Remarks</h2>
 
@@ -39,6 +39,7 @@ const foo = bar;
 | [TestEmptyInterface](/test-suite-a/testemptyinterface-interface) | An empty interface |
 | [TestInterface](/test-suite-a/testinterface-interface) | Test interface |
 | [TestInterfaceExtendingOtherInterfaces](/test-suite-a/testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
+| [TestInterfaceWithCallSignature](/test-suite-a/testinterfacewithcallsignature-interface) | An interface with a complex call signature. |
 | [TestInterfaceWithIndexSignature](/test-suite-a/testinterfacewithindexsignature-interface) | An interface with an index signature. |
 | [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
 
@@ -59,13 +60,20 @@ const foo = bar;
 
 | TypeAlias | Description |
 | - | - |
+| [IntersectionType](/test-suite-a/intersectiontype-typealias) | An intersection type combining [TypeWithProperties](/test-suite-a/typewithproperties-typealias) and [TypeWithConstructSignature](/test-suite-a/typewithconstructsignature-typealias). |
 | [TestMappedType](/test-suite-a/testmappedtype-typealias) | Test Mapped Type, using [TestEnum](/test-suite-a/testenum-enum) |
 | [TypeAlias](/test-suite-a/typealias-typealias) | Test Type-Alias |
+| [TypeWithConstructSignature](/test-suite-a/typewithconstructsignature-typealias) | A test type with a construct signature. |
+| [TypeWithProperties](/test-suite-a/typewithproperties-typealias) | A test type with properties. |
+| [UnionType](/test-suite-a/uniontype-typealias) | A union type combining [TypeWithProperties](/test-suite-a/typewithproperties-typealias) and [TypeWithConstructSignature](/test-suite-a/typewithconstructsignature-typealias). |
 
 ## Functions
 
 | Function | Alerts | Return Type | Description |
 | - | - | - | - |
+| [functionWithOverloads(value)](/test-suite-a/#functionwithoverloads-function) | | string | Takes a number and returns a string. |
+| [functionWithOverloads(value)](/test-suite-a/#functionwithoverloads_1-function) | | boolean | Takes a string and returns a boolean. |
+| [functionWithOverloads(value)](/test-suite-a/#functionwithoverloads_2-function) | | number | Takes a boolean and returns a number. |
 | [testFunction(testParameter, testOptionalParameter)](/test-suite-a/#testfunction-function) | `Alpha` | TTypeParameter | Test function |
 | [testFunctionReturningInlineType()](/test-suite-a/#testfunctionreturninginlinetype-function) | | {     foo: number;     bar: [TestEnum](/test-suite-a/testenum-enum); } | Test function that returns an inline type |
 | [testFunctionReturningIntersectionType()](/test-suite-a/#testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](/test-suite-a/testemptyinterface-interface) & [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)\<number> | Test function that returns an inline type |
@@ -87,6 +95,72 @@ const foo = bar;
 | [TestNamespace](/test-suite-a/testnamespace-namespace/) | | Test Namespace |
 
 ## Function Details
+
+<h3 id="functionwithoverloads-function">functionWithOverloads</h3>
+
+Takes a number and returns a string.
+
+<h4 id="functionwithoverloads-signature">Signature</h4>
+
+```typescript
+export declare function functionWithOverloads(value: number): string;
+```
+
+<h4 id="functionwithoverloads-parameters">Parameters</h4>
+
+| Parameter | Type | Description |
+| - | - | - |
+| value | number | A number. |
+
+<h4 id="functionwithoverloads-returns">Returns</h4>
+
+A string.
+
+**Return type**: string
+
+<h3 id="functionwithoverloads_1-function">functionWithOverloads</h3>
+
+Takes a string and returns a boolean.
+
+<h4 id="functionwithoverloads_1-signature">Signature</h4>
+
+```typescript
+export declare function functionWithOverloads(value: string): boolean;
+```
+
+<h4 id="functionwithoverloads_1-parameters">Parameters</h4>
+
+| Parameter | Type | Description |
+| - | - | - |
+| value | string | A string. |
+
+<h4 id="functionwithoverloads_1-returns">Returns</h4>
+
+A boolean.
+
+**Return type**: boolean
+
+<h3 id="functionwithoverloads_2-function">functionWithOverloads</h3>
+
+Takes a boolean and returns a number.
+
+<h4 id="functionwithoverloads_2-signature">Signature</h4>
+
+```typescript
+export declare function functionWithOverloads(value: boolean): number;
+```
+
+<h4 id="functionwithoverloads_2-parameters">Parameters</h4>
+
+| Parameter | Type | Description |
+| - | - | - |
+| value | boolean | A boolean. |
+
+<h4 id="functionwithoverloads_2-returns">Returns</h4>
+
+A number.
+
+**Return type**: number
 
 <h3 id="testfunction-function">testFunction</h3>
 
@@ -152,7 +226,7 @@ Test function that returns an inline type
 
 **WARNING: This API is deprecated and will be removed in a future release.**
 
-This is a test deprecation notice. Here is a [link](/test-suite-a/#testfunctionreturninguniontype-function) to something else!
+This is a test deprecation notice. Here is a [link](/test-suite-a/#testfunctionreturninguniontype-function) to something else! And here is a malformed link to nothing: _{@link }_.
 
 <h4 id="testfunctionreturningintersectiontype-signature">Signature</h4>
 

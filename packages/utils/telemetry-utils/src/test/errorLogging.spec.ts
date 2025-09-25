@@ -983,13 +983,24 @@ const createTestError = (
 	});
 
 describe("wrapError", () => {
-	it("Copy message, stack, and props", () => {
+	it("Copy `message`, `stack`, and `props`", () => {
 		const innerError = new LoggingError("hello", { someProp: 123 });
 		innerError.stack = "extra special stack";
 		const newError = wrapError(innerError, createTestError);
 		assert.equal(newError.message, innerError.message, "messages should match");
 		assert.equal(newError.stack, innerError.stack, "stacks should match");
 		assert.equal(newError.getTelemetryProperties().someProp, 123, "Props should be preserved");
+	});
+	it("retains inner error as `cause` but does not promote it", () => {
+		const innerError = new LoggingError("hello", { someProp: 123 });
+		innerError.stack = "extra special stack";
+		const newError = wrapError(innerError, createTestError);
+		assert.strictEqual(newError.cause, innerError, "`cause` should be innerError");
+		assert.equal(
+			newError.getTelemetryProperties().cause,
+			undefined,
+			"`cause` should NOT be a telemetry property",
+		);
 	});
 	it("Include matching errorInstanceId and innerErrorInstanceId in telemetry props", () => {
 		const innerError = new LoggingError("hello");

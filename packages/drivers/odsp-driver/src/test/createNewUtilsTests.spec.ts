@@ -10,9 +10,9 @@ import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitio
 import type {
 	ISnapshot,
 	IDocumentAttributes,
+	IFileEntry,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type IFileEntry,
 	type IOdspResolvedUrl,
 	type ISharingLinkKind,
 	SharingLinkRole,
@@ -118,6 +118,7 @@ describe("Create New Utils Tests", () => {
 		fileEntry = {
 			docId: hashedDocumentId,
 			resolvedUrl,
+			fileVersion: undefined,
 		};
 	});
 
@@ -129,6 +130,7 @@ describe("Create New Utils Tests", () => {
 			{
 				docId: hashedDocumentId,
 				resolvedUrl,
+				fileVersion: undefined,
 			},
 			createChildLogger(),
 		);

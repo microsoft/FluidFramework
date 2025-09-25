@@ -58,7 +58,7 @@ import {
 } from "./operationTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
-import { asTreeViewAlpha, getOrCreateInnerNode } from "../../../simple-tree/index.js";
+import { getOrCreateInnerNode } from "../../../simple-tree/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -67,6 +67,7 @@ import {
 } from "../../../simple-tree/index.js";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedTree } from "../../../treeFactory.js";
+import { asAlpha } from "../../../api.js";
 
 export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 	/**
@@ -148,7 +149,7 @@ export function viewFromState(
 				schema: treeSchema,
 			});
 
-			const treeView = asTreeViewAlpha(tree.viewWith(config));
+			const treeView = asAlpha(tree.viewWith(config));
 			treeView.events.on("schemaChanged", () => {
 				if (!treeView.compatibility.canView) {
 					treeView.dispose();

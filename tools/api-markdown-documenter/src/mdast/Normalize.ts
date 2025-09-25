@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { Element } from "hast";
+import { toHtml } from "hast-util-to-html";
 import type { BlockContent, Break, Html, Nodes, Root, RootContent, Strong } from "mdast";
 
 import type { Section } from "./Section.js";
@@ -130,25 +132,44 @@ function transformAsHeading(
 	// Markdown headings don't natively support anchor IDs.
 	// If the heading has an ID set, we will render it as an HTML element.
 	// While there are extended syntax options for Markdown that do support IDs, none of them are widely supported.
-	return headingNode.id === undefined
-		? [
+	if (headingNode.id !== undefined) {
+		// Create hast representation of HTML heading, then convert to string representation.
+		// This ensures that contents are escaped properly.
+		const htmlHeadingNode: Element = {
+			type: "element",
+			tagName: `h${headingLevel}`,
+			properties: {
+				id: headingNode.id,
+			},
+			children: [
 				{
-					type: "heading",
-					depth: headingLevel,
-					children: [
-						{
-							type: "text",
-							value: headingNode.title,
-						},
-					],
+					type: "text",
+					value: headingNode.title,
 				},
-			]
-		: [
+			],
+		};
+		const htmlHeadingString = toHtml(htmlHeadingNode, {});
+
+		return [
+			{
+				type: "html",
+				value: htmlHeadingString,
+			},
+		];
+	}
+
+	return [
+		{
+			type: "heading",
+			depth: headingLevel,
+			children: [
 				{
-					type: "html",
-					value: `<h${headingLevel} id="${headingNode.id}">${headingNode.title}</h${headingLevel}>`,
+					type: "text",
+					value: headingNode.title,
 				},
-			];
+			],
+		},
+	];
 }
 
 function transformAsBoldText(headingNode: SectionHeading): BlockContent[] {

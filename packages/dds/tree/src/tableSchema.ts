@@ -29,6 +29,7 @@ import {
 	type UnannotateImplicitFieldSchema,
 	isArrayNodeSchema,
 	type InsertableField,
+	withBufferedTreeEvents,
 } from "./simple-tree/index.js";
 
 // Future improvement TODOs:
@@ -891,16 +892,21 @@ export namespace System_TableSchema {
 			private _applyEditsInBatch(applyEdits: () => void): void {
 				const branch = TreeAlpha.branch(this);
 
-				if (branch === undefined) {
-					// If this node does not have a corresponding branch, then it is unhydrated.
-					// I.e., it is not part of a collaborative session yet.
-					// Therefore, we don't need to run the edits as a transaction.
-					applyEdits();
-				} else {
-					branch.runTransaction(() => {
+				// Ensure events are paused until all of the edits are applied.
+				// This ensures that the user sees the corresponding table-level edit as atomic,
+				// and ensures they are not spammed with intermediate events.
+				withBufferedTreeEvents(() => {
+					if (branch === undefined) {
+						// If this node does not have a corresponding branch, then it is unhydrated.
+						// I.e., it is not part of a collaborative session yet.
+						// Therefore, we don't need to run the edits as a transaction.
 						applyEdits();
-					});
-				}
+					} else {
+						branch.runTransaction(() => {
+							applyEdits();
+						});
+					}
+				});
 			}
 
 			/**

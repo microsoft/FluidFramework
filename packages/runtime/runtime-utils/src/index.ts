@@ -19,6 +19,7 @@ export {
 	isFluidHandlePayloadPending,
 	isLocalFluidHandle,
 	isSerializedHandle,
+	lookupTemporaryBlobStorageId,
 	toFluidHandleErased,
 	toFluidHandleInternal,
 } from "./handles.js";
@@ -65,6 +66,7 @@ export {
 	getValidationForRuntimeOptions,
 	getConfigsForMinVersionForCollab,
 	isValidMinVersionForCollab,
+	semanticVersionToMinimumVersionForCollab,
 } from "./compatibilityBase.js";
 export type {
 	ConfigMap,

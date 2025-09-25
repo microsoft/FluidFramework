@@ -30,7 +30,7 @@ export interface HostStoragePolicy {
     snapshotOptions?: ISnapshotOptions;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface ICacheEntry extends IEntry {
     file: IFileEntry;
 }
@@ -47,15 +47,16 @@ export interface ICollabSessionOptions {
 // @beta @legacy
 export type IdentityType = "Consumer" | "Enterprise";
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface IEntry {
     key: string;
     type: CacheContentType;
 }
 
-// @beta @legacy (undocumented)
+// @beta @deprecated @legacy (undocumented)
 export interface IFileEntry {
     docId: string;
+    fileVersion?: string;
     resolvedUrl: IResolvedUrl;
 }
 
@@ -131,7 +132,7 @@ export interface IOpsCachingPolicy {
     totalOpsToCache?: number;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export interface IPersistedCache {
     get(entry: ICacheEntry): Promise<any>;
     put(entry: ICacheEntry, value: any): Promise<void>;
