@@ -14,6 +14,8 @@ import type {
 	IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 
+// eslint-disable-next-line import/no-internal-modules
+import { rootDirectoryDescriptor } from "../data-objects/dataObject.js";
 import {
 	DataObject,
 	type DataObjectTypes,
@@ -22,6 +24,8 @@ import {
 	type ModelDescriptor,
 	type PureDataObject,
 } from "../data-objects/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { rootSharedTreeDescriptor } from "../data-objects/treeDataObject.js";
 
 import { DataObjectFactory } from "./dataObjectFactory.js";
 import type {
@@ -89,6 +93,7 @@ const conversionContent = "conversion";
 // eslint-disable-next-line jsdoc/require-jsdoc -- //*
 export function makeFactoryForMigration<
 	TFactory extends PureDataObjectFactory<TObj, I>,
+	// TProps extends DataObjectFactoryProps<TObj, I>,
 	TProps extends Pick<
 		DataObjectFactoryProps<TObj, I>,
 		"sharedObjects" | "runtimeClass" | "afterBindRuntime"
@@ -96,7 +101,7 @@ export function makeFactoryForMigration<
 	TObj extends PureDataObject<I>,
 	I extends DataObjectTypes = DataObjectTypes,
 >(
-	factoryConstructor: (p: TProps) => TFactory, //* Or make this a plain fn to be more flexible?
+	factoryConstructor: (p: TProps) => TFactory,
 	props: TProps,
 	modelDescriptors: readonly ModelDescriptor[],
 ): TFactory {
@@ -172,11 +177,12 @@ export function makeFactoryForMigration<
 	return f;
 }
 
-//* Doesn't work yet...
+class MyDataObject extends DataObject {}
+
 makeFactoryForMigration(
 	(props) => new DataObjectFactory(props),
-	{ type: "test", ctor: DataObject, sharedObjects: [] },
-	[],
+	{ type: "test", ctor: MyDataObject, sharedObjects: [] /* ...other props... */ },
+	[rootSharedTreeDescriptor(), rootDirectoryDescriptor],
 );
 
 //* BONEYARD

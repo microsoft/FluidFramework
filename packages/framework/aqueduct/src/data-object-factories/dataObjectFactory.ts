@@ -8,16 +8,12 @@ import type { IChannelFactory } from "@fluidframework/datastore-definitions/inte
 import type { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
 import type { FluidObjectSymbolProvider } from "@fluidframework/synthesize/internal";
 
-import type {
-	DataObject,
-	DataObjectTypes,
-	IDataObjectProps,
-	ModelDescriptor,
-	RootDirectoryView,
-} from "../data-objects/index.js";
+import type { DataObject, DataObjectTypes, IDataObjectProps } from "../data-objects/index.js";
 
-import { MigrationDataObjectFactory } from "./migrationDataObjectFactory.js";
-import type { DataObjectFactoryProps } from "./pureDataObjectFactory.js";
+import {
+	PureDataObjectFactory,
+	type DataObjectFactoryProps,
+} from "./pureDataObjectFactory.js";
 
 /**
  * DataObjectFactory is the IFluidDataStoreFactory for use with DataObjects.
@@ -32,7 +28,7 @@ import type { DataObjectFactoryProps } from "./pureDataObjectFactory.js";
 export class DataObjectFactory<
 	TObj extends DataObject<I>,
 	I extends DataObjectTypes = DataObjectTypes,
-> extends MigrationDataObjectFactory<TObj, RootDirectoryView, I> {
+> extends PureDataObjectFactory<TObj, I> {
 	/**
 	 * @remarks Use the props object based constructor instead.
 	 * No new features will be added to this constructor,
@@ -71,22 +67,6 @@ export class DataObjectFactory<
 
 		super({
 			...newProps,
-			// This cast is safe because TObj extends DataObject, which has static modelDescriptors
-			ctor: newProps.ctor as (new (
-				doProps: IDataObjectProps<I>,
-			) => TObj) & {
-				modelDescriptors: readonly [
-					ModelDescriptor<RootDirectoryView>,
-					...ModelDescriptor<RootDirectoryView>[],
-				];
-			}, //* TODO: Can we do something to avoid needing this cast?
-			asyncGetDataForMigration: async () => {
-				throw new Error("No migration supported");
-			},
-			canPerformMigration: async () => false,
-			migrateDataObject: () => {
-				throw new Error("No migration supported");
-			},
 		});
 	}
 }

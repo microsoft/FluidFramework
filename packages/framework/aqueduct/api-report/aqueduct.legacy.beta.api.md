@@ -72,6 +72,12 @@ export interface CreateDataObjectProps<TObj extends PureDataObject, I extends Da
 
 // @beta @legacy
 export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends MigrationDataObject<RootDirectoryView, I> {
+    // (undocumented)
+    protected asyncGetDataForMigration(existingModel: RootDirectoryView): Promise<never>;
+    // (undocumented)
+    protected canPerformMigration(): boolean;
+    // (undocumented)
+    protected migrateDataObject(newModel: RootDirectoryView, data: never): void;
     protected static modelDescriptors: [
     ModelDescriptor<RootDirectoryView>,
     ...ModelDescriptor<RootDirectoryView>[]
@@ -80,7 +86,7 @@ export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> ex
 }
 
 // @beta @legacy
-export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes> extends MigrationDataObjectFactory<TObj, RootDirectoryView, I> {
+export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
     constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects?: readonly IChannelFactory[], optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeFactory?: typeof FluidDataStoreRuntime);
     constructor(props: DataObjectFactoryProps<TObj, I>);
 }
@@ -125,7 +131,10 @@ export interface IDelayLoadChannelFactory<T = unknown> extends IChannelFactory<T
 }
 
 // @beta @legacy
-export abstract class MigrationDataObject<TUniversalView, I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
+export abstract class MigrationDataObject<TUniversalView, I extends DataObjectTypes = DataObjectTypes, TMigrationData = never> extends PureDataObject<I> {
+    constructor(props: IDataObjectProps<I>);
+    protected abstract asyncGetDataForMigration(existingModel: TUniversalView): Promise<TMigrationData>;
+    protected abstract canPerformMigration(): boolean;
     get dataModel(): {
         descriptor: ModelDescriptor<TUniversalView>;
         view: TUniversalView;
@@ -133,31 +142,23 @@ export abstract class MigrationDataObject<TUniversalView, I extends DataObjectTy
     protected getUninitializedErrorString(item: string): string;
     // (undocumented)
     initializeInternal(existing: boolean): Promise<void>;
+    // (undocumented)
+    migrate(): Promise<void>;
+    protected abstract migrateDataObject(newModel: TUniversalView, data: TMigrationData): void;
+    // (undocumented)
+    shouldMigrateBeforeInitialized(): boolean;
+    protected readonly synthesizedProviders: I["OptionalProviders"] | undefined;
 }
 
 // @beta @legacy
-export class MigrationDataObjectFactory<TObj extends MigrationDataObject<TUniversalView, I>, TUniversalView, I extends DataObjectTypes = DataObjectTypes, TNewModel extends TUniversalView = TUniversalView, // default case works for a single model descriptor
-TMigrationData = never> extends PureDataObjectFactory<TObj, I> {
-    constructor(props: MigrationDataObjectFactoryProps<TObj, TUniversalView, I, TNewModel, TMigrationData>);
-    protected observeCreateDataObject(createProps: {
-        context: IFluidDataStoreContext;
-        optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>;
-    }): Promise<void>;
-}
-
-// @beta @legacy
-export interface MigrationDataObjectFactoryProps<TObj extends MigrationDataObject<TUniversalView, I>, TUniversalView, I extends DataObjectTypes = DataObjectTypes, TNewModel extends TUniversalView = TUniversalView, // default case works for a single model descriptor
+export interface MigrationDataObjectFactoryProps<TObj extends MigrationDataObject<TUniversalView, I, TMigrationData>, TUniversalView, I extends DataObjectTypes = DataObjectTypes, TNewModel extends TUniversalView = TUniversalView, // default case works for a single model descriptor
 TMigrationData = never> extends DataObjectFactoryProps<TObj, I> {
-    asyncGetDataForMigration: (existingModel: TUniversalView) => Promise<TMigrationData>;
-    canPerformMigration: (providers: AsyncFluidObjectProvider<I["OptionalProviders"]>) => Promise<boolean>;
     ctor: (new (props: IDataObjectProps<I>) => TObj) & {
         modelDescriptors: readonly [
         ModelDescriptor<TNewModel>,
         ...ModelDescriptor<TUniversalView>[]
         ];
     };
-    migrateDataObject: (runtime: FluidDataStoreRuntime, newModel: TNewModel, data: TMigrationData) => void;
-    refreshDataObject?: () => Promise<void>;
 }
 
 // @beta @legacy
@@ -245,7 +246,7 @@ export abstract class TreeDataObject<TDataObjectTypes extends DataObjectTypes = 
 }
 
 // @beta @legacy
-export class TreeDataObjectFactory<TDataObject extends TreeDataObject<TDataObjectTypes>, TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends MigrationDataObjectFactory<TDataObject, RootTreeView, TDataObjectTypes> {
+export class TreeDataObjectFactory<TDataObject extends TreeDataObject<TDataObjectTypes>, TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TDataObject, TDataObjectTypes> {
     constructor(props: DataObjectFactoryProps<TDataObject, TDataObjectTypes>);
 }
 
