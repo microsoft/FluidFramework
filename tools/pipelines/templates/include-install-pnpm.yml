@@ -27,6 +27,10 @@ parameters:
   type: string
   default: $(Agent.TempDirectory)/.npmrc
 
+- name: primaryRegistry
+  type: string
+  default: $(ado-feeds-primary-registry)
+
 steps:
 - ${{ if eq(parameters.enableCache, true) }}:
   - task: Cache@2
@@ -69,13 +73,13 @@ steps:
         echo "##vso[task.setvariable variable=registryType]private"
       fi
   env:
-    NPM_REGISTRY: $(ado-feeds-primary-registry)
+    NPM_REGISTRY: ${{ parameters.primaryRegistry }}
     NPM_CONFIG_USERCONFIG: ${{ parameters.userNpmrcPath}}
     # We should leverage the primary npm registry to install pnpm as well. However, ADO artifacts feeds do not implement
     # the full npm registry API including a route that corepack uses to get package metadata--the version route here:
     # https://github.com/nodejs/corepack/blob/bc13d40037d0b1bfd386e260ae741f55505b5c7c/sources/npmRegistryUtils.ts#L32
     # Thus installing pnpm from an ADO feed using corepack is not possible at time of writing.
-    # COREPACK_NPM_REGISTRY: $(ado-feeds-primary-registry)
+    # COREPACK_NPM_REGISTRY: ${{ parameters.primaryRegistry }}
 
 # Authenticate to npm feed if required
 - task: npmAuthenticate@0

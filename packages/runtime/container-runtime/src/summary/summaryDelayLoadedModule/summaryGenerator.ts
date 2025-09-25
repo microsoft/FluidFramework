@@ -188,7 +188,7 @@ export class SummaryGenerator {
 			 * state change of multiple data stores. So, the total number of data stores that are summarized should not
 			 * exceed the number of ops since last summary + number of data store whose reference state changed.
 			 */
-			if (!submitSummaryOptions.fullTree) {
+			if (submitSummaryOptions.fullTree !== true) {
 				const { summarizedDataStoreCount, gcStateUpdatedDataStoreCount = 0 } =
 					summaryData.summaryStats;
 				if (

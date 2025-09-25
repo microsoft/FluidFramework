@@ -190,7 +190,7 @@ export class InboundBatchAggregator {
 		//    - here, when queue was empty and start of batch showed up (batchMetadata === true below).
 		// 2. resumed when batch end comes in (batchMetadata === false below)
 
-		if (batchMetadata) {
+		if (batchMetadata === true) {
 			assert(
 				this.currentBatchClientId === undefined,
 				0x29e /* "there can't be active batch" */,

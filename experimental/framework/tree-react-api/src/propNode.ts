@@ -14,7 +14,7 @@ import type { TreeNode, TreeLeafValue } from "@fluidframework/tree";
  * In events where tracking dependencies is not required, the node can be unwrapped using {@link unwrapPropTreeNode}.
  *
  * To convert a TreeNode to this type use {@link toPropTreeNode} or {@link toPropTreeRecord}.
- * @public
+ * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface PropTreeNode<T extends TreeNode> extends ErasedType<[T, "PropTreeNode"]> {}
@@ -33,7 +33,7 @@ export interface PropTreeNode<T extends TreeNode> extends ErasedType<[T, "PropTr
  *
  * This is intended to cover the common cases, and users can handle other cases manually.
  * See the tests for this for more details.
- * @public
+ * @alpha
  */
 export type WrapNodes<T> = T extends TreeNode
 	? PropTreeNode<T>
@@ -67,7 +67,7 @@ export type WrapNodes<T> = T extends TreeNode
  * This also returns the true case for primitive types since mapping over them leaves them unchanged if doing so in a generic context:
  * Mapping over a primitive does not leave them unchanged if done directly (not to a generic type parameter), but this can not detect that behavior.
  * This is fine as the use for this is to detect when making a mapped type from a generic type parameter would be lossy.
- * @system @public
+ * @system @alpha
  */
 export type IsMappableObjectType<
 	T,
@@ -83,7 +83,7 @@ export type IsMappableObjectType<
  * @remarks
  * This should only be done in scenarios where tracking observations is not required (such as event handlers),
  * or when taking care to handle invalidation manually.
- * @public
+ * @alpha
  */
 export function unwrapPropTreeNode<T extends TreeNode | TreeLeafValue>(
 	propNode: PropTreeValue<T> | T,
@@ -93,7 +93,7 @@ export function unwrapPropTreeNode<T extends TreeNode | TreeLeafValue>(
 
 /**
  * {@link unwrapPropTreeNode} but for a {@link PropTreeNodeRecord}.
- * @public
+ * @alpha
  */
 export function unwrapPropTreeRecord<T extends PropTreeNodeRecord>(
 	props: T,
@@ -103,20 +103,20 @@ export function unwrapPropTreeRecord<T extends PropTreeNodeRecord>(
 
 /**
  * {@inheritdoc unwrapPropTreeNode}
- * @public
+ * @alpha
  */
 export type UnwrapPropTreeNode<T extends TreeLeafValue | PropTreeNode<TreeNode> | undefined> =
 	T extends PropTreeNode<infer Node> ? Node : T;
 
 /**
  * Record that can contain TreeNodes.
- * @public
+ * @alpha
  */
 export type NodeRecord = Record<string, TreeNode | TreeLeafValue>;
 
 /**
  * Type erase `TreeNode`s from a {@link NodeRecord} as a {@link PropTreeNode}.
- * @public
+ * @alpha
  */
 export type WrapPropTreeNodeRecord<T extends NodeRecord> = {
 	readonly [P in keyof T]: PropTreeValue<T[P]>;
@@ -124,7 +124,7 @@ export type WrapPropTreeNodeRecord<T extends NodeRecord> = {
 
 /**
  * Type erase `TreeNode`s from a {@link NodeRecord} as a {@link PropTreeNode}.
- * @public
+ * @alpha
  */
 export type UnwrapPropTreeNodeRecord<T extends PropTreeNodeRecord> = {
 	readonly [P in keyof T]: UnwrapPropTreeNode<T[P]>;
@@ -132,7 +132,7 @@ export type UnwrapPropTreeNodeRecord<T extends PropTreeNodeRecord> = {
 
 /**
  * Type erase `TreeNode`s from a {@link NodeRecord} as a {@link PropTreeNode}.
- * @public
+ * @alpha
  */
 export type PropTreeNodeRecord = Record<
 	string,
@@ -141,7 +141,7 @@ export type PropTreeNodeRecord = Record<
 
 /**
  * Type erase a `TreeNode` from a `TreeNode | TreeLeafValue` as a {@link PropTreeNode}.
- * @public
+ * @alpha
  */
 export type PropTreeValue<T extends TreeNode | TreeLeafValue | undefined> = T extends TreeNode
 	? PropTreeNode<T>
@@ -149,7 +149,7 @@ export type PropTreeValue<T extends TreeNode | TreeLeafValue | undefined> = T ex
 
 /**
  * Type erase a TreeNode as a {@link PropTreeNode}.
- * @public
+ * @alpha
  */
 export function toPropTreeNode<T extends TreeNode | TreeLeafValue>(node: T): PropTreeValue<T> {
 	return node as unknown as PropTreeValue<T>;
@@ -157,7 +157,7 @@ export function toPropTreeNode<T extends TreeNode | TreeLeafValue>(node: T): Pro
 
 /**
  * Type erase a {@link NodeRecord} as a {@link PropTreeNodeRecord}.
- * @public
+ * @alpha
  */
 export function toPropTreeRecord<T extends NodeRecord>(node: T): WrapPropTreeNodeRecord<T> {
 	return node as unknown as WrapPropTreeNodeRecord<T>;

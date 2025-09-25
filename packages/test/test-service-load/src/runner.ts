@@ -12,7 +12,7 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
-	IContainerExperimental,
+	asLegacyAlpha,
 	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
@@ -506,7 +506,7 @@ function scheduleContainerClose(
 
 async function scheduleOffline(
 	dsf: FaultInjectionDocumentServiceFactory,
-	container: IContainerExperimental,
+	container: IContainer,
 	runConfig: IRunConfig,
 	offlineDelayMinMs: number,
 	offlineDelayMaxMs: number,
@@ -548,11 +548,10 @@ async function scheduleOffline(
 				}
 				if (
 					runConfig.loaderConfig?.enableOfflineLoad === true &&
-					random.real() < stashPercent &&
-					container.getPendingLocalState
+					random.real() < stashPercent
 				) {
 					printStatus(runConfig, "closing offline container!");
-					const pendingState = await container.getPendingLocalState();
+					const pendingState = await asLegacyAlpha(container).getPendingLocalState();
 					container.close();
 					return pendingState;
 				}

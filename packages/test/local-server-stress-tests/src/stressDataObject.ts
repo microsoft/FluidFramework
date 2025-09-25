@@ -143,7 +143,7 @@ export class StressDataObject extends DataObject {
 	}
 
 	public get attached() {
-		return this.runtime.attachState === AttachState.Attached;
+		return this.runtime.attachState !== AttachState.Detached;
 	}
 
 	public async uploadBlob(tag: `blob-${number}`, contents: string) {

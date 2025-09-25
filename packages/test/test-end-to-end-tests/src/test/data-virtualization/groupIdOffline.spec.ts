@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import { asLegacyAlpha } from "@fluidframework/container-loader/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -116,9 +116,11 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("GroupId offline regular flow", async () => {
 		// Load basic container stuff
-		const container = (await provider.createContainer(runtimeFactory, {
-			configProvider,
-		})) as IContainerExperimental;
+		const container = asLegacyAlpha(
+			await provider.createContainer(runtimeFactory, {
+				configProvider,
+			}),
+		);
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 		const containerRuntime = mainObject.containerRuntime;
 
@@ -217,11 +219,13 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		const { summaryVersion } = await summarizeNow(summarizer);
 		clearCacheIfOdsp(provider, persistedCache);
 
-		const container2 = (await provider.loadContainer(
-			runtimeFactory,
-			{ configProvider },
-			{ [LoaderHeader.version]: summaryVersion },
-		)) as IContainerExperimental;
+		const container2 = asLegacyAlpha(
+			await provider.loadContainer(
+				runtimeFactory,
+				{ configProvider },
+				{ [LoaderHeader.version]: summaryVersion },
+			),
+		);
 		await provider.ensureSynchronized();
 		const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
 		const handleA2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
@@ -273,9 +277,11 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("GroupId offline with refresh", async () => {
 		// Load basic container stuff
-		const container = (await provider.createContainer(runtimeFactory, {
-			configProvider,
-		})) as IContainerExperimental;
+		const container = asLegacyAlpha(
+			await provider.createContainer(runtimeFactory, {
+				configProvider,
+			}),
+		);
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 		const containerRuntime = mainObject.containerRuntime;
 
@@ -313,11 +319,13 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 
 		clearCacheIfOdsp(provider, persistedCache);
 
-		const container2 = (await provider.loadContainer(
-			runtimeFactory,
-			{ configProvider },
-			{ [LoaderHeader.version]: summaryVersion },
-		)) as IContainerExperimental;
+		const container2 = asLegacyAlpha(
+			await provider.loadContainer(
+				runtimeFactory,
+				{ configProvider },
+				{ [LoaderHeader.version]: summaryVersion },
+			),
+		);
 		await provider.ensureSynchronized();
 		const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
 		const handleA2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");

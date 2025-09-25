@@ -134,9 +134,9 @@ export class OpGroupingManager {
 		// We expect this will be on the first message, if present at all.
 		let groupedBatchId;
 		for (const message of batch.messages) {
-			if (message.metadata) {
+			if (message.metadata !== undefined) {
 				const { batch: _batch, batchId, ...rest } = message.metadata;
-				if (batchId) {
+				if (batchId !== undefined) {
 					groupedBatchId = batchId;
 				}
 				assert(Object.keys(rest).length === 0, 0x5dd /* cannot group ops with metadata */);

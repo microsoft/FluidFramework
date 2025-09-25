@@ -160,6 +160,8 @@ function buildPendingMessageContent(message: InboundSequencedContainerRuntimeMes
 }
 
 function typesOfKeys<T extends object>(obj: T): Record<keyof T, string> {
+	// TODO: Fix this violation and remove the disable
+	// eslint-disable-next-line unicorn/no-array-reduce
 	return Object.keys(obj).reduce((acc, key) => {
 		acc[key] = typeof obj[key];
 		return acc;
@@ -174,7 +176,10 @@ function scrubAndStringify(
 
 	// For these known/expected keys, we can either drill into the object (for contents)
 	// or just use the value as-is (since it's not personal info)
-	scrubbed.contents = message.contents && typesOfKeys(message.contents);
+	scrubbed.contents =
+		typeof message.contents === "object" && message.contents !== null
+			? typesOfKeys(message.contents)
+			: undefined;
 	scrubbed.type = message.type;
 
 	return JSON.stringify(scrubbed);
@@ -733,7 +738,7 @@ export class PendingStateManager implements IDisposable {
 					pendingMessageBatchMetadata: asBatchMetadata(pendingMessage.opMetadata)?.batch,
 					messageBatchMetadata: asBatchMetadata(firstMessage?.metadata)?.batch,
 				},
-				messageDetails: firstMessage && extractSafePropertiesFromMessage(firstMessage),
+				messageDetails: extractSafePropertiesFromMessage(firstMessage),
 			});
 		}
 	}
@@ -797,9 +802,10 @@ export class PendingStateManager implements IDisposable {
 			assert(batchMetadataFlag !== false, 0x41b /* We cannot process batches in chunks */);
 
 			// The next message starts a batch (possibly single-message), and we'll need its batchId.
-			const batchId = pendingMessage.batchInfo.ignoreBatchId
-				? undefined
-				: getEffectiveBatchId(pendingMessage);
+			const batchId =
+				pendingMessage.batchInfo.ignoreBatchId === true
+					? undefined
+					: getEffectiveBatchId(pendingMessage);
 
 			const staged = pendingMessage.batchInfo.staged;
 

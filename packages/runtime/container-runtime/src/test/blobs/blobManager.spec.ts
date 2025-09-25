@@ -186,6 +186,8 @@ for (const createBlobPayloadPending of [false, true]) {
 		it("reupload blob if expired", async () => {
 			await runtime.attach();
 			await runtime.connect();
+			// TODO: Fix this violation and remove the disable
+			// eslint-disable-next-line require-atomic-updates
 			runtime.attachedStorage.minTTL = 0.001; // force expired TTL being less than connection time (50ms)
 			await createBlob(textToBlob("blob"));
 			await runtime.processBlobs(true);

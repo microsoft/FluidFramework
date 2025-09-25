@@ -264,7 +264,7 @@ describe("Summary Manager", () => {
 	}
 
 	function assertRequests(count: number, message?: string) {
-		const prefix = message ? `${message} - ` : "";
+		const prefix = message === undefined ? "" : `${message} - `;
 		assert.strictEqual(requestCalls, count, `${prefix}Unexpected request count`);
 	}
 
@@ -450,6 +450,8 @@ describe("Summary Manager", () => {
 			clientElection.electClient(thisClientId); // force trigger refresh
 			await flushPromises();
 			assertRequests(0, "still should not have requested summarizer yet");
+			// TODO: Fix this violation and remove the disable
+			// eslint-disable-next-line require-atomic-updates
 			mockDeltaManager.lastSequenceNumber = 1000; // Bypass now
 			mockDeltaManager.emit("op", summaryOp);
 			clientElection.electClient(thisClientId); // force trigger refresh

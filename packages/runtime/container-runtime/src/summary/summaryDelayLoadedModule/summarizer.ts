@@ -326,7 +326,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		try {
-			if (this._disposed || this.runningSummarizer?.disposed) {
+			if (this._disposed || this.runningSummarizer?.disposed === true) {
 				throw new UsageError("Summarizer is already disposed.");
 			}
 			if (

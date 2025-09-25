@@ -31,7 +31,7 @@ class SubscriptionsWrapper {
 /**
  * Options for {@link useTreeObservations}.
  * @input
- * @public
+ * @alpha
  */
 export interface ObservationOptions {
 	/**

@@ -274,7 +274,10 @@ export class BlobManager {
 				pendingEntry !== undefined,
 				0x725 /* Must have pending blob entry for upcoming op */,
 			);
-			if (pendingEntry?.uploadTime && pendingEntry?.minTTLInSeconds) {
+			if (
+				pendingEntry?.uploadTime !== undefined &&
+				pendingEntry?.minTTLInSeconds !== undefined
+			) {
 				const secondsSinceUpload = (Date.now() - pendingEntry.uploadTime) / 1000;
 				const expired = pendingEntry.minTTLInSeconds - secondsSinceUpload < 0;
 				this.mc.logger.sendTelemetryEvent({
@@ -376,6 +379,8 @@ export class BlobManager {
 			// eventually and wait. We do this even if the local client doesn't have the blob payloadPending flag
 			// enabled, in case a remote client does have it enabled. This wait may be infinite if the uploading
 			// client failed the upload and doesn't exist anymore.
+			// TODO: Fix this violation and remove the disable
+			// eslint-disable-next-line require-atomic-updates
 			storageId = await new Promise<string>((resolve) => {
 				const onProcessBlobAttach = (_localId: string, _storageId: string): void => {
 					if (_localId === localId) {
@@ -466,7 +471,7 @@ export class BlobManager {
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
 	): Promise<IFluidHandleInternalPayloadPending<ArrayBufferLike>> {
-		if (signal?.aborted) {
+		if (signal?.aborted === true) {
 			throw this.createAbortError();
 		}
 
@@ -485,7 +490,7 @@ export class BlobManager {
 		this.pendingBlobs.set(localId, pendingEntry);
 
 		const abortListener = (): void => {
-			if (!pendingEntry.acked) {
+			if (pendingEntry.acked !== true) {
 				pendingEntry.handleP.reject(this.createAbortError(pendingEntry));
 			}
 		};
@@ -593,7 +598,7 @@ export class BlobManager {
 	private deletePendingBlobMaybe(localId: string): void {
 		if (this.pendingBlobs.has(localId)) {
 			const entry = this.pendingBlobs.get(localId);
-			if (entry?.attached && entry?.acked) {
+			if (entry?.attached === true && entry?.acked === true) {
 				this.deletePendingBlob(localId);
 			}
 		}
@@ -612,7 +617,7 @@ export class BlobManager {
 		const entry = this.pendingBlobs.get(localId);
 
 		assert(entry !== undefined, 0x6c8 /* pending blob entry not found for uploaded blob */);
-		if (entry.abortSignal?.aborted === true && !entry.opsent) {
+		if (entry.abortSignal?.aborted === true && entry.opsent !== true) {
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "BlobAborted",
 				localId,
@@ -632,7 +637,7 @@ export class BlobManager {
 		//    until its storage ID is added to the next summary.
 		// 2. It will create a local ID to storage ID mapping in all clients which is needed to retrieve the
 		//    blob from the server via the storage ID.
-		if (!entry.opsent) {
+		if (entry.opsent !== true) {
 			this.sendBlobAttachOp(localId, response.id);
 		}
 		const storageIds = getStorageIds(this.redirectTable);
@@ -687,7 +692,7 @@ export class BlobManager {
 		);
 		const { localId, blobId: storageId } = message.metadata;
 		const pendingEntry = this.pendingBlobs.get(localId);
-		if (pendingEntry?.abortSignal?.aborted) {
+		if (pendingEntry?.abortSignal?.aborted === true) {
 			this.deletePendingBlob(localId);
 			return;
 		}

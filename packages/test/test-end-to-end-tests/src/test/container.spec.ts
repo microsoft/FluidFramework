@@ -19,9 +19,10 @@ import {
 	IFluidCodeDetails,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import { ConnectionState } from "@fluidframework/container-loader";
+import { ConnectionState } from "@fluidframework/container-loader/internal";
 import {
-	IContainerExperimental,
+	asLegacyAlpha,
+	ContainerAlpha,
 	ILoaderProps,
 	Loader,
 	waitContainerToCatchUp,
@@ -346,9 +347,10 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 			runtimeFactory,
 		);
 
-		const container: IContainerExperimental =
-			await localTestObjectProvider.makeTestContainer(testContainerConfig);
-		const pendingString = await container.getPendingLocalState?.();
+		const container: ContainerAlpha = asLegacyAlpha(
+			await localTestObjectProvider.makeTestContainer(testContainerConfig),
+		);
+		const pendingString = await container.getPendingLocalState();
 		container.close();
 		assert.ok(pendingString);
 		const pendingLocalState: { url?: string } = JSON.parse(pendingString);

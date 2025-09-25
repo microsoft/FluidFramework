@@ -571,7 +571,6 @@ But some packages in layer A depend on packages in layer B, and likewise some in
 
 			this.padArraysToSameLength(packagesInCell, layersInCell, "&nbsp;");
 			lines.push(`| Packages | Layer Dependencies |`, `| --- | --- |`);
-			// eslint-disable-next-line unicorn/no-array-push-push
 			lines.push(
 				`| ${packagesInCell.join("</br>")} | ${layersInCell.join("</br>")} |${newline}`,
 			);

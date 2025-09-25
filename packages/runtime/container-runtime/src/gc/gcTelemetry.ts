@@ -210,10 +210,9 @@ export class GCTelemetryTracker {
 					return this.configs.tombstoneTimeoutMs;
 				}
 				case UnreferencedState.SweepReady: {
-					return (
-						this.configs.tombstoneTimeoutMs &&
-						this.configs.tombstoneTimeoutMs + this.configs.sweepGracePeriodMs
-					);
+					return this.configs.tombstoneTimeoutMs === undefined
+						? undefined
+						: this.configs.tombstoneTimeoutMs + this.configs.sweepGracePeriodMs;
 				}
 				default: {
 					return undefined;
@@ -327,7 +326,7 @@ export class GCTelemetryTracker {
 		if (
 			usageType === "Loaded" &&
 			this.configs.throwOnTombstoneLoad &&
-			!headers?.allowTombstone
+			headers?.allowTombstone !== true
 		) {
 			this.mc.logger.sendErrorEvent(event);
 		} else {
