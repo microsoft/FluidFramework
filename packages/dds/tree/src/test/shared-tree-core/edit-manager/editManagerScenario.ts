@@ -398,7 +398,14 @@ export function runUnitTestScenario(
 				const bunchSessionId = commits[0].sessionId;
 				const bunchSeqNumber = commits[0].seqNumber;
 				const bunchRefNumber = commits[0].refNumber;
-				addSequencedChanges(manager, commits, bunchSessionId, bunchSeqNumber, bunchRefNumber);
+				addSequencedChanges(
+					manager,
+					commits,
+					bunchSessionId,
+					bunchSeqNumber,
+					bunchRefNumber,
+					"main",
+				);
 				commits.forEach((commit) => {
 					assert(
 						commit.sessionId === bunchSessionId &&
@@ -413,6 +420,7 @@ export function runUnitTestScenario(
 					commits[0].sessionId,
 					commits[0].seqNumber,
 					commits[0].refNumber,
+					"main",
 				);
 				for (const j of joiners) {
 					j.addSequencedChanges(
@@ -420,6 +428,7 @@ export function runUnitTestScenario(
 						commits[0].sessionId,
 						commits[0].seqNumber,
 						commits[0].refNumber,
+						"main",
 					);
 				}
 

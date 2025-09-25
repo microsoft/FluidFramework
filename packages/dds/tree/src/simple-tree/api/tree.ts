@@ -107,6 +107,12 @@ export interface ITreeAlpha extends ITree {
 	createSharedBranch(): string;
 
 	/**
+	 * Returns a list of all shared branches that currently exist on this tree.
+	 * Any one of them can be checked out using {@link ITreeAlpha.viewSharedBranchWith}.
+	 */
+	getSharedBranchIds(): string[];
+
+	/**
 	 * Returns a view of the tree on the specified shared branch, using the provided schema.
 	 * See {@link ViewableTree.viewWith}.
 	 */

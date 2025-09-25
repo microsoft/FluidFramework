@@ -294,6 +294,7 @@ describe("EditManager - Bench", () => {
 									commit.sessionId,
 									brand(iChange + 1),
 									brand(0),
+									"main",
 								);
 							}
 							const after = state.timer.now();

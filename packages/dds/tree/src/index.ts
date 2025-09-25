@@ -69,6 +69,7 @@ export {
 	independentInitializedView,
 	type ViewContent,
 	TreeAlpha,
+	type ObservationResults,
 	type TreeIdentifierUtils,
 	independentView,
 	ForestTypeOptimized,
