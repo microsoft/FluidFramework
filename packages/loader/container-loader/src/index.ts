@@ -9,10 +9,12 @@ export {
 	createDetachedContainer,
 	loadExistingContainer,
 	rehydrateDetachedContainer,
+	loadFrozenContainerFromPendingState,
 	type ICreateAndLoadContainerProps,
 	type ICreateDetachedContainerProps,
 	type ILoadExistingContainerProps,
 	type IRehydrateDetachedContainerProps,
+	type ILoadFrozenContainerFromPendingStateProps,
 } from "./createAndLoadContainerUtils.js";
 export {
 	type ICodeDetailsLoader,

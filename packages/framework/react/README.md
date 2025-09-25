@@ -1,10 +1,8 @@
-# @fluid-experimental/tree-react-api
+# @fluidframework/react
 
-Utilities for using SharedTree with React.
+Utilities for integrating content powered by the Fluid Framework into [React](https://react.dev/) applications.
 
-This package aims to assist SharedTree based React applications handle some common cases by providing code such applications can share.
-This should improve the quality of such applications by allowing them to share and improve a single implementation of this logic
-(for example ensuring they all handle out of schema documents properly), while reducing the need for boilerplate.
+This package currently has some experimental APIs focused on integrating SharedTree content into React.
 
 ## Known Issues and Limitations
 
@@ -27,11 +25,6 @@ but currently can't be included in this package due to dependency layering issue
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-**IMPORTANT: This package is experimental.**
-**Its APIs may change without notice.**
-
-**Do not use in production scenarios.**
-
 ## Using Fluid Framework libraries
 
 When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
@@ -45,7 +38,7 @@ If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), 
 To get started, install the package by running the following command:
 
 ```bash
-npm i @fluid-experimental/tree-react-api
+npm i @fluidframework/react
 ```
 
 ## Importing from this package
@@ -53,15 +46,15 @@ npm i @fluid-experimental/tree-react-api
 This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
 For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
 
-To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluid-experimental/tree-react-api` like normal.
+To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/react` like normal.
 
-To access the `beta` APIs, import via `@fluid-experimental/tree-react-api/beta`.
+To access the `beta` APIs, import via `@fluidframework/react/beta`.
 
-To access the `alpha` APIs, import via `@fluid-experimental/tree-react-api/alpha`.
+To access the `alpha` APIs, import via `@fluidframework/react/alpha`.
 
 ## API Documentation
 
-API documentation for **@fluid-experimental/tree-react-api** is available at <https://fluidframework.com/docs/apis/tree-react-api>.
+API documentation for **@fluidframework/react** is available at <https://fluidframework.com/docs/apis/react>.
 
 <!-- prettier-ignore-end -->
 

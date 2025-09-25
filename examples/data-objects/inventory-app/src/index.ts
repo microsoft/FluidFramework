@@ -4,7 +4,7 @@
  */
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
-import type { IReactTreeDataObject } from "@fluid-experimental/tree-react-api/alpha";
+import type { IReactTreeDataObject } from "@fluidframework/react/alpha";
 import * as React from "react";
 
 import { InventoryListFactory } from "./inventoryList.js";
