@@ -81,7 +81,7 @@ export const rootDirectoryDescriptor: ModelDescriptor<RootDirectoryView> = {
 export abstract class DataObject<
 	I extends DataObjectTypes = DataObjectTypes,
 > extends MigrationDataObject<RootDirectoryView, I> {
-	//* QUESTION: What happens if a subclass tries to overwrite this> Is this a design concern?
+	//* TODO: Remove this static
 	/**
 	 * Probeable candidate roots the implementer expects for existing stores.
 	 * The order defines probing priority.
@@ -116,5 +116,11 @@ export abstract class DataObject<
 
 	protected migrateDataObject(newModel: RootDirectoryView, data: never): void {
 		throw new Error("DataObject does not support migration");
+	}
+
+	protected async getModelDescriptors(): Promise<
+		readonly [ModelDescriptor<RootDirectoryView>, ...ModelDescriptor<RootDirectoryView>[]]
+	> {
+		return (this.constructor as typeof DataObject).modelDescriptors;
 	}
 }
