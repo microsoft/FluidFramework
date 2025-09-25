@@ -92,22 +92,6 @@ class TreeRootDataObject extends TreeDataObject implements IRootDataObject {
 	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
 		return this.runtime.uploadBlob(blob);
 	}
-	protected async asyncGetDataForMigration(existingModel: unknown): Promise<never> {
-		throw new Error("DataObject does not support migration");
-	}
-
-	protected async canPerformMigration(): Promise<boolean> {
-		return false;
-	}
-
-	protected migrateDataObject(newModel: unknown, data: never): void {
-		throw new Error("DataObject does not support migration");
-	}
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	protected async getModelDescriptors(): Promise<any> {
-		throw new Error("DataObject does not support migration");
-	}
 }
 
 const treeRootDataStoreId = "treeRootDOId";
