@@ -36,25 +36,25 @@ import type {
 	DataObjectFactoryProps,
 } from "./pureDataObjectFactory.js";
 
-/**
- * Represents the properties required to create a MigrationDataObjectFactory.
- * @experimental
- * @legacy
- * @beta
- */
-export interface MigrationDataObjectFactoryProps<
-	TObj extends MigrationDataObject<TUniversalView, I, TMigrationData>,
-	TUniversalView,
-	I extends DataObjectTypes = DataObjectTypes,
-	TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
-> extends DataObjectFactoryProps<TObj, I> {
-	/**
-	 * The constructor for the data object, which must also include static `modelDescriptors` property.
-	 */
-	ctor: new (
-		props: IDataObjectProps<I>,
-	) => TObj;
-}
+// /**
+//  * Represents the properties required to create a MigrationDataObjectFactory.
+//  * @experimental
+//  * @legacy
+//  * @beta
+//  */
+// export interface MigrationDataObjectFactoryProps<
+// 	TObj extends MigrationDataObject<TUniversalView, I, TMigrationData>,
+// 	TUniversalView,
+// 	I extends DataObjectTypes = DataObjectTypes,
+// 	TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
+// > extends DataObjectFactoryProps<TObj, I> {
+// 	/**
+// 	 * The constructor for the data object
+// 	 */
+// 	ctor: new (
+// 		props: IDataObjectProps<I>,
+// 	) => TObj;
+// }
 
 //* STUB
 interface IProvideMigrationInfo {
