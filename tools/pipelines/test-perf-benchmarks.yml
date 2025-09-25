@@ -154,11 +154,25 @@ stages:
             workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
             customCommand: 'run test:benchmark:report'
 
+        - task: Bash@3
+          displayName: Compute benchmark output folder - ${{ testPackage }}
+          inputs:
+            targetType: 'inline'
+            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            script: |
+              set -eu -o pipefail
+              node --input-type=module -e "
+                  const benchmarkIndexPath = await import.meta.resolve('@fluid-tools/benchmark');
+                  const absolutePath = benchmarkIndexPath.replace('index.js', '.output');
+                  console.log('Resolved @fluid-tools/benchmark output folder to ' + absolutePath);
+                  console.log('##vso[task.setvariable variable=benchmarkOutputFolder]' + absolutePath);
+              "
+
         # Consolidate output files
         - task: CopyFiles@2
           displayName: Consolidate output files - ${{ testPackage }}
           inputs:
-            sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/node_modules/@fluid-tools/benchmark/dist/.output/
+            sourceFolder: $(benchmarkOutputFolder)
             contents: '**'
             targetFolder: ${{ variables.consolidatedTestsOutputFolder }}/${{ testPackage }}
 
@@ -569,7 +583,7 @@ stages:
           displayName: Remove Output Folders from local server run ${{ endpointObject.endpointName }}
           inputs:
             targetType: 'inline'
-            workingDirectory: $(pathToTelemetryGenerator)
+            workingDirectory: $(pathToTelemetryGeneratorNew)
             script: |
               set -eu -o pipefail
               ls -laR ${{ variables.executionTimeTestOutputFolder }};
