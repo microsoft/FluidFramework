@@ -320,7 +320,7 @@ stages:
             timeoutInMinutes: 3
             continueOnError: true
             inputs:
-              key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}"'
+              key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}" | generation-1'
               path: $(Build.SourcesDirectory)/node_modules/@fluid-private/test-end-to-end-tests/node_modules/@fluid-private/test-version-utils/node_modules/.legacy/
 
         # Only check out tenants from the tenant pool if we are running tests against ODSP
