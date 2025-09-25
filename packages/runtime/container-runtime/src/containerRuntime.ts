@@ -1010,7 +1010,7 @@ export class ContainerRuntime
 		const runtimeSequenceNumber = messageAtLastSummary?.sequenceNumber;
 		const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
 		// When we load with pending state, we reuse an old snapshot so we don't expect these numbers to match
-		if (context.pendingLocalState !== undefined && runtimeSequenceNumber !== undefined) {
+		if (context.pendingLocalState === undefined && runtimeSequenceNumber !== undefined) {
 			// Unless bypass is explicitly set, then take action when sequence numbers mismatch.
 			// eslint-disable-next-line unicorn/no-lonely-if -- Separate if statements make flow easier to parse
 			if (
