@@ -54,6 +54,8 @@ steps:
       set -eu -o pipefail
       echo "Using node $(node --version)"
       sudo corepack enable
+      # Use the specific pnpm version from package.json to avoid corepack signature verification issues
+      corepack use pnpm@9.15.7
       echo "Using pnpm $(pnpm -v)"
       # This ensures all subsequent tasks in this job will use the pnpm configuration set here.
       echo "##vso[task.setvariable variable=NPM_CONFIG_USERCONFIG]$NPM_CONFIG_USERCONFIG"
