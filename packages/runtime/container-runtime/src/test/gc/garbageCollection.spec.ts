@@ -1960,6 +1960,7 @@ describe("Garbage Collection Tests", () => {
 				defaultGCData.gcNodes[nodeE] = [nodeA];
 
 				// 4. Add reference from A to D with calling addedOutboundReference
+				// TODO: Fix this violation and remove the disable
 				// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 				defaultGCData.gcNodes[nodeA].push(nodeD);
 				garbageCollector.addedOutboundReference(nodeA, nodeD, Date.now());

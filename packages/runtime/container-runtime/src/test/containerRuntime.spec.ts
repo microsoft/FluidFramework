@@ -2616,6 +2616,7 @@ describe("Runtime", () => {
 
 			function createSnapshot(addMissingDatastore: boolean, setGroupId: boolean = true): void {
 				if (addMissingDatastore) {
+					// TODO: Fix this violation and remove the disable
 					// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 					snapshotTree.trees[".channels"].trees.missingDataStore = {
 						blobs: { ".component": "id" },
@@ -2784,6 +2785,7 @@ describe("Runtime", () => {
 				assert(getSnapshotCalledTimes === 1, "second time should be from cache");
 
 				// Set api to undefined to see that it should not be called again.
+				// TODO: Fix this violation and remove the disable
 				// eslint-disable-next-line require-atomic-updates
 				containerContext.storage.getSnapshot = undefined;
 				const datastore2 = await containerRuntime.resolveHandle({

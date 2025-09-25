@@ -252,6 +252,7 @@ describe("Runtime", () => {
 				if (shouldDeferGenerateSummary) {
 					deferGenerateSummary = new Deferred<void>();
 					await deferGenerateSummary.promise;
+					// TODO: Fix this violation and remove the disable
 					// eslint-disable-next-line require-atomic-updates
 					deferGenerateSummary = undefined;
 				}
@@ -838,6 +839,7 @@ describe("Runtime", () => {
 
 							// Change the failure stage after 2 attempts.
 							if (attemptNumber === 2) {
+								// TODO: Fix this violation and remove the disable
 								// eslint-disable-next-line require-atomic-updates
 								currentStage = getNewStage();
 							}
@@ -946,6 +948,7 @@ describe("Runtime", () => {
 							// In the third attempt, fail at "submit" stage. This will trigger a nack failure. It should
 							// not retry attempts anymore because "defaultMaxAttempts" attempts have already been done.
 							if (attemptNumber === maxAttempts - 1) {
+								// TODO: Fix this violation and remove the disable
 								// eslint-disable-next-line require-atomic-updates
 								currentStage = "submit";
 							}

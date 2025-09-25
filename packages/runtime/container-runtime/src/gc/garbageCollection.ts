@@ -846,6 +846,7 @@ export class GarbageCollector implements IGarbageCollector {
 			if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
 				gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
 			} else {
+				// TODO: Fix this violation and remove the disable
 				// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 				gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
 			}
