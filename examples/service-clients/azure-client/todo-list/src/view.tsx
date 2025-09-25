@@ -8,7 +8,7 @@ import {
 	CollaborativeTextArea,
 	SharedStringHelper,
 } from "@fluid-example/example-utils";
-import { useTree } from "@fluid-experimental/tree-react-api/alpha";
+import { useTree } from "@fluidframework/react/alpha";
 import type { IFluidContainer, IFluidHandle } from "fluid-framework";
 import type { ISharedString } from "fluid-framework/legacy";
 import React, { useEffect, useRef, useState } from "react";
