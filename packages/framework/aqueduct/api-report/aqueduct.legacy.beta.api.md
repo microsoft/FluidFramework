@@ -77,6 +77,8 @@ export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> ex
     // (undocumented)
     protected canPerformMigration(): Promise<boolean>;
     // (undocumented)
+    protected getModelDescriptors(): Promise<readonly [ModelDescriptor<RootDirectoryView>, ...ModelDescriptor<RootDirectoryView>[]]>;
+    // (undocumented)
     protected migrateDataObject(newModel: RootDirectoryView, data: never): void;
     protected static modelDescriptors: [
     ModelDescriptor<RootDirectoryView>,
@@ -132,8 +134,9 @@ export interface IDelayLoadChannelFactory<T = unknown> extends IChannelFactory<T
 
 // @beta @legacy
 export interface IMigrationInfo extends IProvideMigrationInfo {
-    readonly migrate: () => Promise<void>;
-    readonly targetFormatTag: string;
+    // (undocumented)
+    readonly readyToMigrate: () => Promise<boolean>;
+    readonly tryMigrate: () => Promise<boolean>;
 }
 
 // @beta @legacy
@@ -244,6 +247,14 @@ export interface RootTreeView {
 
 // @beta @legacy
 export abstract class TreeDataObject<TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends MigrationDataObject<RootTreeView, TDataObjectTypes> {
+    // (undocumented)
+    protected asyncGetDataForMigration(existingModel: RootTreeView): Promise<never>;
+    // (undocumented)
+    protected canPerformMigration(): Promise<boolean>;
+    // (undocumented)
+    protected getModelDescriptors(): Promise<readonly [ModelDescriptor<RootTreeView>, ...ModelDescriptor<RootTreeView>[]]>;
+    // (undocumented)
+    protected migrateDataObject(newModel: RootTreeView, data: never): void;
     protected static modelDescriptors: [
     ModelDescriptor<RootTreeView>,
     ...ModelDescriptor<RootTreeView>[]
