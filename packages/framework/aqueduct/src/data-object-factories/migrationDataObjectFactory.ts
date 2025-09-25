@@ -14,14 +14,16 @@ import type {
 	IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 
-import type {
-	DataObjectTypes,
-	IDataObjectProps,
-	MigrationDataObject,
-	ModelDescriptor,
-	PureDataObject,
+import {
+	DataObject,
+	type DataObjectTypes,
+	type IDataObjectProps,
+	type MigrationDataObject,
+	type ModelDescriptor,
+	type PureDataObject,
 } from "../data-objects/index.js";
 
+import { DataObjectFactory } from "./dataObjectFactory.js";
 import type {
 	PureDataObjectFactory,
 	DataObjectFactoryProps,
@@ -87,17 +89,21 @@ const conversionContent = "conversion";
 // eslint-disable-next-line jsdoc/require-jsdoc -- //*
 export function makeFactoryForMigration<
 	TFactory extends PureDataObjectFactory<TObj, I>,
-	TProps extends DataObjectFactoryProps<TObj, I>,
-	TObj extends PureDataObject<I>, //* Infer default type?
-	I extends DataObjectTypes = DataObjectTypes, //* Infer default type?
+	TProps extends Pick<
+		DataObjectFactoryProps<TObj, I>,
+		"sharedObjects" | "runtimeClass" | "afterBindRuntime"
+	>,
+	TObj extends PureDataObject<I>,
+	I extends DataObjectTypes = DataObjectTypes,
 >(
-	factoryConstructor: new (p: TProps) => TFactory,
+	factoryConstructor: (p: TProps) => TFactory, //* Or make this a plain fn to be more flexible?
 	props: TProps,
 	modelDescriptors: readonly ModelDescriptor[],
 ): TFactory {
 	const allSharedObjects = modelDescriptors.flatMap(
 		(desc) => desc.sharedObjects.alwaysLoaded ?? [],
-	); //* PSUEDO-CODE
+	); //* PSUEDO-CODE (see BONEYARD below for more complex version)
+
 	const runtimeClass = props.runtimeClass ?? FluidDataStoreRuntime;
 
 	const transformedProps = {
@@ -162,9 +168,16 @@ export function makeFactoryForMigration<
 		}, //* Mixin the Migration op processing stuff
 	};
 
-	const f = new factoryConstructor(transformedProps);
+	const f = factoryConstructor(transformedProps);
 	return f;
 }
+
+//* Doesn't work yet...
+makeFactoryForMigration(
+	(props) => new DataObjectFactory(props),
+	{ type: "test", ctor: DataObject, sharedObjects: [] },
+	[],
+);
 
 //* BONEYARD
 // //* TODO: Maybe we don't need to split by delay-loaded here (and in ModelDescriptor type)
