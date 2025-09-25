@@ -1231,7 +1231,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private snapshotFetchRequired: boolean | undefined;
 	private readonly runtime: IContainerRuntimeBase;
 	private readonly blobContents: Map<string, ArrayBuffer> | undefined;
-	private readonly isSnapshotInISnapshotFormat: boolean | undefined;
+	private readonly isSnapshotInISnapshotFormat: boolean;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
 		super(props, true /* existing */, false /* isLocalDataStore */, () => {
@@ -1275,7 +1275,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		if (
 			this.snapshotFetchRequired === undefined &&
 			this._baseSnapshot?.groupId !== undefined &&
-			this.isSnapshotInISnapshotFormat === true
+			this.isSnapshotInISnapshotFormat
 		) {
 			assert(
 				this.blobContents !== undefined,
