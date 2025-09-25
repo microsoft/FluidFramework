@@ -169,9 +169,9 @@ export abstract class MigrationDataObject<
 	 * }
 	 * ```
 	 */
-	protected abstract asyncGetDataForMigration: (
+	protected abstract asyncGetDataForMigration(
 		existingModel: TUniversalView,
-	) => Promise<TMigrationData>;
+	): Promise<TMigrationData>;
 
 	/**
 	 * Migrate the DataObject upon resolve (i.e. on retrieval of the DataStore).
@@ -193,10 +193,7 @@ export abstract class MigrationDataObject<
 	 * @param newModel - New model which is ready to be populated with the data
 	 * @param data - Provided by the "asyncGetDataForMigration" function
 	 */
-	protected abstract migrateDataObject: (
-		newModel: TUniversalView,
-		data: TMigrationData,
-	) => void;
+	protected abstract migrateDataObject(newModel: TUniversalView, data: TMigrationData): void;
 
 	//* TBD exact shape (probably does more than this)
 	public shouldMigrateBeforeInitialized(): boolean {

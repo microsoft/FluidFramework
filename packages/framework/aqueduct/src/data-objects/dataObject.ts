@@ -105,4 +105,16 @@ export abstract class DataObject<
 
 		return internalRoot;
 	}
+
+	protected async asyncGetDataForMigration(existingModel: RootDirectoryView): Promise<never> {
+		throw new Error("DataObject does not support migration");
+	}
+
+	protected canPerformMigration(): boolean {
+		return false;
+	}
+
+	protected migrateDataObject(newModel: RootDirectoryView, data: never): void {
+		throw new Error("DataObject does not support migration");
+	}
 }
