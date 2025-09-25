@@ -3,7 +3,7 @@
 "@fluidframework/react": minor
 "__section": breaking
 ---
-The exports of @fluid-experimental/tree-react-api have been moved to the new @fluidframework/react and placed under its /alpha exports
+The exports of @fluid-experimental/tree-react-api have been moved to the new @fluidframework/react package and placed under its /alpha exports
 
 `@fluid-experimental/tree-react-api` has been adjusted to align with Fluid Framework's [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
 It has been renamed to `@fluidframework/react` and all previously existing APIs are under `@fluidframework/react/alpha`.
