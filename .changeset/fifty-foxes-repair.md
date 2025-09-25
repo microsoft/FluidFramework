@@ -13,4 +13,4 @@ Now all the APIs are `@alpha`, which also amounts to making no guarantees but ma
 
 To accommodate this change, all users of this package will need to adjust:
 - Package dependencies from `"@fluid-experimental/tree-react-api"` to `"@fluidframework/react"`.
-- Imports from `"@fluid-experimental/tree-react-api"` to `"@fluidframework/react/alpha/alpha"`.
+- Imports from `"@fluid-experimental/tree-react-api"` to `"@fluidframework/react/alpha"`.
