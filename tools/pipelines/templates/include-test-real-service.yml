@@ -327,8 +327,8 @@ stages:
                   const path = await import('path');
                   const versionUtilsPath = await import.meta.resolve('@fluid-private/test-version-utils');
                   const absolutePath = path.join(versionUtilsPath, './node_modules/.legacy/');
-                  console.log(`Resolved @fluid-private/test-version-utils to \${absolutePath}`);
-                  console.log(`##vso[task.setvariable variable=compatVersionInstallsPath]\${absolutePath}`);
+                  console.log('Resolved @fluid-private/test-version-utils to ' + absolutePath);
+                  console.log('##vso[task.setvariable variable=compatVersionInstallsPath]' + absolutePath);
                 "
 
           - task: Cache@2
