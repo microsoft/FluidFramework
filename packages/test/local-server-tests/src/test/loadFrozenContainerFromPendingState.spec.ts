@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	asLegacyAlpha,
 	createDetachedContainer,
@@ -15,6 +16,7 @@ import type { ISharedMap } from "@fluidframework/map/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { timeoutPromise, type TestFluidObject } from "@fluidframework/test-utils/internal";
+import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
 import { createLoader } from "../utils.js";
 
@@ -124,6 +126,127 @@ describe("loadFrozenContainerFromPendingState", () => {
 			frozenEntries,
 			toComparableArray(frozenEntryPoint.ITestFluidObject.root),
 			"Expected frozen container's data to remain unchanged after new changes in the original container.",
+		);
+	});
+
+	let clock: SinonFakeTimers;
+	const snapshotRefreshTimeoutMs = 10;
+
+	before(() => {
+		clock = useFakeTimers();
+	});
+
+	it("uploading blob on frozen container", async () => {
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+
+		const { urlResolver, codeDetails, codeLoader, loaderProps } = createLoader({
+			deltaConnectionServer,
+		});
+
+		const container = asLegacyAlpha(
+			await createDetachedContainer({
+				codeDetails,
+				...loaderProps,
+				configProvider: {
+					getRawConfig: (name) => {
+						switch (name) {
+							case "Fluid.Container.enableOfflineLoad":
+								return true;
+							default:
+								return undefined;
+						}
+					},
+				},
+			}),
+		);
+
+		await container.attach(urlResolver.createCreateNewRequest("test"));
+
+		const url = await container.getAbsoluteUrl("");
+		assert(
+			url !== undefined,
+			"Expected container to provide a valid absolute URL, but got undefined",
+		);
+		const pendingLocalState = await container.getPendingLocalState();
+
+		const frozenContainer = await loadFrozenContainerFromPendingState({
+			codeLoader,
+			urlResolver,
+			request: {
+				url,
+			},
+			pendingLocalState,
+		});
+		const frozenEntryPoint: FluidObject<TestFluidObject> =
+			await frozenContainer.getEntryPoint();
+		assert(
+			frozenEntryPoint.ITestFluidObject !== undefined,
+			"Expected frozen container entrypoint to be a valid TestFluidObject, but it was undefined",
+		);
+		await frozenEntryPoint.ITestFluidObject.runtime
+			.uploadBlob(stringToBuffer("some random text", "utf-8"))
+			.then(() => {
+				assert.fail("Blob upload should not be successful on frozen container");
+			})
+			.catch((error) => {
+				assert.strictEqual(
+					error.message,
+					"Operations are not supported on the FrozenDocumentStorageService.",
+					"Error message mismatch",
+				);
+			});
+	});
+
+	it("snapshot refresh on frozen container", async () => {
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+		const { urlResolver, codeDetails, codeLoader, loaderProps } = createLoader({
+			deltaConnectionServer,
+		});
+		const container = asLegacyAlpha(
+			await createDetachedContainer({
+				codeDetails,
+				...loaderProps,
+				configProvider: {
+					getRawConfig: (name) => {
+						switch (name) {
+							case "Fluid.Container.enableOfflineLoad":
+							case "Fluid.Container.enableOfflineSnapshotRefresh":
+								return true;
+							case "Fluid.Container.snapshotRefreshTimeoutMs":
+								return snapshotRefreshTimeoutMs;
+							default:
+								return undefined;
+						}
+					},
+				},
+			}),
+		);
+
+		await container.attach(urlResolver.createCreateNewRequest("test"));
+
+		const url = await container.getAbsoluteUrl("");
+		assert(
+			url !== undefined,
+			"Expected container to provide a valid absolute URL, but got undefined",
+		);
+		const pendingLocalState = await container.getPendingLocalState();
+
+		const frozenContainer = await loadFrozenContainerFromPendingState({
+			codeLoader,
+			urlResolver,
+			request: {
+				url,
+			},
+			pendingLocalState,
+		});
+
+		clock.tick(snapshotRefreshTimeoutMs);
+
+		const frozenEntryPoint: FluidObject<TestFluidObject> =
+			await frozenContainer.getEntryPoint();
+		assert(
+			frozenEntryPoint.ITestFluidObject !== undefined,
+			"Expected frozen container entrypoint to be a valid TestFluidObject, but it was undefined",
 		);
 	});
 });
