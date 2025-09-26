@@ -24,7 +24,7 @@ import { generatePopulatedMarks } from "./populatedMarks.js";
 import { ChangeMaker as Change, cases, MarkMaker as Mark } from "./testEdits.js";
 import { assertChangesetsEqual, inlineRevision } from "./utils.js";
 import { withSchemaValidation } from "../../../codec/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 
 type TestCase = [string, Changeset, FieldChangeEncodingContext];
 
@@ -85,7 +85,11 @@ export function testCodecs() {
 					const codec = sequenceFieldCodec.resolve(version);
 					const jsonCodec =
 						codec.json.encodedSchema !== undefined
-							? withSchemaValidation(codec.json.encodedSchema, codec.json, typeboxValidator)
+							? withSchemaValidation(
+									codec.json.encodedSchema,
+									codec.json,
+									FormatValidatorBasic,
+								)
 							: codec.json;
 					const actual = jsonCodec.decode(changeset, context);
 					assertChangesetsEqual(actual, expected);
