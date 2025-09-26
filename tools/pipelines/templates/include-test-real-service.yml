@@ -439,15 +439,6 @@ stages:
             condition: always()
             continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
 
-        - task: PublishPipelineArtifact@1
-          displayName: Publish Artifact - legacy modules
-          inputs:
-            targetPath: $(compatVersionInstallsPath)
-            artifactName: 'modules-$(System.JobAttempt)'
-            publishLocation: 'pipeline'
-          condition: always()
-          continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the test package log wasn't there)
-
         # Only release tenants that were checked out from the tenant pool for ODSP tests
         - ${{ if or(eq(parameters.stageId, 'e2e_odsp'), eq(parameters.stageId, 'stress_tests_odsp')) }}:
           # Login to release tenant credentials
