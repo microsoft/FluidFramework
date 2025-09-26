@@ -30,16 +30,16 @@ importers:
         version: 17.8.1(commitizen@4.3.1(typescript@5.4.5))(inquirer@8.2.6)
       '@fluid-tools/build-cli':
         specifier: ~0.57.0
-        version: 0.57.0(@types/node@18.19.60)(typescript@5.4.5)
+        version: 0.57.0(@types/node@22.8.0)(typescript@5.4.5)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ~0.57.0
-        version: 0.57.0(@types/node@18.19.60)
+        version: 0.57.0(@types/node@22.8.0)
       '@microsoft/api-extractor':
         specifier: ^7.52.11
-        version: 7.52.11(@types/node@18.19.60)
+        version: 7.52.11(@types/node@22.8.0)
       c8:
         specifier: ^10.1.3
         version: 10.1.3
@@ -7022,12 +7022,12 @@ snapshots:
       '@types/node': 20.5.1
       chalk: 4.1.2
       cosmiconfig: 8.3.6(typescript@5.4.5)
-      cosmiconfig-typescript-loader: 4.2.0(@types/node@20.5.1)(cosmiconfig@8.3.6(typescript@5.4.5))(ts-node@10.9.2(@types/node@18.19.60)(typescript@5.4.5))(typescript@5.4.5)
+      cosmiconfig-typescript-loader: 4.2.0(@types/node@20.5.1)(cosmiconfig@8.3.6(typescript@5.4.5))(ts-node@10.9.2(@types/node@20.5.1)(typescript@5.4.5))(typescript@5.4.5)
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       lodash.uniq: 4.5.0
       resolve-from: 5.0.0
-      ts-node: 10.9.2(@types/node@20.5.1)(typescript@5.4.5)
+      ts-node: 10.9.2(@types/node@22.8.0)(typescript@5.4.5)
       typescript: 5.4.5
     transitivePeerDependencies:
       - '@swc/core'
@@ -7177,23 +7177,23 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@fluid-tools/build-cli@0.57.0(@types/node@18.19.60)(typescript@5.4.5)':
+  '@fluid-tools/build-cli@0.57.0(@types/node@22.8.0)(typescript@5.4.5)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/build-infrastructure': 0.57.0(@types/node@18.19.60)
-      '@fluid-tools/version-tools': 0.57.0(@types/node@18.19.60)
-      '@fluidframework/build-tools': 0.57.0(@types/node@18.19.60)
+      '@fluid-tools/build-infrastructure': 0.57.0(@types/node@22.8.0)
+      '@fluid-tools/version-tools': 0.57.0(@types/node@22.8.0)
+      '@fluidframework/build-tools': 0.57.0(@types/node@22.8.0)
       '@fluidframework/bundle-size-tools': 0.57.0
-      '@inquirer/prompts': 7.0.1(@types/node@18.19.60)
-      '@microsoft/api-extractor': 7.52.11(@types/node@18.19.60)
+      '@inquirer/prompts': 7.0.1(@types/node@22.8.0)
+      '@microsoft/api-extractor': 7.52.11(@types/node@22.8.0)
       '@oclif/core': 4.0.30
       '@oclif/plugin-autocomplete': 3.2.7
       '@oclif/plugin-commands': 4.1.5
       '@oclif/plugin-help': 6.2.16
-      '@oclif/plugin-not-found': 3.2.24(@types/node@18.19.60)
+      '@oclif/plugin-not-found': 3.2.24(@types/node@22.8.0)
       '@octokit/core': 5.2.0
       '@octokit/rest': 21.0.2
-      '@rushstack/node-core-library': 5.14.0(@types/node@18.19.60)
+      '@rushstack/node-core-library': 5.14.0(@types/node@22.8.0)
       async: 3.2.6
       azure-devops-node-api: 11.2.0
       change-case: 3.1.0
@@ -7218,7 +7218,7 @@ snapshots:
       mdast-util-to-string: 4.0.0
       minimatch: 7.4.6
       npm-check-updates: 16.14.20
-      oclif: 4.15.16(@types/node@18.19.60)
+      oclif: 4.15.16(@types/node@22.8.0)
       picocolors: 1.1.1
       prettier: 3.2.5
       prompts: 2.4.2
@@ -7254,9 +7254,9 @@ snapshots:
       - utf-8-validate
       - webpack-cli
 
-  '@fluid-tools/build-infrastructure@0.57.0(@types/node@18.19.60)':
+  '@fluid-tools/build-infrastructure@0.57.0(@types/node@22.8.0)':
     dependencies:
-      '@fluid-tools/version-tools': 0.57.0(@types/node@18.19.60)
+      '@fluid-tools/version-tools': 0.57.0(@types/node@22.8.0)
       '@manypkg/get-packages': 2.2.2
       '@oclif/core': 4.0.30
       cosmiconfig: 8.3.6(typescript@5.4.5)
@@ -7265,7 +7265,7 @@ snapshots:
       fs-extra: 11.3.0
       globby: 11.1.0
       micromatch: 4.0.8
-      oclif: 4.15.16(@types/node@18.19.60)
+      oclif: 4.15.16(@types/node@22.8.0)
       picocolors: 1.1.1
       read-pkg-up: 7.0.1
       semver: 7.7.1
@@ -7297,13 +7297,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluid-tools/version-tools@0.57.0(@types/node@18.19.60)':
+  '@fluid-tools/version-tools@0.57.0(@types/node@22.8.0)':
     dependencies:
       '@oclif/core': 4.0.30
       '@oclif/plugin-autocomplete': 3.2.7
       '@oclif/plugin-commands': 4.1.5
       '@oclif/plugin-help': 6.2.16
-      '@oclif/plugin-not-found': 3.2.24(@types/node@18.19.60)
+      '@oclif/plugin-not-found': 3.2.24(@types/node@22.8.0)
       semver: 7.7.1
       table: 6.8.2
     transitivePeerDependencies:
@@ -7350,9 +7350,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/build-tools@0.57.0(@types/node@18.19.60)':
+  '@fluidframework/build-tools@0.57.0(@types/node@22.8.0)':
     dependencies:
-      '@fluid-tools/version-tools': 0.57.0(@types/node@18.19.60)
+      '@fluid-tools/version-tools': 0.57.0(@types/node@22.8.0)
       '@manypkg/get-packages': 2.2.2
       async: 3.2.6
       cosmiconfig: 8.3.6(typescript@5.4.5)
@@ -7543,6 +7543,15 @@ snapshots:
       ansi-escapes: 4.3.2
       yoctocolors-cjs: 2.1.2
 
+  '@inquirer/checkbox@4.0.1(@types/node@22.8.0)':
+    dependencies:
+      '@inquirer/core': 10.0.1(@types/node@22.8.0)
+      '@inquirer/figures': 1.0.7
+      '@inquirer/type': 3.0.0(@types/node@22.8.0)
+      '@types/node': 22.8.0
+      ansi-escapes: 4.3.2
+      yoctocolors-cjs: 2.1.2
+
   '@inquirer/confirm@3.2.0':
     dependencies:
       '@inquirer/core': 9.2.1
@@ -7554,10 +7563,30 @@ snapshots:
       '@inquirer/type': 3.0.0(@types/node@18.19.60)
       '@types/node': 18.19.60
 
+  '@inquirer/confirm@5.0.1(@types/node@22.8.0)':
+    dependencies:
+      '@inquirer/core': 10.0.1(@types/node@22.8.0)
+      '@inquirer/type': 3.0.0(@types/node@22.8.0)
+      '@types/node': 22.8.0
+
   '@inquirer/core@10.0.1(@types/node@18.19.60)':
     dependencies:
       '@inquirer/figures': 1.0.7
       '@inquirer/type': 3.0.0(@types/node@18.19.60)
+      ansi-escapes: 4.3.2
+      cli-width: 4.1.0
+      mute-stream: 2.0.0
+      signal-exit: 4.1.0
+      strip-ansi: 6.0.1
+      wrap-ansi: 6.2.0
+      yoctocolors-cjs: 2.1.2
+    transitivePeerDependencies:
+      - '@types/node'
+
+  '@inquirer/core@10.0.1(@types/node@22.8.0)':
+    dependencies:
+      '@inquirer/figures': 1.0.7
+      '@inquirer/type': 3.0.0(@types/node@22.8.0)
       ansi-escapes: 4.3.2
       cli-width: 4.1.0
       mute-stream: 2.0.0
@@ -7590,11 +7619,25 @@ snapshots:
       '@types/node': 18.19.60
       external-editor: 3.1.0
 
+  '@inquirer/editor@4.0.1(@types/node@22.8.0)':
+    dependencies:
+      '@inquirer/core': 10.0.1(@types/node@22.8.0)
+      '@inquirer/type': 3.0.0(@types/node@22.8.0)
+      '@types/node': 22.8.0
+      external-editor: 3.1.0
+
   '@inquirer/expand@4.0.1(@types/node@18.19.60)':
     dependencies:
       '@inquirer/core': 10.0.1(@types/node@18.19.60)
       '@inquirer/type': 3.0.0(@types/node@18.19.60)
       '@types/node': 18.19.60
+      yoctocolors-cjs: 2.1.2
+
+  '@inquirer/expand@4.0.1(@types/node@22.8.0)':
+    dependencies:
+      '@inquirer/core': 10.0.1(@types/node@22.8.0)
+      '@inquirer/type': 3.0.0(@types/node@22.8.0)
+      '@types/node': 22.8.0
       yoctocolors-cjs: 2.1.2
 
   '@inquirer/figures@1.0.7': {}
@@ -7610,17 +7653,36 @@ snapshots:
       '@inquirer/type': 3.0.0(@types/node@18.19.60)
       '@types/node': 18.19.60
 
+  '@inquirer/input@4.0.1(@types/node@22.8.0)':
+    dependencies:
+      '@inquirer/core': 10.0.1(@types/node@22.8.0)
+      '@inquirer/type': 3.0.0(@types/node@22.8.0)
+      '@types/node': 22.8.0
+
   '@inquirer/number@3.0.1(@types/node@18.19.60)':
     dependencies:
       '@inquirer/core': 10.0.1(@types/node@18.19.60)
       '@inquirer/type': 3.0.0(@types/node@18.19.60)
       '@types/node': 18.19.60
 
+  '@inquirer/number@3.0.1(@types/node@22.8.0)':
+    dependencies:
+      '@inquirer/core': 10.0.1(@types/node@22.8.0)
+      '@inquirer/type': 3.0.0(@types/node@22.8.0)
+      '@types/node': 22.8.0
+
   '@inquirer/password@4.0.1(@types/node@18.19.60)':
     dependencies:
       '@inquirer/core': 10.0.1(@types/node@18.19.60)
       '@inquirer/type': 3.0.0(@types/node@18.19.60)
       '@types/node': 18.19.60
+      ansi-escapes: 4.3.2
+
+  '@inquirer/password@4.0.1(@types/node@22.8.0)':
+    dependencies:
+      '@inquirer/core': 10.0.1(@types/node@22.8.0)
+      '@inquirer/type': 3.0.0(@types/node@22.8.0)
+      '@types/node': 22.8.0
       ansi-escapes: 4.3.2
 
   '@inquirer/prompts@7.0.1(@types/node@18.19.60)':
@@ -7637,11 +7699,32 @@ snapshots:
       '@inquirer/select': 4.0.1(@types/node@18.19.60)
       '@types/node': 18.19.60
 
+  '@inquirer/prompts@7.0.1(@types/node@22.8.0)':
+    dependencies:
+      '@inquirer/checkbox': 4.0.1(@types/node@22.8.0)
+      '@inquirer/confirm': 5.0.1(@types/node@22.8.0)
+      '@inquirer/editor': 4.0.1(@types/node@22.8.0)
+      '@inquirer/expand': 4.0.1(@types/node@22.8.0)
+      '@inquirer/input': 4.0.1(@types/node@22.8.0)
+      '@inquirer/number': 3.0.1(@types/node@22.8.0)
+      '@inquirer/password': 4.0.1(@types/node@22.8.0)
+      '@inquirer/rawlist': 4.0.1(@types/node@22.8.0)
+      '@inquirer/search': 3.0.1(@types/node@22.8.0)
+      '@inquirer/select': 4.0.1(@types/node@22.8.0)
+      '@types/node': 22.8.0
+
   '@inquirer/rawlist@4.0.1(@types/node@18.19.60)':
     dependencies:
       '@inquirer/core': 10.0.1(@types/node@18.19.60)
       '@inquirer/type': 3.0.0(@types/node@18.19.60)
       '@types/node': 18.19.60
+      yoctocolors-cjs: 2.1.2
+
+  '@inquirer/rawlist@4.0.1(@types/node@22.8.0)':
+    dependencies:
+      '@inquirer/core': 10.0.1(@types/node@22.8.0)
+      '@inquirer/type': 3.0.0(@types/node@22.8.0)
+      '@types/node': 22.8.0
       yoctocolors-cjs: 2.1.2
 
   '@inquirer/search@3.0.1(@types/node@18.19.60)':
@@ -7650,6 +7733,14 @@ snapshots:
       '@inquirer/figures': 1.0.7
       '@inquirer/type': 3.0.0(@types/node@18.19.60)
       '@types/node': 18.19.60
+      yoctocolors-cjs: 2.1.2
+
+  '@inquirer/search@3.0.1(@types/node@22.8.0)':
+    dependencies:
+      '@inquirer/core': 10.0.1(@types/node@22.8.0)
+      '@inquirer/figures': 1.0.7
+      '@inquirer/type': 3.0.0(@types/node@22.8.0)
+      '@types/node': 22.8.0
       yoctocolors-cjs: 2.1.2
 
   '@inquirer/select@2.5.0':
@@ -7669,6 +7760,15 @@ snapshots:
       ansi-escapes: 4.3.2
       yoctocolors-cjs: 2.1.2
 
+  '@inquirer/select@4.0.1(@types/node@22.8.0)':
+    dependencies:
+      '@inquirer/core': 10.0.1(@types/node@22.8.0)
+      '@inquirer/figures': 1.0.7
+      '@inquirer/type': 3.0.0(@types/node@22.8.0)
+      '@types/node': 22.8.0
+      ansi-escapes: 4.3.2
+      yoctocolors-cjs: 2.1.2
+
   '@inquirer/type@1.5.5':
     dependencies:
       mute-stream: 1.0.0
@@ -7680,6 +7780,10 @@ snapshots:
   '@inquirer/type@3.0.0(@types/node@18.19.60)':
     dependencies:
       '@types/node': 18.19.60
+
+  '@inquirer/type@3.0.0(@types/node@22.8.0)':
+    dependencies:
+      '@types/node': 22.8.0
 
   '@isaacs/balanced-match@4.0.1': {}
 
@@ -7782,6 +7886,14 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
+  '@microsoft/api-extractor-model@7.30.7(@types/node@22.8.0)':
+    dependencies:
+      '@microsoft/tsdoc': 0.15.1
+      '@microsoft/tsdoc-config': 0.17.1
+      '@rushstack/node-core-library': 5.14.0(@types/node@22.8.0)
+    transitivePeerDependencies:
+      - '@types/node'
+
   '@microsoft/api-extractor@7.52.11(@types/node@18.19.60)':
     dependencies:
       '@microsoft/api-extractor-model': 7.30.7(@types/node@18.19.60)
@@ -7791,6 +7903,24 @@ snapshots:
       '@rushstack/rig-package': 0.5.3
       '@rushstack/terminal': 0.15.4(@types/node@18.19.60)
       '@rushstack/ts-command-line': 5.0.2(@types/node@18.19.60)
+      lodash: 4.17.21
+      minimatch: 10.0.3
+      resolve: 1.22.8
+      semver: 7.5.4
+      source-map: 0.6.1
+      typescript: 5.8.2
+    transitivePeerDependencies:
+      - '@types/node'
+
+  '@microsoft/api-extractor@7.52.11(@types/node@22.8.0)':
+    dependencies:
+      '@microsoft/api-extractor-model': 7.30.7(@types/node@22.8.0)
+      '@microsoft/tsdoc': 0.15.1
+      '@microsoft/tsdoc-config': 0.17.1
+      '@rushstack/node-core-library': 5.14.0(@types/node@22.8.0)
+      '@rushstack/rig-package': 0.5.3
+      '@rushstack/terminal': 0.15.4(@types/node@22.8.0)
+      '@rushstack/ts-command-line': 5.0.2(@types/node@22.8.0)
       lodash: 4.17.21
       minimatch: 10.0.3
       resolve: 1.22.8
@@ -7929,6 +8059,15 @@ snapshots:
   '@oclif/plugin-not-found@3.2.24(@types/node@18.19.60)':
     dependencies:
       '@inquirer/prompts': 7.0.1(@types/node@18.19.60)
+      '@oclif/core': 4.0.30
+      ansis: 3.3.2
+      fast-levenshtein: 3.0.0
+    transitivePeerDependencies:
+      - '@types/node'
+
+  '@oclif/plugin-not-found@3.2.24(@types/node@22.8.0)':
+    dependencies:
+      '@inquirer/prompts': 7.0.1(@types/node@22.8.0)
       '@oclif/core': 4.0.30
       ansis: 3.3.2
       fast-levenshtein: 3.0.0
@@ -8219,6 +8358,19 @@ snapshots:
     optionalDependencies:
       '@types/node': 18.19.60
 
+  '@rushstack/node-core-library@5.14.0(@types/node@22.8.0)':
+    dependencies:
+      ajv: 8.13.0
+      ajv-draft-04: 1.0.0(ajv@8.13.0)
+      ajv-formats: 3.0.1(ajv@8.13.0)
+      fs-extra: 11.3.0
+      import-lazy: 4.0.0
+      jju: 1.4.0
+      resolve: 1.22.8
+      semver: 7.5.4
+    optionalDependencies:
+      '@types/node': 22.8.0
+
   '@rushstack/node-core-library@5.3.0(@types/node@18.19.60)':
     dependencies:
       ajv: 8.13.0
@@ -8244,11 +8396,27 @@ snapshots:
     optionalDependencies:
       '@types/node': 18.19.60
 
+  '@rushstack/terminal@0.15.4(@types/node@22.8.0)':
+    dependencies:
+      '@rushstack/node-core-library': 5.14.0(@types/node@22.8.0)
+      supports-color: 8.1.1
+    optionalDependencies:
+      '@types/node': 22.8.0
+
   '@rushstack/tree-pattern@0.3.1': {}
 
   '@rushstack/ts-command-line@5.0.2(@types/node@18.19.60)':
     dependencies:
       '@rushstack/terminal': 0.15.4(@types/node@18.19.60)
+      '@types/argparse': 1.0.38
+      argparse: 1.0.10
+      string-argv: 0.3.1
+    transitivePeerDependencies:
+      - '@types/node'
+
+  '@rushstack/ts-command-line@5.0.2(@types/node@22.8.0)':
+    dependencies:
+      '@rushstack/terminal': 0.15.4(@types/node@22.8.0)
       '@types/argparse': 1.0.38
       argparse: 1.0.10
       string-argv: 0.3.1
@@ -9618,11 +9786,11 @@ snapshots:
 
   core-util-is@1.0.3: {}
 
-  cosmiconfig-typescript-loader@4.2.0(@types/node@20.5.1)(cosmiconfig@8.3.6(typescript@5.4.5))(ts-node@10.9.2(@types/node@18.19.60)(typescript@5.4.5))(typescript@5.4.5):
+  cosmiconfig-typescript-loader@4.2.0(@types/node@20.5.1)(cosmiconfig@8.3.6(typescript@5.4.5))(ts-node@10.9.2(@types/node@20.5.1)(typescript@5.4.5))(typescript@5.4.5):
     dependencies:
       '@types/node': 20.5.1
       cosmiconfig: 8.3.6(typescript@5.4.5)
-      ts-node: 10.9.2(@types/node@20.5.1)(typescript@5.4.5)
+      ts-node: 10.9.2(@types/node@22.8.0)(typescript@5.4.5)
       typescript: 5.4.5
 
   cosmiconfig-typescript-loader@5.0.0(@types/node@18.19.60)(cosmiconfig@8.3.6(typescript@5.4.5))(typescript@5.4.5):
@@ -12732,6 +12900,36 @@ snapshots:
       - '@types/node'
       - supports-color
 
+  oclif@4.15.16(@types/node@22.8.0):
+    dependencies:
+      '@aws-sdk/client-cloudfront': empty-npm-package@1.0.0
+      '@aws-sdk/client-s3': empty-npm-package@1.0.0
+      '@inquirer/confirm': 3.2.0
+      '@inquirer/input': 2.2.4
+      '@inquirer/select': 2.5.0
+      '@oclif/core': 4.0.30
+      '@oclif/plugin-help': 6.2.16
+      '@oclif/plugin-not-found': 3.2.24(@types/node@22.8.0)
+      '@oclif/plugin-warn-if-update-available': 3.1.20
+      async-retry: 1.3.3
+      chalk: 4.1.2
+      change-case: 4.1.2
+      debug: 4.3.7(supports-color@8.1.1)
+      ejs: 3.1.10
+      find-yarn-workspace-root: 2.0.0
+      fs-extra: 8.1.0
+      github-slugger: 2.0.0
+      got: 13.0.0
+      lodash: 4.17.21
+      normalize-package-data: 6.0.2
+      semver: 7.7.1
+      sort-package-json: 2.10.1
+      tiny-jsonc: 1.0.1
+      validate-npm-package-name: 5.0.1
+    transitivePeerDependencies:
+      - '@types/node'
+      - supports-color
+
   once@1.4.0:
     dependencies:
       wrappy: 1.0.2
@@ -13959,14 +14157,14 @@ snapshots:
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
 
-  ts-node@10.9.2(@types/node@20.5.1)(typescript@5.4.5):
+  ts-node@10.9.2(@types/node@22.8.0)(typescript@5.4.5):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.9
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
-      '@types/node': 20.5.1
+      '@types/node': 22.8.0
       acorn: 8.10.0
       acorn-walk: 8.2.0
       arg: 4.1.3
