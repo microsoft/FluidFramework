@@ -129,13 +129,6 @@ describe("loadFrozenContainerFromPendingState", () => {
 		);
 	});
 
-	let clock: SinonFakeTimers;
-	const snapshotRefreshTimeoutMs = 10;
-
-	before(() => {
-		clock = useFakeTimers();
-	});
-
 	it("uploading blob on frozen container", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 
@@ -197,7 +190,70 @@ describe("loadFrozenContainerFromPendingState", () => {
 			});
 	});
 
+	it("trying to attach a frozen container", async () => {
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+
+		const { urlResolver, codeDetails, codeLoader, loaderProps } = createLoader({
+			deltaConnectionServer,
+		});
+
+		const container = asLegacyAlpha(
+			await createDetachedContainer({
+				codeDetails,
+				...loaderProps,
+				configProvider: {
+					getRawConfig: (name) => {
+						switch (name) {
+							case "Fluid.Container.enableOfflineLoad":
+								return true;
+							default:
+								return undefined;
+						}
+					},
+				},
+			}),
+		);
+
+		await container.attach(urlResolver.createCreateNewRequest("test"));
+
+		const url = await container.getAbsoluteUrl("");
+		assert(
+			url !== undefined,
+			"Expected container to provide a valid absolute URL, but got undefined",
+		);
+		const pendingLocalState = await container.getPendingLocalState();
+
+		const frozenContainer = await loadFrozenContainerFromPendingState({
+			codeLoader,
+			urlResolver,
+			request: {
+				url,
+			},
+			pendingLocalState,
+		});
+		const frozenEntryPoint: FluidObject<TestFluidObject> =
+			await frozenContainer.getEntryPoint();
+		assert(
+			frozenEntryPoint.ITestFluidObject !== undefined,
+			"Expected frozen container entrypoint to be a valid TestFluidObject, but it was undefined",
+		);
+		await frozenContainer
+			.attach(urlResolver.createCreateNewRequest("test"))
+			.then(() => {
+				assert.fail("Attach should not be successful on frozen container");
+			})
+			.catch((error) => {
+				assert.strictEqual(
+					error.message,
+					"The Container is not in a valid state for attach [loaded] and [Attached]",
+					"Error message mismatch",
+				);
+			});
+	});
+
 	it("snapshot refresh on frozen container", async () => {
+		const clock: SinonFakeTimers = useFakeTimers();
+		const snapshotRefreshTimeoutMs = 10;
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const { urlResolver, codeDetails, codeLoader, loaderProps } = createLoader({
 			deltaConnectionServer,
