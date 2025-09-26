@@ -308,8 +308,7 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 	private updateItem(key: K, value: InternalTypes.ValueOptionalState<T>["value"]): void {
 		this.value.rev += 1;
 		// Caller is required to ensure key exists.
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const item = this.value.items[key]!;
+		const item = this.value.items[key];
 		item.rev += 1;
 		item.timestamp = Date.now();
 		if (value === undefined) {
@@ -562,8 +561,7 @@ class LatestMapValueManagerImpl<
 		};
 		const postUpdateActions: PostUpdateAction[] = [];
 		for (const key of updatedItemKeys) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const item = value.items[key]!;
+			const item = value.items[key];
 			const hadPriorValue = currentState.items[key]?.value;
 			currentState.items[key] = item;
 			const metadata = {

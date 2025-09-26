@@ -77,7 +77,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     // (undocumented)
     readonly clientDetails: IClientDetails;
     createDataStore(pkg: string | PackagePath, loadingGroupId?: string): Promise<IDataStore>;
-    createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
+    createDetachedDataStore(pkg: readonly string[], loadingGroupId?: string): IFluidDataStoreContextDetached;
     // (undocumented)
     readonly disposed: boolean;
     generateDocumentUniqueId(): number | string;

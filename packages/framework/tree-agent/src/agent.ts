@@ -105,14 +105,12 @@ export interface SharedTreeSemanticAgent {
  */
 export type Log = (message: string) => void;
 
-/**
- * TODO
- */
+// eslint-disable-next-line jsdoc/require-jsdoc -- TODO: Add documentation
 export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 	implements SharedTreeSemanticAgent
 {
 	#querying?: Subtree<TRoot>;
-	#messages: (HumanMessage | AIMessage | ToolMessage)[] = [];
+	readonly #messages: (HumanMessage | AIMessage | ToolMessage)[] = [];
 	#treeHasChangedSinceLastQuery = false;
 
 	private get queryTree(): Subtree<TRoot> {

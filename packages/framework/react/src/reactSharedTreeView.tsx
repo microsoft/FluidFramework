@@ -176,7 +176,7 @@ export abstract class ReactTreeDataObject<
 {
 	public abstract readonly config: TreeViewConfiguration<TSchema>;
 
-	#treeView: TreeView<TSchema> | undefined;
+	readonly #treeView: TreeView<TSchema> | undefined;
 
 	/**
 	 * The schema-aware view of the tree.

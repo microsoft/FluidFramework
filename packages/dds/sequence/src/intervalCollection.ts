@@ -706,7 +706,7 @@ function removeMetadataFromPendingChanges(
 
 function clearEmptyPendingEntry(pendingChanges: PendingChanges, id: string) {
 	const pending = pendingChanges[id];
-	if (pending !== undefined && pending.local.empty) {
+	if (pending?.local.empty) {
 		assert(
 			pending.endpointChanges?.empty !== false,
 			0xbc0 /* endpointChanges must be empty if not pending changes */,

@@ -650,7 +650,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 
 	public createDetachedDataStore(
-		pkg: Readonly<string[]>,
+		pkg: readonly string[],
 		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
 		return this.createContext(
@@ -662,7 +662,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 
 	public createDataStoreContext(
-		pkg: Readonly<string[]>,
+		pkg: readonly string[],
 		loadingGroupId?: string,
 	): IFluidDataStoreContextInternal {
 		return this.createContext(
@@ -675,7 +675,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 	protected createContext<T extends LocalFluidDataStoreContext>(
 		id: string,
-		pkg: Readonly<string[]>,
+		pkg: readonly string[],
 		contextCtor: new (props: ILocalDetachedFluidDataStoreContextProps) => T,
 		loadingGroupId?: string,
 	): T {

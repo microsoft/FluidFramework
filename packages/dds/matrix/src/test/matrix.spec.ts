@@ -1111,7 +1111,7 @@ describe("Matrix1", () => {
 							0,
 							lastAddedCol,
 						) as IFluidHandleInternal;
-						assert(deletedHandle, "Route must be added before deleting");
+						assert(deletedHandle !== undefined, "Route must be added before deleting");
 
 						this.matrix1.setCell(0, lastAddedCol, undefined);
 						// Remove deleted handle's route from expected routes.

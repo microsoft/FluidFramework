@@ -53,7 +53,7 @@ describe("SharedJson1", () => {
 
 		describe("APIs", () => {
 			it("Can create a OT", () => {
-				assert.ok(ot, "Could not create a OT");
+				assert(ot !== undefined, "Could not create a OT");
 			});
 
 			describe("insert()", () => {

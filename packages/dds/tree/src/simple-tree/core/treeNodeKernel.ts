@@ -385,7 +385,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	readonly #events = createEmitter<KernelEvents>();
 
 	#eventSource: Listenable<KernelEvents> & HasListeners<KernelEvents>;
-	#disposeSourceListeners: Map<keyof KernelEvents, Off> = new Map();
+	readonly #disposeSourceListeners: Map<keyof KernelEvents, Off> = new Map();
 
 	/**
 	 * Buffer of fields that have changed since events were paused.

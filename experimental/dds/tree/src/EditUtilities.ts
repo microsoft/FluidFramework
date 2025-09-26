@@ -126,7 +126,7 @@ export function convertTreeNodes<
 		if (done === true) {
 			pendingNodes.pop();
 		} else {
-			const [traitLabel, child] = value as [TraitLabel, TIn | TPlaceholder];
+			const [traitLabel, child] = value;
 			let convertedChild: TOut | TPlaceholder;
 			if (!isKnownType(child, isPlaceholder)) {
 				convertedChild = convert(child) as TOut;
@@ -203,7 +203,7 @@ export function walkTree<TIn extends HasVariadicTraits<TIn | TPlaceholder>, TPla
 		if (done === true) {
 			childIterators.pop();
 		} else {
-			const [_, child] = value as [TraitLabel, TIn | TPlaceholder];
+			const [_, child] = value;
 			if (isKnownType(child, isPlaceholder)) {
 				placeholderVisitor?.(child);
 			} else {

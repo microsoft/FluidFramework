@@ -102,7 +102,7 @@ describe("ConsensusOrderedCollection", () => {
 			});
 
 			it("Can create a collection", () => {
-				assert.ok(testCollection);
+				assert(testCollection !== undefined);
 			});
 
 			it("Can add and remove data", async () => {
@@ -115,7 +115,7 @@ describe("ConsensusOrderedCollection", () => {
 			it("Can add and remove a handle", async () => {
 				assert.strictEqual(await removeItem(), undefined);
 				const handle = testCollection.handle;
-				assert(handle, "Need an actual handle to test this case");
+				assert(handle !== undefined, "Need an actual handle to test this case");
 				await addItem(handle);
 
 				const acquiredValue = (await removeItem()) as IFluidHandleInternal;
@@ -431,7 +431,7 @@ describe("ConsensusOrderedCollection", () => {
 
 			public async deleteOutboundRoutes(): Promise<void> {
 				const deletedHandle = (await this.removeItem()) as IFluidHandleInternal;
-				assert(deletedHandle, "Route must be added before deleting");
+				assert(deletedHandle !== undefined, "Route must be added before deleting");
 				// Remove deleted handle's route from expected routes.
 				this._expectedRoutes = this._expectedRoutes.filter(
 					(route) => route !== deletedHandle.absolutePath,

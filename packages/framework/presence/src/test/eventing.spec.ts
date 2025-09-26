@@ -171,7 +171,7 @@ describe("Presence", () => {
 			  };
 
 		function verifyState(attendee: Attendee, verifications: StateVerification[]): void {
-			assert.ok(attendee, "Eventing does not reflect new attendee");
+			assert(attendee !== undefined, "Eventing does not reflect new attendee");
 			assert.strictEqual(
 				attendee.attendeeId,
 				"attendeeId-1",

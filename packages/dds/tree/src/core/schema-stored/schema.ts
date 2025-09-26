@@ -202,8 +202,7 @@ export abstract class TreeNodeStoredSchema {
 
 export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
-	 * @param objectNodeFields -
-	 * Schema for fields with keys scoped to this TreeNodeStoredSchema.
+	 * @param objectNodeFields - Schema for fields with keys scoped to this TreeNodeStoredSchema.
 	 * This refers to the TreeFieldStoredSchema directly
 	 * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> TreeFieldStoredSchema map).
 	 * This allows us short friendly field keys which can be ergonomically used as field names in code.
@@ -259,8 +258,7 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 
 export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
-	 * @param mapFields -
-	 * Allows using the fields as a map, with the keys being
+	 * @param mapFields - Allows using the fields as a map, with the keys being
 	 * FieldKeys and the values being constrained by this TreeFieldStoredSchema.
 	 * Usually `FieldKind.Value` should NOT be used here
 	 * since no nodes can ever be in schema if you use `FieldKind.Value` here
@@ -291,8 +289,7 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 
 export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
-	 * @param leafValue -
-	 * There are several approaches for how to store actual data in the tree
+	 * @param leafValue - There are several approaches for how to store actual data in the tree
 	 * (special node types, special field contents, data on nodes etc.)
 	 * as well as several options about how the data should be modeled at this level
 	 * (byte sequence? javascript type? json?),

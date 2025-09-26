@@ -57,8 +57,7 @@ export class TelemetryEventBatcher<TMetrics extends string> {
 	/**
 	 * Accumulates the custom data and sends it to the logger every {@link TelemetryEventBatcher.threshold} calls.
 	 *
-	 * @param customData -
-	 * A record storing the custom data to be accumulated and eventually logged.
+	 * @param customData - A record storing the custom data to be accumulated and eventually logged.
 	 */
 	public accumulateAndLog(customData: Record<TMetrics, number>): void {
 		for (const key of Object.keys(customData) as TMetrics[]) {

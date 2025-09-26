@@ -873,9 +873,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
+		// eslint-disable-next-line @typescript-eslint/no-floating-promises -- TODO: use Promise.all
 		[...Array(lots).keys()].map(async (i) =>
 			assert.strictEqual(map1.get(i.toString()), undefined),
 		);
+		// eslint-disable-next-line @typescript-eslint/no-floating-promises -- TODO: use Promise.all
 		[...Array(lots).keys()].map(async (i) =>
 			assert.strictEqual(map2.get(i.toString()), undefined),
 		);
