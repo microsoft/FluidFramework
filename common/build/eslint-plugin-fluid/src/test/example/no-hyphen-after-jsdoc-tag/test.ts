@@ -18,6 +18,8 @@ function invalid<T>(param1: string, param2: T): string {
  * @remarks Here are some remarks.
  * @deprecated This function is deprecated, use something else.
  * @returns The concatenated string.
+ * @param param1 - I am a param comment. Since my hyphen follows the param name, this is valid.
+ * @typeParam T - I am a type param comment. I am also valid.
  */
 function valid<T>(param1: string, param2: T): string {
 	return `${param1} - ${param2}`;
