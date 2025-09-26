@@ -222,9 +222,11 @@ import type {
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /**
- * !!! TODO update: Defined using `JsonSerializable` type filter tests `JsonStringify` at call site.
- * Internally, value given is round-tripped through JSON serialization to ensure it is
- * unchanged or converted to given optional expected value.
+ * Defined combining known API for `JsonStringify` and `JsonParse` - effectively
+ * it should always be a proxy for their use.
+ * Internally, value given is sent through `JsonStringify` (captured) and then
+ * sent through `JsonParse` to ensure it is unchanged or converted to given
+ * optional expected value.
  *
  * @param v - value to pass through JSON serialization
  * @param expectedDeserialization - alternate value to compare against after round-trip
