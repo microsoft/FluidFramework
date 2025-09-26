@@ -180,6 +180,7 @@ export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory;
 
 // @beta @legacy
 export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
+    afterBindRuntime?(runtime: IFluidDataStoreChannel): Promise<void>;
     createDataStore?(context: IFluidDataStoreContext): {
         readonly runtime: IFluidDataStoreChannel;
     };
