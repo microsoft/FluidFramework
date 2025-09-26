@@ -14,7 +14,7 @@ module.exports = {
 	"recursive": true,
 	"reporter": "@fluid-tools/benchmark/dist/MochaReporter.js",
 	"reporterOptions": ["reportDir=.memoryTestsOutput/"],
-	"require": ["node_modules/@fluid-internal/mocha-test-setup"],
+	"require": ["@fluid-internal/mocha-test-setup"],
 	"spec": ["dist/test/memory/**/*.spec.*js", "--perfMode"],
 	"timeout": "90000",
 };
