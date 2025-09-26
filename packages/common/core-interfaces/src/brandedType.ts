@@ -8,13 +8,15 @@
  *
  * @remarks
  * To use, derive another class declaration and ideally add additional private
- * and or protected (generally preferred) properties to distinguish the type.
+ * and/or protected (generally preferred) properties to distinguish the type.
+ * (Any private properties should be typed as `unknown` as external to module
+ * the only thing known about a private property is that it exists.)
  * A private constructor is recommended to seal the brand class.
  *
  * `BrandedType` is covariant over its type parameter, which could be leveraged
  * for any generic type, but the preferred pattern is to specify variance
- * explicitly in the derived class. It convenient to have the derived class be
- * the generic given to `BrandedType`.
+ * explicitly in the derived class. It is convenient to have the derived class
+ * be the generic given to `BrandedType`.
  *
  * Since branded types are not real value types, they will always need to be
  * created using `as` syntax and often `as unknown` first.
