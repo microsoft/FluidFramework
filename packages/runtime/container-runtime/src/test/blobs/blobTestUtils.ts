@@ -44,20 +44,29 @@ import type { IBlobMetadata } from "../../metadata.js";
 export const MIN_TTL = 24 * 60 * 60; // same as ODSP
 
 interface MockBlobStorageInternalEvents {
-	blobCreated: (id: string) => void;
+	blobCreated: (id: string, minTTLOverride?: number | undefined) => void;
 	blobCreateFailed: (id: string, error: Error) => void;
 	blobReceived: () => void;
+}
+
+interface BlobProcessOptions {
+	error?: Error;
+	minTTLOverride?: number | undefined;
 }
 
 export class MockBlobStorage
 	implements Pick<IContainerStorageService, "createBlob" | "readBlob">
 {
-	public minTTL: number = MIN_TTL;
+	public defaultMinTTL: number = MIN_TTL;
 
 	public readonly blobs: Map<string, ArrayBufferLike> = new Map();
 	public readonly unprocessedBlobs: [string, ArrayBufferLike][] = [];
 
 	private readonly internalEvents = createEmitter<MockBlobStorageInternalEvents>();
+	private _blobsProcessed = 0;
+	public get blobsProcessed(): number {
+		return this._blobsProcessed;
+	}
 
 	public constructor(private readonly dedupe: boolean) {}
 
@@ -83,24 +92,26 @@ export class MockBlobStorage
 		}
 		this.unprocessedBlobs.push([id, blob]);
 
-		const blobCreatedP = new Promise<void>((resolve, reject) => {
-			const onBlobCreated = (_id: string) => {
-				if (_id === id) {
-					this.internalEvents.off("blobCreated", onBlobCreated);
-					this.internalEvents.off("blobCreateFailed", onBlobCreateFailed);
-					resolve();
-				}
-			};
-			const onBlobCreateFailed = (_id: string, error: Error) => {
-				if (_id === id) {
-					this.internalEvents.off("blobCreated", onBlobCreated);
-					this.internalEvents.off("blobCreateFailed", onBlobCreateFailed);
-					reject(error);
-				}
-			};
-			this.internalEvents.on("blobCreated", onBlobCreated);
-			this.internalEvents.on("blobCreateFailed", onBlobCreateFailed);
-		});
+		const blobCreatedP = new Promise<{ minTTLOverride?: number | undefined }>(
+			(resolve, reject) => {
+				const onBlobCreated = (_id: string, _minTTLOverride?: number | undefined) => {
+					if (_id === id) {
+						this.internalEvents.off("blobCreated", onBlobCreated);
+						this.internalEvents.off("blobCreateFailed", onBlobCreateFailed);
+						resolve({ minTTLOverride: _minTTLOverride });
+					}
+				};
+				const onBlobCreateFailed = (_id: string, error: Error) => {
+					if (_id === id) {
+						this.internalEvents.off("blobCreated", onBlobCreated);
+						this.internalEvents.off("blobCreateFailed", onBlobCreateFailed);
+						reject(error);
+					}
+				};
+				this.internalEvents.on("blobCreated", onBlobCreated);
+				this.internalEvents.on("blobCreateFailed", onBlobCreateFailed);
+			},
+		);
 
 		this.internalEvents.emit("blobReceived");
 
@@ -108,9 +119,10 @@ export class MockBlobStorage
 			this.processAll();
 		}
 
-		await blobCreatedP;
+		const { minTTLOverride } = await blobCreatedP;
+		this._blobsProcessed++;
 
-		return { id, minTTLInSeconds: this.minTTL };
+		return { id, minTTLInSeconds: minTTLOverride ?? this.defaultMinTTL };
 	};
 
 	public readonly readBlob = async (id: string): Promise<ArrayBufferLike> => {
@@ -131,27 +143,29 @@ export class MockBlobStorage
 		}
 	};
 
-	// TODO: minTTL override param?
-	public readonly processOne = (error?: Error): void => {
+	public readonly processOne = (processOptions?: BlobProcessOptions): void => {
+		const { error, minTTLOverride } = processOptions ?? {};
 		const next = this.unprocessedBlobs.shift();
 		assert(next !== undefined, "Tried processing, but none to process");
 
 		const [id, blob] = next;
 		if (error === undefined) {
 			this.blobs.set(id, blob);
-			this.internalEvents.emit("blobCreated", id);
+			this.internalEvents.emit("blobCreated", id, minTTLOverride);
 		} else {
 			this.internalEvents.emit("blobCreateFailed", id, error);
 		}
 	};
 
-	public readonly waitProcessOne = async (error?: Error): Promise<void> => {
+	public readonly waitProcessOne = async (
+		processOptions?: BlobProcessOptions,
+	): Promise<void> => {
 		assert(
 			this._paused,
 			"waitProcessOne is only available in paused mode to avoid conflicting with normal blob processing",
 		);
 		await this.waitBlobAvailable();
-		this.processOne(error);
+		this.processOne(processOptions);
 	};
 
 	public readonly processAll = (): void => {
@@ -172,6 +186,9 @@ export class MockStorageAdapter
 	public readonly unpause = (): void => {
 		this.getCurrentStorage().unpause();
 	};
+	public get blobsProcessed(): number {
+		return this.getCurrentStorage().blobsProcessed;
+	}
 	public constructor(private attached: boolean) {}
 	public readonly simulateAttach = async (
 		patchRedirectTable: BlobManager["patchRedirectTable"],
@@ -206,6 +223,16 @@ export class MockStorageAdapter
 
 	public readBlob = async (id: string): Promise<ArrayBufferLike> =>
 		this.getCurrentStorage().readBlob(id);
+
+	public readonly processOne = (processOptions?: BlobProcessOptions): void => {
+		this.getCurrentStorage().processOne(processOptions);
+	};
+
+	public readonly waitProcessOne = async (
+		processOptions?: BlobProcessOptions,
+	): Promise<void> => {
+		return this.getCurrentStorage().waitProcessOne(processOptions);
+	};
 }
 
 export interface UnprocessedOp {

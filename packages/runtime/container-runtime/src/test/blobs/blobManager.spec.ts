@@ -111,9 +111,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					// for the blob to later arrive)
 					const getBlobP = blobManager.getBlob("blobId", true);
 					// Simulate the blob being created by some remote client
-					const { id: remoteId } = await mockBlobStorage.attachedStorage.createBlob(
-						textToBlob("hello"),
-					);
+					const { id: remoteId } = await mockBlobStorage.createBlob(textToBlob("hello"));
 					blobManager.processBlobAttachMessage(
 						// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 						{ metadata: { localId: "blobId", blobId: remoteId } } as ISequencedMessageEnvelope,
@@ -278,9 +276,9 @@ for (const createBlobPayloadPending of [false, true]) {
 						handle.events.on("payloadShareFailed", onPayloadShareFailed);
 
 						attachHandle(handle);
-						await mockBlobStorage.attachedStorage.waitProcessOne(
-							new LoggingError("fake driver error"),
-						);
+						await mockBlobStorage.waitProcessOne({
+							error: new LoggingError("fake driver error"),
+						});
 						mockBlobStorage.unpause();
 
 						await assert.rejects(waitHandlePayloadShared(handle), {
@@ -302,9 +300,9 @@ for (const createBlobPayloadPending of [false, true]) {
 						// If the blobs are created without pending payloads, we don't get to see the handle at
 						// all so we can't inspect its state.
 						const createBlobP = blobManager.createBlob(textToBlob("hello"));
-						await mockBlobStorage.attachedStorage.waitProcessOne(
-							new LoggingError("fake driver error"),
-						);
+						await mockBlobStorage.waitProcessOne({
+							error: new LoggingError("fake driver error"),
+						});
 						mockBlobStorage.unpause();
 
 						await assert.rejects(createBlobP, { message: "fake driver error" });
@@ -313,6 +311,35 @@ for (const createBlobPayloadPending of [false, true]) {
 					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids, undefined);
 					assert.strictEqual(redirectTable, undefined);
+				});
+
+				it("Reuploads blobs if they are expired", async () => {
+					const { mockBlobStorage, blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
+					mockBlobStorage.pause();
+
+					const handleP = blobManager.createBlob(textToBlob("hello"));
+
+					if (createBlobPayloadPending) {
+						const _handle = await handleP;
+						attachHandle(_handle);
+					}
+					// Use a negative TTL to force the blob to be expired immediately
+					await mockBlobStorage.waitProcessOne({ minTTLOverride: -1 });
+					// After unpausing, the second attempt will be processed with a normal TTL
+					mockBlobStorage.unpause();
+					const handle = await handleP;
+					await ensureBlobsShared([handle]);
+					assert.strictEqual(
+						mockBlobStorage.blobsProcessed,
+						2,
+						"Blob should have been reuploaded once",
+					);
+
+					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					assert.strictEqual(ids?.length, 1);
+					assert.strictEqual(redirectTable?.length, 1);
 				});
 			});
 
@@ -707,7 +734,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				);
 
 				// Allow just the blob upload to process, but not the attach op
-				await mockBlobStorage.attachedStorage.waitProcessOne();
+				await mockBlobStorage.waitProcessOne();
 				const storageId2 = blobManager.lookupTemporaryBlobStorageId(localId);
 				assert.strictEqual(
 					storageId2,
@@ -803,20 +830,6 @@ for (const createBlobPayloadPending of [false, true]) {
 // 			assert.strictEqual((runtime.blobManager as any).pendingBlobs.size, 0);
 // 			injectedSettings = {};
 // 			mockLogger.clear();
-// 		});
-
-// 		it("reupload blob if expired", async () => {
-// 			await runtime.attach();
-// 			await runtime.connect();
-// 			// TODO: Fix this violation and remove the disable
-// 			// eslint-disable-next-line require-atomic-updates
-// 			runtime.attachedStorage.minTTL = 0.001; // force expired TTL being less than connection time (50ms)
-// 			await createBlob(textToBlob("blob"));
-// 			await runtime.processBlobs(true);
-// 			runtime.disconnect();
-// 			await new Promise<void>((resolve) => setTimeout(resolve, 50));
-// 			await runtime.connect();
-// 			await runtime.processAll();
 // 		});
 
 // 		describe("Abort Signal", () => {
