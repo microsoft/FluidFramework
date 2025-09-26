@@ -162,8 +162,8 @@ stages:
             script: |
               set -eu -o pipefail
               node --input-type=module -e "
-                  const benchmarkIndexPath = await import.meta.resolve('@fluid-tools/benchmark');
-                  const absolutePath = benchmarkIndexPath.replace('index.js', '.output');
+                  const benchmarkIndexUrl = await import.meta.resolve('@fluid-tools/benchmark');
+                  const absolutePath = new URL(benchmarkIndexUrl.replace('index.js', '.output')).pathname;
                   console.log('Resolved @fluid-tools/benchmark output folder to ' + absolutePath);
                   console.log('##vso[task.setvariable variable=benchmarkOutputFolder]' + absolutePath);
               "
