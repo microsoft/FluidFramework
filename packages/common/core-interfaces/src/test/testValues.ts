@@ -746,7 +746,7 @@ export const objectWithFluidHandle = {
 	handle: fluidHandleToNumber,
 };
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
 interface TestErasedType<T> extends ErasedType<readonly ["TestCustomType", T]> {}
 
 export const erasedType = 0 as unknown as TestErasedType<number>;
