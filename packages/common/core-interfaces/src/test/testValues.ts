@@ -646,7 +646,8 @@ export const readonlySetOfRecords: ReadonlySet<StringRecordOfPoints> = setOfReco
 // #region Branded types
 
 export const brandedNumber = 0 as number & BrandedType<"zero">;
-export const brandedString = "encoding" as string & BrandedType<"encoded">;
+export type BrandedString = string & BrandedType<"encoded">;
+export const brandedString = "encoding" as BrandedString;
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 export const brandedObject = {} as object & BrandedType<"its a secret">;
 export const brandedObjectWithString = objectWithString as typeof objectWithString &
@@ -680,7 +681,6 @@ assertIdenticalTypes(brandedStringAliasRecordOfBooleans, brandedStringRecordOfBo
 export const brandedStringIndexOfNumbers: { [x: string & BrandedType<"encoded">]: number } = {
 	[brandedString]: 5,
 };
-export type BrandedString = string & BrandedType<"encoded">;
 export const brandedStringAliasIndexOfNumbers: { [x: BrandedString]: number } =
 	brandedStringIndexOfNumbers;
 // @ts-expect-error - while the same, aliased index is not treated as same (just confirm)
