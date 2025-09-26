@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { AttachState } from "@fluidframework/container-definitions";
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandlePayloadPending,
@@ -34,7 +33,10 @@ for (const createBlobPayloadPending of [false, true]) {
 		// #region Detached usage
 		describe("Detached usage", () => {
 			it("Responds as expected for retrieving unknown blob IDs", async () => {
-				const { blobManager } = createTestMaterial({ createBlobPayloadPending });
+				const { blobManager } = createTestMaterial({
+					attached: false,
+					createBlobPayloadPending,
+				});
 				assert(!blobManager.hasBlob("blobId"));
 				await assert.rejects(async () => {
 					// Handles for detached blobs are never payload pending, even if the flag is set.
@@ -44,6 +46,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			it("Can create a blob and retrieve it", async () => {
 				const { mockOrderingService, blobManager } = createTestMaterial({
+					attached: false,
 					createBlobPayloadPending,
 				});
 				const handle = await blobManager.createBlob(textToBlob("hello"));
@@ -66,6 +69,7 @@ for (const createBlobPayloadPending of [false, true]) {
 		describe("Attaching", () => {
 			it("Can attach when empty", async () => {
 				const { mockBlobStorage, mockRuntime, blobManager } = createTestMaterial({
+					attached: false,
 					createBlobPayloadPending,
 				});
 				await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
@@ -73,6 +77,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			it("Can get a detached blob after attaching", async () => {
 				const { mockBlobStorage, mockRuntime, blobManager } = createTestMaterial({
+					attached: false,
 					createBlobPayloadPending,
 				});
 				const handle = await blobManager.createBlob(textToBlob("hello"));
@@ -93,10 +98,9 @@ for (const createBlobPayloadPending of [false, true]) {
 		describe("Attached usage", () => {
 			describe("Normal usage", () => {
 				it("Responds as expected for unknown blob IDs", async () => {
-					const { mockBlobStorage, mockRuntime, blobManager } = createTestMaterial({
+					const { mockBlobStorage, blobManager } = createTestMaterial({
 						createBlobPayloadPending,
 					});
-					await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
 					assert(!blobManager.hasBlob("blobId"));
 					// When payloadPending is false, we throw for unknown blobs
 					await assert.rejects(async () => {
@@ -122,9 +126,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 				// TODO: Separate test for the network-visible effects of blob creation?
 				it("Can create a blob and retrieve it", async () => {
-					const { mockBlobStorage, mockOrderingService, mockRuntime, blobManager } =
-						createTestMaterial({ createBlobPayloadPending });
-					await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
+					const { blobManager } = createTestMaterial({ createBlobPayloadPending });
 					const handle = await blobManager.createBlob(textToBlob("hello"));
 					const { localId } = unpackHandle(handle);
 
@@ -177,18 +179,12 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert(blobManager.hasBlob(localId));
 					const blobFromManager = await blobManager.getBlob(localId, createBlobPayloadPending);
 					assert.strictEqual(blobToText(blobFromManager), "hello", "Blob content mismatch");
-
-					assert.strictEqual(
-						mockOrderingService.messagesReceived,
-						1,
-						"Should have sent one message for blob attach",
-					);
 				});
 
 				it("Can retrieve a blob using its storageId", async () => {
-					const { mockBlobStorage, mockOrderingService, mockRuntime, blobManager } =
-						createTestMaterial({ createBlobPayloadPending });
-					await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
+					const { mockOrderingService, blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
 					let storageId: string | undefined;
 					const onOpReceived = (op: UnprocessedOp) => {
 						storageId = op.metadata.blobId;
@@ -211,7 +207,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				});
 
 				it("Does not log an error if runtime is disposed during readBlob error", async () => {
-					const mockBlobStorage = new MockStorageAdapter();
+					const mockBlobStorage = new MockStorageAdapter(true);
 					mockBlobStorage.readBlob = async () => {
 						throw new Error("BOOM!");
 					};
@@ -219,7 +215,6 @@ for (const createBlobPayloadPending of [false, true]) {
 						mockBlobStorage,
 						createBlobPayloadPending,
 					});
-					await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
 
 					const handle = await blobManager.createBlob(textToBlob("hello"));
 					const { localId } = unpackHandle(handle);
@@ -252,10 +247,9 @@ for (const createBlobPayloadPending of [false, true]) {
 				});
 
 				it("Fails as expected for upload failure", async () => {
-					const { mockBlobStorage, mockRuntime, blobManager } = createTestMaterial({
+					const { mockBlobStorage, blobManager } = createTestMaterial({
 						createBlobPayloadPending,
 					});
-					await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
 					mockBlobStorage.pause();
 
 					if (createBlobPayloadPending) {
@@ -324,15 +318,14 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			describe("Blobs from remote clients", () => {
 				it("Can retrieve blobs uploaded by a remote client", async () => {
-					const { mockBlobStorage, mockOrderingService, mockRuntime, blobManager } =
-						createTestMaterial({ createBlobPayloadPending });
-					await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
-					const { mockRuntime: mockRuntime2, blobManager: blobManager2 } = createTestMaterial({
+					const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
+					const { blobManager: blobManager2 } = createTestMaterial({
 						mockBlobStorage,
 						mockOrderingService,
 						createBlobPayloadPending,
 					});
-					mockRuntime2.attachState = AttachState.Attached;
 
 					const handle = await blobManager2.createBlob(textToBlob("hello"));
 					const { localId } = unpackHandle(handle);
@@ -343,36 +336,17 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert(blobManager.hasBlob(localId));
 					const blobFromManager = await blobManager.getBlob(localId, createBlobPayloadPending);
 					assert.strictEqual(blobToText(blobFromManager), "hello", "Blob content mismatch");
-
-					// Also confirm we can request payloadPending blobs before the blobManager has them,
-					// and wait for them to arrive.
-					if (createBlobPayloadPending) {
-						const handle2 = await blobManager2.createBlob(textToBlob("world"));
-						const { localId: localId2 } = unpackHandle(handle2);
-						attachHandle(handle2);
-
-						assert(!blobManager.hasBlob(localId2));
-						await ensureBlobsShared([handle2]);
-						assert(blobManager.hasBlob(localId2));
-
-						const blob2FromManager = await blobManager.getBlob(
-							localId2,
-							createBlobPayloadPending,
-						);
-						assert.strictEqual(blobToText(blob2FromManager), "world", "Blob content mismatch");
-					}
 				});
 
 				it("Handles deduping against a remote blob", async () => {
-					const { mockBlobStorage, mockOrderingService, mockRuntime, blobManager } =
-						createTestMaterial({ createBlobPayloadPending });
-					await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
-					const { mockRuntime: mockRuntime2, blobManager: blobManager2 } = createTestMaterial({
+					const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
+					const { blobManager: blobManager2 } = createTestMaterial({
 						mockBlobStorage,
 						mockOrderingService,
 						createBlobPayloadPending,
 					});
-					mockRuntime2.attachState = AttachState.Attached;
 
 					const remoteHandle = await blobManager2.createBlob(textToBlob("hello"));
 					if (createBlobPayloadPending) {
@@ -390,15 +364,14 @@ for (const createBlobPayloadPending of [false, true]) {
 				});
 
 				it("Handles deduping against a remote blob between upload and BlobAttach", async () => {
-					const { mockBlobStorage, mockOrderingService, mockRuntime, blobManager } =
-						createTestMaterial({ createBlobPayloadPending });
-					await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
-					const { mockRuntime: mockRuntime2, blobManager: blobManager2 } = createTestMaterial({
+					const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
+					const { blobManager: blobManager2 } = createTestMaterial({
 						mockBlobStorage,
 						mockOrderingService,
 						createBlobPayloadPending,
 					});
-					mockRuntime2.attachState = AttachState.Attached;
 
 					mockOrderingService.pause();
 					const remoteHandleP = blobManager2.createBlob(textToBlob("hello"));
@@ -436,9 +409,9 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			describe("Resubmit", () => {
 				it("Can complete blob attach with resubmit", async () => {
-					const { mockBlobStorage, mockOrderingService, mockRuntime, blobManager } =
-						createTestMaterial({ createBlobPayloadPending });
-					await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
+					const { mockOrderingService, blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
 
 					mockOrderingService.pause();
 					// Generate the original message
@@ -465,9 +438,9 @@ for (const createBlobPayloadPending of [false, true]) {
 				});
 
 				it("Can complete blob attach with multiple resubmits", async () => {
-					const { mockBlobStorage, mockOrderingService, mockRuntime, blobManager } =
-						createTestMaterial({ createBlobPayloadPending });
-					await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
+					const { mockOrderingService, blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
 
 					mockOrderingService.pause();
 					// Generate the original message
@@ -533,7 +506,10 @@ for (const createBlobPayloadPending of [false, true]) {
 				});
 
 				it("Detached, non-dedupe storage", async () => {
-					const { blobManager } = createTestMaterial({ createBlobPayloadPending });
+					const { blobManager } = createTestMaterial({
+						attached: false,
+						createBlobPayloadPending,
+					});
 
 					await blobManager.createBlob(textToBlob("hello"));
 					await blobManager.createBlob(textToBlob("world"));
@@ -547,10 +523,9 @@ for (const createBlobPayloadPending of [false, true]) {
 				});
 
 				it("Attached, dedupe storage", async () => {
-					const { mockBlobStorage, mockRuntime, blobManager } = createTestMaterial({
+					const { blobManager } = createTestMaterial({
 						createBlobPayloadPending,
 					});
-					await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
 
 					const handle1 = await blobManager.createBlob(textToBlob("hello"));
 					const handle2 = await blobManager.createBlob(textToBlob("world"));
@@ -566,6 +541,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 				it("Detached -> attached, deduping after attach", async () => {
 					const { mockBlobStorage, mockRuntime, blobManager } = createTestMaterial({
+						attached: false,
 						createBlobPayloadPending,
 					});
 
@@ -596,12 +572,11 @@ for (const createBlobPayloadPending of [false, true]) {
 				});
 			});
 
-			// TODO: Default to attached storage, make the adapter be the opt-in
 			describe("Loading from summaries", () => {
 				it("Can load from a summary and retrieve its blobs", async () => {
-					const { mockBlobStorage, mockOrderingService, mockRuntime, blobManager } =
-						createTestMaterial({ createBlobPayloadPending });
-					await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
+					const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
 					const handle1 = await blobManager.createBlob(textToBlob("hello"));
 					const handle2 = await blobManager.createBlob(textToBlob("world"));
 					const { localId: localId1 } = unpackHandle(handle1);
@@ -613,13 +588,12 @@ for (const createBlobPayloadPending of [false, true]) {
 						getSummaryContentsWithFormatValidation(blobManager);
 					const { ids: ids1, redirectTable: redirectTable1 } = blobManagerLoadInfo;
 
-					const { mockRuntime: mockRuntime2, blobManager: blobManager2 } = createTestMaterial({
+					const { blobManager: blobManager2 } = createTestMaterial({
 						mockBlobStorage,
 						mockOrderingService,
 						blobManagerLoadInfo,
 						createBlobPayloadPending,
 					});
-					mockRuntime2.attachState = AttachState.Attached;
 
 					assert(blobManager2.hasBlob(localId1));
 					assert(blobManager2.hasBlob(localId2));
@@ -642,9 +616,9 @@ for (const createBlobPayloadPending of [false, true]) {
 				});
 
 				it("Can load from a summary with only ids and retrieve blobs using remoteId", async () => {
-					const { mockBlobStorage, mockOrderingService, mockRuntime, blobManager } =
-						createTestMaterial({ createBlobPayloadPending });
-					await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
+					const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
 					const handle = await blobManager.createBlob(textToBlob("hello"));
 					if (createBlobPayloadPending) {
 						await ensureBlobsShared([handle]);
@@ -658,13 +632,12 @@ for (const createBlobPayloadPending of [false, true]) {
 					const remoteId = blobManagerLoadInfo.ids?.[0];
 					assert(remoteId !== undefined, "Should have one attachment");
 
-					const { mockRuntime: mockRuntime2, blobManager: blobManager2 } = createTestMaterial({
+					const { blobManager: blobManager2 } = createTestMaterial({
 						mockBlobStorage,
 						mockOrderingService,
 						blobManagerLoadInfo,
 						createBlobPayloadPending,
 					});
-					mockRuntime2.attachState = AttachState.Attached;
 
 					// That older behavior made the blob retrievable using its remoteId directly.
 					assert(blobManager2.hasBlob(remoteId));
@@ -690,10 +663,9 @@ for (const createBlobPayloadPending of [false, true]) {
 		// #region Storage ID lookup
 		describe("Storage ID lookup", () => {
 			it("lookupTemporaryBlobStorageId returns correct storage ID for attached blobs", async () => {
-				const { mockBlobStorage, mockRuntime, blobManager } = createTestMaterial({
+				const { blobManager } = createTestMaterial({
 					createBlobPayloadPending,
 				});
-				await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
 				const handle = await blobManager.createBlob(textToBlob("hello"));
 				await ensureBlobsShared([handle]);
 				const { localId } = unpackHandle(handle);
@@ -713,9 +685,9 @@ for (const createBlobPayloadPending of [false, true]) {
 					// This test only applies when payload pending is enabled
 					return;
 				}
-				const { mockBlobStorage, mockOrderingService, mockRuntime, blobManager } =
-					createTestMaterial({ createBlobPayloadPending });
-				await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
+				const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
 				// Pause blob storage and ordering service so the upload will remain pending
 				mockBlobStorage.pause();
 				mockOrderingService.pause();
@@ -754,10 +726,9 @@ for (const createBlobPayloadPending of [false, true]) {
 			});
 
 			it("lookupTemporaryBlobStorageId returns undefined for unknown blob ID", async () => {
-				const { mockBlobStorage, mockRuntime, blobManager } = createTestMaterial({
+				const { blobManager } = createTestMaterial({
 					createBlobPayloadPending,
 				});
-				await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
 				const unknownId = "unknown-blob-id";
 				const storageId = blobManager.lookupTemporaryBlobStorageId(unknownId);
 				assert.strictEqual(

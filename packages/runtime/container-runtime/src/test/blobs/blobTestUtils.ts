@@ -172,7 +172,7 @@ export class MockStorageAdapter
 	public readonly unpause = (): void => {
 		this.getCurrentStorage().unpause();
 	};
-	private attached = false;
+	public constructor(private attached: boolean) {}
 	public readonly simulateAttach = async (
 		patchRedirectTable: BlobManager["patchRedirectTable"],
 	): Promise<void> => {
@@ -336,13 +336,18 @@ class MockRuntime
 		return this._attachState === AttachState.Attached;
 	}
 	public disposed: boolean = false;
-	public constructor(public readonly baseLogger: ITelemetryBaseLogger) {
+	public constructor(
+		public readonly baseLogger: ITelemetryBaseLogger,
+		attached: boolean,
+	) {
 		super();
+		this._attachState = attached ? AttachState.Attached : AttachState.Detached;
 	}
 }
 
 interface TestMaterial {
 	clientId: string;
+	attached: boolean;
 	mockBlobStorage: MockStorageAdapter;
 	mockOrderingService: MockOrderingService;
 	mockGarbageCollector: MockGarbageCollector;
@@ -359,11 +364,12 @@ export const createTestMaterial = (
 	overrides?: TestMaterialOverrides | undefined,
 ): TestMaterial => {
 	const clientId = overrides?.clientId ?? uuid();
-	const mockBlobStorage = overrides?.mockBlobStorage ?? new MockStorageAdapter();
+	const attached = overrides?.attached ?? true;
+	const mockBlobStorage = overrides?.mockBlobStorage ?? new MockStorageAdapter(attached);
 	const mockOrderingService = overrides?.mockOrderingService ?? new MockOrderingService();
 	const mockGarbageCollector = overrides?.mockGarbageCollector ?? new MockGarbageCollector();
 	const mockLogger = overrides?.mockLogger ?? new MockLogger();
-	const mockRuntime = overrides?.mockRuntime ?? new MockRuntime(mockLogger);
+	const mockRuntime = overrides?.mockRuntime ?? new MockRuntime(mockLogger, attached);
 	const blobManagerLoadInfo = overrides?.blobManagerLoadInfo ?? {};
 	const createBlobPayloadPending = overrides?.createBlobPayloadPending ?? false;
 
@@ -394,6 +400,7 @@ export const createTestMaterial = (
 
 	return {
 		clientId,
+		attached,
 		mockBlobStorage,
 		mockOrderingService,
 		mockGarbageCollector,
