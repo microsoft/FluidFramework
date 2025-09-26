@@ -5,6 +5,7 @@
 
 export {
 	BlobManager,
+	type ICreateBlobResponseWithTTL,
 	type IPendingBlobs,
 	type IBlobManagerRuntime,
 	type IBlobManagerEvents,

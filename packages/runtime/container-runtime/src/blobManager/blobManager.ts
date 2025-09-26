@@ -133,7 +133,7 @@ export type IBlobManagerRuntime = Pick<
 > &
 	IEventProvider<IContainerRuntimeEvents>;
 
-type ICreateBlobResponseWithTTL = ICreateBlobResponse &
+export type ICreateBlobResponseWithTTL = ICreateBlobResponse &
 	Partial<Record<"minTTLInSeconds", number>>;
 
 interface PendingBlob {
