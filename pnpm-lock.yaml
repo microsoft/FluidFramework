@@ -13827,6 +13827,9 @@ importers:
       '@fluid-experimental/tree':
         specifier: workspace:~
         version: link:../../../experimental/dds/tree
+      '@fluid-internal/client-utils':
+        specifier: workspace:~
+        version: link:../../common/client-utils
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../mocha-test-setup
