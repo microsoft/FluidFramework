@@ -1,12 +1,12 @@
 {
-	"name": "@fluid-experimental/tree-react-api",
+	"name": "@fluidframework/react",
 	"version": "2.62.0",
-	"description": "Experimental SharedTree API for React integration.",
+	"description": "Utilities for integrating content powered by the Fluid Framework into React applications",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "experimental/framework/tree-react-api"
+		"directory": "packages/framework/react"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -87,7 +87,7 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"pack:tests": "tar -cf ./tree-react-api.test-files.tar ./src/test ./dist/test ./lib/test",
+		"pack:tests": "tar -cf ./react.test-files.tar ./src/test ./dist/test ./lib/test",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
