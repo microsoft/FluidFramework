@@ -99,7 +99,7 @@
 		"@fluid-tools/build-cli": "^0.57.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.57.0",
-		"@microsoft/api-extractor": "^7.52.11",
+		"@microsoft/api-extractor": "^7.45.1",
 		"c8": "^10.1.3",
 		"changesets-format-with-issue-links": "^0.3.0",
 		"concurrently": "^8.2.1",
@@ -138,11 +138,11 @@
 	},
 	"pnpm": {
 		"commentsOverrides": [
-			"@types/node is overridden to v20 to ensure all packages are building using the v20 types, matching the version of note required according to the readme. This also fixes a compile error due to conflicting overloads from multiple versions of the globals in @types/node/module.d.ts",
+			"@types/node is overridden to v18 to ensure all packages are building using the v18 types.",
 			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently."
 		],
 		"overrides": {
-			"@types/node": "~20.0.0",
+			"@types/node@<18": "^18.19.39",
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.11.0",
@@ -159,7 +159,7 @@
 			]
 		},
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.52.11": "patches/@microsoft__api-extractor@7.52.11.patch"
+			"@microsoft/api-extractor@7.45.1": "patches/@microsoft__api-extractor@7.45.1.patch"
 		}
 	}
 }

@@ -4,6 +4,26 @@
 
 ```ts
 
+import * as api from '@fluidframework/protocol-definitions';
+import { AxiosError } from 'axios';
+import { AxiosInstance } from 'axios';
+import { AxiosRequestConfig } from 'axios';
+import type { ICreateTreeEntry } from '@fluidframework/gitresources';
+import type { IQuorumSnapshot } from '@fluidframework/protocol-base';
+import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import { ISnapshotTreeEx } from '@fluidframework/protocol-definitions';
+import type { ISummaryHandle } from '@fluidframework/protocol-definitions';
+import { ISummaryTree as ISummaryTree_2 } from '@fluidframework/protocol-definitions';
+import type { ITokenClaims } from '@fluidframework/protocol-definitions';
+import type { ITree } from '@fluidframework/gitresources';
+import { ITreeEntry } from '@fluidframework/protocol-definitions';
+import type { IUser } from '@fluidframework/protocol-definitions';
+import { RawAxiosRequestHeaders } from 'axios';
+import type * as resources from '@fluidframework/gitresources';
+import type { ScopeType } from '@fluidframework/protocol-definitions';
+import type { SummaryObject } from '@fluidframework/protocol-definitions';
+
 // @internal (undocumented)
 export class BasicRestWrapper extends RestWrapper {
     constructor(baseurl?: string, defaultQueryString?: Record<string, string | number | boolean>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: RawAxiosRequestHeaders, axios?: AxiosInstance, refreshDefaultQueryString?: (() => Record<string, string | number | boolean>) | undefined, refreshDefaultHeaders?: (() => RawAxiosRequestHeaders) | undefined, getCorrelationId?: (() => string | undefined) | undefined, getTelemetryContextProperties?: (() => Record<string, string | number | boolean> | undefined) | undefined, refreshTokenIfNeeded?: ((authorizationHeader: RawAxiosRequestHeaders) => Promise<RawAxiosRequestHeaders | undefined>) | undefined, logHttpMetrics?: ((requestProps: IBasicRestWrapperMetricProps) => void) | undefined, getCallingServiceName?: (() => string | undefined) | undefined);
