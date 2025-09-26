@@ -243,8 +243,7 @@ import type {
 export function passThru<
 	const T,
 	TExpected,
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	Options extends JsonSerializableOptions = {},
+	Options extends JsonSerializableOptions = Record<never, never>,
 >(
 	filteredIn: JsonSerializable<T, Options>,
 	expectedDeserialization?: JsonDeserialized<TExpected>,

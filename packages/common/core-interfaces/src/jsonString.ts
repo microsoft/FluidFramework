@@ -68,8 +68,7 @@ export interface JsonStringifyOptions {
  */
 export const JsonStringify = JSON.stringify as <
 	T,
-	// eslint-disable-next-line @typescript-eslint/ban-types -- `Record<string, never>` is not sufficient replacement for empty object.
-	Options extends JsonStringifyOptions = {},
+	Options extends JsonStringifyOptions = Record<never, never>,
 >(
 	value: JsonSerializable<T, Options>,
 ) => JsonString<T>;

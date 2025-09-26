@@ -234,8 +234,7 @@ import type {
 export function stringifyThenParse<
 	const T,
 	TExpected,
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	Options extends JsonStringifyOptions = {},
+	Options extends JsonStringifyOptions = Record<never, never>,
 >(
 	v: JsonSerializable<T, Options>,
 	expectedDeserialization?: JsonDeserialized<TExpected>,
