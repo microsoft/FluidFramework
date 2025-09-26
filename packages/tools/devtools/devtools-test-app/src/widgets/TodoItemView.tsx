@@ -9,7 +9,7 @@ import {
 	CollaborativeTextArea,
 	SharedStringHelper,
 } from "@fluid-example/example-utils";
-import { useTree } from "@fluid-experimental/tree-react-api/alpha";
+import { useTree } from "@fluidframework/react/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import React from "react";
 

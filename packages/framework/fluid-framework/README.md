@@ -8,6 +8,7 @@ There are some packages there are not included as part of this `fluid-framework`
 -   A service client (e.g. `@fluidframework/azure-client`, `@fluidframework/odsp-client (BETA)`, or `@fluidframework/tinylicious-client` for local development) to allow connecting to a Fluid service.
 -   Fluid Framework [developer tools](https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools).
 -   `@fluidframework/app-insights-logger`: to route Fluid telemetry to Azure App Insights.
+-   `@fluidframework/react (ALPHA)`: to help integrate Fluid content (mainly SharedTree) into [React](https://react.dev/) applications.
 
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
