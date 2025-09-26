@@ -1,5 +1,12 @@
 # @fluidframework/eslint-plugin-fluid Changelog
 
+## [0.3.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-plugin-fluid_v0.2.0)
+
+New rules added:
+
+- `@fluid-internal/fluid/no-hyphen-after-jsdoc-tag`: Forbids following a JSDoc/TSDoc comment tag with a `-`.
+    - Such syntax is commonly used by mistake, due to the fact that `TSDoc` requires a hyphen after the parameter name of a `@param` comment. But no tags want a hyphen between the tag name and the body.
+
 ## [0.2.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-plugin-fluid_v0.2.0)
 
 New rules added:
