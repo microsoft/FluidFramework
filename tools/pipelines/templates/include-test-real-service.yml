@@ -325,7 +325,7 @@ stages:
                 set -eu -o pipefail
                 node --input-type=module -e "
                   const versionUtilsIndexPath = await import.meta.resolve('@fluid-private/test-version-utils');
-                  const absolutePath = versionUtilsIndexPath.replace('/lib/index.js', '/node_modules/.legacy/');
+                  const absolutePath = versionUtilsIndexPath.replace('/lib/index.js', '/node_modules/.legacy');
                   console.log('Resolved @fluid-private/test-version-utils to ' + absolutePath);
                   console.log('##vso[task.setvariable variable=compatVersionInstallsPath]' + absolutePath);
                 "
@@ -426,6 +426,15 @@ stages:
               publishLocation: 'pipeline'
             condition: always()
             continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
+
+        - task: PublishPipelineArtifact@1
+          displayName: Publish Artifact - legacy modules
+          inputs:
+            targetPath: $(compatVersionInstallsPath)
+            artifactName: 'modules-$(System.JobAttempt)'
+            publishLocation: 'pipeline'
+          condition: always()
+          continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the test package log wasn't there)
 
         # Only release tenants that were checked out from the tenant pool for ODSP tests
         - ${{ if or(eq(parameters.stageId, 'e2e_odsp'), eq(parameters.stageId, 'stress_tests_odsp')) }}:
