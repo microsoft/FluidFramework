@@ -637,11 +637,17 @@ export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 
 /**
  * Configuration options for SharedTree.
+ * @beta @input
+ */
+export type SharedTreeOptionsBeta = ForestOptions;
+
+/**
+ * Configuration options for SharedTree.
  * @alpha @input
  */
 export type SharedTreeOptions = Partial<CodecWriteOptions> &
 	Partial<SharedTreeFormatOptions> &
-	ForestOptions;
+	SharedTreeOptionsBeta;
 
 export interface SharedTreeOptionsInternal
 	extends Omit<SharedTreeOptions, "treeEncodeType">,
@@ -719,7 +725,7 @@ export interface ForestType extends ErasedType<"ForestType"> {}
  * A simple implementation with minimal complexity and moderate debuggability, validation and performance.
  * @privateRemarks
  * The "ObjectForest" forest type.
- * @alpha
+ * @beta
  */
 export const ForestTypeReference = toForestType(
 	(breaker: Breakable, schema: TreeStoredSchemaSubscription, idCompressor: IIdCompressor) =>
@@ -733,7 +739,7 @@ export const ForestTypeReference = toForestType(
  * Uses an internal representation optimized for size designed to scale to larger datasets with reduced overhead.
  * @privateRemarks
  * The "ChunkedForest" forest type.
- * @alpha
+ * @beta
  */
 export const ForestTypeOptimized = toForestType(
 	(breaker: Breakable, schema: TreeStoredSchemaSubscription, idCompressor: IIdCompressor) =>
@@ -747,7 +753,7 @@ export const ForestTypeOptimized = toForestType(
  * May be asymptotically slower than {@link ForestTypeReference}, and may perform very badly with larger data sizes.
  * @privateRemarks
  * The "ObjectForest" forest type with expensive asserts for debugging.
- * @alpha
+ * @beta
  */
 export const ForestTypeExpensiveDebug = toForestType(
 	(breaker: Breakable, schema: TreeStoredSchemaSubscription) =>

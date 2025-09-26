@@ -57,6 +57,7 @@ export {
 export {
 	type ITreeInternal,
 	type SharedTreeOptions,
+	type SharedTreeOptionsBeta,
 	type ForestType,
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
@@ -276,6 +277,8 @@ export {
 export {
 	SharedTree,
 	configuredSharedTree,
+	configuredSharedTreeBeta,
+	configuredSharedTreeBetaLegacy,
 } from "./treeFactory.js";
 export { SharedTreeAttributes, SharedTreeFactoryType } from "./sharedTreeAttributes.js";
 export { persistedToSimpleSchema } from "./shared-tree/index.js";
