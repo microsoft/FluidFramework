@@ -9,7 +9,7 @@ import {
 	withTreeObservations,
 	withMemoizedTreeObservations,
 	type PropTreeNode,
-} from "@fluid-experimental/tree-react-api/alpha";
+} from "@fluidframework/react/alpha";
 import { Tree } from "fluid-framework";
 import * as React from "react";
 
