@@ -65,10 +65,25 @@ export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessag
  * Brand for value that has not been verified.
  *
  * @remarks
- * Usage:
+ * What element is unverified is left up to the user and should be
+ * coordinated with and documented for associated logic.
  *
- * - Cast any value to `UnverifiedBrand` using `as unknown as UnverifiedBrand<T>`
- * when it is not yet confirmed that value is of type `T`.
+ * One type of unverified data is whether a `string` represents an identifier
+ * known to the system, such as an email address. This unverified email address
+ * could be represented as `string & UnverifiedBrand<EmailAddress>` where
+ * `EmailAddress` is a branded type for email addresses, such as
+ * `string & BrandedType<"EmailAddress">`.
+ *
+ * Another type of unverified data is particular structure of value where little
+ * to no or weak structure is known. An example is data received over the
+ * wire that is expected to be of a certain structure but has not yet been
+ * verified.
+ *
+ * Usage where value (type `U`) is not yet verified to be type `T`:
+ *
+ * - Cast value of type `U` suspected/expected to be `T` but not verified (where
+ * `T extends U`) to `UnverifiedBrand` using `as U & UnverifiedBrand<T>`. An
+ * example base type `U` for an object is `Record<string, unknown>`.
  *
  * - When `T` value is needed, use narrowing type guards to check (preferred)
  * or cast from `UnverifiedBrand` using `as unknown` when "instance" must
@@ -80,25 +95,6 @@ export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessag
  *   unverified: Foo | (Record<string, unknown> & UnverifiedBrand<Foo>)
  * ): unverified is Foo {
  *   return unverified.IFooProvider === unverified;
- * }
- * ```
- *
- * @privateRemarks
- * Potential helper to mark expected types as unverified:
- * ```typescript
- * type BaseTypeOf<T> =
- * 	T extends string ? string
- * 	: T extends number ? number
- * 		: T extends boolean ? boolean
- * 			: T extends bigint ? bigint
- * 				: T extends undefined ? undefined
- * 					: T extends object ? Record<keyof any, unknown>
- * 						: never;
- *
- * function markUnverified<const T, TKnown extends BaseTypeOf<T> = BaseTypeOf<T>>(
- * 	value: T,
- * ): TKnown & UnverifiedBrand<T> {
- * 	return value as TKnown & UnverifiedBrand<T>;
  * }
  * ```
  *
