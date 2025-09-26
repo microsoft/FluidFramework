@@ -83,6 +83,25 @@ export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessag
  * }
  * ```
  *
+ * @privateRemarks
+ * Potential helper to mark expected types as unverified:
+ * ```typescript
+ * type BaseTypeOf<T> =
+ * 	T extends string ? string
+ * 	: T extends number ? number
+ * 		: T extends boolean ? boolean
+ * 			: T extends bigint ? bigint
+ * 				: T extends undefined ? undefined
+ * 					: T extends object ? Record<keyof any, unknown>
+ * 						: never;
+ *
+ * function markUnverified<const T, TKnown extends BaseTypeOf<T> = BaseTypeOf<T>>(
+ * 	value: T,
+ * ): TKnown & UnverifiedBrand<T> {
+ * 	return value as TKnown & UnverifiedBrand<T>;
+ * }
+ * ```
+ *
  * @sealed
  * @internal
  */
