@@ -1,4 +1,4 @@
-# @fluid-experimental/tree-react-api
+# @fluidframework/react
 
 ## 2.61.0
 

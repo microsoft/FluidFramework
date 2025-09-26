@@ -3,17 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, performanceNow } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import type {
 	IDeltaQueue,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
-import {
-	type IDisposable,
-	type ITelemetryBaseProperties,
-	LogLevel,
-} from "@fluidframework/core-interfaces";
+import { type ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	ConnectionMode,
@@ -22,7 +18,6 @@ import type {
 } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentDeltaConnection,
-	type IDocumentDeltaConnectionEvents,
 	type IDocumentService,
 	DriverErrorTypes,
 	type IAnyDriverError,
@@ -32,7 +27,6 @@ import {
 	type INackContent,
 	type ISequencedDocumentSystemMessage,
 	type ISignalClient,
-	type ITokenClaims,
 	MessageType,
 	ScopeType,
 	type ISequencedDocumentMessage,
@@ -67,6 +61,7 @@ import {
 	ReconnectMode,
 } from "./contracts.js";
 import { DeltaQueue } from "./deltaQueue.js";
+import { FrozenDeltaStream, isFrozenDeltaStreamConnection } from "./frozenServices.js";
 import { SignalType } from "./protocol.js";
 import { isDeltaStreamConnectionForbiddenError } from "./utils.js";
 
@@ -88,85 +83,6 @@ function getNackReconnectInfo(
 		{ canRetry, retryAfterMs },
 		{ statusCode: nackContent.code, driverVersion: undefined },
 	);
-}
-
-/**
- * Implementation of IDocumentDeltaConnection that does not support submitting
- * or receiving ops. Used in storage-only mode.
- */
-const clientNoDeltaStream: IClient = {
-	mode: "read",
-	details: { capabilities: { interactive: true } },
-	permission: [],
-	user: { id: "storage-only client" }, // we need some "fake" ID here.
-	scopes: [],
-};
-const clientIdNoDeltaStream: string = "storage-only client";
-
-class NoDeltaStream
-	extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-	implements IDocumentDeltaConnection, IDisposable
-{
-	clientId = clientIdNoDeltaStream;
-	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-	claims = {
-		scopes: [ScopeType.DocRead],
-	} as ITokenClaims;
-	mode: ConnectionMode = "read";
-	existing: boolean = true;
-	maxMessageSize: number = 0;
-	version: string = "";
-	initialMessages: ISequencedDocumentMessage[] = [];
-	initialSignals: ISignalMessage[] = [];
-	initialClients: ISignalClient[] = [
-		{ client: clientNoDeltaStream, clientId: clientIdNoDeltaStream },
-	];
-	serviceConfiguration: IClientConfiguration = {
-		maxMessageSize: 0,
-		blockSize: 0,
-	};
-	checkpointSequenceNumber?: number | undefined = undefined;
-	/**
-	 * Connection which is not connected to socket.
-	 * @param storageOnlyReason - Reason on why the connection to delta stream is not allowed.
-	 * @param readonlyConnectionReason - reason/error if any which lead to using NoDeltaStream.
-	 */
-	constructor(
-		public readonly storageOnlyReason?: string,
-		public readonly readonlyConnectionReason?: IConnectionStateChangeReason,
-	) {
-		super();
-	}
-	submit(messages: IDocumentMessage[]): void {
-		this.emit(
-			"nack",
-			this.clientId,
-			messages.map((operation) => {
-				return {
-					operation,
-					content: { message: "Cannot submit with storage-only connection", code: 403 },
-				};
-			}),
-		);
-	}
-	submitSignal(message: unknown): void {
-		this.emit("nack", this.clientId, {
-			operation: message,
-			content: { message: "Cannot submit signal with storage-only connection", code: 403 },
-		});
-	}
-
-	private _disposed = false;
-	public get disposed(): boolean {
-		return this._disposed;
-	}
-	public dispose(): void {
-		this._disposed = true;
-	}
-}
-
-function isNoDeltaStreamConnection(connection: unknown): connection is NoDeltaStream {
-	return connection instanceof NoDeltaStream;
 }
 
 const waitForOnline = async (): Promise<void> => {
@@ -377,7 +293,7 @@ export class ConnectionManager implements IConnectionManager {
 	public get readOnlyInfo(): ReadOnlyInfo {
 		let storageOnly: boolean = false;
 		let storageOnlyReason: string | undefined;
-		if (isNoDeltaStreamConnection(this.connection)) {
+		if (isFrozenDeltaStreamConnection(this.connection)) {
 			storageOnly = true;
 			storageOnlyReason = this.connection.storageOnlyReason;
 		}
@@ -589,7 +505,7 @@ export class ConnectionManager implements IConnectionManager {
 		let connection: IDocumentDeltaConnection | undefined;
 
 		if (docService.policies?.storageOnly === true) {
-			connection = new NoDeltaStream();
+			connection = new FrozenDeltaStream();
 			this.setupNewSuccessfulConnection(connection, "read", reason);
 			assert(this.pendingConnection === undefined, 0x2b3 /* "logic error" */);
 			return;
@@ -661,7 +577,7 @@ export class ConnectionManager implements IConnectionManager {
 					LogLevel.verbose,
 				);
 				if (isDeltaStreamConnectionForbiddenError(origError)) {
-					connection = new NoDeltaStream(origError.storageOnlyReason, {
+					connection = new FrozenDeltaStream(origError.storageOnlyReason, {
 						text: origError.message,
 						error: origError,
 					});
@@ -673,7 +589,7 @@ export class ConnectionManager implements IConnectionManager {
 				) {
 					// If we get out of storage error from calling joinsession, then use the NoDeltaStream object so
 					// that user can at least load the container.
-					connection = new NoDeltaStream(undefined, {
+					connection = new FrozenDeltaStream(undefined, {
 						text: origError.message,
 						error: origError,
 					});
@@ -931,7 +847,9 @@ export class ConnectionManager implements IConnectionManager {
 		this.set_readonlyPermissions(
 			readonlyPermission,
 			oldReadonlyValue,
-			isNoDeltaStreamConnection(connection) ? connection.readonlyConnectionReason : undefined,
+			isFrozenDeltaStreamConnection(connection)
+				? connection.readonlyConnectionReason
+				: undefined,
 		);
 
 		if (this._disposed) {
