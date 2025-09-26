@@ -50,6 +50,9 @@ export interface CommitMetadata {
     readonly kind: CommitKind;
 }
 
+// @beta
+export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
+
 // @public
 export enum ConnectionState {
     CatchingUp = 1,
@@ -176,6 +179,15 @@ export interface ForestOptions {
 // @beta @sealed
 export interface ForestType extends ErasedType<"ForestType"> {
 }
+
+// @beta
+export const ForestTypeExpensiveDebug: ForestType;
+
+// @beta
+export const ForestTypeOptimized: ForestType;
+
+// @beta
+export const ForestTypeReference: ForestType;
 
 // @beta @legacy
 export interface IBranchOrigin {
@@ -1116,6 +1128,9 @@ export type SharedStringSegment = TextSegment | Marker;
 
 // @public
 export const SharedTree: SharedObjectKind<ITree>;
+
+// @beta @input
+export type SharedTreeOptionsBeta = ForestOptions;
 
 export { Side }
 

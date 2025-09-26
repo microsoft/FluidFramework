@@ -12,7 +12,7 @@ import type {
 	GraphCommit,
 	ChangeEncodingContext,
 } from "../../core/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeMessageCodec, makeMessageCodecs } from "../../shared-tree-core/messageCodecs.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -141,7 +141,7 @@ const testCases: EncodingTestData<
 
 describe("message codec", () => {
 	const family = makeMessageCodecs(TestChange.codecs, testRevisionTagCodec, {
-		jsonValidator: typeboxValidator,
+		jsonValidator: FormatValidatorBasic,
 	});
 
 	makeEncodingTestSuite(family, testCases);
@@ -152,7 +152,7 @@ describe("message codec", () => {
 			TestChange.codecs,
 			testRevisionTagCodec,
 			{
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 			},
 			version,
 		);

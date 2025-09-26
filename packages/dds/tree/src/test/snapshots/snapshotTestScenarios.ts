@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { typeboxValidator } from "../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import { getBranch, type SharedTreeOptions, Tree } from "../../shared-tree/index.js";
 import { createSnapshotCompressor, TestTreeProviderLite } from "../utils.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
@@ -27,7 +27,7 @@ export interface TestTree {
 // TODO: The generated test trees should eventually be updated to use the chunked-forest.
 export function generateTestTrees(options: SharedTreeOptions) {
 	const factoryOptions: SharedTreeOptions = {
-		jsonValidator: typeboxValidator,
+		jsonValidator: FormatValidatorBasic,
 		...options,
 	};
 	const factory = configuredSharedTree(factoryOptions).getFactory();
