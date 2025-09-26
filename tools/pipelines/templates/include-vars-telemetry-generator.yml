@@ -21,7 +21,7 @@ variables:
 # Same semantics as above two variables, but for pipelines that use the new ff_pipeline_host repository setup
 # for shared internal dependencies.
 - name: pathToTelemetryGeneratorNew
-  value: $(Build.SourcesDirectory)/node_modules/telemetry-generator
+  value: $(Build.SourcesDirectory)/node_modules/@ff-internal/telemetry-generator
   readonly: true
 
 - name: pathToTelemetryGeneratorHandlersNew
