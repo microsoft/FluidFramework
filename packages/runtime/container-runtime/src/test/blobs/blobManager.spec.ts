@@ -31,6 +31,7 @@ import {
 
 for (const createBlobPayloadPending of [false, true]) {
 	describe.only(`BlobManager (pending payloads): ${createBlobPayloadPending}`, () => {
+		// #region Detached usage
 		describe("Detached usage", () => {
 			it("Responds as expected for retrieving unknown blob IDs", async () => {
 				const { blobManager } = createTestMaterial({ createBlobPayloadPending });
@@ -88,6 +89,7 @@ for (const createBlobPayloadPending of [false, true]) {
 			});
 		});
 
+		// #region Attached usage
 		describe("Attached usage", () => {
 			describe("Normal usage", () => {
 				it("Responds as expected for unknown blob IDs", async () => {
@@ -514,6 +516,8 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			describe("getPendingBlobs", () => {});
 		});
+
+		// #region Summaries
 		describe("Summaries", () => {
 			describe("Generating summaries", () => {
 				it("Empty summary", () => {
@@ -680,9 +684,89 @@ for (const createBlobPayloadPending of [false, true]) {
 			});
 		});
 
+		// #region GC
 		describe("Garbage collection", () => {});
 
-		describe("Storage ID lookup", () => {});
+		// #region Storage ID lookup
+		describe("Storage ID lookup", () => {
+			it("lookupTemporaryBlobStorageId returns correct storage ID for attached blobs", async () => {
+				const { mockBlobStorage, mockRuntime, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
+				const handle = await blobManager.createBlob(textToBlob("hello"));
+				await ensureBlobsShared([handle]);
+				const { localId } = unpackHandle(handle);
+				const { ids } = getSummaryContentsWithFormatValidation(blobManager);
+				const expectedStorageId = ids?.[0];
+				assert(expectedStorageId !== undefined, "Storage id not found in summary");
+				const foundStorageId = blobManager.lookupTemporaryBlobStorageId(localId);
+				assert.strictEqual(
+					foundStorageId,
+					expectedStorageId,
+					"Storage ID should match expected value",
+				);
+			});
+
+			it("lookupTemporaryBlobStorageId returns undefined for pending blobs", async () => {
+				if (!createBlobPayloadPending) {
+					// This test only applies when payload pending is enabled
+					return;
+				}
+				const { mockBlobStorage, mockOrderingService, mockRuntime, blobManager } =
+					createTestMaterial({ createBlobPayloadPending });
+				await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
+				// Pause blob storage and ordering service so the upload will remain pending
+				mockBlobStorage.pause();
+				mockOrderingService.pause();
+
+				// Create a blob and attach the handle to start the upload attempt
+				const handle = await blobManager.createBlob(textToBlob("hello"));
+				attachHandle(handle);
+
+				const { localId } = unpackHandle(handle);
+
+				// The blob upload should be pending, so lookupTemporaryBlobStorageId should return undefined
+				const storageId1 = blobManager.lookupTemporaryBlobStorageId(localId);
+				assert.strictEqual(
+					storageId1,
+					undefined,
+					"Storage ID should be undefined while blob upload pending",
+				);
+
+				// Allow just the blob upload to process, but not the attach op
+				await mockBlobStorage.attachedStorage.waitProcessOne();
+				const storageId2 = blobManager.lookupTemporaryBlobStorageId(localId);
+				assert.strictEqual(
+					storageId2,
+					undefined,
+					"Storage ID should be undefined while blob attach op pending",
+				);
+
+				// Now allow the attach op to be sequenced
+				await mockOrderingService.waitSequenceOne();
+				await ensureBlobsShared([handle]);
+				const storageIdAfterProcessing = blobManager.lookupTemporaryBlobStorageId(localId);
+				assert(
+					storageIdAfterProcessing !== undefined,
+					"Storage ID should be found after processing",
+				);
+			});
+
+			it("lookupTemporaryBlobStorageId returns undefined for unknown blob ID", async () => {
+				const { mockBlobStorage, mockRuntime, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
+				const unknownId = "unknown-blob-id";
+				const storageId = blobManager.lookupTemporaryBlobStorageId(unknownId);
+				assert.strictEqual(
+					storageId,
+					undefined,
+					"Storage ID should be undefined for unknown blob ID",
+				);
+			});
+		});
 	});
 }
 
@@ -1143,78 +1227,6 @@ for (const createBlobPayloadPending of [false, true]) {
 // 				assert(
 // 					!redirectTable.has(blob2.storageId),
 // 					"blob2 storageId should have been deleted",
-// 				);
-// 			});
-// 		});
-
-// 		describe("Storage ID Lookup", () => {
-// 			it("lookupTemporaryBlobStorageId returns correct storage ID for attached blobs", async () => {
-// 				await runtime.attach();
-// 				await runtime.connect();
-
-// 				// Create a blob using the helper function
-// 				const blobContents = textToBlob("test blob content");
-// 				const handleP = runtime.createBlob(blobContents);
-// 				await runtime.processAll();
-
-// 				const blobHandle = await handleP;
-// 				const { localId } = unpackHandle(blobHandle);
-// 				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 				assert.strictEqual(summaryData.ids?.length, 1);
-// 				assert.strictEqual(summaryData.redirectTable?.length, 1);
-// 				const redirectTable = new Map<string, string>(summaryData.redirectTable);
-// 				const expectedStorageId: string | undefined = redirectTable.get(localId);
-// 				assert(expectedStorageId !== undefined, "storage id not found in redirect table");
-
-// 				// The blob should now have a storage ID available
-// 				const foundStorageId = runtime.blobManager.lookupTemporaryBlobStorageId(localId);
-// 				assert.strictEqual(
-// 					foundStorageId,
-// 					expectedStorageId,
-// 					"Storage ID should match expected value",
-// 				);
-// 			});
-
-// 			it("lookupTemporaryBlobStorageId returns undefined for pending blobs", async () => {
-// 				if (!createBlobPayloadPending) {
-// 					// This test only applies when payload pending is enabled
-// 					return;
-// 				}
-
-// 				await runtime.attach();
-// 				await runtime.connect();
-
-// 				// Create a blob but don't process it (keep it pending)
-// 				const blobContents = textToBlob("pending blob content");
-// 				const blobHandle = await runtime.createBlob(blobContents);
-
-// 				const { localId } = unpackHandle(blobHandle);
-
-// 				// The blob should be pending, so lookupTemporaryBlobStorageId should return undefined
-// 				const storageId = runtime.blobManager.lookupTemporaryBlobStorageId(localId);
-// 				assert.strictEqual(
-// 					storageId,
-// 					undefined,
-// 					"Storage ID should be undefined for pending blob",
-// 				);
-
-// 				// After processing, it should return the storage ID
-// 				await runtime.processAll();
-// 				const storageIdAfterProcessing =
-// 					runtime.blobManager.lookupTemporaryBlobStorageId(localId);
-// 				assert(
-// 					storageIdAfterProcessing !== undefined,
-// 					"Storage ID should be found after processing",
-// 				);
-// 			});
-
-// 			it("lookupTemporaryBlobStorageId returns undefined for unknown blob ID", () => {
-// 				const unknownId = "unknown-blob-id";
-// 				const storageId = runtime.blobManager.lookupTemporaryBlobStorageId(unknownId);
-// 				assert.strictEqual(
-// 					storageId,
-// 					undefined,
-// 					"Storage ID should be undefined for unknown blob ID",
 // 				);
 // 			});
 // 		});
