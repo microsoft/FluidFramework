@@ -315,13 +315,40 @@ stages:
               destPackageLocation: $(Build.SourcesDirectory)
 
         - ${{ if eq(parameters.cacheCompatVersionsInstalls, true) }}:
+          - task: Bash@3
+            displayName: Compute compat versions install location and version
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(Build.SourcesDirectory)/node_modules/@fluid-private/test-end-to-end-tests
+              # Using import.meta.resolve to compute this is more resilient to different install tree types.
+              # Also note that test-version-utils is esm-only, so cannot be loaded with require.
+              script: |
+                set -eu -o pipefail
+                node --input-type=module -e "
+                  import { createRequire } from 'module';
+                  const require = createRequire(import.meta.url);
+                  const path = require('path');
+                  const versionUtilsIndexUrl = await import.meta.resolve('@fluid-private/test-version-utils');
+                  const basePath = new URL(versionUtilsIndexUrl.replace('/lib/index.js', '')).pathname;
+                  const legacyModulesPath = path.join(basePath, 'node_modules', '.legacy');
+                  console.log('Resolved @fluid-private/test-version-utils legacy modules to ' + legacyModulesPath);
+                  console.log('##vso[task.setvariable variable=compatVersionInstallsPath]' + legacyModulesPath);
+                  const packageJsonPath = path.join(basePath, 'package.json');
+                  const packageJson = require(packageJsonPath);
+                  const packageVersion = packageJson.version;
+                  const [major, minor] = packageVersion.split('.');
+                  const cacheKey = 'major:' + major + ',minor:' + minor;
+                  console.log('Computed compat version cache key: ' + cacheKey);
+                  console.log('##vso[task.setvariable variable=compatVersionCacheKey;]'+ cacheKey);
+                "
+
           - task: Cache@2
             displayName: Cache compat versions install location
             timeoutInMinutes: 3
             continueOnError: true
             inputs:
-              key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}"'
-              path: $(Build.SourcesDirectory)/node_modules/@fluid-private/test-version-utils/node_modules/.legacy/
+              key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}" |  $(compatVersionCacheKey)'
+              path: $(compatVersionInstallsPath)
 
         # Only check out tenants from the tenant pool if we are running tests against ODSP
         - ${{ if or(eq(parameters.stageId, 'e2e_odsp'), eq(parameters.stageId, 'stress_tests_odsp')) }}:
