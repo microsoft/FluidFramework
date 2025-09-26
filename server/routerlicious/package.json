@@ -99,7 +99,7 @@
 		"@fluid-tools/build-cli": "^0.57.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.57.0",
-		"@microsoft/api-extractor": "^7.45.1",
+		"@microsoft/api-extractor": "^7.52.11",
 		"c8": "^10.1.3",
 		"changesets-format-with-issue-links": "^0.3.0",
 		"concurrently": "^8.2.1",
@@ -159,7 +159,7 @@
 			]
 		},
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.45.1": "patches/@microsoft__api-extractor@7.45.1.patch"
+			"@microsoft/api-extractor@7.52.11": "patches/@microsoft__api-extractor@7.52.11.patch"
 		}
 	}
 }

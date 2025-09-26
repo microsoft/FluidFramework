@@ -79,7 +79,7 @@
 		"@fluidframework/build-tools": "^0.57.0",
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
 		"@fluidframework/server-services-client-previous": "npm:@fluidframework/server-services-client@7.0.0",
-		"@microsoft/api-extractor": "^7.45.1",
+		"@microsoft/api-extractor": "^7.52.11",
 		"@types/debug": "^4.1.5",
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^10.0.1",

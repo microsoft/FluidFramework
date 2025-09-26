@@ -132,10 +132,6 @@ packages:
     resolution: {integrity: sha512-CCZCDJuduB9OUkFkY2IgppNZMi2lBQgD2qzwXkEia16cge2pijY/aXi96CJMquDMn3nJdlPV1A5KrJEXwfLNzQ==}
     engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
 
-  '@eslint-community/regexpp@4.8.1':
-    resolution: {integrity: sha512-PWiOzLIUAjN/w5K17PoF4n6sKBw0gqLHPhywmYHP4t1VFQQVYeb1yWsJwnMVEMl3tUHME7X/SJPZLmtG7XBDxQ==}
-    engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
-
   '@eslint/eslintrc@2.1.4':
     resolution: {integrity: sha512-269Z39MS6wVJtsoUl10L60WdkhJVdPG24Q4eZTH3nnF6lpvSShEK3wQjDX9JRWAUPvPh7COouPpU9IrqaZFvtQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
@@ -1246,10 +1242,6 @@ packages:
   http-response-object@3.0.2:
     resolution: {integrity: sha512-bqX0XTF6fnXSQcEJ2Iuyr75yVakyjIDCqroJQ/aHfSdlM743Cwqoi2nDYMzLGWUcuTWGWy8AAvOKXTfiv6q9RA==}
 
-  ignore@5.2.4:
-    resolution: {integrity: sha512-MAb38BcSbH0eHNBxn7ql2NH/kX33OkB3lZ1BNdh7ENeRChHTYsTvWrMubiIAMNS2llXEEgZ1MUOBtXChP3kaFQ==}
-    engines: {node: '>= 4'}
-
   ignore@5.3.2:
     resolution: {integrity: sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g==}
     engines: {node: '>= 4'}
@@ -2356,15 +2348,13 @@ snapshots:
 
   '@eslint-community/regexpp@4.12.1': {}
 
-  '@eslint-community/regexpp@4.8.1': {}
-
   '@eslint/eslintrc@2.1.4':
     dependencies:
       ajv: 6.12.6
       debug: 4.4.1
       espree: 9.6.1
       globals: 13.21.0
-      ignore: 5.2.4
+      ignore: 5.3.2
       import-fresh: 3.3.0
       js-yaml: 4.1.0
       minimatch: 3.1.2
@@ -3309,7 +3299,7 @@ snapshots:
     dependencies:
       escape-string-regexp: 1.0.5
       eslint: 8.57.1
-      ignore: 5.2.4
+      ignore: 5.3.2
 
   eslint-plugin-i@2.29.1(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.4.5))(eslint-import-resolver-typescript@4.4.4)(eslint@8.57.1):
     dependencies:
@@ -3418,7 +3408,7 @@ snapshots:
   eslint@8.57.1:
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0(eslint@8.57.1)
-      '@eslint-community/regexpp': 4.8.1
+      '@eslint-community/regexpp': 4.12.1
       '@eslint/eslintrc': 2.1.4
       '@eslint/js': 8.57.1
       '@humanwhocodes/config-array': 0.13.0
@@ -3442,7 +3432,7 @@ snapshots:
       glob-parent: 6.0.2
       globals: 13.21.0
       graphemer: 1.4.0
-      ignore: 5.2.4
+      ignore: 5.3.2
       imurmurhash: 0.1.4
       is-glob: 4.0.3
       is-path-inside: 3.0.3
@@ -3655,7 +3645,7 @@ snapshots:
       dir-glob: 3.0.1
       fast-glob: 3.3.2
       glob: 7.2.3
-      ignore: 5.2.4
+      ignore: 5.3.2
       merge2: 1.4.1
       slash: 3.0.0
 
@@ -3664,7 +3654,7 @@ snapshots:
       array-union: 2.1.0
       dir-glob: 3.0.1
       fast-glob: 3.3.2
-      ignore: 5.2.4
+      ignore: 5.3.2
       merge2: 1.4.1
       slash: 3.0.0
 
@@ -3730,8 +3720,6 @@ snapshots:
   http-response-object@3.0.2:
     dependencies:
       '@types/node': 10.17.60
-
-  ignore@5.2.4: {}
 
   ignore@5.3.2: {}
 
