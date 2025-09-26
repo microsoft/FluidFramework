@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
 import { type Reducer, combineReducers } from "@fluid-private/stochastic-test-utils";
 import type { DDSFuzzTestState, Client } from "@fluid-private/test-dds-utils";
@@ -50,6 +50,8 @@ import {
 	type NodeObjectValue,
 	type GUIDNodeValue,
 	type ForkMergeOperation,
+	type SharedBranchOperation,
+	type SharedBranchNumber,
 } from "./operationTypes.js";
 
 import { getOrCreateInnerNode } from "../../../simple-tree/index.js";
@@ -99,11 +101,17 @@ const syncFuzzReducer = combineReducers<
 	forkMergeOperation: (state, operation) => {
 		applyForkMergeOperation(state, operation);
 	},
+	sharedBranchOperation: (state, operation) => {
+		applySharedBranchOperation(state, operation);
+	},
 });
 export const fuzzReducer: Reducer<
 	Operation,
 	DDSFuzzTestState<IChannelFactory<ISharedTree>>
-> = (state, operation) => syncFuzzReducer(state, operation);
+> = (state, operation) => {
+	// This is a good place to put a breakpoint when debugging a scenario
+	return syncFuzzReducer(state, operation);
+};
 
 export function checkTreesAreSynchronized(
 	trees: readonly Client<IChannelFactory<ISharedTree>>[],
@@ -191,6 +199,78 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
 	const transactionViews = state.transactionViews ?? new Map();
 	transactionViews.set(state.client.channel, newView);
 	state.transactionViews = transactionViews;
+}
+
+export function applySharedBranchOperation(
+	state: FuzzTestState,
+	sharedBranchOp: SharedBranchOperation,
+) {
+	state.sharedBranchIdToNumber ??= new Map<string, SharedBranchNumber>();
+	state.sharedBranchNumberToId ??= new Map<SharedBranchNumber, string>();
+	state.activeSharedBranch ??= new Map();
+	state.sharedBranchViews ??= new Map();
+
+	switch (sharedBranchOp.contents.type) {
+		case "createSharedBranch": {
+			const branchId = state.client.channel.createSharedBranch();
+			state.sharedBranchIdToNumber.set(branchId, sharedBranchOp.contents.branchNumber);
+			state.sharedBranchNumberToId.set(sharedBranchOp.contents.branchNumber, branchId);
+			break;
+		}
+		case "checkoutSharedBranch": {
+			const branchNumber = sharedBranchOp.contents.branchNumber;
+			const branchId =
+				state.sharedBranchNumberToId.get(branchNumber) ?? fail("Branch does not exist");
+			let sharedViewMap = state.sharedBranchViews.get(state.client.channel);
+			if (sharedViewMap === undefined) {
+				sharedViewMap = new Map<SharedBranchNumber, FuzzView>();
+				state.sharedBranchViews.set(state.client.channel, sharedViewMap);
+			}
+			let branchView = sharedViewMap.get(branchNumber);
+			if (branchView === undefined) {
+				const mainBranchView = viewFromState(state, state.client);
+				branchView = state.client.channel.viewSharedBranchWith(
+					branchId,
+					new TreeViewConfiguration({ schema: mainBranchView.schema }),
+				) as FuzzView;
+				assert.equal(branchView.currentSchema, undefined);
+				const treeSchema = mainBranchView.currentSchema;
+				branchView.currentSchema =
+					treeSchema ?? assert.fail("nodeSchema should not be undefined");
+
+				convertToFuzzView(branchView, branchView.currentSchema);
+				sharedViewMap.set(branchNumber, branchView);
+			}
+			state.activeSharedBranch.set(state.client.channel, {
+				branchNumber,
+				view: branchView,
+			});
+			break;
+		}
+		case "checkoutMainBranch": {
+			const isRemovalEffective = state.activeSharedBranch.delete(state.client.channel);
+			assert(isRemovalEffective, "Client should have a shared branch checked out.");
+			// Note that we do not delete the shared branch view from state.sharedBranchViews here,
+			// as the client may check out this branch again later (and SharedTree does not support checking out the same shared branch multiple times).
+			break;
+		}
+		case "mergeSharedBranch": {
+			const mainBranchView =
+				state.clientViews?.get(state.client.channel) ??
+				fail("Client main view should be defined.");
+			// We only allow merging shared branches that have already been checked out by the client.
+			const branchView =
+				state.sharedBranchViews
+					.get(state.client.channel)
+					?.get(sharedBranchOp.contents.branchNumber) ??
+				fail("Branch view should be defined.");
+
+			mainBranchView.merge(branchView, false);
+			break;
+		}
+		default:
+			break;
+	}
 }
 
 export function applyForkMergeOperation(state: FuzzTestState, branchEdit: ForkMergeOperation) {
