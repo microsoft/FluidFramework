@@ -33,7 +33,7 @@ module.exports = {
 
 				for (const comment of comments) {
 					// Find any JSDoc/TSDoc tags followed by a hyphen
-					const matches = comment.value.matchAll(/(@[a-zA-Z0-9]+)\s+-(.*)/g);
+					const matches = comment.value.matchAll(/(@[a-zA-Z0-9]+)\s*?-(.*)/g);
 					for (const match of matches) {
 						const [fullMatch, tag, body] = match;
 
