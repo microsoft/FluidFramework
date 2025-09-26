@@ -32,11 +32,11 @@ export class RedisThrottleAndUsageStorageManager implements IThrottleAndUsageSto
 		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
 		parameters?: IRedisParameters,
 	) {
-		if (parameters?.expireAfterSeconds) {
+		if (parameters?.expireAfterSeconds !== undefined) {
 			this.expireAfterSeconds = parameters.expireAfterSeconds;
 		}
 
-		if (parameters?.prefix) {
+		if (parameters?.prefix !== undefined) {
 			this.prefix = parameters.prefix;
 		}
 
@@ -114,7 +114,7 @@ export class RedisThrottleAndUsageStorageManager implements IThrottleAndUsageSto
 
 	public async getUsageData(id: string): Promise<IUsageData | undefined> {
 		const usageDataString = await this.redisClientConnectionManager.getRedisClient().rpop(id);
-		if (usageDataString) {
+		if (usageDataString !== null) {
 			return JSON.parse(usageDataString) as IUsageData;
 		}
 		return undefined;

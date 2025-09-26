@@ -12,7 +12,7 @@ export class TestRedisClientConnectionManagerWithInvalidation
 	implements IRedisClientConnectionManager
 {
 	private readonly options: Redis.RedisOptions;
-	private mockRedisClient: Redis.Redis;
+	private mockRedisClient!: Redis.Redis;
 
 	constructor(options?) {
 		this.options = options;

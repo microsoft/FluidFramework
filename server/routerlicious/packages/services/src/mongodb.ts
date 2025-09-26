@@ -105,7 +105,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 		const req: () => Promise<T[]> = async () => {
 			let queryCursor = this.collection.find<T>(query).sort(sort).limit(limit);
 
-			if (skip) {
+			if (skip !== undefined) {
 				queryCursor = queryCursor.skip(skip);
 			}
 			return queryCursor.toArray();
@@ -731,8 +731,8 @@ export class MongoDbFactory implements core.IDbFactory {
 		this.connectionPoolMaxSize = connectionPoolMaxSize;
 		this.connectionNotAvailableMode = connectionNotAvailableMode ?? "ruleBehavior";
 		this.directConnection = directConnection ?? false;
-		this.retryEnabled = config.facadeLevelRetry || false;
-		this.telemetryEnabled = config.facadeLevelTelemetry || false;
+		this.retryEnabled = config.facadeLevelRetry ?? false;
+		this.telemetryEnabled = config.facadeLevelTelemetry ?? false;
 		this.retryRuleOverride = config.facadeLevelRetryRuleOverride
 			? new Map(Object.entries(config.facadeLevelRetryRuleOverride))
 			: new Map();

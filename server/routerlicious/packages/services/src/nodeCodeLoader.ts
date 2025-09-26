@@ -23,7 +23,7 @@ const signalFileName = "dummy";
 export class NodeAllowList {
 	constructor() {}
 
-	public async testSource(source: any) {
+	public async testSource(source: any): Promise<boolean> {
 		return Promise.resolve(true);
 	}
 }
