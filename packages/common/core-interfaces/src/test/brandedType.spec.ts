@@ -4,6 +4,13 @@
  */
 
 import { createInstanceOf } from "./testUtils.js";
+import type { BrandedString } from "./testValues.js";
+import {
+	brandedNumber,
+	brandedString,
+	brandedObject,
+	brandedObjectWithString,
+} from "./testValues.js";
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- incorrect rule: misunderstands `declare`d types.
 import type { BrandedType } from "@fluidframework/core-interfaces/internal";
@@ -67,6 +74,22 @@ declare class AnotherBrandUsingPrivateKey<
 	const T,
 > extends BrandedType<"Any Brand Using Private Key"> {
 	private readonly Private: unknown;
+	private constructor();
+}
+
+// Test examples of poorly declared brands that do not distinguish - DO NOT USE this pattern
+// Note that here the Brands given to BrandedType are effectively the same even though they
+// appear different.
+declare class UndistinguishedBrand<const T> extends BrandedType<
+	UndistinguishedBrand<unknown>
+> {
+	public readonly Undistinguished: T;
+	private constructor();
+}
+declare class AnotherUndistinguishedBrand<const T> extends BrandedType<
+	AnotherUndistinguishedBrand<unknown>
+> {
+	public readonly Undistinguished: T;
 	private constructor();
 }
 
@@ -292,6 +315,92 @@ describe("BrandedType", () => {
 			);
 			parameterAcceptedAs<ContravariantBrand<false>>(
 				createInstanceOf<InvariantBrandFromCoAndContraVariants<boolean>>(),
+			);
+		});
+	});
+
+	describe("incorrect declarations allow potentially undesired compatibility", () => {
+		it("`UndistinguishedBrand<T>` and `AnotherUndistinguishedBrand<T>` are not compatible in any direction", () => {
+			parameterAcceptedAs<AnotherUndistinguishedBrand<string>>(
+				createInstanceOf<UndistinguishedBrand<string>>(),
+			);
+			parameterAcceptedAs<UndistinguishedBrand<number>>(
+				createInstanceOf<AnotherUndistinguishedBrand<number>>(),
+			);
+		});
+	});
+
+	describe("simple brands are covariant over brand", () => {
+		it("`BrandedType<B>` is assignable to `BrandedType<A>` when `B` is a subtype of `A`", () => {
+			parameterAcceptedAs<BrandedType<`encoded${string}`>>(
+				createInstanceOf<BrandedType<"encoded">>(),
+			);
+			parameterAcceptedAs<BrandedType<"zero" | "positive">>(
+				createInstanceOf<BrandedType<"zero">>(),
+			);
+			parameterAcceptedAs<BrandedType<"zero" | "positive">>(
+				createInstanceOf<BrandedType<"positive">>(),
+			);
+		});
+		it("`BrandedType<B>` is NOT assignable to `BrandedType<A>` when `A` is a subtype of `B`", () => {
+			parameterAcceptedAs<BrandedType<"encoded">>(
+				// @ts-expect-error Type 'BrandedType<`encoded${string}`>' is not assignable to type 'BrandedType<"encoded">'
+				createInstanceOf<BrandedType<`encoded${string}`>>(),
+			);
+			parameterAcceptedAs<BrandedType<"zero">>(
+				// @ts-expect-error Type 'BrandedType<"zero" | "positive">' is not assignable to type 'BrandedType<"zero">'
+				createInstanceOf<BrandedType<"zero" | "positive">>(),
+			);
+		});
+	});
+
+	describe("simple brands can define their own compatibility", () => {
+		it("`B & BrandedType<X>` is assignable to `A & BrandedType<X>` when `B` is a subtype of `A`", () => {
+			parameterAcceptedAs<BrandedString>(createInstanceOf<"B" & BrandedType<"encoded">>());
+			parameterAcceptedAs<typeof brandedNumber>(createInstanceOf<0 & BrandedType<"zero">>());
+			parameterAcceptedAs<typeof brandedObject>(
+				createInstanceOf<(() => void) & BrandedType<"its a secret">>(),
+			);
+			parameterAcceptedAs<typeof brandedObjectWithString>(
+				createInstanceOf<
+					{
+						string: "literal";
+					} & BrandedType<"metadata">
+				>(),
+			);
+			parameterAcceptedAs<((a: string) => void) & BrandedType<"function brand">>(
+				createInstanceOf<(() => object) & BrandedType<"function brand">>(),
+			);
+		});
+
+		it("`B & BrandedType<X>` is NOT assignable to `A & BrandedType<X>` when `A` is a subtype of `B`", () => {
+			parameterAcceptedAs<"B" & BrandedType<"encoded">>(
+				// @ts-expect-error Type 'string & BrandedType<"encoded">' is not assignable to type '"B" & BrandedType<"encoded">'
+				brandedString,
+			);
+			parameterAcceptedAs<0 & BrandedType<"zero">>(
+				// @ts-expect-error Type 'number & BrandedType<"zero">' is not assignable to type '0 & BrandedType<"zero">'
+				brandedNumber,
+			);
+			parameterAcceptedAs<(() => void) & BrandedType<"its a secret">>(
+				// @ts-expect-error Type 'object & BrandedType<"its a secret">' is not assignable to type '() => void & BrandedType<"its a secret">'
+				brandedObject,
+			);
+			parameterAcceptedAs<
+				{
+					string: "literal";
+				} & BrandedType<"metadata">
+			>(
+				// @ts-expect-error '{ string: string; } & BrandedType<"metadata">' is not assignable to parameter of type '{ string: "literal"; } & BrandedType<"metadata">'
+				brandedObjectWithString,
+			);
+			parameterAcceptedAs<(() => void) & BrandedType<"function brand">>(
+				// @ts-expect-error Type '((a: string) => void) & BrandedType<"function brand">' is not assignable to type '(() => void) & BrandedType<"function brand">'
+				createInstanceOf<((a: string) => void) & BrandedType<"function brand">>(),
+			);
+			parameterAcceptedAs<((a: string) => object) & BrandedType<"function brand">>(
+				// @ts-expect-error Type '((a: string) => void) & BrandedType<"function brand">' is not assignable to parameter of type '((a: string) => object) & BrandedType<"function brand">'
+				createInstanceOf<((a: string) => void) & BrandedType<"function brand">>(),
 			);
 		});
 	});

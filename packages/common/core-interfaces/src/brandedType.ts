@@ -7,16 +7,29 @@
  * Base branded type which can be used to annotate other type.
  *
  * @remarks
- * To use, derive another class declaration and ideally add additional private
- * and/or protected (generally preferred) properties to distinguish the type.
- * (Any private properties should be typed as `unknown` as external to module
- * the only thing known about a private property is that it exists.)
- * A private constructor is recommended to seal the brand class.
- *
  * `BrandedType` is covariant over its type parameter, which could be leveraged
  * for any generic type, but the preferred pattern is to specify variance
- * explicitly in the derived class. It is convenient to have the derived class
- * be the generic given to `BrandedType`.
+ * explicitly in a derived class making that clear and guaranteeing branding is
+ * unique. It is convenient to have the derived class be the generic given to
+ * `BrandedType`.
+ *
+ * ### Direct use [simple]
+ *
+ * Use `T & BrandedType<"BrandName">` to create a type conforming to `T` and
+ * also branded with name "BrandName".
+ *
+ * ### Derived class use [preferred]
+ *
+ * Derive another class declaration and ideally add additional
+ * protected properties to distinguish the type. (Private properties would
+ * {@link https://github.com/microsoft/TypeScript/issues/20979#issuecomment-361432516|lose their type when exported}
+ * and public properties would allow structural typing and show up on the branded
+ * values.)
+ *
+ * Then use `T & MyBrandedType<U>` to create a type conforming to `T` and
+ * also branded with the derived brand.
+ *
+ * ### Runtime
  *
  * Since branded types are not real value types, they will always need to be
  * created using `as` syntax and often `as unknown` first.
@@ -56,7 +69,6 @@
  * }
  * ```
  *
- * @sealed
  * @internal
  */
 export declare class BrandedType<out Brand> {
