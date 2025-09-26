@@ -337,9 +337,9 @@ stages:
                   const packageJson = require(packageJsonPath);
                   const packageVersion = packageJson.version;
                   const [major, minor] = packageVersion.split('.');
-                  const cacheKey = major + '.' + minor;
+                  const cacheKey = 'major:' + major + ',minor:' + minor;
                   console.log('Computed compat version cache key: ' + cacheKey);
-                  console.log('##vso[task.setvariable variable=compatVersionCacheKey;]'+ major + '.' + cacheKey);
+                  console.log('##vso[task.setvariable variable=compatVersionCacheKey;]'+ cacheKey);
                 "
 
           - task: Cache@2
