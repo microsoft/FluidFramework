@@ -309,50 +309,10 @@ stages:
                 tar --extract --verbose --file $TAR_PATH ./dist/test
                 tar --extract --verbose --file $TAR_PATH ./src/test
 
-          # The test workload we are running frequently depends on devDependencies of the package being installed.
-          # To make sure these are available, copy them to the root package.json and reinstall.
-          - task: Bash@3
-            displayName: Copy devDependencies
-            inputs:
-              targetType: 'inline'
-              script: |
-                set -eu -o pipefail
-
-                testPkgJsonPath=$(Build.SourcesDirectory)/node_modules/${{ parameters.testPackage }}/package.json
-                pkgJsonPath=$(Build.SourcesDirectory)/package.json
-                node -e "
-                  const { devDependencies } = require('$testPkgJsonPath');
-                  const pkg = require('$pkgJsonPath');
-                  if (!pkg.devDependencies) {
-                    pkg.devDependencies = {};
-                  }
-                  // Avoid copying some common dev dependencies that should only be required at build time.
-                  // Keeping the dependency tree small helps reduce job time and likelihood of install failures, since
-                  // dependencies added as part of this step won't be reproducible via pnpm-lock.
-                  const avoidCopying = new Set([
-                    '@types/node',
-                    'typescript',
-                    '@microsoft/api-extractor',
-                    '@fluid-tools/build-cli',
-                    '@fluidframework/build-common',
-                    '@fluidframework/build-tools'
-                  ]);
-                  for (const [k, v] of Object.entries(devDependencies)) {
-                    if (!pkg.devDependencies[k] && !avoidCopying.has(k)) {
-                      // Note that if you use string interpolation, bash interpreting the dollar sign takes precedence.
-                      console.log('Adding devDependency ' + k + '@' + v);
-                      pkg.devDependencies[k] = v;
-                    }
-                  }
-                  require('fs').writeFileSync('$pkgJsonPath', JSON.stringify(pkg));
-                "
-
-          - task: Bash@3
-            displayName: 'pnpm install - extra dependencies for test files'
-            retryCountOnTaskFailure: 10
-            inputs:
-              targetType: 'inline'
-              script: 'pnpm install --no-frozen-lockfile'
+          - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
+            parameters:
+              sourcePackageLocation: $(Build.SourcesDirectory)/node_modules/${{ parameters.testPackage }}
+              destPackageLocation: $(Build.SourcesDirectory)
 
         - ${{ if eq(parameters.cacheCompatVersionsInstalls, true) }}:
           - task: Cache@2
