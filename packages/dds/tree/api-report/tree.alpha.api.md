@@ -124,6 +124,9 @@ export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidH
     [key: string]: ConciseTree<THandle>;
 };
 
+// @beta
+export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
+
 // @alpha
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
 
@@ -275,13 +278,13 @@ export interface ForestOptions {
 export interface ForestType extends ErasedType<"ForestType"> {
 }
 
-// @alpha
+// @beta
 export const ForestTypeExpensiveDebug: ForestType;
 
-// @alpha
+// @beta
 export const ForestTypeOptimized: ForestType;
 
-// @alpha
+// @beta
 export const ForestTypeReference: ForestType;
 
 // @alpha @sealed
@@ -314,7 +317,7 @@ export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
 
 // @alpha @input
 export interface ICodecOptions {
-    readonly jsonValidator: JsonValidator | FormatValidator;
+    readonly jsonValidator: FormatValidator;
 }
 
 // @alpha
@@ -553,11 +556,6 @@ export type JsonTreeSchema = JsonFieldSchema & {
 };
 
 // @alpha @input
-export interface JsonValidator {
-    compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
-}
-
-// @alpha @input
 export enum KeyEncodingOptions {
     allStoredKeys = "allStoredKeys",
     knownStoredKeys = "knownStoredKeys",
@@ -654,9 +652,6 @@ export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
 export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown> extends NodeSchemaOptions<TCustomMetadata> {
     readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }
-
-// @alpha
-export const noopValidator: JsonValidator;
 
 // @alpha @sealed
 export interface NormalizedAnnotatedAllowedTypes extends AnnotatedAllowedTypes<TreeNodeSchema> {
@@ -916,11 +911,6 @@ export class SchemaUpgrade {
     protected _typeCheck: MakeNominal;
 }
 
-// @alpha @input
-export interface SchemaValidationFunction<Schema extends TSchema> {
-    check(data: unknown): data is Static<Schema>;
-}
-
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
@@ -943,7 +933,10 @@ export const SharedTreeFormatVersion: {
 export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 
 // @alpha @input
-export type SharedTreeOptions = Partial<CodecWriteOptions> & Partial<SharedTreeFormatOptions> & ForestOptions;
+export type SharedTreeOptions = Partial<CodecWriteOptions> & Partial<SharedTreeFormatOptions> & SharedTreeOptionsBeta;
+
+// @beta @input
+export type SharedTreeOptionsBeta = ForestOptions;
 
 // @alpha @sealed
 export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBaseAlpha<NodeKind.Array, TCustomMetadata> {
@@ -1572,9 +1565,6 @@ export interface TreeViewEvents {
     rootChanged(): void;
     schemaChanged(): void;
 }
-
-// @alpha
-export const typeboxValidator: JsonValidator;
 
 // @public @deprecated @system
 const typeNameSymbol: unique symbol;

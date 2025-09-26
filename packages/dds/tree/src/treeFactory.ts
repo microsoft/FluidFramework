@@ -20,6 +20,7 @@ import {
 	SharedTreeKernel,
 	type ITreePrivate,
 	type SharedTreeOptions,
+	type SharedTreeOptionsBeta,
 	type SharedTreeOptionsInternal,
 	type SharedTreeKernelView,
 } from "./shared-tree/index.js";
@@ -91,26 +92,65 @@ export const SharedTree = configuredSharedTree({});
 /**
  * {@link SharedTree} but allowing a non-default configuration.
  * @remarks
- * This is useful for debugging and testing to opt into extra validation or see if opting out of some optimizations fixes an issue.
+ * This is useful for debugging and testing.
+ * For example it can be used to opt into extra validation or see if opting out of some optimizations fixes an issue.
+ *
+ * With great care, and knowledge of the support and stability of the options exposed here,
+ * this can also be used to opt into some features early or for performance tuning.
+ *
  * @example
  * ```typescript
  * import {
- * 	ForestType,
+ * 	configuredSharedTreeBeta,
+ * 	ForestTypeReference,
+ * } from "fluid-framework/beta";
+ * const SharedTree = configuredSharedTree({
+ * 	forest: ForestTypeReference,
+ * });
+ * ```
+ * @privateRemarks
+ * The Legacy `ISharedObjectKind<ITree>` type is omitted here for simplicity.
+ * @beta
+ */
+export function configuredSharedTreeBeta(
+	options: SharedTreeOptionsBeta,
+): SharedObjectKind<ITree> {
+	return configuredSharedTree(options);
+}
+
+/**
+ * {@link configuredSharedTreeBeta} including the legacy `ISharedObjectKind` type.
+ * @privateRemarks
+ * This is given a different export name (with legacy appended) to avoid the need to do the special reexport with different types from the fluid-framework package.
+ * @legacy @beta
+ */
+export function configuredSharedTreeBetaLegacy(
+	options: SharedTreeOptionsBeta,
+): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
+	return configuredSharedTree(options);
+}
+
+/**
+ * {@link configuredSharedTreeBetaLegacy} but including `@alpha` options.
+ *
+ * @example
+ * ```typescript
+ * import {
  * 	TreeCompressionStrategy,
  * 	configuredSharedTree,
- * 	typeboxValidator,
+ * 	FormatValidatorBasic,
+ * 	ForestTypeReference,
  * } from "@fluidframework/tree/internal";
  * const SharedTree = configuredSharedTree({
  * 	forest: ForestTypeReference,
- * 	jsonValidator: typeboxValidator,
+ * 	jsonValidator: FormatValidatorBasic,
  * 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
  * });
  * ```
  * @privateRemarks
- * This should be legacy, but has to be internal due to limitations of API tagging preventing it from being both alpha and alpha+legacy.
- * TODO:
- * Expose Ajv validator for better error message quality somehow.
- * Maybe as part of a test utils or dev-tool package?
+ * This should be legacy, but has to be internal due to no alpha+legacy being setup yet.
+ *
+ * This should be renamed to `configuredSharedTreeAlpha` to avoid colliding with the eventual public version which will have less options.
  * @internal
  */
 export function configuredSharedTree(
