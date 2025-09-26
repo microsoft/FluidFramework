@@ -4,20 +4,6 @@
 
 ```ts
 
-import type * as git from '@fluidframework/gitresources';
-import { ICommittedProposal } from '@fluidframework/protocol-definitions';
-import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
-import { IProcessMessageResult } from '@fluidframework/protocol-definitions';
-import { IQuorum } from '@fluidframework/protocol-definitions';
-import type { IQuorumClients } from '@fluidframework/protocol-definitions';
-import type { IQuorumProposals } from '@fluidframework/protocol-definitions';
-import { ISequencedClient } from '@fluidframework/protocol-definitions';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISequencedProposal } from '@fluidframework/protocol-definitions';
-import { ISnapshotTreeEx } from '@fluidframework/protocol-definitions';
-import { SummaryObject } from '@fluidframework/protocol-definitions';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
-
 // @internal
 export function buildGitTreeHierarchy(flatTree: git.ITree, blobsShaToPathCache?: Map<string, string>, removeAppTreePrefix?: boolean): ISnapshotTreeEx;
 
