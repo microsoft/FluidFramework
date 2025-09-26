@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@types/node@<18': ^18.19.39
+  '@types/node': ~20.0.0
   oclif>@aws-sdk/client-cloudfront: npm:empty-npm-package@1.0.0
   oclif>@aws-sdk/client-s3: npm:empty-npm-package@1.0.0
   qs: ^6.11.0
@@ -116,13 +116,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
+        version: 0.57.0(@types/node@20.0.0)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)
+        version: 0.57.0(@types/node@20.0.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
@@ -130,8 +130,8 @@ importers:
         specifier: npm:@fluidframework/server-kafka-orderer@7.0.0
         version: '@fluidframework/server-kafka-orderer@7.0.0'
       '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
+        specifier: ~20.0.0
+        version: 20.0.0
       concurrently:
         specifier: ^8.2.1
         version: 8.2.1
@@ -222,13 +222,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
+        version: 0.57.0(@types/node@20.0.0)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)
+        version: 0.57.0(@types/node@20.0.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
@@ -254,8 +254,8 @@ importers:
         specifier: ^0.10.2
         version: 0.10.6
       '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
+        specifier: ~20.0.0
+        version: 20.0.0
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
@@ -328,13 +328,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
+        version: 0.57.0(@types/node@20.0.0)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)
+        version: 0.57.0(@types/node@20.0.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
@@ -354,8 +354,8 @@ importers:
         specifier: ^10.0.1
         version: 10.0.10
       '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
+        specifier: ~20.0.0
+        version: 20.0.0
       c8:
         specifier: ^10.1.3
         version: 10.1.3
@@ -419,13 +419,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
+        version: 0.57.0(@types/node@20.0.0)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)
+        version: 0.57.0(@types/node@20.0.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
@@ -434,7 +434,7 @@ importers:
         version: '@fluidframework/server-local-server@7.0.0'
       '@microsoft/api-extractor':
         specifier: ^7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.39)
+        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@20.0.0)
       '@types/jsrsasign':
         specifier: ^10.5.12
         version: 10.5.12
@@ -445,8 +445,8 @@ importers:
         specifier: ^9.3.0
         version: 9.3.1
       '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
+        specifier: ~20.0.0
+        version: 20.0.0
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
@@ -523,8 +523,8 @@ importers:
         specifier: ^4.14.118
         version: 4.14.202
       '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
+        specifier: ~20.0.0
+        version: 20.0.0
       '@types/ws':
         specifier: ^6.0.1
         version: 6.0.4
@@ -555,13 +555,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
+        version: 0.57.0(@types/node@20.0.0)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)
+        version: 0.57.0(@types/node@20.0.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
@@ -613,13 +613,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
+        version: 0.57.0(@types/node@20.0.0)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)
+        version: 0.57.0(@types/node@20.0.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
@@ -628,7 +628,7 @@ importers:
         version: '@fluidframework/protocol-base@7.0.0'
       '@microsoft/api-extractor':
         specifier: ^7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.39)
+        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@20.0.0)
       '@types/assert':
         specifier: ^1.5.1
         version: 1.5.6
@@ -636,8 +636,8 @@ importers:
         specifier: ^10.0.1
         version: 10.0.10
       '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
+        specifier: ~20.0.0
+        version: 20.0.0
       c8:
         specifier: ^10.1.3
         version: 10.1.3
@@ -725,13 +725,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
+        version: 0.57.0(@types/node@20.0.0)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)
+        version: 0.57.0(@types/node@20.0.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
@@ -745,8 +745,8 @@ importers:
         specifier: ^0.10.2
         version: 0.10.6
       '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
+        specifier: ~20.0.0
+        version: 20.0.0
       concurrently:
         specifier: ^8.2.1
         version: 8.2.1
@@ -870,13 +870,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
+        version: 0.57.0(@types/node@20.0.0)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)
+        version: 0.57.0(@types/node@20.0.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
@@ -926,8 +926,8 @@ importers:
         specifier: ^0.10.2
         version: 0.10.6
       '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
+        specifier: ~20.0.0
+        version: 20.0.0
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
@@ -1045,13 +1045,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
+        version: 0.57.0(@types/node@20.0.0)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)
+        version: 0.57.0(@types/node@20.0.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1074,8 +1074,8 @@ importers:
         specifier: ^10.0.1
         version: 10.0.10
       '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
+        specifier: ~20.0.0
+        version: 20.0.0
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
@@ -1151,13 +1151,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
+        version: 0.57.0(@types/node@20.0.0)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)
+        version: 0.57.0(@types/node@20.0.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1166,7 +1166,7 @@ importers:
         version: '@fluidframework/server-services-client@7.0.0'
       '@microsoft/api-extractor':
         specifier: ^7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.39)
+        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@20.0.0)
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.12
@@ -1177,8 +1177,8 @@ importers:
         specifier: ^10.0.1
         version: 10.0.10
       '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
+        specifier: ~20.0.0
+        version: 20.0.0
       axios-mock-adapter:
         specifier: ^1.19.0
         version: 1.21.5(axios@1.8.4(debug@4.4.1))
@@ -1228,8 +1228,8 @@ importers:
         specifier: ^0.10.2
         version: 0.10.6
       '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
+        specifier: ~20.0.0
+        version: 20.0.0
       debug:
         specifier: ^4.3.4
         version: 4.4.1(supports-color@8.1.1)
@@ -1242,13 +1242,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
+        version: 0.57.0(@types/node@20.0.0)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)
+        version: 0.57.0(@types/node@20.0.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1315,13 +1315,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
+        version: 0.57.0(@types/node@20.0.0)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)
+        version: 0.57.0(@types/node@20.0.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1338,8 +1338,8 @@ importers:
         specifier: ^5.1.0
         version: 5.1.1
       '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
+        specifier: ~20.0.0
+        version: 20.0.0
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
@@ -1394,13 +1394,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
+        version: 0.57.0(@types/node@20.0.0)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)
+        version: 0.57.0(@types/node@20.0.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1420,8 +1420,8 @@ importers:
         specifier: ^5.1.0
         version: 5.1.1
       '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
+        specifier: ~20.0.0
+        version: 20.0.0
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
@@ -1455,13 +1455,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
+        version: 0.57.0(@types/node@20.0.0)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)
+        version: 0.57.0(@types/node@20.0.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1478,8 +1478,8 @@ importers:
         specifier: ^5.1.0
         version: 5.1.1
       '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
+        specifier: ~20.0.0
+        version: 20.0.0
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
@@ -1582,13 +1582,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
+        version: 0.57.0(@types/node@20.0.0)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)
+        version: 0.57.0(@types/node@20.0.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1614,8 +1614,8 @@ importers:
         specifier: ^0.10.2
         version: 0.10.6
       '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
+        specifier: ~20.0.0
+        version: 20.0.0
       '@types/supertest':
         specifier: ^2.0.5
         version: 2.0.12
@@ -1667,13 +1667,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
+        version: 0.57.0(@types/node@20.0.0)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)
+        version: 0.57.0(@types/node@20.0.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1684,8 +1684,8 @@ importers:
         specifier: ^10.0.1
         version: 10.0.10
       '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
+        specifier: ~20.0.0
+        version: 20.0.0
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
@@ -1773,13 +1773,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
+        version: 0.57.0(@types/node@20.0.0)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)
+        version: 0.57.0(@types/node@20.0.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1814,8 +1814,8 @@ importers:
         specifier: ^0.10.2
         version: 0.10.6
       '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
+        specifier: ~20.0.0
+        version: 20.0.0
       '@types/supertest':
         specifier: ^2.0.5
         version: 2.0.12
@@ -1897,13 +1897,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
+        version: 0.57.0(@types/node@20.0.0)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.57.0
-        version: 0.57.0(@types/node@18.19.39)
+        version: 0.57.0(@types/node@20.0.0)
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1917,8 +1917,8 @@ importers:
         specifier: ^10.0.1
         version: 10.0.10
       '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
+        specifier: ~20.0.0
+        version: 20.0.0
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
@@ -2063,7 +2063,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.1.6)
       '@microsoft/api-extractor':
         specifier: ^7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.39)
+        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@20.0.0)
       '@types/compression':
         specifier: ^1.7.2
         version: 1.7.3
@@ -2098,8 +2098,8 @@ importers:
         specifier: ^0.10.0
         version: 0.10.6
       '@types/node':
-        specifier: ^18.19.39
-        version: 18.19.39
+        specifier: ~20.0.0
+        version: 20.0.0
       '@types/rimraf':
         specifier: ^3.0.0
         version: 3.0.2
@@ -2535,7 +2535,7 @@ packages:
     resolution: {integrity: sha512-PgP35JfmGjHU0LSXOyRew0zHuA9N6OJwOlos1fZ20b7j8ISeAdib3L+n0jIxBtX958UeEpte6xhG/gxJ5iUqMw==}
     engines: {node: '>=18'}
     peerDependencies:
-      '@types/node': '>=18'
+      '@types/node': ~20.0.0
 
   '@inquirer/confirm@3.2.0':
     resolution: {integrity: sha512-oOIwPs0Dvq5220Z8lGL/6LHRTEr9TgLHmiI99Rj1PJ1p1czTys+olrgBqZk4E2qC0YTzeHprxSQmoHioVdJ7Lw==}
@@ -2545,7 +2545,7 @@ packages:
     resolution: {integrity: sha512-fuF9laMmHoOgWapF9h9hv6opA5WvmGFHsTYGCmuFxcghIhEhb3dN0CdQR4BUMqa2H506NCj8cGX4jwMsE4t6dA==}
     engines: {node: '>=18'}
     peerDependencies:
-      '@types/node': '>=18'
+      '@types/node': ~20.0.0
 
   '@inquirer/core@10.1.4':
     resolution: {integrity: sha512-5y4/PUJVnRb4bwWY67KLdebWOhOc7xj5IP2J80oWXa64mVag24rwQ1VAdnj7/eDY/odhguW0zQ1Mp1pj6fO/2w==}
@@ -2559,13 +2559,13 @@ packages:
     resolution: {integrity: sha512-S9KnIOJuTZpb9upeRSBBhoDZv7aSV3pG9TECrBj0f+ZsFwccz886hzKBrChGrXMJwd4NKY+pOA9Vy72uqnd6Eg==}
     engines: {node: '>=18'}
     peerDependencies:
-      '@types/node': '>=18'
+      '@types/node': ~20.0.0
 
   '@inquirer/expand@4.0.6':
     resolution: {integrity: sha512-TRTfi1mv1GeIZGyi9PQmvAaH65ZlG4/FACq6wSzs7Vvf1z5dnNWsAAXBjWMHt76l+1hUY8teIqJFrWBk5N6gsg==}
     engines: {node: '>=18'}
     peerDependencies:
-      '@types/node': '>=18'
+      '@types/node': ~20.0.0
 
   '@inquirer/figures@1.0.9':
     resolution: {integrity: sha512-BXvGj0ehzrngHTPTDqUoDT3NXL8U0RxUk2zJm2A66RhCEIWdtU1v6GuUqNAgArW4PQ9CinqIWyHdQgdwOj06zQ==}
@@ -2579,37 +2579,37 @@ packages:
     resolution: {integrity: sha512-zeo++6f7hxaEe7OjtMzdGZPHiawsfmCZxWB9X1NpmYgbeoyerIbWemvlBxxl+sQIlHC0WuSAG19ibMq3gbhaqQ==}
     engines: {node: '>=18'}
     peerDependencies:
-      '@types/node': '>=18'
+      '@types/node': ~20.0.0
 
   '@inquirer/number@3.0.6':
     resolution: {integrity: sha512-xO07lftUHk1rs1gR0KbqB+LJPhkUNkyzV/KhH+937hdkMazmAYHLm1OIrNKpPelppeV1FgWrgFDjdUD8mM+XUg==}
     engines: {node: '>=18'}
     peerDependencies:
-      '@types/node': '>=18'
+      '@types/node': ~20.0.0
 
   '@inquirer/password@4.0.6':
     resolution: {integrity: sha512-QLF0HmMpHZPPMp10WGXh6F+ZPvzWE7LX6rNoccdktv/Rov0B+0f+eyXkAcgqy5cH9V+WSpbLxu2lo3ysEVK91w==}
     engines: {node: '>=18'}
     peerDependencies:
-      '@types/node': '>=18'
+      '@types/node': ~20.0.0
 
   '@inquirer/prompts@7.2.3':
     resolution: {integrity: sha512-hzfnm3uOoDySDXfDNOm9usOuYIaQvTgKp/13l1uJoe6UNY+Zpcn2RYt0jXz3yA+yemGHvDOxVzqWl3S5sQq53Q==}
     engines: {node: '>=18'}
     peerDependencies:
-      '@types/node': '>=18'
+      '@types/node': ~20.0.0
 
   '@inquirer/rawlist@4.0.6':
     resolution: {integrity: sha512-QoE4s1SsIPx27FO4L1b1mUjVcoHm1pWE/oCmm4z/Hl+V1Aw5IXl8FYYzGmfXaBT0l/sWr49XmNSiq7kg3Kd/Lg==}
     engines: {node: '>=18'}
     peerDependencies:
-      '@types/node': '>=18'
+      '@types/node': ~20.0.0
 
   '@inquirer/search@3.0.6':
     resolution: {integrity: sha512-eFZ2hiAq0bZcFPuFFBmZEtXU1EarHLigE+ENCtpO+37NHCl4+Yokq1P/d09kUblObaikwfo97w+0FtG/EXl5Ng==}
     engines: {node: '>=18'}
     peerDependencies:
-      '@types/node': '>=18'
+      '@types/node': ~20.0.0
 
   '@inquirer/select@2.5.0':
     resolution: {integrity: sha512-YmDobTItPP3WcEI86GvPo+T2sRHkxxOq/kXmsBjHS5BVXUgvgZ5AfJjkvQvZr03T81NnI3KrrRuMzeuYUQRFOA==}
@@ -2619,7 +2619,7 @@ packages:
     resolution: {integrity: sha512-yANzIiNZ8fhMm4NORm+a74+KFYHmf7BZphSOBovIzYPVLquseTGEkU5l2UTnBOf5k0VLmTgPighNDLE9QtbViQ==}
     engines: {node: '>=18'}
     peerDependencies:
-      '@types/node': '>=18'
+      '@types/node': ~20.0.0
 
   '@inquirer/type@1.5.5':
     resolution: {integrity: sha512-MzICLu4yS7V8AA61sANROZ9vT1H3ooca5dSmI1FjZkzq7o/koMsRfQSzRtFo+F3Ao4Sf1C0bpLKejpKB/+j6MA==}
@@ -2633,7 +2633,7 @@ packages:
     resolution: {integrity: sha512-ZhQ4TvhwHZF+lGhQ2O/rsjo80XoZR5/5qhOY3t6FJuX5XBg5Be8YzYTvaUGJnc12AUGI2nr4QSUE4PhKSigx7g==}
     engines: {node: '>=18'}
     peerDependencies:
-      '@types/node': '>=18'
+      '@types/node': ~20.0.0
 
   '@ioredis/as-callback@3.0.0':
     resolution: {integrity: sha512-Kqv1rZ3WbgOrS+hgzJ5xG5WQuhvzzSTRYvNeyPMLOAM78MHSnuKI20JeJGbpuAt//LCuP0vsexZcorqW7kWhJg==}
@@ -2937,7 +2937,7 @@ packages:
   '@rushstack/node-core-library@5.14.0':
     resolution: {integrity: sha512-eRong84/rwQUlATGFW3TMTYVyqL1vfW9Lf10PH+mVGfIb9HzU3h5AASNIw+axnBLjnD0n3rT5uQBwu9fvzATrg==}
     peerDependencies:
-      '@types/node': ^18.19.39
+      '@types/node': ~20.0.0
     peerDependenciesMeta:
       '@types/node':
         optional: true
@@ -2948,7 +2948,7 @@ packages:
   '@rushstack/terminal@0.15.4':
     resolution: {integrity: sha512-OQSThV0itlwVNHV6thoXiAYZlQh4Fgvie2CzxFABsbO2MWQsI4zOh3LRNigYSTrmS+ba2j0B3EObakPzf/x6Zg==}
     peerDependencies:
-      '@types/node': ^18.19.39
+      '@types/node': ~20.0.0
     peerDependenciesMeta:
       '@types/node':
         optional: true
@@ -3305,8 +3305,8 @@ packages:
   '@types/nock@9.3.1':
     resolution: {integrity: sha512-eOVHXS5RnWOjTVhu3deCM/ruy9E6JCgeix2g7wpFiekQh3AaEAK1cz43tZDukKmtSmQnwvSySq7ubijCA32I7Q==}
 
-  '@types/node@18.19.39':
-    resolution: {integrity: sha512-nPwTRDKUctxw3di5b4TfT3I0sWDiWoPQCZjXhvdkINntwr8lcoVCKsTgnXeRubKIlfnV+eN/HYk6Jb40tbcEAQ==}
+  '@types/node@20.0.0':
+    resolution: {integrity: sha512-cD2uPTDnQQCVpmRefonO98/PPijuOnnEy5oytWJFPY1N9aJCz2wJ5kSGWO+zJoed2cY2JxQh6yBuUq4vIn61hw==}
 
   '@types/node@22.10.7':
     resolution: {integrity: sha512-V09KvXxFiutGp6B7XkpaDXlNadZxrzajcY50EuoLIpQ6WWYCSvf19lVIazzfIzQvhUN2HjX12spLojTnhuKlGg==}
@@ -8183,9 +8183,6 @@ packages:
   underscore@1.13.6:
     resolution: {integrity: sha512-+A5Sja4HP1M08MaXya7p5LvjuM7K6q/2EaC0+iovj/wOcMsTzMvDFbasi/oSapiwOlt252IqsKqPjCl7huKS0A==}
 
-  undici-types@5.26.5:
-    resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
-
   undici-types@6.20.0:
     resolution: {integrity: sha512-Ny6QZ2Nju20vw1SRHe3d9jVu6gJ+4e3+MMpqu7pqE5HT6WsTSlce++GQmK5UXS8mzV8DSYHrQH+Xrf2jVcuKNg==}
 
@@ -9258,23 +9255,23 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluid-tools/build-cli@0.57.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)':
+  '@fluid-tools/build-cli@0.57.0(@types/node@20.0.0)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/build-infrastructure': 0.57.0(@types/node@18.19.39)
-      '@fluid-tools/version-tools': 0.57.0(@types/node@18.19.39)
-      '@fluidframework/build-tools': 0.57.0(@types/node@18.19.39)
+      '@fluid-tools/build-infrastructure': 0.57.0(@types/node@20.0.0)
+      '@fluid-tools/version-tools': 0.57.0(@types/node@20.0.0)
+      '@fluidframework/build-tools': 0.57.0(@types/node@20.0.0)
       '@fluidframework/bundle-size-tools': 0.57.0(webpack-cli@5.1.4)
-      '@inquirer/prompts': 7.2.3(@types/node@18.19.39)
-      '@microsoft/api-extractor': 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.39)
+      '@inquirer/prompts': 7.2.3(@types/node@20.0.0)
+      '@microsoft/api-extractor': 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@20.0.0)
       '@oclif/core': 4.2.4
       '@oclif/plugin-autocomplete': 3.2.18
       '@oclif/plugin-commands': 4.1.17
       '@oclif/plugin-help': 6.2.22
-      '@oclif/plugin-not-found': 3.2.37(@types/node@18.19.39)
+      '@oclif/plugin-not-found': 3.2.37(@types/node@20.0.0)
       '@octokit/core': 5.2.0
       '@octokit/rest': 21.1.0
-      '@rushstack/node-core-library': 5.14.0(@types/node@18.19.39)
+      '@rushstack/node-core-library': 5.14.0(@types/node@20.0.0)
       async: 3.2.6
       azure-devops-node-api: 11.2.0
       change-case: 3.1.0
@@ -9299,7 +9296,7 @@ snapshots:
       mdast-util-to-string: 4.0.0
       minimatch: 7.4.6
       npm-check-updates: 16.14.20
-      oclif: 4.17.17(@types/node@18.19.39)
+      oclif: 4.17.17(@types/node@20.0.0)
       picocolors: 1.1.1
       prettier: 3.2.5
       prompts: 2.4.2
@@ -9412,9 +9409,9 @@ snapshots:
       - utf-8-validate
       - webpack-cli
 
-  '@fluid-tools/build-infrastructure@0.57.0(@types/node@18.19.39)':
+  '@fluid-tools/build-infrastructure@0.57.0(@types/node@20.0.0)':
     dependencies:
-      '@fluid-tools/version-tools': 0.57.0(@types/node@18.19.39)
+      '@fluid-tools/version-tools': 0.57.0(@types/node@20.0.0)
       '@manypkg/get-packages': 2.2.2
       '@oclif/core': 4.2.4
       cosmiconfig: 8.3.6(typescript@5.4.5)
@@ -9423,7 +9420,7 @@ snapshots:
       fs-extra: 11.3.0
       globby: 11.1.0
       micromatch: 4.0.8
-      oclif: 4.17.17(@types/node@18.19.39)
+      oclif: 4.17.17(@types/node@20.0.0)
       picocolors: 1.1.1
       read-pkg-up: 7.0.1
       semver: 7.7.2
@@ -9464,13 +9461,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluid-tools/version-tools@0.57.0(@types/node@18.19.39)':
+  '@fluid-tools/version-tools@0.57.0(@types/node@20.0.0)':
     dependencies:
       '@oclif/core': 4.2.4
       '@oclif/plugin-autocomplete': 3.2.18
       '@oclif/plugin-commands': 4.1.17
       '@oclif/plugin-help': 6.2.22
-      '@oclif/plugin-not-found': 3.2.37(@types/node@18.19.39)
+      '@oclif/plugin-not-found': 3.2.37(@types/node@20.0.0)
       semver: 7.7.2
       table: 6.9.0
     transitivePeerDependencies:
@@ -9498,9 +9495,9 @@ snapshots:
 
   '@fluidframework/build-common@2.0.3': {}
 
-  '@fluidframework/build-tools@0.57.0(@types/node@18.19.39)':
+  '@fluidframework/build-tools@0.57.0(@types/node@20.0.0)':
     dependencies:
-      '@fluid-tools/version-tools': 0.57.0(@types/node@18.19.39)
+      '@fluid-tools/version-tools': 0.57.0(@types/node@20.0.0)
       '@manypkg/get-packages': 2.2.2
       async: 3.2.6
       cosmiconfig: 8.3.6(typescript@5.4.5)
@@ -9749,7 +9746,7 @@ snapshots:
       '@types/debug': 4.1.12
       '@types/double-ended-queue': 2.1.7
       '@types/lodash': 4.14.202
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
       '@types/ws': 6.0.4
       assert: 2.1.0
       debug: 4.4.1(supports-color@8.1.1)
@@ -9832,7 +9829,7 @@ snapshots:
       '@fluidframework/server-services-client': 7.0.0
       '@fluidframework/server-services-telemetry': 7.0.0
       '@types/nconf': 0.10.6
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
       debug: 4.4.1(supports-color@8.1.1)
       events: 3.3.0
       nconf: 0.12.1
@@ -10016,12 +10013,12 @@ snapshots:
 
   '@humanwhocodes/object-schema@2.0.2': {}
 
-  '@inquirer/checkbox@4.0.6(@types/node@18.19.39)':
+  '@inquirer/checkbox@4.0.6(@types/node@20.0.0)':
     dependencies:
-      '@inquirer/core': 10.1.4(@types/node@18.19.39)
+      '@inquirer/core': 10.1.4(@types/node@20.0.0)
       '@inquirer/figures': 1.0.9
-      '@inquirer/type': 3.0.2(@types/node@18.19.39)
-      '@types/node': 18.19.39
+      '@inquirer/type': 3.0.2(@types/node@20.0.0)
+      '@types/node': 20.0.0
       ansi-escapes: 4.3.2
       yoctocolors-cjs: 2.1.2
 
@@ -10039,11 +10036,11 @@ snapshots:
       '@inquirer/core': 9.2.1
       '@inquirer/type': 1.5.5
 
-  '@inquirer/confirm@5.1.3(@types/node@18.19.39)':
+  '@inquirer/confirm@5.1.3(@types/node@20.0.0)':
     dependencies:
-      '@inquirer/core': 10.1.4(@types/node@18.19.39)
-      '@inquirer/type': 3.0.2(@types/node@18.19.39)
-      '@types/node': 18.19.39
+      '@inquirer/core': 10.1.4(@types/node@20.0.0)
+      '@inquirer/type': 3.0.2(@types/node@20.0.0)
+      '@types/node': 20.0.0
 
   '@inquirer/confirm@5.1.3(@types/node@22.10.7)':
     dependencies:
@@ -10051,10 +10048,10 @@ snapshots:
       '@inquirer/type': 3.0.2(@types/node@22.10.7)
       '@types/node': 22.10.7
 
-  '@inquirer/core@10.1.4(@types/node@18.19.39)':
+  '@inquirer/core@10.1.4(@types/node@20.0.0)':
     dependencies:
       '@inquirer/figures': 1.0.9
-      '@inquirer/type': 3.0.2(@types/node@18.19.39)
+      '@inquirer/type': 3.0.2(@types/node@20.0.0)
       ansi-escapes: 4.3.2
       cli-width: 4.1.0
       mute-stream: 2.0.0
@@ -10084,7 +10081,7 @@ snapshots:
       '@inquirer/figures': 1.0.9
       '@inquirer/type': 2.0.0
       '@types/mute-stream': 0.0.4
-      '@types/node': 22.10.7
+      '@types/node': 20.0.0
       '@types/wrap-ansi': 3.0.0
       ansi-escapes: 4.3.2
       cli-width: 4.1.0
@@ -10094,11 +10091,11 @@ snapshots:
       wrap-ansi: 6.2.0
       yoctocolors-cjs: 2.1.2
 
-  '@inquirer/editor@4.2.3(@types/node@18.19.39)':
+  '@inquirer/editor@4.2.3(@types/node@20.0.0)':
     dependencies:
-      '@inquirer/core': 10.1.4(@types/node@18.19.39)
-      '@inquirer/type': 3.0.2(@types/node@18.19.39)
-      '@types/node': 18.19.39
+      '@inquirer/core': 10.1.4(@types/node@20.0.0)
+      '@inquirer/type': 3.0.2(@types/node@20.0.0)
+      '@types/node': 20.0.0
       external-editor: 3.1.0
 
   '@inquirer/editor@4.2.3(@types/node@22.10.7)':
@@ -10108,11 +10105,11 @@ snapshots:
       '@types/node': 22.10.7
       external-editor: 3.1.0
 
-  '@inquirer/expand@4.0.6(@types/node@18.19.39)':
+  '@inquirer/expand@4.0.6(@types/node@20.0.0)':
     dependencies:
-      '@inquirer/core': 10.1.4(@types/node@18.19.39)
-      '@inquirer/type': 3.0.2(@types/node@18.19.39)
-      '@types/node': 18.19.39
+      '@inquirer/core': 10.1.4(@types/node@20.0.0)
+      '@inquirer/type': 3.0.2(@types/node@20.0.0)
+      '@types/node': 20.0.0
       yoctocolors-cjs: 2.1.2
 
   '@inquirer/expand@4.0.6(@types/node@22.10.7)':
@@ -10129,11 +10126,11 @@ snapshots:
       '@inquirer/core': 9.2.1
       '@inquirer/type': 1.5.5
 
-  '@inquirer/input@4.1.3(@types/node@18.19.39)':
+  '@inquirer/input@4.1.3(@types/node@20.0.0)':
     dependencies:
-      '@inquirer/core': 10.1.4(@types/node@18.19.39)
-      '@inquirer/type': 3.0.2(@types/node@18.19.39)
-      '@types/node': 18.19.39
+      '@inquirer/core': 10.1.4(@types/node@20.0.0)
+      '@inquirer/type': 3.0.2(@types/node@20.0.0)
+      '@types/node': 20.0.0
 
   '@inquirer/input@4.1.3(@types/node@22.10.7)':
     dependencies:
@@ -10141,11 +10138,11 @@ snapshots:
       '@inquirer/type': 3.0.2(@types/node@22.10.7)
       '@types/node': 22.10.7
 
-  '@inquirer/number@3.0.6(@types/node@18.19.39)':
+  '@inquirer/number@3.0.6(@types/node@20.0.0)':
     dependencies:
-      '@inquirer/core': 10.1.4(@types/node@18.19.39)
-      '@inquirer/type': 3.0.2(@types/node@18.19.39)
-      '@types/node': 18.19.39
+      '@inquirer/core': 10.1.4(@types/node@20.0.0)
+      '@inquirer/type': 3.0.2(@types/node@20.0.0)
+      '@types/node': 20.0.0
 
   '@inquirer/number@3.0.6(@types/node@22.10.7)':
     dependencies:
@@ -10153,11 +10150,11 @@ snapshots:
       '@inquirer/type': 3.0.2(@types/node@22.10.7)
       '@types/node': 22.10.7
 
-  '@inquirer/password@4.0.6(@types/node@18.19.39)':
+  '@inquirer/password@4.0.6(@types/node@20.0.0)':
     dependencies:
-      '@inquirer/core': 10.1.4(@types/node@18.19.39)
-      '@inquirer/type': 3.0.2(@types/node@18.19.39)
-      '@types/node': 18.19.39
+      '@inquirer/core': 10.1.4(@types/node@20.0.0)
+      '@inquirer/type': 3.0.2(@types/node@20.0.0)
+      '@types/node': 20.0.0
       ansi-escapes: 4.3.2
 
   '@inquirer/password@4.0.6(@types/node@22.10.7)':
@@ -10167,19 +10164,19 @@ snapshots:
       '@types/node': 22.10.7
       ansi-escapes: 4.3.2
 
-  '@inquirer/prompts@7.2.3(@types/node@18.19.39)':
+  '@inquirer/prompts@7.2.3(@types/node@20.0.0)':
     dependencies:
-      '@inquirer/checkbox': 4.0.6(@types/node@18.19.39)
-      '@inquirer/confirm': 5.1.3(@types/node@18.19.39)
-      '@inquirer/editor': 4.2.3(@types/node@18.19.39)
-      '@inquirer/expand': 4.0.6(@types/node@18.19.39)
-      '@inquirer/input': 4.1.3(@types/node@18.19.39)
-      '@inquirer/number': 3.0.6(@types/node@18.19.39)
-      '@inquirer/password': 4.0.6(@types/node@18.19.39)
-      '@inquirer/rawlist': 4.0.6(@types/node@18.19.39)
-      '@inquirer/search': 3.0.6(@types/node@18.19.39)
-      '@inquirer/select': 4.0.6(@types/node@18.19.39)
-      '@types/node': 18.19.39
+      '@inquirer/checkbox': 4.0.6(@types/node@20.0.0)
+      '@inquirer/confirm': 5.1.3(@types/node@20.0.0)
+      '@inquirer/editor': 4.2.3(@types/node@20.0.0)
+      '@inquirer/expand': 4.0.6(@types/node@20.0.0)
+      '@inquirer/input': 4.1.3(@types/node@20.0.0)
+      '@inquirer/number': 3.0.6(@types/node@20.0.0)
+      '@inquirer/password': 4.0.6(@types/node@20.0.0)
+      '@inquirer/rawlist': 4.0.6(@types/node@20.0.0)
+      '@inquirer/search': 3.0.6(@types/node@20.0.0)
+      '@inquirer/select': 4.0.6(@types/node@20.0.0)
+      '@types/node': 20.0.0
 
   '@inquirer/prompts@7.2.3(@types/node@22.10.7)':
     dependencies:
@@ -10195,11 +10192,11 @@ snapshots:
       '@inquirer/select': 4.0.6(@types/node@22.10.7)
       '@types/node': 22.10.7
 
-  '@inquirer/rawlist@4.0.6(@types/node@18.19.39)':
+  '@inquirer/rawlist@4.0.6(@types/node@20.0.0)':
     dependencies:
-      '@inquirer/core': 10.1.4(@types/node@18.19.39)
-      '@inquirer/type': 3.0.2(@types/node@18.19.39)
-      '@types/node': 18.19.39
+      '@inquirer/core': 10.1.4(@types/node@20.0.0)
+      '@inquirer/type': 3.0.2(@types/node@20.0.0)
+      '@types/node': 20.0.0
       yoctocolors-cjs: 2.1.2
 
   '@inquirer/rawlist@4.0.6(@types/node@22.10.7)':
@@ -10209,12 +10206,12 @@ snapshots:
       '@types/node': 22.10.7
       yoctocolors-cjs: 2.1.2
 
-  '@inquirer/search@3.0.6(@types/node@18.19.39)':
+  '@inquirer/search@3.0.6(@types/node@20.0.0)':
     dependencies:
-      '@inquirer/core': 10.1.4(@types/node@18.19.39)
+      '@inquirer/core': 10.1.4(@types/node@20.0.0)
       '@inquirer/figures': 1.0.9
-      '@inquirer/type': 3.0.2(@types/node@18.19.39)
-      '@types/node': 18.19.39
+      '@inquirer/type': 3.0.2(@types/node@20.0.0)
+      '@types/node': 20.0.0
       yoctocolors-cjs: 2.1.2
 
   '@inquirer/search@3.0.6(@types/node@22.10.7)':
@@ -10233,12 +10230,12 @@ snapshots:
       ansi-escapes: 4.3.2
       yoctocolors-cjs: 2.1.2
 
-  '@inquirer/select@4.0.6(@types/node@18.19.39)':
+  '@inquirer/select@4.0.6(@types/node@20.0.0)':
     dependencies:
-      '@inquirer/core': 10.1.4(@types/node@18.19.39)
+      '@inquirer/core': 10.1.4(@types/node@20.0.0)
       '@inquirer/figures': 1.0.9
-      '@inquirer/type': 3.0.2(@types/node@18.19.39)
-      '@types/node': 18.19.39
+      '@inquirer/type': 3.0.2(@types/node@20.0.0)
+      '@types/node': 20.0.0
       ansi-escapes: 4.3.2
       yoctocolors-cjs: 2.1.2
 
@@ -10259,9 +10256,9 @@ snapshots:
     dependencies:
       mute-stream: 1.0.0
 
-  '@inquirer/type@3.0.2(@types/node@18.19.39)':
+  '@inquirer/type@3.0.2(@types/node@20.0.0)':
     dependencies:
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
 
   '@inquirer/type@3.0.2(@types/node@22.10.7)':
     dependencies:
@@ -10321,7 +10318,7 @@ snapshots:
   '@manypkg/find-root@1.1.0':
     dependencies:
       '@babel/runtime': 7.23.6
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
       find-up: 4.1.0
       fs-extra: 8.1.0
 
@@ -10349,11 +10346,11 @@ snapshots:
       jju: 1.4.0
       js-yaml: 4.1.0
 
-  '@microsoft/api-extractor-model@7.30.7(@types/node@18.19.39)':
+  '@microsoft/api-extractor-model@7.30.7(@types/node@20.0.0)':
     dependencies:
       '@microsoft/tsdoc': 0.15.1
       '@microsoft/tsdoc-config': 0.17.1
-      '@rushstack/node-core-library': 5.14.0(@types/node@18.19.39)
+      '@rushstack/node-core-library': 5.14.0(@types/node@20.0.0)
     transitivePeerDependencies:
       - '@types/node'
 
@@ -10365,15 +10362,15 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@microsoft/api-extractor@7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.39)':
+  '@microsoft/api-extractor@7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@20.0.0)':
     dependencies:
-      '@microsoft/api-extractor-model': 7.30.7(@types/node@18.19.39)
+      '@microsoft/api-extractor-model': 7.30.7(@types/node@20.0.0)
       '@microsoft/tsdoc': 0.15.1
       '@microsoft/tsdoc-config': 0.17.1
-      '@rushstack/node-core-library': 5.14.0(@types/node@18.19.39)
+      '@rushstack/node-core-library': 5.14.0(@types/node@20.0.0)
       '@rushstack/rig-package': 0.5.3
-      '@rushstack/terminal': 0.15.4(@types/node@18.19.39)
-      '@rushstack/ts-command-line': 5.0.2(@types/node@18.19.39)
+      '@rushstack/terminal': 0.15.4(@types/node@20.0.0)
+      '@rushstack/ts-command-line': 5.0.2(@types/node@20.0.0)
       lodash: 4.17.21
       minimatch: 10.0.3
       resolve: 1.22.10
@@ -10521,9 +10518,9 @@ snapshots:
     dependencies:
       '@oclif/core': 4.2.4
 
-  '@oclif/plugin-not-found@3.2.37(@types/node@18.19.39)':
+  '@oclif/plugin-not-found@3.2.37(@types/node@20.0.0)':
     dependencies:
-      '@inquirer/prompts': 7.2.3(@types/node@18.19.39)
+      '@inquirer/prompts': 7.2.3(@types/node@20.0.0)
       '@oclif/core': 4.2.4
       ansis: 3.9.0
       fast-levenshtein: 3.0.0
@@ -10772,7 +10769,7 @@ snapshots:
       - supports-color
       - typescript
 
-  '@rushstack/node-core-library@5.14.0(@types/node@18.19.39)':
+  '@rushstack/node-core-library@5.14.0(@types/node@20.0.0)':
     dependencies:
       ajv: 8.13.0
       ajv-draft-04: 1.0.0(ajv@8.13.0)
@@ -10783,7 +10780,7 @@ snapshots:
       resolve: 1.22.10
       semver: 7.5.4
     optionalDependencies:
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
 
   '@rushstack/node-core-library@5.14.0(@types/node@22.10.7)':
     dependencies:
@@ -10803,12 +10800,12 @@ snapshots:
       resolve: 1.22.10
       strip-json-comments: 3.1.1
 
-  '@rushstack/terminal@0.15.4(@types/node@18.19.39)':
+  '@rushstack/terminal@0.15.4(@types/node@20.0.0)':
     dependencies:
-      '@rushstack/node-core-library': 5.14.0(@types/node@18.19.39)
+      '@rushstack/node-core-library': 5.14.0(@types/node@20.0.0)
       supports-color: 8.1.1
     optionalDependencies:
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
 
   '@rushstack/terminal@0.15.4(@types/node@22.10.7)':
     dependencies:
@@ -10819,9 +10816,9 @@ snapshots:
 
   '@rushstack/tree-pattern@0.3.1': {}
 
-  '@rushstack/ts-command-line@5.0.2(@types/node@18.19.39)':
+  '@rushstack/ts-command-line@5.0.2(@types/node@20.0.0)':
     dependencies:
-      '@rushstack/terminal': 0.15.4(@types/node@18.19.39)
+      '@rushstack/terminal': 0.15.4(@types/node@20.0.0)
       '@types/argparse': 1.0.38
       argparse: 1.0.10
       string-argv: 0.3.2
@@ -11192,7 +11189,7 @@ snapshots:
   '@types/amqplib@0.5.17':
     dependencies:
       '@types/bluebird': 3.5.38
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
 
   '@types/argparse@1.0.38': {}
 
@@ -11205,7 +11202,7 @@ snapshots:
   '@types/body-parser@1.19.2':
     dependencies:
       '@types/connect': 3.4.35
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
 
   '@types/bytes@3.1.1': {}
 
@@ -11219,7 +11216,7 @@ snapshots:
 
   '@types/connect@3.4.35':
     dependencies:
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
 
   '@types/cookie-parser@1.4.3':
     dependencies:
@@ -11231,7 +11228,7 @@ snapshots:
 
   '@types/cors@2.8.17':
     dependencies:
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
 
   '@types/debug@4.1.12':
     dependencies:
@@ -11257,7 +11254,7 @@ snapshots:
 
   '@types/express-serve-static-core@4.17.35':
     dependencies:
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
       '@types/qs': 6.9.7
       '@types/range-parser': 1.2.4
       '@types/send': 0.17.1
@@ -11272,7 +11269,7 @@ snapshots:
   '@types/glob@7.2.0':
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
 
   '@types/http-cache-semantics@4.0.1': {}
 
@@ -11288,7 +11285,7 @@ snapshots:
 
   '@types/jsonwebtoken@9.0.2':
     dependencies:
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
 
   '@types/jsrsasign@10.5.12': {}
 
@@ -11312,23 +11309,21 @@ snapshots:
 
   '@types/morgan@1.9.4':
     dependencies:
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
 
   '@types/ms@0.7.34': {}
 
   '@types/mute-stream@0.0.4':
     dependencies:
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
 
   '@types/nconf@0.10.6': {}
 
   '@types/nock@9.3.1':
     dependencies:
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
 
-  '@types/node@18.19.39':
-    dependencies:
-      undici-types: 5.26.5
+  '@types/node@20.0.0': {}
 
   '@types/node@22.10.7':
     dependencies:
@@ -11350,7 +11345,7 @@ snapshots:
   '@types/rimraf@3.0.2':
     dependencies:
       '@types/glob': 7.2.0
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
 
   '@types/semver-utils@1.1.3': {}
 
@@ -11359,12 +11354,12 @@ snapshots:
   '@types/send@0.17.1':
     dependencies:
       '@types/mime': 1.3.2
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
 
   '@types/serve-static@1.15.1':
     dependencies:
       '@types/mime': 3.0.1
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
 
   '@types/sinon@17.0.3':
     dependencies:
@@ -11374,14 +11369,14 @@ snapshots:
 
   '@types/split@0.3.28':
     dependencies:
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
 
   '@types/string-hash@1.1.1': {}
 
   '@types/superagent@4.1.18':
     dependencies:
       '@types/cookiejar': 2.1.2
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
 
   '@types/supertest@2.0.12':
     dependencies:
@@ -11397,14 +11392,14 @@ snapshots:
 
   '@types/whatwg-url@8.2.2':
     dependencies:
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
       '@types/webidl-conversions': 7.0.3
 
   '@types/wrap-ansi@3.0.0': {}
 
   '@types/ws@6.0.4':
     dependencies:
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
 
   '@typescript-eslint/eslint-plugin@6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0)(typescript@5.1.6)':
     dependencies:
@@ -12849,7 +12844,7 @@ snapshots:
     dependencies:
       '@types/cookie': 0.4.1
       '@types/cors': 2.8.17
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
       accepts: 1.3.8
       base64id: 2.0.0
       cookie: 0.7.2
@@ -14248,7 +14243,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 18.19.39
+      '@types/node': 20.0.0
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
@@ -15434,7 +15429,7 @@ snapshots:
       define-properties: 1.2.1
       es-abstract: 1.22.4
 
-  oclif@4.17.17(@types/node@18.19.39):
+  oclif@4.17.17(@types/node@20.0.0):
     dependencies:
       '@aws-sdk/client-cloudfront': empty-npm-package@1.0.0
       '@aws-sdk/client-s3': empty-npm-package@1.0.0
@@ -15443,7 +15438,7 @@ snapshots:
       '@inquirer/select': 2.5.0
       '@oclif/core': 4.2.4
       '@oclif/plugin-help': 6.2.22
-      '@oclif/plugin-not-found': 3.2.37(@types/node@18.19.39)
+      '@oclif/plugin-not-found': 3.2.37(@types/node@20.0.0)
       '@oclif/plugin-warn-if-update-available': 3.1.31
       async-retry: 1.3.3
       chalk: 4.1.2
@@ -17143,8 +17138,6 @@ snapshots:
       through: 2.3.8
 
   underscore@1.13.6: {}
-
-  undici-types@5.26.5: {}
 
   undici-types@6.20.0: {}
 
