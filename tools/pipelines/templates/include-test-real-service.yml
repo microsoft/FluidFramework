@@ -316,18 +316,27 @@ stages:
 
         - ${{ if eq(parameters.cacheCompatVersionsInstalls, true) }}:
           - task: Bash@3
-            displayName: Compute compat versions install location
+            displayName: Compute compat versions install location and version
             inputs:
               targetType: 'inline'
               workingDirectory: $(Build.SourcesDirectory)/node_modules/@fluid-private/test-end-to-end-tests
-              # Using require.resolve to compute this is more resilient to different install tree types.
+              # Using import.meta.resolve to compute this is more resilient to different install tree types.
               script: |
                 set -eu -o pipefail
                 node --input-type=module -e "
+                  const path = await import('path');
                   const versionUtilsIndexUrl = await import.meta.resolve('@fluid-private/test-version-utils');
-                  const absolutePath = new URL(versionUtilsIndexUrl.replace('/lib/index.js', '/node_modules/.legacy')).pathname;
-                  console.log('Resolved @fluid-private/test-version-utils to ' + absolutePath);
-                  console.log('##vso[task.setvariable variable=compatVersionInstallsPath]' + absolutePath);
+                  const basePath = new URL(versionUtilsIndexUrl.replace('/lib/index.js', '')).pathname;
+                  const legacyModulesPath = path.join(basePath, 'node_modules', '.legacy');
+                  console.log('Resolved @fluid-private/test-version-utils legacy modules to ' + legacyModulesPath);
+                  console.log('##vso[task.setvariable variable=compatVersionInstallsPath]' + legacyModulesPath);
+                  const packageJsonPath = path.join(basePath, 'package.json');
+                  const packageJson = await import(packageJsonPath);
+                  const packageVersion = packageJson.version;
+                  const [major, minor] = packageVersion.split('.');
+                  const cacheKey = major + '.' + minor;
+                  console.log('Computed compat version cache key: ' + cacheKey);
+                  console.log('##vso[task.setvariable variable=compatVersionCacheKey;]'+ major + '.' + cacheKey);
                 "
 
           - task: Cache@2
@@ -335,7 +344,7 @@ stages:
             timeoutInMinutes: 3
             continueOnError: true
             inputs:
-              key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}" | generation-1'
+              key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}" |  $(compatVersionCacheKey)'
               path: $(compatVersionInstallsPath)
 
         # Only check out tenants from the tenant pool if we are running tests against ODSP
