@@ -11,14 +11,19 @@ variables:
 - name: pathToTelemetryGenerator
   value: $(Agent.TempDirectory)/telemetry-generator
   readonly: true
+
 # Path where the handlers for telemetry-generator are located. Convenient because every call to the tool needs to
 # provide this as an absolute path.
 - name: pathToTelemetryGeneratorHandlers
-  value: $(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers/
+  value: $(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers
   readonly: true
 
-# Path where the handlers for telemetry-generator are located when using the ff_pipeline_host repository
+# Same semantics as above two variables, but for pipelines that use the new ff_pipeline_host repository setup
 # for shared internal dependencies.
+- name: pathToTelemetryGeneratorNew
+  value: $(Build.SourcesDirectory)/node_modules/@ff-internal/telemetry-generator
+  readonly: true
+
 - name: pathToTelemetryGeneratorHandlersNew
-  value: $(Build.SourcesDirectory)/node_modules/@ff-internal/telemetry-generator/dist/handlers/
+  value: $(Build.SourcesDirectory)/node_modules/@ff-internal/telemetry-generator/dist/handlers
   readonly: true
