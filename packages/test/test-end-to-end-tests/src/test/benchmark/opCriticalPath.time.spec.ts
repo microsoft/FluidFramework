@@ -59,6 +59,12 @@ describeCompat(
 
 		let testId = 0;
 
+		beforeEach("conditionalSkip", async function () {
+			if (provider.driver.type === "r11s" || provider.driver.type === "routerlicious") {
+				this.skip(); // This test is not reliable with FRS for some reason
+			}
+		});
+
 		const setup = async () => {
 			testId++;
 			provider = getTestObjectProvider();
@@ -93,7 +99,8 @@ describeCompat(
 			before: async () => {
 				await setup();
 			},
-			benchmarkFnAsync: async () => {
+			// eslint-disable-next-line object-shorthand
+			benchmarkFnAsync: async function () {
 				sendOps("A");
 				// There's no event fired for "flush" so the simplest thing is to wait for the outbound queue to be idle.
 				// This should not add much time, and is part of the real flow so it's ok to include it in the benchmark.
