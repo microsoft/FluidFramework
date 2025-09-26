@@ -13,7 +13,7 @@
 // TODO: Find a more robust way to meet the needs of that use-case.
 
 // This file is not named `index.ts` to help avoid confusion and auto-completed imports of it within this package:
-// This is a special case and it not like the other index files in this package
+// This is a special case and it is not like the other index files in this package
 // (such as those in the nested directories in test which reexport contents of those directories for use within this package).
 
 export { baseTreeModel } from "./shared-tree/index.js";
