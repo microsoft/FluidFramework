@@ -7,7 +7,7 @@
 // It should not be imported within this package.
 // This is very fragile since package exports are generally assumed to have their dependencies described by the "dependencies" of the package listed in the package.json.
 // This does not work for test code since it can depend on `devDependencies` of the package instead, which will not be installed by users of this package.
-// Therefor this pattern is very fragile and should be avoided if possible.
+// Therefore this pattern is very fragile and should be avoided if possible.
 // Importers of this must somehow ensure that they provide all the actual dependencies of this code.
 // Currently this is used by `packages/test/local-server-stress-tests/src/ddsModels.ts`.
 // TODO: Find a more robust way to meet the needs of that use-case.
