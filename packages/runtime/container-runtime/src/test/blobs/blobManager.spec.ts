@@ -129,7 +129,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					// TODO: For now, the blob manager can't find pending blobs in unattached handles,
 					// like the ones we will have just created if createBlobPayloadPending. Once the
 					// internal bookkeeping has been updated to include these, we don't need to
-					// ensureBlobsAttached() here anymore and this check can become unconditional.
+					// ensureBlobsShared() here anymore and these checks can be applied to both the
+					// legacy and payloadPending flows.
 					if (!createBlobPayloadPending) {
 						assert(blobManager.hasBlob(localId));
 						const _blobFromManager = await blobManager.getBlob(
@@ -314,8 +315,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					}
 
 					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
-					assert.strictEqual(ids?.length, undefined);
-					assert.strictEqual(redirectTable?.length, undefined);
+					assert.strictEqual(ids, undefined);
+					assert.strictEqual(redirectTable, undefined);
 				});
 			});
 
@@ -340,6 +341,24 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert(blobManager.hasBlob(localId));
 					const blobFromManager = await blobManager.getBlob(localId, createBlobPayloadPending);
 					assert.strictEqual(blobToText(blobFromManager), "hello", "Blob content mismatch");
+
+					// Also confirm we can request payloadPending blobs before the blobManager has them,
+					// and wait for them to arrive.
+					if (createBlobPayloadPending) {
+						const handle2 = await blobManager2.createBlob(textToBlob("world"));
+						const { localId: localId2 } = unpackHandle(handle2);
+						attachHandle(handle2);
+
+						assert(!blobManager.hasBlob(localId2));
+						await ensureBlobsShared([handle2]);
+						assert(blobManager.hasBlob(localId2));
+
+						const blob2FromManager = await blobManager.getBlob(
+							localId2,
+							createBlobPayloadPending,
+						);
+						assert.strictEqual(blobToText(blob2FromManager), "world", "Blob content mismatch");
+					}
 				});
 
 				it("Handles deduping against a remote blob", async () => {
@@ -383,12 +402,12 @@ for (const createBlobPayloadPending of [false, true]) {
 					const remoteHandleP = blobManager2.createBlob(textToBlob("hello"));
 					const localHandleP = blobManager.createBlob(textToBlob("hello"));
 					if (createBlobPayloadPending) {
-						// For payload pending blobs, it's safe to await the createBlob call
-						// And we need to attach the handle to generate the BlobAttach op
 						const [remoteHandle, localHandle] = await Promise.all([
 							remoteHandleP,
 							localHandleP,
 						]);
+						// Attach the handle to generate an op, but don't wait for the blob to be shared yet
+						// until we unpause the ordering service and can process those ops.
 						attachHandle(remoteHandle);
 						attachHandle(localHandle);
 					}
@@ -413,7 +432,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				});
 			});
 
-			describe("Disconnect/reconnect", () => {
+			describe("Resubmit", () => {
 				it("Can complete blob attach with resubmit", async () => {
 					const { mockBlobStorage, mockOrderingService, mockRuntime, blobManager } =
 						createTestMaterial({ createBlobPayloadPending });
@@ -523,23 +542,6 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert.strictEqual(redirectTable?.length, 3);
 				});
 
-				it("Detached, deduping after attach", async () => {
-					const { mockBlobStorage, mockRuntime, blobManager } = createTestMaterial({
-						createBlobPayloadPending,
-					});
-
-					await blobManager.createBlob(textToBlob("hello"));
-					await blobManager.createBlob(textToBlob("world"));
-					await blobManager.createBlob(textToBlob("world"));
-					await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
-					// As attach uploads the non-deduped blobs to the deduping storage, the duplicate
-					// "world" will remain in the redirectTable (since it has a unique localId), but
-					// its attachment will be deduplicated.
-					assert.strictEqual(ids?.length, 2);
-					assert.strictEqual(redirectTable?.length, 3);
-				});
-
 				it("Attached, dedupe storage", async () => {
 					const { mockBlobStorage, mockRuntime, blobManager } = createTestMaterial({
 						createBlobPayloadPending,
@@ -567,6 +569,14 @@ for (const createBlobPayloadPending of [false, true]) {
 					await blobManager.createBlob(textToBlob("world"));
 					await blobManager.createBlob(textToBlob("world"));
 					await simulateAttach(mockBlobStorage, mockRuntime, blobManager);
+					const { ids: ids1, redirectTable: redirectTable1 } =
+						getSummaryContentsWithFormatValidation(blobManager);
+					// As attach uploads the non-deduped blobs to the deduping storage, the duplicate
+					// "world" will remain in the redirectTable (since it has a unique localId), but
+					// its attachment will be deduplicated.
+					assert.strictEqual(ids1?.length, 2);
+					assert.strictEqual(redirectTable1?.length, 3);
+
 					const handle1 = await blobManager.createBlob(textToBlob("hello"));
 					const handle2 = await blobManager.createBlob(textToBlob("world"));
 					const handle3 = await blobManager.createBlob(textToBlob("another"));
@@ -575,9 +585,10 @@ for (const createBlobPayloadPending of [false, true]) {
 					if (createBlobPayloadPending) {
 						await ensureBlobsShared([handle1, handle2, handle3, handle4]);
 					}
-					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
-					assert.strictEqual(ids?.length, 3);
-					assert.strictEqual(redirectTable?.length, 7);
+					const { ids: ids2, redirectTable: redirectTable2 } =
+						getSummaryContentsWithFormatValidation(blobManager);
+					assert.strictEqual(ids2?.length, 3);
+					assert.strictEqual(redirectTable2?.length, 7);
 				});
 			});
 
@@ -670,6 +681,8 @@ for (const createBlobPayloadPending of [false, true]) {
 		});
 
 		describe("Garbage collection", () => {});
+
+		describe("Storage ID lookup", () => {});
 	});
 }
 
@@ -737,91 +750,6 @@ for (const createBlobPayloadPending of [false, true]) {
 // 			mockLogger.clear();
 // 		});
 
-// 		it("empty snapshot", () => {
-// 			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 			assert.strictEqual(summaryData.ids, undefined);
-// 			assert.strictEqual(summaryData.redirectTable, undefined);
-// 		});
-
-// 		it("non empty snapshot", async () => {
-// 			await runtime.attach();
-// 			await runtime.connect();
-
-// 			await createBlob(textToBlob("blob"));
-// 			await runtime.processAll();
-
-// 			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 			assert.strictEqual(summaryData.ids?.length, 1);
-// 			assert.strictEqual(summaryData.redirectTable?.length, 1);
-// 		});
-
-// 		it("hasPendingBlobs", async () => {
-// 			await runtime.attach();
-// 			await runtime.connect();
-
-// 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
-// 			await createBlob(textToBlob("blob"));
-// 			await createBlob(textToBlob("blob2"));
-// 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, true);
-// 			await runtime.processAll();
-// 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
-// 			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 			assert.strictEqual(summaryData.ids?.length, 2);
-// 			assert.strictEqual(summaryData.redirectTable?.length, 2);
-// 		});
-
-// 		it("NoPendingBlobs count", async () => {
-// 			await runtime.attach();
-// 			await runtime.connect();
-// 			let count = 0;
-// 			runtime.blobManager.events.on("noPendingBlobs", () => count++);
-
-// 			await createBlob(textToBlob("blob"));
-// 			await runtime.processAll();
-// 			assert.strictEqual(count, 1);
-// 			await createBlob(textToBlob("blob2"));
-// 			await createBlob(textToBlob("blob3"));
-// 			await runtime.processAll();
-// 			assert.strictEqual(count, 2);
-// 			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 			assert.strictEqual(summaryData.ids?.length, 3);
-// 			assert.strictEqual(summaryData.redirectTable?.length, 3);
-// 		});
-
-// 		it("detached snapshot", async () => {
-// 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
-// 			await createBlob(textToBlob("blob"));
-// 			await runtime.processAll();
-// 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, true);
-
-// 			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 			assert.strictEqual(summaryData.ids?.length, 1);
-// 			assert.strictEqual(summaryData.redirectTable?.length, 1);
-// 		});
-
-// 		it("detached->attached snapshot", async () => {
-// 			await createBlob(textToBlob("blob"));
-// 			await runtime.processAll();
-// 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, true);
-// 			await runtime.attach();
-// 			assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
-// 			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 			assert.strictEqual(summaryData.ids?.length, 1);
-// 			assert.strictEqual(summaryData.redirectTable?.length, 1);
-// 		});
-
-// 		it("uploads while disconnected", async () => {
-// 			await runtime.attach();
-// 			const handleP = runtime.createBlob(textToBlob("blob"));
-// 			await runtime.connect();
-// 			await runtime.processAll();
-// 			await assert.doesNotReject(handleP);
-
-// 			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 			assert.strictEqual(summaryData.ids?.length, 1);
-// 			assert.strictEqual(summaryData.redirectTable?.length, 1);
-// 		});
-
 // 		it("reupload blob if expired", async () => {
 // 			await runtime.attach();
 // 			await runtime.connect();
@@ -834,410 +762,6 @@ for (const createBlobPayloadPending of [false, true]) {
 // 			await new Promise<void>((resolve) => setTimeout(resolve, 50));
 // 			await runtime.connect();
 // 			await runtime.processAll();
-// 		});
-
-// 		it("completes after disconnection while upload pending", async () => {
-// 			await runtime.attach();
-// 			await runtime.connect();
-
-// 			const handleP = runtime.createBlob(textToBlob("blob"));
-// 			runtime.disconnect();
-// 			await runtime.connect(10); // adding some delay to reconnection
-// 			await runtime.processAll();
-// 			await assert.doesNotReject(handleP);
-
-// 			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 			assert.strictEqual(summaryData.ids?.length, 1);
-// 			assert.strictEqual(summaryData.redirectTable?.length, 1);
-// 		});
-
-// 		it("upload fails gracefully", async () => {
-// 			await runtime.attach();
-// 			await runtime.connect();
-
-// 			if (createBlobPayloadPending) {
-// 				const handle = await runtime.createBlob(textToBlob("blob"));
-// 				assert.strict(isFluidHandlePayloadPending(handle));
-// 				assert.strict(isLocalFluidHandle(handle));
-// 				assert.strictEqual(
-// 					handle.payloadState,
-// 					"pending",
-// 					"Handle should be in pending state",
-// 				);
-// 				assert.strictEqual(
-// 					handle.payloadShareError,
-// 					undefined,
-// 					"handle should not have an error yet",
-// 				);
-// 				let failed = false;
-// 				const onPayloadShareFailed = (error: unknown): void => {
-// 					failed = true;
-// 					assert.strictEqual(
-// 						(error as Error).message,
-// 						"fake driver error",
-// 						"Did not receive the expected error",
-// 					);
-// 					handle.events.off("payloadShareFailed", onPayloadShareFailed);
-// 				};
-// 				handle.events.on("payloadShareFailed", onPayloadShareFailed);
-// 				await runtime.processHandles();
-// 				await runtime.processBlobs(false);
-// 				runtime.processOps();
-// 				assert.strict(failed, "should fail");
-// 				assert.strictEqual(
-// 					handle.payloadState,
-// 					"pending",
-// 					"Handle should still be in pending state",
-// 				);
-// 				assert.strictEqual(
-// 					(handle.payloadShareError as unknown as Error).message,
-// 					"fake driver error",
-// 					"Handle did not have the expected error",
-// 				);
-// 			} else {
-// 				// If the blobs are created without pending payloads, we don't get to see the handle at
-// 				// all so we can't inspect its state.
-// 				const handleP = runtime.createBlob(textToBlob("blob"));
-// 				await runtime.processBlobs(false);
-// 				runtime.processOps();
-// 				try {
-// 					await handleP;
-// 					assert.fail("should fail");
-// 				} catch (error: unknown) {
-// 					assert.strictEqual((error as Error).message, "fake driver error");
-// 				}
-// 				await assert.rejects(handleP);
-// 			}
-// 			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 			assert.strictEqual(summaryData.ids, undefined);
-// 			assert.strictEqual(summaryData.redirectTable, undefined);
-// 		});
-
-// 		it("updates handle state after success", async () => {
-// 			await runtime.attach();
-// 			await runtime.connect();
-
-// 			if (createBlobPayloadPending) {
-// 				const handle = await runtime.createBlob(textToBlob("blob"));
-// 				assert.strict(isFluidHandlePayloadPending(handle));
-// 				assert.strictEqual(
-// 					handle.payloadState,
-// 					"pending",
-// 					"Handle should be in pending state",
-// 				);
-// 				let shared = false;
-// 				const onPayloadShared = (): void => {
-// 					shared = true;
-// 					handle.events.off("payloadShared", onPayloadShared);
-// 				};
-// 				handle.events.on("payloadShared", onPayloadShared);
-// 				await runtime.processHandles();
-// 				await runtime.processBlobs(true);
-// 				runtime.processOps();
-// 				assert.strict(shared, "should become shared");
-// 				assert.strictEqual(handle.payloadState, "shared", "Handle should be in shared state");
-// 			} else {
-// 				// Without placeholder blobs, we don't get to see the handle before it reaches "shared" state
-// 				// but we can still verify it's in the expected state when we get it.
-// 				const handleP = runtime.createBlob(textToBlob("blob"));
-// 				await runtime.processAll();
-// 				const handle = await handleP;
-// 				assert.strict(isFluidHandlePayloadPending(handle));
-// 				assert.strictEqual(handle.payloadState, "shared", "Handle should be in shared state");
-// 			}
-// 			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 			assert.strictEqual(summaryData.ids?.length, 1);
-// 			assert.strictEqual(summaryData.redirectTable?.length, 1);
-// 		});
-
-// 		it("completes after disconnection while op in flight", async () => {
-// 			await runtime.attach();
-// 			await runtime.connect();
-
-// 			await createBlob(textToBlob("blob"));
-// 			await createBlob(textToBlob("blob"));
-// 			await runtime.processBlobs(true);
-
-// 			runtime.disconnect();
-// 			await runtime.connect();
-// 			await runtime.processAll();
-
-// 			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 			assert.strictEqual(summaryData.ids?.length, 1);
-// 			assert.strictEqual(summaryData.redirectTable?.length, 2);
-// 		});
-
-// 		it("multiple disconnect/connects", async () => {
-// 			await runtime.attach();
-// 			await runtime.connect();
-
-// 			const blob = textToBlob("blob");
-// 			const handleP = runtime.createBlob(blob);
-// 			runtime.disconnect();
-// 			await runtime.connect(10);
-
-// 			const blob2 = textToBlob("blob2");
-// 			const handleP2 = runtime.createBlob(blob2);
-// 			runtime.disconnect();
-
-// 			await runtime.connect(10);
-// 			await runtime.processAll();
-// 			await assert.doesNotReject(handleP);
-// 			await assert.doesNotReject(handleP2);
-// 			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 			assert.strictEqual(summaryData.ids?.length, 2);
-// 			assert.strictEqual(summaryData.redirectTable?.length, 2);
-// 		});
-
-// 		it("handles deduped IDs", async () => {
-// 			await runtime.attach();
-// 			await runtime.connect();
-
-// 			await createBlob(textToBlob("blob"));
-// 			await createBlob(textToBlob("blob"));
-// 			runtime.disconnect();
-// 			await runtime.connect();
-
-// 			await createBlob(textToBlob("blob"));
-// 			await createBlob(textToBlob("blob"));
-// 			await runtime.processBlobs(true);
-
-// 			runtime.disconnect();
-// 			await runtime.connect();
-
-// 			await createBlob(textToBlob("blob"));
-// 			await createBlob(textToBlob("blob"));
-// 			await runtime.processAll();
-
-// 			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 			assert.strictEqual(summaryData.ids?.length, 1);
-// 			assert.strictEqual(summaryData.redirectTable?.length, 6);
-// 		});
-
-// 		it("handles deduped IDs in detached", async () => {
-// 			runtime.detachedStorage = new DedupeStorage();
-
-// 			await createBlob(textToBlob("blob"));
-// 			await createBlob(textToBlob("blob"));
-// 			await runtime.processAll();
-
-// 			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 			assert.strictEqual(summaryData.ids?.length, 1);
-// 			assert.strictEqual(summaryData.redirectTable?.length, 2);
-// 		});
-
-// 		it("handles deduped IDs in detached->attached", async () => {
-// 			runtime.detachedStorage = new DedupeStorage();
-
-// 			await createBlob(textToBlob("blob"));
-// 			await createBlob(textToBlob("blob"));
-// 			await runtime.processAll();
-
-// 			await runtime.attach();
-// 			await runtime.connect();
-// 			await createBlob(textToBlob("blob"));
-// 			await createBlob(textToBlob("blob"));
-
-// 			runtime.disconnect();
-// 			await runtime.connect();
-
-// 			await createBlob(textToBlob("blob"));
-// 			await createBlob(textToBlob("blob"));
-
-// 			await runtime.processAll();
-
-// 			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 			assert.strictEqual(summaryData.ids?.length, 1);
-// 			assert.strictEqual(summaryData.redirectTable?.length, 6);
-// 		});
-
-// 		it("can load from summary", async () => {
-// 			await createBlob(textToBlob("blob"));
-// 			await runtime.processAll();
-
-// 			await runtime.attach();
-// 			const handle = runtime.createBlob(textToBlob("blob"));
-// 			await runtime.connect();
-
-// 			await runtime.processAll();
-// 			await assert.doesNotReject(handle);
-
-// 			await createBlob(textToBlob("blob"));
-// 			await runtime.processAll();
-
-// 			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 			assert.strictEqual(summaryData.ids?.length, 1);
-// 			assert.strictEqual(summaryData.redirectTable?.length, 3);
-
-// 			const runtime2 = new MockRuntime(mc, createBlobPayloadPending, summaryData, true);
-// 			const summaryData2 = getSummaryContentsWithFormatValidation(runtime2.blobManager);
-// 			assert.strictEqual(summaryData2.ids?.length, 1);
-// 			assert.strictEqual(summaryData2.redirectTable?.length, 3);
-// 		});
-
-// 		it("can get blobs by requesting their storage ID", async () => {
-// 			await runtime.attach();
-// 			await runtime.connect();
-
-// 			const handle = runtime.createBlob(textToBlob("blob"));
-// 			await runtime.processAll();
-
-// 			await assert.doesNotReject(handle);
-
-// 			// Using the summary as a simple way to grab the storage ID of the blob we just created
-// 			const { redirectTable, ids: ids1 } = getSummaryContentsWithFormatValidation(
-// 				runtime.blobManager,
-// 			);
-// 			const storageId = ids1?.[0];
-// 			assert.strictEqual(redirectTable?.length, 1);
-// 			assert(typeof storageId === "string", "Expect storage ID to be in the summary");
-
-// 			const blob = await runtime.blobManager.getBlob(storageId, createBlobPayloadPending);
-
-// 			const runtime2 = new MockRuntime(
-// 				mc,
-// 				createBlobPayloadPending,
-// 				// Loading a second runtime with just the blob attachments and no redirect table
-// 				// lets us verify that we still correctly reconstruct the identity mapping during load.
-// 				{ ids: [storageId] },
-// 				true,
-// 			);
-// 			(runtime2.storage as unknown as BaseMockBlobStorage).blobs.set(storageId, blob);
-// 			await assert.doesNotReject(
-// 				runtime2.blobManager.getBlob(storageId, createBlobPayloadPending),
-// 			);
-// 			const { redirectTable: redirectTable2, ids: ids2 } =
-// 				getSummaryContentsWithFormatValidation(runtime2.blobManager);
-// 			const storageId2 = ids2?.[0];
-// 			assert.strictEqual(redirectTable2, undefined);
-// 			assert.strictEqual(storageId2, storageId, "Expect storage ID to be in the summary");
-// 		});
-
-// 		it("handles duplicate remote upload", async () => {
-// 			await runtime.attach();
-// 			await runtime.connect();
-
-// 			await createBlob(textToBlob("blob"));
-// 			await runtime.remoteUpload(textToBlob("blob"));
-// 			await runtime.processAll();
-
-// 			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 			assert.strictEqual(summaryData.ids?.length, 1);
-// 			assert.strictEqual(summaryData.redirectTable?.length, 2);
-// 		});
-
-// 		it("handles duplicate remote upload between upload and op", async () => {
-// 			await runtime.attach();
-// 			await runtime.connect();
-
-// 			await createBlob(textToBlob("blob"));
-// 			await runtime.processBlobs(true);
-// 			await runtime.remoteUpload(textToBlob("blob"));
-// 			await runtime.processAll();
-
-// 			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 			assert.strictEqual(summaryData.ids?.length, 1);
-// 			assert.strictEqual(summaryData.redirectTable?.length, 2);
-// 		});
-
-// 		it("handles duplicate remote upload with local ID", async () => {
-// 			await runtime.attach();
-
-// 			await createBlob(textToBlob("blob"));
-// 			await runtime.connect();
-// 			await runtime.processBlobs(true);
-// 			await runtime.remoteUpload(textToBlob("blob"));
-// 			await runtime.processAll();
-
-// 			const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 			assert.strictEqual(summaryData.ids?.length, 1);
-// 			assert.strictEqual(summaryData.redirectTable?.length, 2);
-// 		});
-
-// 		it("includes blob IDs in summary while attaching", async () => {
-// 			await createBlob(textToBlob("blob1"));
-// 			await createBlob(textToBlob("blob2"));
-// 			await createBlob(textToBlob("blob3"));
-// 			await runtime.processAll();
-
-// 			// While attaching with blobs, Container takes a summary while still in "Detached"
-// 			// state. BlobManager should know to include the list of attached blob
-// 			// IDs since this summary will be used to create the document
-// 			const summaryData = await runtime.attach();
-// 			assert.strictEqual(summaryData.ids?.length, 3);
-// 			assert.strictEqual(summaryData.redirectTable?.length, 3);
-// 		});
-
-// 		it("all blobs attached", async () => {
-// 			await runtime.attach();
-// 			await runtime.connect();
-// 			assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
-// 			await createBlob(textToBlob("blob1"));
-// 			// We immediately attach the handle in createBlob if pending payloads are enabled
-// 			assert.strictEqual(runtime.blobManager.allBlobsAttached, createBlobPayloadPending);
-// 			await runtime.processBlobs(true);
-// 			assert.strictEqual(runtime.blobManager.allBlobsAttached, createBlobPayloadPending);
-// 			await runtime.processAll();
-// 			assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
-// 			await createBlob(textToBlob("blob1"));
-// 			await createBlob(textToBlob("blob2"));
-// 			await createBlob(textToBlob("blob3"));
-// 			assert.strictEqual(runtime.blobManager.allBlobsAttached, createBlobPayloadPending);
-// 			await runtime.processAll();
-// 			assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
-// 		});
-
-// 		it("runtime disposed during readBlob - log no error", async () => {
-// 			const someLocalId = "someLocalId";
-// 			const someStorageId = "someStorageId";
-// 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call -- Accessing private property
-// 			(runtime.blobManager as any).setRedirection(someLocalId, someStorageId); // To appease an assert
-
-// 			// Mock storage.readBlob to dispose the runtime and throw an error
-// 			Sinon.stub(runtime.storage, "readBlob").callsFake(async (_id: string) => {
-// 				runtime.disposed = true;
-// 				throw new Error("BOOM!");
-// 			});
-
-// 			await assert.rejects(
-// 				async () => runtime.blobManager.getBlob(someLocalId, false),
-// 				(e: Error) => e.message === "BOOM!",
-// 				"Expected getBlob to throw with test error message",
-// 			);
-// 			assert(runtime.disposed, "Runtime should be disposed");
-// 			mockLogger.assertMatchNone(
-// 				[{ category: "error" }],
-// 				"Should not have logged any errors",
-// 				undefined,
-// 				false /* clearEventsAfterCheck */,
-// 			);
-// 			mockLogger.assertMatch(
-// 				[{ category: "generic", eventName: "BlobManager:AttachmentReadBlob_cancel" }],
-// 				"Expected the _cancel event to be logged with 'generic' category",
-// 			);
-// 		});
-
-// 		it("waits for blobs from handles with pending payloads without error", async () => {
-// 			await runtime.attach();
-
-// 			// Part of remoteUpload, but stop short of processing the message
-// 			const response = await runtime.storage.createBlob(textToBlob("blob"));
-// 			const op = { metadata: { localId: uuid(), blobId: response.id } };
-
-// 			await assert.rejects(
-// 				runtime.blobManager.getBlob(op.metadata.localId, false),
-// 				"Rejects when attempting to get non-existent, shared-payload blobs",
-// 			);
-
-// 			// Try to get the blob that we haven't processed the attach op for yet.
-// 			// This simulates having found this ID in a handle with a pending payload that the remote client would have sent
-// 			const blobP = runtime.blobManager.getBlob(op.metadata.localId, true);
-
-// 			// Process the op as if it were arriving from the remote client, which should cause the blobP promise to resolve
-// 			runtime.blobManager.processBlobAttachMessage(op as ISequencedMessageEnvelope, false);
-
-// 			// Await the promise to confirm it settles and does not reject
-// 			await blobP;
 // 		});
 
 // 		describe("Abort Signal", () => {
