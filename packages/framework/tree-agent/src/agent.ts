@@ -6,14 +6,11 @@
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type {
 	ImplicitFieldSchema,
-	RestrictiveStringRecord,
 	TreeFieldFromImplicitField,
-	TreeObjectNode,
+	TreeNodeSchema,
 } from "@fluidframework/tree";
 import { TreeNode, NodeKind, Tree } from "@fluidframework/tree";
-import { getSimpleSchema } from "@fluidframework/tree/alpha";
 import type {
-	ObjectNodeSchema,
 	ReadableField,
 	TreeBranch,
 	FactoryContentObject,
@@ -21,6 +18,7 @@ import type {
 	UnsafeUnknownSchema,
 	ReadSchema,
 } from "@fluidframework/tree/alpha";
+import { getSimpleSchema, ObjectNodeSchema } from "@fluidframework/tree/alpha";
 import { normalizeFieldSchema, type TreeMapNode } from "@fluidframework/tree/internal";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models"; // eslint-disable-line import/no-internal-modules
 import { HumanMessage, SystemMessage } from "@langchain/core/messages"; // eslint-disable-line import/no-internal-modules
@@ -34,12 +32,14 @@ import {
 	constructNode,
 	fail,
 	failUsage,
-	getFriendlySchema,
-	getFriendlySchemaName,
+	getFriendlyName,
+	unqualifySchema,
 	getZodSchemaAsTypeScript,
 	llmDefault,
 	type SchemaDetails,
 	type TreeView,
+	findNamedSchemas,
+	isNamedSchema,
 } from "./utils.js";
 
 const functionName = "editTree";
@@ -173,13 +173,10 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 		);
 		const tree = this.queryTree;
 		const create: Record<string, (input: FactoryContentObject) => TreeNode> = {};
-		visitObjectNodeSchema(tree.schema, (schema) => {
-			const name =
-				getFriendlySchemaName(schema.identifier) ??
-				fail("Expected friendly name for object node schema");
-
-			create[name] = (input: FactoryContentObject) => constructObjectNode(schema, input);
-		});
+		for (const schema of findNamedSchemas(tree.schema)) {
+			const name = getFriendlyName(schema);
+			create[name] = (input: FactoryContentObject) => constructTreeNode(schema, input);
+		}
 		if (this.options?.validator?.(functionCode) === false) {
 			this.options?.log?.(`#### Code Validation Failed\n\n`);
 			return "Code validation failed";
@@ -347,7 +344,7 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 					break;
 				}
 				case NodeKind.Object: {
-					exampleObjectName ??= getFriendlySchemaName(definition);
+					exampleObjectName ??= unqualifySchema(definition);
 					break;
 				}
 				// No default
@@ -356,15 +353,10 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 
 		const { domainTypes } = generateEditTypesForPrompt(schema, simpleSchema);
 		for (const [key, value] of Object.entries(domainTypes)) {
-			const friendlyKey = getFriendlySchemaName(key);
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 			delete domainTypes[key];
-			if (
-				friendlyKey !== undefined &&
-				friendlyKey !== "string" &&
-				friendlyKey !== "number" &&
-				friendlyKey !== "boolean"
-			) {
+			if (isNamedSchema(key)) {
+				const friendlyKey = unqualifySchema(key);
 				domainTypes[friendlyKey] = value;
 			}
 		}
@@ -429,7 +421,7 @@ ${getTreeMapNodeDocumentation(mapInterfaceName)}
 
 `;
 
-		const rootTypes = [...simpleSchema.root.allowedTypesIdentifiers];
+		const rootTypes = normalizeFieldSchema(schema).allowedTypeSet;
 		const prompt = `You are a helpful assistant collaborating with the user on a document. The document state is a JSON tree, and you are able to analyze and edit it.
 The JSON tree adheres to the following Typescript schema:
 
@@ -451,7 +443,7 @@ It may be synchronous or asynchronous.
 The ${functionName} function must have a first parameter which has a \`root\` property.
 This \`root\` property holds the current state of the tree as shown above.
 You may mutate any part of the tree as necessary, taking into account the caveats around arrays and maps detailed below.
-You may also set the \`root\` property to be an entirely new value as long as it is one of the types allowed at the root of the tree (\`${rootTypes.map((t) => getFriendlySchemaName(t)).join(" | ")}\`).
+You may also set the \`root\` property to be an entirely new value as long as it is one of the types allowed at the root of the tree (\`${Array.from(rootTypes.values(), (t) => getFriendlyName(t)).join(" | ")}\`).
 ${helperMethodExplanation}
 
 ${hasArrays ? arrayEditing : ""}${hasMaps ? mapEditing : ""}### Additional Notes
@@ -465,7 +457,7 @@ ${builderExplanation}Finally, double check that the edits would accomplish the u
 ### Application data
 
 ${domainHints}
-The current state of the application tree (a \`${getFriendlySchema(field)}\`) is:
+The current state of the application tree (a \`${field === undefined ? "undefined" : getFriendlyName(Tree.schema(field))}\`) is:
 
 \`\`\`JSON
 ${stringified}
@@ -731,19 +723,6 @@ function uncapitalize(str: string): string {
 	return str.charAt(0).toLowerCase() + str.slice(1);
 }
 
-function visitObjectNodeSchema(
-	schema: ImplicitFieldSchema,
-	visitor: (schema: ObjectNodeSchema) => void,
-): void {
-	const normalizedSchema = normalizeFieldSchema(schema);
-	for (const nodeSchema of normalizedSchema.allowedTypeSet) {
-		if (nodeSchema.kind === NodeKind.Object) {
-			visitor(nodeSchema as ObjectNodeSchema);
-		}
-		visitObjectNodeSchema([...nodeSchema.childTypes], visitor);
-	}
-}
-
 function processLlmCode(code: string): string {
 	// TODO: use a library like Acorn to analyze the code more robustly
 	const regex = new RegExp(`function\\s+${functionName}\\s*\\(`);
@@ -755,33 +734,32 @@ function processLlmCode(code: string): string {
 }
 
 /**
- * Creates an unhydrated object node and populates it with `llmDefault` values if they exist.
+ * Creates an unhydrated node of the given schema with the given value.
+ * @remarks If the schema is an object with {@link llmDefault | default values}, this function populates the node with those defaults.
  */
-function constructObjectNode(
-	schema: ObjectNodeSchema,
-	input: FactoryContentObject,
-): TreeObjectNode<RestrictiveStringRecord<ImplicitFieldSchema>> {
-	const inputWithDefaults: Record<string, InsertableContent | undefined> = {};
-	for (const [key, field] of schema.fields) {
-		if (input[key] === undefined) {
-			if (
-				typeof field.metadata.custom === "object" &&
-				field.metadata.custom !== null &&
-				llmDefault in field.metadata.custom
-			) {
-				const defaulter = field.metadata.custom[llmDefault];
-				if (typeof defaulter === "function") {
-					const defaultValue: unknown = defaulter();
-					if (defaultValue !== undefined) {
-						inputWithDefaults[key] = defaultValue;
+function constructTreeNode(schema: TreeNodeSchema, value: FactoryContentObject): TreeNode {
+	if (schema instanceof ObjectNodeSchema) {
+		const inputWithDefaults: Record<string, InsertableContent | undefined> = {};
+		for (const [key, field] of schema.fields) {
+			if (value[key] === undefined) {
+				if (
+					typeof field.metadata.custom === "object" &&
+					field.metadata.custom !== null &&
+					llmDefault in field.metadata.custom
+				) {
+					const defaulter = field.metadata.custom[llmDefault];
+					if (typeof defaulter === "function") {
+						const defaultValue: unknown = defaulter();
+						if (defaultValue !== undefined) {
+							inputWithDefaults[key] = defaultValue;
+						}
 					}
 				}
+			} else {
+				inputWithDefaults[key] = value[key];
 			}
-		} else {
-			inputWithDefaults[key] = input[key];
 		}
+		return constructNode(schema, inputWithDefaults);
 	}
-	return constructNode(schema, inputWithDefaults) as TreeObjectNode<
-		RestrictiveStringRecord<ImplicitFieldSchema>
-	>;
+	return constructNode(schema, value);
 }
