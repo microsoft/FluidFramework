@@ -75,7 +75,7 @@
 		"@types/glob": "^7.2.0",
 		"@types/lodash.isequal": "^4.5.8",
 		"@types/mocha": "^10.0.9",
-		"@types/node": "^18.19.59",
+		"@types/node": "^22.8.0",
 		"@types/rimraf": "^2.0.5",
 		"@types/semver": "^7.7.0",
 		"eslint": "~8.57.0",
