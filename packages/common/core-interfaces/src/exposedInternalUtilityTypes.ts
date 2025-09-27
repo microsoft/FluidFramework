@@ -903,7 +903,7 @@ export namespace InternalUtilityTypes {
 			Controls extends FilterControlsWithSubstitution
 			? /* test for 'any' */ boolean extends (T extends never ? true : false)
 				? /* 'any' => */ Controls["DegenerateSubstitute"]
-				: Options["IgnoreInaccessibleMembers"] extends "ignore-inaccessible-members"
+				: Options extends { IgnoreInaccessibleMembers: "ignore-inaccessible-members" }
 					? JsonSerializableFilter<T, Controls, TAncestorTypes, TNextAncestor>
 					: /* test for non-public properties (class instance type) */
 						IfNonPublicProperties<

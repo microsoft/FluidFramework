@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assertIdenticalTypes } from "./testUtils.js";
+import { assertIdenticalTypes, replaceBigInt } from "./testUtils.js";
 
 import type {
 	ErasedType,
@@ -13,6 +13,7 @@ import type {
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import type {
 	BrandedType,
+	JsonString,
 	ReadonlyNonNullJsonObjectWith,
 } from "@fluidframework/core-interfaces/internal";
 import type {
@@ -797,6 +798,18 @@ export const opaqueSerializableInRecursiveStructure: DirectoryOfValues<
 		item2: { items: { subItem1: {} } },
 	},
 };
+/**
+ * This type represents the deserialized form of {@link opaqueSerializableInRecursiveStructure}
+ */
+export interface DeserializedOpaqueSerializableInRecursiveStructure {
+	items: {
+		[x: string | number]:
+			| OpaqueJsonDeserialized<DirectoryOfValues<OpaqueJsonSerializable<unknown>>>
+			| {
+					value?: OpaqueJsonDeserialized<unknown>;
+			  };
+	};
+}
 
 export const opaqueDeserializedInRecursiveStructure: DirectoryOfValues<
 	OpaqueJsonDeserialized<unknown>
@@ -815,6 +828,20 @@ export const opaqueSerializableAndDeserializedInRecursiveStructure: DirectoryOfV
 		item2: { items: { subItem1: {} } },
 	},
 };
+/**
+ * This type represents the deserialized form of {@link opaqueSerializableAndDeserializedInRecursiveStructure}
+ */
+export interface DeserializedOpaqueSerializableAndDeserializedInRecursiveStructure {
+	items: {
+		[x: string | number]:
+			| OpaqueJsonDeserialized<
+					DirectoryOfValues<OpaqueJsonSerializable<unknown> & OpaqueJsonDeserialized<unknown>>
+			  >
+			| {
+					value?: OpaqueJsonDeserialized<unknown>;
+			  };
+	};
+}
 
 export const opaqueSerializableObjectRequiringBigintSupport =
 	objectWithBigint as unknown as OpaqueJsonSerializable<typeof objectWithBigint, [bigint]>;
@@ -841,6 +868,21 @@ export const opaqueSerializableAndDeserializedObjectExpectingBigintSupport =
 		[bigint]
 	> &
 		OpaqueJsonDeserialized<typeof objectWithReadonlyArrayOfNumbers, [bigint]>;
+
+export const jsonStringOfString = JSON.stringify(string) as JsonString<string>;
+export const jsonStringOfObjectWithArrayOfNumbers = JSON.stringify(
+	objectWithArrayOfNumbers,
+) as JsonString<typeof objectWithArrayOfNumbers>;
+export const jsonStringOfStringRecordOfNumbers = JSON.stringify(
+	stringRecordOfNumbers,
+) as JsonString<typeof stringRecordOfNumbers>;
+export const jsonStringOfStringRecordOfNumberOrUndefined = JSON.stringify(
+	stringRecordOfNumberOrUndefined,
+) as JsonString<typeof stringRecordOfNumberOrUndefined>;
+export const jsonStringOfBigInt = JSON.stringify(bigint, replaceBigInt) as JsonString<bigint>;
+export const jsonStringOfUnknown = JSON.stringify({
+	unknown: "you don't know me",
+}) as JsonString<unknown>;
 
 // #endregion
 
