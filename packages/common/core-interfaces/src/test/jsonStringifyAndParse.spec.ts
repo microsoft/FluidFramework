@@ -238,7 +238,7 @@ export function stringifyThenParse<
 	TExpected,
 	Options extends JsonStringifyOptions = Record<never, never>,
 >(
-	v: JsonSerializable<T, Options>,
+	v: JsonSerializable<T, Pick<Options, Extract<keyof JsonStringifyOptions, keyof Options>>>,
 	expectedDeserialization?: JsonDeserialized<TExpected>,
 ): {
 	stringified: JsonString<T>;

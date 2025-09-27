@@ -70,7 +70,11 @@ export const JsonStringify = JSON.stringify as <
 	T,
 	Options extends JsonStringifyOptions = Record<never, never>,
 >(
-	value: JsonSerializable<T, Options>,
+	value: JsonSerializable<
+		T,
+		// Make sure only options that are known are passed through.
+		Pick<Options, Extract<keyof JsonStringifyOptions, keyof Options>>
+	>,
 ) => JsonString<T>;
 
 /**
