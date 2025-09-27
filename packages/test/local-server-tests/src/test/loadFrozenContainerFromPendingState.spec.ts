@@ -176,18 +176,18 @@ describe("loadFrozenContainerFromPendingState", () => {
 			frozenEntryPoint.ITestFluidObject !== undefined,
 			"Expected frozen container entrypoint to be a valid TestFluidObject, but it was undefined",
 		);
-		await frozenEntryPoint.ITestFluidObject.runtime
-			.uploadBlob(stringToBuffer("some random text", "utf-8"))
-			.then(() => {
-				assert.fail("Blob upload should not be successful on frozen container");
-			})
-			.catch((error) => {
-				assert.strictEqual(
-					error.message,
-					"Operations are not supported on the FrozenDocumentStorageService.",
-					"Error message mismatch",
-				);
-			});
+		try {
+			await frozenEntryPoint.ITestFluidObject.runtime.uploadBlob(
+				stringToBuffer("some random text", "utf-8"),
+			);
+			assert.fail("uploadBlob should have failed");
+		} catch (error: any) {
+			assert.strictEqual(
+				error.message,
+				"Operations are not supported on the FrozenDocumentStorageService.",
+				"Error message mismatch",
+			);
+		}
 	});
 
 	it("trying to attach a frozen container", async () => {
@@ -237,18 +237,16 @@ describe("loadFrozenContainerFromPendingState", () => {
 			frozenEntryPoint.ITestFluidObject !== undefined,
 			"Expected frozen container entrypoint to be a valid TestFluidObject, but it was undefined",
 		);
-		await frozenContainer
-			.attach(urlResolver.createCreateNewRequest("test"))
-			.then(() => {
-				assert.fail("Attach should not be successful on frozen container");
-			})
-			.catch((error) => {
-				assert.strictEqual(
-					error.message,
-					"The Container is not in a valid state for attach [loaded] and [Attached]",
-					"Error message mismatch",
-				);
-			});
+		try {
+			await frozenContainer.attach(urlResolver.createCreateNewRequest("test"));
+			assert.fail("attach should have failed");
+		} catch (error: any) {
+			assert.strictEqual(
+				error.message,
+				"The Container is not in a valid state for attach [loaded] and [Attached]",
+				"Error message mismatch",
+			);
+		}
 	});
 
 	it("snapshot refresh on frozen container", async () => {

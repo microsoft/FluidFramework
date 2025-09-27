@@ -1027,6 +1027,7 @@ export class Container
 			this.storageAdapter,
 			offlineLoadEnabled,
 			this,
+			this.connectionMode,
 			() => this._deltaManager.connectionManager.shouldJoinWrite(),
 			() => this.supportGetSnapshotApi(),
 			this.mc.config.getNumber("Fluid.Container.snapshotRefreshTimeoutMs"),
