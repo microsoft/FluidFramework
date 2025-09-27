@@ -6,7 +6,7 @@
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- incorrect rule: misunderstands `declare`d types.
 import type { BrandedType } from "./brandedType.js";
 import type { JsonDeserialized } from "./jsonDeserialized.js";
-import type { JsonSerializable } from "./jsonSerializable.js";
+import type { JsonSerializable, JsonSerializableOptions } from "./jsonSerializable.js";
 
 /**
  * Brand for JSON that has been stringified.
@@ -41,22 +41,25 @@ declare class JsonStringBrand<T> extends BrandedType<JsonString<unknown>> {
 export type JsonString<T> = string & JsonStringBrand<T>;
 
 /**
- * Options for {@link JsonStringify}.
+ * Compile options for {@link JsonStringify}.
+ *
+ * @remarks
+ * This only impacts type checking -- it has no impact on runtime.
+ *
+ * The options are currently a subset of {@link JsonSerializableOptions}, specifically
+ * only `IgnoreInaccessibleMembers` is supported.
+ *
+ * No instance of this should ever exist at runtime.
+ *
+ * @privateRemarks
+ * Consider adding `AllowUnknown` option to allow precisely `unknown` types to
+ * be passed through. With `unknown` expected successful serialization could not
+ * be checked at compile time. At deserialization time, `unknown` does not
+ * guarantee any type and thus allowing does not erode type safety.
  *
  * @internal
  */
-export interface JsonStringifyOptions {
-	/**
-	 * When set, inaccessible (protected and private) members throughout type T are
-	 * ignored as if not present. Otherwise, inaccessible members are considered
-	 * an error (type checking will mention `SerializationErrorPerNonPublicProperties`).
-	 *
-	 * @remarks
-	 * The default is that `IgnoreInaccessibleMembers` property is not specified,
-	 * which means that inaccessible members are considered an error.
-	 */
-	IgnoreInaccessibleMembers?: "ignore-inaccessible-members";
-}
+export type JsonStringifyOptions = Pick<JsonSerializableOptions, "IgnoreInaccessibleMembers">;
 
 /**
  * Performs basic JSON serialization using `JSON.stringify` and brands the result as {@link JsonString}`<T>`.

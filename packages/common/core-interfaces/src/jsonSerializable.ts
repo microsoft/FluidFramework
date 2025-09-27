@@ -33,9 +33,17 @@ export interface JsonSerializableOptions {
 
 	/**
 	 * When set, inaccessible (protected and private) members throughout type T are
-	 * ignored as if not present.
+	 * ignored as if not present. Otherwise, inaccessible members are considered
+	 * an error (type checking will mention `SerializationErrorPerNonPublicProperties`).
 	 *
-	 * The default value is not present.
+	 * @remarks
+	 * For this option to be set and accurately filter inaccessible members, all
+	 * inaccessible members (if any) must be either inherited, symbol keyed, or
+	 * non-enumerable.
+	 *
+	 * The default is that `IgnoreInaccessibleMembers` property is not specified,
+	 * which means that inaccessible members are considered an error, even if
+	 * they would not be serialized at runtime.
 	 */
 	IgnoreInaccessibleMembers?: "ignore-inaccessible-members";
 }
