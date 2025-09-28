@@ -1185,6 +1185,39 @@ describe("serializedStateManager", () => {
 				);
 			});
 
+			it(`no snapshot refresh on read connection mode. isDirty: ${isDirty}`, async () => {
+				const storageAdapter = new MockStorageAdapter();
+				const saved = false;
+				const isDirtyF = (): boolean => (saved ? false : isDirty);
+				const serializedStateManager = new SerializedStateManager(
+					undefined,
+					enableOfflineSnapshotRefresh(logger),
+					storageAdapter,
+					true,
+					eventEmitter,
+					"read",
+					isDirtyF,
+					() => false,
+					snapshotRefreshTimeoutMs,
+				);
+
+				await serializedStateManager.fetchSnapshot(undefined);
+				const lastProcessedOpSequenceNumber = 20;
+				let seq = 1;
+				while (seq <= lastProcessedOpSequenceNumber) {
+					serializedStateManager.addProcessedOp(generateSavedOp(seq++));
+				}
+				const snapshotSequenceNumber = 11; // latest snapshot will be among processed ops
+				storageAdapter.uploadSummary(snapshotSequenceNumber);
+				// snapshot refresh promise is undefined before timeout
+				const snapshotRefreshP = serializedStateManager.refreshSnapshotP;
+				assert.strictEqual(snapshotRefreshP, undefined);
+				clock.tick(snapshotRefreshTimeoutMs);
+				// now it's a promise
+				const initialRefreshP = serializedStateManager.refreshSnapshotP;
+				assert.strictEqual(initialRefreshP, undefined, "no refresh expected");
+			});
+
 			it(`load flow. saved event before fetching the snapshot isDirty: ${isDirty}`, async () => {
 				const storageAdapter = new MockStorageAdapter();
 				let saved = false;
