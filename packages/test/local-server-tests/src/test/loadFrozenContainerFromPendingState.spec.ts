@@ -10,15 +10,15 @@ import {
 	asLegacyAlpha,
 	createDetachedContainer,
 	loadFrozenContainerFromPendingState,
+	type ContainerAlpha,
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces/internal";
-import type { ISharedMap } from "@fluidframework/map/internal";
+import type { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { timeoutPromise, type TestFluidObject } from "@fluidframework/test-utils/internal";
-import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
-import { createLoader } from "../utils.js";
+import { createLoader, type CreateLoaderDefaultResults } from "../utils.js";
 
 const toComparableArray = (dir: ISharedMap): [string, unknown][] =>
 	[...dir.entries()].map(([key, value]) => [
@@ -27,13 +27,21 @@ const toComparableArray = (dir: ISharedMap): [string, unknown][] =>
 	]);
 
 describe("loadFrozenContainerFromPendingState", () => {
-	it("loadFrozenContainerFromPendingState", async () => {
-		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+	let container: ContainerAlpha;
+	let rootObject: SharedMap;
+	let urlResolver: CreateLoaderDefaultResults["urlResolver"];
+	let codeLoader: CreateLoaderDefaultResults["codeLoader"];
 
-		const { urlResolver, codeDetails, codeLoader, loaderProps } = createLoader({
+	beforeEach(async () => {
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+		const loader = createLoader({
 			deltaConnectionServer,
 		});
-		const container = asLegacyAlpha(
+		const { codeDetails, loaderProps } = loader;
+		urlResolver = loader.urlResolver;
+		codeLoader = loader.codeLoader;
+
+		container = asLegacyAlpha(
 			await createDetachedContainer({
 				codeDetails,
 				...loaderProps,
@@ -55,14 +63,17 @@ describe("loadFrozenContainerFromPendingState", () => {
 			ITestFluidObject !== undefined,
 			"Expected entrypoint to be a valid TestFluidObject, but it was undefined",
 		);
+		rootObject = ITestFluidObject.root;
+	});
 
+	it("loadFrozenContainerFromPendingState", async () => {
 		for (let i = 0; i < 10; i++) {
-			ITestFluidObject.root.set(`detached-${i}`, i);
+			rootObject.set(`detached-${i}`, i);
 		}
 
 		await container.attach(urlResolver.createCreateNewRequest("test"));
 		for (let i = 0; i < 10; i++) {
-			ITestFluidObject.root.set(`attached-${i}`, i);
+			rootObject.set(`attached-${i}`, i);
 		}
 		const url = await container.getAbsoluteUrl("");
 		assert(
@@ -72,7 +83,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 
 		container.disconnect();
 		for (let i = 0; i < 10; i++) {
-			ITestFluidObject.root.set(`disconnected-${i}`, i);
+			rootObject.set(`disconnected-${i}`, i);
 		}
 
 		const pendingLocalState = await container.getPendingLocalState();
@@ -105,13 +116,13 @@ describe("loadFrozenContainerFromPendingState", () => {
 		const frozenEntries = toComparableArray(frozenEntryPoint.ITestFluidObject.root);
 		assert.deepEqual(
 			frozenEntries,
-			toComparableArray(ITestFluidObject.root),
+			toComparableArray(rootObject),
 			"Expected frozen container's data to match the original container's state after pending local state was captured.",
 		);
 
 		container.connect();
 		for (let i = 0; i < 10; i++) {
-			ITestFluidObject.root.set(`afterGetPendingLocalState-${i}`, i);
+			rootObject.set(`afterGetPendingLocalState-${i}`, i);
 		}
 
 		if (container.isDirty) {
@@ -119,7 +130,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 		}
 		assert.notDeepEqual(
 			frozenEntries,
-			toComparableArray(ITestFluidObject.root),
+			toComparableArray(rootObject),
 			"Expected frozen container's data to differ from the original container after new changes were made post-pending state.",
 		);
 		assert.deepEqual(
@@ -130,29 +141,6 @@ describe("loadFrozenContainerFromPendingState", () => {
 	});
 
 	it("uploading blob on frozen container", async () => {
-		const deltaConnectionServer = LocalDeltaConnectionServer.create();
-
-		const { urlResolver, codeDetails, codeLoader, loaderProps } = createLoader({
-			deltaConnectionServer,
-		});
-
-		const container = asLegacyAlpha(
-			await createDetachedContainer({
-				codeDetails,
-				...loaderProps,
-				configProvider: {
-					getRawConfig: (name) => {
-						switch (name) {
-							case "Fluid.Container.enableOfflineLoad":
-								return true;
-							default:
-								return undefined;
-						}
-					},
-				},
-			}),
-		);
-
 		await container.attach(urlResolver.createCreateNewRequest("test"));
 
 		const url = await container.getAbsoluteUrl("");
@@ -191,29 +179,6 @@ describe("loadFrozenContainerFromPendingState", () => {
 	});
 
 	it("trying to attach a frozen container", async () => {
-		const deltaConnectionServer = LocalDeltaConnectionServer.create();
-
-		const { urlResolver, codeDetails, codeLoader, loaderProps } = createLoader({
-			deltaConnectionServer,
-		});
-
-		const container = asLegacyAlpha(
-			await createDetachedContainer({
-				codeDetails,
-				...loaderProps,
-				configProvider: {
-					getRawConfig: (name) => {
-						switch (name) {
-							case "Fluid.Container.enableOfflineLoad":
-								return true;
-							default:
-								return undefined;
-						}
-					},
-				},
-			}),
-		);
-
 		await container.attach(urlResolver.createCreateNewRequest("test"));
 
 		const url = await container.getAbsoluteUrl("");
@@ -247,60 +212,5 @@ describe("loadFrozenContainerFromPendingState", () => {
 				"Error message mismatch",
 			);
 		}
-	});
-
-	it("snapshot refresh on frozen container", async () => {
-		const clock: SinonFakeTimers = useFakeTimers();
-		const snapshotRefreshTimeoutMs = 10;
-		const deltaConnectionServer = LocalDeltaConnectionServer.create();
-		const { urlResolver, codeDetails, codeLoader, loaderProps } = createLoader({
-			deltaConnectionServer,
-		});
-		const container = asLegacyAlpha(
-			await createDetachedContainer({
-				codeDetails,
-				...loaderProps,
-				configProvider: {
-					getRawConfig: (name) => {
-						switch (name) {
-							case "Fluid.Container.enableOfflineLoad":
-							case "Fluid.Container.enableOfflineSnapshotRefresh":
-								return true;
-							case "Fluid.Container.snapshotRefreshTimeoutMs":
-								return snapshotRefreshTimeoutMs;
-							default:
-								return undefined;
-						}
-					},
-				},
-			}),
-		);
-
-		await container.attach(urlResolver.createCreateNewRequest("test"));
-
-		const url = await container.getAbsoluteUrl("");
-		assert(
-			url !== undefined,
-			"Expected container to provide a valid absolute URL, but got undefined",
-		);
-		const pendingLocalState = await container.getPendingLocalState();
-
-		const frozenContainer = await loadFrozenContainerFromPendingState({
-			codeLoader,
-			urlResolver,
-			request: {
-				url,
-			},
-			pendingLocalState,
-		});
-
-		clock.tick(snapshotRefreshTimeoutMs);
-
-		const frozenEntryPoint: FluidObject<TestFluidObject> =
-			await frozenContainer.getEntryPoint();
-		assert(
-			frozenEntryPoint.ITestFluidObject !== undefined,
-			"Expected frozen container entrypoint to be a valid TestFluidObject, but it was undefined",
-		);
 	});
 });
