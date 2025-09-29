@@ -372,7 +372,7 @@ export class EditManager<
 					this.trunkBase.revision,
 				);
 				branches.set(branchId, branchSummary);
-				assert(branchSummary.base !== undefined, "Branch summary must have a base");
+				assert(branchSummary.base !== undefined, 0xc56 /* Branch summary must have a base */);
 				const baseSequenceId = mainBranch.getCommitSequenceId(branchSummary.base);
 				minBaseSeqId = minSequenceId(minBaseSeqId, baseSequenceId);
 			}
@@ -445,7 +445,7 @@ export class EditManager<
 		branchId: BranchId,
 	): void {
 		if (sessionId === this.localSessionId) {
-			assert(this.sharedBranches.has(branchId), "Expected branch to already exist");
+			assert(this.sharedBranches.has(branchId), 0xc57 /* Expected branch to already exist */);
 			return;
 		}
 
@@ -469,9 +469,9 @@ export class EditManager<
 	}
 
 	public removeBranch(branchId: BranchId): void {
-		assert(branchId !== "main", "Cannot remove main branch");
+		assert(branchId !== "main", 0xc58 /* Cannot remove main branch */);
 		const hadBranch = this.sharedBranches.delete(branchId);
-		assert(hadBranch, "Expected branch to exist");
+		assert(hadBranch, 0xc59 /* Expected branch to exist */);
 	}
 
 	private createAndAddSharedBranch(
@@ -489,7 +489,10 @@ export class EditManager<
 		branchId: BranchId,
 		branch: SharedBranch<TEditor, TChangeset>,
 	): void {
-		assert(!this.sharedBranches.has(branchId), "A branch with this ID already exists");
+		assert(
+			!this.sharedBranches.has(branchId),
+			0xc5a /* A branch with this ID already exists */,
+		);
 		this.sharedBranches.set(branchId, branch);
 
 		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
@@ -999,7 +1002,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		// rebasing trunk changes over the inverse of trunk changes.
 		assert(
 			this.localBranch.getHead() === this.trunk.getHead(),
-			"Clients with local changes cannot be used to generate summaries",
+			0xc5b /* Clients with local changes cannot be used to generate summaries */,
 		);
 
 		let parentHead: GraphCommit<TChangeset>;
@@ -1019,7 +1022,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		);
 		assert(
 			forkPointFromMainTrunk !== undefined,
-			"Expected child branch to be based on main branch",
+			0xc5c /* Expected child branch to be based on main branch */,
 		);
 
 		const trunk = childBranchTrunkCommits.map((c) => {
@@ -1075,7 +1078,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 	): void {
 		assert(
 			(this.parentBranch === undefined) === (data.base === undefined),
-			"Expected branch base to match presence of parent branch",
+			0xc5d /* Expected branch base to match presence of parent branch */,
 		);
 		const parentTrunkBase =
 			trunkRevisionCache.get(data.base ?? rootRevision) ??

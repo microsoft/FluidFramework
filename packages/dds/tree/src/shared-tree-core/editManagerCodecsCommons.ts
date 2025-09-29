@@ -144,7 +144,10 @@ export function encodeSharedBranch<TChangeset>(
 		json.author = data.author;
 	}
 	if (data.base !== undefined) {
-		assert(originatorId !== undefined, "Cannot encode branch base without originatorId");
+		assert(
+			originatorId !== undefined,
+			0xc5e /* Cannot encode branch base without originatorId */,
+		);
 		json.base = revisionTagCodec.encode(data.base, {
 			originatorId,
 			idCompressor: context.idCompressor,
@@ -221,11 +224,17 @@ export function decodeSharedBranch<TChangeset>(
 		data.author = json.author;
 	}
 	if (json.id !== undefined) {
-		assert(originatorId !== undefined, "Cannot decode branch id without originatorId");
+		assert(
+			originatorId !== undefined,
+			0xc5f /* Cannot decode branch id without originatorId */,
+		);
 		data.id = decodeBranchId(context.idCompressor, json.id, { originatorId });
 	}
 	if (json.base !== undefined) {
-		assert(originatorId !== undefined, "Cannot decode branch base without originatorId");
+		assert(
+			originatorId !== undefined,
+			0xc60 /* Cannot decode branch base without originatorId */,
+		);
 		data.base = revisionTagCodec.decode(json.base, {
 			originatorId,
 			idCompressor: context.idCompressor,
