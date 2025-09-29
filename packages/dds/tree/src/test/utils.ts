@@ -1612,26 +1612,3 @@ export function treeChunkFromCursor(fieldCursor: ITreeCursorSynchronous): TreeCh
 		idCompressor: testIdCompressor,
 	});
 }
-
-/**
- * Allow running test with development only logic disabled.
- * @remarks
- * Ideally testing for production style use would be done by producing an actual production bundle and testing that,
- * but configuring that is more difficult and this is a useful approximation for now.
- *
- * Currently this configuration is not run automatically.
- * As this currently only disables debugAsserts and development only assert messages, the changes of regressions are low.
- * Currently its considered better to send the testing time on running more fuzz tests.
- * Some test suites where regressions are more likely do their own testing with and without `emulateProductionBuild`,
- * further reducing the need to run this configuration regularly.
- */
-const emulateProduction = process.argv.includes("--emulateProduction");
-
-if (emulateProduction) {
-	before(() => {
-		emulateProductionBuild();
-	});
-	after(() => {
-		emulateProductionBuild(false);
-	});
-}
