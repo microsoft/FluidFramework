@@ -1,9 +1,5 @@
 # @fluid-internal/devtools-browser-extension
 
-## 2.62.0
-
-Dependency updates only.
-
 ## 2.61.0
 
 Dependency updates only.

@@ -1,9 +1,5 @@
 # @fluid-example/tree-cli-app
 
-## 2.62.0
-
-Dependency updates only.
-
 ## 2.61.0
 
 Dependency updates only.
