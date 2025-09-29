@@ -4873,7 +4873,7 @@ importers:
         specifier: ^0.58.3
         version: 0.58.3(@types/node@22.14.1)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^6.0.0
+        specifier: ^6.1.0
         version: 6.1.0(eslint@8.55.0)(typescript@5.4.5)
       copyfiles:
         specifier: ^2.4.1
@@ -5040,7 +5040,7 @@ importers:
         specifier: ^0.58.3
         version: 0.58.3(@types/node@18.19.86)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^6.0.0
+        specifier: ^6.1.0
         version: 6.1.0(eslint@8.55.0)(typescript@5.4.5)
       '@types/node':
         specifier: ^18.19.0
