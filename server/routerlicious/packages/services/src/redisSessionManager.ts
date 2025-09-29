@@ -93,7 +93,7 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 		options?: Partial<IRedisCollaborationSessionManagerOptions>,
 	) {
 		this.options = { ...defaultRedisCollaborationSessionManagerOptions, ...options };
-		if (parameters?.prefix) {
+		if (parameters?.prefix !== undefined) {
 			this.prefix = parameters.prefix;
 		}
 
@@ -151,7 +151,7 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 		return new Promise((resolve, reject) => {
 			const callbackPs: Promise<T>[] = [];
 			sessionJsonScanStream.on("data", (result: string[]) => {
-				if (!result) {
+				if (result.length === 0) {
 					// When redis scan is done, it pushes null to the stream.
 					// This should only trigger the "end" event, but we should check for it to be safe.
 					return;
