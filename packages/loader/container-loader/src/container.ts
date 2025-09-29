@@ -1021,13 +1021,17 @@ export class Container
 			(this.isInteractiveClient &&
 				this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad")) ??
 			options.enableOfflineLoad === true;
+		let storageOnly = false;
+		if (this.readOnlyInfo.readonly === true) {
+			storageOnly = this.readOnlyInfo.storageOnly;
+		}
 		this.serializedStateManager = new SerializedStateManager(
 			pendingLocalState,
 			this.subLogger,
 			this.storageAdapter,
 			offlineLoadEnabled,
 			this,
-			this.connectionMode,
+			storageOnly,
 			() => this._deltaManager.connectionManager.shouldJoinWrite(),
 			() => this.supportGetSnapshotApi(),
 			this.mc.config.getNumber("Fluid.Container.snapshotRefreshTimeoutMs"),

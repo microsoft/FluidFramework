@@ -191,7 +191,7 @@ describe("serializedStateManager", () => {
 				storageAdapter,
 				false,
 				eventEmitter,
-				"write",
+				false,
 				() => false,
 				() => false,
 			);
@@ -218,7 +218,7 @@ describe("serializedStateManager", () => {
 				}),
 				true,
 				eventEmitter,
-				"write",
+				false,
 				() => false,
 				() => false,
 			);
@@ -248,7 +248,7 @@ describe("serializedStateManager", () => {
 				storageAdapter,
 				true,
 				eventEmitter,
-				"write",
+				false,
 				() => false,
 				() => false,
 			);
@@ -272,7 +272,7 @@ describe("serializedStateManager", () => {
 				storageAdapter,
 				true,
 				eventEmitter,
-				"write",
+				false,
 				() => false,
 				() => false,
 			);
@@ -308,7 +308,7 @@ describe("serializedStateManager", () => {
 				storageAdapter,
 				true,
 				eventEmitter,
-				"write",
+				false,
 				() => false,
 				() => false,
 			);
@@ -360,7 +360,7 @@ describe("serializedStateManager", () => {
 				storageAdapter,
 				true,
 				eventEmitter,
-				"write",
+				false,
 				() => false,
 				() => false,
 			);
@@ -424,7 +424,7 @@ describe("serializedStateManager", () => {
 				storageAdapter,
 				true,
 				eventEmitter,
-				"write",
+				false,
 				() => false,
 				() => false,
 			);
@@ -466,7 +466,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
-					"write",
+					false,
 					isDirtyF,
 					() => false,
 				);
@@ -527,7 +527,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
-					"write",
+					false,
 					isDirtyF,
 					() => false,
 				);
@@ -580,7 +580,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
-					"write",
+					false,
 					isDirtyF,
 					() => false,
 				);
@@ -644,7 +644,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
-					"write",
+					false,
 					() => isDirty,
 					() => false,
 				);
@@ -677,7 +677,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
-					"write",
+					false,
 					isDirtyF,
 					() => false,
 				);
@@ -749,7 +749,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
-					"write",
+					false,
 					isDirtyF,
 					() => false,
 				);
@@ -800,7 +800,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
-					"write",
+					false,
 					() => isDirty,
 					() => false,
 				);
@@ -836,7 +836,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
-					"write",
+					false,
 					() => isDirty,
 					() => false,
 				);
@@ -888,7 +888,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
-					"write",
+					false,
 					isDirtyF,
 					() => false,
 				);
@@ -990,7 +990,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
-					"write",
+					false,
 					isDirtyF,
 					() => false,
 					snapshotRefreshTimeoutMs,
@@ -1060,7 +1060,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
-					"write",
+					false,
 					isDirtyF,
 					() => false,
 					snapshotRefreshTimeoutMs,
@@ -1130,7 +1130,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
-					"write",
+					false,
 					isDirtyF,
 					() => false,
 					snapshotRefreshTimeoutMs,
@@ -1185,7 +1185,7 @@ describe("serializedStateManager", () => {
 				);
 			});
 
-			it(`no snapshot refresh on read connection mode. isDirty: ${isDirty}`, async () => {
+			it(`no snapshot refresh on storage only mode. isDirty: ${isDirty}`, async () => {
 				const storageAdapter = new MockStorageAdapter();
 				const saved = false;
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
@@ -1195,7 +1195,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
-					"read",
+					true,
 					isDirtyF,
 					() => false,
 					snapshotRefreshTimeoutMs,
@@ -1228,7 +1228,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
-					"write",
+					false,
 					isDirtyF,
 					() => false,
 					snapshotRefreshTimeoutMs,
@@ -1299,7 +1299,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
-					"write",
+					false,
 					isDirtyF,
 					() => false,
 					snapshotRefreshTimeoutMs,
@@ -1367,7 +1367,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
-					"write",
+					false,
 					isDirtyF,
 					() => false,
 					snapshotRefreshTimeoutMs,

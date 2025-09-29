@@ -21,7 +21,6 @@ import {
 	type ISnapshotTree,
 	type IVersion,
 	type ISequencedDocumentMessage,
-	type ConnectionMode,
 } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
@@ -167,7 +166,7 @@ export class SerializedStateManager {
 		private readonly storageAdapter: ISerializedStateManagerDocumentStorageService,
 		private readonly _offlineLoadEnabled: boolean,
 		containerEvent: IEventProvider<ISerializerEvent>,
-		connectionMode: ConnectionMode,
+		storageOnly: boolean,
 		private readonly containerDirty: () => boolean,
 		private readonly supportGetSnapshotApi: () => boolean,
 		snapshotRefreshTimeoutMs?: number,
@@ -178,10 +177,9 @@ export class SerializedStateManager {
 		});
 
 		this.snapshotRefreshTimeoutMs = snapshotRefreshTimeoutMs ?? this.snapshotRefreshTimeoutMs;
-		this.refreshTimer =
-			connectionMode === "write"
-				? new Timer(this.snapshotRefreshTimeoutMs, () => this.tryRefreshSnapshot())
-				: undefined;
+		this.refreshTimer = storageOnly
+			? undefined
+			: new Timer(this.snapshotRefreshTimeoutMs, () => this.tryRefreshSnapshot());
 		// special case handle. Obtaining the last saved op seq num to avoid
 		// refreshing the snapshot before we have processed it. It could cause
 		// a subsequent stashing to have a newer snapshot than allowed.
