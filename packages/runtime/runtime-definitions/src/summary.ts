@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { ISummaryStats as LoaderSummaryStats } from "@fluidframework/container-loader/internal";
 import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
 import type {
 	ISnapshotTree,
@@ -18,17 +19,7 @@ import type {
 	IGarbageCollectionDetailsBase,
 } from "./garbageCollectionDefinitions.js";
 
-/**
- * Contains the aggregation data from a Tree/Subtree.
- * @legacy @beta
- */
-export interface ISummaryStats {
-	treeNodeCount: number;
-	blobNodeCount: number;
-	handleNodeCount: number;
-	totalBlobSize: number;
-	unreferencedBlobSize: number;
-}
+export type { ISummaryStats } from "@fluidframework/container-loader/internal";
 
 /**
  * Represents the summary tree for a node along with the statistics for that tree.
@@ -42,7 +33,7 @@ export interface ISummaryTreeWithStats {
 	/**
 	 * Represents an aggregation of node counts and blob sizes associated to the current summary information
 	 */
-	stats: ISummaryStats;
+	stats: LoaderSummaryStats;
 	/**
 	 * A recursive data structure that will be converted to a snapshot tree and uploaded
 	 * to the backend.
@@ -55,7 +46,7 @@ export interface ISummaryTreeWithStats {
  * @legacy @beta
  */
 export interface ISummarizeResult {
-	stats: ISummaryStats;
+	stats: LoaderSummaryStats;
 	summary: SummaryTree;
 }
 

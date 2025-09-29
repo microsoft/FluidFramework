@@ -260,6 +260,20 @@ export interface ISummarizerSummarySuccess {
 }
 
 // @beta @legacy
+export interface ISummaryStats {
+    // (undocumented)
+    blobNodeCount: number;
+    // (undocumented)
+    handleNodeCount: number;
+    // (undocumented)
+    totalBlobSize: number;
+    // (undocumented)
+    treeNodeCount: number;
+    // (undocumented)
+    unreferencedBlobSize: number;
+}
+
+// @beta @legacy
 export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "stage"> {
     readonly handle: string;
     // (undocumented)

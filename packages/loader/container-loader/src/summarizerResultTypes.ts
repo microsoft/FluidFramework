@@ -4,7 +4,18 @@
  */
 
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
-import type { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
+
+/**
+ * Contains the aggregation data from a Tree/Subtree.
+ * @legacy @beta
+ */
+export interface ISummaryStats {
+	treeNodeCount: number;
+	blobNodeCount: number;
+	handleNodeCount: number;
+	totalBlobSize: number;
+	unreferencedBlobSize: number;
+}
 
 /**
  * In addition to the normal summary tree + stats, this contains additional stats only relevant at the root of the tree.

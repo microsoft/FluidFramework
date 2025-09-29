@@ -27,6 +27,7 @@ export type {
 	IBroadcastSummaryResult,
 	IGeneratedSummaryStats,
 	IGenerateSummaryTreeResult,
+	ISummaryStats,
 	INackSummaryResult,
 	IRetriableFailureError,
 	ISummarizeResults,

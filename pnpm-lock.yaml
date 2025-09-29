@@ -12022,9 +12022,6 @@ importers:
       '@fluidframework/driver-utils':
         specifier: workspace:~
         version: link:../driver-utils
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../runtime/runtime-definitions
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -12735,6 +12732,9 @@ importers:
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../loader/container-loader
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
