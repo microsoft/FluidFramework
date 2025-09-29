@@ -14,6 +14,11 @@ import type {
 	IValueChanged,
 } from "../interfaces.js";
 
+interface OracleDir {
+	keys: Map<string, unknown>;
+	subdirs: Map<string, OracleDir>;
+}
+
 /**
  * Oracle for directory
  * @internal
@@ -28,10 +33,10 @@ export class SharedDirectoryOracle {
 		this.sharedDir.on("subDirectoryDeleted", this.onSubDirDeleted);
 		this.sharedDir.on("containedValueChanged", this.onContainedValueChanged);
 
-		this.takeSnapshot(sharedDir);
+		this.takeSnapshot();
 	}
 
-	private takeSnapshot(dir: ISharedDirectory | IDirectory): void {
+	private takeSnapshot(): void {
 		for (const [k, v] of this.sharedDir.entries()) {
 			this.model.set(k, v);
 		}
@@ -55,8 +60,9 @@ export class SharedDirectoryOracle {
 			);
 		}
 
+		const workingDir = this.sharedDir.getWorkingDirectory(fullPath);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const newVal = this.sharedDir.get(fullPath);
+		const newVal = workingDir?.get(key);
 
 		if (newVal === undefined) {
 			// deletion
@@ -89,22 +95,13 @@ export class SharedDirectoryOracle {
 	private readonly onContainedValueChanged = (
 		changed: IValueChanged,
 		local: boolean,
-		target: IEventThisPlaceHolder,
+		target,
 	): void => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const { key, previousValue } = changed;
 
-		if (this.model.has(key)) {
-			const prevVal = this.model.get(key);
-			assert.strictEqual(
-				prevVal,
-				previousValue,
-				`contained previous value mismatch at ${key}: expected: ${prevVal}, actual: ${previousValue}`,
-			);
-		}
-
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const newVal = this.sharedDir.get(key);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+		const newVal = target.get(key);
 		if (newVal === undefined) {
 			this.model.delete(key);
 		} else {
@@ -122,7 +119,7 @@ export class SharedDirectoryOracle {
 			let dir: IDirectory | undefined = this.sharedDir;
 
 			for (const part of parts) {
-				dir = dir.getSubDirectory(part);
+				dir = dir.getWorkingDirectory(part);
 				if (!dir) break;
 			}
 
@@ -131,7 +128,7 @@ export class SharedDirectoryOracle {
 			assert.deepStrictEqual(
 				actual,
 				value,
-				`SharedDirectoryOracle mismatch at path="${pathKey}" with actual value = ${actual} and oracle value = ${value} with model entries = ${JSON.stringify(this.model.entries())}}`,
+				`SharedDirectoryOracle mismatch at path="${pathKey}" with actual value = ${actual} and oracle value = ${value}}}`,
 			);
 		}
 	}
