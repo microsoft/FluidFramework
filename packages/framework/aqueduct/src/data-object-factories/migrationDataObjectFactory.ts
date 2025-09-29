@@ -71,10 +71,23 @@ export function getAlteredPropsSupportingMigrationDataObject<
 	const sharedObjects = [...(props.sharedObjects ?? [])];
 	coallesceSharedObjects(sharedObjects, modelDescriptors);
 
+	let migrationLock = false;
+
 	const transformedProps = {
 		...props,
 		sharedObjects,
-		afterBindRuntime: fullMigrateDataObject,
+		afterBindRuntime: async (runtime: IFluidDataStoreChannel) => {
+			// ! This migrationLock is critical, otherwise we may end up in a "getEntryPoint" deadlock
+			if (!migrationLock) {
+				migrationLock = true;
+				try {
+					await fullMigrateDataObject(runtime);
+				} finally {
+					// eslint-disable-next-line require-atomic-updates
+					migrationLock = false;
+				}
+			}
+		},
 		runtimeClass: mixinMigrationSupport(props.runtimeClass ?? FluidDataStoreRuntime),
 	};
 
