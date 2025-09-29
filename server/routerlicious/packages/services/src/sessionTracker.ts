@@ -104,7 +104,7 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 			lastClientLeaveTime: undefined,
 			telemetryProperties: {
 				hadWriteClient:
-					existingSession?.telemetryProperties?.hadWriteClient ?? client.isWriteClient,
+					(existingSession?.telemetryProperties?.hadWriteClient ?? false) || client.isWriteClient,
 				totalClientsJoined:
 					(existingSession?.telemetryProperties?.totalClientsJoined ?? 0) +
 					totalCurrentClients,
