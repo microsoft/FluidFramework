@@ -308,7 +308,8 @@ export class RunningSummarizer
 			"Fluid.Summarizer.AttemptsForSubmitFailures",
 		);
 		this.maxAttemptsForSubmitFailures =
-			overrideMaxAttempts && overrideMaxAttempts < defaultMaxAttemptsForSubmitFailures
+			overrideMaxAttempts !== undefined &&
+			overrideMaxAttempts < defaultMaxAttemptsForSubmitFailures
 				? overrideMaxAttempts
 				: defaultMaxAttemptsForSubmitFailures;
 	}
@@ -500,7 +501,7 @@ export class RunningSummarizer
 		// This will try to run lastSummary if needed.
 		if (
 			allowLastSummary &&
-			this.heuristicRunner?.shouldRunLastSummary() &&
+			this.heuristicRunner?.shouldRunLastSummary() === true &&
 			this.summarizingLock === undefined
 		) {
 			this.trySummarizeOnce(

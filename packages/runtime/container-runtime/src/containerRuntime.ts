@@ -303,11 +303,7 @@ import {
 	SummaryCollection,
 	OrderedClientCollection,
 	validateSummaryHeuristicConfiguration,
-	type ISummaryConfiguration,
-	DefaultSummaryConfiguration,
-	isSummariesDisabled,
-	isSummaryOnRequest,
-	summarizerClientType,
+	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
 

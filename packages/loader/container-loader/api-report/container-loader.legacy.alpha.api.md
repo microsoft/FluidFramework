@@ -156,6 +156,19 @@ export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProp
     readonly request: IRequest;
 }
 
+// @alpha @legacy
+export interface ILoadFrozenContainerFromPendingStateProps {
+    readonly clientDetailsOverride?: IClientDetails | undefined;
+    readonly codeLoader: ICodeDetailsLoader_2;
+    readonly configProvider?: IConfigProviderBase | undefined;
+    readonly logger?: ITelemetryBaseLogger | undefined;
+    readonly options?: IContainerPolicies | undefined;
+    readonly pendingLocalState: string;
+    readonly request: IRequest;
+    readonly scope?: FluidObject | undefined;
+    readonly urlResolver: IUrlResolver;
+}
+
 // @beta @legacy (undocumented)
 export interface INackSummaryResult<TSummaryNackMessage = unknown> {
     // (undocumented)
@@ -275,6 +288,9 @@ export class Loader implements IHostLoader {
 
 // @beta @legacy
 export function loadExistingContainer(loadExistingContainerProps: ILoadExistingContainerProps): Promise<IContainer>;
+
+// @alpha @legacy
+export function loadFrozenContainerFromPendingState(props: ILoadFrozenContainerFromPendingStateProps): Promise<IContainer>;
 
 // @beta
 export function loadSummarizerContainerAndMakeSummary(loadExistingContainerProps: ILoadExistingContainerProps): Promise<LoadSummarizerSummaryResult>;

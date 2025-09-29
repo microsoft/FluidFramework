@@ -104,18 +104,23 @@ export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
 /**
  * {@link SharedTree} but allowing a non-default configuration.
  * @remarks
- * This is useful for debugging and testing to opt into extra validation or see if opting out of some optimizations fixes an issue.
+ * This is useful for debugging and testing.
+ * For example, it can be used to opt into extra validation or see if opting out of some optimizations fixes an issue.
+ *
+ * With great care, and knowledge of the support and stability of the options exposed here,
+ * this can also be used to opt into some features early or for performance tuning.
+ *
  * @example
  * ```typescript
  * import {
- * 	ForestType,
  * 	TreeCompressionStrategy,
  * 	configuredSharedTree,
- * 	typeboxValidator,
- * } from "@fluid-framework/alpha";
+ * 	FormatValidatorBasic,
+ * 	ForestTypeReference,
+ * } from "fluid-framework/alpha";
  * const SharedTree = configuredSharedTree({
  * 	forest: ForestTypeReference,
- * 	jsonValidator: typeboxValidator,
+ * 	jsonValidator: FormatValidatorBasic,
  * 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
  * });
  * ```
