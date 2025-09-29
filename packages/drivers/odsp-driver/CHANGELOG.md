@@ -1,5 +1,20 @@
 # @fluidframework/odsp-driver
 
+## 2.62.0
+
+### Minor Changes
+
+- Move IPersistedCache types to driver-definitions [67a72fdbe1](https://github.com/microsoft/FluidFramework/commit/67a72fdbe1599d20ccc1d624efb9f8089662999d)
+
+  In an effort to decouple the driver web cache from the odsp driver a number of types have been moved from `@fluidframework/odsp-driver-definitions` to `@fluidframework/driver-definitions`. The moved types have been deprecated in `@fluidframework/odsp-driver-definitions`, and any usages should be moved to `@fluidframework/driver-definitions`.
+
+  The moved types are:
+
+  - `IEntry`
+  - `IFileEntry`
+  - `ICacheEntry`
+  - `IPersistedCache`
+
 ## 2.61.0
 
 Dependency updates only.
