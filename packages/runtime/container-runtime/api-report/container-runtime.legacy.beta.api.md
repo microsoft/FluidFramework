@@ -56,15 +56,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration;
 export const disabledCompressionConfig: ICompressionRuntimeOptions;
 
 // @beta @legacy (undocumented)
-export type EnqueueSummarizeResult = (ISummarizeResults & {
-    readonly alreadyEnqueued?: undefined;
-}) | (ISummarizeResults & {
-    readonly alreadyEnqueued: true;
-    readonly overridden: true;
-}) | {
-    readonly alreadyEnqueued: true;
-    readonly overridden?: undefined;
-};
+export type EnqueueSummarizeResult = EnqueueSummarizeResult_2<ISummaryOpMessage, ISummaryAckMessage, ISummaryNackMessage>;
 
 // @beta @legacy
 export interface IAckedSummary {
@@ -75,12 +67,7 @@ export interface IAckedSummary {
 }
 
 // @beta @legacy (undocumented)
-export interface IAckSummaryResult {
-    // (undocumented)
-    readonly ackNackDuration: number;
-    // (undocumented)
-    readonly summaryAckOp: ISummaryAckMessage;
-}
+export type IAckSummaryResult = IAckSummaryResult_2<ISummaryAckMessage>;
 
 // @beta @legacy
 export interface IBaseSummarizeResult {
@@ -93,12 +80,7 @@ export interface IBaseSummarizeResult {
 }
 
 // @beta @legacy (undocumented)
-export interface IBroadcastSummaryResult {
-    // (undocumented)
-    readonly broadcastDuration: number;
-    // (undocumented)
-    readonly summarizeOp: ISummaryOpMessage;
-}
+export type IBroadcastSummaryResult = IBroadcastSummaryResult_2<ISummaryOpMessage>;
 
 // @beta @legacy
 export interface IClientSummaryWatcher extends IDisposable {
@@ -182,12 +164,7 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
 }
 
 // @beta @legacy (undocumented)
-export interface INackSummaryResult {
-    // (undocumented)
-    readonly ackNackDuration: number;
-    // (undocumented)
-    readonly summaryNackOp: ISummaryNackMessage;
-}
+export type INackSummaryResult = INackSummaryResult_2<ISummaryNackMessage>;
 
 // @beta @deprecated @legacy
 export const InactiveResponseHeaderKey = "isInactive";
@@ -231,11 +208,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 }
 
 // @beta @legacy (undocumented)
-export interface ISummarizeResults {
-    readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckSummaryResult, INackSummaryResult>>;
-    readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
-    readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>>;
-}
+export type ISummarizeResults = ISummarizeResults_2<ISummaryOpMessage, ISummaryAckMessage, ISummaryNackMessage>;
 
 // @beta @legacy
 export interface ISummary {
@@ -370,7 +343,7 @@ export type ReadFluidDataStoreAttributes = IFluidDataStoreAttributes0 | IFluidDa
 // @beta @legacy
 export interface SubmitSummaryFailureData {
     // (undocumented)
-    stage: SummaryStage;
+    readonly stage: SummaryStage;
 }
 
 // @beta @legacy
@@ -378,13 +351,13 @@ export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeRes
 
 // @beta @legacy (undocumented)
 export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
-    success: true;
-    data: TSuccess;
+    readonly success: true;
+    readonly data: TSuccess;
 } | {
-    success: false;
-    data: TFailure | undefined;
-    message: string;
-    error: IRetriableFailureError;
+    readonly success: false;
+    readonly data: TFailure | undefined;
+    readonly message: string;
+    readonly error: IRetriableFailureError;
 };
 
 // @beta @legacy

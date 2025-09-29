@@ -19,22 +19,29 @@ export {
 	type LoadSummarizerSummaryResult,
 } from "./createAndLoadContainerUtils.js";
 export type {
+	EnqueueSummarizeResult,
 	IAckSummaryResult,
 	IBaseSummarizeResult,
 	IBroadcastSummaryResult,
+	IGeneratedSummaryStats,
 	IGenerateSummaryTreeResult,
 	INackSummaryResult,
 	IRetriableFailureError,
+	ISummarizeResults,
 	ISubmitSummaryOpResult,
 	IUploadSummaryResult,
-	OnDemandSummarizeResults,
 	SubmitSummaryFailureData,
 	SubmitSummaryResult,
 	SummarizeResultPart,
+	SummaryStage,
+	OnDemandSummarizeResults,
+	SummarizeResultsPromisesLike,
 	SummaryAckMessage,
 	SummaryOpContents,
-	SummaryStage,
-} from "./onDemandSummaryTypes.js";
+	OnDemandSummarizeOptions,
+	SummarizerLike,
+} from "./summarizerResultTypes.js";
+export { summarizerRequestUrl } from "./summarizerResultTypes.js";
 export {
 	type ICodeDetailsLoader,
 	type IFluidModuleWithDetails,

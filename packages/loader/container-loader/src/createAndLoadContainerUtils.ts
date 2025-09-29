@@ -36,21 +36,21 @@ import { v4 as uuid } from "uuid";
 
 import { DebugLogger } from "./debugLogger.js";
 import { Loader } from "./loader.js";
-import {
-	summarizerRequestUrl,
-	type LoadSummarizerSummaryResult,
-	type OnDemandSummarizeResults,
-	type SummarizeResultsPromisesLike,
-	type SummarizerLike,
-} from "./onDemandSummaryTypes.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
+import { summarizerRequestUrl } from "./summarizerResultTypes.js";
+import type {
+	LoadSummarizerSummaryResult,
+	OnDemandSummarizeResults,
+	SummarizeResultsPromisesLike,
+	SummarizerLike,
+} from "./summarizerResultTypes.js";
 
 export type {
 	ISummarizerSummaryFailure,
 	ISummarizerSummarySuccess,
 	LoadSummarizerSummaryResult,
-} from "./onDemandSummaryTypes.js";
+} from "./summarizerResultTypes.js";
 
 /**
  * Properties necessary for creating and loading a container.
