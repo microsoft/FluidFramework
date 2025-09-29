@@ -187,18 +187,22 @@ function makeMarkEffectDecoder(
 			count: number,
 			cellId: ChangeAtomId | undefined,
 			context: FieldChangeEncodingContext,
-		): Detach {
+		): Detach | Rename {
 			const { id, revision, idOverride } = encoded;
-			const mark: Mutable<Detach> = {
-				type: "Remove",
-				id,
-			};
 
-			mark.revision = decodeRevision(revision, context.baseContext);
-			if (idOverride !== undefined) {
-				mark.idOverride = changeAtomIdCodec.decode(idOverride, context.baseContext);
-			}
-			return mark;
+			const decodedIdOverride =
+				idOverride !== undefined
+					? changeAtomIdCodec.decode(idOverride, context.baseContext)
+					: undefined;
+
+			return decodeDetach(
+				cellId,
+				count,
+				decodeRevision(revision, context.baseContext),
+				id,
+				decodedIdOverride,
+				context,
+			);
 		},
 		moveOut(
 			encoded: Encoded.MoveOut,
@@ -207,26 +211,19 @@ function makeMarkEffectDecoder(
 			context: FieldChangeEncodingContext,
 		): Detach | Rename {
 			const { id, idOverride, revision } = encoded;
+			const decodedIdOverride =
+				idOverride !== undefined
+					? changeAtomIdCodec.decode(idOverride, context.baseContext)
+					: undefined;
 
-			const mark: Mutable<Detach> = {
-				type: "Remove",
-				revision: decodeRevision(revision, context.baseContext),
+			return decodeDetach(
+				cellId,
+				count,
+				decodeRevision(revision, context.baseContext),
 				id,
-			};
-
-			if (idOverride !== undefined) {
-				mark.idOverride = changeAtomIdCodec.decode(idOverride, context.baseContext);
-			}
-
-			if (cellId !== undefined) {
-				context.decodeRootRename(cellId, getDetachedNodeId(mark), count);
-				return {
-					type: "Rename",
-					idOverride: mark.idOverride ?? fail("Expected an ID override"),
-				};
-			}
-
-			return mark;
+				decodedIdOverride,
+				context,
+			);
 		},
 		attachAndDetach(
 			encoded: Encoded.AttachAndDetach,
@@ -278,6 +275,36 @@ function makeMarkEffectDecoder(
 	};
 
 	return decoderLibrary;
+}
+
+function decodeDetach(
+	cellId: ChangeAtomId | undefined,
+	count: number,
+	revision: RevisionTag,
+	localId: ChangesetLocalId,
+	idOverride: ChangeAtomId | undefined,
+	context: FieldChangeEncodingContext,
+): Detach | Rename {
+	const detachId: ChangeAtomId = { revision, localId };
+	if (cellId !== undefined) {
+		context.decodeRootRename(cellId, detachId, count);
+		return {
+			type: "Rename",
+			idOverride: idOverride ?? detachId,
+		};
+	}
+
+	const mark: Mutable<Detach> = {
+		type: "Remove",
+		revision,
+		id: localId,
+	};
+
+	if (idOverride !== undefined) {
+		mark.idOverride = idOverride;
+	}
+
+	return mark;
 }
 
 export function makeV2Codec(
@@ -421,17 +448,27 @@ function encodeRename(
 		};
 	}
 
-	const renamedNodeId =
-		context.rootRenames.getFirst(mark.cellId, mark.count).value ?? mark.cellId;
-	const isMoveOutAndAttach = context.isAttachId(renamedNodeId, mark.count).value;
-	const isMoveOutAndDetach = !areEqualChangeAtomIds(renamedNodeId, mark.idOverride);
+	const renamedRootId = context.rootRenames.getFirst(mark.cellId, mark.count).value;
+
+	const outputRootId = renamedRootId ?? mark.cellId;
+	const isMoveOutAndAttach = context.isAttachId(outputRootId, mark.count).value;
+	const isMoveOutAndDetach = !areEqualChangeAtomIds(outputRootId, mark.idOverride);
 	if (isMoveOutAndAttach || isMoveOutAndDetach) {
 		// Detached nodes which were last at this cell location have been moved.
 		return {
 			moveOut: {
-				revision: encodeRevision(renamedNodeId.revision),
-				id: renamedNodeId.localId,
+				revision: encodeRevision(outputRootId.revision),
+				id: outputRootId.localId,
 				idOverride: changeAtomIdCodec.encode(mark.idOverride, context.baseContext),
+			},
+		};
+	}
+
+	if (renamedRootId !== undefined) {
+		return {
+			remove: {
+				revision: encodeRevision(outputRootId.revision),
+				id: outputRootId.localId,
 			},
 		};
 	}

@@ -1785,6 +1785,23 @@ describe("ModularChangeFamily integration", () => {
 			]),
 		);
 
+		const renameInSequence = Change.build(
+			{
+				family,
+				maxId: 2,
+				renames: [
+					{
+						oldId,
+						newId: removeId,
+						count: 1,
+						detachLocation: fieldAId,
+					},
+				],
+				revisions,
+			},
+			Change.field(fieldA, sequence.identifier, [MarkMaker.rename(1, oldId, removeId)]),
+		);
+
 		const renameInOptional = Change.build(
 			{
 				family,
@@ -1792,7 +1809,7 @@ describe("ModularChangeFamily integration", () => {
 				renames: [
 					{
 						oldId,
-						newId: { revision: tag1, localId: brand(0) },
+						newId: removeId,
 						count: 1,
 						detachLocation: fieldAId,
 					},
@@ -1817,6 +1834,7 @@ describe("ModularChangeFamily integration", () => {
 				["edit detached (sequence field)", editDetachedInSequence, context],
 				["edit detached (optional field)", editDetachedInOptional, context],
 				["rename in optional field", renameInOptional, context],
+				["rename in sequence field", renameInSequence, context],
 			],
 		};
 
