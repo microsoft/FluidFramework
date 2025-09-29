@@ -76,7 +76,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		const pendingBlobs = (pendingState[1] ?? {}) as IPendingBlobs;
 		assert.strictEqual(Object.keys(pendingBlobs).length, 1);
 		assert.strictEqual(Object.values(pendingBlobs)[0].acked, false);
-		assert.ok(Object.values(pendingBlobs)[0].uploadTime);
+		assert(Object.values(pendingBlobs)[0].uploadTime !== undefined);
 
 		const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
 		assert.strictEqual(summaryData.ids?.length, 0);
@@ -219,7 +219,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		const pendingState = await pendingStateP;
 		const pendingBlobs = pendingState[1] ?? {};
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		assert.ok(pendingBlobs[Object.keys(pendingBlobs)[0]].storageId);
+		assert(pendingBlobs[Object.keys(pendingBlobs)[0]].storageId !== undefined);
 		const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
 
 		const runtime2 = new MockRuntime(
@@ -254,7 +254,7 @@ describe.skip("getPendingLocalState with blobs", () => {
 		const pendingState = await pendingStateP;
 		const pendingBlobs = pendingState[1] ?? {};
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		assert.ok(pendingBlobs[Object.keys(pendingBlobs)[0]].storageId);
+		assert(pendingBlobs[Object.keys(pendingBlobs)[0]].storageId !== undefined);
 		const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
 
 		const runtime2 = new MockRuntime(

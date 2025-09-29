@@ -659,7 +659,6 @@ for (const createBlobPayloadPending of [false, true]) {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					assert.strictEqual(error.message, "uploadBlob aborted");
 				}
-				assert(handleP);
 				await assert.rejects(handleP);
 				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
 				assert.strictEqual(summaryData.ids, undefined);
@@ -741,7 +740,6 @@ for (const createBlobPayloadPending of [false, true]) {
 				} catch {
 					assert.fail("abort after processing should not throw");
 				}
-				assert(handleP);
 				await assert.doesNotReject(handleP);
 				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
 				assert.strictEqual(summaryData.ids?.length, 1);
@@ -768,16 +766,13 @@ for (const createBlobPayloadPending of [false, true]) {
 					// finish op
 					await handleP;
 					assert.fail("Should not succeed");
-
-					// TODO: better typing
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				} catch (error: any) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				} catch (error: unknown) {
+					assert(error instanceof Error);
 					assert.strictEqual(error.message, "uploadBlob aborted");
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-					assert.ok(error.uploadTime);
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-					assert.strictEqual(error.acked, false);
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- TODO: better typing
+					assert((error as any).uploadTime !== undefined);
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any -- TODO: better typing
+					assert.strictEqual((error as any).acked, false);
 				}
 				await assert.rejects(handleP);
 				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
@@ -804,15 +799,13 @@ for (const createBlobPayloadPending of [false, true]) {
 					ac.abort();
 					await handleP;
 					assert.fail("Should not succeed");
-					// TODO: better typing
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				} catch (error: any) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				} catch (error: unknown) {
+					assert(error instanceof Error);
 					assert.strictEqual(error.message, "uploadBlob aborted");
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-					assert.ok(error.uploadTime);
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-					assert.strictEqual(error.acked, false);
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any -- TODO: better typing
+					assert((error as any).uploadTime !== undefined);
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any -- TODO: better typing
+					assert.strictEqual((error as any).acked, false);
 				}
 				await runtime.connect();
 				runtime.processOps();

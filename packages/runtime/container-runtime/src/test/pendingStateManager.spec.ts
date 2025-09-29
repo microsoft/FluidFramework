@@ -1175,7 +1175,10 @@ describe("Pending State Manager", () => {
 				stubs.reSubmitBatch.callsFake((batch, metadata) => {
 					// Here's where we implement [firstBatchSize === 0] case - Flush an empty batch on resubmit
 					if (firstBatchSize === 0 && stubs.reSubmitBatch.callCount === 1) {
-						assert(metadata.batchId, "PRECONDITION: Expected batchId for empty batch");
+						assert(
+							metadata.batchId !== undefined,
+							"PRECONDITION: Expected batchId for empty batch",
+						);
 						const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch(
 							metadata.batchId,
 							refSeqResubmit_15,
