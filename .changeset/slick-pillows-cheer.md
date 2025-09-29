@@ -60,7 +60,7 @@ const InvalidItemParentComponent = ({
 To provide access to TreeNode content in only part of a component the `usePropTreeNode` or `usePropTreeRecord` hooks can be used.
 
 
-### TreeAlpha.trackObservationsOnce Examples
+#### TreeAlpha.trackObservationsOnce Examples
 
 Here is a rather minimal example of how `TreeAlpha.trackObservationsOnce` can be used:
 
