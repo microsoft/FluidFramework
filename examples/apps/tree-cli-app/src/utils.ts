@@ -21,7 +21,7 @@ import {
 	extractPersistedSchema,
 	FluidClientVersion,
 	independentInitializedView,
-	typeboxValidator,
+	FormatValidatorBasic,
 	type ForestOptions,
 	type ICodecOptions,
 	type JsonCompatible,
@@ -72,7 +72,9 @@ export function loadDocument(source: string | undefined): List {
 			});
 		}
 		case "compressed": {
-			return TreeAlpha.importCompressed(List, fileData, { jsonValidator: typeboxValidator });
+			return TreeAlpha.importCompressed(List, fileData, {
+				jsonValidator: FormatValidatorBasic,
+			});
 		}
 		case "snapshot": {
 			// TODO: This should probably do a validating parse of the data (probably using type box) rather than just casting it.
@@ -249,7 +251,7 @@ export function rejectHandles(key: string, value: unknown): unknown {
 	return value;
 }
 
-const options: ForestOptions & ICodecOptions = { jsonValidator: typeboxValidator };
+const options: ForestOptions & ICodecOptions = { jsonValidator: FormatValidatorBasic };
 
 const File = Type.Object({
 	tree: Type.Unsafe<JsonCompatible<IFluidHandle>>(),
