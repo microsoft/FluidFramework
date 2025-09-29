@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type {
 	ImplicitFieldSchema,
@@ -30,7 +28,6 @@ import type { ToolMessage, AIMessage } from "@langchain/core/messages"; // eslin
 import { tool } from "@langchain/core/tools"; // eslint-disable-line import/no-internal-modules
 import { z } from "zod";
 
-import { IdGenerator } from "./idGenerator.js";
 import { Subtree } from "./subtree.js";
 import { generateEditTypesForPrompt } from "./typeGeneration.js";
 import {
@@ -114,28 +111,21 @@ export type Log = (message: string) => void;
 export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 	implements SharedTreeSemanticAgent
 {
-	#querying: typeof this.querying | undefined;
+	#querying?: Subtree<TRoot>;
 	#messages: (HumanMessage | AIMessage | ToolMessage)[] = [];
 	#treeHasChangedSinceLastQuery = false;
 
-	private get querying(): {
-		readonly tree: Subtree<TRoot>;
-		readonly idGenerator: IdGenerator;
-	} {
+	private get queryTree(): Subtree<TRoot> {
 		return this.#querying ?? fail("Not currently processing a prompt");
 	}
 
-	private setPrompting(): void {
+	private startQuerying(): void {
 		if (this.#querying !== undefined) {
-			this.#querying.tree.branch.dispose();
+			this.#querying.branch.dispose();
 		}
 
-		this.#querying = {
-			tree: this.tree.fork(),
-			idGenerator: new IdGenerator(),
-		};
-
-		this.#querying.idGenerator.assignIds(this.querying.tree.field);
+		this.tree.branch.rebaseOnto(this.originalBranch);
+		this.#querying = this.tree.fork();
 	}
 
 	private readonly originalBranch: TreeBranch;
@@ -181,7 +171,7 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 		this.options?.log?.(
 			`#### Generated Code\n\n\`\`\`javascript\n${functionCode}\n\`\`\`\n\n`,
 		);
-		const { idGenerator, tree } = this.querying;
+		const tree = this.queryTree;
 		const create: Record<string, (input: FactoryContentObject) => TreeNode> = {};
 		visitObjectNodeSchema(tree.schema, (schema) => {
 			const name =
@@ -213,17 +203,17 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 			this.options?.log?.(`#### Error\n\n`);
 			const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
 			this.options?.log?.(`\`\`\`JSON\n${errorMessage}\n\`\`\`\n\n`);
-			this.setPrompting();
+			this.startQuerying();
 			return `Running the function produced an error. The state of the tree will be reset to its initial state. Please try again. Here is the error: ${errorMessage}`;
 		}
 		this.options?.log?.(`#### New Tree State\n\n`);
 		this.options?.log?.(
 			`${
 				this.options.treeToString?.(tree.field) ??
-				`\`\`\`JSON\n${this.stringifyTree(tree.field, idGenerator)}\n\`\`\``
+				`\`\`\`JSON\n${this.stringifyTree(tree.field)}\n\`\`\``
 			}\n\n`,
 		);
-		return `After running the function, the new state of the tree is:\n\n\`\`\`JSON\n${this.stringifyTree(tree.field, idGenerator)}\n\`\`\``;
+		return `After running the function, the new state of the tree is:\n\n\`\`\`JSON\n${this.stringifyTree(tree.field)}\n\`\`\``;
 	}
 
 	// eslint-disable-next-line unicorn/consistent-function-scoping
@@ -240,13 +230,10 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 	private readonly getTreeTool = tool(
 		// eslint-disable-next-line unicorn/consistent-function-scoping
 		() => {
-			const stringified = this.stringifyTree(
-				this.querying.tree.field,
-				this.querying.idGenerator,
-			);
+			const stringified = this.stringifyTree(this.queryTree.field);
 			this.options?.log?.(
 				`${
-					this.options?.treeToString?.(this.querying.tree.field) ??
+					this.options?.treeToString?.(this.queryTree.field) ??
 					`\`\`\`JSON\n${stringified}\n\`\`\``
 				}\n\n`,
 			);
@@ -262,11 +249,10 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 	);
 
 	public async query(userPrompt: string): Promise<string | undefined> {
-		this.tree.branch.rebaseOnto(this.originalBranch);
-		this.setPrompting();
+		this.startQuerying();
 		this.options?.log?.(`## User Query\n\n${userPrompt}\n\n`);
 		if (this.#treeHasChangedSinceLastQuery) {
-			const stringified = this.stringifyTree(this.tree.field, this.querying.idGenerator);
+			const stringified = this.stringifyTree(this.tree.field);
 			this.#messages.push(
 				new HumanMessage(
 					`The tree has changed since the last message. The new state of the tree is: \n\n\`\`\`JSON\n${stringified}\n\`\`\``,
@@ -330,14 +316,14 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 					}
 				}
 			} else {
-				this.tree.branch.merge(this.querying.tree.branch);
+				this.tree.branch.merge(this.queryTree.branch);
 				this.originalBranch.merge(this.tree.branch, false);
 				this.#querying = undefined;
 				return responseMessage.text;
 			}
 		} while (iterations <= maxMessages);
 
-		this.querying.tree.branch.dispose();
+		this.queryTree.branch.dispose();
 		this.#querying = undefined;
 		throw new UsageError("LLM exceeded maximum number of messages");
 	}
@@ -345,9 +331,28 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 	private getSystemPrompt({ field, schema }: Subtree<TRoot>): string {
 		const arrayInterfaceName = "TreeArray";
 		const mapInterfaceName = "TreeMap";
-		// TODO: Support for primitive values
-		assert(typeof field === "object" && field !== null && !isFluidHandle(field), 0xc1c /*  */);
 		const simpleSchema = getSimpleSchema(schema);
+		// Inspect the schema to determine what kinds of nodes are possible - this will affect  how much information we need to include in the prompt.
+		let hasArrays = false;
+		let hasMaps = false;
+		let exampleObjectName: string | undefined;
+		for (const [definition, nodeSchema] of simpleSchema.definitions) {
+			switch (nodeSchema.kind) {
+				case NodeKind.Array: {
+					hasArrays = true;
+					break;
+				}
+				case NodeKind.Map: {
+					hasMaps = true;
+					break;
+				}
+				case NodeKind.Object: {
+					exampleObjectName ??= getFriendlySchemaName(definition);
+					break;
+				}
+				// No default
+			}
+		}
 
 		const { domainTypes } = generateEditTypesForPrompt(schema, simpleSchema);
 		for (const [key, value] of Object.entries(domainTypes)) {
@@ -364,15 +369,7 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 			}
 		}
 
-		const treeObjects: { type: string; id: string }[] = [];
-		const stringified = this.stringifyTree(field, new IdGenerator(), (object, id) => {
-			const type =
-				getFriendlySchemaName(Tree.schema(object).identifier) ??
-				fail("Expected object schema to have a friendly name.");
-
-			treeObjects.push({ type, id });
-		});
-
+		const stringified = this.stringifyTree(field);
 		const details: SchemaDetails = { hasHelperMethods: false };
 		const typescriptSchemaTypes = getZodSchemaAsTypeScript(domainTypes, details);
 
@@ -387,7 +384,7 @@ It will often not be possible to fully accomplish the goal using those helpers. 
 			: "";
 
 		const builderExplanation =
-			treeObjects[0] === undefined
+			exampleObjectName === undefined
 				? ""
 				: `When constructing new objects, you should wrap them in the appropriate builder function rather than simply making a javascript object.
 The builders are available on the "create" property on the first argument of the \`${functionName}\` function and are named according to the type that they create.
@@ -395,12 +392,42 @@ For example:
 
 \`\`\`javascript
 function ${functionName}({ root, create }) {
-	// This creates a new ${treeObjects[0].type} object:
-	const ${uncapitalize(treeObjects[0].type)} = create.${treeObjects[0].type}({ /* ...properties... */ });
+	// This creates a new ${exampleObjectName} object:
+	const ${uncapitalize(exampleObjectName)} = create.${exampleObjectName}({ /* ...properties... */ });
 	// Don't do this:
-	// const ${uncapitalize(treeObjects[0].type)} = { /* ...properties... */ };
+	// const ${uncapitalize(exampleObjectName)} = { /* ...properties... */ };
 }
 \`\`\`\n\n`;
+
+		const arrayEditing = `#### Editing Arrays
+
+The arrays in the tree are somewhat different than normal JavaScript \`Array\`s.
+Read-only operations are generally the same - you can create them, read via index, and call non-mutating methods like \`concat\`, \`map\`, \`filter\`, \`find\`, \`forEach\`, \`indexOf\`, \`slice\`, \`join\`, etc.
+However, write operations (e.g. index assignment, \`push\`, \`pop\`, \`splice\`, etc.) are not supported.
+Instead, you must use the methods on the following interface to mutate the array:
+
+\`\`\`typescript
+${getTreeArrayNodeDocumentation(arrayInterfaceName)}
+\`\`\`
+
+When possible, ensure that the edits preserve the identity of objects already in the tree.
+For example, prefer \`array.moveToIndex\` over \`array.removeAt\` + \`array.insertAt\` and prefer \`array.moveRangeToIndex\` over \`array.removeRange\` + \`array.insertAt\`.
+
+`;
+
+		const mapEditing = `#### Editing Maps
+
+The maps in the tree are somewhat different than normal JavaScript \`Map\`s.
+Map keys are always strings.
+Read-only operations are generally the same - you can create them, read via \`get\`, and call non-mutating methods like \`has\`, \`forEach\`, \`entries\`, \`keys\`, \`values\`, etc. (note the subtle differences around return values and iteration order).
+However, write operations (e.g. \`set\`, \`delete\`, etc.) are not supported.
+Instead, you must use the methods on the following interface to mutate the map:
+
+\`\`\`typescript
+${getTreeMapNodeDocumentation(mapInterfaceName)}
+\`\`\`
+
+`;
 
 		const rootTypes = [...simpleSchema.root.allowedTypesIdentifiers];
 		const prompt = `You are a helpful assistant collaborating with the user on a document. The document state is a JSON tree, and you are able to analyze and edit it.
@@ -427,34 +454,9 @@ You may mutate any part of the tree as necessary, taking into account the caveat
 You may also set the \`root\` property to be an entirely new value as long as it is one of the types allowed at the root of the tree (\`${rootTypes.map((t) => getFriendlySchemaName(t)).join(" | ")}\`).
 ${helperMethodExplanation}
 
-#### Editing Arrays
+${hasArrays ? arrayEditing : ""}${hasMaps ? mapEditing : ""}### Additional Notes
 
-The arrays in the tree are somewhat different than normal JavaScript \`Array\`s.
-Read-only operations are generally the same - you can create them, read via index, and call non-mutating methods like \`concat\`, \`map\`, \`filter\`, \`find\`, \`forEach\`, \`indexOf\`, \`slice\`, \`join\`, etc.
-However, write operations (e.g. index assignment, \`push\`, \`pop\`, \`splice\`, etc.) are not supported.
-Instead, you must use the methods on the following interface to mutate the array:
-
-\`\`\`typescript
-${getTreeArrayNodeDocumentation(arrayInterfaceName)}
-\`\`\`
-
-#### Editing Maps
-
-The maps in the tree are somewhat different than normal JavaScript \`Map\`s.
-Map keys are always strings.
-Read-only operations are generally the same - you can create them, read via \`get\`, and call non-mutating methods like \`has\`, \`forEach\`, \`entries\`, \`keys\`, \`values\`, etc. (note the subtle differences around return values and iteration order).
-However, standard write operations (e.g. \`set\`, \`delete\`, etc.) are not supported.
-Instead, you must use the methods on the following interface to mutate the map:
-
-\`\`\`typescript
-${getTreeMapNodeDocumentation(mapInterfaceName)}
-\`\`\`
-
-### Additional Notes
-
-Before outputting the ${functionName} function, you should check that it is valid according to both the application TypeScript schema and the restrictions of the editing language (e.g. the array methods you are allowed to use).
-
-When possible, ensure that the edits preserve the identity of objects already in the tree (for example, prefer \`array.moveToIndex\` or \`array.moveRange\` over \`array.removeAt\` + \`array.insertAt\`).
+Before outputting the ${functionName} function, you should check that it is valid according to both the application tree's schema and any restrictions of the editing APIs described above.
 
 Once data has been removed from the tree (e.g. replaced via assignment, or removed from an array), that data cannot be re-inserted into the tree - instead, it must be deep cloned and recreated.
 
@@ -471,14 +473,9 @@ ${stringified}
 		return prompt;
 	}
 
-	private stringifyTree(
-		tree: ReadableField<UnsafeUnknownSchema>,
-		idGenerator: IdGenerator,
-		visitNode?: (object: TreeNode, id: string) => void,
-	): string {
+	private stringifyTree(tree: ReadableField<UnsafeUnknownSchema>): string {
 		const indexReplacementKey = "_27bb216b474d45e6aaee14d1ec267b96";
 		const mapReplacementKey = "_a0d98d22a1c644539f07828d3f064d71";
-		idGenerator.assignIds(tree);
 		const stringified = JSON.stringify(
 			tree,
 			(_, node: unknown) => {
@@ -486,11 +483,6 @@ ${stringified}
 					const schema = Tree.schema(node);
 
 					if ([NodeKind.Object, NodeKind.Record, NodeKind.Map].includes(schema.kind)) {
-						visitNode?.(
-							node,
-							idGenerator.getId(node) ??
-								fail("Expected all non-array nodes in tree to have an ID."),
-						);
 						const key = Tree.key(node);
 						const index = typeof key === "number" ? key : undefined;
 						return schema.kind === NodeKind.Map

@@ -2,6 +2,7 @@
 "fluid-framework": minor
 "@fluidframework/tree": minor
 "@fluid-experimental/tree-react-api": minor
+"@fluidframework/react": minor
 "__section": tree
 ---
 Added APIs for tracking observations of SharedTree content for automatic invalidation

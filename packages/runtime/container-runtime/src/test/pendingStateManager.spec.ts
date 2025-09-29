@@ -135,7 +135,7 @@ describe("Pending State Manager", () => {
 			rollbackCalled = true;
 			rollbackContent.push(m);
 			if (rollbackShouldThrow) {
-				throw new Error();
+				throw new Error("test error");
 			}
 		};
 
@@ -213,7 +213,7 @@ describe("Pending State Manager", () => {
 			pendingStateManager = new PendingStateManager(
 				{
 					applyStashedOp: () => {
-						throw new Error();
+						throw new Error("test error");
 					},
 					clientId: () => "oldClientId",
 					connected: () => true,
@@ -1064,7 +1064,6 @@ describe("Pending State Manager", () => {
 	});
 
 	describe("hasPendingUserChanges", () => {
-		// eslint-disable-next-line unicorn/consistent-function-scoping
 		function createPendingStateManager(
 			pendingMessages: IPendingMessage[] = [],
 			initialMessages: IPendingMessage[] = [],

@@ -40,10 +40,10 @@
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
-		"@fluid-experimental/tree-react-api": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/react": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"fluid-framework": "workspace:~",
 		"react": "^18.3.1"

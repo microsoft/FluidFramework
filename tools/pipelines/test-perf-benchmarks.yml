@@ -66,7 +66,7 @@ variables:
     value: 1
     readonly: true
   - name: testWorkspace
-    value: $(Pipeline.Workspace)/test
+    value: $(Build.SourcesDirectory)
     readonly: true
   - name: testFilesPath
     value: $(Pipeline.Workspace)/test-files
@@ -107,8 +107,6 @@ stages:
           artifactBuildId: $(artifactBuildId)
           artifactPipeline: $(artifactPipeline)
           testFilesPath: $(testFilesPath)
-          testWorkspace: $(testWorkspace)
-          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.executionTestPackages }}:
@@ -143,13 +141,10 @@ stages:
               tar --extract --verbose --file $TAR_PATH ./src/test
 
         # Install package dependencies (this gets devDependencies installed so we can then run the package's tests).
-        - task: Bash@3
-          displayName: Install dependencies - ${{ testPackage }}
-          retryCountOnTaskFailure: 4
-          inputs:
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            targetType: 'inline'
-            script: 'npm install'
+        - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
+          parameters:
+            sourcePackageLocation: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            destPackageLocation: $(Build.SourcesDirectory)
 
         # Run tests
         - task: Npm@1
@@ -159,11 +154,25 @@ stages:
             workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
             customCommand: 'run test:benchmark:report'
 
+        - task: Bash@3
+          displayName: Compute benchmark output folder - ${{ testPackage }}
+          inputs:
+            targetType: 'inline'
+            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            script: |
+              set -eu -o pipefail
+              node --input-type=module -e "
+                  const benchmarkIndexUrl = await import.meta.resolve('@fluid-tools/benchmark');
+                  const absolutePath = new URL(benchmarkIndexUrl.replace('index.js', '.output')).pathname;
+                  console.log('Resolved @fluid-tools/benchmark output folder to ' + absolutePath);
+                  console.log('##vso[task.setvariable variable=benchmarkOutputFolder]' + absolutePath);
+              "
+
         # Consolidate output files
         - task: CopyFiles@2
           displayName: Consolidate output files - ${{ testPackage }}
           inputs:
-            sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/node_modules/@fluid-tools/benchmark/dist/.output/
+            sourceFolder: $(benchmarkOutputFolder)
             contents: '**'
             targetFolder: ${{ variables.consolidatedTestsOutputFolder }}/${{ testPackage }}
 
@@ -182,12 +191,11 @@ stages:
         displayName: Write measurements to Aria/Kusto
         inputs:
           targetType: 'inline'
-          workingDirectory: $(pathToTelemetryGenerator)
           script: |
             set -eu -o pipefail
             echo "Write the following benchmark output to Aria/Kusto"
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
+            pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlersNew)/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
 
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifact - Perf tests output - execution time
@@ -223,8 +231,6 @@ stages:
           artifactBuildId: $(artifactBuildId)
           artifactPipeline: $(artifactPipeline)
           testFilesPath: $(testFilesPath)
-          testWorkspace: $(testWorkspace)
-          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.memoryTestPackages }}:
@@ -258,14 +264,11 @@ stages:
               tar --extract --verbose --file $TAR_PATH ./dist/test
               tar --extract --verbose --file $TAR_PATH ./src/test
 
-        # Install package dependencies (this gets devDependencies installed so we can then run the package's tests)
-        - task: Bash@3
-          displayName: Install dependencies - ${{ testPackage }}
-          retryCountOnTaskFailure: 4
-          inputs:
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            targetType: 'inline'
-            script: 'npm install'
+        # Install package dependencies (this gets devDependencies installed so we can then run the package's tests).
+        - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
+          parameters:
+            sourcePackageLocation: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            destPackageLocation: $(Build.SourcesDirectory)
 
         # Run tests
         - task: Npm@1
@@ -298,12 +301,11 @@ stages:
         displayName: Write measurements to Aria/Kusto
         inputs:
           targetType: 'inline'
-          workingDirectory: $(pathToTelemetryGenerator)
           script: |
             set -eu -o pipefail
             echo "Write the following benchmark output to Aria/Kusto";
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/memoryUsageTestHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
+            pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlersNew)/memoryUsageTestHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
 
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifact - Perf tests output - memory usage
@@ -338,8 +340,6 @@ stages:
           artifactBuildId: $(artifactBuildId)
           artifactPipeline: $(artifactPipeline)
           testFilesPath: $(testFilesPath)
-          testWorkspace: $(testWorkspace)
-          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.customBenchmarkTestPackages }}:
@@ -373,14 +373,11 @@ stages:
               tar --extract --verbose --file $TAR_PATH ./dist/test
               tar --extract --verbose --file $TAR_PATH ./src/test
 
-        # Install package dependencies (this gets devDependencies installed so we can then run the package's tests)
-        - task: Bash@3
-          displayName: Install dependencies - ${{ testPackage }}
-          retryCountOnTaskFailure: 4
-          inputs:
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-            targetType: 'inline'
-            script: 'npm install'
+        # Install package dependencies (this gets devDependencies installed so we can then run the package's tests).
+        - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
+          parameters:
+            sourcePackageLocation: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            destPackageLocation: $(Build.SourcesDirectory)
 
         - task: Npm@1
           displayName: Run custom data performance tests - ${{ testPackage }}
@@ -412,12 +409,11 @@ stages:
         displayName: Write measurements to Aria/Kusto
         inputs:
           targetType: 'inline'
-          workingDirectory: $(pathToTelemetryGenerator)
           script: |
             set -eu -o pipefail
             echo "Write the following benchmark output to Aria/Kusto";
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/customBenchmarkHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
+            pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlersNew)/customBenchmarkHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
 
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifact - Perf tests output - custom data usage
@@ -468,8 +464,6 @@ stages:
             artifactBuildId: $(artifactBuildId)
             artifactPipeline: $(artifactPipeline)
             testFilesPath: $(testFilesPath)
-            testWorkspace: $(testWorkspace)
-            pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
             endpointName: ${{ endpointObject.endpointName }}
 
         # Download and install package with performance tests
@@ -480,13 +474,11 @@ stages:
             testPackageName: $(testPackage)
             installPath: $(testWorkspace)
 
-        - task: Bash@3
-          displayName: Install dependencies - ${{ endpointObject.endpointName }}
-          retryCountOnTaskFailure: 4
-          inputs:
-            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
-            targetType: 'inline'
-            script: 'npm install'
+        # Install package dependencies (this gets devDependencies installed so we can then run the package's tests).
+        - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
+          parameters:
+            sourcePackageLocation: ${{ variables.testWorkspace }}/node_modules/$(testPackage)
+            destPackageLocation: $(Build.SourcesDirectory)
 
         # We run both types of tests in the same bash step so we can make sure to run the second set even if the first
         # one fails.
@@ -551,12 +543,11 @@ stages:
           condition: succeededOrFailed()
           inputs:
             targetType: 'inline'
-            workingDirectory: $(pathToTelemetryGenerator)
             script: |
               set -eu -o pipefail
               echo "Writing the following performance tests results to Aria/Kusto - ${{ endpointObject.endpointName }}"
               ls -la ${{ variables.executionTimeTestOutputFolder }};
-              npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
+              pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlersNew)/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
           env:
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
 
@@ -565,12 +556,11 @@ stages:
           condition: succeededOrFailed()
           inputs:
             targetType: 'inline'
-            workingDirectory: $(pathToTelemetryGenerator)
             script: |
               set -eu -o pipefail
               echo "Writing the following performance tests results to Aria/Kusto - ${{ endpointObject.endpointName }}"
               ls -la ${{ variables.memoryUsageTestOutputFolder }};
-              npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
+              pnpm exec telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlersNew)/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
           env:
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
 
@@ -593,7 +583,7 @@ stages:
           displayName: Remove Output Folders from local server run ${{ endpointObject.endpointName }}
           inputs:
             targetType: 'inline'
-            workingDirectory: $(pathToTelemetryGenerator)
+            workingDirectory: $(pathToTelemetryGeneratorNew)
             script: |
               set -eu -o pipefail
               ls -laR ${{ variables.executionTimeTestOutputFolder }};
@@ -626,7 +616,7 @@ stages:
               script: |
                 set -eu -o pipefail
 
-                npx --package=@ff-internal/trips-setup@0.0.5 -- trips-cleanup --reservationId=$(stringBearerToken)
+                pnpm exec trips-cleanup --reservationId=$(stringBearerToken)
             condition: eq(variables['tenantSetupSuccess'], 'true')
 
         - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
