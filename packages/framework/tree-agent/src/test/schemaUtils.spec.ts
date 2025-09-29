@@ -1,8 +1,9 @@
-/* eslint-disable unicorn/no-array-callback-reference, @typescript-eslint/no-unsafe-call */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable unicorn/no-array-callback-reference */
 
 import { strict as assert } from "node:assert";
 
