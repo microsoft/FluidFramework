@@ -7,7 +7,6 @@ import type {
 	IDeltaManager,
 	ContainerWarning,
 } from "@fluidframework/container-definitions/internal";
-import type { SubmitSummaryResult } from "@fluidframework/container-loader/internal";
 import type {
 	ISummarizerEvents,
 	SummarizerStopReason,
@@ -17,10 +16,12 @@ import type {
 	ITelemetryBaseProperties,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import type { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
 import type {
 	ITelemetryLoggerExt,
 	ITelemetryLoggerPropertyBag,
@@ -31,19 +32,6 @@ import type {
 	EnqueueSummarizeResult,
 	ISummarizeResults,
 } from "./summaryDelayLoadedModule/index.js";
-
-export type {
-	IBaseSummarizeResult,
-	IGenerateSummaryTreeResult,
-	IGeneratedSummaryStats,
-	IRetriableFailureError,
-	ISubmitSummaryOpResult,
-	IUploadSummaryResult,
-	SubmitSummaryFailureData,
-	SubmitSummaryResult,
-	SummarizeResultPart,
-	SummaryStage,
-} from "@fluidframework/container-loader/internal";
 
 export const summarizerClientType = "summarizer";
 
@@ -213,6 +201,167 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 	 */
 	readonly override?: boolean;
 }
+
+/**
+ * In addition to the normal summary tree + stats, this contains additional stats
+ * only relevant at the root of the tree.
+ * @legacy @beta
+ */
+export interface IGeneratedSummaryStats extends ISummaryStats {
+	/**
+	 * The total number of data stores in the container.
+	 */
+	readonly dataStoreCount: number;
+	/**
+	 * The number of data stores that were summarized in this summary.
+	 */
+	readonly summarizedDataStoreCount: number;
+	/**
+	 * The number of data stores whose GC reference state was updated in this summary.
+	 */
+	readonly gcStateUpdatedDataStoreCount?: number;
+	/**
+	 * The size of the gc blobs in this summary.
+	 */
+	readonly gcTotalBlobsSize?: number;
+	/**
+	 * The number of gc blobs in this summary.
+	 */
+	readonly gcBlobNodeCount?: number;
+	/**
+	 * The summary number for a container's summary. Incremented on summaries throughout its lifetime.
+	 */
+	readonly summaryNumber: number;
+}
+
+/**
+ * Type for summarization failures that are retriable.
+ * @legacy @beta
+ */
+export interface IRetriableFailureError extends Error {
+	readonly retryAfterSeconds?: number;
+}
+
+/**
+ * Base results for all submitSummary attempts.
+ * @legacy @beta
+ */
+export interface IBaseSummarizeResult {
+	readonly stage: "base";
+	/**
+	 * Retriable error object related to failed summarize attempt.
+	 */
+	readonly error: IRetriableFailureError | undefined;
+	/**
+	 * Reference sequence number as of the generate summary attempt.
+	 */
+	readonly referenceSequenceNumber: number;
+	readonly minimumSequenceNumber: number;
+}
+
+/**
+ * Results of submitSummary after generating the summary tree.
+ * @legacy @beta
+ */
+export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
+	readonly stage: "generate";
+	/**
+	 * Generated summary tree.
+	 */
+	readonly summaryTree: ISummaryTree;
+	/**
+	 * Stats for generated summary tree.
+	 */
+	readonly summaryStats: IGeneratedSummaryStats;
+	/**
+	 * Time it took to generate the summary tree and stats.
+	 */
+	readonly generateDuration: number;
+}
+
+/**
+ * Results of submitSummary after uploading the tree to storage.
+ * @legacy @beta
+ */
+export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "stage"> {
+	readonly stage: "upload";
+	/**
+	 * The handle returned by storage pointing to the uploaded summary tree.
+	 */
+	readonly handle: string;
+	/**
+	 * Time it took to upload the summary tree to storage.
+	 */
+	readonly uploadDuration: number;
+}
+
+/**
+ * Results of submitSummary after submitting the summarize op.
+ * @legacy @beta
+ */
+export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
+	readonly stage: "submit";
+	/**
+	 * The client sequence number of the summarize op submitted for the summary.
+	 */
+	readonly clientSequenceNumber: number;
+	/**
+	 * Time it took to submit the summarize op to the broadcasting service.
+	 */
+	readonly submitOpDuration: number;
+}
+
+/**
+ * Strict type representing result of a submitSummary attempt.
+ * The result consists of 4 possible stages, each with its own data.
+ * The data is cumulative, so each stage will contain the data from the previous stages.
+ * If the final "submitted" stage is not reached, the result may contain the error object.
+ *
+ * Stages:
+ *
+ * 1. "base" - stopped before the summary tree was even generated, and the result only contains the base data
+ *
+ * 2. "generate" - the summary tree was generated, and the result will contain that tree + stats
+ *
+ * 3. "upload" - the summary was uploaded to storage, and the result contains the server-provided handle
+ *
+ * 4. "submit" - the summarize op was submitted, and the result contains the op client sequence number.
+ * @legacy @beta
+ */
+export type SubmitSummaryResult =
+	| IBaseSummarizeResult
+	| IGenerateSummaryTreeResult
+	| IUploadSummaryResult
+	| ISubmitSummaryOpResult;
+
+/**
+ * The stages of Summarize, used to describe how far progress succeeded in case of a failure at a later stage.
+ * @legacy @beta
+ */
+export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
+
+/**
+ * The data in summarizer result when submit summary stage fails.
+ * @legacy @beta
+ */
+export interface SubmitSummaryFailureData {
+	stage: SummaryStage;
+}
+
+/**
+ * @legacy @beta
+ */
+export type SummarizeResultPart<TSuccess, TFailure = undefined> =
+	| {
+			success: true;
+			data: TSuccess;
+	  }
+	| {
+			success: false;
+			data: TFailure | undefined;
+			message: string;
+			error: IRetriableFailureError;
+	  };
 
 /**
  * @legacy @beta

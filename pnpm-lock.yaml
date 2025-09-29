@@ -12277,9 +12277,6 @@ importers:
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
-      '@fluidframework/container-loader':
-        specifier: workspace:~
-        version: link:../../loader/container-loader
       '@fluidframework/container-runtime-definitions':
         specifier: workspace:~
         version: link:../container-runtime-definitions
@@ -12732,9 +12729,6 @@ importers:
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
-      '@fluidframework/container-loader':
-        specifier: workspace:~
-        version: link:../../loader/container-loader
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces

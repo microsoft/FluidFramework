@@ -98,7 +98,6 @@
 	},
 	"dependencies": {
 		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/id-compressor": "workspace:~",
