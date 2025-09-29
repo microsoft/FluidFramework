@@ -412,7 +412,6 @@ describe("SharedTreeCore", () => {
 			public onCommitSubmitted(commit: GraphCommit<ModularChangeset>): void {
 				const toResubmit = this.resubmitQueue.shift();
 				if (toResubmit !== commit) {
-					// XXX: Why?
 					this.resubmitQueue.shift();
 				}
 				this.submissionLog.push(commit);

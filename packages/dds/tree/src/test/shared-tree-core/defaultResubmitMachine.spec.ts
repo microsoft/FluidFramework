@@ -469,7 +469,5 @@ describe("DefaultResubmitMachine", () => {
 			assert.equal(MockChangeEnricher.commitsEnriched, 1);
 			assert.equal(MockChangeEnricher.commitsApplied, 2);
 		});
-
-		// XXX: Add test where commit is removed to simulate concurrent branch merge.
 	});
 });
