@@ -192,7 +192,7 @@ export function isNamedSchema(schemaIdentifier: string): boolean {
 		return false;
 	}
 
-	return schemaIdentifier.match(/\.*(?:Array|Map|Record)<\["(.*)"]>/) === null;
+	return schemaIdentifier.match(/(?:Array|Map|Record)<\["(.*)"]>/) === null;
 }
 
 /**
