@@ -233,7 +233,7 @@ export class PropertyTemplate {
                 target = _.isArray(in_obj) ? [] : {};
                 copyMembers = true;
             } else {
-                throw new TypeError(
+                throw new Error(
                     MSG.MISSING_CASE_IN_TEMPLATE_SERIALIZATION + this.typeid,
                 );
             }

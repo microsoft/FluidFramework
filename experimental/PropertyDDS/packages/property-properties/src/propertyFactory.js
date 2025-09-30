@@ -563,7 +563,7 @@ class PropertyFactory {
         } else if (_.isArray(in_input)) {
             input_array = in_input;
         } else {
-            throw (new TypeError(MSG.ATTEMPT_TO_REGISTER_WITH_BAD_ARGUMENT));
+            throw (new Error(MSG.ATTEMPT_TO_REGISTER_WITH_BAD_ARGUMENT));
         }
 
         if (!validateArray(input_array)) {

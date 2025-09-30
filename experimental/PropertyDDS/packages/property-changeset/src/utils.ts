@@ -2043,7 +2043,7 @@ export namespace Utils {
      *   }
      * }
      * @param in_changeSet - The changeset to extract paths from
-     * @param - - in_options] - Set of options
+     * @param in_options - Set of options
      * @param in_options.includeOperation - Flag to include the operation
      * @param in_options.includeTypeidInfo - Flag to include the typeid info
      * @returns - Flat list of paths
