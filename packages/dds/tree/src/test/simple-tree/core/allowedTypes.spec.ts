@@ -273,6 +273,34 @@ describe("allowedTypes", () => {
 		});
 	});
 
+	describe("AnnotatedAllowedTypesInternal", () => {
+		it("create", () => {
+			const types = AnnotatedAllowedTypesInternal.create(
+				[{ metadata: {}, type: schema.string }],
+				{ custom: "customValue" },
+			);
+			assert.deepEqual(types.metadata, { custom: "customValue" });
+			assert.deepEqual(types.types, [{ metadata: {}, type: schema.string }]);
+			assert.deepEqual(types.length, 1);
+			assert.deepEqual(types[0], schema.string);
+			assert.deepEqual([...types], [schema.string]);
+		});
+
+		it("deepEquals", () => {
+			const types = AnnotatedAllowedTypesInternal.create(
+				[{ metadata: {}, type: schema.string }],
+				{ custom: "customValue" },
+			);
+			const types2 = AnnotatedAllowedTypesInternal.create(
+				[{ metadata: {}, type: schema.string }],
+				{ custom: "customValue" },
+			);
+
+			// deepEqual tests a lot of generic object API which can violate proxy invariants and crash.
+			assert.deepEqual(types, types2);
+		});
+	});
+
 	it("unannotateAllowedType", () => {
 		assert.equal(unannotateAllowedType(SchemaFactory.number), SchemaFactory.number);
 		const lazy = (): typeof SchemaFactory.string => assert.fail();
@@ -452,31 +480,33 @@ describe("allowedTypes", () => {
 
 		it("adds metadata when it doesn't already exist", () => {
 			const result = normalizeAnnotatedAllowedTypes(stringSchema);
-			assert.deepEqual(result, {
-				metadata: {},
-				types: [{ metadata: {}, type: stringSchema }],
-			});
+			assert.deepEqual(
+				result,
+				AnnotatedAllowedTypesInternal.create([{ metadata: {}, type: stringSchema }]),
+			);
 		});
 
 		it("evaluates any lazy allowed types", () => {
 			const input = [lazyString, { metadata: { custom: true }, type: lazyNumber }];
 			const result = normalizeAnnotatedAllowedTypes(input);
-			assert.deepEqual(result, {
-				metadata: {},
-				types: [
+			assert.deepEqual(
+				result,
+				AnnotatedAllowedTypesInternal.create([
 					{ metadata: {}, type: stringSchema },
 					{ metadata: { custom: true }, type: numberSchema },
-				],
-			});
+				]),
+			);
 		});
 
 		it("handles single AnnotatedAllowedType", () => {
 			const input: AnnotatedAllowedType = { metadata: { custom: 1 }, type: lazyString };
 			const result = normalizeAnnotatedAllowedTypes(input);
-			assert.deepEqual(result, {
-				metadata: {},
-				types: [{ metadata: { custom: 1 }, type: stringSchema }],
-			});
+			assert.deepEqual(
+				result,
+				AnnotatedAllowedTypesInternal.create([
+					{ metadata: { custom: 1 }, type: stringSchema },
+				]),
+			);
 		});
 
 		it("retains top level metadata from AnnotatedAllowedTypes object", () => {
@@ -488,10 +518,13 @@ describe("allowedTypes", () => {
 			);
 
 			const result = normalizeAnnotatedAllowedTypes(input);
-			assert.deepEqual(result, {
-				metadata: { custom: "test" },
-				types: [{ metadata: { custom: 1 }, type: stringSchema }],
-			});
+			assert.deepEqual(
+				result,
+				AnnotatedAllowedTypesInternal.create(
+					[{ metadata: { custom: 1 }, type: stringSchema }],
+					{ custom: "test" },
+				),
+			);
 		});
 	});
 

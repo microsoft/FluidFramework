@@ -4,6 +4,8 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { fail } from "@fluidframework/core-utils/internal";
+
 import {
 	type ErasedBaseType,
 	ErasedTypeImplementation,
@@ -127,6 +129,15 @@ export class AnnotatedAllowedTypesInternal<
 		? UnannotateAllowedTypesList<T>
 		: AllowedTypes;
 
+	/**
+	 * The length of the types array.
+	 * @privateRemarks
+	 * This has to exist to make the proxy work correctly (able to expose `length` as an own property).
+	 */
+	public get length(): number {
+		return fail("length should be intercepted by the proxy");
+	}
+
 	private constructor(
 		public readonly types: T,
 		public readonly metadata: AllowedTypesMetadata = {},
@@ -166,7 +177,12 @@ export class AnnotatedAllowedTypesInternal<
 			},
 
 			get: (target, property, receiver) => {
-				// Forward array lookup, length, and array methods to the unannotated types array.
+				// Hide common array editing methods.
+				if (property === "push" || property === "pop") {
+					return undefined;
+				}
+
+				// Forward array lookup and array methods to the unannotated types array.
 				if (property in target.unannotatedTypes) {
 					return Reflect.get(target.unannotatedTypes, property);
 				}
@@ -189,6 +205,15 @@ export class AnnotatedAllowedTypesInternal<
 			},
 
 			getOwnPropertyDescriptor: (target, property) => {
+				if (property === "length") {
+					return {
+						value: target.unannotatedTypes.length,
+						writable: false,
+						enumerable: false,
+						configurable: true,
+					};
+				}
+
 				if (Object.prototype.hasOwnProperty.call(target.unannotatedTypes, property)) {
 					return Object.getOwnPropertyDescriptor(target.unannotatedTypes, property);
 				}
