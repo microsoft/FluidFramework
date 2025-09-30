@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-properties",
-	"version": "2.61.0",
+	"version": "2.61.1",
 	"description": "definitions of properties",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -92,8 +92,6 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

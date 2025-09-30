@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/todo",
-	"version": "2.61.0",
+	"version": "2.61.1",
 	"private": true,
 	"description": "Simple todo canvas.",
 	"homepage": "https://fluidframework.com",
@@ -94,8 +94,6 @@
 		}
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }
