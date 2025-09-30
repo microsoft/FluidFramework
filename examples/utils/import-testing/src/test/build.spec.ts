@@ -61,11 +61,13 @@ describe("build tests", () => {
 		});
 
 		// Error: ../../../packages/utils/telemetry-utils/lib/config.d.ts(37,56): error TS2304: Cannot find name 'Storage'.
+		// That code isn't even package exported: might be fixable by fixing how we do roll-ups?
 		it.skip("without DOM", async () => {
 			await compileTest("typescript-5.4", ["--lib", "ES2022"]);
 		});
 
-		// Several errors
+		// Several errors.
+		// Many of the errors are in types with no release tag which are intended to be package private: this might indicate an issue or limitation of how we do roll-ups?
 		it.skip("exactOptionalPropertyTypes", async () => {
 			await compileTest("typescript-5.4", ["--exactOptionalPropertyTypes"]);
 		});
