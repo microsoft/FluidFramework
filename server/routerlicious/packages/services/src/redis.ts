@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ICache } from "@fluidframework/server-services-core";
-import {
+import type { ICache } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import type {
 	IRedisParameters,
 	IRedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
  * Redis based cache redisClientConnectionManager.getRedisClient()
@@ -21,11 +21,11 @@ export class RedisCache implements ICache {
 		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
 		parameters?: IRedisParameters,
 	) {
-		if (parameters?.expireAfterSeconds) {
+		if (parameters?.expireAfterSeconds !== undefined) {
 			this.expireAfterSeconds = parameters.expireAfterSeconds;
 		}
 
-		if (parameters?.prefix) {
+		if (parameters?.prefix !== undefined) {
 			this.prefix = parameters.prefix;
 		}
 

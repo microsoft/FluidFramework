@@ -6,21 +6,19 @@
 import {
 	DataObject,
 	DataObjectFactory,
-	IDataObjectProps,
+	type IDataObjectProps,
 	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 
 class TestDataObjectClass extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
 
-	public static readonly factory = new DataObjectFactory(
-		TestDataObjectClass.Name,
-		TestDataObjectClass,
-		[],
-		{},
-	);
+	public static readonly factory = new DataObjectFactory({
+		type: TestDataObjectClass.Name,
+		ctor: TestDataObjectClass,
+	});
 
 	constructor(props: IDataObjectProps) {
 		super(props);
@@ -48,12 +46,11 @@ export class CounterTestDataObjectClass extends DataObject {
 
 	public static readonly Name = "@fluid-example/counter-test-data-object";
 
-	public static readonly factory = new DataObjectFactory(
-		CounterTestDataObjectClass.Name,
-		CounterTestDataObjectClass,
-		[SharedCounter.getFactory()],
-		{},
-	);
+	public static readonly factory = new DataObjectFactory({
+		type: CounterTestDataObjectClass.Name,
+		ctor: CounterTestDataObjectClass,
+		sharedObjects: [SharedCounter.getFactory()],
+	});
 
 	public increment(): void {
 		this.counter.increment(1);

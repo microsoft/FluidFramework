@@ -40,12 +40,12 @@ are generated (empty entries are current versions):
 | NewContainerRuntime | old    | old    |                   | old          |
 | NewDataRuntime      | old    | old    | old               |              |
 
-### Cross version combinations
+### Cross-Client combinations
 
 In addition to the layer version combinations seen above, this package also provides functions to generate variations
 intended to test all layers of one version against all layers of another version in tests that feature more than one client.
 The intention is to simulate scenarios where the client that created a document was using a different version than the client
-loading the document. These variations are applied in our cross version tests where we test the current version against the
+loading the document. These variations are applied in our cross-client tests where we test the current version against the
 most recent **public** release.
 
 For example, at the time of writing, main is on version `2.0.0-internal.7.3.0` and the latest **public** release is `1.3.7`.

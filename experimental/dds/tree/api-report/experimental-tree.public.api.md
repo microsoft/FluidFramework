@@ -4,7 +4,4 @@
 
 ```ts
 
-export { getSerializedUploadedEditChunkContents }
-export { getSerializedUploadedEditChunkContents as getUploadedEditChunkContents }
-
 ```

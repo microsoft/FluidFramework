@@ -5,8 +5,8 @@
 
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
-import { VersionBumpType } from "@fluid-tools/version-tools";
-import { Package } from "@fluidframework/build-tools";
+import type { VersionBumpType } from "@fluid-tools/version-tools";
+import type { Package } from "@fluidframework/build-tools";
 import { Flags, ux } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
 import { humanId } from "human-id";

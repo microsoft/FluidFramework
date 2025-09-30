@@ -3,31 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IContainer,
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
-	type IContainerPolicies,
+	IContainerPolicies,
 } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	FluidObject,
 	IConfigProviderBase,
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { IClientDetails } from "@fluidframework/driver-definitions";
-import {
+import type { IClientDetails } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentServiceFactory,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 
+import { FrozenDocumentServiceFactory } from "./frozenServices.js";
 import { Loader } from "./loader.js";
-import { ProtocolHandlerBuilder } from "./protocol.js";
+import type { ProtocolHandlerBuilder } from "./protocol.js";
 
 /**
  * Properties necessary for creating and loading a container.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ICreateAndLoadContainerProps {
 	/**
@@ -89,8 +89,7 @@ export interface ICreateAndLoadContainerProps {
 
 /**
  * Props used to load a container.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProps {
 	/**
@@ -106,8 +105,7 @@ export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProp
 
 /**
  * Props used to create a detached container.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerProps {
 	/**
@@ -118,8 +116,7 @@ export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerPr
 
 /**
  * Props used to rehydrate a detached container.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IRehydrateDetachedContainerProps extends ICreateAndLoadContainerProps {
 	/**
@@ -132,8 +129,7 @@ export interface IRehydrateDetachedContainerProps extends ICreateAndLoadContaine
  * Creates a new container using the specified code details but in an unattached state. While unattached, all
  * updates will only be local until the user explicitly attaches the container to a service provider.
  * @param createDetachedContainerProps - Services and properties necessary for creating detached container.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export async function createDetachedContainer(
 	createDetachedContainerProps: ICreateDetachedContainerProps,
@@ -149,8 +145,7 @@ export async function createDetachedContainer(
  * Creates a new container using the specified snapshot but in an unattached state. While unattached, all
  * updates will only be local until the user explicitly attaches the container to a service provider.
  * @param rehydrateDetachedContainerProps - Services and properties necessary for rehydrating detached container from a previously serialized container's state.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export async function rehydrateDetachedContainer(
 	rehydrateDetachedContainerProps: IRehydrateDetachedContainerProps,
@@ -168,8 +163,7 @@ export async function rehydrateDetachedContainer(
 /**
  * Loads a container with an existing snapshot from the service.
  * @param loadExistingContainerProps - Services and properties necessary for loading an existing container.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export async function loadExistingContainer(
 	loadExistingContainerProps: ILoadExistingContainerProps,
@@ -179,4 +173,69 @@ export async function loadExistingContainer(
 		loadExistingContainerProps.request,
 		loadExistingContainerProps.pendingLocalState,
 	);
+}
+
+/**
+ * Properties required to load a frozen container from pending state.
+ * @legacy @alpha
+ */
+export interface ILoadFrozenContainerFromPendingStateProps {
+	/**
+	 * The code loader handles loading the necessary code for running a container once it is loaded.
+	 */
+	readonly codeLoader: ICodeDetailsLoader;
+
+	/**
+	 * The url resolver used by the loader for resolving external urls into Fluid urls.
+	 */
+	readonly urlResolver: IUrlResolver;
+
+	/**
+	 * The request to resolve the container.
+	 */
+	readonly request: IRequest;
+
+	/**
+	 * Pending local state to be applied to the container.
+	 */
+	readonly pendingLocalState: string;
+
+	/**
+	 * A property bag of options/policies used by various layers to control features.
+	 */
+	readonly options?: IContainerPolicies | undefined;
+
+	/**
+	 * Scope is provided to all container and is a set of shared services for container's to integrate with their host environment.
+	 */
+	readonly scope?: FluidObject | undefined;
+
+	/**
+	 * The logger that all telemetry should be pushed to.
+	 */
+	readonly logger?: ITelemetryBaseLogger | undefined;
+
+	/**
+	 * The configuration provider which may be used to control features.
+	 */
+	readonly configProvider?: IConfigProviderBase | undefined;
+
+	/**
+	 * Client details provided in the override will be merged over the default client.
+	 */
+	readonly clientDetailsOverride?: IClientDetails | undefined;
+}
+
+/**
+ * Loads a frozen container from pending local state.
+ * @param props - Properties required to load a frozen container from pending state.
+ * @legacy @alpha
+ */
+export async function loadFrozenContainerFromPendingState(
+	props: ILoadFrozenContainerFromPendingStateProps,
+): Promise<IContainer> {
+	return loadExistingContainer({
+		...props,
+		documentServiceFactory: new FrozenDocumentServiceFactory(),
+	});
 }

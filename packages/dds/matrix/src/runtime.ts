@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
@@ -17,8 +17,7 @@ import { pkgVersion } from "./packageVersion.js";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedMatrix}.
- * @legacy
- * @alpha
+ * @legacy @beta
  * @deprecated - Use `SharedMatrix.getFactory` instead.
  */
 export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
@@ -61,16 +60,14 @@ export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
 
 /**
  * Entrypoint for {@link ISharedMatrix} creation.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export const SharedMatrix = createSharedObjectKind<ISharedMatrix>(SharedMatrixFactory);
 
 /**
  * Convenience alias for {@link ISharedMatrix}. Prefer to use {@link ISharedMatrix} when referring to
  * SharedMatrix as a type.
- * @legacy
- * @alpha
+ * @legacy @beta
  * @privateRemarks
  * This alias is for legacy compat from when the SharedMatrix class was exported as public.
  */

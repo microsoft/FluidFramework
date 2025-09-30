@@ -24,15 +24,14 @@ import {
 	DefaultChangeFamily,
 	type DefaultChangeset,
 	DefaultEditBuilder,
-	buildForest,
 	cursorForJsonableTreeField,
-	initializeForest,
 	intoDelta,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import {
 	assertDeltaEqual,
+	buildTestForest,
 	chunkFromJsonableTrees,
 	failCodecFamily,
 	mintRevisionTag,
@@ -41,6 +40,7 @@ import {
 } from "../../utils.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { numberSchema, stringSchema } from "../../../simple-tree/index.js";
+import { initializeForest } from "../initializeForest.js";
 
 const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
 const family = defaultChangeFamily;
@@ -114,6 +114,7 @@ function assertDeltasEqual(actual: DeltaRoot[], expected: DeltaRoot[]): void {
 }
 
 /**
+ * Initialize an editable forest.
  * @param data - The data to initialize the forest with.
  */
 function initializeEditableForest(data?: JsonableTree): {
@@ -122,7 +123,7 @@ function initializeEditableForest(data?: JsonableTree): {
 	changes: TaggedChange<DefaultChangeset>[];
 	deltas: DeltaRoot[];
 } {
-	const forest = buildForest();
+	const forest = buildTestForest({ additionalAsserts: true });
 	if (data !== undefined) {
 		initializeForest(
 			forest,

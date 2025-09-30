@@ -4,6 +4,9 @@
 
 ```ts
 
+// @alpha @legacy
+export function asLegacyAlpha(base: IContainer): ContainerAlpha;
+
 // @public
 export enum ConnectionState {
     CatchingUp = 1,
@@ -12,10 +15,15 @@ export enum ConnectionState {
     EstablishingConnection = 3
 }
 
-// @alpha @legacy
+// @alpha @sealed @legacy
+export interface ContainerAlpha extends IContainer {
+    getPendingLocalState(): Promise<string>;
+}
+
+// @beta @legacy
 export function createDetachedContainer(createDetachedContainerProps: ICreateDetachedContainerProps): Promise<IContainer>;
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IBaseProtocolHandler {
     // (undocumented)
     readonly attributes: IDocumentAttributes;
@@ -33,12 +41,12 @@ export interface IBaseProtocolHandler {
     snapshot(): IQuorumSnapshot;
 }
 
-// @alpha @deprecated @legacy (undocumented)
+// @beta @deprecated @legacy (undocumented)
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ICreateAndLoadContainerProps {
     readonly allowReconnect?: boolean | undefined;
     readonly clientDetailsOverride?: IClientDetails | undefined;
@@ -52,29 +60,21 @@ export interface ICreateAndLoadContainerProps {
     readonly urlResolver: IUrlResolver;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerProps {
     readonly codeDetails: IFluidCodeDetails;
 }
 
-// @alpha @deprecated @legacy
-export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
-    size: number;
-    getBlobIds(): string[];
-    dispose?(): void;
-};
-
-// @alpha @deprecated @legacy (undocumented)
+// @beta @deprecated @legacy (undocumented)
 export interface IFluidModuleWithDetails {
     details: IFluidCodeDetails;
     module: IFluidModule;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ILoaderProps {
     readonly codeLoader: ICodeDetailsLoader;
     readonly configProvider?: IConfigProviderBase;
-    readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly logger?: ITelemetryBaseLogger;
     readonly options?: ILoaderOptions;
@@ -83,11 +83,9 @@ export interface ILoaderProps {
     readonly urlResolver: IUrlResolver;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ILoaderServices {
     readonly codeLoader: ICodeDetailsLoader;
-    // @deprecated
-    readonly detachedBlobStorage?: IDetachedBlobStorage;
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly options: ILoaderOptions;
     readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
@@ -96,13 +94,26 @@ export interface ILoaderServices {
     readonly urlResolver: IUrlResolver;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProps {
     readonly pendingLocalState?: string | undefined;
     readonly request: IRequest;
 }
 
 // @alpha @legacy
+export interface ILoadFrozenContainerFromPendingStateProps {
+    readonly clientDetailsOverride?: IClientDetails | undefined;
+    readonly codeLoader: ICodeDetailsLoader_2;
+    readonly configProvider?: IConfigProviderBase | undefined;
+    readonly logger?: ITelemetryBaseLogger | undefined;
+    readonly options?: IContainerPolicies | undefined;
+    readonly pendingLocalState: string;
+    readonly request: IRequest;
+    readonly scope?: FluidObject | undefined;
+    readonly urlResolver: IUrlResolver;
+}
+
+// @beta @legacy
 export interface IParsedUrl {
     id: string;
     path: string;
@@ -110,7 +121,7 @@ export interface IParsedUrl {
     version: string | undefined;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IProtocolHandler extends IBaseProtocolHandler {
     // (undocumented)
     readonly audience: IAudienceOwner;
@@ -118,7 +129,7 @@ export interface IProtocolHandler extends IBaseProtocolHandler {
     processSignal(message: ISignalMessage): any;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IQuorumSnapshot {
     // (undocumented)
     members: QuorumClientsSnapshot;
@@ -128,12 +139,12 @@ export interface IQuorumSnapshot {
     values: QuorumProposalsSnapshot["values"];
 }
 
-// @alpha @legacy
+// @beta @legacy
 export interface IRehydrateDetachedContainerProps extends ICreateAndLoadContainerProps {
     readonly serializedState: string;
 }
 
-// @alpha @legacy (undocumented)
+// @beta @legacy (undocumented)
 export interface IScribeProtocolState {
     // (undocumented)
     members: [string, ISequencedClient][];
@@ -147,7 +158,7 @@ export interface IScribeProtocolState {
     values: [string, ICommittedProposal][];
 }
 
-// @alpha @legacy
+// @beta @legacy
 export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
     // (undocumented)
@@ -166,31 +177,34 @@ export class Loader implements IHostLoader {
     readonly services: ILoaderServices;
 }
 
-// @alpha @legacy
+// @beta @legacy
 export function loadExistingContainer(loadExistingContainerProps: ILoadExistingContainerProps): Promise<IContainer>;
 
 // @alpha @legacy
+export function loadFrozenContainerFromPendingState(props: ILoadFrozenContainerFromPendingStateProps): Promise<IContainer>;
+
+// @beta @legacy
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
 
-// @alpha @legacy
+// @beta @legacy
 export type QuorumClientsSnapshot = [string, ISequencedClient][];
 
-// @alpha @legacy
+// @beta @legacy
 export type QuorumProposalsSnapshot = {
     proposals: [number, ISequencedProposal, string[]][];
     values: [string, ICommittedProposal][];
 };
 
-// @alpha @legacy
+// @beta @legacy
 export function rehydrateDetachedContainer(rehydrateDetachedContainerProps: IRehydrateDetachedContainerProps): Promise<IContainer>;
 
-// @alpha @legacy
+// @beta @legacy
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
 
-// @alpha @legacy
+// @beta @legacy
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined;
 
-// @alpha @legacy
+// @beta @legacy
 export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;
 
 // (No @packageDocumentation comment for this package)

@@ -14,17 +14,17 @@ import {
 import * as core from "@fluidframework/server-services-core";
 import {
 	DefaultServiceConfiguration,
-	ICheckpointHeuristicsServerConfiguration,
-	ICheckpoint,
-	IDb,
-	IDocument,
-	IPartitionLambdaFactory,
-	ISequencedOperationMessage,
-	IServiceConfiguration,
+	type ICheckpointHeuristicsServerConfiguration,
+	type ICheckpoint,
+	type IDb,
+	type IDocument,
+	type IPartitionLambdaFactory,
+	type ISequencedOperationMessage,
+	type IServiceConfiguration,
 	MongoDocumentRepository,
 	MongoManager,
 } from "@fluidframework/server-services-core";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 
 export async function scribeCreate(
 	config: Provider,

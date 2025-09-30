@@ -3,9 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import {
+	setGlobalAbortControllerContext,
+	setGlobalTimeoutContext,
+} from "@fluidframework/server-services-client";
 import { setGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
-import { setGlobalTimeoutContext } from "@fluidframework/server-services-client";
-import { AsyncLocalStorageTelemetryContext, AsyncLocalStorageTimeoutContext } from "./asyncContext";
+
+import {
+	AsyncLocalStorageAbortControllerContext,
+	AsyncLocalStorageTelemetryContext,
+	AsyncLocalStorageTimeoutContext,
+} from "./asyncContext";
 
 /**
  * @internal
@@ -21,4 +29,12 @@ export function configureGlobalTelemetryContext() {
 export function configureGlobalTimeoutContext() {
 	const globalTimeoutContext = new AsyncLocalStorageTimeoutContext();
 	setGlobalTimeoutContext(globalTimeoutContext);
+}
+
+/**
+ * @internal
+ */
+export function configureGlobalAbortControllerContext() {
+	const globalAbortControllerContext = new AsyncLocalStorageAbortControllerContext();
+	setGlobalAbortControllerContext(globalAbortControllerContext);
 }

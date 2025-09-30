@@ -31,16 +31,13 @@ import type {
 } from "../../../shared-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { expectEqualPaths, SharedTreeTestFactory } from "../../utils.js";
-import type {
-	NodeBuilderData,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../simple-tree/schemaTypes.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	type TreeNodeSchema,
 	type ValidateRecursiveSchema,
 	type ViewableTree,
+	type NodeBuilderData,
 } from "../../../simple-tree/index.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
@@ -48,7 +45,7 @@ import type {
 	SharedTreeOptionsInternal,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../shared-tree/sharedTree.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import type { FuzzView } from "./fuzzEditGenerators.js";
 import type { ISharedTree } from "../../../treeFactory.js";
 
@@ -99,10 +96,9 @@ export const initialFuzzSchema = createTreeViewSchema([]);
 export const fuzzFieldSchema = FuzzNode.info.optionalChild;
 
 /**
- *
+ * Returns the {@link FuzzNodeSchema} with the {@link initialAllowedTypes}, as well as the additional nodeTypes passed in.
  * @param nodeTypes - The additional node types outside of the {@link initialAllowedTypes} that the fuzzNode is allowed to contain
  * @param schemaFactory - The schemaFactory used to build the {@link FuzzNodeSchema}. The scope prefix must be "treeFuzz".
- * @returns the {@link FuzzNodeSchema} with the {@link initialAllowedTypes}, as well as the additional nodeTypes passed in.
  */
 function createFuzzNodeSchema(
 	nodeTypes: TreeNodeSchema[],
@@ -169,7 +165,7 @@ export class SharedTreeFuzzTestFactory extends SharedTreeTestFactory {
 	) {
 		super(onCreate, onLoad, {
 			...options,
-			jsonValidator: typeboxValidator,
+			jsonValidator: FormatValidatorBasic,
 			disposeForksAfterTransaction: false,
 		});
 	}

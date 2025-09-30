@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ILumberFormatter } from "./resources";
-import { Lumber } from "./lumber";
+import type { Lumber } from "./lumber";
+import type { ILumberFormatter } from "./resources";
 
 /**
  * @internal

@@ -17,7 +17,6 @@ import {
 	type RevisionMetadataSource,
 	type RevisionTag,
 	type TaggedChange,
-	areEqualChangeAtomIds,
 	makeAnonChange,
 	mapTaggedChange,
 	newChangeAtomIdRangeMap,
@@ -34,10 +33,8 @@ import {
 	type RebaseRevisionMetadata,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import {
-	rebaseRevisionMetadataFromInfo,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+// eslint-disable-next-line import/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
 import {
@@ -45,15 +42,15 @@ import {
 	type Changeset,
 	type HasMarkFields,
 	MarkListFactory,
+	cloneMark,
+	extractMarkEffect,
+	getInputLength,
+	isDetach,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/index.js";
 import {
 	areInputCellsEmpty,
-	cloneMark,
-	extractMarkEffect,
-	getInputLength,
 	isActiveReattach,
-	isDetach,
 	isNewAttach,
 	isTombstone,
 	markEmptiesCells,

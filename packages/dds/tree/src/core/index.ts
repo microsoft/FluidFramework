@@ -137,18 +137,19 @@ export {
 	identifierFieldKindIdentifier,
 	storedEmptyFieldSchema,
 	type StoredSchemaCollection,
-	schemaFormat,
+	schemaFormatV1,
+	schemaFormatV2,
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
-	toTreeNodeSchemaDataFormat,
 	decodeFieldSchema,
-	encodeFieldSchema,
+	encodeFieldSchemaV1,
+	encodeFieldSchemaV2,
 	storedSchemaDecodeDispatcher,
-	type ErasedTreeNodeSchemaDataFormat,
 	type SchemaAndPolicy,
 	Multiplicity,
 	type SchemaPolicy,
+	SchemaVersion,
 } from "./schema-stored/index.js";
 
 export {
@@ -191,10 +192,12 @@ export {
 	revisionMetadataSourceFromInfo,
 	type RevisionInfo,
 	type EncodedRevisionTag,
+	type EncodedStableId,
 	type EncodedChangeAtomId,
 	taggedAtomId,
 	taggedOptAtomId,
 	offsetChangeAtomId,
+	StableIdSchema,
 	subtractChangeAtomIds,
 	replaceAtomRevisions,
 	replaceChange,
@@ -205,13 +208,13 @@ export {
 	newChangeAtomIdRangeMap,
 	newChangeAtomIdTransform,
 	compareRevisions,
+	diffHistories,
 } from "./rebase/index.js";
 
 export {
 	type Adapters,
 	AdaptedViewSchema,
 	type TreeAdapter,
-	AllowedUpdateType,
 } from "./schema-view/index.js";
 
 export {

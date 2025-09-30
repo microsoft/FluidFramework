@@ -30,43 +30,44 @@ import type { NodeId } from "../../../feature-libraries/index.js";
 
 export const Change = {
 	/**
-	 * Makes an empty changeset.
+	 * Creates an empty changeset
 	 */
 	empty: (): OptionalChangeset => ({}),
 	/**
-	 * Makes a changeset that replaces the current value of the field with a new value.
-	 * @param inboundSrc - The register that the replacement node should come from.
-	 * @param outboundDst - The detached node ID to associate with whichever node (if any) happens to be in the field when the changeset applies.
-	 * @param isEmpty - Whether the field is empty in the context that the changeset is authored for.
+	 * Creates a changeset that moves a node from `src` to `dst`.
+	 * @param src - The register to move a node from. The register must be full in the input context of the changeset.
+	 * @param dst - The register to move that node to.
+	 * The register must be empty in the input context of the changeset, or emptied as part of the changeset.
 	 */
 	replace: (
-		inboundSrc: ChangesetLocalId | ChangeAtomId,
-		outboundDst: ChangesetLocalId | ChangeAtomId,
+		src: ChangesetLocalId | ChangeAtomId,
+		dst: ChangesetLocalId | ChangeAtomId,
 		isEmpty: boolean,
 	): OptionalChangeset => {
 		return {
 			valueReplace: {
 				isEmpty,
-				src: asChangeAtomId(inboundSrc),
-				dst: asChangeAtomId(outboundDst),
+				src: asChangeAtomId(src),
+				dst: asChangeAtomId(dst),
 			},
 		};
 	},
 	/**
-	 * Makes a changeset that clears the any value from the field.
-	 * @param outboundDst - The detached node ID to associate with whichever node (if any) happens to be in the field when the changeset applies.
-	 * @param isEmpty - Whether the field is empty in the context that the changeset is authored for. Defaults to false.
+	 * Creates a changeset that clears a register and moves the contents to another register.
+	 * @param dst - The register to move the contents of the target register to.
+	 * The register must be empty in the input context of the changeset, or emptied as part of the changeset.
 	 */
 	clear: (
-		outboundDst: ChangeAtomId | ChangesetLocalId,
+		dst: ChangeAtomId | ChangesetLocalId,
 		isEmpty: boolean = false,
 	): OptionalChangeset => ({
-		valueReplace: { isEmpty, dst: asChangeAtomId(outboundDst) },
+		valueReplace: { isEmpty, dst: asChangeAtomId(dst) },
 	}),
 	/**
-	 * Makes a changeset that clears the any value from the field.
-	 * The field must not be populated in the input context of the changeset.
-	 * @param outboundDst - The detached node ID to associate with whichever node (if any) happens to be in the field when the changeset applies.
+	 * Creates a changeset that reserves a register.
+	 * @param target - The register to reserve. The register must NOT be full in the input context of the changeset.
+	 * @param dst - The register that the contents of the target register should be moved to should it become populated.
+	 * The register must be empty in the input context of the changeset, or emptied as part of the changeset.
 	 */
 	reserve: (dst: ChangeAtomId | ChangesetLocalId): OptionalChangeset => {
 		return {
@@ -74,8 +75,9 @@ export const Change = {
 		};
 	},
 	/**
-	 * Makes a changeset that pins the current node to the field.
-	 * @param outboundDst - The detached node ID to associate with whichever node (if any) happens to be in the field when the changeset applies.
+	 * Creates a changeset that pins the current node to the field.
+	 * @param dst - The register that the contents of the field should be moved to should it become populated
+	 * with a different node that the current one (which will take its place).
 	 */
 	pin: (dst: ChangeAtomId | ChangesetLocalId): OptionalChangeset => {
 		const id = asChangeAtomId(dst);
@@ -84,11 +86,23 @@ export const Change = {
 		};
 	},
 	/**
-	 * Makes a changeset applies a nested change to the node in the field.
-	 * @param change - The change to apply to the child node in the field.
-	 * The field must be full in the input context of the changeset.
+	 * Creates a changeset that applies a change to a child node in the given register.
+	 * @param location - The register that contains the child node to be changed.
+	 * That register must be full in the input context of the changeset.
+	 * @param change - A change to apply to a child node.
 	 */
-	child: (childChange: NodeId): OptionalChangeset => ({ childChange }),
+	childAt: (location: RegisterId | ChangesetLocalId, change: NodeId): OptionalChangeset => {
+		assert(location === "self");
+		return {
+			childChange: change,
+		};
+	},
+	/**
+	 * Creates a changeset that applies the given change to the child node in the "self" register.
+	 * @remarks The "self" register must be full in the input context of the changeset.
+	 * @param change - A change to apply to a child node in the "self" register.
+	 */
+	child: (change: NodeId): OptionalChangeset => Change.childAt("self", change),
 	/**
 	 * Combines multiple changesets for the same input context into a single changeset.
 	 * @param changes - The change to apply as part of the changeset. Interpreted as applying to the same input context.

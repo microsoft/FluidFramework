@@ -4,21 +4,22 @@
  */
 
 import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
-import { NodeKind, type TreeNodeSchema } from "../core/index.js";
+
+import { NodeKind, type TreeNodeSchema, type AllowedTypes } from "../core/index.js";
 import {
 	type FieldSchema,
-	type AllowedTypes,
 	type FieldSchemaAlpha,
 	FieldKind,
 	type FieldProps,
-} from "../schemaTypes.js";
+} from "../fieldSchema.js";
 import type {
 	SimpleFieldSchema,
 	SimpleNodeSchema,
 	SimpleTreeSchema,
 } from "../simpleSchema.js";
+
+import type { TreeSchema } from "./configuration.js";
 import { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
-import type { TreeSchema } from "./tree.js";
 
 const factory = new SchemaFactoryAlpha(undefined);
 
@@ -100,7 +101,7 @@ function generateNode(
 			}
 			// Here allowUnknownOptionalFields is implicitly defaulting. This is a subjective policy choice:
 			// users of this code are expected to handle what ever choice this code makes for cases like this.
-			return factory.object(id, fields, { metadata: schema.metadata });
+			return factory.objectAlpha(id, fields, { metadata: schema.metadata });
 		}
 		case NodeKind.Array:
 			return factory.arrayAlpha(
@@ -110,6 +111,12 @@ function generateNode(
 			);
 		case NodeKind.Map:
 			return factory.mapAlpha(
+				id,
+				generateAllowedTypes(schema.allowedTypesIdentifiers, context),
+				{ metadata: schema.metadata },
+			);
+		case NodeKind.Record:
+			return factory.recordAlpha(
 				id,
 				generateAllowedTypes(schema.allowedTypesIdentifiers, context),
 				{ metadata: schema.metadata },

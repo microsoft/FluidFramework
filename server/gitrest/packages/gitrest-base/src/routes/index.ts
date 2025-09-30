@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Router } from "express";
-import nconf from "nconf";
-import { IFileSystemManagerFactories, IRepositoryManagerFactory } from "../utils";
+import type { Router } from "express";
+import type nconf from "nconf";
+
+import type { IFileSystemManagerFactories, IRepositoryManagerFactory } from "../utils";
+
 /* eslint-disable import/no-internal-modules */
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";

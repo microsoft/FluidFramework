@@ -1,5 +1,1092 @@
 # fluid-framework
 
+## 2.61.0
+
+Dependency updates only.
+
+## 2.60.0
+
+### Minor Changes
+
+- FormatValidator added to replace JsonValidator ([#25311](https://github.com/microsoft/FluidFramework/pull/25311)) [9db6e08ec12](https://github.com/microsoft/FluidFramework/commit/9db6e08ec12973e7cc4f7fe86fecd054bafcd1c0)
+
+  The existing `@alpha` type [`JsonValidator`](https://fluidframework.com/docs/api/fluid-framework/jsonvalidator-interface) has a new type-erased alternative, `FormatValidator`, which is planned to be stabilized to `@beta` in the future.
+  It replaces `JsonValidator` in `ICodecOptions`.
+  Existing code using `ICodecOptions` should migrate to use `FormatValidator`, but this is not required for adopting this release as `JsonValidator` is still supported.
+
+- Single-node insertion/removal APIs have been removed from TableSchema (alpha) ([#25233](https://github.com/microsoft/FluidFramework/pull/25233)) [99281d2b24e](https://github.com/microsoft/FluidFramework/commit/99281d2b24ec406760c9029aad5aa72a9265a65d)
+
+  There is a significant performance benefit to inserting / removing rows / columns in batches.
+  To help encourage more performant usage patterns, single-node insertion and removal APIs have been removed.
+  The APIs that operate on batches should be used instead.
+
+  Specifically:
+
+  - `insertColumn`
+    - Use `insertColumns` instead
+  - `insertRow`
+    - Use `insertRows` instead
+  - `removeColumn`
+    - Use `removeColumns` instead
+  - `removeRow`
+    - Use `removeRows` instead
+
+- Replace "TreeEncodingOptions.useStoredKeys" with "keys" and "KeyEncodingOptions" ([#25263](https://github.com/microsoft/FluidFramework/pull/25263)) [b65f2a86d44](https://github.com/microsoft/FluidFramework/commit/b65f2a86d44d690a675867600a0a7e3c1608a473)
+
+  The alpha API `TreeEncodingOptions` has had its `useStoredKeys` `boolean` replaced with `keys` that takes a `KeyEncodingOptions` allowing for three options instead of the previous two.
+  With the new API, it is now possible to control, for APIs which support it (like [`TreeAlpha.exportVerbose`](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#exportverbose-methodsignature)), if unknown optional fields will be included when exporting data using stored keys.
+
+  Additionally, the relevant options interfaces have been marked as `@input`, indicating that more options may be added as optional parameters in the future, and that should be considered non-breaking.
+
+- Remove unnecessary and internal APIs in ISequenceIntervalCollection and related interval types ([#25244](https://github.com/microsoft/FluidFramework/pull/25244)) [15d476ea706](https://github.com/microsoft/FluidFramework/commit/15d476ea7069eb4de317a726733aa8fb9e8486e8)
+
+  The following APIs are now removed:
+
+  - `IInterval.clone`
+  - `IInterval.modify`
+  - `IInterval.union`
+  - `ISerializableInterval`
+  - `SequenceInterval.clone`
+  - `SequenceInterval.modify`
+  - `SequenceInterval.union`
+  - `SequenceInterval.serialize`
+  - `SequenceInterval.addPositionChangeListeners`
+  - `SequenceInterval.removePositionChangeListeners`
+
+  These APIs were never intended for public use. There is no migration path, and any usage is strongly discouraged, as it may result in severe errors or data corruption. Please remove any dependencies on these APIs as soon as possible.
+
+- SchemaFactoryAlpha.recordRecursive now supports metadata ([#25289](https://github.com/microsoft/FluidFramework/pull/25289)) [83241702d5f](https://github.com/microsoft/FluidFramework/commit/83241702d5fb5608cfa0add569c7803837abcf82)
+
+  `SchemaFactoryAlpha.recordRecursive` now support metadata like `SchemaFactoryAlpha.recordAlpha` and the other `TreeNodeSchema` creation methods on `SchemaFactoryAlpha` (except for `SchemaFactoryAlpha.record` which does not support metadata).
+
+- Range-based row/column removal methods have been added to TableSchema APIs (alpha) ([#25235](https://github.com/microsoft/FluidFramework/pull/25235)) [c803393cec6](https://github.com/microsoft/FluidFramework/commit/c803393cec6847f4294dc34b4a074ec93baf111c)
+
+  Adds range-based overloads to `removeColumns` and `removeRows` for removing contiguous ranges of rows and columns.
+
+  The `removeAllColumns` and `removeAllRows` methods have been removed, as they can be trivially implemented in terms of the new methods.
+
+- Hoist runTransaction method from TreeViewAlpha to TreeBranch ([#25280](https://github.com/microsoft/FluidFramework/pull/25280)) [a66b3b77df3](https://github.com/microsoft/FluidFramework/commit/a66b3b77df346d1689ddedcefc16846eda45991a)
+
+  Transactions are not view-schema-dependent, so it isn't necessary for them to be exclusive to the view type.
+  `runTransaction` is now available on `TreeBranch` (alpha).
+  `TreeViewAlpha` extends `TreeBranch`, so this change strictly makes the API more accessible.
+
+- Add SchemaFactoryBeta ([#25313](https://github.com/microsoft/FluidFramework/pull/25313)) [dca2361d33d](https://github.com/microsoft/FluidFramework/commit/dca2361d33dd959f5d913cbb59601685f85ff6f0)
+
+  `SchemaFactoryBeta` is added to provide a place to partially stabilize APIs from [`SchemaFactoryAlpha`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class).
+  Initially just one APIs is added as `@beta`: `scopedFactory`.
+  Users of the existing `@alpha` `scopedFactory` API on `SchemaFactoryAlpha` will need to update to use `scopedFactoryAlpha` if they require the returned factory to be a `SchemaFactoryAlpha` instance.
+
+## 2.53.0
+
+### Minor Changes
+
+- TableSchema's "removeColumn" API now removes corresponding cells (alpha) ([#25213](https://github.com/microsoft/FluidFramework/pull/25213)) [b665ba8320d](https://github.com/microsoft/FluidFramework/commit/b665ba8320d9ab6d1b87de81bdf54c2fde20e5c1)
+
+  Previously, the [removeColumn](https://fluidframework.com/docs/api/fluid-framework/tableschema-namespace/table-interface#removecolumn-methodsignature) API on Table nodes derived from [TableSchema](https://fluidframework.com/docs/api/fluid-framework/tableschema-namespace/) (alpha) only removed the `Column` node from the list of columns tracked by the table.
+  To also remove the corresponding cells from the table (which are stored on the `Row` nodes), the user was required to write a custom transaction that removed the column and cells.
+
+  The motivation for this design was due to performance concerns with transactions.
+  Those concerns are still relevant, but the data leak risk of dropping columns without removing corresponding cells seems a greater risk, and we have plans to address the performance issues with transactions.
+
+- Adds staged allowed types to SchemaFactoryAlpha ([#25116](https://github.com/microsoft/FluidFramework/pull/25116)) [59baf03ac7f](https://github.com/microsoft/FluidFramework/commit/59baf03ac7f2f2779533c8c63e1de85c01a0d39a)
+
+  This adds the `staged` API to [`SchemaFactoryAlpha`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class).
+  Staged allowed types can be used for schema evolution to add members to an [`AllowedTypes`](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) while supporting cross version collaboration.
+
+  Staged allowed types are [allowed types](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) that can be upgraded by [schema upgrades](https://fluidframework.com/docs/api/fluid-framework/treeview-interface#upgradeschema-methodsignature).
+  Before being upgraded, any attempt to insert or move a node to a location which requires its type to be upgraded to be valid will throw an error.
+
+  To add a new member to an `AllowedTypes`, add the type wrapped by `staged`.
+  For example, migrating an array which previously supported only numbers to support both numbers and strings would start by deploying a version of the app using `staged`:
+
+  ```typescript
+  class TestArray extends schemaFactoryAlpha.arrayAlpha("TestArray", [
+    SchemaFactoryAlpha.number,
+    SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+  ]) {}
+  ```
+
+  Once enough clients have this code update, it is safe to allow writing strings to the array.
+  To allow writing strings to the array, a code change must be made to remove the staged annotation:
+
+  ```typescript
+  class TestArray extends schemaFactoryAlpha.arrayAlpha("TestArray", [
+    schemaFactoryAlpha.number,
+    schemaFactoryAlpha.string,
+  ]) {}
+  ```
+
+  Then when opening old documents [upgradeSchema](https://fluidframework.com/docs/api/fluid-framework/treeview-interface#upgradeschema-methodsignature) is used to upgrade the stored schema:
+
+  ```typescript
+  view.upgradeSchema();
+  ```
+
+  The `@alpha` API [extractPersistedSchema](https://fluidframework.com/docs/api/fluid-framework#extractpersistedschema-function) now takes the schema as an `ImplicitAnnotatedFieldSchema` and an additional parameter to filter which staged upgrades it includes.
+
+  Below is a full example of how the schema migration process works.
+  This can also be found in the [tests](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts).
+
+  ```typescript
+  // Schema A: only number allowed
+  const schemaA = SchemaFactoryAlpha.optional([SchemaFactoryAlpha.number]);
+
+  // Schema B: number or string (string is staged)
+  const schemaB = SchemaFactoryAlpha.optional([
+    SchemaFactoryAlpha.number,
+    SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+  ]);
+
+  // Schema C: number or string, both fully allowed
+  const schemaC = SchemaFactoryAlpha.optional([
+    SchemaFactoryAlpha.number,
+    SchemaFactoryAlpha.string,
+  ]);
+
+  // Initialize with schema A.
+  const configA = new TreeViewConfiguration({
+    schema: schemaA,
+  });
+  const viewA = treeA.viewWith(configA);
+  viewA.initialize(5);
+
+  // Since we are running all the different versions of the app in the same process making changes synchronously,
+  // an explicit flush is needed to make them available to each other.
+  synchronizeTrees();
+
+  assert.deepEqual(viewA.root, 5);
+
+  // View the same document with a second tree using schema B.
+  const configB = new TreeViewConfiguration({
+    schema: schemaB,
+  });
+  const viewB = treeB.viewWith(configB);
+  // B cannot write strings to the root.
+  assert.throws(() => (viewB.root = "test"));
+
+  // View the same document with a third tree using schema C.
+  const configC = new TreeViewConfiguration({
+    schema: schemaC,
+  });
+  const viewC = treeC.viewWith(configC);
+  // Upgrade to schema C
+  viewC.upgradeSchema();
+  // Use the newly enabled schema.
+  viewC.root = "test";
+
+  synchronizeTrees();
+
+  // View A is now incompatible with the stored schema:
+  assert.equal(viewA.compatibility.canView, false);
+
+  // View B can still read the document, and now sees the string root which relies on the staged schema.
+  assert.deepEqual(viewB.root, "test");
+  ```
+
+- Allow edits in arrays to be concurrent to dependent edits of transactions with violated constraints ([#25191](https://github.com/microsoft/FluidFramework/pull/25191)) [ef64bae6ab2](https://github.com/microsoft/FluidFramework/commit/ef64bae6ab2848c67d778d14ad56ae021f54ac7a)
+
+  Before this release, making concurrent edits to an array could lead to assertion error `0x8a2` being thrown if the following conditions were met:
+
+  - Some edit `e1` was a transaction with a constraint that turned out to be violated by edits concurrent to (and sequenced before) `e1`
+  - Some edit `e2` was dependent on `e1` (from before the violation of its constraint)
+  - Some edit `e3` was concurrent to and sequenced after both `e1` and `e2`
+  - `e3` was either concurrent to or the revert of some other edit `e0` that predated `e1`, `e2`, and `e3`.
+  - `e0` and `e2` made edits to the same gap (that is, in the same space between nodes) in the sequence/array.
+
+  After this release, these scenarios will work as expected (that is, no assertion error thrown).
+
+- Export TreeNode not only as a type ([#25226](https://github.com/microsoft/FluidFramework/pull/25226)) [eefb9522c01](https://github.com/microsoft/FluidFramework/commit/eefb9522c019ac68d8b4f40d7134116c78a1f2a5)
+
+  `TreeNode` can now be used as a runtime object.
+  This enables checking if an object is a `TreeNode` with `instanceof`.
+  `TreeNode` has customized `instanceof` support so it can detect `TreeNode` instances, even if they hide their prototype like [POJO mode nodes](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#schemafactory-remarks) do.
+
+## 2.52.0
+
+### Minor Changes
+
+- Change and clarify limitations related to alpha features allowUnknownOptionalFields and importVerbose ([#25074](https://github.com/microsoft/FluidFramework/pull/25074)) [62dc0b0095](https://github.com/microsoft/FluidFramework/commit/62dc0b0095226ade66648f6fd6b4f13b8c7880d8)
+
+  [allowUnknownOptionalFields](https://fluidframework.com/docs/api/fluid-framework/schemafactoryobjectoptions-interface#allowunknownoptionalfields-propertysignature) currently has some limitations.
+  To mitigate some bugs, [importVerbose](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#importverbose-methodsignature) has dropped support for unknown optional fields.
+  Previously `importVerbose` would tolerate some unknown optional fields, but could not validate they comply with the document stored schema.
+  This could cause some crashes, and likely document corruption.
+  This support has been removed: now trying to create nodes containing unknown optional fields via `importVerbose` will throw a `UsageError`.
+  There is no longer a way to create and insert nodes which contain subtrees for which there is no schema.
+
+  Ideally `exportVerbose` and `importVerbose` could be used to round trip data while optionally preserving unknown optional fields, but this is currently not working and thus not supported.
+
+  If exporting using [useStoredKeys](https://fluidframework.com/docs/api/fluid-framework/treeencodingoptions-interface#usestoredkeys-propertysignature), the unknown optional fields will be preserved but may not be able to be imported.
+  If exporting not using `useStoredKeys`, unknown optional fields will be omitted.
+
+- Support unknown optional fields in TreeBeta.clone, TreeAlpha.exportConcise and TreeAlpha.exportVerbose ([#25106](https://github.com/microsoft/FluidFramework/pull/25106)) [e3a126ffac](https://github.com/microsoft/FluidFramework/commit/e3a126ffac46bb91e8b553535410d5532b05e662)
+
+  Trees with [unknown optional fields](https://fluidframework.com/docs/api/fluid-framework/schemafactoryobjectoptions-interface#allowunknownoptionalfields-propertysignature) are now supported in [TreeBeta.clone](https://fluidframework.com/docs/api/tree/treebeta-interface#clone-methodsignature), [TreeBeta.exportConcise](https://fluidframework.com/docs/api/tree/treealpha-interface#exportconcise-methodsignature) and [TreeBeta.exportVerbose](https://fluidframework.com/docs/api/tree/treealpha-interface#exportverbose-methodsignature).
+
+  Previously, attempts to clone or export such nodes could error in some cases, but should now work robustly.
+
+- Fix independentInitializedView when used with ForestTypeExpensiveDebug ([#25083](https://github.com/microsoft/FluidFramework/pull/25083)) [2570b650b6](https://github.com/microsoft/FluidFramework/commit/2570b650b64f261fdf8cbfbfddaf3174577a5da2)
+
+  Previously, when using [independentInitializedView](https://fluidframework.com/docs/api/tree/#independentinitializedview-function) with [ForestTypeExpensiveDebug](https://fluidframework.com/docs/api/tree/#foresttypeexpensivedebug-variable) and the root schema was not an optional field, an error was thrown about the tree being out of schema.
+  This has been fixed.
+
+- Allow attaching a SharedTree to an already attached container ([#25102](https://github.com/microsoft/FluidFramework/pull/25102)) [3e03f94f0e](https://github.com/microsoft/FluidFramework/commit/3e03f94f0e3529094304e272df75dae4bf43618e)
+
+  Before this release, attaching a SharedTree instance to an already attached container would fail with assert code `0x88f` if that instance needed to include data about removed nodes in its attach summary.
+  (This is the case when nodes are removed before attaching and there is a local branch that forks from a commit that made such a removal or from an earlier commit. This is also the case when retaining `Revertible` objects for those commits).
+
+  After this release, the behavior depends on the `CodecWriteOptions.oldestCompatibleClient` value:
+
+  - For values < `FluidClientVersion.v2_52`, the behavior is the same.
+  - For values >= `FluidClientVersion.v2_52`, the attach will succeed, but use a newer storage format.
+
+  Applications should take care to saturate their clients with FF version `2.52` (or greater) before using a `CodecWriteOptions.oldestCompatibleClient` that is equal to or greater than `FluidClientVersion.v2_52`.
+  Failure to do so may lead clients with `CodecWriteOptions.oldestCompatibleClient` equal to or greater than `FluidClientVersion.v2_52` to attach SharedTree instances using a storage format that is not supported by FF versions before `2.52`.
+  This means that application versions using FF versions before `2.52` will be unable to open documents where such an operation has happened.
+
+## 2.51.0
+
+### Minor Changes
+
+- Fix adaptEnum's handling of numeric enums ([#24957](https://github.com/microsoft/FluidFramework/pull/24957)) [7535d31fa61](https://github.com/microsoft/FluidFramework/commit/7535d31fa61a535bf58bb88fc597e6e4f64c5b23)
+
+  Enum entries whose values are numeric get additional properties on TypeScript's generated Enum object.
+  These values were getting treated like enum entries at runtime by `adaptEnum` (`@beta`).
+  This has been fixed and the runtime behavior now matches the types in this case.
+
+  If any documents were created with this API which were impacted by this bug and keeping them openable is required, they will need a workaround.
+  Impacted schema using the union from `adaptEnum` can need to be updated to explicitly include the previously erroneously generated schema.
+
+  Before:
+
+  ```typescript
+  enum Mode {
+    a = 1,
+  }
+  const ModeNodes = adaptEnum(schemaFactory, Mode);
+  const union = ModeNodes.schema;
+  ```
+
+  After:
+
+  ```typescript
+  enum Mode {
+    a = 1,
+  }
+  const ModeNodes = adaptEnum(schemaFactory, Mode);
+  // Bugged version of adaptEnum used to include this: it should not be used but must be included in the schema for legacy document compatibility.
+  class Workaround extends schemaFactory.object("a", {}) {}
+  const union = [...ModeNodes.schema, Workaround] as const;
+  ```
+
+  To help detect when schema contain unexpected content, and to ensure workarounds like this are implemented properly, applications should include tests which check the schema for compatibility.
+  See [tree-cli-app's schema tests](https://github.com/microsoft/FluidFramework/blob/main/examples/apps/tree-cli-app/src/test/schema.spec.ts) for an example of how to do this.
+
+  The schema returned by `adaptEnum` have also been updated to `toString` to include the value of the particular enum entry: this has no effect on the nodes, just the schema.
+
+- Make POJO mode TreeArrayNodes report the array constructor as their constructor ([#24988](https://github.com/microsoft/FluidFramework/pull/24988)) [7b4d0abe90f](https://github.com/microsoft/FluidFramework/commit/7b4d0abe90f50075bb06ef73ceceff2529ef78f5)
+
+  Make POJO mode TreeArrayNode's inherited `constructor` property report `Array` instead of the `TreeNodeSchema` class.
+  This is necessary to make `TreeArrayNode`s appear equal to arrays according to NodeJS's `assert.strict.deepEqual` in NodeJS 22.
+
+- "rootChanged" event is no longer skipped if first change is setting the root to undefined ([#24994](https://github.com/microsoft/FluidFramework/pull/24994)) [e6f25875794](https://github.com/microsoft/FluidFramework/commit/e6f258757947b72b6a9d19c79f5717eccd44452b)
+
+  A bug has been fixed where [rootChanged](https://fluidframework.com/docs/api/fluid-framework/treeviewevents-interface#rootchanged-methodsignature) would not be fired if the change is the first change since the [TreeView](https://fluidframework.com/docs/api/fluid-framework/treeview-interface) became in-schema, and the change was setting the document root to `undefined`.
+
+## 2.50.0
+
+### Minor Changes
+
+- Record node kind was added (alpha) ([#24908](https://github.com/microsoft/FluidFramework/pull/24908)) [b25667bcdc](https://github.com/microsoft/FluidFramework/commit/b25667bcdcad5584f35783f6a32270803b6dfb1c)
+
+  Adds a new kind of node to SharedTree that models a TypeScript record.
+  As is the case with map nodes, record nodes only support string keys.
+
+  ```typescript
+  class MyRecord extends schemaFactory.record("my-record", [
+    schemaFactory.number,
+    schemaFactory.string,
+  ]) {}
+  const myRecord = new MyRecord({
+    foo: 42,
+    bar: "Hello world!",
+  });
+
+  const foo = myRecord.foo; // 42
+
+  delete myRecord.foo;
+
+  myRecord.baz = 37;
+
+  const keys = Object.keys(myRecord); // ["bar", "baz"]
+  const values = Object.values(myRecord); // ["Hello world!", 37]
+  const entries = Object.entries(myRecord); // [["bar", "Hello world!"], ["baz", 37]]
+  ```
+
+  #### `NodeKind` enum update
+
+  This change includes the addition of a new flag to the [NodeKind](https://fluidframework.com/docs/api/fluid-framework/nodekind-enum) enum.
+  This API notes in its documentation that users should not treat its flags as an exhaustive set.
+
+  This change may break code that treats it that way.
+  We recommend updating your code to be more tolerant of unknown node kinds going forward.
+
+  Also see alternative options for schema-agnostic tree traversal if needed:
+
+  - [Tree.parent](https://fluidframework.com/docs/api/fluid-framework/treenodeapi-interface#parent-methodsignature)
+  - [TreeAlpha.child](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#child-methodsignature)
+  - [TreeAlpha.children](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#children-methodsignature)
+
+  #### Additional features
+
+  In addition to the operations afforded by TypeScript records, SharedTree record nodes can be iterated (equivalent to Object.entries).
+
+  ```typescript
+  class MyRecord extends schemaFactory.record("my-record", [schemaFactory.number, schemaFactory.string]) {}
+  const myRecord = new MyRecord({
+  	foo: 42,
+  	bar: "Hello world!"
+  });
+
+  for (const [key, value] of myRecord) {
+  	...
+  }
+
+  const a = { ...myRecord }; // { foo: 42, bar: "Hello world!" }
+  const b = [...myRecord]; // [["foo", 42], ["bar, "Hello world!"]]
+  ```
+
+  #### Recursive records
+
+  Recursive record schema can be defined using `recordRecursive` on [SchemaFactoryAlpha](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class).
+
+  ```typescript
+  class MyRecord extends schemaFactory.recordRecursive("my-record", [
+    schemaFactory.string,
+    () => MyRecord,
+  ]) {}
+  const myRecord = new MyRecord({
+    foo: "Hello world!",
+    bar: new MyRecord({
+      x: "foo",
+      y: new MyRecord({}),
+    }),
+  });
+  ```
+
+  #### TableSchema update (alpha)
+
+  The [TableSchema](https://fluidframework.com/docs/api/fluid-framework/tableschema-namespace/) APIs have been updated to use record nodes in the schema they generate.
+  Specifically, the `Row` representation now uses a record to store its column-cell pairs, rather than a map.
+
+  The node types derived from these APIs model their data in a row-major format.
+  That is, each row in the table contains the set of cells that belong to that row, where each cell is indexed by its corresponding column.
+
+  Previously, this was modeled using a [MapNode](https://fluidframework.com/docs/api/fluid-framework/treemapnode-interface).
+  This format proved cumbersome to interop with popular table rendering libraries like [tanstack](https://tanstack.com/table), which expect a record-like format.
+
+  The persisted format of documents containing trees derived from these APIs is the same, so this change is forward and backward compatible.
+
+  #### JsonDomainSchema update (alpha)
+
+  [JsonObject](https://fluidframework.com/docs/api/fluid-framework/jsonastree-namespace/jsonobject-class) has been updated to a record rather than a map.
+
+  The persisted format of documents containing trees derived from these APIs is the same, so this change is forward and backward compatible.
+
+## 2.43.0
+
+### Minor Changes
+
+- Tree's enum schema utility are now beta ([#24749](https://github.com/microsoft/FluidFramework/pull/24749)) [a23bc9e4d02](https://github.com/microsoft/FluidFramework/commit/a23bc9e4d025f0925d09daadc2952bf0bfacc06b)
+
+  The functions [singletonSchema](https://fluidframework.com/docs/api/tree/#singletonschema-function), [adaptEnum](https://fluidframework.com/docs/api/tree/#adaptenum-function) and [enumFromStrings](https://fluidframework.com/docs/api/tree/#enumfromstrings-function) are now `@beta` instead of `@alpha`.
+
+- Add TreeAlpha.child and TreeAlpha.children APIs for generic tree traversal ([#24723](https://github.com/microsoft/FluidFramework/pull/24723)) [87941b7fa05](https://github.com/microsoft/FluidFramework/commit/87941b7fa0575e030344079a25f65d25d8457367)
+
+  #### TreeAlpha.child
+
+  Access a child node or value of a `TreeNode` by its property key.
+
+  ```typescript
+  class MyObject extends schemaFactory.object("MyObject", {
+  	foo: schemaFactory.string;
+  	bar: schemaFactory.optional(schemaFactory.string);
+  }) {}
+
+  const myObject = new MyObject({
+  	foo: "Hello world!"
+  });
+
+  const foo = TreeAlpha.child(myObject, "foo"); // "Hello world!"
+  const bar = TreeAlpha.child(myObject, "bar"); // undefined
+  const baz = TreeAlpha.child(myObject, "baz"); // undefined
+  ```
+
+  ```typescript
+  class MyArray extends schemaFactory.array("MyArray", schemaFactory.string) {}
+
+  const myArray = new MyArray("Hello", "World");
+
+  const child0 = TreeAlpha.child(myArray, 0); // "Hello"
+  const child1 = TreeAlpha.child(myArray, 1); // "World
+  const child2 = TreeAlpha.child(myArray, 2); // undefined
+  ```
+
+  #### TreeAlpha.children
+
+  Get all child nodes / values of a `TreeNode`, keyed by their property keys.
+
+  ```typescript
+  class MyObject extends schemaFactory.object("MyObject", {
+  	foo: schemaFactory.string;
+  	bar: schemaFactory.optional(schemaFactory.string);
+  	baz: schemaFactory.optional(schemaFactory.number);
+  }) {}
+
+  const myObject = new MyObject({
+  	foo: "Hello world!",
+  	baz: 42,
+  });
+
+  const children = TreeAlpha.children(myObject); // [["foo", "Hello world!"], ["baz", 42]]
+  ```
+
+  ```typescript
+  class MyArray extends schemaFactory.array("MyArray", schemaFactory.string) {}
+
+  const myArray = new MyArray("Hello", "World");
+
+  const children = TreeAlpha.children(myObject); // [[0, "Hello"], [1, "World"]]
+  ```
+
+- Rename and change type of annotatedAllowedTypeSet on FieldSchemaAlpha to more closely align with allowedTypesSet ([#24820](https://github.com/microsoft/FluidFramework/pull/24820)) [f4e8dc8cd09](https://github.com/microsoft/FluidFramework/commit/f4e8dc8cd09f052f21e436e2c0584a1a34d2be77)
+
+  This changes the `annotatedAllowedTypeSet` property on [`FieldSchemaAlpha`](https://fluidframework.com/docs/api/fluid-framework/fieldschemaalpha-class).
+  It is now called `annotatedAllowedTypesNormalized` and stores evaluated schemas along with their annotations in a list of objects rather than as a mapping from the schemas to their annotations. This makes the API easier to use and better aligns with the current public APIs.
+
+- Persisted metadata for Shared Tree schemas (Alpha) ([#24812](https://github.com/microsoft/FluidFramework/pull/24812)) [3f81ab52ff7](https://github.com/microsoft/FluidFramework/commit/3f81ab52ff7265a8533c0e192c8b77d298b70eea)
+
+  The persisted metadata feature for Shared Tree allows an application author to write document-persisted metadata along with the schema. This feature is supported for both node and field schemas.
+
+  #### Using the persisted metadata feature
+
+  As of now, persisted metadata support is available via the SchemaFactoryAlpha API:
+
+  ```ts
+  // Construct a schema factory with alpha APIs
+  const schemaFactory = new SchemaFactoryAlpha("com.example");
+  ```
+
+  Persisted metadata can take the shape of any JSON-serializable object, e.g.:
+
+  ```ts
+  const persistedMetadata = { a: 2 };
+  ```
+
+  #### Feature flag
+
+  To enable persisted metadata, use `configuredSharedTree` to specify the format version. The tree that is returned can be substituted in place of the default `SharedTree` object exported by the Fluid Framework. For example:
+
+  ```ts
+  const tree = configuredSharedTree({
+    formatVersion: SharedTreeFormatVersion.v5,
+  }).create(runtime);
+
+  export const MyContainerSchema = {
+    initialObjects: {
+      appData: tree,
+    },
+  } satisfies ContainerSchema;
+  ```
+
+  #### Examples
+
+  ##### Field schemas with persisted metadata
+
+  ```ts
+  // Construct a schema factory with alpha APIs
+  const schemaFactory = new SchemaFactoryAlpha("com.example");
+
+  // Define metadata. This can take the shape of any JSON-serializable object.
+  const persistedMetadata = { a: 2 };
+
+  // Foo is an object type with metadata
+  class Foo extends schemaFactory.objectAlpha(
+    "Foo",
+    {
+      // Metadata for a required number field
+      bar: schemaFactory.required(schemaFactory.number, { persistedMetadata }),
+
+      // Metadata for an optional string field
+      baz: schemaFactory.optional(schemaFactory.string, { persistedMetadata }),
+      // Metadata for the object type Foo
+    },
+    { persistedMetadata },
+  ) {}
+  ```
+
+  ##### Recursive field schemas
+
+  ```ts
+  // Construct a schema factory with alpha APIs
+  const schemaFactory = new SchemaFactoryAlpha("com.example");
+
+  // Define metadata. This can take the shape of any JSON-serializable object.
+  const persistedMetadata = { a: 2 };
+
+  // Recursive object schema with persisted metadata
+  class RecursiveObject extends schemaFactory.objectRecursive(
+    "RecursiveObject",
+    {
+      x: [() => RecursiveObject, schemaFactory.number],
+    },
+    { persistedMetadata },
+  ) {}
+
+  // Recursive field schema with metadata
+  const recursiveField = schemaFactory.optionalRecursive(
+    [() => RecursiveObject, schemaFactory.number],
+    { persistedMetadata },
+  );
+  ```
+
+  ##### Recursive object schemas
+
+  ```ts
+  // Construct a schema factory with alpha APIs
+  const schemaFactory = new SchemaFactoryAlpha("com.example");
+
+  // Define metadata. This can take the shape of any JSON-serializable object.
+  const persistedMetadata = { a: 2 };
+
+  // Recursive array schema
+  class Foos extends schemaFactory.arrayRecursive("FooList", [() => Foo], {
+    persistedMetadata,
+  }) {}
+
+  // Recursive object schema
+  class Foo extends schemaFactory.objectRecursive(
+    "Foo",
+    { fooList: Foos },
+    { persistedMetadata },
+  ) {}
+
+  // Recursive map schema
+  class FooMap extends schemaFactory.mapRecursive("FooMap", [() => Foo], {
+    persistedMetadata,
+  }) {}
+  ```
+
+- Improved Schema Validation ([#24866](https://github.com/microsoft/FluidFramework/pull/24866)) [caae4ae15ed](https://github.com/microsoft/FluidFramework/commit/caae4ae15edeb8aeae33b0520b18dbb1993965f6)
+
+  When constructing a [`TreeViewConfiguration`](https://fluidframework.com/docs/api/fluid-framework/treeviewconfiguration-class), the same schema listed more than once in a given [`AllowedTypes`](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) is now an error even when [`preventAmbiguity`](https://fluidframework.com/docs/api/fluid-framework/treeviewconfiguration-class#preventambiguity-property) is false.
+  Previously a bug resulted in this only being rejected when `preventAmbiguity` was true.
+
+## 2.42.0
+
+### Minor Changes
+
+- Fix Tree.key and Tree.parent for Unhydrated nodes after edits ([#24708](https://github.com/microsoft/FluidFramework/pull/24708)) [8aa5c233e2](https://github.com/microsoft/FluidFramework/commit/8aa5c233e2d59f440fd9c923bca14687bb958d66)
+
+  In some cases, editing [Unhydrated](https://fluidframework.com/docs/api/fluid-framework/unhydrated-typealias) nodes could result in incorrect results being returned from [Tree.key](https://fluidframework.com/docs/data-structures/tree/nodes#treekey) and [Tree.parent](https://fluidframework.com/docs/data-structures/tree/nodes#treeparent).
+  This has been fixed.
+
+- Defaulted identifier fields on unhydrated nodes are now enumerable ([#24739](https://github.com/microsoft/FluidFramework/pull/24739)) [3a5d0acfb6](https://github.com/microsoft/FluidFramework/commit/3a5d0acfb65f93a927405241e6047c8a04c8da58)
+
+  Previously, there was a special case for defaulted [identifier](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#identifier-property) fields on unhydrated nodes where they were not enumerable.
+  This special case has been removed: they are now enumerable independent of hydration status and defaulting.
+
+- Name collisions from structurally named schema now error ([#24707](https://github.com/microsoft/FluidFramework/pull/24707)) [a343f0498f](https://github.com/microsoft/FluidFramework/commit/a343f0498f2039e68aa11e8ede98f32391ce727d)
+
+  It is legal to have multiple [TreeNodeSchema](https://fluidframework.com/docs/api/fluid-framework/treenodeschema-typealias) with the same name so long as they are not used together in the same tree.
+  Using different schema with the same name when building otherwise identical [structurally named](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#schemafactory-remarks) in the same [SchemaFactory](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class) is not valid, however.
+  Previously doing this would not error, and instead return the first structurally named schema with that name.
+  Now this case throws an informative error:
+
+  ```typescript
+  const factory = new SchemaFactory(undefined);
+  class Child1 extends factory.object("Child", {}) {}
+  class Child2 extends factory.object("Child", {}) {}
+
+  const a = factory.map(Child1);
+
+  // Throws a UsageError with the message:
+  // "Structurally named schema collision: two schema named "Array<["Child"]>" were defined with different input schema."
+  const b = factory.array(Child2);
+  ```
+
+## 2.41.0
+
+### Minor Changes
+
+- TreeAlpha.create now accepts unhydrated nodes ([#24629](https://github.com/microsoft/FluidFramework/pull/24629)) [e63af87aeb](https://github.com/microsoft/FluidFramework/commit/e63af87aeb7ece1ff0969027904c3b18f122d2d1)
+
+  [TreeAlpha.create](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#create-methodsignature) now accepts [unhydrated](https://fluidframework.com/docs/api/fluid-framework/unhydrated-typealias) nodes.
+  `TreeAlpha.create`'s documentation has been updated to clarify that this is supported.
+
+  Additionally `TreeAlpha.create` no longer throws a "Tree does not conform to schema" error when given a tree omitting an identifier.
+  Instead, the identifier behaves like it would for other ways to build unhydrated nodes: remaining unreadable until hydrated.
+
+- SharedTrees's FluidClientVersion enum (alpha) has been redesigned ([#24638](https://github.com/microsoft/FluidFramework/pull/24638)) [5f3b9d7b7d](https://github.com/microsoft/FluidFramework/commit/5f3b9d7b7d12307d89cbd4b88f5e2d6e1833680d)
+
+  Users of [FluidClientVersion](https://fluidframework.com/docs/api/fluid-framework/fluidclientversion-enum)'s `v2_1`, `v2_2`, and `v2_3` entries should specify `v2_0` instead.
+  This will result in no functional differences since no code currently opts into any additional functionality based on specifying those versions.
+  The new approach avoids listing versions which there is currently no reason to select, and thus these options have been removed.
+  If future work adds support to opt into features which only work starting with some of those versions, they will be re-added at that time.
+
+- ForestTypeExpensiveDebug now validates content against schema ([#24658](https://github.com/microsoft/FluidFramework/pull/24658)) [9d600aae88](https://github.com/microsoft/FluidFramework/commit/9d600aae88b9045392067719638258ea7407c2eb)
+
+  When opting into using [ForestTypeExpensiveDebug](https://fluidframework.com/docs/api/fluid-framework/#foresttypeexpensivedebug-variable) using [configuredSharedTree](https://fluidframework.com/docs/api/fluid-framework/#configuredsharedtree-function), the tree is now checked against the schema on load and after every edit.
+  This should help detect and diagnose document corruption bugs.
+
+  ```typescript
+  const DebugSharedTree = configuredSharedTree({
+    jsonValidator: typeboxValidator,
+    // Now detects corrupted documents which are out of schema.
+    forest: ForestTypeExpensiveDebug,
+  });
+  ```
+
+- The comparePersistedSchema function (alpha) has had its canInitialize parameter removed ([#24606](https://github.com/microsoft/FluidFramework/pull/24606)) [d083a1780a](https://github.com/microsoft/FluidFramework/commit/d083a1780a1db74a922cbfb451d23ab932c0eb32)
+
+  [comparePersistedSchema](https://fluidframework.com/docs/api/tree/#comparepersistedschema-function) has had its `canInitialize` parameter removed.
+  This parameter was only used to add to the output [SchemaCompatibilityStatus](https://fluidframework.com/docs/api/fluid-framework/schemacompatibilitystatus-interface).
+  If a full `SchemaCompatibilityStatus` is still desired, the `canInitialize` value can be added to the result:
+
+  ```typescript
+  // old
+  const result = comparePersistedSchema(a, b, canInitialize);
+  // new
+  const result = { ...comparePersistedSchema(a, b), canInitialize };
+  ```
+
+- TreeNodes now implicitly generate identifiers on access instead of throwing ([#24665](https://github.com/microsoft/FluidFramework/pull/24665)) [cd5976b959](https://github.com/microsoft/FluidFramework/commit/cd5976b959d6b7a5259e3bb9ef816f842724bc6e)
+
+  Accessing a defaulted [identifier](https://fluidframework.com/docs/api/fluid-framework/schemafactory-class#identifier-property) on an [Unhydrated](https://fluidframework.com/docs/api/fluid-framework/unhydrated-typealias) `TreeNode` no longer throws a usage error.
+  Instead, a new UUID is allocated for the identifier and returned.
+  These UUIDs will be more compressible than random ones, since they all come from a single sequence (starting with a random UUID).
+  They will not be fully compressed like the identifiers generated after hydration that leverage the document's [IIdCompressor](https://fluidframework.com/docs/api/id-compressor/iidcompressor-interface).
+
+  ```typescript
+  const factory = new SchemaFactory("test");
+  class HasIdentifier extends schema.object("A", { id: factory.identifier }) {}
+  // This used to throw an error:
+  const id = new HasIdentifier({}).id;
+  ```
+
+- New TableSchema (alpha) APIs ([#24579](https://github.com/microsoft/FluidFramework/pull/24579)) [e565f6838b](https://github.com/microsoft/FluidFramework/commit/e565f6838b31d3e777da942c806606575123f6d6)
+
+  A `TableSchema` utility has been added to Shared Tree for managing dynamic, tabular data.
+  This new `TableSchema` namespace contains APIs for creating column, row, and table [node schema](https://fluidframework.com/docs/api/fluid-framework/treenodeschema-typealias).
+
+  Note: these APIs require the use of [SchemaFactoryAlpha](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class).
+
+  > [!WARNING]
+  > These APIs are in preview and are subject to change.
+  > Until these APIs have stabilized, it is not recommended to use them in production code.
+  > There may be breaking changes to these APIs and their underlying data format.
+  > Using these APIs in production code may result in data loss or corruption.
+
+  #### Creating a table
+
+  You can craft a table schema with `TableSchema.table`.
+  This includes providing a schema for the cells that will appear in the table:
+
+  ```typescript
+  class MyTable extends TableSchema.table({
+    schemaFactory,
+    cell: schemaFactory.string,
+  }) {}
+
+  const table = new MyTable({
+    columns: [{ id: "column-0" }],
+    rows: [{ id: "row-0", cells: { "column-0": "Hello world!" } }],
+  });
+  ```
+
+  #### Creating a table with custom column and row schema
+
+  To associate additional data with your rows or columns, generate custom row and column schema using `TableSchema.column` and `TableSchema.row`.
+  These schema can then be provided to `TableSchema.table`:
+
+  ```typescript
+  class MyColumn extends TableSchema.column({
+    schemaFactory,
+    cell: Cell,
+    props: schemaFactory.object("TableColumnProps", {
+      label: schemaFactory.string,
+    }),
+  }) {}
+
+  class MyRow extends TableSchema.row({
+    schemaFactory,
+    cell: Cell,
+  }) {}
+
+  class MyTable extends TableSchema.table({
+    schemaFactory,
+    cell: Cell,
+    column: MyColumn,
+    row: MyRow,
+  }) {}
+
+  const table = new MyTable({
+    columns: [
+      new MyColumn({ props: { label: "Entry" } }),
+      new MyColumn({ props: { label: "Date" } }),
+      new MyColumn({ props: { label: "Amount" } }),
+    ],
+    rows: [],
+  });
+  ```
+
+  #### Interacting with the table
+
+  Table trees created using `TableSchema` offer various APIs to make working with tabular data easy.
+  These include:
+
+  - Insertion and removal of columns, rows, and cells.
+  - Cell access by column/row.
+
+  ```typescript
+  // Create an empty table
+  const table = MyTable.empty();
+
+  const column0 = new MyColumn({
+    props: { label: "Column 0" },
+  });
+
+  // Append a column to the end of the table.
+  table.insertColumn({
+    column: column0,
+  });
+
+  const rows = [new MyRow({ cells: {} }), new MyRow({ cells: {} })];
+
+  // Insert rows at the beginning of the table.
+  table.insertRows({
+    index: 0,
+    rows,
+  });
+
+  // Set cell at row 0, column 0.
+  table.setCell({
+    key: {
+      column: column0,
+      row: rows[0],
+    },
+    cell: "Hello",
+  });
+
+  // Set cell at row 1, column 0.
+  table.setCell({
+    key: {
+      column: column0,
+      row: rows[1],
+    },
+    cell: "World",
+  });
+
+  // Remove the first row.
+  // Note: this will also remove the row's cell.
+  table.removeRow(rows[0]);
+
+  // Remove the column.
+  // Note: this will *not* remove the remaining cell under this column.
+  table.removeColumn(column0);
+  ```
+
+  #### Listening for changes
+
+  Listening for changes to table trees behaves just like it would for any other nodes in a Shared Tree (see [here](https://fluidframework.com/docs/data-structures/tree/events) for more details).
+
+  The most straightforward option is to listen for any changes to the table node and its descendants.
+  For example:
+
+  ```typescript
+  class Cell extends schemaFactory.object("TableCell", {
+    value: schemaFactory.string,
+  }) {}
+
+  class Table extends TableSchema.table({
+    schemaFactory,
+    cell: Cell,
+  }) {}
+
+  const table = new Table({
+    columns: [{ id: "column-0" }],
+    rows: [{ id: "row-0", cells: {} }],
+  });
+
+  // Listen for any changes to the table and its children.
+  // The "treeChanged" event will fire when the `table` node or any of its descendants change.
+  Tree.on(table, "treeChanged", () => {
+    // Respond to the change.
+  });
+  ```
+
+  If you need more granular eventing to meet your performance needs, that is possible as well.
+  For example, if you wish to know when the table's list of rows changes, you could do the following:
+
+  ```typescript
+  class Cell extends schemaFactory.object("TableCell", {
+    value: schemaFactory.string,
+  }) {}
+
+  class Table extends TableSchema.table({
+    schemaFactory,
+    cell: Cell,
+  }) {}
+
+  const table = new Table({
+    columns: [{ id: "column-0" }],
+    rows: [{ id: "row-0", cells: {} }],
+  });
+
+  // Listen for any changes to the list of rows.
+  // The "nodeChanged" event will fire only when the `rows` node itself changes (i.e., its own properties change).
+  // In this case, the event will fire when a row is added or removed, or the order of the list is changed.
+  // But it won't fire when a row's properties change, or when the row's cells change, etc.
+  Tree.on(table.rows, "nodeChanged", () => {
+    // Respond to the change.
+  });
+  ```
+
+  #### Limitations
+
+  ##### Orphaned cells
+
+  Cells in the table may become "orphaned."
+  That is, it is possible to enter a state where one or more rows contain cells with no corresponding column.
+  To reduce the likelihood of this, you can manually remove corresponding cells when removing columns.
+
+  For example:
+
+  ```typescript
+  // Remove column1 and all of its cells.
+  // The "transaction" method will ensure that all changes are applied atomically.
+  Tree.runTransaction(table, () => {
+    // Remove column1
+    table.removeColumn(column1);
+
+    // Remove the cell at column1 for each row.
+    for (const row of table.rows) {
+      table.removeCell({
+        column: column1,
+        row,
+      });
+    }
+  });
+  ```
+
+  > [!WARNING]
+  > Note that even with the above precaution, it is possible to enter such an orphaned cell state via the merging of edits.
+  > For example: one client might add a row while another concurrently removes a column, orphaning the cell where the column and row intersected.
+
+- New TreeAlpha identifier APIs for converting, retrieving, and generating identifiers ([#24218](https://github.com/microsoft/FluidFramework/pull/24218)) [e5b2882132](https://github.com/microsoft/FluidFramework/commit/e5b28821323566112096f05805281b8d5321077d)
+
+  #### TreeAlpha.identifier
+
+  You can retrieve the long identifier with `TreeAlpha.identifier(node)`, where `node` is a `TreeNode`. The long identifier is a stable, compressible UUID generated by the tree.
+  In cases where the node does not yet have an identifier assigned, this will return `undefined`.
+  These cases include:
+
+  - The node does not contain an identifier field.
+  - The node is a non-hydrated node with a user provided identifier. Note that if it is a non-hydrated node without an identifier provided, it will throw an error.
+
+  #### TreeAlpha.identifier.shorten
+
+  You can shorten a long identifier with `TreeAlpha.identifier.shorten(branch, identifier)`, where `branch` is a `TreeBranch`, and `identifier` is a `string`.
+  If the method returns a valid short identifier, this identifier can be passed into `TreeAlpha.identifier.lengthen`
+  to get the original valid long `identifier` back.
+  In the cases where it's not possible to shorten the `identifier`, it will return `undefined`.
+  These cases include:
+
+  - A compressible long identifier, but it is unrecognized by the tree that the node belongs to. This can occur if the identifier is not generated from the tree.
+  - An identifier which is not compressible by the tree. This can occur if the node's identifier was a user provided string.
+
+  #### TreeAlpha.identifier.lengthen
+
+  You can lengthen a short identifier with `TreeAlpha.identifier.lengthen(branch, identifier)`, where `branch` is a `TreeBranch`, and `identifier` is a `number`.
+  If the method returns a valid long identifier, this identifier can be passed into `TreeAlpha.identifier.shorten` to get the original `identifier` back.
+  In the cases where it's not possible to lengthen the `identifier`, this method will throw an error.
+  These cases include:
+
+  - An unrecognized short identifier. This can occur if the identifier is not generated from the tree.
+
+  #### TreeAlpha.identifier.getShort
+
+  You can retrieve the short identifier from a node with `TreeAlpha.identifier.getShort(node)` where `node` is a `TreeNode`.
+  If it is not possible to retrieve the short identifier, it will return `undefined`
+
+  ##### Example for a node with valid identifier
+
+  ```typescript
+  // This will retrieve the short identifier from the node.
+  const shortIdentifier = TreeAlpha.identifier.getShort(
+    nodeWithValidIdentifier,
+  );
+  ```
+
+  ##### Examples for when you get undefined
+
+  In cases where the node provided does not contain an identifier that is recognized or compressible by the tree that the node belongs to, this method will return undefined.
+  This will occur in the following cases:
+
+  - The node is an non-hydrated node with a user provided identifier. Note that if it is an non-hydrated node without an identifier provided, it will throw an error.
+  - The node does not contain an identifier field.
+  - The node contains a compressible long identifier, but it is unrecognized by the tree that the node belongs to. This can occur if the identifier is not generated from the tree.
+  - The node contains an identifier which is not compressible by its id compressor. This can occur if the node's identifier was a user provided string.
+
+  ```typescript
+  // This will return undefined
+  const shortIdentifier = TreeAlpha.identifier.getShort(node);
+  ```
+
+  #### TreeAlpha.identifier.create
+
+  You can create a long identifier from a branch with `TreeAlpha.identifier.create(branch)` where `branch` is a `TreeBranch`.
+
+  ```typescript
+  const createdIdentifier = TreeAlpha.identifier.create(branch);
+  ```
+
+## 2.40.0
+
+### Minor Changes
+
+- SchemaFactoryAlpha.object has been renamed to SchemaFactoryAlpha.objectAlpha ([#24478](https://github.com/microsoft/FluidFramework/pull/24478)) [12e5ab3b33](https://github.com/microsoft/FluidFramework/commit/12e5ab3b335a8af263e1cc84f8951cf02db79b8b)
+
+  This rename was done so that changes can be made to the signature of the class.
+  This is a breaking change and uses of `SchemaFactoryAlpha.object` may need to be changed to `SchemaFactoryAlpha.objectAlpha`.
+
+- AllowedTypes array handling has been updated ([#24484](https://github.com/microsoft/FluidFramework/pull/24484)) [f0a71ccce7](https://github.com/microsoft/FluidFramework/commit/f0a71ccce7a055e99ce9f4ba15e1cede529bbc9c)
+
+  As an optimization, how [AllowedTypes](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) arrays are processed has changed.
+  Now much larger arrays can be provided without hitting:
+
+  > "Type instantiation is excessively deep and possibly infinite.ts"
+
+  Previously, arrays of around 43 schema would start having this issue, but now arrays of hundreds work correctly.
+
+  This optimization has resulted in a small change in behavior for how [input types](https://fluidframework.com/docs/api/fluid-framework/input-typealias) are computed.
+  When the `AllowedTypes` array has a type that is a union of two arrays, and the two arrays start with the same subsequence of types,
+  previously this would allow the types from the common prefix of the arrays.
+  For example `[typeof A] | [typeof A, typeof B]` would permit inserting content compatible with `A`.
+  Now all such unions produce `never` for their insertable node types (just like this example would if the order of the second array were reversed).
+  This case was not intentionally supported, and as documented in [input types](https://fluidframework.com/docs/api/fluid-framework/input-typealias), non-exact types, like these unions,
+  are not guaranteed to produce anything other than `never`.
+
+  If providing exact schema is impractical and the previous behavior is required, convert the union of arrays to an array of unions.
+  The above example can be turned into `[typeof A, typeof B | typeof A]`.
+
+  This is also fix for a case where
+  [AllowedTypes](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias)
+  was order dependent, which violates its documented order independence.
+
+- A SharedTree document corruption bug has been fixed ([#24565](https://github.com/microsoft/FluidFramework/pull/24565)) [6b3e150395](https://github.com/microsoft/FluidFramework/commit/6b3e15039543a2bab4de5b2e969301f0e7f1f3db)
+
+  There was a bug where local changes were not correctly sent to peers.
+  This could lead to a permanent loss of consistency and ultimately document corruption.
+  See [PR24561](https://github.com/microsoft/FluidFramework/pull/24561) for details.
+
+- IContainer.getContainerPackageInfo has been removed ([#24525](https://github.com/microsoft/FluidFramework/pull/24525)) [15a541265b](https://github.com/microsoft/FluidFramework/commit/15a541265ba6293bf24e95308a5e667d5f7e9794)
+
+  `IContainer.getContainerPackageInfo()` was set to be removed in release 2.40.0. To access the package name `getContainerPackageInfo()` provided, use `IFluidCodeDetails.package` returned by `IContainer.getLoadedCodeDetails()`.
+
+  See [issue #23898](https://github.com/microsoft/FluidFramework/issues/23898) for more information.
+
+- The extractPersistedSchema (alpha) API has had its arguments adjusted ([#24562](https://github.com/microsoft/FluidFramework/pull/24562)) [2e6b0cfd74](https://github.com/microsoft/FluidFramework/commit/2e6b0cfd74f3c3db5ce3b6b3f8ff8decbfc24ab6)
+
+  The [extractPersistedSchema](https://fluidframework.com/docs/api/tree/#extractpersistedschema-function) function has been updated to take in [SimpleTreeSchema](https://fluidframework.com/docs/api/fluid-framework/simpletreeschema-interface).
+  This makes it possible to use with simple schema derived from stored schema, like those returned from [ITreeAlpha.exportSimpleSchema](https://fluidframework.com/docs/api/fluid-framework/itreealpha-interface#exportsimpleschema-methodsignature).
+  Like [TreeAlpha.exportCompressed](https://fluidframework.com/docs/api/tree#treealpha-variable), `extractPersistedSchema` now takes in [FluidClientVersion](https://fluidframework.com/docs/api/fluid-framework/fluidclientversion-enum) to make it possible to opt into newer formats when they become available.
+
+  Additionally, `persistedToSimpleSchema` has been added to fill in a gap in the API.
+  Without `persistedToSimpleSchema` it would be impossible to parse the persisted format without a valid compressed tree to provide to [independentInitializedView](https://fluidframework.com/docs/api/tree/#independentinitializedview-functionc).
+
+- SchemaFactoryAlpha supports adding metadata to AllowedTypes ([#24478](https://github.com/microsoft/FluidFramework/pull/24478)) [12e5ab3b33](https://github.com/microsoft/FluidFramework/commit/12e5ab3b335a8af263e1cc84f8951cf02db79b8b)
+
+  This change allows metadata to be added to [`AllowedTypes`](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) as well as individual types in a set of `AllowedTypes`.
+  Users can define custom metadata by putting their `AllowedTypes` in an object with `metadata` and `types` properties:
+
+  ```typescript
+  schemaFactoryAlpha.arrayAlpha({
+    metadata: {
+      custom: "these allowed types are annotated",
+    },
+    types: [SchemaFactory.string, SchemaFactory.number],
+  });
+  ```
+
+  This annotation system will also be used to implement future schema features.
+
+## 2.33.0
+
+### Minor Changes
+
+- Remote edits to nodes which have never been accessed locally correctly trigger "treeChanged" events ([#24421](https://github.com/microsoft/FluidFramework/pull/24421)) [916ad0546f7](https://github.com/microsoft/FluidFramework/commit/916ad0546f772b744e1c150c6e833199c2f713ef)
+
+  There was a bug where "treeChanged" events would not always trigger if the node that was edited had never been accessed in the current view.
+  This has been fixed.
+
+- Typing derived from unions of AllowedTypes arrays is fixed ([#24441](https://github.com/microsoft/FluidFramework/pull/24441)) [a27ef0a0939](https://github.com/microsoft/FluidFramework/commit/a27ef0a0939a0983be85362d1aa34df7735977ed)
+
+  Unions of array types provided as an [AllowedTypes](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) used to result in incorrectly computed insertable content types.
+  This happened because [InsertableTreeNodeFromAllowedTypes](https://fluidframework.com/docs/api/fluid-framework/insertabletreenodefromallowedtypes-typealias) distributed over the union, violating the policy documented in [Input](https://fluidframework.com/docs/api/fluid-framework/input-typealias) for how schema-derived input types should be computed.
+  This has been fixed.
+  To get usable Input types, SharedTree schema's types should always capture the exact schema provided at runtime and not unions of possible different schema.
+  Any code impacted by this change should be updated to replace any such unions with more specific types.
+
+- "Unsafe" @system types moved to System_Unsafe namespace ([#24443](https://github.com/microsoft/FluidFramework/pull/24443)) [dd4abfc4570](https://github.com/microsoft/FluidFramework/commit/dd4abfc4570aff9ce37c3e6bcee23cf4c7eb6e7e)
+
+  Working code conforming to the [rules regarding API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags#api-support-levels) should be unaffected, but this resolves an issue which required violating these rules and directly referencing `@system` types.
+
+  Sometimes packages exporting SharedTree schema related types for recursive schema could yield errors like:
+
+  > error TS2742: The inferred type of 'YourSchema' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'.
+  > This is likely not portable.
+  > A type annotation is necessary.
+
+  Mitigating this error could require explicitly referencing these `@system` types from `internalTypes`.
+  Any such references to the moved types should be able to be deleted, as TypeScript will now be able to find them in the new namespace without assistance.
+
+  This does not migrate all types out of `internalTypes`, so some occurrences of this issue may remain.
+
+- allowUnused utility function ([#24076](https://github.com/microsoft/FluidFramework/pull/24076)) [13c62b613e8](https://github.com/microsoft/FluidFramework/commit/13c62b613e8a3f919c0e41d0ffc582c984504f0d)
+
+  A new `allowUnused` utility function has been added, which discards its type or runtime argument.
+  When TypeScript is configured to reject code with unused locals, this function can be used to suppress that error, enabling use of [ValidateRecursiveSchema](https://fluidframework.com/docs/api/fluid-framework/validaterecursiveschema-typealias) to compile.
+
+  ```typescript
+  class Test extends sf.arrayRecursive("Test", () => Test) {} // Bad
+  allowUnused<ValidateRecursiveSchema<typeof Test>>(); // Reports compile error due to invalid schema above.
+  ```
+
+- Improve handling of deleted nodes ([#24345](https://github.com/microsoft/FluidFramework/pull/24345)) [0ab3e510db5](https://github.com/microsoft/FluidFramework/commit/0ab3e510db5371e40c7f6b0fec3eef40695bcc94)
+
+  [TreeNodes](https://fluidframework.com/docs/api/fluid-framework/treenode-class) which are [deleted](https://fluidframework.com/docs/api/fluid-framework/treestatus-enum#deleted-enummember) were not handled correctly.
+  This has been improved in two ways:
+
+  1. Accessing fields of deleted nodes now consistently throws a usage error indicating that doing so is invalid.
+     Previously, this would throw an assertion error, which was a bug.
+  2. When a `TreeNode` is deleted, but that node still exists within the [`ITree`](https://fluidframework.com/docs/api/driver-definitions/itree-interface), then becomes accessible again later, a new `TreeNode` is now allocated instead of trying to reuse the deleted one.
+     Note that this can only happen when the entire view of the `ITree` is disposed then recreated.
+     This happens when disposing and recreating a [TreeView](https://fluidframework.com/docs/api/fluid-framework/treeview-interface) or when the contents of the view are disposed due to being out of schema (another client did a schema upgrade), then brought back into schema (the schema upgrade was undone).
+
+- Generic types for IntervalCollections have been replaced with non-generic types ([#24411](https://github.com/microsoft/FluidFramework/pull/24411)) [1c743e825ed](https://github.com/microsoft/FluidFramework/commit/1c743e825ed29a81b0e66775ce3553477361d335)
+
+  This change deprecates the following generic types and provides non-generic alternatives where necessary:
+
+  - `IIntervalCollection` is replaced by `ISequenceIntervalCollection`
+  - `IIntervalCollectionEvent` is replaced by `ISequenceIntervalCollectionEvents`
+  - `IntervalIndex` is replaced by `SequenceIntervalIndex`
+  - `IOverlappingIntervalsIndex` is replaced by `ISequenceOverlappingIntervalsIndex`
+  - `ISharedIntervalCollection` is deprecated without replacement
+
+  These types are no longer required to be generic, and replacing them with non-generic alternatives keeps our typing less complex.
+
 ## 2.32.0
 
 ### Minor Changes
@@ -27,7 +1114,7 @@
   Adds an `ITreeAlpha` interface (which `ITree` can be down-casted to) that provides access to both the tree content and the schema.
   This allows inspecting the content saved in a SharedTree in a generic way that can work on any SharedTree.
 
-  This can be combined with the existing `generateSchemaFromSimpleSchema` to generate a schema that can be used with [`IIree.viewWith`](https://fluidframework.com/docs/api/fluid-framework/viewabletree-interface#viewwith-methodsignature) to allow constructing a [`TreeView`](https://fluidframework.com/docs/api/fluid-framework/treeview-interface) for any SharedTree, regardless of its schema.
+  This can be combined with the existing `generateSchemaFromSimpleSchema` to generate a schema that can be used with [`ITree.viewWith`](https://fluidframework.com/docs/api/fluid-framework/viewabletree-interface#viewwith-methodsignature) to allow constructing a [`TreeView`](https://fluidframework.com/docs/api/fluid-framework/treeview-interface) for any SharedTree, regardless of its schema.
 
   Note that the resulting TypeScript typing for such a view will not be friendly: the `TreeView` APIs are designed for statically known schema. Using them is possible with care and a lot of type casts but not recommended if it can be avoided: see disclaimer on `generateSchemaFromSimpleSchema`.
   Example using `ITreeAlpha` and `generateSchemaFromSimpleSchema`:

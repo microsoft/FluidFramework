@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob, fail } from "@fluidframework/core-utils/internal";
-import type { Listenable } from "@fluidframework/core-interfaces";
 import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces";
+import { assert, oob, fail } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
 	type Anchor,
@@ -44,7 +45,6 @@ import {
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
 import { type IChunker, basicChunkTree, chunkFieldSingle, chunkTree } from "./chunkTree.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 function makeRoot(): BasicChunk {
 	return new BasicChunk(aboveRootPlaceholder, new Map());
@@ -468,7 +468,7 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
 }
 
 /**
- * @returns an implementation of {@link IEditableForest} with no data or schema.
+ * Creates an implementation of {@link IEditableForest} with no data or schema.
  */
 export function buildChunkedForest(
 	chunker: IChunker,

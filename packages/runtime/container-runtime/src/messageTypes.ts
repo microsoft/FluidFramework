@@ -3,22 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IdCreationRange } from "@fluidframework/id-compressor/internal";
-import {
+import type {
 	IAttachMessage,
 	IEnvelope,
 	InboundAttachMessage,
 } from "@fluidframework/runtime-definitions/internal";
 
-import { IDataStoreAliasMessage } from "./dataStore.js";
-import { GarbageCollectionMessage } from "./gc/index.js";
-import { IChunkedOp } from "./opLifecycle/index.js";
-import { IDocumentSchemaChangeMessage } from "./summary/index.js";
+import type { IDataStoreAliasMessage } from "./dataStore.js";
+import type { GarbageCollectionMessage } from "./gc/index.js";
+import type { IChunkedOp } from "./opLifecycle/index.js";
+import type {
+	IDocumentSchemaChangeMessageIncoming,
+	IDocumentSchemaChangeMessageOutgoing,
+} from "./summary/index.js";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -112,9 +114,13 @@ export type ContainerRuntimeGCMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.GC,
 	GarbageCollectionMessage
 >;
-export type ContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage<
+export type InboundContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.DocumentSchemaChange,
-	IDocumentSchemaChangeMessage
+	IDocumentSchemaChangeMessageIncoming
+>;
+export type OutboundContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage<
+	ContainerMessageType.DocumentSchemaChange,
+	IDocumentSchemaChangeMessageOutgoing
 >;
 
 /**
@@ -147,7 +153,7 @@ export type InboundContainerRuntimeMessage =
 	| ContainerRuntimeAliasMessage
 	| ContainerRuntimeIdAllocationMessage
 	| ContainerRuntimeGCMessage
-	| ContainerRuntimeDocumentSchemaMessage
+	| InboundContainerRuntimeDocumentSchemaMessage
 	// Inbound messages may include unknown types from other clients, so we include that as a special case here
 	| UnknownContainerRuntimeMessage;
 
@@ -163,7 +169,7 @@ export type LocalContainerRuntimeMessage =
 	| ContainerRuntimeAliasMessage
 	| ContainerRuntimeIdAllocationMessage
 	| ContainerRuntimeGCMessage
-	| ContainerRuntimeDocumentSchemaMessage
+	| OutboundContainerRuntimeDocumentSchemaMessage
 	// In rare cases (e.g. related to stashed ops) we could have a local message of an unknown type
 	| UnknownContainerRuntimeMessage;
 

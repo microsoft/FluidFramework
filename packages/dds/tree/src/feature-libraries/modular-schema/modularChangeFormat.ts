@@ -5,7 +5,7 @@
 
 import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
 
-import { type ChangesetLocalId, RevisionTagSchema, schemaFormat } from "../../core/index.js";
+import { type ChangesetLocalId, RevisionTagSchema, schemaFormatV1 } from "../../core/index.js";
 import {
 	type JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
@@ -27,8 +27,8 @@ export type EncodedChangeAtomId = Static<typeof EncodedChangeAtomId>;
 
 const EncodedFieldChange = Type.Object(
 	{
-		fieldKey: schemaFormat.FieldKeySchema,
-		fieldKind: schemaFormat.FieldKindIdentifierSchema,
+		fieldKey: schemaFormatV1.FieldKeySchema,
+		fieldKind: schemaFormatV1.FieldKindIdentifierSchema,
 		// Implementation note: node and field change encoding is mutually recursive.
 		// This field marks a boundary in that recursion to avoid constructing excessively complex
 		// recursive types. Encoded changes are validated at this boundary at runtime--see modularChangeCodecs.ts.

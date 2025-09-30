@@ -26,14 +26,14 @@ import type {
  * identify clients in a session. {@link Attendee.attendeeId} will provide
  * the session ID.
  *
- * @alpha
+ * @beta
  */
 export type AttendeeId = SessionId & { readonly AttendeeId: "AttendeeId" };
 
 /**
  * The connection status of the {@link Attendee}.
  *
- * @alpha
+ * @beta
  */
 export const AttendeeStatus = {
 	/**
@@ -57,7 +57,7 @@ export const AttendeeStatus = {
  * - State changes are kept locally and communicated to others upon reconnect.
  * - Notification requests are discarded (silently).
  *
- * @alpha
+ * @beta
  */
 export type AttendeeStatus = (typeof AttendeeStatus)[keyof typeof AttendeeStatus];
 
@@ -77,7 +77,7 @@ export type AttendeeStatus = (typeof AttendeeStatus)[keyof typeof AttendeeStatus
  * Audience, and Quorum representations of clients and users.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface Attendee<SpecificAttendeeId extends AttendeeId = AttendeeId> {
 	/**
@@ -109,15 +109,15 @@ export interface Attendee<SpecificAttendeeId extends AttendeeId = AttendeeId> {
 /**
  * Utility type limiting to a specific attendee. (A attendee with
  * a specific session ID - not just any session ID.)
- *
- * @internal
  */
 export type SpecificAttendee<SpecificAttendeeId extends AttendeeId> =
 	string extends SpecificAttendeeId ? never : Attendee<SpecificAttendeeId>;
 
 /**
+ * Events from {@link Presence.attendees}.
+ *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface AttendeesEvents {
 	/**
@@ -136,8 +136,10 @@ export interface AttendeesEvents {
 }
 
 /**
+ * Events from {@link Presence}.
+ *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface PresenceEvents {
 	/**
@@ -159,10 +161,12 @@ export interface PresenceEvents {
 }
 
 /**
- * Presence represents known clients within a session and their custom states and notifications.
+ * Provides top-level access to Presence feature set including known
+ * {@link Attendee}s within a session and their custom states kept
+ * under {@link StatesWorkspace}s.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface Presence {
 	/**
@@ -170,6 +174,15 @@ export interface Presence {
 	 */
 	readonly events: Listenable<PresenceEvents>;
 
+	/**
+	 * Container-wide {@link Attendee} information and event provider.
+	 *
+	 * @remarks
+	 * This provides access to all {@link Attendee}s in the session, including
+	 * the current client. As {@link StatesWorkspace} aren't required to be
+	 * uniform across an application, some {@link Attendee}s may be enumerated
+	 * here while not being present in any particular {@link StatesWorkspace}.
+	 */
 	readonly attendees: {
 		/**
 		 * Events for {@link Attendee}s.
@@ -200,14 +213,18 @@ export interface Presence {
 		getMyself(): Attendee;
 	};
 
+	/**
+	 * Provides access to {@link StatesWorkspace}s that allow clients to
+	 * manage custom states.
+	 */
 	readonly states: {
 		/**
-		 * Acquires a StatesWorkspace from store or adds new one.
+		 * Acquires a {@link StatesWorkspace} from store or adds new one.
 		 *
-		 * @param workspaceAddress - Address of the requested StatesWorkspace
+		 * @param workspaceAddress - Address of the requested {@link StatesWorkspace}
 		 * @param requestedStates - Requested states for the workspace
 		 * @param controls - Optional settings for default broadcast controls
-		 * @returns A StatesWorkspace
+		 * @returns A {@link StatesWorkspace}
 		 */
 		getWorkspace<StatesSchema extends StatesWorkspaceSchema>(
 			workspaceAddress: WorkspaceAddress,
@@ -215,7 +232,21 @@ export interface Presence {
 			controls?: BroadcastControlSettings,
 		): StatesWorkspace<StatesSchema>;
 	};
+}
 
+/**
+ * Provides top-level access to Presence feature set including known
+ * {@link Attendee}s within a session and their custom states and
+ * notifications kept under {@link StatesWorkspace}s and
+ * {@link NotificationsWorkspace}s.
+ *
+ * @remarks
+ * To access this alpha API, cast any `{@link Presence}` to `PresenceWithNotifications`.
+ *
+ * @sealed
+ * @alpha
+ */
+export interface PresenceWithNotifications extends Presence {
 	readonly notifications: {
 		/**
 		 * Acquires a Notifications workspace from store or adds new one.

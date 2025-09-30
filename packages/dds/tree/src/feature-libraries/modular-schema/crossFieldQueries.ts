@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type { ChangeAtomId, ChangeAtomIdRangeMap } from "../../core/index.js";
+import type {
+	ChangeAtomId,
+	ChangeAtomIdRangeMap,
+	ChangesetLocalId,
+	RevisionTag,
+} from "../../core/index.js";
 import type { RangeQueryEntry, RangeQueryResult } from "../../util/index.js";
+
 import type { NodeId } from "./modularChangeTypes.js";
 
 export type CrossFieldMap<T> = ChangeAtomIdRangeMap<T>;
@@ -20,6 +26,15 @@ export function setInCrossFieldMap<T>(
 }
 
 // TODO: Rename to NodeMoveType(Attach | Detach)
+export function getFirstFromCrossFieldMap<T>(
+	map: CrossFieldMap<T>,
+	revision: RevisionTag | undefined,
+	id: ChangesetLocalId,
+	count: number,
+): RangeQueryResult<ChangeAtomId, T> {
+	return map.getFirst({ revision, localId: id }, count);
+}
+
 export enum CrossFieldTarget {
 	Source,
 	Destination,

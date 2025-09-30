@@ -99,6 +99,13 @@ export function hasSome<T>(array: readonly T[]): array is [T, ...T[]] {
 }
 
 /**
+ * Returns true if and only if the given iterable has at least one element.
+ */
+export function iterableHasSome<T>(iterable: Iterable<T>): boolean {
+	return iterable[Symbol.iterator]().next().done === false;
+}
+
+/**
  * Returns true if and only if the given array has exactly one element.
  * @param array - The array to check.
  * @remarks
@@ -310,6 +317,7 @@ export type JsonCompatibleObject<TExtra = never> = { [P in string]?: JsonCompati
  * @remarks
  * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
+ * @alpha
  */
 export type JsonCompatibleReadOnly =
 	| string
@@ -325,6 +333,7 @@ export type JsonCompatibleReadOnly =
  * @remarks
  * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
+ * @alpha
  */
 export type JsonCompatibleReadOnlyObject = { readonly [P in string]?: JsonCompatibleReadOnly };
 

@@ -141,12 +141,11 @@ const textId = "text";
  * @internal
  */
 export class FlowDocument extends DataObject {
-	private static readonly factory = new DataObjectFactory<FlowDocument>(
-		documentType,
-		FlowDocument,
-		[SharedString.getFactory()],
-		{},
-	);
+	private static readonly factory = new DataObjectFactory({
+		type: documentType,
+		ctor: FlowDocument,
+		sharedObjects: [SharedString.getFactory()],
+	});
 
 	public static getFactory() {
 		return FlowDocument.factory;

@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as Redis from "ioredis";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import * as Redis from "ioredis";
+
 import { getRedisClusterRetryStrategy } from "./redisUtils";
 
 /**
@@ -184,7 +185,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 		}
 
 		this.client.on("error", (error) => {
-			if (additionalLoggingFunctionality && additionalLoggingFunctionality(error)) {
+			if (additionalLoggingFunctionality?.(error) ?? false) {
 				// If the additionalLoggingFunctionality returns true, it means it has completely handled the error
 				return;
 			}

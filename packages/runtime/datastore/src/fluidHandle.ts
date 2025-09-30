@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject } from "@fluidframework/core-interfaces";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import {
 	generateHandleContextPath,
 	FluidHandleBase,
@@ -13,14 +12,11 @@ import {
 
 /**
  * Handle for a shared {@link @fluidframework/core-interfaces#FluidObject}.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class FluidObjectHandle<
 	T extends FluidObject = FluidObject,
 > extends FluidHandleBase<T> {
-	private readonly pendingHandlesToMakeVisible: Set<IFluidHandleInternal> = new Set();
-
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.absolutePath}
 	 */
@@ -32,30 +28,6 @@ export class FluidObjectHandle<
 	public get isAttached(): boolean {
 		return this.routeContext.isAttached;
 	}
-
-	/**
-	 * Tells whether the object of this handle is visible in the container locally or globally.
-	 */
-	private get visible(): boolean {
-		/**
-		 * If the object of this handle is attached, it is visible in the container. Ideally, checking local visibility
-		 * should be enough for a handle. However, there are scenarios where the object becomes locally visible but the
-		 * handle does not know this - This will happen is attachGraph is never called on the handle. Couple of examples
-		 * where this can happen:
-		 *
-		 * 1. Handles to DDS other than the default handle won't know if the DDS becomes visible after the handle was
-		 * created.
-		 *
-		 * 2. Handles to root data stores will never know that it was visible because the handle will not be stores in
-		 * another DDS and so, attachGraph will never be called on it.
-		 */
-		return this.isAttached || this.locallyVisible;
-	}
-
-	/**
-	 * Tracks whether this handle is locally visible in the container.
-	 */
-	private locallyVisible: boolean = false;
 
 	/**
 	 * Creates a new `FluidObjectHandle`.
@@ -77,6 +49,9 @@ export class FluidObjectHandle<
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.get}
 	 */
+	// TODO: Return `Promise<T>` instead of `Promise<any>`.
+	// This was clearly the intended typing of this API, but fixing it would be a breaking change.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public async get(): Promise<any> {
 		// Note that this return works whether we received a T or a Promise<T> for this.value in the constructor.
 		return this.value;
@@ -86,27 +61,6 @@ export class FluidObjectHandle<
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.attachGraph }
 	 */
 	public attachGraph(): void {
-		if (this.visible) {
-			return;
-		}
-
-		this.locallyVisible = true;
-		this.pendingHandlesToMakeVisible.forEach((handle) => {
-			handle.attachGraph();
-		});
-		this.pendingHandlesToMakeVisible.clear();
 		this.routeContext.attachGraph();
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.bind}
-	 */
-	public bind(handle: IFluidHandleInternal) {
-		// If this handle is visible, attach the graph of the incoming handle as well.
-		if (this.visible) {
-			handle.attachGraph();
-			return;
-		}
-		this.pendingHandlesToMakeVisible.add(handle);
 	}
 }

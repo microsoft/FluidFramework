@@ -22,8 +22,16 @@ import {
 } from "../../core/index.js";
 import { type JsonCompatibleReadOnly, type Mutable, brand } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
+import {
+	EncodedNodeChangeset,
+	getFromChangeAtomIdMap,
+	rangeQueryChangeAtomIdMap,
+	type EncodedChangeAtomId,
+	type FieldChangeEncodingContext,
+} from "../modular-schema/index.js";
 
 import { Changeset as ChangesetSchema, type Encoded } from "./formatV2.js";
+import type { SequenceCodecHelpers } from "./helperTypes.js";
 import {
 	type Attach,
 	type CellMark,
@@ -34,22 +42,7 @@ import {
 	NoopMarkType,
 	type Rename,
 } from "./types.js";
-import {
-	getAttachedNodeId,
-	getDetachedNodeId,
-	getMovedNodeId,
-	isNoopMark,
-	splitMark,
-} from "./utils.js";
-import type { FieldChangeEncodingContext } from "../index.js";
-import {
-	EncodedNodeChangeset,
-	getFromChangeAtomIdMap,
-	rangeQueryChangeAtomIdMap,
-	type EncodedChangeAtomId,
-} from "../modular-schema/index.js";
-import type { SequenceCodecHelpers } from "./helperTypes.js";
-import { isMoveMark } from "./moveEffectTable.js";
+import { getAttachedNodeId, getDetachedNodeId, isNoopMark, splitMark } from "./utils.js";
 
 export function makeV2CodecHelpers(
 	revisionTagCodec: IJsonCodec<

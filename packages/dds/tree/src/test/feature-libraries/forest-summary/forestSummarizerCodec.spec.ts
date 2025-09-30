@@ -9,7 +9,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import type { ICodecOptions } from "../../../codec/index.js";
 import { rootFieldKey } from "../../../core/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	chunkField,
 	defaultChunkPolicy,
@@ -31,9 +31,9 @@ import {
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { EmptyObject } from "../../cursorTestSuite.js";
-import { testIdCompressor } from "../../utils.js";
+import { testIdCompressor, validateUsageError } from "../../utils.js";
 
-const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
+const codecOptions: ICodecOptions = { jsonValidator: FormatValidatorBasic };
 const fieldBatchCodec = makeFieldBatchCodec(codecOptions, 1);
 const context = {
 	encodeType: TreeCompressionStrategy.Uncompressed,
@@ -121,7 +121,7 @@ describe("ForestSummarizerCodec", () => {
 						},
 						context,
 					),
-				(e: Error) => validateAssertionError(e, "version being decoded is not supported"),
+				validateUsageError(/Unsupported version 2 encountered while decoding data/),
 			);
 		});
 
@@ -136,7 +136,7 @@ describe("ForestSummarizerCodec", () => {
 						},
 						context,
 					),
-				(e: Error) => validateAssertionError(e, "version being decoded is not supported"),
+				validateUsageError(/Unsupported version 2 encountered while decoding data/),
 			);
 		});
 

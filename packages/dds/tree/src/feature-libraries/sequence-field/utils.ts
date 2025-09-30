@@ -261,7 +261,7 @@ export function compareCellPositionsUsingTombstones(
 }
 
 /**
- * @returns the ID of the cell in the output context of the given detach `mark`.
+ * Gets the ID of the cell in the output context of the given detach `mark`.
  */
 export function getDetachOutputCellId(mark: Detach | Rename): ChangeAtomId {
 	if (isRename(mark)) {
@@ -276,14 +276,14 @@ export function getDetachOutputCellId(mark: Detach | Rename): ChangeAtomId {
 }
 
 /**
- * @returns the ID of the node to be attached in the input context of the given detach `mark`.
+ * Gets the ID of the node to be attached in the input context of the given detach `mark`.
  */
 export function getAttachedNodeId(mark: Attach): ChangeAtomId {
 	return makeChangeAtomId(mark.id, mark.revision);
 }
 
 /**
- * @returns the ID of the detached node in the output context of the given detach `mark`.
+ * Gets the ID of the detached node in the output context of the given detach `mark`.
  */
 export function getDetachedNodeId(mark: Detach): ChangeAtomId {
 	return makeChangeAtomId(mark.id, mark.revision);
@@ -335,18 +335,18 @@ export function cloneCellId(id: CellId): CellId {
 }
 
 /**
+ * Gets the number of nodes within the output context of the mark.
  * @param mark - The mark to get the length of.
  * @param ignorePairing - When true, the length of a paired mark (e.g. MoveIn/MoveOut) whose matching mark is not active
  * will be treated the same as if the matching mark were active.
- * @returns The number of nodes within the output context of the mark.
  */
 export function getOutputLength(mark: Mark, ignorePairing: boolean = false): number {
 	return areOutputCellsEmpty(mark) ? 0 : mark.count;
 }
 
 /**
+ * Gets the number of nodes within the input context of the mark.
  * @param mark - The mark to get the length of.
- * @returns The number of nodes within the input context of the mark.
  */
 export function getInputLength(mark: Mark): number {
 	return areInputCellsEmpty(mark) ? 0 : mark.count;
@@ -384,7 +384,9 @@ export function areOutputCellsEmpty(mark: Mark): boolean {
 }
 
 /**
- * @returns true, iff the given `mark` would have impact on the field when applied.
+ * Returns true if and only iff the given `mark` would have impact on the field when applied.
+ *
+ * @remarks
  * Ignores the impact of nested changes.
  * CellRename effects are considered impactful if they actually change the ID of the cells.
  */

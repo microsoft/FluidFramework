@@ -13,9 +13,9 @@ import type {
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
-import { IClientDetails } from "@fluidframework/driver-definitions";
-import type { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
-import {
+import type { IClientDetails } from "@fluidframework/driver-definitions";
+import type {
+	IAnyDriverError,
 	IClientConfiguration,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -86,7 +86,7 @@ export interface BaseDeltaManagerProxyEventHandlers {
  * This class allows us to build proxy functionality without actually having to implement all the methods
  * of the DeltaManager.
  */
-export abstract class BaseDeltaManagerProxy
+export class BaseDeltaManagerProxy
 	extends TypedEventEmitter<IDeltaManagerEvents>
 	implements IDeltaManagerFull
 {

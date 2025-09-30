@@ -13,29 +13,29 @@ export {
 	GCNodeType,
 	gcTestModeKey,
 	gcGenerationOptionName,
-	GCFeatureMatrix,
-	GCVersion,
+	type GCFeatureMatrix,
+	type GCVersion,
 	gcVersionUpgradeToV4Key,
-	IGarbageCollectionRuntime,
-	IGarbageCollector,
-	IGarbageCollectorConfigs,
-	IGarbageCollectorCreateParams,
-	IGCMetadata,
-	IGCMetadata_Deprecated,
-	IGCNodeUpdatedProps,
-	IGCResult,
-	IGCRuntimeOptions,
-	IMarkPhaseStats,
-	ISweepPhaseStats,
-	IGCStats,
+	type IGarbageCollectionRuntime,
+	type IGarbageCollector,
+	type IGarbageCollectorConfigs,
+	type IGarbageCollectorCreateParams,
+	type IGCMetadata,
+	type IGCMetadata_Deprecated,
+	type IGCNodeUpdatedProps,
+	type IGCResult,
+	type IGCRuntimeOptions,
+	type IMarkPhaseStats,
+	type ISweepPhaseStats,
+	type IGCStats,
 	oneDayMs,
 	runSessionExpiryKey,
 	stableGCVersion,
 	UnreferencedState,
 	disableThrowOnTombstoneLoadKey,
-	GarbageCollectionMessage,
+	type GarbageCollectionMessage,
 	GarbageCollectionMessageType,
-	ISweepMessage,
+	type ISweepMessage,
 } from "./gcDefinitions.js";
 export {
 	cloneGCData,
@@ -45,7 +45,7 @@ export {
 	urlToGCNodePath,
 } from "./gcHelpers.js";
 export { runGarbageCollection } from "./gcReferenceGraphAlgorithm.js";
-export {
+export type {
 	IGarbageCollectionNodeData,
 	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
@@ -54,7 +54,7 @@ export {
 export {
 	gcStateBlobKey,
 	GCSummaryStateTracker,
-	IGCSummaryTrackingData,
+	type IGCSummaryTrackingData,
 } from "./gcSummaryStateTracker.js";
 export { GCTelemetryTracker } from "./gcTelemetry.js";
 export { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";

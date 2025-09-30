@@ -1,17 +1,17 @@
 # testClassEventProperty
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestInterface](/test-suite-a/testinterface-interface/) &gt; [testClassEventProperty](/test-suite-a/testinterface-interface/testclasseventproperty-propertysignature)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestInterface](/test-suite-a/testinterface-interface/) > [testClassEventProperty](/test-suite-a/testinterface-interface/testclasseventproperty-propertysignature)
 
 Test interface event property
 
-## Signature {#testclasseventproperty-signature}
+<h2 id="testclasseventproperty-signature">Signature</h2>
 
 ```typescript
 readonly testClassEventProperty: () => void;
 ```
 
-**Type:** () =&gt; void
+**Type**: () => void
 
-## Remarks {#testclasseventproperty-remarks}
+<h2 id="testclasseventproperty-remarks">Remarks</h2>
 
 Here are some remarks about the event property

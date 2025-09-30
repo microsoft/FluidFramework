@@ -3,23 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
+import type { ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
+import type { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { ITaskManager } from "../interfaces.js";
+import type { ITaskManager } from "../interfaces.js";
 import { TaskManagerClass } from "../taskManager.js";
 import { TaskManagerFactory } from "../taskManagerFactory.js";
 
-function createConnectedTaskManager(id: string, runtimeFactory: MockContainerRuntimeFactory) {
+function createConnectedTaskManager(
+	id: string,
+	runtimeFactory: MockContainerRuntimeFactory,
+): TaskManagerClass {
 	// Create and connect a TaskManager.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
@@ -53,7 +56,7 @@ function createDetachedTaskManager(
 		dataStoreRuntime,
 		TaskManagerFactory.Attributes,
 	);
-	const attach = async () => {
+	const attach = async (): Promise<void> => {
 		const services = {
 			deltaConnection: dataStoreRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
@@ -97,7 +100,7 @@ describe("TaskManager", () => {
 			it("Can volunteer for a task", async () => {
 				const taskId = "taskId";
 				const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-				assert.ok(taskManager1.queued(taskId), "Should be queued");
+				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
 				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
 				containerRuntimeFactory.processAllMessages();
 				const isAssigned = await volunteerTaskP;
@@ -111,9 +114,9 @@ describe("TaskManager", () => {
 				const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
 				const volunteerTaskP2 = taskManager2.volunteerForTask(taskId);
 
-				assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
+				assert.ok(!taskManager1.queued(taskId), "Task manager 1 should not be queued");
 				assert.ok(!taskManager1.assigned(taskId), "Task manager 1 should not be assigned");
-				assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
+				assert.ok(!taskManager2.queued(taskId), "Task manager 2 should not be queued");
 				assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
 
 				containerRuntimeFactory.processAllMessages();
@@ -153,9 +156,9 @@ describe("TaskManager", () => {
 				const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
 				const volunteerTaskP2 = taskManager2.volunteerForTask(taskId);
 
-				assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
+				assert.ok(!taskManager1.queued(taskId), "Task manager 1 should not be queued");
 				assert.ok(!taskManager1.assigned(taskId), "Task manager 1 should not be assigned");
-				assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
+				assert.ok(!taskManager2.queued(taskId), "Task manager 2 should not be queued");
 				assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
 
 				containerRuntimeFactory.processAllMessages();
@@ -179,7 +182,7 @@ describe("TaskManager", () => {
 			it("Can abandon and immediately attempt to reacquire a task", async () => {
 				const taskId = "taskId";
 				const volunteerTaskP = taskManager1.volunteerForTask(taskId);
-				assert.ok(taskManager1.queued(taskId), "Should be queued");
+				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
 				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
 				containerRuntimeFactory.processAllMessages();
 				const isAssigned = await volunteerTaskP;
@@ -188,11 +191,11 @@ describe("TaskManager", () => {
 				assert.ok(taskManager1.assigned(taskId), "Should be assigned");
 
 				taskManager1.abandon(taskId);
-				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+				assert.ok(taskManager1.queued(taskId), "Should still be queued (pending abandon)");
+				assert.ok(taskManager1.assigned(taskId), "Should still be assigned (pending abandon)");
 				const revolunteerTaskP = taskManager1.volunteerForTask(taskId);
 				assert.ok(taskManager1.queued(taskId), "Should be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+				assert.ok(taskManager1.assigned(taskId), "Should still be assigned (pending abandon)");
 				containerRuntimeFactory.processAllMessages();
 				const isAssigned2 = await revolunteerTaskP;
 				assert.ok(isAssigned2, "Should resolve true");
@@ -203,7 +206,7 @@ describe("TaskManager", () => {
 			it("Can attempt to volunteer for task twice and abandon twice (after ack)", async () => {
 				const taskId = "taskId";
 				const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
-				assert.ok(taskManager1.queued(taskId), "Should be queued");
+				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
 				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
 				containerRuntimeFactory.processAllMessages();
 				const isAssigned1 = await volunteerTaskP1;
@@ -221,8 +224,8 @@ describe("TaskManager", () => {
 				assert.ok(taskManager1.assigned(taskId), "Should be assigned");
 
 				taskManager1.abandon(taskId);
-				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+				assert.ok(taskManager1.queued(taskId), "Should still be queued (pending abandon)");
+				assert.ok(taskManager1.assigned(taskId), "Should still be assigned (pending abandon)");
 				containerRuntimeFactory.processAllMessages();
 				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
 				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
@@ -238,11 +241,11 @@ describe("TaskManager", () => {
 			it("Can attempt to lock task twice and abandon twice (before ack)", async () => {
 				const taskId = "taskId";
 				const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
-				assert.ok(taskManager1.queued(taskId), "Should be queued");
+				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
 				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
 
 				const volunteerTaskP2 = taskManager1.volunteerForTask(taskId);
-				assert.ok(taskManager1.queued(taskId), "Should be queued");
+				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
 				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
 				containerRuntimeFactory.processAllMessages();
 				const isAssigned1 = await volunteerTaskP1;
@@ -253,11 +256,11 @@ describe("TaskManager", () => {
 				assert.ok(taskManager1.assigned(taskId), "Should be assigned");
 
 				taskManager1.abandon(taskId);
-				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+				assert.ok(taskManager1.queued(taskId), "Should still be queued (pending abandon)");
+				assert.ok(taskManager1.assigned(taskId), "Should still be assigned (pending abandon)");
 				taskManager1.abandon(taskId);
-				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
-				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+				assert.ok(taskManager1.queued(taskId), "Should still be queued (pending abandon)");
+				assert.ok(taskManager1.assigned(taskId), "Should still be assigned (pending abandon)");
 				containerRuntimeFactory.processAllMessages();
 				assert.ok(!taskManager1.queued(taskId), "Should not be queued");
 				assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
@@ -284,7 +287,7 @@ describe("TaskManager", () => {
 				const taskId = "taskId";
 				taskManager1.subscribeToTask(taskId);
 
-				assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
+				assert.ok(!taskManager1.queued(taskId), "Task manager 1 should not be queued");
 				assert.ok(!taskManager1.assigned(taskId), "Task manager 1 should not be assigned");
 				assert.ok(taskManager1.subscribed(taskId), "Task manager 1 should be subscribed");
 
@@ -313,9 +316,9 @@ describe("TaskManager", () => {
 				taskManager1.subscribeToTask(taskId);
 				taskManager2.subscribeToTask(taskId);
 
-				assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
+				assert.ok(!taskManager1.queued(taskId), "Task manager 1 should not be queued");
 				assert.ok(!taskManager1.assigned(taskId), "Task manager 1 should not be assigned");
-				assert.ok(taskManager2.queued(taskId), "Task manager 2 should be queued");
+				assert.ok(!taskManager2.queued(taskId), "Task manager 2 should not be queued");
 				assert.ok(!taskManager2.assigned(taskId), "Task manager 2 should not be assigned");
 
 				containerRuntimeFactory.processAllMessages();
@@ -348,6 +351,7 @@ describe("TaskManager", () => {
 			it("Rejects the promise if you try to complete without being assigned", async () => {
 				const taskId = "taskId";
 				const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
+				// eslint-disable-next-line no-void
 				void taskManager2.volunteerForTask(taskId);
 
 				containerRuntimeFactory.processAllMessages();
@@ -492,8 +496,10 @@ describe("TaskManager", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 		let containerRuntime1: MockContainerRuntimeForReconnection;
 
-		const setReadOnlyInfo = (readOnlyInfo: ReadOnlyInfo) => {
+		const setReadOnlyInfo = (readOnlyInfo: ReadOnlyInfo): void => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			(taskManager1 as any).runtime.deltaManager.readOnlyInfo = readOnlyInfo;
+
 			// Force connection to simulate read mode (TaskManager considered the client disconnected in read mode)
 			containerRuntime1.connected = readOnlyInfo.readonly === false;
 		};
@@ -640,6 +646,28 @@ describe("TaskManager", () => {
 					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
 					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
 				});
+
+				it("Can abandon and immediately attempt to reacquire a task while detached", async () => {
+					const taskId = "taskId";
+					const volunteerTaskP = taskManager1.volunteerForTask(taskId);
+					assert.ok(taskManager1.queued(taskId), "Should be queued");
+					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+					const isAssigned = await volunteerTaskP;
+					assert.ok(isAssigned, "Should resolve true");
+					assert.ok(taskManager1.queued(taskId), "Should be queued");
+					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+
+					taskManager1.abandon(taskId);
+					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+					const revolunteerTaskP = taskManager1.volunteerForTask(taskId);
+					assert.ok(taskManager1.queued(taskId), "Should be queued");
+					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+					const isAssigned2 = await revolunteerTaskP;
+					assert.ok(isAssigned2, "Should resolve true");
+					assert.ok(taskManager1.queued(taskId), "Should be queued");
+					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+				});
 			});
 
 			describe("Subscribing to a task", () => {
@@ -722,6 +750,7 @@ describe("TaskManager", () => {
 				});
 
 				it("Will lose task assignment after attaching if clientId is undefined", async () => {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 					(taskManager1 as any).runtime.clientId = undefined;
 					const taskId = "taskId";
 					const volunteerTaskP = taskManager1.volunteerForTask(taskId);
@@ -730,6 +759,7 @@ describe("TaskManager", () => {
 					assert.ok(taskManager1.queued(taskId), "Should be queued");
 					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
 					assert.strictEqual(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
 						(taskManager1 as any).taskQueues.get(taskId)?.[0],
 						placeholderClientId,
 						"taskQueue should have placeholder clientId",
@@ -749,6 +779,7 @@ describe("TaskManager", () => {
 					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
 					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
 					assert.ok(taskManager1EventFired, "Should have raised lost event on taskManager1");
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 					assert.ok((taskManager1 as any).taskQueues.size === 0, "taskQueue should be empty");
 				});
 			});
@@ -766,6 +797,7 @@ describe("TaskManager", () => {
 				});
 
 				it("Can subscribe to a task and stay subscribed after attach if clientId was undefined", async () => {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 					(taskManager1 as any).runtime.clientId = undefined;
 					const taskId = "taskId";
 					taskManager1.subscribeToTask(taskId);
@@ -790,18 +822,19 @@ describe("TaskManager", () => {
 					assert.ok(taskManager1.subscribed(taskId), "Task manager 1 should be subscribed");
 
 					assert.ok(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
 						(taskManager1 as any).taskQueues.get(taskId)?.length !== 0,
 						"taskQueue should not be empty",
 					);
 					assert.notStrictEqual(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
 						(taskManager1 as any).taskQueues.get(taskId)?.[0],
 						placeholderClientId,
 						"taskQueue should not have placeholder clientId",
 					);
 				});
 
-				// todo AB#7310
-				it.skip("Can abandon a subscribed task after attach", async () => {
+				it("Can abandon a subscribed task after attach", async () => {
 					const taskId = "taskId";
 					taskManager1.subscribeToTask(taskId);
 					containerRuntimeFactory.processAllMessages();
@@ -952,6 +985,7 @@ describe("TaskManager", () => {
 					const clientId2 = containerRuntime2.clientId;
 
 					assert.deepEqual(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
 						(taskManager1 as any).taskQueues.get(taskId),
 						[clientId1, clientId2],
 						"Task queue should have both clients",
@@ -961,6 +995,7 @@ describe("TaskManager", () => {
 					containerRuntimeFactory.processAllMessages();
 
 					assert.deepEqual(
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
 						(taskManager1 as any).taskQueues.get(taskId),
 						[clientId1],
 						"Task queue should only have client 1",
@@ -1041,6 +1076,106 @@ describe("TaskManager", () => {
 						"Task manager 1 should not be subscribed",
 					);
 				});
+
+				it("Can subscribe to a task while disconnected and pending abandon won't be applied", async () => {
+					const taskId = "taskId";
+					const volunteerTaskP = taskManager1.volunteerForTask(taskId);
+					containerRuntimeFactory.processAllMessages();
+					const isAssigned = await volunteerTaskP;
+					assert.ok(isAssigned, "Should resolve true");
+					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+
+					taskManager1.abandon(taskId);
+					// Abandon won't be processed anymore since we're now disconnected and we
+					// don't resubmit ops.
+					containerRuntime1.connected = false;
+
+					taskManager1.subscribeToTask(taskId);
+					containerRuntime1.connected = true;
+					containerRuntimeFactory.processAllMessages();
+
+					assert.equal(taskManager1.assigned(taskId), true, "Should be assigned");
+				});
+
+				it("Can abandon subscription to multiple tasks while disconnected", async () => {
+					const taskId1 = "taskId1";
+					const taskId2 = "taskId2";
+					const taskId3 = "taskId3";
+					containerRuntime1.connected = false;
+
+					taskManager1.subscribeToTask(taskId1);
+					taskManager1.subscribeToTask(taskId2);
+					taskManager1.subscribeToTask(taskId3);
+
+					containerRuntime1.connected = true;
+					containerRuntimeFactory.processAllMessages();
+
+					assert.deepEqual(
+						[
+							taskManager1.assigned(taskId1),
+							taskManager1.assigned(taskId2),
+							taskManager1.assigned(taskId3),
+						],
+						[true, true, true],
+						"Should be assigned all tasks",
+					);
+				});
+
+				it("Can abandon subscription to multiple tasks while disconnected and abandon/complete after", async () => {
+					const taskId1 = "taskId1";
+					const taskId2 = "taskId2";
+					const taskId3 = "taskId3";
+					containerRuntime1.connected = false;
+
+					taskManager1.subscribeToTask(taskId1);
+					taskManager1.subscribeToTask(taskId2);
+					taskManager1.subscribeToTask(taskId3);
+
+					containerRuntime1.connected = true;
+					containerRuntimeFactory.processAllMessages();
+
+					taskManager1.abandon(taskId1);
+					taskManager1.complete(taskId3);
+					containerRuntimeFactory.processAllMessages();
+
+					assert.deepEqual(
+						[
+							taskManager1.assigned(taskId1),
+							taskManager1.assigned(taskId2),
+							taskManager1.assigned(taskId3),
+						],
+						[false, true, false],
+						"Should only be assigned task 2",
+					);
+				});
+
+				it("Can abandon subscription to multiple tasks while disconnected and abandon/resubscribe after", async () => {
+					const taskId1 = "taskId1";
+					const taskId2 = "taskId2";
+					const taskId3 = "taskId3";
+					containerRuntime1.connected = false;
+
+					taskManager1.subscribeToTask(taskId1);
+					taskManager1.subscribeToTask(taskId2);
+					taskManager1.subscribeToTask(taskId3);
+
+					containerRuntime1.connected = true;
+					containerRuntimeFactory.processAllMessages();
+
+					taskManager1.abandon(taskId1);
+					taskManager1.subscribeToTask(taskId1);
+					containerRuntimeFactory.processAllMessages();
+
+					assert.deepEqual(
+						[
+							taskManager1.assigned(taskId1),
+							taskManager1.assigned(taskId2),
+							taskManager1.assigned(taskId3),
+						],
+						[true, true, true],
+						"Should be subscribed to all tasks",
+					);
+				});
 			});
 
 			describe("Completing tasks", () => {
@@ -1086,7 +1221,7 @@ describe("TaskManager", () => {
 
 					containerRuntime1.connected = true;
 
-					assert.ok(taskManager1.queued(taskId), "Task manager 1 should be queued");
+					assert.ok(!taskManager1.queued(taskId), "Task manager 1 should not be queued");
 					assert.ok(!taskManager1.assigned(taskId), "Task manager 1 should not be assigned");
 					assert.ok(taskManager1.subscribed(taskId), "Task manager 1 should be subscribed");
 

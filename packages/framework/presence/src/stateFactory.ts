@@ -9,15 +9,13 @@ import { latest } from "./latestValueManager.js";
 /**
  * Factory for creating presence State objects.
  *
- * @alpha
+ * @remarks
+ * Use `latest` to create a {@link LatestRaw} State object.
+ * Use `latestMap` to create a {@link LatestMapRaw} State object.
+ *
+ * @beta
  */
 export const StateFactory = {
-	/**
-	 * {@inheritdoc latest}
-	 */
 	latest,
-	/**
-	 * {@inheritdoc latestMap}
-	 */
 	latestMap,
 };

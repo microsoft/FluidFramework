@@ -1,13 +1,13 @@
 # protectedProperty
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestAbstractClass](/test-suite-a/testabstractclass-class/) &gt; [protectedProperty](/test-suite-a/testabstractclass-class/protectedproperty-property)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestAbstractClass](/test-suite-a/testabstractclass-class/) > [protectedProperty](/test-suite-a/testabstractclass-class/protectedproperty-property)
 
 A test protected property.
 
-## Signature {#protectedproperty-signature}
+<h2 id="protectedproperty-signature">Signature</h2>
 
 ```typescript
 protected readonly protectedProperty: TestEnum;
 ```
 
-**Type:** [TestEnum](/test-suite-a/testenum-enum/)
+**Type**: [TestEnum](/test-suite-a/testenum-enum/)

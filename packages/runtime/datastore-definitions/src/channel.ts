@@ -4,6 +4,7 @@
  */
 
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
@@ -16,8 +17,22 @@ import type { IFluidDataStoreRuntime } from "./dataStoreRuntime.js";
 import type { IChannelAttributes } from "./storage.js";
 
 /**
- * @legacy
- * @alpha
+ * An object which can be connected to a
+ * {@link https://fluidframework.com/docs/concepts/architecture#fluid-service|Fluid service} via an {@link IChannelServices} instance.
+ * @remarks
+ * This interface exposes functionality that the service requires to create and maintain summaries of the channel.
+ * This summary support allows for loading a channel without having to reapply all ops that have been applied during its lifetime.
+ * @privateRemarks
+ * Since this is an interface between services (which we only expect to be implemented in this repository) and SharedObjects (which we also only expect to be implemented in this repository),
+ * this should probably eventually become internal.
+ *
+ * {@link IChannelView} subsets this interface removing APIs only needed by the service: if/when IChannel becomes internal, it may make sense to reverse the dependency between these two interfaces,
+ * and promote {@link IChannelView} to expose its APIs more publicly.
+ *
+ * TODO:
+ * Either Channels should become a useful well documented abstraction of which there could be another implementation, or it should be better integrated with SharedObject to reduce concept count.
+ *
+ * @legacy @beta
  */
 export interface IChannel extends IFluidLoadable {
 	/**
@@ -120,8 +135,7 @@ export interface IChannel extends IFluidLoadable {
 
 /**
  * Handler provided by shared data structure to process requests from the runtime.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDeltaHandler {
 	/**
@@ -143,8 +157,15 @@ export interface IDeltaHandler {
 	 * at all.
 	 * @param message - The original message that was submitted.
 	 * @param localOpMetadata - The local metadata associated with the original message.
+	 * @param squash - If true, the DDS should avoid resubmitting any "unnecessary intermediate state" created by this message.
+	 * This includes any content which this message created but has since been changed or removed by subsequent messages.
+	 * For example, if this message (call it A) inserts content into a DDS that a subsequent op (call it B) removes,
+	 * resubmission of this message (call it A') should avoid inserting that content, and resubmission of the subsequent op that removed it (B') would
+	 * account for the fact that A' never inserted content.
 	 */
-	reSubmit(message: any, localOpMetadata: unknown): void;
+	// TODO: Use something other than `any` (breaking change)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	reSubmit(message: any, localOpMetadata: unknown, squash?: boolean): void;
 
 	/**
 	 * Apply changes from an op just as if a local client has made the change,
@@ -161,6 +182,8 @@ export interface IDeltaHandler {
 	 * submission of the op if attached. Soon the old flow will be removed
 	 * and only the new flow will be supported.
 	 */
+	// TODO: Use something other than `any` (breaking change)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	applyStashedOp(message: any): void;
 
 	/**
@@ -168,13 +191,14 @@ export interface IDeltaHandler {
 	 * @param message - The original message that was submitted.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
+	// TODO: Use something other than `any` (breaking change)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	rollback?(message: any, localOpMetadata: unknown): void;
 }
 
 /**
  * Interface to represent a connection to a delta notification stream.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDeltaConnection {
 	connected: boolean;
@@ -186,6 +210,8 @@ export interface IDeltaConnection {
 	 * and not sent to the server. It will be provided back when this message is acknowledged by the server. It will
 	 * also be provided back when asked to resubmit the message.
 	 */
+	// TODO: Use something other than `any` (breaking change)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	submit(messageContent: any, localOpMetadata: unknown): void;
 
 	/**
@@ -202,8 +228,7 @@ export interface IDeltaConnection {
 
 /**
  * Storage services to read the objects at a given path.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IChannelStorageService {
 	/**
@@ -220,12 +245,17 @@ export interface IChannelStorageService {
 	 * Lists the blobs that exist at a specific path.
 	 */
 	list(path: string): Promise<string[]>;
+
+	/**
+	 * Returns the snapshot tree for the channel. This will help channels examine their snapshot when it consists
+	 * of dynamic trees and blobs, i.e., the number of tree and blobs and / or their keys are not known in advance.
+	 */
+	getSnapshotTree?(): ISnapshotTree | undefined;
 }
 
 /**
  * Storage services to read the objects at a given path using the given delta connection.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IChannelServices {
 	deltaConnection: IDeltaConnection;
@@ -259,8 +289,7 @@ export interface IChannelServices {
  * This approach (not requiring TChannel to extend IChannel) also makes it possible for SharedObject's public interfaces to not include IChannel if desired
  * (while still requiring the implementation to implement it).
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IChannelFactory<out TChannel = unknown> {
 	/**

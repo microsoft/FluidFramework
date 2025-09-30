@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import type { TypedMessage } from "@fluidframework/core-interfaces/internal";
+
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum MessageType {
 	/**
@@ -94,8 +95,7 @@ export enum SignalType {
 
 /**
  * Messages to track latency trace.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ITrace {
 	/**
@@ -115,8 +115,7 @@ export interface ITrace {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface INack {
 	/**
@@ -137,8 +136,7 @@ export interface INack {
 
 /**
  * Document-specific message.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IDocumentMessage {
 	/**
@@ -193,8 +191,7 @@ export interface IDocumentSystemMessage extends IDocumentMessage {
 
 /**
  * Branch origin information.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IBranchOrigin {
 	/**
@@ -215,8 +212,7 @@ export interface IBranchOrigin {
 
 /**
  * Sequenced message for a distributed document.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISequencedDocumentMessage {
 	/**
@@ -338,19 +334,18 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 
 /**
  * Common interface between incoming and outgoing signals.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
-export interface ISignalMessageBase {
+export interface ISignalMessageBase<TMessage extends TypedMessage = TypedMessage> {
 	/**
 	 * Signal content
 	 */
-	content: unknown;
+	content: TMessage["content"];
 
 	/**
 	 * Signal type
 	 */
-	type?: string;
+	type?: TMessage["type"];
 
 	/**
 	 * Counts the number of signals sent by the sending client.
@@ -371,10 +366,10 @@ export interface ISignalMessageBase {
 
 /**
  * Interface for signals sent by the server to clients.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
-export interface ISignalMessage extends ISignalMessageBase {
+export interface ISignalMessage<TMessage extends TypedMessage = TypedMessage>
+	extends ISignalMessageBase<TMessage> {
 	/**
 	 * The client ID that submitted the message.
 	 * For server generated messages the clientId will be null.
@@ -387,11 +382,11 @@ export interface ISignalMessage extends ISignalMessageBase {
  * Interface for signals sent by clients to the server.
  * @internal
  */
-export type ISentSignalMessage = ISignalMessageBase;
+export type ISentSignalMessage<TMessage extends TypedMessage = TypedMessage> =
+	ISignalMessageBase<TMessage>;
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IUploadedSummaryDetails {
 	/**
@@ -401,8 +396,7 @@ export interface IUploadedSummaryDetails {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryContent {
 	/**
@@ -448,8 +442,7 @@ export interface IServerError {
 
 /**
  * Data about the original proposed summary message.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryProposal {
 	/**
@@ -460,8 +453,7 @@ export interface ISummaryProposal {
 
 /**
  * Contents of summary ack expected from the server.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryAck {
 	/**
@@ -477,8 +469,7 @@ export interface ISummaryAck {
 
 /**
  * Contents of summary nack expected from the server.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISummaryNack {
 	/**
@@ -508,8 +499,7 @@ export interface ISummaryNack {
 
 /**
  * Interface for nack content.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface INackContent {
 	/**
@@ -539,8 +529,7 @@ export interface INackContent {
 
 /**
  * Type of the nack.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export enum NackErrorType {
 	/**

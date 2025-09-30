@@ -117,6 +117,22 @@ export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<NodeKind.Array, 
 }
 
 /**
+ * Types allowed in map / record nodes.
+ *
+ * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-patternproperties}.
+ *
+ * @sealed
+ * @alpha
+ */
+export interface JsonStringKeyPatternProperties {
+	/**
+	 * This format allows for any string key that can appear in tree schema in a way that is JSON schema compatible,
+	 * but restricts the value to the specified allowed types of the value to only those specified.
+	 */
+	"^.*$": JsonFieldSchema;
+}
+
+/**
  * JSON Schema for a map node.
  *
  * @remarks Special case for map nodes, which do not have a native JSON schema corollary.
@@ -131,13 +147,23 @@ export interface JsonMapNodeSchema extends JsonNodeSchemaBase<NodeKind.Map, "obj
 	 * Used to control the types of properties that can appear in the "object" representation of the map.
 	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-patternproperties}.
 	 */
-	readonly patternProperties: {
-		/**
-		 * Types allowed in the map.
-		 * @remarks This format allows for any (JSON-compliant) key, but restricts the allowed types to only those specified.
-		 */
-		"^.*$": JsonFieldSchema;
-	};
+	readonly patternProperties: JsonStringKeyPatternProperties;
+}
+
+/**
+ * JSON Schema for a record node.
+ *
+ * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
+ *
+ * @sealed
+ * @alpha
+ */
+export interface JsonRecordNodeSchema extends JsonNodeSchemaBase<NodeKind.Record, "object"> {
+	/**
+	 * Used to control the types of properties that can appear in the "object" representation of the record.
+	 * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-patternproperties}.
+	 */
+	readonly patternProperties: JsonStringKeyPatternProperties;
 }
 
 /**
@@ -182,7 +208,8 @@ export type JsonNodeSchema =
 	| JsonLeafNodeSchema
 	| JsonMapNodeSchema
 	| JsonArrayNodeSchema
-	| JsonObjectNodeSchema;
+	| JsonObjectNodeSchema
+	| JsonRecordNodeSchema;
 
 /**
  *{@link https://json-schema.org/draft/2020-12/json-schema-core | JSON Schema} representation of a {@link FieldSchema}.

@@ -6,10 +6,10 @@
 import { DocumentLambdaFactory } from "@fluidframework/server-lambdas-driver";
 import {
 	DefaultServiceConfiguration,
-	IPartitionLambdaConfig,
-	IPartitionLambdaFactory,
+	type IPartitionLambdaConfig,
+	type IPartitionLambdaFactory,
 } from "@fluidframework/server-services-core";
-import nconf from "nconf";
+import type nconf from "nconf";
 
 /**
  * Lambda plugin definition

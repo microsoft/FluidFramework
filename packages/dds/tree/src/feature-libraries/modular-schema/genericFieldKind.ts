@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
+import { BTree } from "@tylerbu/sorted-btree-es6";
+
 import {
 	type DeltaMark,
 	Multiplicity,
@@ -10,7 +13,7 @@ import {
 	replaceAtomRevisions,
 	type DeltaFieldChanges,
 } from "../../core/index.js";
-import { assert } from "@fluidframework/core-utils/internal";
+
 import type {
 	FieldChangeHandler,
 	NestedChangesIndices,
@@ -23,7 +26,6 @@ import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
 import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTypes.js";
 import type { NodeId } from "./modularChangeTypes.js";
-import { BTree } from "@tylerbu/sorted-btree-es6";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
@@ -35,6 +37,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 		rebase: rebaseGenericChange,
 		prune: pruneGenericChange,
 		replaceRevisions,
+		mute: (change: GenericChangeset): GenericChangeset => change,
 	},
 	codecsFactory: makeGenericChangeCodec,
 	editor: {

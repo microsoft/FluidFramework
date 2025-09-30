@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { WebApi } from "azure-devops-node-api";
+import type { WebApi } from "azure-devops-node-api";
 
 /**
  * Fetches the last commit hash for a PR.

@@ -7,15 +7,14 @@ import { strict as assert } from "node:assert";
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { isPromiseLike, LazyPromise } from "@fluidframework/core-utils/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import {
+import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
-	IFluidParentContext,
-	type NamedFluidDataStoreRegistryEntries,
-	type IContainerRuntimeBase,
-	type ISummarizerNodeWithGC,
+	NamedFluidDataStoreRegistryEntries,
+	IContainerRuntimeBase,
+	ISummarizerNodeWithGC,
+	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -23,6 +22,7 @@ import {
 	MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 
+import type { IFluidParentContextPrivate } from "../channelCollection.js";
 import {
 	FluidDataStoreContext,
 	LocalDetachedFluidDataStoreContext,
@@ -67,12 +67,13 @@ describe("createChildDataStore", () => {
 		const registry = createRegistry(namedEntries);
 		const createSummarizerNodeFn = () =>
 			new Proxy({} as unknown as ISummarizerNodeWithGC, { get: throwNYI });
-		const storage = new Proxy({} as unknown as IDocumentStorageService, { get: throwNYI });
+		const storage = new Proxy({} as unknown as IRuntimeStorageService, { get: throwNYI });
 
 		const parentContext = {
 			clientDetails: {
 				capabilities: { interactive: true },
 			},
+			isReadOnly: () => false,
 			containerRuntime: {
 				createDetachedDataStore(pkg, loadingGroupId) {
 					return new LocalDetachedFluidDataStoreContext({
@@ -93,7 +94,7 @@ describe("createChildDataStore", () => {
 				},
 			} satisfies Partial<IContainerRuntimeBase> as unknown as IContainerRuntimeBase,
 			deltaManager: new MockDeltaManager(),
-		} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
+		} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 
 		const context = new testContext(
 			{

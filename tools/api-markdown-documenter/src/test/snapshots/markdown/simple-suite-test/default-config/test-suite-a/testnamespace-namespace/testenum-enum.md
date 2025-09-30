@@ -1,10 +1,10 @@
 # TestEnum
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestNamespace](/test-suite-a/testnamespace-namespace/) &gt; [TestEnum](/test-suite-a/testnamespace-namespace/testenum-enum)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestNamespace](/test-suite-a/testnamespace-namespace/) > [TestEnum](/test-suite-a/testnamespace-namespace/testenum-enum)
 
 Test Enum
 
-## Signature {#testenum-signature}
+<h2 id="testenum-signature">Signature</h2>
 
 ```typescript
 enum TestEnum
@@ -13,25 +13,25 @@ enum TestEnum
 ## Flags
 
 | Flag | Description |
-| --- | --- |
+| - | - |
 | [TestEnumValue1](/test-suite-a/testnamespace-namespace/testenum-enum#testenumvalue1-enummember) | Test enum value 1 |
 | [TestEnumValue2](/test-suite-a/testnamespace-namespace/testenum-enum#testenumvalue2-enummember) | Test enum value 2 |
 
-### TestEnumValue1 {#testenumvalue1-enummember}
+<h3 id="testenumvalue1-enummember">TestEnumValue1</h3>
 
 Test enum value 1
 
-#### Signature {#testenumvalue1-signature}
+<h4 id="testenumvalue1-signature">Signature</h4>
 
 ```typescript
 TestEnumValue1 = 0
 ```
 
-### TestEnumValue2 {#testenumvalue2-enummember}
+<h3 id="testenumvalue2-enummember">TestEnumValue2</h3>
 
 Test enum value 2
 
-#### Signature {#testenumvalue2-signature}
+<h4 id="testenumvalue2-signature">Signature</h4>
 
 ```typescript
 TestEnumValue2 = 1

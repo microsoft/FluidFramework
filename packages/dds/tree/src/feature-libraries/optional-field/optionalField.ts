@@ -201,6 +201,10 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		return updated;
 	},
+
+	mute: (change: OptionalChangeset): OptionalChangeset => {
+		return { childChanges: change.childChanges, moves: [] };
+	},
 };
 
 function compose(

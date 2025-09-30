@@ -37,7 +37,6 @@ import {
 	ReferenceType,
 	SlidingPreference,
 	createAnnotateRangeOp,
-	// eslint-disable-next-line import/no-deprecated
 	createGroupOp,
 	createInsertOp,
 	createObliterateRangeOp,
@@ -71,10 +70,7 @@ import Deque from "double-ended-queue";
 
 import { type ISequenceIntervalCollection } from "./intervalCollection.js";
 import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
-import {
-	IMapMessageLocalMetadata,
-	type SequenceOptions,
-} from "./intervalCollectionMapInterfaces.js";
+import { type SequenceOptions } from "./intervalCollectionMapInterfaces.js";
 import {
 	SequenceDeltaEvent,
 	SequenceDeltaEventClass,
@@ -117,8 +113,7 @@ const contentPath = "content";
  * - `event` - Various information on the segments that were modified.
  *
  * - `target` - The sequence itself.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	(
@@ -136,8 +131,7 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISharedSegmentSequence<T extends ISegment>
 	extends ISharedObject<ISharedSegmentSequenceEvents>,
@@ -586,7 +580,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		segment: T | undefined;
 		offset: number | undefined;
 	} {
-		return this.client.getContainingSegment<T>(pos);
+		return (
+			this.client.getContainingSegment<T>(pos) ?? { segment: undefined, offset: undefined }
+		);
 	}
 
 	public getLength(): number {
@@ -776,24 +772,23 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
 	 */
-	protected reSubmitCore(content: any, localOpMetadata: unknown) {
+	protected reSubmitCore(content: any, localOpMetadata: unknown, squash: boolean = false) {
 		const originalRefSeq = this.inFlightRefSeqs.shift();
 		assert(
 			originalRefSeq !== undefined,
 			0x8bb /* Expected a recorded refSeq when resubmitting an op */,
 		);
 		this.useResubmitRefSeq(originalRefSeq, () => {
-			if (
-				!this.intervalCollections.tryResubmitMessage(
-					content,
-					localOpMetadata as IMapMessageLocalMetadata,
-				)
-			) {
+			if (!this.intervalCollections.tryResubmitMessage(content, localOpMetadata, squash)) {
 				this.submitSequenceMessage(
-					this.client.regeneratePendingOp(content as IMergeTreeOp, localOpMetadata),
+					this.client.regeneratePendingOp(content as IMergeTreeOp, localOpMetadata, squash),
 				);
 			}
 		});
+	}
+
+	protected reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		this.reSubmitCore(content, localOpMetadata, true);
 	}
 
 	/**
@@ -803,7 +798,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		const originalRefSeq = this.inFlightRefSeqs.pop();
 		assert(
 			originalRefSeq !== undefined,
-			"Expected a recorded refSeq when rolling back an op ",
+			0xb7f /* Expected a recorded refSeq when rolling back an op  */,
 		);
 
 		if (!this.intervalCollections.tryRollback(content, localOpMetadata)) {
@@ -975,7 +970,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				stashMessage = {
 					...message,
 					referenceSequenceNumber: stashMessage.sequenceNumber - 1,
-					// eslint-disable-next-line import/no-deprecated
 					contents: ops.length !== 1 ? createGroupOp(...ops) : ops[0],
 				};
 			}

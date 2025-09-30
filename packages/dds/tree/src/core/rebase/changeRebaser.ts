@@ -96,8 +96,6 @@ export interface ChangeRebaser<TChangeset> {
 	): TChangeset;
 }
 
-/**
- */
 export interface TaggedChange<TChangeset, TTag = RevisionTag | undefined> {
 	readonly revision: TTag;
 	/**
@@ -127,8 +125,6 @@ export function mapTaggedChange<TIn, TOut>(
  */
 export type RevisionIndexer = (tag: RevisionTag) => number | undefined;
 
-/**
- */
 export interface RevisionMetadataSource {
 	/**
 	 * @returns a positive number if tag2 is a later revision than tag1 or a negative number if tag2 is an earlier revision.
@@ -140,8 +136,6 @@ export interface RevisionMetadataSource {
 	readonly hasRollback: (tag: RevisionTag) => boolean;
 }
 
-/**
- */
 export interface RevisionInfo {
 	readonly revision: RevisionTag;
 	/**

@@ -116,7 +116,7 @@ export function generateRuntimeOptions(
 		chunkSizeInBytes: [204800],
 		enableRuntimeIdCompressor: ["on", undefined, "delayed"],
 		enableGroupedBatching: [true, false],
-		createBlobPayloadPending: [true, false],
+		createBlobPayloadPending: [true, undefined],
 		explicitSchemaControl: [true, false],
 	};
 
@@ -138,6 +138,18 @@ export function generateRuntimeOptions(
 					-readonly [P in keyof ContainerRuntimeOptionsInternal]: ContainerRuntimeOptionsInternal[P];
 				}
 			).compressionOptions = disabledCompressionConfig;
+		}
+	});
+
+	// Override explicitSchemaControl to enabled if createBlobPayloadPending is enabled
+	pairwiseOptions.map((options) => {
+		if (options.createBlobPayloadPending) {
+			(
+				options as {
+					// Remove readonly modifier to allow overriding
+					-readonly [P in keyof ContainerRuntimeOptionsInternal]: ContainerRuntimeOptionsInternal[P];
+				}
+			).explicitSchemaControl = true;
 		}
 	});
 

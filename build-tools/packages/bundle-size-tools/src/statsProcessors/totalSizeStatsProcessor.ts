@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BundleMetric, WebpackStatsProcessor } from "../BundleBuddyTypes";
+import type { BundleMetric, WebpackStatsProcessor } from "../BundleBuddyTypes";
 
 export interface TotalSizeStatsProcessorOptions {
 	// The total stats processor reports a single metric for the total size of the bundle, this is the string that should be used for that metric

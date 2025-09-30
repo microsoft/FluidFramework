@@ -1,17 +1,17 @@
 # testProperty
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface/) &gt; [testProperty](/test-suite-a/testinterfacewithtypeparameter-interface/testproperty-propertysignature)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface/) > [testProperty](/test-suite-a/testinterfacewithtypeparameter-interface/testproperty-propertysignature)
 
 A test interface property using generic type parameter
 
-## Signature {#testproperty-signature}
+<h2 id="testproperty-signature">Signature</h2>
 
 ```typescript
 testProperty: T;
 ```
 
-**Type:** T
+**Type**: T
 
-## Remarks {#testproperty-remarks}
+<h2 id="testproperty-remarks">Remarks</h2>
 
 Here are some remarks about the property

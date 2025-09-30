@@ -4,20 +4,20 @@
  */
 
 import type { RawAxiosRequestHeaders } from "axios";
-import * as git from "@fluidframework/gitresources";
+import type * as git from "@fluidframework/gitresources";
 import {
-	IGetRefParamsExternal,
-	ICreateRefParamsExternal,
-	IPatchRefParamsExternal,
-	IWholeSummaryPayload,
-	IWriteSummaryResponse,
+	type IGetRefParamsExternal,
+	type ICreateRefParamsExternal,
+	type IPatchRefParamsExternal,
+	type IWholeSummaryPayload,
+	type IWriteSummaryResponse,
 	BasicRestWrapper,
-	RestWrapper,
-	IWholeFlatSummary,
-	IWholeSummaryPayloadType,
+	type RestWrapper,
+	type IWholeFlatSummary,
+	type IWholeSummaryPayloadType,
 	LatestSummaryId,
 } from "@fluidframework/server-services-client";
-import { ITenantStorage, runWithRetry } from "@fluidframework/server-services-core";
+import { type ITenantStorage, runWithRetry } from "@fluidframework/server-services-core";
 import { v4 as uuid } from "uuid";
 import * as winston from "winston";
 import {
@@ -26,7 +26,7 @@ import {
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
 import { Constants, getRequestErrorTranslator } from "../utils";
-import { ICache } from "./definitions";
+import type { ICache } from "./definitions";
 import { logHttpMetrics } from "@fluidframework/server-services-utils";
 
 // We include the historian version in the user-agent string
@@ -125,12 +125,14 @@ export class RestGitService {
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 	}
 
-	public async getBlob(sha: string, useCache: boolean): Promise<git.IBlob> {
+	public async getBlob(tenantId: string, sha: string, useCache: boolean): Promise<git.IBlob> {
+		const cacheKey = `${tenantId}:${sha}`;
 		return this.resolve(
-			sha,
+			cacheKey,
 			async () =>
 				this.get<git.IBlob>(
 					`/repos/${this.getRepoPath()}/git/blobs/${encodeURIComponent(sha)}`,
@@ -146,7 +148,7 @@ export class RestGitService {
 		);
 
 		// Fetch the full blob so we can have it in cache
-		this.getBlob(createResults.sha, true).catch((error) => {
+		this.getBlob(this.tenantId, createResults.sha, true).catch((error) => {
 			winston.error(`Error fetching blob ${createResults.sha}`);
 			Lumberjack.error(`Error fetching blob: ${createResults.sha}`, this.lumberProperties);
 		});
@@ -447,7 +449,7 @@ export class RestGitService {
 
 				const blobsP = Promise.all(
 					quorumValuesSha.map(async (quorumSha) => {
-						const blob = await this.getBlob(quorumSha, useCache);
+						const blob = await this.getBlob(this.tenantId, quorumSha, useCache);
 						blobs.set(blob.sha, blob);
 					}),
 				);
@@ -486,7 +488,7 @@ export class RestGitService {
 		const blobsP: Promise<git.IBlob>[] = [];
 		for (const entry of tree.tree) {
 			if (entry.type === "blob" && endsWith(entry.path, includeBlobs)) {
-				const blobP = this.getBlob(entry.sha, useCache);
+				const blobP = this.getBlob(this.tenantId, entry.sha, useCache);
 				blobsP.push(blobP);
 			}
 		}

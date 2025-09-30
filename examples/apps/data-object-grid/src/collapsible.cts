@@ -3,6 +3,4 @@
  * Licensed under the MIT License.
  */
 
-import react_collapsible from "react-collapsible";
-
-export { react_collapsible as Collapsible };
+export { default as Collapsible } from "react-collapsible";

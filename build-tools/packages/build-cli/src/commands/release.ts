@@ -5,12 +5,12 @@
 
 import { strict as assert } from "node:assert";
 import {
-	VersionBumpType,
+	type VersionBumpType,
 	bumpVersionScheme,
 	detectVersionScheme,
 } from "@fluid-tools/version-tools";
 import { rawlist } from "@inquirer/prompts";
-import { Config } from "@oclif/core";
+import type { Config } from "@oclif/core";
 import chalk from "picocolors";
 
 import { findPackageOrReleaseGroup } from "../args.js";
@@ -23,8 +23,8 @@ import {
 } from "../flags.js";
 import {
 	FluidReleaseStateHandler,
-	FluidReleaseStateHandlerData,
-	StateHandler,
+	type FluidReleaseStateHandlerData,
+	type StateHandler,
 } from "../handlers/index.js";
 import { PromptWriter } from "../instructionalPromptWriter.js";
 // eslint-disable-next-line import/no-deprecated

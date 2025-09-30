@@ -4,7 +4,10 @@
  */
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
+
 import { type RevisionTag, replaceAtomRevisions } from "../../core/index.js";
+
+import type { MoveMarkEffect } from "./helperTypes.js";
 import { MarkListFactory } from "./markListFactory.js";
 import {
 	type Changeset,

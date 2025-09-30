@@ -8,6 +8,8 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { DeltaFieldChanges, DeltaMark } from "../../core/index.js";
 import { getLast, hasSome, type Mutable } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
+import type { ToDelta } from "../modular-schema/index.js";
+
 import { type MarkList, NoopMarkType } from "./types.js";
 import {
 	areInputCellsEmpty,
@@ -16,7 +18,6 @@ import {
 	getDetachedNodeId,
 	getInputCellId,
 } from "./utils.js";
-import type { ToDelta } from "../modular-schema/index.js";
 
 export function sequenceFieldToDelta(
 	change: MarkList,

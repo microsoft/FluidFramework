@@ -6,15 +6,16 @@
 import { strict as assert } from "node:assert";
 
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import {
+import type {
 	IDeltasFetchResult,
+	IFileEntry,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	IFileEntry,
-	IOdspResolvedUrl,
-} from "@fluidframework/odsp-driver-definitions/internal";
-import { ITelemetryLoggerExt, MockLogger } from "@fluidframework/telemetry-utils/internal";
+	type ITelemetryLoggerExt,
+	MockLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
@@ -22,7 +23,7 @@ import {
 	OdspDeltaStorageService,
 	OdspDeltaStorageWithCache,
 } from "../odspDeltaStorageService.js";
-import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
+import type { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
 
 import { mockFetchOk } from "./mockFetch.js";
 
@@ -50,7 +51,7 @@ describe("DeltaStorageService", () => {
 		itemId,
 		odspResolvedUrl: true,
 	} as unknown as IOdspResolvedUrl;
-	const fileEntry = { docId: "docId", resolvedUrl };
+	const fileEntry = { docId: "docId", resolvedUrl, fileVersion: undefined };
 
 	it("Should build the correct sharepoint delta url with auth", async () => {
 		const logger = new MockLogger();

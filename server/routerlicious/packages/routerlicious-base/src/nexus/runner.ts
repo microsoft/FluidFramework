@@ -4,8 +4,14 @@
  */
 
 import cluster from "cluster";
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+
+import { Deferred, type TypedEventEmitter } from "@fluidframework/common-utils";
 import {
+	configureWebSocketServices,
+	type ICollaborationSessionEvents,
+} from "@fluidframework/server-lambdas";
+import { createMetricClient } from "@fluidframework/server-services";
+import type {
 	ICache,
 	IClientManager,
 	IClusterDrainingChecker,
@@ -22,18 +28,14 @@ import {
 	IRevokedTokenChecker,
 	ICollaborationSessionTracker,
 	IReadinessCheck,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
-import { Provider } from "nconf";
-import * as winston from "winston";
-import { createMetricClient } from "@fluidframework/server-services";
-import { LumberEventName, Lumberjack, LogLevel } from "@fluidframework/server-services-telemetry";
-import {
-	configureWebSocketServices,
-	ICollaborationSessionEvents,
-} from "@fluidframework/server-lambdas";
-import * as app from "./app";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
+import { LumberEventName, Lumberjack, LogLevel } from "@fluidframework/server-services-telemetry";
+import type { Provider } from "nconf";
+import * as winston from "winston";
+
+import * as app from "./app";
 
 export class NexusRunner implements IRunner {
 	private server?: IWebServer;
@@ -86,6 +88,9 @@ export class NexusRunner implements IRunner {
 				"nexus:maxNumberOfClientsPerDocument",
 			);
 			const numberOfMessagesPerTrace = this.config.get("nexus:numberOfMessagesPerTrace");
+			const enablePrivateLinkNetworkCheck =
+				this.config.get("nexus:enablePrivateLinkNetworkCheck") ?? false;
+			const preconnectTTLMs = this.config.get("nexus:preconnectTTLMs");
 			const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
 			const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
 			const isClientConnectivityCountingEnabled = this.config.get(
@@ -114,6 +119,7 @@ export class NexusRunner implements IRunner {
 				isTokenExpiryEnabled,
 				isClientConnectivityCountingEnabled,
 				isSignalUsageCountingEnabled,
+				enablePrivateLinkNetworkCheck,
 				this.redisCache,
 				this.socketConnectTenantThrottler,
 				this.socketConnectClusterThrottler,
@@ -127,6 +133,7 @@ export class NexusRunner implements IRunner {
 				this.clusterDrainingChecker,
 				this.collaborationSessionTracker,
 				this.denyList,
+				preconnectTTLMs,
 			);
 
 			if (this.tokenRevocationManager) {

@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { EventEmitter } from "events";
-import { MongoManager } from "@fluidframework/server-services-core";
-import { IConcreteNode } from "./interfaces";
+
+import type { MongoManager } from "@fluidframework/server-services-core";
+
+import type { IConcreteNode } from "./interfaces";
 import { RemoteNode } from "./remoteNode";
 
 /**

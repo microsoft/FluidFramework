@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import Webpack from "webpack";
+import type Webpack from "webpack";
 
 const pluginName = "BannedModulesPlugin";
 

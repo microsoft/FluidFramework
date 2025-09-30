@@ -4,7 +4,8 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
-import { splitMarkForMoveEffects, type NodeRangeQueryFunc } from "./moveEffectTable.js";
+
+import { type NodeRangeQueryFunc, splitMarkForMoveEffects } from "./moveEffectTable.js";
 import type { Mark } from "./types.js";
 import { splitMark } from "./utils.js";
 

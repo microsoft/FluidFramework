@@ -4,7 +4,7 @@
  */
 
 /**
- * Library containing functionality to transform `ApiItem`s to {@link DocumentationNode}s.
+ * Library containing functionality to transform `ApiItem`s to Markdown.
  */
 
 export {
@@ -15,7 +15,7 @@ export {
 	getHeadingForApiItem,
 	getLinkForApiItem,
 	shouldItemBeIncluded,
-} from "./ApiItemTransformUtilities.js";
+} from "./utilities/index.js";
 export {
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationConfigurationBase,
@@ -46,11 +46,11 @@ export {
 	createReturnsSection,
 	createSeeAlsoSection,
 	createSignatureSection,
-	createSummaryParagraph,
+	createSummarySection,
 	createThrowsSection,
 	createTypeParametersSection,
 } from "./helpers/index.js";
-export { transformTsdocNode } from "./TsdocNodeTransforms.js";
+export { transformTsdoc } from "./TsdocNodeTransforms.js";
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
 export { transformApiModel } from "./TransformApiModel.js";
-export { checkForDuplicateDocumentPaths } from "./Utilities.js";
+export { checkForDuplicateDocumentPaths } from "./utilities/index.js";

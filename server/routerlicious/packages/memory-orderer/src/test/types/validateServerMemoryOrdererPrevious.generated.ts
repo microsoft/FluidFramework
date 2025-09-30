@@ -22,7 +22,6 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_LocalContext": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_LocalContext = requireAssignableTo<TypeOnly<old.LocalContext>, TypeOnly<current.LocalContext>>
 
 /*
@@ -41,7 +40,6 @@ declare type current_as_old_for_Class_LocalContext = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Class_LocalKafka": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_LocalKafka = requireAssignableTo<TypeOnly<old.LocalKafka>, TypeOnly<current.LocalKafka>>
 
 /*
@@ -60,7 +58,6 @@ declare type current_as_old_for_Class_LocalKafka = requireAssignableTo<TypeOnly<
  * typeValidation.broken:
  * "Class_LocalLambdaController": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_LocalLambdaController = requireAssignableTo<TypeOnly<old.LocalLambdaController>, TypeOnly<current.LocalLambdaController>>
 
 /*
@@ -97,7 +94,6 @@ declare type current_as_old_for_Class_LocalNodeFactory = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Class_LocalOrderer": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_LocalOrderer = requireAssignableTo<TypeOnly<old.LocalOrderer>, TypeOnly<current.LocalOrderer>>
 
 /*
@@ -188,6 +184,7 @@ declare type current_as_old_for_Class_ReservationManager = requireAssignableTo<T
  * typeValidation.broken:
  * "Class_WebSocketSubscriber": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_WebSocketSubscriber = requireAssignableTo<TypeOnly<old.WebSocketSubscriber>, TypeOnly<current.WebSocketSubscriber>>
 
 /*
@@ -368,7 +365,6 @@ declare type current_as_old_for_Interface_IConnectMessage = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IKafkaSubscriber": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IKafkaSubscriber = requireAssignableTo<TypeOnly<old.IKafkaSubscriber>, TypeOnly<current.IKafkaSubscriber>>
 
 /*
@@ -495,6 +491,7 @@ declare type current_as_old_for_Interface_IReservationManager = requireAssignabl
  * typeValidation.broken:
  * "Interface_ISubscriber": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ISubscriber = requireAssignableTo<TypeOnly<old.ISubscriber>, TypeOnly<current.ISubscriber>>
 
 /*

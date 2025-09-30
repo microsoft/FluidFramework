@@ -10,7 +10,7 @@ import {
 	getUnscopedPackageName,
 	type ValidApiItemKind,
 } from "../../utilities/index.js";
-import { createQualifiedDocumentNameForApiItem } from "../ApiItemTransformUtilities.js";
+import { createQualifiedDocumentNameForApiItem } from "../utilities/index.js";
 
 /**
  * Kind of documentation suite hierarchy.

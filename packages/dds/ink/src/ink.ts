@@ -3,26 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
-	IFluidSerializer,
+	type IFluidSerializer,
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
 import { v4 as uuid } from "uuid";
 
 import { InkFactory } from "./inkFactory.js";
-import {
+import type {
 	IClearOperation,
 	ICreateStrokeOperation,
 	IInk,
@@ -33,7 +33,7 @@ import {
 	IPen,
 	IStylusOperation,
 } from "./interfaces.js";
-import { ISerializableInk, InkData } from "./snapshot.js";
+import { type ISerializableInk, InkData } from "./snapshot.js";
 
 /**
  * Filename where the snapshot is stored.

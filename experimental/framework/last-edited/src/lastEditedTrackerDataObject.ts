@@ -4,10 +4,10 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block/internal";
 
-import { IProvideFluidLastEditedTracker } from "./interfaces.js";
+import type { IProvideFluidLastEditedTracker } from "./interfaces.js";
 import { LastEditedTracker } from "./lastEditedTracker.js";
 
 /**
@@ -19,13 +19,11 @@ export class LastEditedTrackerDataObject
 	implements IProvideFluidLastEditedTracker
 {
 	private static readonly factory: DataObjectFactory<LastEditedTrackerDataObject> =
-		new DataObjectFactory(
-			"@fluid-experimental/last-edited",
-			LastEditedTrackerDataObject,
-			[SharedSummaryBlock.getFactory()],
-			{},
-			undefined,
-		);
+		new DataObjectFactory({
+			type: "@fluid-experimental/last-edited",
+			ctor: LastEditedTrackerDataObject,
+			sharedObjects: [SharedSummaryBlock.getFactory()],
+		});
 
 	public static getFactory(): DataObjectFactory<LastEditedTrackerDataObject> {
 		return LastEditedTrackerDataObject.factory;

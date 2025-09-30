@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ICollection, IDatabaseManager } from "./database";
-import { ICheckpoint, IDocument } from "./document";
-import { ISequencedOperationMessage } from "./messages";
-import { MongoManager } from "./mongo";
-import { INode } from "./orderer";
+import type { ICollection, IDatabaseManager } from "./database";
+import type { ICheckpoint, IDocument } from "./document";
+import type { ISequencedOperationMessage } from "./messages";
+import type { MongoManager } from "./mongo";
+import type { INode } from "./orderer";
 
 /**
  * MongoDB implementation of IDatabaseManager

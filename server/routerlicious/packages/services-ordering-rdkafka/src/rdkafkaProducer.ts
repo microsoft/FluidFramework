@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import type * as kafkaTypes from "node-rdkafka";
+import type { Deferred } from "@fluidframework/common-utils";
+import { NetworkError } from "@fluidframework/server-services-client";
 import {
 	BoxcarType,
-	IBoxcarMessage,
-	IPendingBoxcar,
-	IProducer,
+	type IBoxcarMessage,
+	type IPendingBoxcar,
+	type IProducer,
 	PendingBoxcar,
-	IContextErrorData,
+	type IContextErrorData,
 	MaxKafkaMessageSize,
 } from "@fluidframework/server-services-core";
-import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
-import { Deferred } from "@fluidframework/common-utils";
+import type * as kafkaTypes from "node-rdkafka";
 
-import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
+import { type IKafkaBaseOptions, type IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 
 /**
  * Rdkafka producer options

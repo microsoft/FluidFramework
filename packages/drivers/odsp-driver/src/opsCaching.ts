@@ -4,7 +4,7 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 // ISequencedDocumentMessage
 export interface IMessage {

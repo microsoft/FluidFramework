@@ -7,16 +7,19 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	DoublyLinkedList,
+	unreachableCase,
+	type ListNode,
+} from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	Client,
-	DetachedReferencePosition,
 	ISegment,
 	LocalReferencePosition,
 	PropertySet,
 	ReferenceType,
-	SlidingPreference,
 	getSlideToSegoff,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
@@ -25,14 +28,17 @@ import {
 	endpointPosAndSide,
 	type ISegmentInternal,
 	createLocalReconnectingPerspective,
+	SlidingPreference,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {
-	IMapMessageLocalMetadata,
+	IntervalMessageLocalMetadata,
 	SequenceOptions,
 	type IIntervalCollectionTypeOperationValue,
+	type IntervalAddLocalMetadata,
+	type IntervalChangeLocalMetadata,
 } from "./intervalCollectionMapInterfaces.js";
 import {
 	createIdIntervalIndex,
@@ -40,8 +46,6 @@ import {
 	OverlappingIntervalsIndex,
 	type IEndpointIndex,
 	type IIdIntervalIndex,
-	// eslint-disable-next-line import/no-deprecated
-	type IntervalIndex,
 	type ISequenceOverlappingIntervalsIndex,
 	type SequenceIntervalIndex,
 } from "./intervalIndex/index.js";
@@ -55,10 +59,7 @@ import {
 	SerializedIntervalDelta,
 	createPositionReferenceFromSegoff,
 	createSequenceInterval,
-	endReferenceSlidingPreference,
 	getSerializedProperties,
-	startReferenceSlidingPreference,
-	type ISerializableInterval,
 } from "./intervals/index.js";
 
 export type ISerializedIntervalCollectionV1 = ISerializedInterval[];
@@ -69,7 +70,7 @@ export interface ISerializedIntervalCollectionV2 {
 	intervals: CompressedSerializedInterval[];
 }
 
-export function sidesFromStickiness(stickiness: IntervalStickiness) {
+function sidesFromStickiness(stickiness: IntervalStickiness) {
 	const startSide = (stickiness & IntervalStickiness.START) !== 0 ? Side.After : Side.Before;
 	const endSide = (stickiness & IntervalStickiness.END) !== 0 ? Side.Before : Side.After;
 
@@ -137,25 +138,6 @@ export function toOptionalSequencePlace(
 	return typeof pos === "number" && side !== undefined ? { pos, side } : pos;
 }
 
-export function computeStickinessFromSide(
-	startPos: number | "start" | "end" | undefined = -1,
-	startSide: Side = Side.Before,
-	endPos: number | "start" | "end" | undefined = -1,
-	endSide: Side = Side.Before,
-): IntervalStickiness {
-	let stickiness: IntervalStickiness = IntervalStickiness.NONE;
-
-	if (startSide === Side.After || startPos === "start") {
-		stickiness |= IntervalStickiness.START;
-	}
-
-	if (endSide === Side.Before || endPos === "end") {
-		stickiness |= IntervalStickiness.END;
-	}
-
-	return stickiness as IntervalStickiness;
-}
-
 export class LocalIntervalCollection {
 	public readonly overlappingIntervalsIndex: ISequenceOverlappingIntervalsIndex;
 	public readonly idIntervalIndex: IIdIntervalIndex;
@@ -215,7 +197,6 @@ export class LocalIntervalCollection {
 		end: SequencePlace,
 		props?: PropertySet,
 		op?: ISequencedDocumentMessage,
-		rollback?: boolean,
 	) {
 		// This check is intended to prevent scenarios where a random interval is created and then
 		// inserted into a collection. The aim is to ensure that the collection is created first
@@ -239,7 +220,7 @@ export class LocalIntervalCollection {
 			undefined,
 			this.options.mergeTreeReferencesCanSlideToEndpoint,
 			props,
-			rollback,
+			false,
 		);
 
 		this.add(interval);
@@ -353,8 +334,7 @@ export class LocalIntervalCollection {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type DeserializeCallback = (properties: PropertySet) => void;
 
@@ -391,94 +371,7 @@ class IntervalCollectionIterator implements Iterator<SequenceIntervalClass> {
 
 /**
  * Change events emitted by `IntervalCollection`s
- * @legacy
- * @alpha
- * @deprecated The generic version of this interface is no longer used and will be removed. Use {@link ISequenceIntervalCollectionEvents} instead.
- */
-export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval>
-	extends IEvent {
-	/**
-	 * This event is invoked whenever the endpoints of an interval may have changed.
-	 * This can happen on:
-	 * - local endpoint modification
-	 * - ack of a remote endpoint modification
-	 * - position change due to segment sliding (slides due to mergeTree segment deletion will always appear local)
-	 * The `interval` argument reflects the new values.
-	 * `previousInterval` contains transient `ReferencePosition`s at the same location as the interval's original
-	 * endpoints. These references should be used for position information only.
-	 * `local` reflects whether the change originated locally.
-	 * `op` is defined if and only if the server has acked this change.
-	 * `slide` is true if the change is due to sliding on removal of position
-	 */
-	(
-		event: "changeInterval",
-		listener: (
-			interval: TInterval,
-			previousInterval: TInterval,
-			local: boolean,
-			op: ISequencedDocumentMessage | undefined,
-			slide: boolean,
-		) => void,
-	): void;
-	/**
-	 * This event is invoked whenever an interval is added or removed from the collection.
-	 * `local` reflects whether the change originated locally.
-	 * `op` is defined if and only if the server has acked this change.
-	 */
-	(
-		event: "addInterval" | "deleteInterval",
-		listener: (
-			interval: TInterval,
-			local: boolean,
-			op: ISequencedDocumentMessage | undefined,
-		) => void,
-	): void;
-	/**
-	 * This event is invoked whenever an interval's properties have changed.
-	 * `interval` reflects the state of the updated properties.
-	 * `propertyDeltas` is a map-like whose keys contain all values that were changed, and whose
-	 * values contain all previous values of the property set.
-	 * This object can be used directly in a call to `changeProperties` to revert the property change if desired.
-	 * `local` reflects whether the change originated locally.
-	 * `op` is defined if and only if the server has acked this change.
-	 */
-	(
-		event: "propertyChanged",
-		listener: (
-			interval: TInterval,
-			propertyDeltas: PropertySet,
-			local: boolean,
-			op: ISequencedDocumentMessage | undefined,
-		) => void,
-	): void;
-	/**
-	 * This event is invoked whenever an interval's endpoints or properties (or both) have changed.
-	 * `interval` reflects the state of the updated endpoints or properties.
-	 * `propertyDeltas` is a map-like whose keys contain all values that were changed, and whose
-	 * values contain all previous values of the property set.
-	 * This object can be used directly in a call to `changeProperties` to revert the property change if desired.
-	 * 'previousInterval' contains transient `ReferencePosition`s at the same location as the interval's original
-	 * endpoints. These references should be used for position information only. In the case of a property change
-	 * only, this argument should be undefined.
-	 * `local` reflects whether the change originated locally.
-	 * `slide` is true if the change is due to sliding on removal of position.
-	 */
-	(
-		event: "changed",
-		listener: (
-			interval: TInterval,
-			propertyDeltas: PropertySet,
-			previousInterval: TInterval | undefined,
-			local: boolean,
-			slide: boolean,
-		) => void,
-	): void;
-}
-
-/**
- * Change events emitted by `IntervalCollection`s
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISequenceIntervalCollectionEvents extends IEvent {
 	/**
@@ -562,227 +455,7 @@ export interface ISequenceIntervalCollectionEvents extends IEvent {
 /**
  * Collection of intervals that supports addition, modification, removal, and efficient spatial querying.
  * Changes to this collection will be incur updates on collaborating clients (i.e. they are not local-only).
- * @legacy
- * @alpha
- * @deprecated The generic version of this interface is no longer used and will be removed. Use {@link ISequenceIntervalCollection} instead.
- */
-export interface IIntervalCollection<TInterval extends ISerializableInterval>
-	extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
-	readonly attached: boolean;
-	/**
-	 * Attaches an index to this collection.
-	 * All intervals which are part of this collection will be added to the index, and the index will automatically
-	 * be updated when this collection updates due to local or remote changes.
-	 *
-	 * @remarks After attaching an index to an interval collection, applications should typically store this
-	 * index somewhere in their in-memory data model for future reference and querying.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	attachIndex(index: IntervalIndex<TInterval>): void;
-	/**
-	 * Detaches an index from this collection.
-	 * All intervals which are part of this collection will be removed from the index, and updates to this collection
-	 * due to local or remote changes will no longer incur updates to the index.
-	 *
-	 * @returns `false` if the target index cannot be found in the indexes, otherwise remove all intervals in the index and return `true`.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	detachIndex(index: IntervalIndex<TInterval>): boolean;
-	/**
-	 * @returns the interval in this collection that has the provided `id`.
-	 * If no interval in the collection has this `id`, returns `undefined`.
-	 */
-	getIntervalById(id: string): TInterval | undefined;
-	/**
-	 * Creates a new interval and add it to the collection.
-	 * @param start - interval start position (inclusive)
-	 * @param end - interval end position (exclusive)
-	 * @param props - properties of the interval
-	 * @returns - the created interval
-	 * @remarks See documentation on {@link SequenceInterval} for comments on
-	 * interval endpoint semantics: there are subtleties with how the current
-	 * half-open behavior is represented.
-	 *
-	 * Note that intervals may behave unexpectedly if the entire contents
-	 * of the string are deleted. In this case, it is possible for one endpoint
-	 * of the interval to become detached, while the other remains on the string.
-	 *
-	 * By adjusting the `side` and `pos` values of the `start` and `end` parameters,
-	 * it is possible to control whether the interval expands to include content
-	 * inserted at its start or end.
-	 *
-	 *	See {@link @fluidframework/merge-tree#SequencePlace} for more details on the model.
-	 *
-	 *	@example
-	 *
-	 *	Given the string "ABCD":
-	 *
-	 *```typescript
-	 *	// Refers to "BC". If any content is inserted before B or after C, this
-	 *	// interval will include that content
-	 *	//
-	 *	// Picture:
-	 *	// \{start\} - A[- B - C -]D - \{end\}
-	 *	// \{start\} - A - B - C - D - \{end\}
-	 *	collection.add(\{ pos: 0, side: Side.After \}, \{ pos: 3, side: Side.Before \}, IntervalType.SlideOnRemove);
-	 *	// Equivalent to specifying the same positions and Side.Before.
-	 *	// Refers to "ABC". Content inserted after C will be included in the
-	 *	// interval, but content inserted before A will not.
-	 *	// \{start\} -[A - B - C -]D - \{end\}
-	 *	// \{start\} - A - B - C - D - \{end\}
-	 *	collection.add(0, 3, IntervalType.SlideOnRemove);
-	 *```
-	 *
-	 * In the case of the first example, if text is deleted,
-	 *
-	 * ```typescript
-	 *	// Delete the character "B"
-	 *	string.removeRange(1, 2);
-	 * ```
-	 *
-	 * The start point of the interval will slide to the position immediately
-	 * before "C", and the same will be true.
-	 *
-	 * ```
-	 * \{start\} - A[- C -]D - \{end\}
-	 * ```
-	 *
-	 * In this case, text inserted immediately before "C" would be included in
-	 * the interval.
-	 *
-	 * ```typescript
-	 * string.insertText(1, "EFG");
-	 * ```
-	 *
-	 * With the string now being,
-	 *
-	 * ```
-	 * \{start\} - A[- E - F - G - C -]D - \{end\}
-	 * ```
-	 *
-	 * @privateRemarks TODO: ADO:5205 the above comment regarding behavior in
-	 * the case that the entire interval has been deleted should be resolved at
-	 * the same time as this ticket
-	 */
-	add({
-		start,
-		end,
-		props,
-	}: {
-		start: SequencePlace;
-		end: SequencePlace;
-		props?: PropertySet;
-	}): TInterval;
-	/**
-	 * Removes an interval from the collection.
-	 * @param id - Id of the interval to remove
-	 * @returns the removed interval
-	 */
-	removeIntervalById(id: string): TInterval | undefined;
-	/**
-	 * Changes the endpoints, properties, or both of an existing interval.
-	 * @param id - Id of the Interval to change
-	 * @returns the interval that was changed, if it existed in the collection.
-	 * Pass the desired new start position, end position, and/or properties in an object. Start and end positions must be changed
-	 * simultaneously - they must either both be specified or both undefined. To only change the properties, leave both endpoints
-	 * undefined. To only change the endpoints, leave the properties undefined.
-	 */
-	change(
-		id: string,
-		{ start, end, props }: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet },
-	): TInterval | undefined;
-
-	attachDeserializer(onDeserialize: DeserializeCallback): void;
-	/**
-	 * @returns an iterator over all intervals in this collection.
-	 */
-	[Symbol.iterator](): Iterator<TInterval>;
-
-	/**
-	 * @returns a forward iterator over all intervals in this collection with start point equal to `startPosition`.
-	 */
-	CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
-
-	/**
-	 * @returns a backward iterator over all intervals in this collection with start point equal to `startPosition`.
-	 */
-	CreateBackwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
-
-	/**
-	 * @returns a forward iterator over all intervals in this collection with end point equal to `endPosition`.
-	 */
-	CreateForwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
-
-	/**
-	 * @returns a backward iterator over all intervals in this collection with end point equal to `endPosition`.
-	 */
-	CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
-
-	/**
-	 * Gathers iteration results that optionally match a start/end criteria into the provided array.
-	 * @param results - Array to gather the results into. In lieu of a return value, this array will be populated with
-	 * intervals matching the query upon edit.
-	 * @param iteratesForward - whether or not iteration should be in the forward direction
-	 * @param start - If provided, only match intervals whose start point is equal to `start`.
-	 * @param end - If provided, only match intervals whose end point is equal to `end`.
-	 */
-	gatherIterationResults(
-		results: TInterval[],
-		iteratesForward: boolean,
-		start?: number,
-		end?: number,
-	): void;
-
-	/**
-	 * @deprecated - Users must manually attach the corresponding interval index to utilize this functionality, for instance:
-	 *
-	 * ```typescript
-	 * const overlappingIntervalsIndex = createOverlappingIntervalsIndex(sharedString);
-	 * collection.attachIndex(overlappingIntervalsIndex)
-	 * const result = overlappingIntervalsIndex.findOverlappingIntervals(start, end);
-	 * ```
-	 *
-	 * @returns an array of all intervals in this collection that overlap with the interval
-	 * `[startPosition, endPosition]`.
-	 */
-	findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
-
-	/**
-	 * Applies a function to each interval in this collection.
-	 */
-	map(fn: (interval: TInterval) => void): void;
-
-	/**
-	 * @deprecated - due to the forthcoming change where the endpointIndex will no longer be
-	 * automatically added to the collection. Users are advised to independently attach the
-	 * index to the collection and utilize the API accordingly, for instance:
-	 * ```typescript
-	 * const endpointIndex = createEndpointIndex(sharedString);
-	 * collection.attachIndex(endpointIndex);
-	 * const result1 = endpointIndex.previousInterval(pos);
-	 * ```
-	 * If an index is used repeatedly, applications should generally attach it once and store it in memory.
-	 */
-	previousInterval(pos: number): TInterval | undefined;
-
-	/**
-	 * @deprecated - due to the forthcoming change where the endpointIndex will no longer be
-	 * automatically added to the collection. Users are advised to independently attach the
-	 * index to the collection and utilize the API accordingly, for instance:
-	 * ```typescript
-	 * const endpointIndex = createEndpointIndex(sharedString);
-	 * collection.attachIndex(endpointIndex);
-	 * const result2 = endpointIndex.nextInterval(pos);
-	 * ```
-	 */
-	nextInterval(pos: number): TInterval | undefined;
-}
-
-/**
- * Collection of intervals that supports addition, modification, removal, and efficient spatial querying.
- * Changes to this collection will be incur updates on collaborating clients (i.e. they are not local-only).
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ISequenceIntervalCollection
 	extends TypedEventEmitter<ISequenceIntervalCollectionEvents> {
@@ -908,6 +581,9 @@ export interface ISequenceIntervalCollection
 		{ start, end, props }: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet },
 	): SequenceInterval | undefined;
 
+	/**
+	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
+	 */
 	attachDeserializer(onDeserialize: DeserializeCallback): void;
 	/**
 	 * @returns an iterator over all intervals in this collection.
@@ -994,6 +670,59 @@ export interface ISequenceIntervalCollection
 	nextInterval(pos: number): SequenceInterval | undefined;
 }
 
+type PendingChanges = Partial<
+	Record<
+		string,
+		{
+			/**
+			 * The local metadatas are stores in order of submission, FIFO.
+			 * This matches how ops are ordered, and should maintained
+			 * across, submit, process, resubmit, and rollback.
+			 */
+			local: DoublyLinkedList<IntervalMessageLocalMetadata>;
+			/**
+			 * The endpointChanges are unordered, and are used to determine
+			 * if any local changes also change the endpoints. The nodes of the
+			 * list are also stored in the individual change op metadatas, and
+			 * are removed as those metadatas are handled.
+			 */
+			endpointChanges?: DoublyLinkedList<
+				IntervalAddLocalMetadata | IntervalChangeLocalMetadata
+			>;
+			consensus: SequenceIntervalClass | undefined;
+		}
+	>
+>;
+
+function removeMetadataFromPendingChanges(
+	localOpMetadataNode: ListNode<IntervalMessageLocalMetadata> | unknown,
+): IntervalMessageLocalMetadata {
+	const acked = (localOpMetadataNode as ListNode<IntervalMessageLocalMetadata>)?.remove()
+		?.data;
+	assert(acked !== undefined, 0xbbe /* local change must exist */);
+	acked.endpointChangesNode?.remove();
+	return acked;
+}
+
+function clearEmptyPendingEntry(pendingChanges: PendingChanges, id: string) {
+	const pending = pendingChanges[id];
+	if (pending !== undefined && pending.local.empty) {
+		assert(
+			pending.endpointChanges?.empty !== false,
+			0xbc0 /* endpointChanges must be empty if not pending changes */,
+		);
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+		delete pendingChanges[id];
+	}
+	return pending;
+}
+
+function hasEndpointChanges(
+	serialized: SerializedIntervalDelta,
+): serialized is ISerializedInterval {
+	return serialized.start !== undefined && serialized.end !== undefined;
+}
+
 /**
  * {@inheritdoc IIntervalCollection}
  */
@@ -1005,36 +734,38 @@ export class IntervalCollection
 	private localCollection: LocalIntervalCollection | undefined;
 	private onDeserialize: DeserializeCallback | undefined;
 	private client: Client | undefined;
-	private readonly localSeqToSerializedInterval = new Map<
-		number,
-		ISerializedInterval | SerializedIntervalDelta
-	>();
-	private readonly localSeqToRebasedInterval = new Map<
-		number,
-		ISerializedInterval | SerializedIntervalDelta
-	>();
-	private readonly pendingChangesStart: Map<string, ISerializedIntervalCollectionV1> = new Map<
-		string,
-		ISerializedIntervalCollectionV1
-	>();
-	private readonly pendingChangesEnd: Map<string, ISerializedIntervalCollectionV1> = new Map<
-		string,
-		ISerializedIntervalCollectionV1
-	>();
+
+	private readonly pending: PendingChanges = {};
 
 	public get attached(): boolean {
 		return !!this.localCollection;
 	}
 
+	private readonly submitDelta: (
+		op: IIntervalCollectionTypeOperationValue,
+		md: IntervalMessageLocalMetadata,
+		consensus?: SequenceIntervalClass,
+	) => void;
+
 	constructor(
-		private readonly submitDelta: (
-			op: IIntervalCollectionTypeOperationValue,
-			md: IMapMessageLocalMetadata,
-		) => void,
+		submitDelta: (op: IIntervalCollectionTypeOperationValue, md: unknown) => void,
 		serializedIntervals: ISerializedIntervalCollectionV1 | ISerializedIntervalCollectionV2,
 		private readonly options: Partial<SequenceOptions> = {},
 	) {
 		super();
+
+		this.submitDelta = (op, md, consensus) => {
+			const { id } = getSerializedProperties(op.value);
+			const pending = (this.pending[id] ??= {
+				local: new DoublyLinkedList(),
+				consensus,
+			});
+			if (md.type === "add" || (md.type === "change" && hasEndpointChanges(op.value))) {
+				const endpointChanges = (pending.endpointChanges ??= new DoublyLinkedList());
+				md.endpointChangesNode = endpointChanges.push(md).last;
+			}
+			submitDelta(op, pending.local.push(md).last);
+		};
 
 		this.savedSerializedIntervals = Array.isArray(serializedIntervals)
 			? serializedIntervals
@@ -1077,56 +808,51 @@ export class IntervalCollection
 		return true;
 	}
 
-	public rollback(
-		op: IIntervalCollectionTypeOperationValue,
-		localOpMetadata: IMapMessageLocalMetadata,
-	) {
-		const { opName, value } = op;
+	public rollback(op: IIntervalCollectionTypeOperationValue, maybeMetadata: unknown) {
+		const localOpMetadata = removeMetadataFromPendingChanges(maybeMetadata);
+		const { value } = op;
 		const { id, properties } = getSerializedProperties(value);
-		const { localSeq, previous } = localOpMetadata;
-		switch (opName) {
+		const pending = clearEmptyPendingEntry(this.pending, id);
+		const previous = pending?.local.empty
+			? pending.consensus
+			: pending?.local.last?.data.interval;
+		const { type, interval } = localOpMetadata;
+		switch (type) {
 			case "add": {
-				const interval = this.getIntervalById(id);
-				if (interval) {
-					this.deleteExistingInterval({ interval, local: true, rollback: true });
-				}
+				this.deleteExistingInterval({ interval, local: true, rollback: true });
+				interval.dispose();
 				break;
 			}
 			case "change": {
-				assert(previous !== undefined, "must have previous for change");
-
-				const endpointsChanged = value.start !== undefined && value.end !== undefined;
-				const start = endpointsChanged
-					? toOptionalSequencePlace(previous.start, previous.startSide)
+				const changeProperties = Object.keys(properties).length > 0;
+				const deltaProps = changeProperties
+					? interval.changeProperties(properties, undefined, true)
 					: undefined;
-				const end = endpointsChanged
-					? toOptionalSequencePlace(previous.end, previous.endSide)
-					: undefined;
-				this.change(id, {
-					start,
-					end,
-					props: Object.keys(properties).length > 0 ? properties : undefined,
-					rollback: true,
-				});
-				this.localSeqToSerializedInterval.delete(localSeq);
-				if (endpointsChanged) {
-					this.removePendingChange(value);
+				if (localOpMetadata.endpointChangesNode !== undefined) {
+					if (previous !== undefined) {
+						this.localCollection?.removeExistingInterval(interval);
+						this.localCollection?.add(previous);
+						this.emitChange(previous, interval, true, true);
+					}
+					if (previous !== interval) {
+						interval.dispose();
+					}
+				}
+				if (changeProperties) {
+					this.emit("propertyChanged", previous, deltaProps, true, undefined);
 				}
 				break;
 			}
 			case "delete": {
-				assert(previous !== undefined, "must have previous for delete");
-				this.add({
-					id,
-					start: toSequencePlace(previous.start, previous.startSide),
-					end: toSequencePlace(previous.end, previous.endSide),
-					props: Object.keys(properties).length > 0 ? properties : undefined,
-					rollback: true,
-				});
+				// a remote could delete the same interval, so it may not exist to re-add
+				if (previous !== undefined) {
+					this.localCollection?.add(previous);
+					this.emit("addInterval", previous, true, undefined);
+				}
 				break;
 			}
 			default:
-				unreachableCase(opName);
+				unreachableCase(type);
 		}
 	}
 
@@ -1134,12 +860,29 @@ export class IntervalCollection
 		op: IIntervalCollectionTypeOperationValue,
 		local: boolean,
 		message: ISequencedDocumentMessage,
-		localOpMetadata: IMapMessageLocalMetadata,
+		maybeMetadata: unknown,
 	) {
+		const localOpMetadata = local
+			? removeMetadataFromPendingChanges(maybeMetadata)
+			: undefined;
+
 		const { opName, value } = op;
+		const { id } = getSerializedProperties(value);
+		assert(
+			(local === false && localOpMetadata === undefined) || opName === localOpMetadata?.type,
+			0xbc1 /* must be same type */,
+		);
+		let newConsensus = localOpMetadata?.interval;
 		switch (opName) {
 			case "add": {
-				this.ackAdd(value, local, message, localOpMetadata);
+				newConsensus = this.ackAdd(
+					value,
+					local,
+					message,
+					// this cast is safe because of the above assert which
+					// validates the op and metadata types match for local changes
+					localOpMetadata as IntervalAddLocalMetadata | undefined,
+				);
 				break;
 			}
 
@@ -1149,24 +892,43 @@ export class IntervalCollection
 			}
 
 			case "change": {
-				this.ackChange(value, local, message, localOpMetadata);
+				newConsensus = this.ackChange(
+					value,
+					local,
+					message, // this cast is safe because of the above assert which
+					// validates the op and metadata types match for local changes
+					localOpMetadata as IntervalChangeLocalMetadata | undefined,
+				);
 				break;
 			}
 			default:
 				unreachableCase(opName);
 		}
+		const pending = clearEmptyPendingEntry(this.pending, id);
+
+		if (pending !== undefined) {
+			pending.consensus = newConsensus;
+		}
 	}
 
 	public resubmitMessage(
 		op: IIntervalCollectionTypeOperationValue,
-		localOpMetadata: IMapMessageLocalMetadata,
+		maybeMetadata: unknown,
+		squash: boolean,
 	): void {
 		const { opName, value } = op;
-		const { localSeq } = localOpMetadata;
+
+		const localOpMetadata = removeMetadataFromPendingChanges(maybeMetadata);
+
 		const rebasedValue =
-			opName === "delete" ? value : this.rebaseLocalInterval(opName, value, localSeq);
+			localOpMetadata.endpointChangesNode === undefined
+				? value
+				: this.rebaseLocalInterval(value, localOpMetadata, squash);
+
 		if (rebasedValue === undefined) {
-			return undefined;
+			const { id } = getSerializedProperties(value);
+			clearEmptyPendingEntry(this.pending, id);
+			return;
 		}
 
 		this.submitDelta({ opName, value: rebasedValue as any }, localOpMetadata);
@@ -1203,73 +965,69 @@ export class IntervalCollection
 		}
 	}
 
-	private rebasePositionWithSegmentSlide(
-		pos: number | "start" | "end",
-		seqNumberFrom: number,
+	private rebaseReferenceWithSegmentSlide(
+		ref: LocalReferencePosition,
 		localSeq: number,
-	): number | "start" | "end" | undefined {
+		squash: boolean,
+	): { segment: ISegment; offset: number } | undefined {
 		if (!this.client) {
 			throw new LoggingError("mergeTree client must exist");
 		}
 
-		if (pos === "start" || pos === "end") {
-			return pos;
-		}
-
 		const { clientId } = this.client.getCollabWindow();
-		const { segment, offset } = this.client.getContainingSegment(
-			pos,
-			{
-				referenceSequenceNumber: seqNumberFrom,
-				clientId: this.client.getLongClientId(clientId),
-			},
-			localSeq,
+		const segment: ISegmentInternal | undefined = ref.getSegment();
+		if (segment?.endpointType) {
+			return { segment, offset: 0 };
+		}
+		const offset = ref.getOffset();
+
+		const segoff = getSlideToSegoff(
+			segment === undefined ? undefined : { segment, offset },
+			ref.slidingPreference,
+			createLocalReconnectingPerspective(
+				this.client.getCurrentSeq(),
+				clientId,
+				localSeq,
+				squash,
+			),
+			ref.canSlideToEndpoint,
 		);
-
-		// if segment is undefined, it slid off the string
-		assert(segment !== undefined, 0x54e /* No segment found */);
-
-		const segoff =
-			getSlideToSegoff(
-				{ segment, offset },
-				undefined,
-				createLocalReconnectingPerspective(this.client.getCurrentSeq(), clientId, localSeq),
-				this.options.mergeTreeReferencesCanSlideToEndpoint,
-			) ?? segment;
 
 		// case happens when rebasing op, but concurrently entire string has been deleted
-		if (segoff.segment === undefined || segoff.offset === undefined) {
-			return DetachedReferencePosition;
+		if (segoff === undefined) {
+			if (ref.canSlideToEndpoint !== true) {
+				return undefined;
+			}
+			return {
+				segment:
+					ref.slidingPreference === SlidingPreference.FORWARD
+						? this.client.endOfTree
+						: this.client.startOfTree,
+				offset: 0,
+			};
 		}
-
-		assert(
-			offset !== undefined && 0 <= offset && offset < segment.cachedLength,
-			0x54f /* Invalid offset */,
-		);
-		return this.client.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
+		return segoff;
 	}
 
 	private computeRebasedPositions(
-		localSeq: number,
-	): ISerializedInterval | SerializedIntervalDelta {
+		localOpMetadata: IntervalAddLocalMetadata | IntervalChangeLocalMetadata,
+		squash: boolean,
+	): Record<"start" | "end", { segment: ISegmentInternal; offset: number }> | "detached" {
 		assert(
 			this.client !== undefined,
 			0x550 /* Client should be defined when computing rebased position */,
 		);
-		const original = this.localSeqToSerializedInterval.get(localSeq);
-		assert(
-			original !== undefined,
-			0x551 /* Failed to store pending serialized interval info for this localSeq. */,
-		);
-		const rebased = { ...original };
-		const { start, end, sequenceNumber } = original;
-		if (start !== undefined) {
-			rebased.start = this.rebasePositionWithSegmentSlide(start, sequenceNumber, localSeq);
+
+		const { localSeq, interval } = localOpMetadata;
+		const start = this.rebaseReferenceWithSegmentSlide(interval.start, localSeq, squash);
+		if (start === undefined) {
+			return "detached";
 		}
-		if (end !== undefined) {
-			rebased.end = this.rebasePositionWithSegmentSlide(end, sequenceNumber, localSeq);
+		const end = this.rebaseReferenceWithSegmentSlide(interval.end, localSeq, squash);
+		if (end === undefined) {
+			return "detached";
 		}
-		return rebased;
+		return { start, end };
 	}
 
 	public attachGraph(client: Client, label: string) {
@@ -1284,9 +1042,13 @@ export class IntervalCollection
 		// Instantiate the local interval collection based on the saved intervals
 		this.client = client;
 		if (client) {
-			client.on("normalize", () => {
-				for (const localSeq of this.localSeqToSerializedInterval.keys()) {
-					this.localSeqToRebasedInterval.set(localSeq, this.computeRebasedPositions(localSeq));
+			client.on("normalize", (squash) => {
+				for (const pending of Object.values(this.pending)) {
+					if (pending?.endpointChanges !== undefined) {
+						for (const local of pending.endpointChanges) {
+							this.rebaseLocalInterval(local.data.interval.serialize(), local.data, squash);
+						}
+					}
 				}
 			});
 		}
@@ -1394,13 +1156,11 @@ export class IntervalCollection
 		start,
 		end,
 		props,
-		rollback,
 	}: {
 		id?: string;
 		start: SequencePlace;
 		end: SequencePlace;
 		props?: PropertySet;
-		rollback?: boolean;
 	}): SequenceIntervalClass {
 		if (!this.localCollection) {
 			throw new LoggingError("attach must be called prior to adding intervals");
@@ -1418,13 +1178,14 @@ export class IntervalCollection
 
 		this.assertStickinessEnabled(start, end);
 
+		const intervalId = id ?? uuid();
+
 		const interval: SequenceIntervalClass = this.localCollection.addInterval(
-			id ?? uuid(),
+			intervalId,
 			toSequencePlace(startPos, startSide),
 			toSequencePlace(endPos, endSide),
 			props,
 			undefined,
-			rollback,
 		);
 
 		if (interval) {
@@ -1434,16 +1195,16 @@ export class IntervalCollection
 			}
 			const serializedInterval: ISerializedInterval = interval.serialize();
 			const localSeq = this.getNextLocalSeq();
-			if (this.isCollaborating && rollback !== true) {
-				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
-
+			if (this.isCollaborating) {
 				this.submitDelta(
 					{
 						opName: "add",
 						value: serializedInterval,
 					},
 					{
+						type: "add",
 						localSeq,
+						interval,
 					},
 				);
 			}
@@ -1474,15 +1235,17 @@ export class IntervalCollection
 		if (interval) {
 			// Local ops get submitted to the server. Remote ops have the deserializer run.
 			if (local && rollback !== true) {
+				const value = interval.serialize();
 				this.submitDelta(
 					{
 						opName: "delete",
-						value: interval.serialize(),
+						value,
 					},
 					{
+						type: "delete",
 						localSeq: this.getNextLocalSeq(),
-						previous: interval.serialize(),
 					},
+					interval,
 				);
 			} else {
 				if (this.onDeserialize) {
@@ -1501,7 +1264,7 @@ export class IntervalCollection
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
 		}
-		const interval = this.localCollection.idIntervalIndex.getIntervalById(id);
+		const interval = this.getIntervalById(id);
 		if (interval) {
 			this.deleteExistingInterval({ interval, local: true });
 		}
@@ -1566,18 +1329,19 @@ export class IntervalCollection
 				).serializeDelta({ props, includeEndpoints: changeEndpoints });
 				const localSeq = this.getNextLocalSeq();
 
-				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
-				this.addPendingChange(id, serializedInterval);
+				const metadata: IntervalChangeLocalMetadata = {
+					type: "change",
+					localSeq,
+					interval: newInterval ?? interval,
+				};
 
 				this.submitDelta(
 					{
 						opName: "change",
 						value: serializedInterval,
 					},
-					{
-						localSeq,
-						previous: interval.serialize(),
-					},
+					metadata,
+					interval,
 				);
 			}
 			if (deltaProps !== undefined) {
@@ -1593,8 +1357,10 @@ export class IntervalCollection
 			}
 			if (newInterval) {
 				this.emitChange(newInterval, interval, true, false);
-				this.client?.removeLocalReferencePosition(interval.start);
-				this.client?.removeLocalReferencePosition(interval.end);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				interval.start.properties!.interval = undefined;
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				interval.end.properties!.interval = undefined;
 			}
 			return newInterval;
 		}
@@ -1606,90 +1372,18 @@ export class IntervalCollection
 		return this.client?.getCollabWindow().collaborating ?? false;
 	}
 
-	private addPendingChange(id: string, serializedInterval: SerializedIntervalDelta) {
-		if (!this.isCollaborating) {
-			return;
-		}
-		if (serializedInterval.start !== undefined) {
-			this.addPendingChangeHelper(id, this.pendingChangesStart, serializedInterval);
-		}
-		if (serializedInterval.end !== undefined) {
-			this.addPendingChangeHelper(id, this.pendingChangesEnd, serializedInterval);
-		}
-	}
-
-	private addPendingChangeHelper(
-		id: string,
-		pendingChanges: Map<string, SerializedIntervalDelta[]>,
-		serializedInterval: SerializedIntervalDelta,
-	) {
-		let entries: SerializedIntervalDelta[] | undefined = pendingChanges.get(id);
-		if (!entries) {
-			entries = [];
-			pendingChanges.set(id, entries);
-		}
-		entries.push(serializedInterval);
-	}
-
-	private removePendingChange(serializedInterval: SerializedIntervalDelta) {
-		// Change ops always have an ID.
-		const { id } = getSerializedProperties(serializedInterval);
-		if (serializedInterval.start !== undefined) {
-			this.removePendingChangeHelper(id, this.pendingChangesStart, serializedInterval);
-		}
-		if (serializedInterval.end !== undefined) {
-			this.removePendingChangeHelper(id, this.pendingChangesEnd, serializedInterval);
-		}
-	}
-
-	private removePendingChangeHelper(
-		id: string,
-		pendingChanges: Map<string, SerializedIntervalDelta[]>,
-		serializedInterval: SerializedIntervalDelta,
-	) {
-		const entries = pendingChanges.get(id);
-		if (entries) {
-			const pendingChange = entries.shift();
-			if (entries.length === 0) {
-				pendingChanges.delete(id);
-			}
-			if (
-				pendingChange?.start !== serializedInterval.start ||
-				pendingChange?.end !== serializedInterval.end
-			) {
-				throw new LoggingError("Mismatch in pending changes");
-			}
-		}
-	}
-
-	private hasPendingChangeStart(id: string) {
-		const entries = this.pendingChangesStart.get(id);
-		return entries && entries.length !== 0;
-	}
-
-	private hasPendingChangeEnd(id: string) {
-		const entries = this.pendingChangesEnd.get(id);
-		return entries && entries.length !== 0;
+	private hasPendingEndpointChanges(id: string) {
+		return this.pending[id]?.endpointChanges?.empty === false;
 	}
 
 	public ackChange(
 		serializedInterval: SerializedIntervalDelta,
 		local: boolean,
 		op: ISequencedDocumentMessage,
-		localOpMetadata: IMapMessageLocalMetadata | undefined,
+		localOpMetadata: IntervalChangeLocalMetadata | undefined,
 	) {
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
-		}
-
-		if (local) {
-			assert(
-				localOpMetadata !== undefined,
-				0x552 /* op metadata should be defined for local op */,
-			);
-			this.localSeqToSerializedInterval.delete(localOpMetadata?.localSeq);
-			// This is an ack from the server. Remove the pending change.
-			this.removePendingChange(serializedInterval);
 		}
 
 		// Note that the ID is in the property bag only to allow us to find the interval.
@@ -1697,56 +1391,51 @@ export class IntervalCollection
 		// strip it out of the properties here.
 		const { id, properties } = getSerializedProperties(serializedInterval);
 		assert(id !== undefined, 0x3fe /* id must exist on the interval */);
-		const interval: SequenceIntervalClass | undefined = this.getIntervalById(id);
-		if (!interval) {
-			// The interval has been removed locally; no-op.
-			return;
-		}
 
 		if (local) {
+			assert(localOpMetadata !== undefined, 0xbd4 /* local must have metadata */);
+			const { interval } = localOpMetadata;
 			interval.ackPropertiesChange(properties, op);
 
 			this.ackInterval(interval, op);
+			return interval;
 		} else {
-			// If there are pending changes with this ID, don't apply the remote start/end change, as the local ack
-			// should be the winning change.
-			let start: number | "start" | "end" | undefined;
-			let end: number | "start" | "end" | undefined;
-			// Track pending start/end independently of one another.
-			if (!this.hasPendingChangeStart(id)) {
-				start = serializedInterval.start;
-			}
-			if (!this.hasPendingChangeEnd(id)) {
-				end = serializedInterval.end;
+			const latestInterval = this.getIntervalById(id);
+			const intervalToChange: SequenceIntervalClass | undefined =
+				this.pending[id]?.consensus ?? latestInterval;
+
+			const isLatestInterval = intervalToChange === latestInterval;
+
+			if (!intervalToChange) {
+				return intervalToChange;
 			}
 
-			let newInterval = interval;
-			if (start !== undefined || end !== undefined) {
-				// If changeInterval gives us a new interval, work with that one. Otherwise keep working with
-				// the one we originally found in the tree.
-				newInterval =
-					this.localCollection.changeInterval(
-						interval,
-						toOptionalSequencePlace(start, serializedInterval.startSide ?? Side.Before),
-						toOptionalSequencePlace(end, serializedInterval.endSide ?? Side.Before),
-						op,
-					) ?? interval;
-			}
-			const deltaProps = newInterval.changeProperties(properties, op);
+			const deltaProps = intervalToChange.changeProperties(properties, op);
 
-			if (this.onDeserialize) {
-				this.onDeserialize(newInterval);
+			let newInterval = intervalToChange;
+			if (hasEndpointChanges(serializedInterval)) {
+				const { start, end, startSide, endSide } = serializedInterval;
+				newInterval = intervalToChange.modify(
+					"",
+					toOptionalSequencePlace(start, startSide ?? Side.Before),
+					toOptionalSequencePlace(end, endSide ?? Side.Before),
+					op,
+				);
+				if (isLatestInterval) {
+					this.localCollection.removeExistingInterval(intervalToChange);
+					this.localCollection.add(newInterval);
+					this.emitChange(newInterval, intervalToChange, local, false, op);
+					if (this.onDeserialize) {
+						this.onDeserialize(newInterval);
+					}
+				}
 			}
 
-			if (newInterval !== interval) {
-				this.emitChange(newInterval, interval, local, false, op);
+			if (deltaProps !== undefined && Object.keys(deltaProps).length > 0) {
+				this.emit("propertyChanged", latestInterval, deltaProps, local, op);
+				this.emit("changed", latestInterval, deltaProps, undefined, local, false);
 			}
-
-			const changedProperties = Object.keys(properties).length > 0;
-			if (changedProperties) {
-				this.emit("propertyChanged", interval, deltaProps, local, op);
-				this.emit("changed", interval, deltaProps, undefined, local, false);
-			}
+			return newInterval;
 		}
 	}
 
@@ -1775,96 +1464,89 @@ export class IntervalCollection
 	 *
 	 */
 	public rebaseLocalInterval(
-		opName: string,
-		serializedInterval: SerializedIntervalDelta,
-		localSeq: number,
+		original: SerializedIntervalDelta,
+		localOpMetadata: IntervalAddLocalMetadata | IntervalChangeLocalMetadata,
+		squash: boolean,
 	): SerializedIntervalDelta | undefined {
-		if (!this.client) {
+		if (!this.client || !hasEndpointChanges(original)) {
 			// If there's no associated mergeTree client, the originally submitted op is still correct.
-			return serializedInterval;
+			return original;
 		}
-		if (!this.attached) {
+		if (!this.attached || this.localCollection === undefined) {
 			throw new LoggingError("attachSequence must be called");
 		}
 
-		const { intervalType, properties, stickiness, startSide, endSide } = serializedInterval;
-		const { id } = getSerializedProperties(serializedInterval);
-		const { start: startRebased, end: endRebased } =
-			this.localSeqToRebasedInterval.get(localSeq) ?? this.computeRebasedPositions(localSeq);
+		const { localSeq, interval } = localOpMetadata;
+		const { id } = getSerializedProperties(original);
 
-		const localInterval = this.localCollection?.idIntervalIndex.getIntervalById(id);
-
-		const rebased: SerializedIntervalDelta = {
-			start: startRebased,
-			end: endRebased,
-			intervalType,
-			sequenceNumber: this.client?.getCurrentSeq() ?? 0,
-			properties,
-			stickiness,
-			startSide,
-			endSide,
-		};
-
-		if (
-			opName === "change" &&
-			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when .hasPendingChangeStart returns false.
-			(this.hasPendingChangeStart(id) || this.hasPendingChangeEnd(id))
-		) {
-			this.removePendingChange(serializedInterval);
-			this.addPendingChange(id, rebased);
-		}
+		const rebasedEndpoint = this.computeRebasedPositions(localOpMetadata, squash);
+		const localInterval = this.getIntervalById(id);
 
 		// if the interval slid off the string, rebase the op to be a noop and delete the interval.
-		if (
-			!this.options.mergeTreeReferencesCanSlideToEndpoint &&
-			(startRebased === DetachedReferencePosition || endRebased === DetachedReferencePosition)
-		) {
-			if (localInterval) {
+		if (rebasedEndpoint === "detached") {
+			if (
+				localInterval !== undefined &&
+				(localInterval === interval || localOpMetadata.type === "add")
+			) {
 				this.localCollection?.removeExistingInterval(localInterval);
 			}
 			return undefined;
 		}
 
-		if (localInterval !== undefined) {
-			// The rebased op may place this interval's endpoints on different segments. Calling `changeInterval` here
-			// updates the local client's state to be consistent with the emitted op.
-			this.localCollection?.changeInterval(
-				localInterval,
-				toOptionalSequencePlace(startRebased, startSide ?? Side.Before),
-				toOptionalSequencePlace(endRebased, endSide ?? Side.Before),
-				undefined,
-				localSeq,
-			);
+		const { start, end } = rebasedEndpoint;
+		if (
+			interval.start.getSegment() !== start.segment ||
+			interval.start.getOffset() !== start.offset ||
+			interval.end.getSegment() !== end.segment ||
+			interval.end.getOffset() !== end.offset
+		) {
+			if (localInterval === interval) {
+				this.localCollection.removeExistingInterval(localInterval);
+			}
+			const old = interval.clone();
+			interval.moveEndpointReferences(rebasedEndpoint);
+			if (localInterval === interval) {
+				this.localCollection.add(interval);
+				this.emitChange(interval, old, true, true);
+			}
+			old.dispose();
 		}
 
-		return rebased;
+		return {
+			...original,
+			start:
+				start.segment.endpointType ??
+				this.client.findReconnectionPosition(start.segment, localSeq) + start.offset,
+			end:
+				end.segment.endpointType ??
+				this.client.findReconnectionPosition(end.segment, localSeq) + end.offset,
+			sequenceNumber: this.client?.getCurrentSeq() ?? 0,
+		};
 	}
 
 	private getSlideToSegment(
 		lref: LocalReferencePosition,
-		slidingPreference: SlidingPreference,
-	): { segment: ISegment | undefined; offset: number | undefined } | undefined {
+	): { segment: ISegment; offset: number } | undefined {
 		if (!this.client) {
 			throw new LoggingError("client does not exist");
 		}
-		const segoff: { segment: ISegmentInternal | undefined; offset: number | undefined } = {
-			segment: lref.getSegment(),
-			offset: lref.getOffset(),
-		};
-		if (segoff.segment?.localRefs?.has(lref) !== true) {
+		const segment: ISegmentInternal | undefined = lref.getSegment();
+		if (segment === undefined) {
 			return undefined;
 		}
-		const newSegoff = getSlideToSegoff(
+		const segoff = {
+			segment,
+			offset: lref.getOffset(),
+		};
+		if (segoff.segment.localRefs?.has(lref) !== true) {
+			return undefined;
+		}
+		return getSlideToSegoff(
 			segoff,
-			slidingPreference,
+			lref.slidingPreference,
 			undefined,
-			this.options.mergeTreeReferencesCanSlideToEndpoint,
+			lref.canSlideToEndpoint,
 		);
-		const value: { segment: ISegment | undefined; offset: number | undefined } | undefined =
-			segoff.segment === newSegoff.segment && segoff.offset === newSegoff.offset
-				? undefined
-				: newSegoff;
-		return value;
 	}
 
 	private ackInterval(interval: SequenceIntervalClass, op: ISequencedDocumentMessage): void {
@@ -1875,29 +1557,20 @@ export class IntervalCollection
 			return;
 		}
 
-		const newStart = this.getSlideToSegment(
-			interval.start,
-			startReferenceSlidingPreference(interval.stickiness),
-		);
-		const newEnd = this.getSlideToSegment(
-			interval.end,
-			endReferenceSlidingPreference(interval.stickiness),
-		);
+		const newStart = this.getSlideToSegment(interval.start);
+		const newEnd = this.getSlideToSegment(interval.end);
 
 		const id = interval.getIntervalId();
-		const hasPendingStartChange = this.hasPendingChangeStart(id);
-		const hasPendingEndChange = this.hasPendingChangeEnd(id);
+		const hasPendingChange = this.hasPendingEndpointChanges(id);
 
-		if (!hasPendingStartChange) {
+		if (!hasPendingChange) {
 			setSlideOnRemove(interval.start);
-		}
-
-		if (!hasPendingEndChange) {
 			setSlideOnRemove(interval.end);
 		}
 
-		const needsStartUpdate = newStart !== undefined && !hasPendingStartChange;
-		const needsEndUpdate = newEnd !== undefined && !hasPendingEndChange;
+		const needsStartUpdate =
+			newStart?.segment !== interval.start.getSegment() && !hasPendingChange;
+		const needsEndUpdate = newEnd?.segment !== interval.end.getSegment() && !hasPendingChange;
 
 		if (needsStartUpdate || needsEndUpdate) {
 			if (!this.localCollection) {
@@ -1907,26 +1580,28 @@ export class IntervalCollection
 			// `interval`'s endpoints will get modified in-place, so clone it prior to doing so for event emission.
 			const oldInterval = interval.clone();
 
-			// In this case, where we change the start or end of an interval,
-			// it is necessary to remove and re-add the interval listeners.
-			// This ensures that the correct listeners are added to the LocalReferencePosition.
-			this.localCollection.removeExistingInterval(interval);
+			const isLatestInterval = this.getIntervalById(id) === interval;
+
+			if (isLatestInterval) {
+				// In this case, where we change the start or end of an interval,
+				// it is necessary to remove and re-add the interval listeners.
+				// This ensures that the correct listeners are added to the LocalReferencePosition.
+				this.localCollection.removeExistingInterval(interval);
+			}
 			if (!this.client) {
 				throw new LoggingError("client does not exist");
 			}
 
 			if (needsStartUpdate) {
 				const props = interval.start.properties;
-				interval.start = createPositionReferenceFromSegoff(
-					this.client,
-					newStart,
-					interval.start.refType,
+				interval.start = createPositionReferenceFromSegoff({
+					client: this.client,
+					segoff: newStart,
+					refType: interval.start.refType,
 					op,
-					undefined,
-					undefined,
-					startReferenceSlidingPreference(interval.stickiness),
-					startReferenceSlidingPreference(interval.stickiness) === SlidingPreference.BACKWARD,
-				);
+					slidingPreference: interval.start.slidingPreference,
+					canSlideToEndpoint: interval.start.canSlideToEndpoint,
+				});
 				if (props) {
 					interval.start.addProperties(props);
 				}
@@ -1938,16 +1613,14 @@ export class IntervalCollection
 			}
 			if (needsEndUpdate) {
 				const props = interval.end.properties;
-				interval.end = createPositionReferenceFromSegoff(
-					this.client,
-					newEnd,
-					interval.end.refType,
+				interval.end = createPositionReferenceFromSegoff({
+					client: this.client,
+					segoff: newEnd,
+					refType: interval.end.refType,
 					op,
-					undefined,
-					undefined,
-					endReferenceSlidingPreference(interval.stickiness),
-					endReferenceSlidingPreference(interval.stickiness) === SlidingPreference.FORWARD,
-				);
+					slidingPreference: interval.end.slidingPreference,
+					canSlideToEndpoint: interval.end.canSlideToEndpoint,
+				});
 				if (props) {
 					interval.end.addProperties(props);
 				}
@@ -1957,8 +1630,10 @@ export class IntervalCollection
 				oldInterval.end.refType = ReferenceType.Transient;
 				oldSeg?.localRefs?.addLocalRef(oldInterval.end, oldInterval.end.getOffset());
 			}
-			this.localCollection.add(interval);
-			this.emitChange(interval, oldInterval, true, true, op);
+			if (isLatestInterval) {
+				this.localCollection.add(interval);
+				this.emitChange(interval, oldInterval, true, true, op);
+			}
 		}
 	}
 
@@ -1966,8 +1641,8 @@ export class IntervalCollection
 		serializedInterval: ISerializedInterval,
 		local: boolean,
 		op: ISequencedDocumentMessage,
-		localOpMetadata: IMapMessageLocalMetadata | undefined,
-	) {
+		localOpMetadata: IntervalAddLocalMetadata | undefined,
+	): SequenceIntervalClass {
 		const { id, properties } = getSerializedProperties(serializedInterval);
 
 		if (local) {
@@ -1975,12 +1650,8 @@ export class IntervalCollection
 				localOpMetadata !== undefined,
 				0x553 /* op metadata should be defined for local op */,
 			);
-			this.localSeqToSerializedInterval.delete(localOpMetadata.localSeq);
-			const localInterval = this.getIntervalById(id);
-			if (localInterval) {
-				this.ackInterval(localInterval, op);
-			}
-			return;
+			this.ackInterval(localOpMetadata.interval, op);
+			return localOpMetadata.interval;
 		}
 
 		if (!this.localCollection) {
@@ -2023,7 +1694,7 @@ export class IntervalCollection
 		}
 
 		const { id } = getSerializedProperties(serializedInterval);
-		const interval = this.localCollection.idIntervalIndex.getIntervalById(id);
+		const interval = this.getIntervalById(id);
 		if (interval) {
 			this.deleteExistingInterval({ interval, local, op });
 		}

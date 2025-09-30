@@ -24,7 +24,7 @@ import {
 	DefaultServiceConfiguration,
 	createCompositeTokenId,
 	type IWebSocket,
-	ICollaborationSessionClient,
+	type ICollaborationSessionClient,
 	clusterDrainingRetryTimeInMs,
 	type IDenyList,
 } from "@fluidframework/server-services-core";
@@ -35,7 +35,19 @@ import {
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
 import safeStringify from "json-stringify-safe";
+
 import { createRoomJoinMessage, generateClientId } from "../utils";
+
+import type {
+	IConnectedClient,
+	INexusLambdaConnectionStateTrackers,
+	INexusLambdaDependencies,
+	INexusLambdaSettings,
+	IRoom,
+} from "./interfaces";
+import { ProtocolVersions, checkProtocolVersion } from "./protocol";
+import { checkThrottleAndUsage, getSocketConnectThrottleId } from "./throttleAndUsage";
+import { StageTrace, sampleMessages } from "./trace";
 import {
 	getMessageMetadata,
 	handleServerErrorAndConvertToNetworkError,
@@ -44,16 +56,6 @@ import {
 	isWriter,
 	isSummarizer,
 } from "./utils";
-import { StageTrace, sampleMessages } from "./trace";
-import { ProtocolVersions, checkProtocolVersion } from "./protocol";
-import type {
-	IConnectedClient,
-	INexusLambdaConnectionStateTrackers,
-	INexusLambdaDependencies,
-	INexusLambdaSettings,
-	IRoom,
-} from "./interfaces";
-import { checkThrottleAndUsage, getSocketConnectThrottleId } from "./throttleAndUsage";
 
 /**
  * Trace stages for the connect flow.
@@ -174,11 +176,7 @@ async function connectOrderer(
 		lumberjackProperties,
 	);
 	const orderer = await ordererManager.getOrderer(tenantId, documentId).catch(async (error) => {
-		const errMsg = `Failed to get orderer manager. Error: ${safeStringify(
-			error,
-			undefined,
-			2,
-		)}`;
+		const errMsg = "Failed to get orderer manager.";
 		connectDocumentOrdererConnectionMetric.error("Failed to get orderer manager", error);
 		throw handleServerErrorAndConvertToNetworkError(
 			logger,
@@ -192,11 +190,7 @@ async function connectOrderer(
 	const connection = await orderer
 		.connect(socket, clientId, messageClient)
 		.catch(async (error) => {
-			const errMsg = `Failed to connect to orderer. Error: ${safeStringify(
-				error,
-				undefined,
-				2,
-			)}`;
+			const errMsg = "Failed to connect to orderer.";
 			connectDocumentOrdererConnectionMetric.error("Failed to connect to orderer", error);
 			throw handleServerErrorAndConvertToNetworkError(
 				logger,
@@ -232,11 +226,7 @@ async function connectOrderer(
 		};
 	}
 	connection.connect(clientJoinMessageServerMetadata).catch(async (error) => {
-		const errMsg = `Failed to connect to the orderer connection. Error: ${safeStringify(
-			error,
-			undefined,
-			2,
-		)}`;
+		const errMsg = "Failed to connect to the orderer connection.";
 		connectDocumentOrdererConnectionMetric.error(
 			"Failed to establish orderer connection",
 			error,
@@ -302,13 +292,14 @@ function trackCollaborationSession(
 	tenantId: string,
 	documentId: string,
 	connectedClients: ISignalClient[],
+	connectedTimestamp: number,
 	{ collaborationSessionTracker }: INexusLambdaDependencies,
 ): void {
 	// Track the collaboration session for this connection
 	if (collaborationSessionTracker) {
 		const sessionClient: ICollaborationSessionClient = {
 			clientId,
-			joinedTime: clientDetails.timestamp ?? Date.now(),
+			joinedTime: connectedTimestamp,
 			isWriteClient,
 			isSummarizerClient: isSummarizer(clientDetails.details),
 		};
@@ -381,11 +372,7 @@ async function checkToken(
 			throw error;
 		}
 		// We don't understand the error, so it is likely an internal service error.
-		const errMsg = `Could not verify connect document token. Error: ${safeStringify(
-			error,
-			undefined,
-			2,
-		)}`;
+		const errMsg = "Could not verify connect document token.";
 		throw handleServerErrorAndConvertToNetworkError(
 			logger,
 			errMsg,
@@ -453,11 +440,7 @@ async function joinRoomAndSubscribeToChannel(
 		]);
 		return [clientId, room];
 	} catch (error) {
-		const errMsg = `Could not subscribe to channels. Error: ${safeStringify(
-			error,
-			undefined,
-			2,
-		)}`;
+		const errMsg = "Could not subscribe to channels.";
 		throw handleServerErrorAndConvertToNetworkError(
 			logger,
 			errMsg,
@@ -486,7 +469,7 @@ async function retrieveClients(
 			return response;
 		})
 		.catch(async (error) => {
-			const errMsg = `Failed to get clients. Error: ${safeStringify(error, undefined, 2)}`;
+			const errMsg = "Failed to get clients.";
 			connectDocumentGetClientsMetric.error(
 				"Failed to get clients during connectDocument",
 				error,
@@ -578,7 +561,7 @@ async function addMessageClientToClientManager(
 		await clientManager.addClient(tenantId, documentId, clientId, messageClient as IClient);
 		connectDocumentAddClientMetric.success("Successfully added client");
 	} catch (error) {
-		const errMsg = `Could not add client. Error: ${safeStringify(error, undefined, 2)}`;
+		const errMsg = "Could not add client.";
 		connectDocumentAddClientMetric.error("Error adding client during connectDocument", error);
 		throw handleServerErrorAndConvertToNetworkError(
 			logger,
@@ -738,6 +721,7 @@ export async function connectDocument(
 			tenantId,
 			documentId,
 			clients,
+			connectedTimestamp,
 			lambdaDependencies,
 		);
 

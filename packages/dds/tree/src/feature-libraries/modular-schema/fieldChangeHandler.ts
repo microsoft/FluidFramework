@@ -20,14 +20,14 @@ import type {
 	RangeQueryEntry,
 	RangeQueryResult,
 } from "../../util/index.js";
-
 import type {
 	ComposeNodeManager,
 	InvertNodeManager,
 	RebaseNodeManager,
 } from "./crossFieldQueries.js";
-import type { ChangeAtomIdBTree, CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
+
 import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
+import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 
 export type NestedChangesIndices = [NodeId, number /* inputIndex */][];
 
@@ -136,6 +136,12 @@ export interface FieldChangeRebaser<TChangeset> {
 		oldRevisions: Set<RevisionTag | undefined>,
 		newRevisions: RevisionTag | undefined,
 	): TChangeset;
+
+	/**
+	 * Returns a copy of the given changeset with the same declarations (e.g., new cells) but no actual changes.
+	 * This is a kludge. TODO: remove once AB#46104 is completed.
+	 */
+	mute(change: TChangeset): TChangeset;
 }
 
 export interface RootsInfo {
@@ -150,11 +156,13 @@ export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
 	compose: (change1: TChangeset, change2: TChangeset) => TChangeset;
 	invert: (change: TChangeset) => TChangeset;
 	rebase: (change: TChangeset, over: TChangeset) => TChangeset;
+	mute: (change: TChangeset) => TChangeset;
 }): FieldChangeRebaser<TChangeset> {
 	return isolatedFieldChangeRebaser({
 		compose: (change1, change2, _composeChild, _genId) => data.compose(change1, change2),
 		invert: (change, _invertChild, _genId) => data.invert(change),
 		rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over),
+		mute: (change) => data.mute(change),
 	});
 }
 
@@ -162,6 +170,7 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 	compose: FieldChangeRebaser<TChangeset>["compose"];
 	invert: FieldChangeRebaser<TChangeset>["invert"];
 	rebase: FieldChangeRebaser<TChangeset>["rebase"];
+	mute: FieldChangeRebaser<TChangeset>["mute"];
 }): FieldChangeRebaser<TChangeset> {
 	return {
 		...data,
@@ -187,19 +196,13 @@ export interface FieldEditor<TChangeset> {
  */
 export type ToDelta = (child: NodeId) => DeltaFieldMap;
 
-/**
- */
 export type NodeChangeInverter = (change: NodeId) => NodeId;
 
-/**
- */
 export enum NodeAttachState {
 	Attached,
 	Detached,
 }
 
-/**
- */
 export type NodeChangeRebaser = (
 	change: NodeId | undefined,
 	baseChange: NodeId | undefined,
@@ -210,15 +213,11 @@ export type NodeChangeRebaser = (
 	state?: NodeAttachState,
 ) => NodeId | undefined;
 
-/**
- */
 export type NodeChangeComposer = (
 	change1: NodeId | undefined,
 	change2: NodeId | undefined,
 ) => NodeId;
 
-/**
- */
 export type NodeChangePruner = (change: NodeId) => NodeId | undefined;
 
 export type HasDetachedChanges = (detachId: ChangeAtomId, count: number) => boolean;

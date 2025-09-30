@@ -24,12 +24,12 @@ export const validVersions = new Set([version]);
  * Top level length is implied from length of data array.
  * All content are of this shape.
  */
-export const EncodedNestedArray = ShapeIndex;
+export const EncodedNestedArrayShape = ShapeIndex;
 
 /**
  * Inline array.
  */
-export const EncodedInlineArray = Type.Object(
+export const EncodedInlineArrayShape = Type.Object(
 	{
 		length: Count,
 		/**
@@ -46,6 +46,12 @@ export const EncodedInlineArray = Type.Object(
  * Used for polymorphism.
  */
 export const EncodedAnyShape = Type.Literal(0);
+
+/**
+ * Encoded content is a {@link ChunkReferenceId}.
+ * This represents the shape of a chunk that is encoded separately and is referenced by its {@link ChunkReferenceId}.
+ */
+export const EncodedIncrementalChunkShape = Type.Literal(0);
 
 /**
  * Content of the encoded field is specified by the Shape referenced by the ShapeIndex.
@@ -123,7 +129,7 @@ export enum SpecialField {
  * In the future other value shape formats may be added, likely as objects.
  *
  * @remarks
- * See {@link EncodedTreeShape} for usage.
+ * See {@link EncodedNodeShape} for usage.
  */
 export const EncodedValueShape = Type.Union([
 	Type.Boolean(),
@@ -134,7 +140,7 @@ export const EncodedValueShape = Type.Union([
 ]);
 export type EncodedValueShape = undefined | Static<typeof EncodedValueShape>;
 
-export const EncodedTreeShape = Type.Object(
+export const EncodedNodeShape = Type.Object(
 	{
 		/**
 		 * If not provided, inlined in data.
@@ -157,38 +163,49 @@ export const EncodedTreeShape = Type.Object(
 );
 
 /**
- * Discriminated union of chunk shapes.
+ * Discriminated union that represents the shapes of chunks in the encoded data.
+ * "Chunk" here refers to a chunk of tree data, rooted at a range of nodes, that is encoded as a
+ * single unit in a specific format represented by one of the shapes in this union.
+ *
+ * The concept of "chunk" is same for the tree data in memory and in the encoded wire format.
+ * The physical representation of the chunk may differ, but the logical structure remains the same.
+ * This is similar to other such concepts in the system.
  *
  * See {@link DiscriminatedUnionDispatcher} for more information on this pattern.
  */
 export const EncodedChunkShape = Type.Object(
 	{
 		/**
-		 * {@link EncodedNestedArray} union member.
+		 * {@link EncodedNestedArrayShape} union member.
 		 */
-		a: Type.Optional(EncodedNestedArray),
+		a: Type.Optional(EncodedNestedArrayShape),
 		/**
-		 * {@link EncodedInlineArray} union member.
+		 * {@link EncodedInlineArrayShape} union member.
 		 */
-		b: Type.Optional(EncodedInlineArray),
+		b: Type.Optional(EncodedInlineArrayShape),
 		/**
-		 * {@link EncodedTreeShape} union member.
+		 * {@link EncodedNodeShape} union member.
 		 */
-		c: Type.Optional(EncodedTreeShape),
+		c: Type.Optional(EncodedNodeShape),
 		/**
 		 * {@link EncodedAnyShape} union member.
 		 */
 		d: Type.Optional(EncodedAnyShape),
+		/**
+		 * {@link EncodedIncrementalChunkShape} union member.
+		 */
+		e: Type.Optional(EncodedIncrementalChunkShape),
 	},
 	unionOptions,
 );
 
 export type EncodedChunkShape = Static<typeof EncodedChunkShape>;
 
-export type EncodedNestedArray = Static<typeof EncodedNestedArray>;
-export type EncodedInlineArray = Static<typeof EncodedInlineArray>;
-export type EncodedTreeShape = Static<typeof EncodedTreeShape>;
+export type EncodedNestedArrayShape = Static<typeof EncodedNestedArrayShape>;
+export type EncodedInlineArrayShape = Static<typeof EncodedInlineArrayShape>;
+export type EncodedNodeShape = Static<typeof EncodedNodeShape>;
 export type EncodedAnyShape = Static<typeof EncodedAnyShape>;
+export type EncodedIncrementalChunkShape = Static<typeof EncodedIncrementalChunkShape>;
 
 export const EncodedFieldBatch = EncodedFieldBatchGeneric(version, EncodedChunkShape);
 export type EncodedFieldBatch = Static<typeof EncodedFieldBatch>;

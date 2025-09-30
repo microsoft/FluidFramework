@@ -43,21 +43,18 @@ import {
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
+	jsonableTreeFromFieldCursor,
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 
-import {
-	assertChunkCursorEquals,
-	jsonableTreesFromFieldCursor,
-	numberSequenceField,
-} from "./fieldCursorTestUtilities.js";
+import { assertChunkCursorEquals, numberSequenceField } from "./fieldCursorTestUtilities.js";
 import { polygonTree, testData } from "./uniformChunkTestData.js";
 import {
 	nullSchema,
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
-	toStoredSchema,
+	toInitialSchema,
 } from "../../../simple-tree/index.js";
 import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
 import { testIdCompressor } from "../../utils.js";
@@ -70,7 +67,7 @@ const structValue = builder.object("structValue", { x: valueField });
 const optionalField = builder.optional(builder.number);
 const structOptional = builder.object("structOptional", { x: optionalField });
 
-const schema = toStoredSchema([empty, builder.number, structValue, structOptional]);
+const schema = toInitialSchema([empty, builder.number, structValue, structOptional]);
 
 function expectEqual(a: ShapeInfo, b: ShapeInfo): void {
 	assert.deepEqual(a, b);
@@ -179,7 +176,7 @@ describe("chunkTree", () => {
 			assert.equal(chunks[0].topLevelLength, 1);
 			assert.equal(cursor.fieldIndex, 0);
 			assert(chunks[0] instanceof BasicChunk);
-			assert.deepEqual(jsonableTreesFromFieldCursor(chunks[0].cursor()), [
+			assert.deepEqual(jsonableTreeFromFieldCursor(chunks[0].cursor()), [
 				{
 					type: nullSchema.identifier,
 				},
@@ -216,7 +213,7 @@ describe("chunkTree", () => {
 			);
 			assert.equal(chunks.length, 2);
 			assert.equal(cursor.fieldIndex, 2);
-			assert.deepEqual(jsonableTreesFromFieldCursor(new SequenceChunk(chunks).cursor()), [
+			assert.deepEqual(jsonableTreeFromFieldCursor(new SequenceChunk(chunks).cursor()), [
 				{ type: nullSchema.identifier },
 				{ type: nullSchema.identifier },
 			]);
@@ -307,7 +304,7 @@ describe("chunkTree", () => {
 
 					checkChunks(chunks, expectedDepth);
 					assert.deepEqual(
-						jsonableTreesFromFieldCursor(new SequenceChunk(chunks).cursor()),
+						jsonableTreeFromFieldCursor(new SequenceChunk(chunks).cursor()),
 						field,
 					);
 				});
@@ -404,7 +401,7 @@ describe("chunkTree", () => {
 			const info = tryShapeFromFieldSchema(
 				schema,
 				defaultSchemaPolicy,
-				toStoredSchema(valueField).rootFieldSchema,
+				toInitialSchema(valueField).rootFieldSchema,
 				brand("key"),
 				new Map(),
 			);
@@ -418,7 +415,7 @@ describe("chunkTree", () => {
 			const info = tryShapeFromFieldSchema(
 				schema,
 				defaultSchemaPolicy,
-				toStoredSchema(optionalField).rootFieldSchema,
+				toInitialSchema(optionalField).rootFieldSchema,
 				brand("key"),
 				new Map(),
 			);

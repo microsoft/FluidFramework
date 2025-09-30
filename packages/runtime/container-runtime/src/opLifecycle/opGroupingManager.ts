@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	type LocalEmptyBatchPlaceholder,
-	type OutboundBatch,
-	type OutboundSingletonBatch,
+import type {
+	LocalEmptyBatchPlaceholder,
+	OutboundBatch,
+	OutboundSingletonBatch,
 } from "./definitions.js";
 
 /**
@@ -46,6 +46,16 @@ export interface OpGroupingManagerConfig {
 	readonly groupedBatchingEnabled: boolean;
 }
 
+/**
+ * This is the type of an empty grouped batch we send over the wire
+ * We also put this in the placeholder for an empty batch in the PendingStateManager.
+ * But most places throughout the ContainerRuntime, this will not be used (just as Grouped Batches in general don't appear outside opLifecycle dir)
+ */
+export interface EmptyGroupedBatch {
+	type: typeof OpGroupingManager.groupedBatchOp;
+	contents: readonly [];
+}
+
 export class OpGroupingManager {
 	static readonly groupedBatchOp = "groupedBatch";
 	private readonly logger: ITelemetryLoggerExt;
@@ -75,19 +85,22 @@ export class OpGroupingManager {
 			this.config.groupedBatchingEnabled,
 			0xa00 /* cannot create empty grouped batch when grouped batching is disabled */,
 		);
-		const serializedOp = JSON.stringify({
-			type: OpGroupingManager.groupedBatchOp,
+
+		const emptyGroupedBatch: EmptyGroupedBatch = {
+			type: "groupedBatch",
 			contents: [],
-		});
+		};
+		const serializedOp = JSON.stringify(emptyGroupedBatch);
 
 		const placeholderMessage: LocalEmptyBatchPlaceholder = {
 			metadata: { batchId: resubmittingBatchId },
 			localOpMetadata: { emptyBatch: true },
 			referenceSequenceNumber,
+			runtimeOp: emptyGroupedBatch,
 		};
 		const outboundBatch: OutboundSingletonBatch = {
 			contentSizeInBytes: 0,
-			messages: [{ ...placeholderMessage, contents: serializedOp }],
+			messages: [{ ...placeholderMessage, runtimeOp: undefined, contents: serializedOp }],
 			referenceSequenceNumber,
 		};
 		return { outboundBatch, placeholderMessage };
@@ -121,9 +134,9 @@ export class OpGroupingManager {
 		// We expect this will be on the first message, if present at all.
 		let groupedBatchId;
 		for (const message of batch.messages) {
-			if (message.metadata) {
+			if (message.metadata !== undefined) {
 				const { batch: _batch, batchId, ...rest } = message.metadata;
-				if (batchId) {
+				if (batchId !== undefined) {
 					groupedBatchId = batchId;
 				}
 				assert(Object.keys(rest).length === 0, 0x5dd /* cannot group ops with metadata */);

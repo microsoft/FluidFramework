@@ -16,6 +16,9 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
+		// TODO: Enable and fix violations
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+
 		// Catch unused variables in at lint time instead of compile time
 		"@typescript-eslint/no-unused-vars": "error",
 

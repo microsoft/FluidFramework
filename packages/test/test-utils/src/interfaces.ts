@@ -12,16 +12,14 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IProvideTestFluidObject {
 	readonly ITestFluidObject: ITestFluidObject;
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadable {
 	root: ISharedMap;

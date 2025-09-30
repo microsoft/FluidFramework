@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { IntervalIndex, SequenceIntervalIndex } from "./intervalIndex.js";
+export { SequenceIntervalIndex } from "./intervalIndex.js";
 export { IIdIntervalIndex, createIdIntervalIndex } from "./idIntervalIndex.js";
 export { IEndpointIndex, createEndpointIndex, EndpointIndex } from "./endpointIndex.js";
 export {
@@ -18,7 +18,6 @@ export {
 } from "./startpointInRangeIndex.js";
 export { SequenceIntervalIndexes } from "./sequenceIntervalIndexes.js";
 export {
-	IOverlappingIntervalsIndex,
 	createOverlappingIntervalsIndex,
 	OverlappingIntervalsIndex,
 	ISequenceOverlappingIntervalsIndex,

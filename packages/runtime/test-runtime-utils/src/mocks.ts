@@ -60,6 +60,7 @@ import {
 	type ITelemetryContext,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getNormalizedObjectStoragePathParts,
@@ -76,8 +77,7 @@ import { MockHandle } from "./mockHandle.js";
 
 /**
  * Mock implementation of IDeltaConnection for testing
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockDeltaConnection implements IDeltaConnection {
 	public get connected(): boolean {
@@ -114,19 +114,22 @@ export class MockDeltaConnection implements IDeltaConnection {
 		this.handler?.processMessages?.(messageCollection);
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown) {
-		this.handler?.reSubmit(content, localOpMetadata);
+	public reSubmit(content: any, localOpMetadata: unknown, squash?: boolean) {
+		this.handler?.reSubmit(content, localOpMetadata, squash);
 	}
 
 	public applyStashedOp(content: any): unknown {
 		return this.handler?.applyStashedOp(content);
 	}
+
+	public rollback?(message: any, localOpMetadata: unknown): void {
+		this.handler?.rollback?.(message, localOpMetadata);
+	}
 }
 
 // Represents the structure of a pending message stored by the MockContainerRuntime.
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IMockContainerRuntimePendingMessage {
 	content: any;
@@ -142,8 +145,7 @@ export interface IMockContainerRuntimeIdAllocationMessage {
 
 /**
  * Options for the container runtime mock.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IMockContainerRuntimeOptions {
 	/**
@@ -176,8 +178,7 @@ const makeContainerRuntimeOptions = (
 });
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IInternalMockRuntimeMessage {
 	content: any;
@@ -189,8 +190,7 @@ export interface IInternalMockRuntimeMessage {
  * Mock implementation of IContainerRuntime for testing basic submitting and processing of messages.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeForReconnection.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
 	public clientId: string;
@@ -256,6 +256,18 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.dataStoreRuntime.idCompressor.finalizeCreationRange(range);
 	}
 
+	// This enables manual control over flush mode, allowing operations like rollback to be executed in a controlled environment.
+	#manualFlushCalls: number = 0;
+
+	public async runWithManualFlush(act: () => void | Promise<void>) {
+		this.#manualFlushCalls++;
+		try {
+			await act();
+		} finally {
+			this.#manualFlushCalls--;
+		}
+	}
+
 	public submit(messageContent: any, localOpMetadata?: unknown): number {
 		const clientSequenceNumber = ++this.deltaManager.clientSequenceNumber;
 		const message: IInternalMockRuntimeMessage = {
@@ -266,7 +278,10 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 
 		const isAllocationMessage = this.isAllocationMessage(message.content);
 
-		switch (this.runtimeOptions.flushMode) {
+		const currentFlushMode =
+			this.#manualFlushCalls > 0 ? FlushMode.TurnBased : this.runtimeOptions.flushMode;
+
+		switch (currentFlushMode) {
 			case FlushMode.Immediate: {
 				if (!isAllocationMessage) {
 					const idAllocationOp = this.generateIdAllocationOp();
@@ -323,9 +338,21 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 
 	/**
 	 * If flush mode is set to FlushMode.TurnBased, it will send all messages queued since the last time
-	 * this method was called. Otherwise, calling the method does nothing.
+	 * this method (or `flushSomeMessages`) was called. Otherwise, calling the method does nothing.
 	 */
 	public flush() {
+		this.flushSomeMessages(this.outbox.length);
+	}
+
+	/**
+	 * If flush mode is set to FlushMode.TurnBased, it will send the specified number of messages from the outbox
+	 * queued since the last time this (or `flush`) was called. Otherwise, calling the method does nothing.
+	 * This can be useful when simulating staging mode, and we only want to flush certain messages.
+	 */
+	public flushSomeMessages(numMessages: number): void {
+		if (!Number.isInteger(numMessages) || numMessages < 0) {
+			throw new Error("flushSomeMessages: numMessages must be a non-negative integer");
+		}
 		if (this.runtimeOptions.flushMode !== FlushMode.TurnBased) {
 			return;
 		}
@@ -338,10 +365,11 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			this.idAllocationOutbox.push(idAllocationOp);
 		}
 
+		const actualMessagesToSubmit = this.outbox.splice(0, numMessages);
+
 		// As with the runtime behavior, we need to send the idAllocationOps first
-		const messagesToSubmit = this.idAllocationOutbox.concat(this.outbox);
+		const messagesToSubmit = this.idAllocationOutbox.concat(actualMessagesToSubmit);
 		this.idAllocationOutbox.length = 0;
-		this.outbox.length = 0;
 
 		let fakeClientSequenceNumber = 1;
 		messagesToSubmit.forEach((message) => {
@@ -399,6 +427,21 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			} else {
 				this.dataStoreRuntime.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
 			}
+		});
+	}
+
+	/**
+	 * Rolls back all pending messages.
+	 * @remarks
+	 * This only works when the FlushMode is not immediate as immediate
+	 * flush mode send the ops to the mock runtime factory for processing/sequencing, and so those
+	 * ops are no longer local, so not available for rollback.
+	 */
+	public rollback?(): void {
+		const messagesToRollback = this.outbox.slice().reverse();
+		this.outbox.length = 0;
+		messagesToRollback.forEach((pm) => {
+			this.dataStoreRuntime.rollback?.(pm.content, pm.localOpMetadata);
 		});
 	}
 
@@ -490,8 +533,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
  * processes them when asked.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeFactoryForReconnection.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockContainerRuntimeFactory {
 	public sequenceNumber = 0;
@@ -644,8 +686,7 @@ export class MockContainerRuntimeFactory {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	private readonly members: Map<string, ISequencedClient>;
@@ -740,8 +781,7 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 }
 
 /**
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockAudience
 	extends TypedEventEmitter<IAudienceEvents>
@@ -803,8 +843,7 @@ const attachStatesToComparableNumbers = {
 
 /**
  * Mock implementation of IRuntime for testing that does nothing
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockFluidDataStoreRuntime
 	extends EventEmitter
@@ -818,6 +857,7 @@ export class MockFluidDataStoreRuntime
 		idCompressor?: IIdCompressor & IIdCompressorCore;
 		attachState?: AttachState;
 		registry?: readonly IChannelFactory[];
+		minVersionForCollab?: MinimumVersionForCollab;
 	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
@@ -840,11 +880,19 @@ export class MockFluidDataStoreRuntime
 		if (registry) {
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
+
+		this.minVersionForCollab = overrides?.minVersionForCollab;
 	}
+
 	private readonly: boolean = false;
 	public readonly isReadOnly = () => this.readonly;
 
 	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
+
+	/**
+	 * @see IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
+	 */
+	public readonly minVersionForCollab: MinimumVersionForCollab | undefined;
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this;
@@ -992,6 +1040,10 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
+	/**
+	 * @deprecated Use `IFluidDataStoreContext.submitMessage` instead.
+	 * @see https://github.com/microsoft/FluidFramework/issues/24406
+	 */
 	public submitMessage(type: MessageType, content: any) {
 		return null;
 	}
@@ -1142,9 +1194,9 @@ export class MockFluidDataStoreRuntime
 		return null as any as IResponse;
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown) {
+	public reSubmit(content: any, localOpMetadata: unknown, squash?: boolean) {
 		this.deltaConnections.forEach((dc) => {
-			dc.reSubmit(content, localOpMetadata);
+			dc.reSubmit(content, localOpMetadata, squash);
 		});
 	}
 
@@ -1153,7 +1205,9 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public rollback?(message: any, localOpMetadata: unknown): void {
-		return;
+		this.deltaConnections.forEach((dc) => {
+			dc.rollback?.(message, localOpMetadata);
+		});
 	}
 }
 
@@ -1175,8 +1229,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 
 /**
  * Mock implementation of IChannelStorageService
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockObjectStorageService implements IChannelStorageService {
 	public constructor(private readonly contents: { [key: string]: string }) {}
@@ -1199,8 +1252,7 @@ export class MockObjectStorageService implements IChannelStorageService {
 
 /**
  * Mock implementation of IChannelServices
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export class MockSharedObjectServices implements IChannelServices {
 	public static createFromSummary(summaryTree: ISummaryTree) {

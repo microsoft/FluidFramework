@@ -8,14 +8,15 @@ import { strict as assert } from "node:assert";
 import {
 	comparePersistedSchema,
 	extractPersistedSchema,
-	typeboxValidator,
+	FluidClientVersion,
+	FormatValidatorBasic,
 	type ForestOptions,
 	type ICodecOptions,
 	type ImplicitFieldSchema,
 	type JsonCompatible,
 } from "@fluidframework/tree/alpha";
 
-import { List } from "../schema.js";
+import { config, List } from "../schema.js";
 
 import { v1 } from "./legacy/index.js";
 
@@ -111,7 +112,7 @@ const historicalSchema: {
 
 describe("schema", () => {
 	it("current schema matches latest historical schema", () => {
-		const current = extractPersistedSchema(List);
+		const current = extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true);
 
 		// For compatibility with deep equality and simple objects, round trip via JSON to erase prototypes.
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -127,7 +128,7 @@ describe("schema", () => {
 	});
 
 	describe("historical schema can be upgraded to current schema", () => {
-		const options: ForestOptions & ICodecOptions = { jsonValidator: typeboxValidator };
+		const options: ForestOptions & ICodecOptions = { jsonValidator: FormatValidatorBasic };
 
 		for (let documentIndex = 0; documentIndex < historicalSchema.length; documentIndex++) {
 			for (let viewIndex = 0; viewIndex < historicalSchema.length; viewIndex++) {
@@ -139,7 +140,6 @@ describe("schema", () => {
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						historicalSchema[viewIndex]!.viewSchema,
 						options,
-						false,
 					);
 
 					// We do not expect duplicates in historicalSchema.

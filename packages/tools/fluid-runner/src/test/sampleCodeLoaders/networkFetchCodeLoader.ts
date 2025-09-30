@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ICodeDetailsLoader,
 	IContainer,
 } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
-import { IFluidFileConverter } from "../../codeLoaderBundle.js";
+import type { IFluidFileConverter } from "../../codeLoaderBundle.js";
 
 import { SampleCodeLoader } from "./sampleCodeLoader.js";
 

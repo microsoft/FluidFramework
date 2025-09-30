@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ICollection } from "@fluidframework/server-services-core";
-import { ITenantDocument } from "./tenantManager";
+import type { ICollection } from "@fluidframework/server-services-core";
+
+import type { ITenantDocument } from "./tenantManager";
 
 /**
  * Abstract away ITenant collection logic

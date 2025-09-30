@@ -164,6 +164,24 @@ declare type current_as_old_for_Class_DocumentCheckpointManager = requireAssigna
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Class_LambdaCircuitBreaker": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_LambdaCircuitBreaker = requireAssignableTo<TypeOnly<old.LambdaCircuitBreaker>, TypeOnly<current.LambdaCircuitBreaker>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_LambdaCircuitBreaker": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_LambdaCircuitBreaker = requireAssignableTo<TypeOnly<current.LambdaCircuitBreaker>, TypeOnly<old.LambdaCircuitBreaker>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Class_MoiraLambda": {"forwardCompat": false}
  */
 declare type old_as_current_for_Class_MoiraLambda = requireAssignableTo<TypeOnly<old.MoiraLambda>, TypeOnly<current.MoiraLambda>>
@@ -256,7 +274,6 @@ declare type current_as_old_for_Class_ScribeLambdaFactory = requireAssignableTo<
  * typeValidation.broken:
  * "Class_ScriptoriumLambda": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_ScriptoriumLambda = requireAssignableTo<TypeOnly<old.ScriptoriumLambda>, TypeOnly<current.ScriptoriumLambda>>
 
 /*
@@ -393,6 +410,15 @@ declare type current_as_old_for_ClassStatics_DeliLambdaFactory = requireAssignab
  * "ClassStatics_DocumentCheckpointManager": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_DocumentCheckpointManager = requireAssignableTo<TypeOnly<typeof current.DocumentCheckpointManager>, TypeOnly<typeof old.DocumentCheckpointManager>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_LambdaCircuitBreaker": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_LambdaCircuitBreaker = requireAssignableTo<TypeOnly<typeof current.LambdaCircuitBreaker>, TypeOnly<typeof old.LambdaCircuitBreaker>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -537,6 +563,24 @@ declare type current_as_old_for_Function_isDocumentSessionValid = requireAssigna
  * "Function_isDocumentValid": {"backCompat": false}
  */
 declare type current_as_old_for_Function_isDocumentValid = requireAssignableTo<TypeOnly<typeof current.isDocumentValid>, TypeOnly<typeof old.isDocumentValid>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_circuitBreakerOptions": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_circuitBreakerOptions = requireAssignableTo<TypeOnly<old.circuitBreakerOptions>, TypeOnly<current.circuitBreakerOptions>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_circuitBreakerOptions": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_circuitBreakerOptions = requireAssignableTo<TypeOnly<current.circuitBreakerOptions>, TypeOnly<old.circuitBreakerOptions>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -807,6 +851,15 @@ declare type current_as_old_for_Variable_createNackMessage = requireAssignableTo
  * "Variable_createRoomLeaveMessage": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_createRoomLeaveMessage = requireAssignableTo<TypeOnly<typeof current.createRoomLeaveMessage>, TypeOnly<typeof old.createRoomLeaveMessage>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_createRuntimeMessage": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_createRuntimeMessage = requireAssignableTo<TypeOnly<typeof current.createRuntimeMessage>, TypeOnly<typeof old.createRuntimeMessage>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

@@ -11,17 +11,17 @@ import {
 	RedBlackTree,
 } from "@fluidframework/merge-tree/internal";
 
-import { IInterval } from "./intervals/index.js";
+import { ISerializableInterval } from "./intervals/index.js";
 
 export interface AugmentedIntervalNode {
-	minmax: IInterval;
+	minmax: ISerializableInterval;
 }
 
-const intervalComparer = (a: IInterval, b: IInterval) => a.compare(b);
+const intervalComparer = (a: ISerializableInterval, b: ISerializableInterval) => a.compare(b);
 
-export type IntervalNode<T extends IInterval> = RBNode<T, AugmentedIntervalNode>;
+export type IntervalNode<T extends ISerializableInterval> = RBNode<T, AugmentedIntervalNode>;
 
-export class IntervalTree<T extends IInterval>
+export class IntervalTree<T extends ISerializableInterval>
 	implements IRBAugmentation<T, AugmentedIntervalNode>, IRBMatcher<T, AugmentedIntervalNode>
 {
 	public intervals = new RedBlackTree<T, AugmentedIntervalNode>(intervalComparer, this);

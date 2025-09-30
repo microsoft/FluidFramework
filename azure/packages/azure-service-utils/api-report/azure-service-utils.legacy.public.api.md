@@ -4,8 +4,9 @@
 
 ```ts
 
-export { IUser }
-
-export { ScopeType }
+// @public
+export interface IUser {
+    id: string;
+}
 
 ```

@@ -13,7 +13,6 @@ import {
 	genericFieldKind,
 	type ModularChangeset,
 	FieldKindWithEditor,
-	chunkTree,
 	defaultChunkPolicy,
 	type TreeChunk,
 	chunkFieldSingle,
@@ -27,6 +26,8 @@ import {
 	type FieldChangeRebaser,
 	type FieldEditor,
 	type EditDescription,
+	jsonableTreeFromFieldCursor,
+	cursorForJsonableTreeField,
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
@@ -36,7 +37,6 @@ import {
 	type FieldKindIdentifier,
 	type FieldKey,
 	revisionMetadataSourceFromInfo,
-	type ITreeCursorSynchronous,
 	type DeltaFieldChanges,
 	type DeltaRoot,
 	type DeltaDetachedNodeId,
@@ -62,11 +62,12 @@ import {
 	testChangeReceiver,
 	testIdCompressor,
 	testRevisionTagCodec,
+	treeChunkFromCursor,
 } from "../../utils.js";
 
 import { type ValueChangeset, valueField } from "./basicRebasers.js";
 import { ajvValidator } from "../../codec/index.js";
-import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
+import { fieldJsonCursor } from "../../json/index.js";
 import type {
 	NodeChangeset,
 	// eslint-disable-next-line import/no-internal-modules
@@ -97,6 +98,7 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 			? undefined
 			: composeChild(change1, change2),
 	invert: (change) => change,
+	mute: (change: SingleNodeChangeset) => change,
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
 	replaceRevisions: (change, oldRevisions, newRevision) =>
@@ -441,10 +443,7 @@ const rootChangeWithoutNodeFieldChanges: ModularChangeset = family.compose([
 
 const objectNode = chunkFromJsonTrees([{}]);
 const node1Chunk = chunkFromJsonTrees([1]);
-const nodesChunk = chunkFieldSingle(fieldJsonCursor([{}, {}]), {
-	policy: defaultChunkPolicy,
-	idCompressor: testIdCompressor,
-});
+const nodesChunk = treeChunkFromCursor(fieldJsonCursor([{}, {}]));
 
 describe("ModularChangeFamily", () => {
 	describe("compose", () => {
@@ -481,7 +480,7 @@ describe("ModularChangeFamily", () => {
 				builds: newTupleBTree([
 					[
 						[undefined as RevisionTag | undefined, brand(0)],
-						treeChunkFromCursor(singleJsonCursor(2)),
+						treeChunkFromCursor(fieldJsonCursor([2])),
 					],
 				]),
 			};
@@ -1255,9 +1254,9 @@ describe("ModularChangeFamily", () => {
 		const bMajor = mintRevisionTag();
 		const b1 = { major: bMajor, minor: 1 };
 
-		const node2 = singleJsonCursor(2);
+		const node2 = fieldJsonCursor([2]);
 		const node2Chunk = treeChunkFromCursor(node2);
-		const node3 = singleJsonCursor(3);
+		const node3 = fieldJsonCursor([3]);
 		const node3Chunk = treeChunkFromCursor(node3);
 
 		const nodesArray: [DeltaDetachedNodeId, TreeChunk][] = [
@@ -1494,8 +1493,14 @@ describe("ModularChangeFamily", () => {
 	});
 });
 
-function treeChunkFromCursor(cursor: ITreeCursorSynchronous): TreeChunk {
-	return chunkTree(cursor, { policy: defaultChunkPolicy, idCompressor: testIdCompressor });
+function deepCloneChunkedTree(chunk: TreeChunk): TreeChunk {
+	const jsonable = jsonableTreeFromFieldCursor(chunk.cursor());
+	const cursor = cursorForJsonableTreeField(jsonable);
+	const clone = chunkFieldSingle(cursor, {
+		policy: defaultChunkPolicy,
+		idCompressor: testIdCompressor,
+	});
+	return clone;
 }
 
 function inlineRevision(change: ModularChangeset, revision: RevisionTag): ModularChangeset {

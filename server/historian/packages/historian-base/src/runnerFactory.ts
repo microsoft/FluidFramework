@@ -4,17 +4,21 @@
  */
 
 import * as services from "@fluidframework/server-services";
-import * as core from "@fluidframework/server-services-core";
+import type * as core from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import winston from "winston";
 import { DenyList, RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import * as historianServices from "./services";
 import { normalizePort, Constants } from "./utils";
 import { HistorianRunner } from "./runner";
-import { IHistorianResourcesCustomizations } from "./customizations";
+import type { IHistorianResourcesCustomizations } from "./customizations";
 import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 import type { IDenyList } from "@fluidframework/server-services-core";
+import {
+	setupAxiosInterceptorsForAbortSignals,
+	getGlobalAbortControllerContext,
+} from "@fluidframework/server-services-client";
 
 export class HistorianResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
@@ -91,6 +95,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		// Create services
 		const riddlerEndpoint = config.get("riddler");
 		const alfredEndpoint = config.get("alfred");
+		const maxTokenLifetimeSec = config.get("maxTokenLifetimeSec");
 
 		const redisClientConnectionManagerForInvalidTokenCache =
 			customizations?.redisClientConnectionManagerForInvalidTokenCache
@@ -115,6 +120,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		const riddler = new historianServices.RiddlerService(
 			riddlerEndpoint,
 			tenantCache,
+			maxTokenLifetimeSec,
 			redisCacheForInvalidToken,
 		);
 
@@ -251,6 +257,12 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			documentsDenyListConfig,
 		);
 		const startupCheck = new StartupCheck();
+		const axiosAbortSignalEnabled = config.get("axiosAbortSignalEnabled") ?? false;
+		if (axiosAbortSignalEnabled) {
+			setupAxiosInterceptorsForAbortSignals(() =>
+				getGlobalAbortControllerContext().getAbortController(),
+			);
+		}
 
 		return new HistorianResources(
 			config,

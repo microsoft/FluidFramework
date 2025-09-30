@@ -17,14 +17,16 @@ import type { IFluidHandleContext } from "@fluidframework/core-interfaces/intern
 import type { IQuorumClients } from "@fluidframework/driver-definitions";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IInboundSignalMessage,
+	MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
 
 import type { IChannel } from "./channel.js";
 
 /**
  * Events emitted by {@link IFluidDataStoreRuntime}.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
 	(event: "disconnected", listener: () => void);
@@ -43,8 +45,7 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
 
 /**
  * Manages the transmission of ops between the runtime and storage.
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export type IDeltaManagerErased =
 	ErasedType<"@fluidframework/container-definitions.IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>">;
@@ -52,8 +53,7 @@ export type IDeltaManagerErased =
 /**
  * Represents the runtime for the data store. Contains helper functions/state of the data store.
  * @sealed
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IFluidDataStoreRuntime
 	extends IEventProvider<IFluidDataStoreRuntimeEvents>,
@@ -66,6 +66,8 @@ export interface IFluidDataStoreRuntime
 	readonly channelsRoutingContext: IFluidHandleContext;
 	readonly objectsRoutingContext: IFluidHandleContext;
 
+	// TODO: Use something other than `any` (breaking change)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly options: Record<string | number, any>;
 
 	readonly deltaManager: IDeltaManagerErased;
@@ -87,6 +89,12 @@ export interface IFluidDataStoreRuntime
 	 */
 	readonly attachState: AttachState;
 
+	/**
+	 * An optional ID compressor.
+	 * @remarks
+	 * When provided, can be used to compress and decompress IDs stored in this datastore.
+	 * Some SharedObjects, like SharedTree, require this.
+	 */
 	readonly idCompressor: IIdCompressor | undefined;
 
 	/**
@@ -102,13 +110,19 @@ export interface IFluidDataStoreRuntime
 	createChannel(id: string | undefined, type: string): IChannel;
 
 	/**
-	 * This api allows adding channel to data store after it was created.
-	 * This allows callers to cusmomize channel instance. For example, channel implementation
-	 * could have various modes of operations. As long as such configuration is provided at creation
+	 * Adds an existing channel to the data store.
+	 *
+	 * @remarks
+	 * This allows callers to customize channel instance.
+	 *
+	 * For example, a channel implementation could have various modes of operations.
+	 * As long as such configuration is provided at creation
 	 * and stored in summaries (such that all users of such channel instance behave the same), this
 	 * could be useful technique to have customized solutions without introducing a number of data structures
 	 * that all have same implementation.
+	 *
 	 * This is also useful for scenarios like SharedTree DDS, where schema is provided at creation and stored in a summary.
+	 *
 	 * The channel type should be present in the registry, otherwise the runtime would reject
 	 * the channel. The runtime used to create the channel object should be same to which
 	 * it is added.
@@ -163,6 +177,17 @@ export interface IFluidDataStoreRuntime
 }
 
 /**
+ * @experimental
+ * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @legacy @beta
+ * @sealed
+ */
+export interface IFluidDataStoreRuntimeExperimental extends IFluidDataStoreRuntime {
+	readonly inStagingMode?: boolean;
+	readonly isDirty?: boolean;
+}
+
+/**
  * Internal configs possibly implemented by IFuidDataStoreRuntimes, for use only within the runtime layer.
  * For example, temporary layer compatibility details
  *
@@ -170,4 +195,12 @@ export interface IFluidDataStoreRuntime
  */
 export interface IFluidDataStoreRuntimeInternalConfig {
 	readonly submitMessagesWithoutEncodingHandles?: boolean;
+
+	/**
+	 * Minimum version of the FF runtime that is required to collaborate on new documents. DDSes may read this value to
+	 * determine which feature flags should be enabled. This property is consumed by SharedObjectFactory (which are
+	 * implementations of {@link @fluidframework/datastore-definitions#IChannelFactory}).
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
+	 */
+	readonly minVersionForCollab?: MinimumVersionForCollab | undefined;
 }

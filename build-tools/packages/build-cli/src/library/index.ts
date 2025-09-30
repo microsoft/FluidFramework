@@ -4,7 +4,7 @@
  */
 
 export { ApiLevel, knownApiLevels, isKnownApiLevel } from "./apiLevel.js";
-export { ApiTag } from "./apiTag.js";
+export { ReleaseLevel } from "./releaseLevel.js";
 export {
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
@@ -16,7 +16,11 @@ export {
 	generateReleaseBranchName,
 } from "./branches.js";
 export { getDisplayDate, getDisplayDateRelative } from "./dates.js";
-export { bumpReleaseGroup, DependencyUpdateType, isDependencyUpdateType } from "./bump.js";
+export {
+	bumpReleaseGroup,
+	type DependencyUpdateType,
+	isDependencyUpdateType,
+} from "./bump.js";
 export {
 	DEFAULT_CHANGESET_PATH,
 	fluidCustomChangeSetMetadataDefaults,
@@ -32,7 +36,7 @@ export {
 	BaseCommandWithBuildProject,
 	GenerateEntrypointsCommand,
 } from "./commands/index.js";
-export { Context, VersionDetails, isMonoRepoKind, MonoRepoKind } from "./context.js";
+export { Context, type VersionDetails, isMonoRepoKind, MonoRepoKind } from "./context.js";
 export { Repository, getVersionsFromTags } from "./git.js";
 export {
 	ensureDevDependencyExists,
@@ -43,8 +47,8 @@ export {
 	getTarballName,
 	isReleased,
 	npmCheckUpdates,
-	PackageVersionMap,
-	PreReleaseDependencies,
+	type PackageVersionMap,
+	type PreReleaseDependencies,
 	setVersion,
 	sortVersions,
 } from "./package.js";
@@ -54,9 +58,9 @@ export { getApiExports } from "./typescriptApi.js";
 export { createPullRequest, getCommitInfo, pullRequestExists } from "./github.js";
 export {
 	getRanges,
-	ReleaseRanges,
-	ReleaseReport,
-	ReportKind,
+	type ReleaseRanges,
+	type ReleaseReport,
+	type ReportKind,
 	toReportKind,
 } from "./release.js";
 export { LayerGraph } from "./layerGraph.js";

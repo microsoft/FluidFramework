@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IGCResult } from "./gcDefinitions.js";
+import type { IGCResult } from "./gcDefinitions.js";
 
 /**
  * Runs garbage collection on the given reference graph.
@@ -31,7 +31,7 @@ export function runGarbageCollection(
 
 		// Get the node for the referenced id and add its outbound routes to referencedIds since they are
 		// also referenced.
-		const routes = referenceGraph[id];
+		const routes: string[] | undefined = referenceGraph[id];
 		if (routes !== undefined) {
 			referencedIds.push(...routes);
 		}

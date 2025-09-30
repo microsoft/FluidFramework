@@ -199,7 +199,7 @@ describeCompat(
 				testConfig ?? "undefined",
 			)}`, async function () {
 				const provider = getTestObjectProvider();
-				// REVIEW: enable CrossVersion compat testing?
+				// REVIEW: enable cross-client compat testing?
 				if (provider.type === "TestObjectProviderWithVersionedLoad") {
 					this.skip();
 				}

@@ -230,6 +230,7 @@ export const TestChange = {
 	checkChangeList,
 	toDelta,
 	isEmpty,
+	isNonEmptyChange,
 	codec,
 	codecs: makeCodecFamily([
 		[1, codec],

@@ -8,6 +8,7 @@ import {
 	FieldKind,
 	generateSchemaFromSimpleSchema,
 	getJsonSchema,
+	KeyEncodingOptions,
 	NodeKind,
 	normalizeFieldSchema,
 	numberSchema,
@@ -37,7 +38,7 @@ function simpleToJsonSchema(simpleSchema: SimpleTreeSchema): JsonTreeSchema {
 	const schema = generateSchemaFromSimpleSchema(simpleSchema);
 	return toJsonSchema(schema, {
 		requireFieldsWithDefaults: false,
-		useStoredKeys: false,
+		keys: KeyEncodingOptions.usePropertyKeys,
 	});
 }
 
@@ -88,7 +89,12 @@ describe("simpleSchemaToJsonSchema", () => {
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.handle",
-					{ leafKind: ValueSchema.FluidHandle, metadata: {}, kind: NodeKind.Leaf },
+					{
+						leafKind: ValueSchema.FluidHandle,
+						metadata: {},
+						persistedMetadata: undefined,
+						kind: NodeKind.Leaf,
+					},
 				],
 			]),
 		};
@@ -109,6 +115,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: NodeKind.Array,
 						metadata: {},
+						persistedMetadata: undefined,
 						allowedTypesIdentifiers: new Set<string>([stringSchema.identifier]),
 					},
 				],
@@ -161,6 +168,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: NodeKind.Map,
 						metadata: {},
+						persistedMetadata: undefined,
 						allowedTypesIdentifiers: new Set<string>([stringSchema.identifier]),
 					},
 				],
@@ -212,13 +220,78 @@ describe("simpleSchemaToJsonSchema", () => {
 		);
 	});
 
+	it("Record schema", () => {
+		const input: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				allowedTypesIdentifiers: new Set<string>(["test.record"]),
+				metadata: {},
+			},
+			definitions: new Map<string, SimpleNodeSchema>([
+				[
+					"test.record",
+					{
+						kind: NodeKind.Record,
+						metadata: {},
+						persistedMetadata: undefined,
+						allowedTypesIdentifiers: new Set<string>([stringSchema.identifier]),
+					},
+				],
+				[stringSchema.identifier, stringSchema],
+			]),
+		};
+
+		const actual = simpleToJsonSchema(input);
+
+		const expected: JsonTreeSchema = {
+			$defs: {
+				"test.record": {
+					type: "object",
+					_treeNodeSchemaKind: NodeKind.Record,
+					patternProperties: {
+						"^.*$": { $ref: "#/$defs/com.fluidframework.leaf.string" },
+					},
+				},
+				[stringSchema.identifier]: {
+					type: "string",
+					_treeNodeSchemaKind: NodeKind.Leaf,
+				},
+			},
+			$ref: "#/$defs/test.record",
+		};
+		assert.deepEqual(actual, expected);
+
+		// Verify that the generated schema is valid.
+		const validator = getJsonValidator(actual);
+
+		// Verify expected data validation behavior.
+		validator("Hello world", false);
+		validator([], false);
+		validator({}, true);
+		validator(
+			{
+				foo: "Hello",
+				bar: "World",
+			},
+			true,
+		);
+		validator(
+			{
+				foo: "Hello",
+				bar: "World",
+				baz: 42,
+			},
+			false,
+		);
+	});
+
 	describe("convertObjectNodeSchema", () => {
 		it("empty", () => {
 			const schemaFactory = new SchemaFactoryAlpha("test");
-			const empty = schemaFactory.object("empty", {});
+			const empty = schemaFactory.objectAlpha("empty", {});
 			const emptyJson = convertObjectNodeSchema(empty, {
 				requireFieldsWithDefaults: false,
-				useStoredKeys: false,
+				keys: KeyEncodingOptions.usePropertyKeys,
 			});
 			const expectedEmpty: JsonObjectNodeSchema = {
 				type: "object",
@@ -232,7 +305,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 		it("withField", () => {
 			const schemaFactory = new SchemaFactoryAlpha("test");
-			class WithField extends schemaFactory.object("withField", {
+			class WithField extends schemaFactory.objectAlpha("withField", {
 				prop: schemaFactory.optional(schemaFactory.number, {
 					key: "stored",
 					metadata: { description: "The description" },
@@ -240,7 +313,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			}) {}
 			const withFieldJson = convertObjectNodeSchema(WithField, {
 				requireFieldsWithDefaults: false,
-				useStoredKeys: false,
+				keys: KeyEncodingOptions.usePropertyKeys,
 			});
 			const expectedWithField: JsonObjectNodeSchema = {
 				type: "object",
@@ -271,6 +344,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"foo",
@@ -278,6 +352,7 @@ describe("simpleSchemaToJsonSchema", () => {
 									kind: FieldKind.Optional,
 									allowedTypesIdentifiers: new Set<string>([numberSchema.identifier]),
 									metadata: { description: "A number representing the concept of Foo." },
+									persistedMetadata: undefined,
 									storedKey: "foo",
 								},
 							],
@@ -287,6 +362,7 @@ describe("simpleSchemaToJsonSchema", () => {
 									kind: FieldKind.Required,
 									allowedTypesIdentifiers: new Set<string>([stringSchema.identifier]),
 									metadata: { description: "A string representing the concept of Bar." },
+									persistedMetadata: undefined,
 									storedKey: "bar",
 								},
 							],
@@ -298,6 +374,7 @@ describe("simpleSchemaToJsonSchema", () => {
 									metadata: {
 										description: "Unique identifier for the test object.",
 									},
+									persistedMetadata: undefined,
 									storedKey: "id",
 								},
 							],
@@ -404,6 +481,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"id",
@@ -459,12 +537,14 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"foo",
 								{
 									kind: FieldKind.Required,
 									metadata: {},
+									persistedMetadata: undefined,
 									allowedTypesIdentifiers: new Set<string>([
 										numberSchema.identifier,
 										stringSchema.identifier,
@@ -525,12 +605,14 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"foo",
 								{
 									kind: FieldKind.Optional,
 									metadata: {},
+									persistedMetadata: undefined,
 									allowedTypesIdentifiers: new Set<string>([
 										stringSchema.identifier,
 										"test.recursive-object",
@@ -601,40 +683,48 @@ describe("simpleSchemaToJsonSchema", () => {
 				const testSchema = normalizeFieldSchema(testTree.schema).allowedTypes;
 
 				{
-					const withPropertyKeys = TreeAlpha.exportConcise(tree, { useStoredKeys: false });
+					const withPropertyKeys = TreeAlpha.exportConcise(tree, {
+						keys: KeyEncodingOptions.usePropertyKeys,
+					});
 					const jsonSchema = getJsonSchema(testSchema, {
 						requireFieldsWithDefaults: true,
-						useStoredKeys: false,
+						keys: KeyEncodingOptions.usePropertyKeys,
 					});
 					const validator = getJsonValidator(jsonSchema);
 					validator(withPropertyKeys, true);
 				}
 
 				{
-					const withStoredKeys = TreeAlpha.exportConcise(tree, { useStoredKeys: true });
+					const withStoredKeys = TreeAlpha.exportConcise(tree, {
+						keys: KeyEncodingOptions.knownStoredKeys,
+					});
 					const jsonSchema = getJsonSchema(testSchema, {
 						requireFieldsWithDefaults: true,
-						useStoredKeys: true,
+						keys: KeyEncodingOptions.knownStoredKeys,
 					});
 					const validator = getJsonValidator(jsonSchema);
 					validator(withStoredKeys, true);
 				}
 
 				{
-					const withPropertyKeys = TreeAlpha.exportConcise(tree, { useStoredKeys: false });
+					const withPropertyKeys = TreeAlpha.exportConcise(tree, {
+						keys: KeyEncodingOptions.usePropertyKeys,
+					});
 					const jsonSchema = getJsonSchema(testSchema, {
 						requireFieldsWithDefaults: false,
-						useStoredKeys: false,
+						keys: KeyEncodingOptions.usePropertyKeys,
 					});
 					const validator = getJsonValidator(jsonSchema);
 					validator(withPropertyKeys, true);
 				}
 
 				{
-					const withStoredKeys = TreeAlpha.exportConcise(tree, { useStoredKeys: true });
+					const withStoredKeys = TreeAlpha.exportConcise(tree, {
+						keys: KeyEncodingOptions.knownStoredKeys,
+					});
 					const jsonSchema = getJsonSchema(testSchema, {
 						requireFieldsWithDefaults: false,
-						useStoredKeys: true,
+						keys: KeyEncodingOptions.knownStoredKeys,
 					});
 					const validator = getJsonValidator(jsonSchema);
 					validator(withStoredKeys, true);

@@ -127,25 +127,21 @@ export interface IMigrationStrategy {
 	migrateWithManyContainers(...containers: IContainer[]): Promise<RootDO2[]>;
 }
 
-const DOWithSTFactory = new DataObjectFactory(
-	"a",
-	DOWithST,
-	[SharedTree.getFactory(), LegacySharedTree.getFactory()],
-	{},
-);
-const DOWithST2Factory = new DataObjectFactory(
-	"b",
-	DOWithST2,
-	[SharedTree.getFactory(), LegacySharedTree.getFactory()],
-	{},
-);
-const rootDOFactory = new DataObjectFactory(
-	"rootdo",
-	RootDO,
-	[LegacySharedTree.getFactory()],
-	{},
-	[DOWithSTFactory.registryEntry, DOWithST2Factory.registryEntry],
-);
+const DOWithSTFactory = new DataObjectFactory({
+	type: "a",
+	ctor: DOWithST,
+	sharedObjects: [SharedTree.getFactory(), LegacySharedTree.getFactory()],
+});
+const DOWithST2Factory = new DataObjectFactory({
+	type: "b",
+	ctor: DOWithST2,
+});
+const rootDOFactory = new DataObjectFactory({
+	type: "rootdo",
+	ctor: RootDO,
+	sharedObjects: [LegacySharedTree.getFactory()],
+	registryEntries: [DOWithSTFactory.registryEntry, DOWithST2Factory.registryEntry],
+});
 const exampleRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 	defaultFactory: rootDOFactory,
 	registryEntries: [rootDOFactory.registryEntry],

@@ -81,7 +81,7 @@ export class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList]
 export const POJO = schema.object("POJO", { stuff: [NodeMap, NodeList] });
 export type POJO = NodeFromSchema<typeof POJO>;
 
-export const POJOAlpha = schemaAlpha.object("POJO", { stuff: [NodeMap, NodeList] });
+export const POJOAlpha = schemaAlpha.objectAlpha("POJO", { stuff: [NodeMap, NodeList] });
 {
 	type _check = requireAssignableTo<typeof POJOAlpha, ObjectNodeSchema>;
 }
@@ -102,6 +102,14 @@ export const recursiveField = schema.optionalRecursive([() => RecursiveObject, s
 export class RecursiveMap extends schema.mapRecursive("RM", [() => RecursiveMap]) {}
 {
 	type _check = ValidateRecursiveSchema<typeof RecursiveMap>;
+}
+
+export class RecursiveRecord extends schemaAlpha.recordRecursive("RR", [
+	SchemaFactory.number,
+	() => RecursiveRecord,
+]) {}
+{
+	type _check = ValidateRecursiveSchema<typeof RecursiveRecord>;
 }
 
 /**

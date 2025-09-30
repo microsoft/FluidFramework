@@ -15,7 +15,10 @@ import {
 	Loader,
 	waitContainerToCatchUp as waitContainerToCatchUp_original,
 } from "@fluidframework/container-loader/internal";
-import { type IContainerRuntimeOptionsInternal } from "@fluidframework/container-runtime/internal";
+import {
+	type IContainerRuntimeOptionsInternal,
+	type MinimumVersionForCollab,
+} from "@fluidframework/container-runtime/internal";
 import {
 	IRequestHeader,
 	ITelemetryBaseEvent,
@@ -54,8 +57,7 @@ const defaultCodeDetails: IFluidCodeDetails = {
 /**
  * Exposes fine-grained control over the Container's inbound and outbound op queues
  *
- * @legacy
- * @alpha
+ * @legacy @beta
  */
 export interface IOpProcessingController {
 	/**
@@ -143,7 +145,7 @@ export interface ITestObjectProvider {
 	 *
 	 * @param packageEntries - list of code details and fluidEntryPoint pairs.
 	 * @param loaderProps - Optional loader properties
-	 * @param forceUseCreateVersion - For Cross-Version compat testing, create a loader based on the create version
+	 * @param forceUseCreateVersion - For Cross-Client compat testing, create a loader based on the create version
 	 */
 	createLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
@@ -260,11 +262,17 @@ export interface ITestContainerConfig {
 	/** Whether this runtime should be instantiated using a mixed-in attributor class */
 	enableAttribution?: boolean;
 
-	/** For Cross-Version compat testing, load using the create version (e.g. use this to get a Summarizer on the create version) */
+	/** For Cross-Client compat testing, load using the create version (e.g. use this to get a Summarizer on the create version) */
 	forceUseCreateVersion?: true;
 
 	/** Loader options for the loader used to create containers */
 	loaderProps?: Partial<ILoaderProps>;
+
+	/**
+	 * Minimum version of the FF runtime that is required to collaborate on new documents.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
+	 */
+	minVersionForCollab?: MinimumVersionForCollab | undefined;
 }
 
 /**

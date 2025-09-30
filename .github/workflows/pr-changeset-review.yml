@@ -17,10 +17,12 @@ on:
       - ".changeset/**" # Trigger only when changes are found under .changeset
 
 permissions:
-  pull-requests: write
+  pull-requests: read
 
 jobs:
   vale:
+    permissions:
+      pull-requests: write # for errata-ai/vale-action to add comments to PRs
     name: vale
     runs-on: ubuntu-latest
     steps:

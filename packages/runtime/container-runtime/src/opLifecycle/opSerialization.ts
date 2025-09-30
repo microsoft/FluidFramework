@@ -12,6 +12,8 @@ import {
 
 import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
 
+import type { EmptyGroupedBatch } from "./opGroupingManager.js";
+
 /**
  * Takes an incoming runtime message (outer type "op"), JSON.parses the message's contents in place,
  * if needed (old Loader does this for us).
@@ -34,7 +36,10 @@ export function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMes
  * @param toSerialize - op message to serialize. Also supports an array of ops.
  */
 export function serializeOp(
-	toSerialize: LocalContainerRuntimeMessage | LocalContainerRuntimeMessage[],
+	toSerialize:
+		| EmptyGroupedBatch
+		| LocalContainerRuntimeMessage
+		| LocalContainerRuntimeMessage[],
 ): string {
 	return JSON.stringify(
 		toSerialize,

@@ -3,11 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import {
+	type IPubSub,
+	type ISubscriber,
+	WebSocketSubscriber,
+} from "@fluidframework/server-memory-orderer";
+import type { IWebSocket, IWebSocketServer } from "@fluidframework/server-services-core";
 import events_pkg from "events_pkg";
-const { EventEmitter } = events_pkg;
-import { IPubSub, ISubscriber, WebSocketSubscriber } from "@fluidframework/server-memory-orderer";
-import { IWebSocket, IWebSocketServer } from "@fluidframework/server-services-core";
 import { v4 as uuid } from "uuid";
+
+const { EventEmitter } = events_pkg;
 
 /**
  * @internal
@@ -27,6 +32,10 @@ export class LocalWebSocket implements IWebSocket {
 		private readonly server: LocalWebSocketServer,
 	) {
 		this.subscriber = new WebSocketSubscriber(this);
+	}
+
+	public get handshake(): any {
+		return undefined;
 	}
 
 	public on(event: string, listener: (...args: any[]) => void) {
@@ -79,6 +88,10 @@ export class LocalWebSocketServer implements IWebSocketServer {
 	private readonly events = new EventEmitter();
 
 	constructor(public readonly pubsub: IPubSub) {}
+
+	public get handshake(): any {
+		return undefined;
+	}
 
 	public on(event: string, listener: (...args: any[]) => void) {
 		this.events.on(event, listener);

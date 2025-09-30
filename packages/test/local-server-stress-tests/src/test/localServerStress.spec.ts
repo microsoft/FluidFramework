@@ -5,7 +5,14 @@
 
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 
-import { makeGenerator, reducer, saveFailures, type StressOperations } from "../baseModel.js";
+import {
+	ddsModelMinimizers,
+	makeGenerator,
+	reducer,
+	saveFailures,
+	type StressOperations,
+} from "../baseModel.js";
+import { validateAllDataStoresSaved } from "../dataStoreOperations.js";
 import { validateConsistencyOfAllDDS } from "../ddsOperations";
 import {
 	createLocalServerStressSuite,
@@ -17,17 +24,24 @@ describe("Local Server Stress", () => {
 		workloadName: "default",
 		generatorFactory: () => takeAsync(100, makeGenerator()),
 		reducer,
-		validateConsistency: validateConsistencyOfAllDDS,
+		validateConsistency: async (...clients) => {
+			await validateAllDataStoresSaved(...clients);
+			await validateConsistencyOfAllDDS(...clients);
+		},
+		minimizationTransforms: ddsModelMinimizers,
 	};
 
 	createLocalServerStressSuite(model, {
-		defaultTestCount: 100,
-		// skipMinimization: true,
-		// Uncomment to replay a particular seed.
-		// replay: 93,
-		// only: [28],
+		defaultTestCount: 200,
 		saveFailures,
-		// saveSuccesses,
-		skip: [28],
+		configurations: {
+			"Fluid.Container.enableOfflineLoad": true,
+			"Fluid.ContainerRuntime.EnableRollback": true,
+		},
+		// skipMinimization: true,
+		// Use skip, replay, and only properties to control which seeds run.
+		skip: [
+			124, // directory 0xc38
+		],
 	});
 });
