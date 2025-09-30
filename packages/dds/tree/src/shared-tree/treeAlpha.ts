@@ -566,7 +566,7 @@ class NodeSubscription {
 	) {
 		// TODO:Performance: It is possible to optimize this to not use the public TreeNode API.
 		const node = getOrCreateNodeFromInnerNode(flexNode);
-		assert(node instanceof TreeNode, "Unexpected leaf value");
+		assert(node instanceof TreeNode, 0xc54 /* Unexpected leaf value */);
 
 		const handler = (data: NodeChangedData): void => {
 			if (this.keys === undefined || data.changedProperties === undefined) {
