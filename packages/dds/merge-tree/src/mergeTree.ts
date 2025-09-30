@@ -265,7 +265,7 @@ export class MergeNode implements IMergeNodeCommon {
     parent?: IMergeBlock;
     cachedLength: number = 0;
 
-    isLeaf(): this is ISegment {
+    isLeaf() {
         return false;
     }
 }
@@ -524,7 +524,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
         return !!this.properties && (this.properties[key] !== undefined);
     }
 
-    public isLeaf(): this is ISegment {
+    public isLeaf() {
         return true;
     }
 

@@ -152,7 +152,7 @@ export class LocalReference implements LocalReferencePosition {
         return refGetRangeLabels(this);
     }
 
-    public isLeaf(): this is ISegment {
+    public isLeaf() {
         return false;
     }
 

@@ -44,7 +44,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     hasProperty(key: string): boolean;
     // (undocumented)
-    isLeaf(): this is ISegment;
+    isLeaf(): boolean;
     // (undocumented)
     localRefs?: LocalReferenceCollection;
     // (undocumented)
@@ -845,7 +845,7 @@ export class LocalReference implements LocalReferencePosition {
     // @deprecated (undocumented)
     hasTileLabels(): boolean;
     // (undocumented)
-    isLeaf(): this is ISegment;
+    isLeaf(): boolean;
     // @deprecated (undocumented)
     max(b: LocalReference): LocalReference;
     // @deprecated (undocumented)
@@ -1007,7 +1007,7 @@ export class MergeNode implements IMergeNodeCommon {
     // (undocumented)
     index: number;
     // (undocumented)
-    isLeaf(): this is ISegment;
+    isLeaf(): boolean;
     // (undocumented)
     ordinal: string;
     // (undocumented)
