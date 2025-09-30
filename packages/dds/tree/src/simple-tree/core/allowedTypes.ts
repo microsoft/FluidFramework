@@ -116,6 +116,13 @@ export type AllowedTypesFull<
 	T extends readonly AnnotatedAllowedType[] = readonly AnnotatedAllowedType[],
 > = AnnotatedAllowedTypes<T> & UnannotateAllowedTypesList<T>;
 
+/**
+ * The same as the built-in InstanceType, but works on classes with private constructors.
+ * @privateRemarks
+ * This is based on the trick in {@link https://stackoverflow.com/a/74657881}.
+ */
+type InstanceTypeRelaxed<TClass> = InstanceType<(new () => never) & TClass>;
+
 export class AnnotatedAllowedTypesInternal<
 		T extends readonly AnnotatedAllowedType[] = readonly AnnotatedAllowedType[],
 	>
@@ -155,13 +162,15 @@ export class AnnotatedAllowedTypesInternal<
 	}
 
 	public static override [Symbol.hasInstance]<
-		TThis extends abstract new (
-			...args: unknown[]
-		) => object,
+		TThis extends
+			| (abstract new (
+					...args: unknown[]
+			  ) => object)
+			| typeof AnnotatedAllowedTypesInternal,
 	>(
 		this: TThis,
-		value: ErasedBaseType | InstanceType<TThis>,
-	): value is InstanceType<TThis> & AnnotatedAllowedTypesInternal & AllowedTypesFull {
+		value: ErasedBaseType | InstanceTypeRelaxed<TThis> | ImplicitAnnotatedAllowedTypes,
+	): value is InstanceTypeRelaxed<TThis> & AnnotatedAllowedTypesInternal & AllowedTypesFull {
 		return Object.prototype.isPrototypeOf.call(this.prototype, value);
 	}
 

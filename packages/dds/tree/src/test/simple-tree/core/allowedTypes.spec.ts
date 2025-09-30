@@ -299,6 +299,19 @@ describe("allowedTypes", () => {
 			// deepEqual tests a lot of generic object API which can violate proxy invariants and crash.
 			assert.deepEqual(types, types2);
 		});
+
+		it("narrowing", () => {
+			const types = AnnotatedAllowedTypesInternal.create(
+				[{ metadata: {}, type: schema.string }],
+				{ custom: "customValue" },
+			);
+			// While this implements readonly array, it is not actually an array.
+			// The proxy could be changed to make it appear as an array.
+			assert.equal(Array.isArray(types), false);
+			assert(types instanceof AnnotatedAllowedTypesInternal);
+
+			// TODO: Ensure there is a good public way to narrow ImplicitAnnotatedAllowedTypes all of its options. Test those here.
+		});
 	});
 
 	it("unannotateAllowedType", () => {
