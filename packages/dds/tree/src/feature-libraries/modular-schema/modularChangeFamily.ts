@@ -2706,15 +2706,13 @@ class InvertNodeManagerI implements InvertNodeManager {
 					fieldChangeFromId(this.table.change, attachFieldEntry.value),
 				);
 			} else {
-				setInChangeAtomIdMap(
-					this.table.invertedRoots.nodeChanges,
+				assignRootChange(
+					this.table.invertedRoots,
+					this.table.invertedNodeToParent,
 					attachEntry.value,
 					nodeChange,
+					this.fieldId,
 				);
-
-				this.table.invertedNodeToParent.set([nodeChange.revision, nodeChange.localId], {
-					root: attachEntry.value,
-				});
 			}
 		}
 
