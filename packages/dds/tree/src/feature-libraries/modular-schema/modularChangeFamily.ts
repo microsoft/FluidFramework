@@ -2025,6 +2025,7 @@ export class ModularChangeFamily
 	private muteChange(change: ModularChangeset): ModularChangeset {
 		const muted: Mutable<ModularChangeset> = {
 			...change,
+			rootNodes: muteRootChanges(change.rootNodes),
 			crossFieldKeys: newCrossFieldRangeTable(),
 			fieldChanges: this.muteFieldChanges(change.fieldChanges),
 			nodeChanges: brand(change.nodeChanges.mapValues((v) => this.muteNodeChange(v))),
@@ -4577,4 +4578,14 @@ function getFieldsWithRootChanges(
 	}
 
 	return fields;
+}
+
+function muteRootChanges(roots: RootNodeTable): RootNodeTable {
+	return {
+		oldToNewId: newChangeAtomIdTransform(),
+		newToOldId: newChangeAtomIdTransform(),
+		nodeChanges: brand(roots.nodeChanges.clone()),
+		detachLocations: roots.detachLocations.clone(),
+		outputDetachLocations: newChangeAtomIdRangeMap(),
+	};
 }
