@@ -284,7 +284,7 @@ export async function loadFrozenContainerFromPendingState(
  * Loads a summarizer container with the required headers, triggers an on-demand summary, and then closes it.
  * Returns success/failure and an optional error for host-side handling.
  *
- * @beta
+ * @legacy @beta
  */
 export async function loadSummarizerContainerAndMakeSummary(
 	loadExistingContainerProps: ILoadExistingContainerProps,

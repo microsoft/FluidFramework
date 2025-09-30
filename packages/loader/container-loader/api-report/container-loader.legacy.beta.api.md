@@ -159,10 +159,10 @@ export class Loader implements IHostLoader {
 // @beta @legacy
 export function loadExistingContainer(loadExistingContainerProps: ILoadExistingContainerProps): Promise<IContainer>;
 
-// @beta
+// @beta @legacy
 export function loadSummarizerContainerAndMakeSummary(loadExistingContainerProps: ILoadExistingContainerProps): Promise<LoadSummarizerSummaryResult>;
 
-// @beta
+// @beta @legacy
 export type LoadSummarizerSummaryResult = {
     readonly success: true;
     readonly summaryResults: OnDemandSummaryResults;
@@ -171,7 +171,7 @@ export type LoadSummarizerSummaryResult = {
     readonly error: Error;
 };
 
-// @beta
+// @beta @legacy
 export interface OnDemandSummaryResults {
     // (undocumented)
     readonly receivedSummaryAck: boolean;
@@ -205,7 +205,7 @@ export function rehydrateDetachedContainer(rehydrateDetachedContainerProps: IReh
 // @beta @legacy
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
 
-// @beta
+// @beta @legacy
 export type SummaryStage = "base" | "generate" | "upload" | "submit" | "unknown";
 
 // @beta @legacy

@@ -15,7 +15,7 @@ export const summarizerRequestUrl = "_summarizer";
 
 /**
  * Stages of summary process.
- * @beta
+ * @legacy @beta
  */
 export type SummaryStage = "base" | "generate" | "upload" | "submit" | "unknown";
 
@@ -62,7 +62,7 @@ export interface SummarizeOnDemandResults {
 
 /**
  * Results from an on-demand summary request.
- * @beta
+ * @legacy @beta
  */
 export interface OnDemandSummaryResults {
 	readonly summarySubmitted: boolean;
@@ -77,7 +77,7 @@ export interface OnDemandSummaryResults {
 
 /**
  * Outcome from {@link loadSummarizerContainerAndMakeSummary}.
- * @beta
+ * @legacy @beta
  */
 export type LoadSummarizerSummaryResult =
 	| {
