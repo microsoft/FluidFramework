@@ -56,7 +56,13 @@
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.4.5"
+		"typescript": "~5.4.5",
+		"typescript-5.4": "npm:typescript@~5.4.5",
+		"typescript-5.5": "npm:typescript@~5.5.4",
+		"typescript-5.6": "npm:typescript@~5.6.3",
+		"typescript-5.7": "npm:typescript@~5.7.3",
+		"typescript-5.8": "npm:typescript@~5.8.3",
+		"typescript-5.9": "npm:typescript@~5.9.2"
 	},
 	"typeValidation": {
 		"disabled": true,
