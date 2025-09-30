@@ -544,8 +544,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				} = message;
 				const branch = this.editManager.getLocalBranch(branchId);
 				const head = branch.getHead();
-				assert(head.revision === revision, "Can only rollback latest commit");
-				const newHead = head.parent ?? fail("must have parent");
+				assert(head.revision === revision, 0xc6b /* Can only rollback latest commit */);
+				const newHead = head.parent ?? fail(0xc6c /* must have parent */);
 				branch.removeAfter(newHead);
 				this.getResubmitMachine(branchId).onCommitRollback(head);
 				break;
@@ -591,7 +591,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	): void {
 		const changeEnricher = enricher ?? new NoOpChangeEnricher();
 		const commitEnricher = new BranchCommitEnricher(this.changeFamily.rebaser, changeEnricher);
-		assert(!this.enrichers.has(branchId), "Branch already registered");
+		assert(!this.enrichers.has(branchId), 0xc6d /* Branch already registered */);
 		this.enrichers.set(branchId, {
 			enricher: commitEnricher,
 			resubmitMachine:
@@ -619,7 +619,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	private getEnricherState(branchId: BranchId): EnricherState<TChange> {
 		return (
 			this.tryGetEnricherState(branchId) ??
-			fail("Expected to have a resubmit machine for this branch")
+			fail(0xc6e /* Expected to have a resubmit machine for this branch */)
 		);
 	}
 
