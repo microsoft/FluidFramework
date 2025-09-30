@@ -385,6 +385,9 @@ export function getZodSchemaAsTypeScript(
 			case z.ZodFirstPartyTypeKind.ZodVoid: {
 				return append("void");
 			}
+			case z.ZodFirstPartyTypeKind.ZodLazy: {
+				return appendType((type._def as z.ZodLazyDef).getter());
+			}
 			default: {
 				throw new UsageError(
 					`Unsupported type when transforming class method: ${getTypeKind(type)}`,
@@ -589,18 +592,23 @@ export function instanceOf<T extends TreeNodeSchemaClass>(
 const instanceOfs = new WeakMap<z.ZodTypeAny, ObjectNodeSchema>();
 
 /**
- * Yields all named object, map, array, and record schemas reachable from the given schema.
+ * Adds all named object, map, array, and record schemas reachable from the given schema to the given set.
  * @remarks This includes transitive child/descendant schemas.
  * It does not include primitive schemas or inlined array/map/record schemas.
- *
- * This does not filter out duplicate schemas if the same schema is reachable via multiple paths.
+ * @returns The set of named schemas added (same as the `schemas` parameter, if supplied).
  */
-export function* findNamedSchemas(schema: ImplicitFieldSchema): Iterable<TreeNodeSchema> {
-	const normalizedSchema = normalizeFieldSchema(schema);
-	for (const nodeSchema of normalizedSchema.allowedTypeSet) {
-		if (isNamedSchema(nodeSchema.identifier)) {
-			yield nodeSchema;
+export function findNamedSchemas(
+	schema: ImplicitFieldSchema,
+	schemas = new Set<TreeNodeSchema>(),
+): Set<TreeNodeSchema> {
+	const set = schemas ?? new Set();
+	for (const nodeSchema of normalizeFieldSchema(schema).allowedTypeSet) {
+		if (!set.has(nodeSchema)) {
+			if (isNamedSchema(nodeSchema.identifier)) {
+				set.add(nodeSchema);
+			}
+			findNamedSchemas([...nodeSchema.childTypes], set);
 		}
-		yield* findNamedSchemas([...nodeSchema.childTypes]);
 	}
+	return set;
 }
