@@ -123,21 +123,22 @@ export function onAssertionFailure(handler: (error: Error) => void): () => void 
 /**
  * Asserts that can be conditionally enabled in debug/development builds but will be optimized out of production builds.
  *
- * Enabled by default.
+ * Enabled when {@link nonProductionConditionalsIncluded} is true.
  *
  * If the assert must be enforced/checked in production or enabled by default, use {@link assert} instead.
  *
  * @param predicate - A pure function that should return true if the condition holds, or a string or object describing the condition that failed.
  * This function will only be run in some configurations so it should be pure, and only used to detect bugs (when debugAssert are enabled), and must not be relied on to enforce the condition is true: for that use {@link assert}.
  * @remarks
- * Optimizing the asserts out of the bundle requires a bundler like webpack which leverages `__PURE__` annotations like https://webpack.js.org/guides/tree-shaking/#mark-a-function-call-as-side-effect-free.
- *
  * Exceptions thrown by this function must never be caught in production code, as that will result in different behavior when testing and when running optimized builds.
  * The `predicate` function must be pure (have no side-effects) to ensure that the behavior of code is the same regardless of if the asserts are disabled, enabled or optimized out.
  *
- * These asserts are disabled by default, even in debug builds to ensure that by default code will be tested as production runs, with them disabled.
- * Additionally, this ensures that apps that use a bundler which does not remove `__PURE__` will not incur the runtime cost of calling the predicate.
- * These asserts can be can be enabled by calling `configureDebugAsserts(true)`: see {@link configureDebugAsserts}.
+ * These asserts are enabled by default in debug builds: this introduces risk that code may behave differently when they are disabled or optimized out.
+ * To mitigate this risk, these asserts can be disabled in debug builds by calling {@link configureDebugAsserts} or {@link emulateProductionBuild}.
+ * This allows testing with the asserts both enabled and disabled to help ensure that code does not depend on them being enabled.
+ *
+ * Apps (or other performance sensitive scenarios) packaged in a way that does not {@link nonProductionConditionalsIncluded|non-production code}
+ * can use the same approaches to disable these asserts to reduce performance overhead.
  *
  * @privateRemarks
  * This design was chosen to accomplish two main goals:
@@ -149,7 +150,7 @@ export function onAssertionFailure(handler: (error: Error) => void): () => void 
  * 2. Make it easy to test (both manually and automated) with and without the predicates running.
  * This ensures it is possible to benefit from the asserts when enabled, but also test with them disabled to ensure this disablement doesn't cause bugs.
  *
- * The default behavior of having debugAsserts disabled helps ensure that tests which don't know about debug asserts will still run in a way that is most similar to production.
+ * The default behavior of having debugAsserts enabled helps ensure debugAsserts are effective at catching bugs during development and testing.
  * @internal
  */
 export function debugAssert(predicate: () => true | { toString(): string }): void {
@@ -199,7 +200,11 @@ export function configureDebugAsserts(enabled: boolean): boolean {
 /**
  * Checks if non-production conditional code like {@link debugAssert} is included in this build.
  * @remarks
- * Such code can be optimized out by bundlers: this checks if that has occurred.
+ * Such code can be optimized out by bundlers or by {@link emulateProductionBuild}: this checks if that has occurred.
+ *
+ * The non-production used by this library is annotated with `__PURE__` and `#__NO_SIDE_EFFECTS__` and has no return value and thus is removed by bundlers when optimizing based on these annotations.
+ * Typically this means that such code is removed in production builds.
+ * More details on these annotations can be found at {@link  https://github.com/javascript-compiler-hints/compiler-notations-spec/tree/main}.
  * @privateRemarks
  * See {@link skipInProductionInner}.
  * @internal
