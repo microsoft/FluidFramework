@@ -21,11 +21,6 @@ const typescriptVersions = Object.entries(devDependencies).filter(([name]) =>
 
 const execFileAsync = promisify(execFile);
 
-// TODO: cases which do not build, but probably should:
-// - Building with `"lib": ["ES2022"]` (missing "DOM"): Error: ../../../packages/utils/telemetry-utils/lib/config.d.ts(37,56): error TS2304: Cannot find name 'Storage'.
-// - Building with `"lib": ["ES2022", "DOM", "esnext.disposable"]` and TS 5.6 or newer
-// - Building with `"exactOptionalPropertyTypes": true`
-
 async function compileTest(tscName: string, args: string[]): Promise<void> {
 	const result = execFileAsync(
 		`./node_modules/${tscName}/bin/tsc`,
