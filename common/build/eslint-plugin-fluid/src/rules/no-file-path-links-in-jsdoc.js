@@ -40,7 +40,10 @@ module.exports = {
 					// Find links where the `target` component is a file path (starts with `/`, `./`, or `../`)
 					const matches = comment.value.matchAll(/{@link\s+(\/|\.\/|\.\.\/).*}/g);
 					for (const match of matches) {
-						const startIndex = comment.range[0] + match.index;
+						// +2 for the leading "/*", which is ommitted by `comment.value`, but included in `comment.range`.
+						const commentStartIndex = comment.range[0] + 2;
+
+						const startIndex = commentStartIndex + match.index;
 						const endIndex = startIndex + match[0].length;
 
 						context.report({
