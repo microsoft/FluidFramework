@@ -12,7 +12,10 @@ import {
 } from "@fluidframework/runtime-utils/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
-import type { IBlobManagerLoadInfo } from "../../blobManager/index.js";
+import {
+	getGCNodePathFromLocalId,
+	type IBlobManagerLoadInfo,
+} from "../../blobManager/index.js";
 
 import {
 	attachHandle,
@@ -814,7 +817,76 @@ for (const createBlobPayloadPending of [false, true]) {
 		});
 
 		// #region GC
-		describe("Garbage collection", () => {});
+		describe("Garbage collection", () => {
+			it("Errors when trying to get a deleted blob", async () => {
+				const { mockGarbageCollector, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				const handle = await blobManager.createBlob(textToBlob("hello"));
+				if (createBlobPayloadPending) {
+					await ensureBlobsShared([handle]);
+				}
+				const { localId } = unpackHandle(handle);
+				mockGarbageCollector.simulateBlobDeletion(getGCNodePathFromLocalId(localId));
+				await assert.rejects(blobManager.getBlob(localId, createBlobPayloadPending), {
+					message: `Blob was deleted: ${localId}`,
+					code: 404,
+				});
+			});
+
+			it("Deletes unused blobs", async () => {
+				const { blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				const handle1 = await blobManager.createBlob(textToBlob("hello"));
+				const { localId: localId1 } = unpackHandle(handle1);
+				if (createBlobPayloadPending) {
+					await ensureBlobsShared([handle1]);
+				}
+
+				const { ids: ids1, redirectTable: redirectTable1 } =
+					getSummaryContentsWithFormatValidation(blobManager);
+				assert.strictEqual(ids1?.length, 1);
+				assert.strictEqual(redirectTable1?.length, 1);
+
+				blobManager.deleteSweepReadyNodes([getGCNodePathFromLocalId(localId1)]);
+				const { ids: ids2, redirectTable: redirectTable2 } =
+					getSummaryContentsWithFormatValidation(blobManager);
+				assert.strictEqual(ids2, undefined);
+				assert.strictEqual(redirectTable2, undefined);
+			});
+
+			it("Deletes unused blobs only after all duplicates are deleted", async () => {
+				const { blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				// These blobs will be deduped against each other
+				const handle1 = await blobManager.createBlob(textToBlob("hello"));
+				const handle2 = await blobManager.createBlob(textToBlob("hello"));
+				const { localId: localId1 } = unpackHandle(handle1);
+				const { localId: localId2 } = unpackHandle(handle2);
+				if (createBlobPayloadPending) {
+					await ensureBlobsShared([handle1, handle2]);
+				}
+
+				const { ids: ids1, redirectTable: redirectTable1 } =
+					getSummaryContentsWithFormatValidation(blobManager);
+				assert.strictEqual(ids1?.length, 1);
+				assert.strictEqual(redirectTable1?.length, 2);
+
+				blobManager.deleteSweepReadyNodes([getGCNodePathFromLocalId(localId1)]);
+				const { ids: ids2, redirectTable: redirectTable2 } =
+					getSummaryContentsWithFormatValidation(blobManager);
+				assert.strictEqual(ids2?.length, 1);
+				assert.strictEqual(redirectTable2?.length, 1);
+
+				blobManager.deleteSweepReadyNodes([getGCNodePathFromLocalId(localId2)]);
+				const { ids: ids3, redirectTable: redirectTable3 } =
+					getSummaryContentsWithFormatValidation(blobManager);
+				assert.strictEqual(ids3, undefined);
+				assert.strictEqual(redirectTable3, undefined);
+			});
+		});
 
 		// #region Storage ID lookup
 		describe("Storage ID lookup", () => {
@@ -896,228 +968,3 @@ for (const createBlobPayloadPending of [false, true]) {
 		});
 	});
 }
-
-// #region OLD
-
-// for (const createBlobPayloadPending of [false, true]) {
-// 	describe(`BlobManager (pending payloads): ${createBlobPayloadPending}`, () => {
-// 		const mockLogger = new MockLogger();
-// 		let runtime: MockRuntime;
-// 		let createBlob: (blob: ArrayBufferLike, signal?: AbortSignal) => Promise<void>;
-// 		let waitForBlob: (blob: ArrayBufferLike) => Promise<void>;
-// 		let mc: MonitoringContext;
-// 		let injectedSettings: Record<string, ConfigTypes> = {};
-
-// 		beforeEach(() => {
-// 			const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-// 				getRawConfig: (name: string): ConfigTypes => settings[name],
-// 			});
-// 			mc = mixinMonitoringContext(
-// 				createChildLogger({ logger: mockLogger }),
-// 				configProvider(injectedSettings),
-// 			);
-// 			runtime = new MockRuntime(mc, createBlobPayloadPending);
-
-// 			// ensures this blob will be processed next time runtime.processBlobs() is called
-// 			waitForBlob = async (blob) => {
-// 				if (!runtime.unprocessedBlobs.has(blob)) {
-// 					await new Promise<void>((resolve) =>
-// 						runtime.on("blob", () => {
-// 							if (runtime.unprocessedBlobs.has(blob)) {
-// 								resolve();
-// 							}
-// 						}),
-// 					);
-// 				}
-// 			};
-
-// 			// create blob and await the handle after the test
-// 			createBlob = async (blob: ArrayBufferLike, signal?: AbortSignal) => {
-// 				runtime
-// 					.createBlob(blob, signal)
-// 					.then((handle) => {
-// 						if (createBlobPayloadPending) {
-// 							handle.attachGraph();
-// 						}
-// 						return handle;
-// 					})
-// 					// Suppress errors here, we expect them to be detected elsewhere
-// 					.catch(() => {});
-// 				await waitForBlob(blob);
-// 			};
-
-// 			const onNoPendingBlobs = () => {
-// 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Accessing private property
-// 				assert((runtime.blobManager as any).pendingBlobs.size === 0);
-// 			};
-
-// 			runtime.blobManager.events.on("noPendingBlobs", () => onNoPendingBlobs());
-// 		});
-
-// 		afterEach(async () => {
-// 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Accessing private property
-// 			assert.strictEqual((runtime.blobManager as any).pendingBlobs.size, 0);
-// 			injectedSettings = {};
-// 			mockLogger.clear();
-// 		});
-
-// 		describe("Garbage Collection", () => {
-// 			let redirectTable: Map<string, string>;
-
-// 			/**
-// 			 * Creates a blob with the given content and returns its local and storage id.
-// 			 */
-// 			async function createBlobAndGetIds(content: string) {
-// 				// For a given blob's id, returns the GC node id.
-// 				const getGCNodeIdFromBlobId = (blobId: string) => {
-// 					return `/${blobManagerBasePath}/${blobId}`;
-// 				};
-
-// 				const blobContents = textToBlob(content);
-// 				const handleP = runtime.createBlob(blobContents);
-// 				await runtime.processAll();
-
-// 				const blobHandle = await handleP;
-// 				const { localId } = unpackHandle(blobHandle);
-// 				assert(redirectTable.has(localId), "blob not found in redirect table");
-// 				const storageId = redirectTable.get(localId);
-// 				assert(storageId !== undefined, "storage id not found in redirect table");
-// 				return {
-// 					localId,
-// 					localGCNodeId: getGCNodeIdFromBlobId(localId),
-// 					storageId,
-// 					storageGCNodeId: getGCNodeIdFromBlobId(storageId),
-// 				};
-// 			}
-
-// 			beforeEach(() => {
-// 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- Mutating private property
-// 				redirectTable = (runtime.blobManager as any).redirectTable;
-// 			});
-
-// 			it("fetching deleted blob fails", async () => {
-// 				await runtime.attach();
-// 				await runtime.connect();
-// 				const blob1Contents = textToBlob("blob1");
-// 				const blob2Contents = textToBlob("blob2");
-// 				const handle1P = runtime.createBlob(blob1Contents);
-// 				const handle2P = runtime.createBlob(blob2Contents);
-// 				await runtime.processAll();
-
-// 				const blob1Handle = await handle1P;
-// 				const blob2Handle = await handle2P;
-
-// 				// Validate that the blobs can be retrieved.
-// 				assert.strictEqual(await runtime.getBlob(blob1Handle), blob1Contents);
-// 				assert.strictEqual(await runtime.getBlob(blob2Handle), blob2Contents);
-
-// 				// Delete blob1. Retrieving it should result in an error.
-// 				runtime.deleteBlob(blob1Handle);
-// 				await assert.rejects(
-// 					async () => runtime.getBlob(blob1Handle),
-// 					(error: IErrorBase & { code: number | undefined }) => {
-// 						const blob1Id = blob1Handle.absolutePath.split("/")[2];
-// 						const correctErrorType = error.code === 404;
-// 						const correctErrorMessage = error.message === `Blob was deleted: ${blob1Id}`;
-// 						return correctErrorType && correctErrorMessage;
-// 					},
-// 					"Deleted blob2 fetch should have failed",
-// 				);
-
-// 				// Delete blob2. Retrieving it should result in an error.
-// 				runtime.deleteBlob(blob2Handle);
-// 				await assert.rejects(
-// 					async () => runtime.getBlob(blob2Handle),
-// 					(error: IErrorBase & { code: number | undefined }) => {
-// 						const blob2Id = blob2Handle.absolutePath.split("/")[2];
-// 						const correctErrorType = error.code === 404;
-// 						const correctErrorMessage = error.message === `Blob was deleted: ${blob2Id}`;
-// 						return correctErrorType && correctErrorMessage;
-// 					},
-// 					"Deleted blob2 fetch should have failed",
-// 				);
-// 			});
-
-// 			// Support for this config has been removed.
-// 			const legacyKey_disableAttachmentBlobSweep =
-// 				"Fluid.GarbageCollection.DisableAttachmentBlobSweep";
-// 			for (const disableAttachmentBlobsSweep of [true, undefined])
-// 				it(`deletes unused blobs regardless of DisableAttachmentBlobsSweep setting [DisableAttachmentBlobsSweep=${disableAttachmentBlobsSweep}]`, async () => {
-// 					injectedSettings[legacyKey_disableAttachmentBlobSweep] = disableAttachmentBlobsSweep;
-
-// 					await runtime.attach();
-// 					await runtime.connect();
-
-// 					const blob1 = await createBlobAndGetIds("blob1");
-// 					const blob2 = await createBlobAndGetIds("blob2");
-
-// 					// Delete blob1's local id. The local id and the storage id should both be deleted from the redirect table
-// 					// since the blob only had one reference.
-// 					runtime.blobManager.deleteSweepReadyNodes([blob1.localGCNodeId]);
-// 					assert(!redirectTable.has(blob1.localId));
-// 					assert(!redirectTable.has(blob1.storageId));
-
-// 					// Delete blob2's local id. The local id and the storage id should both be deleted from the redirect table
-// 					// since the blob only had one reference.
-// 					runtime.blobManager.deleteSweepReadyNodes([blob2.localGCNodeId]);
-// 					assert(!redirectTable.has(blob2.localId));
-// 					assert(!redirectTable.has(blob2.storageId));
-// 				});
-
-// 			it("deletes unused de-duped blobs", async () => {
-// 				await runtime.attach();
-// 				await runtime.connect();
-
-// 				// Create 2 blobs with the same content. They should get de-duped.
-// 				const blob1 = await createBlobAndGetIds("blob1");
-// 				const blob1Duplicate = await createBlobAndGetIds("blob1");
-// 				assert(blob1.storageId === blob1Duplicate.storageId, "blob1 not de-duped");
-
-// 				// Create another 2 blobs with the same content. They should get de-duped.
-// 				const blob2 = await createBlobAndGetIds("blob2");
-// 				const blob2Duplicate = await createBlobAndGetIds("blob2");
-// 				assert(blob2.storageId === blob2Duplicate.storageId, "blob2 not de-duped");
-
-// 				// Delete blob1's local id. The local id should both be deleted from the redirect table but the storage id
-// 				// should not because the blob has another referenced from the de-duped blob.
-// 				runtime.blobManager.deleteSweepReadyNodes([blob1.localGCNodeId]);
-// 				assert(!redirectTable.has(blob1.localId), "blob1 localId should have been deleted");
-// 				assert(
-// 					redirectTable.has(blob1.storageId),
-// 					"blob1 storageId should not have been deleted",
-// 				);
-// 				// Delete blob1's de-duped local id. The local id and the storage id should both be deleted from the redirect table
-// 				// since all the references for the blob are now deleted.
-// 				runtime.blobManager.deleteSweepReadyNodes([blob1Duplicate.localGCNodeId]);
-// 				assert(
-// 					!redirectTable.has(blob1Duplicate.localId),
-// 					"blob1Duplicate localId should have been deleted",
-// 				);
-// 				assert(
-// 					!redirectTable.has(blob1.storageId),
-// 					"blob1 storageId should have been deleted",
-// 				);
-
-// 				// Delete blob2's local id. The local id should both be deleted from the redirect table but the storage id
-// 				// should not because the blob has another referenced from the de-duped blob.
-// 				runtime.blobManager.deleteSweepReadyNodes([blob2.localGCNodeId]);
-// 				assert(!redirectTable.has(blob2.localId), "blob2 localId should have been deleted");
-// 				assert(
-// 					redirectTable.has(blob2.storageId),
-// 					"blob2 storageId should not have been deleted",
-// 				);
-// 				// Delete blob2's de-duped local id. The local id and the storage id should both be deleted from the redirect table
-// 				// since all the references for the blob are now deleted.
-// 				runtime.blobManager.deleteSweepReadyNodes([blob2Duplicate.localGCNodeId]);
-// 				assert(
-// 					!redirectTable.has(blob2Duplicate.localId),
-// 					"blob2Duplicate localId should have been deleted",
-// 				);
-// 				assert(
-// 					!redirectTable.has(blob2.storageId),
-// 					"blob2 storageId should have been deleted",
-// 				);
-// 			});
-// 		});
-// 	});
-// }

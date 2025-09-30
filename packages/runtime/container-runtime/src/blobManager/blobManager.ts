@@ -920,7 +920,7 @@ export class BlobManager {
  * This path must match the path of the blob handle returned by the createBlob API because blobs are marked
  * referenced by storing these handles in a referenced DDS.
  */
-const getGCNodePathFromLocalId = (localId: string): string =>
+export const getGCNodePathFromLocalId = (localId: string): string =>
 	`/${blobManagerBasePath}/${localId}`;
 
 /**
