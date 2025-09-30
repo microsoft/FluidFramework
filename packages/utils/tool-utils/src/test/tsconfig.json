@@ -8,8 +8,7 @@
             "mocha"
         ],
         "declaration": false,
-        "declarationMap": false,
-        "skipLibCheck": true,
+        "declarationMap": false
     },
     "include": [
         "./**/*"
