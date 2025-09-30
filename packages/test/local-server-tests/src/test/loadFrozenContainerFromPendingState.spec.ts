@@ -13,7 +13,8 @@ import {
 	type ContainerAlpha,
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces/internal";
-import type { ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
+import { SharedMap } from "@fluidframework/map/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { timeoutPromise, type TestFluidObject } from "@fluidframework/test-utils/internal";
@@ -28,7 +29,7 @@ const toComparableArray = (dir: ISharedMap): [string, unknown][] =>
 
 describe("loadFrozenContainerFromPendingState", () => {
 	let container: ContainerAlpha;
-	let rootObject: SharedMap;
+	let rootObject: ISharedMap;
 	let urlResolver: CreateLoaderDefaultResults["urlResolver"];
 	let codeLoader: CreateLoaderDefaultResults["codeLoader"];
 
@@ -112,7 +113,6 @@ describe("loadFrozenContainerFromPendingState", () => {
 			frozenEntryPoint.ITestFluidObject !== undefined,
 			"Expected frozen container entrypoint to be a valid TestFluidObject, but it was undefined",
 		);
-
 		const frozenEntries = toComparableArray(frozenEntryPoint.ITestFluidObject.root);
 		assert.deepEqual(
 			frozenEntries,
@@ -137,6 +137,53 @@ describe("loadFrozenContainerFromPendingState", () => {
 			frozenEntries,
 			toComparableArray(frozenEntryPoint.ITestFluidObject.root),
 			"Expected frozen container's data to remain unchanged after new changes in the original container.",
+		);
+	});
+
+	it("frozen container loads DDS", async () => {
+		const { ITestFluidObject }: FluidObject<TestFluidObject> =
+			(await container.getEntryPoint()) ?? {};
+		assert(
+			ITestFluidObject !== undefined,
+			"Expected entrypoint to be a valid TestFluidObject, but it was undefined",
+		);
+		const newSharedMap1 = SharedMap.create(ITestFluidObject.runtime);
+		// Set a value while in local state.
+		newSharedMap1.set("newKey", "newValue");
+		rootObject.set("newSharedMapId", newSharedMap1.handle);
+
+		await container.attach(urlResolver.createCreateNewRequest("test"));
+		const url = await container.getAbsoluteUrl("");
+		assert(
+			url !== undefined,
+			"Expected container to provide a valid absolute URL, but got undefined",
+		);
+		const pendingLocalState = await container.getPendingLocalState();
+
+		const frozenContainer = await loadFrozenContainerFromPendingState({
+			codeLoader,
+			urlResolver,
+			request: {
+				url,
+			},
+			pendingLocalState,
+		});
+		const frozenEntryPoint: FluidObject<TestFluidObject> =
+			await frozenContainer.getEntryPoint();
+		assert(
+			frozenEntryPoint.ITestFluidObject !== undefined,
+			"Expected frozen container entrypoint to be a valid TestFluidObject, but it was undefined",
+		);
+		const newSharedMap1Retrieved = (await frozenEntryPoint.ITestFluidObject.root
+			.get("newSharedMapId")
+			.get()) as ISharedMap;
+		assert(
+			newSharedMap1Retrieved !== undefined,
+			"Expected to retrieve newSharedMap1 from frozen container, but it was undefined",
+		);
+		assert(
+			newSharedMap1Retrieved.get("newKey") === "newValue",
+			"Expected newSharedMap1 to have key 'newKey' with value 'newValue', but it did not",
 		);
 	});
 
