@@ -17,7 +17,7 @@ Alternatively more localized changes can be made by using `PropNode` to type era
 
 These APIs work with both hydrated and [un-hydrated](https://fluidframework.com/docs/api/tree/unhydrated-typealias) TreeNodes.
 
-### React Support
+#### React Support
 
 Here is a simple example of a React components which has an invalidation bug due to reading a mutable field from a TreeNode that was provided in a prop:
 
@@ -29,7 +29,7 @@ const ItemComponentBug = ({ item }: { item: Item }): JSX.Element => (
 );
 ```
 
-This bug can now easily be fixed using `withTreeObservations` or ``withMemoizedTreeObservations`:
+This bug can now easily be fixed using `withTreeObservations` or `withMemoizedTreeObservations`:
 
 ```typescript
 const ItemComponent = withTreeObservations(
@@ -60,7 +60,7 @@ const InvalidItemParentComponent = ({
 To provide access to TreeNode content in only part of a component the `usePropTreeNode` or `usePropTreeRecord` hooks can be used.
 
 
-### TreeAlpha.trackObservationsOnce Examples
+#### TreeAlpha.trackObservationsOnce Examples
 
 Here is a rather minimal example of how `TreeAlpha.trackObservationsOnce` can be used:
 
