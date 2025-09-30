@@ -510,9 +510,138 @@ for (const createBlobPayloadPending of [false, true]) {
 				});
 			});
 
-			describe("Failure", () => {});
+			describe("Abort", () => {
+				it("Can abort before blob upload", async function () {
+					if (createBlobPayloadPending) {
+						// Blob creation with pending payload doesn't support abort
+						this.skip();
+					}
+					const { blobManager } = createTestMaterial({ createBlobPayloadPending });
+					const ac = new AbortController();
+					ac.abort("abort test");
+					await assert.rejects(blobManager.createBlob(textToBlob("hello"), ac.signal), {
+						message: "uploadBlob aborted",
+						uploadTime: undefined,
+						acked: undefined,
+					});
+					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					assert.strictEqual(ids, undefined);
+					assert.strictEqual(redirectTable, undefined);
+				});
 
-			describe("Abort", () => {});
+				it("Can abort during blob upload", async function () {
+					if (createBlobPayloadPending) {
+						// Blob creation with pending payload doesn't support abort
+						this.skip();
+					}
+					const { mockBlobStorage, blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
+					mockBlobStorage.pause();
+					const ac = new AbortController();
+					const createP = blobManager.createBlob(textToBlob("hello"), ac.signal);
+					ac.abort("abort test");
+					await assert.rejects(createP, {
+						message: "uploadBlob aborted",
+						uploadTime: undefined,
+						acked: false,
+					});
+					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					assert.strictEqual(ids, undefined);
+					assert.strictEqual(redirectTable, undefined);
+				});
+
+				it("Can abort before failed blob upload", async function () {
+					if (createBlobPayloadPending) {
+						// Blob creation with pending payload doesn't support abort
+						this.skip();
+					}
+					const { mockBlobStorage, blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
+					mockBlobStorage.pause();
+					const ac = new AbortController();
+					const createP = blobManager.createBlob(textToBlob("hello"), ac.signal);
+					const createP2 = blobManager.createBlob(textToBlob("world"));
+					ac.abort("abort test");
+					await assert.rejects(createP, {
+						message: "uploadBlob aborted",
+						uploadTime: undefined,
+						acked: false,
+					});
+					await mockBlobStorage.waitProcessOne({ error: new Error("fake driver error") });
+					await mockBlobStorage.waitProcessOne({ error: new Error("fake driver error") });
+					await assert.rejects(createP2, {
+						message: "fake driver error",
+					});
+					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					assert.strictEqual(ids, undefined);
+					assert.strictEqual(redirectTable, undefined);
+				});
+
+				it("Can abort while blob attach op is in flight", async function () {
+					if (createBlobPayloadPending) {
+						// Blob creation with pending payload doesn't support abort
+						this.skip();
+					}
+					const { mockOrderingService, blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
+					mockOrderingService.pause();
+					const ac = new AbortController();
+					const createP = blobManager.createBlob(textToBlob("hello"), ac.signal);
+					// Wait for the op to be sent
+					await new Promise<void>((resolve) => {
+						if (mockOrderingService.messagesReceived !== 1) {
+							const onOpReceived = () => {
+								if (mockOrderingService.messagesReceived === 1) {
+									resolve();
+									mockOrderingService.events.off("opReceived", onOpReceived);
+								}
+							};
+							mockOrderingService.events.on("opReceived", onOpReceived);
+						}
+					});
+					ac.abort("abort test");
+					await assert.rejects(createP, (error) => {
+						assert.strictEqual((error as Error).message, "uploadBlob aborted");
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+						assert.strictEqual(typeof (error as any).uploadTime, "number");
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+						assert.strictEqual((error as any).acked, false);
+						return true;
+					});
+
+					// Also verify that BlobManager doesn't resubmit the op for an already-aborted blob
+					await mockOrderingService.waitDropOne();
+					// TODO: Today we still resubmit the attach op even after abort, but probably shouldn't.
+					// This also means that only the local client will believe the snapshot is empty, other clients will have added
+					// the blob to their snapshot after seeing the resubmitted attach op.
+					// assert.strictEqual(
+					// 	mockOrderingService.messagesReceived,
+					// 	1,
+					// 	"Shouldn't have sent more ops",
+					// );
+
+					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					assert.strictEqual(ids, undefined);
+					assert.strictEqual(redirectTable, undefined);
+				});
+
+				it("Abort does nothing after blob creation succeeds", async function () {
+					if (createBlobPayloadPending) {
+						// Blob creation with pending payload doesn't support abort
+						this.skip();
+					}
+					const { blobManager } = createTestMaterial({ createBlobPayloadPending });
+					const ac = new AbortController();
+					await blobManager.createBlob(textToBlob("hello"), ac.signal);
+					ac.abort("abort test");
+					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
+					assert.strictEqual(ids?.length, 1);
+					assert.strictEqual(redirectTable?.length, 1);
+				});
+			});
 
 			describe("getPendingBlobs", () => {});
 		});
@@ -707,10 +836,10 @@ for (const createBlobPayloadPending of [false, true]) {
 				);
 			});
 
-			it("lookupTemporaryBlobStorageId returns undefined for pending blobs", async () => {
+			it("lookupTemporaryBlobStorageId returns undefined for pending blobs", async function () {
 				if (!createBlobPayloadPending) {
 					// This test only applies when payload pending is enabled
-					return;
+					this.skip();
 				}
 				const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
 					createBlobPayloadPending,
@@ -830,230 +959,6 @@ for (const createBlobPayloadPending of [false, true]) {
 // 			assert.strictEqual((runtime.blobManager as any).pendingBlobs.size, 0);
 // 			injectedSettings = {};
 // 			mockLogger.clear();
-// 		});
-
-// 		describe("Abort Signal", () => {
-// 			it("abort before upload", async function () {
-// 				if (createBlobPayloadPending) {
-// 					// Blob creation with pending payload doesn't support abort
-// 					this.skip();
-// 				}
-// 				await runtime.attach();
-// 				await runtime.connect();
-// 				const ac = new AbortController();
-// 				ac.abort("abort test");
-// 				try {
-// 					const blob = textToBlob("blob");
-// 					await runtime.createBlob(blob, ac.signal);
-// 					assert.fail("Should not succeed");
-
-// 					// TODO: better typing
-// 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-// 				} catch (error: any) {
-// 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-// 					assert.strictEqual(error.status, undefined);
-// 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-// 					assert.strictEqual(error.uploadTime, undefined);
-// 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-// 					assert.strictEqual(error.acked, undefined);
-// 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-// 					assert.strictEqual(error.message, "uploadBlob aborted");
-// 				}
-// 				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 				assert.strictEqual(summaryData.ids, undefined);
-// 				assert.strictEqual(summaryData.redirectTable, undefined);
-// 			});
-
-// 			it("abort while upload", async function () {
-// 				if (createBlobPayloadPending) {
-// 					// Blob creation with pending payload doesn't support abort
-// 					this.skip();
-// 				}
-// 				await runtime.attach();
-// 				await runtime.connect();
-// 				const ac = new AbortController();
-// 				const blob = textToBlob("blob");
-// 				const handleP = runtime.createBlob(blob, ac.signal);
-// 				ac.abort("abort test");
-// 				assert.strictEqual(runtime.unprocessedBlobs.size, 1);
-// 				await runtime.processBlobs(true);
-// 				try {
-// 					await handleP;
-// 					assert.fail("Should not succeed");
-// 					// TODO: better typing
-// 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-// 				} catch (error: any) {
-// 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-// 					assert.strictEqual(error.uploadTime, undefined);
-// 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-// 					assert.strictEqual(error.acked, false);
-// 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-// 					assert.strictEqual(error.message, "uploadBlob aborted");
-// 				}
-// 				assert(handleP);
-// 				await assert.rejects(handleP);
-// 				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 				assert.strictEqual(summaryData.ids, undefined);
-// 				assert.strictEqual(summaryData.redirectTable, undefined);
-// 			});
-
-// 			it("abort while failed upload", async function () {
-// 				if (createBlobPayloadPending) {
-// 					// Blob creation with pending payload doesn't support abort
-// 					this.skip();
-// 				}
-// 				await runtime.attach();
-// 				await runtime.connect();
-// 				const ac = new AbortController();
-// 				const blob = textToBlob("blob");
-// 				const handleP = runtime.createBlob(blob, ac.signal);
-// 				const handleP2 = runtime.createBlob(textToBlob("blob2"));
-// 				ac.abort("abort test");
-// 				assert.strictEqual(runtime.unprocessedBlobs.size, 2);
-// 				await runtime.processBlobs(false);
-// 				try {
-// 					await handleP;
-// 					assert.fail("Should not succeed");
-// 				} catch (error: unknown) {
-// 					assert.strictEqual((error as Error).message, "uploadBlob aborted");
-// 				}
-// 				try {
-// 					await handleP2;
-// 					assert.fail("Should not succeed");
-// 				} catch (error: unknown) {
-// 					assert.strictEqual((error as Error).message, "fake driver error");
-// 				}
-// 				await assert.rejects(handleP);
-// 				await assert.rejects(handleP2);
-// 				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 				assert.strictEqual(summaryData.ids, undefined);
-// 				assert.strictEqual(summaryData.redirectTable, undefined);
-// 			});
-
-// 			it("abort while disconnected", async function () {
-// 				if (createBlobPayloadPending) {
-// 					// Blob creation with pending payload doesn't support abort
-// 					this.skip();
-// 				}
-// 				await runtime.attach();
-// 				await runtime.connect();
-// 				const ac = new AbortController();
-// 				const blob = textToBlob("blob");
-// 				const handleP = runtime.createBlob(blob, ac.signal);
-// 				runtime.disconnect();
-// 				ac.abort();
-// 				await runtime.processBlobs(true);
-// 				try {
-// 					await handleP;
-// 					assert.fail("Should not succeed");
-// 				} catch (error: unknown) {
-// 					assert.strictEqual((error as Error).message, "uploadBlob aborted");
-// 				}
-// 				await assert.rejects(handleP);
-// 				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 				assert.strictEqual(summaryData.ids, undefined);
-// 				assert.strictEqual(summaryData.redirectTable, undefined);
-// 			});
-
-// 			it("abort after blob succeeds", async function () {
-// 				if (createBlobPayloadPending) {
-// 					// Blob creation with pending payload doesn't support abort
-// 					this.skip();
-// 				}
-// 				await runtime.attach();
-// 				await runtime.connect();
-// 				const ac = new AbortController();
-// 				let handleP: Promise<IFluidHandleInternal<ArrayBufferLike>> | undefined;
-// 				try {
-// 					const blob = textToBlob("blob");
-// 					handleP = runtime.createBlob(blob, ac.signal);
-// 					await runtime.processAll();
-// 					ac.abort();
-// 				} catch {
-// 					assert.fail("abort after processing should not throw");
-// 				}
-// 				assert(handleP);
-// 				await assert.doesNotReject(handleP);
-// 				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 				assert.strictEqual(summaryData.ids?.length, 1);
-// 				assert.strictEqual(summaryData.redirectTable?.length, 1);
-// 			});
-
-// 			it("abort while waiting for op", async function () {
-// 				if (createBlobPayloadPending) {
-// 					// Blob creation with pending payload doesn't support abort
-// 					this.skip();
-// 				}
-// 				await runtime.attach();
-// 				await runtime.connect();
-// 				const ac = new AbortController();
-// 				const blob = textToBlob("blob");
-// 				const handleP = runtime.createBlob(blob, ac.signal);
-// 				const p1 = runtime.processBlobs(true);
-// 				const p2 = runtime.processHandles();
-// 				// finish upload
-// 				await Promise.race([p1, p2]);
-// 				ac.abort();
-// 				runtime.processOps();
-// 				try {
-// 					// finish op
-// 					await handleP;
-// 					assert.fail("Should not succeed");
-
-// 					// TODO: better typing
-// 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-// 				} catch (error: any) {
-// 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-// 					assert.strictEqual(error.message, "uploadBlob aborted");
-// 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-// 					assert.ok(error.uploadTime);
-// 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-// 					assert.strictEqual(error.acked, false);
-// 				}
-// 				await assert.rejects(handleP);
-// 				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 				assert.strictEqual(summaryData.ids, undefined);
-// 				assert.strictEqual(summaryData.redirectTable, undefined);
-// 			});
-
-// 			it("resubmit on aborted pending op", async function () {
-// 				if (createBlobPayloadPending) {
-// 					// Blob creation with pending payload doesn't support abort
-// 					this.skip();
-// 				}
-// 				await runtime.attach();
-// 				await runtime.connect();
-// 				const ac = new AbortController();
-// 				let handleP: Promise<IFluidHandleInternal<ArrayBufferLike>> | undefined;
-// 				try {
-// 					handleP = runtime.createBlob(textToBlob("blob"), ac.signal);
-// 					const p1 = runtime.processBlobs(true);
-// 					const p2 = runtime.processHandles();
-// 					// finish upload
-// 					await Promise.race([p1, p2]);
-// 					runtime.disconnect();
-// 					ac.abort();
-// 					await handleP;
-// 					assert.fail("Should not succeed");
-// 					// TODO: better typing
-// 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-// 				} catch (error: any) {
-// 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-// 					assert.strictEqual(error.message, "uploadBlob aborted");
-// 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-// 					assert.ok(error.uploadTime);
-// 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-// 					assert.strictEqual(error.acked, false);
-// 				}
-// 				await runtime.connect();
-// 				runtime.processOps();
-
-// 				// TODO: `handleP` can be `undefined`; this should be made safer.
-// 				await assert.rejects(handleP as Promise<IFluidHandleInternal<ArrayBufferLike>>);
-// 				const summaryData = getSummaryContentsWithFormatValidation(runtime.blobManager);
-// 				assert.strictEqual(summaryData.ids, undefined);
-// 				assert.strictEqual(summaryData.redirectTable, undefined);
-// 			});
 // 		});
 
 // 		describe("Garbage Collection", () => {
