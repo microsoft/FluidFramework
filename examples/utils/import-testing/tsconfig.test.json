@@ -1,0 +1,16 @@
+{
+	"include": ["src/**/*"],
+	"exclude": ["src/test/**/*"],
+	"compilerOptions": {
+		"target": "es2022",
+		"module": "Node16",
+		"strict": true,
+		"skipLibCheck": false,
+		"incremental": false,
+		"exactOptionalPropertyTypes": true,
+		"noImplicitAny": true,
+		"noImplicitOverride": true,
+		"noImplicitReturns": true,
+		"noImplicitThis": true,
+	},
+}
