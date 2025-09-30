@@ -32,6 +32,14 @@ export interface AllowedTypesMetadata {
 // @alpha
 export function allowUnused<T>(t?: T): void;
 
+// @alpha @system
+export type AnnotateAllowedType<T extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>> = T extends AnnotatedAllowedType<infer X> ? X : T;
+
+// @alpha @system
+export type AnnotateAllowedTypesList<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = {
+    [I in keyof T]: AnnotateAllowedType<T[I]>;
+};
+
 // @alpha @sealed
 export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
     readonly metadata: AllowedTypeMetadata;
@@ -39,9 +47,9 @@ export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
 }
 
 // @alpha @sealed
-export interface AnnotatedAllowedTypes<T = LazyItem<TreeNodeSchema>> {
+export interface AnnotatedAllowedTypes<T = readonly AnnotatedAllowedType[]> extends ErasedBaseType<"tree.AnnotatedAllowedTypes"> {
     readonly metadata: AllowedTypesMetadata;
-    readonly types: readonly AnnotatedAllowedType<T>[];
+    readonly types: T;
 }
 
 // @public @system
@@ -209,6 +217,12 @@ export function enumFromStrings<TScope extends string, const Members extends rea
             readonly value: Members[Index];
         }, Record<string, never>, true, Record<string, never>, undefined>; }[Members[number]] : never>;
 };
+
+// @alpha @sealed @system
+export abstract class ErasedBaseType<out Name = unknown> {
+    protected constructor();
+    protected abstract brand(dummy: never): Name;
+}
 
 // @public @sealed
 export abstract class ErasedType<out Name = unknown> {
@@ -806,7 +820,7 @@ export namespace JsonAsTree {
     }
     const // @system
     _APIExtractorWorkaroundObjectBase: TreeNodeSchemaClass<"com.fluidframework.json.object", NodeKind.Record, TreeRecordNodeUnsafe<readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array]> & WithType<"com.fluidframework.json.object", NodeKind.Record, unknown>, {
-        readonly [x: string]: string | number | JsonObject | Array | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | null;
+        readonly [x: string]: string | number | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | JsonObject | Array | null;
     }, false, readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array], undefined, unknown>;
     export type Primitive = TreeNodeFromImplicitAllowedTypes<typeof Primitive>;
     // @system
@@ -1010,7 +1024,7 @@ export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown> extends N
 }
 
 // @alpha @sealed
-export interface NormalizedAnnotatedAllowedTypes extends AnnotatedAllowedTypes<TreeNodeSchema> {
+export interface NormalizedAnnotatedAllowedTypes extends AnnotatedAllowedTypes<readonly AnnotatedAllowedType<TreeNodeSchema>[]> {
 }
 
 // @public @system
@@ -1266,7 +1280,9 @@ export interface SchemaStatics {
 
 // @alpha @sealed @system
 export interface SchemaStaticsAlpha {
-    staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
+    readonly staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
+    // (undocumented)
+    readonly types: <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(t: T, metadata?: AllowedTypesMetadata) => AnnotateAllowedTypesList<T> & UnannotateAllowedTypesList<T>;
 }
 
 // @alpha @sealed

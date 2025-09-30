@@ -32,6 +32,14 @@ export interface AllowedTypesMetadata {
 // @alpha
 export function allowUnused<T>(t?: T): void;
 
+// @alpha @system
+export type AnnotateAllowedType<T extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>> = T extends AnnotatedAllowedType<infer X> ? X : T;
+
+// @alpha @system
+export type AnnotateAllowedTypesList<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = {
+    [I in keyof T]: AnnotateAllowedType<T[I]>;
+};
+
 // @alpha @sealed
 export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
     readonly metadata: AllowedTypeMetadata;
@@ -463,7 +471,7 @@ export namespace JsonAsTree {
     }
     const // @system
     _APIExtractorWorkaroundObjectBase: TreeNodeSchemaClass<"com.fluidframework.json.object", NodeKind.Record, TreeRecordNodeUnsafe<readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array]> & WithType<"com.fluidframework.json.object", NodeKind.Record, unknown>, {
-        readonly [x: string]: string | number | JsonObject | Array | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | null;
+        readonly [x: string]: string | number | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | JsonObject | Array | null;
     }, false, readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array], undefined, unknown>;
     export type Primitive = TreeNodeFromImplicitAllowedTypes<typeof Primitive>;
     // @system
