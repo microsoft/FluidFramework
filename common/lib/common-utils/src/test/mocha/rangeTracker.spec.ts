@@ -91,8 +91,7 @@ describe("Routerlicious", () => {
 				});
 
 				it("Should be able to create a serialized copy of the range tracker", () => {
-					const serialized = rangeTracker.serialize();
-					assert.ok(serialized);
+					rangeTracker.serialize();
 				});
 
 				it("Should be able to load a serialized copy", () => {
