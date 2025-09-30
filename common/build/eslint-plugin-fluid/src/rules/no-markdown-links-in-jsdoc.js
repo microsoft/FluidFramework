@@ -32,11 +32,12 @@ module.exports = {
 					.filter((comment) => comment.type === "Block" && comment.value.startsWith("*"));
 
 				for (const comment of comments) {
+					// +2 for the leading "/*", which is ommitted by `comment.value`, but included in `comment.range`.
+					const commentStartIndex = comment.range[0] + 2;
+
 					const matches = comment.value.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g);
 					for (const match of matches) {
 						const [fullMatch, text, url] = match;
-						// +2 for the leading "/*", which is ommitted by `comment.value`, but included in `comment.range`.
-						const commentStartIndex = comment.range[0] + 2;
 
 						const startIndex = commentStartIndex + match.index;
 						const endIndex = startIndex + fullMatch.length;
