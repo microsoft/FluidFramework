@@ -1,7 +1,7 @@
 {
 	"extends": "@fluidframework/build-common/ts-common-config.json",
 	"compilerOptions": {
-		"strictNullChecks": false,
+		"strictNullChecks": true,
 		"rootDir": "./",
 		"outDir": "../../dist/test",
 		"lib": ["ES2021", "DOM", "DOM.Iterable"],
