@@ -11,27 +11,15 @@ import type {
 	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 
-/**
- * URL path a host uses to request the summarizer entry point from a container.
- * @legacy @beta
- */
 export const summarizerRequestUrl = "_summarizer";
 
 /**
- * Phases of the on-demand summarizer run.
- *
- * @legacy
+ * Stages of summary process.
  * @beta
  */
 export type SummaryStage = "base" | "generate" | "upload" | "submit" | "unknown";
 
-/**
- * Reports whether a summarizer stage succeeded and carries its data or failure info.
- *
- * @legacy
- * @beta
- */
-export type OnDemandSummaryStageResult<TSuccess> =
+type OnDemandSummaryStageResult<TSuccess> =
 	| {
 			readonly success: true;
 			readonly data: TSuccess;
@@ -43,35 +31,20 @@ export type OnDemandSummaryStageResult<TSuccess> =
 			readonly data?: unknown;
 	  };
 
-/**
- * `Summarize` op plus its summary payload.
- *
- * @legacy
- * @beta
- */
-export interface ISummaryOpMessage extends ISequencedDocumentMessage {
+interface ISummaryOpMessage extends ISequencedDocumentMessage {
 	type: MessageType.Summarize;
 	contents: ISummaryContent;
 }
 
-/**
- * `SummaryAck` op returned by the server.
- *
- * @legacy
- * @beta
- */
-export interface ISummaryAckMessage extends ISequencedDocumentMessage {
+interface ISummaryAckMessage extends ISequencedDocumentMessage {
 	type: MessageType.SummaryAck;
 	contents: ISummaryAck;
 }
 
 /**
- * Stage-by-stage results from running the on-demand summarizer.
- *
- * @legacy
- * @beta
+ * @internal
  */
-export interface OnDemandSummaryResults {
+export interface SummarizeOnDemandResults {
 	readonly summarySubmitted: OnDemandSummaryStageResult<{
 		readonly stage: SummaryStage;
 		readonly summaryTree?: ISummaryTree;
@@ -85,6 +58,21 @@ export interface OnDemandSummaryResults {
 		readonly summaryAckOp: ISummaryAckMessage;
 		readonly ackNackDuration: number;
 	}>;
+}
+
+/**
+ * Results from an on-demand summary request.
+ * @beta
+ */
+export interface OnDemandSummaryResults {
+	readonly summarySubmitted: boolean;
+	readonly summaryInfo: {
+		readonly stage?: SummaryStage;
+		readonly summaryTree?: ISummaryTree;
+		readonly handle?: string;
+	};
+	readonly summaryOpBroadcasted: boolean;
+	readonly receivedSummaryAck: boolean;
 }
 
 /**

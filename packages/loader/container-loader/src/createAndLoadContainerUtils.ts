@@ -40,20 +40,17 @@ import { Loader } from "./loader.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
 import { summarizerRequestUrl } from "./summarizerResultTypes.js";
-import type { LoadSummarizerSummaryResult } from "./summarizerResultTypes.js";
-
-type OnDemandSummarizeSuccessResults = Extract<
+import type {
 	LoadSummarizerSummaryResult,
-	{ readonly success: true }
->["summaryResults"];
+	OnDemandSummaryResults,
+	SummarizeOnDemandResults,
+} from "./summarizerResultTypes.js";
 
 interface OnDemandSummarizeResultsPromises {
-	readonly summarySubmitted: Promise<OnDemandSummarizeSuccessResults["summarySubmitted"]>;
-	readonly summaryOpBroadcasted: Promise<
-		OnDemandSummarizeSuccessResults["summaryOpBroadcasted"]
-	>;
+	readonly summarySubmitted: Promise<SummarizeOnDemandResults["summarySubmitted"]>;
+	readonly summaryOpBroadcasted: Promise<SummarizeOnDemandResults["summaryOpBroadcasted"]>;
 	readonly receivedSummaryAckOrNack: Promise<
-		OnDemandSummarizeSuccessResults["receivedSummaryAckOrNack"]
+		SummarizeOnDemandResults["receivedSummaryAckOrNack"]
 	>;
 }
 
@@ -335,9 +332,9 @@ export async function loadSummarizerContainerAndMakeSummary(
 
 	let success = false;
 	let caughtError: IFluidErrorBase | undefined;
-	let summarySubmitted: OnDemandSummarizeSuccessResults["summarySubmitted"];
-	let summaryOpBroadcasted: OnDemandSummarizeSuccessResults["summaryOpBroadcasted"];
-	let receivedSummaryAckOrNack: OnDemandSummarizeSuccessResults["receivedSummaryAckOrNack"];
+	let summarySubmitted: SummarizeOnDemandResults["summarySubmitted"];
+	let summaryOpBroadcasted: SummarizeOnDemandResults["summaryOpBroadcasted"];
+	let receivedSummaryAckOrNack: SummarizeOnDemandResults["receivedSummaryAckOrNack"];
 	try {
 		if (container.connectionState !== ConnectionState.Connected) {
 			await new Promise<void>((resolve) => container.once("connected", () => resolve()));
@@ -378,10 +375,20 @@ export async function loadSummarizerContainerAndMakeSummary(
 			summarizeResults.summaryOpBroadcasted,
 			summarizeResults.receivedSummaryAckOrNack,
 		]);
-		const summaryResults: OnDemandSummarizeSuccessResults = {
-			summarySubmitted,
-			summaryOpBroadcasted,
-			receivedSummaryAckOrNack,
+
+		const summaryResults: OnDemandSummaryResults = {
+			summarySubmitted: summarySubmitted.success,
+			summaryInfo: summarySubmitted.success
+				? {
+						stage: summarySubmitted.data.stage,
+						summaryTree: summarySubmitted.data.summaryTree,
+						handle: receivedSummaryAckOrNack.success
+							? receivedSummaryAckOrNack.data.summaryAckOp.contents.handle
+							: undefined,
+					}
+				: {},
+			summaryOpBroadcasted: summaryOpBroadcasted.success,
+			receivedSummaryAck: receivedSummaryAckOrNack.success,
 		};
 		success = true;
 		return {

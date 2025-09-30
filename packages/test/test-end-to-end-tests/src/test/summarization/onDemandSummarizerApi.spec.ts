@@ -21,30 +21,6 @@ import {
 	DataObjectFactoryType,
 } from "@fluidframework/test-utils/internal";
 
-type StageResult<TData> =
-	| {
-			readonly success: true;
-			readonly data: TData;
-	  }
-	| {
-			readonly success: false;
-			readonly error: Error;
-			readonly message?: string;
-	  };
-
-function expectStageSuccess<TData>(
-	stageName: string,
-	stage: StageResult<TData>,
-	message: string,
-): TData {
-	if (stage.success) {
-		return stage.data;
-	}
-
-	const details = stage.message ?? stage.error.message ?? "unknown failure";
-	assert.fail(`${message} (${stageName}): ${details}`);
-}
-
 describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, apis) => {
 	let logger: MockLogger;
 
@@ -79,24 +55,13 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		// Verify - summary success
 		assert(result.success, "expected summarization success");
 		const summaryResults = result.summaryResults;
-		const submit = expectStageSuccess(
-			"summarySubmitted",
-			summaryResults.summarySubmitted,
-			"expected submit stage success",
-		);
-		assert.strictEqual(submit.stage, "submit", "submit stage value");
-		assert(submit.summaryTree !== undefined, "summary tree should exist");
-		expectStageSuccess(
-			"summaryOpBroadcasted",
-			summaryResults.summaryOpBroadcasted,
-			"expected broadcast stage success",
-		);
-		const ack = expectStageSuccess(
-			"receivedSummaryAckOrNack",
-			summaryResults.receivedSummaryAckOrNack,
-			"expected ack/nack stage success",
-		);
-		assert(ack.summaryAckOp.contents.handle, "ack should have summaryAckOp handle");
+		assert(summaryResults.summarySubmitted, "summary not submitted");
+		assert(summaryResults.summaryOpBroadcasted, "summary op not broadcasted");
+		assert(summaryResults.receivedSummaryAck, "summary ack/nack not received");
+		const data = summaryResults.summaryInfo;
+		assert.strictEqual(data.stage, "submit", "submit stage value");
+		assert(data.summaryTree !== undefined, "summary tree should exist");
+		assert(data.handle !== undefined, "summary handle should exist");
 
 		// Verify - telemetry
 		const created = logger.events.filter(
@@ -125,24 +90,13 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		// Verify - summary success
 		assert(result.success, "expected summarization success");
 		const summaryResults = result.summaryResults;
-		const submit = expectStageSuccess(
-			"summarySubmitted",
-			summaryResults.summarySubmitted,
-			"expected submit stage success",
-		);
-		assert.strictEqual(submit.stage, "submit", "submit stage value");
-		assert(submit.summaryTree !== undefined, "summary tree should exist");
-		expectStageSuccess(
-			"summaryOpBroadcasted",
-			summaryResults.summaryOpBroadcasted,
-			"expected broadcast stage success (gate)",
-		);
-		const ack = expectStageSuccess(
-			"receivedSummaryAckOrNack",
-			summaryResults.receivedSummaryAckOrNack,
-			"expected ack/nack stage success",
-		);
-		assert(ack.summaryAckOp.contents.handle, "ack should have summaryAckOp handle");
+		assert(summaryResults.summarySubmitted, "summary not submitted");
+		assert(summaryResults.summaryOpBroadcasted, "summary op not broadcasted");
+		assert(summaryResults.receivedSummaryAck, "summary ack/nack not received");
+		const data = summaryResults.summaryInfo;
+		assert.strictEqual(data.stage, "submit", "submit stage value");
+		assert(data.summaryTree !== undefined, "summary tree should exist");
+		assert(data.handle !== undefined, "summary handle should exist");
 
 		// Verify - telemetry
 		const closed = logger.events.filter(
@@ -202,36 +156,23 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 			getRawConfig: (key: string) =>
 				key === "Fluid.Summarizer.FullTree.OnDemand" ? true : undefined,
 		};
-		const summaryResult: LoadSummarizerSummaryResult =
-			await loadSummarizerContainerAndMakeSummary({
-				...loaderProps,
-				request: { url },
-				logger,
-				configProvider,
-			});
+		const result: LoadSummarizerSummaryResult = await loadSummarizerContainerAndMakeSummary({
+			...loaderProps,
+			request: { url },
+			logger,
+			configProvider,
+		});
 
 		// Verify - summary success
-		assert(summaryResult.success, "summarizer run should succeed");
-		const summaryResults = summaryResult.summaryResults;
-		const submit = expectStageSuccess(
-			"summarySubmitted",
-			summaryResults.summarySubmitted,
-			"summary submit must succeed",
-		);
-		assert.strictEqual(submit.stage, "submit", "summary should produce submit result");
-		assert(submit.summaryTree !== undefined, "summary tree should exist");
-		expectStageSuccess(
-			"summaryOpBroadcasted",
-			summaryResults.summaryOpBroadcasted,
-			"summary broadcast must succeed",
-		);
-		const ack = expectStageSuccess(
-			"receivedSummaryAckOrNack",
-			summaryResults.receivedSummaryAckOrNack,
-			"summary ack must succeed",
-		);
-		const summaryHandle = ack.summaryAckOp.contents.handle;
-		assert(summaryHandle !== undefined, "summary ack should provide handle");
+		assert(result.success, "expected summarization success");
+		const summaryResults = result.summaryResults;
+		assert(summaryResults.summarySubmitted, "summary not submitted");
+		assert(summaryResults.summaryOpBroadcasted, "summary op not broadcasted");
+		assert(summaryResults.receivedSummaryAck, "summary ack/nack not received");
+		const data = summaryResults.summaryInfo;
+		assert.strictEqual(data.stage, "submit", "submit stage value");
+		assert(data.summaryTree !== undefined, "summary tree should exist");
+		assert(data.handle !== undefined, "summary handle should exist");
 
 		// Verify - telemetry
 		const createdEvents = logger.events.filter(
@@ -246,7 +187,7 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 
 		// Verify - new clients can load from the uploaded summary handle and see client edits.
 		const containerFromSummary = await provider.loadTestContainer(clientConfig, {
-			[LoaderHeader.version]: summaryHandle,
+			[LoaderHeader.version]: data.handle,
 			[LoaderHeader.cache]: false,
 		});
 		const dataObjectFromSummary =

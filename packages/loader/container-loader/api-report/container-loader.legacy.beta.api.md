@@ -138,22 +138,6 @@ export interface IScribeProtocolState {
 }
 
 // @beta @legacy
-export interface ISummaryAckMessage extends ISequencedDocumentMessage {
-    // (undocumented)
-    contents: ISummaryAck;
-    // (undocumented)
-    type: MessageType.SummaryAck;
-}
-
-// @beta @legacy
-export interface ISummaryOpMessage extends ISequencedDocumentMessage {
-    // (undocumented)
-    contents: ISummaryContent;
-    // (undocumented)
-    type: MessageType.Summarize;
-}
-
-// @beta @legacy
 export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
     // (undocumented)
@@ -187,36 +171,21 @@ export type LoadSummarizerSummaryResult = {
     readonly error: Error;
 };
 
-// @beta @legacy
+// @beta
 export interface OnDemandSummaryResults {
     // (undocumented)
-    readonly receivedSummaryAckOrNack: OnDemandSummaryStageResult<{
-        readonly summaryAckOp: ISummaryAckMessage;
-        readonly ackNackDuration: number;
-    }>;
+    readonly receivedSummaryAck: boolean;
     // (undocumented)
-    readonly summaryOpBroadcasted: OnDemandSummaryStageResult<{
-        readonly broadcastDuration: number;
-        readonly summarizeOp: ISummaryOpMessage;
-    }>;
-    // (undocumented)
-    readonly summarySubmitted: OnDemandSummaryStageResult<{
-        readonly stage: SummaryStage;
+    readonly summaryInfo: {
+        readonly stage?: SummaryStage;
         readonly summaryTree?: ISummaryTree;
         readonly handle?: string;
-    }>;
+    };
+    // (undocumented)
+    readonly summaryOpBroadcasted: boolean;
+    // (undocumented)
+    readonly summarySubmitted: boolean;
 }
-
-// @beta @legacy
-export type OnDemandSummaryStageResult<TSuccess> = {
-    readonly success: true;
-    readonly data: TSuccess;
-} | {
-    readonly success: false;
-    readonly error: Error;
-    readonly message?: string;
-    readonly data?: unknown;
-};
 
 // @beta @legacy
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
@@ -236,10 +205,7 @@ export function rehydrateDetachedContainer(rehydrateDetachedContainerProps: IReh
 // @beta @legacy
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
 
-// @beta @legacy
-export const summarizerRequestUrl = "_summarizer";
-
-// @beta @legacy
+// @beta
 export type SummaryStage = "base" | "generate" | "upload" | "submit" | "unknown";
 
 // @beta @legacy

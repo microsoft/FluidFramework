@@ -20,12 +20,8 @@ export {
 export type {
 	LoadSummarizerSummaryResult,
 	OnDemandSummaryResults,
-	ISummaryAckMessage,
-	ISummaryOpMessage,
-	OnDemandSummaryStageResult,
 	SummaryStage,
 } from "./summarizerResultTypes.js";
-export { summarizerRequestUrl } from "./summarizerResultTypes.js";
 export {
 	type ICodeDetailsLoader,
 	type IFluidModuleWithDetails,
