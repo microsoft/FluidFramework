@@ -353,6 +353,7 @@ export function verifyToken(
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	return async (request, response, next) => {
 		try {
+			// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 			const reqTenantId = request.params.tenantId;
 			const authorization = request.get("Authorization");
 			if (!authorization) {
