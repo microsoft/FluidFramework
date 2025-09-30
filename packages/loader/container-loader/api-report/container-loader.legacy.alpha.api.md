@@ -24,25 +24,6 @@ export interface ContainerAlpha extends IContainer {
 export function createDetachedContainer(createDetachedContainerProps: ICreateDetachedContainerProps): Promise<IContainer>;
 
 // @beta @legacy (undocumented)
-export type EnqueueSummarizeResult<TSummaryOpMessage = unknown, TSummaryAckMessage = unknown, TSummaryNackMessage = unknown> = (ISummarizeResults<TSummaryOpMessage, TSummaryAckMessage, TSummaryNackMessage> & {
-    readonly alreadyEnqueued?: undefined;
-}) | (ISummarizeResults<TSummaryOpMessage, TSummaryAckMessage, TSummaryNackMessage> & {
-    readonly alreadyEnqueued: true;
-    readonly overridden: true;
-}) | {
-    readonly alreadyEnqueued: true;
-    readonly overridden?: undefined;
-};
-
-// @beta @legacy (undocumented)
-export interface IAckSummaryResult<TSummaryAckMessage = unknown> {
-    // (undocumented)
-    readonly ackNackDuration: number;
-    // (undocumented)
-    readonly summaryAckOp: TSummaryAckMessage;
-}
-
-// @beta @legacy (undocumented)
 export interface IBaseProtocolHandler {
     // (undocumented)
     readonly attributes: IDocumentAttributes;
@@ -58,24 +39,6 @@ export interface IBaseProtocolHandler {
     setConnectionState(connected: boolean, clientId: string | undefined): any;
     // (undocumented)
     snapshot(): IQuorumSnapshot;
-}
-
-// @beta @legacy
-export interface IBaseSummarizeResult {
-    readonly error: IRetriableFailureError | undefined;
-    // (undocumented)
-    readonly minimumSequenceNumber: number;
-    readonly referenceSequenceNumber: number;
-    // (undocumented)
-    readonly stage: "base";
-}
-
-// @beta @legacy (undocumented)
-export interface IBroadcastSummaryResult<TSummaryOpMessage = unknown> {
-    // (undocumented)
-    readonly broadcastDuration: number;
-    // (undocumented)
-    readonly summarizeOp: TSummaryOpMessage;
 }
 
 // @beta @deprecated @legacy (undocumented)
@@ -106,25 +69,6 @@ export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerPr
 export interface IFluidModuleWithDetails {
     details: IFluidCodeDetails;
     module: IFluidModule;
-}
-
-// @beta @legacy
-export interface IGeneratedSummaryStats extends ISummaryStats {
-    readonly dataStoreCount: number;
-    readonly gcBlobNodeCount?: number;
-    readonly gcStateUpdatedDataStoreCount?: number;
-    readonly gcTotalBlobsSize?: number;
-    readonly summarizedDataStoreCount: number;
-    readonly summaryNumber: number;
-}
-
-// @beta @legacy
-export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
-    readonly generateDuration: number;
-    // (undocumented)
-    readonly stage: "generate";
-    readonly summaryStats: IGeneratedSummaryStats;
-    readonly summaryTree: ISummaryTree;
 }
 
 // @beta @legacy
@@ -169,14 +113,6 @@ export interface ILoadFrozenContainerFromPendingStateProps {
     readonly urlResolver: IUrlResolver;
 }
 
-// @beta @legacy (undocumented)
-export interface INackSummaryResult<TSummaryNackMessage = unknown> {
-    // (undocumented)
-    readonly ackNackDuration: number;
-    // (undocumented)
-    readonly summaryNackOp: TSummaryNackMessage;
-}
-
 // @beta @legacy
 export interface IParsedUrl {
     id: string;
@@ -208,12 +144,6 @@ export interface IRehydrateDetachedContainerProps extends ICreateAndLoadContaine
     readonly serializedState: string;
 }
 
-// @beta @legacy
-export interface IRetriableFailureError extends Error {
-    // (undocumented)
-    readonly retryAfterSeconds?: number;
-}
-
 // @beta @legacy (undocumented)
 export interface IScribeProtocolState {
     // (undocumented)
@@ -229,56 +159,19 @@ export interface IScribeProtocolState {
 }
 
 // @beta @legacy
-export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
-    readonly clientSequenceNumber: number;
+export interface ISummaryAckMessage extends ISequencedDocumentMessage {
     // (undocumented)
-    readonly stage: "submit";
-    readonly submitOpDuration: number;
-}
-
-// @beta @legacy (undocumented)
-export interface ISummarizeResults<TSummaryOpMessage = unknown, TSummaryAckMessage = unknown, TSummaryNackMessage = unknown> {
-    readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckSummaryResult<TSummaryAckMessage>, INackSummaryResult<TSummaryNackMessage>>>;
-    readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult<TSummaryOpMessage>>>;
-    readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>>;
-}
-
-// @beta @legacy (undocumented)
-export interface ISummarizerSummaryFailure {
+    contents: ISummaryAck;
     // (undocumented)
-    readonly error: Error;
-    // (undocumented)
-    readonly success: false;
-}
-
-// @beta @legacy (undocumented)
-export interface ISummarizerSummarySuccess {
-    // (undocumented)
-    readonly success: true;
-    // (undocumented)
-    readonly summaryResults: OnDemandSummarizeResults;
+    type: MessageType.SummaryAck;
 }
 
 // @beta @legacy
-export interface ISummaryStats {
+export interface ISummaryOpMessage extends ISequencedDocumentMessage {
     // (undocumented)
-    blobNodeCount: number;
+    contents: ISummaryContent;
     // (undocumented)
-    handleNodeCount: number;
-    // (undocumented)
-    totalBlobSize: number;
-    // (undocumented)
-    treeNodeCount: number;
-    // (undocumented)
-    unreferencedBlobSize: number;
-}
-
-// @beta @legacy
-export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "stage"> {
-    readonly handle: string;
-    // (undocumented)
-    readonly stage: "upload";
-    readonly uploadDuration: number;
+    type: MessageType.Summarize;
 }
 
 // @beta @legacy
@@ -309,28 +202,45 @@ export function loadFrozenContainerFromPendingState(props: ILoadFrozenContainerF
 // @beta
 export function loadSummarizerContainerAndMakeSummary(loadExistingContainerProps: ILoadExistingContainerProps): Promise<LoadSummarizerSummaryResult>;
 
-// @beta @legacy (undocumented)
-export type LoadSummarizerSummaryResult = ISummarizerSummarySuccess | ISummarizerSummaryFailure;
+// @beta
+export type LoadSummarizerSummaryResult = {
+    readonly success: true;
+    readonly summaryResults: OnDemandSummaryResults;
+} | {
+    readonly success: false;
+    readonly error: Error;
+};
 
-// @beta @legacy (undocumented)
-export interface OnDemandSummarizeOptions {
+// @beta @legacy
+export interface OnDemandSummaryResults {
     // (undocumented)
-    readonly fullTree?: boolean | undefined;
+    readonly receivedSummaryAckOrNack: OnDemandSummaryStageResult<{
+        readonly summaryAckOp: ISummaryAckMessage;
+        readonly ackNackDuration: number;
+    }>;
     // (undocumented)
-    readonly reason?: string | undefined;
+    readonly summaryOpBroadcasted: OnDemandSummaryStageResult<{
+        readonly broadcastDuration: number;
+        readonly summarizeOp: ISummaryOpMessage;
+    }>;
     // (undocumented)
-    readonly retryOnFailure?: boolean | undefined;
+    readonly summarySubmitted: OnDemandSummaryStageResult<{
+        readonly stage: SummaryStage;
+        readonly summaryTree?: ISummaryTree;
+        readonly handle?: string;
+    }>;
 }
 
-// @beta @legacy (undocumented)
-export interface OnDemandSummarizeResults {
-    // (undocumented)
-    readonly receivedSummaryAckOrNack: SummarizeResultPart<IAckSummaryResult<SummaryAckMessage>, INackSummaryResult<Record<string, unknown>>>;
-    // (undocumented)
-    readonly summaryOpBroadcasted: SummarizeResultPart<IBroadcastSummaryResult<Record<string, unknown>>>;
-    // (undocumented)
-    readonly summarySubmitted: SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>;
-}
+// @beta @legacy
+export type OnDemandSummaryStageResult<TSuccess> = {
+    readonly success: true;
+    readonly data: TSuccess;
+} | {
+    readonly success: false;
+    readonly error: Error;
+    readonly message?: string;
+    readonly data?: unknown;
+};
 
 // @beta @legacy
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
@@ -351,64 +261,10 @@ export function rehydrateDetachedContainer(rehydrateDetachedContainerProps: IReh
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
 
 // @beta @legacy
-export interface SubmitSummaryFailureData {
-    // (undocumented)
-    readonly stage: SummaryStage;
-}
-
-// @beta @legacy
-export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeResult | IUploadSummaryResult | ISubmitSummaryOpResult;
-
-// @beta @legacy (undocumented)
-export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
-    readonly success: true;
-    readonly data: TSuccess;
-} | {
-    readonly success: false;
-    readonly data: TFailure | undefined;
-    readonly message: string;
-    readonly error: IRetriableFailureError;
-};
-
-// @beta @legacy (undocumented)
-export interface SummarizeResultsPromisesLike {
-    // (undocumented)
-    readonly receivedSummaryAckOrNack: Promise<OnDemandSummarizeResults["receivedSummaryAckOrNack"]>;
-    // (undocumented)
-    readonly summaryOpBroadcasted: Promise<OnDemandSummarizeResults["summaryOpBroadcasted"]>;
-    // (undocumented)
-    readonly summarySubmitted: Promise<OnDemandSummarizeResults["summarySubmitted"]>;
-}
-
-// @beta @legacy (undocumented)
-export interface SummarizerLike {
-    // (undocumented)
-    readonly ISummarizer?: SummarizerLike;
-    // (undocumented)
-    summarizeOnDemand(options: OnDemandSummarizeOptions): SummarizeResultsPromisesLike;
-}
-
-// @beta @legacy (undocumented)
 export const summarizerRequestUrl = "_summarizer";
 
-// @beta @legacy (undocumented)
-export interface SummaryAckMessage {
-    // (undocumented)
-    readonly [key: string]: unknown;
-    // (undocumented)
-    readonly contents: SummaryOpContents;
-}
-
-// @beta @legacy (undocumented)
-export interface SummaryOpContents {
-    // (undocumented)
-    readonly [key: string]: unknown;
-    // (undocumented)
-    readonly handle?: string;
-}
-
 // @beta @legacy
-export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
+export type SummaryStage = "base" | "generate" | "upload" | "submit" | "unknown";
 
 // @beta @legacy
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined;

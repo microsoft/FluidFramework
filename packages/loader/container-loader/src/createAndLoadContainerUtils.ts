@@ -40,18 +40,33 @@ import { Loader } from "./loader.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
 import { summarizerRequestUrl } from "./summarizerResultTypes.js";
-import type {
-	LoadSummarizerSummaryResult,
-	OnDemandSummarizeResults,
-	SummarizeResultsPromisesLike,
-	SummarizerLike,
-} from "./summarizerResultTypes.js";
+import type { LoadSummarizerSummaryResult } from "./summarizerResultTypes.js";
 
-export type {
-	ISummarizerSummaryFailure,
-	ISummarizerSummarySuccess,
+type OnDemandSummarizeSuccessResults = Extract<
 	LoadSummarizerSummaryResult,
-} from "./summarizerResultTypes.js";
+	{ readonly success: true }
+>["summaryResults"];
+
+interface OnDemandSummarizeResultsPromises {
+	readonly summarySubmitted: Promise<OnDemandSummarizeSuccessResults["summarySubmitted"]>;
+	readonly summaryOpBroadcasted: Promise<
+		OnDemandSummarizeSuccessResults["summaryOpBroadcasted"]
+	>;
+	readonly receivedSummaryAckOrNack: Promise<
+		OnDemandSummarizeSuccessResults["receivedSummaryAckOrNack"]
+	>;
+}
+
+interface OnDemandSummarizeOptions {
+	readonly reason?: string;
+	readonly retryOnFailure?: boolean;
+	readonly fullTree?: boolean;
+}
+
+interface SummarizerLike {
+	readonly ISummarizer?: SummarizerLike;
+	summarizeOnDemand(options: OnDemandSummarizeOptions): OnDemandSummarizeResultsPromises;
+}
 
 /**
  * Properties necessary for creating and loading a container.
@@ -320,9 +335,9 @@ export async function loadSummarizerContainerAndMakeSummary(
 
 	let success = false;
 	let caughtError: IFluidErrorBase | undefined;
-	let summarySubmitted: OnDemandSummarizeResults["summarySubmitted"];
-	let summaryOpBroadcasted: OnDemandSummarizeResults["summaryOpBroadcasted"];
-	let receivedSummaryAckOrNack: OnDemandSummarizeResults["receivedSummaryAckOrNack"];
+	let summarySubmitted: OnDemandSummarizeSuccessResults["summarySubmitted"];
+	let summaryOpBroadcasted: OnDemandSummarizeSuccessResults["summaryOpBroadcasted"];
+	let receivedSummaryAckOrNack: OnDemandSummarizeSuccessResults["receivedSummaryAckOrNack"];
 	try {
 		if (container.connectionState !== ConnectionState.Connected) {
 			await new Promise<void>((resolve) => container.once("connected", () => resolve()));
@@ -353,7 +368,7 @@ export async function loadSummarizerContainerAndMakeSummary(
 		);
 		const fullTreeGate = typeof raw === "boolean" ? raw : false;
 
-		const summarizeResults: SummarizeResultsPromisesLike = summarizer.summarizeOnDemand({
+		const summarizeResults: OnDemandSummarizeResultsPromises = summarizer.summarizeOnDemand({
 			reason: "summaryOnRequest",
 			retryOnFailure: true,
 			fullTree: fullTreeGate,
@@ -363,14 +378,15 @@ export async function loadSummarizerContainerAndMakeSummary(
 			summarizeResults.summaryOpBroadcasted,
 			summarizeResults.receivedSummaryAckOrNack,
 		]);
+		const summaryResults: OnDemandSummarizeSuccessResults = {
+			summarySubmitted,
+			summaryOpBroadcasted,
+			receivedSummaryAckOrNack,
+		};
 		success = true;
 		return {
 			success: true,
-			summaryResults: {
-				summarySubmitted,
-				summaryOpBroadcasted,
-				receivedSummaryAckOrNack,
-			},
+			summaryResults,
 		};
 	} catch (error) {
 		caughtError = normalizeError(error);

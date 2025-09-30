@@ -11,9 +11,6 @@ import {
 	loadSummarizerContainerAndMakeSummary,
 	type ILoadExistingContainerProps,
 	type LoadSummarizerSummaryResult,
-	type SubmitSummaryResult,
-	type ISubmitSummaryOpResult,
-	type SummarizeResultPart,
 } from "@fluidframework/container-loader/internal";
 import { ISummaryConfigurationWithSummaryOnRequest } from "@fluidframework/container-runtime/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
@@ -24,19 +21,28 @@ import {
 	DataObjectFactoryType,
 } from "@fluidframework/test-utils/internal";
 
-function isSubmitOpResult(data: SubmitSummaryResult): data is ISubmitSummaryOpResult {
-	return data.stage === "submit";
-}
+type StageResult<TData> =
+	| {
+			readonly success: true;
+			readonly data: TData;
+	  }
+	| {
+			readonly success: false;
+			readonly error: Error;
+			readonly message?: string;
+	  };
 
-function expectSummarySuccess<TSuccess, TFailure>(
-	result: SummarizeResultPart<TSuccess, TFailure>,
+function expectStageSuccess<TData>(
+	stageName: string,
+	stage: StageResult<TData>,
 	message: string,
-): TSuccess {
-	if (!result.success) {
-		const details = result.message ?? "unknown failure";
-		assert.fail(`${message}: ${details}`);
+): TData {
+	if (stage.success) {
+		return stage.data;
 	}
-	return result.data;
+
+	const details = stage.message ?? stage.error.message ?? "unknown failure";
+	assert.fail(`${message} (${stageName}): ${details}`);
 }
 
 describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, apis) => {
@@ -73,18 +79,20 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		// Verify - summary success
 		assert(result.success, "expected summarization success");
 		const summaryResults = result.summaryResults;
-		const submit = expectSummarySuccess(
+		const submit = expectStageSuccess(
+			"summarySubmitted",
 			summaryResults.summarySubmitted,
 			"expected submit stage success",
 		);
-		assert(submit.stage === "submit", "submit stage value");
-		assert(isSubmitOpResult(submit), "expected submit op result");
+		assert.strictEqual(submit.stage, "submit", "submit stage value");
 		assert(submit.summaryTree !== undefined, "summary tree should exist");
-		expectSummarySuccess(
+		expectStageSuccess(
+			"summaryOpBroadcasted",
 			summaryResults.summaryOpBroadcasted,
 			"expected broadcast stage success",
 		);
-		const ack = expectSummarySuccess(
+		const ack = expectStageSuccess(
+			"receivedSummaryAckOrNack",
 			summaryResults.receivedSummaryAckOrNack,
 			"expected ack/nack stage success",
 		);
@@ -117,18 +125,20 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		// Verify - summary success
 		assert(result.success, "expected summarization success");
 		const summaryResults = result.summaryResults;
-		const submit = expectSummarySuccess(
+		const submit = expectStageSuccess(
+			"summarySubmitted",
 			summaryResults.summarySubmitted,
 			"expected submit stage success",
 		);
-		assert(submit.stage === "submit", "submit stage value");
-		assert(isSubmitOpResult(submit), "expected submit op result");
+		assert.strictEqual(submit.stage, "submit", "submit stage value");
 		assert(submit.summaryTree !== undefined, "summary tree should exist");
-		expectSummarySuccess(
+		expectStageSuccess(
+			"summaryOpBroadcasted",
 			summaryResults.summaryOpBroadcasted,
 			"expected broadcast stage success (gate)",
 		);
-		const ack = expectSummarySuccess(
+		const ack = expectStageSuccess(
+			"receivedSummaryAckOrNack",
 			summaryResults.receivedSummaryAckOrNack,
 			"expected ack/nack stage success",
 		);
@@ -203,17 +213,20 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		// Verify - summary success
 		assert(summaryResult.success, "summarizer run should succeed");
 		const summaryResults = summaryResult.summaryResults;
-		const submit = expectSummarySuccess(
+		const submit = expectStageSuccess(
+			"summarySubmitted",
 			summaryResults.summarySubmitted,
 			"summary submit must succeed",
 		);
-		assert(isSubmitOpResult(submit), "summary should produce submit result");
+		assert.strictEqual(submit.stage, "submit", "summary should produce submit result");
 		assert(submit.summaryTree !== undefined, "summary tree should exist");
-		expectSummarySuccess(
+		expectStageSuccess(
+			"summaryOpBroadcasted",
 			summaryResults.summaryOpBroadcasted,
 			"summary broadcast must succeed",
 		);
-		const ack = expectSummarySuccess(
+		const ack = expectStageSuccess(
+			"receivedSummaryAckOrNack",
 			summaryResults.receivedSummaryAckOrNack,
 			"summary ack must succeed",
 		);
