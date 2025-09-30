@@ -75,7 +75,7 @@ export interface SchemaStaticsAlpha {
 	 * @remarks
 	 * Staged allowed types add support for loading documents which may contain that type at the declared location.
 	 * This allows for an incremental rollout of a schema change to add a {@link TreeNodeSchema} to an {@link AllowedTypes} without breaking cross version collaboration.
-	 * A guide on this process can be found here: https://fluidframework.com/docs/data-structures/tree//schema-evolution/allowed-types-rollout
+	 * A guide on this process can be found here: https://fluidframework.com/docs/data-structures/tree/schema-evolution/allowed-types-rollout
 	 *
 	 * Once enough clients have the type staged (and thus can read documents which allow it), documents can start being created and upgraded to allow the staged type.
 	 * This is done by deploying a new version of the app which removes the `staged` wrapper around the allowed type in the the schema definition.
@@ -91,43 +91,11 @@ export interface SchemaStaticsAlpha {
 	 * Currently, `staged` is not supported in the recursive type APIs: this is a known limitation which future versions of the API will address.
 	 *
 	 * @example
-	 * Suppose you have a schema which has a field that allows some type `A`, but you want to add support for type `B`.
+	 * A full code example of the schema migration process can be found in our {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts | tests}.
 	 *
-	 * The first change is to used to mark the new type as staged, replacing `A` in the schema with `[A, SchemaStaticsAlpha.staged(B)]`.
-	 * Once this is done, and any code which reads contents from documents is updated to handle any `B` content that may be present, this version of the code can be deployed.
-	 *
-	 * Once all users have the above changes, the schema can be updated again to `[A, B]`, and the app can be updated to allow creating of `B` content.
-	 * This updated version of the app will need to call {@link TreeView.upgradeSchema} when opening documents created by earlier versions.
-	 *
-	 * Adding a `B` schema as an option in the root could look like this:
-	 * ```typescript
-	 * const factory = new SchemaFactoryAlpha("test");
-	 * class A extends factory.objectAlpha("A", {}) {}
-	 * class B extends factory.objectAlpha("B", {}) {}
-	 *
-	 * // Does not support B
-	 * const configBefore = new TreeViewConfigurationAlpha({
-	 * 	schema: A,
-	 * });
-	 *
-	 * // Supports documents with or without B
-	 * const configStaged = new TreeViewConfigurationAlpha({
-	 * 	// Adds staged support for B.
-	 * 	// Currently this requires wrapping the root field with `SchemaFactoryAlpha.required`:
-	 * 	// this is normally implicitly included, but is currently required while the "staged" APIs are `@alpha`.
-	 * 	schema: SchemaFactoryAlpha.required([A, SchemaFactoryAlpha.staged(B)]),
-	 * });
-	 *
-	 * // Only supports documents with A and B: can be used to upgrade schema to add B.
-	 * const configAfter = new TreeViewConfigurationAlpha({
-	 * 	schema: [A, B],
-	 * });
-	 * ```
 	 * @privateRemarks
 	 * TODO:#44317 staged allowed types rely on schema validation of stored schema to output errors, these errors are not very
 	 * user friendly and should be improved, particularly in the case of staged allowed types
-	 *
-	 * TODO: the example above does not work tell in intellisense: its formatted to work onm the website. We should find a solution that works well for both.
 	 *
 	 * TODO: AB#45711: Update the docs above when recursive type support is added.
 	 */
