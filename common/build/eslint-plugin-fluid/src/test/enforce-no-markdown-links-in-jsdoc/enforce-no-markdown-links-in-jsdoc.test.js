@@ -38,15 +38,12 @@ describe("Do not allow Markdown links in JSDoc/TSDoc comments", function () {
 			"Markdown link syntax (`[text](url)`) is not allowed in JSDoc/TSDoc comments. Use `{@link url|text}` syntax instead.",
 		);
 		assert.strictEqual(error.line, 10);
-		// Note: columns are 1-based
-		assert.strictEqual(error.column, 51); // inclusive
-		assert.strictEqual(error.endColumn, 75); // exclusive
+		assert.strictEqual(error.column, 51); // 1-based, inclusive
+		assert.strictEqual(error.endColumn, 75); // 1-based, exclusive
 
 		// Test auto-fix
 		assert.notEqual(error.fix, undefined);
-		// Note: range is 0-based global character index in the file.
-		// The start is inclusive, and the end is exclusive.
-		assert.deepEqual(error.fix.range, [259, 283]);
+		assert.deepEqual(error.fix.range, [259, 283]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
 		assert.deepEqual(error.fix.text, "{@link https://bing.com | bing}");
 	});
 });
