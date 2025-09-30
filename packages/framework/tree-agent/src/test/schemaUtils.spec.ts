@@ -219,7 +219,7 @@ describe("findNamedSchemas", () => {
 		for (const s of findNamedSchemas(Root)) {
 			identifiers.push((s as { identifier: string }).identifier);
 		}
-		assert.equal(identifiers.length, new Set(identifiers).size + 1); // There is one duplicate schema that is used twice (NamedStringMap)
+		assert.equal(identifiers.length, new Set(identifiers).size);
 		for (const s of [Root, TestObject, NamedStringArray, NamedStringMap, NamedStringRecord]) {
 			assert.ok(identifiers.includes(s.identifier), `Expected named schema ${s.identifier}`);
 		}
