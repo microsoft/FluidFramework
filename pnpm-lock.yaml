@@ -315,6 +315,9 @@ importers:
 
   examples/apps/blobs:
     dependencies:
+      '@fluid-example/example-driver':
+        specifier: workspace:~
+        version: link:../../utils/example-driver
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils
@@ -348,9 +351,6 @@ importers:
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../packages/dds/map
-      '@fluidframework/routerlicious-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/routerlicious-driver
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
@@ -360,9 +360,6 @@ importers:
       '@fluidframework/server-local-server':
         specifier: ^7.0.0
         version: 7.0.0
-      '@fluidframework/tinylicious-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/tinylicious-driver
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -376,6 +373,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.58.3
         version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -2015,15 +2015,18 @@ importers:
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../../packages/common/core-utils
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/common/driver-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../../packages/loader/driver-utils
       '@fluidframework/odsp-doclib-utils':
         specifier: workspace:~
         version: link:../../../packages/utils/odsp-doclib-utils
       '@fluidframework/odsp-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/odsp-driver
-      '@fluidframework/odsp-driver-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/odsp-driver-definitions
       '@fluidframework/odsp-urlresolver':
         specifier: workspace:~
         version: link:../../../packages/drivers/odsp-urlResolver
@@ -2260,16 +2263,16 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@testing-library/dom':
         specifier: ^10.4.0
-        version: 10.4.0
+        version: 10.4.1
       '@testing-library/jest-dom':
         specifier: ^5.16.5
         version: 5.17.0
       '@testing-library/react':
         specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@testing-library/user-event':
         specifier: ^14.4.3
-        version: 14.5.2(@testing-library/dom@10.4.0)
+        version: 14.5.2(@testing-library/dom@10.4.1)
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -2763,9 +2766,6 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
-      '@fluid-experimental/tree-react-api':
-        specifier: workspace:~
-        version: link:../../../experimental/framework/tree-react-api
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../packages/framework/aqueduct
@@ -2775,6 +2775,9 @@ importers:
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/react':
+        specifier: workspace:~
+        version: link:../../../packages/framework/react
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
@@ -4466,15 +4469,15 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../../utils/example-utils
-      '@fluid-experimental/tree-react-api':
-        specifier: workspace:~
-        version: link:../../../../experimental/framework/tree-react-api
       '@fluidframework/azure-client':
         specifier: workspace:~
         version: link:../../../../packages/service-clients/azure-client
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../../packages/common/core-interfaces
+      '@fluidframework/react':
+        specifier: workspace:~
+        version: link:../../../../packages/framework/react
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../../../packages/drivers/routerlicious-driver
@@ -4827,6 +4830,64 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack@5.97.1)
 
+  examples/utils/example-driver:
+    dependencies:
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-interfaces
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/common/driver-definitions
+      '@fluidframework/local-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/local-driver
+      '@fluidframework/odsp-doclib-utils':
+        specifier: workspace:~
+        version: link:../../../packages/utils/odsp-doclib-utils
+      '@fluidframework/odsp-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/odsp-driver
+      '@fluidframework/routerlicious-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/routerlicious-driver
+      '@fluidframework/server-local-server':
+        specifier: ^7.0.0
+        version: 7.0.0
+      '@fluidframework/tinylicious-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/tinylicious-driver
+    devDependencies:
+      '@arethetypeswrong/cli':
+        specifier: ^0.17.1
+        version: 0.17.1
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
+      '@fluid-tools/build-cli':
+        specifier: ^0.58.3
+        version: 0.58.3(@types/node@22.14.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.58.3
+        version: 0.58.3(@types/node@22.14.1)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
+      copyfiles:
+        specifier: ^2.4.1
+        version: 2.4.1
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
   examples/utils/example-utils:
     dependencies:
       '@fluid-experimental/pact-map':
@@ -4938,6 +4999,52 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
+      copyfiles:
+        specifier: ^2.4.1
+        version: 2.4.1
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
+  examples/utils/example-webpack-integration:
+    dependencies:
+      '@fluidframework/tool-utils':
+        specifier: workspace:~
+        version: link:../../../packages/utils/tool-utils
+      webpack:
+        specifier: ^5.94.0
+        version: 5.97.1(webpack-cli@5.1.4)
+      webpack-dev-server:
+        specifier: ~4.15.2
+        version: 4.15.2(webpack-cli@5.1.4)(webpack@5.97.1)
+    devDependencies:
+      '@arethetypeswrong/cli':
+        specifier: ^0.17.1
+        version: 0.17.1
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
+      '@fluid-tools/build-cli':
+        specifier: ^0.58.3
+        version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.58.3
+        version: 0.58.3(@types/node@18.19.86)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.86
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -6005,6 +6112,9 @@ importers:
 
   examples/view-integration/external-views:
     dependencies:
+      '@fluid-example/example-driver':
+        specifier: workspace:~
+        version: link:../../utils/example-driver
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils
@@ -6038,9 +6148,6 @@ importers:
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../packages/dds/map
-      '@fluidframework/routerlicious-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/routerlicious-driver
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
@@ -6050,9 +6157,6 @@ importers:
       '@fluidframework/server-local-server':
         specifier: ^7.0.0
         version: 7.0.0
-      '@fluidframework/tinylicious-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/tinylicious-driver
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -6066,6 +6170,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-example/example-webpack-integration':
+        specifier: workspace:~
+        version: link:../../utils/example-webpack-integration
       '@fluid-tools/build-cli':
         specifier: ^0.58.3
         version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -7238,106 +7345,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      rimraf:
-        specifier: ^4.4.0
-        version: 4.4.1
-      typescript:
-        specifier: ~5.4.5
-        version: 5.4.5
-
-  experimental/framework/tree-react-api:
-    dependencies:
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../../packages/framework/aqueduct
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../../packages/common/core-interfaces
-      '@fluidframework/datastore-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/datastore-definitions
-      '@fluidframework/fluid-static':
-        specifier: workspace:~
-        version: link:../../../packages/framework/fluid-static
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-definitions
-      '@fluidframework/shared-object-base':
-        specifier: workspace:~
-        version: link:../../../packages/dds/shared-object-base
-      '@fluidframework/tree':
-        specifier: workspace:~
-        version: link:../../../packages/dds/tree
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
-    devDependencies:
-      '@arethetypeswrong/cli':
-        specifier: ^0.17.1
-        version: 0.17.1
-      '@biomejs/biome':
-        specifier: ~1.9.3
-        version: 1.9.4
-      '@fluid-internal/mocha-test-setup':
-        specifier: workspace:~
-        version: link:../../../packages/test/mocha-test-setup
-      '@fluid-tools/build-cli':
-        specifier: ^0.58.3
-        version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: ^0.58.3
-        version: 0.58.3(@types/node@18.19.86)
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^6.0.0
-        version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/tinylicious-client':
-        specifier: workspace:~
-        version: link:../../../packages/service-clients/tinylicious-client
-      '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
-      '@testing-library/react':
-        specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@types/mocha':
-        specifier: ^10.0.10
-        version: 10.0.10
-      '@types/node':
-        specifier: ^18.19.0
-        version: 18.19.86
-      '@types/react':
-        specifier: ^18.3.11
-        version: 18.3.15
-      c8:
-        specifier: ^10.1.3
-        version: 10.1.3
-      concurrently:
-        specifier: ^8.2.1
-        version: 8.2.2
-      copyfiles:
-        specifier: ^2.4.1
-        version: 2.4.1
-      cross-env:
-        specifier: ^7.0.3
-        version: 7.0.3
-      eslint:
-        specifier: ~8.55.0
-        version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
-      global-jsdom:
-        specifier: ^26.0.0
-        version: 26.0.0(jsdom@20.0.3)
-      mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
-      mocha-multi-reporters:
-        specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -9597,9 +9604,12 @@ importers:
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../common/core-utils
-      '@fluidframework/odsp-driver-definitions':
+      '@fluidframework/driver-definitions':
         specifier: workspace:~
-        version: link:../odsp-driver-definitions
+        version: link:../../common/driver-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../loader/driver-utils
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -11527,6 +11537,106 @@ importers:
       sinon:
         specifier: ^18.0.1
         version: 18.0.1
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
+  packages/framework/react:
+    dependencies:
+      '@fluidframework/aqueduct':
+        specifier: workspace:~
+        version: link:../aqueduct
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../common/core-interfaces
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/datastore-definitions
+      '@fluidframework/fluid-static':
+        specifier: workspace:~
+        version: link:../fluid-static
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-definitions
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../../dds/shared-object-base
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../dds/tree
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+    devDependencies:
+      '@arethetypeswrong/cli':
+        specifier: ^0.17.1
+        version: 0.17.1
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../test/mocha-test-setup
+      '@fluid-tools/build-cli':
+        specifier: ^0.58.3
+        version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.58.3
+        version: 0.58.3(@types/node@18.19.86)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/tinylicious-client':
+        specifier: workspace:~
+        version: link:../../service-clients/tinylicious-client
+      '@microsoft/api-extractor':
+        specifier: 7.52.11
+        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+      '@testing-library/react':
+        specifier: ^16.3.0
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.86
+      '@types/react':
+        specifier: ^18.3.11
+        version: 18.3.15
+      c8:
+        specifier: ^10.1.3
+        version: 10.1.3
+      concurrently:
+        specifier: ^8.2.1
+        version: 8.2.2
+      copyfiles:
+        specifier: ^2.4.1
+        version: 2.4.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      eslint-config-prettier:
+        specifier: ~9.0.0
+        version: 9.0.0(eslint@8.55.0)
+      global-jsdom:
+        specifier: ^26.0.0
+        version: 26.0.0(jsdom@20.0.3)
+      mocha:
+        specifier: ^10.8.2
+        version: 10.8.2
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@10.8.2)
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -14845,9 +14955,6 @@ importers:
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../dds/matrix
-      '@fluidframework/odsp-driver-definitions':
-        specifier: workspace:~
-        version: link:../../drivers/odsp-driver-definitions
       '@fluidframework/ordered-collection':
         specifier: workspace:~
         version: link:../../dds/ordered-collection
@@ -15432,9 +15539,6 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../../../examples/utils/example-utils
-      '@fluid-experimental/tree-react-api':
-        specifier: workspace:~
-        version: link:../../../../experimental/framework/tree-react-api
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../common/client-utils
@@ -15480,6 +15584,9 @@ importers:
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../../dds/matrix
+      '@fluidframework/react':
+        specifier: workspace:~
+        version: link:../../../framework/react
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../runtime/runtime-utils
@@ -15528,16 +15635,16 @@ importers:
         version: link:../../../test/test-utils
       '@testing-library/dom':
         specifier: ^10.4.0
-        version: 10.4.0
+        version: 10.4.1
       '@testing-library/jest-dom':
         specifier: ^5.16.5
         version: 5.17.0
       '@testing-library/react':
         specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@testing-library/user-event':
         specifier: ^14.4.3
-        version: 14.5.2(@testing-library/dom@10.4.0)
+        version: 14.5.2(@testing-library/dom@10.4.1)
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -15700,16 +15807,16 @@ importers:
         version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
       '@testing-library/dom':
         specifier: ^10.4.0
-        version: 10.4.0
+        version: 10.4.1
       '@testing-library/jest-dom':
         specifier: ^5.16.5
         version: 5.17.0
       '@testing-library/react':
         specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@testing-library/user-event':
         specifier: ^14.4.3
-        version: 14.5.2(@testing-library/dom@10.4.0)
+        version: 14.5.2(@testing-library/dom@10.4.1)
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -18985,8 +19092,8 @@ packages:
   '@technote-space/doctoc@2.6.4':
     resolution: {integrity: sha512-gm6It+7hCuVSFMl9kP9NYX5TTqc6GRcb9HXm0/YhKnou1E0pyocG+6IR/1GNOu/yCkRnD9bRlp5BYw8puvf2kA==}
 
-  '@testing-library/dom@10.4.0':
-    resolution: {integrity: sha512-pemlzrSESWbdAloYml3bAJMEfNh1Z7EduzqPKprCH5S341frlpYnUEW0H72dLxa6IsYr+mPno20GiSm+h9dEdQ==}
+  '@testing-library/dom@10.4.1':
+    resolution: {integrity: sha512-o4PXJQidqJl82ckFaXUeoAW+XysPLauYI43Abki5hABd853iMhitooc6znOnczgbTYmEP6U6/y1ZyKAIsvMKGg==}
     engines: {node: '>=18'}
 
   '@testing-library/jest-dom@5.17.0':
@@ -25398,7 +25505,7 @@ packages:
   puppeteer@23.10.3:
     resolution: {integrity: sha512-ODG+L9vCSPkQ1j+yDtNDdkSsWt2NXNrQO5C8MlwkYgE2hYnXdqVRbBpsHnoP7+EULJJKbWyR2Q4BdfohjQor3A==}
     engines: {node: '>=18'}
-    deprecated: < 24.9.0 is no longer supported
+    deprecated: < 24.10.2 is no longer supported
     hasBin: true
 
   pure-rand@6.1.0:
@@ -33175,15 +33282,15 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@testing-library/dom@10.4.0':
+  '@testing-library/dom@10.4.1':
     dependencies:
       '@babel/code-frame': 7.26.2
       '@babel/runtime': 7.27.0
       '@types/aria-query': 5.0.4
       aria-query: 5.3.0
-      chalk: 4.1.2
       dom-accessibility-api: 0.5.16
       lz-string: 1.5.0
+      picocolors: 1.1.1
       pretty-format: 27.5.1
 
   '@testing-library/jest-dom@5.17.0':
@@ -33198,19 +33305,19 @@ snapshots:
       lodash: 4.17.21
       redent: 3.0.0
 
-  '@testing-library/react@16.3.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.27.0
-      '@testing-library/dom': 10.4.0
+      '@testing-library/dom': 10.4.1
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
     optionalDependencies:
       '@types/react': 18.3.15
       '@types/react-dom': 18.3.3(@types/react@18.3.15)
 
-  '@testing-library/user-event@14.5.2(@testing-library/dom@10.4.0)':
+  '@testing-library/user-event@14.5.2(@testing-library/dom@10.4.1)':
     dependencies:
-      '@testing-library/dom': 10.4.0
+      '@testing-library/dom': 10.4.1
 
   '@textlint/ast-node-types@12.6.1': {}
 

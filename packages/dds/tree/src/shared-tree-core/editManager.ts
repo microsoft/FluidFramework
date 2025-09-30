@@ -115,11 +115,14 @@ export class EditManager<
 	/**
 	 * @param changeFamily - the change family of changes on the trunk and local branch
 	 * @param localSessionId - the id of the local session that will be used for local commits
+	 * @param mintRevisionTag - a function which generates globally unique revision tags
+	 * @param onSharedBranchCreated - called when a new shared branch is created. This is not called for the main branch.
 	 */
 	public constructor(
 		public readonly changeFamily: TChangeFamily,
 		public readonly localSessionId: SessionId,
 		private readonly mintRevisionTag: () => RevisionTag,
+		private readonly onSharedBranchCreated?: (branchId: BranchId) => void,
 		logger?: ITelemetryLoggerExt,
 	) {
 		this.trunkBase = {
@@ -146,12 +149,7 @@ export class EditManager<
 			this.telemetryEventBatcher,
 		);
 
-		const mainBranch = this.createSharedBranch("main", undefined, undefined, mainTrunk);
-
-		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
-		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
-		// they require and therefore we monitor them explicitly.
-		onForkTransitive(mainBranch.localBranch, (fork) => this.registerBranch(fork));
+		this.createAndAddSharedBranch("main", undefined, undefined, mainTrunk);
 	}
 
 	public getLocalBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChangeset> {
@@ -159,7 +157,7 @@ export class EditManager<
 	}
 
 	private getSharedBranch(branchId: BranchId): SharedBranch<TEditor, TChangeset> {
-		return this.sharedBranches.get(branchId) ?? fail("Branch does not exist");
+		return this.sharedBranches.get(branchId) ?? fail(0xc56 /* Branch does not exist */);
 	}
 
 	/**
@@ -374,7 +372,7 @@ export class EditManager<
 					this.trunkBase.revision,
 				);
 				branches.set(branchId, branchSummary);
-				assert(branchSummary.base !== undefined, "Branch summary must have a base");
+				assert(branchSummary.base !== undefined, 0xc57 /* Branch summary must have a base */);
 				const baseSequenceId = mainBranch.getCommitSequenceId(branchSummary.base);
 				minBaseSeqId = minSequenceId(minBaseSeqId, baseSequenceId);
 			}
@@ -392,7 +390,8 @@ export class EditManager<
 		// when hydrating the peer branches below
 		const trunkRevisionCache = new Map<RevisionTag, GraphCommit<TChangeset>>();
 		trunkRevisionCache.set(this.trunkBase.revision, this.trunkBase);
-		const mainBranch = this.sharedBranches.get("main") ?? fail("Main branch must exist");
+		const mainBranch =
+			this.sharedBranches.get("main") ?? fail(0xc58 /* Main branch must exist */);
 		mainBranch.loadSummaryData(data.main, trunkRevisionCache);
 		if (data.branches !== undefined) {
 			for (const [branchId, branchData] of data.branches) {
@@ -403,6 +402,7 @@ export class EditManager<
 					mainBranch.trunk.fork(),
 				);
 				branch.loadSummaryData(branchData, trunkRevisionCache);
+				this.addSharedBranch(branchId, branch);
 			}
 		}
 	}
@@ -417,10 +417,6 @@ export class EditManager<
 
 	public getTrunkCommits(branchId: BranchId): GraphCommit<TChangeset>[] {
 		return getPathFromBase(this.getTrunkHead(branchId), this.trunkBase);
-	}
-
-	public getLocalChanges(branchId: BranchId): readonly TChangeset[] {
-		return this.getLocalCommits(branchId).map((c) => c.change);
 	}
 
 	public getLocalCommits(branchId: BranchId): readonly GraphCommit<TChangeset>[] {
@@ -450,21 +446,18 @@ export class EditManager<
 		branchId: BranchId,
 	): void {
 		if (sessionId === this.localSessionId) {
-			assert(this.sharedBranches.has(branchId), "Expected branch to already exist");
+			assert(this.sharedBranches.has(branchId), 0xc59 /* Expected branch to already exist */);
 			return;
 		}
 
 		const mainBranch = this.getSharedBranch("main");
 		const branchTrunk = mainBranch.rebasePeer(sessionId, referenceSequenceNumber).fork();
-
-		const sharedBranch = this.createSharedBranch(branchId, sessionId, mainBranch, branchTrunk);
-		this.registerBranch(sharedBranch.localBranch);
-		onForkTransitive(sharedBranch.localBranch, (fork) => this.registerBranch(fork));
+		this.createAndAddSharedBranch(branchId, sessionId, mainBranch, branchTrunk);
 	}
 
-	public addBranch(branchId: BranchId): void {
-		const main = this.getSharedBranch("main") ?? fail("Main branch must exist");
-		this.createSharedBranch(
+	public addNewBranch(branchId: BranchId): void {
+		const main = this.getSharedBranch("main") ?? fail(0xc5a /* Main branch must exist */);
+		this.createAndAddSharedBranch(
 			branchId,
 			this.localSessionId,
 			main,
@@ -472,10 +465,46 @@ export class EditManager<
 		);
 	}
 
+	public getSharedBranchIds(): BranchId[] {
+		return Array.from(this.sharedBranches.keys());
+	}
+
 	public removeBranch(branchId: BranchId): void {
-		assert(branchId !== "main", "Cannot remove main branch");
+		assert(branchId !== "main", 0xc5b /* Cannot remove main branch */);
 		const hadBranch = this.sharedBranches.delete(branchId);
-		assert(hadBranch, "Expected branch to exist");
+		assert(hadBranch, 0xc5c /* Expected branch to exist */);
+	}
+
+	private createAndAddSharedBranch(
+		branchId: BranchId,
+		sessionId: SessionId | undefined,
+		parent: SharedBranch<TEditor, TChangeset> | undefined,
+		branch: SharedTreeBranch<TEditor, TChangeset>,
+	): SharedBranch<TEditor, TChangeset> {
+		const sharedBranch = this.createSharedBranch(branchId, sessionId, parent, branch);
+		this.addSharedBranch(branchId, sharedBranch);
+		return sharedBranch;
+	}
+
+	private addSharedBranch(
+		branchId: BranchId,
+		branch: SharedBranch<TEditor, TChangeset>,
+	): void {
+		assert(
+			!this.sharedBranches.has(branchId),
+			0xc5d /* A branch with this ID already exists */,
+		);
+		this.sharedBranches.set(branchId, branch);
+
+		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
+		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
+		// they require and therefore we monitor them explicitly.
+		onForkTransitive(branch.localBranch, (fork) => this.registerBranch(fork));
+
+		if (branchId !== "main") {
+			this.registerBranch(branch.localBranch);
+			this.onSharedBranchCreated?.(branchId);
+		}
 	}
 
 	private createSharedBranch(
@@ -496,8 +525,6 @@ export class EditManager<
 			this.telemetryEventBatcher,
 		);
 
-		assert(!this.sharedBranches.has(branchId), "A branch with this ID already exists");
-		this.sharedBranches.set(branchId, sharedBranch);
 		return sharedBranch;
 	}
 
@@ -517,7 +544,7 @@ export class EditManager<
 		sessionId: SessionId,
 		sequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
-		branchId: BranchId = "main",
+		branchId: BranchId,
 	): void {
 		assert(newCommits.length > 0, 0xad8 /* Expected at least one sequenced change */);
 		assert(
@@ -976,7 +1003,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		// rebasing trunk changes over the inverse of trunk changes.
 		assert(
 			this.localBranch.getHead() === this.trunk.getHead(),
-			"Clients with local changes cannot be used to generate summaries",
+			0xc5e /* Clients with local changes cannot be used to generate summaries */,
 		);
 
 		let parentHead: GraphCommit<TChangeset>;
@@ -996,7 +1023,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		);
 		assert(
 			forkPointFromMainTrunk !== undefined,
-			"Expected child branch to be based on main branch",
+			0xc5f /* Expected child branch to be based on main branch */,
 		);
 
 		const trunk = childBranchTrunkCommits.map((c) => {
@@ -1052,11 +1079,11 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 	): void {
 		assert(
 			(this.parentBranch === undefined) === (data.base === undefined),
-			"Expected branch base to match presence of parent branch",
+			0xc60 /* Expected branch base to match presence of parent branch */,
 		);
 		const parentTrunkBase =
 			trunkRevisionCache.get(data.base ?? rootRevision) ??
-			fail("Expected base revision to be in trunk cache");
+			fail(0xc61 /* Expected base revision to be in trunk cache */);
 		this.trunk.setHead(
 			data.trunk.reduce((base, c) => {
 				const sequenceId: SequenceId =

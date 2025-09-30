@@ -9,7 +9,7 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import type { ImplicitFieldSchema } from "@fluidframework/tree";
 import {
-	asTreeViewAlpha,
+	asAlpha,
 	getSimpleSchema,
 	SchemaFactory,
 	SharedTree,
@@ -22,7 +22,7 @@ import { z } from "zod";
 import { createSemanticAgent, type FunctioningSemanticAgent } from "../agent.js";
 import { buildFunc, exposeMethodsSymbol, type ExposedMethods } from "../methodBinding.js";
 import { generateEditTypesForPrompt } from "../typeGeneration.js";
-import { getFriendlySchemaName, getZodSchemaAsTypeScript } from "../utils.js";
+import { unqualifySchema, getZodSchemaAsTypeScript, isNamedSchema } from "../utils.js";
 
 const factory = SharedTree.getFactory();
 const sf = new SchemaFactory("test");
@@ -98,15 +98,10 @@ describe("System prompt", () => {
 		const schema = getSimpleSchema(view.schema);
 		const { domainTypes } = generateEditTypesForPrompt(view.schema, schema);
 		for (const [key, value] of Object.entries(domainTypes)) {
-			const friendlyKey = getFriendlySchemaName(key);
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 			delete domainTypes[key];
-			if (
-				friendlyKey !== undefined &&
-				friendlyKey !== "string" &&
-				friendlyKey !== "number" &&
-				friendlyKey !== "boolean"
-			) {
+			if (isNamedSchema(key)) {
+				const friendlyKey = unqualifySchema(key);
 				domainTypes[friendlyKey] = value;
 			}
 		}
@@ -125,15 +120,10 @@ describe("System prompt", () => {
 
 		const { domainTypes } = generateEditTypesForPrompt(view.schema, schema);
 		for (const [key, value] of Object.entries(domainTypes)) {
-			const friendlyKey = getFriendlySchemaName(key);
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 			delete domainTypes[key];
-			if (
-				friendlyKey !== undefined &&
-				friendlyKey !== "string" &&
-				friendlyKey !== "number" &&
-				friendlyKey !== "boolean"
-			) {
+			if (isNamedSchema(key)) {
+				const friendlyKey = unqualifySchema(key);
 				domainTypes[friendlyKey] = value;
 			}
 		}
@@ -167,7 +157,7 @@ describe("System prompt", () => {
 			responses: ["pong", "second", "third"],
 		});
 
-		const agent = createSemanticAgent(chat, asTreeViewAlpha(view)) as FunctioningSemanticAgent<
+		const agent = createSemanticAgent(chat, asAlpha(view)) as FunctioningSemanticAgent<
 			typeof ArrayWithMethod
 		>;
 
