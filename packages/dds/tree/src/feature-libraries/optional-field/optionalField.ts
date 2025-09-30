@@ -203,7 +203,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	},
 
 	mute: (change: OptionalChangeset): OptionalChangeset => {
-		return { childChanges: change.childChanges, moves: [] };
+		return { childChange: change.childChange };
 	},
 };
 

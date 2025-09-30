@@ -27,7 +27,7 @@ import type {
 } from "./crossFieldQueries.js";
 
 import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
-import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
+import type { ChangeAtomIdBTree, CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 
 export type NestedChangesIndices = [NodeId, number /* inputIndex */][];
 

@@ -81,6 +81,7 @@ import {
 	type RootNodeTable,
 } from "./modularChangeTypes.js";
 import {
+	addNodeRename,
 	getFirstAttachField,
 	getFirstDetachField,
 	newRootTable,

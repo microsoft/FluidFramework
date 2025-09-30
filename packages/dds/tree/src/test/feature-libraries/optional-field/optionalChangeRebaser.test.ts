@@ -36,7 +36,6 @@ import { chunkFromJsonTrees } from "../../utils.js";
 import { intoDelta, type DefaultChangeset } from "../../../feature-libraries/index.js";
 import type {
 	FieldEditDescription,
-	GlobalEditDescription,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {

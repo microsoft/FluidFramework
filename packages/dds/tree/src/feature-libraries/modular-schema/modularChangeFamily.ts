@@ -45,6 +45,7 @@ import {
 	type NormalizedFieldUpPath,
 	isDetachedUpPathRoot,
 	subtractChangeAtomIds,
+	makeChangeAtomId,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,

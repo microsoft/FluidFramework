@@ -5,18 +5,13 @@
 
 import path from "node:path";
 
-import {
-	newChangeAtomIdTransform,
-	RevisionTagCodec,
-	type ChangeAtomId,
-} from "../../../core/index.js";
-import { SequenceField, type NodeId } from "../../../feature-libraries/index.js";
+import { newChangeAtomIdTransform, RevisionTagCodec } from "../../../core/index.js";
+import { SequenceField } from "../../../feature-libraries/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { createSnapshotCompressor, testIdCompressor } from "../../utils.js";
 import { generatePopulatedMarks } from "./populatedMarks.js";
-import { newTupleBTree } from "../../../util/bTreeUtils.js";
-import { brand } from "../../../util/brand.js";
+import { brand, newTupleBTree } from "../../../util/index.js";
 
 export function testSnapshots() {
 	describe("Snapshots", () => {
