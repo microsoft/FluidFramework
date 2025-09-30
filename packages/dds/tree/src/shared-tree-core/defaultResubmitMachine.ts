@@ -89,8 +89,6 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		// Update the enrichments of the stale commits.
 		for (const [iCommit, commit] of localCommits.entries()) {
 			const current = this.getPendingChange(commit.revision);
-
-			// XXX: We might not have a pending change if we rebased over a merge of that change.
 			assert(
 				current !== undefined,
 				0xbda /* there must be an inflight commit for each resubmit commit */,
