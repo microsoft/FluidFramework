@@ -52,8 +52,13 @@ import type {
 import { getView, validateUsageError } from "../../../utils.js";
 import { Tree } from "../../../../shared-tree/index.js";
 import { FieldKinds } from "../../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { createField, UnhydratedFlexTreeNode } from "../../../../simple-tree/core/index.js";
+
+import {
+	AnnotatedAllowedTypesInternal,
+	createField,
+	UnhydratedFlexTreeNode,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../simple-tree/core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getUnhydratedContext } from "../../../../simple-tree/createContext.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -996,13 +1001,10 @@ describeHydration(
 
 			it("unannotates annotated allowed types", () => {
 				const schemaRecord = {
-					bar: {
-						metadata: {},
-						types: [
-							{ metadata: {}, type: stringSchema },
-							{ metadata: {}, type: numberSchema },
-						],
-					},
+					bar: AnnotatedAllowedTypesInternal.create([
+						{ metadata: {}, type: stringSchema },
+						{ metadata: {}, type: numberSchema },
+					]),
 				};
 				const result = unannotateSchemaRecord(schemaRecord);
 				assert.deepStrictEqual(result, {
@@ -1014,10 +1016,7 @@ describeHydration(
 				const fieldSchema = SchemaFactory.optional(stringSchema);
 				const schemaRecord = {
 					foo: fieldSchema,
-					bar: {
-						metadata: {},
-						types: [{ metadata: {}, type: stringSchema }],
-					},
+					bar: AnnotatedAllowedTypesInternal.create([{ metadata: {}, type: stringSchema }]),
 				};
 				const result = unannotateSchemaRecord(schemaRecord);
 				assert.deepStrictEqual(result, {

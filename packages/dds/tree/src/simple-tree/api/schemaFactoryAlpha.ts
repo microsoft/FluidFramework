@@ -37,8 +37,15 @@ import type {
 	ImplicitAnnotatedAllowedTypes,
 	AnnotatedAllowedType,
 	LazyItem,
+	AllowedTypesMetadata,
+	UnannotateAllowedTypesList,
+	AnnotateAllowedTypesList,
 } from "../core/index.js";
-import { normalizeToAnnotatedAllowedType, createSchemaUpgrade } from "../core/index.js";
+import {
+	normalizeToAnnotatedAllowedType,
+	createSchemaUpgrade,
+	AnnotatedAllowedTypesInternal,
+} from "../core/index.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
@@ -188,9 +195,16 @@ export interface SchemaStaticsAlpha {
 	 *
 	 * TODO: AB#45711: Update the docs above when recursive type support is added.
 	 */
-	staged: <const T extends LazyItem<TreeNodeSchema>>(
+	readonly staged: <const T extends LazyItem<TreeNodeSchema>>(
 		t: T | AnnotatedAllowedType<T>,
 	) => AnnotatedAllowedType<T>;
+
+	readonly types: <
+		const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
+	>(
+		t: T,
+		metadata?: AllowedTypesMetadata,
+	) => AnnotateAllowedTypesList<T> & UnannotateAllowedTypesList<T>;
 }
 
 const schemaStaticsAlpha: SchemaStaticsAlpha = {
@@ -205,6 +219,13 @@ const schemaStaticsAlpha: SchemaStaticsAlpha = {
 				stagedSchemaUpgrade: createSchemaUpgrade(),
 			},
 		};
+	},
+
+	types: <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(
+		t: T,
+		metadata: AllowedTypesMetadata = {},
+	): AnnotateAllowedTypesList<T> & UnannotateAllowedTypesList<T> => {
+		return AnnotatedAllowedTypesInternal.createMixed<T>(t, metadata);
 	},
 };
 

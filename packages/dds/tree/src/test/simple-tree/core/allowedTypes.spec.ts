@@ -29,6 +29,7 @@ import type {
 } from "../../../util/index.js";
 
 import {
+	AnnotatedAllowedTypesInternal,
 	isAnnotatedAllowedType,
 	normalizeAllowedTypes,
 	normalizeAnnotatedAllowedTypes,
@@ -36,7 +37,6 @@ import {
 	unannotateAllowedType,
 	unannotateImplicitAllowedTypes,
 	type AllowedTypes,
-	type AllowedTypesMetadata,
 	type AnnotatedAllowedType,
 	type AnnotatedAllowedTypes,
 	type ImplicitAllowedTypes,
@@ -239,10 +239,7 @@ const schema = new SchemaFactory("com.example");
 			AnnotatedAllowedType,
 			{ type: typeof SchemaFactory.number; metadata: { custom: "customValue" } },
 		];
-		type Unannotated = UnannotateAllowedTypes<{
-			metadata: AllowedTypesMetadata;
-			types: AnnotatedList;
-		}>;
+		type Unannotated = UnannotateAllowedTypes<AnnotatedAllowedTypes<AnnotatedList>>;
 		type _check = requireAssignableTo<
 			Unannotated,
 			readonly [LazyItem<TreeNodeSchema>, typeof SchemaFactory.number]
@@ -381,10 +378,10 @@ describe("allowedTypes", () => {
 		});
 
 		it("handles AnnotatedAllowedTypes object", () => {
-			const input: AnnotatedAllowedTypes = {
-				metadata: { custom: { something: true } },
-				types: [{ metadata: {}, type: lazy }],
-			};
+			const input: AnnotatedAllowedTypes = AnnotatedAllowedTypesInternal.create(
+				[{ metadata: {}, type: lazy }],
+				{ custom: { something: true } },
+			);
 			assert.deepEqual(unannotateImplicitAllowedTypes(input), [lazy]);
 		});
 
@@ -402,10 +399,7 @@ describe("allowedTypes", () => {
 		});
 
 		it("handles empty array of allowed types in AnnotatedAllowedTypes", () => {
-			const input: AnnotatedAllowedTypes = {
-				metadata: { custom: { something: true } },
-				types: [],
-			};
+			const input = AnnotatedAllowedTypesInternal.create([], { custom: { something: true } });
 			assert.deepEqual(unannotateImplicitAllowedTypes(input), []);
 		});
 	});
@@ -486,12 +480,13 @@ describe("allowedTypes", () => {
 		});
 
 		it("retains top level metadata from AnnotatedAllowedTypes object", () => {
-			const input: AnnotatedAllowedTypes = {
-				metadata: {
+			const input = AnnotatedAllowedTypesInternal.create(
+				[{ metadata: { custom: 1 }, type: lazyString }],
+				{
 					custom: "test",
 				},
-				types: [{ metadata: { custom: 1 }, type: lazyString }],
-			};
+			);
+
 			const result = normalizeAnnotatedAllowedTypes(input);
 			assert.deepEqual(result, {
 				metadata: { custom: "test" },

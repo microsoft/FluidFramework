@@ -11,6 +11,7 @@ import {
 	type TreeNodeSchema,
 } from "../../simple-tree/index.js";
 import {
+	AnnotatedAllowedTypesInternal,
 	walkAllowedTypes,
 	type AnnotatedAllowedType,
 	type NormalizedAnnotatedAllowedTypes,
@@ -54,10 +55,7 @@ describe("walk schema", () => {
 
 	it("calls visitor on single allowed type", () => {
 		const annotated = makeAnnotated(sf.string);
-		const annotatedTypes = {
-			metadata: {},
-			types: [annotated],
-		};
+		const annotatedTypes = AnnotatedAllowedTypesInternal.create([annotated]);
 
 		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(annotatedTypes);
 
@@ -156,10 +154,9 @@ describe("walk schema", () => {
 	});
 
 	it("handles empty allowed types", () => {
-		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes({
-			metadata: {},
-			types: [],
-		});
+		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(
+			AnnotatedAllowedTypesInternal.create([]),
+		);
 
 		assert.deepEqual(visitedNodes, []);
 		assert.deepEqual(visitedAllowedTypes, [{ metadata: {}, types: [] }]);
@@ -169,7 +166,7 @@ describe("walk schema", () => {
 		const annotatedString = makeAnnotated(sf.string);
 
 		assert.doesNotThrow(() =>
-			walkAllowedTypes({ metadata: {}, types: [annotatedString] }, {}),
+			walkAllowedTypes(AnnotatedAllowedTypesInternal.create([annotatedString]), {}),
 		);
 	});
 

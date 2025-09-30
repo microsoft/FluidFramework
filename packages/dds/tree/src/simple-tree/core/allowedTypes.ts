@@ -4,6 +4,10 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	type ErasedBaseType,
+	ErasedTypeImplementation,
+} from "@fluidframework/core-interfaces/internal";
 
 import {
 	getOrCreate,
@@ -69,7 +73,7 @@ export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
  * @alpha
  */
 export interface NormalizedAnnotatedAllowedTypes
-	extends AnnotatedAllowedTypes<TreeNodeSchema> {}
+	extends AnnotatedAllowedTypes<readonly AnnotatedAllowedType<TreeNodeSchema>[]> {}
 
 /**
  * Checks if the input is an {@link AnnotatedAllowedTypes}.
@@ -89,7 +93,8 @@ export function isAnnotatedAllowedTypes(
  * @alpha
  * @sealed
  */
-export interface AnnotatedAllowedTypes<T = LazyItem<TreeNodeSchema>> {
+export interface AnnotatedAllowedTypes<T = readonly AnnotatedAllowedType[]>
+	extends ErasedBaseType<"tree.AnnotatedAllowedTypes"> {
 	/**
 	 * Annotations that apply to a set of allowed types.
 	 */
@@ -97,7 +102,121 @@ export interface AnnotatedAllowedTypes<T = LazyItem<TreeNodeSchema>> {
 	/**
 	 * All the allowed types that the annotations apply to. The types themselves may also have individual annotations.
 	 */
-	readonly types: readonly AnnotatedAllowedType<T>[];
+	readonly types: T;
+}
+
+/**
+ * Stores annotations for a set of allowed types.
+ * @alpha
+ * @sealed
+ */
+export type AllowedTypesFull<
+	T extends readonly AnnotatedAllowedType[] = readonly AnnotatedAllowedType[],
+> = AnnotatedAllowedTypes<T> & UnannotateAllowedTypesList<T>;
+
+export class AnnotatedAllowedTypesInternal<
+		T extends readonly AnnotatedAllowedType[] = readonly AnnotatedAllowedType[],
+	>
+	extends ErasedTypeImplementation<AnnotatedAllowedTypes<T>>
+	implements AnnotatedAllowedTypes<T>
+{
+	public readonly unannotatedTypes: T extends readonly (
+		| AnnotatedAllowedType
+		| LazyItem<TreeNodeSchema>
+	)[]
+		? UnannotateAllowedTypesList<T>
+		: AllowedTypes;
+
+	private constructor(
+		public readonly types: T,
+		public readonly metadata: AllowedTypesMetadata = {},
+	) {
+		super();
+		this.unannotatedTypes = unannotateImplicitAllowedTypes(
+			types as ImplicitAnnotatedAllowedTypes,
+		) as typeof this.unannotatedTypes;
+	}
+
+	public evaluate(): AnnotatedAllowedTypesInternal<
+		readonly AnnotatedAllowedType<TreeNodeSchema>[]
+	> {
+		return normalizeAnnotatedAllowedTypes(this);
+	}
+
+	public static override [Symbol.hasInstance]<
+		TThis extends abstract new (
+			...args: unknown[]
+		) => object,
+	>(
+		this: TThis,
+		value: ErasedBaseType | InstanceType<TThis>,
+	): value is InstanceType<TThis> & AnnotatedAllowedTypesInternal & AllowedTypesFull {
+		return Object.prototype.isPrototypeOf.call(this.prototype, value);
+	}
+
+	public static create<const T extends readonly AnnotatedAllowedType[]>(
+		types: T,
+		metadata: AllowedTypesMetadata = {},
+	): AnnotatedAllowedTypesInternal<T> & AllowedTypesFull<T> {
+		const result = new AnnotatedAllowedTypesInternal(types, metadata);
+
+		const proxy = new Proxy(result, {
+			set: () => {
+				throw new UsageError("AnnotatedAllowedTypes is immutable");
+			},
+
+			get: (target, property, receiver) => {
+				// Forward array lookup, length, and array methods to the unannotated types array.
+				if (property in target.unannotatedTypes) {
+					return Reflect.get(target.unannotatedTypes, property);
+				}
+				// Forward anything else to target.
+				return Reflect.get(target, property) as unknown;
+			},
+
+			has: (target, property) => {
+				if (property in target.unannotatedTypes) {
+					return true;
+				}
+				// Forward anything else to target.
+				return property in target;
+			},
+
+			ownKeys: (target) => {
+				const targetKeys = Reflect.ownKeys(target);
+				const unannotatedTypesKeys = Reflect.ownKeys(target.unannotatedTypes);
+				return [...unannotatedTypesKeys, ...targetKeys];
+			},
+
+			getOwnPropertyDescriptor: (target, property) => {
+				if (Object.prototype.hasOwnProperty.call(target.unannotatedTypes, property)) {
+					return Object.getOwnPropertyDescriptor(target.unannotatedTypes, property);
+				}
+				return Object.getOwnPropertyDescriptor(target, property);
+			},
+		});
+		return proxy as typeof result & UnannotateAllowedTypesList<T>;
+	}
+
+	public static createUnannotated<const T extends AllowedTypes>(
+		types: T,
+		metadata: AllowedTypesMetadata = {},
+	): AnnotatedAllowedTypesInternal & T {
+		const annotatedTypes: AnnotatedAllowedType[] = types.map(normalizeToAnnotatedAllowedType);
+		const result = AnnotatedAllowedTypesInternal.create(annotatedTypes, metadata);
+		return result as typeof result & T;
+	}
+
+	public static createMixed<
+		const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
+	>(
+		types: T,
+		metadata: AllowedTypesMetadata = {},
+	): AnnotateAllowedTypesList<T> & UnannotateAllowedTypesList<T> {
+		const annotatedTypes: AnnotatedAllowedType[] = types.map(normalizeToAnnotatedAllowedType);
+		const result = AnnotatedAllowedTypesInternal.create(annotatedTypes, metadata);
+		return result as typeof result & UnannotateAllowedTypesList<T>;
+	}
 }
 
 /**
@@ -250,6 +369,16 @@ export type UnannotateAllowedTypesList<
 };
 
 /**
+ * Removes annotations from a list of allowed types that may contain annotations.
+ * @system @alpha
+ */
+export type AnnotateAllowedTypesList<
+	T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
+> = {
+	[I in keyof T]: AnnotateAllowedType<T[I]>;
+};
+
+/**
  * Removes all annotations from a set of allowed types.
  * @system @alpha
  */
@@ -266,6 +395,13 @@ export type UnannotateAllowedTypes<T extends AnnotatedAllowedTypes> =
  * @system @alpha
  */
 export type UnannotateAllowedType<T extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>> =
+	T extends AnnotatedAllowedType<infer X> ? X : T;
+
+/**
+ * Add annotations to an allowed type.
+ * @system @alpha
+ */
+export type AnnotateAllowedType<T extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>> =
 	T extends AnnotatedAllowedType<infer X> ? X : T;
 
 /**
@@ -318,7 +454,8 @@ export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchem
  */
 export function normalizeAnnotatedAllowedTypes(
 	types: ImplicitAnnotatedAllowedTypes,
-): NormalizedAnnotatedAllowedTypes {
+): AnnotatedAllowedTypesInternal<readonly AnnotatedAllowedType<TreeNodeSchema>[]> &
+	readonly TreeNodeSchema[] {
 	const typesWithoutAnnotation = isAnnotatedAllowedTypes(types) ? types.types : types;
 	const annotatedTypes: AnnotatedAllowedType<TreeNodeSchema>[] = [];
 	if (isReadonlyArray(typesWithoutAnnotation)) {
@@ -343,10 +480,10 @@ export function normalizeAnnotatedAllowedTypes(
 		}
 	}
 
-	return {
-		metadata: isAnnotatedAllowedTypes(types) ? types.metadata : {},
-		types: annotatedTypes,
-	};
+	return AnnotatedAllowedTypesInternal.create(
+		annotatedTypes,
+		isAnnotatedAllowedTypes(types) ? types.metadata : {},
+	);
 }
 
 /**

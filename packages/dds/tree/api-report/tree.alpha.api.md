@@ -39,9 +39,9 @@ export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
 }
 
 // @alpha @sealed
-export interface AnnotatedAllowedTypes<T = LazyItem<TreeNodeSchema>> {
+export interface AnnotatedAllowedTypes<T = readonly AnnotatedAllowedType[]> extends ErasedBaseType<"tree.AnnotatedAllowedTypes"> {
     readonly metadata: AllowedTypesMetadata;
-    readonly types: readonly AnnotatedAllowedType<T>[];
+    readonly types: T;
 }
 
 // @public @system
@@ -654,7 +654,7 @@ export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown> extends N
 }
 
 // @alpha @sealed
-export interface NormalizedAnnotatedAllowedTypes extends AnnotatedAllowedTypes<TreeNodeSchema> {
+export interface NormalizedAnnotatedAllowedTypes extends AnnotatedAllowedTypes<readonly AnnotatedAllowedType<TreeNodeSchema>[]> {
 }
 
 // @public @system
@@ -902,7 +902,9 @@ export interface SchemaStatics {
 
 // @alpha @sealed @system
 export interface SchemaStaticsAlpha {
-    staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
+    readonly staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
+    // (undocumented)
+    readonly types: <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(t: T, metadata?: AllowedTypesMetadata) => AnnotateAllowedTypesList<T> & UnannotateAllowedTypesList<T>;
 }
 
 // @alpha @sealed

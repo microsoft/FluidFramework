@@ -83,3 +83,76 @@ export abstract class ErasedType<out Name = unknown> {
 		);
 	}
 }
+
+/**
+ * An alternative to {@link ErasedType} which is more ergonomic to implement in the case where the implementation can have the needed helper base class.
+ * @remarks
+ * Users of interfaces extending this should never refer to anything about this class:
+ * migrating the type branding to another mechanism, like {@link ErasedType} should be considered a non-breaking change.
+ * @privateRemarks
+ * Implement interfaces which extend this by sub-classing {@link ErasedTypeImplementation}.
+ *
+ * @sealed
+ * @alpha
+ * @system
+ */
+export abstract class ErasedBaseType<out Name = unknown> {
+	/**
+	 * Compile time only marker to make type checking more strict.
+	 * This method will not exist at runtime and accessing it is invalid.
+	 * @privateRemarks
+	 * `Name` is used as the return type of a method rather than a a simple readonly member as this allows types with two brands to be intersected without getting `never`.
+	 * The method takes in never to help emphasize that its not callable.
+	 */
+	protected abstract brand(dummy: never): Name;
+
+	/**
+	 * This class should never exist at runtime, so make it un-constructable.
+	 * @privateRemarks
+	 * From an API perspective, private would be preferred here.
+	 * However protected is almost as good since this class is not package exported,
+	 * and it allows ErasedTypeImplementation to extend this class.
+	 */
+	protected constructor() {}
+}
+
+/**
+ * An implementation of an {@link ErasedBaseType}.
+ * For a given erased type interface, there should be exactly one implementation of it, and it must be defined by the same code which defined the interface.
+ * @remarks
+ * {@link ErasedBaseType} is package exported only as a type, not a value, so the only way to subclass it is via this class.
+ * This limitation help enforce the pattern that there is only one implementation of a given erased type interface.
+ * @internal
+ */
+export abstract class ErasedTypeImplementation<
+	TInterface extends ErasedBaseType,
+> extends ErasedBaseType<TInterface extends ErasedBaseType<infer Name> ? Name : never> {
+	protected readonly brand!: (
+		dummy: never,
+	) => TInterface extends ErasedBaseType<infer Name> ? Name : never;
+
+	protected constructor() {
+		super();
+	}
+
+	public static [Symbol.hasInstance]<
+		TThis extends abstract new (
+			...args: unknown[]
+		) => object,
+	>(this: TThis, value: ErasedBaseType | InstanceType<TThis>): value is InstanceType<TThis> {
+		return Object.prototype.isPrototypeOf.call(this.prototype, value);
+	}
+
+	public static narrow<TThis extends abstract new (...args: unknown[]) => object>(
+		this: TThis,
+		value: ErasedBaseType | InstanceType<TThis>,
+	): asserts value is InstanceType<TThis> {
+		if (!Object.prototype.isPrototypeOf.call(this.prototype, value)) {
+			throw new TypeError("Invalid ErasedBaseType instance");
+		}
+	}
+
+	public upCast<TThis extends TInterface>(this: TThis): TInterface {
+		return this;
+	}
+}

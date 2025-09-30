@@ -60,6 +60,7 @@ export {
 	evaluateLazySchema,
 	createSchemaUpgrade,
 	type SchemaUpgrade,
+	AnnotatedAllowedTypesInternal,
 } from "./allowedTypes.js";
 export type {
 	AnnotatedAllowedType,
@@ -78,6 +79,7 @@ export type {
 	UnannotateAllowedTypesList,
 	AllowedTypeMetadata,
 	AnnotatedAllowedTypes,
+	AnnotateAllowedTypesList,
 } from "./allowedTypes.js";
 export { walkAllowedTypes, walkNodeSchema, type SchemaVisitor } from "./walkSchema.js";
 export { Context, HydratedContext } from "./context.js";
