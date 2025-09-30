@@ -7,6 +7,7 @@ export {
 	type ITreePrivate,
 	type SharedTreeOptionsInternal,
 	type SharedTreeOptions,
+	type SharedTreeOptionsBeta,
 	SharedTreeKernel,
 	getBranch,
 	type ForestType,
@@ -49,6 +50,7 @@ export type { RunTransaction } from "./tree.js";
 export {
 	TreeAlpha,
 	type TreeIdentifierUtils,
+	type ObservationResults,
 } from "./treeAlpha.js";
 
 export {
