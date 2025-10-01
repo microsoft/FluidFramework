@@ -1343,13 +1343,16 @@ describe("schemaFactory", () => {
 		const schemaFactory = new SchemaFactoryAlpha("staged tests");
 
 		class TestObject extends schemaFactory.objectAlpha("TestObject", {
-			foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
+			foo: SchemaFactoryAlpha.types([
+				SchemaFactoryAlpha.number,
+				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+			]),
 		}) {}
 
 		it("allows forward references", () => {
 			const schemaFactoryAlpha = new SchemaFactoryAlpha("test");
 			class A extends schemaFactoryAlpha.objectAlpha("A", {
-				foo: SchemaFactoryAlpha.staged(() => B),
+				foo: SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(() => B)]),
 			}) {}
 
 			class B extends schemaFactoryAlpha.objectAlpha("B", {}) {}
@@ -1374,7 +1377,7 @@ describe("schemaFactory", () => {
 				// Adds staged support for B.
 				// Currently this requires wrapping the root field with `SchemaFactoryAlpha.required`:
 				// this is normally implicitly included, but is currently required while the "staged" APIs are `@alpha`.
-				schema: SchemaFactoryAlpha.required([A, SchemaFactoryAlpha.staged(B)]),
+				schema: SchemaFactoryAlpha.types([A, SchemaFactoryAlpha.staged(B)]),
 			});
 
 			// Only supports documents with A and B: can be used to upgrade schema to add B.
@@ -1423,10 +1426,13 @@ describe("schemaFactory", () => {
 		});
 
 		describe("in maps", () => {
-			class TestMap extends schemaFactory.mapAlpha("TestMap", [
-				SchemaFactoryAlpha.number,
-				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-			]) {}
+			class TestMap extends schemaFactory.mapAlpha(
+				"TestMap",
+				SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
+			) {}
 
 			it("are permitted when unhydrated", () => {
 				const testMap = new TestMap({ foo: "test" });
@@ -1467,10 +1473,13 @@ describe("schemaFactory", () => {
 		});
 
 		describe("in records", () => {
-			class TestRecord extends schemaFactory.recordAlpha("TestRecord", [
-				SchemaFactoryAlpha.number,
-				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-			]) {}
+			class TestRecord extends schemaFactory.recordAlpha(
+				"TestRecord",
+				SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
+			) {}
 
 			it("are permitted when unhydrated", () => {
 				const testRecord = new TestRecord({ foo: "test" });
@@ -1514,10 +1523,13 @@ describe("schemaFactory", () => {
 			/**
 			 * Allows numbers, and staged to allow strings.
 			 */
-			class TestArray extends schemaFactory.arrayAlpha("TestArray", [
-				SchemaFactoryAlpha.number,
-				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-			]) {}
+			class TestArray extends schemaFactory.arrayAlpha(
+				"TestArray",
+				SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
+			) {}
 
 			it("are permitted when unhydrated", () => {
 				const testArray = new TestArray(["test"]);

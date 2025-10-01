@@ -402,6 +402,16 @@ export class SchemaFactoryAlpha<
 	public staged = schemaStaticsAlpha.staged;
 
 	/**
+	 * {@inheritDoc SchemaStaticsAlpha.types}
+	 */
+	public static types = schemaStaticsAlpha.types;
+
+	/**
+	 * {@inheritDoc SchemaStaticsAlpha.types}
+	 */
+	public types = schemaStaticsAlpha.types;
+
+	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.

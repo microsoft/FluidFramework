@@ -66,9 +66,9 @@ describe("walk schema", () => {
 	it("calls visitor on nested allowed types", () => {
 		const annotatedString = makeAnnotated(sf.string);
 		const annotatedObject = makeAnnotated(
-			sf.objectAlpha("annotatedObject", { name: annotatedString }),
+			sf.objectAlpha("annotatedObject", { name: SchemaFactoryAlpha.types([annotatedString]) }),
 		);
-		const schema = sf.arrayAlpha("schema", annotatedObject);
+		const schema = sf.arrayAlpha("schema", SchemaFactoryAlpha.types([annotatedObject]));
 
 		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(
 			normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
@@ -85,15 +85,19 @@ describe("walk schema", () => {
 	it("calls visitor on nested objects", () => {
 		const annotatedString = makeAnnotated(sf.string);
 		const annotatedObject3 = makeAnnotated(
-			sf.objectAlpha("annotatedObject3", { name: annotatedString }),
+			sf.objectAlpha("annotatedObject3", {
+				name: SchemaFactoryAlpha.types([annotatedString]),
+			}),
 		);
 		const annotatedObject2 = makeAnnotated(
-			sf.objectAlpha("annotatedObject2", { bar: annotatedObject3 }),
+			sf.objectAlpha("annotatedObject2", {
+				bar: SchemaFactoryAlpha.types([annotatedObject3]),
+			}),
 		);
 		const annotatedObject = makeAnnotated(
-			sf.objectAlpha("annotatedObject", { foo: annotatedObject2 }),
+			sf.objectAlpha("annotatedObject", { foo: SchemaFactoryAlpha.types([annotatedObject2]) }),
 		);
-		const schema = sf.arrayAlpha("schema", annotatedObject);
+		const schema = sf.arrayAlpha("schema", SchemaFactoryAlpha.types([annotatedObject]));
 
 		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(
 			normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
@@ -118,7 +122,10 @@ describe("walk schema", () => {
 	it("calls visitor on all child allowed types", () => {
 		const annotatedString = makeAnnotated(sf.string);
 		const annotatedNumber = makeAnnotated(sf.number);
-		const schema = sf.arrayAlpha("schema", [annotatedNumber, annotatedString]);
+		const schema = sf.arrayAlpha(
+			"schema",
+			SchemaFactoryAlpha.types([annotatedNumber, annotatedString]),
+		);
 
 		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(
 			normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
@@ -136,13 +143,14 @@ describe("walk schema", () => {
 		const otherAnnotatedString = makeAnnotated(sf.string, "other");
 		const annotatedObject = makeAnnotated(
 			sf.objectAlpha("annotatedObject", {
-				name: annotatedString,
-				title: otherAnnotatedString,
+				name: SchemaFactoryAlpha.types([annotatedString]),
+				title: SchemaFactoryAlpha.types([otherAnnotatedString]),
 			}),
 		);
 
 		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(
-			normalizeFieldSchema(annotatedObject).annotatedAllowedTypesNormalized,
+			normalizeFieldSchema(SchemaFactoryAlpha.types([annotatedObject]))
+				.annotatedAllowedTypesNormalized,
 		);
 
 		assert.deepEqual(visitedNodes, [annotatedString.type, annotatedObject.type]);
@@ -173,7 +181,7 @@ describe("walk schema", () => {
 	it("does not call visitor on staged allowed types by default", () => {
 		const stagedString = SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string);
 		class TestObject extends sf.objectAlpha("TestObject", {
-			name: stagedString,
+			name: SchemaFactoryAlpha.types([stagedString]),
 		}) {}
 
 		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(
@@ -190,7 +198,7 @@ describe("walk schema", () => {
 	it("calls visitor on staged allowed types when walkStagedAllowedTypes is set to true", () => {
 		const stagedString = SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string);
 		class TestObject extends sf.objectAlpha("TestObject", {
-			name: stagedString,
+			name: SchemaFactoryAlpha.types([stagedString]),
 		}) {}
 
 		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(

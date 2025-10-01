@@ -80,6 +80,7 @@ export type {
 	AnnotateAllowedTypesList,
 	SchemaUpgrade,
 	AllowedTypesFullInternal,
+	AllowedTypesFull,
 } from "./allowedTypes.js";
 export { walkAllowedTypes, walkNodeSchema, type SchemaVisitor } from "./walkSchema.js";
 export { Context, HydratedContext } from "./context.js";

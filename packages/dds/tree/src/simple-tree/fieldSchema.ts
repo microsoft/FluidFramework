@@ -29,9 +29,13 @@ import type {
 	TreeNodeFromImplicitAllowedTypes,
 	TreeLeafValue,
 	InsertableTreeNodeFromImplicitAllowedTypes,
-	AllowedTypesFullInternal,
+	AllowedTypesFull,
 } from "./core/index.js";
-import { normalizeAllowedTypes, normalizeAnnotatedAllowedTypes } from "./core/index.js";
+import {
+	AnnotatedAllowedTypesInternal,
+	normalizeAllowedTypes,
+	normalizeAnnotatedAllowedTypes,
+} from "./core/index.js";
 
 import type { SimpleFieldSchema } from "./simpleSchema.js";
 import type { UnsafeUnknownSchema } from "./unsafeUnknownSchema.js";
@@ -411,7 +415,7 @@ export class FieldSchemaAlpha<
 		) => new FieldSchemaAlpha(kind, annotatedAllowedTypes, props);
 	}
 
-	public readonly annotatedAllowedTypes: AllowedTypesFullInternal;
+	public readonly annotatedAllowedTypes: AllowedTypesFull;
 
 	protected constructor(
 		kind: Kind,
@@ -421,13 +425,11 @@ export class FieldSchemaAlpha<
 	) {
 		super(kind, types, props);
 
-		this.annotatedAllowedTypes = normalizeAnnotatedAllowedTypes(types);
+		const normalizedTypes = normalizeAnnotatedAllowedTypes(types);
+		this.annotatedAllowedTypes = normalizedTypes;
 
 		this.lazyIdentifiers = new Lazy(
-			() =>
-				new Set(
-					this.annotatedAllowedTypes.evaluate().types.map(({ type }) => type.identifier),
-				),
+			() => new Set(normalizedTypes.evaluate().types.map(({ type }) => type.identifier)),
 		);
 		this.propsAlpha = props;
 	}
@@ -441,6 +443,7 @@ export class FieldSchemaAlpha<
 	 * @remarks Counterpart to {@link FieldSchemaAlpha.annotatedAllowedTypes}, with any lazy definitions evaluated.
 	 */
 	public get annotatedAllowedTypesNormalized(): NormalizedAnnotatedAllowedTypes {
+		AnnotatedAllowedTypesInternal.narrow(this.annotatedAllowedTypes);
 		return this.annotatedAllowedTypes.evaluate();
 	}
 }

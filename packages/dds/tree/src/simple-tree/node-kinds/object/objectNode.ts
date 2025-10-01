@@ -41,7 +41,6 @@ import {
 	getOrCreateInnerNode,
 	type NodeSchemaMetadata,
 	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
 	TreeNodeValid,
 	type MostDerivedData,
 	type TreeNodeSchemaInitializedData,

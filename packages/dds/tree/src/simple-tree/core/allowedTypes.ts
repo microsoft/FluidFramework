@@ -213,6 +213,23 @@ export class AnnotatedAllowedTypesInternal<
 		return Object.prototype.isPrototypeOf.call(this.prototype, value);
 	}
 
+	public static override narrow<
+		TThis extends
+			| (abstract new (
+					...args: unknown[]
+			  ) => object)
+			| typeof AnnotatedAllowedTypesInternal,
+	>(
+		this: TThis,
+		value: ErasedBaseType | InstanceTypeRelaxed<TThis> | ImplicitAnnotatedAllowedTypes,
+	): asserts value is InstanceTypeRelaxed<TThis> &
+		AnnotatedAllowedTypesInternal &
+		AllowedTypesFull {
+		if (!Object.prototype.isPrototypeOf.call(this.prototype, value)) {
+			throw new TypeError("Invalid AnnotatedAllowedTypes instance");
+		}
+	}
+
 	private static proxy<const T extends readonly AnnotatedAllowedType[]>(
 		result: AnnotatedAllowedTypesInternal<T>,
 	): AnnotatedAllowedTypesInternal<T> & AllowedTypesFull<T> {
