@@ -953,7 +953,7 @@ for (const createBlobPayloadPending of [false, true]) {
 				);
 			});
 
-			it("lookupTemporaryBlobStorageId returns undefined for unknown blob ID", async () => {
+			it("lookupTemporaryBlobStorageId returns undefined for unknown blob ID", () => {
 				const { blobManager } = createTestMaterial({
 					createBlobPayloadPending,
 				});
