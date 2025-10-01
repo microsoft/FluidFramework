@@ -112,23 +112,23 @@ parameters:
 # If tests need to run against an ODSP tenant, specify the type of tenant here. Steps will be injected to lease one for the duration of the test.
 - name: odspTenantType
   type: string
-  default: ''
+  default: none
   values:
-    - ''
-    - 'prod'
-    - 'dogfood'
+    - none
+    - prod
+    - dogfood
 
 # lockBehavior of the stage (if any).
 - name: lockBehavior
   type: string
-  default: ''
+  default: none
   values:
-    - ''
-    - 'sequential'
+    - none
+    - sequential
 
 stages:
 - stage: ${{ parameters.stageId}}
-  ${{ if ne(parameters.lockBehavior, '') }}:
+  ${{ if ne(parameters.lockBehavior, 'none') }}:
     lockBehavior: ${{ parameters.lockBehavior }}
   condition: ${{ parameters.condition }}
   displayName: ${{ parameters.stageDisplayName }}
@@ -368,7 +368,7 @@ stages:
               path: $(compatVersionInstallsPath)
 
         # Only check out tenants from the tenant pool if we are running tests against ODSP
-        - ${{ if ne(parameters.odspTenantType, '') }}:
+        - ${{ if ne(parameters.odspTenantType, 'none') }}:
           # Retrieve a tenant from the tenant pool
           - task: AzureCLI@2
             displayName: 'Log in to retrieve tenant credentials'
@@ -465,7 +465,7 @@ stages:
             continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
 
         # Only release tenants that were checked out from the tenant pool for ODSP/ODSPDF tests
-        - ${{ if ne(parameters.odspTenantType, '') }}:
+        - ${{ if ne(parameters.odspTenantType, 'none') }}:
           # Login to release tenant credentials
           # Currently, some of the compat tests run for longer than 60 minutes and exceed the average token lifetime:
           # https://learn.microsoft.com/en-us/entra/identity-platform/configurable-token-lifetimes#access-tokens
