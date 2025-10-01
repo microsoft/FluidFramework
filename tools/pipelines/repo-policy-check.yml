@@ -24,16 +24,16 @@ variables:
 
 steps:
 - task: UseNode@1
-  displayName: Use Node 18.17.1
+  displayName: Use Node 20.15.1
   inputs:
-    version: 18.17.1
+    version: 20.15.1
 
 - task: Npm@1
-  displayName: Install npm 6
+  displayName: Install npm 10
   retryCountOnTaskFailure: 4
   inputs:
     command: 'custom'
-    customCommand: 'install --global npm@^6'
+    customCommand: 'install --global npm@^10'
     customRegistry: 'useNpmrc'
 
 - task: Npm@1
