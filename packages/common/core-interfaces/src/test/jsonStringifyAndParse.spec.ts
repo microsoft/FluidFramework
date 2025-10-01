@@ -16,6 +16,7 @@ import type {
 	ObjectWithSymbolOrRecursion,
 } from "./testValues.js";
 // Note: some values are commented out as not interesting to add coverage for (but acknowledge they exist to test).
+// This import list should be kept mostly in-sync with jsonDeserialized.spec.ts.
 import {
 	boolean,
 	number,
@@ -77,6 +78,7 @@ import {
 	objectWithUndefined,
 	objectWithUnknown,
 	objectWithOptionalUnknown,
+	objectWithOptionalUndefined,
 	objectWithOptionalSymbol,
 	objectWithOptionalBigint,
 	objectWithNumberKey,
@@ -160,6 +162,14 @@ import {
 	functionObjectWithPublicData,
 	classInstanceWithPrivateDataAndIsFunction,
 	classInstanceWithPublicDataAndIsFunction,
+	// These `ClassWith*` values are used to verify `instanceof` results of
+	// parse and not expected to be test cases themselves.
+	ClassWithPrivateData,
+	ClassWithPrivateMethod,
+	ClassWithPrivateGetter,
+	ClassWithPrivateSetter,
+	ClassWithPublicData,
+	ClassWithPublicMethod,
 	mapOfStringsToNumbers,
 	readonlyMapOfStringsToNumbers,
 	setOfNumbers,
@@ -828,7 +838,7 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(out, objectWithMismatchedGetterAndSetterPropertyViaValue);
 			});
 
-			describe("class instance", () => {
+			describe("class instance (losing 'instanceof' nature)", () => {
 				it("with public data (just cares about data)", () => {
 					const { stringified, out } = stringifyThenParse(classInstanceWithPublicData, {
 						public: "public",
@@ -838,59 +848,106 @@ describe("JsonStringify and JsonParse", () => {
 						createInstanceOf<JsonString<typeof classInstanceWithPublicData>>(),
 					);
 					assertIdenticalTypes(out, classInstanceWithPublicData);
+					assert.ok(
+						classInstanceWithPublicData instanceof ClassWithPublicData,
+						"classInstanceWithPublicData is an instance of ClassWithPublicData",
+					);
+					assert.ok(
+						!(out instanceof ClassWithPublicData),
+						"out is not an instance of ClassWithPublicData",
+					);
 				});
 				describe("with `ignore-inaccessible-members`", () => {
-					// it("with private method ignores method", () => {
-					// 	const { stringified, out } = passThruIgnoreInaccessibleMembers(
-					// 		classInstanceWithPrivateMethod,
-					// 		{
-					// 			public: "public",
-					// 		},
-					// 	);
-					// 	assertIdenticalTypes(
-					// 		stringified,
-					// 		createInstanceOf<{
-					// 			public: string;
-					// 		}>(),
-					// 	);
-					// 	assertIdenticalTypes(stringified, out);
-					// 	// @ts-expect-error getSecret is missing, but required
-					// 	stringified satisfies typeof classInstanceWithPrivateMethod;
-					// });
-					// it("with private getter ignores getter", () => {
-					// 	const { stringified, out } = passThruIgnoreInaccessibleMembers(
-					// 		classInstanceWithPrivateGetter,
-					// 		{
-					// 			public: "public",
-					// 		},
-					// 	);
-					// 	assertIdenticalTypes(
-					// 		stringified,
-					// 		createInstanceOf<{
-					// 			public: string;
-					// 		}>(),
-					// 	);
-					// 	assertIdenticalTypes(stringified, out);
-					// 	// @ts-expect-error secret is missing, but required
-					// 	stringified satisfies typeof classInstanceWithPrivateGetter;
-					// });
-					// it("with private setter ignores setter", () => {
-					// 	const { stringified, out } = passThruIgnoreInaccessibleMembers(
-					// 		classInstanceWithPrivateSetter,
-					// 		{
-					// 			public: "public",
-					// 		},
-					// 	);
-					// 	assertIdenticalTypes(
-					// 		stringified,
-					// 		createInstanceOf<{
-					// 			public: string;
-					// 		}>(),
-					// 	);
-					// 	assertIdenticalTypes(stringified, out);
-					// 	// @ts-expect-error secret is missing, but required
-					// 	stringified satisfies typeof classInstanceWithPrivateSetter;
-					// });
+					it("with private method ignores method", () => {
+						const { stringified, out } = stringifyIgnoringInaccessibleMembersThenParse(
+							classInstanceWithPrivateMethod,
+							{
+								public: "public",
+							},
+						);
+						assertIdenticalTypes(
+							stringified,
+							createInstanceOf<JsonString<typeof classInstanceWithPrivateMethod>>(),
+						);
+						assertIdenticalTypes(
+							out,
+							createInstanceOf<{
+								public: string;
+							}>(),
+						);
+						// @ts-expect-error getSecret is missing, but required
+						out satisfies typeof classInstanceWithPrivateMethod;
+						// @ts-expect-error getSecret is missing, but required
+						assertIdenticalTypes(out, classInstanceWithPrivateMethod);
+						assert.ok(
+							classInstanceWithPrivateMethod instanceof ClassWithPrivateMethod,
+							"classInstanceWithPrivateMethod is an instance of ClassWithPrivateMethod",
+						);
+						assert.ok(
+							!(out instanceof ClassWithPrivateMethod),
+							"out is not an instance of ClassWithPrivateMethod",
+						);
+					});
+					it("with private getter ignores getter", () => {
+						const { stringified, out } = stringifyIgnoringInaccessibleMembersThenParse(
+							classInstanceWithPrivateGetter,
+							{
+								public: "public",
+							},
+						);
+						assertIdenticalTypes(
+							stringified,
+							createInstanceOf<JsonString<typeof classInstanceWithPrivateGetter>>(),
+						);
+						assertIdenticalTypes(
+							out,
+							createInstanceOf<{
+								public: string;
+							}>(),
+						);
+						// @ts-expect-error secret is missing, but required
+						out satisfies typeof classInstanceWithPrivateGetter;
+						// @ts-expect-error secret is missing, but required
+						assertIdenticalTypes(out, classInstanceWithPrivateGetter);
+						assert.ok(
+							classInstanceWithPrivateGetter instanceof ClassWithPrivateGetter,
+							"classInstanceWithPrivateGetter is an instance of ClassWithPrivateGetter",
+						);
+						assert.ok(
+							!(out instanceof ClassWithPrivateGetter),
+							"out is not an instance of ClassWithPrivateGetter",
+						);
+					});
+					it("with private setter ignores setter", () => {
+						const { stringified, out } = stringifyIgnoringInaccessibleMembersThenParse(
+							classInstanceWithPrivateSetter,
+							{
+								public: "public",
+							},
+						);
+						assertIdenticalTypes(
+							stringified,
+							createInstanceOf<JsonString<typeof classInstanceWithPrivateSetter>>(),
+						);
+						assertIdenticalTypes(
+							out,
+							createInstanceOf<{
+								public: string;
+							}>(),
+						);
+						// @ts-expect-error secret is missing, but required
+						out satisfies typeof classInstanceWithPrivateSetter;
+						// @ts-expect-error secret is missing, but required
+						assertIdenticalTypes(out, classInstanceWithPrivateSetter);
+						assert.ok(
+							classInstanceWithPrivateSetter instanceof ClassWithPrivateSetter,
+							"classInstanceWithPrivateSetter is an instance of ClassWithPrivateSetter",
+						);
+						assert.ok(
+							!(out instanceof ClassWithPrivateSetter),
+							"out is not an instance of ClassWithPrivateSetter",
+						);
+					});
 				});
 			});
 
@@ -1165,6 +1222,16 @@ describe("JsonStringify and JsonParse", () => {
 							// @ts-expect-error secret is missing, but required
 							out satisfies typeof classInstanceWithPrivateData;
 							assertIdenticalTypes(out, createInstanceOf<{ public: string }>());
+							// @ts-expect-error secret is missing, but required
+							assertIdenticalTypes(out, classInstanceWithPrivateData);
+							assert.ok(
+								classInstanceWithPrivateData instanceof ClassWithPrivateData,
+								"classInstanceWithPrivateData is an instance of ClassWithPrivateData",
+							);
+							assert.ok(
+								!(out instanceof ClassWithPrivateData),
+								"out is not an instance of ClassWithPrivateData",
+							);
 						});
 					});
 				});
@@ -2162,6 +2229,18 @@ describe("JsonStringify and JsonParse", () => {
 						);
 						assertIdenticalTypes(out, emptyObject);
 					});
+					it("as optional property type (using 'exactOptionalPropertyTypes: true')", () => {
+						const { stringified, out } = stringifyThenParse(
+							// @ts-expect-error not assignable to parameter of type '{ optUndef?: never; }
+							objectWithOptionalUndefined,
+							{},
+						);
+						assertIdenticalTypes(
+							stringified,
+							createInstanceOf<JsonString<typeof objectWithOptionalUndefined>>(),
+						);
+						assertIdenticalTypes(out, emptyObject);
+					});
 					it("in union property", () => {
 						const { stringified: resultUndefined, out: outUndefined } = stringifyThenParse(
 							// @ts-expect-error not assignable to type '{ "error required property may not allow `undefined` value": never; }'
@@ -2388,6 +2467,16 @@ describe("JsonStringify and JsonParse", () => {
 							createInstanceOf<JsonString<typeof classInstanceWithPublicMethod>>(),
 						);
 						assertIdenticalTypes(out, createInstanceOf<{ public: string }>());
+						// @ts-expect-error getSecret is missing, but required
+						assertIdenticalTypes(out, classInstanceWithPublicMethod);
+						assert.ok(
+							classInstanceWithPublicMethod instanceof ClassWithPublicMethod,
+							"classInstanceWithPublicMethod is an instance of ClassWithPublicMethod",
+						);
+						assert.ok(
+							!(out instanceof ClassWithPublicMethod),
+							"out is not an instance of ClassWithPublicMethod",
+						);
 					});
 					it("with private data in optional recursion", () => {
 						const { stringified, out } = stringifyThenParse(

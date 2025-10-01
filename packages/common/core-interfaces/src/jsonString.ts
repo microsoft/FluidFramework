@@ -88,4 +88,4 @@ export const JsonStringify = JSON.stringify as <
  *
  * @internal
  */
-export const JsonParse: <T>(text: JsonString<T>) => JsonDeserialized<T> = JSON.parse;
+export const JsonParse = JSON.parse as <T>(text: JsonString<T>) => JsonDeserialized<T>;
