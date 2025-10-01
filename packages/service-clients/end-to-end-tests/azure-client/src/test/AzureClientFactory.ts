@@ -92,7 +92,7 @@ export function createAzureClient(
 			}
 		: {
 				tokenProvider: new InsecureTokenProvider("fooBar", user, scopes),
-				endpoint: "http://localhost:7071",
+				endpoint: "http://localhost:7071", // Port for local Azure Fluid Relay (AFR) service
 				type: "local",
 			};
 	const getLogger = (): ITelemetryBaseLogger | undefined => {
@@ -159,7 +159,7 @@ export function createAzureClientLegacy(
 				}
 			: {
 					tokenProvider: new InsecureTokenProvider("fooBar", user),
-					endpoint: "http://localhost:7071",
+					endpoint: "http://localhost:7071", // Port for local Azure Fluid Relay (AFR) service
 					type: "local",
 				};
 	const getLogger = (): ITelemetryBaseLoggerLegacy | undefined => {
@@ -208,7 +208,7 @@ export async function createContainerFromPayload(
 	};
 	const endPoint = useAzure
 		? (process.env.azure__fluid__relay__service__endpoint as string)
-		: "http://localhost:7071";
+		: "http://localhost:7071"; // Port for local Azure Fluid Relay (AFR) service
 	if (useAzure && endPoint === undefined) {
 		throw new Error("Azure Fluid Relay service endpoint is missing");
 	}

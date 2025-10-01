@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { AxiosRequestConfig, AxiosRequestHeaders } from "./axios.cjs";
+import type { AxiosRequestConfig, AxiosRequestHeaders } from "./request.cjs";
 import { type QueryStringType } from "./queryStringUtils.js";
 import { IR11sResponse } from "./restWrapper.js";
 

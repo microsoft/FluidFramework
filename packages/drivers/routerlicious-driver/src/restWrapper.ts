@@ -25,7 +25,7 @@ import {
 import fetch from "cross-fetch";
 import safeStringify from "json-stringify-safe";
 
-import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "./axios.cjs";
+import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "./request.cjs";
 import {
 	getUrlForTelemetry,
 	RouterliciousErrorTypes,
