@@ -237,6 +237,25 @@ describe("allowedTypes", () => {
 			assert.deepEqual([...types], [schema.string]);
 		});
 
+		it("object apis", () => {
+			const types = AnnotatedAllowedTypesInternal.create(
+				[{ metadata: {}, type: schema.string }],
+				{ custom: "customValue" },
+			);
+
+			const keys = new Set(Object.keys(types));
+			assert(keys.has("0"));
+			assert(!keys.has("1"));
+
+			// Not enumerable:
+			assert(!keys.has("length"));
+			assert(!keys.has("types"));
+			assert(!keys.has("metadata"));
+			assert("length" in types);
+			assert("types" in types);
+			assert("metadata" in types);
+		});
+
 		it("deepEquals", () => {
 			const types = AnnotatedAllowedTypesInternal.create(
 				[{ metadata: {}, type: schema.string }],

@@ -4,7 +4,7 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { assert, fail, Lazy } from "@fluidframework/core-utils/internal";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 
 import {
 	type ErasedBaseType,
@@ -142,15 +142,6 @@ export class AnnotatedAllowedTypesInternal<
 	public readonly unannotatedTypes: UnannotateAllowedTypesList<T>;
 
 	/**
-	 * The length of the types array.
-	 * @privateRemarks
-	 * This has to exist to make the proxy work correctly (able to expose `length` as an own property).
-	 */
-	public get length(): number {
-		return fail("length should be intercepted by the proxy");
-	}
-
-	/**
 	 * True if and only if there is at least one lazy schema reference in the types arrays.
 	 */
 	private readonly isLazy: boolean;
@@ -267,19 +258,23 @@ export class AnnotatedAllowedTypesInternal<
 			},
 
 			getOwnPropertyDescriptor: (target, property) => {
-				if (property === "length") {
+				if (Object.prototype.hasOwnProperty.call(target.unannotatedTypes, property)) {
+					const inner = Object.getOwnPropertyDescriptor(target.unannotatedTypes, property);
 					return {
-						value: target.unannotatedTypes.length,
-						writable: false,
-						enumerable: false,
+						...inner,
+						// Since these properties are not on the target, make them non-configurable to confirm with proxy invariants.
 						configurable: true,
+						writable: false,
+					};
+				} else {
+					const inner = Object.getOwnPropertyDescriptor(target, property);
+					return {
+						...inner,
+						writable: false,
+						// Allow only array entries to be enumerable.
+						enumerable: false,
 					};
 				}
-
-				if (Object.prototype.hasOwnProperty.call(target.unannotatedTypes, property)) {
-					return Object.getOwnPropertyDescriptor(target.unannotatedTypes, property);
-				}
-				return Object.getOwnPropertyDescriptor(target, property);
 			},
 		});
 		return proxy as typeof result & UnannotateAllowedTypesList<T>;
@@ -290,7 +285,7 @@ export class AnnotatedAllowedTypesInternal<
 		metadata: AllowedTypesMetadata = {},
 	): AnnotatedAllowedTypesInternal<T> & AllowedTypesFull<T> {
 		const result = new AnnotatedAllowedTypesInternal(types, metadata);
-		return AnnotatedAllowedTypesInternal.proxy(result);
+		return result as typeof result & UnannotateAllowedTypesList<T>;
 	}
 
 	public static createUnannotated<const T extends AllowedTypes>(
