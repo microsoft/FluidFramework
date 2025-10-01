@@ -14,13 +14,8 @@ SECURITY.md
 !**/src/lib/**
 common/lib/**/lib
 common/build/eslint-config-fluid/printed-configs/
-build-tools/packages/*/docs/*.md
-build-tools/packages/build-cli/README.md
-build-tools/packages/readme-command/README.md
-build-tools/packages/version-tools/README.md
 **/src/**/test/types/*
 **/src/packageVersion.ts
-**/build-tools/CHANGELOG.md
 
 # Dependencies
 **/node_modules/*
@@ -37,7 +32,6 @@ tools/pipelines/
 .changeset/templates/
 
 # Test json
-build-tools/packages/build-tools/src/test/data/
 experimental/dds/tree/src/test/documents/
 experimental/dds/tree2/src/test/snapshots/files/*.json
 packages/dds/merge-tree/src/test/literature/*.txt
