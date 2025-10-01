@@ -15,6 +15,17 @@ export const summarizerRequestUrl = "_summarizer";
 
 /**
  * Stages of summary process.
+ *
+ * Stages:
+ *
+ * 1. "base" - stopped before the summary tree was even generated, and the result only contains the base data
+ *
+ * 2. "generate" - the summary tree was generated, and the result will contain that tree + stats
+ *
+ * 3. "upload" - the summary was uploaded to storage, and the result contains the server-provided handle
+ *
+ * 4. "submit" - the summarize op was submitted, and the result contains the op client sequence number.
+ *
  * @legacy @beta
  */
 export type SummaryStage = "base" | "generate" | "upload" | "submit" | "unknown";
@@ -65,13 +76,37 @@ export interface SummarizeOnDemandResults {
  * @legacy @beta
  */
 export interface OnDemandSummaryResults {
+	/**
+	 * True if summary was generated, uploaded, and submitted.
+	 */
 	readonly summarySubmitted: boolean;
+
+	/**
+	 * Information about the summary that was submitted, if any.
+	 */
 	readonly summaryInfo: {
+		/**
+		 * Stage at which summary process ended.
+		 */
 		readonly stage?: SummaryStage;
+		/**
+		 * Generated summary tree.
+		 */
 		readonly summaryTree?: ISummaryTree;
+		/**
+		 * Handle of the complete summary.
+		 */
 		readonly handle?: string;
 	};
+
+	/**
+	 * True if summarize op broadcast was observed.
+	 */
 	readonly summaryOpBroadcasted: boolean;
+
+	/**
+	 * True if summaryAck was received.
+	 */
 	readonly receivedSummaryAck: boolean;
 }
 

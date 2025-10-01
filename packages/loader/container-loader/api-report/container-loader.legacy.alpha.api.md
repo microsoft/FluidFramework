@@ -197,17 +197,13 @@ export type LoadSummarizerSummaryResult = {
 
 // @beta @legacy
 export interface OnDemandSummaryResults {
-    // (undocumented)
     readonly receivedSummaryAck: boolean;
-    // (undocumented)
     readonly summaryInfo: {
         readonly stage?: SummaryStage;
         readonly summaryTree?: ISummaryTree;
         readonly handle?: string;
     };
-    // (undocumented)
     readonly summaryOpBroadcasted: boolean;
-    // (undocumented)
     readonly summarySubmitted: boolean;
 }
 
