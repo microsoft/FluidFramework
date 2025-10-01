@@ -22,7 +22,7 @@
     "build:genver": "pnpm run -r --no-sort --stream build:genver",
     "bump-version": "fluid-bump-version --root .",
     "bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
-    "bundle-analysis:run": "fluid-run-bundle-analyses",
+    "bundle-analysis:run": "flub run bundleStats",
     "ci:build": "npm run build:genver && pnpm run -r --stream build:compile",
     "ci:build:docs": "pnpm run -r --stream ci:build:docs",
     "ci:test": "npm run test:report ; t1=$? ; npm run test:copyresults ; exit $t1",
@@ -110,6 +110,7 @@
     "c8": "^7.7.1",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
+		"danger": "^13.0.4",
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.6",
     "typescript": "~4.5.5"
