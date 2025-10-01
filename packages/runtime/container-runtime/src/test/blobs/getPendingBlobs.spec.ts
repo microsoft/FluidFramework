@@ -16,7 +16,7 @@ import {
 
 // ADO#44999: Update for placeholder pending blob creation and getPendingLocalState
 for (const createBlobPayloadPending of [false, true]) {
-	describe.only(`getPendingBlobs (pending payloads): ${createBlobPayloadPending}`, () => {
+	describe(`getPendingBlobs (pending payloads): ${createBlobPayloadPending}`, () => {
 		it("With no pending blobs", async () => {
 			const { blobManager } = createTestMaterial({ createBlobPayloadPending });
 			const pendingState = blobManager.getPendingBlobs();
