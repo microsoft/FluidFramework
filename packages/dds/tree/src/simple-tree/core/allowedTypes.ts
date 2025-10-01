@@ -116,6 +116,22 @@ export type AllowedTypesFull<
 > = AnnotatedAllowedTypes<T> & UnannotateAllowedTypesList<T>;
 
 /**
+ * Const a {@link AllowedTypesFull} from a mixed array of annotated and unannotated allowed types.
+ * @remarks
+ * This is currently somewhat limited in the cases it handles well.
+ * In some cases it omits the {@link AnnotatedAllowedTypes} when the type constraints cannot be satisfied.
+ * This is enough for current uses, but may be improved in the future.
+ * @alpha
+ * @sealed
+ */
+export type AllowedTypesFullFromMixed<
+	T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
+> = (AnnotateAllowedTypesList<T> extends readonly AnnotatedAllowedType[]
+	? AnnotatedAllowedTypes<AnnotateAllowedTypesList<T>>
+	: unknown) &
+	UnannotateAllowedTypesList<T>;
+
+/**
  * The same as the built-in InstanceType, but works on classes with private constructors.
  * @privateRemarks
  * This is based on the trick in {@link https://stackoverflow.com/a/74657881}.
@@ -163,7 +179,14 @@ export class AnnotatedAllowedTypesInternal<
 		Object.freeze(this.types);
 		Object.freeze(this.unannotatedTypes);
 
-		this.isLazy = this.unannotatedTypes.find((t) => isLazy(t)) !== undefined;
+		this.isLazy = false;
+		for (const type of this.unannotatedTypes) {
+			if (isLazy(type)) {
+				this.isLazy = true;
+			} else {
+				markSchemaMostDerived(type);
+			}
+		}
 
 		const proxy = AnnotatedAllowedTypesInternal.proxy(this);
 
@@ -299,13 +322,10 @@ export class AnnotatedAllowedTypesInternal<
 
 	public static createMixed<
 		const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
-	>(
-		types: T,
-		metadata: AllowedTypesMetadata = {},
-	): AnnotateAllowedTypesList<T> & UnannotateAllowedTypesList<T> {
+	>(types: T, metadata: AllowedTypesMetadata = {}): AllowedTypesFullFromMixed<T> {
 		const annotatedTypes: AnnotatedAllowedType[] = types.map(normalizeToAnnotatedAllowedType);
 		const result = AnnotatedAllowedTypesInternal.create(annotatedTypes, metadata);
-		return result as typeof result & UnannotateAllowedTypesList<T>;
+		return result as AllowedTypesFullFromMixed<T>;
 	}
 }
 

@@ -70,7 +70,7 @@ import {
 	getExplicitStoredKey,
 	type TreeFieldFromImplicitField,
 	type InsertableTreeFieldFromImplicitField,
-	FieldSchema,
+	type FieldSchema,
 	FieldSchemaAlpha,
 	normalizeFieldSchema,
 	FieldKind,
@@ -618,20 +618,6 @@ export function objectSchema<
 			input: InsertableObjectFromAnnotatedSchemaRecord<T> | InternalTreeNode,
 		) => TreeObjectNode<UnannotateSchemaRecord<T>, TName>);
 	return CustomObjectNode as Output;
-}
-
-/**
- * Removes annotations from a schema record.
- */
-export function unannotateSchemaRecord<
-	Schema extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
->(schemaRecord: Schema): UnannotateSchemaRecord<Schema> {
-	return Object.fromEntries(
-		Object.entries(schemaRecord).map(([key, schema]) => [
-			key,
-			schema instanceof FieldSchema ? schema : schema,
-		]),
-	) as UnannotateSchemaRecord<Schema>;
 }
 
 const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();

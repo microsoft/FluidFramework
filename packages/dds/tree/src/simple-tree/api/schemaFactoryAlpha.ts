@@ -38,8 +38,7 @@ import type {
 	AnnotatedAllowedType,
 	LazyItem,
 	AllowedTypesMetadata,
-	UnannotateAllowedTypesList,
-	AnnotateAllowedTypesList,
+	AllowedTypesFullFromMixed,
 } from "../core/index.js";
 import {
 	normalizeToAnnotatedAllowedType,
@@ -203,7 +202,7 @@ export interface SchemaStaticsAlpha {
 	>(
 		t: T,
 		metadata?: AllowedTypesMetadata,
-	) => AnnotateAllowedTypesList<T> & UnannotateAllowedTypesList<T>;
+	) => AllowedTypesFullFromMixed<T>;
 }
 
 const schemaStaticsAlpha: SchemaStaticsAlpha = {
@@ -223,7 +222,7 @@ const schemaStaticsAlpha: SchemaStaticsAlpha = {
 	types: <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(
 		t: T,
 		metadata: AllowedTypesMetadata = {},
-	): AnnotateAllowedTypesList<T> & UnannotateAllowedTypesList<T> => {
+	): AllowedTypesFullFromMixed<T> => {
 		return AnnotatedAllowedTypesInternal.createMixed<T>(t, metadata);
 	},
 };

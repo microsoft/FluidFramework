@@ -31,12 +31,11 @@ import {
 	type NodeFromSchema,
 	unhydratedFlexTreeFromInsertable,
 } from "../../../../simple-tree/index.js";
-import {
-	type FieldHasDefault,
-	type InsertableObjectFromSchemaRecord,
-	type InsertableObjectFromAnnotatedSchemaRecord,
-	type ObjectFromSchemaRecord,
-	unannotateSchemaRecord,
+import type {
+	FieldHasDefault,
+	InsertableObjectFromSchemaRecord,
+	InsertableObjectFromAnnotatedSchemaRecord,
+	ObjectFromSchemaRecord,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../simple-tree/node-kinds/object/objectNode.js";
 import { describeHydration, hydrate, pretty } from "../../utils.js";
@@ -54,7 +53,6 @@ import { Tree } from "../../../../shared-tree/index.js";
 import { FieldKinds } from "../../../../feature-libraries/index.js";
 
 import {
-	AnnotatedAllowedTypesInternal,
 	createField,
 	UnhydratedFlexTreeNode,
 	// eslint-disable-next-line import/no-internal-modules
@@ -985,50 +983,6 @@ describeHydration(
 				a: SchemaFactory.required(SchemaFactory.number, { key: "b" }),
 				b: SchemaFactory.required(SchemaFactory.number, { key: "a" }),
 			}) {}
-		});
-
-		describe("unannotateSchemaRecord", () => {
-			const stringSchema = schemaFactory.string;
-			const numberSchema = schemaFactory.number;
-
-			it("returns the same FieldSchema if no annotations are present", () => {
-				const schemaRecord = {
-					foo: SchemaFactory.optional(stringSchema),
-				};
-				const result = unannotateSchemaRecord(schemaRecord);
-				assert.deepStrictEqual(result, schemaRecord);
-			});
-
-			it("unannotates annotated allowed types", () => {
-				const schemaRecord = {
-					bar: AnnotatedAllowedTypesInternal.create([
-						{ metadata: {}, type: stringSchema },
-						{ metadata: {}, type: numberSchema },
-					]),
-				};
-				const result = unannotateSchemaRecord(schemaRecord);
-				assert.deepStrictEqual(result, {
-					bar: [stringSchema, numberSchema],
-				});
-			});
-
-			it("handles mixed FieldSchema and annotated types", () => {
-				const fieldSchema = SchemaFactory.optional(stringSchema);
-				const schemaRecord = {
-					foo: fieldSchema,
-					bar: AnnotatedAllowedTypesInternal.create([{ metadata: {}, type: stringSchema }]),
-				};
-				const result = unannotateSchemaRecord(schemaRecord);
-				assert.deepStrictEqual(result, {
-					foo: fieldSchema,
-					bar: [stringSchema],
-				});
-			});
-
-			it("handles empty schema record", () => {
-				const result = unannotateSchemaRecord({});
-				assert.deepStrictEqual(result, {});
-			});
 		});
 	},
 );

@@ -27,6 +27,9 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 // @alpha @sealed
 export type AllowedTypesFull<T extends readonly AnnotatedAllowedType[] = readonly AnnotatedAllowedType[]> = AnnotatedAllowedTypes<T> & UnannotateAllowedTypesList<T>;
 
+// @alpha @sealed
+export type AllowedTypesFullFromMixed<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = (AnnotateAllowedTypesList<T> extends readonly AnnotatedAllowedType[] ? AnnotatedAllowedTypes<AnnotateAllowedTypesList<T>> : unknown) & UnannotateAllowedTypesList<T>;
+
 // @alpha @input
 export interface AllowedTypesMetadata {
     readonly custom?: unknown;
@@ -879,9 +882,9 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     static staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
     staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
     // (undocumented)
-    static types: <const T extends readonly (LazyItem<TreeNodeSchema> | AnnotatedAllowedType<LazyItem<TreeNodeSchema>>)[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AnnotateAllowedTypesList<T> & UnannotateAllowedTypesList<T>;
+    static types: <const T extends readonly (LazyItem<TreeNodeSchema> | AnnotatedAllowedType<LazyItem<TreeNodeSchema>>)[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AllowedTypesFullFromMixed<T>;
     // (undocumented)
-    types: <const T extends readonly (LazyItem<TreeNodeSchema> | AnnotatedAllowedType<LazyItem<TreeNodeSchema>>)[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AnnotateAllowedTypesList<T> & UnannotateAllowedTypesList<T>;
+    types: <const T extends readonly (LazyItem<TreeNodeSchema> | AnnotatedAllowedType<LazyItem<TreeNodeSchema>>)[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AllowedTypesFullFromMixed<T>;
 }
 
 // @beta
@@ -918,7 +921,7 @@ export interface SchemaStatics {
 export interface SchemaStaticsAlpha {
     readonly staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
     // (undocumented)
-    readonly types: <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(t: T, metadata?: AllowedTypesMetadata) => AnnotateAllowedTypesList<T> & UnannotateAllowedTypesList<T>;
+    readonly types: <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixed<T>;
 }
 
 // @alpha @sealed

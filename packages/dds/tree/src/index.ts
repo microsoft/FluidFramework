@@ -180,6 +180,7 @@ export {
 	type AnnotateAllowedTypesList,
 	type AnnotateAllowedType,
 	type AllowedTypesFull,
+	type AllowedTypesFullFromMixed,
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
