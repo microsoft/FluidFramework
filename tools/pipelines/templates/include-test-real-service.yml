@@ -401,9 +401,8 @@ stages:
           displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
           continueOnError: ${{ parameters.continueOnError }}
           env:
-            ${{ each envVar in parameters.env }}:
-              ${{ each pair in envVar }}:
-                ${{ pair.name }}: ${{ pair.value }}
+            ${{ each pair in parameters.env }}:
+              ${{ pair.name }}: ${{ pair.value }}
             # ODSP tenant setup script injects the values here (appClientId, tenantCreds).
             # The e2e test workload references the keys (login__*).
             ${{ if eq(parameters.odspTenantType, 'dogfood') }}:
