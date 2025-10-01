@@ -32,10 +32,8 @@ import {
 	AnnotatedAllowedTypesInternal,
 	isAnnotatedAllowedType,
 	normalizeAllowedTypes,
-	normalizeAnnotatedAllowedTypes,
+	normalizeAndEvaluateAnnotatedAllowedTypes,
 	normalizeToAnnotatedAllowedType,
-	unannotateAllowedType,
-	unannotateImplicitAllowedTypes,
 	type AllowedTypes,
 	type AnnotatedAllowedType,
 	type AnnotatedAllowedTypes,
@@ -492,7 +490,7 @@ describe("allowedTypes", () => {
 		const lazyNumber = () => numberSchema;
 
 		it("adds metadata when it doesn't already exist", () => {
-			const result = normalizeAnnotatedAllowedTypes(stringSchema);
+			const result = normalizeAndEvaluateAnnotatedAllowedTypes(stringSchema);
 			assert.deepEqual(
 				result,
 				AnnotatedAllowedTypesInternal.create([{ metadata: {}, type: stringSchema }]),
@@ -501,7 +499,7 @@ describe("allowedTypes", () => {
 
 		it("evaluates any lazy allowed types", () => {
 			const input = [lazyString, { metadata: { custom: true }, type: lazyNumber }];
-			const result = normalizeAnnotatedAllowedTypes(input);
+			const result = normalizeAndEvaluateAnnotatedAllowedTypes(input);
 			assert.deepEqual(
 				result,
 				AnnotatedAllowedTypesInternal.create([
@@ -513,7 +511,7 @@ describe("allowedTypes", () => {
 
 		it("handles single AnnotatedAllowedType", () => {
 			const input: AnnotatedAllowedType = { metadata: { custom: 1 }, type: lazyString };
-			const result = normalizeAnnotatedAllowedTypes(input);
+			const result = normalizeAndEvaluateAnnotatedAllowedTypes(input);
 			assert.deepEqual(
 				result,
 				AnnotatedAllowedTypesInternal.create([
@@ -530,7 +528,7 @@ describe("allowedTypes", () => {
 				},
 			);
 
-			const result = normalizeAnnotatedAllowedTypes(input);
+			const result = normalizeAndEvaluateAnnotatedAllowedTypes(input);
 			assert.deepEqual(
 				result,
 				AnnotatedAllowedTypesInternal.create(

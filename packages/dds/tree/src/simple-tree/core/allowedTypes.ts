@@ -4,7 +4,7 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, Lazy } from "@fluidframework/core-utils/internal";
 
 import {
 	type ErasedBaseType,
@@ -82,12 +82,9 @@ export interface NormalizedAnnotatedAllowedTypes
  */
 export function isAnnotatedAllowedTypes(
 	allowedTypes: ImplicitAnnotatedAllowedTypes,
-): allowedTypes is AnnotatedAllowedTypes {
+): allowedTypes is AllowedTypesFullInternal {
 	checkForUninitializedSchema(allowedTypes);
-	return (
-		// Class based schema, and lazy schema references report type "function": filtering them out with typeof makes narrowing based on members mostly safe
-		typeof allowedTypes === "object" && "metadata" in allowedTypes && "types" in allowedTypes
-	);
+	return allowedTypes instanceof AnnotatedAllowedTypesInternal;
 }
 
 /**
@@ -109,6 +106,8 @@ export interface AnnotatedAllowedTypes<T = readonly AnnotatedAllowedType[]>
 
 /**
  * Stores annotations for a set of allowed types.
+ * @remarks
+ * Most expressive form of AllowedTypes which any of the implicit types can be normalized to.
  * @alpha
  * @sealed
  */
@@ -123,18 +122,24 @@ export type AllowedTypesFull<
  */
 type InstanceTypeRelaxed<TClass> = InstanceType<(new () => never) & TClass>;
 
+/**
+ * {@link AllowedTypesFull} but with internal types.
+ */
+export type AllowedTypesFullInternal<
+	T extends readonly AnnotatedAllowedType[] = readonly AnnotatedAllowedType[],
+> = AnnotatedAllowedTypesInternal<T> & UnannotateAllowedTypesList<T>;
+
+type AllowedTypesFullInternalEvaluated = AllowedTypesFullInternal<
+	readonly AnnotatedAllowedType<TreeNodeSchema>[]
+>;
+
 export class AnnotatedAllowedTypesInternal<
 		T extends readonly AnnotatedAllowedType[] = readonly AnnotatedAllowedType[],
 	>
 	extends ErasedTypeImplementation<AnnotatedAllowedTypes<T>>
 	implements AnnotatedAllowedTypes<T>
 {
-	public readonly unannotatedTypes: T extends readonly (
-		| AnnotatedAllowedType
-		| LazyItem<TreeNodeSchema>
-	)[]
-		? UnannotateAllowedTypesList<T>
-		: AllowedTypes;
+	public readonly unannotatedTypes: UnannotateAllowedTypesList<T>;
 
 	/**
 	 * The length of the types array.
@@ -145,20 +150,54 @@ export class AnnotatedAllowedTypesInternal<
 		return fail("length should be intercepted by the proxy");
 	}
 
+	/**
+	 * True if and only if there is at least one lazy schema reference in the types arrays.
+	 */
+	private readonly isLazy: boolean;
+
+	private readonly lazyEvaluate: Lazy<{
+		readonly annotated: AllowedTypesFullInternalEvaluated;
+		readonly set: ReadonlySet<TreeNodeSchema>;
+	}>;
+
 	private constructor(
 		public readonly types: T,
 		public readonly metadata: AllowedTypesMetadata = {},
 	) {
 		super();
-		this.unannotatedTypes = unannotateImplicitAllowedTypes(
-			types as ImplicitAnnotatedAllowedTypes,
-		) as typeof this.unannotatedTypes;
+		this.unannotatedTypes = types.map((type) => type.type) as typeof this.unannotatedTypes;
+
+		// Since the array has been copied, mutations ot it will not be handled correctly so freeze it.
+		// Support for such mutations could be added at a later date by making more things lazy.
+		Object.freeze(this.types);
+		Object.freeze(this.unannotatedTypes);
+
+		this.isLazy = this.unannotatedTypes.find((t) => isLazy(t)) !== undefined;
+
+		const proxy = AnnotatedAllowedTypesInternal.proxy(this);
+
+		this.lazyEvaluate = new Lazy(() => {
+			const annotated = this.isLazy
+				? AnnotatedAllowedTypesInternal.create(
+						this.types.map((type) => ({
+							...type,
+							type: evaluateLazySchema(type.type),
+						})),
+						this.metadata,
+					)
+				: (proxy as AllowedTypesFullInternalEvaluated);
+			return { annotated, set: new Set(annotated.unannotatedTypes) };
+		});
+
+		return proxy;
 	}
 
-	public evaluate(): AnnotatedAllowedTypesInternal<
-		readonly AnnotatedAllowedType<TreeNodeSchema>[]
-	> {
-		return normalizeAnnotatedAllowedTypes(this);
+	public evaluate(): AllowedTypesFullInternalEvaluated {
+		return this.lazyEvaluate.value.annotated;
+	}
+
+	public evaluateSet(): ReadonlySet<TreeNodeSchema> {
+		return this.lazyEvaluate.value.set;
 	}
 
 	public static override [Symbol.hasInstance]<
@@ -174,12 +213,9 @@ export class AnnotatedAllowedTypesInternal<
 		return Object.prototype.isPrototypeOf.call(this.prototype, value);
 	}
 
-	public static create<const T extends readonly AnnotatedAllowedType[]>(
-		types: T,
-		metadata: AllowedTypesMetadata = {},
+	private static proxy<const T extends readonly AnnotatedAllowedType[]>(
+		result: AnnotatedAllowedTypesInternal<T>,
 	): AnnotatedAllowedTypesInternal<T> & AllowedTypesFull<T> {
-		const result = new AnnotatedAllowedTypesInternal(types, metadata);
-
 		const proxy = new Proxy(result, {
 			set: () => {
 				throw new UsageError("AnnotatedAllowedTypes is immutable");
@@ -230,6 +266,14 @@ export class AnnotatedAllowedTypesInternal<
 			},
 		});
 		return proxy as typeof result & UnannotateAllowedTypesList<T>;
+	}
+
+	public static create<const T extends readonly AnnotatedAllowedType[]>(
+		types: T,
+		metadata: AllowedTypesMetadata = {},
+	): AnnotatedAllowedTypesInternal<T> & AllowedTypesFull<T> {
+		const result = new AnnotatedAllowedTypesInternal(types, metadata);
+		return AnnotatedAllowedTypesInternal.proxy(result);
 	}
 
 	public static createUnannotated<const T extends AllowedTypes>(
@@ -359,14 +403,12 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 /**
  * Types of {@link TreeNode|TreeNodes} or {@link TreeLeafValue|TreeLeafValues} allowed at a location in a tree with
  * additional metadata associated with the location they're allowed at.
+ * @remarks
+ * Since AllowedTypesFull implements `AllowedTypes`, this type is not really necessary and ImplicitAllowedTypes could be used instead.
  * @alpha
  * @input
  */
-export type ImplicitAnnotatedAllowedTypes =
-	| TreeNodeSchema
-	| AnnotatedAllowedType
-	| AnnotatedAllowedTypes
-	| readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[];
+export type ImplicitAnnotatedAllowedTypes = AllowedTypesFull | ImplicitAllowedTypes;
 
 /**
  * Returns an {@link ImplicitAllowedTypes} that is equivalent to the input without annotations.
@@ -450,19 +492,7 @@ export type AnnotateAllowedType<T extends AnnotatedAllowedType | LazyItem<TreeNo
 export function normalizeAllowedTypes(
 	types: ImplicitAnnotatedAllowedTypes,
 ): ReadonlySet<TreeNodeSchema> {
-	// remove annotations before normalizing
-	const unannotated = unannotateImplicitAllowedTypes(types);
-	const normalized = new Set<TreeNodeSchema>();
-	if (isReadonlyArray(unannotated)) {
-		// Types array must not be modified after it is normalized since that would result in the user of the normalized data having wrong (out of date) content.
-		Object.freeze(unannotated);
-		for (const lazyType of unannotated) {
-			normalized.add(evaluateLazySchema(lazyType));
-		}
-	} else {
-		normalized.add(evaluateLazySchema(unannotated));
-	}
-	return normalized;
+	return normalizeToAnnotatedAllowedTypes(types).evaluateSet();
 }
 
 /**
@@ -480,77 +510,37 @@ export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchem
 }
 
 /**
+ * Normalizes an allowed type to an {@link AnnotatedAllowedType}, by adding empty annotations if they don't already exist.
+ */
+export function normalizeToAnnotatedAllowedTypes(
+	type: ImplicitAnnotatedAllowedTypes,
+): AllowedTypesFullInternal {
+	if (isAnnotatedAllowedTypes(type)) {
+		return type;
+	}
+
+	// Due to more specific internal type, the above does not narrow sufficiently, so more narrowing is needed.
+	// It is possible this will give a false error if a TreeNodeSchema which matches this check is used.
+	assert(!("types" in type && "metadata" in type), "invalid AnnotatedAllowedTypes");
+
+	const annotatedTypes: AnnotatedAllowedType[] = (isReadonlyArray(type) ? type : [type]).map(
+		normalizeToAnnotatedAllowedType,
+	);
+
+	return AnnotatedAllowedTypesInternal.create(annotatedTypes);
+}
+
+/**
  * Normalizes a {@link ImplicitAnnotatedAllowedTypes} to a set of {@link AnnotatedAllowedSchema}s, by eagerly evaluating any
  * lazy schema declarations and adding empty metadata if it doesn't already exist.
  *
  * @remarks Note: this must only be called after all required schemas have been declared, otherwise evaluation of
  * recursive schemas may fail.
  */
-export function normalizeAnnotatedAllowedTypes(
+export function normalizeAndEvaluateAnnotatedAllowedTypes(
 	types: ImplicitAnnotatedAllowedTypes,
-): AnnotatedAllowedTypesInternal<readonly AnnotatedAllowedType<TreeNodeSchema>[]> &
-	readonly TreeNodeSchema[] {
-	const typesWithoutAnnotation = isAnnotatedAllowedTypes(types) ? types.types : types;
-	const annotatedTypes: AnnotatedAllowedType<TreeNodeSchema>[] = [];
-	if (isReadonlyArray(typesWithoutAnnotation)) {
-		for (const annotatedType of typesWithoutAnnotation) {
-			if (isAnnotatedAllowedType(annotatedType)) {
-				annotatedTypes.push({
-					type: evaluateLazySchema(annotatedType.type),
-					metadata: annotatedType.metadata,
-				});
-			} else {
-				annotatedTypes.push({ type: evaluateLazySchema(annotatedType), metadata: {} });
-			}
-		}
-	} else {
-		if (isAnnotatedAllowedType(typesWithoutAnnotation)) {
-			annotatedTypes.push({
-				type: evaluateLazySchema(typesWithoutAnnotation.type),
-				metadata: typesWithoutAnnotation.metadata,
-			});
-		} else {
-			annotatedTypes.push({ type: evaluateLazySchema(typesWithoutAnnotation), metadata: {} });
-		}
-	}
-
-	return AnnotatedAllowedTypesInternal.create(
-		annotatedTypes,
-		isAnnotatedAllowedTypes(types) ? types.metadata : {},
-	);
-}
-
-/**
- * Converts an {@link ImplicitAnnotatedAllowedTypes} to an {@link ImplicitAllowedTypes}s, by removing
- * any annotations.
- * @remarks
- * This does not evaluate any lazy schemas.
- */
-export function unannotateImplicitAllowedTypes<Types extends ImplicitAnnotatedAllowedTypes>(
-	types: Types,
-): UnannotateImplicitAllowedTypes<Types> {
-	return (
-		isAnnotatedAllowedTypes(types)
-			? types.types.map(unannotateAllowedType)
-			: isReadonlyArray(types)
-				? types.map(unannotateAllowedType)
-				: isAnnotatedAllowedType(types)
-					? types.type
-					: types
-	) as UnannotateImplicitAllowedTypes<Types>;
-}
-
-/**
- * Converts an {@link AnnotatedAllowedType} to an {@link LazyItem} by removing any annotations.
- * @remarks
- * This does not evaluate any lazy schemas.
- */
-export function unannotateAllowedType<
-	Type extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>,
->(allowedType: Type): UnannotateAllowedType<Type> {
-	return isAnnotatedAllowedType(allowedType)
-		? (allowedType.type as UnannotateAllowedType<Type>)
-		: (allowedType as UnannotateAllowedType<Type>);
+): AllowedTypesFullInternalEvaluated {
+	return normalizeToAnnotatedAllowedTypes(types).evaluate();
 }
 
 const cachedLazyItem = new WeakMap<() => unknown, unknown>();

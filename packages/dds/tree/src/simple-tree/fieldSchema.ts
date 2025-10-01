@@ -27,17 +27,12 @@ import type {
 	ImplicitAllowedTypes,
 	ImplicitAnnotatedAllowedTypes,
 	UnannotateImplicitAllowedTypes,
-	AllowedTypesMetadata,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeLeafValue,
 	InsertableTreeNodeFromImplicitAllowedTypes,
+	AllowedTypesFullInternal,
 } from "./core/index.js";
-import {
-	isAnnotatedAllowedTypes,
-	normalizeAllowedTypes,
-	normalizeAnnotatedAllowedTypes,
-	unannotateImplicitAllowedTypes,
-} from "./core/index.js";
+import { normalizeAllowedTypes, normalizeAnnotatedAllowedTypes } from "./core/index.js";
 
 import type { SimpleFieldSchema } from "./simpleSchema.js";
 import type { UnsafeUnknownSchema } from "./unsafeUnknownSchema.js";
@@ -280,36 +275,13 @@ export interface FieldSchemaMetadataAlpha<TCustomMetadata = unknown>
  */
 export function createFieldSchema<
 	Kind extends FieldKind,
-	Types extends ImplicitAllowedTypes,
-	TCustomMetadata = unknown,
->(
-	kind: Kind,
-	annotatedTypes: Types,
-	props?: FieldProps<TCustomMetadata>,
-): FieldSchemaAlpha<Kind, Types, TCustomMetadata>;
-
-/**
- * Package internal construction API that supports annotations for allowed types.
- */
-export function createFieldSchema<
-	Kind extends FieldKind,
 	Types extends ImplicitAnnotatedAllowedTypes,
 	TCustomMetadata = unknown,
 >(
 	kind: Kind,
 	annotatedTypes: Types,
 	props?: FieldProps<TCustomMetadata>,
-): FieldSchemaAlpha<Kind, UnannotateImplicitAllowedTypes<Types>, TCustomMetadata>;
-
-export function createFieldSchema<
-	Kind extends FieldKind,
-	Types extends ImplicitAnnotatedAllowedTypes,
-	TCustomMetadata = unknown,
->(
-	kind: Kind,
-	annotatedTypes: Types,
-	props?: FieldProps<TCustomMetadata>,
-): FieldSchemaAlpha<Kind, UnannotateImplicitAllowedTypes<Types>, TCustomMetadata> {
+): FieldSchemaAlpha<Kind, Types, TCustomMetadata> {
 	return createFieldSchemaPrivate(kind, annotatedTypes, props);
 }
 
@@ -324,7 +296,7 @@ let createFieldSchemaPrivate: <
 	kind: Kind,
 	annotatedTypes: Types,
 	props?: FieldProps<TCustomMetadata>,
-) => FieldSchemaAlpha<Kind, UnannotateImplicitAllowedTypes<Types>, TCustomMetadata>;
+) => FieldSchemaAlpha<Kind, Types, TCustomMetadata>;
 
 /**
  * All policy for a specific field,
@@ -422,13 +394,7 @@ export class FieldSchemaAlpha<
 	implements SimpleFieldSchema
 {
 	private readonly lazyIdentifiers: Lazy<ReadonlySet<string>>;
-	private readonly lazyAnnotatedTypes: Lazy<NormalizedAnnotatedAllowedTypes>;
 	private readonly propsAlpha: FieldPropsAlpha<TCustomMetadata> | undefined;
-
-	/**
-	 * Metadata on the types of tree nodes allowed on this field.
-	 */
-	public readonly allowedTypesMetadata: AllowedTypesMetadata;
 
 	public get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined {
 		return this.propsAlpha?.persistedMetadata;
@@ -443,32 +409,26 @@ export class FieldSchemaAlpha<
 			kind: Kind2,
 			annotatedAllowedTypes: Types2,
 			props?: FieldPropsAlpha<TCustomMetadata2>,
-		) =>
-			new FieldSchemaAlpha(
-				kind,
-				unannotateImplicitAllowedTypes(annotatedAllowedTypes),
-				annotatedAllowedTypes,
-				props,
-			);
+		) => new FieldSchemaAlpha(kind, annotatedAllowedTypes, props);
 	}
+
+	public readonly annotatedAllowedTypes: AllowedTypesFullInternal;
 
 	protected constructor(
 		kind: Kind,
 		types: Types,
-		public readonly annotatedAllowedTypes: ImplicitAnnotatedAllowedTypes,
+
 		props?: FieldPropsAlpha<TCustomMetadata>,
 	) {
 		super(kind, types, props);
 
-		this.allowedTypesMetadata = isAnnotatedAllowedTypes(annotatedAllowedTypes)
-			? annotatedAllowedTypes.metadata
-			: {};
-		this.lazyAnnotatedTypes = new Lazy(() =>
-			normalizeAnnotatedAllowedTypes(annotatedAllowedTypes),
-		);
+		this.annotatedAllowedTypes = normalizeAnnotatedAllowedTypes(types);
+
 		this.lazyIdentifiers = new Lazy(
 			() =>
-				new Set(this.annotatedAllowedTypesNormalized.types.map(({ type }) => type.identifier)),
+				new Set(
+					this.annotatedAllowedTypes.evaluate().types.map(({ type }) => type.identifier),
+				),
 		);
 		this.propsAlpha = props;
 	}
@@ -482,7 +442,7 @@ export class FieldSchemaAlpha<
 	 * @remarks Counterpart to {@link FieldSchemaAlpha.annotatedAllowedTypes}, with any lazy definitions evaluated.
 	 */
 	public get annotatedAllowedTypesNormalized(): NormalizedAnnotatedAllowedTypes {
-		return this.lazyAnnotatedTypes.value;
+		return this.annotatedAllowedTypes.evaluate();
 	}
 }
 

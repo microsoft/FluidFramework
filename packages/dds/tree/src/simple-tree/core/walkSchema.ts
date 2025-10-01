@@ -4,7 +4,7 @@
  */
 
 import {
-	normalizeAnnotatedAllowedTypes,
+	normalizeAndEvaluateAnnotatedAllowedTypes,
 	type AnnotatedAllowedType,
 	type NormalizedAnnotatedAllowedTypes,
 } from "./allowedTypes.js";
@@ -32,7 +32,11 @@ export function walkNodeSchema(
 		getTreeNodeSchemaPrivateData(schema).childAnnotatedAllowedTypes;
 
 	for (const fieldAllowedTypes of annotatedAllowedTypes) {
-		walkAllowedTypes(normalizeAnnotatedAllowedTypes(fieldAllowedTypes), visitor, visitedSet);
+		walkAllowedTypes(
+			normalizeAndEvaluateAnnotatedAllowedTypes(fieldAllowedTypes),
+			visitor,
+			visitedSet,
+		);
 	}
 
 	// This visit is done at the end so the traversal order is most inner types first.

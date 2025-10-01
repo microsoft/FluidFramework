@@ -180,7 +180,7 @@ function optional<
 >(
 	t: T,
 	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
-): FieldSchemaAlpha<FieldKind.Optional, UnannotateImplicitAllowedTypes<T>, TCustomMetadata>;
+): FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata>;
 
 function optional<
 	const T extends ImplicitAnnotatedAllowedTypes,
@@ -188,7 +188,7 @@ function optional<
 >(
 	t: T,
 	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
-): FieldSchemaAlpha<FieldKind.Optional, UnannotateImplicitAllowedTypes<T>, TCustomMetadata> {
+): FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata> {
 	return createFieldSchema(FieldKind.Optional, t, {
 		defaultProvider: defaultOptionalProvider,
 		...props,
