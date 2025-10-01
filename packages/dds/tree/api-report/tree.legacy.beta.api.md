@@ -43,6 +43,12 @@ export interface CommitMetadata {
     readonly kind: CommitKind;
 }
 
+// @beta
+export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
+
+// @beta @legacy
+export function configuredSharedTreeBetaLegacy(options: SharedTreeOptionsBeta): ISharedObjectKind<ITree> & SharedObjectKind<ITree>;
+
 // @public @sealed @system
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
@@ -120,6 +126,15 @@ export interface ForestOptions {
 // @beta @sealed
 export interface ForestType extends ErasedType<"ForestType"> {
 }
+
+// @beta
+export const ForestTypeExpensiveDebug: ForestType;
+
+// @beta
+export const ForestTypeOptimized: ForestType;
+
+// @beta
+export const ForestTypeReference: ForestType;
 
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
@@ -403,6 +418,9 @@ export const SharedTreeAttributes: IChannelAttributes;
 
 // @beta @legacy
 export const SharedTreeFactoryType = "https://graph.microsoft.com/types/tree";
+
+// @beta @input
+export type SharedTreeOptionsBeta = ForestOptions;
 
 // @public @sealed @system
 export interface SimpleNodeSchemaBase<out TNodeKind extends NodeKind, out TCustomMetadata = unknown> {

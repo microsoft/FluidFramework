@@ -57,6 +57,7 @@ export {
 export {
 	type ITreeInternal,
 	type SharedTreeOptions,
+	type SharedTreeOptionsBeta,
 	type ForestType,
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
@@ -276,6 +277,8 @@ export {
 export {
 	SharedTree,
 	configuredSharedTree,
+	configuredSharedTreeBeta,
+	configuredSharedTreeBetaLegacy,
 } from "./treeFactory.js";
 export { SharedTreeAttributes, SharedTreeFactoryType } from "./sharedTreeAttributes.js";
 export { persistedToSimpleSchema } from "./shared-tree/index.js";
@@ -283,14 +286,11 @@ export { persistedToSimpleSchema } from "./shared-tree/index.js";
 export {
 	type ICodecOptions,
 	type CodecWriteOptions,
-	type JsonValidator,
-	type SchemaValidationFunction,
 	FluidClientVersion,
 	type FormatValidator,
 	FormatValidatorNoOp,
 } from "./codec/index.js";
-export { noopValidator } from "./codec/index.js";
-export { typeboxValidator, FormatValidatorBasic } from "./external-utilities/index.js";
+export { FormatValidatorBasic } from "./external-utilities/index.js";
 
 export type {
 	// Type Testing

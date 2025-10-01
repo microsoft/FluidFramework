@@ -15,20 +15,8 @@ parameters:
 - name: artifactBuildId
   type: string
 
-# Path where the packages with perf tests will be installed.
-# The template will create it, and install aria-logger in it.
-- name: testWorkspace
-  type: string
-
 # Path to the folder where the test files artifact should be downloaded.
 - name: testFilesPath
-  type: string
-
-# Path where the telemetry-generator package should be installed.
-# It should be an empty directory so that it doesn't interfere with anything else.
-# The caller of this template will need to know this in order to point to the correct locations for the handlers,
-# which will be under <this path>/node_modules/@ff-internal/telemetry-generator/dist/handlers/.
-- name: pathForTelemetryGeneratorInstall
   type: string
 
 # Name of the service that the tests are running against.
@@ -36,7 +24,13 @@ parameters:
   type: string
   default: ''
 
+- name: userNpmrcDirectory
+  type: string
+  default: $(Agent.TempDirectory)
+
 steps:
+- checkout: git://internal/ff_pipeline_host
+
 - task: Bash@3
   displayName: Print parameter/variable values for troubleshooting
   inputs:
@@ -48,17 +42,24 @@ steps:
         artifactBuildId=${{ parameters.artifactBuildId }}
         artifactPipeline=${{ parameters.artifactPipeline }}
         testFilesPath=${{ parameters.testFilesPath }}
-        testWorkspace=${{ parameters.testWorkspace }}
 
       Build Params
         SourceBranch=$(Build.SourceBranch)
       "
 
+# Note: there is some duplication between the .npmrc setup here, the pnpm configuration in the next step, and the
+# base .npmrc file in ff_pipeline_host which could be cleaned up.
 - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
-
-- template: /tools/pipelines/templates/include-telemetry-setup.yml@self
   parameters:
-    pathForTelemetryGeneratorInstall: ${{ parameters.pathForTelemetryGeneratorInstall }}
+    userNpmrcDirectory: ${{ parameters.userNpmrcDirectory }}
+
+- template: /tools/pipelines/templates/include-install.yml@self
+  parameters:
+    packageManager: pnpm
+    buildDirectory: $(Build.SourcesDirectory)
+    packageManagerInstallCommand: pnpm install
+    primaryRegistry: $(ado-feeds-ff-download-only)
+    userNpmrcPath: ${{ parameters.userNpmrcDirectory }}/.npmrc
 
 # Download artifact with test files
 - task: DownloadPipelineArtifact@2
@@ -79,22 +80,6 @@ steps:
     path: ${{ parameters.testFilesPath }}
     # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
     # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
-
-- task: Bash@3
-  displayName: Create test directory
-  inputs:
-    targetType: 'inline'
-    script: |
-      mkdir ${{ parameters.testWorkspace }}
-
-# Install aria-logger
-- task: Bash@3
-  displayName: 'npm install aria logger'
-  retryCountOnTaskFailure: 4
-  inputs:
-    workingDirectory: ${{ parameters.testWorkspace }}
-    targetType: 'inline'
-    script: 'npm install @ff-internal/aria-logger'
 
 - ${{ if eq(parameters.endpointName, 'odsp') }}:
   # Log in to Azure to retrieve tenant credentials
@@ -117,11 +102,10 @@ steps:
     env:
       SYSTEM_ACCESSTOKEN: $(System.AccessToken)
     inputs:
-      workingDirectory: ${{ parameters.testWorkspace }}
       targetType: 'inline'
       script: |
         set -eu -o pipefail
 
         # Increase the maximum time to wait for a tenant to 1 hour to accommodate multiple test runs at the same time.
-        npx --package=@ff-internal/trips-setup@0.0.5 -- trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN
+        pnpm exec trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN
         echo "##vso[task.setvariable variable=tenantSetupSuccess;]true"
