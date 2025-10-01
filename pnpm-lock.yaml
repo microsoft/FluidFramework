@@ -12810,9 +12810,6 @@ importers:
       '@fluidframework/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
-      '@fluidframework/tool-utils-previous':
-        specifier: npm:@fluidframework/tool-utils@1.3.1
-        version: '@fluidframework/tool-utils@1.3.1(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: ~7.22.2
         version: 7.22.2
@@ -13618,9 +13615,6 @@ packages:
 
   '@fluidframework/tinylicious-driver@1.4.0':
     resolution: {integrity: sha512-FYwfZvwp+Yu/7qVwgRQs1eNlWs6pZssIBHToXNMlBe6ubPJ6/ZgdooSxMU4OfTCAMwyW4SsJGc9J0QVE5A2xsg==}
-
-  '@fluidframework/tool-utils@1.3.1':
-    resolution: {integrity: sha512-wESClsRxMfdnMGYqhtAsEWvrQLB/T8AtmvAosy+1j2ZC3AKb6sC+i2p0UrjfBCBVYE0DIpV3uDqvQqGKLtwoAA==}
 
   '@fluidframework/tool-utils@1.4.0':
     resolution: {integrity: sha512-cryRCUhYuFTMCESo7N3uDYKPWTHZt6P8nrHZvAwyTajxV6DLnBtFC8/CUW9szMIwaVtu8IDpXYqsEK9oV2Hxfw==}
@@ -25234,20 +25228,6 @@ snapshots:
       - encoding
       - supports-color
       - utf-8-validate
-
-  '@fluidframework/tool-utils@1.3.1(encoding@0.1.13)':
-    dependencies:
-      '@fluidframework/common-utils': 0.32.2
-      '@fluidframework/odsp-doclib-utils': 1.4.0(debug@4.4.1)(encoding@0.1.13)
-      '@fluidframework/protocol-base': 0.1036.5002
-      '@fluidframework/protocol-definitions': 0.1028.2000
-      async-mutex: 0.3.2
-      debug: 4.4.1(supports-color@8.1.1)
-      jwt-decode: 2.2.0
-      proper-lockfile: 4.1.2
-    transitivePeerDependencies:
-      - encoding
-      - supports-color
 
   '@fluidframework/tool-utils@1.4.0(encoding@0.1.13)':
     dependencies:
