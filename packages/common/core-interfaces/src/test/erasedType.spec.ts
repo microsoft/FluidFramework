@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { ErasedTypeImplementation, type ErasedBaseType } from "../erasedType.js";
 
-describe("OpaqueJsonSerializable and OpaqueJsonDeserialized", () => {
+describe("erasedType", () => {
 	it("ErasedBaseType", () => {
 		interface Foo extends ErasedBaseType<"x"> {
 			bar: number;
