@@ -1029,10 +1029,6 @@ export class Container
 			(this.isInteractiveClient &&
 				this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad")) ??
 			options.enableOfflineLoad === true;
-		let storageOnly = false;
-		if (this.readOnlyInfo.readonly === true) {
-			storageOnly = this.readOnlyInfo.storageOnly;
-		}
 		this.serializedStateManager = new SerializedStateManager(
 			pendingLocalState,
 			this.subLogger,
