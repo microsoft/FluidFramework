@@ -50,7 +50,6 @@ parameters:
 - name: env
   type: object
   default:
-    dummyKey: dummyValue
 
 - name: splitTestVariants
   type: object
@@ -402,9 +401,8 @@ stages:
           displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
           continueOnError: ${{ parameters.continueOnError }}
           env:
-            ${{ if ne(length(parameters.env), 0) }}:
-              ${{ each pair in parameters.env }}:
-                ${{ pair.name }}: ${{ pair.value }}
+            ${{ each pair in parameters.env }}:
+              ${{ pair.key }}: ${{ pair.value }}
             # ODSP tenant setup script injects the values here (appClientId, tenantCreds).
             # The e2e test workload references the keys (login__*).
             ${{ if eq(parameters.odspTenantType, 'dogfood') }}:
