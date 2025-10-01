@@ -84,6 +84,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
     const containerError = async (container: IContainer) =>
         new Promise<IErrorBase | undefined>((resolve) => container.once("closed", (error) => { resolve(error); }));
 
+    // Test disabled -- after moving LTS to use pnpm, this test still runs and passes locally,
+    // but fails on CI.
     itExpects.skip("A large op will close the container with chunking disabled", [
         { eventName: "fluid:telemetry:Container:ContainerClose", error: "OpTooLarge" },
     ], async () => {

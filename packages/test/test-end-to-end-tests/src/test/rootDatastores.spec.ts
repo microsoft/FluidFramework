@@ -175,6 +175,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert(await dataCorruption);
         });
 
+        // Test disabled -- after moving LTS to use pnpm, this test still runs and passes locally,
+        // but fails on CI.
         it.skip("Root datastore creation with aliasing turned on throws exception", async () => {
             // Containers need to be recreated in order for the settings to be picked up
             await reset();
@@ -199,6 +201,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject1, "2"));
         });
 
+        // Test disabled -- after moving LTS to use pnpm, this test still runs and passes locally,
+        // but fails on CI.
         it.skip("Root datastore creation with aliasing turned on and legacy API throws exception", async () => {
             // Containers need to be recreated in order for the settings to be picked up
             await reset();
@@ -299,6 +303,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
 
+        // Test disabled -- after moving LTS to use pnpm, this test still runs and passes locally,
+        // but fails on CI.
         it.skip("Aliases with slashes are not supported", async () => {
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
             const ds2 = await runtimeOf(dataObject2).createDataStore(packageName);
