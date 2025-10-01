@@ -113,13 +113,18 @@ parameters:
 - name: odspTenantType
   type: string
   default: ''
-  values: ['', 'prod', 'dogfood']
+  values:
+    - ''
+    - 'prod'
+    - 'dogfood'
 
 # lockBehavior of the stage (if any).
 - name: lockBehavior
   type: string
   default: ''
-  values: ['', 'sequential']
+  values:
+    - ''
+    - 'sequential'
 
 stages:
 - stage: ${{ parameters.stageId}}
