@@ -32,7 +32,7 @@ import {
 } from "./blobTestUtils.js";
 
 for (const createBlobPayloadPending of [false, true]) {
-	describe.only(`BlobManager (pending payloads): ${createBlobPayloadPending}`, () => {
+	describe(`BlobManager (pending payloads): ${createBlobPayloadPending}`, () => {
 		// #region Detached usage
 		describe("Detached usage", () => {
 			it("Responds as expected for retrieving unknown blob IDs", async () => {

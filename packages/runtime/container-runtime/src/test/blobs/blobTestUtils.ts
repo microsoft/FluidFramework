@@ -37,6 +37,7 @@ import {
 	type IBlobManagerLoadInfo,
 	type IBlobManagerRuntime,
 	type ICreateBlobResponseWithTTL,
+	type IPendingBlobs,
 	redirectTableBlobName,
 } from "../../blobManager/index.js";
 import type { IBlobMetadata } from "../../metadata.js";
@@ -381,6 +382,7 @@ interface TestMaterial {
 	mockLogger: MockLogger;
 	mockRuntime: MockRuntime;
 	blobManagerLoadInfo: IBlobManagerLoadInfo;
+	pendingBlobs: IPendingBlobs | undefined;
 	createBlobPayloadPending: boolean;
 	blobManager: BlobManager;
 }
@@ -398,6 +400,7 @@ export const createTestMaterial = (
 	const mockLogger = overrides?.mockLogger ?? new MockLogger();
 	const mockRuntime = overrides?.mockRuntime ?? new MockRuntime(mockLogger, attached);
 	const blobManagerLoadInfo = overrides?.blobManagerLoadInfo ?? {};
+	const pendingBlobs = overrides?.pendingBlobs ?? undefined;
 	const createBlobPayloadPending = overrides?.createBlobPayloadPending ?? false;
 
 	const blobManager = new BlobManager({
@@ -411,7 +414,7 @@ export const createTestMaterial = (
 		blobRequested: () => undefined,
 		isBlobDeleted: mockGarbageCollector.isBlobDeleted,
 		runtime: mockRuntime,
-		stashedBlobs: undefined,
+		stashedBlobs: pendingBlobs,
 		createBlobPayloadPending,
 	});
 
@@ -434,6 +437,7 @@ export const createTestMaterial = (
 		mockLogger,
 		mockRuntime,
 		blobManagerLoadInfo,
+		pendingBlobs,
 		createBlobPayloadPending,
 		blobManager,
 	};
