@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { RequestConfig, RequestHeaders } from "./request.cjs";
 import { type QueryStringType } from "./queryStringUtils.js";
+import type { RequestConfig, RequestHeaders } from "./request.cjs";
 import { IR11sResponse } from "./restWrapper.js";
 
 export abstract class RestWrapper {
