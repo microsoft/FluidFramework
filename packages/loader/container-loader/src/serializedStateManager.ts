@@ -166,7 +166,7 @@ export class SerializedStateManager {
 		private readonly storageAdapter: ISerializedStateManagerDocumentStorageService,
 		private readonly _offlineLoadEnabled: boolean,
 		containerEvent: IEventProvider<ISerializerEvent>,
-		private readonly storageOnly: boolean,
+		private readonly storageOnly: () => boolean,
 		private readonly containerDirty: () => boolean,
 		private readonly supportGetSnapshotApi: () => boolean,
 		snapshotRefreshTimeoutMs?: number,
@@ -177,7 +177,7 @@ export class SerializedStateManager {
 		});
 
 		this.snapshotRefreshTimeoutMs = snapshotRefreshTimeoutMs ?? this.snapshotRefreshTimeoutMs;
-		this.refreshTimer = this.storageOnly
+		this.refreshTimer = this.storageOnly()
 			? undefined
 			: new Timer(this.snapshotRefreshTimeoutMs, () => this.tryRefreshSnapshot());
 		// special case handle. Obtaining the last saved op seq num to avoid
@@ -278,7 +278,7 @@ export class SerializedStateManager {
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") === true &&
 			this._refreshSnapshotP === undefined &&
 			this.latestSnapshot === undefined &&
-			!this.storageOnly
+			!this.storageOnly()
 		) {
 			// Don't block on the refresh snapshot call - it is for the next time we serialize, not booting this incarnation
 			this._refreshSnapshotP = this.refreshLatestSnapshot(this.supportGetSnapshotApi());
