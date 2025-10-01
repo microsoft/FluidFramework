@@ -34,7 +34,7 @@ import type {
 import {
 	AnnotatedAllowedTypesInternal,
 	normalizeAllowedTypes,
-	normalizeAnnotatedAllowedTypes,
+	normalizeToAnnotatedAllowedTypes,
 } from "./core/index.js";
 
 import type { SimpleFieldSchema } from "./simpleSchema.js";
@@ -425,7 +425,7 @@ export class FieldSchemaAlpha<
 	) {
 		super(kind, types, props);
 
-		const normalizedTypes = normalizeAnnotatedAllowedTypes(types);
+		const normalizedTypes = normalizeToAnnotatedAllowedTypes(types);
 		this.annotatedAllowedTypes = normalizedTypes;
 
 		this.lazyIdentifiers = new Lazy(

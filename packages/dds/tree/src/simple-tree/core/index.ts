@@ -53,12 +53,13 @@ export {
 	isAnnotatedAllowedTypes,
 	isAnnotatedAllowedType,
 	normalizeAllowedTypes,
-	normalizeAndEvaluateAnnotatedAllowedTypes as normalizeAnnotatedAllowedTypes,
+	normalizeAndEvaluateAnnotatedAllowedTypes,
 	normalizeToAnnotatedAllowedType,
 	markSchemaMostDerived,
 	evaluateLazySchema,
 	createSchemaUpgrade,
 	AnnotatedAllowedTypesInternal,
+	normalizeToAnnotatedAllowedTypes,
 } from "./allowedTypes.js";
 export type {
 	AnnotatedAllowedType,
