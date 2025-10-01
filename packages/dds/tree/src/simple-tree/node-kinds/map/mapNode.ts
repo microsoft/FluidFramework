@@ -30,13 +30,11 @@ import {
 	type InternalTreeNode,
 	type UnhydratedFlexTreeNode,
 	normalizeAllowedTypes,
-	unannotateImplicitAllowedTypes,
 	type ImplicitAllowedTypes,
 	type ImplicitAnnotatedAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeSchemaMetadata,
 	type TreeNodeFromImplicitAllowedTypes,
-	type UnannotateImplicitAllowedTypes,
 	TreeNodeValid,
 	type MostDerivedData,
 	type TreeNodeSchemaInitializedData,
@@ -274,19 +272,14 @@ export function mapSchema<
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
 	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
 ) {
-	const lazyChildTypes = new Lazy(() =>
-		normalizeAllowedTypes(unannotateImplicitAllowedTypes(info)),
-	);
+	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
 
 	let privateData: TreeNodeSchemaPrivateData | undefined;
 
-	class Schema
-		extends CustomMapNodeBase<UnannotateImplicitAllowedTypes<T>>
-		implements TreeMapNode<UnannotateImplicitAllowedTypes<T>>
-	{
+	class Schema extends CustomMapNodeBase<T> implements TreeMapNode<T> {
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,

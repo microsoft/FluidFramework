@@ -20,10 +20,8 @@ import {
 	type InternalTreeNode,
 	type NodeSchemaMetadata,
 	type ImplicitAnnotatedAllowedTypes,
-	type UnannotateImplicitAllowedTypes,
 	type ImplicitAllowedTypes,
 	normalizeAllowedTypes,
-	unannotateImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
 	TreeNodeValid,
 	type MostDerivedData,
@@ -261,8 +259,6 @@ export function recordSchema<
 		TCustomMetadata
 	>,
 ) {
-	type TUnannotatedAllowedTypes = UnannotateImplicitAllowedTypes<TAllowedTypes>;
-
 	const {
 		identifier,
 		info,
@@ -272,9 +268,7 @@ export function recordSchema<
 		persistedMetadata,
 	} = options;
 
-	const lazyChildTypes = new Lazy(() =>
-		normalizeAllowedTypes(unannotateImplicitAllowedTypes(info)),
-	);
+	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
@@ -282,13 +276,13 @@ export function recordSchema<
 	let privateData: TreeNodeSchemaPrivateData | undefined;
 
 	class Schema
-		extends CustomRecordNodeBase<TUnannotatedAllowedTypes>
-		implements TreeRecordNode<TUnannotatedAllowedTypes>
+		extends CustomRecordNodeBase<TAllowedTypes>
+		implements TreeRecordNode<TAllowedTypes>
 	{
 		/**
 		 * Record-like index signature for the node.
 		 */
-		[key: string]: TreeNodeFromImplicitAllowedTypes<TUnannotatedAllowedTypes>;
+		[key: string]: TreeNodeFromImplicitAllowedTypes<TAllowedTypes>;
 
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
@@ -389,7 +383,7 @@ export function recordSchema<
 		}
 
 		public [Symbol.iterator](): IterableIterator<
-			[string, TreeNodeFromImplicitAllowedTypes<TUnannotatedAllowedTypes>]
+			[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]
 		> {
 			return recordIterator(this);
 		}

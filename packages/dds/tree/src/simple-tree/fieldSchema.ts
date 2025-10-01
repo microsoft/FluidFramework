@@ -26,7 +26,6 @@ import type {
 	NormalizedAnnotatedAllowedTypes,
 	ImplicitAllowedTypes,
 	ImplicitAnnotatedAllowedTypes,
-	UnannotateImplicitAllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeLeafValue,
 	InsertableTreeNodeFromImplicitAllowedTypes,
@@ -590,7 +589,7 @@ export type ImplicitAnnotatedFieldSchema = FieldSchema | ImplicitAnnotatedAllowe
  * @system @alpha
  */
 export type UnannotateImplicitFieldSchema<T extends ImplicitAnnotatedFieldSchema> =
-	T extends ImplicitAnnotatedAllowedTypes ? UnannotateImplicitAllowedTypes<T> : T;
+	T extends ImplicitAnnotatedAllowedTypes ? T : T;
 
 /**
  * Converts an `ImplicitFieldSchema` to a property type suitable for reading a field with this that schema.

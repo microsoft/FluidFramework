@@ -4,11 +4,7 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type {
-	ImplicitAllowedTypes,
-	ImplicitAnnotatedAllowedTypes,
-	UnannotateImplicitAllowedTypes,
-} from "../core/index.js";
+import type { ImplicitAllowedTypes, ImplicitAnnotatedAllowedTypes } from "../core/index.js";
 import { FieldKind, getDefaultProvider, createFieldSchema } from "../fieldSchema.js";
 import type {
 	FieldProps,
@@ -166,7 +162,7 @@ export interface SchemaStatics {
 const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => []);
 
 // The following overloads for optional and required are used to get around the fact that
-// the compiler can't infer that UnannotateImplicitAllowedTypes<T> is equal to T when T is known to extend ImplicitAllowedTypes
+// the compiler can't infer that T is equal to T when T is known to extend ImplicitAllowedTypes
 
 // #region Overloads for optional and required
 function optional<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
@@ -206,7 +202,7 @@ function required<
 >(
 	t: T,
 	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
-): FieldSchemaAlpha<FieldKind.Required, UnannotateImplicitAllowedTypes<T>, TCustomMetadata>;
+): FieldSchemaAlpha<FieldKind.Required, T, TCustomMetadata>;
 
 function required<
 	const T extends ImplicitAnnotatedAllowedTypes,
@@ -214,7 +210,7 @@ function required<
 >(
 	t: T,
 	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
-): FieldSchemaAlpha<FieldKind.Required, UnannotateImplicitAllowedTypes<T>, TCustomMetadata> {
+): FieldSchemaAlpha<FieldKind.Required, T, TCustomMetadata> {
 	return createFieldSchema(FieldKind.Required, t, props);
 }
 // #endregion

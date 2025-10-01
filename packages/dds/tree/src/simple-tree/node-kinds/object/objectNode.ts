@@ -42,7 +42,6 @@ import {
 	type NodeSchemaMetadata,
 	type ImplicitAllowedTypes,
 	type ImplicitAnnotatedAllowedTypes,
-	unannotateImplicitAllowedTypes,
 	TreeNodeValid,
 	type MostDerivedData,
 	type TreeNodeSchemaInitializedData,
@@ -404,10 +403,9 @@ export class ObjectFieldSchema<
 	public constructor(
 		kind: Kind,
 		allowedTypes: Types,
-		annotatedTypes: ImplicitAnnotatedAllowedTypes,
 		props: FieldProps<TCustomMetadata> & { readonly key: string },
 	) {
-		super(kind, allowedTypes, annotatedTypes, props);
+		super(kind, allowedTypes, props);
 		this.storedKey = props.key;
 	}
 }
@@ -473,15 +471,10 @@ export function objectSchema<
 		> = new Map(
 			Array.from(flexKeyMap, ([key, value]) => [
 				key as string,
-				new ObjectFieldSchema(
-					value.schema.kind,
-					value.schema.allowedTypes,
-					(value.schema as FieldSchemaAlpha).annotatedAllowedTypes,
-					{
-						...value.schema.props,
-						key: getStoredKey(key as string, value.schema),
-					},
-				),
+				new ObjectFieldSchema(value.schema.kind, value.schema.allowedTypes, {
+					...value.schema.props,
+					key: getStoredKey(key as string, value.schema),
+				}),
 			]),
 		);
 		public static readonly flexKeyMap: SimpleKeyMap = flexKeyMap;
@@ -637,7 +630,7 @@ export function unannotateSchemaRecord<
 	return Object.fromEntries(
 		Object.entries(schemaRecord).map(([key, schema]) => [
 			key,
-			schema instanceof FieldSchema ? schema : unannotateImplicitAllowedTypes(schema),
+			schema instanceof FieldSchema ? schema : schema,
 		]),
 	) as UnannotateSchemaRecord<Schema>;
 }

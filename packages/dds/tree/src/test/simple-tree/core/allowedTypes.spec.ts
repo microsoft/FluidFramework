@@ -38,14 +38,12 @@ import {
 	type AnnotatedAllowedType,
 	type AnnotatedAllowedTypes,
 	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
 	type InsertableTreeNodeFromAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
 	type UnannotateAllowedType,
 	type UnannotateAllowedTypes,
 	type UnannotateAllowedTypesList,
-	type UnannotateImplicitAllowedTypes,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/allowedTypes.js";
 import { validateUsageError } from "../../utils.js";
@@ -146,51 +144,6 @@ const schema = new SchemaFactory("com.example");
 
 // Type tests for unannotate utilities
 {
-	// UnannotateImplicitAllowedTypes
-	{
-		{
-			type _check = requireTrue<
-				areSafelyAssignable<
-					UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>,
-					ImplicitAllowedTypes
-				>
-			>;
-		}
-
-		{
-			type Result = UnannotateImplicitAllowedTypes<AnnotatedAllowedTypes>;
-			type _check = requireTrue<areSafelyAssignable<Result, AllowedTypes>>;
-		}
-
-		{
-			type Result = UnannotateImplicitAllowedTypes<ImplicitAllowedTypes>;
-			type _check = requireTrue<areSafelyAssignable<Result, ImplicitAllowedTypes>>;
-		}
-
-		{
-			type Result = UnannotateImplicitAllowedTypes<TreeNodeSchema>;
-			type _check = requireTrue<areSafelyAssignable<Result, TreeNodeSchema>>;
-		}
-		{
-			type Result = UnannotateImplicitAllowedTypes<[AnnotatedAllowedType]>;
-			type _check = requireTrue<areSafelyAssignable<Result, [LazyItem<TreeNodeSchema>]>>;
-		}
-
-		// eslint-disable-next-line no-inner-declarations
-		function _genericCase<T extends ImplicitAnnotatedAllowedTypes>(): void {
-			type Result = UnannotateImplicitAllowedTypes<T>;
-			// @ts-expect-error Ideally this would compile, however TypeScript can't solve the type equivalence so it does not.
-			type _check = requireTrue<areSafelyAssignable<Result, ImplicitAllowedTypes>>;
-		}
-
-		// eslint-disable-next-line no-inner-declarations
-		function _genericCase2<T extends ImplicitAllowedTypes>(): void {
-			type Result = UnannotateImplicitAllowedTypes<T>;
-			// @ts-expect-error Ideally this would compile, however TypeScript can't solve the type equivalence so it does not.
-			type _check = requireTrue<areSafelyAssignable<Result, T>>;
-		}
-	}
-
 	// UnannotateAllowedType
 	{
 		// Generic cases
@@ -312,21 +265,6 @@ describe("allowedTypes", () => {
 		});
 	});
 
-	it("unannotateAllowedType", () => {
-		assert.equal(unannotateAllowedType(SchemaFactory.number), SchemaFactory.number);
-		const lazy = (): typeof SchemaFactory.string => assert.fail();
-		{
-			const result = unannotateAllowedType(lazy);
-			assert.equal(result, lazy);
-			type _check1 = requireTrue<areSafelyAssignable<typeof lazy, typeof result>>;
-		}
-		{
-			const result = unannotateAllowedType({ type: lazy, metadata: {} });
-			assert.equal(result, lazy);
-			type _check1 = requireTrue<areSafelyAssignable<typeof lazy, typeof result>>;
-		}
-	});
-
 	describe("normalizeAllowedTypes", () => {
 		it("Normalizes single type", () => {
 			const schemaFactory = new SchemaFactory("test");
@@ -395,54 +333,6 @@ describe("allowedTypes", () => {
 		});
 	});
 
-	describe("unannotateImplicitAllowedTypes", () => {
-		const fakeSchema = schema.string;
-		const lazy = (): typeof fakeSchema => assert.fail();
-
-		it("handles a raw TreeNodeSchema", () => {
-			assert.equal(unannotateImplicitAllowedTypes(fakeSchema), fakeSchema);
-		});
-
-		it("handles AnnotatedAllowedType", () => {
-			const input: AnnotatedAllowedType = { metadata: {}, type: lazy };
-			assert.equal(unannotateImplicitAllowedTypes(input), lazy);
-		});
-
-		it("handles array of mixed annotated/unannotated", () => {
-			const input: readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[] = [
-				{ metadata: {}, type: lazy },
-				lazy,
-			];
-			assert.deepEqual(unannotateImplicitAllowedTypes(input), [lazy, lazy]);
-		});
-
-		it("handles AnnotatedAllowedTypes object", () => {
-			const input: AnnotatedAllowedTypes = AnnotatedAllowedTypesInternal.create(
-				[{ metadata: {}, type: lazy }],
-				{ custom: { something: true } },
-			);
-			assert.deepEqual(unannotateImplicitAllowedTypes(input), [lazy]);
-		});
-
-		it("handles single AnnotatedAllowedType nested directly", () => {
-			const input: AnnotatedAllowedType = {
-				metadata: { custom: { something: true } },
-				type: lazy,
-			};
-			assert.deepEqual(unannotateImplicitAllowedTypes(input), lazy);
-		});
-
-		it("handles empty array of allowed types", () => {
-			const input: readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[] = [];
-			assert.deepEqual(unannotateImplicitAllowedTypes(input), []);
-		});
-
-		it("handles empty array of allowed types in AnnotatedAllowedTypes", () => {
-			const input = AnnotatedAllowedTypesInternal.create([], { custom: { something: true } });
-			assert.deepEqual(unannotateImplicitAllowedTypes(input), []);
-		});
-	});
-
 	describe("normalizeToAnnotatedAllowedType", () => {
 		const fakeSchema = SchemaFactory.string;
 		const lazy = () => fakeSchema;
@@ -498,24 +388,16 @@ describe("allowedTypes", () => {
 		});
 
 		it("evaluates any lazy allowed types", () => {
-			const input = [lazyString, { metadata: { custom: true }, type: lazyNumber }];
+			const input = AnnotatedAllowedTypesInternal.createMixed([
+				lazyString,
+				{ metadata: { custom: true }, type: lazyNumber },
+			]);
 			const result = normalizeAndEvaluateAnnotatedAllowedTypes(input);
 			assert.deepEqual(
 				result,
 				AnnotatedAllowedTypesInternal.create([
 					{ metadata: {}, type: stringSchema },
 					{ metadata: { custom: true }, type: numberSchema },
-				]),
-			);
-		});
-
-		it("handles single AnnotatedAllowedType", () => {
-			const input: AnnotatedAllowedType = { metadata: { custom: 1 }, type: lazyString };
-			const result = normalizeAndEvaluateAnnotatedAllowedTypes(input);
-			assert.deepEqual(
-				result,
-				AnnotatedAllowedTypesInternal.create([
-					{ metadata: { custom: 1 }, type: stringSchema },
 				]),
 			);
 		});

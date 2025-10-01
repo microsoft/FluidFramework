@@ -28,7 +28,6 @@ import type {
 	TreeNodeSchemaBoth,
 	UnhydratedFlexTreeNode,
 	NodeSchemaMetadata,
-	UnannotateImplicitAllowedTypes,
 	ImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../core/index.js";
@@ -545,13 +544,12 @@ export class SchemaFactory<
 		T,
 		undefined
 	> {
-		// The compiler can't infer that UnannotateImplicitAllowedTypes<T> is equal to T so we have to do a bunch of typing to make the error go away.
+		// The compiler can't infer that T is equal to T so we have to do a bunch of typing to make the error go away.
 		const map: TreeNodeSchemaBoth<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Map,
-			TreeMapNode<UnannotateImplicitAllowedTypes<T>> &
-				WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
-			MapNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
+			TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
+			MapNodeInsertableData<T>,
 			ImplicitlyConstructable,
 			T,
 			undefined
@@ -567,8 +565,7 @@ export class SchemaFactory<
 		return map as TreeNodeSchemaBoth<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Map,
-			TreeMapNode<UnannotateImplicitAllowedTypes<T>> &
-				WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
+			TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
 			MapNodeInsertableData<ImplicitAllowedTypes>,
 			ImplicitlyConstructable,
 			T,

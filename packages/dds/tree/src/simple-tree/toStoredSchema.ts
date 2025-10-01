@@ -138,7 +138,7 @@ export function convertField(
 	let types: TreeTypeSet;
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (schema instanceof FieldSchemaAlpha) {
-		types = convertAllowedTypes(schema.annotatedAllowedTypesNormalized, options);
+		types = convertAllowedTypes(schema.allowedTypes, options);
 	} else {
 		types = schema.allowedTypesIdentifiers as TreeTypeSet;
 	}

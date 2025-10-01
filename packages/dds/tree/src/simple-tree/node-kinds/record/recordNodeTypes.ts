@@ -14,7 +14,6 @@ import type {
 	ImplicitAnnotatedAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,
-	UnannotateImplicitAllowedTypes,
 } from "../../core/index.js";
 
 import type { SimpleRecordNodeSchema } from "../../simpleSchema.js";
@@ -62,9 +61,8 @@ export interface RecordNodeCustomizableSchema<
 > extends TreeNodeSchemaClass<
 			/* Name */ TName,
 			/* Kind */ NodeKind.Record,
-			/* TNode */ TreeRecordNode<UnannotateImplicitAllowedTypes<T>> &
-				WithType<TName, NodeKind.Record, T>,
-			/* TInsertable */ RecordNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
+			/* TNode */ TreeRecordNode<T> & WithType<TName, NodeKind.Record, T>,
+			/* TInsertable */ RecordNodeInsertableData<T>,
 			/* ImplicitlyConstructable */ ImplicitlyConstructable,
 			/* Info */ T,
 			/* TConstructorExtra */ never,
@@ -84,9 +82,8 @@ export interface RecordNodePojoEmulationSchema<
 > extends TreeNodeSchemaNonClass<
 			/* Name */ TName,
 			/* Kind */ NodeKind.Record,
-			/* TNode */ TreeRecordNode<UnannotateImplicitAllowedTypes<T>> &
-				WithType<TName, NodeKind.Record, T>,
-			/* TInsertable */ RecordNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
+			/* TNode */ TreeRecordNode<T> & WithType<TName, NodeKind.Record, T>,
+			/* TInsertable */ RecordNodeInsertableData<T>,
 			/* ImplicitlyConstructable */ ImplicitlyConstructable,
 			/* Info */ T,
 			/* TConstructorExtra */ never,

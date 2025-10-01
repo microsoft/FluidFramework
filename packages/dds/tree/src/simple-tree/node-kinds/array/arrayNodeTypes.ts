@@ -12,7 +12,6 @@ import type {
 	WithType,
 	ImplicitAnnotatedAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
-	UnannotateImplicitAllowedTypes,
 } from "../../core/index.js";
 
 import type { SimpleArrayNodeSchema } from "../../simpleSchema.js";
@@ -29,8 +28,8 @@ export interface ArrayNodeCustomizableSchema<
 > extends TreeNodeSchemaClass<
 			TName,
 			NodeKind.Array,
-			TreeArrayNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Array, T>,
-			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>>,
+			TreeArrayNode<T> & WithType<TName, NodeKind.Array, T>,
+			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 			ImplicitlyConstructable,
 			T,
 			undefined,
@@ -50,8 +49,8 @@ export interface ArrayNodePojoEmulationSchema<
 > extends TreeNodeSchemaNonClass<
 			TName,
 			NodeKind.Array,
-			TreeArrayNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Array, T>,
-			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<UnannotateImplicitAllowedTypes<T>>>,
+			TreeArrayNode<T> & WithType<TName, NodeKind.Array, T>,
+			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 			ImplicitlyConstructable,
 			T,
 			undefined,
