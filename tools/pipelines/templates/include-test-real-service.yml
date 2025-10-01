@@ -50,6 +50,7 @@ parameters:
 - name: env
   type: object
   default:
+    dummyKey: dummyValue
 
 - name: splitTestVariants
   type: object
