@@ -4341,7 +4341,7 @@ importers:
         version: 2.1.0
       axios:
         specifier: ^1.8.4
-        version: 1.8.4(debug@4.3.7)
+        version: 1.8.4(debug@4.4.0)
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -4489,7 +4489,7 @@ importers:
         version: 2.1.0
       axios:
         specifier: ^1.8.4
-        version: 1.8.4(debug@4.3.7)
+        version: 1.8.4(debug@4.4.0)
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -5286,7 +5286,7 @@ importers:
         version: link:../../../packages/utils/tool-utils
       axios:
         specifier: ^1.8.4
-        version: 1.8.4(debug@4.3.7)
+        version: 1.8.4(debug@4.4.0)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -6625,7 +6625,7 @@ importers:
         version: link:../../../../packages/dds/shared-object-base
       axios:
         specifier: ^1.8.4
-        version: 1.8.4(debug@4.3.7)
+        version: 1.8.4(debug@4.4.0)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -8183,7 +8183,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/map-previous':
         specifier: npm:@fluidframework/map@2.60.0
-        version: '@fluidframework/map@2.60.0'
+        version: '@fluidframework/map@2.60.0(debug@4.4.0)'
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -8952,7 +8952,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/shared-object-base-previous':
         specifier: npm:@fluidframework/shared-object-base@2.60.0
-        version: '@fluidframework/shared-object-base@2.60.0'
+        version: '@fluidframework/shared-object-base@2.60.0(debug@4.4.0)'
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -9570,7 +9570,7 @@ importers:
         version: 0.58.3(@types/node@18.19.86)
       '@fluidframework/driver-base-previous':
         specifier: npm:@fluidframework/driver-base@2.60.0
-        version: '@fluidframework/driver-base@2.60.0'
+        version: '@fluidframework/driver-base@2.60.0(debug@4.4.0)'
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -9822,7 +9822,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/local-driver-previous':
         specifier: npm:@fluidframework/local-driver@2.60.0
-        version: '@fluidframework/local-driver@2.60.0(encoding@0.1.13)'
+        version: '@fluidframework/local-driver@2.60.0(debug@4.4.0)(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
@@ -9925,7 +9925,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/odsp-driver-previous':
         specifier: npm:@fluidframework/odsp-driver@2.60.0
-        version: '@fluidframework/odsp-driver@2.60.0(encoding@0.1.13)'
+        version: '@fluidframework/odsp-driver@2.60.0(debug@4.4.0)(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
@@ -10226,7 +10226,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/routerlicious-driver-previous':
         specifier: npm:@fluidframework/routerlicious-driver@2.60.0
-        version: '@fluidframework/routerlicious-driver@2.60.0(encoding@0.1.13)'
+        version: '@fluidframework/routerlicious-driver@2.60.0(debug@4.4.0)(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
@@ -11700,7 +11700,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/request-handler-previous':
         specifier: npm:@fluidframework/request-handler@2.60.0
-        version: '@fluidframework/request-handler@2.60.0'
+        version: '@fluidframework/request-handler@2.60.0(debug@4.4.0)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
@@ -12185,7 +12185,7 @@ importers:
         version: 0.58.3(@types/node@18.19.86)
       '@fluidframework/driver-utils-previous':
         specifier: npm:@fluidframework/driver-utils@2.60.0
-        version: '@fluidframework/driver-utils@2.60.0'
+        version: '@fluidframework/driver-utils@2.60.0(debug@4.4.0)'
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -12367,7 +12367,7 @@ importers:
         version: 0.58.3(@types/node@18.19.86)
       '@fluidframework/container-runtime-previous':
         specifier: npm:@fluidframework/container-runtime@2.60.0
-        version: '@fluidframework/container-runtime@2.60.0'
+        version: '@fluidframework/container-runtime@2.60.0(debug@4.4.0)'
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -12540,7 +12540,7 @@ importers:
         version: 0.58.3(@types/node@18.19.86)
       '@fluidframework/datastore-previous':
         specifier: npm:@fluidframework/datastore@2.60.0
-        version: '@fluidframework/datastore@2.60.0'
+        version: '@fluidframework/datastore@2.60.0(debug@4.4.0)'
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -12856,7 +12856,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/runtime-utils-previous':
         specifier: npm:@fluidframework/runtime-utils@2.60.0
-        version: '@fluidframework/runtime-utils@2.60.0'
+        version: '@fluidframework/runtime-utils@2.60.0(debug@4.4.0)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
@@ -14310,7 +14310,7 @@ importers:
         version: 4.6.0
       axios:
         specifier: ^1.8.4
-        version: 1.8.4(debug@4.3.7)
+        version: 1.8.4(debug@4.4.0)
       semver:
         specifier: ^7.7.1
         version: 7.7.1
@@ -16267,7 +16267,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/odsp-doclib-utils-previous':
         specifier: npm:@fluidframework/odsp-doclib-utils@2.60.0
-        version: '@fluidframework/odsp-doclib-utils@2.60.0(encoding@0.1.13)'
+        version: '@fluidframework/odsp-doclib-utils@2.60.0(debug@4.4.0)(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
         version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
@@ -25517,7 +25517,7 @@ packages:
   puppeteer@23.10.3:
     resolution: {integrity: sha512-ODG+L9vCSPkQ1j+yDtNDdkSsWt2NXNrQO5C8MlwkYgE2hYnXdqVRbBpsHnoP7+EULJJKbWyR2Q4BdfohjQor3A==}
     engines: {node: '>=18'}
-    deprecated: < 24.10.2 is no longer supported
+    deprecated: < 24.15.0 is no longer supported
     hasBin: true
 
   pure-rand@6.1.0:
@@ -26070,6 +26070,7 @@ packages:
   semver-try-require@6.2.3:
     resolution: {integrity: sha512-6q1N/Vr/4/G0EcQ1k4svN5kwfh3MJs4Gfl+zBAVcKn+AeIjKLwTXQ143Y6YHu6xEeN5gSCbCD1/5+NwCipLY5A==}
     engines: {node: ^14||^16||>=18}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   semver-ts@1.0.3:
     resolution: {integrity: sha512-RMf2+Nbd0Hiq5u8LADzqnSRb09Vu1UKOLFw9P9nm8XY3JPeFjv3DLVYBZjPWFHUxBVz7ktIVGR3xFjYilHlXng==}
@@ -29992,16 +29993,16 @@ snapshots:
       '@azure/identity': 4.5.0
       '@azure/identity-cache-persistence': 1.1.1
       '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/container-runtime': 2.60.0
+      '@fluidframework/container-runtime': 2.60.0(debug@4.4.0)
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/datastore': 2.60.0
+      '@fluidframework/datastore': 2.60.0(debug@4.4.0)
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/odsp-doclib-utils': 2.60.0(encoding@0.1.13)
-      '@fluidframework/odsp-driver': 2.60.0(encoding@0.1.13)
+      '@fluidframework/odsp-doclib-utils': 2.60.0(debug@4.4.0)(encoding@0.1.13)
+      '@fluidframework/odsp-driver': 2.60.0(debug@4.4.0)(encoding@0.1.13)
       '@fluidframework/odsp-driver-definitions': 2.60.0
       '@fluidframework/odsp-urlresolver': 2.60.0(encoding@0.1.13)
-      '@fluidframework/routerlicious-driver': 2.60.0(encoding@0.1.13)
+      '@fluidframework/routerlicious-driver': 2.60.0(debug@4.4.0)(encoding@0.1.13)
       '@fluidframework/routerlicious-urlresolver': 2.60.0
       '@fluidframework/runtime-definitions': 2.60.0
       '@fluidframework/tool-utils': 2.60.0(encoding@0.1.13)
@@ -30050,12 +30051,12 @@ snapshots:
       '@fluidframework/container-definitions': 2.60.0
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/datastore': 2.60.0
+      '@fluidframework/datastore': 2.60.0(debug@4.4.0)
       '@fluidframework/datastore-definitions': 2.60.0
-      '@fluidframework/map': 2.60.0
+      '@fluidframework/map': 2.60.0(debug@4.4.0)
       '@fluidframework/register-collection': 2.60.0
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
       uuid: 11.1.0
     transitivePeerDependencies:
@@ -30096,17 +30097,17 @@ snapshots:
     dependencies:
       '@fluid-internal/client-utils': 2.60.0
       '@fluidframework/container-definitions': 2.60.0
-      '@fluidframework/container-runtime': 2.60.0
+      '@fluidframework/container-runtime': 2.60.0(debug@4.4.0)
       '@fluidframework/container-runtime-definitions': 2.60.0
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/datastore': 2.60.0
+      '@fluidframework/datastore': 2.60.0(debug@4.4.0)
       '@fluidframework/datastore-definitions': 2.60.0
-      '@fluidframework/map': 2.60.0
-      '@fluidframework/request-handler': 2.60.0
+      '@fluidframework/map': 2.60.0(debug@4.4.0)
+      '@fluidframework/request-handler': 2.60.0(debug@4.4.0)
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
       '@fluidframework/synthesize': 2.60.0
       '@fluidframework/telemetry-utils': 2.60.0
       '@fluidframework/tree': 2.60.0
@@ -30129,7 +30130,7 @@ snapshots:
       '@fluidframework/routerlicious-driver': 1.4.0(encoding@0.1.13)
       '@fluidframework/runtime-utils': 1.4.0
       '@fluidframework/server-services-client': 0.1036.5002
-      axios: 0.30.0
+      axios: 0.30.0(debug@4.4.0)
       uuid: 8.3.2
     transitivePeerDependencies:
       - bufferutil
@@ -30144,9 +30145,9 @@ snapshots:
       '@fluidframework/container-loader': 2.60.0
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/fluid-static': 2.60.0
-      '@fluidframework/routerlicious-driver': 2.60.0(encoding@0.1.13)
+      '@fluidframework/routerlicious-driver': 2.60.0(debug@4.4.0)(encoding@0.1.13)
       '@fluidframework/telemetry-utils': 2.60.0
     transitivePeerDependencies:
       - bufferutil
@@ -30265,9 +30266,9 @@ snapshots:
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -30402,29 +30403,6 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/container-runtime@2.60.0':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/container-definitions': 2.60.0
-      '@fluidframework/container-runtime-definitions': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/datastore': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
-      '@fluidframework/id-compressor': 2.60.0
-      '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/telemetry-utils': 2.60.0
-      '@tylerbu/sorted-btree-es6': 1.8.0
-      double-ended-queue: 2.1.0-0
-      lz4js: 0.2.0
-      semver-ts: 1.0.3
-      uuid: 11.1.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
   '@fluidframework/container-runtime@2.60.0(debug@4.4.0)':
     dependencies:
       '@fluid-internal/client-utils': 2.60.0
@@ -30470,9 +30448,9 @@ snapshots:
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -30518,24 +30496,6 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/datastore@2.60.0':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/container-definitions': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/datastore-definitions': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
-      '@fluidframework/id-compressor': 2.60.0
-      '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/telemetry-utils': 2.60.0
-      uuid: 11.1.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
   '@fluidframework/datastore@2.60.0(debug@4.4.0)':
     dependencies:
       '@fluid-internal/client-utils': 2.60.0
@@ -30558,7 +30518,7 @@ snapshots:
     dependencies:
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/replay-driver': 2.60.0
       jsonschema: 1.4.1
     transitivePeerDependencies:
@@ -30572,18 +30532,18 @@ snapshots:
       '@fluidframework/cell': 2.60.0
       '@fluidframework/container-definitions': 2.60.0
       '@fluidframework/container-loader': 2.60.0
-      '@fluidframework/container-runtime': 2.60.0
+      '@fluidframework/container-runtime': 2.60.0(debug@4.4.0)
       '@fluidframework/container-runtime-definitions': 2.60.0
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/counter': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/map': 2.60.0
+      '@fluidframework/map': 2.60.0(debug@4.4.0)
       '@fluidframework/matrix': 2.60.0
       '@fluidframework/runtime-definitions': 2.60.0
       '@fluidframework/sequence': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
       '@fluidframework/tree': 2.60.0
     transitivePeerDependencies:
@@ -30608,18 +30568,6 @@ snapshots:
       '@fluidframework/driver-utils': 1.4.0
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/telemetry-utils': 1.4.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
-  '@fluidframework/driver-base@2.60.0':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
-      '@fluidframework/telemetry-utils': 2.60.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -30656,22 +30604,8 @@ snapshots:
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/telemetry-utils': 1.4.0
-      axios: 0.30.0
+      axios: 0.30.0(debug@4.4.0)
       uuid: 8.3.2
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
-  '@fluidframework/driver-utils@2.60.0':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/telemetry-utils': 2.60.0
-      axios: 1.8.4(debug@4.3.7)
-      lz4js: 0.2.0
-      uuid: 11.1.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -30711,9 +30645,9 @@ snapshots:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
       eslint-config-biome: 1.9.4
       eslint-config-prettier: 9.0.0(eslint@8.55.0)
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.55.0)
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       eslint-plugin-jsdoc: 46.8.2(eslint@8.55.0)
       eslint-plugin-promise: 6.1.1(eslint@8.55.0)
       eslint-plugin-react: 7.33.2(eslint@8.55.0)
@@ -30735,7 +30669,7 @@ snapshots:
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/replay-driver': 2.60.0
     transitivePeerDependencies:
       - debug
@@ -30748,7 +30682,7 @@ snapshots:
       '@fluidframework/container-loader': 2.60.0
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/odsp-driver': 2.60.0(encoding@0.1.13)
+      '@fluidframework/odsp-driver': 2.60.0(debug@4.4.0)(encoding@0.1.13)
       '@fluidframework/odsp-driver-definitions': 2.60.0
       '@fluidframework/telemetry-utils': 2.60.0
       '@json2csv/plainjs': 7.0.6
@@ -30784,16 +30718,16 @@ snapshots:
       '@fluidframework/aqueduct': 2.60.0
       '@fluidframework/container-definitions': 2.60.0
       '@fluidframework/container-loader': 2.60.0
-      '@fluidframework/container-runtime': 2.60.0
+      '@fluidframework/container-runtime': 2.60.0(debug@4.4.0)
       '@fluidframework/container-runtime-definitions': 2.60.0
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/request-handler': 2.60.0
+      '@fluidframework/request-handler': 2.60.0(debug@4.4.0)
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
       '@fluidframework/tree': 2.60.0
     transitivePeerDependencies:
@@ -30845,30 +30779,6 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/local-driver@2.60.0(encoding@0.1.13)':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/driver-base': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
-      '@fluidframework/protocol-base': 7.0.0
-      '@fluidframework/routerlicious-driver': 2.60.0(encoding@0.1.13)
-      '@fluidframework/server-local-server': 7.0.0
-      '@fluidframework/server-services-client': 7.0.0
-      '@fluidframework/server-services-core': 7.0.0
-      '@fluidframework/server-test-utils': 7.0.0
-      '@fluidframework/telemetry-utils': 2.60.0
-      jsrsasign: 11.1.0
-      uuid: 11.1.0
-    transitivePeerDependencies:
-      - bufferutil
-      - debug
-      - encoding
-      - supports-color
-      - utf-8-validate
-
   '@fluidframework/map@1.4.0':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -30881,23 +30791,6 @@ snapshots:
       '@fluidframework/runtime-definitions': 1.4.0
       '@fluidframework/runtime-utils': 1.4.0
       '@fluidframework/shared-object-base': 1.4.0
-      path-browserify: 1.0.1
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
-  '@fluidframework/map@2.60.0':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/datastore-definitions': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
-      '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
-      '@fluidframework/telemetry-utils': 2.60.0
       path-browserify: 1.0.1
     transitivePeerDependencies:
       - debug
@@ -30927,11 +30820,11 @@ snapshots:
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/merge-tree': 2.60.0
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
       '@tiny-calc/nano': 0.0.0-alpha.5
       double-ended-queue: 2.1.0-0
@@ -30949,8 +30842,8 @@ snapshots:
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
     transitivePeerDependencies:
       - debug
@@ -30963,21 +30856,6 @@ snapshots:
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
       '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
-      '@fluidframework/odsp-driver-definitions': 2.60.0
-      '@fluidframework/telemetry-utils': 2.60.0
-      isomorphic-fetch: 3.0.0(encoding@0.1.13)
-    transitivePeerDependencies:
-      - debug
-      - encoding
-      - supports-color
-
-  '@fluidframework/odsp-doclib-utils@2.60.0(encoding@0.1.13)':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
       '@fluidframework/odsp-driver-definitions': 2.60.0
       '@fluidframework/telemetry-utils': 2.60.0
       isomorphic-fetch: 3.0.0(encoding@0.1.13)
@@ -31010,33 +30888,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/odsp-driver@2.60.0(encoding@0.1.13)':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/driver-base': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
-      '@fluidframework/odsp-doclib-utils': 2.60.0(encoding@0.1.13)
-      '@fluidframework/odsp-driver-definitions': 2.60.0
-      '@fluidframework/telemetry-utils': 2.60.0
-      socket.io-client: 4.7.5
-      uuid: 11.1.0
-    transitivePeerDependencies:
-      - bufferutil
-      - debug
-      - encoding
-      - supports-color
-      - utf-8-validate
-
   '@fluidframework/odsp-urlresolver@2.60.0(encoding@0.1.13)':
     dependencies:
       '@fluid-internal/client-utils': 2.60.0
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/odsp-driver': 2.60.0(encoding@0.1.13)
+      '@fluidframework/odsp-driver': 2.60.0(debug@4.4.0)(encoding@0.1.13)
       '@fluidframework/odsp-driver-definitions': 2.60.0
     transitivePeerDependencies:
       - bufferutil
@@ -31053,8 +30911,8 @@ snapshots:
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
       uuid: 11.1.0
     transitivePeerDependencies:
@@ -31092,9 +30950,9 @@ snapshots:
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -31105,7 +30963,7 @@ snapshots:
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
     transitivePeerDependencies:
       - debug
@@ -31119,17 +30977,6 @@ snapshots:
       '@fluidframework/runtime-definitions': 1.4.0
       '@fluidframework/runtime-utils': 1.4.0
     transitivePeerDependencies:
-      - supports-color
-
-  '@fluidframework/request-handler@2.60.0':
-    dependencies:
-      '@fluidframework/container-runtime-definitions': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-    transitivePeerDependencies:
-      - debug
       - supports-color
 
   '@fluidframework/request-handler@2.60.0(debug@4.4.0)':
@@ -31189,27 +31036,6 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/routerlicious-driver@2.60.0(encoding@0.1.13)':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/driver-base': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
-      '@fluidframework/server-services-client': 7.0.0
-      '@fluidframework/telemetry-utils': 2.60.0
-      cross-fetch: 3.1.8(encoding@0.1.13)
-      json-stringify-safe: 5.0.1
-      socket.io-client: 4.7.5
-      uuid: 11.1.0
-    transitivePeerDependencies:
-      - bufferutil
-      - debug
-      - encoding
-      - supports-color
-      - utf-8-validate
-
   '@fluidframework/routerlicious-urlresolver@2.60.0':
     dependencies:
       '@fluidframework/core-interfaces': 2.60.0
@@ -31252,23 +31078,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/runtime-utils@2.60.0':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/container-definitions': 2.60.0
-      '@fluidframework/container-runtime-definitions': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/datastore-definitions': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
-      '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/telemetry-utils': 2.60.0
-      semver-ts: 1.0.3
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
   '@fluidframework/runtime-utils@2.60.0(debug@4.4.0)':
     dependencies:
       '@fluid-internal/client-utils': 2.60.0
@@ -31295,8 +31104,8 @@ snapshots:
       '@fluidframework/driver-definitions': 2.60.0
       '@fluidframework/merge-tree': 2.60.0
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
       double-ended-queue: 2.1.0-0
       uuid: 11.1.0
@@ -31317,35 +31126,6 @@ snapshots:
       nconf: 0.12.1
       serialize-error: 8.1.0
     transitivePeerDependencies:
-      - supports-color
-
-  '@fluidframework/server-lambdas@7.0.0':
-    dependencies:
-      '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 7.0.0
-      '@fluidframework/protocol-base': 7.0.0
-      '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas-driver': 7.0.0
-      '@fluidframework/server-services-client': 7.0.0
-      '@fluidframework/server-services-core': 7.0.0
-      '@fluidframework/server-services-telemetry': 7.0.0
-      '@types/semver': 7.7.0
-      assert: 2.1.0
-      async: 3.2.6
-      axios: 1.8.4(debug@4.3.7)
-      buffer: 6.0.3
-      double-ended-queue: 2.1.0-0
-      events: 3.3.0
-      json-stringify-safe: 5.0.1
-      lodash: 4.17.21
-      nconf: 0.12.1
-      opossum: 8.5.0
-      semver: 7.7.1
-      serialize-error: 8.1.0
-      sha.js: 2.4.12
-      uuid: 11.1.0
-    transitivePeerDependencies:
-      - debug
       - supports-color
 
   '@fluidframework/server-lambdas@7.0.0(debug@4.4.0)':
@@ -31575,24 +31355,6 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/shared-object-base@2.60.0':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/container-definitions': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/datastore': 2.60.0
-      '@fluidframework/datastore-definitions': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/id-compressor': 2.60.0
-      '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/telemetry-utils': 2.60.0
-      uuid: 11.1.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
   '@fluidframework/shared-object-base@2.60.0(debug@4.4.0)':
     dependencies:
       '@fluid-internal/client-utils': 2.60.0
@@ -31616,9 +31378,9 @@ snapshots:
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -31638,9 +31400,9 @@ snapshots:
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -31675,11 +31437,11 @@ snapshots:
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/id-compressor': 2.60.0
-      '@fluidframework/routerlicious-driver': 2.60.0(encoding@0.1.13)
+      '@fluidframework/routerlicious-driver': 2.60.0(debug@4.4.0)(encoding@0.1.13)
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
       jsrsasign: 11.1.0
       uuid: 11.1.0
@@ -31731,11 +31493,11 @@ snapshots:
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/fluid-static': 2.60.0
-      '@fluidframework/map': 2.60.0
-      '@fluidframework/routerlicious-driver': 2.60.0(encoding@0.1.13)
-      '@fluidframework/runtime-utils': 2.60.0
+      '@fluidframework/map': 2.60.0(debug@4.4.0)
+      '@fluidframework/routerlicious-driver': 2.60.0(debug@4.4.0)(encoding@0.1.13)
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
       '@fluidframework/tinylicious-driver': 2.60.0(encoding@0.1.13)
     transitivePeerDependencies:
@@ -31749,8 +31511,8 @@ snapshots:
     dependencies:
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
-      '@fluidframework/routerlicious-driver': 2.60.0(encoding@0.1.13)
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
+      '@fluidframework/routerlicious-driver': 2.60.0(debug@4.4.0)(encoding@0.1.13)
       jsrsasign: 11.1.0
       uuid: 11.1.0
     transitivePeerDependencies:
@@ -31776,15 +31538,15 @@ snapshots:
   '@fluidframework/tree@2.60.0':
     dependencies:
       '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/container-runtime': 2.60.0
+      '@fluidframework/container-runtime': 2.60.0(debug@4.4.0)
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
       '@fluidframework/id-compressor': 2.60.0
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
       '@sinclair/typebox': 0.34.13
       '@tylerbu/sorted-btree-es6': 1.8.0
@@ -31798,7 +31560,7 @@ snapshots:
   '@fluidframework/undo-redo@2.60.0':
     dependencies:
       '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/map': 2.60.0
+      '@fluidframework/map': 2.60.0(debug@4.4.0)
       '@fluidframework/matrix': 2.60.0
       '@fluidframework/merge-tree': 2.60.0
       '@fluidframework/sequence': 2.60.0
@@ -34417,7 +34179,7 @@ snapshots:
 
   '@vvago/vale@3.11.2':
     dependencies:
-      axios: 1.8.4(debug@4.3.7)
+      axios: 1.8.4(debug@4.4.0)
       rimraf: 5.0.10
       tar: 6.2.1
       unzipper: 0.10.14
@@ -34863,14 +34625,6 @@ snapshots:
       possible-typed-array-names: 1.0.0
 
   axe-core@4.10.2: {}
-
-  axios@0.30.0:
-    dependencies:
-      follow-redirects: 1.15.9(debug@4.3.7)
-      form-data: 4.0.4
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
 
   axios@0.30.0(debug@4.4.0):
     dependencies:
@@ -36598,33 +36352,33 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.0(supports-color@8.1.1)
       enhanced-resolve: 5.17.1
       eslint: 8.55.0
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       fast-glob: 3.3.3
       get-tsconfig: 4.10.0
       is-bun-module: 1.3.0
       is-glob: 4.0.3
     optionalDependencies:
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
       - eslint-import-resolver-node
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -36638,13 +36392,13 @@ snapshots:
       eslint: 8.55.0
       ignore: 5.3.2
 
-  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
     dependencies:
       debug: 4.4.0(supports-color@8.1.1)
       doctrine: 3.0.0
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       get-tsconfig: 4.10.0
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -37851,18 +37605,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  http-proxy-middleware@2.0.7(@types/express@4.17.21):
-    dependencies:
-      '@types/http-proxy': 1.17.15
-      http-proxy: 1.18.1
-      is-glob: 4.0.3
-      is-plain-obj: 3.0.0
-      micromatch: 4.0.8
-    optionalDependencies:
-      '@types/express': 4.17.21
-    transitivePeerDependencies:
-      - debug
-
   http-proxy-middleware@2.0.7(@types/express@4.17.21)(debug@4.4.0):
     dependencies:
       '@types/http-proxy': 1.17.15
@@ -37872,14 +37614,6 @@ snapshots:
       micromatch: 4.0.8
     optionalDependencies:
       '@types/express': 4.17.21
-    transitivePeerDependencies:
-      - debug
-
-  http-proxy@1.18.1:
-    dependencies:
-      eventemitter3: 4.0.7
-      follow-redirects: 1.15.9(debug@4.3.7)
-      requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
 
@@ -38602,7 +38336,7 @@ snapshots:
       prompts: 2.4.2
       spawnd: 10.1.4
       tree-kill: 1.2.2
-      wait-on: 8.0.1(debug@4.3.7)
+      wait-on: 8.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -39189,7 +38923,7 @@ snapshots:
     optionalDependencies:
       '@langchain/anthropic': 0.3.26(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))
       '@langchain/google-genai': 0.2.16(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))
-      axios: 0.30.0
+      axios: 0.30.0(debug@4.4.0)
       handlebars: 4.7.8
     transitivePeerDependencies:
       - '@opentelemetry/api'
@@ -43170,7 +42904,7 @@ snapshots:
       '@fluidframework/gitresources': 7.0.0
       '@fluidframework/protocol-base': 7.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas': 7.0.0
+      '@fluidframework/server-lambdas': 7.0.0(debug@4.4.0)
       '@fluidframework/server-local-server': 7.0.0
       '@fluidframework/server-memory-orderer': 7.0.0
       '@fluidframework/server-services-client': 7.0.0
@@ -43180,7 +42914,7 @@ snapshots:
       '@fluidframework/server-services-utils': 7.0.0
       '@fluidframework/server-test-utils': 7.0.0
       agentkeepalive: 4.6.0
-      axios: 1.8.4(debug@4.3.7)
+      axios: 1.8.4(debug@4.4.0)
       body-parser: 1.20.3
       charwise: 3.0.1
       compression: 1.7.5
@@ -43895,6 +43629,16 @@ snapshots:
     dependencies:
       xml-name-validator: 4.0.0
 
+  wait-on@8.0.1:
+    dependencies:
+      axios: 1.8.4(debug@4.4.0)
+      joi: 17.13.3
+      lodash: 4.17.21
+      minimist: 1.2.8
+      rxjs: 7.8.1
+    transitivePeerDependencies:
+      - debug
+
   wait-on@8.0.1(debug@4.3.7):
     dependencies:
       axios: 1.8.4(debug@4.3.7)
@@ -44093,7 +43837,7 @@ snapshots:
       express: 4.21.2
       graceful-fs: 4.2.11
       html-entities: 2.5.2
-      http-proxy-middleware: 2.0.7(@types/express@4.17.21)
+      http-proxy-middleware: 2.0.7(@types/express@4.17.21)(debug@4.4.0)
       ipaddr.js: 2.2.0
       launch-editor: 2.9.1
       open: 8.4.2
