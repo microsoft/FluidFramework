@@ -401,7 +401,7 @@ stages:
           displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
           continueOnError: ${{ parameters.continueOnError }}
           env:
-            ${{ if ne(length(parameters.env)), 0 }}:
+            ${{ if ne(length(parameters.env), 0) }}:
               ${{ each pair in parameters.env }}:
                 ${{ pair.name }}: ${{ pair.value }}
             # ODSP tenant setup script injects the values here (appClientId, tenantCreds).
