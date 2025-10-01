@@ -3,6 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import type { AxiosRequestConfig, AxiosRequestHeaders, RawAxiosRequestHeaders } from "axios";
+/**
+ * Request configuration interface compatible with the existing RestWrapper API.
+ * This replaces the previous axios-based types with native fetch-compatible types.
+ */
+export interface AxiosRequestConfig {
+	baseURL?: string;
+	url?: string;
+	method?: string;
+	headers?: RawAxiosRequestHeaders;
+	params?: Record<string, any>;
+	data?: any;
+	maxBodyLength?: number;
+	maxContentLength?: number;
+}
 
-export { AxiosRequestConfig, AxiosRequestHeaders, RawAxiosRequestHeaders };
+/**
+ * Request headers type.
+ */
+export type AxiosRequestHeaders = Record<string, string | number | boolean>;
+
+/**
+ * Raw request headers type allowing undefined values.
+ */
+export type RawAxiosRequestHeaders = Record<string, string | number | boolean | undefined>;

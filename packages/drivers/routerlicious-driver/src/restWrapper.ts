@@ -150,7 +150,7 @@ class RouterliciousRestWrapper extends RestWrapper {
 		// Build the complete request url including baseUrl, url and query params. (all except 'retry' query param)
 		let completeRequestUrl = addOrUpdateQueryParams(
 			buildRequestUrl(requestConfig),
-			requestConfig.params,
+			requestConfig.params ?? {},
 		);
 
 		// Check whether this request has been made before or if it is a retry.
@@ -163,12 +163,12 @@ class RouterliciousRestWrapper extends RestWrapper {
 			});
 		}
 
-		const config = {
+		const config: AxiosRequestConfig = {
 			...requestConfig,
 			headers: await this.generateHeaders(requestConfig.headers),
 		};
 
-		const translatedConfig = this.useRestLess ? this.restLess.translate(config) : config;
+		const translatedConfig = this.useRestLess ? (this.restLess.translate(config) as AxiosRequestConfig) : config;
 		const fetchRequestConfig = axiosBuildRequestInitConfig(translatedConfig);
 
 		const res = await this.rateLimiter.schedule(async () => {
