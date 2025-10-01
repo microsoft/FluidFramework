@@ -12158,9 +12158,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
-      axios:
-        specifier: ^1.8.4
-        version: 1.8.4(debug@4.4.0)
       lz4js:
         specifier: ^0.2.0
         version: 0.2.0

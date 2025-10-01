@@ -11,7 +11,6 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/legacy";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import type { AxiosResponse } from "axios";
 
 import {
 	createAzureClient,
@@ -49,7 +48,7 @@ for (const testOpts of testMatrix) {
 			let container: IFluidContainer;
 			let services: AzureContainerServices;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.findOriginalMember,
 					"test-user-id-1",
 					"test-user-name-1",
@@ -94,7 +93,7 @@ for (const testOpts of testMatrix) {
 			let container: IFluidContainer;
 			let services: AzureContainerServices;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.findPartnerMember,
 					"test-user-id-1",
 					"test-user-name-1",
@@ -158,7 +157,7 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.observeMemberLeaving,
 					"test-user-id-1",
 					"test-user-name-1",
@@ -217,7 +216,7 @@ for (const testOpts of testMatrix) {
 			let container: IFluidContainer;
 			let services: AzureContainerServices;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.observeMemberLeaving,
 					"test-user-id-1",
 					"test-user-name-1",
@@ -326,7 +325,7 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.observeMemberLeaving,
 					"test-user-id-1",
 					"test-user-name-1",
