@@ -560,9 +560,9 @@ export class BlobManager {
 			isBlobMetadata(message.metadata),
 			0xc02 /* Expected blob metadata for a BlobAttach op */,
 		);
-		const { localId, blobId } = message.metadata;
-		this.redirectTable.set(localId, blobId);
-		this.internalEvents.emit("processedBlobAttach", localId, blobId);
+		const { localId, blobId: storageId } = message.metadata;
+		this.redirectTable.set(localId, storageId);
+		this.internalEvents.emit("processedBlobAttach", localId, storageId);
 	}
 
 	public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
@@ -590,10 +590,21 @@ export class BlobManager {
 	}
 
 	/**
-	 * Delete attachment blobs that are sweep ready.
-	 * @param sweepReadyBlobRoutes - The routes of blobs that are sweep ready and should be deleted. These routes will
-	 * be based off of local ids.
+	 * Delete blobs with the given routes from the redirect table.
 	 * @returns The routes of blobs that were deleted.
+	 *
+	 * @remarks
+	 * The routes are GC nodes paths of format -`/<blobManagerBasePath>/<localId>`.
+	 * Deleting the blobs involves 2 steps:
+	 *
+	 * 1. The redirect table entry for the local ids are deleted.
+	 *
+	 * 2. If the storage ids corresponding to the deleted local ids are not referenced by any further local ids, the
+	 * identity mappings in the redirect table are deleted as well.
+	 *
+	 * Note that this does not delete the blobs from storage service immediately. Deleting the blobs from redirect table
+	 * will ensure we don't create an attachment blob for them at the next summary. The service would then delete them
+	 * some time in the future.
 	 */
 	public deleteSweepReadyNodes(sweepReadyBlobRoutes: readonly string[]): readonly string[] {
 		// maybeUnusedStorageIds is used to compute the set of storage IDs that *used to have a local ID*, but that
