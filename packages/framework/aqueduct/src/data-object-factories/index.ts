@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export { DataObjectFactory } from "./dataObjectFactory.js";
+export {
+	DataObjectFactory,
+	getAlteredPropsSupportingDataObject,
+} from "./dataObjectFactory.js";
 export {
 	type DataObjectFactoryProps,
 	PureDataObjectFactory,

@@ -4,4 +4,7 @@
 
 ```ts
 
+// @public
+export function getAlteredPropsSupportingDataObject<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes>(props: DataObjectFactoryProps<TObj, I>): DataObjectFactoryProps<TObj, I>;
+
 ```

@@ -57,7 +57,7 @@ export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> ex
     protected get root(): ISharedDirectory;
 }
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TObj, I> {
     constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects?: readonly IChannelFactory[], optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeFactory?: typeof FluidDataStoreRuntime);
     constructor(props: DataObjectFactoryProps<TObj, I>);
@@ -80,6 +80,9 @@ export interface DataObjectTypes {
     InitialState?: any;
     OptionalProviders?: FluidObject;
 }
+
+// @public
+export function getAlteredPropsSupportingDataObject<TObj extends DataObject<I>, I extends DataObjectTypes = DataObjectTypes>(props: DataObjectFactoryProps<TObj, I>): DataObjectFactoryProps<TObj, I>;
 
 // @beta @legacy (undocumented)
 export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {

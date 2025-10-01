@@ -4,7 +4,15 @@
  */
 
 import type { EventEmitter } from "@fluid-example/example-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+import type {
+	// eslint-disable-next-line import/no-deprecated
+	DataObjectFactory,
+} from "@fluidframework/aqueduct/legacy";
+import {
+	DataObject,
+	getAlteredPropsSupportingDataObject,
+	PureDataObjectFactory,
+} from "@fluidframework/aqueduct/legacy";
 import type { Serializable } from "@fluidframework/datastore-definitions/legacy";
 import type React from "react";
 import type { Layout } from "react-grid-layout";
@@ -78,11 +86,13 @@ export interface IDataObjectGridItem<T = unknown> {
 export class DataObjectGrid extends DataObject implements IDataObjectGrid<ISingleHandleItem> {
 	public static readonly ComponentName = "@fluid-example/data-object-grid";
 
-	private static readonly factory = new DataObjectFactory({
-		type: DataObjectGrid.ComponentName,
-		ctor: DataObjectGrid,
-		registryEntries: [...registryEntries],
-	});
+	private static readonly factory = new PureDataObjectFactory(
+		getAlteredPropsSupportingDataObject({
+			type: DataObjectGrid.ComponentName,
+			ctor: DataObjectGrid,
+			registryEntries: [...registryEntries],
+		}),
+	);
 
 	public static getFactory(): DataObjectFactory<DataObjectGrid> {
 		return DataObjectGrid.factory;

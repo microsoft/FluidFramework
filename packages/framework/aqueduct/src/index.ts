@@ -23,6 +23,7 @@ export {
 	type DataObjectFactoryProps,
 	PureDataObjectFactory,
 	TreeDataObjectFactory,
+	getAlteredPropsSupportingDataObject,
 } from "./data-object-factories/index.js";
 export {
 	DataObject,

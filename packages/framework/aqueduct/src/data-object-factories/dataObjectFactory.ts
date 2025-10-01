@@ -22,9 +22,36 @@ import {
 } from "./pureDataObjectFactory.js";
 
 /**
+ * Alters the props used for PureDataObjectFactory to ensure the resulting factory will support DataObject features.
+ * @param props - Props to be passed to the PureDataObjectFactory constructor which need to be altered for the resulting factory to work for DataObjects
+ * @returns The altered props (shallow copy) with the necessary alterations made
+ */
+export function getAlteredPropsSupportingDataObject<
+	TObj extends DataObject<I>,
+	I extends DataObjectTypes = DataObjectTypes,
+>(props: DataObjectFactoryProps<TObj, I>): DataObjectFactoryProps<TObj, I> {
+	const sharedObjects = [...(props.sharedObjects ?? [])];
+
+	if (!sharedObjects.some((factory) => factory.type === DirectoryFactory.Type)) {
+		// User did not register for directory
+		sharedObjects.push(SharedDirectory.getFactory());
+	}
+
+	// TODO: Remove SharedMap factory when compatibility with SharedMap DataObject is no longer needed in 0.10
+	if (!sharedObjects.some((factory) => factory.type === MapFactory.Type)) {
+		// User did not register for map
+		sharedObjects.push(SharedMap.getFactory());
+	}
+
+	return { ...props, sharedObjects };
+}
+
+/**
  * DataObjectFactory is the IFluidDataStoreFactory for use with DataObjects.
  * It facilitates DataObject's features (such as its shared directory) by
  * ensuring relevant shared objects etc are available to the factory.
+ *
+ * @remarks - Will be deprecated. Use PureDataObjectFactory with getAlteredPropsSupportingDataObject instead.
  *
  * @typeParam TObj - DataObject (concrete type)
  * @typeParam I - The input types for the DataObject
@@ -71,19 +98,6 @@ export class DataObjectFactory<
 					}
 				: { ...propsOrType };
 
-		const sharedObjects = (newProps.sharedObjects = [...(newProps.sharedObjects ?? [])]);
-
-		if (!sharedObjects.some((factory) => factory.type === DirectoryFactory.Type)) {
-			// User did not register for directory
-			sharedObjects.push(SharedDirectory.getFactory());
-		}
-
-		// TODO: Remove SharedMap factory when compatibility with SharedMap DataObject is no longer needed in 0.10
-		if (!sharedObjects.some((factory) => factory.type === MapFactory.Type)) {
-			// User did not register for map
-			sharedObjects.push(SharedMap.getFactory());
-		}
-
-		super(newProps);
+		super(getAlteredPropsSupportingDataObject(newProps));
 	}
 }
