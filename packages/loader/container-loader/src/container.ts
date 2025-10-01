@@ -744,6 +744,14 @@ export class Container
 		return this._dirtyContainer;
 	}
 
+	private get isStorageOnly(): boolean {
+		let storageOnly = false;
+		if (this.readOnlyInfo.readonly === true) {
+			storageOnly = this.readOnlyInfo.storageOnly;
+		}
+		return storageOnly;
+	}
+
 	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
 	 */
@@ -1031,7 +1039,7 @@ export class Container
 			this.storageAdapter,
 			offlineLoadEnabled,
 			this,
-			storageOnly,
+			() => this.isStorageOnly,
 			() => this._deltaManager.connectionManager.shouldJoinWrite(),
 			() => this.supportGetSnapshotApi(),
 			this.mc.config.getNumber("Fluid.Container.snapshotRefreshTimeoutMs"),
