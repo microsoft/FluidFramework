@@ -1,0 +1,1 @@
+LTS uses a version of build-tools from main. The unused build-tools code in the LTS branch was removed, but since flub expects the existence of a build-tools directory, this directory (and explanatory markdown file) remain.
