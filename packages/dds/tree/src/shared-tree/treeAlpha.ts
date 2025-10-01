@@ -60,9 +60,9 @@ import {
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
 	FluidClientVersion,
-	noopValidator,
 	type ICodecOptions,
 	type CodecWriteOptions,
+	FormatValidatorNoOp,
 } from "../codec/index.js";
 import { EmptyKey, type FieldKey, type ITreeCursorSynchronous } from "../core/index.js";
 import {
@@ -566,7 +566,7 @@ class NodeSubscription {
 	) {
 		// TODO:Performance: It is possible to optimize this to not use the public TreeNode API.
 		const node = getOrCreateNodeFromInnerNode(flexNode);
-		assert(node instanceof TreeNode, "Unexpected leaf value");
+		assert(node instanceof TreeNode, 0xc54 /* Unexpected leaf value */);
 
 		const handler = (data: NodeChangedData): void => {
 			if (this.keys === undefined || data.changedProperties === undefined) {
@@ -828,7 +828,7 @@ export const TreeAlpha: TreeAlpha = {
 	): JsonCompatible<IFluidHandle> {
 		const schema = tryGetSchema(node) ?? fail(0xacf /* invalid input */);
 		const format = fluidVersionToFieldBatchCodecWriteVersion(options.oldestCompatibleClient);
-		const codec = makeFieldBatchCodec({ jsonValidator: noopValidator }, format);
+		const codec = makeFieldBatchCodec({ jsonValidator: FormatValidatorNoOp }, format);
 		const cursor = borrowFieldCursorFromTreeNodeOrValue(node);
 		const batch: FieldBatch = [cursor];
 		// If none provided, create a compressor which will not compress anything.

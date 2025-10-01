@@ -20,11 +20,11 @@ overrides:
   socket.io-client: ~4.7.5
   axios@<0.30.0: ^0.30.0
 
-pnpmfileChecksum: jsbnis4v7zlhs4t7yscsd3mtxe
+pnpmfileChecksum: sha256-UgK94jvekjDphs6M2itZJZ9CcCzYY0xcxZhNXJw7D28=
 
 patchedDependencies:
   '@microsoft/api-extractor@7.52.11':
-    hash: ldzfpsbo3oeejrejk775zxplmi
+    hash: c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069
     path: patches/@microsoft__api-extractor@7.52.11.patch
 
 importers:
@@ -60,7 +60,7 @@ importers:
         version: 1.0.195075
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.14.1)
       '@vvago/vale':
         specifier: ^3.11.2
         version: 3.11.2
@@ -176,7 +176,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.14.1)
       '@types/jsrsasign':
         specifier: ^10.5.12
         version: 10.5.15
@@ -2263,16 +2263,16 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@testing-library/dom':
         specifier: ^10.4.0
-        version: 10.4.0
+        version: 10.4.1
       '@testing-library/jest-dom':
         specifier: ^5.16.5
         version: 5.17.0
       '@testing-library/react':
         specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@testing-library/user-event':
         specifier: ^14.4.3
-        version: 14.5.2(@testing-library/dom@10.4.0)
+        version: 14.5.2(@testing-library/dom@10.4.1)
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -2766,9 +2766,6 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
-      '@fluid-experimental/tree-react-api':
-        specifier: workspace:~
-        version: link:../../../experimental/framework/tree-react-api
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../packages/framework/aqueduct
@@ -2778,6 +2775,9 @@ importers:
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/react':
+        specifier: workspace:~
+        version: link:../../../packages/framework/react
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
@@ -3674,7 +3674,7 @@ importers:
         version: link:../../../packages/test/test-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.12
@@ -4341,7 +4341,7 @@ importers:
         version: 2.1.0
       axios:
         specifier: ^1.8.4
-        version: 1.8.4(debug@4.3.7)
+        version: 1.8.4(debug@4.4.0)
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -4469,15 +4469,15 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../../utils/example-utils
-      '@fluid-experimental/tree-react-api':
-        specifier: workspace:~
-        version: link:../../../../experimental/framework/tree-react-api
       '@fluidframework/azure-client':
         specifier: workspace:~
         version: link:../../../../packages/service-clients/azure-client
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../../packages/common/core-interfaces
+      '@fluidframework/react':
+        specifier: workspace:~
+        version: link:../../../../packages/framework/react
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../../../packages/drivers/routerlicious-driver
@@ -4489,7 +4489,7 @@ importers:
         version: 2.1.0
       axios:
         specifier: ^1.8.4
-        version: 1.8.4(debug@4.3.7)
+        version: 1.8.4(debug@4.4.0)
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -4992,7 +4992,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.14.1)
       '@types/react':
         specifier: ^18.3.11
         version: 18.3.15
@@ -5115,6 +5115,24 @@ importers:
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
+      typescript-5.4:
+        specifier: npm:typescript@~5.4.5
+        version: typescript@5.4.5
+      typescript-5.5:
+        specifier: npm:typescript@~5.5.4
+        version: typescript@5.5.4
+      typescript-5.6:
+        specifier: npm:typescript@~5.6.3
+        version: typescript@5.6.3
+      typescript-5.7:
+        specifier: npm:typescript@~5.7.3
+        version: typescript@5.7.3
+      typescript-5.8:
+        specifier: npm:typescript@~5.8.3
+        version: typescript@5.8.3
+      typescript-5.9:
+        specifier: npm:typescript@~5.9.2
+        version: typescript@5.9.2
 
   examples/utils/migration-tools:
     dependencies:
@@ -5193,7 +5211,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.14.1)
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -5268,7 +5286,7 @@ importers:
         version: link:../../../packages/utils/tool-utils
       axios:
         specifier: ^1.8.4
-        version: 1.8.4(debug@4.3.7)
+        version: 1.8.4(debug@4.4.0)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -6514,7 +6532,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/chai':
         specifier: ^4.0.0
         version: 4.3.20
@@ -6607,7 +6625,7 @@ importers:
         version: link:../../../../packages/dds/shared-object-base
       axios:
         specifier: ^1.8.4
-        version: 1.8.4(debug@4.3.7)
+        version: 1.8.4(debug@4.4.0)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -6677,7 +6695,7 @@ importers:
         version: link:../../../../packages/test/test-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/lodash':
         specifier: ^4.14.118
         version: 4.17.13
@@ -6850,7 +6868,7 @@ importers:
         version: link:../../../../packages/runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -6941,7 +6959,7 @@ importers:
         version: link:../../../../../packages/runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -7029,7 +7047,7 @@ importers:
         version: link:../../../packages/runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.8
@@ -7168,7 +7186,7 @@ importers:
         version: link:../../../packages/framework/undo-redo
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/chai':
         specifier: ^4.0.0
         version: 4.3.20
@@ -7265,7 +7283,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.86
@@ -7332,7 +7350,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.86
@@ -7345,106 +7363,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      rimraf:
-        specifier: ^4.4.0
-        version: 4.4.1
-      typescript:
-        specifier: ~5.4.5
-        version: 5.4.5
-
-  experimental/framework/tree-react-api:
-    dependencies:
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../../packages/framework/aqueduct
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../../packages/common/core-interfaces
-      '@fluidframework/datastore-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/datastore-definitions
-      '@fluidframework/fluid-static':
-        specifier: workspace:~
-        version: link:../../../packages/framework/fluid-static
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-definitions
-      '@fluidframework/shared-object-base':
-        specifier: workspace:~
-        version: link:../../../packages/dds/shared-object-base
-      '@fluidframework/tree':
-        specifier: workspace:~
-        version: link:../../../packages/dds/tree
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
-    devDependencies:
-      '@arethetypeswrong/cli':
-        specifier: ^0.17.1
-        version: 0.17.1
-      '@biomejs/biome':
-        specifier: ~1.9.3
-        version: 1.9.4
-      '@fluid-internal/mocha-test-setup':
-        specifier: workspace:~
-        version: link:../../../packages/test/mocha-test-setup
-      '@fluid-tools/build-cli':
-        specifier: ^0.58.3
-        version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: ^0.58.3
-        version: 0.58.3(@types/node@18.19.86)
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^6.0.0
-        version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/tinylicious-client':
-        specifier: workspace:~
-        version: link:../../../packages/service-clients/tinylicious-client
-      '@microsoft/api-extractor':
-        specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
-      '@testing-library/react':
-        specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@types/mocha':
-        specifier: ^10.0.10
-        version: 10.0.10
-      '@types/node':
-        specifier: ^18.19.0
-        version: 18.19.86
-      '@types/react':
-        specifier: ^18.3.11
-        version: 18.3.15
-      c8:
-        specifier: ^10.1.3
-        version: 10.1.3
-      concurrently:
-        specifier: ^8.2.1
-        version: 8.2.2
-      copyfiles:
-        specifier: ^2.4.1
-        version: 2.4.1
-      cross-env:
-        specifier: ^7.0.3
-        version: 7.0.3
-      eslint:
-        specifier: ~8.55.0
-        version: 8.55.0
-      eslint-config-prettier:
-        specifier: ~9.0.0
-        version: 9.0.0(eslint@8.55.0)
-      global-jsdom:
-        specifier: ^26.0.0
-        version: 26.0.0(jsdom@20.0.3)
-      mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
-      mocha-multi-reporters:
-        specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -7502,7 +7420,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/base64-js':
         specifier: ^1.3.0
         version: 1.3.2
@@ -7617,7 +7535,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.14.1)
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -7659,7 +7577,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -7725,7 +7643,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -7798,7 +7716,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.14.1)
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -7874,7 +7792,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -7965,7 +7883,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -8053,7 +7971,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -8156,7 +8074,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -8265,13 +8183,13 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/map-previous':
         specifier: npm:@fluidframework/map@2.60.0
-        version: '@fluidframework/map@2.60.0'
+        version: '@fluidframework/map@2.60.0(debug@4.4.0)'
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -8395,7 +8313,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@tiny-calc/micro':
         specifier: 0.0.0-alpha.5
         version: 0.0.0-alpha.5
@@ -8516,7 +8434,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.8
@@ -8622,7 +8540,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -8713,7 +8631,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -8807,7 +8725,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -8922,7 +8840,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.8
@@ -9034,13 +8952,13 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/shared-object-base-previous':
         specifier: npm:@fluidframework/shared-object-base@2.60.0
-        version: '@fluidframework/shared-object-base@2.60.0'
+        version: '@fluidframework/shared-object-base@2.60.0(debug@4.4.0)'
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/benchmark':
         specifier: ^2.1.0
         version: 2.1.5
@@ -9143,7 +9061,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/benchmark':
         specifier: ^2.1.0
         version: 2.1.5
@@ -9255,7 +9173,7 @@ importers:
         version: link:../../test/test-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -9355,7 +9273,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -9491,7 +9409,7 @@ importers:
         version: '@fluidframework/tree@2.60.0'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.8
@@ -9591,7 +9509,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.86
@@ -9652,13 +9570,13 @@ importers:
         version: 0.58.3(@types/node@18.19.86)
       '@fluidframework/driver-base-previous':
         specifier: npm:@fluidframework/driver-base@2.60.0
-        version: '@fluidframework/driver-base@2.60.0'
+        version: '@fluidframework/driver-base@2.60.0(debug@4.4.0)'
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -9740,7 +9658,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -9813,7 +9731,7 @@ importers:
         version: '@fluidframework/file-driver@2.60.0'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.86
@@ -9904,10 +9822,10 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/local-driver-previous':
         specifier: npm:@fluidframework/local-driver@2.60.0
-        version: '@fluidframework/local-driver@2.60.0(encoding@0.1.13)'
+        version: '@fluidframework/local-driver@2.60.0(debug@4.4.0)(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/jsrsasign':
         specifier: ^10.5.12
         version: 10.5.15
@@ -10007,10 +9925,10 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/odsp-driver-previous':
         specifier: npm:@fluidframework/odsp-driver@2.60.0
-        version: '@fluidframework/odsp-driver@2.60.0(encoding@0.1.13)'
+        version: '@fluidframework/odsp-driver@2.60.0(debug@4.4.0)(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -10080,7 +9998,7 @@ importers:
         version: '@fluidframework/odsp-driver-definitions@2.60.0'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.14.1)
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -10147,7 +10065,7 @@ importers:
         version: '@fluidframework/odsp-urlresolver@2.60.0(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -10223,7 +10141,7 @@ importers:
         version: '@fluidframework/replay-driver@2.60.0'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/nock':
         specifier: ^9.3.0
         version: 9.3.1
@@ -10311,10 +10229,10 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/routerlicious-driver-previous':
         specifier: npm:@fluidframework/routerlicious-driver@2.60.0
-        version: '@fluidframework/routerlicious-driver@2.60.0(encoding@0.1.13)'
+        version: '@fluidframework/routerlicious-driver@2.60.0(debug@4.4.0)(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -10329,7 +10247,7 @@ importers:
         version: 17.0.3
       axios:
         specifier: ^1.8.4
-        version: 1.8.4(debug@4.3.7)
+        version: 1.8.4(debug@4.4.0)
       c8:
         specifier: ^10.1.3
         version: 10.1.3
@@ -10405,7 +10323,7 @@ importers:
         version: '@fluidframework/routerlicious-urlresolver@2.60.0'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -10490,7 +10408,7 @@ importers:
         version: '@fluidframework/tinylicious-driver@2.60.0(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/jsrsasign':
         specifier: ^10.5.12
         version: 10.5.15
@@ -10584,7 +10502,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.86
@@ -10663,7 +10581,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -10778,7 +10696,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -10890,7 +10808,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -10960,7 +10878,7 @@ importers:
         version: 0.58.3(@types/node@18.19.86)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -11060,7 +10978,7 @@ importers:
         version: link:../../../dds/tree
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.14.1)
       '@types/chai':
         specifier: ^4.0.0
         version: 4.3.20
@@ -11163,7 +11081,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.86
@@ -11227,7 +11145,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.8
@@ -11324,7 +11242,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.86
@@ -11427,7 +11345,7 @@ importers:
         version: link:../../dds/sequence
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -11503,7 +11421,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.86
@@ -11600,7 +11518,7 @@ importers:
         version: link:../../test/test-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -11637,6 +11555,106 @@ importers:
       sinon:
         specifier: ^18.0.1
         version: 18.0.1
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
+  packages/framework/react:
+    dependencies:
+      '@fluidframework/aqueduct':
+        specifier: workspace:~
+        version: link:../aqueduct
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../common/core-interfaces
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/datastore-definitions
+      '@fluidframework/fluid-static':
+        specifier: workspace:~
+        version: link:../fluid-static
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-definitions
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../../dds/shared-object-base
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../dds/tree
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+    devDependencies:
+      '@arethetypeswrong/cli':
+        specifier: ^0.17.1
+        version: 0.17.1
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../test/mocha-test-setup
+      '@fluid-tools/build-cli':
+        specifier: ^0.58.3
+        version: 0.58.3(@types/node@18.19.86)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.58.3
+        version: 0.58.3(@types/node@18.19.86)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^6.0.0
+        version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/tinylicious-client':
+        specifier: workspace:~
+        version: link:../../service-clients/tinylicious-client
+      '@microsoft/api-extractor':
+        specifier: 7.52.11
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
+      '@testing-library/react':
+        specifier: ^16.3.0
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.86
+      '@types/react':
+        specifier: ^18.3.11
+        version: 18.3.15
+      c8:
+        specifier: ^10.1.3
+        version: 10.1.3
+      concurrently:
+        specifier: ^8.2.1
+        version: 8.2.2
+      copyfiles:
+        specifier: ^2.4.1
+        version: 2.4.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      eslint-config-prettier:
+        specifier: ~9.0.0
+        version: 9.0.0(eslint@8.55.0)
+      global-jsdom:
+        specifier: ^26.0.0
+        version: 26.0.0(jsdom@20.0.3)
+      mocha:
+        specifier: ^10.8.2
+        version: 10.8.2
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@10.8.2)
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -11682,10 +11700,10 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/request-handler-previous':
         specifier: npm:@fluidframework/request-handler@2.60.0
-        version: '@fluidframework/request-handler@2.60.0'
+        version: '@fluidframework/request-handler@2.60.0(debug@4.4.0)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.8
@@ -11767,7 +11785,7 @@ importers:
         version: '@fluidframework/synthesize@2.60.0'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -11870,7 +11888,7 @@ importers:
         version: 0.6.12(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))(ws@8.18.0)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -11961,7 +11979,7 @@ importers:
         version: '@fluidframework/undo-redo@2.60.0'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.8
@@ -12073,7 +12091,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.12
@@ -12142,7 +12160,7 @@ importers:
         version: link:../../utils/telemetry-utils
       axios:
         specifier: ^1.8.4
-        version: 1.8.4(debug@4.3.7)
+        version: 1.8.4(debug@4.4.0)
       lz4js:
         specifier: ^0.2.0
         version: 0.2.0
@@ -12170,13 +12188,13 @@ importers:
         version: 0.58.3(@types/node@18.19.86)
       '@fluidframework/driver-utils-previous':
         specifier: npm:@fluidframework/driver-utils@2.60.0
-        version: '@fluidframework/driver-utils@2.60.0'
+        version: '@fluidframework/driver-utils@2.60.0(debug@4.4.0)'
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -12252,7 +12270,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.14.1)
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -12352,7 +12370,7 @@ importers:
         version: 0.58.3(@types/node@18.19.86)
       '@fluidframework/container-runtime-previous':
         specifier: npm:@fluidframework/container-runtime@2.60.0
-        version: '@fluidframework/container-runtime@2.60.0'
+        version: '@fluidframework/container-runtime@2.60.0(debug@4.4.0)'
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -12361,7 +12379,7 @@ importers:
         version: link:../test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/double-ended-queue':
         specifier: ^2.1.0
         version: 2.1.7
@@ -12449,7 +12467,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.14.1)
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -12525,7 +12543,7 @@ importers:
         version: 0.58.3(@types/node@18.19.86)
       '@fluidframework/datastore-previous':
         specifier: npm:@fluidframework/datastore@2.60.0
-        version: '@fluidframework/datastore@2.60.0'
+        version: '@fluidframework/datastore@2.60.0(debug@4.4.0)'
       '@fluidframework/eslint-config-fluid':
         specifier: ^6.0.0
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
@@ -12534,7 +12552,7 @@ importers:
         version: link:../test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/lodash':
         specifier: ^4.14.118
         version: 4.17.13
@@ -12619,7 +12637,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.14.1)
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -12689,7 +12707,7 @@ importers:
         version: '@fluidframework/id-compressor@2.60.0'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -12765,7 +12783,7 @@ importers:
         version: '@fluidframework/runtime-definitions@2.60.0'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.14.1)
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -12841,10 +12859,10 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/runtime-utils-previous':
         specifier: npm:@fluidframework/runtime-utils@2.60.0
-        version: '@fluidframework/runtime-utils@2.60.0'
+        version: '@fluidframework/runtime-utils@2.60.0(debug@4.4.0)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -12962,7 +12980,7 @@ importers:
         version: '@fluidframework/test-runtime-utils@2.60.0(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/jsrsasign':
         specifier: ^10.5.12
         version: 10.5.15
@@ -13062,7 +13080,7 @@ importers:
         version: link:../../test/test-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -13176,7 +13194,7 @@ importers:
         version: link:../../../dds/tree
       axios:
         specifier: ^1.8.4
-        version: 1.8.4(debug@4.3.7)
+        version: 1.8.4(debug@4.4.0)
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -13413,7 +13431,7 @@ importers:
         version: link:../../test/test-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -13519,7 +13537,7 @@ importers:
         version: '@fluidframework/tinylicious-client@2.60.0(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -13980,7 +13998,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -14156,7 +14174,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -14226,7 +14244,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.14.1)
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -14298,7 +14316,7 @@ importers:
         version: 4.6.0
       axios:
         specifier: ^1.8.4
-        version: 1.8.4(debug@4.3.7)
+        version: 1.8.4(debug@4.4.0)
       semver:
         specifier: ^7.7.1
         version: 7.7.1
@@ -14326,7 +14344,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.86
@@ -14589,7 +14607,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -14849,7 +14867,7 @@ importers:
         version: '@fluidframework/test-utils@2.60.0(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.12
@@ -15009,7 +15027,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -15075,7 +15093,7 @@ importers:
         version: 0.58.3(@types/node@22.14.1)
       jest-environment-puppeteer:
         specifier: ^10.1.3
-        version: 10.1.4(typescript@5.8.2)
+        version: 10.1.4(typescript@5.9.2)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -15155,7 +15173,7 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.14.1)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -15484,7 +15502,7 @@ importers:
         version: link:../../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.14.1)
       '@types/chai':
         specifier: ^4.0.0
         version: 4.3.20
@@ -15539,9 +15557,6 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../../../examples/utils/example-utils
-      '@fluid-experimental/tree-react-api':
-        specifier: workspace:~
-        version: link:../../../../experimental/framework/tree-react-api
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../common/client-utils
@@ -15587,6 +15602,9 @@ importers:
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../../dds/matrix
+      '@fluidframework/react':
+        specifier: workspace:~
+        version: link:../../../framework/react
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../runtime/runtime-utils
@@ -15635,16 +15653,16 @@ importers:
         version: link:../../../test/test-utils
       '@testing-library/dom':
         specifier: ^10.4.0
-        version: 10.4.0
+        version: 10.4.1
       '@testing-library/jest-dom':
         specifier: ^5.16.5
         version: 5.17.0
       '@testing-library/react':
         specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@testing-library/user-event':
         specifier: ^14.4.3
-        version: 14.5.2(@testing-library/dom@10.4.0)
+        version: 14.5.2(@testing-library/dom@10.4.1)
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -15804,19 +15822,19 @@ importers:
         version: link:../../../dds/shared-object-base
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@testing-library/dom':
         specifier: ^10.4.0
-        version: 10.4.0
+        version: 10.4.1
       '@testing-library/jest-dom':
         specifier: ^5.16.5
         version: 5.17.0
       '@testing-library/react':
         specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@testing-library/user-event':
         specifier: ^14.4.3
-        version: 14.5.2(@testing-library/dom@10.4.0)
+        version: 14.5.2(@testing-library/dom@10.4.1)
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -16046,7 +16064,7 @@ importers:
         version: '@fluidframework/fluid-runner@2.60.0(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -16255,10 +16273,10 @@ importers:
         version: 6.0.0(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/odsp-doclib-utils-previous':
         specifier: npm:@fluidframework/odsp-doclib-utils@2.60.0
-        version: '@fluidframework/odsp-doclib-utils@2.60.0(encoding@0.1.13)'
+        version: '@fluidframework/odsp-doclib-utils@2.60.0(debug@4.4.0)(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/isomorphic-fetch':
         specifier: ^0.0.39
         version: 0.0.39
@@ -16343,7 +16361,7 @@ importers:
         version: '@fluidframework/telemetry-utils@2.60.0'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.12
@@ -16437,7 +16455,7 @@ importers:
         version: '@fluidframework/tool-utils@2.60.0(encoding@0.1.13)'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.12
@@ -19091,10 +19109,6 @@ packages:
 
   '@technote-space/doctoc@2.6.4':
     resolution: {integrity: sha512-gm6It+7hCuVSFMl9kP9NYX5TTqc6GRcb9HXm0/YhKnou1E0pyocG+6IR/1GNOu/yCkRnD9bRlp5BYw8puvf2kA==}
-
-  '@testing-library/dom@10.4.0':
-    resolution: {integrity: sha512-pemlzrSESWbdAloYml3bAJMEfNh1Z7EduzqPKprCH5S341frlpYnUEW0H72dLxa6IsYr+mPno20GiSm+h9dEdQ==}
-    engines: {node: '>=18'}
 
   '@testing-library/dom@10.4.1':
     resolution: {integrity: sha512-o4PXJQidqJl82ckFaXUeoAW+XysPLauYI43Abki5hABd853iMhitooc6znOnczgbTYmEP6U6/y1ZyKAIsvMKGg==}
@@ -25509,7 +25523,7 @@ packages:
   puppeteer@23.10.3:
     resolution: {integrity: sha512-ODG+L9vCSPkQ1j+yDtNDdkSsWt2NXNrQO5C8MlwkYgE2hYnXdqVRbBpsHnoP7+EULJJKbWyR2Q4BdfohjQor3A==}
     engines: {node: '>=18'}
-    deprecated: < 24.9.0 is no longer supported
+    deprecated: < 24.10.2 is no longer supported
     hasBin: true
 
   pure-rand@6.1.0:
@@ -27094,13 +27108,38 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  typescript@5.5.4:
+    resolution: {integrity: sha512-Mtq29sKDAEYP7aljRgtPOpTvOfbwRWlS6dPRzwjdE+C0R4brX/GUyhHSecbHMFLNBLcJIPt9nl9yG5TZ1weH+Q==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   typescript@5.6.1-rc:
     resolution: {integrity: sha512-E3b2+1zEFu84jB0YQi9BORDjz9+jGbwwy1Zi3G0LUNw7a7cePUrHMRNy8aPh53nXpkFGVHSxIZo5vKTfYaFiBQ==}
     engines: {node: '>=14.17'}
     hasBin: true
 
+  typescript@5.6.3:
+    resolution: {integrity: sha512-hjcS1mhfuyi4WW8IWtjP7brDrG2cuDZukyrYrSauoXGNgx0S7zceP07adYkJycEr56BOUTNPzbInooiN3fn1qw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  typescript@5.7.3:
+    resolution: {integrity: sha512-84MVSjMEHP+FQRPy3pX9sTVV/INIex71s9TL2Gm5FG/WG1SqXeKyZ0k7/blY/4FdOzI12CBy1vGc4og/eus0fw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   typescript@5.8.2:
     resolution: {integrity: sha512-aJn6wq13/afZp/jT9QZmwEjDqqvSGp1VT5GVg+f/t6/oVyrgXM6BY1h9BRh/O5p3PlUPAe+WuiEZOmb/49RqoQ==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  typescript@5.8.3:
+    resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  typescript@5.9.2:
+    resolution: {integrity: sha512-CWBzXQrc/qOkhidw1OzBTQuYRbfyxDXJMVJ1XNwUHGROVmuaeiEm3OslpZ1RV96d7SKKjZKrSJu3+t/xlw3R9A==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -29756,7 +29795,7 @@ snapshots:
       '@fluidframework/build-tools': 0.58.3(@types/node@18.19.86)
       '@fluidframework/bundle-size-tools': 0.58.3(webpack-cli@5.1.4)
       '@inquirer/prompts': 7.2.0(@types/node@18.19.86)
-      '@microsoft/api-extractor': 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)
+      '@microsoft/api-extractor': 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)
       '@oclif/core': 4.0.36
       '@oclif/plugin-autocomplete': 3.2.13
       '@oclif/plugin-commands': 4.1.13
@@ -29833,7 +29872,7 @@ snapshots:
       '@fluidframework/build-tools': 0.58.3(@types/node@22.14.1)
       '@fluidframework/bundle-size-tools': 0.58.3(webpack-cli@5.1.4)
       '@inquirer/prompts': 7.2.0(@types/node@22.14.1)
-      '@microsoft/api-extractor': 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
+      '@microsoft/api-extractor': 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.14.1)
       '@oclif/core': 4.0.36
       '@oclif/plugin-autocomplete': 3.2.13
       '@oclif/plugin-commands': 4.1.13
@@ -29959,16 +29998,16 @@ snapshots:
       '@azure/identity': 4.5.0
       '@azure/identity-cache-persistence': 1.1.1
       '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/container-runtime': 2.60.0
+      '@fluidframework/container-runtime': 2.60.0(debug@4.4.0)
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/datastore': 2.60.0
+      '@fluidframework/datastore': 2.60.0(debug@4.4.0)
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/odsp-doclib-utils': 2.60.0(encoding@0.1.13)
-      '@fluidframework/odsp-driver': 2.60.0(encoding@0.1.13)
+      '@fluidframework/odsp-doclib-utils': 2.60.0(debug@4.4.0)(encoding@0.1.13)
+      '@fluidframework/odsp-driver': 2.60.0(debug@4.4.0)(encoding@0.1.13)
       '@fluidframework/odsp-driver-definitions': 2.60.0
       '@fluidframework/odsp-urlresolver': 2.60.0(encoding@0.1.13)
-      '@fluidframework/routerlicious-driver': 2.60.0(encoding@0.1.13)
+      '@fluidframework/routerlicious-driver': 2.60.0(debug@4.4.0)(encoding@0.1.13)
       '@fluidframework/routerlicious-urlresolver': 2.60.0
       '@fluidframework/runtime-definitions': 2.60.0
       '@fluidframework/tool-utils': 2.60.0(encoding@0.1.13)
@@ -30017,12 +30056,12 @@ snapshots:
       '@fluidframework/container-definitions': 2.60.0
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/datastore': 2.60.0
+      '@fluidframework/datastore': 2.60.0(debug@4.4.0)
       '@fluidframework/datastore-definitions': 2.60.0
-      '@fluidframework/map': 2.60.0
+      '@fluidframework/map': 2.60.0(debug@4.4.0)
       '@fluidframework/register-collection': 2.60.0
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
       uuid: 11.1.0
     transitivePeerDependencies:
@@ -30063,17 +30102,17 @@ snapshots:
     dependencies:
       '@fluid-internal/client-utils': 2.60.0
       '@fluidframework/container-definitions': 2.60.0
-      '@fluidframework/container-runtime': 2.60.0
+      '@fluidframework/container-runtime': 2.60.0(debug@4.4.0)
       '@fluidframework/container-runtime-definitions': 2.60.0
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/datastore': 2.60.0
+      '@fluidframework/datastore': 2.60.0(debug@4.4.0)
       '@fluidframework/datastore-definitions': 2.60.0
-      '@fluidframework/map': 2.60.0
-      '@fluidframework/request-handler': 2.60.0
+      '@fluidframework/map': 2.60.0(debug@4.4.0)
+      '@fluidframework/request-handler': 2.60.0(debug@4.4.0)
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
       '@fluidframework/synthesize': 2.60.0
       '@fluidframework/telemetry-utils': 2.60.0
       '@fluidframework/tree': 2.60.0
@@ -30096,7 +30135,7 @@ snapshots:
       '@fluidframework/routerlicious-driver': 1.4.0(encoding@0.1.13)
       '@fluidframework/runtime-utils': 1.4.0
       '@fluidframework/server-services-client': 0.1036.5002
-      axios: 0.30.0
+      axios: 0.30.0(debug@4.4.0)
       uuid: 8.3.2
     transitivePeerDependencies:
       - bufferutil
@@ -30111,9 +30150,9 @@ snapshots:
       '@fluidframework/container-loader': 2.60.0
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/fluid-static': 2.60.0
-      '@fluidframework/routerlicious-driver': 2.60.0(encoding@0.1.13)
+      '@fluidframework/routerlicious-driver': 2.60.0(debug@4.4.0)(encoding@0.1.13)
       '@fluidframework/telemetry-utils': 2.60.0
     transitivePeerDependencies:
       - bufferutil
@@ -30232,9 +30271,9 @@ snapshots:
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -30369,29 +30408,6 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/container-runtime@2.60.0':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/container-definitions': 2.60.0
-      '@fluidframework/container-runtime-definitions': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/datastore': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
-      '@fluidframework/id-compressor': 2.60.0
-      '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/telemetry-utils': 2.60.0
-      '@tylerbu/sorted-btree-es6': 1.8.0
-      double-ended-queue: 2.1.0-0
-      lz4js: 0.2.0
-      semver-ts: 1.0.3
-      uuid: 11.1.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
   '@fluidframework/container-runtime@2.60.0(debug@4.4.0)':
     dependencies:
       '@fluid-internal/client-utils': 2.60.0
@@ -30437,9 +30453,9 @@ snapshots:
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -30485,24 +30501,6 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/datastore@2.60.0':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/container-definitions': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/datastore-definitions': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
-      '@fluidframework/id-compressor': 2.60.0
-      '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/telemetry-utils': 2.60.0
-      uuid: 11.1.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
   '@fluidframework/datastore@2.60.0(debug@4.4.0)':
     dependencies:
       '@fluid-internal/client-utils': 2.60.0
@@ -30525,7 +30523,7 @@ snapshots:
     dependencies:
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/replay-driver': 2.60.0
       jsonschema: 1.4.1
     transitivePeerDependencies:
@@ -30539,18 +30537,18 @@ snapshots:
       '@fluidframework/cell': 2.60.0
       '@fluidframework/container-definitions': 2.60.0
       '@fluidframework/container-loader': 2.60.0
-      '@fluidframework/container-runtime': 2.60.0
+      '@fluidframework/container-runtime': 2.60.0(debug@4.4.0)
       '@fluidframework/container-runtime-definitions': 2.60.0
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/counter': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/map': 2.60.0
+      '@fluidframework/map': 2.60.0(debug@4.4.0)
       '@fluidframework/matrix': 2.60.0
       '@fluidframework/runtime-definitions': 2.60.0
       '@fluidframework/sequence': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
       '@fluidframework/tree': 2.60.0
     transitivePeerDependencies:
@@ -30575,18 +30573,6 @@ snapshots:
       '@fluidframework/driver-utils': 1.4.0
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/telemetry-utils': 1.4.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
-  '@fluidframework/driver-base@2.60.0':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
-      '@fluidframework/telemetry-utils': 2.60.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -30623,22 +30609,8 @@ snapshots:
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/telemetry-utils': 1.4.0
-      axios: 0.30.0
+      axios: 0.30.0(debug@4.4.0)
       uuid: 8.3.2
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
-  '@fluidframework/driver-utils@2.60.0':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/telemetry-utils': 2.60.0
-      axios: 1.8.4(debug@4.3.7)
-      lz4js: 0.2.0
-      uuid: 11.1.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -30702,7 +30674,7 @@ snapshots:
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/replay-driver': 2.60.0
     transitivePeerDependencies:
       - debug
@@ -30715,7 +30687,7 @@ snapshots:
       '@fluidframework/container-loader': 2.60.0
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/odsp-driver': 2.60.0(encoding@0.1.13)
+      '@fluidframework/odsp-driver': 2.60.0(debug@4.4.0)(encoding@0.1.13)
       '@fluidframework/odsp-driver-definitions': 2.60.0
       '@fluidframework/telemetry-utils': 2.60.0
       '@json2csv/plainjs': 7.0.6
@@ -30751,16 +30723,16 @@ snapshots:
       '@fluidframework/aqueduct': 2.60.0
       '@fluidframework/container-definitions': 2.60.0
       '@fluidframework/container-loader': 2.60.0
-      '@fluidframework/container-runtime': 2.60.0
+      '@fluidframework/container-runtime': 2.60.0(debug@4.4.0)
       '@fluidframework/container-runtime-definitions': 2.60.0
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/request-handler': 2.60.0
+      '@fluidframework/request-handler': 2.60.0(debug@4.4.0)
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
       '@fluidframework/tree': 2.60.0
     transitivePeerDependencies:
@@ -30812,30 +30784,6 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/local-driver@2.60.0(encoding@0.1.13)':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/driver-base': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
-      '@fluidframework/protocol-base': 7.0.0
-      '@fluidframework/routerlicious-driver': 2.60.0(encoding@0.1.13)
-      '@fluidframework/server-local-server': 7.0.0
-      '@fluidframework/server-services-client': 7.0.0
-      '@fluidframework/server-services-core': 7.0.0
-      '@fluidframework/server-test-utils': 7.0.0
-      '@fluidframework/telemetry-utils': 2.60.0
-      jsrsasign: 11.1.0
-      uuid: 11.1.0
-    transitivePeerDependencies:
-      - bufferutil
-      - debug
-      - encoding
-      - supports-color
-      - utf-8-validate
-
   '@fluidframework/map@1.4.0':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -30848,23 +30796,6 @@ snapshots:
       '@fluidframework/runtime-definitions': 1.4.0
       '@fluidframework/runtime-utils': 1.4.0
       '@fluidframework/shared-object-base': 1.4.0
-      path-browserify: 1.0.1
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
-  '@fluidframework/map@2.60.0':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/datastore-definitions': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
-      '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
-      '@fluidframework/telemetry-utils': 2.60.0
       path-browserify: 1.0.1
     transitivePeerDependencies:
       - debug
@@ -30894,11 +30825,11 @@ snapshots:
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/merge-tree': 2.60.0
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
       '@tiny-calc/nano': 0.0.0-alpha.5
       double-ended-queue: 2.1.0-0
@@ -30916,8 +30847,8 @@ snapshots:
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
     transitivePeerDependencies:
       - debug
@@ -30930,21 +30861,6 @@ snapshots:
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
       '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
-      '@fluidframework/odsp-driver-definitions': 2.60.0
-      '@fluidframework/telemetry-utils': 2.60.0
-      isomorphic-fetch: 3.0.0(encoding@0.1.13)
-    transitivePeerDependencies:
-      - debug
-      - encoding
-      - supports-color
-
-  '@fluidframework/odsp-doclib-utils@2.60.0(encoding@0.1.13)':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
       '@fluidframework/odsp-driver-definitions': 2.60.0
       '@fluidframework/telemetry-utils': 2.60.0
       isomorphic-fetch: 3.0.0(encoding@0.1.13)
@@ -30977,33 +30893,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/odsp-driver@2.60.0(encoding@0.1.13)':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/driver-base': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
-      '@fluidframework/odsp-doclib-utils': 2.60.0(encoding@0.1.13)
-      '@fluidframework/odsp-driver-definitions': 2.60.0
-      '@fluidframework/telemetry-utils': 2.60.0
-      socket.io-client: 4.7.5
-      uuid: 11.1.0
-    transitivePeerDependencies:
-      - bufferutil
-      - debug
-      - encoding
-      - supports-color
-      - utf-8-validate
-
   '@fluidframework/odsp-urlresolver@2.60.0(encoding@0.1.13)':
     dependencies:
       '@fluid-internal/client-utils': 2.60.0
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/odsp-driver': 2.60.0(encoding@0.1.13)
+      '@fluidframework/odsp-driver': 2.60.0(debug@4.4.0)(encoding@0.1.13)
       '@fluidframework/odsp-driver-definitions': 2.60.0
     transitivePeerDependencies:
       - bufferutil
@@ -31020,8 +30916,8 @@ snapshots:
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
       uuid: 11.1.0
     transitivePeerDependencies:
@@ -31059,9 +30955,9 @@ snapshots:
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -31072,7 +30968,7 @@ snapshots:
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
     transitivePeerDependencies:
       - debug
@@ -31086,17 +30982,6 @@ snapshots:
       '@fluidframework/runtime-definitions': 1.4.0
       '@fluidframework/runtime-utils': 1.4.0
     transitivePeerDependencies:
-      - supports-color
-
-  '@fluidframework/request-handler@2.60.0':
-    dependencies:
-      '@fluidframework/container-runtime-definitions': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-    transitivePeerDependencies:
-      - debug
       - supports-color
 
   '@fluidframework/request-handler@2.60.0(debug@4.4.0)':
@@ -31156,27 +31041,6 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/routerlicious-driver@2.60.0(encoding@0.1.13)':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/driver-base': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
-      '@fluidframework/server-services-client': 7.0.0
-      '@fluidframework/telemetry-utils': 2.60.0
-      cross-fetch: 3.1.8(encoding@0.1.13)
-      json-stringify-safe: 5.0.1
-      socket.io-client: 4.7.5
-      uuid: 11.1.0
-    transitivePeerDependencies:
-      - bufferutil
-      - debug
-      - encoding
-      - supports-color
-      - utf-8-validate
-
   '@fluidframework/routerlicious-urlresolver@2.60.0':
     dependencies:
       '@fluidframework/core-interfaces': 2.60.0
@@ -31219,23 +31083,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/runtime-utils@2.60.0':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/container-definitions': 2.60.0
-      '@fluidframework/container-runtime-definitions': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/datastore-definitions': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
-      '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/telemetry-utils': 2.60.0
-      semver-ts: 1.0.3
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
   '@fluidframework/runtime-utils@2.60.0(debug@4.4.0)':
     dependencies:
       '@fluid-internal/client-utils': 2.60.0
@@ -31262,8 +31109,8 @@ snapshots:
       '@fluidframework/driver-definitions': 2.60.0
       '@fluidframework/merge-tree': 2.60.0
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
       double-ended-queue: 2.1.0-0
       uuid: 11.1.0
@@ -31284,35 +31131,6 @@ snapshots:
       nconf: 0.12.1
       serialize-error: 8.1.0
     transitivePeerDependencies:
-      - supports-color
-
-  '@fluidframework/server-lambdas@7.0.0':
-    dependencies:
-      '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 7.0.0
-      '@fluidframework/protocol-base': 7.0.0
-      '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas-driver': 7.0.0
-      '@fluidframework/server-services-client': 7.0.0
-      '@fluidframework/server-services-core': 7.0.0
-      '@fluidframework/server-services-telemetry': 7.0.0
-      '@types/semver': 7.7.0
-      assert: 2.1.0
-      async: 3.2.6
-      axios: 1.8.4(debug@4.3.7)
-      buffer: 6.0.3
-      double-ended-queue: 2.1.0-0
-      events: 3.3.0
-      json-stringify-safe: 5.0.1
-      lodash: 4.17.21
-      nconf: 0.12.1
-      opossum: 8.5.0
-      semver: 7.7.1
-      serialize-error: 8.1.0
-      sha.js: 2.4.12
-      uuid: 11.1.0
-    transitivePeerDependencies:
-      - debug
       - supports-color
 
   '@fluidframework/server-lambdas@7.0.0(debug@4.4.0)':
@@ -31542,24 +31360,6 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/shared-object-base@2.60.0':
-    dependencies:
-      '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/container-definitions': 2.60.0
-      '@fluidframework/core-interfaces': 2.60.0
-      '@fluidframework/core-utils': 2.60.0
-      '@fluidframework/datastore': 2.60.0
-      '@fluidframework/datastore-definitions': 2.60.0
-      '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/id-compressor': 2.60.0
-      '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/telemetry-utils': 2.60.0
-      uuid: 11.1.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
   '@fluidframework/shared-object-base@2.60.0(debug@4.4.0)':
     dependencies:
       '@fluid-internal/client-utils': 2.60.0
@@ -31583,9 +31383,9 @@ snapshots:
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -31605,9 +31405,9 @@ snapshots:
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -31642,11 +31442,11 @@ snapshots:
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/id-compressor': 2.60.0
-      '@fluidframework/routerlicious-driver': 2.60.0(encoding@0.1.13)
+      '@fluidframework/routerlicious-driver': 2.60.0(debug@4.4.0)(encoding@0.1.13)
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
       jsrsasign: 11.1.0
       uuid: 11.1.0
@@ -31698,11 +31498,11 @@ snapshots:
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/fluid-static': 2.60.0
-      '@fluidframework/map': 2.60.0
-      '@fluidframework/routerlicious-driver': 2.60.0(encoding@0.1.13)
-      '@fluidframework/runtime-utils': 2.60.0
+      '@fluidframework/map': 2.60.0(debug@4.4.0)
+      '@fluidframework/routerlicious-driver': 2.60.0(debug@4.4.0)(encoding@0.1.13)
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
       '@fluidframework/tinylicious-driver': 2.60.0(encoding@0.1.13)
     transitivePeerDependencies:
@@ -31716,8 +31516,8 @@ snapshots:
     dependencies:
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
-      '@fluidframework/driver-utils': 2.60.0
-      '@fluidframework/routerlicious-driver': 2.60.0(encoding@0.1.13)
+      '@fluidframework/driver-utils': 2.60.0(debug@4.4.0)
+      '@fluidframework/routerlicious-driver': 2.60.0(debug@4.4.0)(encoding@0.1.13)
       jsrsasign: 11.1.0
       uuid: 11.1.0
     transitivePeerDependencies:
@@ -31743,15 +31543,15 @@ snapshots:
   '@fluidframework/tree@2.60.0':
     dependencies:
       '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/container-runtime': 2.60.0
+      '@fluidframework/container-runtime': 2.60.0(debug@4.4.0)
       '@fluidframework/core-interfaces': 2.60.0
       '@fluidframework/core-utils': 2.60.0
       '@fluidframework/datastore-definitions': 2.60.0
       '@fluidframework/driver-definitions': 2.60.0
       '@fluidframework/id-compressor': 2.60.0
       '@fluidframework/runtime-definitions': 2.60.0
-      '@fluidframework/runtime-utils': 2.60.0
-      '@fluidframework/shared-object-base': 2.60.0
+      '@fluidframework/runtime-utils': 2.60.0(debug@4.4.0)
+      '@fluidframework/shared-object-base': 2.60.0(debug@4.4.0)
       '@fluidframework/telemetry-utils': 2.60.0
       '@sinclair/typebox': 0.34.13
       '@tylerbu/sorted-btree-es6': 1.8.0
@@ -31765,7 +31565,7 @@ snapshots:
   '@fluidframework/undo-redo@2.60.0':
     dependencies:
       '@fluid-internal/client-utils': 2.60.0
-      '@fluidframework/map': 2.60.0
+      '@fluidframework/map': 2.60.0(debug@4.4.0)
       '@fluidframework/matrix': 2.60.0
       '@fluidframework/merge-tree': 2.60.0
       '@fluidframework/sequence': 2.60.0
@@ -32573,7 +32373,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@microsoft/api-extractor@7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.86)':
+  '@microsoft/api-extractor@7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@18.19.86)':
     dependencies:
       '@microsoft/api-extractor-model': 7.30.7(@types/node@18.19.86)
       '@microsoft/tsdoc': 0.15.1
@@ -32591,7 +32391,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@microsoft/api-extractor@7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)':
+  '@microsoft/api-extractor@7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.14.1)':
     dependencies:
       '@microsoft/api-extractor-model': 7.30.7(@types/node@22.14.1)
       '@microsoft/tsdoc': 0.15.1
@@ -33525,17 +33325,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@testing-library/dom@10.4.0':
-    dependencies:
-      '@babel/code-frame': 7.26.2
-      '@babel/runtime': 7.27.0
-      '@types/aria-query': 5.0.4
-      aria-query: 5.3.0
-      chalk: 4.1.2
-      dom-accessibility-api: 0.5.16
-      lz-string: 1.5.0
-      pretty-format: 27.5.1
-
   '@testing-library/dom@10.4.1':
     dependencies:
       '@babel/code-frame': 7.26.2
@@ -33559,16 +33348,6 @@ snapshots:
       lodash: 4.17.21
       redent: 3.0.0
 
-  '@testing-library/react@16.3.0(@testing-library/dom@10.4.0)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
-    dependencies:
-      '@babel/runtime': 7.27.0
-      '@testing-library/dom': 10.4.0
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-    optionalDependencies:
-      '@types/react': 18.3.15
-      '@types/react-dom': 18.3.3(@types/react@18.3.15)
-
   '@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.27.0
@@ -33579,9 +33358,9 @@ snapshots:
       '@types/react': 18.3.15
       '@types/react-dom': 18.3.3(@types/react@18.3.15)
 
-  '@testing-library/user-event@14.5.2(@testing-library/dom@10.4.0)':
+  '@testing-library/user-event@14.5.2(@testing-library/dom@10.4.1)':
     dependencies:
-      '@testing-library/dom': 10.4.0
+      '@testing-library/dom': 10.4.1
 
   '@textlint/ast-node-types@12.6.1': {}
 
@@ -34405,7 +34184,7 @@ snapshots:
 
   '@vvago/vale@3.11.2':
     dependencies:
-      axios: 1.8.4(debug@4.3.7)
+      axios: 1.8.4(debug@4.4.0)
       rimraf: 5.0.10
       tar: 6.2.1
       unzipper: 0.10.14
@@ -34851,14 +34630,6 @@ snapshots:
       possible-typed-array-names: 1.0.0
 
   axe-core@4.10.2: {}
-
-  axios@0.30.0:
-    dependencies:
-      follow-redirects: 1.15.9(debug@4.3.7)
-      form-data: 4.0.4
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
 
   axios@0.30.0(debug@4.4.0):
     dependencies:
@@ -35753,14 +35524,14 @@ snapshots:
     optionalDependencies:
       typescript: 5.4.5
 
-  cosmiconfig@8.3.6(typescript@5.8.2):
+  cosmiconfig@8.3.6(typescript@5.9.2):
     dependencies:
       import-fresh: 3.3.1
       js-yaml: 4.1.0
       parse-json: 5.2.0
       path-type: 4.0.0
     optionalDependencies:
-      typescript: 5.8.2
+      typescript: 5.9.2
 
   cosmiconfig@9.0.0(typescript@5.4.5):
     dependencies:
@@ -37839,18 +37610,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  http-proxy-middleware@2.0.7(@types/express@4.17.21):
-    dependencies:
-      '@types/http-proxy': 1.17.15
-      http-proxy: 1.18.1
-      is-glob: 4.0.3
-      is-plain-obj: 3.0.0
-      micromatch: 4.0.8
-    optionalDependencies:
-      '@types/express': 4.17.21
-    transitivePeerDependencies:
-      - debug
-
   http-proxy-middleware@2.0.7(@types/express@4.17.21)(debug@4.4.0):
     dependencies:
       '@types/http-proxy': 1.17.15
@@ -37860,14 +37619,6 @@ snapshots:
       micromatch: 4.0.8
     optionalDependencies:
       '@types/express': 4.17.21
-    transitivePeerDependencies:
-      - debug
-
-  http-proxy@1.18.1:
-    dependencies:
-      eventemitter3: 4.0.7
-      follow-redirects: 1.15.9(debug@4.3.7)
-      requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
 
@@ -38590,7 +38341,7 @@ snapshots:
       prompts: 2.4.2
       spawnd: 10.1.4
       tree-kill: 1.2.2
-      wait-on: 8.0.1(debug@4.3.7)
+      wait-on: 8.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -38650,10 +38401,10 @@ snapshots:
       - supports-color
       - typescript
 
-  jest-environment-puppeteer@10.1.4(typescript@5.8.2):
+  jest-environment-puppeteer@10.1.4(typescript@5.9.2):
     dependencies:
       chalk: 4.1.2
-      cosmiconfig: 8.3.6(typescript@5.8.2)
+      cosmiconfig: 8.3.6(typescript@5.9.2)
       deepmerge: 4.3.1
       jest-dev-server: 10.1.4
       jest-environment-node: 29.7.0
@@ -39177,7 +38928,7 @@ snapshots:
     optionalDependencies:
       '@langchain/anthropic': 0.3.26(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))
       '@langchain/google-genai': 0.2.16(@langchain/core@0.3.66(openai@5.12.2(ws@8.18.0)(zod@3.25.76)))
-      axios: 0.30.0
+      axios: 0.30.0(debug@4.4.0)
       handlebars: 4.7.8
     transitivePeerDependencies:
       - '@opentelemetry/api'
@@ -43158,7 +42909,7 @@ snapshots:
       '@fluidframework/gitresources': 7.0.0
       '@fluidframework/protocol-base': 7.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas': 7.0.0
+      '@fluidframework/server-lambdas': 7.0.0(debug@4.4.0)
       '@fluidframework/server-local-server': 7.0.0
       '@fluidframework/server-memory-orderer': 7.0.0
       '@fluidframework/server-services-client': 7.0.0
@@ -43168,7 +42919,7 @@ snapshots:
       '@fluidframework/server-services-utils': 7.0.0
       '@fluidframework/server-test-utils': 7.0.0
       agentkeepalive: 4.6.0
-      axios: 1.8.4(debug@4.3.7)
+      axios: 1.8.4(debug@4.4.0)
       body-parser: 1.20.3
       charwise: 3.0.1
       compression: 1.7.5
@@ -43523,9 +43274,19 @@ snapshots:
 
   typescript@5.4.5: {}
 
+  typescript@5.5.4: {}
+
   typescript@5.6.1-rc: {}
 
+  typescript@5.6.3: {}
+
+  typescript@5.7.3: {}
+
   typescript@5.8.2: {}
+
+  typescript@5.8.3: {}
+
+  typescript@5.9.2: {}
 
   typeson-registry@1.0.0-alpha.39:
     dependencies:
@@ -43873,6 +43634,16 @@ snapshots:
     dependencies:
       xml-name-validator: 4.0.0
 
+  wait-on@8.0.1:
+    dependencies:
+      axios: 1.8.4(debug@4.4.0)
+      joi: 17.13.3
+      lodash: 4.17.21
+      minimist: 1.2.8
+      rxjs: 7.8.1
+    transitivePeerDependencies:
+      - debug
+
   wait-on@8.0.1(debug@4.3.7):
     dependencies:
       axios: 1.8.4(debug@4.3.7)
@@ -44071,7 +43842,7 @@ snapshots:
       express: 4.21.2
       graceful-fs: 4.2.11
       html-entities: 2.5.2
-      http-proxy-middleware: 2.0.7(@types/express@4.17.21)
+      http-proxy-middleware: 2.0.7(@types/express@4.17.21)(debug@4.4.0)
       ipaddr.js: 2.2.0
       launch-editor: 2.9.1
       open: 8.4.2

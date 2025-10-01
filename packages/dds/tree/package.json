@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree",
-	"version": "2.62.0",
+	"version": "2.63.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -66,12 +66,12 @@
 		"./internal/test": {
 			"allow-ff-test-exports": {
 				"import": {
-					"types": "./lib/test/index.d.ts",
-					"default": "./lib/test/index.js"
+					"types": "./lib/test/testExports.d.ts",
+					"default": "./lib/test/testExports.js"
 				},
 				"require": {
-					"types": "./dist/test/index.d.ts",
-					"default": "./dist/test/index.js"
+					"types": "./dist/test/testExports.d.ts",
+					"default": "./dist/test/testExports.js"
 				}
 			}
 		}

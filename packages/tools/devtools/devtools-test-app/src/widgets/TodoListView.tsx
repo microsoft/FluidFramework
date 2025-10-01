@@ -5,7 +5,7 @@
 
 import { makeStyles } from "@fluentui/react-components";
 import { CollaborativeInput } from "@fluid-example/example-utils";
-import { useTree } from "@fluid-experimental/tree-react-api/alpha";
+import { useTree } from "@fluidframework/react/internal";
 import type { SharedString, ISharedString } from "@fluidframework/sequence/internal";
 import { Tree } from "@fluidframework/tree/internal";
 import React from "react";
