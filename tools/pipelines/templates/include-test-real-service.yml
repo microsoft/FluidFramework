@@ -404,7 +404,6 @@ stages:
             ${{ each envVar in parameters.env }}:
               ${{ each pair in envVar }}:
                 ${{ pair.name }}: ${{ pair.value }}
-
             # ODSP tenant setup script injects the values here (appClientId, tenantCreds).
             # The e2e test workload references the keys (login__*).
             ${{ if eq(parameters.odspTenantType, 'dogfood') }}:
@@ -413,7 +412,6 @@ stages:
             ${{ elseif eq(parameters.odspTenantType, 'prod') }}:
               login__microsoft__clientId: $(appClientId)
               login__odsp__test__tenants: $(tenantCreds)
-
           inputs:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/node_modules/${{ parameters.testPackage }}
