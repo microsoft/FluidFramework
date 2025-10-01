@@ -191,6 +191,7 @@ describe("serializedStateManager", () => {
 				storageAdapter,
 				false,
 				eventEmitter,
+				false,
 				() => false,
 				() => false,
 			);
@@ -217,6 +218,7 @@ describe("serializedStateManager", () => {
 				}),
 				true,
 				eventEmitter,
+				false,
 				() => false,
 				() => false,
 			);
@@ -246,6 +248,7 @@ describe("serializedStateManager", () => {
 				storageAdapter,
 				true,
 				eventEmitter,
+				false,
 				() => false,
 				() => false,
 			);
@@ -269,6 +272,7 @@ describe("serializedStateManager", () => {
 				storageAdapter,
 				true,
 				eventEmitter,
+				false,
 				() => false,
 				() => false,
 			);
@@ -304,6 +308,7 @@ describe("serializedStateManager", () => {
 				storageAdapter,
 				true,
 				eventEmitter,
+				false,
 				() => false,
 				() => false,
 			);
@@ -355,6 +360,7 @@ describe("serializedStateManager", () => {
 				storageAdapter,
 				true,
 				eventEmitter,
+				false,
 				() => false,
 				() => false,
 			);
@@ -418,6 +424,7 @@ describe("serializedStateManager", () => {
 				storageAdapter,
 				true,
 				eventEmitter,
+				false,
 				() => false,
 				() => false,
 			);
@@ -459,6 +466,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
+					false,
 					isDirtyF,
 					() => false,
 				);
@@ -519,6 +527,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
+					false,
 					isDirtyF,
 					() => false,
 				);
@@ -571,6 +580,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
+					false,
 					isDirtyF,
 					() => false,
 				);
@@ -634,6 +644,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
+					false,
 					() => isDirty,
 					() => false,
 				);
@@ -666,6 +677,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
+					false,
 					isDirtyF,
 					() => false,
 				);
@@ -737,6 +749,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
+					false,
 					isDirtyF,
 					() => false,
 				);
@@ -787,6 +800,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
+					false,
 					() => isDirty,
 					() => false,
 				);
@@ -822,6 +836,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
+					false,
 					() => isDirty,
 					() => false,
 				);
@@ -873,6 +888,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
+					false,
 					isDirtyF,
 					() => false,
 				);
@@ -974,6 +990,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
+					false,
 					isDirtyF,
 					() => false,
 					snapshotRefreshTimeoutMs,
@@ -1043,6 +1060,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
+					false,
 					isDirtyF,
 					() => false,
 					snapshotRefreshTimeoutMs,
@@ -1112,6 +1130,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
+					false,
 					isDirtyF,
 					() => false,
 					snapshotRefreshTimeoutMs,
@@ -1176,6 +1195,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
+					false,
 					isDirtyF,
 					() => false,
 					snapshotRefreshTimeoutMs,
@@ -1246,6 +1266,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
+					false,
 					isDirtyF,
 					() => false,
 					snapshotRefreshTimeoutMs,
@@ -1313,6 +1334,7 @@ describe("serializedStateManager", () => {
 					storageAdapter,
 					true,
 					eventEmitter,
+					false,
 					isDirtyF,
 					() => false,
 					snapshotRefreshTimeoutMs,
@@ -1362,6 +1384,39 @@ describe("serializedStateManager", () => {
 					snapshotSequenceNumber,
 					lastProcessedOpSequenceNumber,
 				);
+			});
+
+			it(`no snapshot refresh on storage only mode. isDirty: ${isDirty}`, async () => {
+				const storageAdapter = new MockStorageAdapter();
+				const saved = false;
+				const isDirtyF = (): boolean => (saved ? false : isDirty);
+				const serializedStateManager = new SerializedStateManager(
+					undefined,
+					enableOfflineSnapshotRefresh(logger),
+					storageAdapter,
+					true,
+					eventEmitter,
+					true,
+					isDirtyF,
+					() => false,
+					snapshotRefreshTimeoutMs,
+				);
+
+				await serializedStateManager.fetchSnapshot(undefined);
+				const lastProcessedOpSequenceNumber = 20;
+				let seq = 1;
+				while (seq <= lastProcessedOpSequenceNumber) {
+					serializedStateManager.addProcessedOp(generateSavedOp(seq++));
+				}
+				const snapshotSequenceNumber = 11; // latest snapshot will be among processed ops
+				storageAdapter.uploadSummary(snapshotSequenceNumber);
+				// snapshot refresh promise is undefined before timeout
+				const snapshotRefreshP = serializedStateManager.refreshSnapshotP;
+				assert.strictEqual(snapshotRefreshP, undefined);
+				clock.tick(snapshotRefreshTimeoutMs);
+				// now it's a promise
+				const initialRefreshP = serializedStateManager.refreshSnapshotP;
+				assert.strictEqual(initialRefreshP, undefined, "no refresh expected");
 			});
 		}
 	});

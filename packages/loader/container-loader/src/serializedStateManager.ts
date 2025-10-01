@@ -149,7 +149,7 @@ export class SerializedStateManager {
 	private latestSnapshot: ISnapshotInfo | undefined;
 	private _refreshSnapshotP: Promise<number> | undefined;
 	private readonly lastSavedOpSequenceNumber: number = 0;
-	private readonly refreshTimer: Timer;
+	private readonly refreshTimer: Timer | undefined;
 	private readonly snapshotRefreshTimeoutMs: number = 60 * 60 * 24 * 1000;
 
 	/**
@@ -166,6 +166,7 @@ export class SerializedStateManager {
 		private readonly storageAdapter: ISerializedStateManagerDocumentStorageService,
 		private readonly _offlineLoadEnabled: boolean,
 		containerEvent: IEventProvider<ISerializerEvent>,
+		private readonly storageOnly: boolean,
 		private readonly containerDirty: () => boolean,
 		private readonly supportGetSnapshotApi: () => boolean,
 		snapshotRefreshTimeoutMs?: number,
@@ -176,9 +177,9 @@ export class SerializedStateManager {
 		});
 
 		this.snapshotRefreshTimeoutMs = snapshotRefreshTimeoutMs ?? this.snapshotRefreshTimeoutMs;
-		this.refreshTimer = new Timer(this.snapshotRefreshTimeoutMs, () =>
-			this.tryRefreshSnapshot(),
-		);
+		this.refreshTimer = this.storageOnly
+			? undefined
+			: new Timer(this.snapshotRefreshTimeoutMs, () => this.tryRefreshSnapshot());
 		// special case handle. Obtaining the last saved op seq num to avoid
 		// refreshing the snapshot before we have processed it. It could cause
 		// a subsequent stashing to have a newer snapshot than allowed.
@@ -244,7 +245,7 @@ export class SerializedStateManager {
 					snapshotBlobs,
 					snapshotSequenceNumber: attributes.sequenceNumber,
 				};
-				this.refreshTimer.start();
+				this.refreshTimer?.start();
 			}
 			return { baseSnapshot, version };
 		} else {
@@ -276,7 +277,8 @@ export class SerializedStateManager {
 		if (
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") === true &&
 			this._refreshSnapshotP === undefined &&
-			this.latestSnapshot === undefined
+			this.latestSnapshot === undefined &&
+			!this.storageOnly
 		) {
 			// Don't block on the refresh snapshot call - it is for the next time we serialize, not booting this incarnation
 			this._refreshSnapshotP = this.refreshLatestSnapshot(this.supportGetSnapshotApi());
@@ -361,14 +363,14 @@ export class SerializedStateManager {
 				stashedSnapshotSequenceNumber: this.snapshot?.snapshotSequenceNumber,
 			});
 			this.latestSnapshot = undefined;
-			this.refreshTimer.restart();
+			this.refreshTimer?.restart();
 		} else if (snapshotSequenceNumber <= lastProcessedOpSequenceNumber) {
 			// Snapshot seq num is between the first and last processed op.
 			// Remove the ops that are already part of the snapshot
 			this.processedOps.splice(0, snapshotSequenceNumber - firstProcessedOpSequenceNumber + 1);
 			this.snapshot = this.latestSnapshot;
 			this.latestSnapshot = undefined;
-			this.refreshTimer.restart();
+			this.refreshTimer?.restart();
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SnapshotRefreshed",
 				snapshotSequenceNumber,
@@ -410,7 +412,7 @@ export class SerializedStateManager {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				snapshotSequenceNumber: attributes.sequenceNumber as number,
 			};
-			this.refreshTimer.start();
+			this.refreshTimer?.start();
 		}
 	}
 
