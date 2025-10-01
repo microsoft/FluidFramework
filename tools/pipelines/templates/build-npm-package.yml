@@ -376,6 +376,7 @@ stages:
                 eq(variables['Build.Reason'], 'PullRequest'),
                 ne(variables['System.PullRequest.IsFork'], 'true')
               )
+            continueOnError: true
             env:
               ADO_API_TOKEN: $(System.AccessToken)
               DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
