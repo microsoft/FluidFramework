@@ -15,42 +15,91 @@ pr:
 - lts
 - release/*
 
-pool:
-  Small-eastus2
-
 variables:
-- name: skipComponentGovernanceDetection
-  value: true
+- name: pnpmStorePath
+  value: $(Pipeline.Workspace)/.pnpm-store
+- group: ado-feeds
 
-steps:
-- task: UseNode@1
-  displayName: Use Node 20.15.1
-  inputs:
-    version: 20.15.1
+# The `resources` specify the location and version of the 1ES PT.
+resources:
+  repositories:
+  - repository: m365Pipelines
+    type: git
+    name: 1ESPipelineTemplates/M365GPT
+    ref: refs/tags/release
+extends:
+  # The pipeline extends the 1ES pipeline template which will inject different SDL and compliance tasks.
+  # Read more: https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-docs/1es-pipeline-templates/onboarding/overview
+  ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+    template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
+  ${{ else }}:
+    # For non-production pipelines, we use "Unofficial" 1ES pipeline template
+    # The unofficial template skips some of the jobs that are irrelevant for the pipelines that do not have the potential to produce a production release candidate.(For example ARROW).
+    template: v1/M365.Unofficial.PipelineTemplate.yml@m365Pipelines
+  parameters:
+    pool:
+      name: Small-eastus2
+      os: linux
+    sdl:
+      ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+        arrow:
+          # This is the service connection for the Arrow Service Connection in FluidFramework Azure DevOps organization
+          serviceConnection: ff-internal-arrow-sc
+      sourceAnalysisPool:
+        name: Azure-Pipelines-1ESPT-ExDShared
+        image: windows-2022
+        os: windows
+      # Tentative workaround for the occasional Credscan failures
+      credscan:
+        batchSize: 4
+    # Skip tagging if Github PR coming from a fork
+    settings:
+      skipBuildTagsForGitHubPullRequests: true
+    customBuildTags:
+      - ES365AIMigrationTooling
+    stages:
+    - stage: run_policy_check
+      jobs:
+      - job: run_policy_check
+        steps:
+        # Install
+        - task: UseNode@1
+          displayName: Use Node 20.15.1
+          inputs:
+            version: 20.15.1
 
-- task: Npm@1
-  displayName: Install npm 10
-  retryCountOnTaskFailure: 4
-  inputs:
-    command: 'custom'
-    customCommand: 'install --global npm@^10'
-    customRegistry: 'useNpmrc'
+        - task: Npm@1
+          displayName: Install npm 10
+          retryCountOnTaskFailure: 4
+          inputs:
+            command: 'custom'
+            customCommand: 'install --global npm@^10'
+            customRegistry: 'useNpmrc'
 
-- task: Npm@1
-  displayName: npm ci
-  inputs:
-    command: 'custom'
-    customCommand: 'ci --ignore-scripts'
-    customRegistry: 'useNpmrc'
+        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+          parameters:
+            buildDirectory: .
 
-- task: Npm@1
-  displayName: Policy Check
-  inputs:
-    command: 'custom'
-    customCommand: 'run policy-check'
+        - task: Bash@3
+          displayName: Install root dependencies
+          inputs:
+            targetType: 'inline'
+            workingDirectory: .
+            script: |
+              set -eu -o pipefail
+              # We only need to install the root dependencies
+              pnpm install --workspace-root --frozen-lockfile
 
-- task: Npm@1
-  displayName: Layer Check
-  inputs:
-    command: 'custom'
-    customCommand: 'run layer-check'
+        - task: Npm@1
+          displayName: Policy Check
+          inputs:
+            command: 'custom'
+            customCommand: 'run policy-check'
+
+        - task: Bash@3
+          displayName: Prune pnpm store
+          inputs:
+            targetType: 'inline'
+            script: |
+              set -eu -o pipefail
+              pnpm store prune
