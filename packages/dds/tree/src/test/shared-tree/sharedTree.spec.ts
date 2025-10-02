@@ -1642,6 +1642,41 @@ describe("SharedTree", () => {
 				resubmitter.assertOuterListEquals(finalState);
 				submitter.assertOuterListEquals(finalState);
 			});
+
+			// This tests a client resubmitting two commits,
+			// the first of which is a merge of a commit which has concurrently been merged by another client.
+			it("over merge of commit to be resubmitted", () => {
+				const provider = new TestTreeProviderLite(
+					2,
+					configuredSharedTree({
+						jsonValidator: FormatValidatorBasic,
+						formatVersion: SharedTreeFormatVersion.vSharedBranches,
+					}).getFactory(),
+				);
+
+				const config = new TreeViewConfiguration({ schema, enableSchemaValidation });
+				const [tree1, tree2] = provider.trees;
+				const mainView1 = asAlpha(tree1.viewWith(config));
+				mainView1.initialize([["A"]]);
+				const branchId = tree1.createSharedBranch();
+				const branchView1 = asAlpha(tree1.viewSharedBranchWith(branchId, config));
+				branchView1.root[0].insertAtEnd("B");
+				provider.synchronizeMessages();
+
+				tree1.containerRuntime.connected = false;
+				mainView1.merge(branchView1, false);
+				const mainView2 = asAlpha(tree2.viewWith(config));
+				const branchView2 = asAlpha(tree2.viewSharedBranchWith(branchId, config));
+				branchView2.root[0].insertAtEnd("C");
+				mainView2.merge(branchView2, false);
+				provider.synchronizeMessages();
+
+				tree1.containerRuntime.connected = true;
+				provider.synchronizeMessages();
+
+				assert.deepEqual(mainView1.root[0], ["A", "B", "C"]);
+				assert.deepEqual(mainView2.root[0], ["A", "B", "C"]);
+			});
 		});
 
 		it("revert constraint", () => {

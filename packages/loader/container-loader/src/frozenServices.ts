@@ -29,8 +29,13 @@ import {
 import type { IConnectionStateChangeReason } from "./contracts.js";
 
 export class FrozenDocumentServiceFactory implements IDocumentServiceFactory {
+	constructor(private readonly documentServiceFactory?: IDocumentServiceFactory) {}
+
 	async createDocumentService(resolvedUrl: IResolvedUrl): Promise<IDocumentService> {
-		return new FrozenDocumentService(resolvedUrl);
+		return new FrozenDocumentService(
+			resolvedUrl,
+			await this.documentServiceFactory?.createDocumentService(resolvedUrl),
+		);
 	}
 	async createContainer(): Promise<IDocumentService> {
 		throw new Error("The FrozenDocumentServiceFactory cannot be used to create containers.");
@@ -41,7 +46,10 @@ class FrozenDocumentService
 	extends TypedEventEmitter<IDocumentServiceEvents>
 	implements IDocumentService
 {
-	constructor(public readonly resolvedUrl: IResolvedUrl) {
+	constructor(
+		public readonly resolvedUrl: IResolvedUrl,
+		private readonly documentService?: IDocumentService,
+	) {
 		super();
 	}
 
@@ -49,7 +57,7 @@ class FrozenDocumentService
 		storageOnly: true,
 	};
 	async connectToStorage(): Promise<IDocumentStorageService> {
-		return frozenDocumentStorageService;
+		return new FrozenDocumentStorageService(await this.documentService?.connectToStorage());
 	}
 	async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
 		return frozenDocumentDeltaStorageService;
@@ -63,15 +71,19 @@ class FrozenDocumentService
 const frozenDocumentStorageServiceHandler = (): never => {
 	throw new Error("Operations are not supported on the FrozenDocumentStorageService.");
 };
-const frozenDocumentStorageService: IDocumentStorageService = {
-	getSnapshotTree: frozenDocumentStorageServiceHandler,
-	getSnapshot: frozenDocumentStorageServiceHandler,
-	getVersions: frozenDocumentStorageServiceHandler,
-	createBlob: frozenDocumentStorageServiceHandler,
-	readBlob: frozenDocumentStorageServiceHandler,
-	uploadSummaryWithContext: frozenDocumentStorageServiceHandler,
-	downloadSummary: frozenDocumentStorageServiceHandler,
-};
+class FrozenDocumentStorageService implements IDocumentStorageService {
+	constructor(private readonly documentStorageService?: IDocumentStorageService) {}
+
+	getSnapshotTree = frozenDocumentStorageServiceHandler;
+	getSnapshot = frozenDocumentStorageServiceHandler;
+	getVersions = frozenDocumentStorageServiceHandler;
+	createBlob = frozenDocumentStorageServiceHandler;
+	readBlob =
+		this.documentStorageService?.readBlob.bind(this.documentStorageService) ??
+		frozenDocumentStorageServiceHandler;
+	uploadSummaryWithContext = frozenDocumentStorageServiceHandler;
+	downloadSummary = frozenDocumentStorageServiceHandler;
+}
 
 const frozenDocumentDeltaStorageService: IDocumentDeltaStorageService = {
 	fetchMessages: () => ({

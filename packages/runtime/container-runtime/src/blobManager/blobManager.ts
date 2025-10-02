@@ -133,7 +133,7 @@ export type IBlobManagerRuntime = Pick<
 > &
 	IEventProvider<IContainerRuntimeEvents>;
 
-type ICreateBlobResponseWithTTL = ICreateBlobResponse &
+export type ICreateBlobResponseWithTTL = ICreateBlobResponse &
 	Partial<Record<"minTTLInSeconds", number>>;
 
 interface PendingBlob {
@@ -159,10 +159,6 @@ export interface IPendingBlobs {
 	};
 }
 
-export interface IBlobManagerEvents {
-	noPendingBlobs: () => void;
-}
-
 interface IBlobManagerInternalEvents {
 	uploadFailed: (localId: string, error: unknown) => void;
 	handleAttached: (pending: PendingBlob) => void;
@@ -174,10 +170,6 @@ export const blobManagerBasePath = "_blobs" as const;
 export class BlobManager {
 	private readonly mc: MonitoringContext;
 
-	private readonly publicEvents = createEmitter<IBlobManagerEvents>();
-	public get events(): Listenable<IBlobManagerEvents> {
-		return this.publicEvents;
-	}
 	private readonly internalEvents = createEmitter<IBlobManagerInternalEvents>();
 
 	/**
@@ -302,22 +294,6 @@ export class BlobManager {
 			pendingEntry.opsent = true;
 			sendBlobAttachOp(localId, storageId);
 		};
-	}
-
-	public get allBlobsAttached(): boolean {
-		for (const entry of this.pendingBlobs.values()) {
-			if (entry.attached === false) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	public get hasPendingBlobs(): boolean {
-		return (
-			(this.runtime.attachState !== AttachState.Attached && this.redirectTable.size > 0) ||
-			this.pendingBlobs.size > 0
-		);
 	}
 
 	private createAbortError(pending?: PendingBlob): LoggingError {
@@ -605,9 +581,7 @@ export class BlobManager {
 	}
 
 	private deletePendingBlob(id: string): void {
-		if (this.pendingBlobs.delete(id) && !this.hasPendingBlobs) {
-			this.publicEvents.emit("noPendingBlobs");
-		}
+		this.pendingBlobs.delete(id);
 	}
 
 	private onUploadResolve(
@@ -920,7 +894,7 @@ export class BlobManager {
  * This path must match the path of the blob handle returned by the createBlob API because blobs are marked
  * referenced by storing these handles in a referenced DDS.
  */
-const getGCNodePathFromLocalId = (localId: string): string =>
+export const getGCNodePathFromLocalId = (localId: string): string =>
 	`/${blobManagerBasePath}/${localId}`;
 
 /**
