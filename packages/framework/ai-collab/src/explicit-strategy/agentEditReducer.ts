@@ -140,7 +140,7 @@ export function applyAgentEdit(
 
 			// We assume that the parentNode for inserts edits are guaranteed to be an arrayNode.
 			if (!(parentNodeSchema instanceof ArrayNodeSchema)) {
-				throw new UsageError("the parent node must an arrayNode");
+				throw new UsageError("the parent node must be an arrayNode");
 			}
 			const allowedTypes = normalizeAllowedTypes(parentNodeSchema.info).evaluate();
 
