@@ -9,7 +9,6 @@ import type {
 	IEventProvider,
 	IEvent,
 	ITelemetryBaseLogger,
-	Tagged,
 } from "@fluidframework/core-interfaces";
 import { Timer, assert } from "@fluidframework/core-utils/internal";
 import {
@@ -28,7 +27,6 @@ import {
 	PerformanceEvent,
 	UsageError,
 	createChildMonitoringContext,
-	type TelemetryEventPropertyTypeExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -135,6 +133,25 @@ interface ISerializerEvent extends IEvent {
 	(event: "saved", listener: (dirty: boolean) => void): void;
 }
 
+class RefreshPromiseTracker {
+	public get hasPromise(): boolean {
+		return this.#promise !== undefined;
+	}
+	public get Promise(): Promise<number> | undefined {
+		return this.#promise;
+	}
+	constructor(private readonly catchHandler: (error: Error) => void) {}
+
+	#promise: Promise<number> | undefined;
+	setPromise(p: Promise<number>): void {
+		if (this.hasPromise) {
+			throw new Error("Cannot set promise while promise exists");
+		}
+		this.#promise = p;
+		p.catch(this.catchHandler).finally((this.#promise = undefined));
+	}
+}
+
 /**
  * Helper class to manage the state of the container needed for proper serialization.
  *
@@ -147,7 +164,16 @@ export class SerializedStateManager {
 	private readonly mc: MonitoringContext;
 	private snapshot: ISnapshotInfo | undefined;
 	private latestSnapshot: ISnapshotInfo | undefined;
-	private _refreshSnapshotP: Promise<number> | undefined;
+	private readonly refreshTracker = new RefreshPromiseTracker(
+		// eslint-disable-next-line unicorn/consistent-function-scoping
+		(error) =>
+			this.mc.logger.sendErrorEvent(
+				{
+					eventName: "RefreshLatestSnapshotFailed",
+				},
+				error,
+			),
+	);
 	private readonly lastSavedOpSequenceNumber: number = 0;
 	private readonly refreshTimer: Timer;
 	private readonly snapshotRefreshTimeoutMs: number = 60 * 60 * 24 * 1000;
@@ -200,7 +226,7 @@ export class SerializedStateManager {
 	 * @returns The snapshot sequence number associated with the latest fetched snapshot
 	 */
 	public get refreshSnapshotP(): Promise<number> | undefined {
-		return this._refreshSnapshotP;
+		return this.refreshTracker.Promise;
 	}
 
 	/**
@@ -226,6 +252,7 @@ export class SerializedStateManager {
 	public async fetchSnapshot(specifiedVersion: string | undefined): Promise<{
 		baseSnapshot: ISnapshot | ISnapshotTree;
 		version: IVersion | undefined;
+		attributes: IDocumentAttributes;
 	}> {
 		if (this.pendingLocalState === undefined) {
 			const { baseSnapshot, version } = await getSnapshot(
@@ -235,18 +262,22 @@ export class SerializedStateManager {
 				specifiedVersion,
 			);
 			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
+			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshotTree);
 			// non-interactive clients will not have any pending state we want to save
 			if (this.offlineLoadEnabled) {
-				const snapshotBlobs = await getBlobContentsFromTree(baseSnapshot, this.storageAdapter);
-				const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshotTree);
-				this.snapshot = {
-					baseSnapshot: baseSnapshotTree,
-					snapshotBlobs,
-					snapshotSequenceNumber: attributes.sequenceNumber,
-				};
-				this.refreshTimer.start();
+				this.refreshTracker.setPromise(
+					getBlobContentsFromTree(baseSnapshot, this.storageAdapter).then((snapshotBlobs) => {
+						this.snapshot = {
+							baseSnapshot: baseSnapshotTree,
+							snapshotBlobs,
+							snapshotSequenceNumber: attributes.sequenceNumber,
+						};
+						this.refreshTimer.start();
+						return attributes.sequenceNumber;
+					}),
+				);
 			}
-			return { baseSnapshot, version };
+			return { baseSnapshot, version, attributes };
 		} else {
 			const { baseSnapshot, snapshotBlobs } = this.pendingLocalState;
 			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshot);
@@ -268,30 +299,18 @@ export class SerializedStateManager {
 				ops: [],
 				snapshotFormatV: 1,
 			};
-			return { baseSnapshot: iSnapshot, version: undefined };
+			return { baseSnapshot: iSnapshot, version: undefined, attributes };
 		}
 	}
 
 	private tryRefreshSnapshot(): void {
 		if (
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") === true &&
-			this._refreshSnapshotP === undefined &&
+			!this.refreshTracker.hasPromise &&
 			this.latestSnapshot === undefined
 		) {
 			// Don't block on the refresh snapshot call - it is for the next time we serialize, not booting this incarnation
-			this._refreshSnapshotP = this.refreshLatestSnapshot(this.supportGetSnapshotApi());
-			this._refreshSnapshotP
-				.catch(
-					(error: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>) => {
-						this.mc.logger.sendTelemetryEvent({
-							eventName: "RefreshLatestSnapshotFailed",
-							error,
-						});
-					},
-				)
-				.finally(() => {
-					this._refreshSnapshotP = undefined;
-				});
+			this.refreshTracker.setPromise(this.refreshLatestSnapshot(this.supportGetSnapshotApi()));
 		}
 	}
 
@@ -439,6 +458,10 @@ export class SerializedStateManager {
 				if (!this.offlineLoadEnabled) {
 					throw new UsageError("Can't get pending local state unless offline load is enabled");
 				}
+				if (this.snapshot === undefined && this.refreshTracker.hasPromise) {
+					await this.refreshTracker.Promise;
+				}
+
 				assert(this.snapshot !== undefined, 0x8e5 /* no base data */);
 				const pendingRuntimeState = await runtime.getPendingLocalState({
 					notifyImminentClosure: false,
