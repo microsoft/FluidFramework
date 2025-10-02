@@ -5,9 +5,18 @@
 
 import type {
 	IConfigProviderBase,
+	IEvent,
+	IEventProvider,
+	IFluidHandle,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
+import type {
+	ContainerAttachProps,
+	ContainerSchema,
+	IFluidContainer,
+	IMember,
+	IServiceAudience,
+} from "@fluidframework/fluid-static";
 
 import type { IOdspTokenProvider } from "./token.js";
 
@@ -59,7 +68,6 @@ export interface OdspClientProps {
 }
 
 /**
- * @legacy
  * @beta
  */
 export interface OdspContainerAttachProps {
@@ -72,6 +80,58 @@ export interface OdspContainerAttachProps {
 	 * The file name of the Fluid file. If undefined, the file is named with a GUID.
 	 */
 	fileName: string | undefined;
+
+	/**
+	 * The ID of the item (file) to which the container is being attached.
+	 * When combined with eTag, this will trigger a conversion of an existing file to a Fluid file.
+	 */
+	itemId?: string;
+
+	/**
+	 * Optional eTag to use when attaching the container.
+	 * If provided, the container will
+	 */
+	eTag?: string;
+}
+
+/**
+ * Interface for the events emitted by the ODSP Fluid container services.
+ * @beta
+ */
+export interface IOdspFluidContainerEvents extends IEvent {
+	(event: "readOnlyStateChanged", listener: (readonly: boolean) => void): void;
+	(event: "sensitivityLabelChanged", listener: (sensitivityLabelsInfo: string) => void): void;
+}
+
+/**
+ * ODSP version of the IFluidContainer interface.
+ * @beta
+ */
+export interface IOdspFluidContainer<
+	TContainerSchema extends ContainerSchema = ContainerSchema,
+> extends IFluidContainer<TContainerSchema> {
+	/**
+	 * A newly created container starts detached from the collaborative service.
+	 * Calling `attach()` uploads the new container to the service and connects to the collaborative service.
+	 *
+	 * This function is same as the IFluidContainer.attach function, but has ODSP specific function signatures.
+	 *
+	 * @param props - Optional properties to pass to the attach function.
+	 *
+	 * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
+	 */
+	attach(props?: ContainerAttachProps<OdspContainerAttachProps>): Promise<string>;
+
+	/**
+	 * Upload a blob of data.
+	 * @param blob - The blob to upload to the ODSP service.
+	 */
+	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+
+	/**
+	 * Serialize the container to a string representation. This can be saved for later rehydration.
+	 */
+	serialize(): string;
 }
 
 /**
@@ -82,11 +142,42 @@ export interface OdspContainerAttachProps {
  * use, will not be included here but rather on the FluidContainer class itself.
  * @beta
  */
-export interface OdspContainerServices {
+export interface OdspContainerServices extends IEventProvider<IOdspFluidContainerEvents> {
 	/**
 	 * Provides an object that facilitates obtaining information about users present in the Fluid session, as well as listeners for roster changes triggered by users joining or leaving the session.
 	 */
 	audience: IOdspAudience;
+
+	/**
+	 * Get the read-only information about the container.
+	 *
+	 * @remarks
+	 *
+	 * This is used to determine if the container is read-only or not.
+	 * Read-only is undefined on disconnected containers.
+	 */
+	getReadOnlyState(): boolean | undefined;
+
+	/**
+	 * Disposes the container services.
+	 */
+	dispose(): void;
+
+	/**
+	 * Lookup the blob URL for a blob handle.
+	 * @param handle - The blob handle to lookup the URL for
+	 * @returns The blob URL if found and the blob is not pending, undefined otherwise
+	 * @remarks
+	 * This function provides access to blob URLs for handles.
+	 * The URL may expire and does not support permalinks.
+	 * For blobs with pending payloads, this returns undefined. Consumers should use
+	 * the observability APIs on the handle (handle.payloadState, payloadShared event)
+	 * to understand/wait for URL availability.
+	 *
+	 * **WARNING**: This API comes with strong warnings that the URL may expire
+	 * and does not support permalinks.
+	 */
+	lookupTemporaryBlobURL<T>(handle: IFluidHandle<T>): string | undefined;
 }
 
 /**
