@@ -211,7 +211,7 @@ export class AnnotatedAllowedTypesInternal<
 		super();
 		this.unannotatedTypes = types.map((type) => type.type) as typeof this.unannotatedTypes;
 
-		// Since the array has been copied, mutations ot it will not be handled correctly so freeze it.
+		// Since the array has been copied, mutations to it will not be handled correctly so freeze it.
 		// Support for such mutations could be added at a later date by making more things lazy.
 		Object.freeze(this.types);
 		Object.freeze(this.unannotatedTypes);
