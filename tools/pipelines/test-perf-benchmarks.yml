@@ -20,7 +20,7 @@ resources:
   repositories:
   - repository: ff_pipeline_host
     type: git
-    name: PipelineHost
+    name: ff_pipeline_host
 
 
 parameters:
