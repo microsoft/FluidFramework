@@ -1024,7 +1024,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	// #region Commit Validation
 
 	/** Used to maintain the contract of {@link onCommitValid}(). */
-	#validatedCommits = new WeakMap<
+	readonly #validatedCommits = new WeakMap<
 		GraphCommit<SharedTreeChange>,
 		((commit: GraphCommit<SharedTreeChange>) => void)[] | true
 	>();
