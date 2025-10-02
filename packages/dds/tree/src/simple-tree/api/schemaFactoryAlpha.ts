@@ -197,6 +197,11 @@ export interface SchemaStaticsAlpha {
 		t: T | AnnotatedAllowedType<T>,
 	) => AnnotatedAllowedType<T>;
 
+	/**
+	 * Normalize information about a set of {@link AllowedTypes} into an {@link AllowedTypesFull}.
+	 * @remarks
+	 * This can take in {@link AnnotatedAllowedType} to preserve their annotations.
+	 */
 	readonly types: <
 		const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
 	>(

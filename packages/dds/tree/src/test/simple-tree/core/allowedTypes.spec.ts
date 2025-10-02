@@ -36,13 +36,10 @@ import {
 	normalizeToAnnotatedAllowedType,
 	type AllowedTypes,
 	type AnnotatedAllowedType,
-	type AnnotatedAllowedTypes,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
-	type UnannotateAllowedType,
-	type UnannotateAllowedTypes,
 	type UnannotateAllowedTypesList,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/allowedTypes.js";
@@ -144,34 +141,6 @@ const schema = new SchemaFactory("com.example");
 
 // Type tests for unannotate utilities
 {
-	// UnannotateAllowedType
-	{
-		// Generic cases
-		{
-			type A = LazyItem<TreeNodeSchema>;
-			type B = AnnotatedAllowedType;
-
-			type _check1 = requireAssignableTo<A, UnannotateAllowedType<A>>;
-			type _check2 = requireAssignableTo<UnannotateAllowedType<A>, A>;
-			type _check3 = requireAssignableTo<UnannotateAllowedType<B>, A>;
-			type _check4 = requireAssignableTo<
-				UnannotateAllowedType<AnnotatedAllowedType<TreeNodeSchema>>,
-				TreeNodeSchema
-			>;
-		}
-		// Concrete cases
-		{
-			type A = typeof SchemaFactory.number;
-
-			type _check1 = requireTrue<areSafelyAssignable<UnannotateAllowedType<A>, A>>;
-			type _check2 = requireTrue<
-				areSafelyAssignable<UnannotateAllowedType<{ type: A; metadata: { custom: "x" } }>, A>
-			>;
-
-			type _check4 = requireAssignableTo<UnannotateAllowedType<A>, A>;
-		}
-	}
-
 	// UnannotateAllowedTypesList
 	{
 		type A1 = AnnotatedAllowedType;
@@ -182,19 +151,6 @@ const schema = new SchemaFactory("com.example");
 		type _check1 = requireAssignableTo<Empty, UnannotateAllowedTypesList<Empty>>;
 
 		type _check2 = requireAssignableTo<UnannotateAllowedTypesList<Mixed>, readonly A2[]>;
-	}
-
-	// UnannotateAllowedTypes
-	{
-		type AnnotatedList = readonly [
-			AnnotatedAllowedType,
-			{ type: typeof SchemaFactory.number; metadata: { custom: "customValue" } },
-		];
-		type Unannotated = UnannotateAllowedTypes<AnnotatedAllowedTypes<AnnotatedList>>;
-		type _check = requireAssignableTo<
-			Unannotated,
-			readonly [LazyItem<TreeNodeSchema>, typeof SchemaFactory.number]
-		>;
 	}
 }
 

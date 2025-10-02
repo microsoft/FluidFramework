@@ -39,11 +39,8 @@ export interface AllowedTypesMetadata {
 export function allowUnused<T>(t?: T): void;
 
 // @alpha @system
-export type AnnotateAllowedType<T extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>> = T extends AnnotatedAllowedType<infer X> ? X : T;
-
-// @alpha @system
 export type AnnotateAllowedTypesList<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = {
-    [I in keyof T]: AnnotateAllowedType<T[I]>;
+    [I in keyof T]: T[I] extends AnnotatedAllowedType<infer X> ? X : T[I];
 };
 
 // @alpha @sealed
@@ -881,9 +878,7 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     scopedFactoryAlpha<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner>;
     static staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
     staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
-    // (undocumented)
     static types: <const T extends readonly (LazyItem<TreeNodeSchema> | AnnotatedAllowedType<LazyItem<TreeNodeSchema>>)[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AllowedTypesFullFromMixed<T>;
-    // (undocumented)
     types: <const T extends readonly (LazyItem<TreeNodeSchema> | AnnotatedAllowedType<LazyItem<TreeNodeSchema>>)[]>(t: T, metadata?: AllowedTypesMetadata | undefined) => AllowedTypesFullFromMixed<T>;
 }
 
@@ -920,7 +915,6 @@ export interface SchemaStatics {
 // @alpha @sealed @system
 export interface SchemaStaticsAlpha {
     readonly staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
-    // (undocumented)
     readonly types: <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixed<T>;
 }
 
@@ -1592,14 +1586,8 @@ const typeNameSymbol: unique symbol;
 export const typeSchemaSymbol: unique symbol;
 
 // @alpha @system
-export type UnannotateAllowedType<T extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>> = T extends AnnotatedAllowedType<infer X> ? X : T;
-
-// @alpha @system
-export type UnannotateAllowedTypes<T extends AnnotatedAllowedTypes> = UnannotateAllowedTypesList<T["types"]>;
-
-// @alpha @system
 export type UnannotateAllowedTypesList<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = {
-    [I in keyof T]: UnannotateAllowedType<T[I]>;
+    [I in keyof T]: T[I] extends AnnotatedAllowedType<infer X> ? X : T[I];
 };
 
 // @public

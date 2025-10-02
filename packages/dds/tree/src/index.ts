@@ -171,12 +171,9 @@ export {
 	type AllowedTypeMetadata,
 	type AllowedTypesMetadata,
 	type InsertableObjectFromAnnotatedSchemaRecord,
-	type UnannotateAllowedTypes,
-	type UnannotateAllowedType,
 	type UnannotateAllowedTypesList,
 	type SchemaStaticsAlpha,
 	type AnnotateAllowedTypesList,
-	type AnnotateAllowedType,
 	type AllowedTypesFull,
 	type AllowedTypesFullFromMixed,
 	// Beta APIs
