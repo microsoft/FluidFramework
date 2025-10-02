@@ -191,3 +191,4 @@ export type { IWebSocketTracker } from "./webSocketTracker";
 export type { IReadinessCheck, IReadinessStatus, ICheck } from "./readinessCheck";
 export type { IFluidAccessToken, IFluidAccessTokenGenerator } from "./fluidAccessTokenGenerator";
 export type { IDenyList } from "./denyList";
+export { type IStageTrace, StageTrace } from "./trace";

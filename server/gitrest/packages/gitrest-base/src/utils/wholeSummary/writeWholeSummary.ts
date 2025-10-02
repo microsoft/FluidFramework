@@ -195,6 +195,7 @@ async function createNewSummaryVersion(
 	isNewDocument: boolean,
 	sequenceNumber: number,
 	options: IWholeSummaryOptions,
+	commitDateStr?: string,
 ): Promise<ISummaryVersion> {
 	const commitMessage = isNewDocument
 		? "New document"
@@ -203,7 +204,7 @@ async function createNewSummaryVersion(
 		  `Summary @${sequenceNumber}`;
 	const commitParams: ICreateCommitParams = {
 		author: {
-			date: new Date().toISOString(),
+			date: commitDateStr ?? new Date().toISOString(),
 			email: "dummy@microsoft.com",
 			name: "GitRest Service",
 		},
@@ -215,6 +216,7 @@ async function createNewSummaryVersion(
 		GitRestLumberEventName.CreateSummaryVersion,
 		options.lumberjackProperties,
 	);
+
 	try {
 		const commit = await options.repoManager.createCommit(commitParams);
 		writeSummaryVersionMetric.success("Successfully created summary version as Git commit.");
@@ -316,6 +318,7 @@ export async function writeContainerSummary(
 		isNewDocument,
 		payload.sequenceNumber,
 		options,
+		payload.summaryTime,
 	);
 
 	// Create or update the document ref to reference the new commit.
