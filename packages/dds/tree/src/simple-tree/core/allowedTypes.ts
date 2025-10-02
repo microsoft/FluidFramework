@@ -46,9 +46,9 @@ import { schemaAsTreeNodeValid } from "./treeNodeValid.js";
  * For example, typing `[typeof A] | [typeof A, typeof B]` as `[typeof A, typeof B | typeof A]` is allowed,
  * and can produce more useful {@link Input} types.
  *
- * Due to this being implemented by {@link AllowedTypesFull} is it not safe to assume this is an array (as determined by `Array.isArray`).
- * @privateRemarks
- * Code reading data from this should use `normalizeAllowedTypes` to ensure consistent handling, caching, nice errors etc.
+ * Due to one implementation of this being {@link AllowedTypesFull}, it is not safe to assume this is an array (as determined by `Array.isArray`).
+ *
+ * Code reading data from this should use {@link normalizeAllowedTypes} to ensure consistent handling, caching, nice errors etc.
  * @system @public
  */
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
@@ -57,6 +57,9 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
  * Stores annotations for an individual allowed type.
  * @remarks
  * Create using APIs on {@link SchemaFactoryAlpha}, like {@link SchemaStaticsAlpha.staged}.
+ * @privateRemarks
+ * Since this is sealed, users are not supposed to create instances of it directly.
+ * Making it extend ErasedType could enforce that.
  * @alpha
  * @sealed
  */
