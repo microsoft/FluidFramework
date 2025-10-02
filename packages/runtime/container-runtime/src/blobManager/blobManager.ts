@@ -399,14 +399,14 @@ export class BlobManager {
 		const localId = this.localIdGenerator();
 		// There shouldn't really be any chance we need to query the localBlobCache before the
 		// blob is "uploaded" to the MemoryBlobStorage, but including it here out of caution.
-		this.localBlobCache.set(localId, { state: "uploading", blob } satisfies UploadingBlob);
+		this.localBlobCache.set(localId, { state: "uploading", blob });
 		// Blobs created while the container is detached are stored in IDetachedBlobStorage.
 		// The 'IContainerStorageService.createBlob()' call below will respond with a pseudo storage ID.
 		// That pseudo storage ID will be replaced with the real storage ID at attach time.
 		const { id: detachedStorageId } = await this.storage.createBlob(blob);
 		// From the perspective of the BlobManager, the blob is fully attached. The actual
 		// upload/attach process at container attach time is treated as opaque to this tracking.
-		this.localBlobCache.set(localId, { state: "attached", blob } satisfies AttachedBlob);
+		this.localBlobCache.set(localId, { state: "attached", blob });
 		this.redirectTable.set(localId, detachedStorageId);
 		return this.getNonPayloadPendingBlobHandle(localId);
 	}
@@ -442,8 +442,8 @@ export class BlobManager {
 		}
 
 		const localId = this.localIdGenerator();
-		this.localBlobCache.set(localId, { state: "localOnly", blob } satisfies LocalOnlyBlob);
-		// TODO:Pass abort signal?
+		this.localBlobCache.set(localId, { state: "localOnly", blob });
+		// TODO: Pass abort signal?
 		await this.uploadAndAttachLocalOnlyBlob(localId, blob);
 		// TODO: Check abort signal again here?
 		return this.getNonPayloadPendingBlobHandle(localId);
@@ -453,7 +453,7 @@ export class BlobManager {
 		blob: ArrayBufferLike,
 	): IFluidHandleInternalPayloadPending<ArrayBufferLike> {
 		const localId = this.localIdGenerator();
-		this.localBlobCache.set(localId, { state: "localOnly", blob } satisfies LocalOnlyBlob);
+		this.localBlobCache.set(localId, { state: "localOnly", blob });
 
 		const blobHandle = new BlobHandle(
 			getGCNodePathFromLocalId(localId),
@@ -481,9 +481,7 @@ export class BlobManager {
 	): Promise<void> {
 		// TODO: Assert localOnly here (but also need to permit the reupload due to TTL case?  Maybe reset the state to localOnly
 		// when TTL expires.)
-		// TODO: runWithRetry - seems we need to handle createBlob throwing as its fail mechanism
-		// TODO: Also handle uploadFailed here
-		this.localBlobCache.set(localId, { state: "uploading", blob } satisfies UploadingBlob);
+		this.localBlobCache.set(localId, { state: "uploading", blob });
 		const createBlobResponse: ICreateBlobResponseWithTTL = await this.storage.createBlob(blob);
 		this.localBlobCache.set(localId, {
 			state: "uploaded",
@@ -491,7 +489,7 @@ export class BlobManager {
 			storageId: createBlobResponse.id,
 			uploadTime: Date.now(),
 			minTTLInSeconds: createBlobResponse.minTTLInSeconds,
-		} satisfies UploadedBlob);
+		});
 		return this.attachUploadedBlob(localId);
 	}
 
@@ -505,7 +503,7 @@ export class BlobManager {
 		this.localBlobCache.set(localId, {
 			...localBlobRecord,
 			state: "attaching",
-		} satisfies AttachingBlob);
+		});
 
 		// Send and await a blob attach op. This serves two purposes:
 		// 1. If its a new blob, i.e., it isn't de-duped, the server will keep the blob alive if it sees this op
@@ -523,10 +521,10 @@ export class BlobManager {
 			this.sendBlobAttachOp(localId, localBlobRecord.storageId);
 		});
 
-		const attachedBlobRecord = {
+		const attachedBlobRecord: AttachedBlob = {
 			state: "attached",
 			blob: localBlobRecord.blob,
-		} satisfies AttachedBlob;
+		};
 		this.localBlobCache.set(localId, attachedBlobRecord);
 		// Note there may or may not be an entry in handleAttachedPendingBlobs for this localId,
 		// in particular for the non-payloadPending case since we should be reaching this point
