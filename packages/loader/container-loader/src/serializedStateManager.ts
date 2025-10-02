@@ -274,7 +274,8 @@ export class SerializedStateManager {
 
 	private tryRefreshSnapshot(): void {
 		if (
-			this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") === true &&
+			(this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") ??
+				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull")) === true &&
 			this._refreshSnapshotP === undefined &&
 			this.latestSnapshot === undefined
 		) {

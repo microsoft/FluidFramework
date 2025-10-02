@@ -1349,7 +1349,7 @@ export class ContainerRuntime
 
 	private readonly batchRunner = new BatchRunCounter();
 	private readonly _flushMode: FlushMode;
-	private readonly offlineEnabled: boolean;
+	private readonly offlineBatchDetectionEnabled: boolean;
 	private flushScheduled = false;
 
 	private canSendOps: boolean;
@@ -1796,10 +1796,12 @@ export class ContainerRuntime
 		} else {
 			this._flushMode = runtimeOptions.flushMode;
 		}
-		this.offlineEnabled =
-			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false;
+		this.offlineBatchDetectionEnabled =
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.enableOfflineBatchDetection") ??
+			false;
 
-		if (this.offlineEnabled && this._flushMode !== FlushMode.TurnBased) {
+		if (this.offlineBatchDetectionEnabled && this._flushMode !== FlushMode.TurnBased) {
 			const error = new UsageError("Offline mode is only supported in turn-based mode");
 			this.closeFn(error);
 			throw error;
@@ -1808,7 +1810,7 @@ export class ContainerRuntime
 		// DuplicateBatchDetection is only enabled if Offline Load is enabled
 		// It maintains a cache of all batchIds/sequenceNumbers within the collab window.
 		// Don't waste resources doing so if not needed.
-		if (this.offlineEnabled) {
+		if (this.offlineBatchDetectionEnabled) {
 			this.duplicateBatchDetector = new DuplicateBatchDetector(recentBatchInfo);
 		}
 
@@ -4762,7 +4764,7 @@ export class ContainerRuntime
 		const resubmitInfo = {
 			// Only include Batch ID if "Offline Load" feature is enabled
 			// It's only needed to identify batches across container forks arising from misuse of offline load.
-			batchId: this.offlineEnabled ? batchId : undefined,
+			batchId: this.offlineBatchDetectionEnabled ? batchId : undefined,
 			staged,
 		};
 

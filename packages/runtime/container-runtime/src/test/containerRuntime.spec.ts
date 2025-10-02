@@ -426,12 +426,13 @@ describe("Runtime", () => {
 				assert.strictEqual(containerRuntime.isDirty, false);
 			});
 
-			for (const enableOfflineLoad of [true, undefined])
+			for (const enableDuplicateBatchDetection of [true, undefined])
 				it("Replaying ops should resend in correct order, with batch ID if applicable", async () => {
 					const containerRuntime = (await ContainerRuntime.loadRuntime({
 						context: getMockContext({
 							settings: {
-								"Fluid.Container.enableOfflineLoad": enableOfflineLoad, // batchId only stamped if true
+								"Fluid.ContainerRuntime.enableOfflineBatchDetection":
+									enableDuplicateBatchDetection, // batchId only stamped if true
 							},
 						}) as IContainerContext,
 						registryEntries: [],
@@ -468,7 +469,7 @@ describe("Runtime", () => {
 						);
 					}
 
-					if (enableOfflineLoad === true) {
+					if (enableDuplicateBatchDetection === true) {
 						assert(
 							batchIdMatchesUnsentFormat(
 								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -2368,11 +2369,14 @@ describe("Runtime", () => {
 		});
 
 		describe("Duplicate Batch Detection", () => {
-			for (const enableOfflineLoad of [undefined, true]) {
-				it(`DuplicateBatchDetector enablement matches Offline load (${enableOfflineLoad === true ? "ENABLED" : "DISABLED"})`, async () => {
+			for (const enableDuplicateBatchDetection of [undefined, true]) {
+				it(`DuplicateBatchDetector enablement matches Offline load (${enableDuplicateBatchDetection === true ? "ENABLED" : "DISABLED"})`, async () => {
 					const containerRuntime = await ContainerRuntime.loadRuntime({
 						context: getMockContext({
-							settings: { "Fluid.Container.enableOfflineLoad": enableOfflineLoad },
+							settings: {
+								"Fluid.ContainerRuntime.enableOfflineBatchDetection":
+									enableDuplicateBatchDetection,
+							},
 						}) as IContainerContext,
 						registryEntries: [],
 						existing: false,
@@ -2394,7 +2398,7 @@ describe("Runtime", () => {
 					);
 					// Process a duplicate batch "batchId1" with different seqNum 234
 					const assertThrowsOnlyIfExpected =
-						enableOfflineLoad === true ? assert.throws : assert.doesNotThrow;
+						enableDuplicateBatchDetection === true ? assert.throws : assert.doesNotThrow;
 					const errorPredicate = (e: Error) =>
 						e.message === "Duplicate batch - The same batch was sequenced twice";
 					assertThrowsOnlyIfExpected(
@@ -2417,7 +2421,9 @@ describe("Runtime", () => {
 
 			it("Can roundrip DuplicateBatchDetector state through summary/snapshot", async () => {
 				// Duplicate Batch Detection requires OfflineLoad enabled
-				const settings_enableOfflineLoad = { "Fluid.Container.enableOfflineLoad": true };
+				const settings_enableOfflineLoad = {
+					"Fluid.ContainerRuntime.enableOfflineBatchDetection": true,
+				};
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({
 						settings: settings_enableOfflineLoad,
