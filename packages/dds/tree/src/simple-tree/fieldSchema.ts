@@ -588,13 +588,6 @@ export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 export type ImplicitAnnotatedFieldSchema = FieldSchema | ImplicitAnnotatedAllowedTypes;
 
 /**
- * Removes annotations from an annotated field schema.
- * @system @alpha
- */
-export type UnannotateImplicitFieldSchema<T extends ImplicitAnnotatedFieldSchema> =
-	T extends ImplicitAnnotatedAllowedTypes ? T : T;
-
-/**
  * Converts an `ImplicitFieldSchema` to a property type suitable for reading a field with this that schema.
  *
  * @typeparam TSchema - When non-exact schema are provided this errors on the side of returning too general of a type (a conservative union of all possibilities).

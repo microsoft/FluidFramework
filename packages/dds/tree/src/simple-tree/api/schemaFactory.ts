@@ -50,7 +50,6 @@ import {
 	type InsertableObjectFromSchemaRecord,
 	type TreeMapNode,
 	type TreeObjectNode,
-	type UnannotateSchemaRecord,
 } from "../node-kinds/index.js";
 import {
 	FieldKind,
@@ -388,36 +387,12 @@ export class SchemaFactory<
 		true,
 		T
 	> {
-		// The compiler can't infer that UnannotateSchemaRecord<T> is equal to T so we have to do a bunch of typing to make the error go away.
-		const object: TreeNodeSchemaClass<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Object,
-			TreeObjectNode<UnannotateSchemaRecord<T>, ScopedSchemaName<TScope, Name>>,
-			object & InsertableObjectFromSchemaRecord<UnannotateSchemaRecord<T>>,
-			true,
-			T
-		> = objectSchema(
+		return objectSchema(
 			scoped(this, name),
 			fields,
 			true,
 			defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
 		);
-
-		return object as TreeNodeSchemaClass<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Object,
-			TreeObjectNode<RestrictiveStringRecord<ImplicitFieldSchema>>,
-			unknown,
-			true,
-			T
-		> as TreeNodeSchemaClass<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Object,
-			TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
-			object & InsertableObjectFromSchemaRecord<T>,
-			true,
-			T
-		>;
 	}
 
 	/**
@@ -544,16 +519,7 @@ export class SchemaFactory<
 		T,
 		undefined
 	> {
-		// The compiler can't infer that T is equal to T so we have to do a bunch of typing to make the error go away.
-		const map: TreeNodeSchemaBoth<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Map,
-			TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
-			MapNodeInsertableData<T>,
-			ImplicitlyConstructable,
-			T,
-			undefined
-		> = mapSchema(
+		return mapSchema(
 			scoped(this, name),
 			allowedTypes,
 			implicitlyConstructable,
@@ -561,24 +527,6 @@ export class SchemaFactory<
 			!customizable,
 			undefined,
 		);
-
-		return map as TreeNodeSchemaBoth<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Map,
-			TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
-			MapNodeInsertableData<ImplicitAllowedTypes>,
-			ImplicitlyConstructable,
-			T,
-			undefined
-		> as TreeNodeSchemaBoth<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Map,
-			TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
-			MapNodeInsertableData<T>,
-			ImplicitlyConstructable,
-			T,
-			undefined
-		>;
 	}
 
 	/**
@@ -754,22 +702,12 @@ export class SchemaFactory<
 		T,
 		undefined
 	> {
-		const array = arraySchema(
+		return arraySchema(
 			scoped(this, name),
 			allowedTypes,
 			implicitlyConstructable,
 			customizable,
 		);
-
-		return array as TreeNodeSchemaBoth<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Array,
-			TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>, NodeKind.Array>,
-			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-			ImplicitlyConstructable,
-			T,
-			undefined
-		>;
 	}
 
 	/**

@@ -189,7 +189,6 @@ export {
 	type ImplicitFieldSchema,
 	type ImplicitAnnotatedFieldSchema,
 	type TreeFieldFromImplicitField,
-	type UnannotateImplicitFieldSchema,
 	FieldKind,
 	FieldSchema,
 	FieldSchemaAlpha,
@@ -238,7 +237,6 @@ export {
 	type RecordNodePojoEmulationSchema,
 	RecordNodeSchema,
 	type TreeRecordNode,
-	type UnannotateSchemaRecord,
 } from "./node-kinds/index.js";
 export {
 	unhydratedFlexTreeFromInsertable,

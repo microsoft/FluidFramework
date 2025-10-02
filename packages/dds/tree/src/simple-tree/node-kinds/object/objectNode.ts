@@ -61,7 +61,6 @@ import type {
 	ObjectNodeSchema,
 	ObjectNodeSchemaInternalData,
 	ObjectNodeSchemaPrivate,
-	UnannotateSchemaRecord,
 } from "./objectNodeTypes.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import {
@@ -202,7 +201,7 @@ export type InsertableObjectFromSchemaRecord<
  */
 export type InsertableObjectFromAnnotatedSchemaRecord<
 	T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
-> = InsertableObjectFromSchemaRecord<UnannotateSchemaRecord<T>>;
+> = InsertableObjectFromSchemaRecord<T>;
 
 /**
  * Maps from simple field keys ("property" keys) to information about the field.
@@ -463,7 +462,7 @@ export function objectSchema<
 	let handler: ProxyHandler<object>;
 	let customizable: boolean;
 
-	class CustomObjectNode extends CustomObjectNodeBase<UnannotateSchemaRecord<T>> {
+	class CustomObjectNode extends CustomObjectNodeBase<T> {
 		public static readonly fields: ReadonlyMap<
 			string,
 			FieldSchemaAlpha & SimpleObjectFieldSchema
@@ -616,7 +615,7 @@ export function objectSchema<
 	type Output = typeof CustomObjectNode &
 		(new (
 			input: InsertableObjectFromAnnotatedSchemaRecord<T> | InternalTreeNode,
-		) => TreeObjectNode<UnannotateSchemaRecord<T>, TName>);
+		) => TreeObjectNode<T, TName>);
 	return CustomObjectNode as Output;
 }
 
