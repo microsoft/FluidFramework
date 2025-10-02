@@ -29,6 +29,7 @@ export {
 	SchemaFactory,
 	type ScopedSchemaName,
 	type SchemaFactoryObjectOptions,
+	type SchemaFactoryObjectOptionsAlpha,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type SchemaFactory_base,
@@ -87,6 +88,7 @@ export type {
 	FieldSchemaAlphaUnsafe,
 	ArrayNodeCustomizableSchemaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
+	RecordNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
 	TreeRecordNodeUnsafe,
 } from "./typesUnsafe.js";
