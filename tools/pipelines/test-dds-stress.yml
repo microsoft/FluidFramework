@@ -21,7 +21,7 @@ resources:
   repositories:
   - repository: ff_pipeline_host
     type: git
-    name: ff_pipeline_host
+    name: PipelineHost
 
 
 variables:

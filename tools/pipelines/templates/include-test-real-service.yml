@@ -167,7 +167,7 @@ stages:
 
         steps:
         # Setup
-        - checkout: git://internal/ff_pipeline_host
+        - checkout: PipelineHost
           clean: true
 
         # Install self-signed cert for R11s deployment in local cert store

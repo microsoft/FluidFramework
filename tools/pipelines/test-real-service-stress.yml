@@ -20,9 +20,9 @@ resources:
       - next
       - lts
   repositories:
-    - repository: ff_pipeline_host
-      type: git
-      name: ff_pipeline_host
+  - repository: ff_pipeline_host
+    type: git
+    name: PipelineHost
 
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
