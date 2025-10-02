@@ -21,8 +21,8 @@ import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
  * but configuring that is more difficult and this is a useful approximation for now.
  *
  * Currently this configuration is not run automatically.
- * As this currently only disables debugAsserts and development only assert messages, the changes of regressions are low.
- * Currently its considered better to send the testing time on running more fuzz tests.
+ * As this currently only disables debugAsserts and development-only assert messages, the chances of regressions are low.
+ * Currently it's considered better to spend the testing time on running more fuzz tests.
  * Some test suites where regressions are more likely do their own testing with and without `emulateProductionBuild`,
  * further reducing the need to run this configuration regularly.
  */
