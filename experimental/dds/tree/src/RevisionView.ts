@@ -204,7 +204,7 @@ export function convertTreeNodesToViewNodes<
 				pendingNodes.pop()?.newNode ?? fail('covertTreeNodesToViewNodes incorrectly coordinated parentage')
 			);
 		} else {
-			const [traitLabel, child] = value as [TraitLabel, TIn];
+			const [traitLabel, child] = value;
 			const convertedChild = convert(child) as TOut;
 			if (convertedChild === undefined) {
 				return undefined;

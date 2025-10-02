@@ -342,7 +342,7 @@ function checkRuntimeCompatibility(
 	} else {
 		for (const [name, value] of Object.entries(documentSchema.runtime)) {
 			const validator = documentSchemaSupportedConfigs[name] as IProperty | undefined;
-			if (validator === undefined || !validator.validate(value)) {
+			if (!(validator?.validate(value) ?? false)) {
 				unknownProperty = `runtime/${name}`;
 			}
 		}
@@ -809,7 +809,7 @@ export class DocumentsSchemaController {
  */
 function isDevBuild(version: string): boolean {
 	const parsed = parse(version);
-	return parsed !== null && parsed.prerelease.includes("test");
+	return parsed?.prerelease.includes("test") ?? false;
 }
 
 /* eslint-enable jsdoc/check-indentation */

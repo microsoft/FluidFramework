@@ -165,7 +165,7 @@ interface IBlobManagerInternalEvents {
 	processedBlobAttach: (localId: string, storageId: string) => void;
 }
 
-export const blobManagerBasePath = "_blobs" as const;
+export const blobManagerBasePath = "_blobs";
 
 export class BlobManager {
 	private readonly mc: MonitoringContext;
