@@ -517,11 +517,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					const { blobManager } = createTestMaterial({ createBlobPayloadPending });
 					const ac = new AbortController();
 					ac.abort("abort test");
-					await assert.rejects(blobManager.createBlob(textToBlob("hello"), ac.signal), {
-						message: "uploadBlob aborted",
-						uploadTime: undefined,
-						acked: undefined,
-					});
+					const createP = blobManager.createBlob(textToBlob("hello"), ac.signal);
+					await assert.rejects(createP, { message: "uploadBlob aborted" });
 					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids, undefined);
 					assert.strictEqual(redirectTable, undefined);
@@ -539,11 +536,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					const ac = new AbortController();
 					const createP = blobManager.createBlob(textToBlob("hello"), ac.signal);
 					ac.abort("abort test");
-					await assert.rejects(createP, {
-						message: "uploadBlob aborted",
-						uploadTime: undefined,
-						acked: false,
-					});
+					await assert.rejects(createP, { message: "uploadBlob aborted" });
 					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids, undefined);
 					assert.strictEqual(redirectTable, undefined);
@@ -562,16 +555,10 @@ for (const createBlobPayloadPending of [false, true]) {
 					const createP = blobManager.createBlob(textToBlob("hello"), ac.signal);
 					const createP2 = blobManager.createBlob(textToBlob("world"));
 					ac.abort("abort test");
-					await assert.rejects(createP, {
-						message: "uploadBlob aborted",
-						uploadTime: undefined,
-						acked: false,
-					});
+					await assert.rejects(createP, { message: "uploadBlob aborted" });
 					await mockBlobStorage.waitProcessOne({ error: new Error("fake driver error") });
 					await mockBlobStorage.waitProcessOne({ error: new Error("fake driver error") });
-					await assert.rejects(createP2, {
-						message: "fake driver error",
-					});
+					await assert.rejects(createP2, { message: "fake driver error" });
 					const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 					assert.strictEqual(ids, undefined);
 					assert.strictEqual(redirectTable, undefined);

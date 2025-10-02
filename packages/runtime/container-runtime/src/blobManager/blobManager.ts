@@ -283,9 +283,8 @@ export class BlobManager {
 		this.sendBlobAttachOp = sendBlobAttachOp;
 	}
 
-	private createAbortError(pending?: LocalBlobRecord): LoggingError {
-		// TODO: Any other properties?
-		return new LoggingError("createBlob aborted");
+	private createAbortError(): LoggingError {
+		return new LoggingError("uploadBlob aborted");
 	}
 
 	public hasBlob(localId: string): boolean {
