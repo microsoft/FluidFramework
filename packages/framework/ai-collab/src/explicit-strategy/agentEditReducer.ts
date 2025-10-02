@@ -667,8 +667,7 @@ function createModifyDiff(treeEdit: Modify, idGenerator: IdGenerator): ModifyDif
 				{
 					shortId: undefined,
 					parentField: treeEdit.field,
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					schemaIdentifier: getSchemaIdentifier(treeEdit.modification)!,
+					schemaIdentifier: getSchemaIdentifier(treeEdit.modification),
 				},
 			]),
 			newValue: treeEdit.modification,

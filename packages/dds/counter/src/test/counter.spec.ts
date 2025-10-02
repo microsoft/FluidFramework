@@ -40,7 +40,7 @@ describe("SharedCounter", () => {
 	describe("SharedCounter in local state", () => {
 		describe("constructor", () => {
 			it("Can create a counter with default value", () => {
-				assert.ok(testCounter, "Count not create the SharedCounter");
+				assert(testCounter !== undefined, "Count not create the SharedCounter");
 				assert.equal(testCounter.value, 0, "The default value is incorrect");
 			});
 		});
