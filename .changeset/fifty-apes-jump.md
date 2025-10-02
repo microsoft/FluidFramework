@@ -5,4 +5,5 @@
 ---
 Alpha APIs for annotated allowed types have been refactored
 
-TODO: docs here
+Staged allowed types must now be run through `SchemaFactoryAlpha.types` to convert them into an `AllowedTypes`.
+This change also means that it is now possible to use the produced `AllowedTypes` in non-alpha APIs since it implements `AllowedTypes`.
