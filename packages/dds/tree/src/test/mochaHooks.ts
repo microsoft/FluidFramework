@@ -10,12 +10,12 @@ import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
  * This file should always be loaded when running tests in this package.
  *
  * If manually running subsets of tests by file (rather than filtering), this file should be explicitly included.
- * Note however that such an approach to limit which tests run is not recommended: use what is specified in this packages mocha config instead,
+ * Note however that such an approach to limit which tests run is not recommended: use what is specified in this package's mocha config instead,
  * and augment that with test filters.
  */
 
 /**
- * Allow running test with development only logic disabled.
+ * Allow running test with development-only logic (e.g. `debugAssert`) disabled.
  * @remarks
  * Ideally testing for production style use would be done by producing an actual production bundle and testing that,
  * but configuring that is more difficult and this is a useful approximation for now.
