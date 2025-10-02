@@ -1,6 +1,14 @@
 # @fluidframework/eslint-plugin-fluid Changelog
 
-## [0.3.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-plugin-fluid_v0.2.0)
+## [0.3.1](https://github.com/microsoft/FluidFramework/releases/tag/eslint-plugin-fluid_v0.3.1)
+
+Fixes indexing issues in the following rules, which would cause incorrect notification ranges and could cause malformed code fixes:
+
+- `@fluid-internal/fluid/no-file-path-links-in-jsdoc`
+- `@fluid-internal/fluid/no-hyphen-after-jsdoc-tag`
+- `@fluid-internal/fluid/no-markdown-links-in-jsdoc`
+
+## [0.3.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-plugin-fluid_v0.3.0)
 
 New rules added:
 
