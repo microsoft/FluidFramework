@@ -22,9 +22,6 @@ variables:
   value: true
 - group: ado-feeds
 
-# Skip tagging if Github PR coming from a fork
-settings:
-  skipBuildTagsForGitHubPullRequests: true
 stages:
 - stage: run_policy_check
   jobs:
