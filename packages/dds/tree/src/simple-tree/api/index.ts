@@ -87,7 +87,6 @@ export type {
 	FieldSchemaAlphaUnsafe,
 	ArrayNodeCustomizableSchemaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
-	RecordNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
 	TreeRecordNodeUnsafe,
 } from "./typesUnsafe.js";

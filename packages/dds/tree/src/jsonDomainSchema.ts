@@ -12,7 +12,6 @@ import type {
 	// #region Unused imports to make d.ts cleaner
 	/* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars */
 	ArrayNodeCustomizableSchemaUnsafe,
-	RecordNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
 	TreeNodeSchemaNonClass,
 	TreeNodeSchemaClass,

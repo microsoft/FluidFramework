@@ -121,7 +121,6 @@ export {
 	type System_Unsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
 	type MapNodeCustomizableSchemaUnsafe,
-	type RecordNodeCustomizableSchemaUnsafe,
 	type TreeRecordNodeUnsafe,
 	type TreeViewAlpha,
 	type TreeBranch,

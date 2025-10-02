@@ -534,35 +534,6 @@ export interface MapNodeCustomizableSchemaUnsafe<
 		SimpleMapNodeSchema<TCustomMetadata> {}
 
 /**
- * {@link Unenforced} version of {@link RecordNodeCustomizableSchema}s.
- * @remarks
- * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
- * @system @sealed @alpha
- */
-export interface RecordNodeCustomizableSchemaUnsafe<
-	out TName extends string,
-	in out T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
-	out TCustomMetadata,
-> extends TreeNodeSchemaClass<
-			TName,
-			NodeKind.Record,
-			TreeRecordNodeUnsafe<T> & WithType<TName, NodeKind.Record, T>,
-			| {
-					[Symbol.iterator](): Iterator<
-						[string, System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]
-					>;
-			  }
-			| {
-					readonly [P in string]: System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
-			  },
-			false,
-			T,
-			undefined,
-			TCustomMetadata
-		>,
-		SimpleRecordNodeSchema<TCustomMetadata> {}
-
-/**
  * {@link Unenforced} version of {@link TreeRecordNode}.
  * @remarks
  * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.

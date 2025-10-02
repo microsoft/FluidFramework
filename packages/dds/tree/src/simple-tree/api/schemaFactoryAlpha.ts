@@ -31,13 +31,14 @@ import type {
 	ImplicitAnnotatedAllowedTypes,
 	AnnotatedAllowedType,
 	LazyItem,
+	WithType,
 } from "../core/index.js";
 import { normalizeToAnnotatedAllowedType, createSchemaUpgrade } from "../core/index.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
-	RecordNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
+	TreeRecordNodeUnsafe,
 } from "./typesUnsafe.js";
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
 import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
@@ -434,14 +435,33 @@ export class SchemaFactoryAlpha<
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
 	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
-		return this.recordAlpha(
-			name,
-			allowedTypes as T & ImplicitAllowedTypes,
-			options,
-		) as unknown as RecordNodeCustomizableSchemaUnsafe<
-			ScopedSchemaName<TScope, Name>,
-			T,
-			TCustomMetadata
+		const RecordSchema = recordSchema({
+			identifier: scoped<TScope, TName, Name>(this, name),
+			info: allowedTypes as T & ImplicitAllowedTypes,
+			customizable: true,
+			// Setting this to true seems to work ok currently, but not for other node kinds.
+			// Supporting this could be fragile and might break other future changes, so it's being kept as false for now.
+			implicitlyConstructable: false,
+			metadata: options?.metadata,
+			persistedMetadata: options?.persistedMetadata,
+		});
+
+		return RecordSchema as TreeNodeSchemaClass<
+			/* Name */ ScopedSchemaName<TScope, Name>,
+			/* Kind */ NodeKind.Record,
+			/* TNode */ TreeRecordNodeUnsafe<T> &
+				WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>,
+			/* TInsertable */ {
+				// Ideally this would be
+				// RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>,
+				// but doing so breaks recursive types.
+				// Instead we do a less nice version:
+				readonly [P in string]: System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
+			},
+			/* ImplicitlyConstructable */ false,
+			/* Info */ T,
+			/* TConstructorExtra */ undefined,
+			/* TCustomMetadata */ TCustomMetadata
 		>;
 	}
 
