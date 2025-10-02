@@ -78,7 +78,10 @@ import {
 	objectWithUndefined,
 	objectWithUnknown,
 	objectWithOptionalUnknown,
-	objectWithOptionalUndefined,
+	// Skipped as type checking varies with exactOptionalPropertyTypes setting. See
+	// jsonDeserialized.spec.ts, jsonSerializable.exactOptionalPropertyTypes.true.spec.ts,
+	// and jsonSerializable.exactOptionalPropertyTypes.false.spec.ts.
+	// objectWithOptionalUndefined,
 	objectWithOptionalSymbol,
 	objectWithOptionalBigint,
 	objectWithNumberKey,
@@ -2226,18 +2229,6 @@ describe("JsonStringify and JsonParse", () => {
 						assertIdenticalTypes(
 							stringified,
 							createInstanceOf<JsonString<typeof objectWithUndefined>>(),
-						);
-						assertIdenticalTypes(out, emptyObject);
-					});
-					it("as optional property type (using 'exactOptionalPropertyTypes: true')", () => {
-						const { stringified, out } = stringifyThenParse(
-							// @ts-expect-error not assignable to parameter of type '{ optUndef?: never; }
-							objectWithOptionalUndefined,
-							{},
-						);
-						assertIdenticalTypes(
-							stringified,
-							createInstanceOf<JsonString<typeof objectWithOptionalUndefined>>(),
 						);
 						assertIdenticalTypes(out, emptyObject);
 					});
