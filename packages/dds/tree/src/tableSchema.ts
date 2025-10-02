@@ -13,7 +13,7 @@ import {
 	type InsertableObjectFromSchemaRecord,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeKind,
-	type SchemaFactoryBeta,
+	type SchemaFactoryAlpha,
 	type ScopedSchemaName,
 	TreeArrayNode,
 	type TreeNode,
@@ -25,7 +25,8 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type InternalTreeNode,
 	SchemaFactory,
-	type ImplicitFieldSchema,
+	type ImplicitAnnotatedFieldSchema,
+	type UnannotateImplicitFieldSchema,
 	isArrayNodeSchema,
 	type InsertableField,
 	withBufferedTreeEvents,
@@ -119,7 +120,7 @@ export namespace System_TableSchema {
 	 * @privateRemarks This interface primarily exists to provide a single home for property documentation.
 	 * @system @alpha
 	 */
-	export interface OptionsWithSchemaFactory<TSchemaFactory extends SchemaFactoryBeta> {
+	export interface OptionsWithSchemaFactory<TSchemaFactory extends SchemaFactoryAlpha> {
 		/**
 		 * Schema factory with which the Column schema will be associated.
 		 * @remarks Can be used to associate the resulting schema with an existing {@link SchemaFactory.scope|scope}.
@@ -148,7 +149,7 @@ export namespace System_TableSchema {
 	 * @system @alpha
 	 */
 	export type CreateColumnOptionsBase<
-		TSchemaFactory extends SchemaFactoryBeta = SchemaFactoryBeta,
+		TSchemaFactory extends SchemaFactoryAlpha = SchemaFactoryAlpha,
 		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	> = OptionsWithSchemaFactory<TSchemaFactory> & OptionsWithCellSchema<TCell>;
 
@@ -160,13 +161,13 @@ export namespace System_TableSchema {
 	export function createColumnSchema<
 		const TInputScope extends string | undefined,
 		const TCellSchema extends ImplicitAllowedTypes,
-		const TPropsSchema extends ImplicitFieldSchema,
+		const TPropsSchema extends ImplicitAnnotatedFieldSchema,
 	>(
-		inputSchemaFactory: SchemaFactoryBeta<TInputScope>,
+		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		cellSchema: TCellSchema,
 		propsSchema: TPropsSchema,
 	) {
-		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
+		const schemaFactory = inputSchemaFactory.scopedFactoryAlpha(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
 		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
@@ -201,7 +202,7 @@ export namespace System_TableSchema {
 		 * A column in a table.
 		 */
 		class Column
-			extends schemaFactory.objectBeta("Column", columnFields, {
+			extends schemaFactory.objectAlpha("Column", columnFields, {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
@@ -245,7 +246,7 @@ export namespace System_TableSchema {
 		type ColumnInsertableType = InsertableObjectFromSchemaRecord<
 			typeof columnFieldsBuiltInParts
 		> &
-			(FieldHasDefault<TPropsSchema> extends true
+			(FieldHasDefault<UnannotateImplicitFieldSchema<TPropsSchema>> extends true
 				? // Note: The docs on the below properties are copied from `IColumn.props`' docs to ensure that the
 					// documentation appears in the data insertion scenario.
 					// The contents are duplicated instead of using `@inheritdoc`, as intellisense does not correctly
@@ -256,14 +257,18 @@ export namespace System_TableSchema {
 						 * The column's properties.
 						 * @remarks This is a user-defined schema that can be used to store additional information about the column.
 						 */
-						props?: InsertableTreeFieldFromImplicitField<TPropsSchema>;
+						props?: InsertableTreeFieldFromImplicitField<
+							UnannotateImplicitFieldSchema<TPropsSchema>
+						>;
 					}
 				: {
 						/**
 						 * The column's properties.
 						 * @remarks This is a user-defined schema that can be used to store additional information about the column.
 						 */
-						props: InsertableTreeFieldFromImplicitField<TPropsSchema>;
+						props: InsertableTreeFieldFromImplicitField<
+							UnannotateImplicitFieldSchema<TPropsSchema>
+						>;
 					});
 
 		// Modified version of `Column` that ensures the constructor (and `createFromInsertable`) are
@@ -307,7 +312,7 @@ export namespace System_TableSchema {
 	export type ColumnSchemaBase<
 		TScope extends string | undefined = string | undefined,
 		TCellSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-		TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+		TPropsSchema extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
 	> = ReturnType<typeof createColumnSchema<TScope, TCellSchema, TPropsSchema>>;
 
 	// #endregion
@@ -320,7 +325,7 @@ export namespace System_TableSchema {
 	 * @system @alpha
 	 */
 	export type CreateRowOptionsBase<
-		TSchemaFactory extends SchemaFactoryBeta = SchemaFactoryBeta,
+		TSchemaFactory extends SchemaFactoryAlpha = SchemaFactoryAlpha,
 		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	> = OptionsWithSchemaFactory<TSchemaFactory> & OptionsWithCellSchema<TCell>;
 
@@ -332,13 +337,13 @@ export namespace System_TableSchema {
 	export function createRowSchema<
 		const TInputScope extends string | undefined,
 		const TCellSchema extends ImplicitAllowedTypes,
-		const TPropsSchema extends ImplicitFieldSchema,
+		const TPropsSchema extends ImplicitAnnotatedFieldSchema,
 	>(
-		inputSchemaFactory: SchemaFactoryBeta<TInputScope>,
+		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		cellSchema: TCellSchema,
 		propsSchema: TPropsSchema,
 	) {
-		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
+		const schemaFactory = inputSchemaFactory.scopedFactoryAlpha(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
 		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
@@ -381,7 +386,7 @@ export namespace System_TableSchema {
 		 * The Row schema - this is a map of Cells where the key is the column id
 		 */
 		class Row
-			extends schemaFactory.objectBeta("Row", rowFields, {
+			extends schemaFactory.objectAlpha("Row", rowFields, {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
@@ -461,7 +466,7 @@ export namespace System_TableSchema {
 		// the issue.
 		// type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFields>;
 		type RowInsertableType = InsertableObjectFromSchemaRecord<typeof rowFieldsBuiltInParts> &
-			(FieldHasDefault<TPropsSchema> extends true
+			(FieldHasDefault<UnannotateImplicitFieldSchema<TPropsSchema>> extends true
 				? // Note: The docs on the below properties are copied from `IRow.props`' docs to ensure that the
 					// documentation appears in the data insertion scenario.
 					// The contents are duplicated instead of using `@inheritdoc`, as intellisense does not correctly
@@ -473,7 +478,9 @@ export namespace System_TableSchema {
 						 * @remarks This is a user-defined schema that can be used to store additional information
 						 * about the row.
 						 */
-						props?: InsertableTreeFieldFromImplicitField<TPropsSchema>;
+						props?: InsertableTreeFieldFromImplicitField<
+							UnannotateImplicitFieldSchema<TPropsSchema>
+						>;
 					}
 				: {
 						/**
@@ -481,7 +488,9 @@ export namespace System_TableSchema {
 						 * @remarks This is a user-defined schema that can be used to store additional information
 						 * about the row.
 						 */
-						props: InsertableTreeFieldFromImplicitField<TPropsSchema>;
+						props: InsertableTreeFieldFromImplicitField<
+							UnannotateImplicitFieldSchema<TPropsSchema>
+						>;
 					});
 
 		// Modified version of `Row` that ensures the constructor (and `createFromInsertable`) are
@@ -525,7 +534,7 @@ export namespace System_TableSchema {
 	export type RowSchemaBase<
 		TScope extends string | undefined = string | undefined,
 		TCellSchema extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-		TPropsSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+		TPropsSchema extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
 	> = ReturnType<typeof createRowSchema<TScope, TCellSchema, TPropsSchema>>;
 
 	// #endregion
@@ -538,7 +547,7 @@ export namespace System_TableSchema {
 	 * @system @alpha
 	 */
 	export type TableFactoryOptionsBase<
-		TSchemaFactory extends SchemaFactoryBeta = SchemaFactoryBeta,
+		TSchemaFactory extends SchemaFactoryAlpha = SchemaFactoryAlpha,
 		TCell extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	> = OptionsWithSchemaFactory<TSchemaFactory> & OptionsWithCellSchema<TCell>;
 
@@ -553,12 +562,12 @@ export namespace System_TableSchema {
 		const TColumnSchema extends ColumnSchemaBase<TInputScope, TCellSchema>,
 		const TRowSchema extends RowSchemaBase<TInputScope, TCellSchema>,
 	>(
-		inputSchemaFactory: SchemaFactoryBeta<TInputScope>,
+		inputSchemaFactory: SchemaFactoryAlpha<TInputScope>,
 		_cellSchema: TCellSchema,
 		columnSchema: TColumnSchema,
 		rowSchema: TRowSchema,
 	) {
-		const schemaFactory = inputSchemaFactory.scopedFactory(tableSchemaFactorySubScope);
+		const schemaFactory = inputSchemaFactory.scopedFactoryAlpha(tableSchemaFactorySubScope);
 		type Scope = ScopedSchemaName<TInputScope, typeof tableSchemaFactorySubScope>;
 
 		type CellValueType = TreeNodeFromImplicitAllowedTypes<TCellSchema>;
@@ -573,13 +582,13 @@ export namespace System_TableSchema {
 		const tableFields = {
 			rows: schemaFactory.array("Table.rows", rowSchema),
 			columns: schemaFactory.array("Table.columns", columnSchema),
-		} as const satisfies Record<string, ImplicitFieldSchema>;
+		} as const satisfies Record<string, ImplicitAnnotatedFieldSchema>;
 
 		/**
 		 * The Table schema
 		 */
 		class Table
-			extends schemaFactory.objectBeta("Table", tableFields, {
+			extends schemaFactory.objectAlpha("Table", tableFields, {
 				// Will make it easier to evolve this schema in the future.
 				allowUnknownOptionalFields: true,
 			})
@@ -1205,7 +1214,7 @@ export namespace TableSchema {
 	 */
 	export interface Column<
 		TCell extends ImplicitAllowedTypes,
-		TProps extends ImplicitFieldSchema = ImplicitFieldSchema,
+		TProps extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
 	> {
 		/**
 		 * The unique identifier of the column.
@@ -1220,8 +1229,10 @@ export namespace TableSchema {
 		 * Note: these docs are duplicated on the inline type definitions in {@link System_TableSchema.createColumnSchema}.
 		 * If you update the docs here, please also update the inline type definitions.
 		 */
-		get props(): TreeFieldFromImplicitField<TProps>;
-		set props(value: InsertableTreeFieldFromImplicitField<TProps>);
+		get props(): TreeFieldFromImplicitField<UnannotateImplicitFieldSchema<TProps>>;
+		set props(value: InsertableTreeFieldFromImplicitField<
+			UnannotateImplicitFieldSchema<TProps>
+		>);
 
 		/**
 		 * Gets all of the populated cells in the column, keyed by their associated row IDs.
@@ -1243,7 +1254,7 @@ export namespace TableSchema {
 		const TScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
 	>(
-		params: System_TableSchema.CreateColumnOptionsBase<SchemaFactoryBeta<TScope>, TCell>,
+		params: System_TableSchema.CreateColumnOptionsBase<SchemaFactoryAlpha<TScope>, TCell>,
 	): System_TableSchema.ColumnSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>;
 	/**
 	 * Factory for creating new table column schema.
@@ -1255,9 +1266,9 @@ export namespace TableSchema {
 	export function column<
 		const TScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TProps extends ImplicitFieldSchema,
+		const TProps extends ImplicitAnnotatedFieldSchema,
 	>(
-		params: System_TableSchema.CreateColumnOptionsBase<SchemaFactoryBeta<TScope>, TCell> & {
+		params: System_TableSchema.CreateColumnOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
 			/**
 			 * Optional column properties.
 			 */
@@ -1272,7 +1283,7 @@ export namespace TableSchema {
 		cell,
 		props = SchemaFactory.optional(SchemaFactory.null),
 	}: System_TableSchema.CreateColumnOptionsBase & {
-		readonly props?: ImplicitFieldSchema;
+		readonly props?: ImplicitAnnotatedFieldSchema;
 	}): TreeNodeSchema {
 		return System_TableSchema.createColumnSchema(schemaFactory, cell, props);
 	}
@@ -1290,7 +1301,7 @@ export namespace TableSchema {
 	 */
 	export interface Row<
 		TCell extends ImplicitAllowedTypes,
-		TProps extends ImplicitFieldSchema = ImplicitFieldSchema,
+		TProps extends ImplicitAnnotatedFieldSchema = ImplicitAnnotatedFieldSchema,
 	> {
 		/**
 		 * The unique identifier of the row.
@@ -1352,8 +1363,10 @@ export namespace TableSchema {
 		 * Note: these docs are duplicated on the inline type definitions in {@link System_TableSchema.createRowSchema}.
 		 * If you update the docs here, please also update the inline type definitions.
 		 */
-		get props(): TreeFieldFromImplicitField<TProps>;
-		set props(value: InsertableTreeFieldFromImplicitField<TProps>);
+		get props(): TreeFieldFromImplicitField<UnannotateImplicitFieldSchema<TProps>>;
+		set props(value: InsertableTreeFieldFromImplicitField<
+			UnannotateImplicitFieldSchema<TProps>
+		>);
 	}
 
 	/**
@@ -1366,7 +1379,7 @@ export namespace TableSchema {
 		const TScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
 	>(
-		params: System_TableSchema.CreateRowOptionsBase<SchemaFactoryBeta<TScope>, TCell>,
+		params: System_TableSchema.CreateRowOptionsBase<SchemaFactoryAlpha<TScope>, TCell>,
 	): System_TableSchema.RowSchemaBase<TScope, TCell, System_TableSchema.DefaultPropsType>;
 	/**
 	 * Factory for creating new table row schema.
@@ -1378,9 +1391,9 @@ export namespace TableSchema {
 	export function row<
 		const TScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
-		const TProps extends ImplicitFieldSchema,
+		const TProps extends ImplicitAnnotatedFieldSchema,
 	>(
-		params: System_TableSchema.CreateRowOptionsBase<SchemaFactoryBeta<TScope>, TCell> & {
+		params: System_TableSchema.CreateRowOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
 			/**
 			 * Optional row properties.
 			 */
@@ -1395,7 +1408,7 @@ export namespace TableSchema {
 		cell,
 		props = SchemaFactory.optional(SchemaFactory.null),
 	}: System_TableSchema.CreateRowOptionsBase & {
-		readonly props?: ImplicitFieldSchema;
+		readonly props?: ImplicitAnnotatedFieldSchema;
 	}): TreeNodeSchema {
 		return System_TableSchema.createRowSchema(schemaFactory, cell, props);
 	}
@@ -1644,7 +1657,7 @@ export namespace TableSchema {
 		const TScope extends string | undefined,
 		const TCell extends ImplicitAllowedTypes,
 	>(
-		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryBeta<TScope>, TCell>,
+		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell>,
 	): System_TableSchema.TableSchemaBase<
 		TScope,
 		TCell,
@@ -1663,7 +1676,7 @@ export namespace TableSchema {
 		const TCell extends ImplicitAllowedTypes,
 		const TColumn extends System_TableSchema.ColumnSchemaBase<TScope, TCell>,
 	>(
-		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryBeta<TScope>, TCell> & {
+		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
 			readonly column: TColumn;
 		},
 	): System_TableSchema.TableSchemaBase<
@@ -1684,7 +1697,7 @@ export namespace TableSchema {
 		const TCell extends ImplicitAllowedTypes,
 		const TRow extends System_TableSchema.RowSchemaBase<TScope, TCell>,
 	>(
-		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryBeta<TScope>, TCell> & {
+		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
 			readonly row: TRow;
 		},
 	): System_TableSchema.TableSchemaBase<
@@ -1707,7 +1720,7 @@ export namespace TableSchema {
 		const TColumn extends System_TableSchema.ColumnSchemaBase<TScope, TCell>,
 		const TRow extends System_TableSchema.RowSchemaBase<TScope, TCell>,
 	>(
-		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryBeta<TScope>, TCell> & {
+		params: System_TableSchema.TableFactoryOptionsBase<SchemaFactoryAlpha<TScope>, TCell> & {
 			readonly column: TColumn;
 			readonly row: TRow;
 		},
