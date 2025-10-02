@@ -5,7 +5,7 @@ sidebar_position: 3
 
 # Rolling Out New Allowed Types
 
-This guide shows you how to safely add new allowed types to existing fields in your [SharedTree](../index.mdx) schema without breaking [forwards compatibility](./index.mdx#forwards-compatibility) with existing applications.
+This guide shows how to safely add a new [TreeNodeSchema](../../../api/fluid-framework/treenodeschema-typealias) to an existing [AllowedTypes](../../../api/tree/allowedtypes-typealias) in a [SharedTree](../index.mdx) schema without breaking [forwards compatibility](./index.mdx#forwards-compatibility) with existing applications.
 
 Directly adding a new node type to an existing field would cause old clients to be unable to load documents whose schema contain the new type, breaking them immediately.
 The following process stages changes to introduce a new allowed type in a non-breaking way.
