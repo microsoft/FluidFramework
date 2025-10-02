@@ -40,20 +40,20 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-example/clicker": "^1.4.0",
-    "@fluid-example/codemirror": "^1.4.0",
-    "@fluid-example/collaborative-textarea": "^1.4.0",
-    "@fluid-example/multiview-coordinate-model": "^1.4.0",
-    "@fluid-example/multiview-slider-coordinate-view": "^1.4.0",
-    "@fluid-example/prosemirror": "^1.4.0",
-    "@fluid-experimental/get-container": "^1.4.0",
-    "@fluidframework/aqueduct": "^1.4.0",
+    "@fluid-example/clicker": "workspace:~",
+    "@fluid-example/codemirror": "workspace:~",
+    "@fluid-example/collaborative-textarea": "workspace:~",
+    "@fluid-example/multiview-coordinate-model": "workspace:~",
+    "@fluid-example/multiview-slider-coordinate-view": "workspace:~",
+    "@fluid-example/prosemirror": "workspace:~",
+    "@fluid-experimental/get-container": "workspace:~",
+    "@fluidframework/aqueduct": "workspace:~",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/core-interfaces": "^1.4.0",
-    "@fluidframework/datastore-definitions": "^1.4.0",
-    "@fluidframework/runtime-definitions": "^1.4.0",
-    "@fluidframework/runtime-utils": "^1.4.0",
-    "@fluidframework/view-adapters": "^1.4.0",
+    "@fluidframework/core-interfaces": "workspace:~",
+    "@fluidframework/datastore-definitions": "workspace:~",
+    "@fluidframework/runtime-definitions": "workspace:~",
+    "@fluidframework/runtime-utils": "workspace:~",
+    "@fluidframework/view-adapters": "workspace:~",
     "office-ui-fabric-react": "^7.28.1",
     "prop-types": "^15.7.2",
     "react": "^16.10.2",
@@ -75,11 +75,12 @@
     "@types/puppeteer": "1.3.0",
     "@types/react": "^16.9.15",
     "@types/react-dom": "^16.9.4",
+    "@types/uuid": "^8.3.0",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
     "cross-env": "^7.0.2",
     "css-loader": "^1.0.0",
-    "eslint": "~8.6.0",
+    "eslint": "~8.55.0",
     "html-loader": "^3.1.0",
     "html-webpack-plugin": "^5.5.0",
     "jest": "^26.6.3",
@@ -95,7 +96,7 @@
     "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0",
     "url-loader": "^2.1.0",
-    "webpack": "^5.72.0",
+    "webpack": "^5.76.0",
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "~4.6.0",
     "webpack-merge": "^5.8.0"
@@ -113,5 +114,10 @@
   "jest-junit": {
     "outputDirectory": "nyc",
     "outputName": "jest-junit-report.xml"
+  },
+  "typeValidation": {
+    "disabled": true,
+    "broken": {},
+    "entrypoint": "internal"
   }
 }

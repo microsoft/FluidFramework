@@ -23,8 +23,10 @@ module.exports = {
         },
         {
             // Rules only for type validation files
-            files: ["**/types/*validate*Previous*.ts"],
-            rules: {
+            "files": ["**/test/types/*.generated.*"],
+            "rules": {
+                "max-len": "off",
+                "@typescript-eslint/semi": "off",
                 "@typescript-eslint/comma-spacing": "off",
             },
         },

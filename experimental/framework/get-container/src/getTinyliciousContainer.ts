@@ -33,22 +33,17 @@ export async function getTinyliciousContainer(
     const tokenProvider = new InsecureTinyliciousTokenProvider();
     const urlResolver = new InsecureTinyliciousUrlResolver(tinyliciousPort);
     const documentServiceFactory = new RouterliciousDocumentServiceFactory(tokenProvider);
-    let container: IContainer;
-    if (createNew) {
-        container = await createContainer({
+    const container = await (createNew ? createContainer({
             documentServiceFactory,
             urlResolver,
             containerRuntimeFactory,
             request: createTinyliciousCreateNewRequest(),
-        });
-    } else {
-        container = await getContainer({
+        }) : getContainer({
             documentServiceFactory,
             urlResolver,
             containerRuntimeFactory,
             request: { url: documentId },
-        });
-    }
+        }));
     const resolved = container.resolvedUrl;
     ensureFluidResolvedUrl(resolved);
     const containerId = resolved.id;

@@ -46,13 +46,13 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
     /**
      * Resolves the referenced property for the given key
      *
-     * @param  {number|array<string|number>} in_ids the ID of the property or an array of IDs
+     * @param  {number|array<string|number>} in_ids -  the ID of the property or an array of IDs
      *     if an array is passed, the .get function will be performed on each id in sequence
      *     for example .get([0, 'position','x']) is equivalent to .get(0).get('position').get('x').
      *     If .get resolves to a ReferenceProperty, it will, by default, return the property that the ReferenceProperty
      *     refers to.
      * @param {Object} in_options - parameter object
-     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
+     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] -
      *     How should this function behave during reference resolution?
      *
      * @return {property-properties.BaseProperty|undefined} The property object the reference points to or undefined if it
@@ -82,7 +82,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
      * Checks whether the reference is valid. This is either the case when it is empty or when the referenced
      * property exists.
      *
-     * @param {number} in_position the target index
+     * @param {number} in_position - the target index
      * @return {boolean} True if the reference is valid, otherwise false.
      */
     isReferenceValid(in_position) {
@@ -124,7 +124,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
 
     /**
      * returns the path value of a reference.
-     * @param {number} in_id the index of the property
+     * @param {number} in_id - the index of the property
      * @return {string} the path string
      */
     getValue(in_id) {
@@ -162,7 +162,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
 
     /**
      * Removes an element of the array and shift remaining elements to the left
-     * @param {number} in_position the index that will be removed
+     * @param {number} in_position - the index that will be removed
      * @throws if in_position is not a number
      * @throws if trying to remove an item with a parent
      * @throws if trying to remove something that does not exist
@@ -176,8 +176,8 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
 
     /**
      * Removes a given number of elements from the array and shifts remaining values to the left.
-     * @param {number} in_offset target start index
-     * @param {number} in_deleteCount number of elements to be deleted
+     * @param {number} in_offset - target start index
+     * @param {number} in_deleteCount - number of elements to be deleted
      * @throws if in_offset is not a number
      * @throws if in_deleteCount is not a number
      * @throws if trying to remove an item with a parent
@@ -206,17 +206,12 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
      */
     _resolvePathSegment(in_segment, in_segmentType) {
         // Array tokens are automatically resolved
-        if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
-            return this.get(in_segment, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
-        } else {
-            // Everything else is handled by the implementation in the base property
-            return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
-        }
+        return in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN ? this.get(in_segment, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER }) : AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
     }
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param {Number} in_length - the initial length of the array
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new UniversalDataArray(in_length);

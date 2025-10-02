@@ -10,6 +10,17 @@ module.exports = {
     "parserOptions": {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
+    "overrides": [
+        {
+            // Rules only for type validation files
+            "files": ["**/test/types/*.generated.*"],
+            "rules": {
+                "max-len": "off",
+                "@typescript-eslint/semi": "off",
+                "@typescript-eslint/comma-spacing": "off",
+            },
+        },
+    ],
     "rules": {
         // Many rules are disabled in PropertyDDS projects. See https://github.com/microsoft/FluidFramework/pull/10272
         "@typescript-eslint/ban-types": "off",

@@ -88,11 +88,7 @@ export class ScriptManager {
                     cacheLink.as = targetName === "umd" ? "script" : targetName;
                     cacheLink.crossOrigin = "anonymous";
 
-                    if (cacheLink.relList?.supports("preload") === true) {
-                        cacheLink.rel = "preload";
-                    } else {
-                        cacheLink.rel = "prefetch";
-                    }
+                    cacheLink.rel = cacheLink.relList?.supports("preload") === true ? "preload" : "prefetch";
                     const loadP = new Promise<void>((resolve, reject) => {
                         cacheLink.onload = () => resolve();
                         // eslint-disable-next-line prefer-promise-reject-errors

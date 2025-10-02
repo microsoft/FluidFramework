@@ -22,11 +22,7 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
             : existing;
         const runtime = await this.preInitialize(context, fromExisting);
 
-        if (fromExisting) {
-            await this.instantiateFromExisting(runtime);
-        } else {
-            await this.instantiateFirstTime(runtime);
-        }
+        await (fromExisting ? this.instantiateFromExisting(runtime) : this.instantiateFirstTime(runtime));
 
         await this.hasInitialized(runtime);
         return runtime;

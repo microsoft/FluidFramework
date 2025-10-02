@@ -24,7 +24,7 @@ parameters:
 - name: buildToolsVersionToInstall
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
-  default: "^0.5.0"
+  default: "^0.55.0"
 
 trigger:
   branches:
@@ -66,7 +66,7 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: tools/test-tools
-    tagName:
+    tagName: test-tools
     taskBuild: build
     taskBuildDocs: false
     taskLint: false

@@ -15,4 +15,15 @@ module.exports = {
         "@typescript-eslint/promise-function-async": "off",
         "@typescript-eslint/no-misused-promises": "off",
     },
+    overrides: [
+        {
+            // Rules only for type validation files
+            files: ["**/test/types/*.generated.*"],
+            rules: {
+                "max-len": "off",
+                "@typescript-eslint/semi": "off",
+                "@typescript-eslint/comma-spacing": "off",
+            },
+        },
+    ],
 };

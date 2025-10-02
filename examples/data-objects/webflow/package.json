@@ -74,29 +74,29 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluid-example/example-utils": "^1.4.0",
-    "@fluidframework/aqueduct": "^1.4.0",
+    "@fluid-example/example-utils": "workspace:~",
+    "@fluidframework/aqueduct": "workspace:~",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.2",
-    "@fluidframework/core-interfaces": "^1.4.0",
-    "@fluidframework/data-object-base": "^1.4.0",
-    "@fluidframework/map": "^1.4.0",
-    "@fluidframework/merge-tree": "^1.4.0",
-    "@fluidframework/runtime-definitions": "^1.4.0",
-    "@fluidframework/sequence": "^1.4.0",
-    "@fluidframework/view-interfaces": "^1.4.0",
+    "@fluidframework/core-interfaces": "workspace:~",
+    "@fluidframework/data-object-base": "workspace:~",
+    "@fluidframework/map": "workspace:~",
+    "@fluidframework/merge-tree": "workspace:~",
+    "@fluidframework/runtime-definitions": "workspace:~",
+    "@fluidframework/sequence": "workspace:~",
+    "@fluidframework/view-interfaces": "workspace:~",
     "debug": "^4.1.1",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": "^1.4.0",
+    "@fluid-tools/webpack-fluid-loader": "workspace:~",
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup": "^1.4.0",
-    "@fluidframework/runtime-utils": "^1.4.0",
-    "@fluidframework/test-utils": "^1.4.0",
-    "@fluidframework/test-version-utils": "^1.4.0",
+    "@fluidframework/mocha-test-setup": "workspace:~",
+    "@fluidframework/runtime-utils": "workspace:~",
+    "@fluidframework/test-utils": "workspace:~",
+    "@fluidframework/test-version-utils": "workspace:~",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/debug": "^4.1.5",
     "@types/mocha": "^9.1.1",
@@ -107,7 +107,7 @@
     "copyfiles": "^2.1.0",
     "cross-env": "^7.0.2",
     "css-loader": "^1.0.0",
-    "eslint": "~8.6.0",
+    "eslint": "~8.55.0",
     "file-loader": "^3.0.1",
     "html-loader": "^3.1.0",
     "ignore-styles": "^5.0.1",
@@ -124,7 +124,7 @@
     "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0",
     "url-loader": "^2.1.0",
-    "webpack": "^5.72.0",
+    "webpack": "^5.76.0",
     "webpack-bundle-analyzer": "^4.5.0",
     "webpack-cli": "^4.9.2",
     "webpack-dev-server": "~4.6.0",
@@ -139,5 +139,10 @@
         "library": "main"
       }
     }
+  },
+  "typeValidation": {
+    "disabled": true,
+    "broken": {},
+    "entrypoint": "internal"
   }
 }

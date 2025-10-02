@@ -1,8 +1,0 @@
-{
-  "packages": [
-    "examples/**",
-    "experimental/**",
-    "packages/**"
-  ],
-  "version": "1.4.0"
-}

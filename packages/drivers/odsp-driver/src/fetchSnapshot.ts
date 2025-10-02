@@ -66,11 +66,7 @@ export async function fetchSnapshot(
     let queryParams: ISnapshotOptions = {};
 
     if (fetchFullSnapshot) {
-        if (versionId !== "latest") {
-            queryParams = { channels: 1, blobs: 2 };
-        } else {
-            queryParams = { deltas: 1, channels: 1, blobs: 2 };
-        }
+        queryParams = versionId !== "latest" ? { channels: 1, blobs: 2 } : { deltas: 1, channels: 1, blobs: 2 };
     }
 
     const queryString = getQueryString(queryParams);
