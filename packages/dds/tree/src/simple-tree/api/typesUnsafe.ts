@@ -534,12 +534,10 @@ export interface MapNodeCustomizableSchemaUnsafe<
 		SimpleMapNodeSchema<TCustomMetadata> {}
 
 /**
- * {@link Unenforced} version of {@link MapNodeCustomizableSchema}s.
+ * {@link Unenforced} version of {@link RecordNodeCustomizableSchema}s.
  * @remarks
  * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
- * @sealed
- * @alpha
- * @system
+ * @system @sealed @alpha
  */
 export interface RecordNodeCustomizableSchemaUnsafe<
 	out TName extends string,
