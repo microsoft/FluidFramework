@@ -24,36 +24,52 @@ const toComparableArray = (dir: ISharedMap): [string, unknown][] =>
 		isFluidHandle(value) ? toFluidHandleInternal(value).absolutePath : value,
 	]);
 
+// initialize loader and create a container function
+const initialize = async () => {
+	const deltaConnectionServer = LocalDeltaConnectionServer.create();
+
+	const { urlResolver, codeDetails, codeLoader, loaderProps, documentServiceFactory } =
+		createLoader({
+			deltaConnectionServer,
+		});
+
+	const container = asLegacyAlpha(
+		await createDetachedContainer({
+			codeDetails,
+			...loaderProps,
+			configProvider: {
+				getRawConfig: (name) => {
+					switch (name) {
+						case "Fluid.Container.enableOfflineLoad":
+							return true;
+						default:
+							return undefined;
+					}
+				},
+			},
+		}),
+	);
+	const { ITestFluidObject }: FluidObject<TestFluidObject> =
+		(await container.getEntryPoint()) ?? {};
+	assert(
+		ITestFluidObject !== undefined,
+		"Expected entrypoint to be a valid TestFluidObject, but it was undefined",
+	);
+	return {
+		container,
+		ITestFluidObject,
+		urlResolver,
+		codeLoader,
+		documentServiceFactory,
+		deltaConnectionServer,
+		loaderProps,
+	};
+};
+
 describe("loadFrozenContainerFromPendingState", () => {
 	it("loadFrozenContainerFromPendingState", async () => {
-		const deltaConnectionServer = LocalDeltaConnectionServer.create();
-
-		const { urlResolver, codeDetails, codeLoader, loaderProps, documentServiceFactory } =
-			createLoader({
-				deltaConnectionServer,
-			});
-		const container = asLegacyAlpha(
-			await createDetachedContainer({
-				codeDetails,
-				...loaderProps,
-				configProvider: {
-					getRawConfig: (name) => {
-						switch (name) {
-							case "Fluid.Container.enableOfflineLoad":
-								return true;
-							default:
-								return undefined;
-						}
-					},
-				},
-			}),
-		);
-		const { ITestFluidObject }: FluidObject<TestFluidObject> =
-			(await container.getEntryPoint()) ?? {};
-		assert(
-			ITestFluidObject !== undefined,
-			"Expected entrypoint to be a valid TestFluidObject, but it was undefined",
-		);
+		const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+			await initialize();
 
 		for (let i = 0; i < 10; i++) {
 			ITestFluidObject.root.set(`detached-${i}`, i);
