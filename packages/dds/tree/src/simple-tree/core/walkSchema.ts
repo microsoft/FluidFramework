@@ -6,7 +6,7 @@
 import {
 	normalizeAndEvaluateAnnotatedAllowedTypes,
 	type AnnotatedAllowedType,
-	type NormalizedAnnotatedAllowedTypes,
+	type AllowedTypesFullEvaluated,
 } from "./allowedTypes.js";
 import { getTreeNodeSchemaPrivateData, type TreeNodeSchema } from "./treeNodeSchema.js";
 
@@ -51,7 +51,7 @@ export function walkNodeSchema(
  * @internal
  */
 export function walkAllowedTypes(
-	annotatedAllowedTypes: NormalizedAnnotatedAllowedTypes,
+	annotatedAllowedTypes: AllowedTypesFullEvaluated,
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
@@ -81,7 +81,7 @@ export interface SchemaVisitor {
 	 *
 	 * After this is called {@link SchemaVisitor.allowedTypeFilter} is applied to each allowed type in the schema to determine which of them are walked into.
 	 */
-	allowedTypes?: (allowedTypes: NormalizedAnnotatedAllowedTypes) => void;
+	allowedTypes?: (allowedTypes: AllowedTypesFullEvaluated) => void;
 	/**
 	 * If true, will walk into this `allowedType`.
 	 * If false, the `allowedType` will not be walked into.

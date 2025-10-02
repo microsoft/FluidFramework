@@ -593,7 +593,7 @@ export function objectSchema<
 				this,
 				Array.from(
 					flexKeyMap.values(),
-					({ schema }) => normalizeFieldSchema(schema).annotatedAllowedTypes,
+					({ schema }) => normalizeFieldSchema(schema).allowedTypes,
 				),
 				(storedOptions) => {
 					const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();

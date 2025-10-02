@@ -59,11 +59,11 @@ export {
 	evaluateLazySchema,
 	createSchemaUpgrade,
 	AnnotatedAllowedTypesInternal,
-	normalizeToAnnotatedAllowedTypes,
+	normalizeAllowedTypesInternal,
 } from "./allowedTypes.js";
 export type {
 	AnnotatedAllowedType,
-	NormalizedAnnotatedAllowedTypes,
+	AllowedTypesFullEvaluated,
 	ImplicitAllowedTypes,
 	ImplicitAnnotatedAllowedTypes,
 	AllowedTypesMetadata,

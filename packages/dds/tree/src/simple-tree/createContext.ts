@@ -34,7 +34,7 @@ export function getUnhydratedContext(schema: ImplicitFieldSchema): Context {
 		);
 		return new Context(
 			flexContext,
-			Context.schemaMapFromRootSchema(normalized.annotatedAllowedTypesNormalized),
+			Context.schemaMapFromRootSchema(normalized.allowedTypesFull.evaluate()),
 		);
 	});
 }

@@ -44,7 +44,10 @@ export function recordLikeDataToFlexContent(
 
 		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
 		if (value !== undefined) {
-			const child = unhydratedFlexTreeFromInsertableNode(value, allowedChildTypes);
+			const child = unhydratedFlexTreeFromInsertableNode(
+				value,
+				allowedChildTypes.evaluateSet(),
+			);
 			const field = createField(context, FieldKinds.optional.identifier, brand(key), [child]);
 			transformedFields.set(brand(key), field);
 		}

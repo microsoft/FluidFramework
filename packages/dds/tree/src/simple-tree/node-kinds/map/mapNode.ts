@@ -272,9 +272,9 @@ export function mapSchema<
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
 	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
 ) {
-	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
+	const normalizedTypes = normalizeAllowedTypes(info);
 	const lazyAllowedTypesIdentifiers = new Lazy(
-		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
+		() => new Set(normalizedTypes.evaluate().map((type) => type.identifier)),
 	);
 
 	let privateData: TreeNodeSchemaPrivateData | undefined;
@@ -318,7 +318,7 @@ export function mapSchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
-			return lazyChildTypes.value;
+			return normalizedTypes.evaluateSet();
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =

@@ -19,10 +19,9 @@ import {
 	normalizeFieldSchema,
 } from "../fieldSchema.js";
 import {
+	type AllowedTypesFullEvaluated,
 	NodeKind,
 	type TreeNodeSchema,
-	isAnnotatedAllowedType,
-	evaluateLazySchema,
 	markSchemaMostDerived,
 } from "../core/index.js";
 import {
@@ -235,9 +234,9 @@ export class TreeViewConfiguration<
 				debugAssert(() => !definitions.has(schema.identifier));
 				definitions.set(schema.identifier, schema as SimpleNodeSchema & TreeNodeSchema);
 			},
-			allowedTypes({ types }): void {
+			allowedTypes({ types }: AllowedTypesFullEvaluated): void {
 				checkUnion(
-					types.map((t) => evaluateLazySchema(isAnnotatedAllowedType(t) ? t.type : t)),
+					types.map((t) => t.type),
 					config.preventAmbiguity,
 					ambiguityErrors,
 				);

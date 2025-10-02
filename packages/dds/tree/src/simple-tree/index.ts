@@ -9,7 +9,7 @@ export {
 	type WithType,
 	type TreeNodeSchema,
 	type AnnotatedAllowedType,
-	type NormalizedAnnotatedAllowedTypes,
+	type AllowedTypesFullEvaluated,
 	NodeKind,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
@@ -57,6 +57,7 @@ export {
 	type AnnotateAllowedTypesList,
 	type AllowedTypesFull,
 	type AllowedTypesFullFromMixed,
+	AnnotatedAllowedTypesInternal,
 } from "./core/index.js";
 export { walkFieldSchema } from "./walkFieldSchema.js";
 export type { UnsafeUnknownSchema, Insertable } from "./unsafeUnknownSchema.js";

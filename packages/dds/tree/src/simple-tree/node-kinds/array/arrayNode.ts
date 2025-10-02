@@ -1165,9 +1165,9 @@ export function arraySchema<
 		ArrayNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
 		TreeNodeSchemaCorePrivate;
 
-	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(info));
+	const normalizedTypes = normalizeAllowedTypes(info);
 	const lazyAllowedTypesIdentifiers = new Lazy(
-		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
+		() => new Set(normalizedTypes.evaluate().map((type) => type.identifier)),
 	);
 
 	let privateData: TreeNodeSchemaPrivateData | undefined;
@@ -1251,7 +1251,7 @@ export function arraySchema<
 		public static readonly implicitlyConstructable: ImplicitlyConstructable =
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
-			return lazyChildTypes.value;
+			return normalizedTypes.evaluateSet();
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
@@ -1269,7 +1269,7 @@ export function arraySchema<
 			return info;
 		}
 		protected get allowedTypes(): ReadonlySet<TreeNodeSchema> {
-			return lazyChildTypes.value;
+			return normalizedTypes.evaluateSet();
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
@@ -1366,10 +1366,10 @@ function arrayToFlexContent(data: FactoryContent, schema: ArrayNodeSchema): Flex
 		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
 	}
 
-	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
+	const allowedChildTypes = normalizeAllowedTypes(schema.info);
 
 	const mappedData = Array.from(data, (child) =>
-		arrayChildToFlexTree(child, allowedChildTypes),
+		arrayChildToFlexTree(child, allowedChildTypes.evaluateSet()),
 	);
 
 	const context = getUnhydratedContext(schema).flexContext;

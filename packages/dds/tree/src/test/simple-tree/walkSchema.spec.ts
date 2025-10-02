@@ -13,8 +13,8 @@ import {
 import {
 	AnnotatedAllowedTypesInternal,
 	walkAllowedTypes,
+	type AllowedTypesFullEvaluated,
 	type AnnotatedAllowedType,
-	type NormalizedAnnotatedAllowedTypes,
 	type SchemaVisitor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/core/index.js";
@@ -32,11 +32,11 @@ function makeAnnotated(
 }
 
 function recordWalkAllowedTypes(
-	annotatedAllowedTypes: NormalizedAnnotatedAllowedTypes,
+	annotatedAllowedTypes: AllowedTypesFullEvaluated,
 	walkStagedAllowedTypes?: true,
-): [TreeNodeSchema[], readonly NormalizedAnnotatedAllowedTypes[]] {
+): [TreeNodeSchema[], readonly AllowedTypesFullEvaluated[]] {
 	const visitedNodes: TreeNodeSchema[] = [];
-	const visitedAllowedTypes: NormalizedAnnotatedAllowedTypes[] = [];
+	const visitedAllowedTypes: AllowedTypesFullEvaluated[] = [];
 
 	const visitor: SchemaVisitor = {
 		node: (schema) => visitedNodes.push(schema),
@@ -71,7 +71,7 @@ describe("walk schema", () => {
 		const schema = sf.arrayAlpha("schema", annotatedObject);
 
 		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(
-			normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
+			normalizeFieldSchema(schema).allowedTypesFull.evaluate(),
 		);
 
 		assert.deepEqual(visitedNodes, [annotatedString[0], annotatedObject[0], schema]);
@@ -103,7 +103,7 @@ describe("walk schema", () => {
 		const schema = sf.arrayAlpha("schema", annotatedObject);
 
 		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(
-			normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
+			normalizeFieldSchema(schema).allowedTypesFull.evaluate(),
 		);
 
 		assert.deepEqual(visitedNodes, [
@@ -129,7 +129,7 @@ describe("walk schema", () => {
 		const schema = sf.arrayAlpha("schema", annotatedUnion);
 
 		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(
-			normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
+			normalizeFieldSchema(schema).allowedTypesFull.evaluate(),
 		);
 
 		assert.deepEqual(visitedNodes, [annotatedNumber.type, annotatedString.type, schema]);
@@ -152,7 +152,7 @@ describe("walk schema", () => {
 		]);
 
 		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(
-			normalizeFieldSchema(annotatedObject).annotatedAllowedTypesNormalized,
+			normalizeFieldSchema(annotatedObject).allowedTypesFull.evaluate(),
 		);
 
 		assert.deepEqual(visitedNodes, [annotatedString[0], annotatedObject[0]]);
@@ -189,7 +189,7 @@ describe("walk schema", () => {
 		}) {}
 
 		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(
-			normalizeFieldSchema(TestObject).annotatedAllowedTypesNormalized,
+			normalizeFieldSchema(TestObject).allowedTypesFull.evaluate(),
 		);
 
 		assert.deepEqual(visitedNodes, [TestObject]);
@@ -208,7 +208,7 @@ describe("walk schema", () => {
 		}) {}
 
 		const [visitedNodes, visitedAllowedTypes] = recordWalkAllowedTypes(
-			normalizeFieldSchema(TestObject).annotatedAllowedTypesNormalized,
+			normalizeFieldSchema(TestObject).allowedTypesFull.evaluate(),
 			true,
 		);
 

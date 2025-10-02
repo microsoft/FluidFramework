@@ -12,7 +12,7 @@ import type { InternalTreeNode, Unhydrated } from "./types.js";
 import type { UnionToIntersection } from "../../util/index.js";
 import type {
 	ImplicitAnnotatedAllowedTypes,
-	NormalizedAnnotatedAllowedTypes,
+	AllowedTypesFullEvaluated,
 } from "./allowedTypes.js";
 import type { Context } from "./context.js";
 import type { FieldKey, NodeData, TreeNodeStoredSchema } from "../../core/index.js";
@@ -425,7 +425,7 @@ export interface TreeNodeSchemaInitializedData {
 	 * If this is stabilized, it will live alongside the childTypes property on {@link TreeNodeSchemaCore}.
 	 * @system
 	 */
-	readonly childAnnotatedAllowedTypes: readonly NormalizedAnnotatedAllowedTypes[];
+	readonly childAnnotatedAllowedTypes: readonly AllowedTypesFullEvaluated[];
 
 	/**
 	 * A {@link Context} which can be used for unhydrated nodes of this schema.

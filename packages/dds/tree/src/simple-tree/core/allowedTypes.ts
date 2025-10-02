@@ -45,6 +45,8 @@ import { schemaAsTreeNodeValid } from "./treeNodeValid.js";
  * but some of the items are known to be present unconditionally.
  * For example, typing `[typeof A] | [typeof A, typeof B]` as `[typeof A, typeof B | typeof A]` is allowed,
  * and can produce more useful {@link Input} types.
+ *
+ * Due to this being implemented by {@link AllowedTypesFull} is it not safe to assume this is an array (as determined by `Array.isArray`).
  * @privateRemarks
  * Code reading data from this should use `normalizeAllowedTypes` to ensure consistent handling, caching, nice errors etc.
  * @system @public
@@ -70,12 +72,13 @@ export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
 }
 
 /**
- * {@link AnnotatedAllowedTypes} but with the lazy schema references eagerly evaluated.
+ * {@link AllowedTypesFull} but with the lazy schema references eagerly evaluated.
  * @sealed
  * @alpha
  */
-export interface NormalizedAnnotatedAllowedTypes
-	extends AnnotatedAllowedTypes<readonly AnnotatedAllowedType<TreeNodeSchema>[]> {}
+export type AllowedTypesFullEvaluated = AllowedTypesFull<
+	readonly AnnotatedAllowedType<TreeNodeSchema>[]
+>;
 
 /**
  * Checks if the input is an {@link AnnotatedAllowedTypes}.
@@ -102,6 +105,30 @@ export interface AnnotatedAllowedTypes<T = readonly AnnotatedAllowedType[]>
 	 * All the allowed types that the annotations apply to. The types themselves may also have individual annotations.
 	 */
 	readonly types: T;
+
+	/**
+	 * Get this {@link AnnotatedAllowedTypes} but with any lazy schema references eagerly evaluated.
+	 * @remarks
+	 * See {@link evaluateLazySchema} the implications of evaluating lazy schema references.
+	 */
+	evaluate(): AllowedTypesFullEvaluated;
+
+	/**
+	 * Get the allowed types as a set with any lazy schema references eagerly evaluated.
+	 * @remarks
+	 * See {@link evaluateLazySchema} the implications of evaluating lazy schema references.
+	 */
+	evaluateSet(): ReadonlySet<TreeNodeSchema>;
+
+	/**
+	 * Get the allowed types as a set of identifiers with any lazy schema references eagerly evaluated.
+	 * @remarks
+	 * See {@link evaluateLazySchema} the implications of evaluating lazy schema references.
+	 *
+	 * It is recommend to work in terms of {@link TreeNodeSchema}
+	 * rather than identifiers where possible since its more type safe and it is possible that two schema with the same identifier exist.
+	 */
+	evaluateIdentifiers(): ReadonlySet<string>;
 }
 
 /**
@@ -149,6 +176,12 @@ type AllowedTypesFullInternalEvaluated = AllowedTypesFullInternal<
 	readonly AnnotatedAllowedType<TreeNodeSchema>[]
 >;
 
+/**
+ * The implementation of {@link AnnotatedAllowedTypes}. Also implements {@link AllowedTypesFull}.
+ * @remarks
+ * Due to TypeScript limitations, this class cannot directly state it implements {@link AllowedTypesFull}.
+ * As a workaround for that, the static `create` method returns the intersection type.
+ */
 export class AnnotatedAllowedTypesInternal<
 		T extends readonly AnnotatedAllowedType[] = readonly AnnotatedAllowedType[],
 	>
@@ -165,6 +198,7 @@ export class AnnotatedAllowedTypesInternal<
 	private readonly lazyEvaluate: Lazy<{
 		readonly annotated: AllowedTypesFullInternalEvaluated;
 		readonly set: ReadonlySet<TreeNodeSchema>;
+		readonly identifiers: ReadonlySet<string>;
 	}>;
 
 	private constructor(
@@ -200,7 +234,11 @@ export class AnnotatedAllowedTypesInternal<
 						this.metadata,
 					)
 				: (proxy as AllowedTypesFullInternalEvaluated);
-			return { annotated, set: new Set(annotated.unannotatedTypes) };
+			return {
+				annotated,
+				set: new Set(annotated.unannotatedTypes),
+				identifiers: new Set(annotated.unannotatedTypes.map((t) => t.identifier)),
+			};
 		});
 
 		return proxy;
@@ -212,6 +250,10 @@ export class AnnotatedAllowedTypesInternal<
 
 	public evaluateSet(): ReadonlySet<TreeNodeSchema> {
 		return this.lazyEvaluate.value.set;
+	}
+
+	public evaluateIdentifiers(): ReadonlySet<string> {
+		return this.lazyEvaluate.value.identifiers;
 	}
 
 	public static override [Symbol.hasInstance]<
@@ -413,6 +455,8 @@ export class SchemaUpgrade {
  * When referring to types that are declared after the definition of the `ImplicitAllowedTypes`, the schema can be wrapped in a lambda to allow the forward reference.
  * See {@link ValidateRecursiveSchema} for details on how to structure the `ImplicitAllowedTypes` instances when constructing recursive schema.
  *
+ * Code reading data from this should use {@link normalizeAllowedTypes} to ensure consistent handling, caching, nice errors etc.
+ *
  * @example Explicit use with strong typing
  * ```typescript
  * const sf = new SchemaFactory("myScope");
@@ -426,8 +470,6 @@ export class SchemaUpgrade {
  * class A extends sf.array("example", [() => B]) {}
  * class B extends sf.array("Inner", sf.number) {}
  * ```
- * @privateRemarks
- * Code reading data from this should use `normalizeAllowedTypes` to ensure consistent handling, caching, nice errors etc.
  * @public
  */
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
@@ -468,13 +510,10 @@ export type AnnotateAllowedTypesList<
  *
  * @remarks Note: this must only be called after all required schemas have been declared, otherwise evaluation of
  * recursive schemas may fail.
- *
- * @internal
+ * @alpha
  */
-export function normalizeAllowedTypes(
-	types: ImplicitAnnotatedAllowedTypes,
-): ReadonlySet<TreeNodeSchema> {
-	return normalizeToAnnotatedAllowedTypes(types).evaluateSet();
+export function normalizeAllowedTypes(types: ImplicitAnnotatedAllowedTypes): AllowedTypesFull {
+	return normalizeAllowedTypesInternal(types);
 }
 
 /**
@@ -494,7 +533,7 @@ export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchem
 /**
  * Normalizes an allowed type to an {@link AnnotatedAllowedType}, by adding empty annotations if they don't already exist.
  */
-export function normalizeToAnnotatedAllowedTypes(
+export function normalizeAllowedTypesInternal(
 	type: ImplicitAnnotatedAllowedTypes,
 ): AllowedTypesFullInternal {
 	if (isAnnotatedAllowedTypes(type)) {
@@ -522,7 +561,7 @@ export function normalizeToAnnotatedAllowedTypes(
 export function normalizeAndEvaluateAnnotatedAllowedTypes(
 	types: ImplicitAnnotatedAllowedTypes,
 ): AllowedTypesFullInternalEvaluated {
-	return normalizeToAnnotatedAllowedTypes(types).evaluate();
+	return normalizeAllowedTypesInternal(types).evaluate();
 }
 
 const cachedLazyItem = new WeakMap<() => unknown, unknown>();

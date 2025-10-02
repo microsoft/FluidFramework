@@ -346,7 +346,7 @@ function* getFieldDiscrepancies(
 		0xbee /* all field schema should be FieldSchemaAlpha */,
 	);
 	yield* getAllowedTypeDiscrepancies(
-		view.annotatedAllowedTypesNormalized.types,
+		view.allowedTypesFull.evaluate().types,
 		stored.types,
 		identifier,
 		fieldKey,

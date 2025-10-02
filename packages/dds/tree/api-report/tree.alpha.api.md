@@ -28,6 +28,9 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 export type AllowedTypesFull<T extends readonly AnnotatedAllowedType[] = readonly AnnotatedAllowedType[]> = AnnotatedAllowedTypes<T> & UnannotateAllowedTypesList<T>;
 
 // @alpha @sealed
+export type AllowedTypesFullEvaluated = AllowedTypesFull<readonly AnnotatedAllowedType<TreeNodeSchema>[]>;
+
+// @alpha @sealed
 export type AllowedTypesFullFromMixed<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = (AnnotateAllowedTypesList<T> extends readonly AnnotatedAllowedType[] ? AnnotatedAllowedTypes<AnnotateAllowedTypesList<T>> : unknown) & UnannotateAllowedTypesList<T>;
 
 // @alpha @input
@@ -51,6 +54,9 @@ export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
 
 // @alpha @sealed
 export interface AnnotatedAllowedTypes<T = readonly AnnotatedAllowedType[]> extends ErasedBaseType<"tree.AnnotatedAllowedTypes"> {
+    evaluate(): AllowedTypesFullEvaluated;
+    evaluateIdentifiers(): ReadonlySet<string>;
+    evaluateSet(): ReadonlySet<TreeNodeSchema>;
     readonly metadata: AllowedTypesMetadata;
     readonly types: T;
 }
@@ -238,11 +244,9 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types exten
 // @alpha @sealed
 export class FieldSchemaAlpha<Kind extends FieldKind = FieldKind, Types extends ImplicitAllowedTypes = ImplicitAllowedTypes, TCustomMetadata = unknown> extends FieldSchema<Kind, Types, TCustomMetadata> implements SimpleFieldSchema {
     protected constructor(kind: Kind, types: Types, props?: FieldPropsAlpha<TCustomMetadata>);
+    readonly allowedTypesFull: AllowedTypesFull;
     // (undocumented)
     get allowedTypesIdentifiers(): ReadonlySet<string>;
-    // (undocumented)
-    readonly annotatedAllowedTypes: AllowedTypesFull;
-    get annotatedAllowedTypesNormalized(): NormalizedAnnotatedAllowedTypes;
     // (undocumented)
     get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined;
 }
@@ -663,9 +667,8 @@ export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown> extends N
     readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }
 
-// @alpha @sealed
-export interface NormalizedAnnotatedAllowedTypes extends AnnotatedAllowedTypes<readonly AnnotatedAllowedType<TreeNodeSchema>[]> {
-}
+// @alpha
+export function normalizeAllowedTypes(types: ImplicitAnnotatedAllowedTypes): AllowedTypesFull;
 
 // @public @system
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {} : {

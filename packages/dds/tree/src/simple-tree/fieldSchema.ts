@@ -23,7 +23,6 @@ import type {
 	TreeNodeSchema,
 	TreeNode,
 	UnhydratedFlexTreeNode,
-	NormalizedAnnotatedAllowedTypes,
 	ImplicitAllowedTypes,
 	ImplicitAnnotatedAllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,
@@ -31,11 +30,7 @@ import type {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	AllowedTypesFull,
 } from "./core/index.js";
-import {
-	AnnotatedAllowedTypesInternal,
-	normalizeAllowedTypes,
-	normalizeToAnnotatedAllowedTypes,
-} from "./core/index.js";
+import { normalizeAllowedTypes } from "./core/index.js";
 
 import type { SimpleFieldSchema } from "./simpleSchema.js";
 import type { UnsafeUnknownSchema } from "./unsafeUnknownSchema.js";
@@ -375,7 +370,7 @@ export class FieldSchema<
 			throw new UsageError("FieldSchema is @sealed: sub-classing is not allowed.");
 		}
 
-		this.lazyTypes = new Lazy(() => normalizeAllowedTypes(this.allowedTypes));
+		this.lazyTypes = new Lazy(() => normalizeAllowedTypes(this.allowedTypes).evaluateSet());
 		// TODO: optional fields should (by default) get a default provider that returns undefined, removing the need to special case them here:
 		this.requiresValue =
 			this.props?.defaultProvider === undefined && this.kind !== FieldKind.Optional;
@@ -396,7 +391,6 @@ export class FieldSchemaAlpha<
 	extends FieldSchema<Kind, Types, TCustomMetadata>
 	implements SimpleFieldSchema
 {
-	private readonly lazyIdentifiers: Lazy<ReadonlySet<string>>;
 	private readonly propsAlpha: FieldPropsAlpha<TCustomMetadata> | undefined;
 
 	public get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined {
@@ -415,7 +409,14 @@ export class FieldSchemaAlpha<
 		) => new FieldSchemaAlpha(kind, annotatedAllowedTypes, props);
 	}
 
-	public readonly annotatedAllowedTypes: AllowedTypesFull;
+	/**
+	 * {@link normalizeAllowedTypes|Normalized} version of {@link FieldSchema.allowedTypes}.
+	 */
+	public readonly allowedTypesFull: AllowedTypesFull;
+
+	public get allowedTypesIdentifiers(): ReadonlySet<string> {
+		return this.allowedTypesFull.evaluateIdentifiers();
+	}
 
 	protected constructor(
 		kind: Kind,
@@ -425,26 +426,9 @@ export class FieldSchemaAlpha<
 	) {
 		super(kind, types, props);
 
-		const normalizedTypes = normalizeToAnnotatedAllowedTypes(types);
-		this.annotatedAllowedTypes = normalizedTypes;
-
-		this.lazyIdentifiers = new Lazy(
-			() => new Set(normalizedTypes.evaluate().types.map(({ type }) => type.identifier)),
-		);
+		const normalizedTypes = normalizeAllowedTypes(types);
+		this.allowedTypesFull = normalizedTypes;
 		this.propsAlpha = props;
-	}
-
-	public get allowedTypesIdentifiers(): ReadonlySet<string> {
-		return this.lazyIdentifiers.value;
-	}
-
-	/**
-	 * What types of tree nodes are allowed in this field and their annotations.
-	 * @remarks Counterpart to {@link FieldSchemaAlpha.annotatedAllowedTypes}, with any lazy definitions evaluated.
-	 */
-	public get annotatedAllowedTypesNormalized(): NormalizedAnnotatedAllowedTypes {
-		AnnotatedAllowedTypesInternal.narrow(this.annotatedAllowedTypes);
-		return this.annotatedAllowedTypes.evaluate();
 	}
 }
 

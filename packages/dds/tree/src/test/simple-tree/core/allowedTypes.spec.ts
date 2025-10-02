@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	allowUnused,
 	SchemaFactory,
 	type booleanSchema,
 	type InsertableObjectFromSchemaRecord,
@@ -35,6 +36,7 @@ import {
 	normalizeAndEvaluateAnnotatedAllowedTypes,
 	normalizeToAnnotatedAllowedType,
 	type AllowedTypes,
+	type AllowedTypesFullEvaluated,
 	type AnnotatedAllowedType,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromAllowedTypes,
@@ -137,6 +139,11 @@ const schema = new SchemaFactory("com.example");
 		type _check = requireAssignableTo<A, T>;
 		type _check2 = requireFalse<isAssignableTo<B, T>>;
 	}
+}
+
+// AllowedTypesFullEvaluated
+{
+	allowUnused<requireAssignableTo<AllowedTypesFullEvaluated, readonly TreeNodeSchema[]>>();
 }
 
 // Type tests for unannotate utilities
@@ -244,16 +251,15 @@ describe("allowedTypes", () => {
 		it("Normalizes single type", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const result = normalizeAllowedTypes(schemaFactory.number);
-			assert.equal(result.size, 1);
-			assert(result.has(schemaFactory.number));
+			assert(result instanceof AnnotatedAllowedTypesInternal);
+			assert.deepEqual([...result], [schemaFactory.number]);
 		});
 
 		it("Normalizes multiple types", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const result = normalizeAllowedTypes([schemaFactory.number, schemaFactory.boolean]);
-			assert.equal(result.size, 2);
-			assert(result.has(schemaFactory.boolean));
-			assert(result.has(schemaFactory.number));
+			assert(result instanceof AnnotatedAllowedTypesInternal);
+			assert.deepEqual([...result], [schemaFactory.number, schemaFactory.boolean]);
 		});
 
 		it("Normalizes recursive schemas", () => {
@@ -265,46 +271,48 @@ describe("allowedTypes", () => {
 				y: [() => Foo],
 			}) {}
 			const result = normalizeAllowedTypes([Foo, Bar]);
-			assert.equal(result.size, 2);
-			assert(result.has(Foo));
-			assert(result.has(Bar));
+			assert(result instanceof AnnotatedAllowedTypesInternal);
+			assert.deepEqual([...result], [Foo, Bar]);
+		});
+	});
+
+	describe("evaluation fails when a referenced schema has not yet been instantiated", () => {
+		const schemaFactory = new SchemaFactory("test");
+
+		let Bar: TreeNodeSchema;
+
+		// eslint-disable-next-line no-constant-condition
+		if (false) {
+			// Make the compiler think that Bar might be initialized.
+			Bar = assert.fail();
+		}
+
+		class Foo extends schemaFactory.objectRecursive("Foo", {
+			x: [() => Bar],
+		}) {}
+
+		it("in an array", () => {
+			const normalized = normalizeAllowedTypes([Foo, Bar]);
+			assert.throws(
+				() => normalized.evaluate(),
+				(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+			);
 		});
 
-		describe("Normalization fails when a referenced schema has not yet been instantiated", () => {
-			const schemaFactory = new SchemaFactory("test");
+		it("directly", () => {
+			const normalized = normalizeAllowedTypes(Bar);
+			assert.throws(
+				() => normalized.evaluate(),
+				(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+			);
+		});
 
-			let Bar: TreeNodeSchema;
-
-			// eslint-disable-next-line no-constant-condition
-			if (false) {
-				// Make the compiler think that Bar might be initialized.
-				Bar = assert.fail();
-			}
-
-			class Foo extends schemaFactory.objectRecursive("Foo", {
-				x: [() => Bar],
-			}) {}
-
-			it("in an array", () => {
-				assert.throws(
-					() => normalizeAllowedTypes([Foo, Bar]),
-					(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
-				);
-			});
-
-			it("directly", () => {
-				assert.throws(
-					() => normalizeAllowedTypes(Bar),
-					(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
-				);
-			});
-
-			it("in a lazy reference", () => {
-				assert.throws(
-					() => normalizeAllowedTypes([() => Bar]),
-					(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
-				);
-			});
+		it("in a lazy reference", () => {
+			const normalized = normalizeAllowedTypes([() => Bar]);
+			assert.throws(
+				() => normalized.evaluate(),
+				(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+			);
 		});
 	});
 

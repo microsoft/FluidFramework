@@ -167,7 +167,7 @@ export {
 	type ImplicitAnnotatedFieldSchema,
 	type AnnotatedAllowedType,
 	type AnnotatedAllowedTypes,
-	type NormalizedAnnotatedAllowedTypes,
+	type AllowedTypesFullEvaluated,
 	type AllowedTypeMetadata,
 	type AllowedTypesMetadata,
 	type InsertableObjectFromAnnotatedSchemaRecord,
