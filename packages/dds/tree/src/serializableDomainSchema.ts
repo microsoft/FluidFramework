@@ -7,13 +7,14 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import {
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	type FixRecursiveArraySchema,
 	type TreeNodeFromImplicitAllowedTypes,
 	type ValidateRecursiveSchema,
 } from "./simple-tree/index.js";
 import type { JsonCompatible } from "./util/index.js";
 
-const sf = new SchemaFactory("com.fluidframework.serializable");
+const sf = new SchemaFactoryAlpha("com.fluidframework.serializable");
 
 /**
  * Utilities for storing {@link FluidSerializableAsTree.Data|Fluid Serializable data} in {@link TreeNode}s.
@@ -57,7 +58,7 @@ export namespace FluidSerializableAsTree {
 	 * Do not use. Exists only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
 	 * @system @alpha
 	 */
-	export const _APIExtractorWorkaroundObjectBase = sf.mapRecursive("object", Tree);
+	export const _APIExtractorWorkaroundObjectBase = sf.recordRecursive("object", Tree);
 
 	/**
 	 * Arbitrary Fluid Serializable object as a {@link TreeNode}.
