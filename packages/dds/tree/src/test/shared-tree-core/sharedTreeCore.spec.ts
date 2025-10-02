@@ -32,6 +32,7 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	type GraphCommit,
+	type RevisionTag,
 	rootFieldKey,
 } from "../../core/index.js";
 import type {
@@ -381,25 +382,33 @@ describe("SharedTreeCore", () => {
 		interface EnrichedCommit extends GraphCommit<ModularChangeset> {
 			readonly original?: GraphCommit<ModularChangeset>;
 		}
+
 		class MockResubmitMachine implements ResubmitMachine<DefaultChangeset> {
 			public readonly resubmitQueue: EnrichedCommit[] = [];
 			public readonly sequencingLog: boolean[] = [];
 			public readonly submissionLog: EnrichedCommit[] = [];
 			public readonly resubmissionLog: GraphCommit<DefaultChangeset>[][] = [];
 
-			public prepareForResubmit(toResubmit: readonly GraphCommit<ModularChangeset>[]): void {
+			private prepareForResubmit(toResubmit: readonly GraphCommit<ModularChangeset>[]): void {
 				assert.equal(this.resubmitQueue.length, 0);
 				assert.equal(toResubmit.length, this.submissionLog.length);
 				this.resubmitQueue.push(...Array.from(toResubmit, (c) => ({ ...c, original: c })));
-				this.isInResubmitPhase = true;
 				this.resubmissionLog.push(toResubmit.slice());
 			}
-			public peekNextCommit(): GraphCommit<ModularChangeset> {
-				assert.equal(this.isInResubmitPhase, true);
+
+			public getEnrichedCommit(
+				revision: RevisionTag,
+				getLocalCommits: () => readonly GraphCommit<ModularChangeset>[],
+			): GraphCommit<ModularChangeset> | undefined {
+				if (this.resubmitQueue.length === 0) {
+					this.prepareForResubmit(getLocalCommits());
+				}
 				assert.equal(this.resubmitQueue.length > 0, true);
-				return this.resubmitQueue[0];
+				const commit = this.resubmitQueue[0];
+				assert.equal(commit.revision, revision);
+				return commit;
 			}
-			public isInResubmitPhase: boolean = false;
+
 			public onCommitSubmitted(commit: GraphCommit<ModularChangeset>): void {
 				const toResubmit = this.resubmitQueue.shift();
 				if (toResubmit !== commit) {
@@ -407,9 +416,11 @@ describe("SharedTreeCore", () => {
 				}
 				this.submissionLog.push(commit);
 			}
-			public onSequencedCommitApplied(isLocal: boolean): void {
+
+			public onSequencedCommitApplied(revision: RevisionTag, isLocal: boolean): void {
 				this.sequencingLog.push(isLocal);
 			}
+
 			public onCommitRollback(): void {
 				throw new Error("not implemented");
 			}

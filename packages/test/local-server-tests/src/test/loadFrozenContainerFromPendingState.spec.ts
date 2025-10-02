@@ -28,9 +28,10 @@ describe("loadFrozenContainerFromPendingState", () => {
 	it("loadFrozenContainerFromPendingState", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 
-		const { urlResolver, codeDetails, codeLoader, loaderProps } = createLoader({
-			deltaConnectionServer,
-		});
+		const { urlResolver, codeDetails, codeLoader, loaderProps, documentServiceFactory } =
+			createLoader({
+				deltaConnectionServer,
+			});
 		const container = asLegacyAlpha(
 			await createDetachedContainer({
 				codeDetails,
@@ -77,6 +78,7 @@ describe("loadFrozenContainerFromPendingState", () => {
 
 		const frozenContainer = await loadFrozenContainerFromPendingState({
 			codeLoader,
+			documentServiceFactory,
 			urlResolver,
 			request: {
 				url,
