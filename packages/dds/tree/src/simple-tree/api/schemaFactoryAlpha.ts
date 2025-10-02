@@ -17,7 +17,7 @@ import {
 	defaultSchemaFactoryObjectOptions,
 	scoped,
 	type NodeSchemaOptionsAlpha,
-	type SchemaFactoryObjectOptionsAlpha,
+	type SchemaFactoryObjectOptions,
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
 import { schemaStatics } from "./schemaStatics.js";
@@ -140,7 +140,7 @@ export class SchemaFactoryAlpha<
 	>(
 		name: Name,
 		fields: T,
-		options?: SchemaFactoryObjectOptionsAlpha<TCustomMetadata>,
+		options?: SchemaFactoryObjectOptions<TCustomMetadata>,
 	): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> & {
 		/**
 		 * Typing checking workaround: not for for actual use.
@@ -175,7 +175,7 @@ export class SchemaFactoryAlpha<
 	>(
 		name: Name,
 		t: T,
-		options?: SchemaFactoryObjectOptionsAlpha<TCustomMetadata>,
+		options?: SchemaFactoryObjectOptions<TCustomMetadata>,
 	): TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Object,

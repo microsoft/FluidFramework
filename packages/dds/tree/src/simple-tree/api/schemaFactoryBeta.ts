@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { RestrictiveStringRecord } from "../../util/index.js";
 import type {
 	ImplicitAllowedTypes,
 	NodeKind,
@@ -13,24 +12,17 @@ import type {
 	TreeNodeSchemaNonClass,
 	WithType,
 } from "../core/index.js";
-import type { ImplicitFieldSchema } from "../fieldSchema.js";
 
 import {
-	objectSchema,
 	recordSchema,
-	type InsertableObjectFromSchemaRecord,
 	type RecordNodeInsertableData,
-	type TreeObjectNode,
 	type TreeRecordNode,
-	type UnannotateSchemaRecord,
 } from "../node-kinds/index.js";
 import {
-	defaultSchemaFactoryObjectOptions,
 	SchemaFactory,
 	scoped,
 	structuralName,
 	type NodeSchemaOptions,
-	type SchemaFactoryObjectOptions,
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
 import type { System_Unsafe, TreeRecordNodeUnsafe } from "./typesUnsafe.js";
@@ -66,63 +58,6 @@ export class SchemaFactoryBeta<
 		name: T,
 	): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner> {
 		return new SchemaFactoryBeta(scoped(this, name));
-	}
-
-	/**
-	 * Define a {@link TreeNodeSchemaClass} for a {@link TreeObjectNode}.
-	 *
-	 * @param name - Unique identifier for this schema within this factory's scope.
-	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
-	 * @param options - Additional options for the schema.
-	 */
-	public objectBeta<
-		const Name extends TName,
-		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
-	>(
-		name: Name,
-		fields: T,
-		options?: SchemaFactoryObjectOptions,
-	): TreeNodeSchemaClass<
-		/* Name */ ScopedSchemaName<TScope, Name>,
-		/* Kind */ NodeKind.Object,
-		/* TNode */ TreeObjectNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Object>,
-		/* TInsertable */ object & InsertableObjectFromSchemaRecord<T>,
-		/* ImplicitlyConstructable */ true,
-		/* Info */ T,
-		/* TConstructorExtra */ undefined
-	> {
-		// The compiler can't infer that UnannotateSchemaRecord<T> is equal to T so we have to do a bunch of typing to make the error go away.
-		const object: TreeNodeSchemaClass<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Object,
-			TreeObjectNode<UnannotateSchemaRecord<T>, ScopedSchemaName<TScope, Name>>,
-			object & InsertableObjectFromSchemaRecord<UnannotateSchemaRecord<T>>,
-			true,
-			T
-		> = objectSchema(
-			scoped<TScope, TName, Name>(this, name),
-			fields,
-			true,
-			options?.allowUnknownOptionalFields ??
-				defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
-		);
-
-		return object as TreeNodeSchemaClass<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Object,
-			TreeObjectNode<RestrictiveStringRecord<ImplicitFieldSchema>>,
-			unknown,
-			true,
-			T
-		> as TreeNodeSchemaClass<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Object,
-			TreeObjectNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Object>,
-			object & InsertableObjectFromSchemaRecord<T>,
-			true,
-			T,
-			undefined
-		>;
 	}
 
 	/**

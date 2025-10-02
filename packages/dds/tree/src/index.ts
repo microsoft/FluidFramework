@@ -95,7 +95,6 @@ export {
 	SchemaFactoryBeta,
 	SchemaFactoryAlpha,
 	type SchemaFactoryObjectOptions,
-	type SchemaFactoryObjectOptionsAlpha,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
 	type TreeChangeEvents,
