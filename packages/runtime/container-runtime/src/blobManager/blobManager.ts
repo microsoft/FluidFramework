@@ -562,6 +562,8 @@ export class BlobManager {
 		);
 		const { localId, blobId: storageId } = message.metadata;
 		this.redirectTable.set(localId, storageId);
+		// set identity (id -> id) entry
+		this.redirectTable.set(storageId, storageId);
 		this.internalEvents.emit("processedBlobAttach", localId, storageId);
 	}
 
