@@ -11,7 +11,6 @@ import type {
 	WithType,
 	TreeNode,
 	ImplicitAllowedTypes,
-	ImplicitAnnotatedAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,
 } from "../../core/index.js";
@@ -55,7 +54,7 @@ export type RecordNodeInsertableData<T extends ImplicitAllowedTypes> = Restricti
  */
 export interface RecordNodeCustomizableSchema<
 	out TName extends string = string,
-	in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+	in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<
@@ -76,7 +75,7 @@ export interface RecordNodeCustomizableSchema<
  */
 export interface RecordNodePojoEmulationSchema<
 	out TName extends string = string,
-	in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+	in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaNonClass<
@@ -101,7 +100,7 @@ export interface RecordNodePojoEmulationSchema<
  */
 export type RecordNodeSchema<
 	TName extends string = string,
-	T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+	T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	ImplicitlyConstructable extends boolean = true,
 	TCustomMetadata = unknown,
 > =

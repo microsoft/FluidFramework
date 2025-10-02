@@ -84,7 +84,7 @@ export type AllowedTypesFullEvaluated = AllowedTypesFull<
  * Checks if the input is an {@link AnnotatedAllowedTypes}.
  */
 export function isAnnotatedAllowedTypes(
-	allowedTypes: ImplicitAnnotatedAllowedTypes,
+	allowedTypes: ImplicitAllowedTypes,
 ): allowedTypes is AllowedTypesFullInternal {
 	checkForUninitializedSchema(allowedTypes);
 	return allowedTypes instanceof AnnotatedAllowedTypesInternal;
@@ -264,7 +264,7 @@ export class AnnotatedAllowedTypesInternal<
 			| typeof AnnotatedAllowedTypesInternal,
 	>(
 		this: TThis,
-		value: ErasedBaseType | InstanceTypeRelaxed<TThis> | ImplicitAnnotatedAllowedTypes,
+		value: ErasedBaseType | InstanceTypeRelaxed<TThis> | ImplicitAllowedTypes,
 	): value is InstanceTypeRelaxed<TThis> & AnnotatedAllowedTypesInternal & AllowedTypesFull {
 		return Object.prototype.isPrototypeOf.call(this.prototype, value);
 	}
@@ -277,7 +277,7 @@ export class AnnotatedAllowedTypesInternal<
 			| typeof AnnotatedAllowedTypesInternal,
 	>(
 		this: TThis,
-		value: ErasedBaseType | InstanceTypeRelaxed<TThis> | ImplicitAnnotatedAllowedTypes,
+		value: ErasedBaseType | InstanceTypeRelaxed<TThis> | ImplicitAllowedTypes,
 	): asserts value is InstanceTypeRelaxed<TThis> &
 		AnnotatedAllowedTypesInternal &
 		AllowedTypesFull {
@@ -475,16 +475,6 @@ export class SchemaUpgrade {
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
 /**
- * Types of {@link TreeNode|TreeNodes} or {@link TreeLeafValue|TreeLeafValues} allowed at a location in a tree with
- * additional metadata associated with the location they're allowed at.
- * @remarks
- * Since AllowedTypesFull implements `AllowedTypes`, this type is not really necessary and ImplicitAllowedTypes could be used instead.
- * @alpha
- * @input
- */
-export type ImplicitAnnotatedAllowedTypes = ImplicitAllowedTypes;
-
-/**
  * Removes annotations from a list of allowed types that may contain annotations.
  * @system @alpha
  */
@@ -508,7 +498,7 @@ export type AnnotateAllowedTypesList<
  * Normalizes a {@link ImplicitAllowedTypes} to {@link AllowedTypesFull}.
  * @alpha
  */
-export function normalizeAllowedTypes(types: ImplicitAnnotatedAllowedTypes): AllowedTypesFull {
+export function normalizeAllowedTypes(types: ImplicitAllowedTypes): AllowedTypesFull {
 	return normalizeAllowedTypesInternal(types);
 }
 
@@ -530,7 +520,7 @@ export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchem
  * Normalizes a allowed types to {@link AllowedTypesFullInternal}.
  */
 export function normalizeAllowedTypesInternal(
-	type: ImplicitAnnotatedAllowedTypes,
+	type: ImplicitAllowedTypes,
 ): AllowedTypesFullInternal {
 	if (isAnnotatedAllowedTypes(type)) {
 		return type;
@@ -548,14 +538,14 @@ export function normalizeAllowedTypesInternal(
 }
 
 /**
- * Normalizes a {@link ImplicitAnnotatedAllowedTypes} to a set of {@link AnnotatedAllowedSchema}s, by eagerly evaluating any
+ * Normalizes a {@link ImplicitAllowedTypes} to a set of {@link AnnotatedAllowedSchema}s, by eagerly evaluating any
  * lazy schema declarations and adding empty metadata if it doesn't already exist.
  *
  * @remarks Note: this must only be called after all required schemas have been declared, otherwise evaluation of
  * recursive schemas may fail.
  */
 export function normalizeAndEvaluateAnnotatedAllowedTypes(
-	types: ImplicitAnnotatedAllowedTypes,
+	types: ImplicitAllowedTypes,
 ): AllowedTypesFullInternalEvaluated {
 	return normalizeAllowedTypesInternal(types).evaluate();
 }
@@ -582,7 +572,7 @@ export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>)
  * Throws a UsageError if the provided schema is undefined, most likely due to being used before it was initialized.
  */
 export function checkForUninitializedSchema(
-	schema: ImplicitAnnotatedAllowedTypes | LazyItem<TreeNodeSchema> | AnnotatedAllowedType,
+	schema: ImplicitAllowedTypes | LazyItem<TreeNodeSchema> | AnnotatedAllowedType,
 ): void {
 	if (schema === undefined) {
 		throw new UsageError(

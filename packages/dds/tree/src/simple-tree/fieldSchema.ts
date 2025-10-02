@@ -24,7 +24,6 @@ import type {
 	TreeNode,
 	UnhydratedFlexTreeNode,
 	ImplicitAllowedTypes,
-	ImplicitAnnotatedAllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeLeafValue,
 	InsertableTreeNodeFromImplicitAllowedTypes,
@@ -268,7 +267,7 @@ export interface FieldSchemaMetadataAlpha<TCustomMetadata = unknown>
  */
 export function createFieldSchema<
 	Kind extends FieldKind,
-	Types extends ImplicitAnnotatedAllowedTypes,
+	Types extends ImplicitAllowedTypes,
 	TCustomMetadata = unknown,
 >(
 	kind: Kind,
@@ -283,7 +282,7 @@ export function createFieldSchema<
  */
 let createFieldSchemaPrivate: <
 	Kind extends FieldKind,
-	Types extends ImplicitAnnotatedAllowedTypes,
+	Types extends ImplicitAllowedTypes,
 	TCustomMetadata,
 >(
 	kind: Kind,
@@ -395,7 +394,7 @@ export class FieldSchemaAlpha<
 	static {
 		createFieldSchemaPrivate = <
 			Kind2 extends FieldKind,
-			Types2 extends ImplicitAnnotatedAllowedTypes,
+			Types2 extends ImplicitAllowedTypes,
 			TCustomMetadata2,
 		>(
 			kind: Kind2,

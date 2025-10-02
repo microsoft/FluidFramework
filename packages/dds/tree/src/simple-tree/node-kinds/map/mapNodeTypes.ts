@@ -10,7 +10,7 @@ import type {
 	TreeNodeSchema,
 	TreeNodeSchemaNonClass,
 	WithType,
-	ImplicitAnnotatedAllowedTypes,
+	ImplicitAllowedTypes,
 } from "../../core/index.js";
 
 import type { SimpleMapNodeSchema } from "../../simpleSchema.js";
@@ -21,7 +21,7 @@ import type { SimpleMapNodeSchema } from "../../simpleSchema.js";
  */
 export interface MapNodeCustomizableSchema<
 	out TName extends string = string,
-	in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+	in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<
@@ -42,7 +42,7 @@ export interface MapNodeCustomizableSchema<
  */
 export interface MapNodePojoEmulationSchema<
 	out TName extends string = string,
-	in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+	in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaNonClass<

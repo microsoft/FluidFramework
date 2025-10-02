@@ -19,7 +19,6 @@ import {
 	getKernel,
 	type InternalTreeNode,
 	type NodeSchemaMetadata,
-	type ImplicitAnnotatedAllowedTypes,
 	type ImplicitAllowedTypes,
 	normalizeAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
@@ -210,7 +209,7 @@ abstract class CustomRecordNodeBase<
  */
 export interface RecordSchemaOptions<
 	TName extends string,
-	TAllowedTypes extends ImplicitAnnotatedAllowedTypes,
+	TAllowedTypes extends ImplicitAllowedTypes,
 	TImplicitlyConstructable extends boolean,
 	TCustomMetadata = unknown,
 > {
@@ -248,7 +247,7 @@ export interface RecordSchemaOptions<
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function recordSchema<
 	TName extends string,
-	const TAllowedTypes extends ImplicitAnnotatedAllowedTypes,
+	const TAllowedTypes extends ImplicitAllowedTypes,
 	const TImplicitlyConstructable extends boolean,
 	const TCustomMetadata = unknown,
 >(

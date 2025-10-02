@@ -34,7 +34,6 @@ import type {
 	TreeNodeSchemaNonClass,
 	WithType,
 	ImplicitAllowedTypes,
-	ImplicitAnnotatedAllowedTypes,
 	AnnotatedAllowedType,
 	LazyItem,
 	AllowedTypesMetadata,
@@ -342,7 +341,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public mapAlpha<
 		Name extends TName,
-		const T extends ImplicitAnnotatedAllowedTypes,
+		const T extends ImplicitAllowedTypes,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -393,7 +392,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public arrayAlpha<
 		const Name extends TName,
-		const T extends ImplicitAnnotatedAllowedTypes,
+		const T extends ImplicitAllowedTypes,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -631,7 +630,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public recordAlpha<
 		const Name extends TName,
-		const T extends ImplicitAnnotatedAllowedTypes,
+		const T extends ImplicitAllowedTypes,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,

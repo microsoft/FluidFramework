@@ -4,7 +4,7 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { ImplicitAllowedTypes, ImplicitAnnotatedAllowedTypes } from "../core/index.js";
+import type { ImplicitAllowedTypes } from "../core/index.js";
 import { FieldKind, getDefaultProvider, createFieldSchema } from "../fieldSchema.js";
 import type {
 	FieldProps,
@@ -161,60 +161,6 @@ export interface SchemaStatics {
 
 const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => []);
 
-// The following overloads for optional and required are used to get around the fact that
-// the compiler can't infer that T is equal to T when T is known to extend ImplicitAllowedTypes
-
-// #region Overloads for optional and required
-function optional<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
-	t: T,
-	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
-): FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata>;
-
-function optional<
-	const T extends ImplicitAnnotatedAllowedTypes,
-	const TCustomMetadata = unknown,
->(
-	t: T,
-	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
-): FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata>;
-
-function optional<
-	const T extends ImplicitAnnotatedAllowedTypes,
-	const TCustomMetadata = unknown,
->(
-	t: T,
-	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
-): FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata> {
-	return createFieldSchema(FieldKind.Optional, t, {
-		defaultProvider: defaultOptionalProvider,
-		...props,
-	});
-}
-
-function required<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
-	t: T,
-	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
-): FieldSchemaAlpha<FieldKind.Required, T, TCustomMetadata>;
-
-function required<
-	const T extends ImplicitAnnotatedAllowedTypes,
-	const TCustomMetadata = unknown,
->(
-	t: T,
-	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
-): FieldSchemaAlpha<FieldKind.Required, T, TCustomMetadata>;
-
-function required<
-	const T extends ImplicitAnnotatedAllowedTypes,
-	const TCustomMetadata = unknown,
->(
-	t: T,
-	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
-): FieldSchemaAlpha<FieldKind.Required, T, TCustomMetadata> {
-	return createFieldSchema(FieldKind.Required, t, props);
-}
-// #endregion
-
 /**
  * Implementation of {@link SchemaStatics}.
  * @remarks
@@ -229,9 +175,22 @@ export const schemaStaticsStable = {
 	handle: handleSchema,
 	leaves: [stringSchema, numberSchema, booleanSchema, nullSchema, handleSchema],
 
-	optional,
+	optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
+		t: T,
+		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
+	): FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata> => {
+		return createFieldSchema(FieldKind.Optional, t, {
+			defaultProvider: defaultOptionalProvider,
+			...props,
+		});
+	},
 
-	required,
+	required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
+		t: T,
+		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
+	): FieldSchemaAlpha<FieldKind.Required, T, TCustomMetadata> => {
+		return createFieldSchema(FieldKind.Required, t, props);
+	},
 
 	optionalRecursive: <
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,

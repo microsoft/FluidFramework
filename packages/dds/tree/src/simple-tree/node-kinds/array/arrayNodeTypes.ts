@@ -10,7 +10,7 @@ import type {
 	TreeNodeSchema,
 	TreeNodeSchemaNonClass,
 	WithType,
-	ImplicitAnnotatedAllowedTypes,
+	ImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../../core/index.js";
 
@@ -22,7 +22,7 @@ import type { SimpleArrayNodeSchema } from "../../simpleSchema.js";
  */
 export interface ArrayNodeCustomizableSchema<
 	out TName extends string = string,
-	in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+	in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<
@@ -43,7 +43,7 @@ export interface ArrayNodeCustomizableSchema<
  */
 export interface ArrayNodePojoEmulationSchema<
 	out TName extends string = string,
-	in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+	in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaNonClass<

@@ -31,7 +31,6 @@ import {
 	type UnhydratedFlexTreeNode,
 	normalizeAllowedTypes,
 	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeSchemaMetadata,
 	type TreeNodeFromImplicitAllowedTypes,
@@ -261,7 +260,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function mapSchema<
 	TName extends string,
-	const T extends ImplicitAnnotatedAllowedTypes,
+	const T extends ImplicitAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
 	const TCustomMetadata = unknown,
 >(

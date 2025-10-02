@@ -38,7 +38,6 @@ export {
 	normalizeAllowedTypes,
 	type NodeSchemaMetadata,
 	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
 	type AllowedTypesMetadata,
 	evaluateLazySchema,
 	type UnannotateAllowedTypesList,

@@ -163,7 +163,6 @@ export {
 	type FactoryContentObject,
 	type ReadableField,
 	type ReadSchema,
-	type ImplicitAnnotatedAllowedTypes,
 	type AnnotatedAllowedType,
 	type AnnotatedAllowedTypes,
 	type AllowedTypesFullEvaluated,

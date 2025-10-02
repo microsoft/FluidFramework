@@ -65,7 +65,6 @@ export type {
 	AnnotatedAllowedType,
 	AllowedTypesFullEvaluated,
 	ImplicitAllowedTypes,
-	ImplicitAnnotatedAllowedTypes,
 	AllowedTypesMetadata,
 	AllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,

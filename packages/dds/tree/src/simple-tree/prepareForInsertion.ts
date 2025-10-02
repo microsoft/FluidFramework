@@ -31,7 +31,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { brand } from "../util/index.js";
 import {
 	getKernel,
-	type ImplicitAnnotatedAllowedTypes,
+	type ImplicitAllowedTypes,
 	type TreeNode,
 	type UnhydratedFlexTreeNode,
 } from "./core/index.js";
@@ -84,7 +84,7 @@ export function prepareForInsertion<TIn extends InsertableContent | undefined>(
  */
 export function prepareArrayContentForInsertion(
 	data: readonly InsertableContent[],
-	schema: ImplicitAnnotatedAllowedTypes,
+	schema: ImplicitAllowedTypes,
 	destinationContext: FlexTreeContext,
 	destinationSchema: TreeTypeSet,
 ): FlexibleFieldContent {

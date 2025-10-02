@@ -242,8 +242,6 @@ describe("allowedTypes", () => {
 			// The proxy could be changed to make it appear as an array.
 			assert.equal(Array.isArray(types), false);
 			assert(types instanceof AnnotatedAllowedTypesInternal);
-
-			// TODO: Ensure there is a good public way to narrow ImplicitAnnotatedAllowedTypes all of its options. Test those here.
 		});
 	});
 

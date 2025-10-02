@@ -33,7 +33,6 @@ import {
 	getOrCreateNodeFromInnerUnboxedNode,
 	normalizeAllowedTypes,
 	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeSchemaMetadata,
 	type TreeLeafValue,
@@ -861,7 +860,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 	public static readonly kind = NodeKind.Array;
 
-	protected abstract get childSchema(): ImplicitAnnotatedAllowedTypes;
+	protected abstract get childSchema(): ImplicitAllowedTypes;
 	protected abstract get allowedTypes(): ReadonlySet<TreeNodeSchema>;
 
 	public abstract override get [typeSchemaSymbol](): TreeNodeSchemaClass<
@@ -1145,7 +1144,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function arraySchema<
 	TName extends string,
-	const T extends ImplicitAnnotatedAllowedTypes,
+	const T extends ImplicitAllowedTypes,
 	const ImplicitlyConstructable extends boolean,
 	const TCustomMetadata = unknown,
 >(
