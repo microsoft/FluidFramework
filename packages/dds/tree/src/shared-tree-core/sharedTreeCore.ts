@@ -451,8 +451,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		);
 
 		// Update the resubmit machine for each commit applied.
-		for (const _ of commits) {
-			this.tryGetResubmitMachine(branchId)?.onSequencedCommitApplied(isLocal);
+		for (const commit of commits) {
+			this.tryGetResubmitMachine(branchId)?.onSequencedCommitApplied(commit.revision, isLocal);
 		}
 	}
 
@@ -500,24 +500,24 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				} = message;
 
 				const resubmitMachine = this.getResubmitMachine(branchId);
-				// If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
-				if (resubmitMachine.isInResubmitPhase === false) {
+
+				const getLocalCommits = (): GraphCommit<TChange>[] => {
 					const localCommits = this.editManager.getLocalCommits(branchId);
 					const revisionIndex = localCommits.findIndex((c) => c.revision === revision);
 					assert(revisionIndex >= 0, 0xbdb /* revision must exist in local commits */);
-					const toResubmit = localCommits.slice(revisionIndex);
-					resubmitMachine.prepareForResubmit(toResubmit);
-				}
+					return localCommits.slice(revisionIndex);
+				};
+
 				assert(
 					isClonableSchemaPolicy(localOpMetadata),
 					0x95e /* Local metadata must contain schema and policy. */,
 				);
-				assert(
-					resubmitMachine.isInResubmitPhase !== false,
-					0x984 /* Invalid resubmit outside of resubmit phase */,
-				);
-				const enrichedCommit = resubmitMachine.peekNextCommit();
-				this.submitCommit(branchId, enrichedCommit, localOpMetadata, true);
+
+				const enrichedCommit = resubmitMachine.getEnrichedCommit(revision, getLocalCommits);
+				if (enrichedCommit !== undefined) {
+					this.submitCommit(branchId, enrichedCommit, localOpMetadata, true);
+				}
+
 				break;
 			}
 			case "branch": {
@@ -544,8 +544,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				} = message;
 				const branch = this.editManager.getLocalBranch(branchId);
 				const head = branch.getHead();
-				assert(head.revision === revision, "Can only rollback latest commit");
-				const newHead = head.parent ?? fail("must have parent");
+				assert(head.revision === revision, 0xc6b /* Can only rollback latest commit */);
+				const newHead = head.parent ?? fail(0xc6c /* must have parent */);
 				branch.removeAfter(newHead);
 				this.getResubmitMachine(branchId).onCommitRollback(head);
 				break;
@@ -591,7 +591,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	): void {
 		const changeEnricher = enricher ?? new NoOpChangeEnricher();
 		const commitEnricher = new BranchCommitEnricher(this.changeFamily.rebaser, changeEnricher);
-		assert(!this.enrichers.has(branchId), "Branch already registered");
+		assert(!this.enrichers.has(branchId), 0xc6d /* Branch already registered */);
 		this.enrichers.set(branchId, {
 			enricher: commitEnricher,
 			resubmitMachine:
@@ -619,7 +619,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	private getEnricherState(branchId: BranchId): EnricherState<TChange> {
 		return (
 			this.tryGetEnricherState(branchId) ??
-			fail("Expected to have a resubmit machine for this branch")
+			fail(0xc6e /* Expected to have a resubmit machine for this branch */)
 		);
 	}
 

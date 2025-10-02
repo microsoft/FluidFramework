@@ -13,7 +13,7 @@ overrides:
 
 patchedDependencies:
   '@microsoft/api-extractor@7.45.1':
-    hash: f66stvskxun56mencgf6l5564y
+    hash: 71d364447818fcf8b1b4ad4d13b8db7eb5a947ada6c7787558db23fa19eb9fc4
     path: patches/@microsoft__api-extractor@7.45.1.patch
 
 importers:
@@ -37,7 +37,7 @@ importers:
         version: 0.57.0(@types/node@22.10.7)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
-        version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@22.10.7)
+        version: 7.45.1(patch_hash=71d364447818fcf8b1b4ad4d13b8db7eb5a947ada6c7787558db23fa19eb9fc4)(@types/node@22.10.7)
       c8:
         specifier: ^10.1.3
         version: 10.1.3
@@ -85,7 +85,7 @@ importers:
         version: '@fluidframework/gitresources@7.0.0'
       '@microsoft/api-extractor':
         specifier: ^7.45.1
-        version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@22.10.7)
+        version: 7.45.1(patch_hash=71d364447818fcf8b1b4ad4d13b8db7eb5a947ada6c7787558db23fa19eb9fc4)(@types/node@22.10.7)
       concurrently:
         specifier: ^8.2.1
         version: 8.2.1
@@ -434,7 +434,7 @@ importers:
         version: '@fluidframework/server-local-server@7.0.0'
       '@microsoft/api-extractor':
         specifier: ^7.45.1
-        version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.39)
+        version: 7.45.1(patch_hash=71d364447818fcf8b1b4ad4d13b8db7eb5a947ada6c7787558db23fa19eb9fc4)(@types/node@18.19.39)
       '@types/jsrsasign':
         specifier: ^10.5.12
         version: 10.5.12
@@ -628,7 +628,7 @@ importers:
         version: '@fluidframework/protocol-base@7.0.0'
       '@microsoft/api-extractor':
         specifier: ^7.45.1
-        version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.39)
+        version: 7.45.1(patch_hash=71d364447818fcf8b1b4ad4d13b8db7eb5a947ada6c7787558db23fa19eb9fc4)(@types/node@18.19.39)
       '@types/assert':
         specifier: ^1.5.1
         version: 1.5.6
@@ -1166,7 +1166,7 @@ importers:
         version: '@fluidframework/server-services-client@7.0.0'
       '@microsoft/api-extractor':
         specifier: ^7.45.1
-        version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.39)
+        version: 7.45.1(patch_hash=71d364447818fcf8b1b4ad4d13b8db7eb5a947ada6c7787558db23fa19eb9fc4)(@types/node@18.19.39)
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.8
@@ -2063,7 +2063,7 @@ importers:
         version: 6.1.0(eslint@8.57.1)(typescript@5.1.6)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
-        version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.39)
+        version: 7.45.1(patch_hash=71d364447818fcf8b1b4ad4d13b8db7eb5a947ada6c7787558db23fa19eb9fc4)(@types/node@18.19.39)
       '@types/compression':
         specifier: ^1.7.2
         version: 1.7.3
@@ -11053,7 +11053,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@microsoft/api-extractor@7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.39)':
+  '@microsoft/api-extractor@7.45.1(patch_hash=71d364447818fcf8b1b4ad4d13b8db7eb5a947ada6c7787558db23fa19eb9fc4)(@types/node@18.19.39)':
     dependencies:
       '@microsoft/api-extractor-model': 7.28.21(@types/node@18.19.39)
       '@microsoft/tsdoc': 0.14.2
@@ -11071,7 +11071,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@microsoft/api-extractor@7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@22.10.7)':
+  '@microsoft/api-extractor@7.45.1(patch_hash=71d364447818fcf8b1b4ad4d13b8db7eb5a947ada6c7787558db23fa19eb9fc4)(@types/node@22.10.7)':
     dependencies:
       '@microsoft/api-extractor-model': 7.28.21(@types/node@22.10.7)
       '@microsoft/tsdoc': 0.14.2

@@ -76,7 +76,10 @@ export function makeV5CodecWithVersion<TChangeset>(
 					context,
 					data.originator,
 				);
-				assert(data.originator !== undefined, "Cannot encode V5 summary without originator");
+				assert(
+					data.originator !== undefined,
+					0xc65 /* Cannot encode V5 summary without originator */,
+				);
 				const json: Mutable<EncodedEditManager<TChangeset>> = {
 					main: mainBranch,
 					originator: data.originator,
@@ -126,8 +129,11 @@ export function makeV5CodecWithVersion<TChangeset>(
 							context,
 							json.originator,
 						);
-						assert(decodedBranch.id !== undefined, "Shared branches must have an id");
-						assert(!branches.has(decodedBranch.id), "Duplicate shared branch id");
+						assert(
+							decodedBranch.id !== undefined,
+							0xc66 /* Shared branches must have an id */,
+						);
+						assert(!branches.has(decodedBranch.id), 0xc67 /* Duplicate shared branch id */);
 						branches.set(decodedBranch.id, decodedBranch);
 					}
 

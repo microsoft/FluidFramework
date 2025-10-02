@@ -9,7 +9,7 @@ overrides:
 
 patchedDependencies:
   '@microsoft/api-extractor@7.52.11':
-    hash: ldzfpsbo3oeejrejk775zxplmi
+    hash: c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069
     path: ../../../patches/@microsoft__api-extractor@7.52.11.patch
 
 importers:
@@ -36,7 +36,7 @@ importers:
         version: '@fluidframework/protocol-definitions@3.2.0'
       '@microsoft/api-extractor':
         specifier: 7.52.11
-        version: 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.5.4)
+        version: 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.5.4)
       concurrently:
         specifier: ^6.2.0
         version: 6.5.1
@@ -5271,7 +5271,7 @@ snapshots:
       '@fluidframework/build-tools': 0.58.1(@types/node@22.5.4)
       '@fluidframework/bundle-size-tools': 0.58.1
       '@inquirer/prompts': 7.6.0(@types/node@22.5.4)
-      '@microsoft/api-extractor': 7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.5.4)
+      '@microsoft/api-extractor': 7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.5.4)
       '@oclif/core': 4.4.0
       '@oclif/plugin-autocomplete': 3.2.31
       '@oclif/plugin-commands': 4.1.26
@@ -5717,7 +5717,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@microsoft/api-extractor@7.52.11(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.5.4)':
+  '@microsoft/api-extractor@7.52.11(patch_hash=c85b3a060bd0e2928f5892cfe09e062ab940a339dbd9de3a7cafbd309b724069)(@types/node@22.5.4)':
     dependencies:
       '@microsoft/api-extractor-model': 7.30.7(@types/node@22.5.4)
       '@microsoft/tsdoc': 0.15.1
