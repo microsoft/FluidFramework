@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	asLegacyAlpha,
 	createDetachedContainer,
@@ -17,7 +18,6 @@ import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server"
 import { timeoutPromise, type TestFluidObject } from "@fluidframework/test-utils/internal";
 
 import { createLoader } from "../utils.js";
-import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 
 const toComparableArray = (dir: ISharedMap): [string, unknown][] =>
 	[...dir.entries()].map(([key, value]) => [
