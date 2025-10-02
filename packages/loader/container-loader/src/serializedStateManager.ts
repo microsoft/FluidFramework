@@ -147,10 +147,10 @@ class RefreshPromiseTracker {
 		if (this.hasPromise) {
 			throw new Error("Cannot set promise while promise exists");
 		}
-		this.#promise = p;
-		p.catch(this.catchHandler).finally(() => {
+		this.#promise = p.finally(() => {
 			this.#promise = undefined;
 		});
+		p.catch(this.catchHandler);
 	}
 }
 
@@ -227,7 +227,7 @@ export class SerializedStateManager {
 	 * only intended to be used for testing purposes.
 	 * @returns The snapshot sequence number associated with the latest fetched snapshot
 	 */
-	public get refreshSnapshotP(): Promise<number> | undefined {
+	public get refreshSnapshotP(): Promise<number | undefined> | undefined {
 		return this.refreshTracker.Promise;
 	}
 
