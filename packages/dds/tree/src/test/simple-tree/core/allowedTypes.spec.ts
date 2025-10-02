@@ -290,17 +290,15 @@ describe("allowedTypes", () => {
 		}) {}
 
 		it("in an array", () => {
-			const normalized = normalizeAllowedTypes([Foo, Bar]);
 			assert.throws(
-				() => normalized.evaluate(),
+				() => normalizeAllowedTypes([Foo, Bar]),
 				(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
 			);
 		});
 
 		it("directly", () => {
-			const normalized = normalizeAllowedTypes(Bar);
 			assert.throws(
-				() => normalized.evaluate(),
+				() => normalizeAllowedTypes(Bar),
 				(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
 			);
 		});
