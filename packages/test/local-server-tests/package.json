@@ -57,6 +57,7 @@
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-experimental/tree": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
