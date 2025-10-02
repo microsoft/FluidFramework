@@ -212,27 +212,22 @@ for (const createBlobPayloadPending of [false, true]) {
 					mockBlobStorage.readBlob = async () => {
 						throw new Error("BOOM!");
 					};
+					const localId = "someLocalId";
+					const remoteId = "someRemoteId";
 					const { mockLogger, mockRuntime, blobManager } = createTestMaterial({
 						mockBlobStorage,
+						blobManagerLoadInfo: {
+							ids: [remoteId],
+							redirectTable: [[localId, remoteId]],
+						},
 						createBlobPayloadPending,
 					});
 
-					const handle = await blobManager.createBlob(textToBlob("hello"));
-					const { localId } = unpackHandle(handle);
-					if (createBlobPayloadPending) {
-						await ensureBlobsShared([handle]);
-					} else {
-						// We have to attach the handle in the legacy flow, or else getBlob will
-						// short-circuit storage and get the blob from the pendingBlobs.
-						attachHandle(handle);
-					}
-
-					mockLogger.clear();
 					mockRuntime.disposed = true;
 					const getBlobP = blobManager.getBlob(localId, createBlobPayloadPending);
 					await assert.rejects(
 						getBlobP,
-						(e: Error) => e.message === "BOOM!",
+						{ message: "BOOM!" },
 						"Expected getBlob to throw with test error message",
 					);
 					mockLogger.assertMatchNone(
