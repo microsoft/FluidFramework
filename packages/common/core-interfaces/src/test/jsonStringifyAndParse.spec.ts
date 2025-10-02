@@ -254,8 +254,10 @@ export function stringifyThenParse<
 	v: JsonSerializable<T, Pick<Options, Extract<keyof JsonStringifyOptions, keyof Options>>>,
 	expectedDeserialization?: JsonDeserialized<TExpected>,
 ): {
-	stringified: JsonString<T>;
-	out: JsonDeserialized<T>;
+	stringified: ReturnType<typeof JsonStringify<T, Options>>;
+	out: ReturnType<typeof JsonParse<ReturnType<typeof JsonStringify<T, Options>>>>;
+	// Replace above with below if `JsonParse` argument is `JsonString<T>`
+	// out: ReturnType<typeof JsonParse<T>>;
 } {
 	const stringified = JsonStringify(v);
 	if (stringified === undefined) {
@@ -281,10 +283,13 @@ export function stringifyThenParse<
 function stringifyIgnoringInaccessibleMembersThenParse<const T, TExpected>(
 	v: JsonSerializable<T, { IgnoreInaccessibleMembers: "ignore-inaccessible-members" }>,
 	expected?: JsonDeserialized<TExpected>,
-): {
-	stringified: JsonString<T>;
-	out: JsonDeserialized<T>;
-} {
+): ReturnType<
+	typeof stringifyThenParse<
+		T,
+		TExpected,
+		{ IgnoreInaccessibleMembers: "ignore-inaccessible-members" }
+	>
+> {
 	return stringifyThenParse<
 		T,
 		TExpected,
@@ -310,13 +315,17 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(stringified, createInstanceOf<JsonString<string>>());
 				assertIdenticalTypes(out, string);
 			});
+
 			it("numeric enum", () => {
 				const { stringified, out } = stringifyThenParse(numericEnumValue);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<typeof numericEnumValue>>(),
 				);
-				assertIdenticalTypes(out, numericEnumValue);
+				assertIdenticalTypes(
+					out,
+					createInstanceOf<typeof numericEnumValue>(),
+				);
 			});
 			it("string enum", () => {
 				const { stringified, out } = stringifyThenParse(stringEnumValue);
@@ -324,7 +333,10 @@ describe("JsonStringify and JsonParse", () => {
 					stringified,
 					createInstanceOf<JsonString<typeof stringEnumValue>>(),
 				);
-				assertIdenticalTypes(out, stringEnumValue);
+				assertIdenticalTypes(
+					out,
+					stringEnumValue,
+				);
 			});
 			it("const heterogenous enum", () => {
 				const { stringified, out } = stringifyThenParse(constHeterogenousEnumValue);
@@ -332,7 +344,10 @@ describe("JsonStringify and JsonParse", () => {
 					stringified,
 					createInstanceOf<JsonString<typeof constHeterogenousEnumValue>>(),
 				);
-				assertIdenticalTypes(out, constHeterogenousEnumValue);
+				assertIdenticalTypes(
+					out,
+					constHeterogenousEnumValue,
+				);
 			});
 			it("computed enum", () => {
 				const { stringified, out } = stringifyThenParse(computedEnumValue);
@@ -340,8 +355,12 @@ describe("JsonStringify and JsonParse", () => {
 					stringified,
 					createInstanceOf<JsonString<typeof computedEnumValue>>(),
 				);
-				assertIdenticalTypes(out, computedEnumValue);
+				assertIdenticalTypes(
+					out,
+					computedEnumValue,
+				);
 			});
+
 			it("branded `number`", () => {
 				const { stringified, out } = stringifyThenParse(brandedNumber);
 				assertIdenticalTypes(
@@ -2780,10 +2799,15 @@ describe("JsonStringify and JsonParse", () => {
 
 describe("JsonParse", () => {
 	it("parses `JsonString<A> | JsonString<B>` to `JsonDeserialized<A | B>`", () => {
+		// Setup
 		const jsonString = JsonStringify({ "a": 6 }) as
 			| JsonString<{ a: number }>
 			| JsonString<{ b: string } | { c: boolean }>;
+
+		// Act
 		const parsed = JsonParse(jsonString);
+
+		// Verify
 		assertIdenticalTypes(
 			parsed,
 			createInstanceOf<{ a: number } | { b: string } | { c: boolean }>(),

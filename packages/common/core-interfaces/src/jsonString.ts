@@ -22,6 +22,18 @@ declare class JsonStringBrand<T> extends BrandedType<JsonString<unknown>> {
 }
 
 /**
+ * Distributes `JsonStringBrand` over union elements of T.
+ *
+ * @remarks
+ * This is useful to allow `JsonString<A | B>` to be assigned to `JsonString<A> | JsonString<B>`.
+ *
+ * The downside is that enums are expanded to union of members and thus cannot be
+ * reconstituted exactly (even if IntelliSense shows the original enum type). This
+ * can be removed if exact enum preservation is found to be more important.
+ */
+type DistributeJsonStringBrand<T> = T extends unknown ? JsonStringBrand<T> : never;
+
+/**
  * Branded `string` for JSON that has been stringified.
  *
  * @remarks
@@ -38,7 +50,7 @@ declare class JsonStringBrand<T> extends BrandedType<JsonString<unknown>> {
  * @sealed
  * @internal
  */
-export type JsonString<T> = string & JsonStringBrand<T>;
+export type JsonString<T> = string & DistributeJsonStringBrand<T>;
 
 /**
  * Compile options for {@link JsonStringify}.

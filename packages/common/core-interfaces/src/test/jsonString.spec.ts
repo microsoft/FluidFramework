@@ -16,10 +16,6 @@ import {
 import type { JsonString } from "@fluidframework/core-interfaces/internal";
 import { JsonStringify } from "@fluidframework/core-interfaces/internal";
 
-function parameterAcceptedAs<T>(_t: T): void {
-	// Do nothing.  Used to verify type compatibility.
-}
-
 const jsonStringOfLiteral = JsonStringify("literal");
 
 describe("JsonString", () => {
@@ -97,45 +93,51 @@ describe("JsonString", () => {
 				jsonStringOfUnknown,
 			);
 		});
+
+		it("`JsonString<A | B>` is not assignable to `JsonString<A>`", () => {
+			parameterAcceptedAs<JsonString<string>>(
+				// @ts-expect-error Type 'JsonString<string | { arrayOfNumbers: number[]; }>' is not assignable to type 'JsonString<string>'
+				jsonStringOfString as JsonString<string | { arrayOfNumbers: number[] }>,
+			);
+		});
 	});
 
 	type ExtractJsonStringBrand<T extends JsonString<unknown>> = T extends string & infer B
 		? B
 		: never;
 
-	describe("known limitations", () => {
-		// Practically `JsonString<A | B>` is the same as `JsonString<A> | JsonString<B>`
-		// since all encodings are the same and parsing from either produces the same
-		// `A|B` result.
-		it("`JsonString<A | B>` is assignable to `JsonString<A> | JsonString<B>`", () => {
-			// Setup
-			const explicitBrandUnion = createInstanceOf<
-				string &
-					(
-						| ExtractJsonStringBrand<JsonString<string>>
-						| ExtractJsonStringBrand<JsonString<{ arrayOfNumbers: number[] }>>
-					)
-			>();
-			const explicitPostBrandUnion = createInstanceOf<
-				| (string & ExtractJsonStringBrand<JsonString<string>>)
-				| (string & ExtractJsonStringBrand<JsonString<{ arrayOfNumbers: number[] }>>)
-			>();
-			assertIdenticalTypes(explicitBrandUnion, explicitPostBrandUnion);
-			assertIdenticalTypes(
-				// @ts-expect-error `JsonString` does not distribute over unions
-				explicitBrandUnion,
-				createInstanceOf<JsonString<string | { arrayOfNumbers: number[] }>>(),
-			);
-			assertIdenticalTypes(
-				explicitPostBrandUnion,
-				createInstanceOf<JsonString<string> | JsonString<{ arrayOfNumbers: number[] }>>(),
-			);
-
-			// Act and Verify
-			parameterAcceptedAs<JsonString<string> | JsonString<{ arrayOfNumbers: number[] }>>(
-				// @ts-expect-error Type 'JsonString<string | { arrayOfNumbers: number[]; }>' is not assignable to parameter of type 'JsonString<string> | JsonString<{ arrayOfNumbers: number[]; }>'
-				jsonStringOfString as JsonString<string | { arrayOfNumbers: number[] }>,
-			);
-		});
+	// Practically `JsonString<A | B>` is the same as `JsonString<A> | JsonString<B>`
+	// since all encodings are the same and parsing from either produces the same
+	// `A|B` result.
+	it("`JsonString<A | B>` is assignable to `JsonString<A> | JsonString<B>`", () => {
+		// Setup
+		const explicitBrandUnion = createInstanceOf<
+			string &
+				(
+					| ExtractJsonStringBrand<JsonString<string>>
+					| ExtractJsonStringBrand<JsonString<{ arrayOfNumbers: number[] }>>
+				)
+		>();
+		const explicitPostBrandUnion = createInstanceOf<
+			| (string & ExtractJsonStringBrand<JsonString<string>>)
+			| (string & ExtractJsonStringBrand<JsonString<{ arrayOfNumbers: number[] }>>)
+		>();
+		assertIdenticalTypes(explicitBrandUnion, explicitPostBrandUnion);
+		assertIdenticalTypes(
+			explicitBrandUnion,
+			createInstanceOf<JsonString<string | { arrayOfNumbers: number[] }>>(),
+		);
+		assertIdenticalTypes(
+			explicitPostBrandUnion,
+			createInstanceOf<JsonString<string> | JsonString<{ arrayOfNumbers: number[] }>>(),
+		);
+		assertIdenticalTypes(
+			createInstanceOf<JsonString<string | { arrayOfNumbers: number[] }>>(),
+			createInstanceOf<JsonString<string> | JsonString<{ arrayOfNumbers: number[] }>>(),
+		);
+		// Act and Verify
+		parameterAcceptedAs<JsonString<string> | JsonString<{ arrayOfNumbers: number[] }>>(
+			jsonStringOfString as JsonString<string | { arrayOfNumbers: number[] }>,
+		);
 	});
 });
