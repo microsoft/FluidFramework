@@ -1431,9 +1431,10 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 		LocalServerStressState
 	> = async (state, op) => {
 		if (isOperationType<RestartClientFromPendingState>("restartClientFromPendingState", op)) {
-			const sourceClientIndex = state.clients.findIndex((c) => c.tag === op.sourceClientTag);
+			const { clients, codeLoader, localDeltaConnectionServer, seed } = state;
+			const sourceClientIndex = clients.findIndex((c) => c.tag === op.sourceClientTag);
 			assert(sourceClientIndex !== -1, `Client ${op.sourceClientTag} not found`);
-			const sourceClient = state.clients[sourceClientIndex];
+			const sourceClient = clients[sourceClientIndex];
 
 			// AB#46464: Add support for serializing pending state while in staging mode
 			if (sourceClient.entryPoint.inStagingMode()) {
@@ -1452,10 +1453,11 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 
 			const frozenContainer = asLegacyAlpha(
 				await loadFrozenContainerFromPendingState({
-					codeLoader: state.codeLoader,
+					codeLoader,
 					pendingLocalState,
 					request: { url },
 					urlResolver: new LocalResolver(),
+					documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
 				}),
 			);
 
@@ -1471,21 +1473,21 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 			frozenContainer.dispose();
 			sourceClient.container.dispose();
 
-			state.clients.splice(
-				state.clients.findIndex((c) => c.tag === op.sourceClientTag),
+			clients.splice(
+				clients.findIndex((c) => c.tag === op.sourceClientTag),
 				1,
 			);
 			const newClient = await loadClient(
-				state.localDeltaConnectionServer,
-				state.codeLoader,
+				localDeltaConnectionServer,
+				codeLoader,
 				op.newClientTag,
 				url,
-				state.seed,
+				seed,
 				options,
 				pendingLocalState,
 			);
 
-			state.clients.push(newClient);
+			clients.push(newClient);
 			return state;
 		}
 
