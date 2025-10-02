@@ -86,6 +86,12 @@ export const JsonStringify = JSON.stringify as <
  * @remarks
  * Return type is filtered through {@link JsonDeserialized}`<T>` for best accuracy.
  *
+ * Note that `JsonParse` cannot verify at runtime that the input is valid JSON
+ * or that it matches type T. It is the caller's responsibility to ensure that
+ * the input is valid JSON and the output conforms to the expected type.
+ *
  * @internal
  */
-export const JsonParse = JSON.parse as <T>(text: JsonString<T>) => JsonDeserialized<T>;
+export const JsonParse = JSON.parse as <T extends JsonString<unknown>>(
+	text: T,
+) => T extends JsonString<infer U> ? JsonDeserialized<U> : unknown;

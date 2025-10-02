@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assertIdenticalTypes, createInstanceOf, parameterAcceptedAs } from "./testUtils.js";
 import {
 	jsonStringOfString,
 	jsonStringOfObjectWithArrayOfNumbers,
@@ -66,6 +67,13 @@ describe("JsonString", () => {
 		it("`JsonString<bigint>` is assignable to `JsonString<unknown>`", () => {
 			parameterAcceptedAs<JsonString<unknown>>(jsonStringOfBigInt);
 		});
+
+		it("`JsonString<A> | JsonString<B>` is assignable to `JsonString<A | B>`", () => {
+			const jsonStringUnion =
+				Math.random() < 0.5 ? jsonStringOfString : jsonStringOfObjectWithArrayOfNumbers;
+
+			parameterAcceptedAs<JsonString<string | { arrayOfNumbers: number[] }>>(jsonStringUnion);
+		});
 	});
 
 	describe("is not contravariant over T", () => {
@@ -87,6 +95,46 @@ describe("JsonString", () => {
 			parameterAcceptedAs<JsonString<bigint>>(
 				// @ts-expect-error Type 'unknown' is not assignable to type 'bigint'
 				jsonStringOfUnknown,
+			);
+		});
+	});
+
+	type ExtractJsonStringBrand<T extends JsonString<unknown>> = T extends string & infer B
+		? B
+		: never;
+
+	describe("known limitations", () => {
+		// Practically `JsonString<A | B>` is the same as `JsonString<A> | JsonString<B>`
+		// since all encodings are the same and parsing from either produces the same
+		// `A|B` result.
+		it("`JsonString<A | B>` is assignable to `JsonString<A> | JsonString<B>`", () => {
+			// Setup
+			const explicitBrandUnion = createInstanceOf<
+				string &
+					(
+						| ExtractJsonStringBrand<JsonString<string>>
+						| ExtractJsonStringBrand<JsonString<{ arrayOfNumbers: number[] }>>
+					)
+			>();
+			const explicitPostBrandUnion = createInstanceOf<
+				| (string & ExtractJsonStringBrand<JsonString<string>>)
+				| (string & ExtractJsonStringBrand<JsonString<{ arrayOfNumbers: number[] }>>)
+			>();
+			assertIdenticalTypes(explicitBrandUnion, explicitPostBrandUnion);
+			assertIdenticalTypes(
+				// @ts-expect-error `JsonString` does not distribute over unions
+				explicitBrandUnion,
+				createInstanceOf<JsonString<string | { arrayOfNumbers: number[] }>>(),
+			);
+			assertIdenticalTypes(
+				explicitPostBrandUnion,
+				createInstanceOf<JsonString<string> | JsonString<{ arrayOfNumbers: number[] }>>(),
+			);
+
+			// Act and Verify
+			parameterAcceptedAs<JsonString<string> | JsonString<{ arrayOfNumbers: number[] }>>(
+				// @ts-expect-error Type 'JsonString<string | { arrayOfNumbers: number[]; }>' is not assignable to parameter of type 'JsonString<string> | JsonString<{ arrayOfNumbers: number[]; }>'
+				jsonStringOfString as JsonString<string | { arrayOfNumbers: number[] }>,
 			);
 		});
 	});

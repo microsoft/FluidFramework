@@ -2778,4 +2778,16 @@ describe("JsonStringify and JsonParse", () => {
 	});
 });
 
-/* eslint-enable unicorn/no-null */
+describe("JsonParse", () => {
+	it("parses `JsonString<A> | JsonString<B>` to `JsonDeserialized<A | B>`", () => {
+		const jsonString = JsonStringify({ "a": 6 }) as
+			| JsonString<{ a: number }>
+			| JsonString<{ b: string } | { c: boolean }>;
+		const parsed = JsonParse(jsonString);
+		assertIdenticalTypes(
+			parsed,
+			createInstanceOf<{ a: number } | { b: string } | { c: boolean }>(),
+		);
+		assert.deepStrictEqual(parsed, { a: 6 });
+	});
+});
