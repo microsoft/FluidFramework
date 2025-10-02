@@ -164,9 +164,6 @@ export interface ITreeViewConfiguration<
 
 /**
  * Configuration for {@link ViewableTree.viewWith}.
- * @privateRemarks
- * When `ImplicitAnnotatedFieldSchema` is stabilized, TSchema should be updated to use it.
- * When doing this, the example for `staged` will need to be updated/simplified.
  * @sealed @public
  */
 export class TreeViewConfiguration<

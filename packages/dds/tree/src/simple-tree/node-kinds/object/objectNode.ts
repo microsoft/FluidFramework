@@ -73,7 +73,6 @@ import {
 	FieldSchemaAlpha,
 	normalizeFieldSchema,
 	FieldKind,
-	type ImplicitAnnotatedFieldSchema,
 	type FieldProps,
 	type ContextualFieldProvider,
 	extractFieldProvider,
@@ -200,7 +199,7 @@ export type InsertableObjectFromSchemaRecord<
  * @system @alpha
  */
 export type InsertableObjectFromAnnotatedSchemaRecord<
-	T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+	T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 > = InsertableObjectFromSchemaRecord<T>;
 
 /**
@@ -219,9 +218,7 @@ export type SimpleKeyMap = ReadonlyMap<
 /**
  * Caches the mappings from property keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
  */
-function createFlexKeyMapping(
-	fields: Record<string, ImplicitAnnotatedFieldSchema>,
-): SimpleKeyMap {
+function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): SimpleKeyMap {
 	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> = new Map();
 	for (const [propertyKey, fieldSchema] of Object.entries(fields)) {
 		const schema = normalizeFieldSchema(fieldSchema);
@@ -423,7 +420,7 @@ abstract class CustomObjectNodeBase<
  */
 export function objectSchema<
 	TName extends string,
-	const T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+	const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 	const ImplicitlyConstructable extends boolean,
 	const TCustomMetadata = unknown,
 >(
@@ -628,7 +625,7 @@ const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
  */
 function assertUniqueKeys<
 	const Name extends number | string,
-	const Fields extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+	const Fields extends RestrictiveStringRecord<ImplicitFieldSchema>,
 >(schemaName: Name, fields: Fields): void {
 	// Verify that there are no duplicates among the explicitly specified stored keys.
 	const explicitStoredKeys = new Set<string>();

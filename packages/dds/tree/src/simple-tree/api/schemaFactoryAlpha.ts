@@ -24,7 +24,7 @@ import {
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
 import { schemaStatics } from "./schemaStatics.js";
-import type { ImplicitAnnotatedFieldSchema, ImplicitFieldSchema } from "../fieldSchema.js";
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type {
 	NodeKind,
@@ -165,7 +165,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public objectAlpha<
 		const Name extends TName,
-		const T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,

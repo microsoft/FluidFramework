@@ -74,10 +74,7 @@ export enum FieldKind {
  * If an explicit stored key was specified in the schema, it will be used.
  * Otherwise, the stored key is the same as the property key.
  */
-export function getStoredKey(
-	propertyKey: string,
-	fieldSchema: ImplicitAnnotatedFieldSchema,
-): FieldKey {
+export function getStoredKey(propertyKey: string, fieldSchema: ImplicitFieldSchema): FieldKey {
 	return brand(getExplicitStoredKey(fieldSchema) ?? propertyKey);
 }
 
@@ -85,9 +82,7 @@ export function getStoredKey(
  * Gets the {@link FieldProps.key | stored key} specified by the schema, if one was explicitly specified.
  * Otherwise, returns undefined.
  */
-export function getExplicitStoredKey(
-	fieldSchema: ImplicitAnnotatedFieldSchema,
-): string | undefined {
+export function getExplicitStoredKey(fieldSchema: ImplicitFieldSchema): string | undefined {
 	return fieldSchema instanceof FieldSchema ? fieldSchema.props?.key : undefined;
 }
 
@@ -433,11 +428,11 @@ export class FieldSchemaAlpha<
 }
 
 /**
- * Normalizes a {@link ImplicitFieldSchema} or {@link ImplicitAnnotatedFieldSchema} to a {@link FieldSchema}.
+ * Normalizes a {@link ImplicitFieldSchema} or {@link ImplicitFieldSchema} to a {@link FieldSchema}.
  * @internal
  */
 export function normalizeFieldSchema(
-	schema: ImplicitFieldSchema | ImplicitAnnotatedFieldSchema,
+	schema: ImplicitFieldSchema | ImplicitFieldSchema,
 ): FieldSchemaAlpha {
 	return schema instanceof FieldSchema
 		? (schema as FieldSchemaAlpha)
@@ -563,13 +558,6 @@ function arePersistedMetadataEqual(
  * @public
  */
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
-
-/**
- * {@link ImplicitFieldSchema} which supports {@link AnnotatedAllowedTypes | annotations} on the allowed types.
- * @alpha
- * @input
- */
-export type ImplicitAnnotatedFieldSchema = FieldSchema | ImplicitAnnotatedAllowedTypes;
 
 /**
  * Converts an `ImplicitFieldSchema` to a property type suitable for reading a field with this that schema.

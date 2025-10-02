@@ -24,7 +24,6 @@ import {
 	type FieldSchema,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
-	type ImplicitAnnotatedFieldSchema,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTreeNodeFromAllowedTypes,
 	type InsertableTypedNode,
@@ -121,7 +120,7 @@ const schemaFactory = new SchemaFactory("Test");
 	// Generic case
 	{
 		type result = InsertableObjectFromAnnotatedSchemaRecord<
-			RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>
+			RestrictiveStringRecord<ImplicitFieldSchema>
 		>;
 		type _check = requireAssignableTo<result, never>;
 	}
@@ -620,7 +619,7 @@ describeHydration(
 			{
 				type TestObject = ObjectNodeSchema<
 					"x",
-					RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+					RestrictiveStringRecord<ImplicitFieldSchema>,
 					false
 				>;
 				type _check1 = requireAssignableTo<TestObject, TreeNodeSchema>;

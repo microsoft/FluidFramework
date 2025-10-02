@@ -164,7 +164,6 @@ export {
 	type ReadableField,
 	type ReadSchema,
 	type ImplicitAnnotatedAllowedTypes,
-	type ImplicitAnnotatedFieldSchema,
 	type AnnotatedAllowedType,
 	type AnnotatedAllowedTypes,
 	type AllowedTypesFullEvaluated,

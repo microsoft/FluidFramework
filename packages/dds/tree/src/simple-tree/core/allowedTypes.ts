@@ -482,7 +482,7 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
  * @alpha
  * @input
  */
-export type ImplicitAnnotatedAllowedTypes = AllowedTypesFull | ImplicitAllowedTypes;
+export type ImplicitAnnotatedAllowedTypes = ImplicitAllowedTypes;
 
 /**
  * Removes annotations from a list of allowed types that may contain annotations.
@@ -505,11 +505,7 @@ export type AnnotateAllowedTypesList<
 };
 
 /**
- * Normalizes a {@link ImplicitAllowedTypes} to a set of {@link TreeNodeSchema}s, by eagerly evaluating any
- * lazy schema declarations.
- *
- * @remarks Note: this must only be called after all required schemas have been declared, otherwise evaluation of
- * recursive schemas may fail.
+ * Normalizes a {@link ImplicitAllowedTypes} to {@link AllowedTypesFull}.
  * @alpha
  */
 export function normalizeAllowedTypes(types: ImplicitAnnotatedAllowedTypes): AllowedTypesFull {
@@ -531,7 +527,7 @@ export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchem
 }
 
 /**
- * Normalizes an allowed type to an {@link AnnotatedAllowedType}, by adding empty annotations if they don't already exist.
+ * Normalizes a allowed types to {@link AllowedTypesFullInternal}.
  */
 export function normalizeAllowedTypesInternal(
 	type: ImplicitAnnotatedAllowedTypes,

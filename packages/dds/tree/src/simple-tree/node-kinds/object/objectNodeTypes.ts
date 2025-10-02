@@ -9,7 +9,7 @@ import type {
 	SimpleKeyMap,
 	InsertableObjectFromAnnotatedSchemaRecord,
 } from "./objectNode.js";
-import type { FieldSchemaAlpha, ImplicitAnnotatedFieldSchema } from "../../fieldSchema.js";
+import type { FieldSchemaAlpha, ImplicitFieldSchema } from "../../fieldSchema.js";
 import {
 	NodeKind,
 	type TreeNodeSchemaClass,
@@ -27,7 +27,7 @@ import type { SimpleObjectFieldSchema, SimpleObjectNodeSchema } from "../../simp
 export interface ObjectNodeSchema<
 	out TName extends string = string,
 	in out T extends
-		RestrictiveStringRecord<ImplicitAnnotatedFieldSchema> = RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
 	ImplicitlyConstructable extends boolean = boolean,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<

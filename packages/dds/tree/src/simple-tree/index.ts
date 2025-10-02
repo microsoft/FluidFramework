@@ -185,7 +185,6 @@ export type {
 } from "./simpleSchema.js";
 export {
 	type ImplicitFieldSchema,
-	type ImplicitAnnotatedFieldSchema,
 	type TreeFieldFromImplicitField,
 	FieldKind,
 	FieldSchema,
