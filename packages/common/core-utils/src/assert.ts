@@ -137,7 +137,7 @@ export function onAssertionFailure(handler: (error: Error) => void): () => void 
  * To mitigate this risk, these asserts can be disabled in debug builds by calling {@link configureDebugAsserts} or {@link emulateProductionBuild}.
  * This allows testing with the asserts both enabled and disabled to help ensure that code does not depend on them being enabled.
  *
- * Apps (or other performance sensitive scenarios) packaged in a way that does not {@link nonProductionConditionalsIncluded|non-production code}
+ * Apps (or other performance sensitive scenarios) packaged in a way that does not {@link nonProductionConditionalsIncluded|skip non-production code}
  * can use the same approaches to disable these asserts to reduce performance overhead.
  *
  * @privateRemarks
