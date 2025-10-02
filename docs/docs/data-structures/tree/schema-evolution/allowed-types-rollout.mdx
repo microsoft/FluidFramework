@@ -7,7 +7,7 @@ sidebar_position: 3
 
 This guide shows you how to safely add new allowed types to existing fields in your [SharedTree](../index.mdx) schema without breaking [forwards compatibility](./index.mdx#forwards-compatibility) with existing applications.
 
-If you directly add a new node type to an existing field, old clients won't be able to load documents that contain the new type, breaking them immediately.
+Directly adding a new node type to an existing field would cause old clients to be unable to load documents whose schema contain the new type, breaking them immediately.
 The following process stages changes to introduce a new allowed type in a non-breaking way.
 
 ## Step-by-Step Guide
