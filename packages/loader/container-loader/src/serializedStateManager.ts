@@ -148,7 +148,7 @@ class RefreshPromiseTracker {
 			throw new Error("Cannot set promise while promise exists");
 		}
 		this.#promise = p;
-		p.catch(this.catchHandler).finally((this.#promise = undefined));
+		p.catch(this.catchHandler).finally(() => { this.#promise = undefined; });
 	}
 }
 
