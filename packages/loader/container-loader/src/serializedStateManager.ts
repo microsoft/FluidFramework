@@ -267,6 +267,8 @@ export class SerializedStateManager {
 			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshotTree);
 			// non-interactive clients will not have any pending state we want to save
 			if (this.offlineLoadEnabled) {
+				// we defer getting the blobs to not impact the container load flow
+				// only getPendingState depends on the resolution of this promise
 				this.refreshTracker.setPromise(
 					getBlobContentsFromTree(baseSnapshot, this.storageAdapter).then((snapshotBlobs) => {
 						this.snapshot = {
@@ -461,6 +463,10 @@ export class SerializedStateManager {
 					throw new UsageError("Can't get pending local state unless offline load is enabled");
 				}
 				if (this.snapshot === undefined && this.refreshTracker.hasPromise) {
+					// we deferred the initial download of the snapshot to not block
+					// the container load flow, so if it is not resolved
+					// and we don't have a snapshot, we will wait for the download
+					// to finish.
 					await this.refreshTracker.Promise;
 				}
 
