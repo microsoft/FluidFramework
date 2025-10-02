@@ -5,6 +5,7 @@
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- incorrect rule: misunderstands `declare`d types.
 import type { BrandedType } from "./brandedType.js";
+import type { InternalUtilityTypes } from "./exposedInternalUtilityTypes.js";
 import type { JsonDeserialized } from "./jsonDeserialized.js";
 import type { JsonSerializable, JsonSerializableOptions } from "./jsonSerializable.js";
 
@@ -34,6 +35,22 @@ declare class JsonStringBrand<T> extends BrandedType<JsonString<unknown>> {
 type DistributeJsonStringBrand<T> = T extends unknown ? JsonStringBrand<T> : never;
 
 /**
+ * Distributes branding over union elements of T unless result could prevent T
+ * from being reconstituted (as in the case of an enum type), in which case it
+ * falls back to a single JsonStringBrand for the entire T.
+ *
+ * @remarks
+ * Note that an enum unioned with anything else will be distributed. It seems
+ * however that TypeScript can/will reconstitute the enum type in that case.
+ */
+type BrandForJsonString<T> = InternalUtilityTypes.IfSameType<
+	DistributeJsonStringBrand<T> extends JsonStringBrand<infer U> ? U : never,
+	T,
+	DistributeJsonStringBrand<T>,
+	JsonStringBrand<T>
+>;
+
+/**
  * Branded `string` for JSON that has been stringified.
  *
  * @remarks
@@ -50,7 +67,7 @@ type DistributeJsonStringBrand<T> = T extends unknown ? JsonStringBrand<T> : nev
  * @sealed
  * @internal
  */
-export type JsonString<T> = string & DistributeJsonStringBrand<T>;
+export type JsonString<T> = string & BrandForJsonString<T>;
 
 /**
  * Compile options for {@link JsonStringify}.

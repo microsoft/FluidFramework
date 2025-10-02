@@ -4,6 +4,7 @@
  */
 
 import { assertIdenticalTypes, createInstanceOf, parameterAcceptedAs } from "./testUtils.js";
+import type { ConstHeterogenousEnum, NumericEnum } from "./testValues.js";
 import {
 	jsonStringOfString,
 	jsonStringOfObjectWithArrayOfNumbers,
@@ -109,7 +110,7 @@ describe("JsonString", () => {
 	// Practically `JsonString<A | B>` is the same as `JsonString<A> | JsonString<B>`
 	// since all encodings are the same and parsing from either produces the same
 	// `A|B` result.
-	it("`JsonString<A | B>` is assignable to `JsonString<A> | JsonString<B>`", () => {
+	it("`JsonString<A | B>` is assignable to `JsonString<A> | JsonString<B>` without enums involved", () => {
 		// Setup
 		const explicitBrandUnion = createInstanceOf<
 			string &
@@ -138,6 +139,20 @@ describe("JsonString", () => {
 		// Act and Verify
 		parameterAcceptedAs<JsonString<string> | JsonString<{ arrayOfNumbers: number[] }>>(
 			jsonStringOfString as JsonString<string | { arrayOfNumbers: number[] }>,
+		);
+	});
+
+	it("`JsonString<A | B>` is assignable to `JsonString<A> | JsonString<B>` with enums involved", () => {
+		parameterAcceptedAs<JsonString<NumericEnum> | JsonString<{ arrayOfNumbers: number[] }>>(
+			createInstanceOf<JsonString<NumericEnum | { arrayOfNumbers: number[] }>>(),
+		);
+
+		parameterAcceptedAs<
+			JsonString<NumericEnum | "other"> | JsonString<{ arrayOfNumbers: number[] }>
+		>(createInstanceOf<JsonString<NumericEnum | "other" | { arrayOfNumbers: number[] }>>());
+
+		parameterAcceptedAs<JsonString<NumericEnum> | JsonString<ConstHeterogenousEnum>>(
+			createInstanceOf<JsonString<NumericEnum | ConstHeterogenousEnum>>(),
 		);
 	});
 });

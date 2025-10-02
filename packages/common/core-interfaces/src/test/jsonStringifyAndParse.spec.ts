@@ -315,17 +315,13 @@ describe("JsonStringify and JsonParse", () => {
 				assertIdenticalTypes(stringified, createInstanceOf<JsonString<string>>());
 				assertIdenticalTypes(out, string);
 			});
-
 			it("numeric enum", () => {
 				const { stringified, out } = stringifyThenParse(numericEnumValue);
 				assertIdenticalTypes(
 					stringified,
 					createInstanceOf<JsonString<typeof numericEnumValue>>(),
 				);
-				assertIdenticalTypes(
-					out,
-					createInstanceOf<typeof numericEnumValue>(),
-				);
+				assertIdenticalTypes(out, createInstanceOf<typeof numericEnumValue>());
 			});
 			it("string enum", () => {
 				const { stringified, out } = stringifyThenParse(stringEnumValue);
@@ -333,10 +329,7 @@ describe("JsonStringify and JsonParse", () => {
 					stringified,
 					createInstanceOf<JsonString<typeof stringEnumValue>>(),
 				);
-				assertIdenticalTypes(
-					out,
-					stringEnumValue,
-				);
+				assertIdenticalTypes(out, stringEnumValue);
 			});
 			it("const heterogenous enum", () => {
 				const { stringified, out } = stringifyThenParse(constHeterogenousEnumValue);
@@ -344,10 +337,7 @@ describe("JsonStringify and JsonParse", () => {
 					stringified,
 					createInstanceOf<JsonString<typeof constHeterogenousEnumValue>>(),
 				);
-				assertIdenticalTypes(
-					out,
-					constHeterogenousEnumValue,
-				);
+				assertIdenticalTypes(out, constHeterogenousEnumValue);
 			});
 			it("computed enum", () => {
 				const { stringified, out } = stringifyThenParse(computedEnumValue);
@@ -355,12 +345,8 @@ describe("JsonStringify and JsonParse", () => {
 					stringified,
 					createInstanceOf<JsonString<typeof computedEnumValue>>(),
 				);
-				assertIdenticalTypes(
-					out,
-					computedEnumValue,
-				);
+				assertIdenticalTypes(out, computedEnumValue);
 			});
-
 			it("branded `number`", () => {
 				const { stringified, out } = stringifyThenParse(brandedNumber);
 				assertIdenticalTypes(
