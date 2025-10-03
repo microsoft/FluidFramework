@@ -1,7 +1,8 @@
-/**
- * Copyright (c) Microsoft Corporation. All rights reserved.
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { NodeKind, Tree, TreeNode } from "@fluidframework/tree";
 import type { ImplicitFieldSchema, TreeMapNode } from "@fluidframework/tree";
 import type { ReadableField, UnsafeUnknownSchema } from "@fluidframework/tree/alpha";
