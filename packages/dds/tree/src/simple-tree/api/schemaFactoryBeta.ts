@@ -144,7 +144,7 @@ export class SchemaFactoryBeta<
 		/* TConstructorExtra */ undefined
 	>;
 	/**
-	 * {@link SchemaFactory.array} implementation.
+	 * {@link SchemaFactoryBeta.record} implementation.
 	 *
 	 * @privateRemarks
 	 * This should return TreeNodeSchemaBoth: see note on "map" implementation for details.
