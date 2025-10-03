@@ -491,6 +491,7 @@ stages:
         # This step reports failure if either of the test runs reports failure.
         - task: Bash@3
           displayName: Run tests ${{ endpointObject.endpointName }}
+          timeoutInMinutes: 30
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
