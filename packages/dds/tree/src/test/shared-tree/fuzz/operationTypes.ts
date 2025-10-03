@@ -15,7 +15,8 @@ export type TreeOperation =
 	| UndoRedo
 	| SchemaChange
 	| Constraint
-	| ForkMergeOperation;
+	| ForkMergeOperation
+	| SharedBranchOperation;
 
 export interface TreeEdit {
 	type: "treeEdit";
@@ -51,6 +52,46 @@ export interface SchemaChange {
 export interface ForkMergeOperation {
 	type: "forkMergeOperation";
 	contents: ForkBranch | MergeBranch;
+}
+
+export interface SharedBranchOperation {
+	type: "sharedBranchOperation";
+	contents: CreateSharedBranch | CheckoutSharedBranch | MergeSharedBranch | CheckoutMainBranch;
+}
+
+/**
+ * An ordinal number associated with a shared branch created during a test, used in operations to refer to that branch.
+ * This is different from the branch ID used internally by SharedTree.
+ * The reason this is used instead of branch IDs is that branch IDs are not stable, which in some cases prevents replay and minification.
+ * SharedBranchNumber also has the advantage that it can be decided at operation generation time, which allows us to include it in CreateSharedBranch and helps test log readability.
+ */
+export type SharedBranchNumber = number;
+
+export interface CreateSharedBranch {
+	type: "createSharedBranch";
+	branchNumber: SharedBranchNumber;
+}
+
+export interface CheckoutSharedBranch {
+	type: "checkoutSharedBranch";
+	branchNumber: SharedBranchNumber;
+}
+
+/**
+ * Only allowed on clients which have another shared branch checked out.
+ */
+export interface CheckoutMainBranch {
+	type: "checkoutMainBranch";
+}
+
+/**
+ * Always merges the shared branch into the main branch.
+ * Only allowed on clients which have checked out this shared branch in the past.
+ * This includes clients that do not currently have that shared branch checked out.
+ */
+export interface MergeSharedBranch {
+	type: "mergeSharedBranch";
+	branchNumber: SharedBranchNumber;
 }
 
 export interface ForkBranch {

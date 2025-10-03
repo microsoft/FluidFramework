@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { fail } from "@fluidframework/core-utils/internal";
 import {
 	type AsyncGenerator,
 	type BaseFuzzTestState,
@@ -55,6 +56,8 @@ import {
 	GeneratedFuzzValueType,
 	type NodeRange,
 	type ForkMergeOperation,
+	type SharedBranchOperation,
+	type SharedBranchNumber,
 } from "./operationTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
@@ -121,6 +124,11 @@ export interface FuzzTestState extends DDSFuzzTestState<IChannelFactory<ISharedT
 	 * which should be used in place of this view until the transaction is complete.
 	 */
 	forkedViews?: Map<ISharedTree, FuzzView[]>;
+
+	sharedBranchIdToNumber?: Map<string, SharedBranchNumber>;
+	sharedBranchNumberToId?: Map<SharedBranchNumber, string>;
+	activeSharedBranch?: Map<ISharedTree, { branchNumber: SharedBranchNumber; view: FuzzView }>;
+	sharedBranchViews?: Map<ISharedTree, Map<SharedBranchNumber, FuzzView>>;
 }
 
 export function viewFromState(
@@ -140,31 +148,39 @@ export function viewFromState(
 		return forkedViews[forkedBranchIndex];
 	}
 
-	const view =
-		state.transactionViews?.get(client.channel) ??
-		(getOrCreate(state.clientViews, client.channel, (sharedTree) => {
-			const tree = sharedTree.kernel;
-			const treeSchema = simpleSchemaFromStoredSchema(tree.storedSchema);
-			const config = new TreeViewConfiguration({
-				schema: treeSchema,
-			});
+	const transactionView = state.transactionViews?.get(client.channel);
+	if (transactionView !== undefined) {
+		return transactionView;
+	}
 
-			const treeView = asAlpha(tree.viewWith(config));
-			treeView.events.on("schemaChanged", () => {
-				if (!treeView.compatibility.canView) {
-					treeView.dispose();
-					state.clientViews?.delete(client.channel);
-				}
-			});
+	const sharedBranchView = state.activeSharedBranch?.get(client.channel);
+	if (sharedBranchView !== undefined) {
+		return sharedBranchView.view;
+	}
 
-			assert(treeView.compatibility.isEquivalent);
-			const fuzzView = treeView as FuzzView;
-			assert.equal(fuzzView.currentSchema, undefined);
-			const nodeSchema = nodeSchemaFromTreeSchema(treeSchema);
+	const view = getOrCreate(state.clientViews, client.channel, (sharedTree) => {
+		const tree = sharedTree.kernel;
+		const treeSchema = simpleSchemaFromStoredSchema(tree.storedSchema);
+		const config = new TreeViewConfiguration({
+			schema: treeSchema,
+		});
 
-			fuzzView.currentSchema = nodeSchema ?? assert.fail("nodeSchema should not be undefined");
-			return fuzzView;
-		}) as unknown as FuzzView);
+		const treeView = asAlpha(tree.viewWith(config));
+		treeView.events.on("schemaChanged", () => {
+			if (!treeView.compatibility.canView) {
+				treeView.dispose();
+				state.clientViews?.delete(client.channel);
+			}
+		});
+
+		assert(treeView.compatibility.isEquivalent);
+		const fuzzView = treeView as FuzzView;
+		assert.equal(fuzzView.currentSchema, undefined);
+		const nodeSchema = nodeSchemaFromTreeSchema(treeSchema);
+
+		fuzzView.currentSchema = nodeSchema ?? assert.fail("nodeSchema should not be undefined");
+		return fuzzView;
+	}) as unknown as FuzzView;
 	return view;
 }
 function filterFuzzNodeSchemas(
@@ -279,6 +295,11 @@ export interface EditGeneratorOpWeights {
 	nodeConstraint: number;
 	fork: number;
 	merge: number;
+
+	createSharedBranch: number;
+	checkoutSharedBranch: number;
+	checkoutMainBranch: number;
+	mergeSharedBranch: number;
 }
 const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	set: 0,
@@ -298,6 +319,10 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	nodeConstraint: 0,
 	fork: 0,
 	merge: 0,
+	createSharedBranch: 0,
+	checkoutSharedBranch: 0,
+	checkoutMainBranch: 0,
+	mergeSharedBranch: 0,
 };
 
 export interface EditGeneratorOptions {
@@ -584,6 +609,65 @@ export const makeTransactionEditGenerator = (
 	]);
 };
 
+export const makeSharedBranchOpGenerator = (
+	opWeightsArg: Partial<EditGeneratorOpWeights>,
+): Generator<SharedBranchOperation, FuzzTestState> => {
+	const opWeights = {
+		...defaultEditGeneratorOpWeights,
+		...opWeightsArg,
+	};
+
+	return createWeightedGenerator<SharedBranchOperation, FuzzTestState>([
+		[
+			(state) => ({
+				type: "sharedBranchOperation",
+				contents: {
+					type: "createSharedBranch",
+					branchNumber: (state.sharedBranchIdToNumber?.size ?? 0) + 1,
+				},
+			}),
+			opWeights.createSharedBranch,
+		],
+		[
+			(state) => ({
+				type: "sharedBranchOperation",
+				contents: {
+					type: "checkoutSharedBranch",
+					branchNumber:
+						state.sharedBranchIdToNumber?.get(
+							state.random.pick(state.client.channel.getSharedBranchIds()),
+						) ?? fail("Missing branch number"),
+				},
+			}),
+			opWeights.checkoutSharedBranch,
+			(state) => state.client.channel.getSharedBranchIds().length > 0,
+		],
+		[
+			{
+				type: "sharedBranchOperation",
+				contents: {
+					type: "checkoutMainBranch",
+				},
+			},
+			opWeights.checkoutMainBranch,
+			(state) => state.activeSharedBranch?.get(state.client.channel) !== undefined,
+		],
+		[
+			(state) => ({
+				type: "sharedBranchOperation",
+				contents: {
+					type: "mergeSharedBranch",
+					branchNumber: state.random.pick(
+						Array.from(state.sharedBranchViews?.get(state.client.channel)?.keys() ?? []),
+					),
+				},
+			}),
+			opWeights.mergeSharedBranch,
+			(state) => state.sharedBranchViews?.get(state.client.channel) !== undefined,
+		],
+	]);
+};
+
 export const makeBranchEditGenerator = (
 	opWeightsArg: Partial<EditGeneratorOpWeights>,
 ): Generator<ForkMergeOperation, FuzzTestState> => {
@@ -720,6 +804,10 @@ export function makeOpGenerator(
 		nodeConstraint,
 		fork,
 		merge,
+		checkoutMainBranch,
+		checkoutSharedBranch,
+		createSharedBranch,
+		mergeSharedBranch,
 		...others
 	} = weights;
 	// This assert will trigger when new weights are added to EditGeneratorOpWeights but this function has not been
@@ -728,6 +816,12 @@ export function makeOpGenerator(
 	const editWeight = sumWeights([insert, remove, intraFieldMove, crossFieldMove, set, clear]);
 	const transactionWeight = sumWeights([abort, commit, start]);
 	const undoRedoWeight = sumWeights([undo, redo]);
+	const sharedBranchOpWeight = sumWeights([
+		checkoutMainBranch,
+		checkoutSharedBranch,
+		createSharedBranch,
+		mergeSharedBranch,
+	]);
 	// Currently we only support node constraints, but this may be expanded in the future.
 	const constraintWeight = nodeConstraint;
 
@@ -750,6 +844,7 @@ export function makeOpGenerator(
 					(state: FuzzTestState) => viewFromState(state).checkout.transaction.isInProgress(),
 				],
 				[() => makeBranchEditGenerator(weights), weights.fork + weights.merge],
+				[() => makeSharedBranchOpGenerator(weights), sharedBranchOpWeight],
 			] as const
 		)
 			.filter(([, weight]) => weight > 0)
