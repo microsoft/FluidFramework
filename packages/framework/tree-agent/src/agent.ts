@@ -36,7 +36,19 @@ import {
 	findNamedSchemas,
 } from "./utils.js";
 
+/**
+ * The name of the Tool that the LLM should use to edit the tree.
+ */
+const editingToolName = "GenerateTreeEditingCode";
+
+/**
+ * The name of the function that the LLM should generate to edit the tree.
+ */
 const editingFunctionName = "editTree";
+
+/**
+ * The name of the parameter passed to the edit function.
+ */
 const paramsName = "params";
 
 /**
@@ -122,8 +134,7 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 
 	private readonly originalBranch: TreeBranch;
 	private readonly tree: Subtree<TRoot>;
-
-	public readonly systemPrompt: string;
+	private readonly editingTool = createEditingTool(this.edit.bind(this));
 
 	public constructor(
 		public readonly client: BaseChatModel,
@@ -138,7 +149,7 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 		const originalSubtree = new Subtree(tree);
 		this.originalBranch = originalSubtree.branch;
 		this.tree = originalSubtree.fork();
-		this.systemPrompt = getPrompt({
+		const prompt = getPrompt({
 			subtree: this.tree,
 			editingToolName: this.editingTool.name,
 			editingFunctionName,
@@ -159,8 +170,8 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 		if (this.client.metadata?.modelName !== undefined) {
 			this.options?.log?.(`Model: **${this.client.metadata?.modelName}**\n\n`);
 		}
-		this.#messages.push(new SystemMessage(this.systemPrompt));
-		this.options?.log?.(`## System Prompt\n\n${this.systemPrompt}\n\n`);
+		this.#messages.push(new SystemMessage(prompt));
+		this.options?.log?.(`## System Prompt\n\n${prompt}\n\n`);
 	}
 
 	private async edit(functionCode: string): Promise<string> {
@@ -209,38 +220,6 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 		);
 		return `After running the function, the new state of the tree is:\n\n\`\`\`JSON\n${stringifyTree(tree.field)}\n\`\`\``;
 	}
-
-	// eslint-disable-next-line unicorn/consistent-function-scoping
-	private readonly editingTool = tool(async ({ functionCode }) => this.edit(functionCode), {
-		name: "GenerateTreeEditingCode",
-		description: `Invokes a JavaScript function \`${editingFunctionName}\` to edit a user's tree`,
-		schema: z.object({
-			functionCode: z
-				.string()
-				.describe(`The body of the \`${editingFunctionName}\` JavaScript function`),
-		}),
-	});
-
-	private readonly getTreeTool = tool(
-		// eslint-disable-next-line unicorn/consistent-function-scoping
-		() => {
-			const stringified = stringifyTree(this.queryTree.field);
-			this.options?.log?.(
-				`${
-					this.options?.treeToString?.(this.queryTree.field) ??
-					`\`\`\`JSON\n${stringified}\n\`\`\``
-				}\n\n`,
-			);
-			return stringified;
-		},
-		{
-			name: "getData",
-			description:
-				"Use this tool to get the current state of the tree. It will return the tree's data in a human-readable format.",
-
-			schema: z.object({}),
-		},
-	);
 
 	public async query(userPrompt: string): Promise<string | undefined> {
 		this.startQuerying();
@@ -294,10 +273,6 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 			if (responseMessage.tool_calls !== undefined && responseMessage.tool_calls.length > 0) {
 				for (const toolCall of responseMessage.tool_calls) {
 					switch (toolCall.name) {
-						case this.getTreeTool.name: {
-							this.#messages.push(await this.getTreeTool.invoke(toolCall));
-							break;
-						}
 						case this.editingTool.name: {
 							this.#messages.push(await this.editingTool.invoke(toolCall));
 							break;
@@ -366,4 +341,25 @@ function constructTreeNode(schema: TreeNodeSchema, value: FactoryContentObject):
 		return constructNode(schema, inputWithDefaults);
 	}
 	return constructNode(schema, value);
+}
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function createEditingTool(edit: (functionCode: string) => Promise<string>) {
+	return tool(async ({ functionCode }) => edit(functionCode), {
+		name: editingToolName,
+		description: `Invokes a JavaScript function \`${editingFunctionName}\` to edit a user's tree`,
+		schema: z.object({
+			functionCode: z
+				.string()
+				.describe(`The code of the \`${editingFunctionName}\` JavaScript function.
+					For example:
+					\`\`\`javascript
+					function ${editingFunctionName}({ root, create }) {
+						const newNode = create.MyNodeType({ myField: 123 });
+						root.myArrayField.insertAtEnd(newNode);
+					}
+					\`\`\`
+				`),
+		}),
+	});
 }
