@@ -115,8 +115,10 @@ export interface ServiceClient {
 	// attachContainer<T>(detached: FluidContainer<T>): Promise<FluidContainerAttached<T>>;
 	/**
 	 * Creates a detached container associated with this service client.
+	 * @privateRemarks
+	 * TODO:As this is a detached container, it should be able to be created synchronously.
 	 */
-	createContainer<T>(root: DataStoreKind<T>): FluidContainerWithService<T>;
+	createContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerWithService<T>>;
 
 	/**
 	 * Loads an existing container from the service.

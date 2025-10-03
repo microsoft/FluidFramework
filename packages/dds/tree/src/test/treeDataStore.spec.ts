@@ -16,6 +16,20 @@ import { createEphemeralServiceClient } from "@fluidframework/local-driver/inter
 import { SharedTree } from "../treeFactory.js";
 
 describe("treeDataStore", () => {
+	it("detached example", async () => {
+		const myFactory = treeDataStoreKind({
+			type: "my-tree",
+			config: new TreeViewConfiguration({ schema: SchemaFactoryAlpha.number }),
+			initializer: () => 1,
+		});
+
+		const service = createEphemeralServiceClient();
+		const detached = await service.createContainer(myFactory);
+
+		assert.equal(detached.data.root, 1);
+		detached.data.root = 2;
+		assert.equal(detached.data.root, 2);
+	});
 	it("collaboration example", async () => {
 		const myFactory = treeDataStoreKind({
 			type: "my-tree",
@@ -28,7 +42,7 @@ describe("treeDataStore", () => {
 		// Someday it would be nice to support this pattern, but that is longer term.
 		// const container1 = await service.attachContainer(createContainer(myFactory));
 
-		const container1 = await service.createContainer(myFactory).attach();
+		const container1 = await (await service.createContainer(myFactory)).attach();
 
 		assert.equal(container1.data.root, 1);
 
@@ -55,7 +69,7 @@ describe("treeDataStore", () => {
 				initializer: () => 1,
 			});
 
-			const container = await service.createContainer(myFactory).attach();
+			const container = await (await service.createContainer(myFactory)).attach();
 			id = container.id;
 		}
 
@@ -86,7 +100,7 @@ describe("treeDataStore", () => {
 		});
 
 		const service = createEphemeralServiceClient();
-		const container = service.createContainer(myFactory);
+		const container = await service.createContainer(myFactory);
 
 		assert(SharedTree.is(container.data));
 
