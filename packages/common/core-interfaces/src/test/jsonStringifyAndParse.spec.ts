@@ -321,7 +321,7 @@ describe("JsonStringify and JsonParse", () => {
 					stringified,
 					createInstanceOf<JsonString<typeof numericEnumValue>>(),
 				);
-				assertIdenticalTypes(out, createInstanceOf<typeof numericEnumValue>());
+				assertIdenticalTypes(out, numericEnumValue);
 			});
 			it("string enum", () => {
 				const { stringified, out } = stringifyThenParse(stringEnumValue);
