@@ -92,8 +92,8 @@ const localServer: ILocalDeltaConnectionServer =
 const urlResolver = new LocalResolver();
 const documentServiceFactory = new LocalDocumentServiceFactory(localServer);
 // const createCreateNewRequest = (id: string) => createLocalResolverCreateNewRequest(id);
-const createLoadExistingRequest = (id: string): IRequest => {
-	return { url: `/${id}` };
+const createLoadExistingRequest = (documentId: string): IRequest => {
+	return { url: `http://localhost:3000/${documentId}` };
 };
 
 const rootDataStoreId = "root";

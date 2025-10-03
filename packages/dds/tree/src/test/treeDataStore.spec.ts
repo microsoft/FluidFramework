@@ -30,6 +30,21 @@ describe("treeDataStore", () => {
 		detached.data.root = 2;
 		assert.equal(detached.data.root, 2);
 	});
+
+	it("attach example", async () => {
+		const myFactory = treeDataStoreKind({
+			type: "my-tree",
+			config: new TreeViewConfiguration({ schema: SchemaFactoryAlpha.number }),
+			initializer: () => 1,
+		});
+
+		const service = createEphemeralServiceClient();
+		const detached = await service.createContainer(myFactory);
+		const attached = await detached.attach();
+
+		assert.equal(attached.data.root, 1);
+	});
+
 	it("collaboration example", async () => {
 		const myFactory = treeDataStoreKind({
 			type: "my-tree",
