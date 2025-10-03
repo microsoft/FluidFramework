@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ICodeDetailsLoader,
-	IContainer,
-	IContainerContext,
-	IFluidCodeDetails,
-	IFluidCodeDetailsComparer,
-	IFluidModuleWithDetails,
-	IRuntime,
-	IRuntimeFactory,
+import {
+	ConnectionState,
+	type ICodeDetailsLoader,
+	type IContainer,
+	type IContainerContext,
+	type IFluidCodeDetails,
+	type IFluidCodeDetailsComparer,
+	type IFluidModuleWithDetails,
+	type IRuntime,
+	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
@@ -82,12 +83,58 @@ class EphemeralServiceClient implements ServiceClient {
 	}
 }
 
+let containers: EphemeralServiceContainer<unknown>[] = [];
+
+function updateContainers() {
+	containers = containers.filter((c) => !c.container.closed);
+}
+
 /**
  * Synchronizes all local clients.
  * @alpha
  */
 export async function synchronizeLocalService(): Promise<void> {
-	while (await localServer.hasPendingWork()) {}
+	// based on LoaderContainerTracker.ensureSynchronized, but stripped down a lot. Might miss some edge cases.
+
+	let clean = 0;
+
+	while (clean < 2) {
+		// TODO: does this accomplish anything?
+		while (await localServer.hasPendingWork()) {
+			clean = 0;
+		}
+
+		updateContainers();
+		const containersToApply = containers.map((c) => c.container);
+
+		// Ignore readonly dirty containers, because it can't send ops and nothing can be done about it being dirty
+		const dirtyContainers = containersToApply.filter((c) => {
+			const { deltaManager, isDirty, connectionState } = c;
+			return (
+				connectionState !== ConnectionState.Disconnected &&
+				deltaManager.readOnlyInfo.readonly !== true &&
+				isDirty
+			);
+		});
+		if (dirtyContainers.length !== 0) {
+			await Promise.all(
+				dirtyContainers.map(async (c) =>
+					Promise.race([
+						new Promise((resolve) => c.once("saved", resolve)),
+						new Promise((resolve) => c.once("closed", resolve)),
+					]),
+				),
+			);
+			clean = 0;
+		}
+
+		// yield a turn to allow side effect of resuming or the ops we just processed execute before we check
+		await new Promise<void>((resolve) => {
+			setTimeout(resolve, 0);
+		});
+
+		clean++;
+	}
 }
 
 // A single localServer should be shared by all instances of a local driver so they can communicate
@@ -251,7 +298,10 @@ class EphemeralServiceContainer<T> implements FluidContainerWithService<T> {
 		public readonly container: IContainer,
 		public readonly data: T,
 		public id: string | undefined,
-	) {}
+	) {
+		containers.push(this);
+		updateContainers();
+	}
 
 	public async attach(): Promise<FluidContainerAttached<T>> {
 		// TODO: handel concurrent attach calls
