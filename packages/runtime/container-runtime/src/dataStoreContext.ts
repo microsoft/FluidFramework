@@ -168,7 +168,7 @@ export interface IFluidDataStoreContextProps {
  * Properties necessary for creating a local FluidDataStoreContext
  */
 export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContextProps {
-	readonly pkg: Readonly<string[]> | undefined;
+	readonly pkg: readonly string[] | undefined;
 	readonly snapshotTree: ISnapshotTree | undefined;
 	readonly makeLocallyVisibleFn: () => void;
 }
@@ -282,7 +282,7 @@ export abstract class FluidDataStoreContext
 
 	private isStagingMode: boolean = false;
 	public isReadOnly = (): boolean =>
-		(this.isStagingMode && this.channel?.policies?.readonlyInStagingMode !== false) ||
+		(this.isStagingMode && this.channel?.policies?.readonlyInStagingMode === true) ||
 		this.parentContext.isReadOnly();
 
 	public get connected(): boolean {

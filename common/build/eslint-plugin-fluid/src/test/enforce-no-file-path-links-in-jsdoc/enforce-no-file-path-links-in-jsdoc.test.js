@@ -36,19 +36,31 @@ describe("Do not allow file path links in JSDoc/TSDoc comments", function () {
 		assert.strictEqual(result.errorCount, 4);
 
 		// Error 1
-		assert.strictEqual(result.messages[0].message, expectedErrorMessage);
-		assert.strictEqual(result.messages[0].line, 10);
+		const error1 = result.messages[0];
+		assert.strictEqual(error1.message, expectedErrorMessage);
+		assert.strictEqual(error1.line, 10);
+		assert.strictEqual(error1.column, 56); // 1-based, inclusive
+		assert.strictEqual(error1.endColumn, 84); // 1-based, exclusive
 
 		// Error 2
-		assert.strictEqual(result.messages[1].message, expectedErrorMessage);
-		assert.strictEqual(result.messages[1].line, 11);
+		const error2 = result.messages[1];
+		assert.strictEqual(error2.message, expectedErrorMessage);
+		assert.strictEqual(error2.line, 11);
+		assert.strictEqual(error2.column, 17); // 1-based, inclusive
+		assert.strictEqual(error2.endColumn, 41); // 1-based, exclusive
 
 		// Error 3
-		assert.strictEqual(result.messages[2].message, expectedErrorMessage);
-		assert.strictEqual(result.messages[2].line, 16);
+		const error3 = result.messages[2];
+		assert.strictEqual(error3.message, expectedErrorMessage);
+		assert.strictEqual(error3.line, 16);
+		assert.strictEqual(error3.column, 57); // 1-based, inclusive
+		assert.strictEqual(error3.endColumn, 84); // 1-based, exclusive
 
 		// Error 4
-		assert.strictEqual(result.messages[3].message, expectedErrorMessage);
-		assert.strictEqual(result.messages[3].line, 17);
+		const error4 = result.messages[3];
+		assert.strictEqual(error4.message, expectedErrorMessage);
+		assert.strictEqual(error4.line, 17);
+		assert.strictEqual(error4.column, 17); // 1-based, inclusive
+		assert.strictEqual(error4.endColumn, 40); // 1-based, exclusive
 	});
 });
