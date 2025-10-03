@@ -49,7 +49,24 @@ export function sharedObjectRegistryFromIterable(
 		| { type: string; kind: () => Promise<SharedObjectKind<IFluidLoadable>> }
 	>,
 ): SharedObjectRegistry {
-	throw new Error("Not implemented: registry");
+	const map = new Map<string, Promise<SharedObjectKind<IFluidLoadable>>>();
+	for (const entry of entries) {
+		if ("kind" in entry) {
+			map.set(entry.type, entry.kind());
+		} else {
+			map.set(
+				(entry as unknown as ISharedObjectKind<IFluidLoadable>).getFactory().type,
+				Promise.resolve(entry),
+			);
+		}
+	}
+	return async (type: string) => {
+		const entry = await map.get(type);
+		if (entry === undefined) {
+			throw new UsageError(`Unknown shared object type: ${type}`);
+		}
+		return entry;
+	};
 }
 
 /**
