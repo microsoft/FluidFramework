@@ -187,7 +187,12 @@ export interface IPendingBlobs {
 	[localId: string]: SerializedLocalBlobRecord;
 }
 
+const isTTLExpired = (blobRecord: UploadedBlob | AttachingBlob): boolean =>
+	blobRecord.minTTLInSeconds !== undefined &&
+	Date.now() - blobRecord.uploadTime > blobRecord.minTTLInSeconds * 1000;
+
 interface IBlobManagerInternalEvents {
+	blobExpired: (localId: string) => void;
 	handleAttached: (pending: LocalBlobRecord) => void;
 	processedBlobAttach: (localId: string, storageId: string) => void;
 }
@@ -479,27 +484,40 @@ export class BlobManager {
 		localId: string,
 		blob: ArrayBufferLike,
 	): Promise<void> {
-		// TODO: Assert localOnly here (but also need to permit the reupload due to TTL case?  Maybe reset the state to localOnly
-		// when TTL expires.)
-		this.localBlobCache.set(localId, { state: "uploading", blob });
-		const createBlobResponse: ICreateBlobResponseWithTTL = await this.storage.createBlob(blob);
-		this.localBlobCache.set(localId, {
-			state: "uploaded",
-			blob,
-			storageId: createBlobResponse.id,
-			uploadTime: Date.now(),
-			minTTLInSeconds: createBlobResponse.minTTLInSeconds,
-		});
-		return this.attachUploadedBlob(localId);
+		let uploadCompleted = false;
+		while (!uploadCompleted) {
+			// TODO: Assert localOnly here?
+			this.localBlobCache.set(localId, { state: "uploading", blob });
+			const createBlobResponse: ICreateBlobResponseWithTTL =
+				await this.storage.createBlob(blob);
+			this.localBlobCache.set(localId, {
+				state: "uploaded",
+				blob,
+				storageId: createBlobResponse.id,
+				uploadTime: Date.now(),
+				minTTLInSeconds: createBlobResponse.minTTLInSeconds,
+			});
+			uploadCompleted = await this.attachUploadedBlob(localId);
+		}
 	}
 
-	private async attachUploadedBlob(localId: string): Promise<void> {
+	private async attachUploadedBlob(localId: string): Promise<boolean> {
 		const localBlobRecord = this.localBlobCache.get(localId);
 
 		assert(
 			localBlobRecord?.state === "uploaded",
 			0x386 /* Must have pending blob entry for uploaded blob */,
 		);
+
+		// If the TTL is expired, we assume it's gone from the storage and so is effectively localOnly again.
+		if (isTTLExpired(localBlobRecord)) {
+			this.localBlobCache.set(localId, { state: "localOnly", blob: localBlobRecord.blob });
+			// Emitting here isn't really necessary since the only listener would be attached below. Including here
+			// for completeness though, in case we add other listeners in the future.
+			this.internalEvents.emit("blobExpired", localId);
+			return false;
+		}
+
 		this.localBlobCache.set(localId, {
 			...localBlobRecord,
 			state: "attaching",
@@ -510,16 +528,32 @@ export class BlobManager {
 		//    until its storage ID is added to the next summary.
 		// 2. It will create a local ID to storage ID mapping in all clients which is needed to retrieve the
 		//    blob from the server via the storage ID.
-		await new Promise<void>((resolve) => {
+		const attachCompleted = await new Promise<boolean>((resolve) => {
 			const onProcessedBlobAttach = (_localId: string, _storageId: string): void => {
 				if (_localId === localId) {
 					this.internalEvents.off("processedBlobAttach", onProcessedBlobAttach);
-					resolve();
+					this.internalEvents.off("blobExpired", onBlobExpired);
+					resolve(true);
+				}
+			};
+			const onBlobExpired = (_localId: string): void => {
+				if (_localId === localId) {
+					this.internalEvents.off("processedBlobAttach", onProcessedBlobAttach);
+					this.internalEvents.off("blobExpired", onBlobExpired);
+					resolve(false);
 				}
 			};
 			this.internalEvents.on("processedBlobAttach", onProcessedBlobAttach);
+			this.internalEvents.on("blobExpired", onBlobExpired);
 			this.sendBlobAttachOp(localId, localBlobRecord.storageId);
 		});
+
+		// If something stopped the attach from completing successfully (currently just TTL expiry),
+		// we expect that the blob was already updated to reflect the updated state (e.g. back to localOnly)
+		// and we return to try again.
+		if (!attachCompleted) {
+			return false;
+		}
 
 		const attachedBlobRecord: AttachedBlob = {
 			state: "attached",
@@ -530,6 +564,8 @@ export class BlobManager {
 		// in particular for the non-payloadPending case since we should be reaching this point
 		// before even returning a handle to the caller.
 		this.handleAttachedPendingBlobs.delete(localId);
+
+		return true;
 	}
 
 	/**
@@ -547,8 +583,15 @@ export class BlobManager {
 		// pending state. We shouldn't try to attach them since they won't be accessible to the customer
 		// and would just be considered garbage immediately.
 		// TODO: This needs to incorporate the TTL logic
-		if (this.localBlobCache.get(localId)?.state === "attaching") {
-			this.sendBlobAttachOp(localId, remoteId);
+		const localBlobRecord = this.localBlobCache.get(localId);
+		if (localBlobRecord?.state === "attaching") {
+			// If the TTL is expired, we assume it's gone from the storage and so is effectively localOnly again.
+			if (isTTLExpired(localBlobRecord)) {
+				this.localBlobCache.set(localId, { state: "localOnly", blob: localBlobRecord.blob });
+				this.internalEvents.emit("blobExpired", localId);
+			} else {
+				this.sendBlobAttachOp(localId, remoteId);
+			}
 		}
 	}
 
