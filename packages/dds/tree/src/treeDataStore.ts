@@ -29,7 +29,10 @@ import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import type {
+	ISharedObject,
+	ISharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 // TODO: Non-tree specific content should be moved elsewhere.
@@ -183,6 +186,10 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 					}
 					const sharedObject = kind as unknown as ISharedObjectKind<T2>;
 					const result = sharedObject.create(rt, rootSharedObjectId);
+
+					const result2 = result as unknown as ISharedObject;
+					result2.bindToContext();
+
 					createdRoot = result;
 					return result;
 				},
