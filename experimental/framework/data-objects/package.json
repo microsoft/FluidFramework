@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/data-objects",
-	"version": "2.62.0",
+	"version": "2.62.1",
 	"description": "A collection of ready to use Fluid Data Objects",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -75,8 +75,6 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

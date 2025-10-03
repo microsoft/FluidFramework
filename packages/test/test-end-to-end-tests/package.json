@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-end-to-end-tests",
-	"version": "2.62.0",
+	"version": "2.62.1",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -159,8 +159,6 @@
 		}
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

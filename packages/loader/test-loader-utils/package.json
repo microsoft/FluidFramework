@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-loader-utils",
-	"version": "2.62.0",
+	"version": "2.62.1",
 	"description": "Mocks and other test utilities for the Fluid Framework Loader",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -85,8 +85,6 @@
 		}
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

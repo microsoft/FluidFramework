@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/react",
-	"version": "2.62.0",
+	"version": "2.62.1",
 	"description": "Utilities for integrating content powered by the Fluid Framework into React applications",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -155,8 +155,6 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }
