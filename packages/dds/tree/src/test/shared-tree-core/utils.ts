@@ -21,7 +21,7 @@ import {
 	type GraphCommit,
 	type RevisionTag,
 } from "../../core/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	DefaultChangeFamily,
 	type DefaultChangeset,
@@ -72,7 +72,7 @@ import { mockSerializer } from "../mockSerializer.js";
 import { TestChange } from "../testChange.js";
 
 const codecOptions: ICodecOptions = {
-	jsonValidator: typeboxValidator,
+	jsonValidator: FormatValidatorBasic,
 };
 const formatVersions = { editManager: 1, message: 1, fieldBatch: 1 };
 
@@ -260,24 +260,25 @@ export class TestSharedTreeCore extends SharedObject {
 			},
 		);
 
+		const commitEnricher = this.kernel.getCommitEnricher("main");
 		this.transaction.events.on("started", () => {
 			if (this.isAttached()) {
-				this.kernel.commitEnricher.startTransaction();
+				commitEnricher.startTransaction();
 			}
 		});
 		this.transaction.events.on("aborting", () => {
 			if (this.isAttached()) {
-				this.kernel.commitEnricher.abortTransaction();
+				commitEnricher.abortTransaction();
 			}
 		});
 		this.transaction.events.on("committing", () => {
 			if (this.isAttached()) {
-				this.kernel.commitEnricher.commitTransaction();
+				commitEnricher.commitTransaction();
 			}
 		});
 		this.transaction.activeBranchEvents.on("afterChange", (event) => {
 			if (event.type === "append" && this.isAttached() && this.transaction.isInProgress()) {
-				this.kernel.commitEnricher.addTransactionCommits(event.newCommits);
+				commitEnricher.addTransactionCommits(event.newCommits);
 			}
 		});
 	}

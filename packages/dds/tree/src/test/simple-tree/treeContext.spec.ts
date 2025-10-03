@@ -115,8 +115,7 @@ describe("TreeBranch", () => {
 			assert.deepEqual([...branchBranch.root], ["y"]);
 			assert.throws(
 				() => view.rebaseOnto(branch),
-				(e: Error) =>
-					validateAssertionError(e, /The main branch cannot be rebased onto another branch./),
+				(e: Error) => validateAssertionError(e, /cannot be rebased onto another branch./),
 			);
 		});
 

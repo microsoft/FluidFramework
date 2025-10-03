@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Base configuration from which all of our exported configs extends.
+ */
 module.exports = {
 	env: {
 		browser: true,
@@ -36,6 +39,36 @@ module.exports = {
 	plugins: ["import", "unicorn"],
 	reportUnusedDisableDirectives: true,
 	rules: {
+		// #region TODO: promote these rules to errors in 7.0.0
+
+		// (Also move into the alphabetized lists below)
+
+		/**
+		 * Disallow `-` immediately following a JSDoc/TSDoc tag (e.g. `@deprecated - foo`).
+		 */
+		"@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": "warn",
+
+		/**
+		 * Disallow file path based links in JSDoc/TSDoc comments.
+		 */
+		"@fluid-internal/fluid/no-file-path-links-in-jsdoc": "warn",
+
+		/**
+		 * Disallow the use of Markdown-syntax links in JSDoc/TSDoc comments.
+		 */
+		"@fluid-internal/fluid/no-markdown-links-in-jsdoc": "warn",
+
+		/** See {@link https://typescript-eslint.io/rules/no-empty-object-type} */
+		"@typescript-eslint/no-empty-object-type": "warn",
+
+		/** See {@link https://typescript-eslint.io/rules/no-unsafe-function-type} */
+		"@typescript-eslint/no-unsafe-function-type": "warn",
+
+		/** See {@link https://typescript-eslint.io/rules/no-wrapper-object-types/} */
+		"@typescript-eslint/no-wrapper-object-types": "warn",
+
+		// #endregion
+
 		// Please keep entries alphabetized within a group
 
 		// @typescript-eslint

@@ -5,12 +5,16 @@
 
 import { strict as assert } from "node:assert";
 
-import { SchemaFactory, TreeViewConfiguration } from "../../../simple-tree/index.js";
-// TODO: test other things from "treeNodeKernel" file.
-// eslint-disable-next-line import/no-internal-modules
-import { getKernel, isTreeNode } from "../../../simple-tree/core/treeNodeKernel.js";
+import { SchemaFactory, TreeBeta, TreeViewConfiguration } from "../../../simple-tree/index.js";
+import {
+	getKernel,
+	isTreeNode,
+	withBufferedTreeEvents,
+	// TODO: test other things from "treeNodeKernel" file.
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../simple-tree/core/treeNodeKernel.js";
 
-import { hydrate } from "../utils.js";
+import { describeHydration, hydrate } from "../utils.js";
 import { getView } from "../../utils.js";
 import { AnchorSet, rootFieldKey, type UpPath } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
@@ -165,4 +169,61 @@ describe("simple-tree proxies", () => {
 			assert(anchors.isEmpty());
 		});
 	}
+});
+
+describe("withBufferedTreeEvents", () => {
+	const schemaFactory = new SchemaFactory("test");
+	class MyObject extends schemaFactory.object("myObject", {
+		foo: schemaFactory.string,
+		bar: schemaFactory.boolean,
+		baz: schemaFactory.optional(schemaFactory.number),
+	}) {}
+	describeHydration(
+		"", // Unnamed intentionally - only care about the hydrated/unhydrated split here.
+		(init) => {
+			it("Can buffer events", () => {
+				const myObject = init(MyObject, new MyObject({ foo: "hi", bar: true }));
+
+				const eventLog: string[] = [];
+
+				TreeBeta.on(myObject, "nodeChanged", ({ changedProperties }) => {
+					eventLog.push(`nodeChanged: ${JSON.stringify([...changedProperties.keys()])}`);
+				});
+				TreeBeta.on(myObject, "treeChanged", () => {
+					eventLog.push("treeChanged");
+				});
+
+				withBufferedTreeEvents(() => {
+					myObject.foo = "hello";
+					myObject.baz = 5;
+					myObject.baz = undefined;
+					myObject.foo = "world";
+					assert.deepEqual(eventLog, []);
+				});
+				assert.deepEqual(eventLog, ['nodeChanged: ["foo","baz"]', "treeChanged"]);
+			});
+		},
+	);
+
+	it("Can hydrate node while events are buffered", () => {
+		const myObject = new MyObject({ foo: "hi", bar: true });
+
+		// Subscribe to kernel events to verify they are raised.
+		let eventCounter: number = 0;
+		TreeBeta.on(myObject, "treeChanged", () => {
+			eventCounter++;
+		});
+
+		withBufferedTreeEvents(() => {
+			myObject.foo = "hello";
+			assert.equal(eventCounter, 0);
+
+			hydrate(MyObject, myObject);
+			assert.equal(eventCounter, 0);
+
+			myObject.baz = 42;
+			assert.equal(eventCounter, 0);
+		});
+		assert.equal(eventCounter, 1); // Only a single event should have been raised.
+	});
 });

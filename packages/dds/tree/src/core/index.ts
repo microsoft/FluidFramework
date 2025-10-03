@@ -207,6 +207,7 @@ export {
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
 	compareRevisions,
+	diffHistories,
 } from "./rebase/index.js";
 
 export {

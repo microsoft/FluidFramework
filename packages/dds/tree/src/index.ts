@@ -57,6 +57,7 @@ export {
 export {
 	type ITreeInternal,
 	type SharedTreeOptions,
+	type SharedTreeOptionsBeta,
 	type ForestType,
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
@@ -69,6 +70,7 @@ export {
 	independentInitializedView,
 	type ViewContent,
 	TreeAlpha,
+	type ObservationResults,
 	type TreeIdentifierUtils,
 	independentView,
 	ForestTypeOptimized,
@@ -145,6 +147,9 @@ export {
 	type IdentifierIndex,
 	createSimpleTreeIndex,
 	createIdentifierIndex,
+	type DirtyTreeStatus,
+	trackDirtyNodes,
+	type DirtyTreeMap,
 	// experimental @alpha APIs:
 	adaptEnum,
 	enumFromStrings,
@@ -267,10 +272,13 @@ export {
 	type TreeRecordNode,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
+	type SchemaFactory_base,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
 	configuredSharedTree,
+	configuredSharedTreeBeta,
+	configuredSharedTreeBetaLegacy,
 } from "./treeFactory.js";
 export { SharedTreeAttributes, SharedTreeFactoryType } from "./sharedTreeAttributes.js";
 export { persistedToSimpleSchema } from "./shared-tree/index.js";
@@ -278,14 +286,11 @@ export { persistedToSimpleSchema } from "./shared-tree/index.js";
 export {
 	type ICodecOptions,
 	type CodecWriteOptions,
-	type JsonValidator,
-	type SchemaValidationFunction,
 	FluidClientVersion,
 	type FormatValidator,
 	FormatValidatorNoOp,
 } from "./codec/index.js";
-export { noopValidator } from "./codec/index.js";
-export { typeboxValidator, FormatValidatorBasic } from "./external-utilities/index.js";
+export { FormatValidatorBasic } from "./external-utilities/index.js";
 
 export type {
 	// Type Testing
@@ -338,3 +343,4 @@ export type {
 	Creator,
 	SharedObjectRegistry,
 } from "./treeDataStore.js";
+export { asAlpha } from "./api.js";

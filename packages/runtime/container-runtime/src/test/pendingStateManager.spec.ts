@@ -135,7 +135,7 @@ describe("Pending State Manager", () => {
 			rollbackCalled = true;
 			rollbackContent.push(m);
 			if (rollbackShouldThrow) {
-				throw new Error();
+				throw new Error("test error");
 			}
 		};
 
@@ -213,7 +213,7 @@ describe("Pending State Manager", () => {
 			pendingStateManager = new PendingStateManager(
 				{
 					applyStashedOp: () => {
-						throw new Error();
+						throw new Error("test error");
 					},
 					clientId: () => "oldClientId",
 					connected: () => true,
@@ -1064,7 +1064,6 @@ describe("Pending State Manager", () => {
 	});
 
 	describe("hasPendingUserChanges", () => {
-		// eslint-disable-next-line unicorn/consistent-function-scoping
 		function createPendingStateManager(
 			pendingMessages: IPendingMessage[] = [],
 			initialMessages: IPendingMessage[] = [],
@@ -1176,7 +1175,10 @@ describe("Pending State Manager", () => {
 				stubs.reSubmitBatch.callsFake((batch, metadata) => {
 					// Here's where we implement [firstBatchSize === 0] case - Flush an empty batch on resubmit
 					if (firstBatchSize === 0 && stubs.reSubmitBatch.callCount === 1) {
-						assert(metadata.batchId, "PRECONDITION: Expected batchId for empty batch");
+						assert(
+							metadata.batchId !== undefined,
+							"PRECONDITION: Expected batchId for empty batch",
+						);
 						const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch(
 							metadata.batchId,
 							refSeqResubmit_15,

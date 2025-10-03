@@ -68,7 +68,7 @@ Note: some packages do explicitly filter test files to `*.spec.js`: in such pack
 
 ## Environment Variables
 
-In package.json scripts, environment variables can be set using cross-env, like "cross-env MOCHA_SPEC=lib/mocha/test mocha".
+In package.json scripts, environment variables can be set using cross-env, like "cross-env MOCHA_SPEC=lib/mocha/test/**/*.spec.*js mocha".
 
 The configuration will have additional settings if the following environment variables are present:
 
@@ -106,6 +106,13 @@ FLUID_LOGGER_PROPS='{ "hostName": "Benchmark" }'
 Injects implementation of `createTestLogger`.
 We use it in our pipelines to submit telemetry to internal engineering systems.
 Probably not useful outside of that scenario, except when using it locally to test something related to its use in the pipelines.
+
+### FLUID_TEST_MODULE_SYSTEM
+
+When set to "CJS", current run is setup to be for CommonJS coverage:
+- "CJS" is noted as a variant and shown as prefix to test case names.
+- Coverage file will be prefixed with "CJS-".
+- Default spec is changed from `lib/test` to `dist/test`; see more below.
 
 ### MOCHA_SPEC
 
