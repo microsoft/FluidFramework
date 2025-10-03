@@ -9,11 +9,17 @@ import type { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import type { Revertible, TreeView, ValidateRecursiveSchema } from "@fluidframework/tree";
-import { SchemaFactory, Tree, TreeStatus, TreeViewConfiguration } from "@fluidframework/tree";
-import { allowUnused, asAlpha } from "@fluidframework/tree/alpha";
-import { SharedTree } from "@fluidframework/tree/legacy";
-import type { AxiosResponse } from "axios";
+import {
+	TreeViewConfiguration,
+	SchemaFactory,
+	type TreeView,
+	SharedTree,
+	Tree,
+	TreeStatus,
+	type Revertible,
+	type ValidateRecursiveSchema,
+	allowUnused,
+} from "@fluidframework/tree";
 
 import {
 	createAzureClient,
@@ -94,7 +100,7 @@ for (const testOpts of testMatrix) {
 				containerId = await container.attach();
 				await waitForConnection(container);
 			} else {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					summaryTree,
 					"test-user-id-1",
 					"test-user-name-1",
@@ -216,11 +222,11 @@ for (const testOpts of testMatrix) {
 				it("can handle undo/redo and transactions", async () => {
 					const { container } = await client.createContainer(schema, "2");
 					await container.attach();
-					const view = asAlpha(
-						container.initialObjects.tree1.viewWith(
+					const view = container.initialObjects.tree1
+						.viewWith(
 							new TreeViewConfiguration({ schema: User, enableSchemaValidation: true }),
-						),
-					);
+						)
+						.asAlpha();
 
 					view.initialize(
 						new User({
@@ -294,7 +300,6 @@ for (const testOpts of testMatrix) {
 
 			it("can listen to events on a recursive tree", async () => {
 				class Doll extends sf.objectRecursive("Matryoshka", {
-					// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 					nested: sf.optionalRecursive([() => Doll]),
 				}) {}
 				allowUnused<ValidateRecursiveSchema<typeof Doll>>();
