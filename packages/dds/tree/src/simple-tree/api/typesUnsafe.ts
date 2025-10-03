@@ -31,10 +31,7 @@ import type {
 	LazyItem,
 } from "../core/index.js";
 import type { TreeArrayNode } from "../node-kinds/index.js";
-import type {
-	SimpleArrayNodeSchema,
-	SimpleMapNodeSchema,
-} from "../simpleSchema.js";
+import type { SimpleArrayNodeSchema, SimpleMapNodeSchema } from "../simpleSchema.js";
 
 /*
  * TODO:
