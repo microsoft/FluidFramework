@@ -185,9 +185,9 @@ export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, 
 export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): SimpleTreeIndex<TKey, TValue>;
 
 // @alpha @sealed
-export interface Creator {
+export interface Creator<TConstraint = IFluidLoadable> {
     // (undocumented)
-    create<T extends IFluidLoadable>(kind: SharedObjectKind<T>): Promise<T>;
+    create<T extends TConstraint>(kind: SharedObjectKind<T>): Promise<T>;
 }
 
 // @alpha
@@ -195,7 +195,7 @@ export function dataStoreKind<T, TRoot extends IFluidLoadable>(options: DataStor
 
 // @alpha @input (undocumented)
 export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutput> {
-    instantiateFirstTime(creator: Creator): Promise<TRoot>;
+    instantiateFirstTime(rootCreator: Creator<TRoot>, creator: Creator): Promise<TRoot>;
     readonly registry: SharedObjectRegistry;
     readonly type: string;
     view(root: TRoot): TOutput;
@@ -1817,7 +1817,7 @@ export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(opt
 export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> {
     // (undocumented)
     readonly config: TreeViewConfiguration<TSchema>;
-    readonly initializer?: () => InsertableTreeFieldFromImplicitField<TSchema>;
+    readonly initializer?: (creator: Creator) => InsertableTreeFieldFromImplicitField<TSchema>;
     readonly registry?: Iterable<SharedObjectKind<IFluidLoadable>> | SharedObjectRegistry;
     readonly type: string;
 }
