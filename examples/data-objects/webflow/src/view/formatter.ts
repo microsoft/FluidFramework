@@ -9,7 +9,7 @@ import { emptyObject } from "../util/index.js";
 
 import { Layout } from "./layout.js";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IFormatterState {}
 
 export abstract class Formatter<TState extends IFormatterState> {

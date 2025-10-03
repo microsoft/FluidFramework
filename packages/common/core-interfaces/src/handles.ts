@@ -223,5 +223,5 @@ export interface IFluidHandle<out T = unknown> {
  * Created from {@link IFluidHandleInternal} using {@link toFluidHandleErased}.
  * @sealed @public
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandle", T]> {}

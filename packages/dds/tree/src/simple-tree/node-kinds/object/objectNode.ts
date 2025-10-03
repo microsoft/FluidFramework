@@ -102,7 +102,7 @@ import { convertField, convertFieldKind } from "../../toStoredSchema.js";
  */
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> =
 	RestrictiveStringRecord<ImplicitFieldSchema> extends T
-		? // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+		? // eslint-disable-next-line @typescript-eslint/ban-types
 			{}
 		: {
 				-readonly [Property in keyof T]: Property extends string

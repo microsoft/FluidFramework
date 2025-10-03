@@ -252,8 +252,8 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
 	/**
 	 * Add one or more values at the end of the array
-	 * @param {Array<property-properties.BaseProperty>|property-properties.BaseProperty|*|Array<*>} in_values - The
-	 * item or items to be pushed (either properties or values). If an array is passed, .push
+	 * @param {Array<property-properties.BaseProperty>|property-properties.BaseProperty|*|Array<*>} in_values- -
+	 * the item or items to be pushed (either properties or values). If an array is passed, .push
 	 * will be called on each item in the array.
 	 * @throws if trying to push a property that is a root property
 	 * @return {number} new length of the array

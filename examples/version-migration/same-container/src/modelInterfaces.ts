@@ -11,7 +11,7 @@ import type {
 import type { IEventProvider } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence/legacy";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IInventoryListAppModelEvents extends ISameContainerMigratableModelEvents {}
 
 /**

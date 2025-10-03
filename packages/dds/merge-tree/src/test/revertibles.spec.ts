@@ -37,7 +37,7 @@ import { TestClientLogger, createClientsAtInitialState } from "./testClientLogge
  * be merged with the implementation that lives there
  */
 export function spyOnMethod(
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
+	// eslint-disable-next-line @typescript-eslint/ban-types
 	methodClass: Function,
 	methodName: string,
 	spy: () => void,

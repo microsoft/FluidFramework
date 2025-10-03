@@ -534,7 +534,7 @@ export class TestTreeProviderLite {
  * after the spy is no longer needed.
  */
 export function spyOnMethod(
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
+	// eslint-disable-next-line @typescript-eslint/ban-types
 	methodClass: Function,
 	methodName: string,
 	spy: () => void,
