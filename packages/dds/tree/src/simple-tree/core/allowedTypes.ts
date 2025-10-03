@@ -520,6 +520,11 @@ export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchem
 }
 
 /**
+ * See note inside {@link normalizeAllowedTypesInternal}.
+ */
+const cachedNormalize = new WeakMap<ImplicitAllowedTypes, AllowedTypesFullInternal>();
+
+/**
  * Normalizes a allowed types to {@link AllowedTypesFullInternal}.
  */
 export function normalizeAllowedTypesInternal(
@@ -529,15 +534,23 @@ export function normalizeAllowedTypesInternal(
 		return type;
 	}
 
-	// Due to more specific internal type, the above does not narrow sufficiently, so more narrowing is needed.
-	// It is possible this will give a false error if a TreeNodeSchema which matches this check is used.
-	assert(!("types" in type && "metadata" in type), "invalid AnnotatedAllowedTypes");
+	// This caching accomplishes two things:
+	// 1. It avoids redundant computations for the same input.
+	// 2. It provides a stable object identity for the output in case the input is normalized twice and other systems (such as unhydrated contexts) are cached based on the object identity of the output.
+	// It is this second case which is the more important since creating the AnnotatedAllowedTypesInternal is rather cheap.
+	// Adding this cache improved the performance of the "large recursive union" test (which mostly just constructs a TreeConfiguration) by ~5 times.
+	// This cache is strictly a performance optimization: it is not required for correctness.
+	return getOrCreate(cachedNormalize, type, () => {
+		// Due to more specific internal type, the above does not narrow sufficiently, so more narrowing is needed.
+		// It is possible this will give a false error if a TreeNodeSchema which matches this check is used.
+		assert(!("types" in type && "metadata" in type), "invalid AnnotatedAllowedTypes");
 
-	const annotatedTypes: AnnotatedAllowedType[] = (isReadonlyArray(type) ? type : [type]).map(
-		normalizeToAnnotatedAllowedType,
-	);
+		const annotatedTypes: AnnotatedAllowedType[] = (isReadonlyArray(type) ? type : [type]).map(
+			normalizeToAnnotatedAllowedType,
+		);
 
-	return AnnotatedAllowedTypesInternal.create(annotatedTypes);
+		return AnnotatedAllowedTypesInternal.create(annotatedTypes);
+	});
 }
 
 /**
