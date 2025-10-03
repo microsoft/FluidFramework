@@ -93,17 +93,7 @@ export class SchemaFactoryBeta<
 		/* TConstructorExtra */ never,
 		/* TCustomMetadata */ TCustomMetadata
 	> {
-		// The compiler can't infer that UnannotateSchemaRecord<T> is equal to T so we have to do a bunch of typing to make the error go away.
-		const object: TreeNodeSchemaClass<
-			ScopedSchemaName<TScope, Name>,
-			NodeKind.Object,
-			TreeObjectNode<UnannotateSchemaRecord<T>, ScopedSchemaName<TScope, Name>>,
-			object & InsertableObjectFromSchemaRecord<UnannotateSchemaRecord<T>>,
-			true,
-			T,
-			never,
-			TCustomMetadata
-		> = objectSchema(
+		const object = objectSchema(
 			scoped(this, name),
 			fields,
 			true,
