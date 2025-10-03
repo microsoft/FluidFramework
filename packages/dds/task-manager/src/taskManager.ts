@@ -452,7 +452,7 @@ export class TaskManagerClass
 		};
 		const disconnectHandler = (): void => {
 			// If we are disconnected and have not already sent a volunteer op, then we should
-			// submit another a volunteer op while disconnected. This will allow the op to be
+			// submit another volunteer op while disconnected. This will allow the op to be
 			// picked up by resubmitCore() and resubmitted when we reconnect.
 			if (!this.queuedOptimistically(taskId)) {
 				submitVolunteerOp();
