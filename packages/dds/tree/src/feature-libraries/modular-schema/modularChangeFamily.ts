@@ -504,7 +504,7 @@ export class ModularChangeFamily
 		}
 
 		for (const [field, fieldChange2] of change2) {
-			if (change1 === undefined || !change1.has(field)) {
+			if (!change1?.has(field)) {
 				composedFields.set(field, fieldChange2);
 			}
 		}

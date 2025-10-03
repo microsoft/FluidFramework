@@ -68,8 +68,8 @@ describe("SharedTreeCore", () => {
 	it("summarizes without indexes", async () => {
 		const tree = createTree([]);
 		const { summary, stats } = tree.summarizeCore(mockSerializer);
-		assert(summary);
-		assert(stats);
+		assert(summary !== undefined);
+		assert(stats !== undefined);
 		assert.equal(stats.treeNodeCount, 3);
 		assert.equal(stats.blobNodeCount, 1); // EditManager is always summarized
 		assert.equal(stats.handleNodeCount, 0);

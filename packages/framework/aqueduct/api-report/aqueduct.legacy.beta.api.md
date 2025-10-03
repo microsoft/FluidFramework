@@ -126,9 +126,9 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     createInstance(runtime: IContainerRuntimeBase, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
     // (undocumented)
     protected createInstanceCore(context: IFluidDataStoreContextDetached, initialState?: I["InitialState"]): Promise<TObj>;
-    createInstanceWithDataStore(containerRuntime: IContainerRuntimeBase, initialState?: I["InitialState"], packagePath?: Readonly<string[]>, loadingGroupId?: string): Promise<[TObj, IDataStore]>;
+    createInstanceWithDataStore(containerRuntime: IContainerRuntimeBase, initialState?: I["InitialState"], packagePath?: readonly string[], loadingGroupId?: string): Promise<[TObj, IDataStore]>;
     // (undocumented)
-    protected createNonRootInstanceCore(containerRuntime: IContainerRuntimeBase, packagePath: Readonly<string[]>, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
+    protected createNonRootInstanceCore(containerRuntime: IContainerRuntimeBase, packagePath: readonly string[], initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
     createPeerInstance(peerContext: IFluidDataStoreContext, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
     // @deprecated
     createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime, initialState?: I["InitialState"]): Promise<TObj>;
