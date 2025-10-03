@@ -25,7 +25,7 @@ import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
 import { toIDeltaManagerFull, waitForContainerConnection } from "./containerUtils.js";
 import { debug } from "./debug.js";
 import { isNonEmptyArray, type NonEmptyArray } from "./nonEmptyArrayType.js";
-import { IOpProcessingController } from "./testObjectProvider.js";
+import type { IOpProcessingController } from "./testObjectProvider.js";
 import { timeoutAwait, timeoutPromise } from "./timeoutUtils.js";
 
 const debugOp = debug.extend("ops");

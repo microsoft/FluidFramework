@@ -73,6 +73,7 @@ describe("treeDataStore", () => {
 		await synchronizeLocalService();
 
 		// TODO: why is this needed?
+		// Maybe adjust synchronizeLocalService to use LoaderContainerTracker?
 		await new Promise<void>((resolve) => {
 			setTimeout(() => resolve(), 100);
 		});
