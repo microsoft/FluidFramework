@@ -12,7 +12,10 @@ import {
 } from "../simple-tree/index.js";
 
 import { dataStoreKind, treeDataStoreKind } from "../treeDataStore.js";
-import { createEphemeralServiceClient } from "@fluidframework/local-driver/internal";
+import {
+	createEphemeralServiceClient,
+	synchronizeLocalService,
+} from "@fluidframework/local-driver/internal";
 import { SharedTree } from "../treeFactory.js";
 
 describe("treeDataStore", () => {
@@ -67,8 +70,11 @@ describe("treeDataStore", () => {
 
 		container2.data.root = 2;
 
+		await synchronizeLocalService();
+
+		// TODO: why is this needed?
 		await new Promise<void>((resolve) => {
-			setTimeout(() => resolve(), 1000);
+			setTimeout(() => resolve(), 100);
 		});
 
 		assert.equal(container1.data.root, 2);

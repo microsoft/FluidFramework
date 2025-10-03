@@ -82,6 +82,14 @@ class EphemeralServiceClient implements ServiceClient {
 	}
 }
 
+/**
+ * Synchronizes all local clients.
+ * @alpha
+ */
+export async function synchronizeLocalService(): Promise<void> {
+	while (await localServer.hasPendingWork()) {}
+}
+
 // A single localServer should be shared by all instances of a local driver so they can communicate
 // with each other.
 const localServer: ILocalDeltaConnectionServer =
