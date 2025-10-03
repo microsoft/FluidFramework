@@ -1,18 +1,34 @@
 services:
+  proxy:
+    platform: linux/amd64/v3
+    image: nginx:latest
+    depends_on:
+      - "alfred"
+      - "historian"
+      - "nexus"
+    volumes:
+      - ./routerlicious/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "3003:3003"
+      - "3002:3002"
+      - "3001:3001"
   alfred:
     image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}
-    ports:
-      - "3003:3000"
+    expose:
+      - "3000"
     command: node packages/routerlicious/dist/alfred/www.js
     environment:
       - DEBUG=fluid:*
       - NODE_ENV=development
       - IS_FLUID_SERVER=true
     restart: always
+    # THIS VOLUMES IS FOR LOCAL TESTING, IT SHOULD NOT GET MERGED
+    volumes:
+      - ./routerlicious/packages/routerlicious/config/config.json:/usr/src/server/packages/routerlicious/config/config.json
   nexus:
     image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}
-    ports:
-      - "3002:3000"
+    expose:
+      - "3000"
     command: node packages/routerlicious/dist/nexus/www.js
     environment:
       - DEBUG=fluid:*
@@ -63,15 +79,17 @@ services:
     restart: always
   historian:
     image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/historian:${HISTORIAN_IMAGE_TAG:-latest}
-    ports:
-      - "3001:3000"
+    expose:
+      - "3000"
     environment:
       - DEBUG=fluid:*
       - NODE_ENV=development
       - IS_FLUID_SERVER=true
+    # volumes:
+    #   - ./routerlicious/packages/routerlicious/config/config.json:/home/node/server/packages/routerlicious/config.json
     restart: always
   gitrest:
-    image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/gitrest:${HISTORIAN_IMAGE_TAG:-latest}
+    image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/gitrest:${GITREST_IMAGE_TAG:-latest}
     environment:
       - DEBUG=fluid:*
       - NODE_ENV=development
@@ -80,7 +98,7 @@ services:
       - git:/home/node/documents
     restart: always
   git:
-    image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/gitssh:${HISTORIAN_IMAGE_TAG:-latest}
+    image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/gitssh:${GITSSH_IMAGE_TAG:-latest}
     ports:
       - "3022:22"
     volumes:

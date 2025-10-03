@@ -126,6 +126,14 @@ parameters:
     - none
     - sequential
 
+- name: preSteps
+  type: stepList
+  default: []
+
+- name: checkout
+  type: boolean
+  default: false
+
 stages:
 - stage: ${{ parameters.stageId}}
   ${{ if ne(parameters.lockBehavior, 'none') }}:
@@ -167,8 +175,12 @@ stages:
 
         steps:
         # Setup
-        - checkout: ff_pipeline_host
-          clean: true
+        - ${{ if eq(parameters.checkout, true) }}:
+          - checkout: self
+            clean: true
+        - ${{ else }}:
+          - checkout: ff_pipeline_host
+            clean: true
 
         # Install self-signed cert for R11s deployment in local cert store
         - ${{ if ne(parameters.r11sSelfSignedCertSecureFile, '') }}:
@@ -228,6 +240,8 @@ stages:
             buildDirectory: $(Build.SourcesDirectory)
 
         - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
+
+        - ${{ parameters.preSteps }}
 
         - task: Bash@3
           displayName: Install base dependencies
