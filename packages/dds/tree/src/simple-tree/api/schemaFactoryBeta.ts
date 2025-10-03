@@ -147,7 +147,7 @@ export class SchemaFactoryBeta<
 	 * {@link SchemaFactoryBeta.record} implementation.
 	 *
 	 * @privateRemarks
-	 * This should return TreeNodeSchemaBoth: see note on "map" implementation for details.
+	 * This should return {@link TreeNodeSchemaBoth}: see note on {@link SchemaFactory.map} implementation for details.
 	 */
 	public record<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
