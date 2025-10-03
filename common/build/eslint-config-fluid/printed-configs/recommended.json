@@ -42,13 +42,13 @@
             "off"
         ],
         "@fluid-internal/fluid/no-file-path-links-in-jsdoc": [
-            "warn"
+            "error"
         ],
         "@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": [
-            "warn"
+            "error"
         ],
         "@fluid-internal/fluid/no-markdown-links-in-jsdoc": [
-            "warn"
+            "error"
         ],
         "@fluid-internal/fluid/no-member-release-tags": [
             "error"
@@ -618,7 +618,7 @@
             "error"
         ],
         "@typescript-eslint/ban-types": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/block-spacing": [
             "off"
@@ -739,10 +739,10 @@
             "off"
         ],
         "@typescript-eslint/no-empty-interface": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/no-empty-object-type": [
-            "warn"
+            "error"
         ],
         "@typescript-eslint/no-explicit-any": [
             "error",
@@ -878,7 +878,7 @@
             "off"
         ],
         "@typescript-eslint/no-unsafe-function-type": [
-            "warn"
+            "error"
         ],
         "@typescript-eslint/no-unsafe-member-access": [
             "error"
@@ -899,7 +899,7 @@
             "error"
         ],
         "@typescript-eslint/no-wrapper-object-types": [
-            "warn"
+            "error"
         ],
         "@typescript-eslint/non-nullable-type-assertion-style": [
             "off"

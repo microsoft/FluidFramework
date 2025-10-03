@@ -240,7 +240,7 @@ import type {
 export function passThru<
 	const T,
 	TExpected,
-	// eslint-disable-next-line @typescript-eslint/ban-types
+	// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
 	Options extends JsonSerializableOptions = {},
 >(
 	filteredIn: JsonSerializable<T, Options>,
