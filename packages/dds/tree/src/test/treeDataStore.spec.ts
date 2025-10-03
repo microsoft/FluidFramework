@@ -66,8 +66,13 @@ describe("treeDataStore", () => {
 		assert.equal(container2.data.root, 1);
 
 		container2.data.root = 2;
+
+		await new Promise<void>((resolve) => {
+			setTimeout(() => resolve(), 1000);
+		});
+
 		assert.equal(container1.data.root, 2);
-		assert.equal(container2.data.root, 1);
+		assert.equal(container2.data.root, 2);
 	});
 
 	it("schema evolution example", async () => {
