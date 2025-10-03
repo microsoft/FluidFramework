@@ -21,6 +21,7 @@ import {
 	type IGitManager,
 } from "@fluidframework/server-services-client";
 import {
+	type IAdditionalQueryParams,
 	type ICollection,
 	type IDeliState,
 	type IDocument,
@@ -164,6 +165,7 @@ export class DocumentStorage implements IDocumentStorage {
 		enableDiscovery: boolean = false,
 		isEphemeralContainer: boolean = false,
 		messageBrokerId?: string,
+		additionalQueryParams?: IAdditionalQueryParams,
 	): Promise<IDocumentDetails> {
 		const createDocTrace = new StageTrace<DocCreationStage>(DocCreationStage.Started);
 		const lumberjackProperties: Record<string, any> = {
