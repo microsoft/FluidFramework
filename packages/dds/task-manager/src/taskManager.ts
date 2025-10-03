@@ -382,6 +382,7 @@ export class TaskManagerClass
 			};
 
 			const rejectOnDisconnect = (): void => {
+				this.abandon(taskId);
 				removeListeners();
 				reject(new Error("Disconnected before acquiring task assignment"));
 			};
@@ -430,6 +431,7 @@ export class TaskManagerClass
 		}
 
 		let volunteerOpMessageId: number | undefined;
+		let abandoned = false;
 
 		const submitVolunteerOp = (): void => {
 			volunteerOpMessageId = this.nextPendingMessageId;
@@ -445,14 +447,16 @@ export class TaskManagerClass
 		const removeListeners = (): void => {
 			this.abandonWatcher.off("abandon", checkIfAbandoned);
 			this.connectionWatcher.off("disconnect", disconnectHandler);
-			this.connectionWatcher.off("connect", submitVolunteerOp);
 			this.completedWatcher.off("completed", checkIfCompleted);
 			this.rollbackWatcher.off("rollback", checkIfRolledBack);
 		};
-
 		const disconnectHandler = (): void => {
-			// Wait to be connected again and then re-submit volunteer op
-			this.connectionWatcher.once("connect", submitVolunteerOp);
+			// If we are disconnected and have not already sent a volunteer op, then we should
+			// submit another a volunteer op while disconnected. This will allow the op to be
+			// picked up by resubmitCore() and resubmitted when we reconnect.
+			if (!this.queuedOptimistically(taskId)) {
+				submitVolunteerOp();
+			}
 		};
 
 		const checkIfAbandoned = (eventTaskId: string, messageId: number | undefined): void => {
@@ -475,6 +479,7 @@ export class TaskManagerClass
 			}
 			removeListeners();
 			this.subscribedTasks.delete(taskId);
+			abandoned = true;
 		};
 
 		const checkIfCompleted = (eventTaskId: string, messageId: number | undefined): void => {
@@ -514,15 +519,15 @@ export class TaskManagerClass
 			this.runtime.once("attached", () => {
 				// We call scrubClientsNotInQuorum() in case our clientId changed during the attach process.
 				this.scrubClientsNotInQuorum();
-				if (this.connected) {
-					submitVolunteerOp();
-				} else {
-					this.connectionWatcher.once("connect", submitVolunteerOp);
+				// Make sure abandon() was not called while we were detached.
+				if (!abandoned) {
+					if (this.connected) {
+						submitVolunteerOp();
+					} else {
+						this.connectionWatcher.once("connect", submitVolunteerOp);
+					}
 				}
 			});
-		} else if (!this.connected) {
-			// If we are disconnected (and attached), wait to be connected and submit volunteer op
-			disconnectHandler();
 		} else if (!this.queuedOptimistically(taskId)) {
 			// We don't need to send a second volunteer op if we just sent one.
 			submitVolunteerOp();
@@ -688,6 +693,12 @@ export class TaskManagerClass
 		);
 		assert(pendingOpIndex !== -1, 0xc43 /* Could not match pending op on resubmit attempt */);
 		pendingOps.splice(pendingOpIndex, 1);
+		if (
+			content.type === "volunteer" &&
+			pendingOps[pendingOps.length - 1]?.type !== "abandon"
+		) {
+			this.submitVolunteerOp(content.taskId);
+		}
 		if (pendingOps.length === 0) {
 			this.latestPendingOps.delete(content.taskId);
 		}
@@ -837,10 +848,6 @@ export class TaskManagerClass
 	 * for the latest pending ops.
 	 */
 	private queuedOptimistically(taskId: string): boolean {
-		if (this.isAttached() && !this.connected) {
-			return false;
-		}
-
 		assert(this.clientId !== undefined, 0xc44 /* clientId undefined */);
 
 		const inQueue = this.taskQueues.get(taskId)?.includes(this.clientId) ?? false;
