@@ -45,7 +45,7 @@
             "error"
         ],
         "@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": [
-            "warn"
+            "error"
         ],
         "@fluid-internal/fluid/no-markdown-links-in-jsdoc": [
             "error"

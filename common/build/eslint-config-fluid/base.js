@@ -52,7 +52,7 @@ module.exports = {
 		/**
 		 * Disallow `-` immediately following a JSDoc/TSDoc tag (e.g. `@deprecated - foo`).
 		 */
-		"@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": "warn",
+		"@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": "error",
 
 		/**
 		 * Disallow file path based links in JSDoc/TSDoc comments.
