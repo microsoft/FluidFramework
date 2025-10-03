@@ -7,17 +7,16 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type {
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
-	TreeNode,
 	TreeNodeSchema,
 } from "@fluidframework/tree";
+import { TreeNode } from "@fluidframework/tree";
 import type {
 	ReadableField,
-	TreeBranch,
 	FactoryContentObject,
 	InsertableContent,
 	ReadSchema,
 } from "@fluidframework/tree/alpha";
-import { ObjectNodeSchema } from "@fluidframework/tree/alpha";
+import { ObjectNodeSchema, Tree } from "@fluidframework/tree/alpha";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models"; // eslint-disable-line import/no-internal-modules
 import { HumanMessage, SystemMessage } from "@langchain/core/messages"; // eslint-disable-line import/no-internal-modules
 import type { ToolMessage, AIMessage } from "@langchain/core/messages"; // eslint-disable-line import/no-internal-modules
@@ -28,14 +27,17 @@ import { getPrompt, stringifyTree } from "./prompt.js";
 import { Subtree } from "./subtree.js";
 import {
 	constructNode,
-	fail,
-	failUsage,
 	getFriendlyName,
 	llmDefault,
 	type TreeView,
 	findNamedSchemas,
 } from "./utils.js";
 
+/**
+ * The default maximum number of sequential edits the LLM can make before we assume it's stuck in a loop.
+ * @remarks This can be overridden by passing {@link SemanticAgentOptions.maximumSequentialEdits | maximumSequentialEdits} to {@link createSemanticAgent}.
+ */
+const defaultMaxSequentialEdits = 20;
 /**
  * The name of the Tool that the LLM should use to edit the tree.
  */
@@ -52,18 +54,27 @@ const editingFunctionName = "editTree";
 const paramsName = "params";
 
 /**
+ * Options used to parameterize the creation of a {@link SharedTreeSemanticAgent}.
+ * @alpha
+ */
+export interface SemanticAgentOptions<TSchema extends ReadableField<ImplicitFieldSchema>> {
+	domainHints?: string;
+	validator?: (js: string) => boolean;
+	/**
+	 * The maximum number of sequential edits the LLM can make before we assume it's stuck in a loop.
+	 */
+	maximumSequentialEdits?: number;
+	logger?: Logger<TSchema>;
+}
+
+/**
  * TODO doc
  * @alpha
  */
 export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(
 	client: BaseChatModel,
 	treeView: TreeView<TSchema>,
-	options?: {
-		readonly domainHints?: string;
-		readonly treeToString?: (root: ReadableField<TSchema>) => string;
-		readonly validator?: (js: string) => boolean;
-		readonly log?: Log;
-	},
+	options?: Readonly<SemanticAgentOptions<ReadableField<TSchema>>>,
 ): SharedTreeSemanticAgent;
 /**
  * TODO doc
@@ -72,23 +83,22 @@ export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(
 export function createSemanticAgent<T extends TreeNode>(
 	client: BaseChatModel,
 	node: T,
-	options?: {
-		readonly domainHints?: string;
-		readonly treeToString?: (root: T) => string;
-		readonly validator?: (js: string) => boolean;
-		readonly log?: Log;
-	},
+	options?: Readonly<SemanticAgentOptions<T>>,
+): SharedTreeSemanticAgent;
+/**
+ * TODO doc
+ * @alpha
+ */
+export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(
+	client: BaseChatModel,
+	treeView: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode),
+	options?: Readonly<SemanticAgentOptions<ReadableField<TSchema>>>,
 ): SharedTreeSemanticAgent;
 // eslint-disable-next-line jsdoc/require-jsdoc
 export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(
 	client: BaseChatModel,
 	treeView: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode),
-	options?: {
-		readonly domainHints?: string;
-		readonly treeToString?: (root: ReadableField<TSchema>) => string;
-		readonly validator?: (js: string) => boolean;
-		readonly log?: Log;
-	},
+	options?: Readonly<SemanticAgentOptions<ReadableField<TSchema>>>,
 ): SharedTreeSemanticAgent {
 	return new FunctioningSemanticAgent(client, treeView, options);
 }
@@ -107,55 +117,52 @@ export interface SharedTreeSemanticAgent {
 }
 
 /**
+ * Logger interface for logging events from a {@link SharedTreeSemanticAgent}.
  * @alpha
  */
-export type Log = (message: string) => void;
+export interface Logger<
+	TTree extends ReadableField<ImplicitFieldSchema> = ReadableField<ImplicitFieldSchema>,
+> {
+	/**
+	 * Log a message.
+	 */
+	log(message: string): void;
+	/**
+	 * Optional function to override the default tree stringification (JSON) when logging tree state.
+	 */
+	treeToString?(tree: TTree): string;
+}
 
 // eslint-disable-next-line jsdoc/require-jsdoc -- TODO: Add documentation
-export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
+export class FunctioningSemanticAgent<TSchema extends ImplicitFieldSchema>
 	implements SharedTreeSemanticAgent
 {
-	#querying?: Subtree<TRoot>;
+	readonly #outerTree: Subtree<TSchema>;
 	readonly #messages: (HumanMessage | AIMessage | ToolMessage)[] = [];
-	#treeHasChangedSinceLastQuery = false;
-
-	private get queryTree(): Subtree<TRoot> {
-		return this.#querying ?? fail("Not currently processing a prompt");
-	}
-
-	private startQuerying(): void {
-		if (this.#querying !== undefined) {
-			this.#querying.branch.dispose();
-		}
-
-		this.tree.branch.rebaseOnto(this.originalBranch);
-		this.#querying = this.tree.fork();
-	}
-
-	private readonly originalBranch: TreeBranch;
-	private readonly tree: Subtree<TRoot>;
-	private readonly editingTool = createEditingTool(this.edit.bind(this));
+	/**
+	 * Whether or not the outer tree has changed since the last query finished.
+	 */
+	#outerTreeIsDirty = false;
 
 	public constructor(
 		public readonly client: BaseChatModel,
-		tree: TreeView<TRoot> | (ReadableField<TRoot> & TreeNode),
-		private readonly options?: {
-			readonly domainHints?: string;
-			readonly treeToString?: (root: ReadableField<TRoot>) => string;
-			readonly validator?: (js: string) => boolean;
-			readonly log?: Log;
-		},
+		tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode),
+		private readonly options?: Readonly<SemanticAgentOptions<ReadableField<TSchema>>>,
 	) {
-		const originalSubtree = new Subtree(tree);
-		this.originalBranch = originalSubtree.branch;
-		this.tree = originalSubtree.fork();
+		if (tree instanceof TreeNode) {
+			Tree.on(tree, "treeChanged", () => (this.#outerTreeIsDirty = true));
+		} else {
+			tree.events.on("changed", () => (this.#outerTreeIsDirty = true));
+		}
+
+		this.#outerTree = new Subtree(tree);
 		const prompt = getPrompt({
-			subtree: this.tree,
-			editingToolName: this.editingTool.name,
+			subtree: this.#outerTree,
+			editingToolName,
 			editingFunctionName,
 			domainHints: this.options?.domainHints,
 		});
-		this.options?.log?.(`# Fluid Framework SharedTree AI Agent Log\n\n`);
+		this.options?.logger?.log(`# Fluid Framework SharedTree AI Agent Log\n\n`);
 		const now = new Date();
 		const formattedDate = now.toLocaleString(undefined, {
 			weekday: "long",
@@ -166,115 +173,65 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 			minute: "2-digit",
 			second: "2-digit",
 		});
-		this.options?.log?.(`Agent created: **${formattedDate}**\n\n`);
+		this.options?.logger?.log(`Agent created: **${formattedDate}**\n\n`);
 		if (this.client.metadata?.modelName !== undefined) {
-			this.options?.log?.(`Model: **${this.client.metadata?.modelName}**\n\n`);
+			this.options?.logger?.log(`Model: **${this.client.metadata?.modelName}**\n\n`);
 		}
 		this.#messages.push(new SystemMessage(prompt));
-		this.options?.log?.(`## System Prompt\n\n${prompt}\n\n`);
-	}
-
-	private async edit(functionCode: string): Promise<string> {
-		this.options?.log?.(`### Editing Tool Invoked\n\n`);
-		this.options?.log?.(
-			`#### Generated Code\n\n\`\`\`javascript\n${functionCode}\n\`\`\`\n\n`,
-		);
-		const tree = this.queryTree;
-		const create: Record<string, (input: FactoryContentObject) => TreeNode> = {};
-		for (const schema of findNamedSchemas(tree.schema)) {
-			const name = getFriendlyName(schema);
-			create[name] = (input: FactoryContentObject) => constructTreeNode(schema, input);
-		}
-		if (this.options?.validator?.(functionCode) === false) {
-			this.options?.log?.(`#### Code Validation Failed\n\n`);
-			return "Code validation failed";
-		}
-
-		const params = {
-			get root(): TreeNode | ReadableField<TRoot> {
-				return tree.field;
-			},
-			set root(value: TreeFieldFromImplicitField<ReadSchema<TRoot>>) {
-				tree.field = value;
-			},
-			create,
-		};
-		const code = processLlmCode(functionCode);
-		// eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
-		const fn = new Function(paramsName, code) as (p: typeof params) => Promise<void> | void;
-		try {
-			await fn(params);
-		} catch (error: unknown) {
-			this.options?.log?.(`#### Error\n\n`);
-			const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
-			this.options?.log?.(`\`\`\`JSON\n${errorMessage}\n\`\`\`\n\n`);
-			this.startQuerying();
-			return `Running the function produced an error. The state of the tree will be reset to its initial state. Please try again. Here is the error: ${errorMessage}`;
-		}
-		this.options?.log?.(`#### New Tree State\n\n`);
-		this.options?.log?.(
-			`${
-				this.options.treeToString?.(tree.field) ??
-				`\`\`\`JSON\n${stringifyTree(tree.field)}\n\`\`\``
-			}\n\n`,
-		);
-		return `After running the function, the new state of the tree is:\n\n\`\`\`JSON\n${stringifyTree(tree.field)}\n\`\`\``;
+		this.options?.logger?.log(`## System Prompt\n\n${prompt}\n\n`);
 	}
 
 	public async query(userPrompt: string): Promise<string | undefined> {
-		this.startQuerying();
-		this.options?.log?.(`## User Query\n\n${userPrompt}\n\n`);
-		if (this.#treeHasChangedSinceLastQuery) {
-			const stringified = stringifyTree(this.tree.field);
+		this.options?.logger?.log(`## User Query\n\n${userPrompt}\n\n`);
+
+		// Notify the llm if the tree has changed since the last query, and if so, provide the new state of the tree.
+		if (this.#outerTreeIsDirty) {
+			const stringified = stringifyTree(this.#outerTree.field);
 			this.#messages.push(
-				new HumanMessage(
+				new SystemMessage(
 					`The tree has changed since the last message. The new state of the tree is: \n\n\`\`\`JSON\n${stringified}\n\`\`\``,
 				),
 			);
-			this.options?.log?.(
+			this.options?.logger?.log(
 				`### Latest Tree State\n\nThe Tree was edited by a local or remote user since the previous query. The latest state is:\n\n\`\`\`JSON\n${stringified}\n\`\`\`\n\n`,
 			);
-			this.#treeHasChangedSinceLastQuery = false;
 		}
+
 		this.#messages.push(
 			new HumanMessage(
-				`${this.#treeHasChangedSinceLastQuery ? "" : "The tree has not changed since your last message. "}${userPrompt}`,
+				`${userPrompt}${this.#outerTreeIsDirty ? "" : "(Note: The tree is the same as it was after the end of the previous query.)"}`,
 			),
 		);
 
-		let loggedChainOfThought = false;
-		let responseMessage: AIMessage;
-		let iterations = 0;
+		// Fork a branch that will live for the lifetime of this query (which can be multiple LLM calls if the there are errors or the LLM decides to take multiple steps to accomplish a task).
+		// The branch will be merged back into the outer branch if and only if the query succeeds.
+		const queryTree = this.#outerTree.fork();
+		const editingTool = createEditingTool(
+			queryTree,
+			this.options?.validator,
+			this.options?.logger,
+		);
+
+		const maxEditCount = this.options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
+		let editCount = 0;
 		do {
-			iterations += 1;
-			responseMessage =
-				(await this.client
-					.bindTools?.([this.editingTool], { tool_choice: "auto" })
-					?.invoke(this.#messages)) ??
-				failUsage("LLM client must support function calling or tool use.");
-
-			this.#messages.push(responseMessage);
-
-			// We start with one message, and then add two more for each subsequent correspondence
-			this.options?.log?.(`## Response ${(this.#messages.length - 1) / 2}\n\n`);
-
-			// This is a special case for Claude Sonnet, the only supported model that exposes its Chain of Thought.
-			if (!loggedChainOfThought) {
-				for (const c of responseMessage.content) {
-					if (typeof c === "object" && c.type === "thinking") {
-						this.options?.log?.(`${c.thinking}\n\n----\n\n`);
-						loggedChainOfThought = true;
-						break;
-					}
-				}
+			const runnable = this.client.bindTools?.([editingTool], { tool_choice: "auto" });
+			if (runnable === undefined) {
+				throw new UsageError("LLM client must support function calling or tool use.");
 			}
 
-			this.options?.log?.(`${responseMessage.text}\n\n`);
+			const responseMessage = await runnable.invoke(this.#messages);
+			this.#messages.push(responseMessage);
+			this.options?.logger?.log(`## Response\n\n`);
+			this.options?.logger?.log(`${responseMessage.text}\n\n`);
+
 			if (responseMessage.tool_calls !== undefined && responseMessage.tool_calls.length > 0) {
+				// If we receive a tool call (e.g. to edit the tree), we process it and then continue the loop to get another response from the LLM.
 				for (const toolCall of responseMessage.tool_calls) {
 					switch (toolCall.name) {
-						case this.editingTool.name: {
-							this.#messages.push(await this.editingTool.invoke(toolCall));
+						case editingTool.name: {
+							this.#messages.push(await editingTool.invoke(toolCall));
+							editCount += 1;
 							break;
 						}
 						default: {
@@ -285,20 +242,18 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 					}
 				}
 			} else {
-				this.tree.branch.merge(this.queryTree.branch);
-				this.originalBranch.merge(this.tree.branch, false);
-				this.#querying = undefined;
+				// If there is no tool call, we assume the LLM is done editing and awaiting the next query.
+				this.#outerTree.branch.merge(queryTree.branch);
+				this.#outerTreeIsDirty = false;
 				return responseMessage.text;
 			}
-		} while (iterations <= maxMessages);
+		} while (editCount <= maxEditCount);
 
-		this.queryTree.branch.dispose();
-		this.#querying = undefined;
-		throw new UsageError("LLM exceeded maximum number of messages");
+		queryTree.branch.dispose();
+		this.#outerTreeIsDirty = false;
+		return `I've attempted to resolve your query, but it's taking too many iterations. Please try again, perhaps by rephrasing your request.`;
 	}
 }
-
-const maxMessages = 20; // TODO: Allow caller to provide this
 
 function processLlmCode(code: string): string {
 	// TODO: use a library like Acorn to analyze the code more robustly
@@ -344,14 +299,67 @@ function constructTreeNode(schema: TreeNodeSchema, value: FactoryContentObject):
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function createEditingTool(edit: (functionCode: string) => Promise<string>) {
-	return tool(async ({ functionCode }) => edit(functionCode), {
-		name: editingToolName,
-		description: `Invokes a JavaScript function \`${editingFunctionName}\` to edit a user's tree`,
-		schema: z.object({
-			functionCode: z
-				.string()
-				.describe(`The code of the \`${editingFunctionName}\` JavaScript function.
+function createEditingTool<TSchema extends ImplicitFieldSchema>(
+	tree: Subtree<TSchema>,
+	validator?: (js: string) => boolean,
+	logger?: Logger<ReadableField<TSchema>>,
+) {
+	return tool(
+		async ({ functionCode }) => {
+			logger?.log(`### Editing Tool Invoked\n\n`);
+			logger?.log(`#### Generated Code\n\n\`\`\`javascript\n${functionCode}\n\`\`\`\n\n`);
+
+			const create: Record<string, (input: FactoryContentObject) => TreeNode> = {};
+			for (const schema of findNamedSchemas(tree.schema)) {
+				const name = getFriendlyName(schema);
+				create[name] = (input: FactoryContentObject) => constructTreeNode(schema, input);
+			}
+			if (validator?.(functionCode) === false) {
+				logger?.log(`#### Code Validation Failed\n\n`);
+				return "Code validation failed";
+			}
+
+			// Fork a branch to edit. If the edit fails or produces an error, we discard this branch, otherwise we merge it.
+			const editTree = tree.fork();
+			const params = {
+				get root(): TreeNode | ReadableField<TSchema> {
+					return editTree.field;
+				},
+				set root(value: TreeFieldFromImplicitField<ReadSchema<TSchema>>) {
+					editTree.field = value;
+				},
+				create,
+			};
+			const code = processLlmCode(functionCode);
+			// eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
+			const fn = new Function(paramsName, code) as (p: typeof params) => Promise<void> | void;
+			try {
+				await fn(params);
+			} catch (error: unknown) {
+				logger?.log(`#### Error\n\n`);
+				const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+				logger?.log(`\`\`\`JSON\n${errorMessage}\n\`\`\`\n\n`);
+				editTree.branch.dispose();
+				return `Running the function produced an error. The state of the tree will be reset to its previous state as it was before the function ran. Please try again. Here is the error: ${errorMessage}`;
+			}
+
+			tree.branch.merge(editTree.branch);
+			logger?.log(`#### New Tree State\n\n`);
+			logger?.log(
+				`${
+					logger?.treeToString?.(tree.field) ??
+					`\`\`\`JSON\n${stringifyTree(tree.field)}\n\`\`\``
+				}\n\n`,
+			);
+			return `After running the function, the new state of the tree is:\n\n\`\`\`JSON\n${stringifyTree(tree.field)}\n\`\`\``;
+		},
+		{
+			name: editingToolName,
+			description: `Invokes a JavaScript function \`${editingFunctionName}\` to edit a user's tree`,
+			schema: z.object({
+				functionCode: z
+					.string()
+					.describe(`The code of the \`${editingFunctionName}\` JavaScript function.
 					For example:
 					\`\`\`javascript
 					function ${editingFunctionName}({ root, create }) {
@@ -360,6 +368,7 @@ function createEditingTool(edit: (functionCode: string) => Promise<string>) {
 					}
 					\`\`\`
 				`),
-		}),
-	});
+			}),
+		},
+	);
 }
