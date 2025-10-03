@@ -42,6 +42,7 @@ describe("Local Server Stress", () => {
 		// Use skip, replay, and only properties to control which seeds run.
 		skip: [
 			124, // directory 0xc38
+			105, // Task-manger hides dirty state AB#49649
 		],
 	});
 });

@@ -212,7 +212,7 @@ export namespace InternalUtilityTypes {
 						| symbol
 						| undefined
 						? /* not serializable => */ Result["WhenNeverDeserializable"]
-						: // eslint-disable-next-line @typescript-eslint/ban-types
+						: // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
 							T extends Function
 							? ExtractFunctionFromIntersection<T> extends {
 									classification: "exactly Function";
@@ -307,7 +307,7 @@ export namespace InternalUtilityTypes {
 						/* extract types that might lead to missing property */ Extract<
 							PossibleTypeLessAllowed,
 							/* types that might lead to missing property, except `bigint` */
-							// eslint-disable-next-line @typescript-eslint/ban-types
+							// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
 							undefined | symbol | Function
 						> extends never
 							? /* all types are supported plus possibly `bigint` => */
@@ -371,7 +371,7 @@ export namespace InternalUtilityTypes {
 					? Extract<
 							IfSameType<PossibleTypeLessAllowed, unknown, undefined, PossibleTypeLessAllowed>,
 							/* types that might lead to missing property */
-							// eslint-disable-next-line @typescript-eslint/ban-types
+							// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
 							undefined | symbol | Function
 						> extends never
 						? /* exclusively supported types or exactly `never` */ never
@@ -463,7 +463,7 @@ export namespace InternalUtilityTypes {
 						/* exactly replaced => */ T,
 						/* test for known types that become null */ T extends undefined | symbol
 							? /* => */ null
-							: // eslint-disable-next-line @typescript-eslint/ban-types
+							: // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
 								T extends Function
 								? ExtractFunctionFromIntersection<T> extends {
 										classification: "exactly Function";
@@ -484,7 +484,7 @@ export namespace InternalUtilityTypes {
 		NotEnumLike = unknown,
 	> = T extends readonly (infer _)[]
 		? /* array => */ NotEnumLike
-		: // eslint-disable-next-line @typescript-eslint/ban-types
+		: // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
 			T extends Function
 			? /* function => */ NotEnumLike
 			: T extends {
@@ -1047,7 +1047,7 @@ export namespace InternalUtilityTypes {
 								"no match"
 							> extends true
 						? /* exact alternate type => */ T
-						: // eslint-disable-next-line @typescript-eslint/ban-types
+						: // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
 							/* test for not a function */ Extract<T, Function> extends never
 							? /* not a function => test for object */ T extends object
 								? /* object => test for array */ T extends readonly (infer _)[]
