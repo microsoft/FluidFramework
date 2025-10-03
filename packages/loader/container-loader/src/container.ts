@@ -380,7 +380,7 @@ interface IContainerLifecycleEvents extends IEvent {
 
 export class Container
 	extends EventEmitterWithErrorHandling<IContainerEvents>
-	implements IContainer, IContainerExperimental
+	implements IContainer, ContainerAlpha
 {
 	/**
 	 * Load an existing container.
@@ -1641,10 +1641,9 @@ export class Container
 		const timings: Record<string, number> = { phase1: performanceNow() };
 		this.service = await this.createDocumentService(resolvedUrl, { mode: "load" });
 
-		// Except in cases where it has stashed ops or requested by feature gate, the container will connect in "read" mode
+		// Except in cases where its requested by feature gate, the container will connect in "read" mode
 		const mode =
-			this.mc.config.getBoolean("Fluid.Container.ForceWriteConnection") === true ||
-			(pendingLocalState?.savedOps.length ?? 0) > 0
+			this.mc.config.getBoolean("Fluid.Container.ForceWriteConnection") === true
 				? "write"
 				: "read";
 		const connectionArgs: IConnectionArgs = {
@@ -2558,14 +2557,22 @@ export class Container
 
 /**
  * IContainer interface that includes experimental features still under development.
- * @internal
+ * @alpha @legacy @sealed
  */
-export interface IContainerExperimental extends IContainer {
+export interface ContainerAlpha extends IContainer {
 	/**
 	 * Get pending state from container. WARNING: misuse of this API can result in duplicate op
 	 * submission and potential document corruption. The blob returned MUST be deleted if and when this
 	 * container emits a "connected" event.
 	 * @returns serialized blob that can be passed to Loader.resolve()
 	 */
-	getPendingLocalState?(): Promise<string>;
+	getPendingLocalState(): Promise<string>;
+}
+
+/**
+ * Converts types to their alpha counterparts to expose alpha functionality.
+ * @legacy @alpha
+ */
+export function asLegacyAlpha(base: IContainer): ContainerAlpha {
+	return base as ContainerAlpha;
 }

@@ -9,11 +9,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type {
-	ImplicitFieldSchema,
-	TreeLeafValue,
-	TreeNodeSchemaClass,
-} from "@fluidframework/tree";
+import type { ImplicitFieldSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
 import type {
 	InsertableContent,
 	TreeBranch,
@@ -22,7 +18,14 @@ import type {
 	TreeViewAlpha,
 	UnsafeUnknownSchema,
 } from "@fluidframework/tree/alpha";
-import { ObjectNodeSchema, Tree, TreeAlpha } from "@fluidframework/tree/alpha";
+import {
+	ArrayNodeSchema,
+	MapNodeSchema,
+	ObjectNodeSchema,
+	RecordNodeSchema,
+	TreeAlpha,
+} from "@fluidframework/tree/alpha";
+import { NodeKind, normalizeFieldSchema } from "@fluidframework/tree/internal";
 import { z } from "zod";
 
 import { FunctionWrapper } from "./methodBinding.js";
@@ -151,40 +154,57 @@ export function constructNode(schema: TreeNodeSchema, value: InsertableContent):
 }
 
 /**
- * Get a human-readable representation of a tree value's type.
+ * Returns the unqualified name of a tree value's schema (e.g. a node with schema identifier `"my.scope.MyNode"` returns `"MyNode"`).
+ * @remarks If the schema is an inlined array, map, or record type, then it has no name and this function will return a string representation of the type (e.g., `"MyNode[]"` or `"Map<string, MyNode>"`).
  */
-export function getFriendlySchema(value: TreeNode | TreeLeafValue | undefined): string {
-	if (value === undefined) {
-		return "undefined";
+export function getFriendlyName(schema: TreeNodeSchema): string {
+	if (schema.kind === NodeKind.Leaf || isNamedSchema(schema.identifier)) {
+		return unqualifySchema(schema.identifier);
 	}
-	if (value === null) {
-		return "null";
+
+	const childNames = Array.from(schema.childTypes, (t) => getFriendlyName(t));
+	if (schema instanceof ArrayNodeSchema) {
+		return childNames.length > 1 ? `(${childNames.join(" | ")})[]` : `${childNames[0]}[]`;
 	}
-	if (["string", "number", "boolean"].includes(typeof value)) {
-		return typeof value;
+	if (schema instanceof MapNodeSchema) {
+		return childNames.length > 1
+			? `Map<string, (${childNames.join(" | ")})>`
+			: `Map<string, ${childNames[0]}>`;
 	}
-	if (isFluidHandle(value)) {
-		return "FluidHandle";
+	if (schema instanceof RecordNodeSchema) {
+		return childNames.length > 1
+			? `Record<string, (${childNames.join(" | ")})>`
+			: `Record<string, ${childNames[0]}>`;
 	}
-	const schema = Tree.schema(value);
-	return getFriendlySchemaName(schema.identifier) ?? schema.identifier;
+	fail("Unexpected node schema");
 }
 
 /**
- * TODO
- * @remarks Returns undefined if the schema should not be included in the prompt (and therefore should not ever be seen by the LLM).
+ * Returns true if the schema identifier represents a named schema (object, named array, named map, or named record).
+ * @remarks This does not include primitive schemas or inlined array/map/record schemas.
  */
-export function getFriendlySchemaName(schemaName: string): string | undefined {
-	// TODO: Kludge
-	const arrayTypes = schemaName.match(/Array<\["(.*)"]>/);
-	if (arrayTypes?.[1] !== undefined) {
-		return undefined;
+export function isNamedSchema(schemaIdentifier: string): boolean {
+	if (
+		["string", "number", "boolean", "null", "handle"].includes(
+			unqualifySchema(schemaIdentifier),
+		)
+	) {
+		return false;
 	}
 
-	const matches = schemaName.match(/[^.]+$/);
+	return schemaIdentifier.match(/(?:Array|Map|Record)<\["(.*)"]>/) === null;
+}
+
+/**
+ * Returns the unqualified name of a schema (e.g. `"my.scope.MyNode"` returns `"MyNode"`).
+ * @remarks This works by removing all characters before the last dot in the schema name.
+ * If there is a dot in a user's schema name, this might produce unexpected results.
+ */
+export function unqualifySchema(schemaIdentifier: string): string {
+	// Get the unqualified name by removing the scope (everything before the last dot).
+	const matches = schemaIdentifier.match(/[^.]+$/);
 	if (matches === null) {
-		// empty scope
-		return schemaName;
+		return schemaIdentifier; // Return the original name if it is unscoped.
 	}
 	return matches[0];
 }
@@ -356,11 +376,7 @@ export function getZodSchemaAsTypeScript(
 							`Unsupported zod effects type when transforming class method: ${getTypeKind(type)}`,
 						);
 					}
-					const name =
-						getFriendlySchemaName(objectNodeSchema.identifier) ??
-						fail("Expected object node schema to have a friendly name");
-
-					return append(name);
+					return append(getFriendlyName(objectNodeSchema));
 				}
 				throw new Error(
 					"Unsupported zod effects type. Did you use z.instanceOf? Use ExposedMethods.instanceOf function to reference schema classes in methods.",
@@ -368,6 +384,9 @@ export function getZodSchemaAsTypeScript(
 			}
 			case z.ZodFirstPartyTypeKind.ZodVoid: {
 				return append("void");
+			}
+			case z.ZodFirstPartyTypeKind.ZodLazy: {
+				return appendType((type._def as z.ZodLazyDef).getter());
 			}
 			default: {
 				throw new UsageError(
@@ -571,3 +590,32 @@ export function instanceOf<T extends TreeNodeSchemaClass>(
 }
 
 const instanceOfs = new WeakMap<z.ZodTypeAny, ObjectNodeSchema>();
+
+/**
+ * Adds all named object, map, array, and record schemas reachable from the given schema to the given set.
+ * @remarks This includes transitive child/descendant schemas.
+ * It does not include primitive schemas or inlined array/map/record schemas.
+ * @returns The set of named schemas added (same as the `schemas` parameter, if supplied).
+ */
+export function findNamedSchemas(
+	schema: ImplicitFieldSchema,
+	schemas = new Set<TreeNodeSchema>(),
+): Set<TreeNodeSchema> {
+	const set = schemas ?? new Set();
+	for (const nodeSchema of normalizeFieldSchema(schema).allowedTypeSet) {
+		if (!set.has(nodeSchema)) {
+			if (isNamedSchema(nodeSchema.identifier)) {
+				set.add(nodeSchema);
+			}
+			findNamedSchemas([...nodeSchema.childTypes], set);
+		}
+	}
+	return set;
+}
+
+/**
+ * De-capitalize (the first letter of) a string.
+ */
+export function communize(str: string): string {
+	return str.charAt(0).toLowerCase() + str.slice(1);
+}

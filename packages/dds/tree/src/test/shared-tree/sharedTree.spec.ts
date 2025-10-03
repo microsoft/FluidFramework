@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import { asLegacyAlpha, type ContainerAlpha } from "@fluidframework/container-loader/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
@@ -31,7 +31,7 @@ import {
 	type ChangeFamilyEditor,
 	EmptyKey,
 } from "../../core/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	ChunkedForest,
 	// eslint-disable-next-line import/no-internal-modules
@@ -122,7 +122,7 @@ import { asAlpha } from "../../api.js";
 const enableSchemaValidation = true;
 
 const DebugSharedTree = configuredSharedTree({
-	jsonValidator: typeboxValidator,
+	jsonValidator: FormatValidatorBasic,
 	forest: ForestTypeExpensiveDebug,
 }) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
@@ -329,7 +329,7 @@ describe("SharedTree", () => {
 			2,
 			SummarizeType.disabled,
 			configuredSharedTree({
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 				treeEncodeType: TreeCompressionStrategy.Uncompressed,
 			}).getFactory(),
 		);
@@ -1642,6 +1642,41 @@ describe("SharedTree", () => {
 				resubmitter.assertOuterListEquals(finalState);
 				submitter.assertOuterListEquals(finalState);
 			});
+
+			// This tests a client resubmitting two commits,
+			// the first of which is a merge of a commit which has concurrently been merged by another client.
+			it("over merge of commit to be resubmitted", () => {
+				const provider = new TestTreeProviderLite(
+					2,
+					configuredSharedTree({
+						jsonValidator: FormatValidatorBasic,
+						formatVersion: SharedTreeFormatVersion.vSharedBranches,
+					}).getFactory(),
+				);
+
+				const config = new TreeViewConfiguration({ schema, enableSchemaValidation });
+				const [tree1, tree2] = provider.trees;
+				const mainView1 = asAlpha(tree1.viewWith(config));
+				mainView1.initialize([["A"]]);
+				const branchId = tree1.createSharedBranch();
+				const branchView1 = asAlpha(tree1.viewSharedBranchWith(branchId, config));
+				branchView1.root[0].insertAtEnd("B");
+				provider.synchronizeMessages();
+
+				tree1.containerRuntime.connected = false;
+				mainView1.merge(branchView1, false);
+				const mainView2 = asAlpha(tree2.viewWith(config));
+				const branchView2 = asAlpha(tree2.viewSharedBranchWith(branchId, config));
+				branchView2.root[0].insertAtEnd("C");
+				mainView2.merge(branchView2, false);
+				provider.synchronizeMessages();
+
+				tree1.containerRuntime.connected = true;
+				provider.synchronizeMessages();
+
+				assert.deepEqual(mainView1.root[0], ["A", "B", "C"]);
+				assert.deepEqual(mainView2.root[0], ["A", "B", "C"]);
+			});
 		});
 
 		it("revert constraint", () => {
@@ -1784,13 +1819,13 @@ describe("SharedTree", () => {
 			view1.initialize(["a"]);
 			await provider.ensureSynchronized();
 
-			const pausedContainer: IContainerExperimental = provider.containers[0];
+			const pausedContainer: ContainerAlpha = asLegacyAlpha(provider.containers[0]);
 			const url = (await pausedContainer.getAbsoluteUrl("")) ?? assert.fail("didn't get url");
 			const pausedTree = view1;
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			pausedTree.root.insertAt(1, "b");
 			pausedTree.root.insertAt(2, "c");
-			const pendingOps = await pausedContainer.getPendingLocalState?.();
+			const pendingOps = await pausedContainer.getPendingLocalState();
 			pausedContainer.close();
 			provider.opProcessingController.resumeProcessing();
 
@@ -2092,7 +2127,7 @@ describe("SharedTree", () => {
 		it("can apply and resubmit stashed schema ops", async () => {
 			const provider = await TestTreeProvider.create(2);
 
-			const pausedContainer: IContainerExperimental = provider.containers[0];
+			const pausedContainer: ContainerAlpha = asLegacyAlpha(provider.containers[0]);
 			const url = (await pausedContainer.getAbsoluteUrl("")) ?? assert.fail("didn't get url");
 			const pausedTree = provider.trees[0];
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
@@ -2103,7 +2138,7 @@ describe("SharedTree", () => {
 				}),
 			);
 			pausedView.initialize([]);
-			const pendingOps = await pausedContainer.getPendingLocalState?.();
+			const pendingOps = await pausedContainer.getPendingLocalState();
 			pausedContainer.close();
 			provider.opProcessingController.resumeProcessing();
 
@@ -2129,7 +2164,7 @@ describe("SharedTree", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
-					jsonValidator: typeboxValidator,
+					jsonValidator: FormatValidatorBasic,
 				}).getFactory(),
 			);
 			assert.equal(trees[0].kernel.checkout.forest instanceof ObjectForest, true);
@@ -2139,7 +2174,7 @@ describe("SharedTree", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
-					jsonValidator: typeboxValidator,
+					jsonValidator: FormatValidatorBasic,
 					forest: ForestTypeReference,
 				}).getFactory(),
 			);
@@ -2152,7 +2187,7 @@ describe("SharedTree", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
-					jsonValidator: typeboxValidator,
+					jsonValidator: FormatValidatorBasic,
 					forest: ForestTypeOptimized,
 				}).getFactory(),
 			);
@@ -2163,7 +2198,7 @@ describe("SharedTree", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
-					jsonValidator: typeboxValidator,
+					jsonValidator: FormatValidatorBasic,
 					forest: ForestTypeExpensiveDebug,
 				}).getFactory(),
 			);
@@ -2176,7 +2211,7 @@ describe("SharedTree", () => {
 		// TODO:#8915: This test will fail until bug #8915 is fixed
 		it.skip("uses the correct schema for subsequent edits after schema change.", async () => {
 			const factory = configuredSharedTree({
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 				treeEncodeType: TreeCompressionStrategy.Compressed,
 			}).getFactory();
 			const provider = new TestTreeProviderLite(2, factory);
@@ -2221,7 +2256,7 @@ describe("SharedTree", () => {
 		it("properly encodes ops using specified compression strategy", async () => {
 			// Check that ops are using uncompressed encoding with "Uncompressed" treeEncodeType
 			const factory = configuredSharedTree({
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 				treeEncodeType: TreeCompressionStrategy.Uncompressed,
 			}).getFactory();
 			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand, factory);
@@ -2264,7 +2299,7 @@ describe("SharedTree", () => {
 
 			// Check that ops are encoded using schema based compression with "Compressed" treeEncodeType
 			const factory2 = configuredSharedTree({
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 				treeEncodeType: TreeCompressionStrategy.Compressed,
 			}).getFactory();
 			const provider2 = await TestTreeProvider.create(1, SummarizeType.onDemand, factory2);
@@ -2410,7 +2445,7 @@ describe("SharedTree", () => {
 	it("summarize with pre-attach removed nodes", () => {
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const sharedObject = configuredSharedTree({
-			jsonValidator: typeboxValidator,
+			jsonValidator: FormatValidatorBasic,
 			forest: ForestTypeExpensiveDebug,
 			oldestCompatibleClient: FluidClientVersion.v2_52,
 		}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
@@ -2479,7 +2514,7 @@ describe("SharedTree", () => {
 		const provider = new TestTreeProviderLite(
 			2,
 			configuredSharedTree({
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 				formatVersion: SharedTreeFormatVersion.vSharedBranches,
 			}).getFactory(),
 		);

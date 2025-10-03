@@ -4,22 +4,24 @@
  */
 
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
+import type {
+	ICacheEntry,
+	IEntry,
+	IFileEntry,
+	IPersistedCache,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	LocationRedirectionError,
+	maximumCacheDurationMs,
 	NonRetryableError,
 	RateLimiter,
 	ThrottlingError,
 } from "@fluidframework/driver-utils/internal";
 import {
-	type ICacheEntry,
-	type IEntry,
-	type IFileEntry,
 	type IOdspError,
 	type IOdspErrorAugmentations,
 	type IOdspResolvedUrl,
-	type IPersistedCache,
 	OdspErrorTypes,
-	maximumCacheDurationMs,
 	snapshotKey,
 	snapshotWithLoadingGroupIdKey,
 } from "@fluidframework/odsp-driver-definitions/internal";
@@ -132,10 +134,9 @@ export class EpochTracker implements IPersistedFileCache {
 	public async get(entry: IEntry): Promise<any> {
 		try {
 			// Return undefined so that the ops/snapshots are grabbed from the server instead of the cache
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const value: IVersionedValueWithEpoch = await this.cache.get(
+			const value = (await this.cache.get(
 				this.fileEntryFromEntry(entry),
-			);
+			)) as IVersionedValueWithEpoch;
 			// Version mismatch between what the runtime expects and what it recieved.
 			// The cached value should not be used
 			if (value === undefined || value.version !== persistedCacheValueVersion) {

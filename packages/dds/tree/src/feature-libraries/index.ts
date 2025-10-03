@@ -171,6 +171,9 @@ export {
 	type FlexTreeHydratedContextMinimal,
 	type HydratedFlexTreeNode,
 	getOrCreateHydratedFlexTreeNode,
+	currentObserver,
+	withObservation,
+	type Observer,
 } from "./flex-tree/index.js";
 
 export {

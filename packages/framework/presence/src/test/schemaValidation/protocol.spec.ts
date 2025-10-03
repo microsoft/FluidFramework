@@ -161,7 +161,7 @@ describe("Presence", () => {
 
 				// Check Join response without active validators
 				const attendeeId4 = createSpecificAttendeeId("attendeeId-4");
-				const connectionId4 = "client4" as const;
+				const connectionId4 = "client4";
 				const newAttendeeSignal = generateBasicClientJoin(clock.now - 50, {
 					averageLatency: 50,
 					attendeeId: attendeeId4,

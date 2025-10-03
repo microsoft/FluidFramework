@@ -86,8 +86,8 @@ export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessag
  * @sealed
  * @internal
  */
-export declare class UnverifiedBrand<T> extends BrandedType<T> {
-	private readonly UnverifiedValue: T;
+export declare class UnverifiedBrand<T> extends BrandedType<UnverifiedBrand<unknown>> {
+	protected readonly UnverifiedValue: T;
 	private constructor();
 }
 

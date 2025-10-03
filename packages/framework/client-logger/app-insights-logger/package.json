@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/app-insights-logger",
-	"version": "2.62.0",
+	"version": "2.63.0",
 	"description": "Contains a Fluid logging client that sends telemetry events to Azure App Insights",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -104,8 +104,8 @@
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.55.0",
-		"eslint-config-prettier": "~9.0.0",
+		"eslint": "~8.57.0",
+		"eslint-config-prettier": "~10.1.8",
 		"eslint-plugin-jest": "~27.4.2",
 		"eslint-plugin-react": "~7.33.2",
 		"eslint-plugin-react-hooks": "~4.6.0",

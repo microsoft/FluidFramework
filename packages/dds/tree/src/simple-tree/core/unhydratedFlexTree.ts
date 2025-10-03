@@ -50,6 +50,7 @@ import {
 	type HydratedFlexTreeNode,
 	cursorForMapTreeField,
 	type MinimalFieldMap,
+	currentObserver,
 } from "../../feature-libraries/index.js";
 import { brand, filterIterable, getOrCreate, mapIterable } from "../../util/index.js";
 
@@ -144,8 +145,10 @@ export class UnhydratedFlexTreeNode
 	 */
 	public readonly fields: MinimalFieldMap<UnhydratedFlexTreeField> = {
 		get: (key: FieldKey): UnhydratedFlexTreeField | undefined => this.tryGetField(key),
-		[Symbol.iterator]: (): IterableIterator<[FieldKey, UnhydratedFlexTreeField]> =>
-			filterIterable(this.fieldsAll, ([, field]) => field.length > 0),
+		[Symbol.iterator]: (): IterableIterator<[FieldKey, UnhydratedFlexTreeField]> => {
+			currentObserver?.observeNodeFields(this);
+			return filterIterable(this.fieldsAll, ([, field]) => field.length > 0);
+		},
 	};
 
 	public [Symbol.iterator](): IterableIterator<UnhydratedFlexTreeField> {
@@ -218,6 +221,7 @@ export class UnhydratedFlexTreeNode
 	 * @remarks If this node is unparented, this method will return the special {@link unparentedLocation} as the parent.
 	 */
 	public get parentField(): LocationInField {
+		currentObserver?.observeParentOf(this);
 		return this.location;
 	}
 
@@ -226,6 +230,8 @@ export class UnhydratedFlexTreeNode
 	}
 
 	public tryGetField(key: FieldKey): UnhydratedFlexTreeField | undefined {
+		currentObserver?.observeNodeField(this, key);
+
 		const field = this.fieldsAll.get(key);
 		// Only return the field if it is not empty, in order to fulfill the contract of `tryGetField`.
 		if (field !== undefined && field.length > 0) {
@@ -235,6 +241,9 @@ export class UnhydratedFlexTreeNode
 
 	public getBoxed(key: string): UnhydratedFlexTreeField {
 		const fieldKey: FieldKey = brand(key);
+
+		currentObserver?.observeNodeField(this, fieldKey);
+
 		return this.getOrCreateField(fieldKey);
 	}
 
