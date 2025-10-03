@@ -182,7 +182,7 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 						throw new UsageError("Root shared object already created");
 					}
 					const sharedObject = kind as unknown as ISharedObjectKind<T2>;
-					const result = sharedObject.create(rt);
+					const result = sharedObject.create(rt, rootSharedObjectId);
 					createdRoot = result;
 					return result;
 				},
