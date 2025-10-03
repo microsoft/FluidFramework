@@ -73,6 +73,10 @@ export class SchemaFactoryBeta<
 	 *
 	 * If using these structurally named records, other types in this schema builder should avoid names of the form `Record<${string}>`.
 	 *
+	 * The underlying data format for `Record` nodes is the same as that for `Map` nodes.
+	 * Therefore, changing an existing `Map` schema to a `Record` schema (or vice versa) is
+	 * a non-breaking change and does not require schema migration.
+	 *
 	 * @example
 	 * The returned schema should be used as a schema directly:
 	 * ```typescript
@@ -116,6 +120,10 @@ export class SchemaFactoryBeta<
 	 * @param allowedTypes - The types that may appear in the record.
 	 *
 	 * @remarks
+	 * The underlying data format for `Record` nodes is the same as that for `Map` nodes.
+	 * Therefore, changing an existing `Map` schema to a `Record` schema (or vice versa) is
+	 * a non-breaking change and does not require schema migration.
+	 *
 	 * Like TypeScript `Record`s, record nodes have some potential pitfalls.
 	 * For example: TypeScript makes assumptions about built-in keys being present (e.g. `toString`, `hasOwnProperty`, etc.).
 	 * Since these are otherwise valid keys in a record, this can lead to unexpected behavior.
