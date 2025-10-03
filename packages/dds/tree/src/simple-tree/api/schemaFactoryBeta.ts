@@ -122,8 +122,6 @@ export class SchemaFactoryBeta<
 	 * To prevent inconsistent behavior, these built-ins are hidden by record nodes.
 	 * This means that if you try to call these built-ins (e.g. `toString()`) on a record node, you will get an error.
 	 *
-	 * In most cases, it is probably preferable to use {@link SchemaFactory.(map:2)} instead.
-	 *
 	 * @example
 	 * ```typescript
 	 * class NamedRecord extends factory.record("name", factory.number) {}
