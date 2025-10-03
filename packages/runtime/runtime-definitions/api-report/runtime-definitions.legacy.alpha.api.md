@@ -55,11 +55,31 @@ export enum CreateSummarizerNodeSource {
     Local = 2
 }
 
+// @alpha @sealed
+export interface DataStoreKind<T> extends ErasedType<readonly ["DataStoreFactory", T]> {
+}
+
 // @beta @legacy
 export interface DetachedAttributionKey {
     id: 0;
     // (undocumented)
     type: "detached";
+}
+
+// @alpha @sealed
+export interface FluidContainer<T = unknown> {
+    readonly data: T;
+    readonly id?: string | undefined;
+}
+
+// @alpha @sealed
+export interface FluidContainerAttached<T = unknown> extends FluidContainer<T> {
+    readonly id: string;
+}
+
+// @alpha @sealed
+export interface FluidContainerWithService<T = unknown> extends FluidContainer<T> {
+    attach(): Promise<FluidContainerAttached<T>>;
 }
 
 // @beta @legacy
@@ -426,7 +446,7 @@ export interface LocalAttributionKey {
     type: "local";
 }
 
-// @beta @legacy
+// @beta
 export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 // @beta @legacy
@@ -449,6 +469,21 @@ export interface OpAttributionKey {
 
 // @beta @legacy
 export type PackagePath = readonly string[];
+
+// @alpha @input
+export type Registry<T> = (type: string) => T;
+
+// @alpha @sealed
+export interface ServiceClient {
+    createContainer<T>(root: DataStoreKind<T>): FluidContainerWithService<T>;
+    loadContainer<T>(id: string, root: DataStoreKind<T> | Registry<Promise<DataStoreKind<T>>>): Promise<FluidContainerAttached<T>>;
+}
+
+// @alpha @input
+export interface ServiceOptions {
+    // (undocumented)
+    readonly minVersionForCollab: MinimumVersionForCollab;
+}
 
 // @alpha @sealed @legacy
 export interface StageControlsAlpha {

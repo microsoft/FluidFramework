@@ -118,6 +118,10 @@
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/container-runtime": "workspace:^",
+		"@fluidframework/container-runtime-definitions": "workspace:^",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-base": "workspace:~",
@@ -125,6 +129,7 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/protocol-base": "^7.0.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
+		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/server-local-server": "^7.0.0",
 		"@fluidframework/server-services-client": "^7.0.0",
 		"@fluidframework/server-services-core": "^7.0.0",

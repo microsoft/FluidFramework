@@ -83,6 +83,16 @@ export {
 } from "./summary.js";
 export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
 
+export type {
+	DataStoreKind,
+	FluidContainer,
+	ServiceClient,
+	ServiceOptions,
+	FluidContainerAttached,
+	Registry,
+	FluidContainerWithService,
+} from "./serviceClient.js";
+
 export {
 	type ContainerRuntimeBaseAlpha,
 	type StageControlsAlpha,
