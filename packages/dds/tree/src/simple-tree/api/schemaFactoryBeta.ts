@@ -20,7 +20,6 @@ import {
 	type RecordNodeInsertableData,
 	type TreeObjectNode,
 	type TreeRecordNode,
-	type UnannotateSchemaRecord,
 } from "../node-kinds/index.js";
 import {
 	defaultSchemaFactoryObjectOptions,
