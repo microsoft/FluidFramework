@@ -1,0 +1,78 @@
+[
+    {
+        "seed": 3673401075337474,
+        "type": "attach"
+    },
+    {
+        "seed": 8239062498115352,
+        "type": "addClient",
+        "clientTag": "client-4"
+    },
+    {
+        "seed": 2202730565873669,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop3",
+            "path": "/",
+            "value": "Rqpu"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 4045419307377695,
+        "type": "synchronize"
+    },
+    {
+        "seed": 3568539798529378,
+        "type": "createChannel",
+        "channelType": "https://graph.microsoft.com/types/task-manager",
+        "tag": "channel-5",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 6510214168424423,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop1",
+            "path": "/",
+            "value": {
+                "tag": "channel-5",
+                "absolutePath": "/A/channel-5",
+                "isAttached": true
+            }
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 7769878521344477,
+        "type": "restartClientFromPendingState",
+        "sourceClientTag": "client-4",
+        "newClientTag": "client-5"
+    },
+    {
+        "seed": 3894411416511882,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "subscribe",
+            "taskId": "uxpfF"
+        },
+        "channelType": "https://graph.microsoft.com/types/task-manager",
+        "clientTag": "client-5",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-5"
+    },
+    {
+        "seed": 822358015848098,
+        "type": "FinalSynchronization"
+    }
+]
