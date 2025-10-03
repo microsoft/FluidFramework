@@ -71,15 +71,7 @@ export class DataObjectFactory<
 
 		super({
 			...newProps,
-			// This cast is safe because TObj extends DataObject, which has static modelDescriptors
-			ctor: newProps.ctor as (new (
-				doProps: IDataObjectProps<I>,
-			) => TObj) & {
-				modelDescriptors: readonly [
-					ModelDescriptor<RootDirectoryView>,
-					...ModelDescriptor<RootDirectoryView>[],
-				];
-			}, //* TODO: Can we do something to avoid needing this cast?
+			ctor: new (props: IDataObjectProps<I>, modelDescriptors:) => new newProps.ctor(props),
 			asyncGetDataForMigration: async () => {
 				throw new Error("No migration supported");
 			},

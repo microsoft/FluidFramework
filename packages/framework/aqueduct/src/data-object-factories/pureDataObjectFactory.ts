@@ -63,7 +63,7 @@ export interface CreateDataObjectProps<
  * Proxy over PureDataObject
  * Does delayed creation & initialization of PureDataObject
  */
-async function createDataObject<
+export async function createDataObject<
 	TObj extends PureDataObject,
 	I extends DataObjectTypes = DataObjectTypes,
 >({
@@ -219,7 +219,7 @@ export class PureDataObjectFactory<
 > implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry>
 {
 	private readonly registry: IFluidDataStoreRegistry | undefined;
-	private readonly createProps: Omit<CreateDataObjectProps<TObj, I>, "existing" | "context">;
+	protected readonly createProps: Omit<CreateDataObjectProps<TObj, I>, "existing" | "context">;
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreFactory."type"}
@@ -319,11 +319,25 @@ export class PureDataObjectFactory<
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
-		const props = { ...this.createProps, context, existing };
-		// await this.observeCreateDataObject(props);
-		const { runtime } = await createDataObject(props);
-
+		const { runtime } = await this.buildDataObjectInstance(context, existing);
 		return runtime;
+	}
+
+	/**
+	 * Protected helper to build the data object instance + runtime. Subclasses overriding
+	 * instantiateDataStore can call this to leverage standard creation while injecting
+	 * custom initial state or wrapping the ctor (by temporarily shadowing this.createProps.ctor).
+	 */
+	protected async buildDataObjectInstance(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<{ instance: TObj; runtime: FluidDataStoreRuntime }> {
+		const props = {
+			...this.createProps,
+			context,
+			existing,
+		};
+		return createDataObject(props);
 	}
 
 	/**

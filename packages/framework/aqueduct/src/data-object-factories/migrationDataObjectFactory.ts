@@ -4,6 +4,7 @@
  */
 
 import type { IMigrationTargetFluidDataStoreFactory } from "@fluidframework/container-runtime/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces/internal";
 import {
 	DataStoreMessageType,
 	FluidDataStoreRuntime,
@@ -15,6 +16,10 @@ import type {
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
+import type {
+	AsyncFluidObjectProvider,
+	IFluidDependencySynthesizer,
+} from "@fluidframework/synthesize/internal";
 
 import type { IDelayLoadChannelFactory } from "../channel-factories/index.js";
 import type {
@@ -39,7 +44,6 @@ export interface MigrationDataObjectFactoryProps<
 	TObj extends MigrationDataObject<TUniversalView, I>,
 	TUniversalView,
 	I extends DataObjectTypes = DataObjectTypes,
-	TNewModel extends TUniversalView = TUniversalView, // default case works for a single model descriptor
 	TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
 > extends DataObjectFactoryProps<TObj, I> {
 	/**
@@ -59,7 +63,7 @@ export interface MigrationDataObjectFactoryProps<
 	 * target ("latest") that will be instantiated and populated during `migrate`.
 	 */
 	modelDescriptors: readonly [
-		ModelDescriptor<TNewModel>,
+		ModelDescriptor<TUniversalView>,
 		...ModelDescriptor<TUniversalView>[],
 	];
 
@@ -118,7 +122,7 @@ export interface MigrationDataObjectFactoryProps<
 	 */
 	migrateDataObject: (
 		runtime: FluidDataStoreRuntime,
-		newModel: TNewModel,
+		newModel: TUniversalView,
 		data: TMigrationData,
 	) => void;
 
@@ -140,7 +144,6 @@ export class MigrationDataObjectFactory<
 		TObj extends MigrationDataObject<TUniversalView, I>,
 		TUniversalView,
 		I extends DataObjectTypes = DataObjectTypes,
-		TNewModel extends TUniversalView = TUniversalView, // default case works for a single model descriptor
 		TMigrationData = never, // default case works for a single model descriptor (migration is not needed)
 	>
 	extends PureDataObjectFactory<TObj, I>
@@ -155,7 +158,6 @@ export class MigrationDataObjectFactory<
 			TObj,
 			TUniversalView,
 			I,
-			TNewModel,
 			TMigrationData
 		>,
 	) {
@@ -296,6 +298,22 @@ export class MigrationDataObjectFactory<
 		throw new Error("Use migrate instead");
 	}
 
+	//* This shows a flaw in the design - if the target is dynamic, we can't have a typed for TNewModel.
+	private getTargetModelDescriptor(
+		context: IFluidDataStoreContext,
+	): ModelDescriptor<TUniversalView> {
+		const scope: FluidObject<IFluidDependencySynthesizer> = context.scope;
+		const providers =
+			scope.IFluidDependencySynthesizer?.synthesize<I["OptionalProviders"]>(
+				this.props.optionalProviders ?? {},
+				{},
+			) ??
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+			({} as AsyncFluidObjectProvider<never>);
+
+		return this.props.modelDescriptors[0];
+	}
+
 	public async migrate(
 		context: IFluidDataStoreContext,
 		runtime: IFluidDataStoreChannel,
@@ -304,14 +322,15 @@ export class MigrationDataObjectFactory<
 		//* TODO: Avoid this cast?
 		const realRuntime = runtime as FluidDataStoreRuntime;
 
-		// Get the first model descriptor, which is the target of migration
-		const modelDescriptors = this.props.modelDescriptors;
-		const [targetDescriptor, ..._otherDescriptors] = modelDescriptors;
+		const targetDescriptor = this.getTargetModelDescriptor(context);
 
 		// Create the target model and run migration.
 		await targetDescriptor.ensureFactoriesLoaded();
 		const newModel = targetDescriptor.create(realRuntime);
 		this.props.migrateDataObject(realRuntime, newModel, portableData as TMigrationData);
+
+		const dataObject = (await realRuntime.entryPoint.get()) as TObj;
+		await dataObject.finishInitialization(true);
 
 		//* TODO: evacuate old model
 		//* i.e. delete unused root contexts, but not only that.  GC doesn't run sub-DataStore.

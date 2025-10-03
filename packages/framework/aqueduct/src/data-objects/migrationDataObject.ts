@@ -192,7 +192,9 @@ export abstract class MultiFormatDataObject<
 			this.#activeModel = { descriptor: creator, view: created };
 		}
 
-		await super.initializeInternal(existing);
+		if (this.IMigrationInfo === undefined) {
+			await super.initializeInternal(existing);
+		}
 	}
 
 	/**

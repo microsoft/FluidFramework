@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
@@ -189,7 +190,6 @@ const props: MigrationDataObjectFactoryProps<
 	DirToTreeDataObject,
 	ViewWithDirOrTree,
 	DataObjectTypes,
-	TreeModel,
 	MigrationData
 > = {
 	type: "DirToTree",
@@ -197,10 +197,12 @@ const props: MigrationDataObjectFactoryProps<
 	modelDescriptors: [treeDesc, dirDesc],
 	migrateDataObject: (
 		_runtime: IFluidDataStoreRuntime,
-		newModel: TreeModel,
+		newModel: ViewWithDirOrTree,
 		data: MigrationData,
 	) => {
-		wrapTreeView(newModel.getRoot().root, (treeView) => {
+		const modelRoot = newModel.getRoot();
+		assert(!modelRoot.isDirectory, "Expected tree model");
+		wrapTreeView(modelRoot.root, (treeView) => {
 			// Initialize the root of the tree if it is not already initialized.
 			if (treeView.compatibility.canInitialize) {
 				treeView.initialize(new DemoSchema({ arbitraryKeys: [] }));
