@@ -293,6 +293,9 @@ export type PopUnion<Union, AsOverloadedFunction = UnionToIntersection<Union ext
 export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue> extends ReadonlyArray<T>, Awaited<TreeNode & WithType<string, NodeKind.Array>> {
 }
 
+// @beta @system
+export type RecordNodeInsertableData<T extends ImplicitAllowedTypes> = RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypes<T>>;
+
 // @public @deprecated
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
@@ -381,6 +384,11 @@ export const SchemaFactory_base: SchemaStatics & (new () => SchemaStatics);
 
 // @beta
 export class SchemaFactoryBeta<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory<TScope, TName> {
+    record<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchemaNonClass<ScopedSchemaName<TScope, `Record<${string}>`>, NodeKind.Record, TreeRecordNode<T> & WithType<ScopedSchemaName<TScope, `Record<${string}>`>, NodeKind.Record>, RecordNodeInsertableData<T>, true, T, undefined>;
+    record<const Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Record, TreeRecordNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>, RecordNodeInsertableData<T>, true, T, undefined>;
+    recordRecursive<Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Record, TreeRecordNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record, unknown>, {
+        readonly [x: string]: System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
+    }, false, T, undefined, TCustomMetadata>;
     scopedFactory<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner>;
 }
 
@@ -633,6 +641,23 @@ export type TreeNodeSchemaNonClass<Name extends string = string, Kind extends No
 
 // @public
 export type TreeObjectNode<T extends RestrictiveStringRecord<ImplicitFieldSchema>, TypeName extends string = string> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object, T>;
+
+// @beta
+export interface TreeRecordNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, Record<string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>> {
+    [Symbol.iterator](): IterableIterator<[
+    string,
+    TreeNodeFromImplicitAllowedTypes<TAllowedTypes>
+    ]>;
+}
+
+// @beta @sealed @system
+export interface TreeRecordNodeUnsafe<TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe> extends Record<string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>>, TreeNode {
+    // (undocumented)
+    [Symbol.iterator](): IterableIterator<[
+    string,
+    System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>
+    ]>;
+}
 
 // @public
 export enum TreeStatus {
