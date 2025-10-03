@@ -34,7 +34,6 @@ import type { TreeArrayNode } from "../node-kinds/index.js";
 import type {
 	SimpleArrayNodeSchema,
 	SimpleMapNodeSchema,
-	SimpleRecordNodeSchema,
 } from "../simpleSchema.js";
 
 /*
