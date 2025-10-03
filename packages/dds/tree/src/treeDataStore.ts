@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
@@ -11,10 +11,26 @@ import type {
 	TreeView,
 	TreeViewConfiguration,
 } from "./simple-tree/index.js";
-import type { DataStoreKind, Registry } from "@fluidframework/runtime-definitions/internal";
+import type {
+	DataStoreKind,
+	IFluidDataStoreChannel,
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+	Registry,
+} from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import { SharedTree } from "./treeFactory.js";
-import type { IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { FluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
+import {
+	FluidDataStoreRuntime,
+	type ISharedObjectRegistry,
+} from "@fluidframework/datastore/internal";
+import type {
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 // TODO: Non-tree specific content should be moved elsewhere.
 
@@ -57,7 +73,7 @@ export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutp
 	/**
 	 * Create the initial content of the datastore, and return the root shared object.
 	 */
-	instantiateFirstTime(creator: Creator): Promise<TRoot>;
+	instantiateFirstTime(rootCreator: Creator<TRoot>, creator: Creator): Promise<TRoot>;
 	/**
 	 * Construct a view of the datastore's root shared object.
 	 *
@@ -75,7 +91,103 @@ export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutp
 export function dataStoreKind<T, TRoot extends IFluidLoadable>(
 	options: DataStoreOptions<TRoot, T>,
 ): DataStoreKind<T> {
-	return fail("Not implemented: dataStoreKind");
+	const f: IFluidDataStoreFactory = {
+		type: options.type,
+
+		async instantiateDataStore(
+			context: IFluidDataStoreContext,
+			existing: boolean,
+		): Promise<IFluidDataStoreChannel> {
+			return createDataStore(context, existing, options);
+		},
+
+		get IFluidDataStoreFactory(): IFluidDataStoreFactory {
+			return f;
+		},
+	};
+
+	return f as IFluidDataStoreFactory & DataStoreKind<T>;
+}
+
+// TODO: we should not require a list of knowing types to prefetch for registry conversion.
+const knownTypes = [SharedTree.getFactory().type];
+
+async function convertRegistry(
+	registry: SharedObjectRegistry,
+): Promise<ISharedObjectRegistry> {
+	const entries = knownTypes.map(
+		async (type) =>
+			[
+				type,
+				((await registry(type)) as unknown as ISharedObjectKind<IFluidLoadable>).getFactory(),
+			] as const,
+	);
+	const resolved = await Promise.allSettled(entries);
+
+	const registryMap = new Map<string, IChannelFactory>();
+	for (const result of resolved) {
+		if (result.status === "fulfilled") {
+			registryMap.set(result.value[0], result.value[1]);
+		} else {
+			// TODO: Handle the error case? Rethrow on get from output registry?
+		}
+	}
+	return registryMap;
+}
+
+const rootSharedObjectId = "root";
+
+async function createDataStore<T, TRoot extends IFluidLoadable>(
+	context: IFluidDataStoreContext,
+	existing: boolean,
+	options: DataStoreOptions<TRoot, T>,
+): Promise<IFluidDataStoreChannel> {
+	const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
+		context,
+		await convertRegistry(options.registry),
+		existing,
+		async (rt: IFluidDataStoreRuntime) => {
+			const creator: Creator = {
+				async create<T2 extends IFluidLoadable>(kind: SharedObjectKind<T2>): Promise<T2> {
+					// Create detached channel.
+					const sharedObject = kind as unknown as ISharedObjectKind<T2>;
+					return sharedObject.create(rt);
+				},
+			};
+
+			let createdRoot: TRoot | undefined;
+
+			const rootCreator: Creator<TRoot> = {
+				async create<T2 extends TRoot>(kind: SharedObjectKind<T2>): Promise<T2> {
+					// Create named channel under the root id.
+					// Error if called twice.
+					if (createdRoot !== undefined) {
+						throw new UsageError("Root shared object already created");
+					}
+					const sharedObject = kind as unknown as ISharedObjectKind<T2>;
+					const result = sharedObject.create(rt);
+					createdRoot = result;
+					return result;
+				},
+			};
+
+			let root: TRoot | undefined;
+			if (existing) {
+				root = (await rt.getChannel(rootSharedObjectId)) as unknown as TRoot;
+			} else {
+				root = await options.instantiateFirstTime(rootCreator, creator);
+				if (root !== createdRoot) {
+					throw new UsageError(
+						"instantiateFirstTime did not return root created with rootCreator",
+					);
+				}
+			}
+
+			return options.view(root) as unknown as FluidObject;
+		},
+	);
+
+	return runtime;
 }
 
 /**
@@ -85,8 +197,8 @@ export function dataStoreKind<T, TRoot extends IFluidLoadable>(
  * @sealed
  * @alpha
  */
-export interface Creator {
-	create<T extends IFluidLoadable>(kind: SharedObjectKind<T>): Promise<T>;
+export interface Creator<TConstraint = IFluidLoadable> {
+	create<T extends TConstraint>(kind: SharedObjectKind<T>): Promise<T>;
 }
 
 /**
@@ -104,7 +216,7 @@ export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> {
 	/**
 	 * If provided, used to initialize the tree content when creating a new instance of the data store.
 	 */
-	readonly initializer?: () => InsertableTreeFieldFromImplicitField<TSchema>;
+	readonly initializer?: (creator: Creator) => InsertableTreeFieldFromImplicitField<TSchema>;
 
 	/**
 	 * If provided, must include at least a SharedTree kind in the registry.
@@ -131,14 +243,14 @@ export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(
 	const result = dataStoreKind<TreeView<TSchema>, ITree>({
 		type: options.type,
 		registry,
-		async instantiateFirstTime(creator: Creator): Promise<ITree> {
+		async instantiateFirstTime(rootCreator: Creator, creator: Creator): Promise<ITree> {
 			const treeKind = await registry(SharedTree.getFactory().type);
-			const tree = await creator.create(treeKind);
+			const tree = await rootCreator.create(treeKind);
 			// TODO: Should this pass for customized SharedTree kinds? Should there be a different check?
 			assert(SharedTree.is(tree), "Created shared tree should be a SharedTree");
 			if (options.initializer !== undefined) {
 				const view = tree.viewWith(options.config);
-				view.initialize(options.initializer());
+				view.initialize(options.initializer(creator));
 				view.dispose();
 			}
 			return tree;
