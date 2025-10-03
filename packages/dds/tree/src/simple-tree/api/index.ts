@@ -29,6 +29,7 @@ export {
 	SchemaFactory,
 	type ScopedSchemaName,
 	type SchemaFactoryObjectOptions,
+	type SchemaFactoryObjectOptionsAlpha,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type SchemaFactory_base,

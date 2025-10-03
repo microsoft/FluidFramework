@@ -14,15 +14,21 @@ import type {
 } from "../core/index.js";
 
 import {
+	objectSchema,
 	recordSchema,
+	type InsertableObjectFromSchemaRecord,
 	type RecordNodeInsertableData,
+	type TreeObjectNode,
 	type TreeRecordNode,
+	type UnannotateSchemaRecord,
 } from "../node-kinds/index.js";
 import {
+	defaultSchemaFactoryObjectOptions,
 	SchemaFactory,
 	scoped,
 	structuralName,
 	type NodeSchemaOptions,
+	type SchemaFactoryObjectOptions,
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
 import type { System_Unsafe, TreeRecordNodeUnsafe } from "./typesUnsafe.js";
@@ -34,9 +40,11 @@ import type {
 	FieldSchemaAlpha,
 	FieldPropsAlpha,
 	FieldKind,
+	ImplicitFieldSchema,
 } from "../fieldSchema.js";
 import type { LeafSchema } from "../leafNodeSchema.js";
 import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
+import type { RestrictiveStringRecord } from "../../util/index.js";
 /* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import/no-duplicates */
 
 /**
@@ -58,6 +66,71 @@ export class SchemaFactoryBeta<
 		name: T,
 	): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner> {
 		return new SchemaFactoryBeta(scoped(this, name));
+	}
+
+	/**
+	 * Define a {@link TreeNodeSchemaClass} for a {@link TreeObjectNode}.
+	 *
+	 * @param name - Unique identifier for this schema within this factory's scope.
+	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
+	 * @param options - Additional options for the schema.
+	 */
+	public objectBeta<
+		const Name extends TName,
+		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
+		const TCustomMetadata = unknown,
+	>(
+		name: Name,
+		fields: T,
+		options?: SchemaFactoryObjectOptions<TCustomMetadata>,
+	): TreeNodeSchemaClass<
+		/* Name */ ScopedSchemaName<TScope, Name>,
+		/* Kind */ NodeKind.Object,
+		/* TNode */ TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
+		/* TInsertable */ object & InsertableObjectFromSchemaRecord<T>,
+		/* ImplicitlyConstructable */ true,
+		/* Info */ T,
+		/* TConstructorExtra */ never,
+		/* TCustomMetadata */ TCustomMetadata
+	> {
+		// The compiler can't infer that UnannotateSchemaRecord<T> is equal to T so we have to do a bunch of typing to make the error go away.
+		const object: TreeNodeSchemaClass<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Object,
+			TreeObjectNode<UnannotateSchemaRecord<T>, ScopedSchemaName<TScope, Name>>,
+			object & InsertableObjectFromSchemaRecord<UnannotateSchemaRecord<T>>,
+			true,
+			T,
+			never,
+			TCustomMetadata
+		> = objectSchema(
+			scoped(this, name),
+			fields,
+			true,
+			options?.allowUnknownOptionalFields ??
+				defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
+			options?.metadata,
+		);
+
+		return object as TreeNodeSchemaClass<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Object,
+			TreeObjectNode<RestrictiveStringRecord<ImplicitFieldSchema>>,
+			unknown,
+			true,
+			T,
+			never,
+			TCustomMetadata
+		> as TreeNodeSchemaClass<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Object,
+			TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
+			object & InsertableObjectFromSchemaRecord<T>,
+			true,
+			T,
+			never,
+			TCustomMetadata
+		>;
 	}
 
 	/**
