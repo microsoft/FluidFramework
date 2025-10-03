@@ -155,7 +155,7 @@ function findTypesPathsMatching<TOutKey>(
  * mapNode10CompatExportPathToData, map of compat file path to Node16 path.
  */
 export function queryTypesResolutionPathsFromPackageExports<TOutKey>(
-	packageJson: PackageJson,
+	packageJson: Pick<PackageJson, "exports">,
 	mapQueryPathToOutKey: ReadonlyMap<string | RegExp, TOutKey | undefined>,
 	{
 		node10TypeCompat,

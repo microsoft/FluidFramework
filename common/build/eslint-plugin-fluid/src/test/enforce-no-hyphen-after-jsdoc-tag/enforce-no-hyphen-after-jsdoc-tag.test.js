@@ -41,21 +41,36 @@ describe("Do not allow `-` following JSDoc/TSDoc tags", function () {
 		assert.strictEqual(result.errorCount, 3);
 
 		// Error 1
-		assert.strictEqual(result.messages[0].message, expectedErrorMessage);
-		assert.strictEqual(result.messages[0].line, 8);
-		assert.strictEqual(result.messages[0].fix?.text, "@remarks Here are some remarks.");
+		const error1 = result.messages[0];
+		assert.strictEqual(error1.message, expectedErrorMessage);
+		assert.strictEqual(error1.line, 8);
+		assert.strictEqual(error1.column, 4); // 1-based, inclusive
+		assert.strictEqual(error1.endColumn, 37); // 1-based, exclusive
+		assert(error1.fix !== undefined);
+		assert.strictEqual(error1.fix.text, "@remarks Here are some remarks.");
+		assert.deepEqual(error1.fix.range, [226, 259]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
 
 		// Error 2
-		assert.strictEqual(result.messages[1].message, expectedErrorMessage);
-		assert.strictEqual(result.messages[1].line, 9);
+		const error2 = result.messages[1];
+		assert.strictEqual(error2.message, expectedErrorMessage);
+		assert.strictEqual(error2.line, 9);
+		assert.strictEqual(error2.column, 4); // 1-based, inclusive
+		assert.strictEqual(error2.endColumn, 65); // 1-based, exclusive
+		assert(error2.fix !== undefined);
 		assert.strictEqual(
-			result.messages[1].fix?.text,
+			error2.fix.text,
 			"@deprecated This function is deprecated, use something else.",
 		);
+		assert.deepEqual(error2.fix.range, [263, 324]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
 
 		// Error 3
-		assert.strictEqual(result.messages[2].message, expectedErrorMessage);
-		assert.strictEqual(result.messages[2].line, 10);
-		assert.strictEqual(result.messages[2].fix?.text, "@returns The concatenated string.");
+		const error3 = result.messages[2];
+		assert.strictEqual(error3.message, expectedErrorMessage);
+		assert.strictEqual(error3.line, 10);
+		assert.strictEqual(error3.column, 4); // 1-based, inclusive
+		assert.strictEqual(error3.endColumn, 39); // 1-based, exclusive
+		assert(error3.fix !== undefined);
+		assert.strictEqual(error3.fix.text, "@returns The concatenated string.");
+		assert.deepEqual(error3.fix.range, [328, 363]); // 0-based global character index in the file. The start is inclusive, and the end is exclusive.
 	});
 });

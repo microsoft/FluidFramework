@@ -47,6 +47,9 @@
         "@fluid-internal/fluid/no-file-path-links-in-jsdoc": [
             "error"
         ],
+        "@fluid-internal/fluid/no-hyphen-after-jsdoc-tag": [
+            "warn"
+        ],
         "@fluid-internal/fluid/no-markdown-links-in-jsdoc": [
             "error"
         ],

@@ -4,6 +4,7 @@
 
 ### New Rules
 
+- `@fluid-internal/fluid/no-hyphen-after-jsdoc-tag`
 - `@fluid-internal/fluid/no-file-path-links-in-jsdoc`
 - `@fluid-internal/fluid/no-markdown-links-in-jsdoc`
 - [@typescript-eslint/no-empty-object-type](https://typescript-eslint.io/rules/no-empty-object-type/)
@@ -25,6 +26,19 @@ They are replaced by the following new rules, which are now configured as errors
 - [no-empty-object-type](https://typescript-eslint.io/rules/no-empty-object-type/)
 - [no-unsafe-function-type](https://typescript-eslint.io/rules/no-unsafe-function-type/)
 - [no-wrapper-object-types](https://typescript-eslint.io/rules/no-wrapper-object-types/)
+
+## [6.1.1](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.1.1)
+
+Enables the following new rules as warnings (they will be promoted to errors in the next major release):
+
+- `@fluid-internal/fluid/no-hyphen-after-jsdoc-tag`
+
+### 🐞 Bug fixes
+
+Fixes indexing issues in the following rules, which would cause incorrect notification ranges and could cause malformed code fixes:
+
+- `@fluid-internal/fluid/no-file-path-links-in-jsdoc`
+- `@fluid-internal/fluid/no-markdown-links-in-jsdoc`
 
 ## [6.1.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.1.0)
 

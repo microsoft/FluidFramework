@@ -1,0 +1,20 @@
+{
+	"include": ["src/**/*"],
+	// "exclude": ["src/test/**/*"],
+	"compilerOptions": {
+		"target": "es2022",
+		"module": "Node16",
+		"strict": true,
+		"skipLibCheck": false,
+		"incremental": false,
+		"noImplicitAny": true,
+		"noImplicitOverride": true,
+		"noImplicitReturns": true,
+		"noImplicitThis": true,
+		"noUncheckedIndexedAccess": true,
+		"lib": ["ES2022", "DOM"],
+
+		// The pretty formatting seems to make it through how we log these errors, so keep it on.
+		"pretty": true,
+	},
+}
