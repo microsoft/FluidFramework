@@ -132,8 +132,9 @@ function makeCodeLoader<T>(
 				if (data === undefined) {
 					throw new Error("Root data store missing!");
 				}
+				const rootDataStore = await data.get();
 				// TODO: verify type?
-				return data.get() as unknown as T & FluidObject;
+				return rootDataStore as T & FluidObject;
 			};
 
 			const runtime = await loadContainerRuntime({
@@ -147,10 +148,11 @@ function makeCodeLoader<T>(
 
 			if (!existing) {
 				assert(root !== undefined, "Root data store kind must be provided for new containers");
-				const blobCollection = await runtime.createDataStore(
+				const dataStore = await runtime.createDataStore(
 					(root as unknown as IFluidDataStoreFactory).type,
 				);
-				await blobCollection.trySetAlias(rootDataStoreId);
+				const aliasResult = await dataStore.trySetAlias(rootDataStoreId);
+				assert(aliasResult === "Success", "Should be able to set alias on new data store");
 			}
 
 			return runtime;
