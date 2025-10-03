@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/replay-tool",
-	"version": "2.62.0",
+	"version": "2.62.1",
 	"private": true,
 	"description": "A tool that lets the user to replay ops.",
 	"homepage": "https://fluidframework.com",
@@ -90,8 +90,6 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }
