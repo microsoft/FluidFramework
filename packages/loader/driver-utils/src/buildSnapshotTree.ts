@@ -28,11 +28,13 @@ function flattenCore(
 
 		if (treeEntry.type === TreeEntry.Blob) {
 			const blob = treeEntry.value;
-			const buffer = stringToBuffer(blob.contents, blob.encoding);
+			const buffer: ArrayBufferLike = stringToBuffer(blob.contents, blob.encoding);
 			const id = uuid();
 			blobMap.set(id, buffer);
 
 			const entry: IGitTreeEntry = {
+				// FileMode enum is indexed by numeric mode; this lookup is safe by construction of TreeEntry
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				mode: FileMode[treeEntry.mode],
 				path: subPath,
 				sha: id,
@@ -48,6 +50,8 @@ function flattenCore(
 			);
 			const t = treeEntry.value;
 			const entry: IGitTreeEntry = {
+				// FileMode enum is indexed by numeric mode; this lookup is safe by construction of TreeEntry
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				mode: FileMode[treeEntry.mode],
 				path: subPath,
 				sha: "",
