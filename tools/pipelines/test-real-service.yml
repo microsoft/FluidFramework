@@ -20,7 +20,7 @@ parameters:
 
 resources:
   pipelines:
-  - pipeline: client   # Name of the pipeline resource
+  - pipeline: client
     source: Build - client packages
     branch: main # Default branch for manual/scheduled triggers if none is selected
     trigger:
@@ -29,6 +29,18 @@ resources:
       - main
       - next
       - lts
+  - pipeline: routerlicious
+    source: server-routerlicious
+    branch: main # Default branch for manual/scheduled triggers if none is selected
+  - pipeline: historian
+    source: server-historian
+    branch: main # Default branch for manual/scheduled triggers if none is selected
+  - pipeline: gitrest
+    source: server-gitrest
+    branch: main # Default branch for manual/scheduled triggers if none is selected
+  - pipeline: gitssh
+    source: server-gitssh
+    branch: main # Default branch for manual/scheduled triggers if none is selected
   repositories:
     - repository: ff_pipeline_host
       type: git
@@ -127,6 +139,68 @@ stages:
           fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+
+  # end-to-end tests docker
+  - template: templates/include-test-real-service.yml
+    parameters:
+      stageId: e2e_docker
+      stageDisplayName: e2e - docker
+      poolBuild: Large
+      testPackage: ${{ variables.testPackage }}
+      testWorkspace: ${{ variables.testWorkspace }}
+      artifactBuildId: $(resources.pipeline.client.runID)
+      continueOnError: true
+      testCommand: test:realsvc:r11s:docker
+      checkout: true
+      stageVariables:
+        - group: container-registry-info
+      splitTestVariants:
+        - name: Non-compat
+          flags: --compatVersion=0
+        - name: N-1
+          flags: --compatVersion=-1
+        - name: LTS
+          flags: --compatVersion=LTS
+        - name: Cross-Version
+          flags: --compatVersion=CROSS_VERSION
+      cacheCompatVersionsInstalls: true
+      uploadTestPassRateTelemetry: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      preSteps:
+        - task: Docker@2
+          displayName: 'Login to container registry'
+          inputs:
+            # $(containerRegistryConnection) comes from the container-registry-info variable group and needs to be
+            # specified as a runtime variable (variables from variable groups apparently are never available "statically"
+            # at parse/compile time, so can't be used with template-expression syntax ( '${{ }}' )).
+            containerRegistry: 'Fluid Container Registry' # $(containerRegistryConnection)
+            command: 'login'
+        - task: DockerCompose@1
+          displayName: 'Start routerlicious environment in docker'
+          inputs:
+            containerregistrytype: 'Container Registry'
+            dockerComposeFile: 'server/docker-compose.yml'
+            action: 'Run a Docker Compose command'
+            dockerComposeCommand: 'up -d'
+            projectName: 'routerlicious'
+          env:
+            REGISTRY_URL: fluidcr.azurecr.io/build
+            ALFRED_IMAGE_TAG: 0.0.$(resources.pipeline.routerlicious.runID)
+            HISTORIAN_IMAGE_TAG: 0.0.$(resources.pipeline.historian.runID)
+            GITREST_IMAGE_TAG: 0.0.$(resources.pipeline.gitrest.runID)
+            GITSSH_IMAGE_TAG: 0.0.$(resources.pipeline.gitssh.runID)
+      additionalSteps:
+        - task: DockerCompose@1
+          displayName: 'Stop routerlicious environment in docker'
+          condition: always()
+          inputs:
+            containerregistrytype: 'Container Registry'
+            dockerComposeFile: 'server/docker-compose.yml'
+            action: 'Run a Docker Compose command'
+            dockerComposeCommand: 'down'
+            projectName: 'routerlicious'
+      env:
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
 
   # end-to-end tests AFR
   - template: /tools/pipelines/templates/include-test-real-service.yml@self
