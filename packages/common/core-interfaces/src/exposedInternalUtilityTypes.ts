@@ -871,6 +871,9 @@ export namespace InternalUtilityTypes {
 	export type JsonSerializableImpl<
 		T,
 		Options extends Partial<FilterControls> & {
+			/**
+			 * See {@link JsonSerializableOptions} for meaning and expected use.
+			 */
 			IgnoreInaccessibleMembers?: "ignore-inaccessible-members";
 		},
 		TAncestorTypes extends unknown[] = [],
