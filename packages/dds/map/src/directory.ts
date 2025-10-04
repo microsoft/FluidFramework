@@ -2449,9 +2449,15 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				(entry) => entry.type === "createSubDirectory" && entry.subdirName === subdirName,
 			);
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
+			if (pendingEntry === undefined) {
+				// If we can't find a pending entry then it's likely we deleted and re-created this
+				// subdirectory from a remote delete subdir op. If that's the case then there is
+				// nothing to rollback since the pending data was removed with the subdirectory deletion.
+				return;
+			}
 			assert(
-				pendingEntry !== undefined && pendingEntry.type === "createSubDirectory",
-				0xc37 /* Unexpected pending data for createSubDirectory op */,
+				pendingEntry.type === "createSubDirectory",
+				"Unexpected pending data for createSubDirectory op",
 			);
 
 			// We still need to emit the disposed event for any locally created (and now
@@ -2473,9 +2479,15 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				(entry) => entry.type === "deleteSubDirectory" && entry.subdirName === subdirName,
 			);
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
+			if (pendingEntry === undefined) {
+				// If we can't find a pending entry then it's likely we deleted and re-created this
+				// subdirectory from a remote delete subdir op. If that's the case then there is
+				// nothing to rollback since the pending data was removed with the subdirectory deletion.
+				return;
+			}
 			assert(
-				pendingEntry !== undefined && pendingEntry.type === "deleteSubDirectory",
-				0xc38 /* Unexpected pending data for deleteSubDirectory op */,
+				pendingEntry.type === "deleteSubDirectory",
+				"Unexpected pending data for deleteSubDirectory op",
 			);
 			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
 
