@@ -18,6 +18,7 @@ import type {
 	ObjectWithOptionalRecursion,
 	ObjectWithSymbolOrRecursion,
 } from "./testValues.js";
+// This import list should be kept mostly in-sync with jsonDeserialized.spec.ts. Deltas should be commented.
 import {
 	boolean,
 	number,
@@ -79,6 +80,8 @@ import {
 	objectWithUndefined,
 	objectWithUnknown,
 	objectWithOptionalUnknown,
+	// See tests in jsonSerializable.exactOptionalPropertyTypes.(true|false).spec.ts
+	// objectWithOptionalUndefined,
 	objectWithOptionalSymbol,
 	objectWithOptionalBigint,
 	objectWithNumberKey,
@@ -237,7 +240,7 @@ import type {
 export function passThru<
 	const T,
 	TExpected,
-	// eslint-disable-next-line @typescript-eslint/ban-types
+	// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
 	Options extends JsonSerializableOptions = {},
 >(
 	filteredIn: JsonSerializable<T, Options>,
@@ -1433,6 +1436,30 @@ describe("JsonSerializable", () => {
 						{ boolean },
 					);
 					assertIdenticalTypes(filteredIn, createInstanceOf<Record<string, boolean>>());
+				});
+				it("object with exactly `unknown`", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error not assignable to type '{ "error required property may not allow `unknown` value": never; }'
+						objectWithUnknown,
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{
+							unknown: { "error required property may not allow `unknown` value": never };
+						}>(),
+					);
+				});
+				it("object with optional `unknown`", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error `unknown` is not supported (expects `JsonTypeWith<never> | OpaqueJsonSerializable<unknown>`)
+						objectWithOptionalUnknown,
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{
+							optUnknown?: JsonTypeWith<never> | OpaqueJsonSerializable<unknown>;
+						}>(),
+					);
 				});
 
 				it("object with array of `bigint`s", () => {

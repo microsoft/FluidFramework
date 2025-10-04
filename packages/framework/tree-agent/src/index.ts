@@ -10,7 +10,7 @@
  */
 
 export { createSemanticAgent } from "./agent.js";
-export type { Log, SharedTreeSemanticAgent } from "./agent.js";
+export type { Logger, SemanticAgentOptions, SharedTreeSemanticAgent } from "./agent.js";
 export { type TreeView, llmDefault } from "./utils.js";
 export {
 	buildFunc,

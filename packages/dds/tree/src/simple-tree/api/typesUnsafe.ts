@@ -533,7 +533,7 @@ export interface MapNodeCustomizableSchemaUnsafe<
  * {@link Unenforced} version of {@link TreeRecordNode}.
  * @remarks
  * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
- * @system @sealed @alpha
+ * @system @sealed @beta
  */
 export interface TreeRecordNodeUnsafe<
 	TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe,
