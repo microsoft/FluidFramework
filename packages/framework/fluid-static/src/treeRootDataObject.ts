@@ -168,7 +168,9 @@ class TreeRootDataObjectFactory extends TreeDataObjectFactory<TreeRootDataObject
 		sharedObjects: readonly IChannelFactory[] = [],
 		private readonly dataStoreRegistry: IFluidDataStoreRegistry,
 	) {
-		type Ctor = new (props: IDataObjectProps) => TreeRootDataObject;
+		type Ctor = (new (
+			props: IDataObjectProps,
+		) => TreeRootDataObject) & { modelDescriptors?: unknown };
 		const ctor: Ctor = function (_props) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			return new TreeRootDataObject({
@@ -176,6 +178,10 @@ class TreeRootDataObjectFactory extends TreeDataObjectFactory<TreeRootDataObject
 				// Add any additional injected properties here
 			});
 		} as unknown as Ctor;
+
+		ctor.modelDescriptors = (
+			TreeDataObject as unknown as { modelDescriptors: unknown }
+		).modelDescriptors;
 
 		// Note: we're not specifying registry entries to the base class, so it won't create a registry itself,
 		// and instead we override the necessary methods in this class to use the registry received in the constructor.
