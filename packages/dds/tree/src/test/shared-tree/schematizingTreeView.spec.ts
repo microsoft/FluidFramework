@@ -145,10 +145,13 @@ describe("SchematizingSimpleTreeView", () => {
 				});
 
 				it(`Initialize invalid content: staged allowed type with enableSchemaValidation: ${enableSchemaValidation}, additionalAsserts: ${additionalAsserts}`, () => {
-					class StagedSchema extends schema.arrayAlpha("TestArray", [
-						SchemaFactoryAlpha.number,
-						SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-					]) {}
+					class StagedSchema extends schema.arrayAlpha(
+						"TestArray",
+						SchemaFactoryAlpha.types([
+							SchemaFactoryAlpha.number,
+							SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+						]),
+					) {}
 
 					const emptyContent = {
 						schema: emptySchema,

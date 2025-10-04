@@ -21,12 +21,10 @@ import {
 import {
 	type FieldKind,
 	type FieldSchema,
-	type ImplicitAnnotatedFieldSchema,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	type TreeFieldFromImplicitField,
-	type UnannotateImplicitFieldSchema,
 	areImplicitFieldSchemaEqual,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/fieldSchema.js";
@@ -345,13 +343,4 @@ describe("fieldSchema", () => {
 			type _check7 = requireAssignableTo<undefined, ArgFieldOptional>;
 		});
 	});
-
-	// Type tests for unannotate utilities
-	{
-		// UnannotateImplicitFieldSchema
-		{
-			type T = ImplicitAnnotatedFieldSchema;
-			type _check = requireAssignableTo<UnannotateImplicitFieldSchema<T>, ImplicitFieldSchema>;
-		}
-	}
 });

@@ -2871,7 +2871,10 @@ describe("treeNodeApi", () => {
 		it("can clone staged types", () => {
 			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
 			class StagedSchema extends schemaFactoryAlpha.objectAlpha("TestObject", {
-				foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
+				foo: SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
 			}) {}
 
 			const original = new StagedSchema({ foo: "test" });
@@ -2883,7 +2886,10 @@ describe("treeNodeApi", () => {
 		describe("clone uses stored schema from source, breaking insertion of staged types the source lacked", () => {
 			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
 			class StagedSchema extends schemaFactoryAlpha.objectAlpha("TestObject", {
-				foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
+				foo: SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
 			}) {}
 			it("Unhydrated case: staged type is allowed", () => {
 				const original = new StagedSchema({ foo: 5 });

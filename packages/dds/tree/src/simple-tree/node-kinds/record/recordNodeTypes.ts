@@ -11,10 +11,8 @@ import type {
 	WithType,
 	TreeNode,
 	ImplicitAllowedTypes,
-	ImplicitAnnotatedAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,
-	UnannotateImplicitAllowedTypes,
 } from "../../core/index.js";
 
 import type { SimpleRecordNodeSchema } from "../../simpleSchema.js";
@@ -56,15 +54,14 @@ export type RecordNodeInsertableData<T extends ImplicitAllowedTypes> = Restricti
  */
 export interface RecordNodeCustomizableSchema<
 	out TName extends string = string,
-	in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+	in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<
 			/* Name */ TName,
 			/* Kind */ NodeKind.Record,
-			/* TNode */ TreeRecordNode<UnannotateImplicitAllowedTypes<T>> &
-				WithType<TName, NodeKind.Record, T>,
-			/* TInsertable */ RecordNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
+			/* TNode */ TreeRecordNode<T> & WithType<TName, NodeKind.Record, T>,
+			/* TInsertable */ RecordNodeInsertableData<T>,
 			/* ImplicitlyConstructable */ ImplicitlyConstructable,
 			/* Info */ T,
 			/* TConstructorExtra */ never,
@@ -78,15 +75,14 @@ export interface RecordNodeCustomizableSchema<
  */
 export interface RecordNodePojoEmulationSchema<
 	out TName extends string = string,
-	in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+	in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaNonClass<
 			/* Name */ TName,
 			/* Kind */ NodeKind.Record,
-			/* TNode */ TreeRecordNode<UnannotateImplicitAllowedTypes<T>> &
-				WithType<TName, NodeKind.Record, T>,
-			/* TInsertable */ RecordNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
+			/* TNode */ TreeRecordNode<T> & WithType<TName, NodeKind.Record, T>,
+			/* TInsertable */ RecordNodeInsertableData<T>,
 			/* ImplicitlyConstructable */ ImplicitlyConstructable,
 			/* Info */ T,
 			/* TConstructorExtra */ never,
@@ -104,7 +100,7 @@ export interface RecordNodePojoEmulationSchema<
  */
 export type RecordNodeSchema<
 	TName extends string = string,
-	T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+	T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 	ImplicitlyConstructable extends boolean = true,
 	TCustomMetadata = unknown,
 > =

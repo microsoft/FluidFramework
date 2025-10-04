@@ -20,6 +20,7 @@ import {
 	type ImplicitFieldSchema,
 	type IterableTreeArrayContent,
 	SchemaFactory,
+	ArrayNodeSchema,
 } from "@fluidframework/tree/internal";
 import { closest } from "fastest-levenshtein";
 
@@ -138,9 +139,10 @@ export function applyAgentEdit(
 			const schemaIdentifier = getSchemaIdentifier(treeEdit.content);
 
 			// We assume that the parentNode for inserts edits are guaranteed to be an arrayNode.
-			const allowedTypes = [
-				...normalizeAllowedTypes(parentNodeSchema.info as ImplicitAllowedTypes),
-			];
+			if (!(parentNodeSchema instanceof ArrayNodeSchema)) {
+				throw new UsageError("the parent node must be an arrayNode");
+			}
+			const allowedTypes = normalizeAllowedTypes(parentNodeSchema.info).evaluate();
 
 			for (const allowedType of allowedTypes.values()) {
 				if (allowedType.identifier === schemaIdentifier && typeof allowedType === "function") {
@@ -327,12 +329,12 @@ export function applyAgentEdit(
 					throw new UsageError("the source node must be within an arrayNode");
 				}
 				const destinationArraySchema = Tree.schema(destinationArrayNode);
-				const allowedTypes = [
-					...normalizeAllowedTypes(destinationArraySchema.info as ImplicitAllowedTypes),
-				];
+				if (destinationArraySchema instanceof ArrayNodeSchema === false) {
+					throw new UsageError("the destination node must be within an arrayNode");
+				}
 				const nodeToMove = sourceArrayNode.at(sourceIndex);
 				assert(nodeToMove !== undefined, 0xa77 /* node to move must exist */);
-				if (isNodeAllowedType(nodeToMove as TreeNode, allowedTypes)) {
+				if (Tree.is(nodeToMove as TreeNode, destinationArraySchema.info)) {
 					destinationArrayNode.moveRangeToIndex(
 						destinationIndex,
 						sourceIndex,
@@ -355,7 +357,7 @@ export function applyAgentEdit(
 				for (let i = sourceStartIndex; i < sourceEndIndex; i++) {
 					const nodeToMove = array.at(i);
 					assert(nodeToMove !== undefined, 0xa78 /* node to move must exist */);
-					if (!isNodeAllowedType(nodeToMove as TreeNode, allowedTypes)) {
+					if (!Tree.is(nodeToMove as TreeNode, allowedTypes)) {
 						throw new UsageError("Illegal node type in destination array");
 					}
 				}
@@ -411,15 +413,6 @@ function createInvalidModifyFeedbackMsg(
 	}
 
 	return messagePrefix + messageSuffix;
-}
-
-function isNodeAllowedType(node: TreeNode, allowedTypes: TreeNodeSchema[]): boolean {
-	for (const allowedType of allowedTypes) {
-		if (Tree.is(node, allowedType)) {
-			return true;
-		}
-	}
-	return false;
 }
 
 function isPrimitive(content: unknown): boolean {

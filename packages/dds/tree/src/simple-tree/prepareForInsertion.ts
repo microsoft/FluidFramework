@@ -22,7 +22,7 @@ import {
 	type FlexibleNodeContent,
 	throwOutOfSchema,
 } from "../feature-libraries/index.js";
-import type { ImplicitAnnotatedFieldSchema } from "./fieldSchema.js";
+import type { ImplicitFieldSchema } from "./fieldSchema.js";
 import {
 	type InsertableContent,
 	unhydratedFlexTreeFromInsertable,
@@ -31,7 +31,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { brand } from "../util/index.js";
 import {
 	getKernel,
-	type ImplicitAnnotatedAllowedTypes,
+	type ImplicitAllowedTypes,
 	type TreeNode,
 	type UnhydratedFlexTreeNode,
 } from "./core/index.js";
@@ -56,7 +56,7 @@ const validateSchema = true;
  */
 export function prepareForInsertion<TIn extends InsertableContent | undefined>(
 	data: TIn,
-	schema: ImplicitAnnotatedFieldSchema,
+	schema: ImplicitFieldSchema,
 	destinationContext: FlexTreeContext,
 	destinationSchema: TreeFieldStoredSchema,
 ): TIn extends undefined ? undefined : FlexibleNodeContent {
@@ -84,7 +84,7 @@ export function prepareForInsertion<TIn extends InsertableContent | undefined>(
  */
 export function prepareArrayContentForInsertion(
 	data: readonly InsertableContent[],
-	schema: ImplicitAnnotatedAllowedTypes,
+	schema: ImplicitAllowedTypes,
 	destinationContext: FlexTreeContext,
 	destinationSchema: TreeTypeSet,
 ): FlexibleFieldContent {
@@ -117,7 +117,7 @@ export function prepareArrayContentForInsertion(
  */
 export function prepareForInsertionContextless<TIn extends InsertableContent | undefined>(
 	data: TIn,
-	schema: ImplicitAnnotatedFieldSchema,
+	schema: ImplicitFieldSchema,
 	schemaAndPolicy: SchemaAndPolicy,
 	hydratedData: FlexTreeHydratedContextMinimal | undefined,
 	destinationSchema: TreeFieldStoredSchema,

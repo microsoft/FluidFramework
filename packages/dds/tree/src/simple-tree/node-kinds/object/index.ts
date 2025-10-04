@@ -17,5 +17,4 @@ export {
 	isObjectNodeSchema,
 	ObjectNodeSchema,
 	type ObjectNodeSchemaPrivate,
-	type UnannotateSchemaRecord,
 } from "./objectNodeTypes.js";

@@ -5,9 +5,9 @@
 
 import { brand } from "../../util/index.js";
 import {
-	normalizeAnnotatedAllowedTypes,
+	normalizeAndEvaluateAnnotatedAllowedTypes,
 	type AnnotatedAllowedType,
-	type ImplicitAnnotatedAllowedTypes,
+	type ImplicitAllowedTypes,
 	type SchemaUpgrade,
 } from "./allowedTypes.js";
 import type { TreeNodeSchemaIdentifier, TreeTypeSet } from "../../core/index.js";
@@ -42,16 +42,18 @@ export function allowedTypeFilter(
 }
 
 /**
- * Converts an ImplicitAnnotatedAllowedTypes to a stored schema.
+ * Converts an ImplicitAllowedTypes to a stored schema.
  * @param schema - The schema to convert.
  * @param options - The options to use for filtering.
  * @returns The converted stored schema.
  */
 export function convertAllowedTypes(
-	schema: ImplicitAnnotatedAllowedTypes,
+	schema: ImplicitAllowedTypes,
 	options: StoredSchemaGenerationOptions,
 ): TreeTypeSet {
-	const filtered: TreeNodeSchemaIdentifier[] = normalizeAnnotatedAllowedTypes(schema)
+	const filtered: TreeNodeSchemaIdentifier[] = normalizeAndEvaluateAnnotatedAllowedTypes(
+		schema,
+	)
 		.types.filter((allowedType) => allowedTypeFilter(allowedType, options))
 		.map((a) => brand(a.type.identifier));
 	return new Set(filtered);

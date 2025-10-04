@@ -222,7 +222,7 @@ export const treeNodeApi: TreeNodeApi = {
 		if (actualSchema === undefined) {
 			return false;
 		}
-		return normalizeAllowedTypes(schema).has(actualSchema);
+		return normalizeAllowedTypes(schema).evaluateSet().has(actualSchema);
 	},
 	schema(node: TreeNode | TreeLeafValue): TreeNodeSchema {
 		return tryGetSchema(node) ?? fail(0xb37 /* Not a tree node */);

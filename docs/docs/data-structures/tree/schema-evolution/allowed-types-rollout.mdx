@@ -36,10 +36,10 @@ To add support for reading strings, we import the alpha APIs and use [`staged`](
 
 ```typescript
 // Schema B: number or string (string is staged)
-const schemaB = SchemaFactoryAlpha.optional([
+const schemaB = SchemaFactoryAlpha.optional(SchemaFactoryAlpha.types([
     SchemaFactoryAlpha.number,
     SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-]);
+]));
 ```
 
 ### Step 2: Upgrade the Schema to Deploy Reading Support

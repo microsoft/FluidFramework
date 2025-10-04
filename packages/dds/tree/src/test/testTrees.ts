@@ -381,7 +381,10 @@ export class HasUnknownOptionalFieldsV2 extends factory.objectRecursive(
 ) {}
 
 export class HasStagedAllowedTypes extends factory.objectAlpha("hasStagedAllowedTypes", {
-	x: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
+	x: SchemaFactoryAlpha.types([
+		SchemaFactoryAlpha.number,
+		SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+	]),
 }) {}
 
 export class HasStagedAllowedTypesAfterUpdate extends factory.objectAlpha(
@@ -391,28 +394,40 @@ export class HasStagedAllowedTypesAfterUpdate extends factory.objectAlpha(
 	},
 ) {}
 
-class MapWithStaged extends factory.mapAlpha("MapWithStaged", [
-	SchemaFactoryAlpha.number,
-	SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-]) {}
+class MapWithStaged extends factory.mapAlpha(
+	"MapWithStaged",
+	SchemaFactoryAlpha.types([
+		SchemaFactoryAlpha.number,
+		SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+	]),
+) {}
 
-class ArrayWithStaged extends factory.arrayAlpha("ArrayWithStaged", [
-	SchemaFactoryAlpha.number,
-	SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-]) {}
+class ArrayWithStaged extends factory.arrayAlpha(
+	"ArrayWithStaged",
+	SchemaFactoryAlpha.types([
+		SchemaFactoryAlpha.number,
+		SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+	]),
+) {}
 
 const multiStageCUpgrade = SchemaFactoryAlpha.staged(ArrayWithStaged);
 
 class NestedMultiStage extends factory.object("NestedMultiStage", {
-	a: SchemaFactoryAlpha.optional(SchemaFactoryAlpha.staged(SchemaFactoryAlpha.number)),
-	b: SchemaFactoryAlpha.required([
-		SchemaFactoryAlpha.staged({
-			type: () => MapWithStaged,
-			metadata: {},
-		}),
-		SchemaFactoryAlpha.null,
-	]),
-	c: SchemaFactoryAlpha.required([multiStageCUpgrade, SchemaFactoryAlpha.null]),
+	a: SchemaFactoryAlpha.optional(
+		SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(SchemaFactoryAlpha.number)]),
+	),
+	b: SchemaFactoryAlpha.required(
+		SchemaFactoryAlpha.types([
+			SchemaFactoryAlpha.staged({
+				type: () => MapWithStaged,
+				metadata: {},
+			}),
+			SchemaFactoryAlpha.null,
+		]),
+	),
+	c: SchemaFactoryAlpha.required(
+		SchemaFactoryAlpha.types([multiStageCUpgrade, SchemaFactoryAlpha.null]),
+	),
 }) {}
 
 // TODO: AB#45711: add recursive staged schema tests documents
@@ -497,7 +512,7 @@ export const testDocuments: readonly TestDocument[] = [
 	{
 		ambiguous: false,
 		name: "Staged in root",
-		schema: SchemaFactoryAlpha.required([
+		schema: SchemaFactoryAlpha.types([
 			SchemaFactoryAlpha.number,
 			SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
 		]),
@@ -510,7 +525,7 @@ export const testDocuments: readonly TestDocument[] = [
 	{
 		ambiguous: false,
 		name: "Staged node in root",
-		schema: SchemaFactoryAlpha.required([
+		schema: SchemaFactoryAlpha.types([
 			SchemaFactoryAlpha.number,
 			SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
 		]),
