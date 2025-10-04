@@ -707,7 +707,7 @@ export function getCodecTreeForSharedTreeFormat(
 ): CodecTree {
 	const children: CodecTree[] = [];
 	const childCodecs = getCodecVersions(version);
-	for (const name of Object.keys(childCodecs) as Array<keyof ExplicitCodecVersions>) {
+	for (const name of Object.keys(childCodecs) as (keyof ExplicitCodecVersions)[]) {
 		switch (name) {
 			case "editManager":
 				children.push(getCodecTreeForEditManagerFormat(childCodecs.editManager));

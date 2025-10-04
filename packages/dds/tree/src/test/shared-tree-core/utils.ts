@@ -13,7 +13,7 @@ import {
 	MockHandle,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { DependentFormatVersion, ICodecOptions } from "../../codec/index.js";
+import { DependentFormatVersion, type ICodecOptions } from "../../codec/index.js";
 import {
 	RevisionTagCodec,
 	tagChange,
@@ -77,10 +77,12 @@ import type {
 import { Breakable } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";
 import { TestChange } from "../testChange.js";
+// eslint-disable-next-line import/no-internal-modules
 import { dependenciesForChangeFormat } from "../../shared-tree/sharedTreeChangeCodecs.js";
 import {
 	changeFormatVersionForEditManager,
 	changeFormatVersionForMessage,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/sharedTree.js";
 
 const codecOptions: ICodecOptions = {

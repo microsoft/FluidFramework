@@ -24,6 +24,7 @@ export {
 	exportSimpleSchema,
 	type SharedTreeKernelView,
 	persistedToSimpleSchema,
+	getCodecTreeForSharedTreeFormat,
 } from "./sharedTree.js";
 
 export {

@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { getCodecTreeForSharedTreeFormat } from "../../shared-tree/sharedTree.js";
-import { SharedTreeFormatVersion } from "../../shared-tree/index.js";
+import {
+	SharedTreeFormatVersion,
+	getCodecTreeForSharedTreeFormat,
+} from "../../shared-tree/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots/index.js";
 import { jsonableCodecTree } from "../../codec/index.js";
 

@@ -274,7 +274,7 @@ export class UniqueDependentFormatVersion<TChildVersion extends FormatVersion>
 	implements DependentFormatVersion<FormatVersion, TChildVersion>
 {
 	public constructor(private readonly child: TChildVersion) {}
-	lookup(_parent: FormatVersion): TChildVersion {
+	public lookup(_parent: FormatVersion): TChildVersion {
 		return this.child;
 	}
 }
@@ -285,7 +285,7 @@ export class MappedDependentFormatVersion<
 > implements DependentFormatVersion<TParentVersion, TChildVersion>
 {
 	public constructor(private readonly map: ReadonlyMap<TParentVersion, TChildVersion>) {}
-	lookup(parent: TParentVersion): TChildVersion {
+	public lookup(parent: TParentVersion): TChildVersion {
 		return this.map.get(parent) ?? fail("Unknown parent version");
 	}
 }

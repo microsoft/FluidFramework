@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type CodecTree,
-	DependentFormatVersion,
+	type DependentFormatVersion,
 	type FormatVersion,
 	type ICodecFamily,
 	type ICodecOptions,
