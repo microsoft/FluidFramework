@@ -1118,6 +1118,10 @@ describe("serializedStateManager", () => {
 				);
 
 				await serializedStateManager.fetchSnapshot(undefined);
+				// the snapshot load is deferred, so need to wait for that to
+				// finish before we can track refresh
+				await serializedStateManager.refreshSnapshotP;
+
 				const lastProcessedOpSequenceNumber = 20;
 				let seq = 1;
 				while (seq <= lastProcessedOpSequenceNumber) {
@@ -1182,6 +1186,10 @@ describe("serializedStateManager", () => {
 				);
 
 				await serializedStateManager.fetchSnapshot(undefined);
+				// the snapshot load is deferred, so need to wait for that to
+				// finish before we can track refresh
+				await serializedStateManager.refreshSnapshotP;
+
 				const lastProcessedOpSequenceNumber = 20;
 				let seq = 1;
 				while (seq <= lastProcessedOpSequenceNumber) {
