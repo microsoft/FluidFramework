@@ -176,6 +176,30 @@ export function loadExistingContainer(loadExistingContainerProps: ILoadExistingC
 export function loadFrozenContainerFromPendingState(props: ILoadFrozenContainerFromPendingStateProps): Promise<IContainer>;
 
 // @beta @legacy
+export function loadSummarizerContainerAndMakeSummary(loadExistingContainerProps: ILoadExistingContainerProps): Promise<LoadSummarizerSummaryResult>;
+
+// @beta @legacy
+export type LoadSummarizerSummaryResult = {
+    readonly success: true;
+    readonly summaryResults: OnDemandSummaryResults;
+} | {
+    readonly success: false;
+    readonly error: Error;
+};
+
+// @beta @legacy
+export interface OnDemandSummaryResults {
+    readonly receivedSummaryAck: boolean;
+    readonly summaryInfo: {
+        readonly stage?: SummaryStage;
+        readonly summaryTree?: ISummaryTree;
+        readonly handle?: string;
+    };
+    readonly summaryOpBroadcasted: boolean;
+    readonly summarySubmitted: boolean;
+}
+
+// @beta @legacy
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
 
 // @beta @legacy
@@ -192,6 +216,9 @@ export function rehydrateDetachedContainer(rehydrateDetachedContainerProps: IReh
 
 // @beta @legacy
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
+
+// @beta @legacy
+export type SummaryStage = "base" | "generate" | "upload" | "submit" | "unknown";
 
 // @beta @legacy
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined;

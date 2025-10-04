@@ -10,12 +10,18 @@ export {
 	loadExistingContainer,
 	rehydrateDetachedContainer,
 	loadFrozenContainerFromPendingState,
+	loadSummarizerContainerAndMakeSummary,
 	type ICreateAndLoadContainerProps,
 	type ICreateDetachedContainerProps,
 	type ILoadExistingContainerProps,
 	type IRehydrateDetachedContainerProps,
 	type ILoadFrozenContainerFromPendingStateProps,
 } from "./createAndLoadContainerUtils.js";
+export type {
+	LoadSummarizerSummaryResult,
+	OnDemandSummaryResults,
+	SummaryStage,
+} from "./summarizerResultTypes.js";
 export {
 	type ICodeDetailsLoader,
 	type IFluidModuleWithDetails,
