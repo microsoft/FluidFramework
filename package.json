@@ -400,6 +400,19 @@
 		},
 		"patchedDependencies": {
 			"@microsoft/api-extractor@7.52.11": "patches/@microsoft__api-extractor@7.52.11.patch"
-		}
+		},
+		"onlyBuiltDependencies": [
+			"@azure/msal-node-extensions",
+			"@azure/msal-node-runtime",
+			"@biomejs/biome",
+			"@parcel/watcher",
+			"@vvago/vale",
+			"classic-level",
+			"core-js",
+			"keytar",
+			"msgpackr-extract",
+			"puppeteer",
+			"unrs-resolver"
+		]
 	}
 }
