@@ -4,7 +4,7 @@
  */
 
 import type { ErasedType, IFluidLoadable } from "@fluidframework/core-interfaces/internal";
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
 import type {
@@ -18,12 +18,15 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	type CodecTree,
 	type CodecWriteOptions,
+	DependentFormatVersion,
 	FluidClientVersion,
 	FormatValidatorNoOp,
 	type ICodecOptions,
 } from "../codec/index.js";
 import {
+	type DetachedFieldIndexFormatVersion,
 	type FieldKey,
 	type GraphCommit,
 	type IEditableForest,
@@ -39,6 +42,7 @@ import {
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
+	getCodecTreeForDetachedFieldIndexFormat,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
 } from "../core/index.js";
@@ -51,11 +55,16 @@ import {
 	buildChunkedForest,
 	buildForest,
 	defaultSchemaPolicy,
+	getCodecTreeForFieldBatchFormat,
+	getCodecTreeForForestFormat,
+	getCodecTreeForSchemaFormat,
 	jsonableTreeFromFieldCursor,
 	makeFieldBatchCodec,
 	makeMitigatedChangeFamily,
 	makeSchemaCodec,
 	makeTreeChunker,
+	type FieldBatchFormatVersion,
+	type ForestFormatVersion,
 	type TreeCompressionStrategyPrivate,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -63,7 +72,11 @@ import type { FormatV1 } from "../feature-libraries/schema-index/index.js";
 import {
 	type BranchId,
 	type ClonableSchemaAndPolicy,
+	type EditManagerFormatVersion,
 	type ExplicitCoreCodecVersions,
+	getCodecTreeForEditManagerFormatWithChange,
+	getCodecTreeForMessageFormatWithChange,
+	type MessageFormatVersion,
 	SharedTreeCore,
 } from "../shared-tree-core/index.js";
 import {
@@ -97,6 +110,10 @@ import {
 	type JsonCompatible,
 	throwIfBroken,
 } from "../util/index.js";
+import {
+	getCodecTreeForChangeFormat,
+	type SharedTreeChangeFormatVersion,
+} from "./sharedTreeChangeCodecs.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.
@@ -161,10 +178,10 @@ export interface ITreePrivate extends ITreeInternal {
  * TODO: Plumb these write versions into forest, schema, detached field index codec creation.
  */
 interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
-	forest: number;
+	forest: ForestFormatVersion;
 	schema: SchemaVersion;
-	detachedFieldIndex: number;
-	fieldBatch: number;
+	detachedFieldIndex: DetachedFieldIndexFormatVersion;
+	fieldBatch: FieldBatchFormatVersion;
 }
 
 const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersions>([
@@ -321,6 +338,8 @@ export class SharedTreeKernel
 			changeFamily,
 			options,
 			codecVersions,
+			changeFormatVersionForEditManager,
+			changeFormatVersionForMessage,
 			idCompressor,
 			schema,
 			defaultSchemaPolicy,
@@ -634,6 +653,90 @@ export const SharedTreeFormatVersion = {
  * Such an abstraction should probably be in the form of a Fluid-Framework wide compatibility enum.
  */
 export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
+
+/**
+ * Defines for each EditManagerFormatVersion the SharedTreeChangeFormatVersion to use.
+ * This is an arbitrary mapping that is injected in the EditManger codec.
+ * Once an entry is defined and used in production, it cannot be changed.
+ * This is because the format for SharedTree changes are not explicitly versioned.
+ */
+export const changeFormatVersionForEditManager: DependentFormatVersion<
+	EditManagerFormatVersion,
+	SharedTreeChangeFormatVersion
+> = DependentFormatVersion.fromPairs([
+	// [EditManagerFormatVersion, SharedTreeChangeFormatVersion]
+	[1, 1],
+	[2, 2],
+	[3, 3],
+	[4, 4],
+	[5, 4],
+]);
+
+/**
+ * Defines for each MessageFormatVersion the SharedTreeChangeFormatVersion to use.
+ * This is an arbitrary mapping that is injected in the message codec.
+ * Once an entry is defined and used in production, it cannot be changed.
+ * This is because the format for SharedTree changes are not explicitly versioned.
+ */
+export const changeFormatVersionForMessage: DependentFormatVersion<
+	MessageFormatVersion,
+	SharedTreeChangeFormatVersion
+> = DependentFormatVersion.fromPairs([
+	[undefined, 1],
+	[1, 1],
+	[2, 2],
+	[3, 3],
+	[4, 4],
+	[5, 4],
+]);
+
+function getCodecTreeForEditManagerFormat(version: EditManagerFormatVersion): CodecTree {
+	const change = changeFormatVersionForEditManager.lookup(version);
+	const changeCodecTree = getCodecTreeForChangeFormat(change);
+	return getCodecTreeForEditManagerFormatWithChange(version, changeCodecTree);
+}
+
+function getCodecTreeForMessageFormat(version: MessageFormatVersion): CodecTree {
+	const change = changeFormatVersionForMessage.lookup(version);
+	const changeCodecTree = getCodecTreeForChangeFormat(change);
+	return getCodecTreeForMessageFormatWithChange(version, changeCodecTree);
+}
+
+export function getCodecTreeForSharedTreeFormat(
+	version: SharedTreeFormatVersion[keyof SharedTreeFormatVersion],
+): CodecTree {
+	const children: CodecTree[] = [];
+	const childCodecs = getCodecVersions(version);
+	for (const name of Object.keys(childCodecs) as (keyof ExplicitCodecVersions)[]) {
+		switch (name) {
+			case "editManager":
+				children.push(getCodecTreeForEditManagerFormat(childCodecs.editManager));
+				break;
+			case "message":
+				children.push(getCodecTreeForMessageFormat(childCodecs.message));
+				break;
+			case "forest":
+				children.push(getCodecTreeForForestFormat(childCodecs.forest));
+				break;
+			case "schema":
+				children.push(getCodecTreeForSchemaFormat(childCodecs.schema));
+				break;
+			case "detachedFieldIndex":
+				children.push(getCodecTreeForDetachedFieldIndexFormat(childCodecs.detachedFieldIndex));
+				break;
+			case "fieldBatch":
+				children.push(getCodecTreeForFieldBatchFormat(childCodecs.fieldBatch));
+				break;
+			default:
+				unreachableCase(name);
+		}
+	}
+	return {
+		name: "SharedTree",
+		version,
+		children,
+	};
+}
 
 /**
  * Configuration options for SharedTree.

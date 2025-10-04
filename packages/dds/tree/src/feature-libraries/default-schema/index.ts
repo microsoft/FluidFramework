@@ -12,6 +12,8 @@ export {
 	type Forbidden,
 	fieldKinds,
 	fieldKindConfigurations,
+	getCodecTreeForModularChangeFormat,
+	type ModularChangeFormatVersion,
 } from "./defaultFieldKinds.js";
 
 export {

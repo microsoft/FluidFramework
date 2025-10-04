@@ -39,7 +39,12 @@ export {
 	NoOpChangeEnricher,
 } from "./changeEnricher.js";
 
-export { makeEditManagerCodec } from "./editManagerCodecs.js";
+export {
+	makeEditManagerCodec,
+	getCodecTreeForEditManagerFormatWithChange,
+	type EditManagerFormatVersion,
+	editManagerFormatVersions,
+} from "./editManagerCodecs.js";
 export { EditManagerSummarizer } from "./editManagerSummarizer.js";
 export {
 	EditManager,
@@ -54,3 +59,9 @@ export type {
 	SummarySessionBranch,
 	EncodedCommit,
 } from "./editManagerFormatCommons.js";
+
+export {
+	type MessageFormatVersion,
+	messageFormatVersions,
+	getCodecTreeForMessageFormatWithChange,
+} from "./messageCodecs.js";

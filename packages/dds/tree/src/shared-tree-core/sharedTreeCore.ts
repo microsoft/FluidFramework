@@ -25,7 +25,7 @@ import type {
 } from "@fluidframework/shared-object-base/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
+import type { DependentFormatVersion, ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
@@ -51,10 +51,14 @@ import { BranchCommitEnricher } from "./branchCommitEnricher.js";
 import { type ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./changeEnricher.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
-import { makeEditManagerCodec } from "./editManagerCodecs.js";
+import { makeEditManagerCodec, type EditManagerFormatVersion } from "./editManagerCodecs.js";
 import type { SeqNumber } from "./editManagerFormatCommons.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
-import { type MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
+import {
+	type MessageEncodingContext,
+	type MessageFormatVersion,
+	makeMessageCodec,
+} from "./messageCodecs.js";
 import type { DecodedMessage } from "./messageTypes.js";
 import type { ResubmitMachine } from "./resubmitMachine.js";
 
@@ -62,8 +66,8 @@ import type { ResubmitMachine } from "./resubmitMachine.js";
 const summarizablesTreeKey = "indexes";
 
 export interface ExplicitCoreCodecVersions {
-	editManager: number;
-	message: number;
+	editManager: EditManagerFormatVersion;
+	message: MessageFormatVersion;
 }
 
 export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
@@ -126,6 +130,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		protected readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		options: ICodecOptions,
 		formatOptions: ExplicitCoreCodecVersions,
+		changeFormatVersionForEditManager: DependentFormatVersion<EditManagerFormatVersion>,
+		changeFormatVersionForMessage: DependentFormatVersion<MessageFormatVersion>,
 		protected readonly idCompressor: IIdCompressor,
 		schema: TreeStoredSchemaRepository,
 		schemaPolicy: SchemaPolicy,
@@ -163,6 +169,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const editManagerCodec = makeEditManagerCodec(
 			this.editManager.changeFamily.codecs,
+			changeFormatVersionForEditManager,
 			revisionTagCodec,
 			options,
 			formatOptions.editManager,
@@ -183,6 +190,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 		this.messageCodec = makeMessageCodec(
 			changeFamily.codecs,
+			changeFormatVersionForMessage,
 			new RevisionTagCodec(idCompressor),
 			options,
 			formatOptions.message,

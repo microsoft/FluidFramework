@@ -6,6 +6,7 @@
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
+	type CodecTree,
 	type CodecWriteOptions,
 	FluidClientVersion,
 	type ICodecFamily,
@@ -41,4 +42,11 @@ export function makeDetachedFieldIndexCodecFamily(
 		[version1, makeDetachedNodeToFieldCodecV1(revisionTagCodec, options, idCompressor)],
 		[version2, makeDetachedNodeToFieldCodecV2(revisionTagCodec, options, idCompressor)],
 	]);
+}
+
+export type DetachedFieldIndexFormatVersion = 1 | 2;
+export function getCodecTreeForDetachedFieldIndexFormat(
+	version: DetachedFieldIndexFormatVersion,
+): CodecTree {
+	return { name: "DetachedFieldIndex", version };
 }

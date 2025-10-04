@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import {
+	type CodecTree,
+	type DependentFormatVersion,
+	type FormatVersion,
 	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
@@ -30,6 +34,7 @@ export interface MessageEncodingContext {
 
 export function makeMessageCodec<TChangeset>(
 	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>,
+	dependentChangeFormatVersion: DependentFormatVersion<MessageFormatVersion>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -37,14 +42,19 @@ export function makeMessageCodec<TChangeset>(
 		ChangeEncodingContext
 	>,
 	options: ICodecOptions,
-	writeVersion: number,
+	writeVersion: MessageFormatVersion = 1,
 ): IJsonCodec<
 	DecodedMessage<TChangeset>,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
 	MessageEncodingContext
 > {
-	const family = makeMessageCodecs(changeCodecs, revisionTagCodec, options);
+	const family = makeMessageCodecs(
+		changeCodecs,
+		dependentChangeFormatVersion,
+		revisionTagCodec,
+		options,
+	);
 	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
 }
 
@@ -53,6 +63,7 @@ export function makeMessageCodec<TChangeset>(
  */
 export function makeMessageCodecs<TChangeset>(
 	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>,
+	dependentChangeFormatVersion: DependentFormatVersion<MessageFormatVersion>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -61,28 +72,57 @@ export function makeMessageCodecs<TChangeset>(
 	>,
 	options: ICodecOptions,
 ): ICodecFamily<DecodedMessage<TChangeset>, MessageEncodingContext> {
-	const v1Codec = makeV1ToV4CodecWithVersion(
-		changeCodecs.resolve(1).json,
-		revisionTagCodec,
-		options,
-		1,
-	);
-	return makeCodecFamily([
-		// Back-compat: messages weren't always written with an explicit version field.
-		[undefined, v1Codec],
-		[1, v1Codec],
-		[
-			2,
-			makeV1ToV4CodecWithVersion(changeCodecs.resolve(2).json, revisionTagCodec, options, 2),
-		],
-		[
-			3,
-			makeV1ToV4CodecWithVersion(changeCodecs.resolve(3).json, revisionTagCodec, options, 3),
-		],
-		[
-			4,
-			makeV1ToV4CodecWithVersion(changeCodecs.resolve(4).json, revisionTagCodec, options, 4),
-		],
-		[5, makeV5CodecWithVersion(changeCodecs.resolve(4).json, revisionTagCodec, options, 5)],
-	]);
+	const registry: [
+		FormatVersion,
+		IJsonCodec<
+			DecodedMessage<TChangeset>,
+			JsonCompatibleReadOnly,
+			JsonCompatibleReadOnly,
+			MessageEncodingContext
+		>,
+	][] = Array.from(messageFormatVersions).map((version) => {
+		const changeCodec = changeCodecs.resolve(
+			dependentChangeFormatVersion.lookup(version),
+		).json;
+		switch (version) {
+			case undefined:
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+				return [
+					version,
+					makeV1ToV4CodecWithVersion(changeCodec, revisionTagCodec, options, version ?? 1),
+				];
+			case 5:
+				return [
+					version,
+					makeV5CodecWithVersion(changeCodec, revisionTagCodec, options, version),
+				];
+			default:
+				unreachableCase(version);
+		}
+	});
+	return makeCodecFamily(registry);
+}
+
+export type MessageFormatVersion = undefined | 1 | 2 | 3 | 4 | 5;
+export const messageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set([
+	undefined,
+	1,
+	2,
+	3,
+	4,
+	5,
+]);
+
+export function getCodecTreeForMessageFormatWithChange(
+	version: MessageFormatVersion,
+	changeFormat: CodecTree,
+): CodecTree {
+	return {
+		name: "Message",
+		version,
+		children: [changeFormat],
+	};
 }

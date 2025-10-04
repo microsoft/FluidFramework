@@ -15,6 +15,7 @@ import {
 } from "./formatGeneric.js";
 
 export const version = 1;
+export type FieldBatchFormatVersion = 1;
 
 // Compatible versions used for format/version validation.
 // TODO: A proper version update policy will need to be documented.

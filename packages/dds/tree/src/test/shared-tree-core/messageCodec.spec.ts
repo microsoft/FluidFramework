@@ -28,6 +28,7 @@ import {
 	testRevisionTagCodec,
 	validateUsageError,
 } from "../utils.js";
+import { DependentFormatVersion } from "../../codec/index.js";
 
 const commit1 = {
 	revision: mintRevisionTag(),
@@ -140,9 +141,14 @@ const testCases: EncodingTestData<
 };
 
 describe("message codec", () => {
-	const family = makeMessageCodecs(TestChange.codecs, testRevisionTagCodec, {
-		jsonValidator: FormatValidatorBasic,
-	});
+	const family = makeMessageCodecs(
+		TestChange.codecs,
+		DependentFormatVersion.fromUnique(1),
+		testRevisionTagCodec,
+		{
+			jsonValidator: FormatValidatorBasic,
+		},
+	);
 
 	makeEncodingTestSuite(family, testCases);
 
@@ -150,6 +156,7 @@ describe("message codec", () => {
 		const version = 1;
 		const codec = makeMessageCodec(
 			TestChange.codecs,
+			DependentFormatVersion.fromUnique(1),
 			testRevisionTagCodec,
 			{
 				jsonValidator: FormatValidatorBasic,

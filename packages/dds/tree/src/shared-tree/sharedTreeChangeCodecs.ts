@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "@fluidframework/core-utils/internal";
 import {
+	type CodecTree,
 	DiscriminatedUnionDispatcher,
+	type FormatVersion,
 	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
@@ -13,9 +16,13 @@ import {
 } from "../codec/index.js";
 import type { ChangeEncodingContext, TreeStoredSchema } from "../core/index.js";
 import {
+	type ModularChangeFormatVersion,
 	type ModularChangeset,
 	type SchemaChange,
+	type SchemaChangeFormatVersion,
 	defaultSchemaPolicy,
+	getCodecTreeForModularChangeFormat,
+	getCodecTreeForSchemaChangeFormat,
 	makeSchemaChangeCodecs,
 } from "../feature-libraries/index.js";
 import type { JsonCompatibleReadOnly, Mutable } from "../util/index.js";
@@ -31,40 +38,63 @@ export function makeSharedTreeChangeCodecFamily(
 	options: ICodecOptions,
 ): ICodecFamily<SharedTreeChange, ChangeEncodingContext> {
 	const schemaChangeCodecs = makeSchemaChangeCodecs(options);
-	return makeCodecFamily([
-		[
-			1,
+	const versions: [
+		FormatVersion,
+		IJsonCodec<
+			SharedTreeChange,
+			EncodedSharedTreeChange,
+			EncodedSharedTreeChange,
+			ChangeEncodingContext
+		>,
+	][] = Array.from(dependenciesForChangeFormat.entries()).map(
+		([format, { modularChange, schemaChange }]) => [
+			format,
 			makeSharedTreeChangeCodec(
-				modularChangeCodecFamily.resolve(1).json,
-				schemaChangeCodecs.resolve(1).json,
+				modularChangeCodecFamily.resolve(modularChange).json,
+				schemaChangeCodecs.resolve(schemaChange).json,
 				options,
 			),
 		],
-		[
-			2,
-			makeSharedTreeChangeCodec(
-				modularChangeCodecFamily.resolve(2).json,
-				schemaChangeCodecs.resolve(1).json,
-				options,
-			),
+	);
+	return makeCodecFamily(versions);
+}
+
+interface ChangeFormatDependencies {
+	readonly modularChange: ModularChangeFormatVersion;
+	readonly schemaChange: SchemaChangeFormatVersion;
+}
+
+export type SharedTreeChangeFormatVersion = 1 | 2 | 3 | 4;
+
+/**
+ * Defines for each SharedTree change format the corresponding dependent formats to use.
+ * This is an arbitrary mapping that is injected in the SharedTree change codec.
+ * Once an entry is defined and used in production, it cannot be changed.
+ * This is because the format for the dependent formats are not explicitly versioned.
+ */
+export const dependenciesForChangeFormat: Map<
+	SharedTreeChangeFormatVersion,
+	ChangeFormatDependencies
+> = new Map([
+	[1, { modularChange: 1, schemaChange: 1 }],
+	[2, { modularChange: 2, schemaChange: 1 }],
+	[3, { modularChange: 3, schemaChange: 1 }],
+	[4, { modularChange: 4, schemaChange: 1 }],
+]);
+
+export function getCodecTreeForChangeFormat(
+	version: SharedTreeChangeFormatVersion,
+): CodecTree {
+	const { modularChange, schemaChange } =
+		dependenciesForChangeFormat.get(version) ?? fail("Unknown change format");
+	return {
+		name: "SharedTreeChange",
+		version,
+		children: [
+			getCodecTreeForModularChangeFormat(modularChange),
+			getCodecTreeForSchemaChangeFormat(schemaChange),
 		],
-		[
-			3,
-			makeSharedTreeChangeCodec(
-				modularChangeCodecFamily.resolve(3).json,
-				schemaChangeCodecs.resolve(1).json,
-				options,
-			),
-		],
-		[
-			4,
-			makeSharedTreeChangeCodec(
-				modularChangeCodecFamily.resolve(4).json,
-				schemaChangeCodecs.resolve(1).json,
-				options,
-			),
-		],
-	]);
+	};
 }
 
 function makeSharedTreeChangeCodec(

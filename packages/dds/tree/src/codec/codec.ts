@@ -256,6 +256,52 @@ export interface ICodecFamily<TDecoded, TContext = void> {
 export type FormatVersion = number | undefined;
 
 /**
+ * A format version which is dependent on some parent format version.
+ */
+export interface DependentFormatVersion<
+	TParentVersion extends FormatVersion = FormatVersion,
+	TChildVersion extends FormatVersion = FormatVersion,
+> {
+	/**
+	 * Looks up the child format version for a given parent format version.
+	 * @param parent - The parent format version.
+	 * @returns The corresponding child format version.
+	 */
+	lookup(parent: TParentVersion): TChildVersion;
+}
+
+export class UniqueDependentFormatVersion<TChildVersion extends FormatVersion>
+	implements DependentFormatVersion<FormatVersion, TChildVersion>
+{
+	public constructor(private readonly child: TChildVersion) {}
+	public lookup(_parent: FormatVersion): TChildVersion {
+		return this.child;
+	}
+}
+
+export class MappedDependentFormatVersion<
+	TParentVersion extends FormatVersion = FormatVersion,
+	TChildVersion extends FormatVersion = FormatVersion,
+> implements DependentFormatVersion<TParentVersion, TChildVersion>
+{
+	public constructor(private readonly map: ReadonlyMap<TParentVersion, TChildVersion>) {}
+	public lookup(parent: TParentVersion): TChildVersion {
+		return this.map.get(parent) ?? fail("Unknown parent version");
+	}
+}
+
+export const DependentFormatVersion = {
+	fromUnique: <TChildVersion extends FormatVersion>(child: TChildVersion) =>
+		new UniqueDependentFormatVersion(child),
+	fromMap: <TParentVersion extends FormatVersion, TChildVersion extends FormatVersion>(
+		map: ReadonlyMap<TParentVersion, TChildVersion>,
+	) => new MappedDependentFormatVersion(map),
+	fromPairs: <TParentVersion extends FormatVersion, TChildVersion extends FormatVersion>(
+		pairs: Iterable<[TParentVersion, TChildVersion]>,
+	) => new MappedDependentFormatVersion(new Map(pairs)),
+};
+
+/**
  * Creates a codec family from a registry of codecs.
  * Any codec that is not a {@link IMultiFormatCodec} will be wrapped with a default binary encoding.
  */
@@ -487,3 +533,17 @@ export enum FluidClientVersion {
  * TODO: Consider using packageVersion.ts to keep this current.
  */
 export const currentVersion: FluidClientVersion = FluidClientVersion.v2_0;
+
+export interface CodecTree {
+	readonly name: string;
+	readonly version: FormatVersion;
+	readonly children?: readonly CodecTree[];
+}
+
+export function jsonableCodecTree(tree: CodecTree): JsonCompatibleReadOnly {
+	return {
+		name: tree.name,
+		version: tree.version ?? "null",
+		children: tree.children?.map(jsonableCodecTree),
+	};
+}

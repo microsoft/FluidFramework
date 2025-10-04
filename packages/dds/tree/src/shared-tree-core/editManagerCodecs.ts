@@ -4,8 +4,12 @@
  */
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
+	type CodecTree,
+	type DependentFormatVersion,
+	type FormatVersion,
 	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
@@ -31,6 +35,7 @@ export interface EditManagerEncodingContext {
 
 export function makeEditManagerCodec<TChangeset>(
 	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>,
+	dependentChangeFormatVersion: DependentFormatVersion<EditManagerFormatVersion>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -45,12 +50,18 @@ export function makeEditManagerCodec<TChangeset>(
 	JsonCompatibleReadOnly,
 	EditManagerEncodingContext
 > {
-	const family = makeEditManagerCodecs(changeCodecs, revisionTagCodec, options);
+	const family = makeEditManagerCodecs(
+		changeCodecs,
+		dependentChangeFormatVersion,
+		revisionTagCodec,
+		options,
+	);
 	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
 }
 
 export function makeEditManagerCodecs<TChangeset>(
 	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>,
+	dependentChangeFormatVersion: DependentFormatVersion<EditManagerFormatVersion>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -59,11 +70,49 @@ export function makeEditManagerCodecs<TChangeset>(
 	>,
 	options: ICodecOptions,
 ): ICodecFamily<SummaryData<TChangeset>, EditManagerEncodingContext> {
-	return makeCodecFamily([
-		[1, makeV1CodecWithVersion(changeCodecs.resolve(1), revisionTagCodec, options, 1)],
-		[2, makeV1CodecWithVersion(changeCodecs.resolve(2), revisionTagCodec, options, 2)],
-		[3, makeV1CodecWithVersion(changeCodecs.resolve(3), revisionTagCodec, options, 3)],
-		[4, makeV1CodecWithVersion(changeCodecs.resolve(4), revisionTagCodec, options, 4)],
-		[5, makeV5CodecWithVersion(changeCodecs.resolve(4), revisionTagCodec, options, 5)],
-	]);
+	const registry: [
+		FormatVersion,
+		IJsonCodec<
+			SummaryData<TChangeset>,
+			JsonCompatibleReadOnly,
+			JsonCompatibleReadOnly,
+			EditManagerEncodingContext
+		>,
+	][] = Array.from(editManagerFormatVersions, (version) => {
+		const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
+		switch (version) {
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+				return [
+					version,
+					makeV1CodecWithVersion(changeCodec, revisionTagCodec, options, version),
+				];
+			case 5:
+				return [
+					version,
+					makeV5CodecWithVersion(changeCodec, revisionTagCodec, options, version),
+				];
+			default:
+				unreachableCase(version);
+		}
+	});
+	return makeCodecFamily(registry);
+}
+
+export type EditManagerFormatVersion = 1 | 2 | 3 | 4 | 5;
+export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set([
+	1, 2, 3, 4, 5,
+]);
+
+export function getCodecTreeForEditManagerFormatWithChange(
+	version: EditManagerFormatVersion,
+	changeFormat: CodecTree,
+): CodecTree {
+	return {
+		name: "EditManager",
+		version,
+		children: [changeFormat],
+	};
 }
