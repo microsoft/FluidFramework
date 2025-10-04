@@ -60,3 +60,8 @@ export {
 } from "./independentView.js";
 
 export type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+
+export {
+	getCodecTreeForChangeFormat,
+	type SharedTreeChangeFormatVersion,
+} from "./sharedTreeChangeCodecs.js";

@@ -13,7 +13,7 @@ import {
 	MockHandle,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import type { ICodecOptions } from "../../codec/index.js";
+import { DependentFormatVersion, ICodecOptions } from "../../codec/index.js";
 import {
 	RevisionTagCodec,
 	tagChange,
@@ -26,6 +26,8 @@ import {
 	DefaultChangeFamily,
 	type DefaultChangeset,
 	type DefaultEditBuilder,
+	type FieldBatchFormatVersion,
+	type ModularChangeFormatVersion,
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
 	fieldKindConfigurations,
@@ -41,6 +43,11 @@ import {
 	type Summarizable,
 	type ChangeEnricherMutableCheckout,
 	NoOpChangeEnricher,
+	type ExplicitCoreCodecVersions,
+	type EditManagerFormatVersion,
+	editManagerFormatVersions,
+	type MessageFormatVersion,
+	messageFormatVersions,
 } from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
 import { strict as assert, fail } from "node:assert";
@@ -70,11 +77,20 @@ import type {
 import { Breakable } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";
 import { TestChange } from "../testChange.js";
+import { dependenciesForChangeFormat } from "../../shared-tree/sharedTreeChangeCodecs.js";
+import {
+	changeFormatVersionForEditManager,
+	changeFormatVersionForMessage,
+} from "../../shared-tree/sharedTree.js";
 
 const codecOptions: ICodecOptions = {
 	jsonValidator: FormatValidatorBasic,
 };
-const formatVersions = { editManager: 1, message: 1, fieldBatch: 1 };
+const formatVersions: ExplicitCoreCodecVersions & { fieldBatch: FieldBatchFormatVersion } = {
+	editManager: 1,
+	message: 1,
+	fieldBatch: 1,
+};
 
 class MockSharedObjectHandle extends MockHandle<ISharedObject> implements ISharedObjectHandle {
 	public bind(): never {
@@ -154,6 +170,36 @@ export function makeTestDefaultChangeFamily(options?: {
 	);
 }
 
+/**
+ * Use the same codecs as SharedTree but without the SharedTreeFamily wrapper.
+ * This an arbitrary choice that could be revisited.
+ */
+const modularChangeFormatVersionForEditManager: DependentFormatVersion<
+	EditManagerFormatVersion,
+	ModularChangeFormatVersion
+> = DependentFormatVersion.fromPairs(
+	Array.from(editManagerFormatVersions, (e) => [
+		e,
+		dependenciesForChangeFormat.get(changeFormatVersionForEditManager.lookup(e))
+			?.modularChange ?? fail("Unknown change format"),
+	]),
+);
+
+/**
+ * Use the same codecs as SharedTree but without the SharedTreeFamily wrapper.
+ * This an arbitrary choice that could be revisited.
+ */
+const modularChangeFormatVersionForMessage: DependentFormatVersion<
+	MessageFormatVersion,
+	ModularChangeFormatVersion
+> = DependentFormatVersion.fromPairs(
+	Array.from(messageFormatVersions, (m) => [
+		m,
+		dependenciesForChangeFormat.get(changeFormatVersionForMessage.lookup(m))?.modularChange ??
+			fail("Unknown change format"),
+	]),
+);
+
 function createTreeInner(
 	sharedObject: IChannelView & IFluidLoadable,
 	serializer: IFluidSerializer,
@@ -179,6 +225,8 @@ function createTreeInner(
 			changeFamily,
 			codecOptions,
 			formatVersions,
+			modularChangeFormatVersionForEditManager,
+			modularChangeFormatVersionForMessage,
 			idCompressor,
 			schema,
 			defaultSchemaPolicy,
