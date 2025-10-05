@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/changelog-generator-wrapper",
-	"version": "2.62.0",
+	"version": "2.62.1",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -42,8 +42,6 @@
 		"rimraf": "^4.4.0"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }
