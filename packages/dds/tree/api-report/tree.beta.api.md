@@ -44,6 +44,11 @@ export interface CommitMetadata {
 }
 
 // @beta
+export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
+    [key: string]: ConciseTree<THandle>;
+};
+
+// @beta
 export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
 
 // @public @sealed @system
@@ -217,6 +222,13 @@ export interface ITreeConfigurationOptions {
 // @public
 export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeConfigurationOptions {
     readonly schema: TSchema;
+}
+
+// @beta @input
+export enum KeyEncodingOptions {
+    allStoredKeys = "allStoredKeys",
+    knownStoredKeys = "knownStoredKeys",
+    usePropertyKeys = "usePropertyKeys"
 }
 
 // @public
@@ -554,6 +566,9 @@ export const TreeArrayNode: {
 // @beta @sealed @system
 export interface TreeBeta {
     clone<const TSchema extends ImplicitFieldSchema>(node: TreeFieldFromImplicitField<TSchema>): TreeFieldFromImplicitField<TSchema>;
+    exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
+    exportConcise(node: TreeNode | TreeLeafValue | undefined, options?: TreeEncodingOptions): ConciseTree | undefined;
+    importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: ConciseTree | undefined): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>): () => void;
 }
 
@@ -569,6 +584,11 @@ export interface TreeChangeEvents {
 // @beta @sealed
 export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends TreeChangeEvents {
     nodeChanged: (data: NodeChangedData<TNode> & (TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record> ? Required<Pick<NodeChangedData<TNode>, "changedProperties">> : unknown)) => void;
+}
+
+// @beta @input
+export interface TreeEncodingOptions<TKeyOptions = KeyEncodingOptions> {
+    readonly keys?: TKeyOptions;
 }
 
 // @public
@@ -713,6 +733,12 @@ export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) e
 
 // @beta @system
 export type UnionToTuple<Union, A extends unknown[] = [], First = PopUnion<Union>> = IsUnion<Union> extends true ? UnionToTuple<Exclude<Union, First>, [First, ...A]> : [Union, ...A];
+
+// @beta
+export const UnsafeUnknownSchema: unique symbol;
+
+// @beta
+export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
 
 // @public
 export type ValidateRecursiveSchema<T extends ValidateRecursiveSchemaTemplate<T>> = true;

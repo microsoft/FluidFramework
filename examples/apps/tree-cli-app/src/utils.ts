@@ -61,7 +61,7 @@ export function loadDocument(source: string | undefined): List {
 
 	switch (parts.at(-2)) {
 		case "concise": {
-			return TreeAlpha.importConcise(List, fileData as ConciseTree);
+			return TreeBeta.importConcise(List, fileData as ConciseTree);
 		}
 		case "verbose": {
 			return TreeAlpha.importVerbose(List, fileData as VerboseTree);
@@ -140,13 +140,13 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 
 	switch (parts.at(-2)) {
 		case "concise": {
-			return TreeAlpha.exportConcise(tree) as JsonCompatible;
+			return TreeBeta.exportConcise(tree) as JsonCompatible;
 		}
 		case "verbose": {
 			return TreeAlpha.exportVerbose(tree) as JsonCompatible;
 		}
 		case "concise-stored": {
-			return TreeAlpha.exportConcise(tree, {
+			return TreeBeta.exportConcise(tree, {
 				keys: KeyEncodingOptions.knownStoredKeys,
 			}) as JsonCompatible;
 		}
