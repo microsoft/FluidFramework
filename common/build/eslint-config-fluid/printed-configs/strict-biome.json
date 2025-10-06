@@ -22,7 +22,7 @@
     },
     "plugins": [
         "eslint-comments",
-        "import",
+        "import-x",
         "@fluid-internal/fluid",
         "unused-imports",
         "promise",
@@ -754,6 +754,9 @@
         "@typescript-eslint/no-array-constructor": [
             "off"
         ],
+        "@typescript-eslint/no-array-delete": [
+            "error"
+        ],
         "@typescript-eslint/no-base-to-string": [
             "error"
         ],
@@ -929,6 +932,9 @@
         "@typescript-eslint/no-unsafe-return": [
             "error"
         ],
+        "@typescript-eslint/no-unsafe-unary-minus": [
+            "error"
+        ],
         "@typescript-eslint/no-unused-expressions": [
             "error"
         ],
@@ -959,7 +965,13 @@
         "@typescript-eslint/object-curly-spacing": [
             "off"
         ],
+        "@typescript-eslint/only-throw-error": [
+            "error"
+        ],
         "@typescript-eslint/prefer-as-const": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-find": [
             "error"
         ],
         "@typescript-eslint/prefer-for-of": [
@@ -983,7 +995,13 @@
         "@typescript-eslint/prefer-optional-chain": [
             "off"
         ],
+        "@typescript-eslint/prefer-promise-reject-errors": [
+            "error"
+        ],
         "@typescript-eslint/prefer-readonly": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-regexp-exec": [
             "error"
         ],
         "@typescript-eslint/prefer-string-starts-ends-with": [
@@ -1233,16 +1251,31 @@
         "import-access/eslint-plugin-import-access": [
             "off"
         ],
-        "import/default": [
+        "import-x/default": [
             2
         ],
-        "import/export": [
+        "import-x/export": [
             2
         ],
-        "import/named": [
+        "import-x/named": [
             "off"
         ],
-        "import/namespace": [
+        "import-x/namespace": [
+            2
+        ],
+        "import-x/no-duplicates": [
+            1
+        ],
+        "import-x/no-named-as-default": [
+            1
+        ],
+        "import-x/no-named-as-default-member": [
+            1
+        ],
+        "import-x/no-rename-default": [
+            1
+        ],
+        "import-x/no-unresolved": [
             2
         ],
         "import/no-default-export": [
@@ -1250,9 +1283,6 @@
         ],
         "import/no-deprecated": [
             "error"
-        ],
-        "import/no-duplicates": [
-            1
         ],
         "import/no-extraneous-dependencies": [
             "error"
@@ -1272,12 +1302,6 @@
                 ]
             }
         ],
-        "import/no-named-as-default": [
-            1
-        ],
-        "import/no-named-as-default-member": [
-            1
-        ],
         "import/no-nodejs-modules": [
             "error"
         ],
@@ -1285,10 +1309,9 @@
             "error"
         ],
         "import/no-unresolved": [
-            2,
+            "error",
             {
-                "caseSensitive": true,
-                "caseSensitiveStrict": false
+                "caseSensitive": true
             }
         ],
         "import/no-unused-modules": [
@@ -1300,11 +1323,8 @@
                 "newlines-between": "always",
                 "alphabetize": {
                     "order": "asc",
-                    "caseInsensitive": false,
-                    "orderImportKind": "ignore"
-                },
-                "distinctGroup": true,
-                "warnOnUnassignedImports": false
+                    "caseInsensitive": false
+                }
             }
         ],
         "indent": [
@@ -1577,6 +1597,9 @@
         "no-const-assign": [
             "off"
         ],
+        "no-constant-binary-expression": [
+            "error"
+        ],
         "no-constant-condition": [
             "off"
         ],
@@ -1621,6 +1644,9 @@
         ],
         "no-empty-pattern": [
             "off"
+        ],
+        "no-empty-static-block": [
+            "error"
         ],
         "no-eval": [
             "off"
@@ -2158,6 +2184,9 @@
             "error"
         ],
         "unicorn/consistent-destructuring": [
+            "off"
+        ],
+        "unicorn/consistent-empty-array-spread": [
             "error"
         ],
         "unicorn/consistent-function-scoping": [
@@ -2199,6 +2228,9 @@
         "unicorn/no-abusive-eslint-disable": [
             "error"
         ],
+        "unicorn/no-anonymous-default-export": [
+            "error"
+        ],
         "unicorn/no-array-callback-reference": [
             "error"
         ],
@@ -2215,6 +2247,9 @@
             "error"
         ],
         "unicorn/no-await-expression-member": [
+            "error"
+        ],
+        "unicorn/no-await-in-promise-methods": [
             "error"
         ],
         "unicorn/no-console-spaces": [
@@ -2235,16 +2270,28 @@
         "unicorn/no-instanceof-array": [
             "off"
         ],
+        "unicorn/no-invalid-fetch-options": [
+            "error"
+        ],
         "unicorn/no-invalid-remove-event-listener": [
             "error"
         ],
         "unicorn/no-keyword-prefix": [
             "off"
         ],
+        "unicorn/no-length-as-slice-end": [
+            "error"
+        ],
         "unicorn/no-lonely-if": [
             "error"
         ],
+        "unicorn/no-magic-array-flat-depth": [
+            "error"
+        ],
         "unicorn/no-negated-condition": [
+            "error"
+        ],
+        "unicorn/no-negation-in-equality-check": [
             "error"
         ],
         "unicorn/no-nested-ternary": [
@@ -2265,6 +2312,9 @@
         "unicorn/no-process-exit": [
             "error"
         ],
+        "unicorn/no-single-promise-in-promise-methods": [
+            "error"
+        ],
         "unicorn/no-static-only-class": [
             "off"
         ],
@@ -2278,6 +2328,9 @@
             "off"
         ],
         "unicorn/no-unnecessary-await": [
+            "error"
+        ],
+        "unicorn/no-unnecessary-polyfills": [
             "error"
         ],
         "unicorn/no-unreadable-array-destructuring": [
@@ -2433,6 +2486,9 @@
         "unicorn/prefer-spread": [
             "error"
         ],
+        "unicorn/prefer-string-raw": [
+            "error"
+        ],
         "unicorn/prefer-string-replace-all": [
             "off"
         ],
@@ -2443,6 +2499,9 @@
             "error"
         ],
         "unicorn/prefer-string-trim-start-end": [
+            "error"
+        ],
+        "unicorn/prefer-structured-clone": [
             "error"
         ],
         "unicorn/prefer-switch": [
@@ -2630,24 +2689,43 @@
         ]
     },
     "settings": {
+        "import-x/extensions": [
+            ".ts",
+            ".tsx",
+            ".cts",
+            ".mts",
+            ".js",
+            ".jsx",
+            ".cjs",
+            ".mjs"
+        ],
+        "import-x/external-module-folders": [
+            "node_modules",
+            "node_modules/@types"
+        ],
+        "import-x/parsers": {
+            "@typescript-eslint/parser": [
+                ".ts",
+                ".tsx",
+                ".cts",
+                ".mts"
+            ]
+        },
+        "import-x/resolver": {
+            "typescript": true
+        },
         "import/extensions": [
             ".ts",
             ".tsx",
             ".d.ts",
             ".js",
-            ".jsx",
             ".jsx"
-        ],
-        "import/external-module-folders": [
-            "node_modules",
-            "node_modules/@types"
         ],
         "import/parsers": {
             "@typescript-eslint/parser": [
                 ".ts",
                 ".tsx",
-                ".d.ts",
-                ".tsx"
+                ".d.ts"
             ]
         },
         "import/resolver": {
@@ -2676,9 +2754,8 @@
             "node": {
                 "extensions": [
                     ".ts",
-                    ".cts",
-                    ".mts",
                     ".tsx",
+                    ".d.ts",
                     ".js",
                     ".jsx"
                 ]

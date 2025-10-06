@@ -6,23 +6,26 @@
 const assert = require("assert");
 const path = require("path");
 const { ESLint } = require("eslint");
+const plugin = require("../../../index.js");
 
 describe("Do not allow release tags on members", function () {
 	function createESLintInstance() {
 		const eslintConfig = {
 			rules: {
-				"no-member-release-tags": ["error"],
+				"@fluid-internal/fluid/no-member-release-tags": ["error"],
 			},
 			parser: "@typescript-eslint/parser",
 			parserOptions: {
 				project: path.join(__dirname, "../example/tsconfig.json"),
 			},
+			plugins: {
+				"@fluid-internal/fluid": plugin,
+			},
 		};
 
 		return new ESLint({
-			useEslintrc: false,
+			overrideConfigFile: true,
 			overrideConfig: eslintConfig,
-			rulePaths: [path.join(__dirname, "../../rules")],
 		});
 	}
 

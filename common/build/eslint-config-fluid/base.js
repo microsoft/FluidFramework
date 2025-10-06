@@ -19,9 +19,9 @@ module.exports = {
 		"plugin:@typescript-eslint/eslint-recommended",
 		"plugin:@typescript-eslint/recommended-type-checked",
 		"plugin:@typescript-eslint/stylistic-type-checked",
-		// import/recommended is the combination of import/errors and import/warnings
-		"plugin:import/recommended",
-		"plugin:import/typescript",
+		// import-x/recommended is the combination of import-x/errors and import-x/warnings
+		"plugin:import-x/recommended",
+		"plugin:import-x/typescript",
 	],
 	globals: {
 		Atomics: "readonly",
@@ -36,15 +36,9 @@ module.exports = {
 		sourceType: "module",
 		project: "./tsconfig.json",
 	},
-	plugins: ["import", "unicorn"],
+	plugins: ["import-x", "unicorn"],
 	reportUnusedDisableDirectives: true,
 	rules: {
-		// These rules were deprecated, then removed in `@typescript-eslint/eslint-plugin` v8.
-		// They are replaced by a set of more specific rules, which have been enabled in the list below.
-		// These explicit disable will need to be removed when this package is updated to v8+ of the plugin.
-		"@typescript-eslint/ban-types": "off",
-		"@typescript-eslint/no-empty-interface": "off",
-
 		// Please keep entries alphabetized within a group
 
 		// #region Fluid Custom Rules

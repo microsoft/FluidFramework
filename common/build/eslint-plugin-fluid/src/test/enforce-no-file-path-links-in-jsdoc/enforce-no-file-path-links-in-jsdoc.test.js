@@ -6,21 +6,24 @@
 const assert = require("assert");
 const path = require("path");
 const { ESLint } = require("eslint");
+const plugin = require("../../../index.js");
 
 describe("Do not allow file path links in JSDoc/TSDoc comments", function () {
 	async function lintFile(file) {
 		const eslint = new ESLint({
-			useEslintrc: false,
+			overrideConfigFile: true,
 			overrideConfig: {
 				rules: {
-					"no-file-path-links-in-jsdoc": "error",
+					"@fluid-internal/fluid/no-file-path-links-in-jsdoc": "error",
 				},
 				parser: "@typescript-eslint/parser",
 				parserOptions: {
 					project: path.join(__dirname, "../example/tsconfig.json"),
 				},
+				plugins: {
+					"@fluid-internal/fluid": plugin,
+				},
 			},
-			rulePaths: [path.join(__dirname, "../../rules")],
 		});
 		const fileToLint = path.join(__dirname, "../example/no-file-path-links-in-jsdoc", file);
 		const results = await eslint.lintFiles([fileToLint]);
