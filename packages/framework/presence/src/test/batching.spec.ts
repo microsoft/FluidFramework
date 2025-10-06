@@ -759,7 +759,7 @@ describe("Presence", () => {
 				);
 
 				// Configure a notifications workspace
-				// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+				// eslint-disable-next-line @typescript-eslint/ban-types
 				const notificationsWorkspace: NotificationsWorkspace<{}> =
 					presence.notifications.getWorkspace("name:testNotificationWorkspace", {});
 
@@ -871,7 +871,7 @@ describe("Presence", () => {
 					}),
 				}); // will be queued, deadline is 1110
 
-				// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+				// eslint-disable-next-line @typescript-eslint/ban-types
 				const notificationsWorkspace: NotificationsWorkspace<{}> =
 					presence.notifications.getWorkspace("name:testNotificationWorkspace", {});
 
