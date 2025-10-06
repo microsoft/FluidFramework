@@ -47,8 +47,6 @@ export interface SemanticAgentOptions<TSchema extends ImplicitFieldSchema> {
  * - `runtimeError`: An error was thrown while executing the provided JavaScript.
  * - `tooManyEditsError`: The {@link SharedTreeChatQuery.edit} function has been called more than the number of times specified by {@link SemanticAgentOptions.maximumSequentialEdits} for the same message.
  * - `expiredError`: The {@link SharedTreeChatQuery.edit} function was called after the issuing query has already completed.
- *
- * In the case of an error, the `message` field will contain an error message that is appropriate to put in a model's chat history.
  * @alpha
  */
 export interface EditResult {
@@ -60,6 +58,11 @@ export interface EditResult {
 		| "runtimeError"
 		| "tooManyEditsError"
 		| "expiredError";
+
+	/**
+	 * A human-readable message describing the result of the edit attempt.
+	 * @remarks In the case of an error, this message is appropriate to include in a model's chat history.
+	 */
 	message: string;
 }
 
@@ -87,7 +90,8 @@ export interface SharedTreeChatQuery {
 	 */
 	text: string;
 	/**
-	 * @remarks If this has called more than the number of times specified by {@link SemanticAgentOptions.maximumSequentialEdits} for the same message, the function will neglect to perform the requested edit and will return `undefined`.
+	 * Edit the tree with the provided JavaScript function code.
+	 * @remarks Attempting an edit may fail for a variety of reasons which are captured in the {@link EditResult | returned object}.
 	 */
 	edit(js: string): Promise<EditResult>;
 }

@@ -102,7 +102,7 @@ For example: "function ${this.editFunctionName}({ root, create }) { /* your code
 // #region Legacy APIs
 
 /**
- * TODO doc
+ * Create a {@link SharedTreeSemanticAgent} using a Langchain chat model.
  * @alpha
  * @deprecated Use {@link SharedTreeSemanticAgent} with a {@link LangchainChatModel} instead.
  */
@@ -112,7 +112,7 @@ export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(
 	options?: Readonly<SemanticAgentOptions<TSchema>>,
 ): SharedTreeSemanticAgent<TSchema>;
 /**
- * TODO doc
+ * Create a {@link SharedTreeSemanticAgent} using a Langchain chat model.
  * @alpha
  * @deprecated Use {@link SharedTreeSemanticAgent} with a {@link LangchainChatModel} instead.
  */
@@ -122,7 +122,7 @@ export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(
 	options?: Readonly<SemanticAgentOptions<TSchema>>,
 ): SharedTreeSemanticAgent<TSchema>;
 /**
- * TODO doc
+ * Create a {@link SharedTreeSemanticAgent} using a Langchain chat model.
  * @alpha
  * @deprecated Use {@link SharedTreeSemanticAgent} with a {@link LangchainChatModel} instead.
  */

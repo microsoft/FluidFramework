@@ -34,7 +34,6 @@ export type Ctor<T = any> = new (...args: any[]) => T;
 
 // @alpha
 export interface EditResult {
-    // (undocumented)
     message: string;
     // (undocumented)
     type: "success" | "disabledError" | "validationError" | "compileError" | "runtimeError" | "tooManyEditsError" | "expiredError";
@@ -124,7 +123,6 @@ export interface SharedTreeChatModel {
 
 // @alpha
 export interface SharedTreeChatQuery {
-    // (undocumented)
     edit(js: string): Promise<EditResult>;
     text: string;
 }
