@@ -43,7 +43,7 @@ describe("Presence", () => {
 		let clock: SinonFakeTimers;
 		let presence: PresenceWithNotifications;
 		let processSignal: ProcessSignalFunction;
-		// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+		// eslint-disable-next-line @typescript-eslint/ban-types
 		let notificationsWorkspace: NotificationsWorkspace<{}>;
 
 		before(async () => {
