@@ -15,6 +15,7 @@ import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
 import { Format } from "./format.js";
+import type { Brand } from "../../util/index.js";
 
 /**
  * Uses field cursors
@@ -52,7 +53,7 @@ export function makeForestSummarizerCodec(
 	});
 }
 
-export type ForestFormatVersion = 1;
+export type ForestFormatVersion = Brand<1, "ForestFormatVersion">;
 export function getCodecTreeForForestFormat(version: ForestFormatVersion): CodecTree {
 	return { name: "Forest", version };
 }
