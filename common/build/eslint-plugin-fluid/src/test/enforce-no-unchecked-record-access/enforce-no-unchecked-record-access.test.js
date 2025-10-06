@@ -12,18 +12,22 @@ describe("ESLint Rule Tests", function () {
 	async function lintFile(file) {
 		const eslint = new ESLint({
 			overrideConfigFile: true,
-			overrideConfig: {
-				rules: {
-					"@fluid-internal/fluid/no-unchecked-record-access": "error",
-				},
-				parser: "@typescript-eslint/parser",
-				parserOptions: {
-					project: path.join(__dirname, "../example/tsconfig.json"),
+			overrideConfig: [{
+				files: ["**/*.ts"],
+				languageOptions: {
+					parser: require("@typescript-eslint/parser"),
+					parserOptions: {
+						projectService: true,
+						tsconfigRootDir: path.join(__dirname, "../example"),
+					},
 				},
 				plugins: {
 					"@fluid-internal/fluid": plugin,
 				},
-			},
+				rules: {
+					"@fluid-internal/fluid/no-unchecked-record-access": "error",
+				},
+			}],
 		});
 		const fileToLint = path.join(__dirname, "../example/no-unchecked-record-access", file);
 		const results = await eslint.lintFiles([fileToLint]);

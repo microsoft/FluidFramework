@@ -12,18 +12,21 @@ describe("Do not allow file path links in JSDoc/TSDoc comments", function () {
 	async function lintFile(file) {
 		const eslint = new ESLint({
 			overrideConfigFile: true,
-			overrideConfig: {
-				rules: {
-					"@fluid-internal/fluid/no-file-path-links-in-jsdoc": "error",
-				},
-				parser: "@typescript-eslint/parser",
-				parserOptions: {
-					project: path.join(__dirname, "../example/tsconfig.json"),
+			overrideConfig: [{
+				files: ["**/*.ts"],
+				languageOptions: {
+					parser: require("@typescript-eslint/parser"),
+					parserOptions: {
+						project: path.join(__dirname, "../example/tsconfig.json"),
+					},
 				},
 				plugins: {
 					"@fluid-internal/fluid": plugin,
 				},
-			},
+				rules: {
+					"@fluid-internal/fluid/no-file-path-links-in-jsdoc": "error",
+				},
+			}],
 		});
 		const fileToLint = path.join(__dirname, "../example/no-file-path-links-in-jsdoc", file);
 		const results = await eslint.lintFiles([fileToLint]);

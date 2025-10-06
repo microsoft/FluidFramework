@@ -12,13 +12,18 @@ describe("ESLint Rule Tests", function () {
 	function createESLintInstance(config) {
 		return new ESLint({
 			overrideConfigFile: true,
-			overrideConfig: {
-				...config,
+			overrideConfig: [{
+				files: ["**/*.ts"],
+				languageOptions: {
+					parser: require("@typescript-eslint/parser"),
+					parserOptions: config.parserOptions,
+				},
 				plugins: {
 					"@fluid-internal/fluid": plugin,
 					...config.plugins,
 				},
-			},
+				rules: config.rules,
+			}],
 		});
 	}
 
@@ -33,7 +38,6 @@ describe("ESLint Rule Tests", function () {
 					},
 				],
 			},
-			parser: "@typescript-eslint/parser",
 			parserOptions: {
 				project: path.join(__dirname, "../example/tsconfig.json"),
 			},
@@ -68,7 +72,6 @@ describe("ESLint Rule Tests", function () {
 					},
 				],
 			},
-			parser: "@typescript-eslint/parser",
 			parserOptions: {
 				project: path.join(__dirname, "../example/tsconfig.json"),
 			},
@@ -96,7 +99,6 @@ describe("ESLint Rule Tests", function () {
 					},
 				],
 			},
-			parser: "@typescript-eslint/parser",
 			parserOptions: {
 				project: path.join(__dirname, "../example/tsconfig.json"),
 			},

@@ -12,18 +12,21 @@ describe("Do not allow Markdown links in JSDoc/TSDoc comments", function () {
 	async function lintFile(file) {
 		const eslint = new ESLint({
 			overrideConfigFile: true,
-			overrideConfig: {
-				rules: {
-					"@fluid-internal/fluid/no-markdown-links-in-jsdoc": "error",
-				},
-				parser: "@typescript-eslint/parser",
-				parserOptions: {
-					project: path.join(__dirname, "../example/tsconfig.json"),
+			overrideConfig: [{
+				files: ["**/*.ts"],
+				languageOptions: {
+					parser: require("@typescript-eslint/parser"),
+					parserOptions: {
+						project: path.join(__dirname, "../example/tsconfig.json"),
+					},
 				},
 				plugins: {
 					"@fluid-internal/fluid": plugin,
 				},
-			},
+				rules: {
+					"@fluid-internal/fluid/no-markdown-links-in-jsdoc": "error",
+				},
+			}],
 		});
 		const fileToLint = path.join(__dirname, "../example/no-markdown-links-in-jsdoc", file);
 		const results = await eslint.lintFiles([fileToLint]);
