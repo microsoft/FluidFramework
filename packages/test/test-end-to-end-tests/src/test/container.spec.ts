@@ -28,13 +28,7 @@ import {
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import {
-	ConfigTypes,
-	IConfigProviderBase,
-	IErrorBase,
-	IRequest,
-	IRequestHeader,
-} from "@fluidframework/core-interfaces";
+import { IErrorBase, IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
@@ -326,17 +320,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 	});
 
 	it("getPendingLocalState() called on container", async () => {
-		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-			getRawConfig: (name: string): ConfigTypes => settings[name],
-		});
-
-		const testContainerConfig: ITestContainerConfig = {
-			loaderProps: {
-				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
-				}),
-			},
-		};
+		const testContainerConfig: ITestContainerConfig = {};
 
 		const runtimeFactory = (_?: unknown) =>
 			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory());

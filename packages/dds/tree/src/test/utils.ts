@@ -353,9 +353,7 @@ export class TestTreeProvider {
 		});
 		const testContainerConfig: ITestContainerConfig = {
 			loaderProps: {
-				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
-				}),
+				configProvider: configProvider({}),
 			},
 		};
 		const container =

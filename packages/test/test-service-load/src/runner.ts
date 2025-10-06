@@ -546,10 +546,7 @@ async function scheduleOffline(
 				if (container.closed) {
 					return undefined;
 				}
-				if (
-					runConfig.loaderConfig?.enableOfflineLoad === true &&
-					random.real() < stashPercent
-				) {
+				if (random.real() < stashPercent) {
 					printStatus(runConfig, "closing offline container!");
 					const pendingState = await asLegacyAlpha(container).getPendingLocalState();
 					container.close();

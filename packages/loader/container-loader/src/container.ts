@@ -1018,16 +1018,11 @@ export class Container
 			enableSummarizeProtocolTree,
 		);
 
-		const offlineLoadEnabled =
-			this.isInteractiveClient &&
-			(this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
-				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
-				options.enableOfflineLoad === true);
 		this.serializedStateManager = new SerializedStateManager(
 			pendingLocalState,
 			this.subLogger,
 			this.storageAdapter,
-			offlineLoadEnabled,
+			this.isInteractiveClient,
 			this,
 			() => this._deltaManager.connectionManager.shouldJoinWrite(),
 			() => this.supportGetSnapshotApi(),
@@ -1350,7 +1345,6 @@ export class Container
 
 					let attachP = runRetriableAttachProcess({
 						initialAttachmentData: this.attachmentData,
-						offlineLoadEnabled: this.serializedStateManager.offlineLoadEnabled,
 						detachedBlobStorage: this.detachedBlobStorage,
 						setAttachmentData,
 						createAttachmentSummary,

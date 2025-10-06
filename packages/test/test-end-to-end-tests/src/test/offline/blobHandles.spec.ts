@@ -61,9 +61,7 @@ describeCompat("Offline and Blobs", "NoCompat", (getTestObjectProvider, apis) =>
 			},
 		},
 	};
-	const configProvider = createTestConfigProvider({
-		"Fluid.Container.enableOfflineLoad": true,
-	});
+	const configProvider = createTestConfigProvider({});
 	const testDataObjectType = "TestDataObject";
 	const dataObjectFactory = new DataObjectFactory({
 		type: testDataObjectType,

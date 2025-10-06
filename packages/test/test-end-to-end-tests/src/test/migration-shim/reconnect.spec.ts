@@ -186,9 +186,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 
 	const loaderProps = {
-		configProvider: configProvider({
-			"Fluid.Container.enableOfflineLoad": true,
-		}),
+		configProvider: configProvider({}),
 	};
 
 	beforeEach("setup", async () => {

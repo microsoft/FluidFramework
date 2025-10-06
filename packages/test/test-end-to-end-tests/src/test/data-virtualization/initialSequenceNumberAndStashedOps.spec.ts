@@ -30,9 +30,7 @@ describeCompat(
 				},
 			},
 			loaderProps: {
-				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
-				}),
+				configProvider: configProvider({}),
 			},
 		};
 

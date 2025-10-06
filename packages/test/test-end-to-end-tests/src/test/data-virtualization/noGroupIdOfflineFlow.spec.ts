@@ -66,9 +66,7 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 	});
 
 	let provider: ITestObjectProvider;
-	const configProvider = createTestConfigProvider({
-		"Fluid.Container.enableOfflineLoad": true,
-	});
+	const configProvider = createTestConfigProvider({});
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider();
 	});

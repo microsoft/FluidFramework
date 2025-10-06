@@ -126,11 +126,6 @@ export interface AttachProcessProps {
 	readonly createAttachmentSummary: (
 		redirectTable?: Map<string, string>,
 	) => CombinedAppAndProtocolSummary;
-
-	/**
-	 * Whether offline load is enabled or not.
-	 */
-	readonly offlineLoadEnabled: boolean;
 }
 
 /**
