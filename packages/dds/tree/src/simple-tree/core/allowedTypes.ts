@@ -146,7 +146,7 @@ export type AllowedTypesFull<
 > = AnnotatedAllowedTypes<T> & UnannotateAllowedTypesList<T>;
 
 /**
- * Const a {@link AllowedTypesFull} from a mixed array of annotated and unannotated allowed types.
+ * Creates an {@link AllowedTypesFull} type from a mixed array of annotated and unannotated allowed types.
  * @remarks
  * This is currently somewhat limited in the cases it handles well.
  * In some cases it omits the {@link AnnotatedAllowedTypes} when the type constraints cannot be satisfied.
@@ -525,7 +525,7 @@ export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchem
 const cachedNormalize = new WeakMap<ImplicitAllowedTypes, AllowedTypesFullInternal>();
 
 /**
- * Normalizes a allowed types to {@link AllowedTypesFullInternal}.
+ * Normalizes allowed types to an {@link AllowedTypesFullInternal}.
  */
 export function normalizeAllowedTypesInternal(
 	type: ImplicitAllowedTypes,
@@ -554,7 +554,7 @@ export function normalizeAllowedTypesInternal(
 }
 
 /**
- * Normalizes a {@link ImplicitAllowedTypes} to a set of {@link AnnotatedAllowedSchema}s, by eagerly evaluating any
+ * Normalizes an {@link ImplicitAllowedTypes} to an {@link AllowedTypesFullInternalEvaluated} by eagerly evaluating any
  * lazy schema declarations and adding empty metadata if it doesn't already exist.
  *
  * @remarks Note: this must only be called after all required schemas have been declared, otherwise evaluation of
