@@ -240,7 +240,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 				break;
 			}
 
-			// Ignore readonly dirty containers, because it can't send ops and nothing can be done about it being dirty
+			// Ignore readonly dirty containers because they can't send ops and nothing can be done about them being dirty.
 			const dirtyContainers = containersToApply.filter((c) => {
 				const { deltaManager, isDirty } = c;
 				return deltaManager.readOnlyInfo.readonly !== true && isDirty;
