@@ -41,9 +41,10 @@ import { loaderCompatDetailsForRuntime } from "./loaderLayerCompatState.js";
  * Configuration object for ContainerContext constructor.
  *
  * @remarks
- * A large subset is from {@link IContainerContext} and below select properties
- * are explicitly omitted so that as {@link ContainerContext} is extended added
- * properties are not forgotten (but may also be explicitly omitted by choice).
+ * A large subset of properties are from {@link IContainerContext}. Select
+ * properties are explicitly omitted so that, as {@link ContainerContext} is
+ * extended, newly added properties are not overlooked (but may also be
+ * explicitly omitted here by adding to the list).
  */
 export interface IContainerContextConfig
 	extends Readonly<
