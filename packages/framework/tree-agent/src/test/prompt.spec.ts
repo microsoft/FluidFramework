@@ -4,6 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
+import * as fs from "node:fs";
+import * as path from "node:path";
 
 import {
 	independentView,
@@ -84,6 +86,50 @@ describe("Prompt generation", () => {
 			);
 			assert.ok(prompt(view).includes("# Editing Maps"));
 		}
+	});
+});
+
+describe("Prompt snapshot", () => {
+	const updateSnapshots = false;
+
+	it("with all options enabled", () => {
+		class TestMap extends sf.map("TestMap", sf.number) {}
+		class TestArray extends sf.array("TestArray", sf.number) {}
+		class Obj extends sf.object("Obj", {
+			map: TestMap,
+			array: TestArray,
+		}) {}
+
+		const view = getView(Obj, { map: { a: 1 }, array: [1, 2, 3] });
+		const prompt = getPrompt({
+			subtree: new Subtree(view),
+			editFunctionName: "editTree",
+			editToolName: "EditTool",
+			domainHints: "These are some domain-specific hints.",
+		});
+
+		const snapDir = "./src/test/__snapshots__";
+		if (!fs.existsSync(snapDir)) {
+			fs.mkdirSync(snapDir, { recursive: true });
+		}
+		const snapFile = path.join(snapDir, "prompt.md");
+
+		// If the UPDATE_SNAPSHOTS environment variable is set, write/overwrite the snapshot.
+		if (updateSnapshots) {
+			fs.writeFileSync(snapFile, prompt, "utf8");
+			// Make the test pass when updating snapshots.
+			return;
+		}
+
+		// Otherwise, read the snapshot and compare.
+		if (!fs.existsSync(snapFile)) {
+			throw new Error(
+				`Snapshot not found: ${snapFile}. Run the tests with updateSnapshots=true to create it.`,
+			);
+		}
+
+		const expected = fs.readFileSync(snapFile, "utf8");
+		assert.equal(prompt, expected);
 	});
 });
 
