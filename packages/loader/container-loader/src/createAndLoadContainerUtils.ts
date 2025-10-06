@@ -14,6 +14,7 @@ import type {
 	ConfigTypes,
 	FluidObject,
 	IConfigProviderBase,
+	IErrorBase,
 	IRequest,
 	ITelemetryBaseLogger,
 	IResponse,
@@ -27,7 +28,6 @@ import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 import {
 	GenericError,
 	normalizeError,
-	type IFluidErrorBase,
 	createChildMonitoringContext,
 	mixinMonitoringContext,
 	sessionStorageConfigProvider,
@@ -331,7 +331,7 @@ export async function loadSummarizerContainerAndMakeSummary(
 	});
 
 	let success = false;
-	let caughtError: IFluidErrorBase | undefined;
+	let caughtError: IErrorBase | undefined;
 	let summarySubmitted: SummarizeOnDemandResults["summarySubmitted"];
 	let summaryOpBroadcasted: SummarizeOnDemandResults["summaryOpBroadcasted"];
 	let receivedSummaryAckOrNack: SummarizeOnDemandResults["receivedSummaryAckOrNack"];

@@ -192,7 +192,7 @@ export type LoadSummarizerSummaryResult = {
     readonly summaryResults: OnDemandSummaryResults;
 } | {
     readonly success: false;
-    readonly error: Error;
+    readonly error: IErrorBase;
 };
 
 // @beta @legacy

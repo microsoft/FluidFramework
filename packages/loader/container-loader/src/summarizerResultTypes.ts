@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IErrorBase } from "@fluidframework/core-interfaces";
 import type {
 	ISequencedDocumentMessage,
 	ISummaryAck,
@@ -37,7 +38,7 @@ type OnDemandSummaryStageResult<TSuccess> =
 	  }
 	| {
 			readonly success: false;
-			readonly error: Error;
+			readonly error: IErrorBase;
 			readonly message?: string;
 			readonly data?: unknown;
 	  };
@@ -121,5 +122,5 @@ export type LoadSummarizerSummaryResult =
 	  }
 	| {
 			readonly success: false;
-			readonly error: Error;
+			readonly error: IErrorBase;
 	  };
