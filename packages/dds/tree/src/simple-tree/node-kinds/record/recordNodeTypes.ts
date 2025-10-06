@@ -28,7 +28,7 @@ import type { RestrictiveStringRecord } from "../../../util/index.js";
  * Therefore code assigning to these fields must explicitly construct nodes using the schema's constructor or create method,
  * or using some other method like {@link (TreeAlpha:interface).create}.
  *
- * @alpha
+ * @beta
  */
 export interface TreeRecordNode<
 	TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes,
@@ -44,7 +44,7 @@ export interface TreeRecordNode<
 
 /**
  * Content which can be used to construct a Record node, explicitly or implicitly.
- * @system @alpha
+ * @system @beta
  */
 export type RecordNodeInsertableData<T extends ImplicitAllowedTypes> = RestrictiveStringRecord<
 	InsertableTreeNodeFromImplicitAllowedTypes<T>
