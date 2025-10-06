@@ -554,7 +554,7 @@ export function normalizeAllowedTypesInternal(
 }
 
 /**
- * Normalizes a {@link ImplicitAllowedTypes} to a set of {@link AnnotatedAllowedSchema}s, by eagerly evaluating any
+ * Normalizes an {@link ImplicitAllowedTypes} to an {@link AllowedTypesFullInternalEvaluated} by eagerly evaluating any
  * lazy schema declarations and adding empty metadata if it doesn't already exist.
  *
  * @remarks Note: this must only be called after all required schemas have been declared, otherwise evaluation of
