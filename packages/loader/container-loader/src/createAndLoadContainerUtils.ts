@@ -403,7 +403,6 @@ export async function loadSummarizerContainerAndMakeSummary(
 		mc.logger.send({
 			category: "generic",
 			eventName: "summarizerContainer_closed",
-			requestUrl: originalRequest.url,
 			success,
 			error: success ? undefined : caughtError?.message,
 		});
