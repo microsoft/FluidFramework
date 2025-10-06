@@ -840,7 +840,7 @@ export class ContainerRuntime
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param params - An object housing the runtime properties.
-	 * {@link LoadContainerRuntimeParams} except with `registry` a instead of `registryEntries` and more `runtimeOptions`.
+	 * {@link LoadContainerRuntimeParams} except with `registry` instead of `registryEntries` and more `runtimeOptions`.
 	 */
 	public static async loadRuntime(
 		params: Omit<LoadContainerRuntimeParams, "registryEntries" | "runtimeOptions"> & {
