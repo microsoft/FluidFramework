@@ -116,7 +116,7 @@ async function createRuntimeWithMockContext(isReadonly: boolean = false): Promis
 	context: MockContext;
 }> {
 	const context = new MockContext(isReadonly);
-	const runtime = await ContainerRuntime.loadRuntime({
+	const runtime = await ContainerRuntime.loadRuntime2({
 		context,
 		registry: new FluidDataStoreRegistry([]),
 		existing: false,
@@ -132,7 +132,7 @@ async function createRuntimeWithoutConnectionState(isReadonly: boolean = false):
 	const context = new MockContext(isReadonly);
 	// Delete the getConnectionState method before creating the runtime
 	delete context.getConnectionState;
-	const runtime = await ContainerRuntime.loadRuntime({
+	const runtime = await ContainerRuntime.loadRuntime2({
 		context,
 		registry: new FluidDataStoreRegistry([]),
 		existing: false,

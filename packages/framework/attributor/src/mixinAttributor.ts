@@ -7,9 +7,8 @@ import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
-	FluidDataStoreRegistryEntry,
 	IContainerRuntimeBase,
-	IFluidDataStoreRegistry,
+	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
@@ -54,7 +53,7 @@ export const mixinAttributor = (
 		): Promise<ContainerRuntime> {
 			const {
 				context,
-				registry,
+				registryEntries,
 				existing,
 				provideEntryPoint,
 				runtimeOptions,
@@ -64,26 +63,10 @@ export const mixinAttributor = (
 
 			const mc = loggerToMonitoringContext(context.taggedLogger);
 			const factory = new RuntimeAttributorFactory();
-			const registryCopy: IFluidDataStoreRegistry = {
-				async get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> {
-					if (name === RuntimeAttributorFactory.type) {
-						return factory;
-					}
-					return registry.get(name);
-				},
-				get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
-					return this;
-				},
-			};
-
-			if (registry.getSync !== undefined) {
-				registryCopy.getSync = (name: string) => {
-					if (name === RuntimeAttributorFactory.type) {
-						return factory;
-					}
-					return registry.getSync?.(name);
-				};
-			}
+			const registryEntriesCopy: NamedFluidDataStoreRegistryEntries = [
+				...registryEntries,
+				[RuntimeAttributorFactory.type, Promise.resolve(factory)],
+			];
 			const shouldTrackAttribution = mc.config.getBoolean(enableOnNewFileKey) ?? false;
 			if (shouldTrackAttribution) {
 				const { options } = context;
@@ -93,7 +76,7 @@ export const mixinAttributor = (
 
 			const runtime = await Base.loadRuntime({
 				context,
-				registry: registryCopy,
+				registryEntries: registryEntriesCopy,
 				provideEntryPoint,
 				runtimeOptions,
 				containerScope,

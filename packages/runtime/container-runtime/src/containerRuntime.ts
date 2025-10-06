@@ -788,10 +788,7 @@ export interface LoadContainerRuntimeParams {
 export async function loadContainerRuntime(
 	params: LoadContainerRuntimeParams,
 ): Promise<IContainerRuntime & IRuntime> {
-	return ContainerRuntime.loadRuntime({
-		...params,
-		registry: new FluidDataStoreRegistry(params.registryEntries),
-	});
+	return ContainerRuntime.loadRuntime(params);
 }
 
 const defaultMaxConsecutiveReconnects = 7;
@@ -842,9 +839,38 @@ export class ContainerRuntime
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param params - An object housing the runtime properties.
-	 * {@link LoadContainerRuntimeParams} except with `registry` instead of `registryEntries` and more `runtimeOptions`.
+	 * {@link LoadContainerRuntimeParams} except internal, while still having layer compat obligations.
+	 * @privateRemarks
+	 * Despite this being `@internal`, this has layer compat implications so changing it is problematic.
+	 * Instead of changing this, {@link loadRuntime2} was added.
+	 * This is directly invoked by `createTestContainerRuntimeFactory`:
+	 * if that is the only cross version use,
+	 * then `createTestContainerRuntimeFactory` could be updated to handle both versions or use the stable {@link loadContainerRuntime} API,
+	 * and `loadRuntime` could be removed (replaced by `loadRuntime2` which could be renamed back to `loadRuntime`).
 	 */
 	public static async loadRuntime(
+		params: LoadContainerRuntimeParams & {
+			/**
+			 * Constructor to use to create the ContainerRuntime instance.
+			 * @remarks
+			 * Defaults to {@link ContainerRuntime}.
+			 */
+			containerRuntimeCtor?: typeof ContainerRuntime;
+		},
+	): Promise<ContainerRuntime> {
+		return ContainerRuntime.loadRuntime2({
+			...params,
+			registry: new FluidDataStoreRegistry(params.registryEntries),
+		});
+	}
+
+	/**
+	 * Load the stores from a snapshot and returns the runtime.
+	 * @remarks
+	 * Same as {@link ContainerRuntime.loadRuntime},
+	 * but with `registry` instead of `registryEntries` and more `runtimeOptions`.
+	 */
+	public static async loadRuntime2(
 		params: Omit<LoadContainerRuntimeParams, "registryEntries" | "runtimeOptions"> & {
 			/**
 			 * Mapping from data store types to their corresponding factories.
