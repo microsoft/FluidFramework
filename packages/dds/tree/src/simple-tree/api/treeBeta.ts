@@ -25,11 +25,13 @@ import {
 import { getUnhydratedContext } from "../createContext.js";
 import type {
 	ImplicitFieldSchema,
-	InsertableField,
+	InsertableTreeFieldFromImplicitField,
 	TreeFieldFromImplicitField,
 } from "../fieldSchema.js";
-import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
-import { unhydratedFlexTreeFromInsertable } from "../unhydratedFlexTreeFromInsertable.js";
+import {
+	unhydratedFlexTreeFromInsertable,
+	type InsertableContent,
+} from "../unhydratedFlexTreeFromInsertable.js";
 
 import { createFromCursor } from "./create.js";
 import { conciseFromCursor, type ConciseTree } from "./conciseTree.js";
@@ -37,6 +39,7 @@ import type { TreeEncodingOptions } from "./customTree.js";
 import { cursorFromVerbose } from "./verboseTree.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
 import { treeNodeApi } from "./treeNodeApi.js";
+import type { InsertableField, UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 // Tests for this file are grouped with those for treeNodeApi.ts as that is where this functionality will eventually land,
 // and where most of the actual implementation is for much of it.
@@ -213,6 +216,20 @@ export interface TreeBeta {
 	// 		replaceIdentifiers?: true;
 	// 	},
 	// ): TreeFieldFromImplicitField<TSchema>;
+
+	/**
+	 * Construct tree content that is compatible with the field defined by the provided `schema`.
+	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
+	 * @param data - The data used to construct the field content.
+	 * @remarks
+	 * When providing a {@link TreeNodeSchemaClass}, this is the same as invoking its constructor except that an unhydrated node can also be provided.
+	 * This function exists as a generalization that can be used in other cases as well,
+	 * such as when `undefined` might be allowed (for an optional field), or when the type should be inferred from the data when more than one type is possible.
+	 */
+	create<const TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
+		data: InsertableTreeFieldFromImplicitField<TSchema>,
+	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 }
 
 /**
@@ -321,5 +338,17 @@ export const TreeBeta: TreeBeta = {
 		return createFromCursor(kernel.schema, cursor, fieldSchema, context) as Unhydrated<
 			TreeFieldFromImplicitField<TSchema>
 		>;
+	},
+
+	create<const TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
+		data: InsertableTreeFieldFromImplicitField<TSchema>,
+	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+		const mapTree = unhydratedFlexTreeFromInsertable(
+			data as InsertableContent | undefined,
+			schema,
+		);
+		const result = mapTree === undefined ? undefined : getOrCreateNodeFromInnerNode(mapTree);
+		return result as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 	},
 };
