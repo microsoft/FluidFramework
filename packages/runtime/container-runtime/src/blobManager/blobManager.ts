@@ -168,7 +168,6 @@ interface AttachedBlob {
 	blob: ArrayBufferLike;
 }
 
-// TODO: How to track failures?
 type LocalBlobRecord =
 	| LocalOnlyBlob
 	| UploadingBlob
@@ -505,11 +504,14 @@ export class BlobManager {
 					signal?.addEventListener("abort", onSignalAbort);
 					this.storage
 						.createBlob(blob)
-						.then((_createBlobResponse) => {
-							signal?.removeEventListener("abort", onSignalAbort);
-							resolve(_createBlobResponse);
+						.then(resolve)
+						.catch((error) => {
+							this.localBlobCache.delete(localId);
+							reject(error);
 						})
-						.catch(reject);
+						.finally(() => {
+							signal?.removeEventListener("abort", onSignalAbort);
+						});
 				});
 			this.localBlobCache.set(localId, {
 				state: "uploaded",
@@ -624,7 +626,6 @@ export class BlobManager {
 		// attached - these won't have a localBlobCache entry because we filter them out when generating
 		// pending state. We shouldn't try to attach them since they won't be accessible to the customer
 		// and would just be considered garbage immediately.
-		// TODO: This needs to incorporate the TTL logic
 		const localBlobRecord = this.localBlobCache.get(localId);
 		if (localBlobRecord?.state === "attaching") {
 			// If the TTL is expired, we assume it's gone from the storage and so is effectively localOnly again.
