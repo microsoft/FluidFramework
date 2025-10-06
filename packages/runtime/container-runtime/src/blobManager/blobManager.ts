@@ -441,7 +441,7 @@ export class BlobManager {
 	): Promise<IFluidHandleInternalPayloadPending<ArrayBufferLike>> {
 		const localId = this.localIdGenerator();
 		this.localBlobCache.set(localId, { state: "localOnly", blob });
-		await this.uploadAndAttachLocalOnlyBlob(localId, blob, signal);
+		await this.uploadAndAttachBlob(localId, blob, signal);
 		return this.getNonPayloadPendingBlobHandle(localId);
 	}
 
@@ -460,7 +460,7 @@ export class BlobManager {
 			() => {
 				// TODO: Need to clean these up in some cases probably
 				this.handleAttachedPendingBlobs.add(localId);
-				const uploadP = this.uploadAndAttachLocalOnlyBlob(localId, blob, signal);
+				const uploadP = this.uploadAndAttachBlob(localId, blob, signal);
 				uploadP.then(blobHandle.notifyShared).catch((error) => {
 					// TODO: notifyShared won't fail directly, but it emits an event to the customer.
 					// Consider what to do if the customer's code throws. reportError is nice.
@@ -473,7 +473,7 @@ export class BlobManager {
 		return blobHandle;
 	}
 
-	private async uploadAndAttachLocalOnlyBlob(
+	private async uploadAndAttachBlob(
 		localId: string,
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
@@ -485,36 +485,46 @@ export class BlobManager {
 				this.localBlobCache.delete(localId);
 				throw createAbortError();
 			}
-			// TODO: Assert localOnly here?
-			this.localBlobCache.set(localId, { state: "uploading", blob });
-			// If we eventually have driver-level support for abort, then this can probably
-			// simplify into awaiting the driver call directly.
-			const createBlobResponse: ICreateBlobResponseWithTTL =
-				await new Promise<ICreateBlobResponseWithTTL>((resolve, reject) => {
-					const onSignalAbort = (): void => {
-						this.localBlobCache.delete(localId);
-						reject(createAbortError());
-						signal?.removeEventListener("abort", onSignalAbort);
-					};
-					signal?.addEventListener("abort", onSignalAbort);
-					this.storage
-						.createBlob(blob)
-						.then(resolve)
-						.catch((error) => {
+			const localBlobRecord = this.localBlobCache.get(localId);
+			assert(
+				localBlobRecord?.state === "localOnly" || localBlobRecord?.state === "uploaded",
+				"Expect to enter uploadAndAttach loop with either localOnly or uploaded state",
+			);
+
+			// uploadAndAttachBlob will be called with a localOnly blob in normal creation flows, but in the
+			// case of loading with pending state we will sometimes call it with an uploaded-but-not-attached blob
+			// Go through the upload flow only if it's localOnly.
+			if (localBlobRecord.state === "localOnly") {
+				this.localBlobCache.set(localId, { state: "uploading", blob });
+				// If we eventually have driver-level support for abort, then this can probably
+				// simplify into awaiting the driver call directly.
+				const createBlobResponse: ICreateBlobResponseWithTTL =
+					await new Promise<ICreateBlobResponseWithTTL>((resolve, reject) => {
+						const onSignalAbort = (): void => {
 							this.localBlobCache.delete(localId);
-							reject(error);
-						})
-						.finally(() => {
+							reject(createAbortError());
 							signal?.removeEventListener("abort", onSignalAbort);
-						});
+						};
+						signal?.addEventListener("abort", onSignalAbort);
+						this.storage
+							.createBlob(blob)
+							.then(resolve)
+							.catch((error) => {
+								this.localBlobCache.delete(localId);
+								reject(error);
+							})
+							.finally(() => {
+								signal?.removeEventListener("abort", onSignalAbort);
+							});
+					});
+				this.localBlobCache.set(localId, {
+					state: "uploaded",
+					blob,
+					storageId: createBlobResponse.id,
+					uploadTime: Date.now(),
+					minTTLInSeconds: createBlobResponse.minTTLInSeconds,
 				});
-			this.localBlobCache.set(localId, {
-				state: "uploaded",
-				blob,
-				storageId: createBlobResponse.id,
-				uploadTime: Date.now(),
-				minTTLInSeconds: createBlobResponse.minTTLInSeconds,
-			});
+			}
 			uploadCompleted = await this.attachUploadedBlob(localId, signal);
 		}
 	}
