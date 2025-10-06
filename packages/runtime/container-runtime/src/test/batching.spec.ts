@@ -30,6 +30,7 @@ import { type SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import type { ChannelCollection } from "../channelCollection.js";
 import { ContainerRuntime } from "../containerRuntime.js";
+import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
 import { ContainerMessageType } from "../messageTypes.js";
 
 describe("Runtime batching", () => {
@@ -81,7 +82,7 @@ describe("Runtime batching", () => {
 		mockDeltaManager = new MockDeltaManager();
 		containerRuntime = await ContainerRuntime.loadRuntime({
 			context: getMockContext(mockDeltaManager) as IContainerContext,
-			registryEntries: [],
+			registry: new FluidDataStoreRegistry([]),
 			existing: false,
 			runtimeOptions: {},
 			provideEntryPoint: mockProvideEntryPoint,
