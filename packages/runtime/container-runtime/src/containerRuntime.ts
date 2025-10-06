@@ -737,7 +737,9 @@ export interface LoadContainerRuntimeParams {
 	 */
 	existing: boolean;
 	/**
-	 * Additional options to be passed to the runtime
+	 * Additional options to be passed to the runtime.
+	 * @remarks
+	 * Defaults to `{}`.
 	 */
 	runtimeOptions?: IContainerRuntimeOptions;
 	/**
@@ -844,8 +846,19 @@ export class ContainerRuntime
 	 */
 	public static async loadRuntime(
 		params: Omit<LoadContainerRuntimeParams, "registryEntries" | "runtimeOptions"> & {
+			/**
+			 * Mapping from data store types to their corresponding factories.
+			 */
 			registry: IFluidDataStoreRegistry;
+			/**
+			 * Constructor to use to create the ContainerRuntime instance.
+			 * @remarks
+			 * Defaults to {@link ContainerRuntime}.
+			 */
 			containerRuntimeCtor?: typeof ContainerRuntime;
+			/**
+			 * {@link LoadContainerRuntimeParams.runtimeOptions}, except with additional internal only options.
+			 */
 			runtimeOptions?: IContainerRuntimeOptionsInternal;
 		},
 	): Promise<ContainerRuntime> {
