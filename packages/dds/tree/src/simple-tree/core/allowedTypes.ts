@@ -525,7 +525,7 @@ export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchem
 const cachedNormalize = new WeakMap<ImplicitAllowedTypes, AllowedTypesFullInternal>();
 
 /**
- * Normalizes a allowed types to {@link AllowedTypesFullInternal}.
+ * Normalizes allowed types to an {@link AllowedTypesFullInternal}.
  */
 export function normalizeAllowedTypesInternal(
 	type: ImplicitAllowedTypes,
