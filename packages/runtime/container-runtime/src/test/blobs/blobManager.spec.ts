@@ -588,14 +588,7 @@ for (const createBlobPayloadPending of [false, true]) {
 						}
 					});
 					ac.abort("abort test");
-					await assert.rejects(createP, (error) => {
-						assert.strictEqual((error as Error).message, "uploadBlob aborted");
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						assert.strictEqual(typeof (error as any).uploadTime, "number");
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-						assert.strictEqual((error as any).acked, false);
-						return true;
-					});
+					await assert.rejects(createP, { message: "uploadBlob aborted" });
 
 					// Also verify that BlobManager doesn't resubmit the op for an already-aborted blob
 					await mockOrderingService.waitDropOne();
