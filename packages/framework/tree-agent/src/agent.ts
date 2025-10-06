@@ -49,7 +49,7 @@ const paramsName = "params";
 /**
  * An agent that uses a {@link SharedTreeChatModel} to interact with a SharedTree.
  * @remarks This class forwards user queries to the chat model, and handles the application of any edits to the tree that the model requests.
- * @alpha
+ * @alpha @sealed
  */
 export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 	public static editFunctionName = "editTree";
