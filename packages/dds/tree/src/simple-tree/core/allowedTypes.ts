@@ -146,7 +146,7 @@ export type AllowedTypesFull<
 > = AnnotatedAllowedTypes<T> & UnannotateAllowedTypesList<T>;
 
 /**
- * Const a {@link AllowedTypesFull} from a mixed array of annotated and unannotated allowed types.
+ * Creates an {@link AllowedTypesFull} type from a mixed array of annotated and unannotated allowed types.
  * @remarks
  * This is currently somewhat limited in the cases it handles well.
  * In some cases it omits the {@link AnnotatedAllowedTypes} when the type constraints cannot be satisfied.
