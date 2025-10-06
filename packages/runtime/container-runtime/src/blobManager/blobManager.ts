@@ -439,14 +439,9 @@ export class BlobManager {
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
 	): Promise<IFluidHandleInternalPayloadPending<ArrayBufferLike>> {
-		if (signal?.aborted === true) {
-			throw createAbortError();
-		}
-
 		const localId = this.localIdGenerator();
 		this.localBlobCache.set(localId, { state: "localOnly", blob });
 		await this.uploadAndAttachLocalOnlyBlob(localId, blob, signal);
-		// TODO: Check abort signal again here?
 		return this.getNonPayloadPendingBlobHandle(localId);
 	}
 
