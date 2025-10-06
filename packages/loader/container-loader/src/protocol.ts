@@ -76,12 +76,13 @@ export interface IProtocolHandler extends IBaseProtocolHandler {
 
 /**
  * More specific version of {@link IProtocolHandler} with narrower call
- * constraints for processSignal.
+ * constraints for {@link IProtocolHandler.processSignal}.
  */
 export interface ProtocolHandlerInternal extends IProtocolHandler {
 	/**
 	 * Process the audience related signal.
-	 * @privateRemarks Internally only AudienceSignal messages need handled
+	 * @privateRemarks
+	 * Internally, only {@link AudienceSignal} messages need handling.
 	 */
 	processSignal(message: AudienceSignal): void;
 }
