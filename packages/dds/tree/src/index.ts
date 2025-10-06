@@ -335,10 +335,4 @@ export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
 export { TableSchema, type System_TableSchema } from "./tableSchema.js";
 export { treeDataStoreKind } from "./treeDataStore.js";
 export type { TreeDataStoreOptions } from "./treeDataStore.js";
-export { dataStoreKind } from "./dataStoreKind.js";
-export type {
-	DataStoreOptions,
-	SharedObjectCreator,
-	SharedObjectRegistry,
-} from "./dataStoreKind.js";
 export { asAlpha } from "./api.js";

@@ -20,18 +20,19 @@ import {
 	type SharedObjectRegistry,
 	sharedObjectRegistryFromIterable,
 	dataStoreKind,
-} from "./dataStoreKind.js";
+	type DataStoreOptions,
+} from "@fluidframework/shared-object-base/internal";
 
 /**
+ * Options for {@link treeDataStoreKind}.
  * @input
  * @alpha
  */
-export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> {
+export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema>
+	extends Pick<DataStoreOptions<never, never>, "type"> {
 	/**
-	 * {@inheritDoc DataStoreOptions."type"}
+	 * Configuration for the tree view to be used in this data store.
 	 */
-	readonly type: string;
-
 	readonly config: TreeViewConfiguration<TSchema>;
 
 	/**
@@ -50,9 +51,9 @@ export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> {
 }
 
 /**
- * Simple tree specific wrapper around {@link dataStoreKind}.
+ * Simple tree specific wrapper around {@link @fluidframework/shared-object-base#dataStoreKind}.
  * @remarks
- * Use {@link dataStoreKind} directly if more control is needed, even if still just using tree.
+ * Use {@link @fluidframework/shared-object-base#dataStoreKind} directly if more control is needed, even if still just using tree.
  * @alpha
  */
 export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(

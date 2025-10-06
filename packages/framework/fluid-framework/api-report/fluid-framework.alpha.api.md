@@ -1324,6 +1324,12 @@ export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedTyp
 // @alpha @input
 export type SharedObjectRegistry = () => Promise<Registry<SharedObjectKind<IFluidLoadable>>>;
 
+// @alpha
+export function sharedObjectRegistryFromIterable(entries: Iterable<SharedObjectKind<IFluidLoadable> | {
+    type: string;
+    kind: () => Promise<SharedObjectKind<IFluidLoadable>>;
+}>): SharedObjectRegistry;
+
 // @public
 export const SharedTree: SharedObjectKind<ITree>;
 
@@ -1812,13 +1818,11 @@ export enum TreeCompressionStrategy {
 // @alpha
 export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(options: TreeDataStoreOptions<TSchema>): DataStoreKind<TreeView<TSchema>>;
 
-// @alpha @input (undocumented)
-export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> {
-    // (undocumented)
+// @alpha @input
+export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> extends Pick<DataStoreOptions<never, never>, "type"> {
     readonly config: TreeViewConfiguration<TSchema>;
     readonly initializer?: (creator: SharedObjectCreator) => InsertableTreeFieldFromImplicitField<TSchema>;
     readonly registry?: Iterable<SharedObjectKind<IFluidLoadable>> | SharedObjectRegistry;
-    readonly type: string;
 }
 
 // @alpha @input

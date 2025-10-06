@@ -142,17 +142,6 @@ export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, 
 // @alpha
 export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): SimpleTreeIndex<TKey, TValue>;
 
-// @alpha
-export function dataStoreKind<T, TRoot extends IFluidLoadable>(options: DataStoreOptions<TRoot, T>): DataStoreKind<T>;
-
-// @alpha @input (undocumented)
-export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutput> {
-    instantiateFirstTime(rootCreator: SharedObjectCreator<TRoot>, creator: SharedObjectCreator): Promise<TRoot>;
-    readonly registry: SharedObjectRegistry;
-    readonly type: string;
-    view(root: TRoot): Promise<TOutput>;
-}
-
 // @public @sealed @system
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
@@ -947,14 +936,6 @@ export class SchemaUpgrade {
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
-// @alpha @sealed
-export interface SharedObjectCreator<TConstraint = IFluidLoadable> {
-    create<T extends TConstraint>(kind: SharedObjectKind<T>): Promise<T>;
-}
-
-// @alpha @input
-export type SharedObjectRegistry = () => Promise<Registry<SharedObjectKind<IFluidLoadable>>>;
-
 // @alpha @input
 export interface SharedTreeFormatOptions {
     formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
@@ -1426,13 +1407,11 @@ export enum TreeCompressionStrategy {
 // @alpha
 export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(options: TreeDataStoreOptions<TSchema>): DataStoreKind<TreeView<TSchema>>;
 
-// @alpha @input (undocumented)
-export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> {
-    // (undocumented)
+// @alpha @input
+export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> extends Pick<DataStoreOptions<never, never>, "type"> {
     readonly config: TreeViewConfiguration<TSchema>;
     readonly initializer?: (creator: SharedObjectCreator) => InsertableTreeFieldFromImplicitField<TSchema>;
     readonly registry?: Iterable<SharedObjectKind<IFluidLoadable>> | SharedObjectRegistry;
-    readonly type: string;
 }
 
 // @alpha @input

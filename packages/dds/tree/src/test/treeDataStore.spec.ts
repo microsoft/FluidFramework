@@ -10,7 +10,7 @@ import {
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 } from "../simple-tree/index.js";
-import { dataStoreKind } from "../dataStoreKind.js";
+import { dataStoreKind } from "@fluidframework/shared-object-base/internal";
 import { treeDataStoreKind } from "../treeDataStore.js";
 import {
 	createEphemeralServiceClient,

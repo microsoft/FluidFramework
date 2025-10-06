@@ -8,6 +8,7 @@ import {
 	type ISharedObjectRegistry,
 	FluidDataStoreRuntime,
 } from "@fluidframework/datastore/internal";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type {
 	Registry,
 	DataStoreKind,
@@ -15,15 +16,10 @@ import type {
 	IFluidDataStoreContext,
 	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions/internal";
-import type {
-	SharedObjectKind,
-	ISharedObjectKind,
-	ISharedObject,
-} from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 
-// TODO: Non-tree specific content should be moved to another package.
+import type { ISharedObjectKind, SharedObjectKind } from "./sharedObject.js";
+import type { ISharedObject } from "./types.js";
 
 /**
  * A {@link @fluidframework/runtime-definitions#Registry} of shared object kinds that can be created or loaded within a data store.

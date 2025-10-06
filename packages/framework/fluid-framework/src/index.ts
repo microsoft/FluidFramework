@@ -75,6 +75,17 @@ export type { isFluidHandle } from "@fluidframework/runtime-utils";
 	*/
 export * from "@fluidframework/tree/alpha";
 
+// These are alpha APIs, but this package doesn't have an alpha entry point so they are imported from "internal".
+export {
+	dataStoreKind,
+	sharedObjectRegistryFromIterable,
+} from "@fluidframework/shared-object-base/internal";
+export type {
+	DataStoreOptions,
+	SharedObjectCreator,
+	SharedObjectRegistry,
+} from "@fluidframework/shared-object-base/internal";
+
 // End of basic public+beta+alpha exports - nothing above this line should
 // depend on an /internal path.
 // #endregion Basic re-exports
