@@ -105,7 +105,7 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 		_scenarioName?: string | undefined,
 		_fetchSource?: FetchSource | undefined,
 	): Promise<IVersion[]> {
-		assert.ok(this.snapshot.id);
+		assert(this.snapshot.id !== undefined);
 		return [{ id: this.snapshot.id, treeId: this.snapshot.id }];
 	}
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
@@ -250,7 +250,7 @@ describe("serializedStateManager", () => {
 				() => false,
 			);
 			const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(undefined);
-			assert(baseSnapshot);
+			assert(baseSnapshot !== undefined);
 			assert.strictEqual(version, undefined);
 			const state = await serializedStateManager.getPendingLocalState(
 				"clientId",
@@ -273,7 +273,7 @@ describe("serializedStateManager", () => {
 				() => false,
 			);
 			const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(undefined);
-			assert(baseSnapshot);
+			assert(baseSnapshot !== undefined);
 			assert.strictEqual(version?.id, "fromStorage");
 			assert.strictEqual(version.treeId, "fromStorage");
 			const state = await serializedStateManager.getPendingLocalState(
@@ -855,7 +855,7 @@ describe("serializedStateManager", () => {
 					assert.strictEqual(parsed.pendingRuntimeState.sessionExpiryTimerStarted, undefined);
 				} else {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-					assert.ok(parsed.pendingRuntimeState.sessionExpiryTimerStarted);
+					assert(parsed.pendingRuntimeState.sessionExpiryTimerStarted !== undefined);
 				}
 			});
 
@@ -903,7 +903,7 @@ describe("serializedStateManager", () => {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const parsed = JSON.parse(state);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				assert.ok(parsed.pendingRuntimeState.sessionExpiryTimerStarted);
+				assert(parsed.pendingRuntimeState.sessionExpiryTimerStarted !== undefined);
 			});
 		}
 	});
@@ -1118,6 +1118,10 @@ describe("serializedStateManager", () => {
 				);
 
 				await serializedStateManager.fetchSnapshot(undefined);
+				// the snapshot load is deferred, so need to wait for that to
+				// finish before we can track refresh
+				await serializedStateManager.refreshSnapshotP;
+
 				const lastProcessedOpSequenceNumber = 20;
 				let seq = 1;
 				while (seq <= lastProcessedOpSequenceNumber) {
@@ -1182,6 +1186,10 @@ describe("serializedStateManager", () => {
 				);
 
 				await serializedStateManager.fetchSnapshot(undefined);
+				// the snapshot load is deferred, so need to wait for that to
+				// finish before we can track refresh
+				await serializedStateManager.refreshSnapshotP;
+
 				const lastProcessedOpSequenceNumber = 20;
 				let seq = 1;
 				while (seq <= lastProcessedOpSequenceNumber) {

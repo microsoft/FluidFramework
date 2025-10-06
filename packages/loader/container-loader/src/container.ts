@@ -140,9 +140,10 @@ import { NoopHeuristic } from "./noopHeuristic.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { IQuorumSnapshot } from "./protocol/index.js";
 import {
-	type IProtocolHandler,
+	type InternalProtocolHandlerBuilder,
 	ProtocolHandler,
 	type ProtocolHandlerBuilder,
+	type ProtocolHandlerInternal,
 	protocolHandlerShouldProcessSignal,
 } from "./protocol.js";
 import { initQuorumValuesFromCodeDetails } from "./quorum.js";
@@ -495,7 +496,7 @@ export class Container
 	private readonly scope: FluidObject;
 	private readonly subLogger: ITelemetryLoggerExt;
 	private readonly detachedBlobStorage: MemoryDetachedBlobStorage | undefined;
-	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
+	private readonly protocolHandlerBuilder: InternalProtocolHandlerBuilder;
 	private readonly client: IClient;
 
 	private readonly mc: MonitoringContext;
@@ -597,8 +598,8 @@ export class Container
 		}
 		return this._runtime;
 	}
-	private _protocolHandler: IProtocolHandler | undefined;
-	private get protocolHandler(): IProtocolHandler {
+	private _protocolHandler: ProtocolHandlerInternal | undefined;
+	private get protocolHandler(): ProtocolHandlerInternal {
 		if (this._protocolHandler === undefined) {
 			throw new Error("Attempted to access protocolHandler before it was defined");
 		}
@@ -830,7 +831,7 @@ export class Container
 				attributes: IDocumentAttributes,
 				quorumSnapshot: IQuorumSnapshot,
 				sendProposal: (key: string, value: unknown) => number,
-			): ProtocolHandler =>
+			): ProtocolHandlerInternal =>
 				new ProtocolHandler(
 					attributes,
 					quorumSnapshot,
@@ -1641,10 +1642,9 @@ export class Container
 		const timings: Record<string, number> = { phase1: performanceNow() };
 		this.service = await this.createDocumentService(resolvedUrl, { mode: "load" });
 
-		// Except in cases where it has stashed ops or requested by feature gate, the container will connect in "read" mode
+		// Except in cases where its requested by feature gate, the container will connect in "read" mode
 		const mode =
-			this.mc.config.getBoolean("Fluid.Container.ForceWriteConnection") === true ||
-			(pendingLocalState?.savedOps.length ?? 0) > 0
+			this.mc.config.getBoolean("Fluid.Container.ForceWriteConnection") === true
 				? "write"
 				: "read";
 		const connectionArgs: IConnectionArgs = {
@@ -1668,14 +1668,10 @@ export class Container
 		timings.phase2 = performanceNow();
 
 		// Fetch specified snapshot.
-		const { baseSnapshot, version } =
+		const { baseSnapshot, version, attributes } =
 			await this.serializedStateManager.fetchSnapshot(specifiedVersion);
 		const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 		this._loadedFromVersion = version;
-		const attributes: IDocumentAttributes = await getDocumentAttributes(
-			this.storageAdapter,
-			baseSnapshotTree,
-		);
 
 		// If we saved ops, we will replay them and don't need DeltaManager to fetch them
 		const lastProcessedSequenceNumber =

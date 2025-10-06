@@ -6,6 +6,7 @@
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import {
+	type CodecTree,
 	type ICodecOptions,
 	type IJsonCodec,
 	makeVersionedValidatedCodec,
@@ -49,4 +50,9 @@ export function makeForestSummarizerCodec(
 			return out;
 		},
 	});
+}
+
+export type ForestFormatVersion = 1;
+export function getCodecTreeForForestFormat(version: ForestFormatVersion): CodecTree {
+	return { name: "Forest", version };
 }
