@@ -93,18 +93,51 @@ describe("Prompt snapshot", () => {
 	const updateSnapshots = false;
 
 	it("with all options enabled", () => {
-		class TestMap extends sf.map("TestMap", sf.number) {}
-		class TestArray extends sf.array("TestArray", sf.number) {}
+		class TestMap extends sf.map("TestMap", sf.number) {
+			public static [exposeMethodsSymbol](methods: ExposedMethods): void {
+				methods.expose(
+					TestMap,
+					"length",
+					buildFunc({ returns: methods.instanceOf(NumberValue) }),
+				);
+			}
+
+			public length(): NumberValue {
+				return new NumberValue({ value: this.size });
+			}
+		}
+		class NumberValue extends sf.object("TestArrayItem", { value: sf.number }) {
+			public static [exposeMethodsSymbol](methods: ExposedMethods): void {
+				methods.expose(
+					NumberValue,
+					"print",
+					buildFunc({ returns: z.string() }, ["radix", z.number()]),
+				);
+			}
+
+			public print(radix: number): string {
+				return this.value.toString(radix);
+			}
+		}
+		class TestArray extends sf.array("TestArray", NumberValue) {}
 		class Obj extends sf.object("Obj", {
 			map: TestMap,
 			array: TestArray,
 		}) {}
 
-		const view = getView(Obj, { map: { a: 1 }, array: [1, 2, 3] });
-		const prompt = getPrompt({
-			subtree: new Subtree(view),
-			editFunctionName: "editTree",
-			editToolName: "EditTool",
+		const view = getView(Obj, {
+			map: { a: 1 },
+			array: [
+				new NumberValue({ value: 1 }),
+				new NumberValue({ value: 2 }),
+				new NumberValue({ value: 3 }),
+			],
+		});
+
+		const fullPrompt = getPrompt({
+			subtree: new Subtree(view as TreeView<ImplicitFieldSchema>),
+			editingFunctionName: "editTree",
+			editingToolName: "EditTool",
 			domainHints: "These are some domain-specific hints.",
 		});
 
@@ -116,7 +149,7 @@ describe("Prompt snapshot", () => {
 
 		// If the UPDATE_SNAPSHOTS environment variable is set, write/overwrite the snapshot.
 		if (updateSnapshots) {
-			fs.writeFileSync(snapFile, prompt, "utf8");
+			fs.writeFileSync(snapFile, fullPrompt, "utf8");
 			// Make the test pass when updating snapshots.
 			return;
 		}
@@ -129,7 +162,7 @@ describe("Prompt snapshot", () => {
 		}
 
 		const expected = fs.readFileSync(snapFile, "utf8");
-		assert.equal(prompt, expected);
+		assert.equal(fullPrompt, expected);
 	});
 });
 
