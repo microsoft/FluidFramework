@@ -10,8 +10,8 @@ import {
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 } from "../simple-tree/index.js";
-
-import { dataStoreKind, treeDataStoreKind } from "../treeDataStore.js";
+import { dataStoreKind } from "../dataStoreKind.js";
+import { treeDataStoreKind } from "../treeDataStore.js";
 import {
 	createEphemeralServiceClient,
 	synchronizeLocalService,

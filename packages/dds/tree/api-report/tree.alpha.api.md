@@ -142,18 +142,12 @@ export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, 
 // @alpha
 export function createSimpleTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): SimpleTreeIndex<TKey, TValue>;
 
-// @alpha @sealed
-export interface Creator<TConstraint = IFluidLoadable> {
-    // (undocumented)
-    create<T extends TConstraint>(kind: SharedObjectKind<T>): Promise<T>;
-}
-
 // @alpha
 export function dataStoreKind<T, TRoot extends IFluidLoadable>(options: DataStoreOptions<TRoot, T>): DataStoreKind<T>;
 
 // @alpha @input (undocumented)
 export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutput> {
-    instantiateFirstTime(rootCreator: Creator<TRoot>, creator: Creator): Promise<TRoot>;
+    instantiateFirstTime(rootCreator: SharedObjectCreator<TRoot>, creator: SharedObjectCreator): Promise<TRoot>;
     readonly registry: SharedObjectRegistry;
     readonly type: string;
     view(root: TRoot): Promise<TOutput>;
@@ -953,6 +947,11 @@ export class SchemaUpgrade {
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
+// @alpha @sealed
+export interface SharedObjectCreator<TConstraint = IFluidLoadable> {
+    create<T extends TConstraint>(kind: SharedObjectKind<T>): Promise<T>;
+}
+
 // @alpha @input
 export type SharedObjectRegistry = () => Promise<Registry<SharedObjectKind<IFluidLoadable>>>;
 
@@ -1431,7 +1430,7 @@ export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(opt
 export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> {
     // (undocumented)
     readonly config: TreeViewConfiguration<TSchema>;
-    readonly initializer?: (creator: Creator) => InsertableTreeFieldFromImplicitField<TSchema>;
+    readonly initializer?: (creator: SharedObjectCreator) => InsertableTreeFieldFromImplicitField<TSchema>;
     readonly registry?: Iterable<SharedObjectKind<IFluidLoadable>> | SharedObjectRegistry;
     readonly type: string;
 }

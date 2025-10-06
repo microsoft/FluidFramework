@@ -11,210 +11,16 @@ import type {
 	TreeView,
 	TreeViewConfiguration,
 } from "./simple-tree/index.js";
-import type {
-	DataStoreKind,
-	IFluidDataStoreChannel,
-	IFluidDataStoreContext,
-	IFluidDataStoreFactory,
-	Registry,
-} from "@fluidframework/runtime-definitions/internal";
+import type { DataStoreKind } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import { SharedTree } from "./treeFactory.js";
-import type { FluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
-	FluidDataStoreRuntime,
-	type ISharedObjectRegistry,
-} from "@fluidframework/datastore/internal";
-import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import type {
-	ISharedObject,
-	ISharedObjectKind,
-} from "@fluidframework/shared-object-base/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-
-// TODO: Non-tree specific content should be moved elsewhere.
-// #region Non-tree specific content
-
-/**
- * A {@link @fluidframework/runtime-definitions#Registry} of shared object kinds that can be created or loaded within a data store.
- * @remarks
- * Supports lazy code loading.
- * @input
- * @alpha
- */
-// export type SharedObjectRegistry = Registry<Promise<SharedObjectKind<IFluidLoadable>>>;
-export type SharedObjectRegistry = () => Promise<Registry<SharedObjectKind<IFluidLoadable>>>;
-
-export function sharedObjectRegistryFromIterable(
-	entries: Iterable<
-		| SharedObjectKind<IFluidLoadable>
-		| { type: string; kind: () => Promise<SharedObjectKind<IFluidLoadable>> }
-	>,
-): SharedObjectRegistry {
-	return async () => {
-		const map = new Map<string, SharedObjectKind<IFluidLoadable>>();
-		for (const entry of entries) {
-			if ("kind" in entry) {
-				map.set(entry.type, await entry.kind());
-			} else {
-				map.set(
-					(entry as unknown as ISharedObjectKind<IFluidLoadable>).getFactory().type,
-					entry,
-				);
-			}
-		}
-		return (type: string) => {
-			const entry = map.get(type);
-			if (entry === undefined) {
-				throw new UsageError(`Unknown shared object type: ${type}`);
-			}
-			return entry;
-		};
-	};
-}
-
-/**
- * @input
- * @alpha
- */
-export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutput> {
-	/**
-	 * The type identifier for the data object factory.
-	 * @remarks
-	 * Persisted identifier which specifies which {@link @fluidframework/runtime-definitions#DataStoreKind} to use when loading it.
-	 * @privateRemarks
-	 * Equivalent to `DataObjectFactoryProps.type`.
-	 */
-	readonly type: string;
-
-	/**
-	 * The registry of shared object kinds (including other DataStores) that can be loaded or created within this DataStore.
-	 */
-	readonly registry: SharedObjectRegistry;
-	/**
-	 * Create the initial content of the datastore, and return the root shared object.
-	 */
-	instantiateFirstTime(rootCreator: Creator<TRoot>, creator: Creator): Promise<TRoot>;
-	/**
-	 * Construct a view of the datastore's root shared object.
-	 *
-	 * @param root - The root shared object of the datastore, created by `instantiateFirstTime` (though possibly created by another client and loaded by this one).
-	 */
-	view(root: TRoot): Promise<TOutput>;
-}
-
-/**
- * Creates a {@link @fluidframework/runtime-definitions#DataStoreFactory} from {@link DataStoreOptions}.
- * @remarks
- * Performs validation some validation of the input before bundling it up in a partially type erased form.
- * @alpha
- */
-export function dataStoreKind<T, TRoot extends IFluidLoadable>(
-	options: DataStoreOptions<TRoot, T>,
-): DataStoreKind<T> {
-	const f: IFluidDataStoreFactory = {
-		type: options.type,
-
-		async instantiateDataStore(
-			context: IFluidDataStoreContext,
-			existing: boolean,
-		): Promise<IFluidDataStoreChannel> {
-			return createDataStore(context, existing, options);
-		},
-
-		get IFluidDataStoreFactory(): IFluidDataStoreFactory {
-			return f;
-		},
-	};
-
-	return f as IFluidDataStoreFactory & DataStoreKind<T>;
-}
-
-async function convertRegistry(
-	registry: SharedObjectRegistry,
-): Promise<ISharedObjectRegistry> {
-	const lookup = await registry();
-
-	const converted: ISharedObjectRegistry = {
-		get: (type: string) => {
-			const entry = lookup(type);
-			return (entry as unknown as ISharedObjectKind<IFluidLoadable>)?.getFactory();
-		},
-	};
-	return converted;
-}
-
-const rootSharedObjectId = "root";
-
-async function createDataStore<T, TRoot extends IFluidLoadable>(
-	context: IFluidDataStoreContext,
-	existing: boolean,
-	options: DataStoreOptions<TRoot, T>,
-): Promise<IFluidDataStoreChannel> {
-	const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
-		context,
-		await convertRegistry(options.registry),
-		existing,
-		async (rt: IFluidDataStoreRuntime) => {
-			const creator: Creator = {
-				async create<T2 extends IFluidLoadable>(kind: SharedObjectKind<T2>): Promise<T2> {
-					// Create detached channel.
-					const sharedObject = kind as unknown as ISharedObjectKind<T2>;
-					return sharedObject.create(rt);
-				},
-			};
-
-			let createdRoot: TRoot | undefined;
-
-			const rootCreator: Creator<TRoot> = {
-				async create<T2 extends TRoot>(kind: SharedObjectKind<T2>): Promise<T2> {
-					// Create named channel under the root id.
-					// Error if called twice.
-					if (createdRoot !== undefined) {
-						throw new UsageError("Root shared object already created");
-					}
-					const sharedObject = kind as unknown as ISharedObjectKind<T2>;
-					const result = sharedObject.create(rt, rootSharedObjectId);
-
-					const result2 = result as unknown as ISharedObject;
-					result2.bindToContext();
-
-					createdRoot = result;
-					return result;
-				},
-			};
-
-			let root: TRoot | undefined;
-			if (existing) {
-				root = (await rt.getChannel(rootSharedObjectId)) as unknown as TRoot;
-			} else {
-				root = await options.instantiateFirstTime(rootCreator, creator);
-				if (root !== createdRoot) {
-					throw new UsageError(
-						"instantiateFirstTime did not return root created with rootCreator",
-					);
-				}
-			}
-
-			return (await options.view(root)) as unknown as FluidObject;
-		},
-	);
-
-	return runtime;
-}
-
-/**
- * Creates instances of SharedObjectKinds.
- * @privateRemarks
- * See IFluidContainer.create.
- * @sealed
- * @alpha
- */
-export interface Creator<TConstraint = IFluidLoadable> {
-	create<T extends TConstraint>(kind: SharedObjectKind<T>): Promise<T>;
-}
-
-// #endregion
+	type SharedObjectCreator,
+	type SharedObjectRegistry,
+	sharedObjectRegistryFromIterable,
+	dataStoreKind,
+} from "./dataStoreKind.js";
 
 /**
  * @input
@@ -231,7 +37,9 @@ export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> {
 	/**
 	 * If provided, used to initialize the tree content when creating a new instance of the data store.
 	 */
-	readonly initializer?: (creator: Creator) => InsertableTreeFieldFromImplicitField<TSchema>;
+	readonly initializer?: (
+		creator: SharedObjectCreator,
+	) => InsertableTreeFieldFromImplicitField<TSchema>;
 
 	/**
 	 * If provided, must include at least a SharedTree kind in the registry.
@@ -258,7 +66,10 @@ export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(
 	const result = dataStoreKind<TreeView<TSchema>, ITree>({
 		type: options.type,
 		registry,
-		async instantiateFirstTime(rootCreator: Creator, creator: Creator): Promise<ITree> {
+		async instantiateFirstTime(
+			rootCreator: SharedObjectCreator,
+			creator: SharedObjectCreator,
+		): Promise<ITree> {
 			const lookup = await registry();
 			const treeKind = lookup(SharedTree.getFactory().type);
 			const tree = await rootCreator.create(treeKind);
