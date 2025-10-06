@@ -28,13 +28,14 @@ import { markEager } from "./flexList.js";
  *
  * 2. Explicit construction of {@link Unhydrated} nodes using either {@link TreeNodeSchemaClass} as a constructor or {@link TreeNodeSchemaNonClass|TreeNodeSchemaNonClass.create}.
  * Either way the {@link TreeNodeSchema} produced must be produced using a {@link SchemaFactory}.
+ * There are also higher level APIs which wrap these, including {@link (TreeBeta:interface).create}, {@link (TreeBeta:interface).clone},
+ * and import APIs like {@link (TreeAlpha:interface).importConcise}, {@link (TreeAlpha:interface).importVerbose}, and {@link (TreeAlpha:interface).importCompressed}.
  *
  * 3. Implicit construction: Several APIs which logically require an unhydrated TreeNode also allow passing in a value which could be used to explicitly construct the node instead.
- * These APIs internally call the constructor with the provided value, so it's really just a special case of the above option.
+ * These APIs internally call the constructor with the provided value (typically behaving like {@link (TreeAlpha:interface).create}), so it's really just a special case of the above option.
  * Note that when constructing nodes, sometimes implicit construction is not allowed
  * (either at runtime due to ambiguous types or at compile time due to TypeScript limitations):
  * in such cases, explicit construction must be used.
- *
  * @privateRemarks
  * This is a class not an interface to enable stricter type checking (see {@link TreeNode.#brand})
  * and some runtime enforcement of schema class policy (see the the validation in the constructor).
