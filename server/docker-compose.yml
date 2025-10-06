@@ -22,9 +22,6 @@ services:
       - NODE_ENV=development
       - IS_FLUID_SERVER=true
     restart: always
-    # THIS VOLUMES IS FOR LOCAL TESTING, IT SHOULD NOT GET MERGED
-    volumes:
-      - ./routerlicious/packages/routerlicious/config/config.json:/usr/src/server/packages/routerlicious/config/config.json
   nexus:
     image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}
     expose:
@@ -85,8 +82,6 @@ services:
       - DEBUG=fluid:*
       - NODE_ENV=development
       - IS_FLUID_SERVER=true
-    # volumes:
-    #   - ./routerlicious/packages/routerlicious/config/config.json:/home/node/server/packages/routerlicious/config.json
     restart: always
   gitrest:
     image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/gitrest:${GITREST_IMAGE_TAG:-latest}

@@ -175,11 +175,11 @@ stages:
 
         steps:
         # Setup
+        - checkout: ff_pipeline_host
+          clean: true
+
         - ${{ if eq(parameters.checkout, true) }}:
           - checkout: self
-            clean: true
-        - ${{ else }}:
-          - checkout: ff_pipeline_host
             clean: true
 
         # Install self-signed cert for R11s deployment in local cert store
