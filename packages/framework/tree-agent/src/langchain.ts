@@ -50,13 +50,13 @@ export class LangchainChatModel implements SharedTreeChatModel {
 
 	public async query(query: SharedTreeChatQuery): Promise<string> {
 		this.messages.push(new HumanMessage(query.text));
-		return this.queryEdit(query.edit);
+		return this.queryEdit(async (js) => query.edit(js));
 	}
 
 	private async queryEdit(edit: SharedTreeChatQuery["edit"]): Promise<string> {
 		const editingTool = tool(
 			async ({ functionCode }) => {
-				return await edit(functionCode);
+				return edit(functionCode);
 			},
 			{
 				name: this.editToolName,
@@ -86,7 +86,7 @@ For example: "function ${this.editFunctionName}({ root, create }) { /* your code
 							return editResult.message;
 						}
 						// This call will either terminate the edit chain (if the LLM decides not to edit further) or continue it if more edits are required.
-						return await this.queryEdit(edit);
+						return this.queryEdit(edit);
 					}
 					default: {
 						this.messages.push(new HumanMessage(`Unrecognized tool call: ${toolCall.name}`));
@@ -131,6 +131,11 @@ export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(
 	treeView: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode),
 	options?: Readonly<SemanticAgentOptions<TSchema>>,
 ): SharedTreeSemanticAgent<TSchema>;
+/**
+ * Create a {@link SharedTreeSemanticAgent} using a Langchain chat model.
+ * @alpha
+ * @deprecated Use {@link SharedTreeSemanticAgent} with a {@link LangchainChatModel} instead.
+ */
 export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(
 	client: BaseChatModel,
 	treeView: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode),

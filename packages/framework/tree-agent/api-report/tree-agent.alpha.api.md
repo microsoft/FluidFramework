@@ -127,7 +127,7 @@ export interface SharedTreeChatQuery {
     text: string;
 }
 
-// @alpha
+// @alpha @sealed
 export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
     constructor(client: SharedTreeChatModel, tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode), options?: Readonly<SemanticAgentOptions<TSchema>> | undefined);
     // (undocumented)
