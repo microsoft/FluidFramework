@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { bufferToString } from "@fluid-internal/client-utils";
 import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 
 import {
@@ -62,58 +63,62 @@ describe("Dehydrate Container", () => {
 
 	it("Summary to baseSnapshot and snapshotBlobs conversion", async () => {
 		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
-		const { baseSnapshot, snapshotBlobs } =
-			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
+		const snapshot = getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
 
-		assert.strictEqual(Object.keys(baseSnapshot.trees).length, 2, "2 trees should be there");
 		assert.strictEqual(
-			Object.keys(baseSnapshot.trees[".protocol"].blobs).length,
+			Object.keys(snapshot.snapshotTree.trees).length,
+			2,
+			"2 trees should be there",
+		);
+		assert.strictEqual(
+			Object.keys(snapshot.snapshotTree.trees[".protocol"].blobs).length,
 			2,
 			"2 protocol blobs should be there.",
 		);
 
 		// Validate the ".component" blob.
-		const defaultDataStoreBlobId = baseSnapshot.trees.default.blobs[".component"];
-		const defaultDataStoreBlob = snapshotBlobs[defaultDataStoreBlobId];
+		const defaultDataStoreBlobId = snapshot.snapshotTree.trees.default.blobs[".component"];
+		const defaultDataStoreBlob = snapshot.blobContents.get(defaultDataStoreBlobId);
 		assert.strict(defaultDataStoreBlob, "defaultDataStoreBlob undefined");
 		assert.strictEqual(
-			JSON.parse(defaultDataStoreBlob),
+			JSON.parse(bufferToString(defaultDataStoreBlob, "utf8")),
 			"defaultDataStore",
 			"The .component blob's content is incorrect",
 		);
 
 		// Validate "root" sub-tree.
-		const rootAttributesBlobId = baseSnapshot.trees.default.trees.root.blobs.attributes;
-		const rootAttributesBlob = snapshotBlobs[rootAttributesBlobId];
+		const rootAttributesBlobId =
+			snapshot.snapshotTree.trees.default.trees.root.blobs.attributes;
+		const rootAttributesBlob = snapshot.blobContents.get(rootAttributesBlobId);
 		assert.strict(rootAttributesBlob, "rootAttributesBlob undefined");
 		assert.strictEqual(
-			JSON.parse(rootAttributesBlob),
+			JSON.parse(bufferToString(rootAttributesBlob, "utf8")),
 			"rootattributes",
 			"The root sub-tree's content is incorrect",
 		);
 		assert.strictEqual(
-			baseSnapshot.trees.default.trees.root.unreferenced,
+			snapshot.snapshotTree.trees.default.trees.root.unreferenced,
 			undefined,
 			"The root sub-tree should not be marked as unreferenced",
 		);
 
 		// Validate "unref" sub-tree.
 		assert.strictEqual(
-			baseSnapshot.trees.default.trees.unref.unreferenced,
+			snapshot.snapshotTree.trees.default.trees.unref.unreferenced,
 			true,
 			"The unref sub-tree should be marked as unreferenced",
 		);
 
 		// Validate "groupId" sub-tree.
 		assert.strictEqual(
-			baseSnapshot.trees.default.trees.groupId.groupId,
+			snapshot.snapshotTree.trees.default.trees.groupId.groupId,
 			"group",
 			"The groupId sub-tree should have a groupId",
 		);
 
 		// Validate "groupId" sub-tree.
 		assert.strictEqual(
-			baseSnapshot.trees.default.trees.groupId.groupId,
+			snapshot.snapshotTree.trees.default.trees.groupId.groupId,
 			"group",
 			"The groupId sub-tree should have a groupId",
 		);

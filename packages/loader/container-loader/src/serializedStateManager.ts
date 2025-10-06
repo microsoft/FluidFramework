@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import type { IRuntime } from "@fluidframework/container-definitions/internal";
 import type {
 	IEventProvider,
@@ -21,17 +21,16 @@ import {
 	type IVersion,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
+import { getSnapshotTree, isInstanceOfISnapshot } from "@fluidframework/driver-utils/internal";
 import {
 	type MonitoringContext,
 	PerformanceEvent,
-	UsageError,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	type ISerializableBlobContents,
 	getBlobContentsFromTree,
+	type ISerializableBlobContents,
 } from "./containerStorageAdapter.js";
 import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";
 
@@ -75,7 +74,7 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	/**
 	 * Any group snapshots (aka delay-loaded) we've downloaded from the service for this container
 	 */
-	loadedGroupIdSnapshots?: Record<string, ISnapshotInfo>;
+	loadedGroupIdSnapshots?: Record<string, SerializedSnapshotInfo>;
 	/**
 	 * All ops since base snapshot sequence number up to the latest op
 	 * seen when the container was closed. Used to apply stashed (saved pending)
@@ -117,9 +116,13 @@ export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
 	pendingRuntimeState?: unknown;
 }
 
-export interface ISnapshotInfo extends SnapshotWithBlobs {
+export interface SerializedSnapshotInfo extends SnapshotWithBlobs {
 	snapshotSequenceNumber: number;
+}
+export interface ISnapshotInfo {
+	snapshotSequenceNumber: number | undefined;
 	snapshotFetchedTime?: number | undefined;
+	snapshot: ISnapshot | ISnapshotTree;
 }
 
 export type ISerializedStateManagerDocumentStorageService = Pick<
@@ -252,42 +255,30 @@ export class SerializedStateManager {
 	 * @returns The snapshot to boot the container from
 	 */
 	public async fetchSnapshot(specifiedVersion: string | undefined): Promise<{
-		baseSnapshot: ISnapshot | ISnapshotTree;
+		snapshot: ISnapshot | ISnapshotTree;
 		version: IVersion | undefined;
 		attributes: IDocumentAttributes;
 	}> {
 		if (this.pendingLocalState === undefined) {
-			const { baseSnapshot, version } = await getSnapshot(
+			const { snapshot, version } = await getSnapshot(
 				this.mc,
 				this.storageAdapter,
 				this.supportGetSnapshotApi(),
 				specifiedVersion,
 			);
-			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
+			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(snapshot);
 			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshotTree);
-			// non-interactive clients will not have any pending state we want to save
-			if (this.offlineLoadEnabled) {
-				// we defer getting the blobs to not impact the container load flow
-				// only getPendingState depends on the resolution of this promise
-				this.refreshTracker.setPromise(
-					getBlobContentsFromTree(baseSnapshot, this.storageAdapter).then((snapshotBlobs) => {
-						this.snapshot = {
-							baseSnapshot: baseSnapshotTree,
-							snapshotBlobs,
-							snapshotSequenceNumber: attributes.sequenceNumber,
-						};
-						this.refreshTimer.start();
-						return attributes.sequenceNumber;
-					}),
-				);
-			}
-			return { baseSnapshot, version, attributes };
+			this.refreshTimer.start();
+			this.snapshot = {
+				snapshot,
+				snapshotSequenceNumber: attributes.sequenceNumber,
+			};
+			return { snapshot, version, attributes };
 		} else {
 			const { baseSnapshot, snapshotBlobs } = this.pendingLocalState;
 			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshot);
 			this.snapshot = {
-				baseSnapshot,
-				snapshotBlobs,
+				snapshot: baseSnapshot,
 				snapshotSequenceNumber: attributes.sequenceNumber,
 			};
 			this.tryRefreshSnapshot();
@@ -295,7 +286,7 @@ export class SerializedStateManager {
 			for (const [id, value] of Object.entries(snapshotBlobs)) {
 				blobContents.set(id, stringToBuffer(value, "utf8"));
 			}
-			const iSnapshot: ISnapshot = {
+			const snapshot: ISnapshot = {
 				sequenceNumber: this.snapshot.snapshotSequenceNumber,
 				snapshotTree: baseSnapshot,
 				blobContents,
@@ -303,7 +294,7 @@ export class SerializedStateManager {
 				ops: [],
 				snapshotFormatV: 1,
 			};
-			return { baseSnapshot: iSnapshot, version: undefined, attributes };
+			return { snapshot, version: undefined, attributes };
 		}
 	}
 
@@ -410,32 +401,12 @@ export class SerializedStateManager {
 	 * base snapshot when attaching.
 	 * @param snapshot - snapshot and blobs collected while attaching (a form of the attach summary)
 	 */
-	public setInitialSnapshot(snapshot: SnapshotWithBlobs | undefined): void {
-		if (this.offlineLoadEnabled) {
-			assert(
-				this.snapshot === undefined,
-				0x937 /* inital snapshot should only be defined once */,
-			);
-			assert(snapshot !== undefined, 0x938 /* attachment snapshot should be defined */);
-			const { baseSnapshot, snapshotBlobs } = snapshot;
-			const attributesHash =
-				".protocol" in baseSnapshot.trees
-					? baseSnapshot.trees[".protocol"].blobs.attributes
-					: baseSnapshot.blobs[".attributes"];
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const attributes = JSON.parse(snapshotBlobs[attributesHash]);
-			assert(
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				attributes.sequenceNumber === 0,
-				0x939 /* trying to set a non attachment snapshot */,
-			);
-			this.snapshot = {
-				...snapshot,
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				snapshotSequenceNumber: attributes.sequenceNumber as number,
-			};
-			this.refreshTimer.start();
-		}
+	public setInitialSnapshot(snapshot: ISnapshot): void {
+		this.snapshot = {
+			snapshot,
+			snapshotSequenceNumber: snapshot.sequenceNumber,
+		};
+		this.refreshTimer.start();
 	}
 
 	/**
@@ -460,17 +431,6 @@ export class SerializedStateManager {
 				clientId,
 			},
 			async () => {
-				if (!this.offlineLoadEnabled) {
-					throw new UsageError("Can't get pending local state unless offline load is enabled");
-				}
-				if (this.snapshot === undefined && this.refreshTracker.hasPromise) {
-					// we deferred the initial download of the snapshot to not block
-					// the container load flow, so if it is not resolved
-					// and we don't have a snapshot, we will wait for the download
-					// to finish.
-					await this.refreshTracker.Promise;
-				}
-
 				assert(this.snapshot !== undefined, 0x8e5 /* no base data */);
 				const pendingRuntimeState = await runtime.getPendingLocalState({
 					notifyImminentClosure: false,
@@ -487,11 +447,17 @@ export class SerializedStateManager {
 						loadedGroupIdSnapshots[groupId] = convertSnapshotToSnapshotInfo(snapshot);
 					}
 				}
+
+				const snapshotWithBlobs: SnapshotWithBlobs = isInstanceOfISnapshot(
+					this.snapshot.snapshot,
+				)
+					? isnapshotToSnapshotWithBlobs(this.snapshot.snapshot)
+					: await snapshotTreeToSnapshotWithBlobs(this.snapshot.snapshot, this.storageAdapter);
+
 				const pendingState: IPendingContainerState = {
 					attached: true,
 					pendingRuntimeState,
-					baseSnapshot: this.snapshot.baseSnapshot,
-					snapshotBlobs: this.snapshot.snapshotBlobs,
+					...snapshotWithBlobs,
 					loadedGroupIdSnapshots: hasGroupIdSnapshots ? loadedGroupIdSnapshots : undefined,
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
@@ -502,6 +468,27 @@ export class SerializedStateManager {
 			},
 		);
 	}
+}
+
+export function isnapshotToSnapshotWithBlobs(snapshot: ISnapshot): SnapshotWithBlobs {
+	const snapshotBlobs: ISerializableBlobContents = {};
+	for (const [id, blob] of snapshot.blobContents.entries()) {
+		snapshotBlobs[id] = bufferToString(blob, "utf8");
+	}
+	return {
+		baseSnapshot: snapshot.snapshotTree,
+		snapshotBlobs,
+	};
+}
+async function snapshotTreeToSnapshotWithBlobs(
+	snapshot: ISnapshotTree,
+	storageAdapter: ISerializedStateManagerDocumentStorageService,
+): Promise<SnapshotWithBlobs> {
+	const snapshotBlobs = await getBlobContentsFromTree(snapshot, storageAdapter);
+	return {
+		baseSnapshot: snapshot,
+		snapshotBlobs,
+	};
 }
 
 /**
@@ -517,7 +504,7 @@ export async function getLatestSnapshotInfo(
 	storageAdapter: ISerializedStateManagerDocumentStorageService,
 	supportGetSnapshotApi: boolean,
 ): Promise<ISnapshotInfo | undefined> {
-	return PerformanceEvent.timedExecAsync(
+	return PerformanceEvent.timedExecAsync<ISnapshotInfo | undefined>(
 		mc.logger,
 		{ eventName: "GetLatestSnapshotInfo" },
 		async () => {
@@ -529,26 +516,18 @@ export async function getLatestSnapshotInfo(
 				"getLatestSnapshotInfo",
 				FetchSource.noCache,
 			);
-			const { baseSnapshot } = await getSnapshot(
+			const { snapshot: baseSnapshot } = await getSnapshot(
 				mc,
 				storageAdapter,
 				supportGetSnapshotApi,
 				specifiedVersion[0]?.id,
 			);
-
-			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
-			const snapshotFetchedTime = Date.now();
-			const snapshotBlobs = await getBlobContentsFromTree(baseSnapshot, storageAdapter);
-			const attributes: IDocumentAttributes = await getDocumentAttributes(
-				storageAdapter,
-				baseSnapshotTree,
-			);
-			const snapshotSequenceNumber = attributes.sequenceNumber;
 			return {
-				baseSnapshot: baseSnapshotTree,
-				snapshotBlobs,
-				snapshotSequenceNumber,
-				snapshotFetchedTime,
+				snapshot: baseSnapshot,
+				snapshotSequenceNumber: isInstanceOfISnapshot(baseSnapshot)
+					? baseSnapshot.sequenceNumber
+					: undefined,
+				snapshotFetchedTime: Date.now(),
 			};
 		},
 	).catch(() => undefined);
@@ -571,12 +550,12 @@ async function getSnapshot(
 	>,
 	supportGetSnapshotApi: boolean,
 	specifiedVersion: string | undefined,
-): Promise<{ baseSnapshot: ISnapshot | ISnapshotTree; version?: IVersion }> {
+): Promise<{ snapshot: ISnapshot | ISnapshotTree; version?: IVersion }> {
 	const { snapshot, version } = supportGetSnapshotApi
 		? await fetchISnapshot(mc, storageAdapter, specifiedVersion)
 		: await fetchISnapshotTree(mc, storageAdapter, specifiedVersion);
 	assert(snapshot !== undefined, 0x8e4 /* Snapshot should exist */);
-	return { baseSnapshot: snapshot, version };
+	return { snapshot, version };
 }
 
 /**

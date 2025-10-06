@@ -149,6 +149,7 @@ import { initQuorumValuesFromCodeDetails } from "./quorum.js";
 import {
 	type IPendingContainerState,
 	type IPendingDetachedContainerState,
+	isnapshotToSnapshotWithBlobs,
 	SerializedStateManager,
 } from "./serializedStateManager.js";
 import {
@@ -1250,16 +1251,14 @@ export class Container
 				this.captureProtocolSummary(),
 			);
 
-		const { baseSnapshot, snapshotBlobs } =
-			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
+		const snapshot = getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
 		const pendingRuntimeState =
 			attachingData === undefined ? undefined : this.runtime.getPendingLocalState();
 		assert(!isPromiseLike(pendingRuntimeState), 0x8e3 /* should not be a promise */);
 
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			baseSnapshot,
-			snapshotBlobs,
+			...isnapshotToSnapshotWithBlobs(snapshot),
 			pendingRuntimeState,
 			hasAttachmentBlobs:
 				this.detachedBlobStorage !== undefined && this.detachedBlobStorage.size > 0,
@@ -1668,8 +1667,11 @@ export class Container
 		timings.phase2 = performanceNow();
 
 		// Fetch specified snapshot.
-		const { baseSnapshot, version, attributes } =
-			await this.serializedStateManager.fetchSnapshot(specifiedVersion);
+		const {
+			snapshot: baseSnapshot,
+			version,
+			attributes,
+		} = await this.serializedStateManager.fetchSnapshot(specifiedVersion);
 		const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 		this._loadedFromVersion = version;
 

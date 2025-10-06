@@ -31,7 +31,7 @@ import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService.js";
 import type {
 	ISerializedStateManagerDocumentStorageService,
-	ISnapshotInfo,
+	SerializedSnapshotInfo,
 } from "./serializedStateManager.js";
 import { convertSnapshotInfoToSnapshot } from "./utils.js";
 
@@ -70,7 +70,7 @@ export class ContainerStorageAdapter
 	public get loadedGroupIdSnapshots(): Record<string, ISnapshot> {
 		return this._loadedGroupIdSnapshots;
 	}
-
+	private readonly blobContents: { [id: string]: ArrayBufferLike } = {};
 	/**
 	 * An adapter that ensures we're using detachedBlobStorage up until we connect to a real service, and then
 	 * after connecting to a real service augments it with retry and combined summary tree enforcement.
@@ -87,12 +87,17 @@ export class ContainerStorageAdapter
 		/**
 		 * ArrayBufferLikes or utf8 encoded strings, containing blobs from a snapshot
 		 */
-		private readonly blobContents: { [id: string]: ArrayBufferLike | string } = {},
-		private loadingGroupIdSnapshotsFromPendingState: Record<string, ISnapshotInfo> | undefined,
+		blobContents: ISerializableBlobContents | undefined = undefined,
+		private loadingGroupIdSnapshotsFromPendingState:
+			| Record<string, SerializedSnapshotInfo>
+			| undefined,
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
 		private readonly enableSummarizeProtocolTree: boolean | undefined,
 	) {
 		this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
+		if (blobContents !== undefined) {
+			this.loadSnapshotFromSnapshotBlobs(blobContents);
+		}
 	}
 
 	disposed: boolean = false;
@@ -143,7 +148,7 @@ export class ContainerStorageAdapter
 
 	public loadSnapshotFromSnapshotBlobs(snapshotBlobs: ISerializableBlobContents): void {
 		for (const [id, value] of Object.entries(snapshotBlobs)) {
-			this.blobContents[id] = value;
+			this.blobContents[id] = stringToBuffer(value, "utf8");
 		}
 	}
 
@@ -184,10 +189,7 @@ export class ContainerStorageAdapter
 			const localSnapshot =
 				this.loadingGroupIdSnapshotsFromPendingState[snapshotFetchOptions.loadingGroupIds[0]];
 			assert(localSnapshot !== undefined, 0x970 /* Local snapshot must be present */);
-			snapshot = convertSnapshotInfoToSnapshot(
-				localSnapshot,
-				localSnapshot.snapshotSequenceNumber,
-			);
+			snapshot = convertSnapshotInfoToSnapshot(localSnapshot);
 		} else {
 			if (this._storageService.getSnapshot === undefined) {
 				throw new UsageError(
