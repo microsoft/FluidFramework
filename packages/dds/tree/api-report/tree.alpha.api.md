@@ -156,7 +156,7 @@ export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutp
     instantiateFirstTime(rootCreator: Creator<TRoot>, creator: Creator): Promise<TRoot>;
     readonly registry: SharedObjectRegistry;
     readonly type: string;
-    view(root: TRoot): TOutput;
+    view(root: TRoot): Promise<TOutput>;
 }
 
 // @public @sealed @system
@@ -954,7 +954,7 @@ export class SchemaUpgrade {
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
 // @alpha @input
-export type SharedObjectRegistry = Registry<Promise<SharedObjectKind<IFluidLoadable>>>;
+export type SharedObjectRegistry = () => Promise<Registry<SharedObjectKind<IFluidLoadable>>>;
 
 // @alpha @input
 export interface SharedTreeFormatOptions {

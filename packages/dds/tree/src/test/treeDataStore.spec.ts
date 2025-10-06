@@ -114,10 +114,13 @@ describe("treeDataStore", () => {
 		// A minimal datastore which lazy loads SharedTree when needed.
 		const myFactory = dataStoreKind({
 			type: "my-tree",
-			registry: async (type) => (await import("../treeFactory.js")).SharedTree,
+			registry: async () => {
+				const module = await import("../treeFactory.js");
+				return (type) => module.SharedTree;
+			},
 			instantiateFirstTime: async (creator) =>
 				creator.create((await import("../treeFactory.js")).SharedTree),
-			view: (tree) => tree,
+			view: async (tree) => tree,
 		});
 
 		const service = createEphemeralServiceClient();

@@ -94,6 +94,8 @@ export interface FluidContainerAttached<T = unknown> extends FluidContainer<T> {
  * TODO:
  * These should be usable as SharedObjectKinds:
  * either make DataStoreFactory extend SharedObjectKinds, or make SharedObjectKind explicitly include DataStoreFactory.
+ * @privateRemarks
+ * Type erased {@link IFluidDataStoreFactory}.
  * @sealed
  * @alpha
  */

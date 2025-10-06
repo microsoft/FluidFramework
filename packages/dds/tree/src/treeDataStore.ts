@@ -25,10 +25,7 @@ import {
 	FluidDataStoreRuntime,
 	type ISharedObjectRegistry,
 } from "@fluidframework/datastore/internal";
-import type {
-	IChannelFactory,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions/internal";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type {
 	ISharedObject,
 	ISharedObjectKind,
@@ -36,6 +33,7 @@ import type {
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 // TODO: Non-tree specific content should be moved elsewhere.
+// #region Non-tree specific content
 
 /**
  * A {@link @fluidframework/runtime-definitions#Registry} of shared object kinds that can be created or loaded within a data store.
@@ -44,7 +42,8 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
  * @input
  * @alpha
  */
-export type SharedObjectRegistry = Registry<Promise<SharedObjectKind<IFluidLoadable>>>;
+// export type SharedObjectRegistry = Registry<Promise<SharedObjectKind<IFluidLoadable>>>;
+export type SharedObjectRegistry = () => Promise<Registry<SharedObjectKind<IFluidLoadable>>>;
 
 export function sharedObjectRegistryFromIterable(
 	entries: Iterable<
@@ -52,23 +51,25 @@ export function sharedObjectRegistryFromIterable(
 		| { type: string; kind: () => Promise<SharedObjectKind<IFluidLoadable>> }
 	>,
 ): SharedObjectRegistry {
-	const map = new Map<string, Promise<SharedObjectKind<IFluidLoadable>>>();
-	for (const entry of entries) {
-		if ("kind" in entry) {
-			map.set(entry.type, entry.kind());
-		} else {
-			map.set(
-				(entry as unknown as ISharedObjectKind<IFluidLoadable>).getFactory().type,
-				Promise.resolve(entry),
-			);
+	return async () => {
+		const map = new Map<string, SharedObjectKind<IFluidLoadable>>();
+		for (const entry of entries) {
+			if ("kind" in entry) {
+				map.set(entry.type, await entry.kind());
+			} else {
+				map.set(
+					(entry as unknown as ISharedObjectKind<IFluidLoadable>).getFactory().type,
+					entry,
+				);
+			}
 		}
-	}
-	return async (type: string) => {
-		const entry = await map.get(type);
-		if (entry === undefined) {
-			throw new UsageError(`Unknown shared object type: ${type}`);
-		}
-		return entry;
+		return (type: string) => {
+			const entry = map.get(type);
+			if (entry === undefined) {
+				throw new UsageError(`Unknown shared object type: ${type}`);
+			}
+			return entry;
+		};
 	};
 }
 
@@ -99,7 +100,7 @@ export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutp
 	 *
 	 * @param root - The root shared object of the datastore, created by `instantiateFirstTime` (though possibly created by another client and loaded by this one).
 	 */
-	view(root: TRoot): TOutput;
+	view(root: TRoot): Promise<TOutput>;
 }
 
 /**
@@ -129,30 +130,18 @@ export function dataStoreKind<T, TRoot extends IFluidLoadable>(
 	return f as IFluidDataStoreFactory & DataStoreKind<T>;
 }
 
-// TODO: we should not require a list of knowing types to prefetch for registry conversion.
-const knownTypes = [SharedTree.getFactory().type];
-
 async function convertRegistry(
 	registry: SharedObjectRegistry,
 ): Promise<ISharedObjectRegistry> {
-	const entries = knownTypes.map(
-		async (type) =>
-			[
-				type,
-				((await registry(type)) as unknown as ISharedObjectKind<IFluidLoadable>).getFactory(),
-			] as const,
-	);
-	const resolved = await Promise.allSettled(entries);
+	const lookup = await registry();
 
-	const registryMap = new Map<string, IChannelFactory>();
-	for (const result of resolved) {
-		if (result.status === "fulfilled") {
-			registryMap.set(result.value[0], result.value[1]);
-		} else {
-			// TODO: Handle the error case? Rethrow on get from output registry?
-		}
-	}
-	return registryMap;
+	const converted: ISharedObjectRegistry = {
+		get: (type: string) => {
+			const entry = lookup(type);
+			return (entry as unknown as ISharedObjectKind<IFluidLoadable>)?.getFactory();
+		},
+	};
+	return converted;
 }
 
 const rootSharedObjectId = "root";
@@ -207,7 +196,7 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 				}
 			}
 
-			return options.view(root) as unknown as FluidObject;
+			return (await options.view(root)) as unknown as FluidObject;
 		},
 	);
 
@@ -224,6 +213,8 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 export interface Creator<TConstraint = IFluidLoadable> {
 	create<T extends TConstraint>(kind: SharedObjectKind<T>): Promise<T>;
 }
+
+// #endregion
 
 /**
  * @input
@@ -268,7 +259,8 @@ export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(
 		type: options.type,
 		registry,
 		async instantiateFirstTime(rootCreator: Creator, creator: Creator): Promise<ITree> {
-			const treeKind = await registry(SharedTree.getFactory().type);
+			const lookup = await registry();
+			const treeKind = lookup(SharedTree.getFactory().type);
 			const tree = await rootCreator.create(treeKind);
 			// TODO: Should this pass for customized SharedTree kinds? Should there be a different check?
 			assert(SharedTree.is(tree), "Created shared tree should be a SharedTree");
@@ -279,7 +271,7 @@ export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(
 			}
 			return tree;
 		},
-		view(tree): TreeView<TSchema> {
+		async view(tree): Promise<TreeView<TSchema>> {
 			const view = tree.viewWith(options.config);
 			return view;
 		},

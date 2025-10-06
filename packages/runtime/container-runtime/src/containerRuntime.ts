@@ -864,9 +864,46 @@ export class ContainerRuntime
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 		minVersionForCollab?: MinimumVersionForCollab;
 	}): Promise<ContainerRuntime> {
+		const registry = new FluidDataStoreRegistry(params.registryEntries);
+		return ContainerRuntime.loadRuntime2({
+			...params,
+			registry,
+		});
+	}
+
+	/**
+	 * Load the stores from a snapshot and returns the runtime.
+	 * @param params - An object housing the runtime properties:
+	 * - context - Context of the container.
+	 * - registry - Mapping from data store types to their corresponding factories.
+	 * - existing - Pass 'true' if loading from an existing snapshot.
+	 * - requestHandler - (optional) Request handler for the request() method of the container runtime.
+	 * Only relevant for back-compat while we remove the request() method and move fully to entryPoint as the main pattern.
+	 * - runtimeOptions - Additional options to be passed to the runtime
+	 * - containerScope - runtime services provided with context
+	 * - containerRuntimeCtor - Constructor to use to create the ContainerRuntime instance.
+	 * This allows mixin classes to leverage this method to define their own async initializer.
+	 * - provideEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
+	 * - minVersionForCollab - Minimum version of the FF runtime that this runtime supports collaboration with.
+	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
+	 */
+	public static async loadRuntime2(params: {
+		context: IContainerContext;
+		registry: IFluidDataStoreRegistry;
+		existing: boolean;
+		runtimeOptions?: IContainerRuntimeOptionsInternal;
+		containerScope?: FluidObject;
+		containerRuntimeCtor?: typeof ContainerRuntime;
+		/**
+		 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+		 */
+		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+		minVersionForCollab?: MinimumVersionForCollab;
+	}): Promise<ContainerRuntime> {
 		const {
 			context,
-			registryEntries,
+			registry,
 			existing,
 			requestHandler,
 			provideEntryPoint,
@@ -965,8 +1002,6 @@ export class ContainerRuntime
 			"enableRuntimeIdCompressor" in runtimeOptions
 				? runtimeOptions.enableRuntimeIdCompressor
 				: defaultConfigs.enableRuntimeIdCompressor;
-
-		const registry = new FluidDataStoreRegistry(registryEntries);
 
 		const tryFetchBlob = async <T>(blobName: string): Promise<T | undefined> => {
 			const blobId = context.baseSnapshot?.blobs[blobName];

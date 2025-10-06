@@ -18,7 +18,7 @@ import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
-import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -29,10 +29,10 @@ import type {
 	DataStoreKind,
 	Registry,
 	FluidContainerWithService,
-	NamedFluidDataStoreRegistryEntries,
-	NamedFluidDataStoreRegistryEntry2,
 	IFluidDataStoreFactory,
 	MinimumVersionForCollab,
+	IFluidDataStoreRegistry,
+	FluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	LocalDeltaConnectionServer,
@@ -155,19 +155,15 @@ const rootDataStoreId = "root";
 
 type DataStoreRegistry<T> = Registry<Promise<DataStoreKind<T>>>;
 
-// TODO: these should not be needed
-const knownRegistryKeys = ["test", "my-tree"] as const;
-
-function convertRegistry<T>(
-	registry: DataStoreRegistry<T>,
-): NamedFluidDataStoreRegistryEntries {
-	return knownRegistryKeys.map(
-		(key): NamedFluidDataStoreRegistryEntry2 => [
-			key,
-			(async (): Promise<IFluidDataStoreFactory> =>
-				(await registry(key)) as unknown as IFluidDataStoreFactory)(),
-		],
-	);
+function convertRegistry<T>(registry: DataStoreRegistry<T>): IFluidDataStoreRegistry {
+	return {
+		async get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> {
+			return (await registry(name)) as unknown as IFluidDataStoreFactory;
+		},
+		get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
+			return this;
+		},
+	};
 }
 
 function makeCodeLoader<T>(
@@ -192,9 +188,9 @@ function makeCodeLoader<T>(
 				return rootDataStore as T & FluidObject;
 			};
 
-			const runtime = await loadContainerRuntime({
+			const runtime = await ContainerRuntime.loadRuntime2({
 				context,
-				registryEntries: convertRegistry(registry),
+				registry: convertRegistry(registry),
 				provideEntryPoint,
 				existing,
 				minVersionForCollab,

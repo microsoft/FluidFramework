@@ -475,7 +475,7 @@ export type Registry<T> = (type: string) => T;
 
 // @alpha @sealed
 export interface ServiceClient {
-    createContainer<T>(root: DataStoreKind<T>): FluidContainerWithService<T>;
+    createContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerWithService<T>>;
     loadContainer<T>(id: string, root: DataStoreKind<T> | Registry<Promise<DataStoreKind<T>>>): Promise<FluidContainerAttached<T>>;
 }
 
