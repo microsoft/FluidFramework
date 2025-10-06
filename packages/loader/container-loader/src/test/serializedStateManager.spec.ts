@@ -31,6 +31,7 @@ import {
 	type IPendingContainerState,
 	SerializedStateManager,
 	type ISerializedStateManagerDocumentStorageService,
+	type SnapshotWithBlobs,
 } from "../serializedStateManager.js";
 
 import { failSometimeProxy } from "./failProxy.js";
@@ -40,7 +41,7 @@ const snapshotTree = {
 	blobs: {},
 	trees: {
 		".protocol": {
-			blobs: { attributes: "attributesId" },
+			blobs: { attributes: "attributesId-0" },
 			trees: {},
 		},
 		".app": {
@@ -50,7 +51,7 @@ const snapshotTree = {
 	},
 };
 
-const snapshot: ISnapshot = {
+const initialSnapshot: ISnapshot = {
 	blobContents: new Map(),
 	latestSequenceNumber: undefined,
 	ops: [],
@@ -79,9 +80,9 @@ const eventEmitter = new EventEmitter();
 
 class MockStorageAdapter implements ISerializedStateManagerDocumentStorageService {
 	public readonly blobs = new Map<string, ArrayBufferLike>();
-	private readonly snapshot: ISnapshotTree;
+	private snapshot: ISnapshotTree;
 
-	constructor(pls = pendingLocalState) {
+	constructor(pls: SnapshotWithBlobs = pendingLocalState) {
 		this.snapshot = pls.baseSnapshot;
 		for (const [id, blob] of Object.entries(pls.snapshotBlobs)) {
 			this.blobs.set(id, stringToBuffer(blob, "utf8"));
@@ -118,14 +119,19 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 	}
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
 		if (!this.blobs.has(id)) {
-			throw new Error("Requested blob does not exist");
+			throw new Error(`Requested blob does not exist: ${id}`);
 		}
 		return this.blobs.get(id) as ArrayBufferLike;
 	}
 
-	public uploadSummary(sequenceNumber: number): void {
+	public uploadSummary(sequenceNumber: number, updateLatest: boolean = true): void {
+		const attributesIds = `attributesId-${sequenceNumber}`;
+		if (updateLatest) {
+			this.snapshot = structuredClone(this.snapshot);
+			this.snapshot.trees[".protocol"].blobs.attributes = attributesIds;
+		}
 		this.blobs.set(
-			`attributesId-${sequenceNumber}`,
+			attributesIds,
 			stringToBuffer(
 				`{"minimumSequenceNumber" : 0, "sequenceNumber": ${sequenceNumber}}`,
 				"utf8",
@@ -198,7 +204,7 @@ describe("serializedStateManager", () => {
 				() => false,
 			);
 			// equivalent to attach
-			serializedStateManager.setInitialSnapshot(snapshot);
+			serializedStateManager.setInitialSnapshot(initialSnapshot);
 			await serializedStateManager.getPendingLocalState(
 				"clientId",
 				new MockRuntime(),
@@ -373,18 +379,21 @@ describe("serializedStateManager", () => {
 				baseSnapshot: { ...snapshotTree, id: "fromPending" },
 			};
 			const storageAdapter = new MockStorageAdapter({
-				id: "fromStorage",
-				blobs: {},
-				trees: {
-					".protocol": {
-						blobs: { attributes: "wrongId" },
-						trees: {},
-					},
-					".app": {
-						blobs: {},
-						trees: {},
+				baseSnapshot: {
+					id: "fromStorage",
+					blobs: {},
+					trees: {
+						".protocol": {
+							blobs: { attributes: "wrongId" },
+							trees: {},
+						},
+						".app": {
+							blobs: {},
+							trees: {},
+						},
 					},
 				},
+				snapshotBlobs: pending.snapshotBlobs,
 			});
 			const serializedStateManager = new SerializedStateManager(
 				pending,
@@ -402,7 +411,7 @@ describe("serializedStateManager", () => {
 			}
 
 			const snapshotSequenceNumber = 11;
-			storageAdapter.uploadSummary(snapshotSequenceNumber);
+			storageAdapter.uploadSummary(snapshotSequenceNumber, false);
 
 			await serializedStateManager.fetchSnapshot(undefined);
 			await serializedStateManager.refreshSnapshotP;
@@ -518,7 +527,7 @@ describe("serializedStateManager", () => {
 						snapshotSequenceNumber,
 						firstProcessedOpSequenceNumber,
 						lastProcessedOpSequenceNumber,
-						stashedSnapshotSequenceNumber: snapshotSequenceNumber,
+						stashedSnapshotSequenceNumber: 0,
 					},
 				]);
 				const state = await serializedStateManager.getPendingLocalState(
@@ -952,7 +961,7 @@ describe("serializedStateManager", () => {
 					snapshotRefreshTimeoutMs,
 				);
 				// equivalent to attach
-				serializedStateManager.setInitialSnapshot(snapshot);
+				serializedStateManager.setInitialSnapshot(initialSnapshot);
 
 				const lastProcessedOpSequenceNumber = 20;
 				let seq = 1;
@@ -1016,7 +1025,7 @@ describe("serializedStateManager", () => {
 					snapshotRefreshTimeoutMs,
 				);
 				// equivalent to attach
-				serializedStateManager.setInitialSnapshot(snapshot);
+				serializedStateManager.setInitialSnapshot(initialSnapshot);
 
 				const lastProcessedOpSequenceNumber = 20;
 				let seq = 1;
@@ -1244,7 +1253,7 @@ describe("serializedStateManager", () => {
 						snapshotSequenceNumber,
 						firstProcessedOpSequenceNumber,
 						lastProcessedOpSequenceNumber,
-						stashedSnapshotSequenceNumber: snapshotSequenceNumber,
+						stashedSnapshotSequenceNumber: 0,
 					},
 				]);
 

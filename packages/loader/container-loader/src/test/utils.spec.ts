@@ -14,7 +14,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 
 import type { ISerializableBlobContents } from "../containerStorageAdapter.js";
-import type { SerializedSnapshotInfo } from "../serializedStateManager.js";
+import type { ISnapshotInfo, SerializedSnapshotInfo } from "../serializedStateManager.js";
 import {
 	convertSnapshotInfoToSnapshot,
 	convertSnapshotToSnapshotInfo,
@@ -179,7 +179,10 @@ describe("container-loader utils", () => {
 
 		it("Converts Snapshot to SnapshotInfo", async () => {
 			const convertedSnapshotInfo = convertSnapshotToSnapshotInfo(snapshot);
-			assert.deepEqual(convertedSnapshotInfo, snapshotInfo);
+			assert.deepEqual<ISnapshotInfo>(convertedSnapshotInfo, {
+				snapshot,
+				snapshotSequenceNumber: snapshot.sequenceNumber ?? 0,
+			});
 		});
 	});
 });

@@ -120,7 +120,7 @@ export interface SerializedSnapshotInfo extends SnapshotWithBlobs {
 	snapshotSequenceNumber: number;
 }
 export interface ISnapshotInfo {
-	snapshotSequenceNumber: number | undefined;
+	snapshotSequenceNumber: number;
 	snapshotFetchedTime?: number | undefined;
 	snapshot: ISnapshot | ISnapshotTree;
 }
@@ -167,7 +167,7 @@ class RefreshPromiseTracker {
 export class SerializedStateManager {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
 	private readonly mc: MonitoringContext;
-	private snapshot: ISnapshotInfo | undefined;
+	private snapshotInfo: ISnapshotInfo | undefined;
 	private latestSnapshot: ISnapshotInfo | undefined;
 	private readonly refreshTracker = new RefreshPromiseTracker(
 		// eslint-disable-next-line unicorn/consistent-function-scoping
@@ -269,7 +269,7 @@ export class SerializedStateManager {
 			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(snapshot);
 			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshotTree);
 			this.refreshTimer.start();
-			this.snapshot = {
+			this.snapshotInfo = {
 				snapshot,
 				snapshotSequenceNumber: attributes.sequenceNumber,
 			};
@@ -277,23 +277,23 @@ export class SerializedStateManager {
 		} else {
 			const { baseSnapshot, snapshotBlobs } = this.pendingLocalState;
 			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshot);
-			this.snapshot = {
-				snapshot: baseSnapshot,
-				snapshotSequenceNumber: attributes.sequenceNumber,
-			};
-			this.tryRefreshSnapshot();
 			const blobContents = new Map<string, ArrayBuffer>();
 			for (const [id, value] of Object.entries(snapshotBlobs)) {
 				blobContents.set(id, stringToBuffer(value, "utf8"));
 			}
 			const snapshot: ISnapshot = {
-				sequenceNumber: this.snapshot.snapshotSequenceNumber,
+				sequenceNumber: attributes.sequenceNumber,
 				snapshotTree: baseSnapshot,
 				blobContents,
 				latestSequenceNumber: undefined,
 				ops: [],
 				snapshotFormatV: 1,
 			};
+			this.snapshotInfo = {
+				snapshot,
+				snapshotSequenceNumber: attributes.sequenceNumber,
+			};
+			this.tryRefreshSnapshot();
 			return { snapshot, version: undefined, attributes };
 		}
 	}
@@ -373,7 +373,7 @@ export class SerializedStateManager {
 				snapshotSequenceNumber,
 				firstProcessedOpSequenceNumber,
 				lastProcessedOpSequenceNumber,
-				stashedSnapshotSequenceNumber: this.snapshot?.snapshotSequenceNumber,
+				stashedSnapshotSequenceNumber: this.snapshotInfo?.snapshotSequenceNumber,
 			});
 			this.latestSnapshot = undefined;
 			this.refreshTimer.restart();
@@ -381,7 +381,7 @@ export class SerializedStateManager {
 			// Snapshot seq num is between the first and last processed op.
 			// Remove the ops that are already part of the snapshot
 			this.processedOps.splice(0, snapshotSequenceNumber - firstProcessedOpSequenceNumber + 1);
-			this.snapshot = this.latestSnapshot;
+			this.snapshotInfo = this.latestSnapshot;
 			this.latestSnapshot = undefined;
 			this.refreshTimer.restart();
 			this.mc.logger.sendTelemetryEvent({
@@ -402,9 +402,9 @@ export class SerializedStateManager {
 	 * @param snapshot - snapshot and blobs collected while attaching (a form of the attach summary)
 	 */
 	public setInitialSnapshot(snapshot: ISnapshot): void {
-		this.snapshot = {
+		this.snapshotInfo = {
 			snapshot,
-			snapshotSequenceNumber: snapshot.sequenceNumber,
+			snapshotSequenceNumber: snapshot.sequenceNumber ?? 0,
 		};
 		this.refreshTimer.start();
 	}
@@ -431,11 +431,11 @@ export class SerializedStateManager {
 				clientId,
 			},
 			async () => {
-				assert(this.snapshot !== undefined, 0x8e5 /* no base data */);
+				assert(this.snapshotInfo !== undefined, 0x8e5 /* no base data */);
 				const pendingRuntimeState = await runtime.getPendingLocalState({
 					notifyImminentClosure: false,
-					snapshotSequenceNumber: this.snapshot.snapshotSequenceNumber,
-					sessionExpiryTimerStarted: this.snapshot.snapshotFetchedTime,
+					snapshotSequenceNumber: this.snapshotInfo.snapshotSequenceNumber,
+					sessionExpiryTimerStarted: this.snapshotInfo.snapshotFetchedTime,
 				});
 				// This conversion is required because ArrayBufferLike doesn't survive JSON.stringify
 				const loadedGroupIdSnapshots = {};
@@ -449,10 +449,13 @@ export class SerializedStateManager {
 				}
 
 				const snapshotWithBlobs: SnapshotWithBlobs = isInstanceOfISnapshot(
-					this.snapshot.snapshot,
+					this.snapshotInfo.snapshot,
 				)
-					? isnapshotToSnapshotWithBlobs(this.snapshot.snapshot)
-					: await snapshotTreeToSnapshotWithBlobs(this.snapshot.snapshot, this.storageAdapter);
+					? isnapshotToSnapshotWithBlobs(this.snapshotInfo.snapshot)
+					: await snapshotTreeToSnapshotWithBlobs(
+							this.snapshotInfo.snapshot,
+							this.storageAdapter,
+						);
 
 				const pendingState: IPendingContainerState = {
 					attached: true,
@@ -507,30 +510,43 @@ export async function getLatestSnapshotInfo(
 	return PerformanceEvent.timedExecAsync<ISnapshotInfo | undefined>(
 		mc.logger,
 		{ eventName: "GetLatestSnapshotInfo" },
-		async () => {
-			// get the latest non cached snapshot version
-			const specifiedVersion: IVersion[] = await storageAdapter.getVersions(
-				// eslint-disable-next-line unicorn/no-null
-				null,
-				1,
-				"getLatestSnapshotInfo",
-				FetchSource.noCache,
-			);
-			const { snapshot: baseSnapshot } = await getSnapshot(
-				mc,
-				storageAdapter,
-				supportGetSnapshotApi,
-				specifiedVersion[0]?.id,
-			);
-			return {
-				snapshot: baseSnapshot,
-				snapshotSequenceNumber: isInstanceOfISnapshot(baseSnapshot)
-					? baseSnapshot.sequenceNumber
-					: undefined,
-				snapshotFetchedTime: Date.now(),
-			};
+		async (event) => {
+			try {
+				// get the latest non cached snapshot version
+				const specifiedVersion: IVersion[] = await storageAdapter.getVersions(
+					// eslint-disable-next-line unicorn/no-null
+					null,
+					1,
+					"getLatestSnapshotInfo",
+					FetchSource.noCache,
+				);
+				const { snapshot: baseSnapshot } = await getSnapshot(
+					mc,
+					storageAdapter,
+					supportGetSnapshotApi,
+					specifiedVersion[0]?.id,
+				);
+
+				const { sequenceNumber, snapshotTree } = isInstanceOfISnapshot(baseSnapshot)
+					? baseSnapshot
+					: { snapshotTree: baseSnapshot, sequenceNumber: undefined };
+
+				const snapshotSequenceNumber: number =
+					sequenceNumber ??
+					(await getDocumentAttributes(storageAdapter, snapshotTree).then(
+						(a) => a.sequenceNumber,
+					));
+				return {
+					snapshot: baseSnapshot,
+					snapshotSequenceNumber,
+					snapshotFetchedTime: Date.now(),
+				};
+			} catch (error) {
+				event.cancel(undefined, error);
+			}
+			return undefined;
 		},
-	).catch(() => undefined);
+	);
 }
 
 /**
