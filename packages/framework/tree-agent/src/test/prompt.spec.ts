@@ -22,11 +22,41 @@ import type { TreeView } from "../utils.js";
 const sf = new SchemaFactory("test");
 
 describe("Prompt generation", () => {
+	it("gives instructions for editing if an editing function name is supplied", () => {
+		// If no editing function name is supplied, then the prompt shouldn't mention editing
+		{
+			const view = getView(sf.object("Object", {}), {});
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editFunctionName: undefined,
+				domainHints: undefined,
+			});
+			assert.ok(!prompt.includes("### Editing"));
+		}
+
+		// If there is an editing function name supplied, then the prompt should describe how to edit the tree
+		{
+			const view = getView(sf.object("Object", {}), {});
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editFunctionName: "testEditFunction",
+				domainHints: undefined,
+			});
+			assert.ok(prompt.includes("### Editing"));
+			assert.ok(prompt.includes("testEditFunction"));
+		}
+	});
+
 	it("acknowledges the presence of class methods if present", () => {
 		// If no methods, then the prompt shouldn't mention them
 		{
 			const view = getView(sf.object("Object", {}), {});
-			assert.ok(!prompt(view).includes("ALWAYS prefer to use the application helper methods"));
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editFunctionName: "testEditFunction",
+				domainHints: undefined,
+			});
+			assert.ok(!prompt.includes("ALWAYS prefer to use the application helper methods"));
 		}
 
 		// If there are methods, then the prompt should mention them
@@ -46,7 +76,12 @@ describe("Prompt generation", () => {
 			}
 
 			const view = getView(Obj, {});
-			assert.ok(prompt(view).includes("ALWAYS prefer to use the application helper methods"));
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editFunctionName: "testEditFunction",
+				domainHints: undefined,
+			});
+			assert.ok(prompt.includes("ALWAYS prefer to use the application helper methods"));
 		}
 	});
 
@@ -54,7 +89,12 @@ describe("Prompt generation", () => {
 		// If no arrays, then the prompt shouldn't mention them
 		{
 			const view = getView(sf.object("Object", {}), {});
-			assert.ok(!prompt(view).includes("# Editing Arrays"));
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editFunctionName: "testEditFunction",
+				domainHints: undefined,
+			});
+			assert.ok(!prompt.includes("# Editing Arrays"));
 		}
 		// If there are arrays, then the prompt should mention them
 		{
@@ -64,7 +104,12 @@ describe("Prompt generation", () => {
 				}),
 				{ array: [] },
 			);
-			assert.ok(prompt(view).includes("# Editing Arrays"));
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editFunctionName: "testEditFunction",
+				domainHints: undefined,
+			});
+			assert.ok(prompt.includes("# Editing Arrays"));
 		}
 	});
 
@@ -72,7 +117,12 @@ describe("Prompt generation", () => {
 		// If no maps, then the prompt shouldn't mention them
 		{
 			const view = getView(sf.object("Object", {}), {});
-			assert.ok(!prompt(view).includes("# Editing Maps"));
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editFunctionName: "testEditFunction",
+				domainHints: undefined,
+			});
+			assert.ok(!prompt.includes("# Editing Maps"));
 		}
 		// If there are maps, then the prompt should mention them
 		{
@@ -82,7 +132,12 @@ describe("Prompt generation", () => {
 				}),
 				{ map: {} },
 			);
-			assert.ok(prompt(view).includes("# Editing Maps"));
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editFunctionName: "testEditFunction",
+				domainHints: undefined,
+			});
+			assert.ok(prompt.includes("# Editing Maps"));
 		}
 	});
 });
@@ -94,12 +149,4 @@ function getView<TSchema extends ImplicitFieldSchema>(
 	const view = independentView(new TreeViewConfiguration({ schema }), {});
 	view.initialize(initialTree);
 	return view;
-}
-
-function prompt(view: TreeView<ImplicitFieldSchema>): string {
-	return getPrompt({
-		subtree: new Subtree(view),
-		editingToolName: "",
-		editingFunctionName: "",
-	});
 }
