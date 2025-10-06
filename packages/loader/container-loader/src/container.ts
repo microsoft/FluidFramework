@@ -1667,14 +1667,10 @@ export class Container
 		timings.phase2 = performanceNow();
 
 		// Fetch specified snapshot.
-		const { baseSnapshot, version } =
+		const { baseSnapshot, version, attributes } =
 			await this.serializedStateManager.fetchSnapshot(specifiedVersion);
 		const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 		this._loadedFromVersion = version;
-		const attributes: IDocumentAttributes = await getDocumentAttributes(
-			this.storageAdapter,
-			baseSnapshotTree,
-		);
 
 		// If we saved ops, we will replay them and don't need DeltaManager to fetch them
 		const lastProcessedSequenceNumber =
