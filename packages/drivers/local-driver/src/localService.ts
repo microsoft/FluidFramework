@@ -188,7 +188,7 @@ function makeCodeLoader<T>(
 				return rootDataStore as T & FluidObject;
 			};
 
-			const runtime = await ContainerRuntime.loadRuntime2({
+			const runtime = await ContainerRuntime.loadRuntime({
 				context,
 				registry: convertRegistry(registry),
 				provideEntryPoint,
