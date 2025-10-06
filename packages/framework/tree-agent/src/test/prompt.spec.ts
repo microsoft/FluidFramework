@@ -24,11 +24,81 @@ import type { TreeView } from "../utils.js";
 const sf = new SchemaFactory("test");
 
 describe("Prompt generation", () => {
+	it("gives instructions for editing if an editing function name is supplied", () => {
+		// If no editing function name is supplied, then the prompt shouldn't mention editing
+		{
+			const view = getView(sf.object("Object", {}), {});
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+			});
+			assert.ok(!prompt.includes("### Editing"));
+		}
+
+		// If there is an editing function name supplied, then the prompt should describe how to edit the tree
+		{
+			const view = getView(sf.object("Object", {}), {});
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editFunctionName: "testEditFunction",
+			});
+			assert.ok(prompt.includes("### Editing"));
+			assert.ok(prompt.includes("testEditFunction"));
+		}
+	});
+
+	it("includes the editing tool name if supplied", () => {
+		// If no editing tool name is supplied, then the prompt shouldn't mention a tool
+		{
+			const view = getView(sf.object("Object", {}), {});
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editFunctionName: "testEditFunction",
+			});
+			assert.ok(!prompt.includes('You must use the "'));
+		}
+
+		// If there is an editing tool name supplied, then the prompt should describe how to edit the tree
+		{
+			const view = getView(sf.object("Object", {}), {});
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editToolName: "TestEditTool",
+				editFunctionName: "testEditFunction",
+			});
+			assert.ok(prompt.includes("TestEditTool"));
+		}
+	});
+
+	it("includes domain hints if supplied", () => {
+		// If no domain hints, then the prompt shouldn't mention them
+		{
+			const view = getView(sf.object("Object", {}), {});
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+			});
+			assert.ok(!prompt.includes("Domain-specific information"));
+		}
+
+		// If there are domain hints, then the prompt should include them
+		{
+			const view = getView(sf.object("Object", {}), {});
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				domainHints: "These are some domain-specific hints.",
+			});
+			assert.ok(prompt.includes("These are some domain-specific hints."));
+		}
+	});
+
 	it("acknowledges the presence of class methods if present", () => {
 		// If no methods, then the prompt shouldn't mention them
 		{
 			const view = getView(sf.object("Object", {}), {});
-			assert.ok(!prompt(view).includes("ALWAYS prefer to use the application helper methods"));
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editFunctionName: "testEditFunction",
+			});
+			assert.ok(!prompt.includes("ALWAYS prefer to use the application helper methods"));
 		}
 
 		// If there are methods, then the prompt should mention them
@@ -48,7 +118,11 @@ describe("Prompt generation", () => {
 			}
 
 			const view = getView(Obj, {});
-			assert.ok(prompt(view).includes("ALWAYS prefer to use the application helper methods"));
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editFunctionName: "testEditFunction",
+			});
+			assert.ok(prompt.includes("ALWAYS prefer to use the application helper methods"));
 		}
 	});
 
@@ -56,7 +130,11 @@ describe("Prompt generation", () => {
 		// If no arrays, then the prompt shouldn't mention them
 		{
 			const view = getView(sf.object("Object", {}), {});
-			assert.ok(!prompt(view).includes("# Editing Arrays"));
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editFunctionName: "testEditFunction",
+			});
+			assert.ok(!prompt.includes("# Editing Arrays"));
 		}
 		// If there are arrays, then the prompt should mention them
 		{
@@ -66,7 +144,11 @@ describe("Prompt generation", () => {
 				}),
 				{ array: [] },
 			);
-			assert.ok(prompt(view).includes("# Editing Arrays"));
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editFunctionName: "testEditFunction",
+			});
+			assert.ok(prompt.includes("# Editing Arrays"));
 		}
 	});
 
@@ -74,7 +156,11 @@ describe("Prompt generation", () => {
 		// If no maps, then the prompt shouldn't mention them
 		{
 			const view = getView(sf.object("Object", {}), {});
-			assert.ok(!prompt(view).includes("# Editing Maps"));
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editFunctionName: "testEditFunction",
+			});
+			assert.ok(!prompt.includes("# Editing Maps"));
 		}
 		// If there are maps, then the prompt should mention them
 		{
@@ -84,7 +170,11 @@ describe("Prompt generation", () => {
 				}),
 				{ map: {} },
 			);
-			assert.ok(prompt(view).includes("# Editing Maps"));
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editFunctionName: "testEditFunction",
+			});
+			assert.ok(prompt.includes("# Editing Maps"));
 		}
 	});
 });
@@ -173,12 +263,4 @@ function getView<TSchema extends ImplicitFieldSchema>(
 	const view = independentView(new TreeViewConfiguration({ schema }), {});
 	view.initialize(initialTree);
 	return view;
-}
-
-function prompt(view: TreeView<ImplicitFieldSchema>): string {
-	return getPrompt({
-		subtree: new Subtree(view),
-		editingToolName: "",
-		editingFunctionName: "",
-	});
 }

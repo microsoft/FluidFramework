@@ -21,6 +21,7 @@ import { version2 } from "./detachedFieldIndexFormatV2.js";
 import { makeDetachedNodeToFieldCodecV1 } from "./detachedFieldIndexCodecV1.js";
 import { makeDetachedNodeToFieldCodecV2 } from "./detachedFieldIndexCodecV2.js";
 import type { DetachedFieldSummaryData } from "./detachedFieldIndexTypes.js";
+import type { Brand } from "../../util/index.js";
 
 export function makeDetachedFieldIndexCodec(
 	revisionTagCodec: RevisionTagCodec,
@@ -44,7 +45,7 @@ export function makeDetachedFieldIndexCodecFamily(
 	]);
 }
 
-export type DetachedFieldIndexFormatVersion = 1 | 2;
+export type DetachedFieldIndexFormatVersion = Brand<1 | 2, "DetachedFieldIndexFormatVersion">;
 export function getCodecTreeForDetachedFieldIndexFormat(
 	version: DetachedFieldIndexFormatVersion,
 ): CodecTree {

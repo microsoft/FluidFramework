@@ -153,7 +153,6 @@ describe("message codec", () => {
 	makeEncodingTestSuite(family, testCases);
 
 	describe("dispatching codec", () => {
-		const version = 1;
 		const codec = makeMessageCodec(
 			TestChange.codecs,
 			DependentFormatVersion.fromUnique(1),
@@ -161,7 +160,6 @@ describe("message codec", () => {
 			{
 				jsonValidator: FormatValidatorBasic,
 			},
-			version,
 		);
 
 		const sessionId: SessionId = "sessionId" as SessionId;
