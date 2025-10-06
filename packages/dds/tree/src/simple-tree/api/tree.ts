@@ -409,7 +409,7 @@ export interface SchemaCompatibilityStatus {
 	 *
 	 * These cases are typically not interesting to applications.
 	 *
-	 * Note that other content in the stored schema that does not impact document compatibility, like {@link NodeSchemaOptionsAlpha.persistedMetadata}, does not effect this field.
+	 * Note that other content in the stored schema that does not impact document compatibility, like {@link NodeSchemaOptionsAlpha.persistedMetadata}, does not affect this field.
 	 *
 	 * For the computation of this equivalence, {@link SchemaStaticsAlpha.staged | staged} schemas are not included.
 	 * If there are any unknown optional fields, even if allowed by {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields}, `isEquivalent` will be false.
