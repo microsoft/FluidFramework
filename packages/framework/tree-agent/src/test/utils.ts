@@ -25,7 +25,8 @@ import type { BaseChatModel } from "@langchain/core/language_models/chat_models"
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatOpenAI } from "@langchain/openai";
 
-import { createSemanticAgent } from "../agent.js";
+import { SharedTreeSemanticAgent } from "../agent.js";
+import { LangchainChatModel } from "../langchain.js";
 import { fail, failUsage, getOrCreate, type TreeView } from "../utils.js";
 
 /**
@@ -122,22 +123,26 @@ async function queryDomain<TSchema extends ImplicitFieldSchema, T = ReadableFiel
 ): Promise<TreeView<TSchema>> {
 	const view = independentView(new TreeViewConfiguration({ schema }), {});
 	view.initialize(initialTree);
-	const client = createLlmClient(provider);
+	const client = new LangchainChatModel(createLlmClient(provider));
 	await (options?.subtree === undefined
-		? createSemanticAgent(client, view, {
+		? new SharedTreeSemanticAgent(client, view, {
 				logger: {
 					log: options?.log ?? (() => {}),
 					treeToString: options?.treeToString as (root: ReadableField<TSchema>) => string,
 				},
 				domainHints: options?.domainHints,
 			}).query(prompt)
-		: createSemanticAgent(client, options.subtree(view.root as ReadableField<TSchema>), {
-				logger: {
-					log: options?.log ?? (() => {}),
-					treeToString: options?.treeToString as (root: TreeNode) => string,
+		: new SharedTreeSemanticAgent(
+				client,
+				options.subtree(view.root as ReadableField<TSchema>),
+				{
+					logger: {
+						log: options?.log ?? (() => {}),
+						treeToString: options?.treeToString as (root: TreeNode) => string,
+					},
+					domainHints: options?.domainHints,
 				},
-				domainHints: options?.domainHints,
-			}).query(prompt));
+			).query(prompt));
 
 	return view;
 }

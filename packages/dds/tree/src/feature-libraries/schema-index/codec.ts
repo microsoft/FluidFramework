@@ -6,6 +6,7 @@
 import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
+	type CodecTree,
 	type FluidClientVersion,
 	type ICodecFamily,
 	type ICodecOptions,
@@ -39,6 +40,10 @@ export function clientVersionToSchemaVersion(
 ): SchemaVersion {
 	// Only one version of the schema codec is currently supported.
 	return SchemaVersion.v1;
+}
+
+export function getCodecTreeForSchemaFormat(version: SchemaVersion): CodecTree {
+	return { name: "Schema", version };
 }
 
 /**
