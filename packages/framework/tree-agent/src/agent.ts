@@ -74,6 +74,7 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 		this.outerTree = new Subtree(tree);
 		const prompt = getPrompt({
 			subtree: this.outerTree,
+			editToolName: this.client.editToolName,
 			editFunctionName: this.client.editFunctionName,
 			domainHints: this.options?.domainHints,
 		});
@@ -124,13 +125,13 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 		let editCount = 0;
 		let editFailed = false;
 		const { editFunctionName } = this.client;
-		const editDisabled = async (): Promise<EditResult> => {
-			return {
-				type: "disabledError",
-				message: "Editing is not enabled for this model.",
-			};
-		};
 		const edit = async (js: string): Promise<EditResult> => {
+			if (editFunctionName === undefined) {
+				return {
+					type: "disabledError",
+					message: "Editing is not enabled for this model.",
+				};
+			}
 			if (!active) {
 				return {
 					type: "expiredError",
@@ -160,7 +161,7 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 
 		const responseMessage = await this.client.query({
 			text: userPrompt,
-			edit: editFunctionName === undefined ? editDisabled : edit,
+			edit,
 		});
 		active = false;
 

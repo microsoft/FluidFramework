@@ -28,8 +28,6 @@ describe("Prompt generation", () => {
 			const view = getView(sf.object("Object", {}), {});
 			const prompt = getPrompt({
 				subtree: new Subtree(view),
-				editFunctionName: undefined,
-				domainHints: undefined,
 			});
 			assert.ok(!prompt.includes("### Editing"));
 		}
@@ -40,10 +38,53 @@ describe("Prompt generation", () => {
 			const prompt = getPrompt({
 				subtree: new Subtree(view),
 				editFunctionName: "testEditFunction",
-				domainHints: undefined,
 			});
 			assert.ok(prompt.includes("### Editing"));
 			assert.ok(prompt.includes("testEditFunction"));
+		}
+	});
+
+	it("includes the editing tool name if supplied", () => {
+		// If no editing tool name is supplied, then the prompt shouldn't mention a tool
+		{
+			const view = getView(sf.object("Object", {}), {});
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editFunctionName: "testEditFunction",
+			});
+			assert.ok(!prompt.includes('You must use the "'));
+		}
+
+		// If there is an editing tool name supplied, then the prompt should describe how to edit the tree
+		{
+			const view = getView(sf.object("Object", {}), {});
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				editToolName: "TestEditTool",
+				editFunctionName: "testEditFunction",
+			});
+			assert.ok(prompt.includes("TestEditTool"));
+		}
+	});
+
+	it("includes domain hints if supplied", () => {
+		// If no domain hints, then the prompt shouldn't mention them
+		{
+			const view = getView(sf.object("Object", {}), {});
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+			});
+			assert.ok(!prompt.includes("Domain-specific information"));
+		}
+
+		// If there are domain hints, then the prompt should include them
+		{
+			const view = getView(sf.object("Object", {}), {});
+			const prompt = getPrompt({
+				subtree: new Subtree(view),
+				domainHints: "These are some domain-specific hints.",
+			});
+			assert.ok(prompt.includes("These are some domain-specific hints."));
 		}
 	});
 
@@ -54,7 +95,6 @@ describe("Prompt generation", () => {
 			const prompt = getPrompt({
 				subtree: new Subtree(view),
 				editFunctionName: "testEditFunction",
-				domainHints: undefined,
 			});
 			assert.ok(!prompt.includes("ALWAYS prefer to use the application helper methods"));
 		}
@@ -79,7 +119,6 @@ describe("Prompt generation", () => {
 			const prompt = getPrompt({
 				subtree: new Subtree(view),
 				editFunctionName: "testEditFunction",
-				domainHints: undefined,
 			});
 			assert.ok(prompt.includes("ALWAYS prefer to use the application helper methods"));
 		}
@@ -92,7 +131,6 @@ describe("Prompt generation", () => {
 			const prompt = getPrompt({
 				subtree: new Subtree(view),
 				editFunctionName: "testEditFunction",
-				domainHints: undefined,
 			});
 			assert.ok(!prompt.includes("# Editing Arrays"));
 		}
@@ -107,7 +145,6 @@ describe("Prompt generation", () => {
 			const prompt = getPrompt({
 				subtree: new Subtree(view),
 				editFunctionName: "testEditFunction",
-				domainHints: undefined,
 			});
 			assert.ok(prompt.includes("# Editing Arrays"));
 		}
@@ -120,7 +157,6 @@ describe("Prompt generation", () => {
 			const prompt = getPrompt({
 				subtree: new Subtree(view),
 				editFunctionName: "testEditFunction",
-				domainHints: undefined,
 			});
 			assert.ok(!prompt.includes("# Editing Maps"));
 		}
@@ -135,7 +171,6 @@ describe("Prompt generation", () => {
 			const prompt = getPrompt({
 				subtree: new Subtree(view),
 				editFunctionName: "testEditFunction",
-				domainHints: undefined,
 			});
 			assert.ok(prompt.includes("# Editing Maps"));
 		}

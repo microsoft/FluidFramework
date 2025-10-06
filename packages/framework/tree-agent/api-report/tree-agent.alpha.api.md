@@ -81,6 +81,8 @@ export class LangchainChatModel implements SharedTreeChatModel {
     // (undocumented)
     readonly editFunctionName = "editTree";
     // (undocumented)
+    readonly editToolName = "GenerateTreeEditingCode";
+    // (undocumented)
     get name(): string | undefined;
     // (undocumented)
     query(query: SharedTreeChatQuery): Promise<string>;
@@ -115,6 +117,7 @@ export interface SemanticAgentOptions<TSchema extends ImplicitFieldSchema> {
 export interface SharedTreeChatModel {
     appendContext?(text: string): void;
     editFunctionName?: string;
+    editToolName?: string;
     name?: string;
     query(message: SharedTreeChatQuery): Promise<string>;
 }

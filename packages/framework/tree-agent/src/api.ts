@@ -104,6 +104,11 @@ export interface SharedTreeChatModel {
 	 */
 	name?: string;
 	/**
+	 * The name of the tool that the model should use to edit the tree, if any.
+	 * @remarks If supplied, this will be mentioned in the context provided to the model and the model will be encouraged to use it when a user query requires an edit.
+	 */
+	editToolName?: string;
+	/**
 	 * The name of the function that the model should generate to edit the tree.
 	 * @remarks If not supplied, the model will not be allowed to edit the tree.
 	 */

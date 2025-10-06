@@ -28,11 +28,6 @@ import {
 import type { TreeView } from "./utils.js";
 
 /**
- * The name of the Tool that the model should use to edit the tree.
- */
-const editingToolName = "GenerateTreeEditingCode";
-
-/**
  * An implementation of {@link SharedTreeChatModel} that wraps a Langchain chat model.
  * @remarks This class is responsible for managing the conversation history and interacting with the Langchain model (e.g. via Tool use for editing).
  * @alpha
@@ -41,6 +36,7 @@ export class LangchainChatModel implements SharedTreeChatModel {
 	private readonly messages: (HumanMessage | AIMessage | ToolMessage)[] = [];
 	public constructor(private readonly model: BaseChatModel) {}
 
+	public readonly editToolName = "GenerateTreeEditingCode";
 	public readonly editFunctionName = "editTree";
 
 	public get name(): string | undefined {
@@ -63,15 +59,12 @@ export class LangchainChatModel implements SharedTreeChatModel {
 				return await edit(functionCode);
 			},
 			{
-				name: editingToolName,
-				description: `Invokes a JavaScript function \`${this.editFunctionName}\` to edit a user's tree`,
+				name: this.editToolName,
+				description: `Invokes a JavaScript function to edit a user's tree`,
 				schema: z.object({
-					functionCode: z
-						.string()
-						.describe(`The code of the \`${this.editFunctionName}\` JavaScript function.
-					`),
+					functionCode: z.string().describe(`The code of the JavaScript function.
+For example: "function ${this.editFunctionName}({ root, create }) { /* your code here */ }"`),
 				}),
-				returnDirect: true,
 			},
 		);
 		const runnable = this.model.bindTools?.([editingTool], { tool_choice: "auto" });

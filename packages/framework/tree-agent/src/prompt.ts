@@ -25,10 +25,11 @@ import {
  */
 export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 	subtree: Subtree<TRoot>;
-	editFunctionName: string | undefined;
-	domainHints: string | undefined;
+	editToolName?: string;
+	editFunctionName?: string;
+	domainHints?: string;
 }): string {
-	const { editFunctionName, subtree, domainHints } = args;
+	const { subtree, editToolName, editFunctionName, domainHints } = args;
 	const { field, schema } = subtree;
 	const arrayInterfaceName = "TreeArray";
 	const mapInterfaceName = "TreeMap";
@@ -121,7 +122,7 @@ ${getTreeMapNodeDocumentation(mapInterfaceName)}
 
 	const rootTypes = normalizeFieldSchema(schema).allowedTypeSet;
 	const editing = `If the user asks you to edit the tree, you should author a JavaScript function to accomplish the user-specified goal, following the instructions for editing detailed below.
-Use an editing tool (if available) to perform the edit.
+${editToolName === undefined ? "Use an applicable tool to perform the edit (if one is available)." : `You must use the "${editToolName}" tool to perform the edit.`}
 After editing the tree, review the latest state of the tree to see if it satisfies the user's request.
 If it does not, or if you receive an error, you may try again with a different approach.
 Once the tree is in the desired state, you should inform the user that the request has been completed.
