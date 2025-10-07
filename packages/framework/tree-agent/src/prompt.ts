@@ -122,7 +122,7 @@ ${getTreeMapNodeDocumentation(mapInterfaceName)}
 
 	const rootTypes = normalizeFieldSchema(schema).allowedTypeSet;
 	const editing = `If the user asks you to edit the tree, you should author a JavaScript function to accomplish the user-specified goal, following the instructions for editing detailed below.
-${editToolName === undefined ? "Use an applicable tool to perform the edit (if one is available)." : `You must use the "${editToolName}" tool to perform the edit.`}
+You must use the "${editToolName}" tool to perform the edit.
 After editing the tree, review the latest state of the tree to see if it satisfies the user's request.
 If it does not, or if you receive an error, you may try again with a different approach.
 Once the tree is in the desired state, you should inform the user that the request has been completed.
@@ -158,7 +158,7 @@ ${typescriptSchemaTypes}
 If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.
 When answering such a question, DO NOT answer with information that is not part of the document unless requested to do so.
 
-${editFunctionName === undefined ? "" : editing}### Application data
+${editToolName === undefined ? "" : editing}### Application data
 
 ${
 	domainHints === undefined

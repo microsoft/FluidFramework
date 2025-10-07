@@ -160,7 +160,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		},
 		loaderProps: {
 			configProvider: configProvider({
-				"Fluid.Container.enableOfflineLoad": true,
+				"Fluid.Container.enableOfflineFull": true,
 				"Fluid.Sequence.intervalStickinessEnabled": true,
 			}),
 		},
@@ -2037,7 +2037,7 @@ describeCompat(
 			},
 			loaderProps: {
 				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
+					"Fluid.Container.enableOfflineFull": true,
 					"Fluid.Sequence.intervalStickinessEnabled": true,
 				}),
 			},
