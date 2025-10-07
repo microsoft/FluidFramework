@@ -155,11 +155,7 @@ export interface TreeBeta {
 	importConcise<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 		data: ConciseTree | undefined,
-	): Unhydrated<
-		TSchema extends ImplicitFieldSchema
-			? TreeFieldFromImplicitField<TSchema>
-			: TreeNode | TreeLeafValue | undefined
-	>;
+	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 	/**
 	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}.
