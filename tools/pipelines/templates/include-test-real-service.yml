@@ -302,7 +302,7 @@ stages:
           retryCountOnTaskFailure: 10
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ parameters.sourcePath }}
+            # workingDirectory: ${{ parameters.sourcePath }}
             script: 'pnpm install $(Initialize.testPackageTgz)'
 
         # Download Test Files & Install Extra Dependencies
