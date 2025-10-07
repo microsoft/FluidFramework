@@ -1,5 +1,32 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v7.0_0)
+
+### New Rules
+
+- `@fluid-internal/fluid/no-hyphen-after-jsdoc-tag`
+- `@fluid-internal/fluid/no-file-path-links-in-jsdoc`
+- `@fluid-internal/fluid/no-markdown-links-in-jsdoc`
+- [@typescript-eslint/no-empty-object-type](https://typescript-eslint.io/rules/no-empty-object-type/)
+- [@typescript-eslint/no-unsafe-function-type](https://typescript-eslint.io/rules/no-unsafe-function-type/)
+- [@typescript-eslint/no-wrapper-object-types](https://typescript-eslint.io/rules/no-wrapper-object-types/)
+
+### Update TypeScript plugin dependencies
+
+`@typescript-eslint/eslint-plugin` and `@typescript-eslint/parser` have been updated.
+These updates includes the deprecation and replacement of a couple of rules that were included in this library.
+
+The following rules have been deprecated and disabled in this library:
+
+- [ban-types](https://typescript-eslint.io/rules/ban-types/)
+- [no-empty-interface](https://typescript-eslint.io/rules/no-empty-interface/)
+
+They are replaced by the following new rules, which are now configured as errors in this library:
+
+- [no-empty-object-type](https://typescript-eslint.io/rules/no-empty-object-type/)
+- [no-unsafe-function-type](https://typescript-eslint.io/rules/no-unsafe-function-type/)
+- [no-wrapper-object-types](https://typescript-eslint.io/rules/no-wrapper-object-types/)
+
 ## [6.1.1](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.1.1)
 
 Enables the following new rules as warnings (they will be promoted to errors in the next major release):

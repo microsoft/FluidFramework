@@ -17,7 +17,7 @@ import type { Covariant } from "./typeCheck.js";
  * mismatched branded types will be:
  * `Type 'Name1' is not assignable to type 'Name2'.`
  *
- * These branded types are not opaque: A `Brand<A, B>` can still be used as a `B`.
+ * These branded types are not opaque: A `Brand<A, B>` can still be used as a `A`.
  */
 export type Brand<ValueType, Name> = ValueType & BrandedType<ValueType, Name>;
 

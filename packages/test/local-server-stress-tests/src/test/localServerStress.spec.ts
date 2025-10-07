@@ -35,7 +35,7 @@ describe("Local Server Stress", () => {
 		defaultTestCount: 200,
 		saveFailures,
 		configurations: {
-			"Fluid.Container.enableOfflineLoad": true,
+			"Fluid.Container.enableOfflineFull": true,
 			"Fluid.ContainerRuntime.EnableRollback": true,
 		},
 		// skipMinimization: true,

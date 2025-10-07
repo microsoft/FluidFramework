@@ -20,6 +20,7 @@ import {
 	testRevisionTagCodec,
 } from "../../utils.js";
 import { strict as assert } from "node:assert";
+import { DependentFormatVersion } from "../../../codec/index.js";
 
 const tags = Array.from({ length: 3 }, mintRevisionTag);
 
@@ -196,9 +197,14 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 
 export function testCodec() {
 	describe("Codec", () => {
-		const family = makeEditManagerCodecs(TestChange.codecs, testRevisionTagCodec, {
-			jsonValidator: FormatValidatorBasic,
-		});
+		const family = makeEditManagerCodecs(
+			TestChange.codecs,
+			DependentFormatVersion.fromUnique(1),
+			testRevisionTagCodec,
+			{
+				jsonValidator: FormatValidatorBasic,
+			},
+		);
 
 		// Versions 1 through 4 do not encode the summary originator ID.
 		makeEncodingTestSuite(
