@@ -33,7 +33,11 @@ import {
 	type ISerializableBlobContents,
 	getBlobContentsFromTree,
 } from "./containerStorageAdapter.js";
-import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";
+import {
+	convertSnapshotToSnapshotInfo,
+	convertISnapshotToSnapshotWithBlobs,
+	getDocumentAttributes,
+} from "./utils.js";
 
 /**
  * This is very similar to {@link @fluidframework/protocol-definitions/internal#ISnapshot}, but the difference is
@@ -410,29 +414,21 @@ export class SerializedStateManager {
 	 * base snapshot when attaching.
 	 * @param snapshot - snapshot and blobs collected while attaching (a form of the attach summary)
 	 */
-	public setInitialSnapshot(snapshot: SnapshotWithBlobs | undefined): void {
+	public setInitialSnapshot(snapshot: ISnapshot): void {
 		if (this.offlineLoadEnabled) {
 			assert(
 				this.snapshot === undefined,
 				0x937 /* inital snapshot should only be defined once */,
 			);
-			assert(snapshot !== undefined, 0x938 /* attachment snapshot should be defined */);
-			const { baseSnapshot, snapshotBlobs } = snapshot;
-			const attributesHash =
-				".protocol" in baseSnapshot.trees
-					? baseSnapshot.trees[".protocol"].blobs.attributes
-					: baseSnapshot.blobs[".attributes"];
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const attributes = JSON.parse(snapshotBlobs[attributesHash]);
 			assert(
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				attributes.sequenceNumber === 0,
+				snapshot.sequenceNumber === 0,
 				0x939 /* trying to set a non attachment snapshot */,
 			);
 			this.snapshot = {
-				...snapshot,
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				snapshotSequenceNumber: attributes.sequenceNumber as number,
+				...convertISnapshotToSnapshotWithBlobs(snapshot),
+				snapshotSequenceNumber: snapshot.sequenceNumber,
+				snapshotFetchedTime: Date.now(),
 			};
 			this.refreshTimer.start();
 		}
