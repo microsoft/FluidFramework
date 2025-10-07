@@ -420,13 +420,17 @@ export interface SchemaCompatibilityStatus {
 	 * Whether the current view schema is sufficiently compatible with the stored schema to allow viewing tree data.
 	 * If false, {@link TreeView.root} will throw upon access.
 	 * @remarks
-	 * Currently, this field is true if `isEquivalent` is true as well as the following case:
+	 * If the view schema does not opt into supporting any additional cases, then `canView` is only true when `isEquivalent` is also true.
+	 * The view schema can however opt into supporting additional cases, and thus can also view documents with stored schema which would be equivalent, except for the following discrepancies:
 	 *
-	 * If the view schema sets {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields} to true, documents with additional optional fields in the corresponding schema will also be viewable.
-	 * In this case `canUpgrade` and `isEquivalent` will be false.
+	 * - An object node with {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields} to set to true that has additional optional fields in the stored schema beyond those mentioned in its view schema.
+	 *
+	 * - An additional type allowed at a location in the stored schema where it is {@link SchemaStaticsAlpha.staged | staged} in the view schema.
+	 *
+	 * In these cases `canUpgrade` and `isEquivalent` will be false.
 	 *
 	 * When the documents allowed by the view schema is a strict superset of those by the stored schema,
-	 * this is false because writes to the document using the view schema could make the document violate its stored schema.
+	 * `canView` is false because writes to the document using the view schema could make the document violate its stored schema.
 	 * In this case, the stored schema could be updated to match the provided view schema, allowing read-write access to the tree.
 	 * See {@link SchemaCompatibilityStatus.canUpgrade}.
 	 *
@@ -443,7 +447,7 @@ export interface SchemaCompatibilityStatus {
 	readonly canView: boolean;
 
 	/**
-	 * True when a {@link TreeView.upgradeSchema} can be performed to add support for all content required to be supported by the view schema.
+	 * True when {@link TreeView.upgradeSchema} can add support for all content required to be supported by the view schema.
 	 * @remarks
 	 * When true, it is valid to call {@link TreeView.upgradeSchema} (though if the stored schema is already an exact match, this is a no-op).
 	 *
