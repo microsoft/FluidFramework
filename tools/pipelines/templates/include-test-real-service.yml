@@ -525,4 +525,4 @@ stages:
     stageId: ${{ parameters.stageId }}
     uploadTestPassRateTelemetry: ${{ parameters.uploadTestPassRateTelemetry }}
     pipelineIdentifierForTelemetry: ${{ parameters.pipelineIdentifierForTelemetry }}
-    testWorkspace: $(Build.SourcesDirectory)
+    testWorkspace: ${{ variables['Build.SourcesDirectory'] }}
