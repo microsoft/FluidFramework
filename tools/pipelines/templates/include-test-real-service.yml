@@ -307,8 +307,8 @@ stages:
           retryCountOnTaskFailure: 10
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ variables.ffPipelineHostPath }}
-            script: 'pnpm install $(Initialize.testPackageTgz)'
+            workingDirectory: ${{ variables.sourcePath }}
+            script: 'pnpm install -w $(Initialize.testPackageTgz)'
 
         # Download Test Files & Install Extra Dependencies
         # These steps are intended to include extra dependencies that are not available as
@@ -363,7 +363,7 @@ stages:
             displayName: Compute compat versions install location and version
             inputs:
               targetType: 'inline'
-              workingDirectory: ${{ variables.ffPipelineHostPath }}/node_modules/@fluid-private/test-end-to-end-tests
+              workingDirectory: ${{ variables.sourcePath }}/node_modules/@fluid-private/test-end-to-end-tests
               # Using import.meta.resolve to compute this is more resilient to different install tree types.
               # Also note that test-version-utils is esm-only, so cannot be loaded with require.
               script: |
