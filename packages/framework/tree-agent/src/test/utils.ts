@@ -109,41 +109,34 @@ export function createLlmClient(provider: LlmProvider): BaseChatModel {
  * - `ANTHROPIC_API_KEY` for Anthropic
  * - `GEMINI_API_KEY` for Gemini
  */
-async function queryDomain<TSchema extends ImplicitFieldSchema, T = ReadableField<TSchema>>(
+async function queryDomain<TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
 	initialTree: InsertableField<TSchema>,
 	provider: LlmProvider,
 	prompt: string,
 	options?: {
-		subtree?: (root: ReadableField<TSchema>) => T & TreeNode;
+		subtree?: (root: ReadableField<TSchema>) => TreeNode;
 		domainHints?: string;
-		treeToString?: (root: T) => string;
 		readonly log?: (text: string) => void;
 	},
 ): Promise<TreeView<TSchema>> {
 	const view = independentView(new TreeViewConfiguration({ schema }), {});
 	view.initialize(initialTree);
 	const client = new LangchainChatModel(createLlmClient(provider));
-	await (options?.subtree === undefined
-		? new SharedTreeSemanticAgent(client, view, {
-				logger: {
-					log: options?.log ?? (() => {}),
-					treeToString: options?.treeToString as (root: ReadableField<TSchema>) => string,
-				},
-				domainHints: options?.domainHints,
-			}).query(prompt)
-		: new SharedTreeSemanticAgent(
-				client,
-				options.subtree(view.root as ReadableField<TSchema>),
-				{
-					logger: {
-						log: options?.log ?? (() => {}),
-						treeToString: options?.treeToString as (root: TreeNode) => string,
-					},
+	const logger = options?.log === undefined ? undefined : { log: options.log };
+	const subtree = options?.subtree?.(view.root);
+	const agent =
+		subtree === undefined
+			? new SharedTreeSemanticAgent(client, view, {
+					logger,
 					domainHints: options?.domainHints,
-				},
-			).query(prompt));
+				})
+			: new SharedTreeSemanticAgent(client, subtree, {
+					logger,
+					domainHints: options?.domainHints,
+				});
 
+	await agent.query(prompt);
 	return view;
 }
 
@@ -159,7 +152,6 @@ export interface LLMIntegrationTest<TRoot extends ImplicitFieldSchema | UnsafeUn
 	readonly options?: {
 		readonly subtree?: (root: ReadableField<TRoot>) => TreeNode;
 		readonly domainHints?: string;
-		readonly treeToString?: (root: ReadableField<TRoot>) => string;
 		readonly log?: (text: string) => void;
 	};
 }
@@ -365,7 +357,6 @@ export function describeIntegrationTests(
 				{
 					subtree: options?.subtree,
 					domainHints: options?.domainHints,
-					treeToString: options?.treeToString,
 					log: (text) => {
 						appendFileSync(fd, text, { encoding: "utf8" });
 					},

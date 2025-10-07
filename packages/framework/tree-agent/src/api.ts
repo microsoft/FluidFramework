@@ -6,42 +6,50 @@
 import type { ImplicitFieldSchema, TreeNode } from "@fluidframework/tree";
 import type { FactoryContentObject, ReadableField } from "@fluidframework/tree/alpha";
 
+// This is used for doc links
+// eslint-disable-next-line unused-imports/no-unused-imports
+import type { SharedTreeSemanticAgent } from "./agent.js";
+
 /**
  * Logger interface for logging events from a {@link SharedTreeSemanticAgent}.
  * @alpha
  */
-export interface Logger<
-	TTree extends ReadableField<ImplicitFieldSchema> = ReadableField<ImplicitFieldSchema>,
-> {
+export interface Logger {
 	/**
 	 * Log a message.
 	 */
 	log(message: string): void;
-	/**
-	 * Optional function to override the default tree stringification (JSON) when logging tree state.
-	 */
-	treeToString?(tree: TTree): string;
 }
 
 /**
  * Options used to parameterize the creation of a {@link SharedTreeSemanticAgent}.
  * @alpha
  */
-export interface SemanticAgentOptions<TSchema extends ImplicitFieldSchema> {
+export interface SemanticAgentOptions {
+	/**
+	 * Additional information about the application domain that will be included in the context provided to the {@link SharedTreeChatModel | model}.
+	 */
 	domainHints?: string;
+	/**
+	 * Validates any generated JavaScript created by the {@link SharedTreeChatModel.editToolName | model's editing tool} before running it.
+	 * @remarks If this returns false, then the edit will throw an error instead of attempting to execute the JavaScript.
+	 */
 	validator?: (js: string) => boolean;
 	/**
 	 * The maximum number of sequential edits the LLM can make before we assume it's stuck in a loop.
 	 */
 	maximumSequentialEdits?: number;
-	logger?: Logger<ReadableField<TSchema>>;
+	/**
+	 * If supplied, generates human-readable markdown text describing the actions taken by the {@link SharedTreeSemanticAgent | agent} as it performs queries.
+	 */
+	logger?: Logger;
 }
 
 /**
  * A result from an edit attempt via the {@link SharedTreeChatQuery.edit} function.
  * @remarks
  * - `success`: The edit was successfully applied.
- * - `disabledError`: The model is not allowed to edit the tree (i.e. {@link SharedTreeChatModel.editFunctionName} was not provided).
+ * - `disabledError`: The model is not allowed to edit the tree (i.e. {@link SharedTreeSemanticAgent.editFunctionName} was not provided).
  * - `validationError`: The provided JavaScript did not pass the optional {@link SemanticAgentOptions.validator} function.
  * - `compileError`: The provided JavaScript could not be parsed or compiled.
  * - `runtimeError`: An error was thrown while executing the provided JavaScript.
@@ -98,6 +106,7 @@ export interface SharedTreeChatQuery {
 
 /**
  * A plugin interface that handles queries from a {@link SharedTreeSemanticAgent}.
+ * @remarks This wraps an underlying communication with an LLM and receives all necessary {@link SharedTreeChatModel.appendContext | context} from the {@link SharedTreeSemanticAgent | agent} for the LLM to properly analyze and edit the tree.
  * @alpha
  */
 export interface SharedTreeChatModel {
@@ -108,18 +117,18 @@ export interface SharedTreeChatModel {
 	 */
 	name?: string;
 	/**
-	 * The name of the tool that the model should use to edit the tree, if any.
-	 * @remarks If supplied, this will be mentioned in the context provided to the model and the model will be encouraged to use it when a user query requires an edit.
+	 * The name of the tool that the model should use to edit the tree.
+	 * @remarks If supplied, this will be mentioned in the context provided to the model so that the underlying LLM will be encouraged to use it when a user query requires an edit.
+	 * The model should "implement" the tool by registering it with the underlying LLM API.
+	 * The tool should take an LLM-generated JavaScript function as input and supply it to the {@link SharedTreeChatQuery.edit | edit} function.
+	 * Instructions for generating the proper function signature and implementation will be provided by the {@link SharedTreeSemanticAgent | agent} via {@link SharedTreeChatModel.appendContext | context}.
+	 * If not supplied, the model will not be able to edit the tree (running the {@link SharedTreeChatQuery.edit | edit} function will fail).
 	 */
 	editToolName?: string;
 	/**
-	 * The name of the function that the model should generate to edit the tree.
-	 * @remarks If not supplied, the model will not be allowed to edit the tree.
-	 */
-	editFunctionName?: string;
-	/**
 	 * Add contextual information to the model that may be relevant to future queries.
 	 * @remarks In practice, this may be implemented by e.g. appending a "system" message to an LLM's chat/message history.
+	 * This context must be present in the context window of every {@link SharedTreeChatModel.query | query} for e.g. {@link SharedTreeChatModel.editToolName | editing} to work.
 	 * @param text - The message or context to append.
 	 */
 	appendContext?(text: string): void;

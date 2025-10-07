@@ -37,7 +37,6 @@ export class LangchainChatModel implements SharedTreeChatModel {
 	public constructor(private readonly model: BaseChatModel) {}
 
 	public readonly editToolName = "GenerateTreeEditingCode";
-	public readonly editFunctionName = "editTree";
 
 	public get name(): string | undefined {
 		const name = this.model.metadata?.modelName;
@@ -63,7 +62,7 @@ export class LangchainChatModel implements SharedTreeChatModel {
 				description: `Invokes a JavaScript function to edit a user's tree`,
 				schema: z.object({
 					functionCode: z.string().describe(`The code of the JavaScript function.
-For example: "function ${this.editFunctionName}({ root, create }) { /* your code here */ }"`),
+For example: "function ${SharedTreeSemanticAgent.editFunctionName}({ root, create }) { /* your code here */ }"`),
 				}),
 			},
 		);
@@ -109,7 +108,7 @@ For example: "function ${this.editFunctionName}({ root, create }) { /* your code
 export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(
 	client: BaseChatModel,
 	treeView: TreeView<TSchema>,
-	options?: Readonly<SemanticAgentOptions<TSchema>>,
+	options?: Readonly<SemanticAgentOptions>,
 ): SharedTreeSemanticAgent<TSchema>;
 /**
  * Create a {@link SharedTreeSemanticAgent} using a Langchain chat model.
@@ -119,7 +118,7 @@ export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(
 export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(
 	client: BaseChatModel,
 	node: ReadableField<TSchema> & TreeNode,
-	options?: Readonly<SemanticAgentOptions<TSchema>>,
+	options?: Readonly<SemanticAgentOptions>,
 ): SharedTreeSemanticAgent<TSchema>;
 /**
  * Create a {@link SharedTreeSemanticAgent} using a Langchain chat model.
@@ -129,7 +128,7 @@ export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(
 export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(
 	client: BaseChatModel,
 	treeView: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode),
-	options?: Readonly<SemanticAgentOptions<TSchema>>,
+	options?: Readonly<SemanticAgentOptions>,
 ): SharedTreeSemanticAgent<TSchema>;
 /**
  * Create a {@link SharedTreeSemanticAgent} using a Langchain chat model.
@@ -139,7 +138,7 @@ export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(
 export function createSemanticAgent<TSchema extends ImplicitFieldSchema>(
 	client: BaseChatModel,
 	treeView: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode),
-	options?: Readonly<SemanticAgentOptions<TSchema>>,
+	options?: Readonly<SemanticAgentOptions>,
 ): SharedTreeSemanticAgent<TSchema> {
 	return new SharedTreeSemanticAgent(new LangchainChatModel(client), treeView, options);
 }
