@@ -7,6 +7,7 @@ import { fail } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
 import {
+	type Brand,
 	type JsonCompatibleReadOnlyObject,
 	type MakeNominal,
 	brand,
@@ -39,6 +40,7 @@ export enum SchemaVersion {
 	 */
 	v2 = 2,
 }
+export type SchemaFormatVersion = Brand<SchemaVersion, "SchemaFormatVersion">;
 
 type FieldSchemaFormat = FieldSchemaFormatV1 | FieldSchemaFormatV2;
 
