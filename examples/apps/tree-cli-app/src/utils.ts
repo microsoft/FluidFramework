@@ -31,6 +31,7 @@ import {
 	TreeAlpha,
 	KeyEncodingOptions,
 } from "@fluidframework/tree/alpha";
+import { TreeBeta } from "@fluidframework/tree/beta";
 import { type Static, Type } from "@sinclair/typebox";
 
 import type { Item } from "./schema.js";
