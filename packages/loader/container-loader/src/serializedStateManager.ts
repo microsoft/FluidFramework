@@ -10,6 +10,7 @@ import type {
 	IEvent,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import type { IDisposable } from "@fluidframework/core-interfaces/internal";
 import { Timer, assert } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
@@ -165,7 +166,7 @@ class RefreshPromiseTracker {
  * as well as the snapshot to be used for serialization.
  * It also keeps track of container dirty state and which local ops have been processed
  */
-export class SerializedStateManager {
+export class SerializedStateManager implements IDisposable {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
 	private readonly mc: MonitoringContext;
 	private snapshot: ISnapshotInfo | undefined;
@@ -181,8 +182,10 @@ export class SerializedStateManager {
 			),
 	);
 	private readonly lastSavedOpSequenceNumber: number = 0;
-	private readonly refreshTimer: Timer;
+	private readonly refreshTimer: Timer | undefined;
 	private readonly snapshotRefreshTimeoutMs: number = 60 * 60 * 24 * 1000;
+	readonly #snapshotRefreshEnabled: boolean;
+	#disposed: boolean = false;
 
 	/**
 	 * @param pendingLocalState - The pendingLocalState being rehydrated, if any (undefined when loading directly from storage)
@@ -208,9 +211,14 @@ export class SerializedStateManager {
 		});
 
 		this.snapshotRefreshTimeoutMs = snapshotRefreshTimeoutMs ?? this.snapshotRefreshTimeoutMs;
-		this.refreshTimer = new Timer(this.snapshotRefreshTimeoutMs, () =>
-			this.tryRefreshSnapshot(),
-		);
+
+		this.#snapshotRefreshEnabled =
+			(this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") ??
+				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull")) === true;
+
+		this.refreshTimer = this.#snapshotRefreshEnabled
+			? new Timer(this.snapshotRefreshTimeoutMs, () => this.tryRefreshSnapshot())
+			: undefined;
 		// special case handle. Obtaining the last saved op seq num to avoid
 		// refreshing the snapshot before we have processed it. It could cause
 		// a subsequent stashing to have a newer snapshot than allowed.
@@ -220,6 +228,19 @@ export class SerializedStateManager {
 				pendingLocalState.savedOps[savedOpsSize - 1].sequenceNumber;
 		}
 		containerEvent.on("saved", () => this.updateSnapshotAndProcessedOpsMaybe());
+	}
+	public get disposed(): boolean {
+		return this.#disposed;
+	}
+	dispose(): void {
+		this.#disposed = true;
+		this.refreshTimer?.clear();
+	}
+
+	private verifyNotDisposed(): void {
+		if (this.#disposed) {
+			throw new Error("SerializedStateManager used after dispose.");
+		}
 	}
 
 	public get offlineLoadEnabled(): boolean {
@@ -260,6 +281,7 @@ export class SerializedStateManager {
 		version: IVersion | undefined;
 		attributes: IDocumentAttributes;
 	}> {
+		this.verifyNotDisposed();
 		if (this.pendingLocalState === undefined) {
 			const { baseSnapshot, version } = await getSnapshot(
 				this.mc,
@@ -280,7 +302,7 @@ export class SerializedStateManager {
 							snapshotBlobs,
 							snapshotSequenceNumber: attributes.sequenceNumber,
 						};
-						this.refreshTimer.start();
+						this.refreshTimer?.start();
 						return attributes.sequenceNumber;
 					}),
 				);
@@ -313,8 +335,8 @@ export class SerializedStateManager {
 
 	private tryRefreshSnapshot(): void {
 		if (
-			(this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") ??
-				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull")) === true &&
+			this.#snapshotRefreshEnabled &&
+			!this.#disposed &&
 			!this.refreshTracker.hasPromise &&
 			this.latestSnapshot === undefined
 		) {
@@ -335,6 +357,10 @@ export class SerializedStateManager {
 			this.storageAdapter,
 			supportGetSnapshotApi,
 		);
+
+		if (this.#disposed) {
+			return -1;
+		}
 
 		// These are loading groupIds that the containerRuntime has requested over its lifetime.
 		// We will fetch the latest snapshot for the groupIds, which will update storageAdapter.loadedGroupIdSnapshots's cache
@@ -364,6 +390,7 @@ export class SerializedStateManager {
 	private updateSnapshotAndProcessedOpsMaybe(): number {
 		const snapshotSequenceNumber = this.latestSnapshot?.snapshotSequenceNumber;
 		if (
+			this.#disposed ||
 			snapshotSequenceNumber === undefined ||
 			this.processedOps.length === 0 ||
 			this.processedOps[this.processedOps.length - 1].sequenceNumber <
@@ -389,14 +416,14 @@ export class SerializedStateManager {
 				stashedSnapshotSequenceNumber: this.snapshot?.snapshotSequenceNumber,
 			});
 			this.latestSnapshot = undefined;
-			this.refreshTimer.restart();
+			this.refreshTimer?.restart();
 		} else if (snapshotSequenceNumber <= lastProcessedOpSequenceNumber) {
 			// Snapshot seq num is between the first and last processed op.
 			// Remove the ops that are already part of the snapshot
 			this.processedOps.splice(0, snapshotSequenceNumber - firstProcessedOpSequenceNumber + 1);
 			this.snapshot = this.latestSnapshot;
 			this.latestSnapshot = undefined;
-			this.refreshTimer.restart();
+			this.refreshTimer?.restart();
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SnapshotRefreshed",
 				snapshotSequenceNumber,
@@ -415,6 +442,7 @@ export class SerializedStateManager {
 	 * @param snapshot - snapshot and blobs collected while attaching (a form of the attach summary)
 	 */
 	public setInitialSnapshot(snapshot: ISnapshot): void {
+		this.verifyNotDisposed();
 		if (this.offlineLoadEnabled) {
 			assert(
 				this.snapshot === undefined,
@@ -430,7 +458,7 @@ export class SerializedStateManager {
 				snapshotSequenceNumber: snapshot.sequenceNumber,
 				snapshotFetchedTime: Date.now(),
 			};
-			this.refreshTimer.start();
+			this.refreshTimer?.start();
 		}
 	}
 
@@ -443,6 +471,8 @@ export class SerializedStateManager {
 		runtime: Pick<IRuntime, "getPendingLocalState">,
 		resolvedUrl: IResolvedUrl,
 	): Promise<string> {
+		this.verifyNotDisposed();
+
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{
