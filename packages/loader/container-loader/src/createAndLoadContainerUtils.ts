@@ -327,7 +327,6 @@ export async function loadSummarizerContainerAndMakeSummary(
 	mc.logger.send({
 		category: "generic",
 		eventName: "summarizerContainer_created",
-		requestUrl: originalRequest.url,
 	});
 
 	let success = false;
