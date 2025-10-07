@@ -949,7 +949,7 @@ export interface TreeBeta {
     create<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: InsertableTreeFieldFromImplicitField<TSchema>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
     exportConcise(node: TreeNode | TreeLeafValue | undefined, options?: TreeEncodingOptions): ConciseTree | undefined;
-    importConcise<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: ConciseTree | undefined): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
+    importConcise<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: ConciseTree | undefined): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>): () => void;
 }
 

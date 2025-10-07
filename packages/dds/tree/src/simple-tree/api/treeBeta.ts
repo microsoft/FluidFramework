@@ -245,6 +245,23 @@ export function borrowCursorFromTreeNodeOrValue(
 /**
  * {@inheritDoc (TreeBeta:interface).importConcise}
  */
+export function importConcise<TSchema extends ImplicitFieldSchema>(
+	schema: TSchema & ImplicitFieldSchema,
+	data: ConciseTree | undefined,
+): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+/**
+ * {@inheritDoc (TreeAlpha:interface).importConcise}
+ */
+export function importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	schema: UnsafeUnknownSchema extends TSchema
+		? ImplicitFieldSchema
+		: TSchema & ImplicitFieldSchema,
+	data: ConciseTree | undefined,
+): Unhydrated<
+	TSchema extends ImplicitFieldSchema
+		? TreeFieldFromImplicitField<TSchema>
+		: TreeNode | TreeLeafValue | undefined
+>;
 export function importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 	schema: UnsafeUnknownSchema extends TSchema
 		? ImplicitFieldSchema
