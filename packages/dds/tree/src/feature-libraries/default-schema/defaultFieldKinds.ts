@@ -33,6 +33,7 @@ import { sequenceFieldChangeHandler } from "../sequence-field/index.js";
 
 import { noChangeCodecFamily } from "./noChangeCodecs.js";
 import type { CodecTree } from "../../codec/index.js";
+import { brand, type Brand } from "../../util/index.js";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.
@@ -211,7 +212,7 @@ export const fieldKindConfigurations: ReadonlyMap<
 	FieldKindConfiguration
 > = new Map([
 	[
-		1,
+		brand(1),
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
 			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
 			[required.identifier, { kind: required, formatVersion: 1 }],
@@ -222,7 +223,7 @@ export const fieldKindConfigurations: ReadonlyMap<
 		]),
 	],
 	[
-		2,
+		brand(2),
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
 			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
 			[required.identifier, { kind: required, formatVersion: 2 }],
@@ -233,7 +234,7 @@ export const fieldKindConfigurations: ReadonlyMap<
 		]),
 	],
 	[
-		3,
+		brand(3),
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
 			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
 			[required.identifier, { kind: required, formatVersion: 2 }],
@@ -244,7 +245,7 @@ export const fieldKindConfigurations: ReadonlyMap<
 		]),
 	],
 	[
-		4,
+		brand(4),
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
 			[nodeKey.identifier, { kind: nodeKey, formatVersion: 1 }],
 			[required.identifier, { kind: required, formatVersion: 2 }],
@@ -256,7 +257,7 @@ export const fieldKindConfigurations: ReadonlyMap<
 	],
 ]);
 
-export type ModularChangeFormatVersion = 1 | 2 | 3 | 4;
+export type ModularChangeFormatVersion = Brand<1 | 2 | 3 | 4, "ModularChangeFormatVersion">;
 export function getCodecTreeForModularChangeFormat(
 	version: ModularChangeFormatVersion,
 ): CodecTree {
