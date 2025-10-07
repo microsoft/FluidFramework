@@ -354,7 +354,7 @@ export namespace FluidSerializableAsTree {
     export type Data = JsonCompatible<IFluidHandle>;
     const // @system
     _APIExtractorWorkaroundObjectBase: TreeNodeSchemaClass_2<"com.fluidframework.serializable.object", NodeKind_2.Record, TreeRecordNodeUnsafe_2<readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema_2<"string", string>, LeafSchema_2<"number", number>, LeafSchema_2<"boolean", boolean>, LeafSchema_2<"null", null>, LeafSchema_2<"handle", IFluidHandle<unknown>>]> & WithType_2<"com.fluidframework.serializable.object", NodeKind_2.Record, unknown>, {
-    readonly [x: string]: string | number | IFluidHandle<unknown> | System_Unsafe_2.InsertableTypedNodeUnsafe<LeafSchema_2<"boolean", boolean>, LeafSchema_2<"boolean", boolean>> | FluidSerializableObject | Array | null;
+    readonly [x: string]: string | number | IFluidHandle<unknown> | FluidSerializableObject | Array | System_Unsafe_2.InsertableTypedNodeUnsafe<LeafSchema_2<"boolean", boolean>, LeafSchema_2<"boolean", boolean>> | null;
     }, false, readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema_2<"string", string>, LeafSchema_2<"number", number>, LeafSchema_2<"boolean", boolean>, LeafSchema_2<"null", null>, LeafSchema_2<"handle", IFluidHandle<unknown>>], undefined, unknown>;
     // @sealed
     export class FluidSerializableObject extends _APIExtractorWorkaroundObjectBase {
@@ -709,9 +709,6 @@ export type InsertableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownS
 TSchema
 ] extends [ImplicitFieldSchema] ? InsertableTreeFieldFromImplicitField<TSchema> : [TSchema] extends [UnsafeUnknownSchema] ? InsertableContent | undefined : never;
 
-// @alpha @system
-export type InsertableObjectFromAnnotatedSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = InsertableObjectFromSchemaRecord<T>;
-
 // @public @system
 type InsertableObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {
     arbitraryKey: "arbitraryValue";
@@ -844,7 +841,7 @@ export namespace JsonAsTree {
     }
     const // @system
     _APIExtractorWorkaroundObjectBase: TreeNodeSchemaClass<"com.fluidframework.json.object", NodeKind.Record, TreeRecordNodeUnsafe<readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array]> & WithType<"com.fluidframework.json.object", NodeKind.Record, unknown>, {
-        readonly [x: string]: string | number | JsonObject | Array | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | null;
+        readonly [x: string]: string | number | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | JsonObject | Array | null;
     }, false, readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array], undefined, unknown>;
     export type Primitive = TreeNodeFromImplicitAllowedTypes<typeof Primitive>;
     // @system
@@ -1061,7 +1058,7 @@ export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFie
 };
 
 // @alpha @sealed
-export interface ObjectNodeSchema<out TName extends string = string, in out T extends RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>, ImplicitlyConstructable extends boolean = boolean, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Object, TreeObjectNode<T, TName>, InsertableObjectFromAnnotatedSchemaRecord<T>, ImplicitlyConstructable, T, never, TCustomMetadata>, SimpleObjectNodeSchema<TCustomMetadata> {
+export interface ObjectNodeSchema<out TName extends string = string, in out T extends RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>, ImplicitlyConstructable extends boolean = boolean, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Object, TreeObjectNode<T, TName>, InsertableObjectFromSchemaRecord<T>, ImplicitlyConstructable, T, never, TCustomMetadata>, SimpleObjectNodeSchema<TCustomMetadata> {
     readonly fields: ReadonlyMap<string, FieldSchemaAlpha & SimpleObjectFieldSchema>;
 }
 

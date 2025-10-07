@@ -191,18 +191,6 @@ export type InsertableObjectFromSchemaRecord<
 		>;
 
 /**
- * Helper used to remove annotations from a schema record and produce insertable objects,
- *
- * @privateRemarks
- * This calls {@link InsertableObjectFromSchemaRecord} in order to produce the insertable objects.
- *
- * @system @alpha
- */
-export type InsertableObjectFromAnnotatedSchemaRecord<
-	T extends RestrictiveStringRecord<ImplicitFieldSchema>,
-> = InsertableObjectFromSchemaRecord<T>;
-
-/**
  * Maps from simple field keys ("property" keys) to information about the field.
  *
  * @remarks
@@ -611,7 +599,7 @@ export function objectSchema<
 	}
 	type Output = typeof CustomObjectNode &
 		(new (
-			input: InsertableObjectFromAnnotatedSchemaRecord<T> | InternalTreeNode,
+			input: InsertableObjectFromSchemaRecord<T> | InternalTreeNode,
 		) => TreeObjectNode<T, TName>);
 	return CustomObjectNode as Output;
 }
