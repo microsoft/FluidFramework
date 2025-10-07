@@ -13,7 +13,7 @@ import type {
 import type { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
 
 import type { MemoryDetachedBlobStorage } from "./memoryBlobStorage.js";
-import { getSnapshotTreeAndBlobsFromSerializedContainer } from "./utils.js";
+import { getISnapshotFromSerializedContainer } from "./utils.js";
 
 /**
  * The default state a newly created detached container will have.
@@ -209,11 +209,13 @@ export const runRetriableAttachProcess = async ({
 			proposalHandle: undefined,
 		});
 	}
-	const { summary } = currentData;
+
+	const snapshot = getISnapshotFromSerializedContainer(currentData.summary);
+
 	setAttachmentData(
 		(currentData = {
 			state: AttachState.Attached,
 		}),
 	);
-	return getSnapshotTreeAndBlobsFromSerializedContainer(summary);
+	return snapshot;
 };

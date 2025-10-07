@@ -5,7 +5,7 @@
 
 import type { VerboseTree } from "@fluidframework/tree/alpha";
 
-import { Page, Paragraph, Sentence, Word, Span, stringifyPage } from "../domains/index.js";
+import { Page, Paragraph, Sentence, Word, Span } from "../domains/index.js";
 import { scoreSymbol, type LLMIntegrationTest, type ScorableVerboseTree } from "../utils.js";
 
 const expected: ScorableVerboseTree = {
@@ -201,7 +201,6 @@ export const addCommentTest = {
 		"Please add a comment to the word 'treat' that says 'Makes me think of Halloween :)'",
 	expected,
 	options: {
-		treeToString: stringifyPage,
 		domainHints: `You are an assistant that helps people create and edit pages of text. When adding new text, each word (e.g. "the", "cat", "lemonade", etc.) should go in its own Word object. Do not add comments or style the text (i.e. do not use Spans) unless the user specifically asked you to. If the user asks you to style a particular word or phrase that is already included in a larger span, you may split the span into smaller spans in order to apply the style at the granularity requested. Likewise, if two or more adjacent spans have the exact same styling, merge them together.`,
 	},
 } as const satisfies LLMIntegrationTest<typeof Page>;

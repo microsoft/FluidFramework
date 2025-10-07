@@ -10,7 +10,7 @@ import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitio
 
 import {
 	combineAppAndProtocolSummary,
-	getSnapshotTreeAndBlobsFromSerializedContainer,
+	getISnapshotFromSerializedContainer,
 } from "../utils.js";
 
 describe("Dehydrate Container", () => {
@@ -63,8 +63,10 @@ describe("Dehydrate Container", () => {
 
 	it("Summary to baseSnapshot and snapshotBlobs conversion", async () => {
 		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
-		const snapshot = getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
-
+		const snapshot = getISnapshotFromSerializedContainer(combinedSummary);
+		const baseSnapshot = snapshot.snapshotTree;
+		const snapshotBlobs = snapshot.blobContents;
+		assert.strictEqual(Object.keys(baseSnapshot.trees).length, 2, "2 trees should be there");
 		assert.strictEqual(
 			Object.keys(snapshot.snapshotTree.trees).length,
 			2,
@@ -77,8 +79,8 @@ describe("Dehydrate Container", () => {
 		);
 
 		// Validate the ".component" blob.
-		const defaultDataStoreBlobId = snapshot.snapshotTree.trees.default.blobs[".component"];
-		const defaultDataStoreBlob = snapshot.blobContents.get(defaultDataStoreBlobId);
+		const defaultDataStoreBlobId = baseSnapshot.trees.default.blobs[".component"];
+		const defaultDataStoreBlob = snapshotBlobs.get(defaultDataStoreBlobId);
 		assert.strict(defaultDataStoreBlob, "defaultDataStoreBlob undefined");
 		assert.strictEqual(
 			JSON.parse(bufferToString(defaultDataStoreBlob, "utf8")),
@@ -87,9 +89,8 @@ describe("Dehydrate Container", () => {
 		);
 
 		// Validate "root" sub-tree.
-		const rootAttributesBlobId =
-			snapshot.snapshotTree.trees.default.trees.root.blobs.attributes;
-		const rootAttributesBlob = snapshot.blobContents.get(rootAttributesBlobId);
+		const rootAttributesBlobId = baseSnapshot.trees.default.trees.root.blobs.attributes;
+		const rootAttributesBlob = snapshotBlobs.get(rootAttributesBlobId);
 		assert.strict(rootAttributesBlob, "rootAttributesBlob undefined");
 		assert.strictEqual(
 			JSON.parse(bufferToString(rootAttributesBlob, "utf8")),

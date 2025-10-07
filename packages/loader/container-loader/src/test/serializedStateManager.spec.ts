@@ -36,7 +36,7 @@ import {
 
 import { failSometimeProxy } from "./failProxy.js";
 
-const snapshotTree = {
+const snapshotTree: ISnapshotTree = {
 	id: "fromStorage",
 	blobs: {},
 	trees: {
@@ -52,10 +52,15 @@ const snapshotTree = {
 };
 
 const initialSnapshot: ISnapshot = {
-	blobContents: new Map(),
+	blobContents: new Map([
+		[
+			"attributesId-0",
+			stringToBuffer('{"minimumSequenceNumber" : 0, "sequenceNumber": 0}', "utf8"),
+		],
+	]),
 	latestSequenceNumber: undefined,
 	ops: [],
-	sequenceNumber: undefined,
+	sequenceNumber: 0,
 	snapshotTree,
 	snapshotFormatV: 1,
 };

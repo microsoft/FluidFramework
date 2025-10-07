@@ -150,7 +150,6 @@ import { initQuorumValuesFromCodeDetails } from "./quorum.js";
 import {
 	type IPendingContainerState,
 	type IPendingDetachedContainerState,
-	isnapshotToSnapshotWithBlobs,
 	SerializedStateManager,
 } from "./serializedStateManager.js";
 import {
@@ -160,8 +159,9 @@ import {
 	getDetachedContainerStateFromSerializedContainer,
 	getDocumentAttributes,
 	getProtocolSnapshotTree,
-	getSnapshotTreeAndBlobsFromSerializedContainer,
+	getISnapshotFromSerializedContainer,
 	runSingle,
+	convertISnapshotToSnapshotWithBlobs,
 } from "./utils.js";
 
 const detachedContainerRefSeqNumber = 0;
@@ -1248,14 +1248,14 @@ export class Container
 				this.captureProtocolSummary(),
 			);
 
-		const snapshot = getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
+		const snapshot = getISnapshotFromSerializedContainer(combinedSummary);
 		const pendingRuntimeState =
 			attachingData === undefined ? undefined : this.runtime.getPendingLocalState();
 		assert(!isPromiseLike(pendingRuntimeState), 0x8e3 /* should not be a promise */);
 
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			...isnapshotToSnapshotWithBlobs(snapshot),
+			...convertISnapshotToSnapshotWithBlobs(snapshot),
 			pendingRuntimeState,
 			hasAttachmentBlobs:
 				this.detachedBlobStorage !== undefined && this.detachedBlobStorage.size > 0,
