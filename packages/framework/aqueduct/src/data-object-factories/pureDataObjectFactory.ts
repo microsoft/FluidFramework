@@ -385,7 +385,7 @@ export class PureDataObjectFactory<
 	public async createInstanceWithDataStore(
 		containerRuntime: IContainerRuntimeBase,
 		initialState?: I["InitialState"],
-		packagePath?: Readonly<string[]>,
+		packagePath?: readonly string[],
 		loadingGroupId?: string,
 	): Promise<[TObj, IDataStore]> {
 		const context = containerRuntime.createDetachedDataStore(
@@ -440,7 +440,7 @@ export class PureDataObjectFactory<
 
 	protected async createNonRootInstanceCore(
 		containerRuntime: IContainerRuntimeBase,
-		packagePath: Readonly<string[]>,
+		packagePath: readonly string[],
 		initialState?: I["InitialState"],
 		loadingGroupId?: string,
 	): Promise<TObj> {

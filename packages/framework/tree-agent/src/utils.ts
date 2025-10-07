@@ -612,3 +612,10 @@ export function findNamedSchemas(
 	}
 	return set;
 }
+
+/**
+ * De-capitalize (the first letter of) a string.
+ */
+export function communize(str: string): string {
+	return str.charAt(0).toLowerCase() + str.slice(1);
+}

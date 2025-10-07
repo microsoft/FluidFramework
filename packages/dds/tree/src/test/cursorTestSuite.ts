@@ -749,7 +749,7 @@ function checkTraversal(cursor: ITreeCursor, expectedPath: UpPath | undefined) {
 		if (cursor.nextField()) {
 			const newKey = cursor.getFieldKey();
 			assert(newKey !== key);
-			assert(fieldLengths.get(newKey) ?? 0 > 0);
+			assert((fieldLengths.get(newKey) ?? 0) > 0);
 			cursor.exitField();
 		}
 	}
