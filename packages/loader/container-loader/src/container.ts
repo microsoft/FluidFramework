@@ -1127,6 +1127,7 @@ export class Container
 				this._protocolHandler?.close();
 
 				this.connectionStateHandler.dispose();
+				this.serializedStateManager.dispose();
 			} catch (newError) {
 				this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, newError);
 			}
@@ -1173,6 +1174,7 @@ export class Container
 				this._protocolHandler?.close();
 
 				this.connectionStateHandler.dispose();
+				this.serializedStateManager.dispose();
 
 				const maybeError = error === undefined ? undefined : new Error(error.message);
 				this._runtime?.dispose(maybeError);
