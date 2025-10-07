@@ -181,7 +181,7 @@ export class SerializedStateManager {
 			),
 	);
 	private readonly lastSavedOpSequenceNumber: number = 0;
-	private readonly refreshTimer: Timer;
+	private readonly refreshTimer: Timer | undefined;
 	private readonly snapshotRefreshTimeoutMs: number = 60 * 60 * 24 * 1000;
 
 	/**
@@ -208,9 +208,15 @@ export class SerializedStateManager {
 		});
 
 		this.snapshotRefreshTimeoutMs = snapshotRefreshTimeoutMs ?? this.snapshotRefreshTimeoutMs;
-		this.refreshTimer = new Timer(this.snapshotRefreshTimeoutMs, () =>
-			this.tryRefreshSnapshot(),
-		);
+		if (
+			this.isInteractiveClient &&
+			(this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") ??
+				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull")) === true
+		) {
+			this.refreshTimer = new Timer(this.snapshotRefreshTimeoutMs, () =>
+				this.tryRefreshSnapshot(),
+			);
+		}
 		// special case handle. Obtaining the last saved op seq num to avoid
 		// refreshing the snapshot before we have processed it. It could cause
 		// a subsequent stashing to have a newer snapshot than allowed.
@@ -262,7 +268,7 @@ export class SerializedStateManager {
 			);
 			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(snapshot);
 			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshotTree);
-			this.refreshTimer.start();
+			this.refreshTimer?.start();
 			this.snapshotInfo = {
 				snapshot,
 				snapshotSequenceNumber: attributes.sequenceNumber,
@@ -371,14 +377,14 @@ export class SerializedStateManager {
 				stashedSnapshotSequenceNumber: this.snapshotInfo?.snapshotSequenceNumber,
 			});
 			this.latestSnapshot = undefined;
-			this.refreshTimer.restart();
+			this.refreshTimer?.restart();
 		} else if (snapshotSequenceNumber <= lastProcessedOpSequenceNumber) {
 			// Snapshot seq num is between the first and last processed op.
 			// Remove the ops that are already part of the snapshot
 			this.processedOps.splice(0, snapshotSequenceNumber - firstProcessedOpSequenceNumber + 1);
 			this.snapshotInfo = this.latestSnapshot;
 			this.latestSnapshot = undefined;
-			this.refreshTimer.restart();
+			this.refreshTimer?.restart();
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SnapshotRefreshed",
 				snapshotSequenceNumber,
@@ -401,7 +407,7 @@ export class SerializedStateManager {
 			snapshot,
 			snapshotSequenceNumber: snapshot.sequenceNumber ?? 0,
 		};
-		this.refreshTimer.start();
+		this.refreshTimer?.start();
 	}
 
 	/**
