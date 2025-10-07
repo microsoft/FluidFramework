@@ -100,11 +100,6 @@ export interface OnDemandSummaryResults {
 	 * True if summarize op broadcast was observed.
 	 */
 	readonly summaryOpBroadcasted: boolean;
-
-	/**
-	 * True if summaryAck was received.
-	 */
-	readonly receivedSummaryAck: boolean;
 }
 
 /**

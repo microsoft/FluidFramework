@@ -63,7 +63,6 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		const summaryResults = result.summaryResults;
 		assert(summaryResults.summarySubmitted, "summary not submitted");
 		assert(summaryResults.summaryOpBroadcasted, "summary op not broadcasted");
-		assert(summaryResults.receivedSummaryAck, "summary ack/nack not received");
 		const data = summaryResults.summaryInfo;
 		assert.strictEqual(data.stage, "submit", "submit stage value");
 		assert(data.handle !== undefined, "summary handle should exist");
@@ -102,7 +101,6 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		const summaryResults = result.summaryResults;
 		assert(summaryResults.summarySubmitted, "summary not submitted");
 		assert(summaryResults.summaryOpBroadcasted, "summary op not broadcasted");
-		assert(summaryResults.receivedSummaryAck, "summary ack/nack not received");
 		const data = summaryResults.summaryInfo;
 		assert.strictEqual(data.stage, "submit", "submit stage value");
 		assert(data.handle !== undefined, "summary handle should exist");
@@ -124,11 +122,7 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 			true,
 			"end event should capture summaryOpBroadcasted",
 		);
-		assert.strictEqual(
-			endEvent.receivedSummaryAck,
-			true,
-			"end event should capture receivedSummaryAck",
-		);
+		assert(!("receivedSummaryAck" in endEvent), "end event should omit receivedSummaryAck");
 	});
 
 	it("clients with summaries disabled can make changes and load from on-demand summary", async () => {
@@ -195,7 +189,6 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		const summaryResults = result.summaryResults;
 		assert(summaryResults.summarySubmitted, "summary not submitted");
 		assert(summaryResults.summaryOpBroadcasted, "summary op not broadcasted");
-		assert(summaryResults.receivedSummaryAck, "summary ack/nack not received");
 		const data = summaryResults.summaryInfo;
 		assert.strictEqual(data.stage, "submit", "submit stage value");
 		assert(data.handle !== undefined, "summary handle should exist");

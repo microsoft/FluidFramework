@@ -46,9 +46,6 @@ import type {
 interface OnDemandSummarizeResultsPromises {
 	readonly summarySubmitted: Promise<SummarizeOnDemandResults["summarySubmitted"]>;
 	readonly summaryOpBroadcasted: Promise<SummarizeOnDemandResults["summaryOpBroadcasted"]>;
-	readonly receivedSummaryAckOrNack: Promise<
-		SummarizeOnDemandResults["receivedSummaryAckOrNack"]
-	>;
 }
 
 interface OnDemandSummarizeOptions {
@@ -327,7 +324,6 @@ export async function loadSummarizerContainerAndMakeSummary(
 
 			let summarySubmitted: SummarizeOnDemandResults["summarySubmitted"];
 			let summaryOpBroadcasted: SummarizeOnDemandResults["summaryOpBroadcasted"];
-			let receivedSummaryAckOrNack: SummarizeOnDemandResults["receivedSummaryAckOrNack"];
 			try {
 				if (container.getEntryPoint === undefined) {
 					throw new GenericError("container.getEntryPoint() is undefined");
@@ -348,32 +344,27 @@ export async function loadSummarizerContainerAndMakeSummary(
 						retryOnFailure: true,
 						fullTree: fullTreeGate,
 					});
-				[summarySubmitted, summaryOpBroadcasted, receivedSummaryAckOrNack] = await Promise.all(
-					[
-						summarizeResults.summarySubmitted,
-						summarizeResults.summaryOpBroadcasted,
-						summarizeResults.receivedSummaryAckOrNack,
-					],
-				);
+				[summarySubmitted, summaryOpBroadcasted] = await Promise.all([
+					summarizeResults.summarySubmitted,
+					summarizeResults.summaryOpBroadcasted,
+				]);
 
 				const summaryResults: OnDemandSummaryResults = {
 					summarySubmitted: summarySubmitted.success,
 					summaryInfo: summarySubmitted.success
 						? {
 								stage: summarySubmitted.data.stage,
-								handle: receivedSummaryAckOrNack.success
-									? receivedSummaryAckOrNack.data.summaryAckOp.contents.handle
+								handle: summaryOpBroadcasted.success
+									? summaryOpBroadcasted.data.summarizeOp.contents.handle
 									: undefined,
 							}
 						: {},
 					summaryOpBroadcasted: summaryOpBroadcasted.success,
-					receivedSummaryAck: receivedSummaryAckOrNack.success,
 				};
 				event.end({
 					success: true,
 					summarySubmitted: summarySubmitted.success,
 					summaryOpBroadcasted: summaryOpBroadcasted.success,
-					receivedSummaryAck: receivedSummaryAckOrNack.success,
 				});
 				return {
 					success: true,
