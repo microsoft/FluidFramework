@@ -35,7 +35,6 @@ import {
 	isnapshotToSnapshotWithBlobs,
 	type IPendingContainerState,
 	type IPendingDetachedContainerState,
-	type ISnapshotInfo,
 	type SerializedSnapshotInfo,
 } from "./serializedStateManager.js";
 
@@ -196,7 +195,7 @@ function convertSummaryToSnapshotAndBlobs(
  * Note, this assumes the ISnapshot sequence number is defined. Otherwise an assert will be thrown
  * @param snapshot - ISnapshot
  */
-export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): ISnapshotInfo {
+export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): SerializedSnapshotInfo {
 	assert(
 		snapshot.sequenceNumber !== undefined,
 		0x93a /* Snapshot sequence number is missing */,
@@ -206,7 +205,8 @@ export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): ISnapshotInf
 		snapshotBlobs[blobId] = bufferToString(arrayBufferLike, "utf8");
 	}
 	return {
-		snapshot,
+		baseSnapshot: snapshot.snapshotTree,
+		snapshotBlobs,
 		snapshotSequenceNumber: snapshot.sequenceNumber,
 	};
 }

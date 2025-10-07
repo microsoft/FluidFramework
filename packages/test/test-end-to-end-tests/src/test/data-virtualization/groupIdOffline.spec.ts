@@ -143,10 +143,6 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		dataObjectB._root.set("B", "B");
 
 		// Get Pending state and close
-		assert(
-			container.getPendingLocalState !== undefined,
-			"Test can't run without getPendingLocalState",
-		);
 		const pendingState = await container.getPendingLocalState();
 		container.close();
 

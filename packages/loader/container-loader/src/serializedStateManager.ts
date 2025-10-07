@@ -119,7 +119,8 @@ export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
 export interface SerializedSnapshotInfo extends SnapshotWithBlobs {
 	snapshotSequenceNumber: number;
 }
-export interface ISnapshotInfo {
+
+interface ISnapshotInfo {
 	snapshotSequenceNumber: number;
 	snapshotFetchedTime?: number | undefined;
 	snapshot: ISnapshot | ISnapshotTree;
@@ -432,7 +433,7 @@ export class SerializedStateManager {
 					sessionExpiryTimerStarted: this.snapshotInfo.snapshotFetchedTime,
 				});
 				// This conversion is required because ArrayBufferLike doesn't survive JSON.stringify
-				const loadedGroupIdSnapshots = {};
+				const loadedGroupIdSnapshots: Record<string, SerializedSnapshotInfo> = {};
 				let hasGroupIdSnapshots = false;
 				const groupIdSnapshots = Object.entries(this.storageAdapter.loadedGroupIdSnapshots);
 				if (groupIdSnapshots.length > 0) {
