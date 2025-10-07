@@ -30,6 +30,7 @@ describe("Prompt generation", () => {
 			const view = getView(sf.object("Object", {}), {});
 			const prompt = getPrompt({
 				subtree: new Subtree(view),
+				editToolName: undefined,
 			});
 			assert.ok(!prompt.includes("### Editing"));
 		}
@@ -52,6 +53,7 @@ describe("Prompt generation", () => {
 			const view = getView(sf.object("Object", {}), {});
 			const prompt = getPrompt({
 				subtree: new Subtree(view),
+				editToolName: undefined,
 			});
 			assert.ok(!prompt.includes("Domain-specific information"));
 		}
@@ -61,6 +63,7 @@ describe("Prompt generation", () => {
 			const view = getView(sf.object("Object", {}), {});
 			const prompt = getPrompt({
 				subtree: new Subtree(view),
+				editToolName: undefined,
 				domainHints: "These are some domain-specific hints.",
 			});
 			assert.ok(prompt.includes("These are some domain-specific hints."));
@@ -203,7 +206,6 @@ describe("Prompt snapshot", () => {
 
 		const fullPrompt = getPrompt({
 			subtree: new Subtree(view as TreeView<ImplicitFieldSchema>),
-			editFunctionName: "editTree",
 			editToolName: "EditTreeTool",
 			domainHints: "These are some domain-specific hints.",
 		});
