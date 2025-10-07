@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { SchemaFactoryAlpha } from "@fluidframework/tree/internal";
-
-import { fail } from "../../utils.js";
 
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable jsdoc/require-jsdoc */
@@ -66,54 +63,3 @@ export class Page extends sf.objectAlpha(
 		},
 	},
 ) {}
-
-export function stringifyPage(page: Page): string {
-	let result = "";
-	if (page.comments.length > 0) {
-		for (let i = 0; i < page.comments.length; i++) {
-			const c = page.comments[i] ?? fail("Comment not found");
-			result += `#### ${i + 1}: ${c.text}\n\n`;
-		}
-	}
-	result += page.paragraphs
-		.map((paragraph) => {
-			return paragraph.sentences
-				.map((sentence) => {
-					return sentence.words
-						.map((wOrS) => {
-							if (wOrS instanceof Word) {
-								return stringifyWord(wOrS);
-							} else if (wOrS instanceof Span) {
-								let text = wOrS.words.map((w) => stringifyWord(w)).join(" ");
-								if (wOrS.bold) {
-									text = `**${text}**`;
-								}
-								if (wOrS.italic) {
-									text = `_${text}_`;
-								}
-								if (wOrS.comments.length > 0) {
-									const ids = wOrS.comments
-										.map((id) => page.comments.map((co) => co.identifier).indexOf(id) + 1)
-										.join(",");
-
-									text = `(${text})^${ids}`;
-								}
-								return text;
-							}
-							return "";
-						})
-						.join(" ");
-				})
-				.join(". ");
-		})
-		.join("\n\n");
-
-	return result;
-}
-
-function stringifyWord(word: Word): string {
-	if (!/^[\dA-Za-z]+$/.test(word.characters)) {
-		throw new UsageError(`Word contains non-alphanumeric characters: ${word.characters}`);
-	}
-	return word.characters;
-}
