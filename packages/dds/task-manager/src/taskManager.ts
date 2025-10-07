@@ -101,6 +101,8 @@ export class TaskManagerClass
 	private readonly completedWatcher: EventEmitter = new EventEmitter();
 	// rollbackWatcher emits an event whenever a pending op is rolled back.
 	private readonly rollbackWatcher: EventEmitter = new EventEmitter();
+	// attachedWatcher emits an event whenever the client becomes attached.
+	private readonly attachedWatcher: EventEmitter = new EventEmitter();
 
 	private nextPendingMessageId: number = 0;
 	/**
@@ -116,8 +118,8 @@ export class TaskManagerClass
 	/**
 	 * Returns the clientId. Will return a placeholder if the runtime is detached and not yet assigned a clientId.
 	 */
-	private get clientId(): string | undefined {
-		return this.isAttached() ? this.runtime.clientId : placeholderClientId;
+	private get clientId(): string {
+		return this.runtime.clientId ?? placeholderClientId;
 	}
 
 	/**
@@ -220,11 +222,6 @@ export class TaskManagerClass
 					return;
 				}
 
-				// Exit early if we are still catching up on reconnect -- we can't be the leader yet anyway.
-				if (this.clientId === undefined) {
-					return;
-				}
-
 				if (oldLockHolder !== this.clientId && newLockHolder === this.clientId) {
 					this.emit("assigned", taskId);
 				} else if (oldLockHolder === this.clientId && newLockHolder !== this.clientId) {
@@ -234,8 +231,6 @@ export class TaskManagerClass
 		);
 
 		this.connectionWatcher.on("disconnect", () => {
-			assert(this.clientId !== undefined, 0x1d3 /* "Missing client id on disconnect" */);
-
 			// Emit "lost" for any tasks we were assigned to.
 			for (const [taskId, clientQueue] of this.taskQueues.entries()) {
 				if (this.isAttached() && clientQueue[0] === this.clientId) {
@@ -325,7 +320,6 @@ export class TaskManagerClass
 
 		if (this.isDetached()) {
 			// Simulate auto-ack in detached scenario
-			assert(this.clientId !== undefined, 0x472 /* clientId should not be undefined */);
 			this.addClientToQueue(taskId, this.clientId);
 			return true;
 		}
@@ -511,21 +505,16 @@ export class TaskManagerClass
 
 		if (this.isDetached()) {
 			// Simulate auto-ack in detached scenario
-			assert(this.clientId !== undefined, 0x473 /* clientId should not be undefined */);
 			this.addClientToQueue(taskId, this.clientId);
 			// Because we volunteered with placeholderClientId, we need to wait for when we attach and are assigned
 			// a real clientId. At that point we should re-enter the queue with a real volunteer op (assuming we are
 			// connected).
-			this.runtime.once("attached", () => {
+			this.attachedWatcher.once("attached", () => {
 				// We call scrubClientsNotInQuorum() in case our clientId changed during the attach process.
 				this.scrubClientsNotInQuorum();
 				// Make sure abandon() was not called while we were detached.
 				if (!abandoned) {
-					if (this.connected) {
-						submitVolunteerOp();
-					} else {
-						this.connectionWatcher.once("connect", submitVolunteerOp);
-					}
+					submitVolunteerOp();
 				}
 			});
 		} else if (!this.queuedOptimistically(taskId)) {
@@ -548,7 +537,6 @@ export class TaskManagerClass
 
 		if (this.isDetached()) {
 			// Simulate auto-ack in detached scenario
-			assert(this.clientId !== undefined, 0x474 /* clientId is undefined */);
 			this.removeClientFromQueue(taskId, this.clientId);
 			this.abandonWatcher.emit("abandon", taskId);
 			return;
@@ -578,7 +566,6 @@ export class TaskManagerClass
 			return false;
 		}
 
-		assert(this.clientId !== undefined, 0x07f /* "clientId undefined" */);
 		return this.taskQueues.get(taskId)?.includes(this.clientId) ?? false;
 	}
 
@@ -629,7 +616,7 @@ export class TaskManagerClass
 	 * @returns the summary of the current state of the task manager
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-		if (this.runtime.clientId === undefined) {
+		if (this.clientId === placeholderClientId) {
 			// If the runtime has still not been assigned a clientId, we should not summarize with the placeholder
 			// clientIds and instead remove them from the queues and require the client to re-volunteer when assigned
 			// a new clientId.
@@ -848,8 +835,6 @@ export class TaskManagerClass
 	 * for the latest pending ops.
 	 */
 	private queuedOptimistically(taskId: string): boolean {
-		assert(this.clientId !== undefined, 0xc44 /* clientId undefined */);
-
 		const inQueue = this.taskQueues.get(taskId)?.includes(this.clientId) ?? false;
 		const latestPendingOps = this.latestPendingOps.get(taskId);
 
@@ -902,5 +887,12 @@ export class TaskManagerClass
 			this.latestPendingOps.delete(content.taskId);
 		}
 		this.rollbackWatcher.emit("rollback", content.taskId);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.didAttach}
+	 */
+	protected didAttach(): void {
+		this.attachedWatcher.emit("attached");
 	}
 }
