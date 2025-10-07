@@ -363,7 +363,7 @@ stages:
             displayName: Compute compat versions install location and version
             inputs:
               targetType: 'inline'
-              workingDirectory: ${{ variables.sourcePath }}/node_modules/@fluid-private/test-end-to-end-tests
+              workingDirectory: ${{ variables.ffPipelineHostPath }}/node_modules/@fluid-private/test-end-to-end-tests
               # Using import.meta.resolve to compute this is more resilient to different install tree types.
               # Also note that test-version-utils is esm-only, so cannot be loaded with require.
               script: |
