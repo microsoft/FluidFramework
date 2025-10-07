@@ -26,7 +26,7 @@ import type {
 	RebaseNodeManager,
 } from "./crossFieldQueries.js";
 
-import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
+import type { EncodedNodeChangeset } from "./modularChangeFormatV1.js";
 import type { ChangeAtomIdBTree, CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 
 export type NestedChangesIndices = [NodeId, number /* inputIndex */][];
@@ -244,3 +244,5 @@ export interface FieldChangeEncodingContext {
 	decodeRootRename(oldId: ChangeAtomId, newId: ChangeAtomId, count: number): void;
 	generateId(): ChangeAtomId;
 }
+
+export const supportChangeHandlingBackCompat = false;

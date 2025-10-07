@@ -32,12 +32,11 @@ import {
 	type InvertNodeManager,
 	type CrossFieldKeyRange,
 	CrossFieldTarget,
+	supportChangeHandlingBackCompat,
 } from "../modular-schema/index.js";
 
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
-
-const useCompatMode: boolean = true;
 
 export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose,
@@ -150,7 +149,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		}
 
 		assert(
-			!useCompatMode ||
+			!supportChangeHandlingBackCompat ||
 				rebased.nodeDetach === undefined ||
 				areEqualChangeAtomIdOpts(rebased.nodeDetach, rebased.valueReplace?.src),
 			"When supporting older clients, nodeDetach should only be used for pins",
@@ -221,7 +220,11 @@ function compose(
 
 	const composedDetach = composeNodeDetaches(change1, change2, nodeManager);
 	const composedReplace = composeReplaces(change1, change2);
-	if (useCompatMode && composedReplace !== undefined && composedDetach !== undefined) {
+	if (
+		supportChangeHandlingBackCompat &&
+		composedReplace !== undefined &&
+		composedDetach !== undefined
+	) {
 		(composedReplace as Mutable<Replace>).dst = composedDetach;
 	}
 
@@ -244,7 +247,7 @@ function compose(
 
 	return makeChangeset(
 		composedReplace,
-		useCompatMode ? undefined : composedDetach,
+		supportChangeHandlingBackCompat ? undefined : composedDetach,
 		composedChildChange,
 	);
 }

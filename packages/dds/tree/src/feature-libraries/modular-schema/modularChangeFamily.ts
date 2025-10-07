@@ -79,6 +79,7 @@ import {
 	type FieldChangeHandler,
 	NodeAttachState,
 	type RebaseRevisionMetadata,
+	supportChangeHandlingBackCompat,
 } from "./fieldChangeHandler.js";
 import { type FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
 import { convertGenericChange, genericFieldKind } from "./genericFieldKind.js";
@@ -3034,7 +3035,10 @@ function assignRootChange(
 	nodeId: NodeId,
 	detachLocation: FieldId | undefined,
 ): void {
-	assert(detachLocation !== undefined, "XXX");
+	assert(
+		!supportChangeHandlingBackCompat || detachLocation !== undefined,
+		"All root changes need a detach location to support compatibility with older client versions",
+	);
 
 	setInChangeAtomIdMap(table.nodeChanges, detachId, nodeId);
 

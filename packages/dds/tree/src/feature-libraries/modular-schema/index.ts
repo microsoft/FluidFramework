@@ -26,7 +26,7 @@ export {
 	EncodedRevisionInfo,
 	EncodedModularChangeset,
 	EncodedNodeChangeset,
-} from "./modularChangeFormat.js";
+} from "./modularChangeFormatV1.js";
 export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
 export { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 export {
@@ -44,6 +44,7 @@ export {
 	type FieldChangeEncodingContext,
 	type NestedChangesIndices,
 	type RootsInfo,
+	supportChangeHandlingBackCompat,
 } from "./fieldChangeHandler.js";
 export {
 	type CrossFieldKey,

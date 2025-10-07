@@ -44,7 +44,7 @@ export interface EncodedFieldChange extends Static<typeof EncodedFieldChange> {
 	change: JsonCompatibleReadOnly;
 }
 
-const EncodedFieldChangeMap = Type.Array(EncodedFieldChange);
+export const EncodedFieldChangeMap = Type.Array(EncodedFieldChange);
 
 /**
  * Format for encoding as json.
