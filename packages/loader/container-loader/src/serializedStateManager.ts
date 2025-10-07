@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import type { IRuntime } from "@fluidframework/container-definitions/internal";
 import type {
 	IEventProvider,
@@ -34,8 +34,8 @@ import {
 	type ISerializableBlobContents,
 } from "./containerStorageAdapter.js";
 import {
-	convertSnapshotToSnapshotInfo,
 	convertISnapshotToSnapshotWithBlobs,
+	convertSnapshotToSnapshotInfo,
 	getDocumentAttributes,
 } from "./utils.js";
 
@@ -485,8 +485,8 @@ export class SerializedStateManager implements IDisposable {
 				const snapshotWithBlobs: SnapshotWithBlobs = isInstanceOfISnapshot(
 					this.snapshotInfo.snapshot,
 				)
-					? isnapshotToSnapshotWithBlobs(this.snapshotInfo.snapshot)
-					: await snapshotTreeToSnapshotWithBlobs(
+					? convertISnapshotToSnapshotWithBlobs(this.snapshotInfo.snapshot)
+					: await convertSnapshotTreeToSnapshotWithBlobs(
 							this.snapshotInfo.snapshot,
 							this.storageAdapter,
 						);
@@ -507,17 +507,7 @@ export class SerializedStateManager implements IDisposable {
 	}
 }
 
-export function isnapshotToSnapshotWithBlobs(snapshot: ISnapshot): SnapshotWithBlobs {
-	const snapshotBlobs: ISerializableBlobContents = {};
-	for (const [id, blob] of snapshot.blobContents.entries()) {
-		snapshotBlobs[id] = bufferToString(blob, "utf8");
-	}
-	return {
-		baseSnapshot: snapshot.snapshotTree,
-		snapshotBlobs,
-	};
-}
-async function snapshotTreeToSnapshotWithBlobs(
+async function convertSnapshotTreeToSnapshotWithBlobs(
 	snapshot: ISnapshotTree,
 	storageAdapter: ISerializedStateManagerDocumentStorageService,
 ): Promise<SnapshotWithBlobs> {
