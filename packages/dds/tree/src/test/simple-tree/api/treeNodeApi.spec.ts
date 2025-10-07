@@ -723,7 +723,7 @@ describe("treeNodeApi", () => {
 			});
 
 			it("Unknown optional fields not considered", () => {
-				class TestObjectOld extends schema.objectAlpha(
+				class TestObjectOld extends schema.object(
 					"TestObject",
 					{
 						foo: schema.string,
@@ -733,7 +733,7 @@ describe("treeNodeApi", () => {
 					},
 				) {}
 
-				class TestObjectNew extends schema.objectAlpha("TestObject", {
+				class TestObjectNew extends schema.object("TestObject", {
 					foo: schema.string,
 					bar: schema.optional(schema.string),
 				}) {}
