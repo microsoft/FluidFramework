@@ -27,7 +27,7 @@ export const summarizerRequestUrl = "_summarizer";
  *
  * 4. "submit" - the summarize op was submitted, and the result contains the op client sequence number.
  *
- * @legacy @beta
+ * @legacy @alpha
  */
 export type SummaryStage = "base" | "generate" | "upload" | "submit" | "unknown";
 
@@ -74,7 +74,7 @@ export interface SummarizeOnDemandResults {
 
 /**
  * Results from an on-demand summary request.
- * @legacy @beta
+ * @legacy @alpha
  */
 export interface OnDemandSummaryResults {
 	/**
@@ -113,7 +113,7 @@ export interface OnDemandSummaryResults {
 
 /**
  * Outcome from {@link loadSummarizerContainerAndMakeSummary}.
- * @legacy @beta
+ * @legacy @alpha
  */
 export type LoadSummarizerSummaryResult =
 	| {
