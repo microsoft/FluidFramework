@@ -9,7 +9,7 @@ import type {
 	IFluidCodeDetails,
 	IContainerPolicies,
 } from "@fluidframework/container-definitions/internal";
-import { LoaderHeader, ConnectionState } from "@fluidframework/container-definitions/internal";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
 	IConfigProviderBase,
@@ -329,10 +329,6 @@ export async function loadSummarizerContainerAndMakeSummary(
 			let summaryOpBroadcasted: SummarizeOnDemandResults["summaryOpBroadcasted"];
 			let receivedSummaryAckOrNack: SummarizeOnDemandResults["receivedSummaryAckOrNack"];
 			try {
-				if (container.connectionState !== ConnectionState.Connected) {
-					await new Promise<void>((resolve) => container.once("connected", () => resolve()));
-				}
-
 				if (container.getEntryPoint === undefined) {
 					throw new GenericError("container.getEntryPoint() is undefined");
 				}
