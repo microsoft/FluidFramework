@@ -13,7 +13,6 @@ import { LoaderHeader, ConnectionState } from "@fluidframework/container-definit
 import type {
 	FluidObject,
 	IConfigProviderBase,
-	IErrorBase,
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
@@ -29,6 +28,7 @@ import {
 	createChildMonitoringContext,
 	mixinMonitoringContext,
 	sessionStorageConfigProvider,
+	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -303,92 +303,91 @@ export async function loadSummarizerContainerAndMakeSummary(
 		logger: subMc.logger,
 		namespace: "SummarizerOnDemand",
 	});
-	const loader = new Loader(loadExistingContainerProps);
-	const baseHeaders = originalRequest.headers;
-	const request = {
-		...originalRequest,
-		headers: {
-			...baseHeaders,
-			[LoaderHeader.cache]: false,
-			[LoaderHeader.clientDetails]: {
-				capabilities: { interactive: false },
-				type: "summarizer",
-			},
-			[DriverHeader.summarizingClient]: true,
-			[LoaderHeader.reconnect]: false,
+	return PerformanceEvent.timedExecAsync(
+		mc.logger,
+		{ eventName: "SummarizerOnDemandSummary" },
+		async (event) => {
+			const loader = new Loader(loadExistingContainerProps);
+			const baseHeaders = originalRequest.headers;
+			const request = {
+				...originalRequest,
+				headers: {
+					...baseHeaders,
+					[LoaderHeader.cache]: false,
+					[LoaderHeader.clientDetails]: {
+						capabilities: { interactive: false },
+						type: "summarizer",
+					},
+					[DriverHeader.summarizingClient]: true,
+					[LoaderHeader.reconnect]: false,
+				},
+			};
+
+			const container = await loader.resolve(request);
+
+			let summarySubmitted: SummarizeOnDemandResults["summarySubmitted"];
+			let summaryOpBroadcasted: SummarizeOnDemandResults["summaryOpBroadcasted"];
+			let receivedSummaryAckOrNack: SummarizeOnDemandResults["receivedSummaryAckOrNack"];
+			try {
+				if (container.connectionState !== ConnectionState.Connected) {
+					await new Promise<void>((resolve) => container.once("connected", () => resolve()));
+				}
+
+				if (container.getEntryPoint === undefined) {
+					throw new GenericError("container.getEntryPoint() is undefined");
+				}
+				const fluidObject = (await container.getEntryPoint()) as FluidObject<SummarizerLike>;
+				const summarizer = fluidObject?.ISummarizer;
+				if (summarizer === undefined) {
+					throw new GenericError("Summarizer entry point not available");
+				}
+				// Host controlled feature gate for fullTree
+				// Default value will be false
+				const fullTreeGate =
+					mc.config.getBoolean("Fluid.Summarizer.FullTree.OnDemand") === true;
+
+				const summarizeResults: OnDemandSummarizeResultsPromises = summarizer.summarizeOnDemand({
+					reason: "summaryOnRequest",
+					retryOnFailure: true,
+					fullTree: fullTreeGate,
+				});
+				[summarySubmitted, summaryOpBroadcasted, receivedSummaryAckOrNack] = await Promise.all([
+					summarizeResults.summarySubmitted,
+					summarizeResults.summaryOpBroadcasted,
+					summarizeResults.receivedSummaryAckOrNack,
+				]);
+
+				const summaryResults: OnDemandSummaryResults = {
+					summarySubmitted: summarySubmitted.success,
+					summaryInfo: summarySubmitted.success
+						? {
+								stage: summarySubmitted.data.stage,
+								summaryTree: summarySubmitted.data.summaryTree,
+								handle: receivedSummaryAckOrNack.success
+									? receivedSummaryAckOrNack.data.summaryAckOp.contents.handle
+									: undefined,
+						  }
+						: {},
+					summaryOpBroadcasted: summaryOpBroadcasted.success,
+					receivedSummaryAck: receivedSummaryAckOrNack.success,
+				};
+				event.end({ success: true,
+					summarySubmitted: summarySubmitted.success,
+					summaryOpBroadcasted: summaryOpBroadcasted.success,
+					receivedSummaryAck: receivedSummaryAckOrNack.success,
+				});
+				return {
+					success: true,
+					summaryResults,
+				};
+			} catch (error) {
+				const caughtError = normalizeError(error);
+				event.end({ success: false, errorMessage: caughtError.message });
+				return { success: false, error: caughtError };
+			} finally {
+				container.dispose();
+			}
 		},
-	};
-
-	const container = await loader.resolve(request);
-
-	mc.logger.send({
-		category: "generic",
-		eventName: "summarizerContainer_created",
-	});
-
-	let success = false;
-	let caughtError: IErrorBase | undefined;
-	let summarySubmitted: SummarizeOnDemandResults["summarySubmitted"];
-	let summaryOpBroadcasted: SummarizeOnDemandResults["summaryOpBroadcasted"];
-	let receivedSummaryAckOrNack: SummarizeOnDemandResults["receivedSummaryAckOrNack"];
-	try {
-		if (container.connectionState !== ConnectionState.Connected) {
-			await new Promise<void>((resolve) => container.once("connected", () => resolve()));
-		}
-
-		if (container.getEntryPoint === undefined) {
-			throw new GenericError("container.getEntryPoint() is undefined");
-		}
-		const fluidObject = (await container.getEntryPoint()) as FluidObject<SummarizerLike>;
-		const summarizer = fluidObject?.ISummarizer;
-		if (summarizer === undefined) {
-			throw new GenericError("Summarizer entry point not available");
-		}
-		// Host controlled feature gate for fullTree
-		// Default value will be false
-		const fullTreeGate =
-			mc.config.getBoolean("Fluid.Summarizer.FullTree.OnDemand") === true;
-
-		const summarizeResults: OnDemandSummarizeResultsPromises = summarizer.summarizeOnDemand({
-			reason: "summaryOnRequest",
-			retryOnFailure: true,
-			fullTree: fullTreeGate,
-		});
-		[summarySubmitted, summaryOpBroadcasted, receivedSummaryAckOrNack] = await Promise.all([
-			summarizeResults.summarySubmitted,
-			summarizeResults.summaryOpBroadcasted,
-			summarizeResults.receivedSummaryAckOrNack,
-		]);
-
-		const summaryResults: OnDemandSummaryResults = {
-			summarySubmitted: summarySubmitted.success,
-			summaryInfo: summarySubmitted.success
-				? {
-						stage: summarySubmitted.data.stage,
-						summaryTree: summarySubmitted.data.summaryTree,
-						handle: receivedSummaryAckOrNack.success
-							? receivedSummaryAckOrNack.data.summaryAckOp.contents.handle
-							: undefined,
-					}
-				: {},
-			summaryOpBroadcasted: summaryOpBroadcasted.success,
-			receivedSummaryAck: receivedSummaryAckOrNack.success,
-		};
-		success = true;
-		return {
-			success: true,
-			summaryResults,
-		};
-	} catch (error) {
-		caughtError = normalizeError(error);
-		return { success: false, error: caughtError };
-	} finally {
-		container.dispose();
-		mc.logger.send({
-			category: "generic",
-			eventName: "summarizerContainer_closed",
-			success,
-			error: success ? undefined : caughtError?.message,
-		});
-	}
+		{ start: true, end: true, cancel: "generic" },
+	);
 }

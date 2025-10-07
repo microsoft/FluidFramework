@@ -28,6 +28,15 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		logger = new MockLogger();
 	});
 
+	const summarizerEventName =
+		"fluid:telemetry:SummarizerOnDemand:SummarizerOnDemandSummary";
+
+	function getPerformanceEvents(suffix: "start" | "end" | "cancel") {
+		return logger.events.filter(
+			(e) => e.eventName === `${summarizerEventName}_${suffix}`,
+		);
+	}
+
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 	};
@@ -64,21 +73,26 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		assert(data.handle !== undefined, "summary handle should exist");
 
 		// Verify - telemetry
-		const created = logger.events.filter(
-			(e) => e.eventName === "fluid:telemetry:SummarizerOnDemand:summarizerContainer_created",
+		const startEvents = getPerformanceEvents("start");
+		const endEvents = getPerformanceEvents("end");
+		assert.strictEqual(startEvents.length, 1, "start telemetry missing");
+		assert.strictEqual(endEvents.length, 1, "end telemetry missing");
+		const endEvent = endEvents[0];
+		assert.strictEqual(endEvent.category, "performance", "end event should be performance");
+		assert.strictEqual(endEvent.success, true, "end event should indicate success");
+		assert.strictEqual(
+			typeof endEvent.duration,
+			"number",
+			"end event should report duration in ms",
 		);
-		const closed = logger.events.filter(
-			(e) => e.eventName === "fluid:telemetry:SummarizerOnDemand:summarizerContainer_closed",
-		);
-		assert.strictEqual(created.length, 1, "created telemetry missing");
-		assert.strictEqual(closed.length, 1, "closed telemetry missing");
-		assert.strictEqual(closed[0].success, true, "closed event should indicate success");
 	});
 
 	it("summarizes successfully with fullTree gate on", async () => {
 		const props = await buildLoadProps();
 		const configProvider = {
 			getRawConfig: (key: string) =>
+				key === "Fluid.Summarizer.FullTree.OnDemand" ? true : undefined,
+			getBoolean: (key: string) =>
 				key === "Fluid.Summarizer.FullTree.OnDemand" ? true : undefined,
 		};
 		const result: LoadSummarizerSummaryResult = await loadSummarizerContainerAndMakeSummary({
@@ -99,11 +113,27 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		assert(data.handle !== undefined, "summary handle should exist");
 
 		// Verify - telemetry
-		const closed = logger.events.filter(
-			(e) => e.eventName === "fluid:telemetry:SummarizerOnDemand:summarizerContainer_closed",
+		const startEvents = getPerformanceEvents("start");
+		const endEvents = getPerformanceEvents("end");
+		assert.strictEqual(startEvents.length, 1, "start telemetry missing");
+		assert.strictEqual(endEvents.length, 1, "end telemetry missing");
+		const endEvent = endEvents[0];
+		assert.strictEqual(endEvent.success, true, "end event should indicate success");
+		assert.strictEqual(
+			endEvent.summarySubmitted,
+			true,
+			"end event should capture summarySubmitted",
 		);
-		assert.strictEqual(closed.length, 1, "closed telemetry missing");
-		assert.strictEqual(closed[0].success, true, "closed event should indicate success");
+		assert.strictEqual(
+			endEvent.summaryOpBroadcasted,
+			true,
+			"end event should capture summaryOpBroadcasted",
+		);
+		assert.strictEqual(
+			endEvent.receivedSummaryAck,
+			true,
+			"end event should capture receivedSummaryAck",
+		);
 	});
 
 	it("clients with summaries disabled can make changes and load from on-demand summary", async () => {
@@ -155,6 +185,8 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		const configProvider = {
 			getRawConfig: (key: string) =>
 				key === "Fluid.Summarizer.FullTree.OnDemand" ? true : undefined,
+			getBoolean: (key: string) =>
+				key === "Fluid.Summarizer.FullTree.OnDemand" ? true : undefined,
 		};
 		const result: LoadSummarizerSummaryResult = await loadSummarizerContainerAndMakeSummary({
 			...loaderProps,
@@ -175,15 +207,11 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		assert(data.handle !== undefined, "summary handle should exist");
 
 		// Verify - telemetry
-		const createdEvents = logger.events.filter(
-			(e) => e.eventName === "fluid:telemetry:SummarizerOnDemand:summarizerContainer_created",
-		);
-		const closedEvents = logger.events.filter(
-			(e) => e.eventName === "fluid:telemetry:SummarizerOnDemand:summarizerContainer_closed",
-		);
-		assert.strictEqual(createdEvents.length, 1, "summarizer should log creation once");
-		assert.strictEqual(closedEvents.length, 1, "summarizer should log closure once");
-		assert.strictEqual(closedEvents[0].success, true, "summarizer should close successfully");
+		const startEvents = getPerformanceEvents("start");
+		const endEvents = getPerformanceEvents("end");
+		assert.strictEqual(startEvents.length, 1, "summarizer should log start once");
+		assert.strictEqual(endEvents.length, 1, "summarizer should log end once");
+		assert.strictEqual(endEvents[0].success, true, "summarizer should complete successfully");
 
 		// Verify - new clients can load from the uploaded summary handle and see client edits.
 		const containerFromSummary = await provider.loadTestContainer(clientConfig, {
