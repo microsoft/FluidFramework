@@ -175,21 +175,26 @@ type LocalBlobRecord =
 	| AttachingBlob
 	| AttachedBlob;
 
-type SerializedLocalBlobRecord =
+/**
+ * Serializable form of the LocalBlobRecord that can be used to save and restore pending state.
+ * Omits attached blobs since they are fully uploaded and don't need to be saved and restored.
+ * Omits uploading and attaching states since upon restore we will need to restart those processes.
+ */
+type SerializableLocalBlobRecord =
 	| (Omit<LocalOnlyBlob, "blob"> & { blob: string })
-	| (Omit<UploadingBlob, "blob"> & { blob: string })
-	| (Omit<UploadedBlob, "blob"> & { blob: string })
-	| (Omit<AttachingBlob, "blob"> & { blob: string })
-	| (Omit<AttachedBlob, "blob"> & { blob: string });
+	| (Omit<UploadedBlob, "blob"> & { blob: string });
 
 export interface IPendingBlobs {
-	[localId: string]: SerializedLocalBlobRecord;
+	[localId: string]: SerializableLocalBlobRecord;
 }
 
-// TODO: Probably divide TTL in half for safety
-const isTTLExpired = (blobRecord: UploadedBlob | AttachingBlob): boolean =>
+/**
+ * Check if for a given uploaded or attaching blob, the TTL is too close to expiry to safely attempt
+ * an attach. Currently using a heuristic of half the TTL duration having passed since upload.
+ */
+const isTTLTooCloseToExpiry = (blobRecord: UploadedBlob | AttachingBlob): boolean =>
 	blobRecord.minTTLInSeconds !== undefined &&
-	Date.now() - blobRecord.uploadTime > blobRecord.minTTLInSeconds * 1000;
+	Date.now() - blobRecord.uploadTime > (blobRecord.minTTLInSeconds / 2) * 1000;
 
 interface IBlobManagerInternalEvents {
 	blobExpired: (localId: string) => void;
@@ -591,7 +596,7 @@ export class BlobManager {
 
 			// If we just uploaded the blob TTL really shouldn't be expired at this location. But if we loaded from
 			// pending state, the upload may have happened some time far in the past and could be expired here.
-			if (isTTLExpired(localBlobRecord)) {
+			if (isTTLTooCloseToExpiry(localBlobRecord)) {
 				// If the TTL is expired, we assume it's gone from the storage and so is effectively localOnly again.
 				// Then when we re-enter the loop, we'll re-upload it.
 				this.localBlobCache.set(localId, { state: "localOnly", blob });
@@ -676,7 +681,7 @@ export class BlobManager {
 		const localBlobRecord = this.localBlobCache.get(localId);
 		if (localBlobRecord?.state === "attaching") {
 			// If the TTL is expired, we assume it's gone from the storage and so is effectively localOnly again.
-			if (isTTLExpired(localBlobRecord)) {
+			if (isTTLTooCloseToExpiry(localBlobRecord)) {
 				this.localBlobCache.set(localId, { state: "localOnly", blob: localBlobRecord.blob });
 				this.internalEvents.emit("blobExpired", localId);
 			} else {
@@ -864,7 +869,6 @@ export class BlobManager {
 	 * for payload-pending handles, this will return the blobs associated with those handles.
 	 */
 	public getPendingBlobs(): IPendingBlobs | undefined {
-		// TODO: Remove non-local/uploaded states from serialized type?
 		const pendingBlobs: IPendingBlobs = {};
 		for (const localId of this.pendingBlobsWithAttachedHandles) {
 			const localBlobRecord = this.localBlobCache.get(localId);
