@@ -25,6 +25,7 @@ export class TreeDataObjectFactory<
 	TDataObjectTypes extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObjectFactory<TDataObject, TDataObjectTypes> {
 	public constructor(props: DataObjectFactoryProps<TDataObject, TDataObjectTypes>) {
+		//* BROKEN - WILL FIX LATER
 		const newProps = {
 			...props,
 			sharedObjects: props.sharedObjects ? [...props.sharedObjects] : [],
