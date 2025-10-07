@@ -342,16 +342,19 @@ export async function loadSummarizerContainerAndMakeSummary(
 				const fullTreeGate =
 					mc.config.getBoolean("Fluid.Summarizer.FullTree.OnDemand") === true;
 
-				const summarizeResults: OnDemandSummarizeResultsPromises = summarizer.summarizeOnDemand({
-					reason: "summaryOnRequest",
-					retryOnFailure: true,
-					fullTree: fullTreeGate,
-				});
-				[summarySubmitted, summaryOpBroadcasted, receivedSummaryAckOrNack] = await Promise.all([
-					summarizeResults.summarySubmitted,
-					summarizeResults.summaryOpBroadcasted,
-					summarizeResults.receivedSummaryAckOrNack,
-				]);
+				const summarizeResults: OnDemandSummarizeResultsPromises =
+					summarizer.summarizeOnDemand({
+						reason: "summaryOnRequest",
+						retryOnFailure: true,
+						fullTree: fullTreeGate,
+					});
+				[summarySubmitted, summaryOpBroadcasted, receivedSummaryAckOrNack] = await Promise.all(
+					[
+						summarizeResults.summarySubmitted,
+						summarizeResults.summaryOpBroadcasted,
+						summarizeResults.receivedSummaryAckOrNack,
+					],
+				);
 
 				const summaryResults: OnDemandSummaryResults = {
 					summarySubmitted: summarySubmitted.success,
@@ -361,12 +364,13 @@ export async function loadSummarizerContainerAndMakeSummary(
 								handle: receivedSummaryAckOrNack.success
 									? receivedSummaryAckOrNack.data.summaryAckOp.contents.handle
 									: undefined,
-						  }
+							}
 						: {},
 					summaryOpBroadcasted: summaryOpBroadcasted.success,
 					receivedSummaryAck: receivedSummaryAckOrNack.success,
 				};
-				event.end({ success: true,
+				event.end({
+					success: true,
 					summarySubmitted: summarySubmitted.success,
 					summaryOpBroadcasted: summaryOpBroadcasted.success,
 					receivedSummaryAck: receivedSummaryAckOrNack.success,

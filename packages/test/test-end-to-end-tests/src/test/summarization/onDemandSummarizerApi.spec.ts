@@ -28,13 +28,10 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		logger = new MockLogger();
 	});
 
-	const summarizerEventName =
-		"fluid:telemetry:SummarizerOnDemand:SummarizerOnDemandSummary";
+	const summarizerEventName = "fluid:telemetry:SummarizerOnDemand:SummarizerOnDemandSummary";
 
 	function getPerformanceEvents(suffix: "start" | "end" | "cancel") {
-		return logger.events.filter(
-			(e) => e.eventName === `${summarizerEventName}_${suffix}`,
-		);
+		return logger.events.filter((e) => e.eventName === `${summarizerEventName}_${suffix}`);
 	}
 
 	const testContainerConfig: ITestContainerConfig = {
