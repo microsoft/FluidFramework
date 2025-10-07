@@ -9,7 +9,11 @@ export {
 } from "./editableTreeBinder.js";
 export { allowsValue, assertAllowedValue, isTreeValue } from "./valueUtilities.js";
 
-export { ForestSummarizer } from "./forest-summary/index.js";
+export {
+	ForestSummarizer,
+	getCodecTreeForForestFormat,
+	type ForestFormatVersion,
+} from "./forest-summary/index.js";
 export {
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
@@ -28,6 +32,7 @@ export {
 	encodeTreeSchema,
 	makeSchemaCodec,
 	makeSchemaCodecs,
+	getCodecTreeForSchemaFormat,
 } from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
@@ -98,6 +103,8 @@ export {
 	defaultChunkPolicy,
 	type FieldBatch,
 	type FieldBatchCodec,
+	type FieldBatchFormatVersion,
+	getCodecTreeForFieldBatchFormat,
 	makeTreeChunker,
 	makeFieldBatchCodec,
 	fluidVersionToFieldBatchCodecWriteVersion,
@@ -139,6 +146,8 @@ export {
 	isNodeInSchema,
 	isFieldInSchema,
 	throwOutOfSchema,
+	getCodecTreeForModularChangeFormat,
+	type ModularChangeFormatVersion,
 } from "./default-schema/index.js";
 
 export {
@@ -190,6 +199,8 @@ export {
 	type SchemaChange,
 	makeSchemaChangeCodecs,
 	EncodedSchemaChange,
+	getCodecTreeForSchemaChangeFormat,
+	type SchemaChangeFormatVersion,
 } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
