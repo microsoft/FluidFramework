@@ -1,5 +1,6 @@
 ---
 "@fluidframework/tree": minor
+"fluid-framework": minor
 "__section": tree
 ---
 MinimumVersionForCollab is now used in place of FluidClientVersion
