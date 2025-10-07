@@ -22,7 +22,7 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import type { JsonCompatibleReadOnly } from "../util/index.js";
+import { brand, type Brand, type JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { SummaryData } from "./editManager.js";
 import { makeV1CodecWithVersion } from "./editManagerCodecsV1toV4.js";
@@ -101,9 +101,13 @@ export function makeEditManagerCodecs<TChangeset>(
 	return makeCodecFamily(registry);
 }
 
-export type EditManagerFormatVersion = 1 | 2 | 3 | 4 | 5;
+export type EditManagerFormatVersion = Brand<1 | 2 | 3 | 4 | 5, "EditManagerFormatVersion">;
 export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set([
-	1, 2, 3, 4, 5,
+	brand(1),
+	brand(2),
+	brand(3),
+	brand(4),
+	brand(5),
 ]);
 
 export function getCodecTreeForEditManagerFormatWithChange(

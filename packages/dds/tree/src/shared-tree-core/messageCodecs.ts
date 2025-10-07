@@ -20,7 +20,7 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import type { JsonCompatibleReadOnly } from "../util/index.js";
+import { brand, type Brand, type JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { DecodedMessage } from "./messageTypes.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -42,7 +42,7 @@ export function makeMessageCodec<TChangeset>(
 		ChangeEncodingContext
 	>,
 	options: ICodecOptions,
-	writeVersion: MessageFormatVersion = 1,
+	writeVersion: MessageFormatVersion = brand(1),
 ): IJsonCodec<
 	DecodedMessage<TChangeset>,
 	JsonCompatibleReadOnly,
@@ -106,14 +106,17 @@ export function makeMessageCodecs<TChangeset>(
 	return makeCodecFamily(registry);
 }
 
-export type MessageFormatVersion = undefined | 1 | 2 | 3 | 4 | 5;
+export type MessageFormatVersion = Brand<
+	undefined | 1 | 2 | 3 | 4 | 5,
+	"MessageFormatVersion"
+>;
 export const messageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set([
-	undefined,
-	1,
-	2,
-	3,
-	4,
-	5,
+	brand(undefined),
+	brand(1),
+	brand(2),
+	brand(3),
+	brand(4),
+	brand(5),
 ]);
 
 export function getCodecTreeForMessageFormatWithChange(

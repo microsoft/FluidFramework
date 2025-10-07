@@ -25,16 +25,16 @@ import {
  */
 export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 	subtree: Subtree<TRoot>;
-	editingToolName: string;
-	editingFunctionName: string;
+	editToolName?: string;
+	editFunctionName?: string;
 	domainHints?: string;
 }): string {
-	const { editingToolName, editingFunctionName, subtree, domainHints } = args;
+	const { subtree, editToolName, editFunctionName, domainHints } = args;
 	const { field, schema } = subtree;
 	const arrayInterfaceName = "TreeArray";
 	const mapInterfaceName = "TreeMap";
 	const simpleSchema = getSimpleSchema(schema);
-	// Inspect the schema to determine what kinds of nodes are possible - this will affect  how much information we need to include in the prompt.
+	// Inspect the schema to determine what kinds of nodes are possible - this will affect how much information we need to include in the prompt.
 	let hasArrays = false;
 	let hasMaps = false;
 	let exampleObjectName: string | undefined;
@@ -78,11 +78,11 @@ It will often not be possible to fully accomplish the goal using those helpers. 
 		exampleObjectName === undefined
 			? ""
 			: `When constructing new objects, you should wrap them in the appropriate builder function rather than simply making a javascript object.
-The builders are available on the "create" property on the first argument of the \`${editingFunctionName}\` function and are named according to the type that they create.
+The builders are available on the "create" property on the first argument of the \`${editFunctionName}\` function and are named according to the type that they create.
 For example:
 
 \`\`\`javascript
-function ${editingFunctionName}({ root, create }) {
+function ${editFunctionName}({ root, create }) {
 	// This creates a new ${exampleObjectName} object:
 	const ${communize(exampleObjectName)} = create.${exampleObjectName}({ /* ...properties... */ });
 	// Don't do this:
@@ -121,6 +121,33 @@ ${getTreeMapNodeDocumentation(mapInterfaceName)}
 `;
 
 	const rootTypes = normalizeFieldSchema(schema).allowedTypeSet;
+	const editing = `If the user asks you to edit the tree, you should author a JavaScript function to accomplish the user-specified goal, following the instructions for editing detailed below.
+${editToolName === undefined ? "Use an applicable tool to perform the edit (if one is available)." : `You must use the "${editToolName}" tool to perform the edit.`}
+After editing the tree, review the latest state of the tree to see if it satisfies the user's request.
+If it does not, or if you receive an error, you may try again with a different approach.
+Once the tree is in the desired state, you should inform the user that the request has been completed.
+
+### Editing
+
+If the user asks you to edit the document, you will write a JavaScript function that mutates the data in-place to achieve the user's goal.
+The function must be named "${editFunctionName}".
+It may be synchronous or asynchronous.
+The ${editFunctionName} function must have a first parameter which has a \`root\` property.
+This \`root\` property holds the current state of the tree as shown above.
+You may mutate any part of the tree as necessary, taking into account the caveats around arrays and maps detailed below.
+You may also set the \`root\` property to be an entirely new value as long as it is one of the types allowed at the root of the tree (\`${Array.from(rootTypes.values(), (t) => getFriendlyName(t)).join(" | ")}\`).
+${helperMethodExplanation}
+
+${hasArrays ? arrayEditing : ""}${hasMaps ? mapEditing : ""}#### Additional Notes
+
+Before outputting the ${editFunctionName} function, you should check that it is valid according to both the application tree's schema and any restrictions of the editing APIs described above.
+
+Once data has been removed from the tree (e.g. replaced via assignment, or removed from an array), that data cannot be re-inserted into the tree - instead, it must be deep cloned and recreated.
+
+${builderExplanation}Finally, double check that the edits would accomplish the user's request (if it is possible).
+
+`;
+
 	const prompt = `You are a helpful assistant collaborating with the user on a document. The document state is a JSON tree, and you are able to analyze and edit it.
 The JSON tree adheres to the following Typescript schema:
 
@@ -128,32 +155,10 @@ The JSON tree adheres to the following Typescript schema:
 ${typescriptSchemaTypes}
 \`\`\`
 
-If the user asks you a question about the tree, you should inspect the state of the tree and answer the question. When answering such a question, DO NOT answer with information that is not part of the document unless requested to do so.
-If the user asks you to edit the tree, you should use the "${editingToolName}" tool to accomplish the user-specified goal, following the instructions for editing detailed below.
-After editing the tree, review the latest state of the tree to see if it satisfies the user's request.
-If it does not, or if you receive an error, you may try again with a different approach.
-Once the tree is in the desired state, you should inform the user that the request has been completed.
+If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.
+When answering such a question, DO NOT answer with information that is not part of the document unless requested to do so.
 
-### Editing
-
-If the user asks you to edit the document, you will use the "${editingToolName}" tool to write a JavaScript function that mutates the data in-place to achieve the user's goal.
-The function must be named "${editingFunctionName}".
-It may be synchronous or asynchronous.
-The ${editingFunctionName} function must have a first parameter which has a \`root\` property.
-This \`root\` property holds the current state of the tree as shown above.
-You may mutate any part of the tree as necessary, taking into account the caveats around arrays and maps detailed below.
-You may also set the \`root\` property to be an entirely new value as long as it is one of the types allowed at the root of the tree (\`${Array.from(rootTypes.values(), (t) => getFriendlyName(t)).join(" | ")}\`).
-${helperMethodExplanation}
-
-${hasArrays ? arrayEditing : ""}${hasMaps ? mapEditing : ""}### Additional Notes
-
-Before outputting the ${editingFunctionName} function, you should check that it is valid according to both the application tree's schema and any restrictions of the editing APIs described above.
-
-Once data has been removed from the tree (e.g. replaced via assignment, or removed from an array), that data cannot be re-inserted into the tree - instead, it must be deep cloned and recreated.
-
-${builderExplanation}Finally, double check that the edits would accomplish the user's request (if it is possible).
-
-### Application data
+${editFunctionName === undefined ? "" : editing}### Application data
 
 ${
 	domainHints === undefined
