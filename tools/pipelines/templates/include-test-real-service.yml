@@ -171,7 +171,7 @@ stages:
           ${{ else }}:
             value: $(Build.SourcesDirectory)
         - name: testPackageDir
-          value: '${{ variables.sourcePath }}/node_modules/${{ parameters.testPackage }}'
+          value: '${{ variables.ffPipelineHostPath }}/node_modules/${{ parameters.testPackage }}'
         - name: testPackageFilePattern
           value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-[0-9]*.tgz
         # Note that this path must match the path that the packed packages are saved to in the build pipeline.
@@ -248,7 +248,7 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
-            buildDirectory: ${{ variables.sourcePath }}
+            buildDirectory: ${{ variables.ffPipelineHostPath }}
 
         - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
 
@@ -258,7 +258,7 @@ stages:
           displayName: Install base dependencies
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ variables.sourcePath }}
+            workingDirectory: ${{ variables.ffPipelineHostPath }}
             script: |
               set -eu -o pipefail
               pnpm install
@@ -288,7 +288,7 @@ stages:
           displayName: Initialize
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ variables.sourcePath }}
+            workingDirectory: ${{ variables.ffPipelineHostPath }}
             script: |
               set -eu -o pipefail
               if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
@@ -307,7 +307,7 @@ stages:
           retryCountOnTaskFailure: 10
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ variables.sourcePath }}
+            workingDirectory: ${{ variables.ffPipelineHostPath }}
             script: 'pnpm install -w $(Initialize.testPackageTgz)'
 
         # Download Test Files & Install Extra Dependencies
@@ -338,7 +338,7 @@ stages:
             displayName: Unpack test files
             inputs:
               targetType: 'inline'
-              workingDirectory: ${{ variables.sourcePath }}/node_modules/${{ parameters.testPackage }}
+              workingDirectory: ${{ variables.ffPipelineHostPath }}/node_modules/${{ parameters.testPackage }}
               script: |
                 set -eu -o pipefail
 
@@ -355,15 +355,15 @@ stages:
 
           - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
             parameters:
-              sourcePackageLocation: ${{ variables.sourcePath }}/node_modules/${{ parameters.testPackage }}
-              destPackageLocation: ${{ variables.sourcePath }}
+              sourcePackageLocation: ${{ variables.ffPipelineHostPath }}/node_modules/${{ parameters.testPackage }}
+              destPackageLocation: ${{ variables.ffPipelineHostPath }}
 
         - ${{ if eq(parameters.cacheCompatVersionsInstalls, true) }}:
           - task: Bash@3
             displayName: Compute compat versions install location and version
             inputs:
               targetType: 'inline'
-              workingDirectory: ${{ variables.sourcePath }}/node_modules/@fluid-private/test-end-to-end-tests
+              workingDirectory: ${{ variables.ffPipelineHostPath }}/node_modules/@fluid-private/test-end-to-end-tests
               # Using import.meta.resolve to compute this is more resilient to different install tree types.
               # Also note that test-version-utils is esm-only, so cannot be loaded with require.
               script: |
@@ -440,7 +440,7 @@ stages:
               login__odsp__test__tenants: $(tenantCreds)
           inputs:
             command: 'custom'
-            workingDir: ${{ variables.sourcePath }}/node_modules/${{ parameters.testPackage }}
+            workingDir: ${{ variables.ffPipelineHostPath }}/node_modules/${{ parameters.testPackage }}
             customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
         - ${{ if eq(parameters.skipTestResultPublishing, false) }}:
@@ -482,7 +482,7 @@ stages:
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - Tinylicious Log
             inputs:
-              targetPath: '${{ variables.sourcePath }}/node_modules/${{ parameters.testPackage }}/tinylicious.log'
+              targetPath: '${{ variables.ffPipelineHostPath }}/node_modules/${{ parameters.testPackage }}/tinylicious.log'
               artifactName: 'tinyliciousLog_attempt-$(System.JobAttempt)'
               publishLocation: 'pipeline'
             condition: always()
@@ -530,4 +530,4 @@ stages:
     stageId: ${{ parameters.stageId }}
     uploadTestPassRateTelemetry: ${{ parameters.uploadTestPassRateTelemetry }}
     pipelineIdentifierForTelemetry: ${{ parameters.pipelineIdentifierForTelemetry }}
-    testWorkspace: ${{ variables.sourcePath }}
+    testWorkspace: ${{ variables.ffPipelineHostPath }}
