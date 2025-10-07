@@ -184,6 +184,8 @@ export class SerializedStateManager implements IDisposable {
 	private lastSavedOpSequenceNumber: number = 0;
 	private readonly refreshTimer: Timer | undefined;
 	private readonly snapshotRefreshTimeoutMs: number = 60 * 60 * 24 * 1000;
+	readonly #snapshotRefreshEnabled: boolean;
+	#disposed: boolean = false;
 
 	/**
 	 * @param pendingLocalState - The pendingLocalState being rehydrated, if any (undefined when loading directly from storage)
@@ -208,19 +210,17 @@ export class SerializedStateManager implements IDisposable {
 		});
 
 		this.snapshotRefreshTimeoutMs = snapshotRefreshTimeoutMs ?? this.snapshotRefreshTimeoutMs;
-		if (
-			this.isInteractiveClient &&
+
+		this.#snapshotRefreshEnabled =
 			(this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") ??
-				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull")) === true
-		) {
-			this.refreshTimer = new Timer(this.snapshotRefreshTimeoutMs, () =>
-				this.tryRefreshSnapshot(),
-			);
-		}
+				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull")) === true;
+
+		this.refreshTimer = this.#snapshotRefreshEnabled
+			? new Timer(this.snapshotRefreshTimeoutMs, () => this.tryRefreshSnapshot())
+			: undefined;
 
 		containerEvent.on("saved", () => this.updateSnapshotAndProcessedOpsMaybe());
 	}
-	#disposed: boolean = false;
 	public get disposed(): boolean {
 		return this.#disposed;
 	}
@@ -228,6 +228,13 @@ export class SerializedStateManager implements IDisposable {
 		this.#disposed = true;
 		this.refreshTimer?.clear();
 	}
+
+	private verifyNotDisposed(): void {
+		if (this.#disposed) {
+			throw new Error("SerializedStateManager used after dispose.");
+		}
+	}
+
 	/**
 	 * Promise that will resolve (or reject) once we've tried to download the latest snapshot(s) from storage
 	 * only intended to be used for testing purposes.
@@ -315,7 +322,8 @@ export class SerializedStateManager implements IDisposable {
 
 	private tryRefreshSnapshot(): void {
 		if (
-			this.refreshTimer !== undefined &&
+			this.#snapshotRefreshEnabled &&
+			!this.#disposed &&
 			!this.refreshTracker.hasPromise &&
 			this.latestSnapshot === undefined
 		) {
@@ -336,6 +344,10 @@ export class SerializedStateManager implements IDisposable {
 			this.storageAdapter,
 			supportGetSnapshotApi,
 		);
+
+		if (this.#disposed) {
+			return -1;
+		}
 
 		// These are loading groupIds that the containerRuntime has requested over its lifetime.
 		// We will fetch the latest snapshot for the groupIds, which will update storageAdapter.loadedGroupIdSnapshots's cache
@@ -365,6 +377,7 @@ export class SerializedStateManager implements IDisposable {
 	private updateSnapshotAndProcessedOpsMaybe(): number {
 		const snapshotSequenceNumber = this.latestSnapshot?.snapshotSequenceNumber;
 		if (
+			this.#disposed ||
 			snapshotSequenceNumber === undefined ||
 			this.processedOps.length === 0 ||
 			this.processedOps[this.processedOps.length - 1].sequenceNumber <
@@ -416,6 +429,7 @@ export class SerializedStateManager implements IDisposable {
 	 * @param snapshot - snapshot and blobs collected while attaching (a form of the attach summary)
 	 */
 	public setInitialSnapshot(snapshot: ISnapshot): void {
+		this.verifyNotDisposed();
 		this.snapshotInfo = {
 			snapshot,
 			snapshotSequenceNumber: snapshot.sequenceNumber ?? 0,
@@ -432,6 +446,8 @@ export class SerializedStateManager implements IDisposable {
 		runtime: Pick<IRuntime, "getPendingLocalState">,
 		resolvedUrl: IResolvedUrl,
 	): Promise<string> {
+		this.verifyNotDisposed();
+
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{
