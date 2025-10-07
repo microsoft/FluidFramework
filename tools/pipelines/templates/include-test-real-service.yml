@@ -253,6 +253,7 @@ stages:
           displayName: Install base dependencies
           inputs:
             targetType: 'inline'
+            workingDirectory: ${{ parameters.sourcePath }}
             script: |
               set -eu -o pipefail
               pnpm install
@@ -301,6 +302,7 @@ stages:
           retryCountOnTaskFailure: 10
           inputs:
             targetType: 'inline'
+            workingDirectory: ${{ parameters.sourcePath }}
             script: 'pnpm install $(Initialize.testPackageTgz)'
 
         # Download Test Files & Install Extra Dependencies
@@ -330,8 +332,8 @@ stages:
           - task: Bash@3
             displayName: Unpack test files
             inputs:
-              workingDirectory: ${{ parameters.sourcePath }}/node_modules/${{ parameters.testPackage }}
               targetType: 'inline'
+              workingDirectory: ${{ parameters.sourcePath }}/node_modules/${{ parameters.testPackage }}
               script: |
                 set -eu -o pipefail
 
