@@ -16,7 +16,6 @@ import type {
 	IErrorBase,
 	IRequest,
 	ITelemetryBaseLogger,
-	IResponse,
 } from "@fluidframework/core-interfaces";
 import type { IClientDetails } from "@fluidframework/driver-definitions";
 import type {
@@ -38,7 +37,6 @@ import { FrozenDocumentServiceFactory } from "./frozenServices.js";
 import { Loader } from "./loader.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
-import { summarizerRequestUrl } from "./summarizerResultTypes.js";
 import type {
 	LoadSummarizerSummaryResult,
 	OnDemandSummaryResults,
@@ -338,20 +336,10 @@ export async function loadSummarizerContainerAndMakeSummary(
 			await new Promise<void>((resolve) => container.once("connected", () => resolve()));
 		}
 
-		let fluidObject: FluidObject<SummarizerLike> | undefined;
-		// Back-compat: Older containers may not implement getEntryPoint().
 		if (container.getEntryPoint === undefined) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-			const response = (await (container as any).request({
-				url: `/${summarizerRequestUrl}`,
-			})) as IResponse;
-			if (response.status !== 200 || response.mimeType !== "fluid/object") {
-				throw new GenericError("Summarizer entry point request failed");
-			}
-			fluidObject = response.value as FluidObject<SummarizerLike>;
-		} else {
-			fluidObject = (await container.getEntryPoint()) as FluidObject<SummarizerLike>;
+			throw new GenericError("container.getEntryPoint() is undefined");
 		}
+		const fluidObject = (await container.getEntryPoint()) as FluidObject<SummarizerLike>;
 		const summarizer = fluidObject?.ISummarizer;
 		if (summarizer === undefined) {
 			throw new GenericError("Summarizer entry point not available");
