@@ -173,9 +173,9 @@ function normalizeMoveIds(change: SF.Changeset): SF.Changeset {
 				const effectId = { revision: effect.revision, localId: effect.id };
 				const atom = normalizeAtom(effectId, CrossFieldTarget.Destination);
 				const normalized: Mutable<SF.Detach> = { ...effect };
-				if (normalized.idOverride === undefined) {
+				if (normalized.cellRename === undefined) {
 					// Use the idOverride so we don't normalize the output cell ID
-					normalized.idOverride = effectId;
+					normalized.cellRename = effectId;
 				}
 				normalized.id = atom.localId;
 				normalized.revision = atom.revision;

@@ -33,8 +33,8 @@ import {
 	cellSourcesFromMarks,
 	compareCellPositionsUsingTombstones,
 	extractMarkEffect,
-	getAttachedNodeId,
-	getDetachedNodeId,
+	getAttachedRootId,
+	getDetachedRootId,
 	getInputCellId,
 	getMovedNodeId,
 	getOutputCellId,
@@ -132,7 +132,7 @@ function composeMarksIgnoreChild(
 		return { ...newMark, cellId: baseMark.cellId };
 	} else if (isRename(newMark)) {
 		assert(isDetach(baseMark), 0x9f2 /* Unexpected mark type */);
-		return updateBaseMarkId(moveEffects, { ...baseMark, idOverride: newMark.idOverride });
+		return updateBaseMarkId(moveEffects, { ...baseMark, cellRename: newMark.idOverride });
 	}
 
 	if (!markHasCellEffect(baseMark)) {
@@ -141,7 +141,7 @@ function composeMarksIgnoreChild(
 		// `newMark` can be either a remove or another pin.
 		// A pin is treated as a detach and attach, so we call `composeAttachDetach` in either case.
 		moveEffects.composeAttachDetach(
-			getAttachedNodeId(baseMark),
+			getAttachedRootId(baseMark),
 			{
 				revision: newMark.revision,
 				localId: newMark.id,
@@ -150,7 +150,7 @@ function composeMarksIgnoreChild(
 		);
 
 		// XXX: This currently has a side effect of removing the detach cross-field key for `baseMark` and so must be called.
-		moveEffects.getNewChangesForBaseDetach(getAttachedNodeId(baseMark), baseMark.count);
+		moveEffects.getNewChangesForBaseDetach(getAttachedRootId(baseMark), baseMark.count);
 
 		return newMark;
 	} else if (!markHasCellEffect(newMark)) {
@@ -158,8 +158,8 @@ function composeMarksIgnoreChild(
 			// When composing two inserts, the second insert (which is a pin) should take precedence.
 			// We treat the pin as a detach and reattach.
 			moveEffects.composeAttachDetach(
-				getAttachedNodeId(baseMark),
-				getAttachedNodeId(newMark),
+				getAttachedRootId(baseMark),
+				getAttachedRootId(newMark),
 				baseMark.count,
 			);
 
@@ -174,8 +174,8 @@ function composeMarksIgnoreChild(
 		const detach = extractMarkEffect(newMark);
 
 		moveEffects.composeAttachDetach(
-			getAttachedNodeId(baseMark),
-			getDetachedNodeId(newMark),
+			getAttachedRootId(baseMark),
+			getDetachedRootId(newMark),
 			baseMark.count,
 		);
 
@@ -187,8 +187,8 @@ function composeMarksIgnoreChild(
 	} else {
 		assert(baseMark.type === "Remove", "Unexpected mark type");
 		assert(newMark.type === "Insert", "Unexpected mark type");
-		const detachId = getDetachedNodeId(baseMark);
-		const attachId = getAttachedNodeId(newMark);
+		const detachId = getDetachedRootId(baseMark);
+		const attachId = getAttachedRootId(newMark);
 
 		// Note that we cannot assert that this returns true,
 		// as it may not be until a second pass that MCF can tell that this is a reattach of the same node.
@@ -209,7 +209,7 @@ function updateBaseMarkId(moveEffects: ComposeNodeManager, baseMark: Mark): Mark
 				...baseMark,
 				revision: updatedDetachId.revision,
 				id: updatedDetachId.localId,
-				idOverride: baseMark.idOverride ?? getDetachedNodeId(baseMark),
+				cellRename: baseMark.cellRename ?? getDetachedRootId(baseMark),
 			};
 		}
 	}
@@ -242,7 +242,7 @@ function handleNodeChanges(
 	if (newMark.changes !== undefined) {
 		if (baseMark.type === "Insert" && baseMark.cellId !== undefined) {
 			moveEffects.sendNewChangesToBaseSourceLocation(
-				getAttachedNodeId(baseMark),
+				getAttachedRootId(baseMark),
 				newMark.changes,
 			);
 			return undefined;
@@ -404,7 +404,7 @@ function getMovedChangesFromMark(
 		return undefined;
 	}
 
-	return moveEffects.getNewChangesForBaseDetach(getDetachedNodeId(markEffect), 1).value
+	return moveEffects.getNewChangesForBaseDetach(getDetachedRootId(markEffect), 1).value
 		?.nodeChange;
 }
 
@@ -412,6 +412,6 @@ function getUpdatedDetachId(
 	manager: ComposeNodeManager,
 	mark: CellMark<Detach>,
 ): ChangeAtomId | undefined {
-	return manager.getNewChangesForBaseDetach(getDetachedNodeId(mark), mark.count).value
+	return manager.getNewChangesForBaseDetach(getDetachedRootId(mark), mark.count).value
 		?.detachId;
 }

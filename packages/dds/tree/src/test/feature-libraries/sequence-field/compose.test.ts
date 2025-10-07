@@ -737,7 +737,7 @@ export function testCompose() {
 			const moveBack = [
 				Mark.moveOut(1, brand(0), {
 					changes,
-					idOverride: { revision: tag1, localId: brand(1) },
+					cellRename: { revision: tag1, localId: brand(1) },
 				}),
 				{ count: 1 },
 				Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
@@ -825,11 +825,11 @@ export function testCompose() {
 				Mark.moveOut(1, brand(0), {
 					revision: tag4,
 					changes,
-					idOverride: { revision: tag1, localId: brand(2) },
+					cellRename: { revision: tag1, localId: brand(2) },
 				}),
 				Mark.moveOut(1, brand(1), {
 					revision: tag4,
-					idOverride: { revision: tag1, localId: brand(3) },
+					cellRename: { revision: tag1, localId: brand(3) },
 				}),
 			];
 			assertChangesetsEqual(actual, expected);
@@ -1117,7 +1117,7 @@ export function testCompose() {
 					Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
 					{ count: 1 },
 					Mark.moveOut(1, brand(0), {
-						idOverride: { revision: tag1, localId: brand(1) },
+						cellRename: { revision: tag1, localId: brand(1) },
 					}),
 				],
 				tag3,
@@ -1436,7 +1436,7 @@ export function testCompose() {
 		it("remove (rollback) ○ insert", () => {
 			const insertA = tagChangeInline([Mark.insert(1, brand(0))], tag1);
 			const removeB = tagChangeInline(
-				[Mark.remove(1, brand(0), { idOverride: { revision: tag2, localId: brand(0) } })],
+				[Mark.remove(1, brand(0), { cellRename: { revision: tag2, localId: brand(0) } })],
 				tag3,
 				tag2,
 			);
@@ -1451,7 +1451,7 @@ export function testCompose() {
 				Mark.remove(
 					1,
 					{ revision: tag3, localId: brand(0) },
-					{ idOverride: { revision: tag2, localId: brand(0) } },
+					{ cellRename: { revision: tag2, localId: brand(0) } },
 				),
 				Mark.insert(1, { revision: tag1, localId: brand(0) }),
 			];

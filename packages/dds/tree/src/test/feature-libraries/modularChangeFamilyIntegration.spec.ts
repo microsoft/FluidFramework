@@ -204,7 +204,7 @@ describe("ModularChangeFamily integration", () => {
 					MarkMaker.remove(
 						1,
 						{ revision: tag1, localId: brand(4) },
-						{ idOverride: { revision: tag1, localId: brand(1) } },
+						{ cellRename: { revision: tag1, localId: brand(1) } },
 					),
 					MarkMaker.insert(1, { revision: tag1, localId: brand(2) }, { id: brand(0) }),
 					MarkMaker.rename(
@@ -999,6 +999,45 @@ describe("ModularChangeFamily integration", () => {
 			assertEqual(rebased, expected);
 		});
 
+		it("composite move over move", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
+
+			const fieldAPath = { parent: undefined, field: fieldA };
+			editor.move(fieldAPath, 0, 1, fieldAPath, 3);
+			editor.move(fieldAPath, 0, 1, fieldAPath, 1);
+			editor.move(fieldAPath, 1, 1, fieldAPath, 2);
+
+			const [move1Untagged, move2a, move2b] = getChanges();
+			const move1 = tagChangeInline(move1Untagged, tag1);
+			const move2 = tagChangeInline(
+				family.compose([makeAnonChange(move2a), makeAnonChange(move2b)]),
+				tag2,
+			);
+
+			const rebased = family.rebase(
+				move2,
+				move1,
+				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+			);
+
+			const expected = Change.build(
+				{ family },
+				Change.field(fieldA, sequence.identifier, [
+					MarkMaker.tomb(tag1, brand(8)),
+					MarkMaker.skip(1),
+					MarkMaker.insert(1, { revision: tag2, localId: brand(9) }),
+					MarkMaker.remove(
+						1,
+						{ revision: tag2, localId: brand(10) },
+						{ cellRename: { revision: tag2, localId: brand(11) } },
+					),
+				]),
+			);
+
+			assertEqual(rebased, expected);
+		});
+
 		it("prunes its output", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
@@ -1229,7 +1268,7 @@ describe("ModularChangeFamily integration", () => {
 					revisions: [{ revision: tag1 }, { revision: tag2 }],
 				},
 				Change.field(fieldA, sequence.identifier, [
-					MarkMaker.remove(1, id2, { idOverride: id1 }),
+					MarkMaker.remove(1, id2, { cellRename: id1 }),
 				]),
 				Change.field(fieldB, sequence.identifier, [
 					MarkMaker.rename(

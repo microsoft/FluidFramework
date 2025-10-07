@@ -6,7 +6,7 @@
 import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import type { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../core/index.js";
-import type { IdAllocator } from "../../util/index.js";
+import type { IdAllocator, Mutable } from "../../util/index.js";
 import {
 	type RebaseNodeManager,
 	type NodeChangeRebaser,
@@ -39,10 +39,11 @@ import {
 	cloneMark,
 	compareCellPositionsUsingTombstones,
 	extractMarkEffect,
-	getAttachedNodeId,
+	getAttachedRootId,
 	getDetachOutputCellId,
-	getDetachedNodeId,
+	getDetachedRootId,
 	getInputCellId,
+	getOutputCellId,
 	isAttach,
 	isDetach,
 	isNewAttach,
@@ -117,10 +118,10 @@ class RebaseQueue {
 	) {
 		const queryFunc: NodeRangeQueryFunc = (mark) => {
 			if (isAttach(mark)) {
-				return moveEffects.getNewChangesForBaseAttach(getAttachedNodeId(mark), mark.count)
+				return moveEffects.getNewChangesForBaseAttach(getAttachedRootId(mark), mark.count)
 					.length;
 			} else if (isDetach(mark)) {
-				return moveEffects.doesBaseMoveNodes(getDetachedNodeId(mark), mark.count).length;
+				return moveEffects.doesBaseMoveNodes(getDetachedRootId(mark), mark.count).length;
 			}
 
 			let count = mark.count;
@@ -244,7 +245,7 @@ function addMovedMarkEffect(mark: Mark, effect: Detach): Mark {
 	if (isAttach(mark) && isDetach(effect)) {
 		return { ...mark, type: "Insert" };
 	} else if (isRename(mark) && isDetach(effect)) {
-		return { ...effect, count: mark.count, idOverride: mark.idOverride };
+		return { ...effect, count: mark.count, cellRename: mark.idOverride };
 	} else if (isTombstone(mark)) {
 		return { ...mark, ...effect };
 	}
@@ -295,7 +296,7 @@ function rebaseMarkIgnoreChild(
 			0x69d /* A new attach should not be rebased over its cell being emptied */,
 		);
 		const baseCellId = getDetachOutputCellId(baseMark);
-		const baseDetachId = getDetachedNodeId(baseMark);
+		const baseDetachId = getDetachedRootId(baseMark);
 
 		const { remains, follows } = separateEffectsForMove(
 			extractMarkEffect(currMark),
@@ -327,7 +328,7 @@ function rebaseMarkIgnoreChild(
 		}
 
 		// XXX: Is this right if currMark is a rename?
-		return withCellId(currMark, getDetachOutputCellId(baseMark));
+		return withCellId(currMark, getOutputCellId(baseMark));
 	} else if (
 		isRename(currMark) &&
 		moveEffects.doesBaseMoveNodes(
@@ -359,6 +360,10 @@ function separateEffectsForMove(
 		case NoopMarkType:
 			return {};
 		case "Remove": {
+			if (mark.cellRename !== undefined) {
+				return { remains: { type: "Rename", idOverride: mark.cellRename }, follows: mark };
+			}
+
 			// We should rename these cells unless the nodes are reattached elsewhere,
 			// in which case we will rename those cells instead.
 			const remains: MarkEffect = nodeManager.doesBaseMoveNodes(baseDetachId, 1).value
@@ -396,8 +401,9 @@ function moveRebasedChanges(
 	nodeChange: NodeId | undefined,
 	newDetach: Detach | undefined,
 ): void {
-	const newId = newDetach !== undefined ? getDetachedNodeId(newDetach) : undefined;
-	moveEffects.rebaseOverDetach(baseId, count, newId, nodeChange);
+	const newId = newDetach !== undefined ? getDetachedRootId(newDetach) : undefined;
+	const detachCellId = newDetach?.detachCellId;
+	moveEffects.rebaseOverDetach(baseId, count, newId, nodeChange, detachCellId);
 }
 
 function rebaseNodeChange(
@@ -462,10 +468,22 @@ function getMovedEffect(
 	assert(entry.length === count, 0x6f3 /* Expected effect to cover entire mark */);
 	const detachId = entry.value?.detachId;
 	if (detachId === undefined) {
+		assert(
+			entry.value?.bonusId === undefined,
+			"Cell detach should be accompanied by node detach",
+		);
 		return undefined;
 	}
 
-	const detach: Detach = { type: "Remove", revision: detachId.revision, id: detachId.localId };
+	const detach: Mutable<Detach> = {
+		type: "Remove",
+		revision: detachId.revision,
+		id: detachId.localId,
+	};
+	if (entry.value?.bonusId !== undefined) {
+		detach.detachCellId = entry.value.bonusId;
+	}
+
 	return detach;
 }
 

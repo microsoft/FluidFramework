@@ -193,7 +193,7 @@ export const sequenceFieldEditor = {
 		const moveOut: CellMark<Detach> = {
 			type: "Remove",
 			id: attachCellId.localId,
-			idOverride: detachCellId,
+			cellRename: detachCellId,
 			count,
 			revision,
 		};

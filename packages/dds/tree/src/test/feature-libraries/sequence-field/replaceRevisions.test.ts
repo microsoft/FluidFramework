@@ -104,20 +104,20 @@ function runCases(outputRev: RevisionTag | undefined) {
 			Mark.insert(1, atom1),
 			Mark.insert(1, atom2),
 			Mark.insert(1, atom3),
-			Mark.remove(1, atom0, { idOverride: atom1 }),
-			Mark.remove(1, atom1, { idOverride: atom2 }),
-			Mark.remove(1, atom2, { idOverride: atom3 }),
-			Mark.remove(1, atom3, { idOverride: atom0 }),
+			Mark.remove(1, atom0, { cellRename: atom1 }),
+			Mark.remove(1, atom1, { cellRename: atom2 }),
+			Mark.remove(1, atom2, { cellRename: atom3 }),
+			Mark.remove(1, atom3, { cellRename: atom0 }),
 		];
 		const expected: SF.Changeset = [
 			Mark.insert(1, atom0),
 			Mark.insert(1, atomOut1),
 			Mark.insert(1, atomOut2),
 			Mark.insert(1, atomOut3),
-			Mark.remove(1, atom0, { idOverride: atomOut1 }),
-			Mark.remove(1, atomOut1, { idOverride: atomOut2 }),
-			Mark.remove(1, atomOut2, { idOverride: atomOut3 }),
-			Mark.remove(1, atomOut3, { idOverride: atom0 }),
+			Mark.remove(1, atom0, { cellRename: atomOut1 }),
+			Mark.remove(1, atomOut1, { cellRename: atomOut2 }),
+			Mark.remove(1, atomOut2, { cellRename: atomOut3 }),
+			Mark.remove(1, atomOut3, { cellRename: atom0 }),
 		];
 		const actual = process(input);
 		assertChangesetsEqual(actual, expected);

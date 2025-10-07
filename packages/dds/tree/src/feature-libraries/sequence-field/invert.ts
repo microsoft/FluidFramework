@@ -24,7 +24,7 @@ import {
 } from "./types.js";
 import {
 	areEqualCellIds,
-	getAttachedNodeId,
+	getAttachedRootId,
 	getInputCellId,
 	getOutputCellId,
 	isImpactful,
@@ -147,7 +147,7 @@ function invertInsert(
 	manager: InvertNodeManager,
 	isRollback: boolean,
 ): Mark[] {
-	const entry = manager.invertAttach(getAttachedNodeId(mark), mark.count);
+	const entry = manager.invertAttach(getAttachedRootId(mark), mark.count);
 
 	if (entry.length < mark.count) {
 		const [mark1, mark2] = splitMark(mark, entry.length);
@@ -169,7 +169,7 @@ function invertInsertSegment(
 	const inputId = getInputCellId(mark);
 	assert(inputId !== undefined, 0x80c /* Active inserts should target empty cells */);
 
-	const detachId = invertAttachId(getAttachedNodeId(mark), revision, isRollback, detachEntry);
+	const detachId = invertAttachId(getAttachedRootId(mark), revision, isRollback, detachEntry);
 
 	const removeMark: Mutable<CellMark<Detach>> = {
 		type: "Remove",
@@ -179,7 +179,7 @@ function invertInsertSegment(
 	};
 
 	if (isRollback && !areEqualCellIds(inputId, detachId)) {
-		removeMark.idOverride = inputId;
+		removeMark.cellRename = inputId;
 	}
 
 	if (detachEntry?.nodeChange !== undefined) {

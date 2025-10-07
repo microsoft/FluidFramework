@@ -1062,7 +1062,7 @@ export function testExamples() {
 			const redetach = invert(rebasedRevive, tag4);
 			const expected = [
 				Mark.remove(1, brand(0), {
-					idOverride: { revision: tag1, localId: brand(0) },
+					cellRename: { revision: tag1, localId: brand(0) },
 					revision: tag4,
 				}),
 				Mark.tomb(tag2, brand(42)),

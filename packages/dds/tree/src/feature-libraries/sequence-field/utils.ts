@@ -29,7 +29,6 @@ import {
 	type CellMark,
 	type Changeset,
 	type Detach,
-	type DetachFields,
 	type HasRevisionTag,
 	type Mark,
 	type MarkEffect,
@@ -119,13 +118,19 @@ export function getInputCellId(mark: Mark): CellId | undefined {
 }
 
 export function getOutputCellId(mark: Mark): CellId | undefined {
-	if (isDetach(mark) || isRename(mark)) {
-		return getDetachOutputCellId(mark);
-	} else if (markFillsCells(mark)) {
-		return undefined;
+	const type = mark.type;
+	switch (type) {
+		case NoopMarkType:
+			return getInputCellId(mark);
+		case "Insert":
+			return undefined;
+		case "Remove":
+			return getDetachOutputCellId(mark);
+		case "Rename":
+			return mark.idOverride;
+		default:
+			unreachableCase(type);
 	}
-
-	return getInputCellId(mark);
 }
 
 export function cellSourcesFromMarks(
@@ -263,29 +268,29 @@ export function compareCellPositionsUsingTombstones(
 /**
  * Gets the ID of the cell in the output context of the given detach `mark`.
  */
-export function getDetachOutputCellId(mark: Detach | Rename): ChangeAtomId {
-	if (isRename(mark)) {
-		return mark.idOverride;
+export function getDetachOutputCellId(mark: Detach): ChangeAtomId {
+	if (mark.cellRename !== undefined) {
+		return mark.cellRename;
 	}
-	if (mark.idOverride !== undefined) {
-		return mark.idOverride;
+
+	if (mark.detachCellId !== undefined) {
+		return mark.detachCellId;
 	}
-	return mark.revision === undefined
-		? { localId: mark.id }
-		: { revision: mark.revision, localId: mark.id };
+
+	return getDetachedRootId(mark);
 }
 
 /**
  * Gets the ID of the node to be attached in the input context of the given detach `mark`.
  */
-export function getAttachedNodeId(mark: Attach): ChangeAtomId {
+export function getAttachedRootId(mark: Attach): ChangeAtomId {
 	return makeChangeAtomId(mark.id, mark.revision);
 }
 
 /**
  * Gets the ID of the detached node in the output context of the given detach `mark`.
  */
-export function getDetachedNodeId(mark: Detach): ChangeAtomId {
+export function getDetachedRootId(mark: Detach): ChangeAtomId {
 	return makeChangeAtomId(mark.id, mark.revision);
 }
 
@@ -477,17 +482,6 @@ export function areMergeableChangeAtoms(
 	);
 }
 
-function haveMergeableIdOverrides(
-	lhs: DetachFields,
-	lhsCount: number,
-	rhs: DetachFields,
-): boolean {
-	if (lhs.idOverride !== undefined && rhs.idOverride !== undefined) {
-		return areMergeableCellIds(lhs.idOverride, lhsCount, rhs.idOverride);
-	}
-	return (lhs.idOverride === undefined) === (rhs.idOverride === undefined);
-}
-
 function areMergeableCellIds(
 	lhs: CellId | undefined,
 	lhsCount: number,
@@ -543,7 +537,11 @@ function tryMergeEffects(
 		return undefined;
 	}
 
-	if (isDetach(lhs) && isDetach(rhs) && !haveMergeableIdOverrides(lhs, lhsCount, rhs)) {
+	if (
+		isDetach(lhs) &&
+		isDetach(rhs) &&
+		!areMergeableChangeAtoms(lhs.cellRename, lhsCount, rhs.cellRename)
+	) {
 		return undefined;
 	}
 
@@ -553,7 +551,8 @@ function tryMergeEffects(
 			const lhsDetach = lhs as Detach;
 			if (
 				(lhsDetach.id as number) + lhsCount === rhs.id &&
-				haveMergeableIdOverrides(lhsDetach, lhsCount, rhs)
+				areMergeableChangeAtoms(lhsDetach.cellRename, lhsCount, rhs.cellRename) &&
+				areMergeableChangeAtoms(lhsDetach.detachCellId, lhsCount, rhs.detachCellId)
 			) {
 				return lhsDetach;
 			}
@@ -561,7 +560,7 @@ function tryMergeEffects(
 		}
 		case "Rename": {
 			const lhsDetach = lhs as Rename;
-			if (haveMergeableIdOverrides(lhsDetach, lhsCount, rhs)) {
+			if (areMergeableChangeAtoms(lhsDetach.idOverride, lhsCount, rhs.idOverride)) {
 				return lhsDetach;
 			}
 			break;
@@ -632,8 +631,12 @@ export function splitMarkEffect<TEffect extends MarkEffect>(
 			const id2: ChangesetLocalId = brand((effect.id as number) + length);
 			const effect2 = { ...effect, id: id2 };
 			const effect2Remove = effect2 as Mutable<Detach>;
-			if (effect2Remove.idOverride !== undefined) {
-				effect2Remove.idOverride = splitDetachEvent(effect2Remove.idOverride, length);
+			if (effect2Remove.cellRename !== undefined) {
+				effect2Remove.cellRename = splitDetachEvent(effect2Remove.cellRename, length);
+			}
+
+			if (effect2Remove.detachCellId !== undefined) {
+				effect2Remove.detachCellId = splitDetachEvent(effect2Remove.detachCellId, length);
 			}
 			return [effect1, effect2];
 		}

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { type RevisionTag, replaceAtomRevisions } from "../../core/index.js";
 
@@ -19,6 +19,7 @@ import {
 	type Rename,
 } from "./types.js";
 import { isDetach, isRename } from "./utils.js";
+import type { Mutable } from "../../util/index.js";
 
 export function replaceRevisions(
 	changeset: Changeset,
@@ -39,7 +40,7 @@ function updateMark(
 	revisionsToReplace: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
 ): Mark {
-	const updatedMark = { ...updateEffect(mark, revisionsToReplace, newRevision) };
+	const updatedMark = { ...replaceEffectRevisions(mark, revisionsToReplace, newRevision) };
 	if (mark.cellId !== undefined) {
 		updatedMark.cellId = replaceAtomRevisions(mark.cellId, revisionsToReplace, newRevision);
 	}
@@ -51,46 +52,59 @@ function updateMark(
 	return updatedMark;
 }
 
-function updateEffect<TMark extends MarkEffect>(
-	input: TMark,
+function replaceEffectRevisions<TMark extends MarkEffect>(
+	mark: TMark,
 	revisionsToReplace: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
 ): TMark {
-	const mark =
-		isDetach(input) || isRename(input)
-			? updateIdOverride(input, revisionsToReplace, newRevision)
-			: input;
 	const type = mark.type;
 	switch (type) {
-		case "Rename":
 		case NoopMarkType:
 			return mark;
 		case "Insert":
+			return replaceRevision<TMark & HasRevisionTag>(mark, revisionsToReplace, newRevision);
+
 		case "Remove":
-			return updateRevision<TMark & HasRevisionTag>(mark, revisionsToReplace, newRevision);
+			return replaceDetachRevisions<TMark & Detach>(
+				mark as Detach & TMark,
+				revisionsToReplace,
+				newRevision,
+			);
+		case "Rename":
+			return {
+				...mark,
+				idOverride: replaceAtomRevisions(mark.idOverride, revisionsToReplace, newRevision),
+			};
 		default:
 			unreachableCase(type);
 	}
 }
 
-function updateIdOverride<TEffect extends Detach | Rename>(
-	effect: TEffect,
+function replaceDetachRevisions<TDetach extends Detach>(
+	detach: TDetach,
 	revisionsToReplace: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
-): TEffect {
-	if (effect.idOverride !== undefined) {
-		const idOverride = replaceAtomRevisions(
-			effect.idOverride,
+): TDetach {
+	const updated = replaceRevision(detach, revisionsToReplace, newRevision) as Mutable<TDetach>;
+	if (updated.cellRename !== undefined) {
+		updated.cellRename = replaceAtomRevisions(
+			updated.cellRename,
 			revisionsToReplace,
 			newRevision,
 		);
-		return { ...effect, idOverride };
-	} else {
-		return effect;
 	}
+
+	if (updated.detachCellId !== undefined) {
+		updated.detachCellId = replaceAtomRevisions(
+			updated.detachCellId,
+			revisionsToReplace,
+			newRevision,
+		);
+	}
+	return updated;
 }
 
-function updateRevision<T extends HasRevisionTag>(
+function replaceRevision<T extends HasRevisionTag>(
 	input: T,
 	revisionsToReplace: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,

@@ -83,18 +83,6 @@ export interface HasMoveFields extends HasMoveId, HasRevisionTag {
 	finalEndpoint?: ChangeAtomId;
 }
 
-export interface DetachFields {
-	/**
-	 * When set, the detach should use the `CellId` specified in this object to characterize the cell being emptied.
-	 * Note that this does not affect the ID associated with the detached node.
-	 *
-	 * This is used in two situations:
-	 * - to restore the prior ID of a cell in a rollback changeset
-	 * - to represent the impact of a detach composed with a rename
-	 */
-	readonly idOverride?: CellId;
-}
-
 /**
  * Removes nodes from their cells.
  * Always brings about the desired outcome: the targeted nodes are removed from their cells.
@@ -103,9 +91,30 @@ export interface DetachFields {
  * Rebasing this mark never causes it to target different set of nodes.
  * Rebasing this mark can cause it to clear a different set of cells.
  */
-export interface Detach extends HasRevisionTag, DetachFields {
-	type: "Remove";
-	id: ChangesetLocalId;
+export interface Detach extends HasRevisionTag {
+	readonly type: "Remove";
+	readonly id: ChangesetLocalId;
+
+	/**
+	 * The ID the cell should be set to when this detach is applied.
+	 * If not set, this the same as the detach ID.
+	 * This applies to the cell where the node is being detached from,
+	 * or the last cell the node occupied if it is already detached.
+	 *
+	 * This field is used to represent the composition of two moves.
+	 *
+	 */
+	readonly detachCellId?: CellId;
+
+	/**
+	 * When set, this represents a rename of this cell to be applied after the detach.
+	 * Note that this does not affect the ID associated with the detached node.
+	 *
+	 * This is used in two situations:
+	 * - to restore the prior ID of a cell in a rollback changeset
+	 * - to represent the impact of a detach composed with a rename
+	 */
+	readonly cellRename?: CellId;
 }
 
 /**

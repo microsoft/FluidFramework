@@ -144,7 +144,7 @@ export interface RebaseNodeManager {
 	getNewChangesForBaseAttach(
 		baseAttachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry>;
+	): RangeQueryResult<ChangeAtomId, RebaseDetachedNodeEntry>;
 
 	// XXX: It's not clear if this must be called even when newDetachId and nodeChange are undefined.
 	// XXX: It's not clear if it's okay to call this once with a newDetachId then once with a nodeChange.
@@ -156,12 +156,15 @@ export interface RebaseNodeManager {
 	 * @param count - The number of nodes detached by the base detach.
 	 * @param newDetachId - The ID associated the detach intention (if any) for these nodes in the rebased changeset.
 	 * @param nodeChange - The nested changes (if any) associated with this node in the rebased changeset.
+	 * @param bonusId - An additional ID to associate with this node. This ID will be included in the result of {@link getNewChangesForBaseAttach}.
+	 * This is used by sequence field to represent a cell ID for this detach, and is only needed for compatibility with earlier client versions.
 	 */
 	rebaseOverDetach(
 		baseDetachId: ChangeAtomId,
 		count: number,
 		newDetachId: ChangeAtomId | undefined,
 		nodeChange: NodeId | undefined,
+		bonusId?: ChangeAtomId,
 	): void;
 
 	addDetach(id: ChangeAtomId, count: number): void;
@@ -187,4 +190,8 @@ export interface RebaseNodeManager {
 export interface DetachedNodeEntry {
 	nodeChange?: NodeId;
 	detachId?: ChangeAtomId;
+}
+
+export interface RebaseDetachedNodeEntry extends DetachedNodeEntry {
+	bonusId?: ChangeAtomId;
 }

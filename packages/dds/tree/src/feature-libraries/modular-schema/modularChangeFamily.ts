@@ -71,6 +71,7 @@ import {
 	CrossFieldTarget,
 	type DetachedNodeEntry,
 	type InvertNodeManager,
+	type RebaseDetachedNodeEntry,
 	type RebaseNodeManager,
 	setInCrossFieldMap,
 } from "./crossFieldQueries.js";
@@ -2552,7 +2553,7 @@ interface InvertContext {
 
 interface RebaseTable {
 	// Entries are keyed on attach ID
-	readonly entries: CrossFieldMap<DetachedNodeEntry>;
+	readonly entries: CrossFieldMap<RebaseDetachedNodeEntry>;
 	readonly baseChange: ModularChangeset;
 	readonly newChange: ModularChangeset;
 
@@ -2791,7 +2792,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 	public getNewChangesForBaseAttach(
 		baseAttachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
+	): RangeQueryResult<ChangeAtomId, RebaseDetachedNodeEntry> {
 		let countToProcess = count;
 
 		// XXX: This should not longer be necessary.
@@ -2859,6 +2860,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		count: number,
 		newDetachId: ChangeAtomId | undefined,
 		nodeChange: NodeId | undefined,
+		bonusId?: ChangeAtomId,
 	): void {
 		let countToProcess = count;
 		const attachIdEntry = firstAttachIdFromDetachId(
@@ -2888,6 +2890,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			setInCrossFieldMap(this.table.entries, baseAttachId, countToProcess, {
 				nodeChange,
 				detachId: newDetachId,
+				bonusId,
 			});
 
 			if (nodeChange !== undefined || newDetachId !== undefined) {

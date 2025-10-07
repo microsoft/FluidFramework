@@ -14,8 +14,8 @@ import { type MarkList, NoopMarkType } from "./types.js";
 import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
-	getAttachedNodeId,
-	getDetachedNodeId,
+	getAttachedRootId,
+	getDetachedRootId,
 	getInputCellId,
 } from "./utils.js";
 
@@ -44,7 +44,7 @@ export function sequenceFieldToDelta(
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			switch (type) {
 				case "Remove": {
-					const newDetachId = getDetachedNodeId(mark);
+					const newDetachId = getDetachedRootId(mark);
 					if (inputCellId === undefined) {
 						deltaMark.detach = nodeIdFromChangeAtom(newDetachId);
 						deltaMarks.push(deltaMark);
@@ -52,7 +52,7 @@ export function sequenceFieldToDelta(
 					break;
 				}
 				case "Insert": {
-					const buildId = nodeIdFromChangeAtom(getAttachedNodeId(mark));
+					const buildId = nodeIdFromChangeAtom(getAttachedRootId(mark));
 					deltaMark.attach = buildId;
 					deltaMarks.push(deltaMark);
 					break;

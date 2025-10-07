@@ -39,8 +39,11 @@ export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMa
 		type: "Remove",
 		id: brand(0),
 		revision: tag,
-		idOverride: atomId,
+		cellRename: atomId,
+		detachCellId: atomId,
 	};
+
+	// XXX: Why are the above not used?
 	const populatedMarks: PopulatedMark[] = [
 		{ count: 1, cellId: atomId, changes },
 		{ type: "Insert", count: 1, cellId: atomId, changes, id: brand(0), revision: tag },
@@ -51,7 +54,7 @@ export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMa
 			changes,
 			id: brand(0),
 			revision: tag,
-			idOverride: atomId,
+			cellRename: atomId,
 		},
 		{ type: "Rename", count: 1, cellId: atomId, changes, idOverride: atomId },
 	];
