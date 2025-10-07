@@ -36,11 +36,16 @@ import {
 	normalizeAndEvaluateAnnotatedAllowedTypes,
 	normalizeToAnnotatedAllowedType,
 	type AllowedTypes,
+	type AllowedTypesFull,
 	type AllowedTypesFullEvaluated,
+	type AllowedTypesFullFromMixed,
+	type AnnotateAllowedTypesList,
 	type AnnotatedAllowedType,
+	type AnnotatedAllowedTypes,
 	type ImplicitAllowedTypes,
 	type InsertableTreeNodeFromAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NumberKeys,
 	type TreeNodeFromImplicitAllowedTypes,
 	type UnannotateAllowedTypesList,
 	// eslint-disable-next-line import/no-internal-modules
@@ -139,6 +144,55 @@ const schema = new SchemaFactory("com.example");
 		type _check = requireAssignableTo<A, T>;
 		type _check2 = requireFalse<isAssignableTo<B, T>>;
 	}
+
+	{
+		type T = InsertableTreeNodeFromAllowedTypes<
+			UnannotateAllowedTypesList<AnnotateAllowedTypesList<[typeof A, typeof B]>>
+		>;
+		type _check = requireAssignableTo<A | B, T>;
+	}
+
+	{
+		type T = InsertableTreeNodeFromAllowedTypes<
+			AllowedTypesFull<AnnotateAllowedTypesList<[typeof A, typeof B]>>
+		>;
+		type _check = requireAssignableTo<A | B, T>;
+	}
+
+	{
+		type T = InsertableTreeNodeFromAllowedTypes<
+			AllowedTypesFullFromMixed<[typeof A, typeof B]>
+		>;
+		type _check = requireAssignableTo<A | B, T>;
+	}
+
+	{
+		type Annotated = AnnotateAllowedTypesList<[typeof A, typeof B]>;
+		type T = InsertableTreeNodeFromAllowedTypes<
+			AnnotatedAllowedTypes<Annotated> & [typeof A, typeof B]
+		>;
+		type _check = requireAssignableTo<A | B, T>;
+	}
+
+	{
+		type T = InsertableTreeNodeFromAllowedTypes<AnnotatedAllowedTypes & [typeof A, typeof B]>;
+		type _check = requireAssignableTo<A | B, T>;
+	}
+
+	{
+		// Must ignore irrelevant fields
+		type T = InsertableTreeNodeFromAllowedTypes<{ x: 5 } & [typeof A, typeof B]>;
+		type _check = requireAssignableTo<A | B, T>;
+	}
+}
+
+// NumberKeys
+{
+	type F = { x: 4 } & [5, 6];
+	type Keys = NumberKeys<F>;
+
+	allowUnused<requireAssignableTo<Keys, "0" | "1">>();
+	allowUnused<requireAssignableTo<"0" | "1", Keys>>();
 }
 
 // AllowedTypesFullEvaluated

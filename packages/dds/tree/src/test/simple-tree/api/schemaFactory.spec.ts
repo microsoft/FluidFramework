@@ -27,10 +27,19 @@ import {
 	type TreeFieldFromImplicitField,
 	TreeViewConfigurationAlpha,
 	SchemaFactoryBeta,
+	allowUnused,
+	type InsertableTreeFieldFromImplicitField,
 } from "../../../simple-tree/index.js";
 import {
 	// Import directly to get the non-type import to allow testing of the package only instanceof
 	TreeNode,
+	type AllowedTypes,
+	type AllowedTypesFull,
+	type AnnotatedAllowedType,
+	type AnnotatedAllowedTypes,
+	type InsertableTreeNodeFromAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type UnannotateAllowedTypesList,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/index.js";
 import {
@@ -46,7 +55,9 @@ import {
 import {
 	brand,
 	type areSafelyAssignable,
+	type IsUnion,
 	type requireAssignableTo,
+	type requireFalse,
 	type requireTrue,
 } from "../../../util/index.js";
 
@@ -1426,6 +1437,76 @@ describe("schemaFactory", () => {
 		});
 
 		describe("in maps", () => {
+			it("typing", () => {
+				const allowedTypes = SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]);
+
+				allowUnused<requireAssignableTo<typeof allowedTypes, AllowedTypes>>();
+				allowUnused<
+					requireAssignableTo<
+						typeof allowedTypes,
+						readonly [typeof SchemaFactoryAlpha.number, typeof SchemaFactoryAlpha.string]
+					>
+				>();
+
+				allowUnused<requireAssignableTo<typeof allowedTypes, AnnotatedAllowedTypes>>();
+				allowUnused<
+					requireAssignableTo<
+						typeof allowedTypes,
+						UnannotateAllowedTypesList<
+							readonly [typeof SchemaFactoryAlpha.number, typeof SchemaFactoryAlpha.string]
+						>
+					>
+				>();
+				allowUnused<
+					requireAssignableTo<
+						typeof allowedTypes,
+						AnnotatedAllowedTypes<
+							readonly [
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.number>,
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.string>,
+							]
+						>
+					>
+				>();
+
+				allowUnused<
+					requireAssignableTo<
+						typeof allowedTypes,
+						AllowedTypesFull<
+							readonly [
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.number>,
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.string>,
+							]
+						>
+					>
+				>();
+
+				{
+					type InField = InsertableTreeFieldFromImplicitField<typeof allowedTypes>;
+					allowUnused<requireAssignableTo<InField, number | string>>();
+					allowUnused<requireAssignableTo<number | string, InField>>();
+				}
+
+				{
+					type InAllowedTypes = InsertableTreeNodeFromImplicitAllowedTypes<
+						typeof allowedTypes
+					>;
+					allowUnused<requireAssignableTo<InAllowedTypes, number | string>>();
+					allowUnused<requireAssignableTo<number | string, InAllowedTypes>>();
+				}
+
+				{
+					type InAllowedTypes = InsertableTreeNodeFromAllowedTypes<typeof allowedTypes>;
+					allowUnused<requireAssignableTo<InAllowedTypes, number | string>>();
+					allowUnused<requireAssignableTo<number | string, InAllowedTypes>>();
+				}
+
+				allowUnused<requireFalse<IsUnion<typeof allowedTypes>>>();
+			});
+
 			class TestMap extends schemaFactory.mapAlpha(
 				"TestMap",
 				SchemaFactoryAlpha.types([

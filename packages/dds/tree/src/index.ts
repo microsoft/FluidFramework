@@ -269,6 +269,7 @@ export {
 	KeyEncodingOptions,
 	type TreeParsingOptions,
 	type SchemaFactory_base,
+	type NumberKeys,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

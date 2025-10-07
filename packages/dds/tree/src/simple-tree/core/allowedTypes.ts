@@ -104,6 +104,7 @@ export interface AnnotatedAllowedTypes<T = readonly AnnotatedAllowedType[]>
 	 * Annotations that apply to a set of allowed types.
 	 */
 	readonly metadata: AllowedTypesMetadata;
+
 	/**
 	 * All the allowed types that the annotations apply to. The types themselves may also have individual annotations.
 	 */
@@ -147,19 +148,12 @@ export type AllowedTypesFull<
 
 /**
  * Creates an {@link AllowedTypesFull} type from a mixed array of annotated and unannotated allowed types.
- * @remarks
- * This is currently somewhat limited in the cases it handles well.
- * In some cases it omits the {@link AnnotatedAllowedTypes} when the type constraints cannot be satisfied.
- * This is enough for current uses, but may be improved in the future.
  * @alpha
  * @sealed
  */
 export type AllowedTypesFullFromMixed<
 	T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
-> = (AnnotateAllowedTypesList<T> extends readonly AnnotatedAllowedType[]
-	? AnnotatedAllowedTypes<AnnotateAllowedTypesList<T>>
-	: unknown) &
-	UnannotateAllowedTypesList<T>;
+> = UnannotateAllowedTypesList<T> & AnnotatedAllowedTypes<AnnotateAllowedTypesList<T>>;
 
 /**
  * The same as the built-in InstanceType, but works on classes with private constructors.
@@ -488,13 +482,15 @@ export type UnannotateAllowedTypesList<
 };
 
 /**
- * Removes annotations from a list of allowed types that may contain annotations.
+ * Add annotations to a list of allowed types that may or may not contain annotations.
  * @system @alpha
  */
 export type AnnotateAllowedTypesList<
 	T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
 > = {
-	[I in keyof T]: T[I] extends AnnotatedAllowedType<infer X> ? X : T[I];
+	[I in keyof T]: T[I] extends AnnotatedAllowedType<unknown>
+		? T[I]
+		: AnnotatedAllowedType<T[I]>;
 };
 
 /**
@@ -727,16 +723,32 @@ export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitA
  * @typeparam TList - AllowedTypes to process
  *
  * @privateRemarks
- * This loop is manually unrolled to allow larger unions before hitting the recursion limit in TypeScript.
+ * This loop is non-recursive to allow larger unions before hitting the recursion limit in TypeScript.
  * @system @public
  */
 export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> =
 	IsUnion<TList> extends true
 		? never
 		: {
-				readonly [Property in keyof TList]: TList[Property] extends LazyItem<
-					infer TSchema extends TreeNodeSchema
-				>
+				readonly [Property in keyof TList]: [TList[Property]] extends [
+					LazyItem<infer TSchema extends TreeNodeSchema>,
+				]
 					? InsertableTypedNode<TSchema>
 					: never;
-			}[number];
+			}[NumberKeys<TList>];
+
+/**
+ * Extracts the keys of `T` which are numbers.
+ * @remarks
+ * The keys are extracted as strings which can be used to index `T`.
+ *
+ * This handles cases like `{ x: 4 } & [5, 6]` returning `"0"` and `"1"`.
+ * Such cases are difficult to handle since `keyof` includes `number` in such cases, but the type can not be indexed by `number`.
+ * @system @public
+ */
+export type NumberKeys<
+	T,
+	Transformed = {
+		readonly [Property in keyof T as number extends Property ? never : Property]: Property;
+	},
+> = Transformed[`${number}` & keyof Transformed];
