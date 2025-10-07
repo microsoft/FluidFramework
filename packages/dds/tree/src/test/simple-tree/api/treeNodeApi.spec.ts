@@ -97,6 +97,349 @@ const schema = new SchemaFactoryAlpha("com.example");
 class Point extends schema.object("Point", {}) {}
 
 describe("treeNodeApi", () => {
+	describeHydration(
+		"trackObservations",
+		(init) => {
+			it("no reads", () => {
+				class Point2D extends schema.object("Point", {
+					x: schema.number,
+				}) {}
+				const node = init(Point2D, { x: 0 });
+
+				const out = TreeAlpha.trackObservations(
+					() => assert.fail(),
+					() => "x",
+				);
+				node.x = 1;
+				assert.equal(out.result, "x");
+			});
+
+			it("field read, unhydrated", () => {
+				class PointX extends schema.object("Point", {
+					x: schema.number,
+				}) {}
+				const node = init(PointX, { x: 0 });
+				const invalidations: string[] = [];
+
+				const out = TreeAlpha.trackObservations(
+					() => invalidations.push("Read X"),
+					() => node.x,
+				);
+				assert.deepEqual(invalidations, []);
+				assert.equal(out.result, 0);
+				node.x = 2;
+				assert.deepEqual(invalidations, ["Read X"]);
+				node.x = 3;
+				assert.deepEqual(invalidations, ["Read X", "Read X"]);
+				out.unsubscribe();
+				node.x = 4;
+				assert.deepEqual(invalidations, ["Read X", "Read X"]);
+			});
+
+			it("optional field unhydrated", () => {
+				class PointX extends schema.object("Point", {
+					x: SchemaFactory.optional(schema.number),
+				}) {}
+				const node = init(PointX, {});
+				const invalidations: string[] = [];
+
+				const out = TreeAlpha.trackObservations(
+					() => invalidations.push("Read keys"),
+					() => [...Object.keys(node)],
+				);
+				assert.deepEqual(invalidations, []);
+				assert.deepEqual(out.result, []);
+				node.x = 2;
+				assert.deepEqual(invalidations, ["Read keys"]);
+			});
+
+			it("parent unhydrated", () => {
+				class PointX extends schema.object("Point", {}) {}
+				const node = init(PointX, {});
+
+				assert.throws(
+					() => {
+						TreeAlpha.trackObservations(
+							() => assert.fail(),
+							() => [Tree.parent(node)],
+						);
+					},
+					validateUsageError(/parent/),
+				);
+			});
+
+			describe("array", () => {
+				class Numbers extends schema.array("Array", schema.number) {}
+				it("read cases", () => {
+					const node = init(Numbers, []);
+					const invalidations: Set<string> = new Set();
+
+					TreeAlpha.trackObservations(
+						() => invalidations.add("length"),
+						() => node.length,
+					);
+					TreeAlpha.trackObservations(
+						() => invalidations.add("children"),
+						() => TreeAlpha.children(node),
+					);
+					TreeAlpha.trackObservations(
+						() => invalidations.add("in"),
+						() => 0 in node,
+					);
+					TreeAlpha.trackObservations(
+						() => invalidations.add("child"),
+						() => TreeAlpha.child(node, 0),
+					);
+					TreeAlpha.trackObservations(
+						() => invalidations.add("exportCompressed"),
+						() =>
+							TreeAlpha.exportCompressed(node, {
+								oldestCompatibleClient: FluidClientVersion.v2_0,
+							}),
+					);
+					TreeAlpha.trackObservations(
+						() => invalidations.add("exportConcise"),
+						() => TreeAlpha.exportConcise(node, {}),
+					);
+					TreeAlpha.trackObservations(
+						() => invalidations.add("exportVerbose"),
+						() => TreeAlpha.exportVerbose(node, {}),
+					);
+
+					// Should not invalidate:
+					TreeAlpha.trackObservations(
+						() => invalidations.add("is"),
+						() => Tree.is(node, Numbers),
+					);
+
+					assert.deepEqual(invalidations, new Set());
+					node.insertAtStart(1);
+					assert.deepEqual(
+						invalidations,
+						new Set([
+							"length",
+							"children",
+							"in",
+							"child",
+							"exportCompressed",
+							"exportConcise",
+							"exportVerbose",
+						]),
+					);
+				});
+			});
+
+			it("multiple nodes", () => {
+				class Component extends schema.object("Component", {
+					value: schema.number,
+				}) {}
+
+				class Point2d extends schema.object("Point", {
+					x: Component,
+					y: Component,
+				}) {}
+
+				const node = init(Point2d, { x: { value: 1 }, y: { value: 2 } });
+
+				const log: string[] = [];
+
+				TreeAlpha.trackObservations(
+					() => log.push("node.x"),
+					() => node.x,
+				);
+
+				TreeAlpha.trackObservations(
+					() => log.push("node.y"),
+					() => node.y,
+				);
+
+				TreeAlpha.trackObservations(
+					() => log.push("node.x.value"),
+					() => node.x.value,
+				);
+
+				TreeAlpha.trackObservations(
+					() => log.push("node.y.value"),
+					() => node.y.value,
+				);
+
+				const x = node.x;
+				const y = node.y;
+
+				TreeAlpha.trackObservations(
+					() => log.push("x.value"),
+					() => x.value,
+				);
+
+				TreeAlpha.trackObservations(
+					() => log.push("y.value"),
+					() => y.value,
+				);
+
+				TreeAlpha.trackObservationsOnce(
+					() => log.push("x.parent"),
+					() => Tree.parent(x),
+				);
+
+				TreeAlpha.trackObservationsOnce(
+					() => log.push("y.parent"),
+					() => Tree.parent(y),
+				);
+
+				log.push("change: x.value");
+				node.x.value = 3;
+
+				log.push("change: y");
+				node.y = new Component({ value: 4 });
+
+				assert.deepEqual(log, [
+					"change: x.value",
+					"node.x.value",
+					"x.value",
+					"change: y",
+					"node.y",
+					"node.y.value",
+					"y.parent",
+				]);
+			});
+
+			it("aliased fields", () => {
+				class Point2d extends schema.object("Point", {
+					x: SchemaFactory.required(schema.number, { key: "X" }),
+					y: schema.number,
+				}) {}
+
+				const node = init(Point2d, { x: 1, y: 2 });
+
+				const log: string[] = [];
+
+				TreeAlpha.trackObservations(
+					() => log.push("x"),
+					() => node.x,
+				);
+
+				TreeAlpha.trackObservations(
+					() => log.push("y"),
+					() => node.y,
+				);
+
+				log.push("change: x");
+				node.x = 3;
+
+				log.push("change: y");
+				node.y = 4;
+
+				assert.deepEqual(log, ["change: x", "x", "change: y", "y"]);
+			});
+		},
+		() => {
+			it("example 1", () => {
+				const factory = new SchemaFactory("com.example");
+				class MyNode extends factory.object("MyNode", {
+					someChild: [() => Child],
+				}) {}
+
+				class Child extends factory.object("Child", {
+					bar: SchemaFactory.number,
+					baz: SchemaFactory.number,
+				}) {}
+
+				const nodeA = new MyNode({ someChild: { bar: 3, baz: 4 } });
+				const nodeB = new MyNode({ someChild: { bar: 3, baz: 4 } });
+
+				let cachedFoo: undefined | number;
+
+				function foo(): number {
+					// Compute and cache this "foo" value, and clear the cache when the fields read in the callback to compute it change.
+					cachedFoo ??= TreeAlpha.trackObservationsOnce(
+						() => {
+							cachedFoo = undefined;
+						},
+						() => nodeA.someChild.bar + nodeB.someChild.baz,
+					).result;
+					return cachedFoo;
+				}
+
+				assert.equal(cachedFoo, undefined);
+				assert.equal(foo(), 7);
+				assert.equal(cachedFoo, 7);
+				nodeA.someChild.bar = 0;
+				assert.equal(cachedFoo, undefined);
+				assert.equal(foo(), 4);
+
+				function fooManual(): number {
+					// Compute and cache this "foo" value, and clear the cache when the fields read in the callback to compute it change.
+					if (cachedFoo === undefined) {
+						cachedFoo = nodeA.someChild.bar + nodeB.someChild.baz;
+						const invalidate = (): void => {
+							cachedFoo = undefined;
+							for (const u of unsubscribe) {
+								u();
+							}
+						};
+						const unsubscribe: (() => void)[] = [
+							TreeBeta.on(nodeA, "nodeChanged", (data) => {
+								if (data.changedProperties.has("someChild")) {
+									invalidate();
+								}
+							}),
+							TreeBeta.on(nodeB, "nodeChanged", (data) => {
+								if (data.changedProperties.has("someChild")) {
+									invalidate();
+								}
+							}),
+							TreeBeta.on(nodeA.someChild, "nodeChanged", (data) => {
+								if (data.changedProperties.has("bar")) {
+									invalidate();
+								}
+							}),
+							TreeBeta.on(nodeB.someChild, "nodeChanged", (data) => {
+								if (data.changedProperties.has("baz")) {
+									invalidate();
+								}
+							}),
+						];
+					}
+					return cachedFoo;
+				}
+
+				nodeA.someChild.bar = 3;
+				assert.equal(cachedFoo, undefined);
+				assert.equal(fooManual(), 7);
+				assert.equal(cachedFoo, 7);
+				nodeA.someChild.bar = 0;
+				assert.equal(cachedFoo, undefined);
+				assert.equal(fooManual(), 4);
+			});
+
+			it("example 2", () => {
+				const factory = new SchemaFactory("com.example");
+				class Vector extends factory.object("Vector", {
+					x: SchemaFactory.number,
+					y: SchemaFactory.number,
+				}) {
+					#length: number | undefined = undefined;
+					public length(): number {
+						if (this.#length === undefined) {
+							const result = TreeAlpha.trackObservationsOnce(
+								() => {
+									this.#length = undefined;
+								},
+								() => Math.hypot(this.x, this.y),
+							);
+							this.#length = result.result;
+						}
+						return this.#length;
+					}
+				}
+				const vec = new Vector({ x: 3, y: 4 });
+				assert.equal(vec.length(), 5);
+				vec.x = 0;
+				assert.equal(vec.length(), 4);
+			});
+		},
+	);
+
 	describe("is", () => {
 		it("is", () => {
 			const config = new TreeViewConfiguration({ schema: [Point, schema.number] });
@@ -1789,7 +2132,7 @@ describe("treeNodeApi", () => {
 			});
 		});
 
-		describeHydration("array node", (initializeTree, hydrated) => {
+		describeHydration("array node", (initializeTree) => {
 			const sb = new SchemaFactory("array-node-tests");
 			class myObject extends sb.object("object", {
 				myNumber: sb.number,
@@ -1874,53 +2217,49 @@ describe("treeNodeApi", () => {
 				assert.equal(a2DeepChanges, 1, `treeChanged should fire once.`);
 			});
 
-			// Extra events are fired for move operation within unhydrated array nodes.
-			// TODO:AB#47457: Fix and re-enable this test in unhydrated mode.
-			if (hydrated) {
-				it(`all operations on the node trigger 'nodeChanged' and 'treeChanged' the correct number of times`, () => {
-					const testSchema = sb.array("listRoot", sb.number);
-					const root = initializeTree(testSchema, []);
+			it(`all operations on the node trigger 'nodeChanged' and 'treeChanged' the correct number of times`, () => {
+				const testSchema = sb.array("listRoot", sb.number);
+				const root = initializeTree(testSchema, []);
 
-					let shallowChanges = 0;
-					let deepChanges = 0;
-					Tree.on(root, "treeChanged", () => {
-						deepChanges++;
-					});
-					Tree.on(root, "nodeChanged", () => {
-						shallowChanges++;
-					});
-
-					// Insert single item
-					root.insertAtStart(1);
-					assert.equal(shallowChanges, 1);
-					assert.equal(deepChanges, 1);
-
-					// Insert multiple items
-					root.insertAtEnd(2, 3);
-					assert.equal(shallowChanges, 2);
-					assert.equal(deepChanges, 2);
-
-					// Move one item within the same node
-					root.moveToEnd(0);
-					assert.equal(shallowChanges, 3);
-					assert.equal(deepChanges, 3);
-
-					// Move multiple items within the same node
-					root.moveRangeToEnd(0, 2);
-					assert.equal(shallowChanges, 4);
-					assert.equal(deepChanges, 4);
-
-					// Remove single item
-					root.removeAt(0);
-					assert.equal(shallowChanges, 5);
-					assert.equal(deepChanges, 5);
-
-					// Remove multiple items
-					root.removeRange(0, 2);
-					assert.equal(shallowChanges, 6);
-					assert.equal(deepChanges, 6);
+				let shallowChanges = 0;
+				let deepChanges = 0;
+				Tree.on(root, "treeChanged", () => {
+					deepChanges++;
 				});
-			}
+				Tree.on(root, "nodeChanged", () => {
+					shallowChanges++;
+				});
+
+				// Insert single item
+				root.insertAtStart(1);
+				assert.equal(shallowChanges, 1);
+				assert.equal(deepChanges, 1);
+
+				// Insert multiple items
+				root.insertAtEnd(2, 3);
+				assert.equal(shallowChanges, 2);
+				assert.equal(deepChanges, 2);
+
+				// Move one item within the same node
+				root.moveToEnd(0);
+				assert.equal(shallowChanges, 3);
+				assert.equal(deepChanges, 3);
+
+				// Move multiple items within the same node
+				root.moveRangeToEnd(0, 2);
+				assert.equal(shallowChanges, 4);
+				assert.equal(deepChanges, 4);
+
+				// Remove single item
+				root.removeAt(0);
+				assert.equal(shallowChanges, 5);
+				assert.equal(deepChanges, 5);
+
+				// Remove multiple items
+				root.removeRange(0, 2);
+				assert.equal(shallowChanges, 6);
+				assert.equal(deepChanges, 6);
+			});
 		});
 
 		describeHydration("map node", (initializeTree) => {
@@ -2532,7 +2871,10 @@ describe("treeNodeApi", () => {
 		it("can clone staged types", () => {
 			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
 			class StagedSchema extends schemaFactoryAlpha.objectAlpha("TestObject", {
-				foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
+				foo: SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
 			}) {}
 
 			const original = new StagedSchema({ foo: "test" });
@@ -2544,7 +2886,10 @@ describe("treeNodeApi", () => {
 		describe("clone uses stored schema from source, breaking insertion of staged types the source lacked", () => {
 			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
 			class StagedSchema extends schemaFactoryAlpha.objectAlpha("TestObject", {
-				foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
+				foo: SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
 			}) {}
 			it("Unhydrated case: staged type is allowed", () => {
 				const original = new StagedSchema({ foo: 5 });

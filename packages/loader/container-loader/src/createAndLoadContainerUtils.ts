@@ -21,6 +21,7 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 
+import { FrozenDocumentServiceFactory } from "./frozenServices.js";
 import { Loader } from "./loader.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
 
@@ -172,4 +173,30 @@ export async function loadExistingContainer(
 		loadExistingContainerProps.request,
 		loadExistingContainerProps.pendingLocalState,
 	);
+}
+
+/**
+ * Properties required to load a frozen container from pending state.
+ * @legacy @alpha
+ */
+export interface ILoadFrozenContainerFromPendingStateProps
+	extends ILoadExistingContainerProps {
+	/**
+	 * Pending local state to be applied to the container.
+	 */
+	readonly pendingLocalState: string;
+}
+
+/**
+ * Loads a frozen container from pending local state.
+ * @param props - Properties required to load a frozen container from pending state.
+ * @legacy @alpha
+ */
+export async function loadFrozenContainerFromPendingState(
+	props: ILoadFrozenContainerFromPendingStateProps,
+): Promise<IContainer> {
+	return loadExistingContainer({
+		...props,
+		documentServiceFactory: new FrozenDocumentServiceFactory(props.documentServiceFactory),
+	});
 }

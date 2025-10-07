@@ -9,7 +9,7 @@ export {
 	type WithType,
 	type TreeNodeSchema,
 	type AnnotatedAllowedType,
-	type NormalizedAnnotatedAllowedTypes,
+	type AllowedTypesFullEvaluated,
 	NodeKind,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
@@ -38,12 +38,8 @@ export {
 	normalizeAllowedTypes,
 	type NodeSchemaMetadata,
 	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
-	type UnannotateImplicitAllowedTypes,
 	type AllowedTypesMetadata,
 	evaluateLazySchema,
-	type UnannotateAllowedTypes,
-	type UnannotateAllowedType,
 	type UnannotateAllowedTypesList,
 	type AllowedTypeMetadata,
 	type AnnotatedAllowedTypes,
@@ -56,6 +52,12 @@ export {
 	walkAllowedTypes,
 	type SchemaVisitor,
 	type SimpleNodeSchemaBase,
+	withBufferedTreeEvents,
+	type AnnotateAllowedTypesList,
+	type AllowedTypesFull,
+	type AllowedTypesFullFromMixed,
+	AnnotatedAllowedTypesInternal,
+	type NumberKeys,
 } from "./core/index.js";
 export { walkFieldSchema } from "./walkFieldSchema.js";
 export type { UnsafeUnknownSchema, Insertable } from "./unsafeUnknownSchema.js";
@@ -88,6 +90,9 @@ export {
 	type IdentifierIndex,
 	createSimpleTreeIndex,
 	createIdentifierIndex,
+	type DirtyTreeStatus,
+	trackDirtyNodes,
+	type DirtyTreeMap,
 	type JsonSchemaId,
 	type JsonSchemaType,
 	type JsonObjectNodeSchema,
@@ -164,6 +169,7 @@ export {
 	type SchemaStaticsAlpha,
 	KeyEncodingOptions,
 	type TreeParsingOptions,
+	type SchemaFactory_base,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
@@ -179,9 +185,7 @@ export type {
 } from "./simpleSchema.js";
 export {
 	type ImplicitFieldSchema,
-	type ImplicitAnnotatedFieldSchema,
 	type TreeFieldFromImplicitField,
-	type UnannotateImplicitFieldSchema,
 	FieldKind,
 	FieldSchema,
 	FieldSchemaAlpha,
@@ -230,7 +234,6 @@ export {
 	type RecordNodePojoEmulationSchema,
 	RecordNodeSchema,
 	type TreeRecordNode,
-	type UnannotateSchemaRecord,
 } from "./node-kinds/index.js";
 export {
 	unhydratedFlexTreeFromInsertable,

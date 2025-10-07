@@ -51,7 +51,7 @@ Here are some remarks about the class
 
 | Property | Modifiers | Type | Description |
 | - | - | - | - |
-| [abstractPropertyGetter](/test-suite-a/testclass-class#abstractpropertygetter-property) | `readonly` | [TestMappedType](/test-suite-a/testmappedtype-typealias) | A test abstract getter property. |
+| [abstractPropertyGetter](/test-suite-a/testclass-class#abstractpropertygetter-property) | `readonly` | [TestMappedType](/test-suite-a/testmappedtype-typealias) | <p>A test abstract getter property.</p><p>@escapedTag</p> |
 | [testClassGetterProperty](/test-suite-a/testclass-class#testclassgetterproperty-property) | `virtual` | number | Test class property with both a getter and a setter. |
 | [testClassProperty](/test-suite-a/testclass-class#testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
 
@@ -111,6 +111,8 @@ Here are some remarks about the property
 <h3 id="abstractpropertygetter-property">abstractPropertyGetter</h3>
 
 A test abstract getter property.
+
+@escapedTag
 
 <h4 id="abstractpropertygetter-signature">Signature</h4>
 

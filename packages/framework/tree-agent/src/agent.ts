@@ -3,125 +3,80 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import { isFluidHandle } from "@fluidframework/runtime-utils";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type {
 	ImplicitFieldSchema,
-	RestrictiveStringRecord,
 	TreeFieldFromImplicitField,
-	TreeNode,
-	TreeObjectNode,
+	TreeNodeSchema,
 } from "@fluidframework/tree";
-import { NodeKind, Tree } from "@fluidframework/tree";
-import {
-	type TreeViewAlpha,
-	type ReadableField,
-	type TreeBranch,
-	getSimpleSchema,
-	type FactoryContentObject,
-	type ObjectNodeSchema,
-	type InsertableContent,
-	type InsertableField,
+import { TreeNode } from "@fluidframework/tree";
+import type {
+	ReadableField,
+	FactoryContentObject,
+	InsertableContent,
+	ReadSchema,
 } from "@fluidframework/tree/alpha";
-import { normalizeFieldSchema } from "@fluidframework/tree/internal";
-import type { BaseChatModel } from "@langchain/core/language_models/chat_models"; // eslint-disable-line import/no-internal-modules
-import { HumanMessage, SystemMessage } from "@langchain/core/messages"; // eslint-disable-line import/no-internal-modules
-import type { ToolMessage, AIMessage } from "@langchain/core/messages"; // eslint-disable-line import/no-internal-modules
-import { tool } from "@langchain/core/tools"; // eslint-disable-line import/no-internal-modules
-import { z } from "zod";
+import { ObjectNodeSchema, Tree } from "@fluidframework/tree/alpha";
 
-import { IdGenerator } from "./idGenerator.js";
-import { generateEditTypesForPrompt } from "./typeGeneration.js";
+import type {
+	SharedTreeChatModel,
+	EditFunction,
+	EditResult,
+	SemanticAgentOptions,
+	Logger,
+} from "./api.js";
+import { findInvocableFunctionName, stripExportSyntax } from "./functionParsing.js";
+import { getPrompt, stringifyTree } from "./prompt.js";
+import { Subtree } from "./subtree.js";
 import {
 	constructNode,
-	fail,
-	failUsage,
-	getFriendlySchemaName,
-	getZodSchemaAsTypeScript,
+	getFriendlyName,
 	llmDefault,
 	type TreeView,
+	findNamedSchemas,
 } from "./utils.js";
 
-const functionName = "editTree";
+/**
+ * The default maximum number of sequential edits the LLM can make before we assume it's stuck in a loop.
+ * @remarks This can be overridden by passing {@link SemanticAgentOptions.maximumSequentialEdits | maximumSequentialEdits} to {@link createSemanticAgent}.
+ */
+const defaultMaxSequentialEdits = 20;
+
+/**
+ * The name of the parameter passed to the edit function.
+ */
 const paramsName = "params";
 
 /**
- * TODO doc
- * @alpha
+ * An agent that uses a {@link SharedTreeChatModel} to interact with a SharedTree.
+ * @remarks This class forwards user queries to the chat model, and handles the application of any edits to the tree that the model requests.
+ * @alpha @sealed
  */
-export function createSemanticAgent<TRoot extends ImplicitFieldSchema>(
-	client: BaseChatModel,
-	treeView: TreeView<TRoot>,
-	options?: {
-		readonly domainHints?: string;
-		readonly treeToString?: (root: ReadableField<TRoot>) => string;
-		readonly validator?: (js: string) => boolean;
-		readonly log?: Log;
-	},
-): SharedTreeSemanticAgent {
-	return new FunctioningSemanticAgent(client, treeView, options);
-}
-
-/**
- * @alpha
- */
-export interface SharedTreeSemanticAgent {
+export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
+	// Converted from ECMAScript private fields (#name) to TypeScript private members for easier debugger inspection.
+	private readonly outerTree: Subtree<TSchema>;
 	/**
-	 * Given a user prompt, return a response.
-	 *
-	 * @param userPrompt - The prompt to send to the agent.
-	 * @returns The agent's response.
+	 * Whether or not the outer tree has changed since the last query finished.
 	 */
-	query(userPrompt: string): Promise<string | undefined>;
-}
-
-/**
- * @alpha
- */
-export type Log = (message: string) => void;
-
-/**
- * TODO
- */
-export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
-	implements SharedTreeSemanticAgent
-{
-	#prompting: typeof this.prompting | undefined;
-	#messages: (HumanMessage | AIMessage | ToolMessage)[] = [];
-	#treeHasChangedSinceLastQuery = false;
-
-	private get prompting(): {
-		readonly branch: TreeViewAlpha<TRoot> & TreeBranch;
-		readonly idGenerator: IdGenerator;
-	} {
-		return this.#prompting ?? fail("Not currently processing a prompt");
-	}
-
-	// TODO: it's weird that this is called by subclasses. Refactor to make it more robust.
-	private setPrompting(): void {
-		if (this.#prompting !== undefined) {
-			this.prompting.branch.dispose();
-		}
-		this.#prompting = {
-			branch: this.treeView.fork(),
-			idGenerator: new IdGenerator(),
-		};
-		this.#prompting.idGenerator.assignIds(this.#prompting.branch.root);
-	}
+	private outerTreeIsDirty = false;
 
 	public constructor(
-		public readonly client: BaseChatModel,
-		public readonly treeView: TreeView<TRoot>,
-		private readonly options?: {
-			readonly domainHints?: string;
-			readonly treeToString?: (root: ReadableField<TRoot>) => string;
-			readonly validator?: (js: string) => boolean;
-			readonly log?: Log;
-		},
+		private readonly client: SharedTreeChatModel,
+		tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode),
+		private readonly options?: Readonly<SemanticAgentOptions>,
 	) {
-		const systemPrompt = this.getSystemPrompt(this.treeView);
-		this.options?.log?.(`# Fluid Framework SharedTree AI Agent Log\n\n`);
+		if (tree instanceof TreeNode) {
+			Tree.on(tree, "treeChanged", () => (this.outerTreeIsDirty = true));
+		} else {
+			tree.events.on("changed", () => (this.outerTreeIsDirty = true));
+		}
+
+		this.outerTree = new Subtree(tree);
+		const prompt = getPrompt({
+			subtree: this.outerTree,
+			editToolName: this.client.editToolName,
+			domainHints: this.options?.domainHints,
+		});
+		this.options?.logger?.log(`# Fluid Framework SharedTree AI Agent Log\n\n`);
 		const now = new Date();
 		const formattedDate = now.toLocaleString(undefined, {
 			weekday: "long",
@@ -132,520 +87,215 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 			minute: "2-digit",
 			second: "2-digit",
 		});
-		this.options?.log?.(`Agent created: **${formattedDate}**\n\n`);
-		if (this.client.metadata?.modelName !== undefined) {
-			this.options?.log?.(`Model: **${this.client.metadata?.modelName}**\n\n`);
+		this.options?.logger?.log(`Agent created: **${formattedDate}**\n\n`);
+		if (this.client.name !== undefined) {
+			this.options?.logger?.log(`Model: **${this.client.name}**\n\n`);
 		}
-		this.#messages.push(new SystemMessage(systemPrompt));
-		this.options?.log?.(`## System Prompt\n\n${systemPrompt}\n\n`);
-		if (this.options?.domainHints !== undefined) {
-			this.#messages.push(
-				new HumanMessage(
-					`Here is some information about my application domain: ${this.options.domainHints}\n\n`,
-				),
-			);
-			this.options?.log?.(`## Domain Hints\n\n"${this.options.domainHints}"\n\n`);
-		}
+		this.client.appendContext?.(prompt);
+		this.options?.logger?.log(`## System Prompt\n\n${prompt}\n\n`);
 	}
 
-	private async edit(functionCode: string): Promise<string> {
-		this.options?.log?.(`### Editing Tool Invoked\n\n`);
-		this.options?.log?.(
-			`#### Generated Code\n\n\`\`\`javascript\n${functionCode}\n\`\`\`\n\n`,
-		);
-		const { branch, idGenerator } = this.prompting;
-		const create: Record<string, (input: FactoryContentObject) => TreeNode> = {};
-		visitObjectNodeSchema(this.treeView.schema, (schema) => {
-			const name =
-				getFriendlySchemaName(schema.identifier) ??
-				fail("Expected friendly name for object node schema");
+	/**
+	 * Given a user prompt, return a response.
+	 *
+	 * @param userPrompt - The prompt to send to the agent.
+	 * @returns The agent's response.
+	 */
+	public async query(userPrompt: string): Promise<string> {
+		this.options?.logger?.log(`## User Query\n\n${userPrompt}\n\n`);
 
-			create[name] = (input: FactoryContentObject) => constructObjectNode(schema, input);
-		});
-		if (this.options?.validator?.(functionCode) === false) {
-			this.options?.log?.(`#### Code Validation Failed\n\n`);
-			return "Code validation failed";
-		}
-		const params = {
-			get root(): TreeFieldFromImplicitField<TRoot> {
-				return branch.root;
-			},
-			set root(value: InsertableField<TRoot>) {
-				branch.root = value;
-			},
-			create,
-		};
-		const code = processLlmCode(functionCode);
-		// eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
-		const fn = new Function(paramsName, code) as (p: typeof params) => Promise<void> | void;
-		try {
-			await fn(params);
-		} catch (error: unknown) {
-			this.options?.log?.(`#### Error\n\n`);
-			const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
-			this.options?.log?.(`\`\`\`JSON\n${errorMessage}\n\`\`\`\n\n`);
-			this.setPrompting();
-			return `Running the function produced an error. The state of the tree will be reset to its initial state. Please try again. Here is the error: ${errorMessage}`;
-		}
-		this.options?.log?.(`#### New Tree State\n\n`);
-		this.options?.log?.(
-			`${
-				this.options.treeToString?.(branch.root) ??
-				`\`\`\`JSON\n${this.stringifyTree(branch.root, idGenerator)}\n\`\`\``
-			}\n\n`,
-		);
-		return `After running the function, the new state of the tree is:\n\n\`\`\`JSON\n${this.stringifyTree(branch.root, idGenerator)}\n\`\`\``;
-	}
-
-	// eslint-disable-next-line unicorn/consistent-function-scoping
-	private readonly editingTool = tool(async ({ functionCode }) => this.edit(functionCode), {
-		name: "GenerateTreeEditingCode",
-		description: `Invokes a JavaScript function \`${functionName}\` to edit a user's tree`,
-		schema: z.object({
-			functionCode: z
-				.string()
-				.describe(`The body of the \`${functionName}\` JavaScript function`),
-		}),
-	});
-
-	private readonly getTreeTool = tool(
-		// eslint-disable-next-line unicorn/consistent-function-scoping
-		() => {
-			const stringified = this.stringifyTree(
-				this.prompting?.branch.root,
-				this.prompting.idGenerator,
+		// Notify the llm if the tree has changed since the last query, and if so, provide the new state of the tree.
+		if (this.outerTreeIsDirty) {
+			const stringified = stringifyTree(this.outerTree.field);
+			this.client.appendContext?.(
+				`The tree has changed since the last query. The new state of the tree is: \n\n\`\`\`JSON\n${stringified}\n\`\`\``,
 			);
-			this.options?.log?.(
-				`${
-					this.options?.treeToString?.(this.prompting.branch.root) ??
-					`\`\`\`JSON\n${stringified}\n\`\`\``
-				}\n\n`,
-			);
-			return stringified;
-		},
-		{
-			name: "getData",
-			description:
-				"Use this tool to get the current state of the tree. It will return the tree's data in a human-readable format.",
-
-			schema: z.object({}),
-		},
-	);
-
-	public async query(userPrompt: string): Promise<string | undefined> {
-		this.setPrompting();
-		this.options?.log?.(`## User Query\n\n${userPrompt}\n\n`);
-		if (this.#treeHasChangedSinceLastQuery) {
-			const stringified = this.stringifyTree(
-				this.prompting.branch.root,
-				this.prompting.idGenerator,
-			);
-			this.#messages.push(
-				new HumanMessage(
-					`The tree has changed since the last message. The new state of the tree is: \n\n\`\`\`JSON\n${stringified}\n\`\`\``,
-				),
-			);
-			this.options?.log?.(
+			this.options?.logger?.log(
 				`### Latest Tree State\n\nThe Tree was edited by a local or remote user since the previous query. The latest state is:\n\n\`\`\`JSON\n${stringified}\n\`\`\`\n\n`,
 			);
-			this.#treeHasChangedSinceLastQuery = false;
 		}
-		this.#messages.push(
-			new HumanMessage(
-				`${this.#treeHasChangedSinceLastQuery ? "" : "The tree has not changed since your last message. "}${userPrompt}`,
-			),
-		);
 
-		let loggedChainOfThought = false;
-		let responseMessage: AIMessage;
-		let iterations = 0;
-		do {
-			iterations += 1;
-			responseMessage =
-				(await this.client
-					.bindTools?.([this.editingTool], { tool_choice: "auto" })
-					?.invoke(this.#messages)) ??
-				failUsage("LLM client must support function calling or tool use.");
-
-			this.#messages.push(responseMessage);
-
-			// We start with one message, and then add two more for each subsequent correspondence
-			this.options?.log?.(`## Response ${(this.#messages.length - 1) / 2}\n\n`);
-
-			// This is a special case for Claude Sonnet, the only supported model that exposes its Chain of Thought.
-			if (!loggedChainOfThought) {
-				for (const c of responseMessage.content) {
-					if (typeof c === "object" && c.type === "thinking") {
-						this.options?.log?.(`${c.thinking}\n\n----\n\n`);
-						loggedChainOfThought = true;
-						break;
-					}
-				}
+		// Fork a branch that will live for the lifetime of this query (which can be multiple LLM calls if the there are errors or the LLM decides to take multiple steps to accomplish a task).
+		// The branch will be merged back into the outer branch if and only if the query succeeds.
+		const queryTree = this.outerTree.fork();
+		const maxEditCount = this.options?.maximumSequentialEdits ?? defaultMaxSequentialEdits;
+		let active = true;
+		let editCount = 0;
+		let editFailed = false;
+		const { editToolName } = this.client;
+		const edit = async (js: string): Promise<EditResult> => {
+			if (editToolName === undefined) {
+				return {
+					type: "disabledError",
+					message: "Editing is not enabled for this model.",
+				};
+			}
+			if (!active) {
+				return {
+					type: "expiredError",
+					message: `The query has already completed. Further edits are not allowed.`,
+				};
 			}
 
-			this.options?.log?.(`${responseMessage.text}\n\n`);
-			if (responseMessage.tool_calls !== undefined && responseMessage.tool_calls.length > 0) {
-				for (const toolCall of responseMessage.tool_calls) {
-					switch (toolCall.name) {
-						case this.getTreeTool.name: {
-							this.#messages.push(await this.getTreeTool.invoke(toolCall));
-							break;
-						}
-						case this.editingTool.name: {
-							this.#messages.push(await this.editingTool.invoke(toolCall));
-							break;
-						}
-						default: {
-							this.#messages.push(
-								new HumanMessage(`Unrecognized tool call: ${toolCall.name}`),
-							);
+			if (++editCount > maxEditCount) {
+				editFailed = true;
+				return {
+					type: "tooManyEditsError",
+					message: `The maximum number of edits (${maxEditCount}) for this query has been exceeded.`,
+				};
+			}
+
+			const editResult = await applyTreeFunction(
+				queryTree,
+				js,
+				this.options?.validator,
+				this.options?.logger,
+			);
+
+			editFailed ||= editResult.type !== "success";
+			return editResult;
+		};
+
+		const responseMessage = await this.client.query({
+			text: userPrompt,
+			edit,
+		});
+		active = false;
+
+		if (!editFailed) {
+			this.outerTree.branch.merge(queryTree.branch);
+			this.outerTreeIsDirty = false;
+		}
+		this.options?.logger?.log(`## Response\n\n`);
+		this.options?.logger?.log(`${responseMessage}\n\n`);
+		return responseMessage;
+	}
+}
+
+/**
+ * Creates an unhydrated node of the given schema with the given value.
+ * @remarks If the schema is an object with {@link llmDefault | default values}, this function populates the node with those defaults.
+ */
+function constructTreeNode(schema: TreeNodeSchema, value: FactoryContentObject): TreeNode {
+	if (schema instanceof ObjectNodeSchema) {
+		const inputWithDefaults: Record<string, InsertableContent | undefined> = {};
+		for (const [key, field] of schema.fields) {
+			if (value[key] === undefined) {
+				if (
+					typeof field.metadata.custom === "object" &&
+					field.metadata.custom !== null &&
+					llmDefault in field.metadata.custom
+				) {
+					const defaulter = field.metadata.custom[llmDefault];
+					if (typeof defaulter === "function") {
+						const defaultValue: unknown = defaulter();
+						if (defaultValue !== undefined) {
+							inputWithDefaults[key] = defaultValue;
 						}
 					}
 				}
 			} else {
-				this.treeView.merge(this.prompting.branch);
-				this.#prompting = undefined;
-				return responseMessage.text;
-			}
-		} while (iterations <= maxMessages);
-
-		this.#prompting?.branch.dispose();
-		this.#prompting = undefined;
-		throw new UsageError("LLM exceeded maximum number of messages");
-	}
-
-	private getSystemPrompt(view: Omit<TreeView<TRoot>, "fork" | "merge">): string {
-		const arrayInterfaceName = "TreeArray";
-		// TODO: Support for non-object roots
-		assert(
-			typeof view.root === "object" && view.root !== null && !isFluidHandle(view.root),
-			0xc1c /*  */,
-		);
-		const schema = getSimpleSchema(view.schema);
-
-		const { domainTypes } = generateEditTypesForPrompt(view.schema, schema);
-		for (const [key, value] of Object.entries(domainTypes)) {
-			const friendlyKey = getFriendlySchemaName(key);
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-			delete domainTypes[key];
-			if (
-				friendlyKey !== undefined &&
-				friendlyKey !== "string" &&
-				friendlyKey !== "number" &&
-				friendlyKey !== "boolean"
-			) {
-				domainTypes[friendlyKey] = value;
+				inputWithDefaults[key] = value[key];
 			}
 		}
-
-		const treeObjects: { type: string; id: string }[] = [];
-		const stringified = this.stringifyTree(view.root, new IdGenerator(), (object, id) => {
-			const type =
-				getFriendlySchemaName(Tree.schema(object).identifier) ??
-				fail("Expected object schema to have a friendly name.");
-
-			treeObjects.push({ type, id });
-		});
-
-		const builderExplanation =
-			treeObjects[0] === undefined
-				? ""
-				: `When constructing new objects, you should wrap them in the appropriate builder function rather than simply making a javascript object.
-The builders are available on the "create" property on the first argument of the \`${functionName}\` function and are named according to the type that they create.
-For example:
-		
-\`\`\`javascript
-function ${functionName}({ root, create }) {
-	// This creates a new ${treeObjects[0].type} object:
-	const ${uncapitalize(treeObjects[0].type)} = create.${treeObjects[0].type}({ /* ...properties... */ });
-	// Don't do this:
-	// const ${uncapitalize(treeObjects[0].type)} = { /* ...properties... */ };
-}
-\`\`\`\n\n`;
-
-		const rootTypes = [...schema.root.allowedTypesIdentifiers];
-		const prompt = `You are a collaborative agent who assists a user with editing and analyzing a JSON tree.
-The tree is a JSON object with the following Typescript schema:
-
-\`\`\`typescript
-${getZodSchemaAsTypeScript(domainTypes)}
-\`\`\`
-
-If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.
-If the user asks you to edit the tree, you should use the ${this.editingTool.name} tool to accomplish the user-specified goal.
-After editing the tree, review the latest state of the tree to see if it satisfies the user's request.
-If it does not, or if you receive an error, you may try again with a different approach.
-Once the tree is in the desired state, you should inform the user that the request has been completed.
-
-### Editing
-
-If the user asks you to edit the data, you will use the ${this.editingTool.name} tool to write a JavaScript function that mutates the data in-place to achieve the user's goal.
-The function must be named "${functionName}".
-It may be synchronous or asynchronous.
-The ${functionName} function must have a first parameter which has a \`root\` property that is the JSON object you are to mutate.
-The current state of the \`root\` object is:
-
-\`\`\`JSON
-${stringified}
-\`\`\`
-
-You may set the \`root\` property to be a new root object if necessary, but you must ensure that the new object is one of the types allowed at the root of the tree (\`${rootTypes.map((t) => getFriendlySchemaName(t)).join(" | ")}\`).
-
-#### Editing Arrays
-
-There is a notable restriction: the arrays in the tree cannot be mutated in the normal way.
-Instead, they must be mutated via methods on the following TypeScript interface:
-
-\`\`\`typescript
-${getTreeArrayNodeDocumentation(arrayInterfaceName)}
-\`\`\`
-
-Outside of mutation, they behave like normal JavaScript arrays - you can create them, read from them, and call non-mutating methods on them (e.g. \`concat\`, \`map\`, \`filter\`, \`find\`, \`forEach\`, \`indexOf\`, \`slice\`, \`join\`, etc.).
-
-### Additional Notes
-
-Before outputting the ${functionName} function, you should check that it is valid according to both the application tree's schema and the restrictions of the editing language (e.g. the array methods you are allowed to use).
-
-When possible, ensure that the edits preserve the identity of objects already in the tree (for example, prefer \`array.moveToIndex\` or \`array.moveRange\` over \`array.removeAt\` + \`array.insertAt\`).
-
-Once data has been removed from the tree (e.g. replaced via assignment, or removed from an array), that data cannot be re-inserted into the tree - instead, it must be deep cloned and recreated.
-
-${builderExplanation}Finally, double check that the edits would accomplish the user's request (if it is possible).`;
-		return prompt;
+		return constructNode(schema, inputWithDefaults);
 	}
-
-	private stringifyTree(
-		root: ReadableField<TRoot>,
-		idGenerator: IdGenerator,
-		visitObject?: (
-			object: TreeObjectNode<RestrictiveStringRecord<ImplicitFieldSchema>>,
-			id: string,
-		) => void,
-	): string {
-		const indexReplacementKey = "_27bb216b474d45e6aaee14d1ec267b96";
-		idGenerator.assignIds(root);
-		const stringified = JSON.stringify(
-			root,
-			(_, value: unknown) => {
-				// TODO: Is this array check correct? What about POJO array nodes?
-				if (typeof value === "object" && !Array.isArray(value) && value !== null) {
-					const objectNode = value as TreeObjectNode<
-						RestrictiveStringRecord<ImplicitFieldSchema>
-					>;
-
-					visitObject?.(
-						objectNode,
-						idGenerator.getId(objectNode) ??
-							fail("Expected all object nodes in tree to have an ID."),
-					);
-
-					const key = Tree.key(objectNode);
-					return {
-						[indexReplacementKey]: typeof key === "number" ? key : undefined,
-						...objectNode,
-					};
-				}
-				return value;
-			},
-			2,
-		);
-
-		return stringified.replace(new RegExp(`"${indexReplacementKey}":`, "g"), `// Index:`);
-	}
-}
-
-const maxMessages = 20; // TODO: Allow caller to provide this
-
-/**
- * Retrieves the documentation for the `TreeArrayNode` interface to feed to the LLM.
- * @remarks The documentation has been simplified in various ways to make it easier for the LLM to understand.
- * @privateRemarks TODO: How do we keep this in sync with the actual `TreeArrayNode` docs if/when those docs change?
- */
-function getTreeArrayNodeDocumentation(typeName: string): string {
-	return `/** A special type of array which implements 'readonly T[]' (i.e. it supports all read-only JS array methods) and provides custom array mutation APIs. */
-export interface ${typeName}<T> extends ReadonlyArray<T> {
-	/**
-	 * Inserts new item(s) at a specified location.
-	 * @param index - The index at which to insert \`value\`.
-	 * @param value - The content to insert.
-	 * @throws Throws if \`index\` is not in the range [0, \`array.length\`).
-	 */
-	insertAt(index: number, ...value: readonly T[]): void;
-
-	/**
-	 * Removes the item at the specified location.
-	 * @param index - The index at which to remove the item.
-	 * @throws Throws if \`index\` is not in the range [0, \`array.length\`).
-	 */
-	removeAt(index: number): void;
-
-	/**
-	 * Removes all items between the specified indices.
-	 * @param start - The starting index of the range to remove (inclusive). Defaults to the start of the array.
-	 * @param end - The ending index of the range to remove (exclusive). Defaults to \`array.length\`.
-	 * @throws Throws if \`start\` is not in the range [0, \`array.length\`].
-	 * @throws Throws if \`end\` is less than \`start\`.
-	 * If \`end\` is not supplied or is greater than the length of the array, all items after \`start\` are removed.
-	 *
-	 * @remarks
-	 * The default values for start and end are computed when this is called,
-	 * and thus the behavior is the same as providing them explicitly, even with respect to merge resolution with concurrent edits.
-	 * For example, two concurrent transactions both emptying the array with \`node.removeRange()\` then inserting an item,
-	 * will merge to result in the array having both inserted items.
-	 */
-	removeRange(start?: number, end?: number): void;
-
-	/**
-	 * Moves the specified item to the desired location in the array.
-	 *
-	 * WARNING - This API is easily misused.
-	 * Please read the documentation for the \`destinationGap\` parameter carefully.
-	 *
-	 * @param destinationGap - The location *between* existing items that the moved item should be moved to.
-	 *
-	 * WARNING - \`destinationGap\` describes a location between existing items *prior to applying the move operation*.
-	 *
-	 * For example, if the array contains items \`[A, B, C]\` before the move, the \`destinationGap\` must be one of the following:
-	 *
-	 * - \`0\` (between the start of the array and \`A\`'s original position)
-	 * - \`1\` (between \`A\`'s original position and \`B\`'s original position)
-	 * - \`2\` (between \`B\`'s original position and \`C\`'s original position)
-	 * - \`3\` (between \`C\`'s original position and the end of the array)
-	 *
-	 * So moving \`A\` between \`B\` and \`C\` would require \`destinationGap\` to be \`2\`.
-	 *
-	 * This interpretation of \`destinationGap\` makes it easy to specify the desired destination relative to a sibling item that is not being moved,
-	 * or relative to the start or end of the array:
-	 *
-	 * - Move to the start of the array: \`array.moveToIndex(0, ...)\` (see also \`moveToStart\`)
-	 * - Move to before some item X: \`array.moveToIndex(indexOfX, ...)\`
-	 * - Move to after some item X: \`array.moveToIndex(indexOfX + 1\`, ...)
-	 * - Move to the end of the array: \`array.moveToIndex(array.length, ...)\` (see also \`moveToEnd\`)
-	 *
-	 * This interpretation of \`destinationGap\` does however make it less obvious how to move an item relative to its current position:
-	 *
-	 * - Move item B before its predecessor: \`array.moveToIndex(indexOfB - 1, ...)\`
-	 * - Move item B after its successor: \`array.moveToIndex(indexOfB + 2, ...)\`
-	 *
-	 * Notice the asymmetry between \`-1\` and \`+2\` in the above examples.
-	 * In such scenarios, it can often be easier to approach such edits by swapping adjacent items:
-	 * If items A and B are adjacent, such that A precedes B,
-	 * then they can be swapped with \`array.moveToIndex(indexOfA, indexOfB)\`.
-	 *
-	 * @param sourceIndex - The index of the item to move.
-	 * @param source - The optional source array to move the item out of (defaults to this array).
-	 * @throws Throws if any of the source index is not in the range [0, \`array.length\`),
-	 * or if the index is not in the range [0, \`array.length\`].
-	 */
-	moveToIndex(destinationGap: number, sourceIndex: number, source?: ${typeName}<T>): void;
-
-	/**
-	 * Moves the specified items to the desired location within the array.
-	 *
-	 * WARNING - This API is easily misused.
-	 * Please read the documentation for the \`destinationGap\` parameter carefully.
-	 *
-	 * @param destinationGap - The location *between* existing items that the moved item should be moved to.
-	 *
-	 * WARNING - \`destinationGap\` describes a location between existing items *prior to applying the move operation*.
-	 *
-	 * For example, if the array contains items \`[A, B, C]\` before the move, the \`destinationGap\` must be one of the following:
-	 *
-	 * - \`0\` (between the start of the array and \`A\`'s original position)
-	 * - \`1\` (between \`A\`'s original position and \`B\`'s original position)
-	 * - \`2\` (between \`B\`'s original position and \`C\`'s original position)
-	 * - \`3\` (between \`C\`'s original position and the end of the array)
-	 *
-	 * So moving \`A\` between \`B\` and \`C\` would require \`destinationGap\` to be \`2\`.
-	 *
-	 * This interpretation of \`destinationGap\` makes it easy to specify the desired destination relative to a sibling item that is not being moved,
-	 * or relative to the start or end of the array:
-	 *
-	 * - Move to the start of the array: \`array.moveToIndex(0, ...)\` (see also \`moveToStart\`)
-	 * - Move to before some item X: \`array.moveToIndex(indexOfX, ...)\`
-	 * - Move to after some item X: \`array.moveToIndex(indexOfX + 1\`, ...)
-	 * - Move to the end of the array: \`array.moveToIndex(array.length, ...)\` (see also \`moveToEnd\`)
-	 *
-	 * This interpretation of \`destinationGap\` does however make it less obvious how to move an item relative to its current position:
-	 *
-	 * - Move item B before its predecessor: \`array.moveToIndex(indexOfB - 1, ...)\`
-	 * - Move item B after its successor: \`array.moveToIndex(indexOfB + 2, ...)\`
-	 *
-	 * Notice the asymmetry between \`-1\` and \`+2\` in the above examples.
-	 * In such scenarios, it can often be easier to approach such edits by swapping adjacent items:
-	 * If items A and B are adjacent, such that A precedes B,
-	 * then they can be swapped with \`array.moveToIndex(indexOfA, indexOfB)\`.
-	 *
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @param source - The optional source array to move items out of (defaults to this array).
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination array,
-	 * if any of the input indices are not in the range [0, \`array.length\`], or if \`sourceStart\` is greater than \`sourceEnd\`.
-	 */
-	moveRangeToIndex(
-		destinationGap: number,
-		sourceStart: number,
-		sourceEnd: number,
-		source?: ${typeName}<T>,
-	): void;
-}`;
-}
-
-function uncapitalize(str: string): string {
-	return str.charAt(0).toLowerCase() + str.slice(1);
-}
-
-function visitObjectNodeSchema(
-	schema: ImplicitFieldSchema,
-	visitor: (schema: ObjectNodeSchema) => void,
-): void {
-	const normalizedSchema = normalizeFieldSchema(schema);
-	for (const nodeSchema of normalizedSchema.allowedTypeSet) {
-		if (nodeSchema.kind === NodeKind.Object) {
-			visitor(nodeSchema as ObjectNodeSchema);
-		}
-		visitObjectNodeSchema([...nodeSchema.childTypes], visitor);
-	}
-}
-
-function processLlmCode(code: string): string {
-	// TODO: use a library like Acorn to analyze the code more robustly
-	const regex = new RegExp(`function\\s+${functionName}\\s*\\(`);
-	if (!regex.test(code)) {
-		throw new Error(`Generated code does not contain a function named \`${functionName}\``);
-	}
-
-	return `${code}\n\n${functionName}(${paramsName});`;
+	return constructNode(schema, value);
 }
 
 /**
- * Creates an unhydrated object node and populates it with `llmDefault` values if they exist.
+ * Applies the given function (as a string of JavaScript code or an actual function) to the given tree.
  */
-function constructObjectNode(
-	schema: ObjectNodeSchema,
-	input: FactoryContentObject,
-): TreeObjectNode<RestrictiveStringRecord<ImplicitFieldSchema>> {
-	const inputWithDefaults: Record<string, InsertableContent | undefined> = {};
-	for (const [key, field] of schema.fields) {
-		if (input[key] === undefined) {
-			if (
-				typeof field.metadata.custom === "object" &&
-				field.metadata.custom !== null &&
-				llmDefault in field.metadata.custom
-			) {
-				const defaulter = field.metadata.custom[llmDefault];
-				if (typeof defaulter === "function") {
-					const defaultValue: unknown = defaulter();
-					if (defaultValue !== undefined) {
-						inputWithDefaults[key] = defaultValue;
-					}
-				}
-			}
-		} else {
-			inputWithDefaults[key] = input[key];
-		}
+async function applyTreeFunction<TSchema extends ImplicitFieldSchema>(
+	tree: Subtree<TSchema>,
+	fn: string | EditFunction<TSchema>,
+	validator: ((js: string) => boolean) | undefined,
+	logger: Logger | undefined,
+): Promise<EditResult> {
+	logger?.log(`### Editing Tool Invoked\n\n`);
+	logger?.log(`#### Generated Code\n\n\`\`\`javascript\n${fn}\n\`\`\`\n\n`);
+
+	if (validator?.(fn.toString()) === false) {
+		logger?.log(`#### Code Validation Failed\n\n`);
+		return {
+			type: "validationError",
+			message: "The generated code did not pass validation. Please try again.",
+		};
 	}
-	return constructNode(schema, inputWithDefaults) as TreeObjectNode<
-		RestrictiveStringRecord<ImplicitFieldSchema>
-	>;
+
+	// Stick the tree schema constructors on an object passed to the function so that the LLM can create new nodes.
+	const create: Record<string, (input: FactoryContentObject) => TreeNode> = {};
+	for (const schema of findNamedSchemas(tree.schema)) {
+		const name = getFriendlyName(schema);
+		create[name] = (input: FactoryContentObject) => constructTreeNode(schema, input);
+	}
+
+	// Fork a branch to edit. If the edit fails or produces an error, we discard this branch, otherwise we merge it.
+	const editTree = tree.fork();
+	const params = {
+		get root(): ReadableField<TSchema> {
+			return editTree.field;
+		},
+		set root(value: TreeFieldFromImplicitField<ReadSchema<TSchema>>) {
+			editTree.field = value;
+		},
+		create,
+	};
+
+	let editFunction: EditFunction<TSchema>;
+	if (typeof fn === "string") {
+		try {
+			editFunction = processLlmCode(fn);
+		} catch (error) {
+			logger?.log(`#### Error\n\n`);
+			const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+			logger?.log(`\`\`\`JSON\n${errorMessage}\n\`\`\`\n\n`);
+			editTree.branch.dispose();
+			return {
+				type: "compileError",
+				message: `The supplied JavaScript function is not valid: ${errorMessage}`,
+			};
+		}
+	} else {
+		editFunction = fn;
+	}
+
+	try {
+		await editFunction(params);
+	} catch (error: unknown) {
+		logger?.log(`#### Error\n\n`);
+		const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+		logger?.log(`\`\`\`JSON\n${errorMessage}\n\`\`\`\n\n`);
+		editTree.branch.dispose();
+		return {
+			type: "runtimeError",
+			message: `Running the function produced an error. The state of the tree will be reset to its previous state as it was before the function ran. Please try again. Here is the error: ${errorMessage}`,
+		};
+	}
+
+	tree.branch.merge(editTree.branch);
+	logger?.log(`#### New Tree State\n\n`);
+	logger?.log(`${`\`\`\`JSON\n${stringifyTree(tree.field)}\n\`\`\``}\n\n`);
+	return {
+		type: "success",
+		message: `After running the function, the new state of the tree is:\n\n\`\`\`JSON\n${stringifyTree(tree.field)}\n\`\`\``,
+	};
 }
+
+function processLlmCode<TSchema extends ImplicitFieldSchema>(
+	code: string,
+): EditFunction<TSchema> {
+	const functionName = findInvocableFunctionName(code);
+	if (functionName === undefined) {
+		throw new Error("Generated code does not contain an invokable function");
+	}
+
+	const executionCode = `${stripExportSyntax(code)}\n\nreturn ${functionName}(${paramsName});`;
+	// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
+	const fn = new Function(paramsName, executionCode);
+	return fn as EditFunction<TSchema>;
+}
+
+/**
+ * Finds the name of the first invocable function in the given code.
+ */

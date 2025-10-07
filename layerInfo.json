@@ -87,7 +87,7 @@
 				"deps": ["Container-Definitions", "Core-Utils", "Client-Utils", "Driver-Utils"]
 			},
 			"Framework": {
-				"packages": ["@fluid-experimental/data-objects", "@fluidframework/fluid-static"],
+				"packages": ["@fluid-experimental/data-objects"],
 				"dirs": [
 					"experimental/framework/",
 					"experimental/PropertyDDS/packages/",

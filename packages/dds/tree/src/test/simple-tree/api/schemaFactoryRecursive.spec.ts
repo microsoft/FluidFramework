@@ -701,17 +701,20 @@ describe("SchemaFactory Recursive methods", () => {
 
 			const factory = new SchemaFactoryAlpha("");
 			{
-				class Test extends factory.arrayRecursiveAlpha("Test", [
-					{ type: () => factory.null, metadata: {} },
-				]) {}
+				class Test extends factory.arrayAlpha(
+					"Test",
+					SchemaFactoryAlpha.types([{ type: () => factory.null, metadata: {} }]),
+				) {}
 				// @ts-expect-error Does not support annotations
 				type _check = ValidateRecursiveSchema<typeof Test>;
 				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;
 			}
 
 			{
-				class Test extends factory.objectRecursive("Test", {
-					x: factory.optional([{ type: () => factory.null, metadata: {} }]),
+				class Test extends factory.objectAlpha("Test", {
+					x: factory.optional(
+						SchemaFactoryAlpha.types([{ type: () => factory.null, metadata: {} }]),
+					),
 				}) {}
 
 				const field = Test.info.x;
@@ -779,9 +782,10 @@ describe("SchemaFactory Recursive methods", () => {
 			}
 
 			{
-				class Test extends factory.mapRecursive("Test", [
-					{ type: () => factory.null, metadata: {} },
-				]) {}
+				class Test extends factory.mapAlpha(
+					"Test",
+					SchemaFactoryAlpha.types([{ type: () => factory.null, metadata: {} }]),
+				) {}
 				// @ts-expect-error Does not support annotations
 				type _check = ValidateRecursiveSchema<typeof Test>;
 				type _check2 = ValidateRecursiveSchemaAlpha<typeof Test>;

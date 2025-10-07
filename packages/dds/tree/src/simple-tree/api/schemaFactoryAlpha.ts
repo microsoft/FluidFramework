@@ -11,14 +11,11 @@ import {
 	type ObjectNodeSchema,
 	objectSchema,
 	type RecordNodeCustomizableSchema,
-	type RecordNodeInsertableData,
 	recordSchema,
-	type TreeRecordNode,
 } from "../node-kinds/index.js";
 import {
 	defaultSchemaFactoryObjectOptions,
 	scoped,
-	structuralName,
 	type NodeSchemaOptionsAlpha,
 	type SchemaFactoryObjectOptions,
 	type ScopedSchemaName,
@@ -29,16 +26,19 @@ import type { RestrictiveStringRecord } from "../../util/index.js";
 import type {
 	NodeKind,
 	TreeNodeSchema,
-	TreeNodeSchemaBoth,
 	TreeNodeSchemaClass,
-	TreeNodeSchemaNonClass,
-	WithType,
 	ImplicitAllowedTypes,
-	ImplicitAnnotatedAllowedTypes,
 	AnnotatedAllowedType,
 	LazyItem,
+	WithType,
+	AllowedTypesMetadata,
+	AllowedTypesFullFromMixed,
 } from "../core/index.js";
-import { normalizeToAnnotatedAllowedType, createSchemaUpgrade } from "../core/index.js";
+import {
+	normalizeToAnnotatedAllowedType,
+	createSchemaUpgrade,
+	AnnotatedAllowedTypesInternal,
+} from "../core/index.js";
 import type {
 	AnnotatedAllowedTypeUnsafe,
 	ArrayNodeCustomizableSchemaUnsafe,
@@ -51,7 +51,7 @@ import type {
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
 import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
 
-// This import prevents a large number of type references in the API reports from showing up as *_2.
+// These imports prevent a large number of type references in the API reports from showing up as *_2.
 /* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import/no-duplicates */
 import type {
 	FieldProps,
@@ -61,7 +61,6 @@ import type {
 } from "../fieldSchema.js";
 import type { LeafSchema } from "../leafNodeSchema.js";
 import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
-import type { UnannotateImplicitAllowedTypes } from "../core/index.js";
 import type { FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 /* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import/no-duplicates */
 
@@ -76,8 +75,9 @@ export interface SchemaStaticsAlpha {
 	 * Declares a staged type in a set of {@link AllowedTypes}.
 	 *
 	 * @remarks
-	 * Staged allowed types add support for loading documents which may or may not permit an allowed type in a location in a schema.
+	 * Staged allowed types add support for loading documents which may contain that type at the declared location.
 	 * This allows for an incremental rollout of a schema change to add a {@link TreeNodeSchema} to an {@link AllowedTypes} without breaking cross version collaboration.
+	 * A guide on this process can be found here: https://fluidframework.com/docs/data-structures/tree/schema-evolution/allowed-types-rollout
 	 *
 	 * Once enough clients have the type staged (and thus can read documents which allow it), documents can start being created and upgraded to allow the staged type.
 	 * This is done by deploying a new version of the app which removes the `staged` wrapper around the allowed type in the the schema definition.
@@ -88,112 +88,34 @@ export interface SchemaStaticsAlpha {
 	 * 1. {@link TreeView.initialize} will omit the staged allowed type from the newly created stored schema.
 	 * 2. {@link TreeView.upgradeSchema} will omit the staged allowed type from the the upgraded stored schema.
 	 * 3. When evaluating {@link TreeView.compatibility}, it will be viewable even if the staged allowed type is not present in the stored schema's corresponding allowed types.
-	 * 4. Because of the above, it is possible to get errors when inserting content which uses the staged allowed type when inserting the content into a tree who's stored schema does not permit it.
+	 * 4. Because of the above, it is possible to get errors when inserting content which uses the staged allowed type into a tree whose stored schema does not permit it.
 	 *
 	 * Currently, `staged` is not supported in the recursive type APIs: this is a known limitation which future versions of the API will address.
 	 *
 	 * @example
-	 * Suppose you have a schema which has a field that allows some type `A`, but you want to add support for type `B`.
+	 * A full code example of the schema migration process can be found in our {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts | tests}.
 	 *
-	 * The first change is to used to mark the new type as staged, replacing `A` in the schema with `[A, SchemaStaticsAlpha.staged(B)]`.
-	 * Once this is done, and any code which reads contents from documents is updated to handle any `B` content that may be present, this version of the code can be deployed.
-	 *
-	 * Once all users have the above changes, the schema can be updated again to `[A, B]`, and the app can be updated to allow creating of `B` content.
-	 * This updated version of the app will need to call {@link TreeView.upgradeSchema} when opening documents created by earlier versions.
-	 *
-	 * Adding a `B` schema as an option in the root could look like this:
-	 * ```typescript
-	 * const factory = new SchemaFactoryAlpha("test");
-	 * class A extends factory.objectAlpha("A", {}) {}
-	 * class B extends factory.objectAlpha("B", {}) {}
-	 *
-	 * // Does not support B
-	 * const configBefore = new TreeViewConfigurationAlpha({
-	 * 	schema: A,
-	 * });
-	 *
-	 * // Supports documents with or without B
-	 * const configStaged = new TreeViewConfigurationAlpha({
-	 * 	// Adds staged support for B.
-	 * 	// Currently this requires wrapping the root field with `SchemaFactoryAlpha.required`:
-	 * 	// this is normally implicitly included, but is currently required while the "staged" APIs are `@alpha`.
-	 * 	schema: SchemaFactoryAlpha.required([A, SchemaFactoryAlpha.staged(B)]),
-	 * });
-	 *
-	 * // Only supports documents with A and B: can be used to upgrade schema to add B.
-	 * const configAfter = new TreeViewConfigurationAlpha({
-	 * 	schema: [A, B],
-	 * });
-	 * ```
-	 * @example
-	 * Below is a full example of how the schema migration process works.
-	 * This can also be found in our {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts | tests}.
-	 * ```typescript
-	 * // Schema A: only number allowed
-	 * const schemaA = SchemaFactoryAlpha.optional([SchemaFactoryAlpha.number]);
-	 *
-	 * // Schema B: number or string (string is staged)
-	 * const schemaB = SchemaFactoryAlpha.optional([
-	 * 	SchemaFactoryAlpha.number,
-	 * 	SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-	 * ]);
-	 *
-	 * // Schema C: number or string, both fully allowed
-	 * const schemaC = SchemaFactoryAlpha.optional([
-	 * 	SchemaFactoryAlpha.number,
-	 * 	SchemaFactoryAlpha.string,
-	 * ]);
-	 *
-	 * // Initialize with schema A.
-	 * const configA = new TreeViewConfiguration({
-	 * 	schema: schemaA,
-	 * });
-	 * const viewA = treeA.viewWith(configA);
-	 * viewA.initialize(5);
-	 *
-	 * // Since we are running all the different versions of the app in the same process making changes synchronously,
-	 * // an explicit flush is needed to make them available to each other.
-	 * synchronizeTrees();
-	 *
-	 * assert.deepEqual(viewA.root, 5);
-	 *
-	 * // View the same document with a second tree using schema B.
-	 * const configB = new TreeViewConfiguration({
-	 * 	schema: schemaB,
-	 * });
-	 * const viewB = treeB.viewWith(configB);
-	 * // B cannot write strings to the root.
-	 * assert.throws(() => (viewB.root = "test"));
-	 *
-	 * // View the same document with a third tree using schema C.
-	 * const configC = new TreeViewConfiguration({
-	 * 	schema: schemaC,
-	 * });
-	 * const viewC = treeC.viewWith(configC);
-	 * // Upgrade to schema C
-	 * viewC.upgradeSchema();
-	 * // Use the newly enabled schema.
-	 * viewC.root = "test";
-	 *
-	 * synchronizeTrees();
-	 *
-	 * // View A is now incompatible with the stored schema:
-	 * assert.equal(viewA.compatibility.canView, false);
-	 *
-	 * // View B can still read the document, and now sees the string root which relies on the staged schema.
-	 * assert.deepEqual(viewB.root, "test");
-	 * ```
 	 * @privateRemarks
 	 * TODO:#44317 staged allowed types rely on schema validation of stored schema to output errors, these errors are not very
 	 * user friendly and should be improved, particularly in the case of staged allowed types
 	 *
-	 * TODO: the example above does not work tell in intellisense: its formatted to work onm the website. We should find a solution that works well for both.
-	 *
 	 * TODO: AB#45711: Update the docs above when recursive type support is added.
 	 */
-	staged: <const T extends LazyItem<TreeNodeSchema>>(
+	readonly staged: <const T extends LazyItem<TreeNodeSchema>>(
 		t: T | AnnotatedAllowedType<T>,
 	) => AnnotatedAllowedType<T>;
+
+	/**
+	 * Normalize information about a set of {@link AllowedTypes} into an {@link AllowedTypesFull}.
+	 * @remarks
+	 * This can take in {@link AnnotatedAllowedType} to preserve their annotations.
+	 */
+	readonly types: <
+		const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
+	>(
+		t: T,
+		metadata?: AllowedTypesMetadata,
+	) => AllowedTypesFullFromMixed<T>;
 
 	/**
 	 * {@link SchemaStaticsAlpha.staged} except tweaked to work better for recursive types.
@@ -223,6 +145,13 @@ const staged = <const T extends LazyItem<TreeNodeSchema>>(
 const schemaStaticsAlpha: SchemaStaticsAlpha = {
 	staged,
 	stagedRecursive: staged as SchemaStaticsAlpha["stagedRecursive"],
+
+	types: <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(
+		t: T,
+		metadata: AllowedTypesMetadata = {},
+	): AllowedTypesFullFromMixed<T> => {
+		return AnnotatedAllowedTypesInternal.createMixed<T>(t, metadata);
+	},
 };
 
 /**
@@ -247,7 +176,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public objectAlpha<
 		const Name extends TName,
-		const T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -419,6 +348,26 @@ export class SchemaFactoryAlpha<
 	public stagedRecursive = schemaStaticsAlpha.stagedRecursive;
 
 	/**
+	 * {@inheritDoc SchemaStaticsAlpha.types}
+	 */
+	public static types = schemaStaticsAlpha.types;
+
+	/**
+	 * {@inheritDoc SchemaStaticsAlpha.types}
+	 */
+	public types = schemaStaticsAlpha.types;
+
+	/**
+	 * {@inheritDoc SchemaStaticsAlpha.typesRecursive}
+	 */
+	public static typesRecursive = schemaStaticsAlpha.typesRecursive;
+
+	/**
+	 * {@inheritDoc SchemaStaticsAlpha.typesRecursive}
+	 */
+	public typesRecursive = schemaStaticsAlpha.typesRecursive;
+
+	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
@@ -434,7 +383,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public mapAlpha<
 		Name extends TName,
-		const T extends ImplicitAnnotatedAllowedTypes,
+		const T extends ImplicitAllowedTypes,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -485,7 +434,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public arrayAlpha<
 		const Name extends TName,
-		const T extends ImplicitAnnotatedAllowedTypes,
+		const T extends ImplicitAllowedTypes,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -745,7 +694,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public recordAlpha<
 		const Name extends TName,
-		const T extends ImplicitAnnotatedAllowedTypes,
+		const T extends ImplicitAllowedTypes,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -763,27 +712,28 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * {@link SchemaFactoryAlpha.(record:2)} except tweaked to work better for recursive types.
+	 * {@link SchemaFactoryBeta.(record:2)} except tweaked to work better for recursive types.
 	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
 	 * @remarks
 	 * This version of `SchemaFactory.record` uses the same workarounds as {@link SchemaFactory.objectRecursive}.
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	public recordRecursive<
+	public override recordRecursive<
 		Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
 	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
-		const RecordSchema = this.namedRecord(
-			name,
-			allowedTypes as T & ImplicitAllowedTypes,
-			/* customizable */ true,
+		const RecordSchema = recordSchema({
+			identifier: scoped<TScope, TName, Name>(this, name),
+			info: allowedTypes as T & ImplicitAllowedTypes,
+			customizable: true,
 			// Setting this to true seems to work ok currently, but not for other node kinds.
 			// Supporting this could be fragile and might break other future changes, so it's being kept as false for now.
-			/* implicitlyConstructable */ false,
-			options,
-		);
+			implicitlyConstructable: false,
+			metadata: options?.metadata,
+			persistedMetadata: options?.persistedMetadata,
+		});
 
 		return RecordSchema as TreeNodeSchemaClass<
 			/* Name */ ScopedSchemaName<TScope, Name>,

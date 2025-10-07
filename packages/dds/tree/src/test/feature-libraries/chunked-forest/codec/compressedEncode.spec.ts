@@ -21,7 +21,7 @@ import type {
 	TreeNodeSchemaIdentifier,
 	Value,
 } from "../../../../core/index.js";
-import { typeboxValidator } from "../../../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../../../external-utilities/index.js";
 import {
 	decode,
 	readValue,
@@ -139,7 +139,7 @@ describe("compressedEncode", () => {
 					testIdCompressor,
 					undefined /* incrementalEncoder */,
 				);
-				const codec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, context);
+				const codec = makeFieldBatchCodec({ jsonValidator: FormatValidatorBasic }, context);
 				const result = codec.encode(input, {
 					encodeType: TreeCompressionStrategy.Compressed,
 					idCompressor: testIdCompressor,

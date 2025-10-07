@@ -9,11 +9,7 @@ import type {
 	SimpleKeyMap,
 	InsertableObjectFromAnnotatedSchemaRecord,
 } from "./objectNode.js";
-import type {
-	FieldSchemaAlpha,
-	ImplicitAnnotatedFieldSchema,
-	UnannotateImplicitFieldSchema,
-} from "../../fieldSchema.js";
+import type { FieldSchemaAlpha, ImplicitFieldSchema } from "../../fieldSchema.js";
 import {
 	NodeKind,
 	type TreeNodeSchemaClass,
@@ -31,13 +27,13 @@ import type { SimpleObjectFieldSchema, SimpleObjectNodeSchema } from "../../simp
 export interface ObjectNodeSchema<
 	out TName extends string = string,
 	in out T extends
-		RestrictiveStringRecord<ImplicitAnnotatedFieldSchema> = RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+		RestrictiveStringRecord<ImplicitFieldSchema> = RestrictiveStringRecord<ImplicitFieldSchema>,
 	ImplicitlyConstructable extends boolean = boolean,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<
 			TName,
 			NodeKind.Object,
-			TreeObjectNode<UnannotateSchemaRecord<T>, TName>,
+			TreeObjectNode<T, TName>,
 			InsertableObjectFromAnnotatedSchemaRecord<T>,
 			ImplicitlyConstructable,
 			T,
@@ -50,16 +46,6 @@ export interface ObjectNodeSchema<
 	 */
 	readonly fields: ReadonlyMap<string, FieldSchemaAlpha & SimpleObjectFieldSchema>;
 }
-
-/**
- * Removes annotations from field schemas in a schema record.
- * @system @alpha
- */
-export type UnannotateSchemaRecord<
-	T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
-> = {
-	readonly [P in Extract<keyof T, string>]: UnannotateImplicitFieldSchema<T[P]>;
-};
 
 /**
  * Extra data provided on all {@link ObjectNodeSchema} that is not included in the (soon possibly public) ObjectNodeSchema type.

@@ -24,7 +24,7 @@ import {
 import { brand } from "../../util/index.js";
 import {
 	NodeKind,
-	normalizeAnnotatedAllowedTypes,
+	normalizeAndEvaluateAnnotatedAllowedTypes,
 	type AnnotatedAllowedType,
 	type TreeNodeSchema,
 } from "../core/index.js";
@@ -237,7 +237,7 @@ function* getNodeDiscrepancies(
 			}
 
 			yield* getAllowedTypeDiscrepancies(
-				normalizeAnnotatedAllowedTypes(view.info).types,
+				normalizeAndEvaluateAnnotatedAllowedTypes(view.info).types,
 				arrayStoredSchema,
 				brand(view.identifier),
 				EmptyKey,
@@ -346,7 +346,7 @@ function* getFieldDiscrepancies(
 		0xbee /* all field schema should be FieldSchemaAlpha */,
 	);
 	yield* getAllowedTypeDiscrepancies(
-		view.annotatedAllowedTypesNormalized.types,
+		view.allowedTypesFull.evaluate().types,
 		stored.types,
 		identifier,
 		fieldKey,

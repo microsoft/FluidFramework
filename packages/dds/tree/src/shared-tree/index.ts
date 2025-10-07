@@ -7,6 +7,7 @@ export {
 	type ITreePrivate,
 	type SharedTreeOptionsInternal,
 	type SharedTreeOptions,
+	type SharedTreeOptionsBeta,
 	SharedTreeKernel,
 	getBranch,
 	type ForestType,
@@ -23,6 +24,7 @@ export {
 	exportSimpleSchema,
 	type SharedTreeKernelView,
 	persistedToSimpleSchema,
+	getCodecTreeForSharedTreeFormat,
 } from "./sharedTree.js";
 
 export {
@@ -49,6 +51,7 @@ export type { RunTransaction } from "./tree.js";
 export {
 	TreeAlpha,
 	type TreeIdentifierUtils,
+	type ObservationResults,
 } from "./treeAlpha.js";
 
 export {
@@ -58,3 +61,8 @@ export {
 } from "./independentView.js";
 
 export type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+
+export {
+	getCodecTreeForChangeFormat,
+	type SharedTreeChangeFormatVersion,
+} from "./sharedTreeChangeCodecs.js";

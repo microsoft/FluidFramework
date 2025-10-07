@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/core-interfaces",
-	"version": "2.61.0",
+	"version": "2.63.0",
 	"description": "Fluid object interfaces",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -36,11 +36,11 @@
 		"./internal": {
 			"import": {
 				"types": "./lib/internal.d.ts",
-				"default": "./lib/index.js"
+				"default": "./lib/internal.js"
 			},
 			"require": {
 				"types": "./dist/internal.d.ts",
-				"default": "./dist/index.js"
+				"default": "./dist/internal.js"
 			}
 		},
 		"./internal/exposedUtilityTypes": {
@@ -91,8 +91,8 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
-		"test:mocha:cjs": "mocha dist/test",
-		"test:mocha:esm": "mocha lib/test",
+		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
+		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && npm run place:cjs:package-stub",
 		"tsc:watch": "npm run place:cjs:package-stub && fluid-tsc commonjs --project ./tsconfig.cjs.json --watch",
@@ -122,10 +122,10 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
-		"@fluid-tools/build-cli": "^0.58.1",
+		"@fluid-tools/build-cli": "^0.58.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.58.1",
-		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.60.0",
+		"@fluidframework/build-tools": "^0.58.3",
+		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.62.0",
 		"@fluidframework/eslint-config-fluid": "^6.0.0",
 		"@microsoft/api-extractor": "7.52.11",
 		"@types/mocha": "^10.0.10",

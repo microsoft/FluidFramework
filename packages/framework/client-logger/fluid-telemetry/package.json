@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/fluid-telemetry",
-	"version": "2.61.0",
+	"version": "2.63.0",
 	"description": "Customer facing Fluid telemetry types and classes for both producing and consuming said telemetry",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -104,8 +104,8 @@
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.58.1",
-		"@fluidframework/build-tools": "^0.58.1",
+		"@fluid-tools/build-cli": "^0.58.3",
+		"@fluidframework/build-tools": "^0.58.3",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
