@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { createEmitter } from "@fluid-internal/client-utils";
+import { bufferToString, createEmitter } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	type IContainerStorageService,
@@ -186,6 +186,7 @@ export interface IPendingBlobs {
 	[localId: string]: SerializedLocalBlobRecord;
 }
 
+// TODO: Probably divide TTL in half for safety
 const isTTLExpired = (blobRecord: UploadedBlob | AttachingBlob): boolean =>
 	blobRecord.minTTLInSeconds !== undefined &&
 	Date.now() - blobRecord.uploadTime > blobRecord.minTTLInSeconds * 1000;
@@ -483,6 +484,7 @@ export class BlobManager {
 	private async uploadAndAttach(localId: string, signal?: AbortSignal): Promise<void> {
 		if (signal?.aborted === true) {
 			this.localBlobCache.delete(localId);
+			this.pendingBlobsWithAttachedHandles.delete(localId);
 			throw createAbortError();
 		}
 		const localBlobRecordInitial = this.localBlobCache.get(localId);
@@ -518,6 +520,7 @@ export class BlobManager {
 				await new Promise<ICreateBlobResponseWithTTL>((resolve, reject) => {
 					const onSignalAbort = (): void => {
 						this.localBlobCache.delete(localId);
+						this.pendingBlobsWithAttachedHandles.delete(localId);
 						reject(createAbortError());
 						signal?.removeEventListener("abort", onSignalAbort);
 					};
@@ -528,6 +531,7 @@ export class BlobManager {
 						.catch((error) => {
 							// If the storage call errors, we can't recover. Reject to throw back to the caller.
 							this.localBlobCache.delete(localId);
+							this.pendingBlobsWithAttachedHandles.delete(localId);
 							reject(error);
 						})
 						.finally(() => {
@@ -599,6 +603,7 @@ export class BlobManager {
 						this.internalEvents.off("blobExpired", onBlobExpired);
 						signal?.removeEventListener("abort", onCreateBlobAbort);
 						this.localBlobCache.delete(localId);
+						this.pendingBlobsWithAttachedHandles.delete(localId);
 						reject(createAbortError());
 					};
 
@@ -616,7 +621,7 @@ export class BlobManager {
 			uploadCompleted = await tryAttach();
 
 			// If something stopped the attach from completing successfully (currently just TTL expiry),
-			// we expect that the blob was already updated to reflect the updated state (e.g. back to localOnly)
+			// we expect that the blob was already updated to reflect the updated state (i.e. back to localOnly)
 			// and we'll try the loop again from the top.
 		}
 
@@ -809,6 +814,8 @@ export class BlobManager {
 		}
 	};
 
+	// TODO: Make sure we do the right thing if we realize our pending blob actually finished attaching
+	// since we took the pending state.
 	/**
 	 * To be used in getPendingLocalState flow. Get a serializable record of the blobs that are
 	 * pending upload and/or their BlobAttach op, which can be given to a new BlobManager to
@@ -821,7 +828,30 @@ export class BlobManager {
 	 * for payload-pending handles, this will return the blobs associated with those handles.
 	 */
 	public getPendingBlobs(): IPendingBlobs | undefined {
-		return undefined;
+		// TODO: Remove non-local/uploaded states from serialized type?
+		const pendingBlobs: IPendingBlobs = {};
+		for (const localId of this.pendingBlobsWithAttachedHandles) {
+			const localBlobRecord = this.localBlobCache.get(localId);
+			assert(localBlobRecord !== undefined, "Pending blob must be in local cache");
+			assert(
+				localBlobRecord.state === "uploading" ||
+					localBlobRecord.state === "uploaded" ||
+					localBlobRecord.state === "attaching",
+				"Pending blob must be in uploading, uploaded, or attaching state",
+			);
+			pendingBlobs[localId] =
+				localBlobRecord.state === "uploading"
+					? {
+							state: "localOnly",
+							blob: bufferToString(localBlobRecord.blob, "base64"),
+						}
+					: {
+							...localBlobRecord,
+							state: "uploaded",
+							blob: bufferToString(localBlobRecord.blob, "base64"),
+						};
+		}
+		return Object.keys(pendingBlobs).length > 0 ? pendingBlobs : undefined;
 	}
 
 	/**
