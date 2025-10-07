@@ -91,10 +91,6 @@ export interface OnDemandSummaryResults {
 		 */
 		readonly stage?: SummaryStage;
 		/**
-		 * Generated summary tree.
-		 */
-		readonly summaryTree?: ISummaryTree;
-		/**
 		 * Handle of the complete summary.
 		 */
 		readonly handle?: string;

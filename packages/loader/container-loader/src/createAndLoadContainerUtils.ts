@@ -362,7 +362,6 @@ export async function loadSummarizerContainerAndMakeSummary(
 					summaryInfo: summarySubmitted.success
 						? {
 								stage: summarySubmitted.data.stage,
-								summaryTree: summarySubmitted.data.summaryTree,
 								handle: receivedSummaryAckOrNack.success
 									? receivedSummaryAckOrNack.data.summaryAckOp.contents.handle
 									: undefined,

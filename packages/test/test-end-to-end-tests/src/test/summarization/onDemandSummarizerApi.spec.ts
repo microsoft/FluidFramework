@@ -69,7 +69,6 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		assert(summaryResults.receivedSummaryAck, "summary ack/nack not received");
 		const data = summaryResults.summaryInfo;
 		assert.strictEqual(data.stage, "submit", "submit stage value");
-		assert(data.summaryTree !== undefined, "summary tree should exist");
 		assert(data.handle !== undefined, "summary handle should exist");
 
 		// Verify - telemetry
@@ -109,7 +108,6 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		assert(summaryResults.receivedSummaryAck, "summary ack/nack not received");
 		const data = summaryResults.summaryInfo;
 		assert.strictEqual(data.stage, "submit", "submit stage value");
-		assert(data.summaryTree !== undefined, "summary tree should exist");
 		assert(data.handle !== undefined, "summary handle should exist");
 
 		// Verify - telemetry
@@ -203,7 +201,6 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		assert(summaryResults.receivedSummaryAck, "summary ack/nack not received");
 		const data = summaryResults.summaryInfo;
 		assert.strictEqual(data.stage, "submit", "submit stage value");
-		assert(data.summaryTree !== undefined, "summary tree should exist");
 		assert(data.handle !== undefined, "summary handle should exist");
 
 		// Verify - telemetry
