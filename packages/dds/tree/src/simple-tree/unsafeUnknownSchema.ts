@@ -15,7 +15,7 @@ import type { InsertableContent } from "./unhydratedFlexTreeFromInsertable.js";
 
 /**
  * {@inheritdoc (UnsafeUnknownSchema:type)}
- * @beta
+ * @alpha
  */
 export const UnsafeUnknownSchema: unique symbol = Symbol("UnsafeUnknownSchema");
 
@@ -35,9 +35,10 @@ export const UnsafeUnknownSchema: unique symbol = Symbol("UnsafeUnknownSchema");
  * Any APIs which use this must produce UsageErrors when out of schema data is encountered, and never produce unrecoverable errors,
  * or silently accept invalid data.
  * This is currently only type exported from the package: the symbol is just used as a way to get a named type.
- * @beta
+ * @alpha
  */
 export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
+
 /**
  * Content which could be inserted into a tree.
  *
@@ -46,7 +47,6 @@ export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
  * Extended version of {@link InsertableTreeNodeFromImplicitAllowedTypes} that also allows {@link (UnsafeUnknownSchema:type)}.
  * @alpha
  */
-
 export type Insertable<TSchema extends ImplicitAllowedTypes | UnsafeUnknownSchema> =
 	TSchema extends ImplicitAllowedTypes
 		? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>

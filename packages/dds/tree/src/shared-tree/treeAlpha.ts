@@ -54,6 +54,9 @@ import {
 	toUnhydratedSchema,
 	type TreeParsingOptions,
 	type NodeChangedData,
+	type ConciseTree,
+	importConcise,
+	exportConcise,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
@@ -244,6 +247,37 @@ export interface TreeAlpha {
 			? TreeFieldFromImplicitField<TSchema>
 			: TreeNode | TreeLeafValue | undefined
 	>;
+
+	/**
+	 * {@inheritDoc (TreeBeta:interface).importConcise}
+	 */
+	importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		schema: UnsafeUnknownSchema extends TSchema
+			? ImplicitFieldSchema
+			: TSchema & ImplicitFieldSchema,
+		data: ConciseTree | undefined,
+	): Unhydrated<
+		TSchema extends ImplicitFieldSchema
+			? TreeFieldFromImplicitField<TSchema>
+			: TreeNode | TreeLeafValue | undefined
+	>;
+
+	/**
+	 * {@inheritDoc (TreeBeta:interface).(exportConcise:1)}
+	 * @privateRemarks Note: this was retained on this interface because {@link (TreeAlpha:interface).importConcise} exists.
+	 * It should be removed if/when that is removed from this interface.
+	 */
+	exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
+
+	/**
+	 * {@inheritDoc (TreeBeta:interface).(exportConcise:2)}
+	 * @privateRemarks Note: this was retained on this interface because {@link (TreeAlpha:interface).importConcise} exists.
+	 * It should be removed if/when that is removed from this interface.
+	 */
+	exportConcise(
+		node: TreeNode | TreeLeafValue | undefined,
+		options?: TreeEncodingOptions,
+	): ConciseTree | undefined;
 
 	/**
 	 * Construct tree content compatible with a field defined by the provided `schema`.
@@ -725,6 +759,21 @@ export const TreeAlpha: TreeAlpha = {
 				: TreeNode | TreeLeafValue | undefined
 		>;
 	},
+
+	importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		schema: UnsafeUnknownSchema extends TSchema
+			? ImplicitFieldSchema
+			: TSchema & ImplicitFieldSchema,
+		data: ConciseTree | undefined,
+	): Unhydrated<
+		TSchema extends ImplicitFieldSchema
+			? TreeFieldFromImplicitField<TSchema>
+			: TreeNode | TreeLeafValue | undefined
+	> {
+		return importConcise(schema, data);
+	},
+
+	exportConcise,
 
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,

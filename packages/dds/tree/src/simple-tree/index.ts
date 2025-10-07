@@ -83,6 +83,8 @@ export {
 	treeNodeApi,
 	type TreeNodeApi,
 	type NodeChangedData,
+	exportConcise,
+	importConcise,
 	TreeBeta,
 	type TreeChangeEventsBeta,
 	type SimpleTreeIndex,

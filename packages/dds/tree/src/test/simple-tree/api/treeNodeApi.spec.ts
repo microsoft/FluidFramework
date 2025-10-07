@@ -3151,11 +3151,11 @@ describe("treeNodeApi", () => {
 					const exported = TreeBeta.exportConcise(view.root);
 					if (testCase.ambiguous) {
 						assert.throws(
-							() => TreeBeta.importConcise<UnsafeUnknownSchema>(testCase.schema, exported),
+							() => TreeAlpha.importConcise<UnsafeUnknownSchema>(testCase.schema, exported),
 							validateUsageError(/compatible with more than one type/),
 						);
 					} else {
-						const imported = TreeBeta.importConcise<UnsafeUnknownSchema>(
+						const imported = TreeAlpha.importConcise<UnsafeUnknownSchema>(
 							testCase.schema,
 							exported,
 						);

@@ -152,10 +152,8 @@ export interface TreeBeta {
 	 * Documented (and thus recoverable) error handling/reporting for this is not yet implemented,
 	 * but for now most invalid inputs will throw a recoverable error.
 	 */
-	importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
-		schema: UnsafeUnknownSchema extends TSchema
-			? ImplicitFieldSchema
-			: TSchema & ImplicitFieldSchema,
+	importConcise<const TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
 		data: ConciseTree | undefined,
 	): Unhydrated<
 		TSchema extends ImplicitFieldSchema
@@ -248,17 +246,47 @@ function borrowCursorFromTreeNodeOrValue(
 	return cursor;
 }
 
-function exportConcise(
+/**
+ * {@inheritDoc (TreeBeta:interface).importConcise}
+ */
+export function importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	schema: UnsafeUnknownSchema extends TSchema
+		? ImplicitFieldSchema
+		: TSchema & ImplicitFieldSchema,
+	data: ConciseTree | undefined,
+): Unhydrated<
+	TSchema extends ImplicitFieldSchema
+		? TreeFieldFromImplicitField<TSchema>
+		: TreeNode | TreeLeafValue | undefined
+> {
+	// Create the tree content from insertable data
+	const mapTree = unhydratedFlexTreeFromInsertable(
+		data as InsertableField<UnsafeUnknownSchema>,
+		schema,
+	);
+	const result = mapTree === undefined ? undefined : getOrCreateNodeFromInnerNode(mapTree);
+	return result as Unhydrated<
+		TSchema extends ImplicitFieldSchema
+			? TreeFieldFromImplicitField<TSchema>
+			: TreeNode | TreeLeafValue | undefined
+	>;
+}
+
+/**
+ * {@inheritDoc (TreeBeta:interface).(exportConcise:1)}
+ */
+export function exportConcise(
 	node: TreeNode | TreeLeafValue,
 	options?: TreeEncodingOptions,
 ): ConciseTree;
-
-function exportConcise(
+/**
+ * {@inheritDoc (TreeBeta:interface).(exportConcise:2)}
+ */
+export function exportConcise(
 	node: TreeNode | TreeLeafValue | undefined,
 	options?: TreeEncodingOptions,
 ): ConciseTree | undefined;
-
-function exportConcise(
+export function exportConcise(
 	node: TreeNode | TreeLeafValue | undefined,
 	options?: TreeEncodingOptions,
 ): ConciseTree | undefined {
@@ -286,29 +314,7 @@ export const TreeBeta: TreeBeta = {
 		return treeNodeApi.on(node, eventName, listener);
 	},
 
-	importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
-		schema: UnsafeUnknownSchema extends TSchema
-			? ImplicitFieldSchema
-			: TSchema & ImplicitFieldSchema,
-		data: ConciseTree | undefined,
-	): Unhydrated<
-		TSchema extends ImplicitFieldSchema
-			? TreeFieldFromImplicitField<TSchema>
-			: TreeNode | TreeLeafValue | undefined
-	> {
-		// Create the tree content from insertable data
-		const mapTree = unhydratedFlexTreeFromInsertable(
-			data as InsertableField<UnsafeUnknownSchema>,
-			schema,
-		);
-		const result = mapTree === undefined ? undefined : getOrCreateNodeFromInnerNode(mapTree);
-		return result as Unhydrated<
-			TSchema extends ImplicitFieldSchema
-				? TreeFieldFromImplicitField<TSchema>
-				: TreeNode | TreeLeafValue | undefined
-		>;
-	},
-
+	importConcise,
 	exportConcise,
 
 	clone<const TSchema extends ImplicitFieldSchema>(
