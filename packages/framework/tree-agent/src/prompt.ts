@@ -25,11 +25,10 @@ import {
  */
 export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 	subtree: Subtree<TRoot>;
-	editToolName?: string;
-	editFunctionName?: string;
+	editToolName: string | undefined;
 	domainHints?: string;
 }): string {
-	const { subtree, editToolName, editFunctionName, domainHints } = args;
+	const { subtree, editToolName, domainHints } = args;
 	const { field, schema } = subtree;
 	const arrayInterfaceName = "TreeArray";
 	const mapInterfaceName = "TreeMap";
@@ -78,11 +77,11 @@ It will often not be possible to fully accomplish the goal using those helpers. 
 		exampleObjectName === undefined
 			? ""
 			: `When constructing new objects, you should wrap them in the appropriate builder function rather than simply making a javascript object.
-The builders are available on the "create" property on the first argument of the \`${editFunctionName}\` function and are named according to the type that they create.
+The builders are available on the "create" property on the first argument of the edit function and are named according to the type that they create.
 For example:
 
 \`\`\`javascript
-function ${editFunctionName}({ root, create }) {
+function editTree({ root, create }) {
 	// This creates a new ${exampleObjectName} object:
 	const ${communize(exampleObjectName)} = create.${exampleObjectName}({ /* ...properties... */ });
 	// Don't do this:
@@ -130,9 +129,8 @@ Once the tree is in the desired state, you should inform the user that the reque
 ### Editing
 
 If the user asks you to edit the document, you will write a JavaScript function that mutates the data in-place to achieve the user's goal.
-The function must be named "${editFunctionName}".
-It may be synchronous or asynchronous.
-The ${editFunctionName} function must have a first parameter which has a \`root\` property.
+The edit function may be synchronous or asynchronous.
+The edit function must have a first parameter which has a \`root\` property.
 This \`root\` property holds the current state of the tree as shown above.
 You may mutate any part of the tree as necessary, taking into account the caveats around arrays and maps detailed below.
 You may also set the \`root\` property to be an entirely new value as long as it is one of the types allowed at the root of the tree (\`${Array.from(rootTypes.values(), (t) => getFriendlyName(t)).join(" | ")}\`).
@@ -140,7 +138,7 @@ ${helperMethodExplanation}
 
 ${hasArrays ? arrayEditing : ""}${hasMaps ? mapEditing : ""}#### Additional Notes
 
-Before outputting the ${editFunctionName} function, you should check that it is valid according to both the application tree's schema and any restrictions of the editing APIs described above.
+Before outputting the edit function, you should check that it is valid according to both the application tree's schema and any restrictions of the editing APIs described above.
 
 Once data has been removed from the tree (e.g. replaced via assignment, or removed from an array), that data cannot be re-inserted into the tree - instead, it must be deep cloned and recreated.
 

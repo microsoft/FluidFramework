@@ -35,9 +35,8 @@ Once the tree is in the desired state, you should inform the user that the reque
 ### Editing
 
 If the user asks you to edit the document, you will write a JavaScript function that mutates the data in-place to achieve the user's goal.
-The function must be named "editTree".
-It may be synchronous or asynchronous.
-The editTree function must have a first parameter which has a `root` property.
+The edit function may be synchronous or asynchronous.
+The edit function must have a first parameter which has a `root` property.
 This `root` property holds the current state of the tree as shown above.
 You may mutate any part of the tree as necessary, taking into account the caveats around arrays and maps detailed below.
 You may also set the `root` property to be an entirely new value as long as it is one of the types allowed at the root of the tree (`Obj`).
@@ -266,12 +265,12 @@ export interface TreeMap<T> extends ReadonlyMap<string, T> {
 
 #### Additional Notes
 
-Before outputting the editTree function, you should check that it is valid according to both the application tree's schema and any restrictions of the editing APIs described above.
+Before outputting the edit function, you should check that it is valid according to both the application tree's schema and any restrictions of the editing APIs described above.
 
 Once data has been removed from the tree (e.g. replaced via assignment, or removed from an array), that data cannot be re-inserted into the tree - instead, it must be deep cloned and recreated.
 
 When constructing new objects, you should wrap them in the appropriate builder function rather than simply making a javascript object.
-The builders are available on the "create" property on the first argument of the `editTree` function and are named according to the type that they create.
+The builders are available on the "create" property on the first argument of the edit function and are named according to the type that they create.
 For example:
 
 ```javascript
