@@ -31,7 +31,7 @@ export type AllowedTypesFull<T extends readonly AnnotatedAllowedType[] = readonl
 export type AllowedTypesFullEvaluated = AllowedTypesFull<readonly AnnotatedAllowedType<TreeNodeSchema>[]>;
 
 // @alpha @sealed
-export type AllowedTypesFullFromMixed<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = (AnnotateAllowedTypesList<T> extends readonly AnnotatedAllowedType[] ? AnnotatedAllowedTypes<AnnotateAllowedTypesList<T>> : unknown) & UnannotateAllowedTypesList<T>;
+export type AllowedTypesFullFromMixed<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = UnannotateAllowedTypesList<T> & AnnotatedAllowedTypes<AnnotateAllowedTypesList<T>>;
 
 // @alpha @input
 export interface AllowedTypesMetadata {
@@ -43,7 +43,7 @@ export function allowUnused<T>(t?: T): void;
 
 // @alpha @system
 export type AnnotateAllowedTypesList<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = {
-    [I in keyof T]: T[I] extends AnnotatedAllowedType<infer X> ? X : T[I];
+    [I in keyof T]: T[I] extends AnnotatedAllowedType<unknown> ? T[I] : AnnotatedAllowedType<T[I]>;
 };
 
 // @alpha @sealed
@@ -726,8 +726,10 @@ export type InsertableTreeFieldFromImplicitField<TSchemaInput extends ImplicitFi
 
 // @public @system
 export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> = IsUnion<TList> extends true ? never : {
-    readonly [Property in keyof TList]: TList[Property] extends LazyItem<infer TSchema extends TreeNodeSchema> ? InsertableTypedNode<TSchema> : never;
-}[number];
+    readonly [Property in keyof TList]: [TList[Property]] extends [
+    LazyItem<infer TSchema extends TreeNodeSchema>
+    ] ? InsertableTypedNode<TSchema> : never;
+}[NumberKeys<TList>];
 
 // @public
 export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes> = [
@@ -1047,6 +1049,11 @@ export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown> extends N
 
 // @alpha
 export function normalizeAllowedTypes(types: ImplicitAllowedTypes): AllowedTypesFull;
+
+// @public @system
+export type NumberKeys<T, Transformed = {
+    readonly [Property in keyof T as number extends Property ? never : Property]: Property;
+}> = Transformed[`${number}` & keyof Transformed];
 
 // @public @system
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {} : {
