@@ -49,7 +49,6 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import { DataCorruptionError } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITestContainerConfig,
 	ITestObjectProvider,
 	LoaderContainerTracker,
 	LocalCodeLoader,
@@ -320,8 +319,6 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 	});
 
 	it("getPendingLocalState() called on container", async () => {
-		const testContainerConfig: ITestContainerConfig = {};
-
 		const runtimeFactory = (_?: unknown) =>
 			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory());
 
@@ -332,7 +329,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
 		);
 
 		const container: ContainerAlpha = asLegacyAlpha(
-			await localTestObjectProvider.makeTestContainer(testContainerConfig),
+			await localTestObjectProvider.makeTestContainer(),
 		);
 		const pendingString = await container.getPendingLocalState();
 		container.close();

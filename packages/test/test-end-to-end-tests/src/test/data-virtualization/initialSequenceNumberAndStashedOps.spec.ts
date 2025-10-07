@@ -29,9 +29,6 @@ describeCompat(
 					},
 				},
 			},
-			loaderProps: {
-				configProvider: configProvider({}),
-			},
 		};
 
 		let provider: ITestObjectProvider;

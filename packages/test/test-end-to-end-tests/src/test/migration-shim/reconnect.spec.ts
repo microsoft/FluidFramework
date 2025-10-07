@@ -185,10 +185,6 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	let provider: ITestObjectProvider;
 
-	const loaderProps = {
-		configProvider: configProvider({}),
-	};
-
 	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		// Creates the document as v1 of the code with a SharedCell
@@ -275,7 +271,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 	it("MigrationShim can apply stashed v1 ops to v1 state", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1: ContainerAlpha = asLegacyAlpha(
-			await provider.loadContainer(runtimeFactory2, loaderProps),
+			await provider.loadContainer(runtimeFactory2),
 		);
 		const url = await container1.getAbsoluteUrl("");
 		assert(url !== undefined, "Container url should be defined");
@@ -309,7 +305,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 	it("MigrationShim can apply stashed v2 ops to v2 state", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1: ContainerAlpha = asLegacyAlpha(
-			await provider.loadContainer(runtimeFactory2, loaderProps),
+			await provider.loadContainer(runtimeFactory2),
 		);
 		const url = await container1.getAbsoluteUrl("");
 		assert(url !== undefined, "Container url should be defined");
@@ -371,7 +367,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 		const { summaryVersion } = await summarizeNow(summarizer);
 		const container2: ContainerAlpha = asLegacyAlpha(
-			await provider.loadContainer(runtimeFactory2, loaderProps, {
+			await provider.loadContainer(runtimeFactory2, undefined, {
 				[LoaderHeader.version]: summaryVersion,
 			}),
 		);
@@ -409,7 +405,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 	it("Shims drop stashed v1 ops to v2 state", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1: ContainerAlpha = asLegacyAlpha(
-			await provider.loadContainer(runtimeFactory2, loaderProps),
+			await provider.loadContainer(runtimeFactory2),
 		);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const shim1 = testObj1.getTree<MigrationShim>();
@@ -477,7 +473,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 	it("MigrationShim apply stashed v1 migrate ops in v1 state", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1: ContainerAlpha = asLegacyAlpha(
-			await provider.loadContainer(runtimeFactory2, loaderProps),
+			await provider.loadContainer(runtimeFactory2),
 		);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const shim1 = testObj1.getTree<MigrationShim>();

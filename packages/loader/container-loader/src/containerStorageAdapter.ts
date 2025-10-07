@@ -223,10 +223,6 @@ export class ContainerStorageAdapter
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
 		const maybeBlob = this.blobContents[id];
 		if (maybeBlob !== undefined) {
-			if (typeof maybeBlob === "string") {
-				const blob = stringToBuffer(maybeBlob, "utf8");
-				return blob;
-			}
 			return maybeBlob;
 		}
 		return this._storageService.readBlob(id);
