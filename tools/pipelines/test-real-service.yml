@@ -146,6 +146,7 @@ stages:
       stageId: e2e_docker
       stageDisplayName: e2e - docker
       poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
+      sourcePath: $(Build.SourcesDirectory)/FluidFramework
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
