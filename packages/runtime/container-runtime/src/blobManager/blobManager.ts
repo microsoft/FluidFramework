@@ -615,10 +615,10 @@ export class BlobManager {
 			}
 		};
 
-		let uploadCompleted = false;
-		while (!uploadCompleted) {
+		let attachCompleted = false;
+		while (!attachCompleted) {
 			await ensureUploaded();
-			uploadCompleted = await tryAttach();
+			attachCompleted = await tryAttach();
 
 			// If something stopped the attach from completing successfully (currently just TTL expiry),
 			// we expect that the blob was already updated to reflect the updated state (i.e. back to localOnly)
