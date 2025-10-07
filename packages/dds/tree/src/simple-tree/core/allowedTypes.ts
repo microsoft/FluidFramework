@@ -494,7 +494,7 @@ export type AnnotateAllowedTypesList<
 };
 
 /**
- * Normalizes a {@link ImplicitAllowedTypes} to {@link AllowedTypesFull}.
+ * Normalizes an {@link ImplicitAllowedTypes} to an {@link AllowedTypesFull}.
  * @alpha
  */
 export function normalizeAllowedTypes(types: ImplicitAllowedTypes): AllowedTypesFull {
