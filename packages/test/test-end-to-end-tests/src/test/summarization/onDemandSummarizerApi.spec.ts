@@ -19,12 +19,15 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	DataObjectFactoryType,
+	ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
 describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, apis) => {
 	let logger: MockLogger;
+	let provider: ITestObjectProvider;
 
 	beforeEach(() => {
+		provider = getTestObjectProvider();
 		logger = new MockLogger();
 	});
 
@@ -39,7 +42,6 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 	};
 
 	async function buildLoadProps(): Promise<ILoadExistingContainerProps> {
-		const provider = getTestObjectProvider();
 		const container = await provider.makeTestContainer(testContainerConfig);
 		const entry = (await container.getEntryPoint()) as ITestFluidObject;
 		assert(entry !== undefined, "entry point must resolve");
@@ -53,7 +55,10 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		return { ...loaderProps, request: { url }, logger };
 	}
 
-	it("summarizes successfully (fullTree gate off)", async () => {
+	it("summarizes successfully (fullTree gate off)", async function () {
+		if (provider.driver.type !== "odsp") {
+			this.skip();
+		}
 		const props = await buildLoadProps();
 		const result: LoadSummarizerSummaryResult =
 			await loadSummarizerContainerAndMakeSummary(props);
@@ -82,7 +87,10 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		);
 	});
 
-	it("summarizes successfully with fullTree gate on", async () => {
+	it("summarizes successfully with fullTree gate on", async function () {
+		if (provider.driver.type !== "odsp") {
+			this.skip();
+		}
 		const props = await buildLoadProps();
 		const configProvider = {
 			getRawConfig: (key: string) =>
@@ -125,8 +133,10 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		assert(!("receivedSummaryAck" in endEvent), "end event should omit receivedSummaryAck");
 	});
 
-	it("clients with summaries disabled can make changes and load from on-demand summary", async () => {
-		const provider = getTestObjectProvider();
+	it("clients with summaries disabled can make changes and load from on-demand summary", async function () {
+		if (provider.driver.type !== "odsp") {
+			this.skip();
+		}
 		// Config for clients that opt out of summarization.
 		const clientConfig: ITestContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
