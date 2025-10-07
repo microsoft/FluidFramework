@@ -10,6 +10,7 @@ import type {
 	IEvent,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import type { IDisposable } from "@fluidframework/core-interfaces/internal";
 import { Timer, assert } from "@fluidframework/core-utils/internal";
 import {
 	FetchSource,
@@ -165,7 +166,7 @@ class RefreshPromiseTracker {
  * as well as the snapshot to be used for serialization.
  * It also keeps track of container dirty state and which local ops have been processed
  */
-export class SerializedStateManager {
+export class SerializedStateManager implements IDisposable {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
 	private readonly mc: MonitoringContext;
 	private snapshotInfo: ISnapshotInfo | undefined;
@@ -218,6 +219,14 @@ export class SerializedStateManager {
 		}
 
 		containerEvent.on("saved", () => this.updateSnapshotAndProcessedOpsMaybe());
+	}
+	#disposed: boolean = false;
+	public get disposed(): boolean {
+		return this.#disposed;
+	}
+	dispose(): void {
+		this.#disposed = true;
+		this.refreshTimer?.clear();
 	}
 	/**
 	 * Promise that will resolve (or reject) once we've tried to download the latest snapshot(s) from storage
