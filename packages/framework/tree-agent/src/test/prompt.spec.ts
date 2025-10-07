@@ -204,7 +204,7 @@ describe("Prompt snapshot", () => {
 		const fullPrompt = getPrompt({
 			subtree: new Subtree(view as TreeView<ImplicitFieldSchema>),
 			editFunctionName: "editTree",
-			editToolName: "EditTool",
+			editToolName: "EditTreeTool",
 			domainHints: "These are some domain-specific hints.",
 		});
 
