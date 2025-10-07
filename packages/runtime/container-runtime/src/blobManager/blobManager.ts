@@ -224,7 +224,7 @@ export class BlobManager {
 	// getPendingState().  This will store their local IDs, and then we can look them up against the localBlobCache.
 	private readonly pendingBlobsWithAttachedHandles: Set<string> = new Set();
 	// The set of local IDs for any pending blobs we loaded with and have not yet started the upload/attach flow for.
-	private readonly pendingOnlyBlobs: Set<string> = new Set();
+	private readonly pendingOnlyLocalIds: Set<string> = new Set();
 
 	private readonly sendBlobAttachOp: (localId: string, storageId: string) => void;
 
@@ -303,7 +303,7 @@ export class BlobManager {
 					blob: stringToBuffer(serializableBlobRecord.blob, "base64"),
 				};
 				this.localBlobCache.set(localId, localBlobRecord);
-				this.pendingOnlyBlobs.add(localId);
+				this.pendingOnlyLocalIds.add(localId);
 			}
 		}
 
@@ -499,7 +499,10 @@ export class BlobManager {
 	 * when called. Returns a promise that resolves when the blob completes uploading and attaching, or else
 	 * rejects if an error is encountered or the signal is aborted.
 	 */
-	private async uploadAndAttach(localId: string, signal?: AbortSignal): Promise<void> {
+	private readonly uploadAndAttach = async (
+		localId: string,
+		signal?: AbortSignal,
+	): Promise<void> => {
 		if (signal?.aborted === true) {
 			this.localBlobCache.delete(localId);
 			this.pendingBlobsWithAttachedHandles.delete(localId);
@@ -678,7 +681,7 @@ export class BlobManager {
 		}
 		// When the blob successfully attaches, the localBlobRecord will have been updated to attached state
 		// in processing, so there's nothing else to do here.
-	}
+	};
 
 	/**
 	 * Resubmit a BlobAttach op. Used to add storage IDs to ops that were
@@ -726,7 +729,7 @@ export class BlobManager {
 			// in particular for the non-payloadPending case since we should be reaching this point
 			// before even returning a handle to the caller.
 			this.pendingBlobsWithAttachedHandles.delete(localId);
-			this.pendingOnlyBlobs.delete(localId);
+			this.pendingOnlyLocalIds.delete(localId);
 		}
 		this.redirectTable.set(localId, storageId);
 		// set identity (id -> id) entry
@@ -881,11 +884,11 @@ export class BlobManager {
 	 * if any of them fail.
 	 */
 	public readonly sharePendingBlobs = async (): Promise<void> => {
-		const blobsToUpload = [...this.pendingOnlyBlobs];
-		this.pendingOnlyBlobs.clear();
+		const localIdsToUpload = [...this.pendingOnlyLocalIds];
+		this.pendingOnlyLocalIds.clear();
 		// TODO: Determine if Promise.all is ergonomic at the callsite. Would Promise.allSettled be better?
 		await Promise.all<void>(
-			blobsToUpload.map(async ([localId]) => this.uploadAndAttach(localId)),
+			localIdsToUpload.map(async (localId) => this.uploadAndAttach(localId)),
 		);
 	};
 
