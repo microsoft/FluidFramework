@@ -33,7 +33,11 @@ import {
 	getBlobContentsFromTree,
 	type ISerializableBlobContents,
 } from "./containerStorageAdapter.js";
-import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";
+import {
+	convertSnapshotToSnapshotInfo,
+	convertISnapshotToSnapshotWithBlobs,
+	getDocumentAttributes,
+} from "./utils.js";
 
 /**
  * This is very similar to {@link @fluidframework/protocol-definitions/internal#ISnapshot}, but the difference is
