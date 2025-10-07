@@ -160,10 +160,16 @@ stages:
         # basic ANSI color support though, so force that in the pipeline
         - name: FORCE_COLOR
           value: 1
-        - name: ffPipelineHostPath
-          value: ${{ if eq(parameters.checkout, true) }}$(Build.SourcesDirectory)/ff_pipeline_host${{ else }}$(Build.SourcesDirectory)
         - name: sourcePath
-          value: ${{ if eq(parameters.checkout, true) }}$(Build.SourcesDirectory)/FluidFramework${{ else }}$(Build.SourcesDirectory)
+          ${{ if eq(parameters.checkout, true) }}:
+            value: $(Build.SourcesDirectory)/FluidFramework
+          ${{ else }}:
+            value: $(Build.SourcesDirectory)
+        - name: ffPipelineHostPath
+          ${{ if eq(parameters.checkout, true) }}:
+            value: $(Build.SourcesDirectory)/ff_pipeline_host
+          ${{ else }}:
+            value: $(Build.SourcesDirectory)
         - name: testPackageDir
           value: '${{ variables.sourcePath }}/node_modules/${{ parameters.testPackage }}'
         - name: testPackageFilePattern
