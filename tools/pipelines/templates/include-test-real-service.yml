@@ -43,11 +43,6 @@ parameters:
 - name: testWorkspace
   type: string
 
-# Some pipelines download multiple repositories, so the FluidFramework source may be in a different path
-- name: sourcePath
-  type: string
-  default: $(Build.SourcesDirectory)
-
 - name: timeoutInMinutes
   type: number
   default: 60
@@ -165,8 +160,12 @@ stages:
         # basic ANSI color support though, so force that in the pipeline
         - name: FORCE_COLOR
           value: 1
+        - name: ffPipelineHostPath
+          value: ${{ if eq(parameters.checkout, true) }}$(Build.SourcesDirectory)/ff_pipeline_host${{ else }}$(Build.SourcesDirectory)
+        - name: sourcePath
+          value: ${{ if eq(parameters.checkout, true) }}$(Build.SourcesDirectory)/FluidFramework${{ else }}$(Build.SourcesDirectory)
         - name: testPackageDir
-          value: '${{ parameters.sourcePath }}/node_modules/${{ parameters.testPackage }}'
+          value: '${{ variables.sourcePath }}/node_modules/${{ parameters.testPackage }}'
         - name: testPackageFilePattern
           value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-[0-9]*.tgz
         # Note that this path must match the path that the packed packages are saved to in the build pipeline.
@@ -177,7 +176,6 @@ stages:
           value: true
         - name: artifactPipeline
           value: Build - client packages
-
         steps:
         # Setup
         - checkout: ff_pipeline_host
@@ -224,11 +222,12 @@ stages:
               echo "
               Pipeline Parameters:
                 poolBuild=${{ parameters.poolBuild }}
-                sourcePath=${{ parameters.sourcePath }}
                 testPackage=${{ parameters.testPackage }}
 
               Pipeline Variables:
                 isTestBranch=${{ variables.isTestBranch }}
+                sourcePath=${{ variables.sourcePath }}
+                ffPipelineHostPath=${{ variables.ffPipelineHostPath }}
                 testWorkspace=${{ parameters.testWorkspace }}
                 testPackageFilePattern=${{ variables.testPackageFilePattern }}
                 testCommand=${{ parameters.testCommand }}
@@ -243,7 +242,7 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
-            buildDirectory: ${{ parameters.sourcePath }}
+            buildDirectory: ${{ variables.sourcePath }}
 
         - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
 
@@ -253,7 +252,7 @@ stages:
           displayName: Install base dependencies
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ parameters.sourcePath }}
+            workingDirectory: ${{ variables.sourcePath }}
             script: |
               set -eu -o pipefail
               pnpm install
@@ -283,7 +282,7 @@ stages:
           displayName: Initialize
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ parameters.sourcePath }}
+            workingDirectory: ${{ variables.sourcePath }}
             script: |
               set -eu -o pipefail
               if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
@@ -302,7 +301,7 @@ stages:
           retryCountOnTaskFailure: 10
           inputs:
             targetType: 'inline'
-            # workingDirectory: ${{ parameters.sourcePath }}
+            workingDirectory: ${{ variables.ffPipelineHostPath }}
             script: 'pnpm install $(Initialize.testPackageTgz)'
 
         # Download Test Files & Install Extra Dependencies
@@ -333,7 +332,7 @@ stages:
             displayName: Unpack test files
             inputs:
               targetType: 'inline'
-              workingDirectory: ${{ parameters.sourcePath }}/node_modules/${{ parameters.testPackage }}
+              workingDirectory: ${{ variables.sourcePath }}/node_modules/${{ parameters.testPackage }}
               script: |
                 set -eu -o pipefail
 
@@ -350,15 +349,15 @@ stages:
 
           - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
             parameters:
-              sourcePackageLocation: ${{ parameters.sourcePath }}/node_modules/${{ parameters.testPackage }}
-              destPackageLocation: ${{ parameters.sourcePath }}
+              sourcePackageLocation: ${{ variables.sourcePath }}/node_modules/${{ parameters.testPackage }}
+              destPackageLocation: ${{ variables.sourcePath }}
 
         - ${{ if eq(parameters.cacheCompatVersionsInstalls, true) }}:
           - task: Bash@3
             displayName: Compute compat versions install location and version
             inputs:
               targetType: 'inline'
-              workingDirectory: ${{ parameters.sourcePath }}/node_modules/@fluid-private/test-end-to-end-tests
+              workingDirectory: ${{ variables.sourcePath }}/node_modules/@fluid-private/test-end-to-end-tests
               # Using import.meta.resolve to compute this is more resilient to different install tree types.
               # Also note that test-version-utils is esm-only, so cannot be loaded with require.
               script: |
@@ -435,7 +434,7 @@ stages:
               login__odsp__test__tenants: $(tenantCreds)
           inputs:
             command: 'custom'
-            workingDir: ${{ parameters.sourcePath }}/node_modules/${{ parameters.testPackage }}
+            workingDir: ${{ variables.sourcePath }}/node_modules/${{ parameters.testPackage }}
             customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
         - ${{ if eq(parameters.skipTestResultPublishing, false) }}:
@@ -477,7 +476,7 @@ stages:
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - Tinylicious Log
             inputs:
-              targetPath: '${{ parameters.sourcePath }}/node_modules/${{ parameters.testPackage }}/tinylicious.log'
+              targetPath: '${{ variables.sourcePath }}/node_modules/${{ parameters.testPackage }}/tinylicious.log'
               artifactName: 'tinyliciousLog_attempt-$(System.JobAttempt)'
               publishLocation: 'pipeline'
             condition: always()
@@ -525,4 +524,4 @@ stages:
     stageId: ${{ parameters.stageId }}
     uploadTestPassRateTelemetry: ${{ parameters.uploadTestPassRateTelemetry }}
     pipelineIdentifierForTelemetry: ${{ parameters.pipelineIdentifierForTelemetry }}
-    testWorkspace: ${{ parameters.sourcePath }}
+    testWorkspace: ${{ variables.sourcePath }}
