@@ -27,7 +27,6 @@ export {
 
 export {
 	type FieldHasDefault,
-	type InsertableObjectFromAnnotatedSchemaRecord,
 	type InsertableObjectFromSchemaRecord,
 	isObjectNodeSchema,
 	type ObjectFromSchemaRecord,
