@@ -35,7 +35,7 @@ import {
 
 import { failSometimeProxy } from "./failProxy.js";
 
-const snapshot = {
+const snapshotTree: ISnapshotTree = {
 	id: "fromStorage",
 	blobs: {},
 	trees: {
@@ -50,6 +50,20 @@ const snapshot = {
 	},
 };
 
+const initialSnapshot: ISnapshot = {
+	blobContents: new Map([
+		[
+			"attributesId",
+			stringToBuffer('{"minimumSequenceNumber" : 0, "sequenceNumber": 0}', "utf8"),
+		],
+	]),
+	latestSequenceNumber: undefined,
+	ops: [],
+	sequenceNumber: 0,
+	snapshotTree,
+	snapshotFormatV: 1,
+};
+
 const savedOpsSize = 10;
 const savedOps: ISequencedDocumentMessage[] = [];
 
@@ -59,7 +73,7 @@ for (let i = 1; i <= savedOpsSize; i++) {
 
 const pendingLocalState: IPendingContainerState = {
 	attached: true,
-	baseSnapshot: snapshot,
+	baseSnapshot: snapshotTree,
 	snapshotBlobs: { attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}' },
 	pendingRuntimeState: {},
 	savedOps,
@@ -72,7 +86,7 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 	public readonly blobs = new Map<string, ArrayBufferLike>();
 	private readonly snapshot: ISnapshotTree;
 
-	constructor(baseSnapshot = snapshot) {
+	constructor(baseSnapshot = snapshotTree) {
 		this.snapshot = baseSnapshot;
 		this.blobs.set(
 			"attributesId",
@@ -221,12 +235,7 @@ describe("serializedStateManager", () => {
 				() => false,
 			);
 			// equivalent to attach
-			serializedStateManager.setInitialSnapshot({
-				baseSnapshot: snapshot,
-				snapshotBlobs: {
-					attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
-				},
-			});
+			serializedStateManager.setInitialSnapshot(initialSnapshot);
 			await serializedStateManager.getPendingLocalState(
 				"clientId",
 				new MockRuntime(),
@@ -237,7 +246,7 @@ describe("serializedStateManager", () => {
 		it("can get pending local state from previous pending state", async () => {
 			const pending: IPendingContainerState = {
 				...pendingLocalState,
-				baseSnapshot: { ...snapshot, id: "fromPending" },
+				baseSnapshot: { ...snapshotTree, id: "fromPending" },
 			};
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
@@ -294,7 +303,7 @@ describe("serializedStateManager", () => {
 		it("get pending state again before getting latest snapshot", async () => {
 			const pending: IPendingContainerState = {
 				...pendingLocalState,
-				baseSnapshot: { ...snapshot, id: "fromPending" },
+				baseSnapshot: { ...snapshotTree, id: "fromPending" },
 			};
 			const storageAdapter = new MockStorageAdapter();
 			const getLatestSnapshotInfoP = new Deferred<void>();
@@ -346,7 +355,7 @@ describe("serializedStateManager", () => {
 		it("pending state again before refreshing latest snapshot", async () => {
 			const pending: IPendingContainerState = {
 				...pendingLocalState,
-				baseSnapshot: { ...snapshot, id: "fromPending" },
+				baseSnapshot: { ...snapshotTree, id: "fromPending" },
 			};
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
@@ -396,7 +405,7 @@ describe("serializedStateManager", () => {
 		it("fail to get latest snapshot", async () => {
 			const pending: IPendingContainerState = {
 				...pendingLocalState,
-				baseSnapshot: { ...snapshot, id: "fromPending" },
+				baseSnapshot: { ...snapshotTree, id: "fromPending" },
 			};
 			const storageAdapter = new MockStorageAdapter({
 				id: "fromStorage",
@@ -448,7 +457,7 @@ describe("serializedStateManager", () => {
 			it(`fetched snapshot is the same as pending snapshot, isDirty: ${isDirty}`, async () => {
 				const pending: IPendingContainerState = {
 					...pendingLocalState,
-					baseSnapshot: { ...snapshot, id: "fromPending" },
+					baseSnapshot: { ...snapshotTree, id: "fromPending" },
 				};
 				const storageAdapter = new MockStorageAdapter();
 				let saved = false;
@@ -507,7 +516,7 @@ describe("serializedStateManager", () => {
 			it(`snapshot is older than first processed op, isDirty: ${isDirty}`, async () => {
 				const pending: IPendingContainerState = {
 					...pendingLocalState,
-					baseSnapshot: { ...snapshot, id: "fromPending" },
+					baseSnapshot: { ...snapshotTree, id: "fromPending" },
 					savedOps: [generateSavedOp(13)],
 				};
 				let saved = false;
@@ -560,7 +569,7 @@ describe("serializedStateManager", () => {
 			it(`refresh snapshot when snapshot sequence number is among processed ops, isDirty: ${isDirty}`, async () => {
 				const pending: IPendingContainerState = {
 					...pendingLocalState,
-					baseSnapshot: { ...snapshot, id: "fromPending" },
+					baseSnapshot: { ...snapshotTree, id: "fromPending" },
 				};
 				let saved = false;
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
@@ -624,7 +633,7 @@ describe("serializedStateManager", () => {
 			it(`refresh snapshot when there are no processed ops, isDirty: ${isDirty}`, async () => {
 				const pending: IPendingContainerState = {
 					...pendingLocalState,
-					baseSnapshot: { ...snapshot, id: "fromPending" },
+					baseSnapshot: { ...snapshotTree, id: "fromPending" },
 					savedOps: [],
 				};
 				const storageAdapter = new MockStorageAdapter();
@@ -655,7 +664,7 @@ describe("serializedStateManager", () => {
 			it(`refresh snapshot when snapshot sequence number is above processed ops, isDirty: ${isDirty}`, async () => {
 				const pending: IPendingContainerState = {
 					...pendingLocalState,
-					baseSnapshot: { ...snapshot, id: "fromPending" },
+					baseSnapshot: { ...snapshotTree, id: "fromPending" },
 				};
 				let saved = false;
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
@@ -725,7 +734,7 @@ describe("serializedStateManager", () => {
 				const lastProcessedOpSequenceNumber = 10;
 				const pending: IPendingContainerState = {
 					...pendingLocalState,
-					baseSnapshot: { ...snapshot, id: "fromPending" },
+					baseSnapshot: { ...snapshotTree, id: "fromPending" },
 					savedOps: [generateSavedOp(lastProcessedOpSequenceNumber)],
 				};
 				let saved = false;
@@ -778,7 +787,7 @@ describe("serializedStateManager", () => {
 			it(`session expiry time when snapshot is not refreshed, isDirty: ${isDirty}`, async () => {
 				const pending: IPendingContainerState = {
 					...pendingLocalState,
-					baseSnapshot: { ...snapshot, id: "fromPending" },
+					baseSnapshot: { ...snapshotTree, id: "fromPending" },
 				};
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
@@ -813,7 +822,7 @@ describe("serializedStateManager", () => {
 			it(`session expiry time when snapshot is refreshed but no saved event. isDirty: ${isDirty}`, async () => {
 				const pending: IPendingContainerState = {
 					...pendingLocalState,
-					baseSnapshot: { ...snapshot, id: "fromPending" },
+					baseSnapshot: { ...snapshotTree, id: "fromPending" },
 				};
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
@@ -862,7 +871,7 @@ describe("serializedStateManager", () => {
 			it(`session expiry time when snapshot is refreshed and there is a saved event. isDirty: ${isDirty}`, async () => {
 				const pending: IPendingContainerState = {
 					...pendingLocalState,
-					baseSnapshot: { ...snapshot, id: "fromPending" },
+					baseSnapshot: { ...snapshotTree, id: "fromPending" },
 				};
 				let saved = false;
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
@@ -979,12 +988,7 @@ describe("serializedStateManager", () => {
 					snapshotRefreshTimeoutMs,
 				);
 				// equivalent to attach
-				serializedStateManager.setInitialSnapshot({
-					baseSnapshot: snapshot,
-					snapshotBlobs: {
-						attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
-					},
-				});
+				serializedStateManager.setInitialSnapshot(initialSnapshot);
 
 				const lastProcessedOpSequenceNumber = 20;
 				let seq = 1;
@@ -1048,12 +1052,7 @@ describe("serializedStateManager", () => {
 					snapshotRefreshTimeoutMs,
 				);
 				// equivalent to attach
-				serializedStateManager.setInitialSnapshot({
-					baseSnapshot: snapshot,
-					snapshotBlobs: {
-						attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
-					},
-				});
+				serializedStateManager.setInitialSnapshot(initialSnapshot);
 
 				const lastProcessedOpSequenceNumber = 20;
 				let seq = 1;
@@ -1243,7 +1242,7 @@ describe("serializedStateManager", () => {
 			it(`load flow, snapshot is older than first processed op, isDirty: ${isDirty}`, async () => {
 				const pending: IPendingContainerState = {
 					...pendingLocalState,
-					baseSnapshot: { ...snapshot, id: "fromPending" },
+					baseSnapshot: { ...snapshotTree, id: "fromPending" },
 				};
 				let saved = false;
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
@@ -1310,7 +1309,7 @@ describe("serializedStateManager", () => {
 			it(`load flow, snapshot is newer than last processed op, isDirty: ${isDirty}`, async () => {
 				const pending: IPendingContainerState = {
 					...pendingLocalState,
-					baseSnapshot: { ...snapshot, id: "fromPending" },
+					baseSnapshot: { ...snapshotTree, id: "fromPending" },
 				};
 				let saved = false;
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
