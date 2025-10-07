@@ -11,7 +11,6 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import { LoaderHeader, ConnectionState } from "@fluidframework/container-definitions/internal";
 import type {
-	ConfigTypes,
 	FluidObject,
 	IConfigProviderBase,
 	IErrorBase,
@@ -359,10 +358,8 @@ export async function loadSummarizerContainerAndMakeSummary(
 		}
 		// Host controlled feature gate for fullTree
 		// Default value will be false
-		const raw: ConfigTypes | undefined = mc.config.getRawConfig?.(
-			"Fluid.Summarizer.FullTree.OnDemand",
-		);
-		const fullTreeGate = typeof raw === "boolean" ? raw : false;
+		const fullTreeGate =
+			mc.config.getBoolean("Fluid.Summarizer.FullTree.OnDemand") === true;
 
 		const summarizeResults: OnDemandSummarizeResultsPromises = summarizer.summarizeOnDemand({
 			reason: "summaryOnRequest",
