@@ -235,7 +235,7 @@ export interface TreeBeta {
  * @remarks
  * The cursor must be put back to its original location before the node is used again.
  */
-function borrowCursorFromTreeNodeOrValue(
+export function borrowCursorFromTreeNodeOrValue(
 	node: TreeNode | TreeLeafValue,
 ): ITreeCursorSynchronous {
 	if (isTreeValue(node)) {

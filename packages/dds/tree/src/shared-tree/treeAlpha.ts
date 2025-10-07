@@ -57,6 +57,7 @@ import {
 	type ConciseTree,
 	importConcise,
 	exportConcise,
+	borrowCursorFromTreeNodeOrValue,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
@@ -1009,22 +1010,6 @@ export const TreeAlpha: TreeAlpha = {
 		return result;
 	},
 };
-
-/**
- * Borrow a cursor from a node.
- * @remarks
- * The cursor must be put back to its original location before the node is used again.
- */
-function borrowCursorFromTreeNodeOrValue(
-	node: TreeNode | TreeLeafValue,
-): ITreeCursorSynchronous {
-	if (isTreeValue(node)) {
-		return cursorFromVerbose(node, {});
-	}
-	const kernel = getKernel(node);
-	const cursor = kernel.getOrCreateInnerNode().borrowCursor();
-	return cursor;
-}
 
 /**
  * Borrow a cursor from a field.

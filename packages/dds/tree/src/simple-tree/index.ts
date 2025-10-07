@@ -83,6 +83,7 @@ export {
 	treeNodeApi,
 	type TreeNodeApi,
 	type NodeChangedData,
+	borrowCursorFromTreeNodeOrValue,
 	exportConcise,
 	importConcise,
 	TreeBeta,

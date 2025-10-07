@@ -119,6 +119,7 @@ export {
 } from "./conciseTree.js";
 
 export {
+	borrowCursorFromTreeNodeOrValue,
 	exportConcise,
 	importConcise,
 	type NodeChangedData,
