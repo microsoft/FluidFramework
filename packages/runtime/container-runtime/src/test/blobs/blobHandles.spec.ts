@@ -78,7 +78,7 @@ describe("BlobHandles", () => {
 			sendBlobAttachOp(_localId, _storageId) {
 				d.resolve();
 			},
-			stashedBlobs: {},
+			pendingBlobs: {},
 			localIdGenerator: () => "localId",
 			isBlobDeleted: () => false,
 			storage: failProxy<IRuntimeStorageService>({
@@ -118,7 +118,7 @@ describe("BlobHandles", () => {
 			sendBlobAttachOp(_localId, _storageId) {
 				d.resolve();
 			},
-			stashedBlobs: {},
+			pendingBlobs: {},
 			localIdGenerator: () => "localId",
 			storage: failProxy<IRuntimeStorageService>({
 				createBlob: async () => {

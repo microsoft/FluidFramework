@@ -1943,7 +1943,7 @@ export class ContainerRuntime
 				}),
 			isBlobDeleted: (blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			runtime: this,
-			stashedBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
+			pendingBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
 			createBlobPayloadPending: this.sessionSchema.createBlobPayloadPending === true,
 		});
 

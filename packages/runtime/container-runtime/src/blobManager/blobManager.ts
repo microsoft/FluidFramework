@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString, createEmitter } from "@fluid-internal/client-utils";
+import { bufferToString, createEmitter, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	type IContainerStorageService,
@@ -223,6 +223,8 @@ export class BlobManager {
 	// Blobs with an attached handle that have not finished blob-attaching are the set we need to provide from
 	// getPendingState().  This will store their local IDs, and then we can look them up against the localBlobCache.
 	private readonly pendingBlobsWithAttachedHandles: Set<string> = new Set();
+	// The set of local IDs for any pending blobs we loaded with and have not yet started the upload/attach flow for.
+	private readonly pendingOnlyBlobs: Set<string> = new Set();
 
 	private readonly sendBlobAttachOp: (localId: string, storageId: string) => void;
 
@@ -262,7 +264,7 @@ export class BlobManager {
 		// blobPath's format - `/<basePath>/<localId>`.
 		readonly isBlobDeleted: (blobPath: string) => boolean;
 		readonly runtime: IBlobManagerRuntime;
-		stashedBlobs: IPendingBlobs | undefined;
+		pendingBlobs: IPendingBlobs | undefined;
 		readonly localIdGenerator?: (() => string) | undefined;
 		readonly createBlobPayloadPending: boolean;
 	}) {
@@ -274,6 +276,7 @@ export class BlobManager {
 			blobRequested,
 			isBlobDeleted,
 			runtime,
+			pendingBlobs,
 			localIdGenerator,
 			createBlobPayloadPending,
 		} = props;
@@ -291,6 +294,18 @@ export class BlobManager {
 		});
 
 		this.redirectTable = toRedirectTable(blobManagerLoadInfo, this.mc.logger);
+
+		if (pendingBlobs !== undefined) {
+			for (const [localId, serializableBlobRecord] of Object.entries(pendingBlobs)) {
+				assert(!this.redirectTable.has(localId), "Pending blob already in redirect table");
+				const localBlobRecord = {
+					...serializableBlobRecord,
+					blob: stringToBuffer(serializableBlobRecord.blob, "base64"),
+				};
+				this.localBlobCache.set(localId, localBlobRecord);
+				this.pendingOnlyBlobs.add(localId);
+			}
+		}
 
 		this.sendBlobAttachOp = sendBlobAttachOp;
 	}
@@ -551,6 +566,7 @@ export class BlobManager {
 					.createBlob(blob)
 					.then((createBlobResponse: ICreateBlobResponseWithTTL) => {
 						if (!uploadHasBecomeIrrelevant) {
+							removeListeners();
 							this.localBlobCache.set(localId, {
 								state: "uploaded",
 								blob,
@@ -563,13 +579,13 @@ export class BlobManager {
 					})
 					.catch((error) => {
 						if (!uploadHasBecomeIrrelevant) {
+							removeListeners();
 							// If the storage call errors, we can't recover. Reject to throw back to the caller.
 							this.localBlobCache.delete(localId);
 							this.pendingBlobsWithAttachedHandles.delete(localId);
 							reject(error);
 						}
-					})
-					.finally(removeListeners);
+					});
 			});
 		};
 
@@ -710,6 +726,7 @@ export class BlobManager {
 			// in particular for the non-payloadPending case since we should be reaching this point
 			// before even returning a handle to the caller.
 			this.pendingBlobsWithAttachedHandles.delete(localId);
+			this.pendingOnlyBlobs.delete(localId);
 		}
 		this.redirectTable.set(localId, storageId);
 		// set identity (id -> id) entry
@@ -855,6 +872,21 @@ export class BlobManager {
 			// set identity (id -> id) entry
 			this.redirectTable.set(newStorageId, newStorageId);
 		}
+	};
+
+	/**
+	 * Upload and attach any pending blobs that the BlobManager was loaded with that have not already
+	 * been attached in the meantime.
+	 * @returns A promise that resolves when all the uploads and attaches have completed, or rejects
+	 * if any of them fail.
+	 */
+	public readonly sharePendingBlobs = async (): Promise<void> => {
+		const blobsToUpload = [...this.pendingOnlyBlobs];
+		this.pendingOnlyBlobs.clear();
+		// TODO: Determine if Promise.all is ergonomic at the callsite. Would Promise.allSettled be better?
+		await Promise.all<void>(
+			blobsToUpload.map(async ([localId]) => this.uploadAndAttach(localId)),
+		);
 	};
 
 	/**
