@@ -24,6 +24,7 @@ import type {
 	SemanticAgentOptions,
 	Logger,
 } from "./api.js";
+import { findInvocableFunctionName, stripExportSyntax } from "./functionParsing.js";
 import { getPrompt, stringifyTree } from "./prompt.js";
 import { Subtree } from "./subtree.js";
 import {
@@ -289,7 +290,7 @@ function processLlmCode<TSchema extends ImplicitFieldSchema>(
 		throw new Error("Generated code does not contain an invokable function");
 	}
 
-	const executionCode = `${code}\n\nreturn ${functionName}(${paramsName});`;
+	const executionCode = `${stripExportSyntax(code)}\n\nreturn ${functionName}(${paramsName});`;
 	// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
 	const fn = new Function(paramsName, executionCode);
 	return fn as EditFunction<TSchema>;
@@ -298,24 +299,3 @@ function processLlmCode<TSchema extends ImplicitFieldSchema>(
 /**
  * Finds the name of the first invocable function in the given code.
  */
-function findInvocableFunctionName(code: string): string | undefined {
-	// TODO: use a library like Acorn to analyze the code more robustly
-	const patterns = [
-		/\b(?:export\s+default\s+)?(?:async\s+)?function\s+([$A-Z_a-z][\w$]*)\s*\(/,
-		/\b(?:const|let|var)\s+([$A-Z_a-z][\w$]*)\s*=\s*(?:async\s+)?function\b/,
-		/\b([$A-Z_a-z][\w$]*)\s*=\s*(?:async\s+)?function\b/,
-		/\b(?:const|let|var)\s+([$A-Z_a-z][\w$]*)\s*=\s*(?:async\s*)?\([^=]*?\)\s*=>/,
-		/\b([$A-Z_a-z][\w$]*)\s*=\s*(?:async\s*)?\([^=]*?\)\s*=>/,
-		/\b(?:const|let|var)\s+([$A-Z_a-z][\w$]*)\s*=\s*(?:async\s*)?[$A-Z_a-z][\w$]*\s*=>/,
-		/\b([$A-Z_a-z][\w$]*)\s*=\s*(?:async\s*)?[$A-Z_a-z][\w$]*\s*=>/,
-		/\bexport\s+default\s+([$A-Z_a-z][\w$]*)\b/,
-	];
-	for (const pattern of patterns) {
-		const match = code.match(pattern);
-		if (match?.[1] !== undefined) {
-			return match[1];
-		}
-	}
-
-	return undefined;
-}

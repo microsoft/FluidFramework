@@ -484,6 +484,71 @@ const mutate = (params) => {
 			assert.equal(result.type, "success");
 			assert.equal(root, "Arrow");
 		});
+		it("supports arrow functions without parentheses or block bodies", async () => {
+			const code = `
+const mutate = params => (params.root = "Implicit Arrow");
+`;
+			const { result, root } = await runEditWithCode(code);
+			assert.equal(result.type, "success");
+			assert.equal(root, "Implicit Arrow");
+		});
+
+		it("supports export function declarations", async () => {
+			const code = `
+export function renameRoot(params) {
+	params.root = "Exported Declaration";
+}
+`;
+			const { result, root } = await runEditWithCode(code);
+			assert.equal(result.type, "success");
+			assert.equal(root, "Exported Declaration");
+		});
+
+		it("supports export default function declarations", async () => {
+			const code = `
+export default function renameRoot(params) {
+	params.root = "Exported Default";
+}
+`;
+			const { result, root } = await runEditWithCode(code);
+			assert.equal(result.type, "success");
+			assert.equal(root, "Exported Default");
+		});
+
+		it("supports export const function expressions", async () => {
+			const code = `
+export const mutate = (params) => {
+	params.root = "Exported Const";
+};
+`;
+			const { result, root } = await runEditWithCode(code);
+			assert.equal(result.type, "success");
+			assert.equal(root, "Exported Const");
+		});
+
+		it("supports export default identifier statements", async () => {
+			const code = `
+const mutate = (params) => {
+	params.root = "Exported Identifier";
+};
+export default mutate;
+`;
+			const { result, root } = await runEditWithCode(code);
+			assert.equal(result.type, "success");
+			assert.equal(root, "Exported Identifier");
+		});
+
+		it("supports export named specifiers", async () => {
+			const code = `
+const mutate = (params) => {
+	params.root = "Exported Specifier";
+};
+export { mutate };
+`;
+			const { result, root } = await runEditWithCode(code);
+			assert.equal(result.type, "success");
+			assert.equal(root, "Exported Specifier");
+		});
 
 		it("supports reassigning declared variables", async () => {
 			const code = `
