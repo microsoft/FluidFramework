@@ -308,7 +308,7 @@ stages:
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ variables.ffPipelineHostPath }}
-            script: 'pnpm install -w $(Initialize.testPackageTgz)'
+            script: 'pnpm install $(Initialize.testPackageTgz)'
 
         # Download Test Files & Install Extra Dependencies
         # These steps are intended to include extra dependencies that are not available as
