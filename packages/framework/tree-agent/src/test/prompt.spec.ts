@@ -226,8 +226,8 @@ describe("Prompt snapshot", () => {
 
 		const fullPrompt = getPrompt({
 			subtree: new Subtree(view as TreeView<ImplicitFieldSchema>),
-			editingFunctionName: "editTree",
-			editingToolName: "EditTool",
+			editFunctionName: "editTree",
+			editToolName: "EditTool",
 			domainHints: "These are some domain-specific hints.",
 		});
 
@@ -240,7 +240,6 @@ describe("Prompt snapshot", () => {
 		// If the UPDATE_SNAPSHOTS environment variable is set, write/overwrite the snapshot.
 		if (updateSnapshots) {
 			fs.writeFileSync(snapFile, fullPrompt, "utf8");
-			// Make the test pass when updating snapshots.
 			return;
 		}
 

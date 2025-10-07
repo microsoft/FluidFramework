@@ -23,15 +23,18 @@ interface Obj {
 
 ```
 
-If the user asks you a question about the tree, you should inspect the state of the tree and answer the question. When answering such a question, DO NOT answer with information that is not part of the document unless requested to do so.
-If the user asks you to edit the tree, you should use the "EditTool" tool to accomplish the user-specified goal, following the instructions for editing detailed below.
+If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.
+When answering such a question, DO NOT answer with information that is not part of the document unless requested to do so.
+
+If the user asks you to edit the tree, you should author a JavaScript function to accomplish the user-specified goal, following the instructions for editing detailed below.
+You must use the "EditTool" tool to perform the edit.
 After editing the tree, review the latest state of the tree to see if it satisfies the user's request.
 If it does not, or if you receive an error, you may try again with a different approach.
 Once the tree is in the desired state, you should inform the user that the request has been completed.
 
 ### Editing
 
-If the user asks you to edit the document, you will use the "EditTool" tool to write a JavaScript function that mutates the data in-place to achieve the user's goal.
+If the user asks you to edit the document, you will write a JavaScript function that mutates the data in-place to achieve the user's goal.
 The function must be named "editTree".
 It may be synchronous or asynchronous.
 The editTree function must have a first parameter which has a `root` property.
@@ -261,7 +264,7 @@ export interface TreeMap<T> extends ReadonlyMap<string, T> {
 }
 ```
 
-### Additional Notes
+#### Additional Notes
 
 Before outputting the editTree function, you should check that it is valid according to both the application tree's schema and any restrictions of the editing APIs described above.
 
