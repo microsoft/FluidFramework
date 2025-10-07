@@ -260,8 +260,8 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
 	 * Stores the information to which CheckedOutRepositoryInfo object this root property belongs.
 	 * Note: these functions should only be used internally (within the PropertySets library)
 	 *
-	 * @param {property-properties.CheckoutView~CheckedOutRepositoryInfo} in_checkedOutRepositoryInfo - The checked out
-	 * repository info this root property belongs to.
+	 * @param {property-properties.CheckoutView~CheckedOutRepositoryInfo} in_checkedOutRepositoryInfo -
+	 * The checked out repository info this root property belongs to.
 	 * @protected
 	 */
 	_setCheckedOutRepositoryInfo(in_checkedOutRepositoryInfo) {
