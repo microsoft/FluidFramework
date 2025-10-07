@@ -441,7 +441,7 @@ export class BlobManager {
 	): Promise<IFluidHandleInternalPayloadPending<ArrayBufferLike>> {
 		const localId = this.localIdGenerator();
 		this.localBlobCache.set(localId, { state: "localOnly", blob });
-		await this.uploadAndAttachBlob(localId, blob, signal);
+		await this.uploadAndAttach(localId, signal);
 		return this.getNonPayloadPendingBlobHandle(localId);
 	}
 
@@ -460,7 +460,7 @@ export class BlobManager {
 			() => {
 				// TODO: Need to clean these up in some cases probably
 				this.pendingBlobsWithAttachedHandles.add(localId);
-				const uploadP = this.uploadAndAttachBlob(localId, blob, signal);
+				const uploadP = this.uploadAndAttach(localId, signal);
 				uploadP.then(blobHandle.notifyShared).catch((error) => {
 					// TODO: notifyShared won't fail directly, but it emits an event to the customer.
 					// Consider what to do if the customer's code throws. reportError is nice.
@@ -479,69 +479,65 @@ export class BlobManager {
 	 *
 	 * Precondition is that the localBlobCache has an entry for the localId in either localOnly or uploaded state.
 	 */
-	private async uploadAndAttachBlob(
-		localId: string,
-		blob: ArrayBufferLike,
-		signal?: AbortSignal,
-	): Promise<void> {
-		let uploadCompleted = false;
-		while (!uploadCompleted) {
-			if (signal?.aborted === true) {
-				// TODO: Consolidate where we delete the pending entry?
-				this.localBlobCache.delete(localId);
-				throw createAbortError();
+	private async uploadAndAttach(localId: string, signal?: AbortSignal): Promise<void> {
+		const localBlobRecordInitial = this.localBlobCache.get(localId);
+		assert(
+			localBlobRecordInitial?.state === "localOnly" ||
+				localBlobRecordInitial?.state === "uploaded",
+			"Expect uploadAndAttach to be called with either localOnly or uploaded state",
+		);
+		const { blob } = localBlobRecordInitial;
+
+		const ensureUploaded = async (): Promise<void> => {
+			const localBlobRecord = this.localBlobCache.get(localId);
+			if (localBlobRecord?.state === "uploaded") {
+				// In normal creation flows, the blob will be in localOnly state. But in the case of loading
+				// with pending state we will sometimes call it with an uploaded-but-not-attached blob
+				// Go through the upload flow only if it's localOnly.
+				return;
 			}
-			let localBlobRecord = this.localBlobCache.get(localId);
 			assert(
-				localBlobRecord?.state === "localOnly" || localBlobRecord?.state === "uploaded",
-				"Expect to enter uploadAndAttach loop with either localOnly or uploaded state",
+				localBlobRecord?.state === "localOnly",
+				"Attempting to upload from unexpected state",
 			);
 
-			// uploadAndAttachBlob will be called with a localOnly blob in normal creation flows, but in the
-			// case of loading with pending state we will sometimes call it with an uploaded-but-not-attached blob
-			// Go through the upload flow only if it's localOnly.
-			if (localBlobRecord.state === "localOnly") {
-				this.localBlobCache.set(localId, { state: "uploading", blob });
-				// If we eventually have driver-level support for abort, then this can probably
-				// simplify into awaiting the driver call directly.
-				const createBlobResponse: ICreateBlobResponseWithTTL =
-					await new Promise<ICreateBlobResponseWithTTL>((resolve, reject) => {
-						const onSignalAbort = (): void => {
+			this.localBlobCache.set(localId, { state: "uploading", blob });
+			// If we eventually have driver-level support for abort, then this can probably
+			// simplify into awaiting the driver call directly.
+			const createBlobResponse: ICreateBlobResponseWithTTL =
+				await new Promise<ICreateBlobResponseWithTTL>((resolve, reject) => {
+					const onSignalAbort = (): void => {
+						this.localBlobCache.delete(localId);
+						reject(createAbortError());
+						signal?.removeEventListener("abort", onSignalAbort);
+					};
+					signal?.addEventListener("abort", onSignalAbort);
+					this.storage
+						.createBlob(blob)
+						.then(resolve)
+						.catch((error) => {
+							// If the storage call errors, we can't recover. Reject to throw back to the caller.
 							this.localBlobCache.delete(localId);
-							reject(createAbortError());
+							reject(error);
+						})
+						.finally(() => {
 							signal?.removeEventListener("abort", onSignalAbort);
-						};
-						signal?.addEventListener("abort", onSignalAbort);
-						this.storage
-							.createBlob(blob)
-							.then(resolve)
-							.catch((error) => {
-								this.localBlobCache.delete(localId);
-								reject(error);
-							})
-							.finally(() => {
-								signal?.removeEventListener("abort", onSignalAbort);
-							});
-					});
-				this.localBlobCache.set(localId, {
-					state: "uploaded",
-					blob,
-					storageId: createBlobResponse.id,
-					uploadTime: Date.now(),
-					minTTLInSeconds: createBlobResponse.minTTLInSeconds,
+						});
 				});
-			}
+			this.localBlobCache.set(localId, {
+				state: "uploaded",
+				blob,
+				storageId: createBlobResponse.id,
+				uploadTime: Date.now(),
+				minTTLInSeconds: createBlobResponse.minTTLInSeconds,
+			});
+		};
 
-			// Have to cast here because TS isn't smart enough to understand the abort might have happened during
-			// the async activity above.
-			if ((signal?.aborted as boolean | undefined) === true) {
-				this.localBlobCache.delete(localId);
-				throw createAbortError();
-			}
-			localBlobRecord = this.localBlobCache.get(localId);
+		const tryAttach = async (): Promise<boolean> => {
+			const localBlobRecord = this.localBlobCache.get(localId);
 			assert(
 				localBlobRecord?.state === "uploaded",
-				"Expect blob to be uploaded after upload flow completed or skipped",
+				"Attempting to attach from unexpected state",
 			);
 
 			// If we just uploaded the blob TTL really shouldn't be expired at this location. But if we loaded from
@@ -549,10 +545,11 @@ export class BlobManager {
 			if (isTTLExpired(localBlobRecord)) {
 				// If the TTL is expired, we assume it's gone from the storage and so is effectively localOnly again.
 				// Then when we re-enter the loop, we'll re-upload it.
-				this.localBlobCache.set(localId, { state: "localOnly", blob: localBlobRecord.blob });
+				this.localBlobCache.set(localId, { state: "localOnly", blob });
 				// Emitting here isn't really necessary since the only listener would be attached below. Including here
 				// for completeness though, in case we add other listeners in the future.
 				this.internalEvents.emit("blobExpired", localId);
+				return false;
 			} else {
 				this.localBlobCache.set(localId, {
 					...localBlobRecord,
@@ -564,7 +561,7 @@ export class BlobManager {
 				//    until its storage ID is added to the next summary.
 				// 2. It will create a local ID to storage ID mapping in all clients which is needed to retrieve the
 				//    blob from the server via the storage ID.
-				uploadCompleted = await new Promise<boolean>((resolve) => {
+				return new Promise<boolean>((resolve) => {
 					const onProcessedBlobAttach = (_localId: string, _storageId: string): void => {
 						if (_localId === localId) {
 							this.internalEvents.off("processedBlobAttach", onProcessedBlobAttach);
@@ -593,18 +590,23 @@ export class BlobManager {
 					signal?.addEventListener("abort", onCreateBlobAbort);
 					this.sendBlobAttachOp(localId, localBlobRecord.storageId);
 				});
-
-				// Have to cast here because TS isn't smart enough to understand the abort might have happened during
-				// the async activity above.
-				if ((signal?.aborted as boolean | undefined) === true) {
-					this.localBlobCache.delete(localId);
-					throw createAbortError();
-				}
-
-				// If something stopped the attach from completing successfully (currently just TTL expiry),
-				// we expect that the blob was already updated to reflect the updated state (e.g. back to localOnly)
-				// and we'll try the loop again from the top.
 			}
+		};
+
+		let uploadCompleted = false;
+		while (!uploadCompleted) {
+			if (signal?.aborted === true) {
+				// TODO: Consolidate where we delete the pending entry?
+				this.localBlobCache.delete(localId);
+				throw createAbortError();
+			}
+
+			await ensureUploaded();
+			uploadCompleted = await tryAttach();
+
+			// If something stopped the attach from completing successfully (currently just TTL expiry),
+			// we expect that the blob was already updated to reflect the updated state (e.g. back to localOnly)
+			// and we'll try the loop again from the top.
 		}
 
 		const attachedBlobRecord: AttachedBlob = {
