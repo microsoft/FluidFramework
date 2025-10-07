@@ -329,7 +329,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * Beware that this may impact other clients' ability to view the document: see {@link SchemaCompatibilityStatus.canView} for more information.
 	 *
 	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
-	 * {@link SchemaCompatibilityStatus.canUpgrade} being true does not mean that an upgrade is required, or that an upgrade will have any effect.
+	 * {@link SchemaCompatibilityStatus.canUpgrade} being true does not mean that an upgrade is required, nor that an upgrade will have any effect.
 	 * @privateRemarks
 	 * In the future, more upgrade options could be provided here.
 	 * Some options that could be added:
