@@ -474,12 +474,17 @@ export class BlobManager {
 	}
 
 	/**
-	 * Ensure the given blob is uploaded and attached.
-	 * TODO: Better documentation
+	 * Upload and attach the localBlobCache entry for the given localId.
 	 *
-	 * Precondition is that the localBlobCache has an entry for the localId in either localOnly or uploaded state.
+	 * Expects the localBlobCache entry for the given localId to be in either localOnly or uploaded state
+	 * when called. Returns a promise that resolves when the blob completes uploading and attaching, or else
+	 * rejects if an error is encountered or the signal is aborted.
 	 */
 	private async uploadAndAttach(localId: string, signal?: AbortSignal): Promise<void> {
+		if (signal?.aborted === true) {
+			this.localBlobCache.delete(localId);
+			throw createAbortError();
+		}
 		const localBlobRecordInitial = this.localBlobCache.get(localId);
 		assert(
 			localBlobRecordInitial?.state === "localOnly" ||
@@ -488,6 +493,11 @@ export class BlobManager {
 		);
 		const { blob } = localBlobRecordInitial;
 
+		/**
+		 * Expects the localBlobCache entry for the given localId to be in either localOnly or uploaded state
+		 * when called. Returns a promise that resolves when the blob is in uploaded state, or else rejects on
+		 * error during upload or if the signal is aborted.
+		 */
 		const ensureUploaded = async (): Promise<void> => {
 			const localBlobRecord = this.localBlobCache.get(localId);
 			if (localBlobRecord?.state === "uploaded") {
@@ -533,6 +543,12 @@ export class BlobManager {
 			});
 		};
 
+		/**
+		 * Expects the localBlobCache entry for the given localId to be in uploaded state when called. Returns a
+		 * promise that resolves to true if the blob is successfully attached, or false if it cannot be attached
+		 * (currently only if the TTL expires before attach can be completed). The promise rejects if the signal
+		 * is aborted.
+		 */
 		const tryAttach = async (): Promise<boolean> => {
 			const localBlobRecord = this.localBlobCache.get(localId);
 			assert(
@@ -561,7 +577,7 @@ export class BlobManager {
 				//    until its storage ID is added to the next summary.
 				// 2. It will create a local ID to storage ID mapping in all clients which is needed to retrieve the
 				//    blob from the server via the storage ID.
-				return new Promise<boolean>((resolve) => {
+				return new Promise<boolean>((resolve, reject) => {
 					const onProcessedBlobAttach = (_localId: string, _storageId: string): void => {
 						if (_localId === localId) {
 							this.internalEvents.off("processedBlobAttach", onProcessedBlobAttach);
@@ -582,7 +598,8 @@ export class BlobManager {
 						this.internalEvents.off("processedBlobAttach", onProcessedBlobAttach);
 						this.internalEvents.off("blobExpired", onBlobExpired);
 						signal?.removeEventListener("abort", onCreateBlobAbort);
-						resolve(false);
+						this.localBlobCache.delete(localId);
+						reject(createAbortError());
 					};
 
 					this.internalEvents.on("processedBlobAttach", onProcessedBlobAttach);
@@ -595,12 +612,6 @@ export class BlobManager {
 
 		let uploadCompleted = false;
 		while (!uploadCompleted) {
-			if (signal?.aborted === true) {
-				// TODO: Consolidate where we delete the pending entry?
-				this.localBlobCache.delete(localId);
-				throw createAbortError();
-			}
-
 			await ensureUploaded();
 			uploadCompleted = await tryAttach();
 
