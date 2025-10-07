@@ -1020,7 +1020,6 @@ export class Container
 		);
 
 		this.serializedStateManager = new SerializedStateManager(
-			pendingLocalState,
 			this.subLogger,
 			this.storageAdapter,
 			this.isInteractiveClient,
@@ -1666,7 +1665,7 @@ export class Container
 			snapshot: baseSnapshot,
 			version,
 			attributes,
-		} = await this.serializedStateManager.fetchSnapshot(specifiedVersion);
+		} = await this.serializedStateManager.fetchSnapshot(specifiedVersion, pendingLocalState);
 		const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 		this._loadedFromVersion = version;
 
