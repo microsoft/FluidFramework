@@ -39,52 +39,50 @@ import { loaderCompatDetailsForRuntime } from "./loaderLayerCompatState.js";
 
 /**
  * Configuration object for ContainerContext constructor.
+ *
+ * @remarks
+ * A large subset of properties are from {@link IContainerContext}. Select
+ * properties are explicitly omitted so that, as {@link ContainerContext} is
+ * extended, newly added properties are not overlooked (but may also be
+ * explicitly omitted here by adding to the list).
  */
-export interface IContainerContextConfig {
+export interface IContainerContextConfig
+	extends Readonly<
+		Required<
+			Omit<
+				IContainerContext,
+				| "clientId"
+				| "connected"
+				| "attachState"
+				| "getLoadedFromVersion"
+				| "supportedFeatures"
+				| "id"
+				| "snapshotWithContents"
+			>
+		>
+	> {
+	// This overrides IContainerContext.options with specific type.
 	readonly options: ILoaderOptions;
-	readonly scope: FluidObject;
-	readonly baseSnapshot: ISnapshotTree | undefined;
 	readonly version: IVersion | undefined;
-	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-	readonly storage: IContainerStorageService;
-	readonly quorum: IQuorumClients;
-	readonly audience: IAudience;
-	readonly loader: ILoader;
-	readonly submitFn: (
-		type: MessageType,
-		contents: unknown,
-		batch: boolean,
-		appData: unknown,
-	) => number;
-	readonly submitSummaryFn: (
-		summaryOp: ISummaryContent,
-		referenceSequenceNumber?: number,
-	) => number;
-	readonly submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
-	readonly submitSignalFn: (
-		content: unknown | ISignalEnvelope,
-		targetClientId?: string,
-	) => void;
-	readonly disposeFn: (error?: ICriticalContainerError) => void;
-	readonly closeFn: (error?: ICriticalContainerError) => void;
-	readonly updateDirtyContainerState: (dirty: boolean) => void;
-	readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
 	readonly getContainerDiagnosticId: () => string | undefined;
 	readonly getClientId: () => string | undefined;
 	readonly getAttachState: () => AttachState;
 	readonly getConnected: () => boolean;
-	readonly getConnectionState: () => ConnectionState;
-	readonly clientDetails: IClientDetails;
 	readonly existing: boolean;
 	readonly taggedLogger: ITelemetryLoggerExt;
-	readonly pendingLocalState?: unknown;
-	readonly snapshotWithContents?: ISnapshot;
+	// This "overrides" IContainerContext.snapshotWithContents to be required but allow `undefined`.
+	readonly snapshotWithContents: IContainerContext["snapshotWithContents"] | undefined;
 }
 
 /**
  * {@inheritDoc @fluidframework/container-definitions#IContainerContext}
  */
-export class ContainerContext implements IContainerContext, IProvideLayerCompatDetails {
+export class ContainerContext
+	implements
+		Required<Omit<IContainerContext, "snapshotWithContents">>,
+		Pick<IContainerContext, "snapshotWithContents">,
+		IProvideLayerCompatDetails
+{
 	/**
 	 * @deprecated - This has been replaced by ILayerCompatDetails.
 	 */
@@ -139,7 +137,7 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 	public readonly existing: boolean;
 	public readonly taggedLogger: ITelemetryLoggerExt;
 	public readonly pendingLocalState: unknown;
-	public readonly snapshotWithContents: ISnapshot | undefined;
+	public readonly snapshotWithContents?: ISnapshot;
 
 	public readonly getConnectionState: () => ConnectionState;
 
@@ -197,7 +195,9 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		this.existing = config.existing;
 		this.taggedLogger = config.taggedLogger;
 		this.pendingLocalState = config.pendingLocalState;
-		this.snapshotWithContents = config.snapshotWithContents;
+		if (config.snapshotWithContents !== undefined) {
+			this.snapshotWithContents = config.snapshotWithContents;
+		}
 
 		this.getConnectionState = config.getConnectionState;
 		this._getClientId = config.getClientId;
