@@ -145,7 +145,7 @@ stages:
     parameters:
       stageId: e2e_docker
       stageDisplayName: e2e - docker
-      poolBuild: Large
+      poolBuild: Large-eastus2 # Need Large pool for full-compat matrix
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
@@ -176,7 +176,7 @@ stages:
           displayName: 'Start routerlicious environment in docker'
           inputs:
             containerregistrytype: 'Container Registry'
-            dockerComposeFile: 'server/docker-compose.yml'
+            dockerComposeFile: 'FluidFramework/server/docker-compose.yml'
             action: 'Run a Docker Compose command'
             dockerComposeCommand: 'up -d'
             projectName: 'routerlicious'
@@ -192,7 +192,7 @@ stages:
           condition: always()
           inputs:
             containerregistrytype: 'Container Registry'
-            dockerComposeFile: 'server/docker-compose.yml'
+            dockerComposeFile: 'FluidFramework/server/docker-compose.yml'
             action: 'Run a Docker Compose command'
             dockerComposeCommand: 'down'
             projectName: 'routerlicious'
