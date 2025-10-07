@@ -63,7 +63,7 @@ const initialSnapshot: ISnapshot = {
 	]),
 	latestSequenceNumber: undefined,
 	ops: [],
-	sequenceNumber: undefined,
+	sequenceNumber: 0,
 	snapshotTree,
 	snapshotFormatV: 1,
 };

@@ -161,7 +161,7 @@ import {
 	getProtocolSnapshotTree,
 	getISnapshotFromSerializedContainer,
 	runSingle,
-	covertISnapshotToSnapshotWithBlobs,
+	convertISnapshotToSnapshotWithBlobs,
 } from "./utils.js";
 
 const detachedContainerRefSeqNumber = 0;
@@ -1259,7 +1259,8 @@ export class Container
 
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			...covertISnapshotToSnapshotWithBlobs(snapshot),
+			...convertISnapshotToSnapshotWithBlobs(snapshot),
+			pendingRuntimeState,
 			hasAttachmentBlobs:
 				this.detachedBlobStorage !== undefined && this.detachedBlobStorage.size > 0,
 			attachmentBlobs: this.detachedBlobStorage?.serialize(),

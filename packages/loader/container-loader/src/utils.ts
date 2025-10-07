@@ -180,7 +180,7 @@ function convertSummaryToISnapshot(
 	}
 	return {
 		blobContents,
-		latestSequenceNumber: 0,
+		latestSequenceNumber: undefined,
 		ops: [],
 		sequenceNumber: 0,
 		snapshotFormatV: 1,
@@ -337,7 +337,7 @@ function isPendingDetachedContainerState(
  * @param snapshot - The ISnapshot to convert.
  * @returns A SnapshotWithBlobs containing the base snapshot and serialized blob contents.
  */
-export function covertISnapshotToSnapshotWithBlobs(snapshot: ISnapshot): SnapshotWithBlobs {
+export function convertISnapshotToSnapshotWithBlobs(snapshot: ISnapshot): SnapshotWithBlobs {
 	const snapshotBlobs: ISerializableBlobContents = {};
 	for (const [id, blob] of snapshot.blobContents.entries()) {
 		snapshotBlobs[id] = bufferToString(blob, "utf8");
@@ -367,7 +367,7 @@ export function getDetachedContainerStateFromSerializedContainer(
 		const snapshot = getISnapshotFromSerializedContainer(parsedContainerState);
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			...covertISnapshotToSnapshotWithBlobs(snapshot),
+			...convertISnapshotToSnapshotWithBlobs(snapshot),
 			hasAttachmentBlobs: parsedContainerState.tree[hasBlobsSummaryTree] !== undefined,
 		};
 		return detachedContainerState;

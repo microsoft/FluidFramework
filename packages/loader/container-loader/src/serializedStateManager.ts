@@ -35,7 +35,7 @@ import {
 } from "./containerStorageAdapter.js";
 import {
 	convertSnapshotToSnapshotInfo,
-	covertISnapshotToSnapshotWithBlobs,
+	convertISnapshotToSnapshotWithBlobs,
 	getDocumentAttributes,
 } from "./utils.js";
 
@@ -426,7 +426,7 @@ export class SerializedStateManager {
 				0x939 /* trying to set a non attachment snapshot */,
 			);
 			this.snapshot = {
-				...covertISnapshotToSnapshotWithBlobs(snapshot),
+				...convertISnapshotToSnapshotWithBlobs(snapshot),
 				snapshotSequenceNumber: snapshot.sequenceNumber,
 				snapshotFetchedTime: Date.now(),
 			};
