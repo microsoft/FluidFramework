@@ -180,12 +180,11 @@ export class SerializedStateManager {
 				error,
 			),
 	);
-	private readonly lastSavedOpSequenceNumber: number = 0;
+	private lastSavedOpSequenceNumber: number = 0;
 	private readonly refreshTimer: Timer;
 	private readonly snapshotRefreshTimeoutMs: number = 60 * 60 * 24 * 1000;
 
 	/**
-	 * @param pendingLocalState - The pendingLocalState being rehydrated, if any (undefined when loading directly from storage)
 	 * @param subLogger - Container's logger to use as parent for our logger
 	 * @param storageAdapter - Storage adapter for fetching snapshots
 	 * @param _offlineLoadEnabled - Is serializing/rehydrating containers allowed?
@@ -193,7 +192,6 @@ export class SerializedStateManager {
 	 * @param containerDirty - Is the container "dirty"? That's the opposite of "saved" - there is pending state that may not have been received yet by the service.
 	 */
 	constructor(
-		private readonly pendingLocalState: IPendingContainerState | undefined,
 		subLogger: ITelemetryBaseLogger,
 		private readonly storageAdapter: ISerializedStateManagerDocumentStorageService,
 		private readonly _offlineLoadEnabled: boolean,
@@ -211,14 +209,6 @@ export class SerializedStateManager {
 		this.refreshTimer = new Timer(this.snapshotRefreshTimeoutMs, () =>
 			this.tryRefreshSnapshot(),
 		);
-		// special case handle. Obtaining the last saved op seq num to avoid
-		// refreshing the snapshot before we have processed it. It could cause
-		// a subsequent stashing to have a newer snapshot than allowed.
-		if (pendingLocalState && pendingLocalState.savedOps.length > 0) {
-			const savedOpsSize = pendingLocalState.savedOps.length;
-			this.lastSavedOpSequenceNumber =
-				pendingLocalState.savedOps[savedOpsSize - 1].sequenceNumber;
-		}
 		containerEvent.on("saved", () => this.updateSnapshotAndProcessedOpsMaybe());
 	}
 
@@ -252,15 +242,18 @@ export class SerializedStateManager {
 	 * Otherwise, fetch it from storage (according to specifiedVersion if provided).
 	 *
 	 * @param specifiedVersion - If a version is specified and we don't have pendingLocalState, fetch this version from storage.
-	 * @param supportGetSnapshotApi - a boolean indicating whether to use the fetchISnapshot or fetchISnapshotTree.
+	 * @param pendingLocalState - The pendingLocalState being rehydrated, if any (undefined when loading directly from storage)
 	 * @returns The snapshot to boot the container from
 	 */
-	public async fetchSnapshot(specifiedVersion: string | undefined): Promise<{
+	public async fetchSnapshot(
+		specifiedVersion: string | undefined,
+		pendingLocalState: IPendingContainerState | undefined,
+	): Promise<{
 		baseSnapshot: ISnapshot | ISnapshotTree;
 		version: IVersion | undefined;
 		attributes: IDocumentAttributes;
 	}> {
-		if (this.pendingLocalState === undefined) {
+		if (pendingLocalState === undefined) {
 			const { baseSnapshot, version } = await getSnapshot(
 				this.mc,
 				this.storageAdapter,
@@ -287,7 +280,16 @@ export class SerializedStateManager {
 			}
 			return { baseSnapshot, version, attributes };
 		} else {
-			const { baseSnapshot, snapshotBlobs } = this.pendingLocalState;
+			const { baseSnapshot, snapshotBlobs, savedOps } = pendingLocalState;
+
+			// special case handle. Obtaining the last saved op seq num to avoid
+			// refreshing the snapshot before we have processed it. It could cause
+			// a subsequent stashing to have a newer snapshot than allowed.
+			if (savedOps.length > 0) {
+				const savedOpsSize = savedOps.length;
+				this.lastSavedOpSequenceNumber = savedOps[savedOpsSize - 1].sequenceNumber;
+			}
+
 			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshot);
 			this.snapshot = {
 				baseSnapshot,
