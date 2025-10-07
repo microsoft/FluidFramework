@@ -162,7 +162,7 @@ function convertSummaryToISnapshot(
 					blobId,
 					summaryObject.content instanceof Uint8Array
 						? Uint8ArrayToArrayBuffer(summaryObject.content)
-						: (stringToBuffer(summaryObject.content, "utf8") as ArrayBuffer),
+						: stringToBuffer(summaryObject.content, "utf8"),
 				);
 
 				break;
@@ -224,7 +224,7 @@ export function convertSnapshotInfoToSnapshot(
 ): ISnapshot {
 	const blobContents = new Map<string, ArrayBuffer>();
 	for (const [blobId, serializedContent] of Object.entries(snapshotInfo.snapshotBlobs)) {
-		blobContents.set(blobId, stringToBuffer(serializedContent, "utf8") as ArrayBuffer);
+		blobContents.set(blobId, stringToBuffer(serializedContent, "utf8"));
 	}
 	return {
 		snapshotTree: snapshotInfo.baseSnapshot,

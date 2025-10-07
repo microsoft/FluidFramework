@@ -54,11 +54,7 @@ const initialSnapshot: ISnapshot = {
 	blobContents: new Map([
 		[
 			"attributesId",
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-			stringToBuffer(
-				'{"minimumSequenceNumber" : 0, "sequenceNumber": 0}',
-				"utf8",
-			) as ArrayBuffer,
+			stringToBuffer('{"minimumSequenceNumber" : 0, "sequenceNumber": 0}', "utf8"),
 		],
 	]),
 	latestSequenceNumber: undefined,
