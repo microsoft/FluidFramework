@@ -43,7 +43,6 @@ import { fieldJsonCursor } from "../json/index.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
-import { ajvValidator } from "../codec/index.js";
 
 const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
@@ -2788,7 +2787,13 @@ describe("Editing", () => {
 			for (const src of containers) {
 				for (const dst of containers) {
 					it(`detach from ${src} and attach to ${dst}`, () => {
-						const provider = new TestTreeProviderLite(2);
+						const provider = new TestTreeProviderLite(
+							2,
+							configuredSharedTree({
+								jsonValidator: FormatValidatorBasic,
+								formatVersion: SharedTreeFormatVersion.vDetachedRoots,
+							}).getFactory(),
+						);
 						const viewA = provider.trees[0].viewWith(
 							new TreeViewConfiguration({ schema: Root }),
 						);
@@ -2925,7 +2930,7 @@ describe("Editing", () => {
 				const provider = new TestTreeProviderLite(
 					2,
 					configuredSharedTree({
-						jsonValidator: ajvValidator,
+						jsonValidator: FormatValidatorBasic,
 						formatVersion: SharedTreeFormatVersion.vDetachedRoots,
 					}).getFactory(),
 				);

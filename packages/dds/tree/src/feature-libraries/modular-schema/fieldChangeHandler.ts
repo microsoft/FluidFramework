@@ -245,4 +245,4 @@ export interface FieldChangeEncodingContext {
 	generateId(): ChangeAtomId;
 }
 
-export const supportChangeHandlingBackCompat = false;
+export const supportChangeHandlingBackCompat = true;
