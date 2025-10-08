@@ -49,7 +49,7 @@ export interface SemanticAgentOptions {
  * A result from an edit attempt via the {@link SharedTreeChatQuery.edit} function.
  * @remarks
  * - `success`: The edit was successfully applied.
- * - `disabledError`: The model is not allowed to edit the tree (i.e. {@link SharedTreeSemanticAgent.editFunctionName} was not provided).
+ * - `disabledError`: The model is not allowed to edit the tree (i.e. {@link SharedTreeChatModel.editToolName} was not provided).
  * - `validationError`: The provided JavaScript did not pass the optional {@link SemanticAgentOptions.validator} function.
  * - `compileError`: The provided JavaScript could not be parsed or compiled.
  * - `runtimeError`: An error was thrown while executing the provided JavaScript.

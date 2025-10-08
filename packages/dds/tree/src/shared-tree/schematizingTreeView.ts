@@ -354,7 +354,7 @@ export class SchematizingSimpleTreeView<
 				new HydratedContext(
 					this.flexTreeContext,
 					HydratedContext.schemaMapFromRootSchema(
-						this.rootFieldSchema.annotatedAllowedTypesNormalized,
+						this.rootFieldSchema.allowedTypesFull.evaluate(),
 					),
 				),
 			);

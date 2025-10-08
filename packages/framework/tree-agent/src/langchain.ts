@@ -62,7 +62,7 @@ export class LangchainChatModel implements SharedTreeChatModel {
 				description: `Invokes a JavaScript function to edit a user's tree`,
 				schema: z.object({
 					functionCode: z.string().describe(`The code of the JavaScript function.
-For example: "function ${SharedTreeSemanticAgent.editFunctionName}({ root, create }) { /* your code here */ }"`),
+For example: "function editTree({ root, create }) { /* your code here */ }"`),
 				}),
 			},
 		);
