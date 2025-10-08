@@ -90,6 +90,13 @@ export type {
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
 	TreeRecordNodeUnsafe,
+	UnannotateAllowedTypeUnsafe,
+	AnnotatedAllowedTypeUnsafe,
+	AnnotatedAllowedTypesUnsafe,
+	AllowedTypesFullUnsafe,
+	AllowedTypesFullFromMixedUnsafe,
+	UnannotateAllowedTypesListUnsafe,
+	AnnotateAllowedTypesListUnsafe,
 } from "./typesUnsafe.js";
 
 export {

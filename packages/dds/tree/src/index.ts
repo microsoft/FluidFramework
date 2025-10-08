@@ -137,6 +137,13 @@ export {
 	type ArrayNodeCustomizableSchemaUnsafe,
 	type MapNodeCustomizableSchemaUnsafe,
 	type TreeRecordNodeUnsafe,
+	type UnannotateAllowedTypeUnsafe,
+	type AnnotatedAllowedTypeUnsafe,
+	type AnnotatedAllowedTypesUnsafe,
+	type AllowedTypesFullUnsafe,
+	type AllowedTypesFullFromMixedUnsafe,
+	type UnannotateAllowedTypesListUnsafe,
+	type AnnotateAllowedTypesListUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
 	type TreeNodeSchemaNonClass,

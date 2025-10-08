@@ -40,10 +40,14 @@ import {
 	AnnotatedAllowedTypesInternal,
 } from "../core/index.js";
 import type {
+	AllowedTypesFullFromMixedUnsafe,
+	AnnotatedAllowedTypeUnsafe,
 	ArrayNodeCustomizableSchemaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
 	TreeRecordNodeUnsafe,
+	UnannotateAllowedTypeUnsafe,
+	Unenforced,
 } from "./typesUnsafe.js";
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
 import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
@@ -113,28 +117,64 @@ export interface SchemaStaticsAlpha {
 		t: T,
 		metadata?: AllowedTypesMetadata,
 	) => AllowedTypesFullFromMixed<T>;
+
+	/**
+	 * {@link SchemaStaticsAlpha.staged} except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of {@link SchemaStaticsAlpha.staged} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 */
+	stagedRecursive: <
+		const T extends Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>,
+	>(
+		t: T,
+	) => AnnotatedAllowedTypeUnsafe<UnannotateAllowedTypeUnsafe<T>>;
+
+	/**
+	 * {@link SchemaStaticsAlpha.types} except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of {@link SchemaStaticsAlpha.types} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 * @privateRemarks
+	 * If all inputs (at least recursive ones) were required to be annotated, this could be typed more strongly.
+	 * In that case it could use `T extends readonly (AnnotatedAllowedTypeUnsafe | LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>)[]`.
+	 */
+	readonly typesRecursive: <
+		const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
+	>(
+		t: T,
+		metadata?: AllowedTypesMetadata,
+	) => AllowedTypesFullFromMixedUnsafe<T>;
 }
 
-const schemaStaticsAlpha: SchemaStaticsAlpha = {
-	staged: <const T extends LazyItem<TreeNodeSchema>>(
-		t: T | AnnotatedAllowedType<T>,
-	): AnnotatedAllowedType<T> => {
-		const annotatedType = normalizeToAnnotatedAllowedType(t);
-		return {
-			type: annotatedType.type,
-			metadata: {
-				...annotatedType.metadata,
-				stagedSchemaUpgrade: createSchemaUpgrade(),
-			},
-		};
-	},
+const staged = <const T extends LazyItem<TreeNodeSchema>>(
+	t: T | AnnotatedAllowedType<T>,
+): AnnotatedAllowedType<T> => {
+	const annotatedType = normalizeToAnnotatedAllowedType(t);
+	return {
+		type: annotatedType.type,
+		metadata: {
+			...annotatedType.metadata,
+			stagedSchemaUpgrade: createSchemaUpgrade(),
+		},
+	};
+};
 
-	types: <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(
-		t: T,
-		metadata: AllowedTypesMetadata = {},
-	): AllowedTypesFullFromMixed<T> => {
-		return AnnotatedAllowedTypesInternal.createMixed<T>(t, metadata);
-	},
+const types = <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(
+	t: T,
+	metadata: AllowedTypesMetadata = {},
+): AllowedTypesFullFromMixed<T> => {
+	return AnnotatedAllowedTypesInternal.createMixed<T>(t, metadata);
+};
+
+const schemaStaticsAlpha: SchemaStaticsAlpha = {
+	staged,
+	types,
+
+	stagedRecursive: staged as SchemaStaticsAlpha["stagedRecursive"],
+	typesRecursive: types as unknown as SchemaStaticsAlpha["typesRecursive"],
 };
 
 /**
@@ -311,6 +351,16 @@ export class SchemaFactoryAlpha<
 	public staged = schemaStaticsAlpha.staged;
 
 	/**
+	 * {@inheritDoc SchemaStaticsAlpha.stagedRecursive}
+	 */
+	public static stagedRecursive = schemaStaticsAlpha.stagedRecursive;
+
+	/**
+	 * {@inheritDoc SchemaStaticsAlpha.stagedRecursive}
+	 */
+	public stagedRecursive = schemaStaticsAlpha.stagedRecursive;
+
+	/**
 	 * {@inheritDoc SchemaStaticsAlpha.types}
 	 */
 	public static types = schemaStaticsAlpha.types;
@@ -319,6 +369,16 @@ export class SchemaFactoryAlpha<
 	 * {@inheritDoc SchemaStaticsAlpha.types}
 	 */
 	public types = schemaStaticsAlpha.types;
+
+	/**
+	 * {@inheritDoc SchemaStaticsAlpha.typesRecursive}
+	 */
+	public static typesRecursive = schemaStaticsAlpha.typesRecursive;
+
+	/**
+	 * {@inheritDoc SchemaStaticsAlpha.typesRecursive}
+	 */
+	public typesRecursive = schemaStaticsAlpha.typesRecursive;
 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
@@ -405,7 +465,7 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * {@inheritDoc SchemaFactory.objectRecursive}
+	 * {@link SchemaFactory.arrayRecursive} but with support for some alpha features.
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public override arrayRecursive<
