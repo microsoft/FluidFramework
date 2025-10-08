@@ -192,7 +192,6 @@ export class SerializedStateManager implements IDisposable {
 	#disposed: boolean = false;
 
 	/**
-	 * @param pendingLocalState - The pendingLocalState being rehydrated, if any (undefined when loading directly from storage)
 	 * @param subLogger - Container's logger to use as parent for our logger
 	 * @param storageAdapter - Storage adapter for fetching snapshots
 	 * @param isInteractiveClient  - Is serializing/rehydrating containers allowed?
@@ -264,7 +263,7 @@ export class SerializedStateManager implements IDisposable {
 	 * Otherwise, fetch it from storage (according to specifiedVersion if provided).
 	 *
 	 * @param specifiedVersion - If a version is specified and we don't have pendingLocalState, fetch this version from storage.
-	 * @param supportGetSnapshotApi - a boolean indicating whether to use the fetchISnapshot or fetchISnapshotTree.
+	 * @param pendingLocalState - The pendingLocalState being rehydrated, if any (undefined when loading directly from storage)
 	 * @returns The snapshot to boot the container from
 	 */
 	public async fetchSnapshot(

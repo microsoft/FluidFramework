@@ -11,6 +11,7 @@ import {
 	getJsonSchema,
 	KeyEncodingOptions,
 	SchemaFactoryAlpha,
+	TreeBeta,
 	type ConciseTree,
 	type TreeNode,
 } from "../simple-tree/index.js";
@@ -69,7 +70,7 @@ describe("TableFactory unit tests", () => {
 	 * Fails if they are not equivalent.
 	 */
 	function assertEqualTrees(actual: TreeNode, expected: ConciseTree): void {
-		const actualVerbose = TreeAlpha.exportConcise(actual);
+		const actualVerbose = TreeBeta.exportConcise(actual);
 		assert.deepEqual(actualVerbose, expected);
 	}
 
@@ -1445,9 +1446,7 @@ describe("TableFactory unit tests", () => {
 				rows: [row0],
 			});
 
-			takeJsonSnapshot(
-				TreeAlpha.exportConcise(table, {}) as unknown as JsonCompatibleReadOnly,
-			);
+			takeJsonSnapshot(TreeBeta.exportConcise(table, {}) as unknown as JsonCompatibleReadOnly);
 		});
 	});
 
