@@ -33,15 +33,39 @@ describe.skip("SES edit evaluator", () => {
 		);
 	});
 
+	it("can be generated multiple times without error", async () => {
+		await createSesEditEvaluator({ lockdownOptions });
+		await createSesEditEvaluator({ lockdownOptions });
+	});
+
+	it("passes globals to the compartment", async () => {
+		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
+		view.initialize("Initial");
+		const evaluateEdit = await createSesEditEvaluator({
+			lockdownOptions,
+			compartmentOptions: {
+				globals: new Map([["extraGlobal", "globalValue"]]),
+			},
+		});
+		const model: SharedTreeChatModel = {
+			editToolName: "EditTreeTool",
+			async query({ edit }) {
+				const editResult = await edit("context.root = extraGlobal");
+				assert.equal(editResult.type, "success", editResult.message);
+				return editResult.message;
+			},
+		};
+
+		const agent = new SharedTreeSemanticAgent(model, view, { evaluateEdit });
+		await agent.query("");
+		assert.equal(view.root, "globalValue");
+	});
+
 	it("returns a code error when SES blocks the generated code", async () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
 		view.initialize("Initial");
 		const evaluateEdit = await createSesEditEvaluator({
-			lockdownOptions: {
-				consoleTaming: "unsafe", // Allow test framework to patch console
-				errorTaming: "unsafe", // Keep full stacks for debugging
-				stackFiltering: "verbose", // Richer stacks
-			},
+			lockdownOptions,
 		});
 		const model: SharedTreeChatModel = {
 			editToolName: "EditTreeTool",
@@ -58,3 +82,13 @@ describe.skip("SES edit evaluator", () => {
 		assert.equal(view.root, "Initial", "Tree should not change after SES rejection");
 	});
 });
+
+/**
+ * Used to configure SES lockdown for tests.
+ * @remarks This e.g. prevents mocha from failing during test cleanup as it messes with the console.
+ */
+const lockdownOptions = {
+	consoleTaming: "unsafe", // Allow test framework to patch console
+	errorTaming: "unsafe", // Keep full stacks for debugging
+	stackFiltering: "verbose", // Richer stacks
+} as const;

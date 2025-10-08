@@ -6,6 +6,9 @@
 import type { CompartmentOptions, LockdownOptions } from "ses";
 
 import type { SemanticAgentOptions } from "./api.js";
+import { toErrorString } from "./utils.js";
+
+const lockdownSymbol = Symbol.for("tree-agent.ses.locked");
 
 /**
  * Create an implementation of {@link SemanticAgentOptions.evaluateEdit} that uses the SES library to run the provided code in a secure environment.
@@ -21,7 +24,9 @@ export async function createSesEditEvaluator(options?: {
 	compartmentOptions?: CompartmentOptions;
 	lockdownOptions?: LockdownOptions;
 }): Promise<SemanticAgentOptions["evaluateEdit"]> {
-	if (options?.compartmentOptions?.globals?.has("context") === true) {
+	const optionsGlobals: Map<string, unknown> =
+		options?.compartmentOptions?.globals ?? new Map<string, unknown>();
+	if (optionsGlobals.has("context") === true) {
 		throw new Error(
 			"The 'context' global is reserved and cannot be overridden in the compartment options.",
 		);
@@ -29,14 +34,40 @@ export async function createSesEditEvaluator(options?: {
 
 	// Importing 'ses' has side effects, so we do it lazily to avoid impacting environments that don't use this evaluator.
 	await import("ses");
-	lockdown(options?.lockdownOptions);
+
+	if (!(lockdownSymbol in globalThis)) {
+		try {
+			lockdown(options?.lockdownOptions);
+			Object.defineProperty(globalThis, lockdownSymbol, {
+				value: true,
+				writable: false,
+				configurable: false,
+				enumerable: false,
+			});
+		} catch (error: unknown) {
+			if (toErrorString(error).includes("SES_ALREADY_LOCKED_DOWN")) {
+				Object.defineProperty(globalThis, lockdownSymbol, {
+					value: true,
+					writable: false,
+					configurable: false,
+					enumerable: false,
+				});
+			} else {
+				throw error;
+			}
+		}
+	}
+
 	return async (context: Record<string, unknown>, code: string) => {
-		const compartmentOptions: CompartmentOptions = {
+		const compartmentOptions = {
 			...options?.compartmentOptions,
-			globals: new Map([["context", context]]),
+			globals: {
+				...Object.fromEntries(optionsGlobals),
+				context,
+			},
 		};
 
-		const compartment = new Compartment(compartmentOptions);
+		const compartment = new Compartment({ ...compartmentOptions, __options__: true });
 		await compartment.evaluate(code);
 	};
 }
