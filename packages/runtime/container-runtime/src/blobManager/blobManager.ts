@@ -908,12 +908,6 @@ export class BlobManager {
 	 * To be used in getPendingLocalState flow. Get a serializable record of the blobs that are
 	 * pending upload and/or their BlobAttach op, which can be given to a new BlobManager to
 	 * resume work.
-	 *
-	 * @privateRemarks
-	 * For now, we don't track any pending blobs since the getPendingBlobs flow doesn't enable
-	 * restoring to a state where an accessible handle has been stored by the customer (and we'll
-	 * just drop any BlobAttach ops on the ground during reSubmit). However, once we add support
-	 * for payload-pending handles, this will return the blobs associated with those handles.
 	 */
 	public getPendingBlobs(): IPendingBlobs | undefined {
 		const pendingBlobs: IPendingBlobs = {};
