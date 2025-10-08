@@ -118,7 +118,14 @@ export {
 	replaceConciseTreeHandles,
 } from "./conciseTree.js";
 
-export { TreeBeta, type NodeChangedData, type TreeChangeEventsBeta } from "./treeBeta.js";
+export {
+	borrowCursorFromTreeNodeOrValue,
+	exportConcise,
+	importConcise,
+	type NodeChangedData,
+	TreeBeta,
+	type TreeChangeEventsBeta,
+} from "./treeBeta.js";
 export { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
 export {
 	createIdentifierIndex,

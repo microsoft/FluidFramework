@@ -35,7 +35,7 @@ import { isObjectNodeSchema } from "../node-kinds/index.js";
 
 /**
  * Options for how to interpret or encode a tree when schema information is available.
- * @alpha
+ * @beta
  * @input
  */
 export interface TreeEncodingOptions<TKeyOptions = KeyEncodingOptions> {
@@ -61,7 +61,7 @@ export type TreeParsingOptions = TreeEncodingOptions<
 
 /**
  * Options for how to encode keys in a tree.
- * @alpha
+ * @beta
  * @input
  */
 export enum KeyEncodingOptions {
