@@ -29,6 +29,5 @@ type _check = requireTrue<areSafelyAssignable<MapInlined, ReadonlyMap<string, nu
 	} satisfies AnnotatedAllowedTypeUnsafe;
 
 	type annotated = UnannotateAllowedTypeUnsafe<typeof annotatedAllowedType>;
-	// This case adds a wrapping array, which odd but potentially fine.
 	allowUnused<requireTrue<areSafelyAssignable<annotated, typeof numberSchema>>>;
 }
