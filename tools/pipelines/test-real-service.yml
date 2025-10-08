@@ -176,7 +176,7 @@ stages:
           displayName: 'Start routerlicious environment in docker'
           inputs:
             containerregistrytype: 'Container Registry'
-            dockerComposeFile: "${{ variables['Pipeline.Workspace'] }}/FluidFramework/server/docker-compose.yml"
+            dockerComposeFile: $(Pipeline.Workspace)/FluidFramework/server/docker-compose.yml
             action: 'Run a Docker Compose command'
             dockerComposeCommand: 'up -d'
             projectName: 'routerlicious'
@@ -192,7 +192,7 @@ stages:
           condition: always()
           inputs:
             containerregistrytype: 'Container Registry'
-            dockerComposeFile: "${{ variables['Pipeline.Workspace'] }}/FluidFramework/server/docker-compose.yml"
+            dockerComposeFile: $(Pipeline.Workspace)/FluidFramework/server/docker-compose.yml
             action: 'Run a Docker Compose command'
             dockerComposeCommand: 'down'
             projectName: 'routerlicious'
