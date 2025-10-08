@@ -40,7 +40,6 @@ import {
 	LoggingError,
 	type MonitoringContext,
 	PerformanceEvent,
-	UsageError,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -933,22 +932,6 @@ export class BlobManager {
 						};
 		}
 		return Object.keys(pendingBlobs).length > 0 ? pendingBlobs : undefined;
-	}
-
-	/**
-	 * Part of container serialization when imminent closure is enabled (Currently when calling closeAndGetPendingLocalState).
-	 * This asynchronous function resolves all pending createBlob calls and waits for each blob
-	 * to be attached. It will also send BlobAttach ops for each pending blob that hasn't sent it
-	 * yet so that serialized container can resubmit them when rehydrated.
-	 *
-	 * @param stopBlobAttachingSignal - Optional signal to abort the blob attaching process.
-	 * @returns - A promise that resolves with the details of the attached blobs,
-	 * or undefined if no blobs were processed.
-	 */
-	public async attachAndGetPendingBlobs(
-		stopBlobAttachingSignal?: AbortSignal,
-	): Promise<IPendingBlobs | undefined> {
-		throw new UsageError("attachAndGetPendingBlobs is no longer supported");
 	}
 }
 
