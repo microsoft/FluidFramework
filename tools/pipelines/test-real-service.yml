@@ -151,8 +151,6 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       continueOnError: true
       testCommand: test:realsvc:r11s:docker
-      # Check out the FluidFramework source so we can run the docker service
-      checkout: true
       stageVariables:
         - group: container-registry-info
       splitTestVariants:
@@ -167,36 +165,16 @@ stages:
       cacheCompatVersionsInstalls: true
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-      preSteps:
-        - task: Docker@2
-          displayName: 'Login to container registry'
-          inputs:
-            containerRegistry: 'Fluid Container Registry'
-            command: 'login'
-        - task: DockerCompose@1
-          displayName: 'Start routerlicious environment in docker'
-          inputs:
-            containerregistrytype: 'Container Registry'
-            dockerComposeFile: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
-            action: 'Run a Docker Compose command'
-            dockerComposeCommand: 'up -d'
-            projectName: 'routerlicious'
-          env:
-            REGISTRY_URL: fluidcr.azurecr.io/build
-            ALFRED_IMAGE_TAG: 0.0.$(resources.pipeline.routerlicious.runID)
-            HISTORIAN_IMAGE_TAG: 0.0.$(resources.pipeline.historian.runID)
-            GITREST_IMAGE_TAG: 0.0.$(resources.pipeline.gitrest.runID)
-            GITSSH_IMAGE_TAG: 0.0.$(resources.pipeline.gitssh.runID)
-      additionalSteps:
-        - task: DockerCompose@1
-          displayName: 'Stop routerlicious environment in docker'
-          condition: always()
-          inputs:
-            containerregistrytype: 'Container Registry'
-            dockerComposeFile: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
-            action: 'Run a Docker Compose command'
-            dockerComposeCommand: 'down'
-            projectName: 'routerlicious'
+
+      # Checks out the FluidFramework source so we can run the docker service
+      runAgainstDocker: true
+
+      # Docker tags to use when constructing the docker environment
+      alfredImageTag: 0.0.$(resources.pipeline.routerlicious.runID)
+      historianImageTag: 0.0.$(resources.pipeline.historian.runID)
+      gitrestImageTag: 0.0.$(resources.pipeline.gitrest.runID)
+      gitsshImageTag: 0.0.$(resources.pipeline.gitssh.runID)
+
       env:
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'

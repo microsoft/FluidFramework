@@ -130,9 +130,24 @@ parameters:
   type: stepList
   default: []
 
-- name: checkout
+# if true, the FluidFramework repo will be checked out and a docker-compose env will be spun up for testing
+- name: runAgainstDocker
   type: boolean
   default: false
+
+# Tags for docker environment setup
+- name: alfredImageTag
+  type: string
+  default: 'latest'
+- name: historianImageTag
+  type: string
+  default: 'latest'
+- name: gitrestImageTag
+  type: string
+  default: 'latest'
+- name: gitsshImageTag
+  type: string
+  default: 'latest'
 
 stages:
 - stage: ${{ parameters.stageId}}
@@ -161,7 +176,8 @@ stages:
         - name: FORCE_COLOR
           value: 1
         - name: pipelineHostPath
-          ${{ if eq(parameters.checkout, true) }}:
+          ${{ if eq(parameters.runAgainstDocker, true) }}:
+            # Running against docker means we'll check out the FluidFramework repo as well as ff_pipeline_host
             # When multiple repos are checked out, they are checked out to $(Build.SourcesDirectory)/<REPO_NAME>
             value: $(Build.SourcesDirectory)/ff_pipeline_host
           ${{ else }}:
@@ -183,11 +199,6 @@ stages:
         # Setup
         - checkout: ff_pipeline_host
           clean: true
-
-        - ${{ if eq(parameters.checkout, true) }}:
-          # Checks out FluidFramework repo
-          - checkout: self
-            clean: true
 
         # Install self-signed cert for R11s deployment in local cert store
         - ${{ if ne(parameters.r11sSelfSignedCertSecureFile, '') }}:
@@ -211,6 +222,31 @@ stages:
                 sudo cp cert.crt /usr/local/share/ca-certificates/
                 sudo update-ca-certificates
 
+        # Set up Docker environment if running against docker
+        - ${{ if eq(parameters.runAgainstDocker, true) }}:
+          # Checks out FluidFramework repo
+          - checkout: self
+            clean: true
+          - task: Docker@2
+            displayName: 'Login to container registry'
+            inputs:
+              containerRegistry: 'Fluid Container Registry'
+              command: 'login'
+          - task: DockerCompose@1
+            displayName: 'Start routerlicious environment in docker'
+            inputs:
+              containerregistrytype: 'Container Registry'
+              dockerComposeFile: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
+              action: 'Run a Docker Compose command'
+              dockerComposeCommand: 'up -d'
+              projectName: 'routerlicious'
+            env:
+              REGISTRY_URL: fluidcr.azurecr.io/build
+              ALFRED_IMAGE_TAG: ${{ parameters.alfredImageTag }}
+              HISTORIAN_IMAGE_TAG: ${{ parameters.historianImageTag }}
+              GITREST_IMAGE_TAG: ${{ parameters.gitrestImageTag }}
+              GITSSH_IMAGE_TAG: ${{ parameters.gitsshImageTag }}
+
         # Print parameters/Vars
         # Variables declared outside this template will only work with "macro syntax": $(name).
         # Variables declared inside this template also work with "template expression syntax": ${{ variables.name }}.
@@ -230,7 +266,6 @@ stages:
 
               Pipeline Variables:
                 isTestBranch=${{ variables.isTestBranch }}
-                ffSourcePath=${{ variables.ffSourcePath }}
                 testWorkspace=${{ parameters.testWorkspace }}
                 testPackageFilePattern=${{ variables.testPackageFilePattern }}
                 testCommand=${{ parameters.testCommand }}
@@ -517,6 +552,18 @@ stages:
         # - template: /tools/pipelines/templates/include-process-test-results.yml@self
         #   parameters:
         #     buildDirectory: ${{ variables.testPackageDir }}
+
+        # Stop the docker environment if running against it
+        - ${{ if eq(parameters.runAgainstDocker, true) }}:
+          - task: DockerCompose@1
+            displayName: 'Stop routerlicious environment in docker'
+            condition: always()
+            inputs:
+              containerregistrytype: 'Container Registry'
+              dockerComposeFile: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
+              action: 'Run a Docker Compose command'
+              dockerComposeCommand: 'down'
+              projectName: 'routerlicious'
 
         - ${{ parameters.additionalSteps }}
 
