@@ -927,6 +927,7 @@ export const SharedTreeFormatVersion: {
     readonly v3: 3;
     readonly v5: 5;
     readonly vSharedBranches: 100;
+    readonly vDetachedRoots: 101;
 };
 
 // @alpha
