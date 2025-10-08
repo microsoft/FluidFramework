@@ -2459,6 +2459,7 @@ export class Container
 				storage: this.storageAdapter,
 				quorum: this.protocolHandler.quorum,
 				audience: this.protocolHandler.audience,
+				signalAudience: this.signalAudience,
 				loader,
 				submitFn: (type, contents, batch, metadata) =>
 					this.submitContainerMessage(type, contents, batch, metadata),
