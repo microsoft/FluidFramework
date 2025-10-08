@@ -69,7 +69,7 @@ export function getPrompt<TRoot extends ImplicitFieldSchema>(args: {
 	const details: SchemaDetails = { hasHelperMethods: false };
 	const typescriptSchemaTypes = getZodSchemaAsTypeScript(domainTypes, details);
 	const helperMethodExplanation = details.hasHelperMethods
-		? `Manipulating the data using the APIs described below is allowed, but when possible ALWAYS prefer to use the application helper methods exposed on the schema TypeScript types if the goal can be accomplished that way.
+		? `Manipulating the data using the APIs described below is allowed, but when possible ALWAYS prefer to use any application helper methods exposed on the schema TypeScript types if the goal can be accomplished that way.
 It will often not be possible to fully accomplish the goal using those helpers. When this is the case, mutate the objects as normal, taking into account the following guidance.`
 		: "";
 
@@ -77,16 +77,14 @@ It will often not be possible to fully accomplish the goal using those helpers. 
 		exampleObjectName === undefined
 			? ""
 			: `When constructing new objects, you should wrap them in the appropriate builder function rather than simply making a javascript object.
-The builders are available on the "create" property on the first argument of the edit function and are named according to the type that they create.
+The builders are available on the \`create\` property on the context object and are named according to the type that they create.
 For example:
 
 \`\`\`javascript
-function editTree({ root, create }) {
-	// This creates a new ${exampleObjectName} object:
-	const ${communize(exampleObjectName)} = create.${exampleObjectName}({ /* ...properties... */ });
-	// Don't do this:
-	// const ${communize(exampleObjectName)} = { /* ...properties... */ };
-}
+// This creates a new ${exampleObjectName} object:
+const ${communize(exampleObjectName)} = context.create.${exampleObjectName}({ /* ...properties... */ });
+// Don't do this:
+// const ${communize(exampleObjectName)} = { /* ...properties... */ };
 \`\`\`\n\n`;
 
 	const arrayEditing = `#### Editing Arrays
@@ -120,20 +118,20 @@ ${getTreeMapNodeDocumentation(mapInterfaceName)}
 `;
 
 	const rootTypes = normalizeFieldSchema(schema).allowedTypeSet;
-	const editing = `If the user asks you to edit the tree, you should author a JavaScript function to accomplish the user-specified goal, following the instructions for editing detailed below.
-You must use the "${editToolName}" tool to perform the edit.
+	const editing = `If the user asks you to edit the tree, you should author a snippet of JavaScript code to accomplish the user-specified goal, following the instructions for editing detailed below.
+You must use the "${editToolName}" tool to run the generated code.
 After editing the tree, review the latest state of the tree to see if it satisfies the user's request.
 If it does not, or if you receive an error, you may try again with a different approach.
 Once the tree is in the desired state, you should inform the user that the request has been completed.
 
 ### Editing
 
-If the user asks you to edit the document, you will write a JavaScript function that mutates the data in-place to achieve the user's goal.
-The edit function may be synchronous or asynchronous.
-The edit function must have a first parameter which has a \`root\` property.
-This \`root\` property holds the current state of the tree as shown above.
-You may mutate any part of the tree as necessary, taking into account the caveats around arrays and maps detailed below.
-You may also set the \`root\` property to be an entirely new value as long as it is one of the types allowed at the root of the tree (\`${Array.from(rootTypes.values(), (t) => getFriendlyName(t)).join(" | ")}\`).
+If the user asks you to edit the document, you will write a snippet of JavaScript code that mutates the data in-place to achieve the user's goal.
+The snippet may be synchronous or asynchronous (i.e. it may \`await\` functions if necessary).
+The snippet has a \`context\` variable in its scope.
+This \`context\` variable holds the current state of the tree in the \`root\` property.
+You may mutate any part of the root tree as necessary, taking into account the caveats around${hasArrays ? ` arrays${hasMaps ? " and" : ""}` : ""}${hasMaps ? " maps" : ""} detailed below.
+You may also set the \`root\` property of the context to be an entirely new value as long as it is one of the types allowed at the root of the tree (\`${Array.from(rootTypes.values(), (t) => getFriendlyName(t)).join(" | ")}\`).
 ${helperMethodExplanation}
 
 ${hasArrays ? arrayEditing : ""}${hasMaps ? mapEditing : ""}#### Additional Notes
@@ -163,7 +161,7 @@ ${
 		? ""
 		: `\nThe application supplied the following additional instructions: ${domainHints}`
 }
-The current state of the application tree (a \`${field === undefined ? "undefined" : getFriendlyName(Tree.schema(field))}\`) is:
+The current state of \`context.root\` (a \`${field === undefined ? "undefined" : getFriendlyName(Tree.schema(field))}\`) is:
 
 \`\`\`JSON
 ${stringified}
