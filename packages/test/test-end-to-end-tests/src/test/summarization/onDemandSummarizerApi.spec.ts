@@ -56,9 +56,6 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 	}
 
 	it("summarizes successfully (fullTree gate off)", async function () {
-		if (provider.driver.type !== "odsp") {
-			this.skip();
-		}
 		const props = await buildLoadProps();
 		const result: LoadSummarizerSummaryResult =
 			await loadSummarizerContainerAndMakeSummary(props);
@@ -80,9 +77,6 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 	});
 
 	it("summarizes successfully with fullTree gate on", async function () {
-		if (provider.driver.type !== "odsp") {
-			this.skip();
-		}
 		const props = await buildLoadProps();
 		const configProvider = {
 			getRawConfig: (key: string) =>
@@ -112,7 +106,7 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		assert.strictEqual(endEvents.length, 1, "end telemetry missing");
 	});
 
-	it("clients with summaries disabled can make changes and load from on-demand summary", async function () {
+	it("clients with summaries disabled can make changes and load from on-demand summary handle", async function () {
 		if (provider.driver.type !== "odsp") {
 			this.skip();
 		}
