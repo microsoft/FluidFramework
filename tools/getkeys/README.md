@@ -15,7 +15,7 @@ prague-secrets or WAC Bohemia security group.
 You should restart the console/shell after running the script (or for bash/zsh run `source ~/.bashrc` or `source ~/.zshrc`)
 for the exported environment variables to become available.
 
-> Note: The getkeys tool is no longer used for ODSP tenant credential management. Please refer to the [ff_internal documentation](https://dev.azure.com/fluidframework/internal/_git/ff_internal?path=/packages/trips-setup/README.md) for the updated process.
+> Note: The getkeys tool is no longer used for ODSP tenant credential management. Please refer to the tenant setup documentation in ff_internal for the updated process.
 
 ## TO-DO
 
