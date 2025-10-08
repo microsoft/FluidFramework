@@ -1019,10 +1019,15 @@ export class Container
 			enableSummarizeProtocolTree,
 		);
 
+		const offlineLoadEnabled =
+			this.isInteractiveClient &&
+			(this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
+				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
+				options.enableOfflineLoad !== false);
 		this.serializedStateManager = new SerializedStateManager(
 			this.subLogger,
 			this.storageAdapter,
-			this.isInteractiveClient,
+			offlineLoadEnabled,
 			this,
 			() => this._deltaManager.connectionManager.shouldJoinWrite(),
 			() => this.supportGetSnapshotApi(),

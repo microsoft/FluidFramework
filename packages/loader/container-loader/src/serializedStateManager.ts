@@ -26,6 +26,7 @@ import { getSnapshotTree, isInstanceOfISnapshot } from "@fluidframework/driver-u
 import {
 	type MonitoringContext,
 	PerformanceEvent,
+	UsageError,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -194,14 +195,14 @@ export class SerializedStateManager implements IDisposable {
 	/**
 	 * @param subLogger - Container's logger to use as parent for our logger
 	 * @param storageAdapter - Storage adapter for fetching snapshots
-	 * @param isInteractiveClient  - Is serializing/rehydrating containers allowed?
+	 * @param _offlineLoadEnabled  - Is serializing/rehydrating containers allowed?
 	 * @param containerEvent - Source of the "saved" event when the container has all its pending state uploaded
 	 * @param containerDirty - Is the container "dirty"? That's the opposite of "saved" - there is pending state that may not have been received yet by the service.
 	 */
 	constructor(
 		subLogger: ITelemetryBaseLogger,
 		private readonly storageAdapter: ISerializedStateManagerDocumentStorageService,
-		private readonly isInteractiveClient: boolean,
+		private readonly _offlineLoadEnabled: boolean,
 		containerEvent: IEventProvider<ISerializerEvent>,
 		private readonly containerDirty: () => boolean,
 		private readonly supportGetSnapshotApi: () => boolean,
@@ -215,6 +216,7 @@ export class SerializedStateManager implements IDisposable {
 		this.snapshotRefreshTimeoutMs = snapshotRefreshTimeoutMs ?? this.snapshotRefreshTimeoutMs;
 
 		this.#snapshotRefreshEnabled =
+			_offlineLoadEnabled &&
 			(this.mc.config.getBoolean("Fluid.Container.enableOfflineSnapshotRefresh") ??
 				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull")) === true;
 
@@ -237,6 +239,10 @@ export class SerializedStateManager implements IDisposable {
 		}
 	}
 
+	public get offlineLoadEnabled(): boolean {
+		return this._offlineLoadEnabled;
+	}
+
 	/**
 	 * Promise that will resolve (or reject) once we've tried to download the latest snapshot(s) from storage
 	 * only intended to be used for testing purposes.
@@ -250,7 +256,7 @@ export class SerializedStateManager implements IDisposable {
 	 * Called whenever an incoming op is processed by the Container
 	 */
 	public addProcessedOp(message: ISequencedDocumentMessage): void {
-		if (this.isInteractiveClient) {
+		if (this.offlineLoadEnabled) {
 			this.processedOps.push(message);
 			this.updateSnapshotAndProcessedOpsMaybe();
 		}
@@ -274,6 +280,7 @@ export class SerializedStateManager implements IDisposable {
 		version: IVersion | undefined;
 		attributes: IDocumentAttributes;
 	}> {
+		this.verifyNotDisposed();
 		if (pendingLocalState === undefined) {
 			const { snapshot, version } = await getSnapshot(
 				this.mc,
@@ -291,15 +298,6 @@ export class SerializedStateManager implements IDisposable {
 			return { snapshot, version, attributes };
 		} else {
 			const { baseSnapshot, snapshotBlobs, savedOps } = pendingLocalState;
-
-			// special case handle. Obtaining the last saved op seq num to avoid
-			// refreshing the snapshot before we have processed it. It could cause
-			// a subsequent stashing to have a newer snapshot than allowed.
-			if (savedOps.length > 0) {
-				const savedOpsSize = savedOps.length;
-				this.lastSavedOpSequenceNumber = savedOps[savedOpsSize - 1].sequenceNumber;
-			}
-
 			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshot);
 			const blobContents = new Map<string, ArrayBuffer>();
 			for (const [id, value] of Object.entries(snapshotBlobs)) {
@@ -313,11 +311,22 @@ export class SerializedStateManager implements IDisposable {
 				ops: [],
 				snapshotFormatV: 1,
 			};
-			this.snapshotInfo = {
-				snapshot,
-				snapshotSequenceNumber: attributes.sequenceNumber,
-			};
-			this.tryRefreshSnapshot();
+
+			if (this.offlineLoadEnabled) {
+				// special case handle. Obtaining the last saved op seq num to avoid
+				// refreshing the snapshot before we have processed it. It could cause
+				// a subsequent stashing to have a newer snapshot than allowed.
+				if (savedOps.length > 0) {
+					const savedOpsSize = savedOps.length;
+					this.lastSavedOpSequenceNumber = savedOps[savedOpsSize - 1].sequenceNumber;
+				}
+
+				this.snapshotInfo = {
+					snapshot,
+					snapshotSequenceNumber: attributes.sequenceNumber,
+				};
+				this.tryRefreshSnapshot();
+			}
 			return { snapshot, version: undefined, attributes };
 		}
 	}
@@ -432,11 +441,13 @@ export class SerializedStateManager implements IDisposable {
 	 */
 	public setInitialSnapshot(snapshot: ISnapshot): void {
 		this.verifyNotDisposed();
-		this.snapshotInfo = {
-			snapshot,
-			snapshotSequenceNumber: snapshot.sequenceNumber ?? 0,
-		};
-		this.refreshTimer?.start();
+		if (this.offlineLoadEnabled) {
+			this.snapshotInfo = {
+				snapshot,
+				snapshotSequenceNumber: snapshot.sequenceNumber ?? 0,
+			};
+			this.refreshTimer?.start();
+		}
 	}
 
 	/**
@@ -449,6 +460,9 @@ export class SerializedStateManager implements IDisposable {
 		resolvedUrl: IResolvedUrl,
 	): Promise<string> {
 		this.verifyNotDisposed();
+		if (!this.offlineLoadEnabled) {
+			throw new UsageError("Can't get pending local state unless offline load is enabled");
+		}
 
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
