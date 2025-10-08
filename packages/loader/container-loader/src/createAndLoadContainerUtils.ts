@@ -305,7 +305,6 @@ export async function loadSummarizerContainerAndMakeSummary(
 		mc.logger,
 		{ eventName: "SummarizerOnDemandSummary" },
 		async (event) => {
-			const loader = new Loader(loadExistingContainerProps);
 			const baseHeaders = originalRequest.headers;
 			const request = {
 				...originalRequest,
@@ -321,7 +320,10 @@ export async function loadSummarizerContainerAndMakeSummary(
 				},
 			};
 
-			const container = await loader.resolve(request);
+			const container = await loadExistingContainer({
+				...loadExistingContainerProps,
+				request,
+			});
 
 			let summarySubmitted: SummarizeOnDemandResults["summarySubmitted"];
 			let summaryOpBroadcasted: SummarizeOnDemandResults["summaryOpBroadcasted"];
