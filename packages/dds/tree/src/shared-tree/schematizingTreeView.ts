@@ -368,6 +368,7 @@ export class SchematizingSimpleTreeView<
 				// TODO: provide a better event: this.view.flexTree.on(????) and/or integrate with with the normal event code paths.
 
 				// Track what the root was before to be able to detect changes.
+				// This uses the flex tree root to avoid demanding the simple-tree TreeNode when it might not be hydrated yet.
 				let lastRoot: FlexTreeUnknownUnboxed | undefined = (
 					this.flexTreeContext.root as FlexTreeOptionalField
 				).content;
@@ -394,8 +395,10 @@ export class SchematizingSimpleTreeView<
 		);
 
 		if (!this.midUpgrade) {
-			this.pendingHydration?.();
-			this.pendingHydration = undefined;
+			assert(
+				this.pendingHydration === undefined,
+				"no nodes should be pending hydration when triggering events that could access nodes",
+			);
 			this.events.emit("schemaChanged");
 			this.events.emit("rootChanged");
 		}
@@ -408,6 +411,7 @@ export class SchematizingSimpleTreeView<
 		} finally {
 			this.midUpgrade = false;
 		}
+		// Ensure hydration is flushed before events run which could access nodes.
 		this.pendingHydration?.();
 		this.pendingHydration = undefined;
 		this.events.emit("schemaChanged");
