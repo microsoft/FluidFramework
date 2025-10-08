@@ -161,14 +161,12 @@
 		"patchedDependencies": {
 			"@microsoft/api-extractor@7.45.1": "patches/@microsoft__api-extractor@7.45.1.patch"
 		},
-		"ignoredBuiltDependencies": [
+		"onlyBuiltDependencies": [
 			"classic-level",
 			"core-js",
-			"snappy",
-			"unrs-resolver"
-		],
-		"onlyBuiltDependencies": [
 			"node-rdkafka",
+			"snappy",
+			"unrs-resolver",
 			"zookeeper"
 		]
 	}
