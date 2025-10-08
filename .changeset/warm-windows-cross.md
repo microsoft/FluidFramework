@@ -6,7 +6,7 @@
 MinimumVersionForCollab is now used in place of tree's alpha FluidClientVersion
 
 `FluidClientVersion` is no longer used as the type for Fluid Client versions in APIs/codecs (for example, `oldestCompatibleClient`).
-Additionally, FluidClientVersion is now a const object with members that declare specific MinimumVersionForCollab versions.
+Additionally, `FluidClientVersion` is now a const object with members that declare specific [`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias) versions.
 These are intended to be used with APIs that require a version (such as `TreeAlpha.exportCompressed`).
 
 `SharedTreeOptions.oldestCompatibleClient` has been removed in favor of `LoadContainerRuntimeParams.minVersionForCollab`.
