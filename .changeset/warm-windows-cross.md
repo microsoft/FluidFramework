@@ -3,7 +3,7 @@
 "fluid-framework": minor
 "__section": tree
 ---
-MinimumVersionForCollab is now used in place of FluidClientVersion
+MinimumVersionForCollab is now used in place of tree's alpha FluidClientVersion
 
 FluidClientVersion is no longer used as the declaration type for versions in APIs/codecs (for example, `oldestCompatibleClient`).
 Additionally, FluidClientVersion is now a const object with members that declare specific MinimumVersionForCollab versions.
