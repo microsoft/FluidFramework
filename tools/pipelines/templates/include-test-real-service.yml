@@ -54,8 +54,8 @@ parameters:
 - name: splitTestVariants
   type: object
   default:
-    - name: ""
-      flags: ""
+  - name: ""
+    flags: ""
 
 - name: testCommand
   type: string
