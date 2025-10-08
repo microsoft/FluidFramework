@@ -27,7 +27,6 @@ import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttribu
 import type { ITree } from "./simple-tree/index.js";
 import { Breakable } from "./util/index.js";
 import { FluidClientVersion } from "./codec/index.js";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * {@link ITreePrivate} extended with ISharedObject.
@@ -35,14 +34,6 @@ import type { MinimumVersionForCollab } from "@fluidframework/runtime-definition
  * This is used when integration testing this package with the Fluid runtime as it exposes the APIs the runtime consumes to manipulate the tree.
  */
 export interface ISharedTree extends ISharedObject, ITreePrivate {}
-
-function selectFeatureFlags(
-	optionsOverride: SharedTreeOptionsInternal,
-	minVersionForCollab: MinimumVersionForCollab,
-): SharedTreeOptionsInternal {
-	// Passthrough for now. Someday this will alter feature flags and return a copy with the changes.
-	return optionsOverride;
-}
 
 /**
  * Creates a factory for shared tree kernels with the given options.
@@ -58,13 +49,15 @@ function treeKernelFactory(
 			throw new UsageError("IdCompressor must be enabled to use SharedTree");
 		}
 
+		const { oldestCompatibleClient, ...otherOptions } = options;
+
 		const adjustedOptions = {
-			...selectFeatureFlags(
-				options,
-				// TODO: get default from runtime once something like runtime.oldestCompatibleClient exists.
-				// Using default of 2.0 since that is the oldest version that supports SharedTree.
-				options.oldestCompatibleClient ?? FluidClientVersion.v2_0,
-			),
+			...otherOptions,
+			// We allow setting oldestCompatibleClient via `SharedTreeOptionsInternal` for testing purposes. This type is non-public.
+			// TODO: get default from runtime once something like runtime.oldestCompatibleClient exists.
+			// Using default of 2.0 since that is the oldest version that supports SharedTree.
+			oldestCompatibleClient:
+				oldestCompatibleClient ?? args.minVersionForCollab ?? FluidClientVersion.v2_0,
 		};
 
 		return new SharedTreeKernel(

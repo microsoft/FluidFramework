@@ -40,6 +40,7 @@ describe("versioned Codecs", () => {
 		const builder = new ClientVersionDispatchingCodecBuilder(
 			family,
 			(oldestCompatibleClient: MinimumVersionForCollab) =>
+				// Arbitrary version selection logic for test purposes. Versions greater than 5.0.0 get v2 codec.
 				gt(oldestCompatibleClient, "5.0.0") ? 2 : 1,
 		);
 
@@ -49,6 +50,7 @@ describe("versioned Codecs", () => {
 				jsonValidator: typeboxValidator,
 			});
 			const codec2 = builder.build({
+				// We have to cast to a `MinimumVersionForCollab` because "6.0.0" is not a valid value for that type.
 				oldestCompatibleClient: "6.0.0" as MinimumVersionForCollab,
 				jsonValidator: typeboxValidator,
 			});

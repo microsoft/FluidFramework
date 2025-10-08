@@ -581,13 +581,14 @@ export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
  * Configuration options for SharedTree.
  * @alpha @input
  */
-export type SharedTreeOptions = Partial<CodecWriteOptions> &
+export type SharedTreeOptions = Partial<ICodecOptions> &
 	Partial<SharedTreeFormatOptions> &
 	ForestOptions;
 
 export interface SharedTreeOptionsInternal
 	extends Omit<SharedTreeOptions, "treeEncodeType">,
-		Partial<SharedTreeFormatOptionsInternal> {
+		Partial<SharedTreeFormatOptionsInternal>,
+		Partial<CodecWriteOptions> {
 	disposeForksAfterTransaction?: boolean;
 	/**
 	 * Returns whether a field should be incrementally encoded.
