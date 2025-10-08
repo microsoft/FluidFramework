@@ -75,6 +75,7 @@ export {
 	SchemaFactoryBeta,
 	SchemaFactoryAlpha,
 	type SchemaFactoryObjectOptions,
+	type SchemaFactoryObjectOptionsAlpha,
 	type ScopedSchemaName,
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,

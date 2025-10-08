@@ -97,10 +97,10 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
  * Options when declaring an {@link SchemaFactory.object|object node}'s schema
  *
  * @input
- * @alpha
+ * @beta
  */
 export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
-	extends NodeSchemaOptionsAlpha<TCustomMetadata> {
+	extends NodeSchemaOptions<TCustomMetadata> {
 	/**
 	 * Allow nodes typed with this object node schema to contain optional fields that are not present in the schema declaration.
 	 * Such nodes can come into existence either via import APIs (see remarks) or by way of collaboration with another client
@@ -148,6 +148,16 @@ export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
 	 */
 	readonly allowUnknownOptionalFields?: boolean;
 }
+
+/**
+ * {@link SchemaFactoryObjectOptions} with experimental (alpha) extensions.
+ *
+ * @input
+ * @alpha
+ */
+export interface SchemaFactoryObjectOptionsAlpha<TCustomMetadata = unknown>
+	extends NodeSchemaOptionsAlpha<TCustomMetadata>,
+		SchemaFactoryObjectOptions<TCustomMetadata> {}
 
 /**
  * Default options for Object node schema creation.
