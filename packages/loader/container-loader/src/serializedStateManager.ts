@@ -217,7 +217,6 @@ export class SerializedStateManager implements IDisposable {
 		this.refreshTimer = this.#snapshotRefreshEnabled
 			? new Timer(this.snapshotRefreshTimeoutMs, () => this.tryRefreshSnapshot())
 			: undefined;
-
 		containerEvent.on("saved", () => this.updateSnapshotAndProcessedOpsMaybe());
 	}
 	public get disposed(): boolean {
