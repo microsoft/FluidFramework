@@ -200,7 +200,6 @@ describe("serializedStateManager", () => {
 		it("can't get pending local state when offline load disabled", async () => {
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
-				undefined,
 				enableOfflineSnapshotRefresh(logger),
 				storageAdapter,
 				false,
@@ -224,7 +223,6 @@ describe("serializedStateManager", () => {
 
 		it("can get pending local state after attach", async () => {
 			const serializedStateManager = new SerializedStateManager(
-				undefined,
 				enableOfflineSnapshotRefresh(logger),
 				failSometimeProxy<ISerializedStateManagerDocumentStorageService>({
 					loadedGroupIdSnapshots: {},
@@ -250,7 +248,6 @@ describe("serializedStateManager", () => {
 			};
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
-				pending,
 				enableOfflineSnapshotRefresh(logger),
 				storageAdapter,
 				true,
@@ -258,7 +255,10 @@ describe("serializedStateManager", () => {
 				() => false,
 				() => false,
 			);
-			const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(undefined);
+			const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
+				undefined,
+				pending,
+			);
 			assert(baseSnapshot !== undefined);
 			assert.strictEqual(version, undefined);
 			const state = await serializedStateManager.getPendingLocalState(
@@ -273,7 +273,6 @@ describe("serializedStateManager", () => {
 		it("can fetch snapshot and get state from it", async () => {
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
-				undefined,
 				enableOfflineSnapshotRefresh(logger),
 				storageAdapter,
 				true,
@@ -281,7 +280,10 @@ describe("serializedStateManager", () => {
 				() => false,
 				() => false,
 			);
-			const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(undefined);
+			const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
+				undefined,
+				undefined,
+			);
 			assert(baseSnapshot !== undefined);
 			assert.strictEqual(version?.id, "fromStorage");
 			assert.strictEqual(version.treeId, "fromStorage");
@@ -308,7 +310,6 @@ describe("serializedStateManager", () => {
 			const storageAdapter = new MockStorageAdapter();
 			const getLatestSnapshotInfoP = new Deferred<void>();
 			const serializedStateManager = new SerializedStateManager(
-				pending,
 				enableOfflineSnapshotRefresh(logger),
 				storageAdapter,
 				true,
@@ -328,7 +329,7 @@ describe("serializedStateManager", () => {
 			const snapshotSequenceNumber = 11;
 			storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-			await serializedStateManager.fetchSnapshot(undefined);
+			await serializedStateManager.fetchSnapshot(undefined, pending);
 			lastProcessedOpSequenceNumber = 25;
 			while (seq <= lastProcessedOpSequenceNumber) {
 				serializedStateManager.addProcessedOp(generateSavedOp(seq++));
@@ -359,7 +360,6 @@ describe("serializedStateManager", () => {
 			};
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(
-				pending,
 				enableOfflineSnapshotRefresh(logger),
 				storageAdapter,
 				true,
@@ -376,7 +376,7 @@ describe("serializedStateManager", () => {
 			const snapshotSequenceNumber = 30;
 			storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-			await serializedStateManager.fetchSnapshot(undefined);
+			await serializedStateManager.fetchSnapshot(undefined, pending);
 			// new snapshot fetched but not refreshed since processed ops are behind the snapshot
 			await serializedStateManager.refreshSnapshotP;
 
@@ -422,7 +422,6 @@ describe("serializedStateManager", () => {
 				},
 			});
 			const serializedStateManager = new SerializedStateManager(
-				pending,
 				enableOfflineSnapshotRefresh(logger),
 				storageAdapter,
 				true,
@@ -439,7 +438,7 @@ describe("serializedStateManager", () => {
 			const snapshotSequenceNumber = 11;
 			storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-			await serializedStateManager.fetchSnapshot(undefined);
+			await serializedStateManager.fetchSnapshot(undefined, pending);
 			await serializedStateManager.refreshSnapshotP;
 
 			const state = await serializedStateManager.getPendingLocalState(
@@ -463,7 +462,6 @@ describe("serializedStateManager", () => {
 				let saved = false;
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const serializedStateManager = new SerializedStateManager(
-					pending,
 					enableOfflineSnapshotRefresh(logger),
 					storageAdapter,
 					true,
@@ -475,8 +473,10 @@ describe("serializedStateManager", () => {
 					serializedStateManager.addProcessedOp(savedOp);
 				}
 
-				const { baseSnapshot, version } =
-					await serializedStateManager.fetchSnapshot(undefined);
+				const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
+					undefined,
+					pending,
+				);
 				const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 				assert.strictEqual(baseSnapshotTree.id, "fromPending");
 				assert.strictEqual(version, undefined);
@@ -523,7 +523,6 @@ describe("serializedStateManager", () => {
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					pending,
 					enableOfflineSnapshotRefresh(logger),
 					storageAdapter,
 					true,
@@ -539,7 +538,7 @@ describe("serializedStateManager", () => {
 				}
 				const snapshotSequenceNumber = 11; // uploading an snapshot too old to be the latest
 				storageAdapter.uploadSummary(snapshotSequenceNumber);
-				await serializedStateManager.fetchSnapshot(undefined);
+				await serializedStateManager.fetchSnapshot(undefined, pending);
 				await serializedStateManager.refreshSnapshotP;
 				if (isDirty) {
 					logger.assertMatchNone([
@@ -575,7 +574,6 @@ describe("serializedStateManager", () => {
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					pending,
 					enableOfflineSnapshotRefresh(logger),
 					storageAdapter,
 					true,
@@ -593,7 +591,7 @@ describe("serializedStateManager", () => {
 				const snapshotSequenceNumber = 11; // latest snapshot will be among processed ops
 				storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-				await serializedStateManager.fetchSnapshot(undefined);
+				await serializedStateManager.fetchSnapshot(undefined, pending);
 				// wait to get latest snapshot
 				// this time the snapshot should have been refreshed
 				await serializedStateManager.refreshSnapshotP;
@@ -638,7 +636,6 @@ describe("serializedStateManager", () => {
 				};
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					pending,
 					enableOfflineSnapshotRefresh(logger),
 					storageAdapter,
 					true,
@@ -649,7 +646,7 @@ describe("serializedStateManager", () => {
 				const snapshotSequenceNumber = 11;
 				storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-				await serializedStateManager.fetchSnapshot(undefined);
+				await serializedStateManager.fetchSnapshot(undefined, pending);
 				await serializedStateManager.refreshSnapshotP;
 				const state = await serializedStateManager.getPendingLocalState(
 					"clientId",
@@ -670,7 +667,6 @@ describe("serializedStateManager", () => {
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					pending,
 					enableOfflineSnapshotRefresh(logger),
 					storageAdapter,
 					true,
@@ -687,7 +683,7 @@ describe("serializedStateManager", () => {
 				const snapshotSequenceNumber = 30;
 				storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-				await serializedStateManager.fetchSnapshot(undefined);
+				await serializedStateManager.fetchSnapshot(undefined, pending);
 				// latest snapshot fetched but we're still behind the snapshot.
 				// next addProcessedOp calls will be responsible for refreshing
 				await serializedStateManager.refreshSnapshotP;
@@ -741,7 +737,6 @@ describe("serializedStateManager", () => {
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					pending,
 					enableOfflineSnapshotRefresh(logger),
 					storageAdapter,
 					true,
@@ -757,7 +752,7 @@ describe("serializedStateManager", () => {
 				const snapshotSequenceNumber = 7;
 				storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-				await serializedStateManager.fetchSnapshot(undefined);
+				await serializedStateManager.fetchSnapshot(undefined, pending);
 				// latest snapshot fetched but we're still behind the snapshot.
 				await serializedStateManager.refreshSnapshotP;
 				while (seq < lastProcessedOpSequenceNumber) {
@@ -791,7 +786,6 @@ describe("serializedStateManager", () => {
 				};
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					pending,
 					enableOfflineSnapshotRefresh(logger),
 					storageAdapter,
 					true,
@@ -800,7 +794,7 @@ describe("serializedStateManager", () => {
 					() => false,
 				);
 
-				await serializedStateManager.fetchSnapshot(undefined);
+				await serializedStateManager.fetchSnapshot(undefined, pending);
 				await serializedStateManager.refreshSnapshotP;
 
 				const mockRuntime: ISerializedStateManagerRuntime = {
@@ -826,7 +820,6 @@ describe("serializedStateManager", () => {
 				};
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					pending,
 					enableOfflineSnapshotRefresh(logger),
 					storageAdapter,
 					true,
@@ -842,7 +835,7 @@ describe("serializedStateManager", () => {
 				const snapshotSequenceNumber = 5;
 				storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-				await serializedStateManager.fetchSnapshot(undefined);
+				await serializedStateManager.fetchSnapshot(undefined, pending);
 				await serializedStateManager.refreshSnapshotP;
 
 				const mockRuntime: ISerializedStateManagerRuntime = {
@@ -877,7 +870,6 @@ describe("serializedStateManager", () => {
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					pending,
 					enableOfflineSnapshotRefresh(logger),
 					storageAdapter,
 					true,
@@ -893,7 +885,7 @@ describe("serializedStateManager", () => {
 				const snapshotSequenceNumber = 5;
 				storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-				await serializedStateManager.fetchSnapshot(undefined);
+				await serializedStateManager.fetchSnapshot(undefined, pending);
 				await serializedStateManager.refreshSnapshotP;
 				if (isDirty) {
 					saved = true;
@@ -978,7 +970,6 @@ describe("serializedStateManager", () => {
 				let saved = false;
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const serializedStateManager = new SerializedStateManager(
-					undefined,
 					enableOfflineSnapshotRefresh(logger),
 					storageAdapter,
 					true,
@@ -1042,7 +1033,6 @@ describe("serializedStateManager", () => {
 				let saved = false;
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const serializedStateManager = new SerializedStateManager(
-					undefined,
 					enableOfflineSnapshotRefresh(logger),
 					storageAdapter,
 					true,
@@ -1106,7 +1096,6 @@ describe("serializedStateManager", () => {
 				let saved = false;
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const serializedStateManager = new SerializedStateManager(
-					undefined,
 					enableOfflineSnapshotRefresh(logger),
 					storageAdapter,
 					true,
@@ -1116,7 +1105,7 @@ describe("serializedStateManager", () => {
 					snapshotRefreshTimeoutMs,
 				);
 
-				await serializedStateManager.fetchSnapshot(undefined);
+				await serializedStateManager.fetchSnapshot(undefined, undefined);
 				// the snapshot load is deferred, so need to wait for that to
 				// finish before we can track refresh
 				await serializedStateManager.refreshSnapshotP;
@@ -1174,7 +1163,6 @@ describe("serializedStateManager", () => {
 				let saved = false;
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const serializedStateManager = new SerializedStateManager(
-					undefined,
 					enableOfflineSnapshotRefresh(logger),
 					storageAdapter,
 					true,
@@ -1184,7 +1172,7 @@ describe("serializedStateManager", () => {
 					snapshotRefreshTimeoutMs,
 				);
 
-				await serializedStateManager.fetchSnapshot(undefined);
+				await serializedStateManager.fetchSnapshot(undefined, undefined);
 				// the snapshot load is deferred, so need to wait for that to
 				// finish before we can track refresh
 				await serializedStateManager.refreshSnapshotP;
@@ -1248,7 +1236,6 @@ describe("serializedStateManager", () => {
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					pending,
 					enableOfflineSnapshotRefresh(logger),
 					storageAdapter,
 					true,
@@ -1265,7 +1252,7 @@ describe("serializedStateManager", () => {
 				}
 				let snapshotSequenceNumber = 11; // uploading a snapshot too old to be the latest
 				storageAdapter.uploadSummary(snapshotSequenceNumber);
-				await serializedStateManager.fetchSnapshot(undefined);
+				await serializedStateManager.fetchSnapshot(undefined, pending);
 				await serializedStateManager.refreshSnapshotP;
 				if (isDirty) {
 					logger.assertMatchNone([
@@ -1315,7 +1302,6 @@ describe("serializedStateManager", () => {
 				const isDirtyF = (): boolean => (saved ? false : isDirty);
 				const storageAdapter = new MockStorageAdapter();
 				const serializedStateManager = new SerializedStateManager(
-					pending,
 					enableOfflineSnapshotRefresh(logger),
 					storageAdapter,
 					true,
@@ -1333,7 +1319,7 @@ describe("serializedStateManager", () => {
 				let snapshotSequenceNumber = 30;
 				storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-				await serializedStateManager.fetchSnapshot(undefined);
+				await serializedStateManager.fetchSnapshot(undefined, pending);
 				// latest snapshot fetched but we're still behind the snapshot.
 				// next addProcessedOp calls will be responsible for refreshing
 				await serializedStateManager.refreshSnapshotP;
