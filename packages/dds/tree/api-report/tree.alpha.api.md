@@ -33,6 +33,12 @@ export type AllowedTypesFullEvaluated = AllowedTypesFull<readonly AnnotatedAllow
 // @alpha @sealed
 export type AllowedTypesFullFromMixed<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = UnannotateAllowedTypesList<T> & AnnotatedAllowedTypes<AnnotateAllowedTypesList<T>>;
 
+// @alpha @sealed @system
+export type AllowedTypesFullFromMixedUnsafe<T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]> = UnannotateAllowedTypesListUnsafe<T> & AnnotatedAllowedTypes<AnnotateAllowedTypesListUnsafe<T>>;
+
+// @alpha @sealed @system
+export type AllowedTypesFullUnsafe<T extends readonly AnnotatedAllowedTypeUnsafe[] = readonly AnnotatedAllowedTypeUnsafe[]> = AnnotatedAllowedTypes<T> & UnannotateAllowedTypesListUnsafe<T>;
+
 // @alpha @input
 export interface AllowedTypesMetadata {
     readonly custom?: unknown;
@@ -44,6 +50,11 @@ export function allowUnused<T>(t?: T): void;
 // @alpha @system
 export type AnnotateAllowedTypesList<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = {
     [I in keyof T]: T[I] extends AnnotatedAllowedType<unknown> ? T[I] : AnnotatedAllowedType<T[I]>;
+};
+
+// @alpha @sealed @system
+export type AnnotateAllowedTypesListUnsafe<T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]> = {
+    [I in keyof T]: T[I] extends AnnotatedAllowedTypeUnsafe ? T[I] : AnnotatedAllowedTypeUnsafe<T[I]>;
 };
 
 // @alpha @sealed
@@ -59,6 +70,14 @@ export interface AnnotatedAllowedTypes<T = readonly AnnotatedAllowedType[]> exte
     evaluateSet(): ReadonlySet<TreeNodeSchema>;
     readonly metadata: AllowedTypesMetadata;
     readonly types: T;
+}
+
+// @alpha @sealed @system
+export interface AnnotatedAllowedTypesUnsafe extends AnnotatedAllowedTypes<LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>> {
+}
+
+// @alpha @sealed @system
+export interface AnnotatedAllowedTypeUnsafe<T = Unenforced<LazyItem<TreeNodeSchema>>> extends AnnotatedAllowedType<T> {
 }
 
 // @public @system
@@ -292,7 +311,7 @@ export namespace FluidSerializableAsTree {
     export type Data = JsonCompatible<IFluidHandle>;
     const // @system
     _APIExtractorWorkaroundObjectBase: TreeNodeSchemaClass_2<"com.fluidframework.serializable.object", NodeKind_2.Record, TreeRecordNodeUnsafe_2<readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema_2<"string", string>, LeafSchema_2<"number", number>, LeafSchema_2<"boolean", boolean>, LeafSchema_2<"null", null>, LeafSchema_2<"handle", IFluidHandle<unknown>>]> & WithType_2<"com.fluidframework.serializable.object", NodeKind_2.Record, unknown>, {
-    readonly [x: string]: string | number | IFluidHandle<unknown> | System_Unsafe_2.InsertableTypedNodeUnsafe<LeafSchema_2<"boolean", boolean>, LeafSchema_2<"boolean", boolean>> | FluidSerializableObject | Array | null;
+    readonly [x: string]: string | number | IFluidHandle<unknown> | FluidSerializableObject | Array | System_Unsafe_2.InsertableTypedNodeUnsafe<LeafSchema_2<"boolean", boolean>, LeafSchema_2<"boolean", boolean>> | null;
     }, false, readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema_2<"string", string>, LeafSchema_2<"number", number>, LeafSchema_2<"boolean", boolean>, LeafSchema_2<"null", null>, LeafSchema_2<"handle", IFluidHandle<unknown>>], undefined, unknown>;
     // @sealed
     export class FluidSerializableObject extends _APIExtractorWorkaroundObjectBase {
@@ -495,7 +514,7 @@ export namespace JsonAsTree {
     }
     const // @system
     _APIExtractorWorkaroundObjectBase: TreeNodeSchemaClass<"com.fluidframework.json.object", NodeKind.Record, TreeRecordNodeUnsafe<readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array]> & WithType<"com.fluidframework.json.object", NodeKind.Record, unknown>, {
-        readonly [x: string]: string | number | JsonObject | Array | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | null;
+        readonly [x: string]: string | number | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | JsonObject | Array | null;
     }, false, readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array], undefined, unknown>;
     export type Primitive = TreeNodeFromImplicitAllowedTypes<typeof Primitive>;
     // @system
@@ -1613,6 +1632,16 @@ export const typeSchemaSymbol: unique symbol;
 export type UnannotateAllowedTypesList<T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]> = {
     [I in keyof T]: T[I] extends AnnotatedAllowedType<infer X> ? X : T[I];
 };
+
+// @alpha @sealed @system
+export type UnannotateAllowedTypesListUnsafe<T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]> = {
+    readonly [I in keyof T]: T[I] extends {
+        type: infer X;
+    } ? X : T[I];
+};
+
+// @alpha @sealed @system
+export type UnannotateAllowedTypeUnsafe<T extends Unenforced<AnnotatedAllowedTypeUnsafe | LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>>> = T extends AnnotatedAllowedTypeUnsafe<infer X> ? X : T;
 
 // @public
 export type Unenforced<_DesiredExtendsConstraint> = unknown;
