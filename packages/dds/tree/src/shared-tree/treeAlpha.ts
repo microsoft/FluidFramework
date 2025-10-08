@@ -29,8 +29,6 @@ import {
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type UnsafeUnknownSchema,
-	conciseFromCursor,
-	type ConciseTree,
 	applySchemaToParserOptions,
 	cursorFromVerbose,
 	verboseFromCursor,
@@ -56,6 +54,10 @@ import {
 	toUnhydratedSchema,
 	type TreeParsingOptions,
 	type NodeChangedData,
+	type ConciseTree,
+	importConcise,
+	exportConcise,
+	borrowCursorFromTreeNodeOrValue,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
@@ -248,19 +250,7 @@ export interface TreeAlpha {
 	>;
 
 	/**
-	 * Less type safe version of {@link (TreeAlpha:interface).create}, suitable for importing data.
-	 * @remarks
-	 * Due to {@link ConciseTree} relying on type inference from the data, its use is somewhat limited.
-	 * This does not support {@link ConciseTree|ConciseTrees} with customized handle encodings or using persisted keys.
-	 * Use "compressed" or "verbose" formats for more flexibility.
-	 *
-	 * When using this function,
-	 * it is recommend to ensure your schema is unambiguous with {@link ITreeConfigurationOptions.preventAmbiguity}.
-	 * If the schema is ambiguous, consider using {@link (TreeAlpha:interface).create} and {@link Unhydrated} nodes where needed,
-	 * or using {@link (TreeAlpha:interface).(importVerbose:1)} and specify all types.
-	 *
-	 * Documented (and thus recoverable) error handling/reporting for this is not yet implemented,
-	 * but for now most invalid inputs will throw a recoverable error.
+	 * {@inheritDoc (TreeBeta:interface).importConcise}
 	 */
 	importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema
@@ -272,6 +262,23 @@ export interface TreeAlpha {
 			? TreeFieldFromImplicitField<TSchema>
 			: TreeNode | TreeLeafValue | undefined
 	>;
+
+	/**
+	 * {@inheritDoc (TreeBeta:interface).(exportConcise:1)}
+	 * @privateRemarks Note: this was retained on this interface because {@link (TreeAlpha:interface).importConcise} exists.
+	 * It should be removed if/when that is removed from this interface.
+	 */
+	exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
+
+	/**
+	 * {@inheritDoc (TreeBeta:interface).(exportConcise:2)}
+	 * @privateRemarks Note: this was retained on this interface because {@link (TreeAlpha:interface).importConcise} exists.
+	 * It should be removed if/when that is removed from this interface.
+	 */
+	exportConcise(
+		node: TreeNode | TreeLeafValue | undefined,
+		options?: TreeEncodingOptions,
+	): ConciseTree | undefined;
 
 	/**
 	 * Construct tree content compatible with a field defined by the provided `schema`.
@@ -291,24 +298,11 @@ export interface TreeAlpha {
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 	/**
-	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}.
-	 */
-	exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
-
-	/**
-	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}, allowing undefined.
-	 */
-	exportConcise(
-		node: TreeNode | TreeLeafValue | undefined,
-		options?: TreeEncodingOptions,
-	): ConciseTree | undefined;
-
-	/**
 	 * Copy a snapshot of the current version of a TreeNode into a JSON compatible plain old JavaScript Object (except for {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles}).
 	 * Uses the {@link VerboseTree} format, with an explicit type on every node.
 	 *
 	 * @remarks
-	 * There are several cases this may be preferred to {@link (TreeAlpha:interface).(exportConcise:1)}:
+	 * There are several cases this may be preferred to {@link (TreeBeta:interface).(exportConcise:1)}:
 	 *
 	 * 1. When not using {@link ITreeConfigurationOptions.preventAmbiguity} (or when using `useStableFieldKeys`), `exportConcise` can produce ambiguous data (the type may be unclear on some nodes).
 	 * `exportVerbose` will always be unambiguous and thus lossless.
@@ -767,7 +761,7 @@ export const TreeAlpha: TreeAlpha = {
 		>;
 	},
 
-	importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema
 			? ImplicitFieldSchema
 			: TSchema & ImplicitFieldSchema,
@@ -777,11 +771,10 @@ export const TreeAlpha: TreeAlpha = {
 			? TreeFieldFromImplicitField<TSchema>
 			: TreeNode | TreeLeafValue | undefined
 	> {
-		// `importConcise` does not need to support all the formats that `create` does.
-		// Perhaps it should error instead of hydrating nodes for example.
-		// For now however, it is a simple wrapper around `create`.
-		return this.create(schema, data as InsertableField<TSchema>);
+		return importConcise(schema, data);
 	},
+
+	exportConcise,
 
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
@@ -805,8 +798,6 @@ export const TreeAlpha: TreeAlpha = {
 			convertField(normalizeFieldSchema(schema), toUnhydratedSchema),
 		);
 	},
-
-	exportConcise,
 
 	exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree {
 		if (isTreeValue(node)) {
@@ -1019,46 +1010,6 @@ export const TreeAlpha: TreeAlpha = {
 		return result;
 	},
 };
-
-function exportConcise(
-	node: TreeNode | TreeLeafValue,
-	options?: TreeEncodingOptions,
-): ConciseTree;
-
-function exportConcise(
-	node: TreeNode | TreeLeafValue | undefined,
-	options?: TreeEncodingOptions,
-): ConciseTree | undefined;
-
-function exportConcise(
-	node: TreeNode | TreeLeafValue | undefined,
-	options?: TreeEncodingOptions,
-): ConciseTree | undefined {
-	if (!isTreeNode(node)) {
-		return node;
-	}
-	const config: TreeEncodingOptions = { ...options };
-
-	const kernel = getKernel(node);
-	const cursor = borrowCursorFromTreeNodeOrValue(node);
-	return conciseFromCursor(cursor, kernel.context, config);
-}
-
-/**
- * Borrow a cursor from a node.
- * @remarks
- * The cursor must be put back to its original location before the node is used again.
- */
-function borrowCursorFromTreeNodeOrValue(
-	node: TreeNode | TreeLeafValue,
-): ITreeCursorSynchronous {
-	if (isTreeValue(node)) {
-		return cursorFromVerbose(node, {});
-	}
-	const kernel = getKernel(node);
-	const cursor = kernel.getOrCreateInnerNode().borrowCursor();
-	return cursor;
-}
 
 /**
  * Borrow a cursor from a field.
