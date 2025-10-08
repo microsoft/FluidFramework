@@ -70,7 +70,7 @@ export class ContainerStorageAdapter
 	public get loadedGroupIdSnapshots(): Record<string, ISnapshot> {
 		return this._loadedGroupIdSnapshots;
 	}
-	private readonly blobContents: { [id: string]: ArrayBufferLike } = {};
+
 	/**
 	 * An adapter that ensures we're using detachedBlobStorage up until we connect to a real service, and then
 	 * after connecting to a real service augments it with retry and combined summary tree enforcement.
@@ -87,7 +87,7 @@ export class ContainerStorageAdapter
 		/**
 		 * ArrayBufferLikes or utf8 encoded strings, containing blobs from a snapshot
 		 */
-		blobContents: ISerializableBlobContents | undefined = undefined,
+		private readonly blobContents: { [id: string]: ArrayBufferLike | string } = {},
 		private loadingGroupIdSnapshotsFromPendingState:
 			| Record<string, SerializedSnapshotInfo>
 			| undefined,
@@ -95,9 +95,6 @@ export class ContainerStorageAdapter
 		private readonly enableSummarizeProtocolTree: boolean | undefined,
 	) {
 		this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
-		if (blobContents !== undefined) {
-			this.loadSnapshotFromSnapshotBlobs(blobContents);
-		}
 	}
 
 	disposed: boolean = false;
@@ -148,7 +145,7 @@ export class ContainerStorageAdapter
 
 	public loadSnapshotFromSnapshotBlobs(snapshotBlobs: ISerializableBlobContents): void {
 		for (const [id, value] of Object.entries(snapshotBlobs)) {
-			this.blobContents[id] = stringToBuffer(value, "utf8");
+			this.blobContents[id] = value;
 		}
 	}
 
@@ -223,6 +220,10 @@ export class ContainerStorageAdapter
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
 		const maybeBlob = this.blobContents[id];
 		if (maybeBlob !== undefined) {
+			if (typeof maybeBlob === "string") {
+				const blob = stringToBuffer(maybeBlob, "utf8");
+				return blob;
+			}
 			return maybeBlob;
 		}
 		return this._storageService.readBlob(id);
