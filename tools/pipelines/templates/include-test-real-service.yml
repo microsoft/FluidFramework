@@ -80,6 +80,11 @@ parameters:
   type: string
   default: ""
 
+# If provided, this value is passed directly to the "condition" key of the stage in this file.
+- name: condition
+  type: string
+  default: true
+
 - name: loggerPackage
   type: string
   default: '@ff-internal/aria-logger'
