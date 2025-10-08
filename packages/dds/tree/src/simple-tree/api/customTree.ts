@@ -79,7 +79,7 @@ export enum KeyEncodingOptions {
 	 */
 	allStoredKeys = "allStoredKeys",
 	/**
-	 * Use stored keys but do not include {@link ObjectSchemaOptions.allowUnknownOptionalFields|Unknown optional fields}.
+	 * Use stored keys but do not include {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}.
 	 * @remarks
 	 * Supported for import and export.
 	 * For export, this omits unknown optional fields.

@@ -100,9 +100,6 @@ export class SchemaFactoryBeta<
 		);
 	}
 
-	/**
-	 * {@inheritdoc SchemaFactory.objectRecursive}
-	 */
 	public override objectRecursive<
 		const Name extends TName,
 		const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>,
