@@ -151,6 +151,7 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       continueOnError: true
       testCommand: test:realsvc:r11s:docker
+      # Check out the FluidFramework source so we can run the docker service
       checkout: true
       stageVariables:
         - group: container-registry-info
@@ -176,7 +177,7 @@ stages:
           displayName: 'Start routerlicious environment in docker'
           inputs:
             containerregistrytype: 'Container Registry'
-            dockerComposeFile: $(Pipeline.Workspace)/FluidFramework/server/docker-compose.yml
+            dockerComposeFile: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
             action: 'Run a Docker Compose command'
             dockerComposeCommand: 'up -d'
             projectName: 'routerlicious'
@@ -192,7 +193,7 @@ stages:
           condition: always()
           inputs:
             containerregistrytype: 'Container Registry'
-            dockerComposeFile: $(Pipeline.Workspace)/FluidFramework/server/docker-compose.yml
+            dockerComposeFile: $(Build.SourcesDirectory)/FluidFramework/server/docker-compose.yml
             action: 'Run a Docker Compose command'
             dockerComposeCommand: 'down'
             projectName: 'routerlicious'
