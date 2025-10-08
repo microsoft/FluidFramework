@@ -100,10 +100,10 @@ export interface IFluidCodeDetails {
 	 * Configuration details and additional information about the Fluid document.
 	 *
 	 * @remarks
-	 * This is mainly consumer-defined data.
+	 * This is mainly consumer-defined data (e.g. links to a package manager and base CDNs).
 	 * Its contents and semantics (including whether or not this data is present) are completely up to the consumer,
-	 * except for keys starting with "FluidFramework." (e.g. "FluidFramework.CustomSetting1")
-	 * which are reserved by Fluid and should not be used by consumers.
+	 * _except_ for keys starting with "FluidFramework." (e.g. "FluidFramework.CustomSetting1")
+	 * which are reserved by the framework and should not be used by consumers.
 	 * Outside of those reserved keys, Fluid does not interpret this data in any way.
 	 */
 	readonly config?: IFluidCodeDetailsConfig;
