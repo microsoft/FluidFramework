@@ -181,6 +181,7 @@ stages:
         # Setup
         - checkout: ff_pipeline_host
           clean: true
+          path: $(Build.SourcesDirectory)
 
         - ${{ if ne(parameters.checkout, '') }}:
           # Checks out FluidFramework repo
