@@ -222,6 +222,46 @@ stages:
                 sudo cp cert.crt /usr/local/share/ca-certificates/
                 sudo update-ca-certificates
 
+        # Print parameters/Vars
+        # Variables declared outside this template will only work with "macro syntax": $(name).
+        # Variables declared inside this template also work with "template expression syntax": ${{ variables.name }}.
+        - task: Bash@3
+          displayName: Print Parameters and Variables
+          inputs:
+            targetType: 'inline'
+            script: |
+              set -eu -o pipefail
+
+              # Show all task group conditions
+
+              echo "
+              Pipeline Parameters:
+                poolBuild=${{ parameters.poolBuild }}
+                testPackage=${{ parameters.testPackage }}
+                runAgainstDocker=${{ parameters.runAgainstDocker }}
+
+              Pipeline Variables:
+                isTestBranch=${{ variables.isTestBranch }}
+                testWorkspace=${{ parameters.testWorkspace }}
+                testPackageFilePattern=${{ variables.testPackageFilePattern }}
+                testCommand=${{ parameters.testCommand }}
+                continueOnError=${{ parameters.continueOnError }}
+                variant.flag=${{ variant.flags }}
+                testFileTarName=${{ parameters.testFileTarName }}
+                artifactPipeline=${{ variables.artifactPipeline }}
+                artifactBuildId=${{ parameters.artifactBuildId }}
+              "
+
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+          parameters:
+            buildDirectory: ${{ variables.pipelineHostPath }}
+
+        - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
+
+        - ${{ parameters.preSteps }}
+
         # Set up Docker environment if running against docker
         - ${{ if eq(parameters.runAgainstDocker, true) }}:
           # Checks out FluidFramework repo
@@ -246,45 +286,6 @@ stages:
               HISTORIAN_IMAGE_TAG: ${{ parameters.historianImageTag }}
               GITREST_IMAGE_TAG: ${{ parameters.gitrestImageTag }}
               GITSSH_IMAGE_TAG: ${{ parameters.gitsshImageTag }}
-
-        # Print parameters/Vars
-        # Variables declared outside this template will only work with "macro syntax": $(name).
-        # Variables declared inside this template also work with "template expression syntax": ${{ variables.name }}.
-        - task: Bash@3
-          displayName: Print Parameters and Variables
-          inputs:
-            targetType: 'inline'
-            script: |
-              set -eu -o pipefail
-
-              # Show all task group conditions
-
-              echo "
-              Pipeline Parameters:
-                poolBuild=${{ parameters.poolBuild }}
-                testPackage=${{ parameters.testPackage }}
-
-              Pipeline Variables:
-                isTestBranch=${{ variables.isTestBranch }}
-                testWorkspace=${{ parameters.testWorkspace }}
-                testPackageFilePattern=${{ variables.testPackageFilePattern }}
-                testCommand=${{ parameters.testCommand }}
-                continueOnError=${{ parameters.continueOnError }}
-                variant.flag=${{ variant.flags }}
-                testFileTarName=${{ parameters.testFileTarName }}
-                artifactPipeline=${{ variables.artifactPipeline }}
-                artifactBuildId=${{ parameters.artifactBuildId }}
-              "
-
-        - template: /tools/pipelines/templates/include-use-node-version.yml@self
-
-        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
-          parameters:
-            buildDirectory: ${{ variables.pipelineHostPath }}
-
-        - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
-
-        - ${{ parameters.preSteps }}
 
         - task: Bash@3
           displayName: Install base dependencies
