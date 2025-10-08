@@ -9,7 +9,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	loadSummarizerContainerAndMakeSummary,
-	type ILoadExistingContainerProps,
+	type ILoadSummarizerContainerProps,
 	type LoadSummarizerSummaryResult,
 } from "@fluidframework/container-loader/internal";
 import { ISummaryConfigurationWithSummaryOnRequest } from "@fluidframework/container-runtime/internal";
@@ -41,7 +41,7 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		fluidDataObjectType: DataObjectFactoryType.Test,
 	};
 
-	async function buildLoadProps(): Promise<ILoadExistingContainerProps> {
+	async function buildLoadProps(): Promise<ILoadSummarizerContainerProps> {
 		const container = await provider.makeTestContainer(testContainerConfig);
 		const entry = (await container.getEntryPoint()) as ITestFluidObject;
 		assert(entry !== undefined, "entry point must resolve");

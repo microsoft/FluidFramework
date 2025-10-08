@@ -113,6 +113,9 @@ export interface ILoadFrozenContainerFromPendingStateProps {
     readonly urlResolver: IUrlResolver;
 }
 
+// @alpha @legacy
+export type ILoadSummarizerContainerProps = Omit<ILoadExistingContainerProps, "pendingLocalState">;
+
 // @beta @legacy
 export interface IParsedUrl {
     id: string;
@@ -184,7 +187,7 @@ export function loadExistingContainer(loadExistingContainerProps: ILoadExistingC
 export function loadFrozenContainerFromPendingState(props: ILoadFrozenContainerFromPendingStateProps): Promise<IContainer>;
 
 // @alpha @legacy
-export function loadSummarizerContainerAndMakeSummary(loadExistingContainerProps: ILoadExistingContainerProps): Promise<LoadSummarizerSummaryResult>;
+export function loadSummarizerContainerAndMakeSummary(loadExistingContainerProps: ILoadSummarizerContainerProps): Promise<LoadSummarizerSummaryResult>;
 
 // @alpha @legacy
 export type LoadSummarizerSummaryResult = {

@@ -139,6 +139,15 @@ export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProp
 }
 
 /**
+ * Props used to load summarizer container.
+ * @legacy @alpha
+ */
+export type ILoadSummarizerContainerProps = Omit<
+	ILoadExistingContainerProps,
+	"pendingLocalState"
+>;
+
+/**
  * Props used to create a detached container.
  * @legacy @beta
  */
@@ -282,7 +291,7 @@ export async function loadFrozenContainerFromPendingState(
  * @legacy @alpha
  */
 export async function loadSummarizerContainerAndMakeSummary(
-	loadExistingContainerProps: ILoadExistingContainerProps,
+	loadExistingContainerProps: ILoadSummarizerContainerProps,
 ): Promise<LoadSummarizerSummaryResult> {
 	const { logger, configProvider, request: originalRequest } = loadExistingContainerProps;
 	const telemetryProps = {
