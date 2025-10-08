@@ -5,7 +5,7 @@
 ---
 MinimumVersionForCollab is now used in place of tree's alpha FluidClientVersion
 
-FluidClientVersion is no longer used as the declaration type for versions in APIs/codecs (for example, `oldestCompatibleClient`).
+`FluidClientVersion` is no longer used as the type for Fluid Client versions in APIs/codecs (for example, `oldestCompatibleClient`).
 Additionally, FluidClientVersion is now a const object with members that declare specific MinimumVersionForCollab versions.
 These are intended to be used with APIs that require a version (such as `TreeAlpha.exportCompressed`).
 
