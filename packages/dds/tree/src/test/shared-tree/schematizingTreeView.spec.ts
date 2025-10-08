@@ -25,6 +25,7 @@ import {
 	getKernel,
 	toInitialSchema,
 	toUpgradeSchema,
+	SchemaFactoryBeta,
 } from "../../simple-tree/index.js";
 import {
 	checkoutWithContent,
@@ -324,13 +325,13 @@ describe("SchematizingSimpleTreeView", () => {
 		// This sort of scenario might be reasonably encountered when an "older" version of an application opens
 		// up a document that has been created and/or edited by a "newer" version of an application (which has
 		// expanded the schema to include more information).
-		const factory = new SchemaFactoryAlpha(undefined);
-		class PersonGeneralized extends factory.objectAlpha("Person", {
+		const factory = new SchemaFactoryBeta(undefined);
+		class PersonGeneralized extends factory.object("Person", {
 			name: factory.string,
 			age: factory.number,
 			address: factory.optional(factory.string),
 		}) {}
-		class PersonSpecific extends factory.objectAlpha(
+		class PersonSpecific extends factory.object(
 			"Person",
 			{
 				name: factory.string,
@@ -387,14 +388,14 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("Calling moveToEnd on a more specific schema preserves a node's optional fields that were unknown to that schema", () => {
-		const factorySpecific = new SchemaFactoryAlpha(undefined);
-		const factoryGeneral = new SchemaFactoryAlpha(undefined);
-		class PersonGeneralized extends factorySpecific.objectAlpha("Person", {
+		const factorySpecific = new SchemaFactoryBeta(undefined);
+		const factoryGeneral = new SchemaFactoryBeta(undefined);
+		class PersonGeneralized extends factorySpecific.object("Person", {
 			name: factoryGeneral.string,
 			age: factoryGeneral.number,
 			address: factoryGeneral.optional(factoryGeneral.string),
 		}) {}
-		class PersonSpecific extends factorySpecific.objectAlpha(
+		class PersonSpecific extends factorySpecific.object(
 			"Person",
 			{
 				name: factorySpecific.string,
