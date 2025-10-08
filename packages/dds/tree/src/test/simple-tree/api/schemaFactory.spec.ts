@@ -384,7 +384,7 @@ describe("schemaFactory", () => {
 		});
 
 		it("Node schema metadata", () => {
-			const factory = new SchemaFactoryAlpha("");
+			const factory = new SchemaFactoryBeta("");
 
 			const fooMetadata = {
 				description: "An object called Foo",
@@ -393,7 +393,7 @@ describe("schemaFactory", () => {
 				},
 			};
 
-			class Foo extends factory.objectAlpha(
+			class Foo extends factory.object(
 				"Foo",
 				{ bar: factory.number },
 				{ metadata: fooMetadata },

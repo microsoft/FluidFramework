@@ -28,7 +28,8 @@ export { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 export {
 	SchemaFactory,
 	type ScopedSchemaName,
-	type SchemaFactoryObjectOptions,
+	type ObjectSchemaOptionsAlpha,
+	type ObjectSchemaOptions,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
 	type SchemaFactory_base,
@@ -118,7 +119,14 @@ export {
 	replaceConciseTreeHandles,
 } from "./conciseTree.js";
 
-export { TreeBeta, type NodeChangedData, type TreeChangeEventsBeta } from "./treeBeta.js";
+export {
+	borrowCursorFromTreeNodeOrValue,
+	exportConcise,
+	importConcise,
+	type NodeChangedData,
+	TreeBeta,
+	type TreeChangeEventsBeta,
+} from "./treeBeta.js";
 export { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
 export {
 	createIdentifierIndex,

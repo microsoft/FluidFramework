@@ -147,10 +147,10 @@ describe("SchemaCompatibilityTester", () => {
 
 			// Add allowed types to object node
 			it("view: FlexibleObject ⊃ stored: StricterObject", () => {
-				class StricterObject extends factory.objectAlpha("TestNode", {
+				class StricterObject extends factory.object("TestNode", {
 					x: factory.number,
 				}) {}
-				class FlexibleObject extends factory.objectAlpha("TestNode", {
+				class FlexibleObject extends factory.object("TestNode", {
 					x: [factory.number, factory.string],
 				}) {}
 				expectCompatibility(
@@ -160,11 +160,11 @@ describe("SchemaCompatibilityTester", () => {
 			});
 			// Add optional field to existing schema
 			it("view: optional 3d Point ⊃ stored: 2d Point", () => {
-				class Point2D extends factory.objectAlpha("Point", {
+				class Point2D extends factory.object("Point", {
 					x: factory.number,
 					y: factory.number,
 				}) {}
-				class Point3D extends factory.objectAlpha("Point", {
+				class Point3D extends factory.object("Point", {
 					x: factory.number,
 					y: factory.number,
 					z: factory.optional(factory.number),
@@ -302,7 +302,7 @@ describe("SchemaCompatibilityTester", () => {
 
 		describe("allows viewing but not upgrading when the view schema has opted into allowing the differences", () => {
 			it("due to additional optional fields in the stored schema", () => {
-				class Point2D extends factory.objectAlpha(
+				class Point2D extends factory.object(
 					"Point",
 					{
 						x: factory.number,
@@ -310,7 +310,7 @@ describe("SchemaCompatibilityTester", () => {
 					},
 					{ allowUnknownOptionalFields: true },
 				) {}
-				class Point3D extends factory.objectAlpha("Point", {
+				class Point3D extends factory.object("Point", {
 					x: factory.number,
 					y: factory.number,
 					z: factory.optional(factory.number),
@@ -341,7 +341,7 @@ describe("SchemaCompatibilityTester", () => {
 					});
 
 					it("in an object", () => {
-						class IncompatibleObject1 extends factory.objectAlpha("TestNode", {
+						class IncompatibleObject1 extends factory.object("TestNode", {
 							x: factory.number,
 						}) {}
 						class IncompatibleObject2 extends factory.objectRecursive("TestNode", {
@@ -373,11 +373,11 @@ describe("SchemaCompatibilityTester", () => {
 				});
 
 				it("view: 2d Point vs stored: required 3d Point", () => {
-					class Point2D extends factory.objectAlpha("Point", {
+					class Point2D extends factory.object("Point", {
 						x: factory.number,
 						y: factory.number,
 					}) {}
-					class Point3D extends factory.objectAlpha("Point", {
+					class Point3D extends factory.object("Point", {
 						x: factory.number,
 						y: factory.number,
 						z: factory.number,
@@ -467,11 +467,11 @@ describe("SchemaCompatibilityTester", () => {
 
 		describe("with staged allowed types", () => {
 			it("adding a staged allowed type does not break compatibility", () => {
-				class Compatible1 extends factory.objectAlpha("MyType", {
+				class Compatible1 extends factory.object("MyType", {
 					foo: SchemaFactoryAlpha.number,
 				}) {}
 
-				class Compatible2 extends factory.objectAlpha("MyType", {
+				class Compatible2 extends factory.object("MyType", {
 					foo: SchemaFactoryAlpha.types([
 						SchemaFactoryAlpha.number,
 						SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
@@ -485,14 +485,14 @@ describe("SchemaCompatibilityTester", () => {
 			});
 
 			it("can upgrade from staged to allowed", () => {
-				class Compatible1 extends factory.objectAlpha("MyType", {
+				class Compatible1 extends factory.object("MyType", {
 					foo: SchemaFactoryAlpha.types([
 						SchemaFactoryAlpha.number,
 						SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
 					]),
 				}) {}
 
-				class Compatible2 extends factory.objectAlpha("MyType", {
+				class Compatible2 extends factory.object("MyType", {
 					foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.string],
 				}) {}
 
@@ -503,14 +503,14 @@ describe("SchemaCompatibilityTester", () => {
 			});
 
 			it("clients with staged schema allow viewing but not upgrading after upgrade", () => {
-				class Compatible1 extends factory.objectAlpha("MyType", {
+				class Compatible1 extends factory.object("MyType", {
 					foo: SchemaFactoryAlpha.types([
 						SchemaFactoryAlpha.number,
 						SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
 					]),
 				}) {}
 
-				class Compatible2 extends factory.objectAlpha("MyType", {
+				class Compatible2 extends factory.object("MyType", {
 					foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.string],
 				}) {}
 
@@ -521,14 +521,14 @@ describe("SchemaCompatibilityTester", () => {
 			});
 
 			it("staged schema which mismatches stored can not view", () => {
-				class Compatible1 extends factory.objectAlpha("MyType", {
+				class Compatible1 extends factory.object("MyType", {
 					foo: SchemaFactoryAlpha.types([
 						SchemaFactoryAlpha.number,
 						SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
 					]),
 				}) {}
 
-				class Compatible2 extends factory.objectAlpha("MyType", {
+				class Compatible2 extends factory.object("MyType", {
 					foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.null],
 				}) {}
 
@@ -539,22 +539,22 @@ describe("SchemaCompatibilityTester", () => {
 			});
 
 			it("staged schema which deeply mismatches stored can not view", () => {
-				class Deep1 extends factory.objectAlpha("Deep", {
+				class Deep1 extends factory.object("Deep", {
 					foo: SchemaFactoryAlpha.number,
 				}) {}
 
-				class Deep2 extends factory.objectAlpha("Deep", {
+				class Deep2 extends factory.object("Deep", {
 					bar: SchemaFactoryAlpha.number,
 				}) {}
 
-				class Compatible1 extends factory.objectAlpha("MyType", {
+				class Compatible1 extends factory.object("MyType", {
 					foo: SchemaFactoryAlpha.types([
 						SchemaFactoryAlpha.number,
 						SchemaFactoryAlpha.staged(Deep1),
 					]),
 				}) {}
 
-				class Compatible2 extends factory.objectAlpha("MyType", {
+				class Compatible2 extends factory.object("MyType", {
 					foo: [SchemaFactoryAlpha.number, Deep2],
 				}) {}
 
