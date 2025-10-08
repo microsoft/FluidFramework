@@ -184,7 +184,7 @@ stages:
 
         - ${{ if eq(parameters.checkout, true) }}:
           - checkout: self
-            path: FluidFramework
+            path: '$(Build.SourcesDirectory)/FluidFramework'
             clean: true
 
         # Install self-signed cert for R11s deployment in local cert store
