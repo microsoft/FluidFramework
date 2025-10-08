@@ -919,6 +919,9 @@ export class BlobManager {
 					localBlobRecord.state === "attaching",
 				"Pending blob must be in uploading, uploaded, or attaching state",
 			);
+			// We treat blobs in both uploaded and attaching state as just being uploaded, to distrust
+			// whether we expect to see any ack for a BlobAttach op. We just remain prepared to handle
+			// a BlobAttach op for it if we do see one after loading from pending state.
 			pendingBlobs[localId] =
 				localBlobRecord.state === "uploading"
 					? {
