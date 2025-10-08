@@ -80,10 +80,6 @@ parameters:
   type: string
   default: ""
 
-- name: condition
-  type: string
-  default: true
-
 - name: loggerPackage
   type: string
   default: '@ff-internal/aria-logger'
@@ -97,12 +93,6 @@ parameters:
 - name: skipTestResultPublishing
   type: boolean
   default: false
-
-# Custom steps specified by the "caller" of this template, for any additional things that need to be done
-# after the steps in this template complete.
-- name: additionalSteps
-  type: stepList
-  default: []
 
 # If true, the versions of our packages installed for compat testing will be cached.
 - name: cacheCompatVersionsInstalls
@@ -125,10 +115,6 @@ parameters:
   values:
     - none
     - sequential
-
-- name: preSteps
-  type: stepList
-  default: []
 
 # if true, the FluidFramework repo will be checked out and a docker-compose env will be spun up for testing
 - name: runAgainstDocker
@@ -250,6 +236,7 @@ stages:
                 testFileTarName=${{ parameters.testFileTarName }}
                 artifactPipeline=${{ variables.artifactPipeline }}
                 artifactBuildId=${{ parameters.artifactBuildId }}
+                pipelineHostPath=${{ variables.pipelineHostPath }}
               "
 
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
@@ -259,8 +246,6 @@ stages:
             buildDirectory: ${{ variables.pipelineHostPath }}
 
         - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
-
-        - ${{ parameters.preSteps }}
 
         # Set up Docker environment if running against docker
         - ${{ if eq(parameters.runAgainstDocker, true) }}:
@@ -566,8 +551,6 @@ stages:
               dockerComposeCommand: 'down'
               projectName: 'routerlicious'
 
-        - ${{ parameters.additionalSteps }}
-
         - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
 
 - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
@@ -575,4 +558,4 @@ stages:
     stageId: ${{ parameters.stageId }}
     uploadTestPassRateTelemetry: ${{ parameters.uploadTestPassRateTelemetry }}
     pipelineIdentifierForTelemetry: ${{ parameters.pipelineIdentifierForTelemetry }}
-    testWorkspace: ${{ variables['Build.SourcesDirectory'] }}
+    testWorkspace: $(Build.SourcesDirectory)
