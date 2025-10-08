@@ -24,6 +24,7 @@ import type {
 	SemanticAgentOptions,
 	Logger,
 } from "./api.js";
+import { findInvocableFunctionName, stripExportSyntax } from "./functionParsing.js";
 import { getPrompt, stringifyTree } from "./prompt.js";
 import { Subtree } from "./subtree.js";
 import {
@@ -32,7 +33,6 @@ import {
 	llmDefault,
 	type TreeView,
 	findNamedSchemas,
-	fail,
 } from "./utils.js";
 
 /**
@@ -52,7 +52,6 @@ const paramsName = "params";
  * @alpha @sealed
  */
 export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
-	public static editFunctionName = "editTree";
 	// Converted from ECMAScript private fields (#name) to TypeScript private members for easier debugger inspection.
 	private readonly outerTree: Subtree<TSchema>;
 	/**
@@ -63,7 +62,7 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 	public constructor(
 		private readonly client: SharedTreeChatModel,
 		tree: TreeView<TSchema> | (ReadableField<TSchema> & TreeNode),
-		private readonly options?: Readonly<SemanticAgentOptions<TSchema>>,
+		private readonly options?: Readonly<SemanticAgentOptions>,
 	) {
 		if (tree instanceof TreeNode) {
 			Tree.on(tree, "treeChanged", () => (this.outerTreeIsDirty = true));
@@ -75,7 +74,6 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 		const prompt = getPrompt({
 			subtree: this.outerTree,
 			editToolName: this.client.editToolName,
-			editFunctionName: this.client.editFunctionName,
 			domainHints: this.options?.domainHints,
 		});
 		this.options?.logger?.log(`# Fluid Framework SharedTree AI Agent Log\n\n`);
@@ -124,9 +122,9 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 		let active = true;
 		let editCount = 0;
 		let editFailed = false;
-		const { editFunctionName } = this.client;
+		const { editToolName } = this.client;
 		const edit = async (js: string): Promise<EditResult> => {
-			if (editFunctionName === undefined) {
+			if (editToolName === undefined) {
 				return {
 					type: "disabledError",
 					message: "Editing is not enabled for this model.",
@@ -150,7 +148,6 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 			const editResult = await applyTreeFunction(
 				queryTree,
 				js,
-				editFunctionName ?? fail("Expected edit function name to be defined"),
 				this.options?.validator,
 				this.options?.logger,
 			);
@@ -212,9 +209,8 @@ function constructTreeNode(schema: TreeNodeSchema, value: FactoryContentObject):
 async function applyTreeFunction<TSchema extends ImplicitFieldSchema>(
 	tree: Subtree<TSchema>,
 	fn: string | EditFunction<TSchema>,
-	editFunctionName: string,
 	validator: ((js: string) => boolean) | undefined,
-	logger: Logger<ReadableField<TSchema>> | undefined,
+	logger: Logger | undefined,
 ): Promise<EditResult> {
 	logger?.log(`### Editing Tool Invoked\n\n`);
 	logger?.log(`#### Generated Code\n\n\`\`\`javascript\n${fn}\n\`\`\`\n\n`);
@@ -249,7 +245,7 @@ async function applyTreeFunction<TSchema extends ImplicitFieldSchema>(
 	let editFunction: EditFunction<TSchema>;
 	if (typeof fn === "string") {
 		try {
-			editFunction = processLlmCode(fn, editFunctionName);
+			editFunction = processLlmCode(fn);
 		} catch (error) {
 			logger?.log(`#### Error\n\n`);
 			const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
@@ -279,11 +275,7 @@ async function applyTreeFunction<TSchema extends ImplicitFieldSchema>(
 
 	tree.branch.merge(editTree.branch);
 	logger?.log(`#### New Tree State\n\n`);
-	logger?.log(
-		`${
-			logger?.treeToString?.(tree.field) ?? `\`\`\`JSON\n${stringifyTree(tree.field)}\n\`\`\``
-		}\n\n`,
-	);
+	logger?.log(`${`\`\`\`JSON\n${stringifyTree(tree.field)}\n\`\`\``}\n\n`);
 	return {
 		type: "success",
 		message: `After running the function, the new state of the tree is:\n\n\`\`\`JSON\n${stringifyTree(tree.field)}\n\`\`\``,
@@ -292,18 +284,18 @@ async function applyTreeFunction<TSchema extends ImplicitFieldSchema>(
 
 function processLlmCode<TSchema extends ImplicitFieldSchema>(
 	code: string,
-	editFunctionName: string,
 ): EditFunction<TSchema> {
-	// TODO: use a library like Acorn to analyze the code more robustly
-	const regex = new RegExp(`function\\s+${editFunctionName}\\s*\\(`);
-	if (!regex.test(code)) {
-		throw new Error(
-			`Generated code does not contain a function named \`${editFunctionName}\``,
-		);
+	const functionName = findInvocableFunctionName(code);
+	if (functionName === undefined) {
+		throw new Error("Generated code does not contain an invokable function");
 	}
 
-	const executionCode = `${code}\n\n${editFunctionName}(${paramsName});`;
+	const executionCode = `${stripExportSyntax(code)}\n\nreturn ${functionName}(${paramsName});`;
 	// eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
 	const fn = new Function(paramsName, executionCode);
 	return fn as EditFunction<TSchema>;
 }
+
+/**
+ * Finds the name of the first invocable function in the given code.
+ */

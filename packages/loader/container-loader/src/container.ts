@@ -159,8 +159,9 @@ import {
 	getDetachedContainerStateFromSerializedContainer,
 	getDocumentAttributes,
 	getProtocolSnapshotTree,
-	getSnapshotTreeAndBlobsFromSerializedContainer,
+	getISnapshotFromSerializedContainer,
 	runSingle,
+	convertISnapshotToSnapshotWithBlobs,
 } from "./utils.js";
 
 const detachedContainerRefSeqNumber = 0;
@@ -1127,6 +1128,7 @@ export class Container
 				this._protocolHandler?.close();
 
 				this.connectionStateHandler.dispose();
+				this.serializedStateManager.dispose();
 			} catch (newError) {
 				this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, newError);
 			}
@@ -1173,6 +1175,7 @@ export class Container
 				this._protocolHandler?.close();
 
 				this.connectionStateHandler.dispose();
+				this.serializedStateManager.dispose();
 
 				const maybeError = error === undefined ? undefined : new Error(error.message);
 				this._runtime?.dispose(maybeError);
@@ -1251,16 +1254,14 @@ export class Container
 				this.captureProtocolSummary(),
 			);
 
-		const { baseSnapshot, snapshotBlobs } =
-			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
+		const snapshot = getISnapshotFromSerializedContainer(combinedSummary);
 		const pendingRuntimeState =
 			attachingData === undefined ? undefined : this.runtime.getPendingLocalState();
 		assert(!isPromiseLike(pendingRuntimeState), 0x8e3 /* should not be a promise */);
 
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			baseSnapshot,
-			snapshotBlobs,
+			...convertISnapshotToSnapshotWithBlobs(snapshot),
 			pendingRuntimeState,
 			hasAttachmentBlobs:
 				this.detachedBlobStorage !== undefined && this.detachedBlobStorage.size > 0,
@@ -1352,7 +1353,6 @@ export class Container
 
 					let attachP = runRetriableAttachProcess({
 						initialAttachmentData: this.attachmentData,
-						offlineLoadEnabled: this.serializedStateManager.offlineLoadEnabled,
 						detachedBlobStorage: this.detachedBlobStorage,
 						setAttachmentData,
 						createAttachmentSummary,
