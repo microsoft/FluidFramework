@@ -225,7 +225,6 @@ export {
 	ObjectNodeSchema,
 	type ObjectNodeSchemaPrivate,
 	isObjectNodeSchema,
-	type InsertableObjectFromAnnotatedSchemaRecord,
 	type TreeObjectNode,
 	setField,
 	isRecordNodeSchema,

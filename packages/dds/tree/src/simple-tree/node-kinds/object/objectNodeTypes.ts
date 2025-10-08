@@ -7,7 +7,7 @@ import type { RestrictiveStringRecord } from "../../../util/index.js";
 import type {
 	TreeObjectNode,
 	SimpleKeyMap,
-	InsertableObjectFromAnnotatedSchemaRecord,
+	InsertableObjectFromSchemaRecord,
 } from "./objectNode.js";
 import type { FieldSchemaAlpha, ImplicitFieldSchema } from "../../fieldSchema.js";
 import {
@@ -34,7 +34,7 @@ export interface ObjectNodeSchema<
 			TName,
 			NodeKind.Object,
 			TreeObjectNode<T, TName>,
-			InsertableObjectFromAnnotatedSchemaRecord<T>,
+			InsertableObjectFromSchemaRecord<T>,
 			ImplicitlyConstructable,
 			T,
 			never,

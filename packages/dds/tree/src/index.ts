@@ -168,7 +168,6 @@ export {
 	type AllowedTypesFullEvaluated,
 	type AllowedTypeMetadata,
 	type AllowedTypesMetadata,
-	type InsertableObjectFromAnnotatedSchemaRecord,
 	type UnannotateAllowedTypesList,
 	type SchemaStaticsAlpha,
 	type AnnotateAllowedTypesList,

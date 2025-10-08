@@ -5,7 +5,6 @@
 
 export {
 	type FieldHasDefault,
-	type InsertableObjectFromAnnotatedSchemaRecord,
 	type InsertableObjectFromSchemaRecord,
 	type ObjectFromSchemaRecord,
 	objectSchema,

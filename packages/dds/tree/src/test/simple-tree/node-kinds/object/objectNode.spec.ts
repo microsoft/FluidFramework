@@ -33,7 +33,6 @@ import {
 import type {
 	FieldHasDefault,
 	InsertableObjectFromSchemaRecord,
-	InsertableObjectFromAnnotatedSchemaRecord,
 	ObjectFromSchemaRecord,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../simple-tree/node-kinds/object/objectNode.js";
@@ -96,39 +95,6 @@ const schemaFactory = new SchemaFactory("Test");
 	{
 		// eslint-disable-next-line @typescript-eslint/ban-types
 		type result = InsertableObjectFromSchemaRecord<{}>;
-		type _check = requireAssignableTo<result, Record<string, never>>;
-	}
-}
-
-// InsertableObjectFromAnnotatedSchemaRecord
-{
-	const schemaFactoryAlpha = new SchemaFactoryAlpha("Test");
-	class Note extends schemaFactoryAlpha.objectAlpha("Note", {}) {}
-
-	// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-	type Info = {
-		readonly stuff: readonly [typeof Note];
-	};
-
-	type Desired = InsertableTypedNode<typeof Note>;
-
-	{
-		type result = InsertableObjectFromAnnotatedSchemaRecord<Info>["stuff"];
-		type _check = requireTrue<areSafelyAssignable<result, Desired>>;
-	}
-
-	// Generic case
-	{
-		type result = InsertableObjectFromAnnotatedSchemaRecord<
-			RestrictiveStringRecord<ImplicitFieldSchema>
-		>;
-		type _check = requireAssignableTo<result, never>;
-	}
-
-	// Empty case
-	{
-		// eslint-disable-next-line @typescript-eslint/ban-types
-		type result = InsertableObjectFromAnnotatedSchemaRecord<{}>;
 		type _check = requireAssignableTo<result, Record<string, never>>;
 	}
 }
