@@ -642,7 +642,7 @@ export const MapNodeSchema: {
 };
 
 // @public @system
-type NodeBuilderData<T extends TreeNodeSchemaCore> = T extends TreeNodeSchemaCore<string, NodeKind, boolean, unknown, infer TBuild> ? TBuild : never;
+type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> = T extends TreeNodeSchemaCore<string, NodeKind, boolean, unknown, infer TBuild> ? TBuild : never;
 
 // @beta @sealed
 export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
@@ -1495,7 +1495,7 @@ export type TreeNodeSchemaClass<Name extends string = string, Kind extends NodeK
 });
 
 // @public @sealed
-export interface TreeNodeSchemaCore<out Name extends string = string, out Kind extends NodeKind = NodeKind, out ImplicitlyConstructable extends boolean = boolean, out Info = unknown, out TInsertable = never, out TCustomMetadata = unknown> extends SimpleNodeSchemaBase<Kind, TCustomMetadata> {
+export interface TreeNodeSchemaCore<out Name extends string, out Kind extends NodeKind, out ImplicitlyConstructable extends boolean, out Info = unknown, out TInsertable = never, out TCustomMetadata = unknown> extends SimpleNodeSchemaBase<Kind, TCustomMetadata> {
     // @system
     readonly childTypes: ReadonlySet<TreeNodeSchema>;
     // @sealed @system

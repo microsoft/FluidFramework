@@ -23,7 +23,6 @@ import {
 	type InsertableTypedNode,
 	type NodeFromSchema,
 	type TreeNodeSchema,
-	type TreeNodeSchemaCore,
 } from "./treeNodeSchema.js";
 import { schemaAsTreeNodeValid } from "./treeNodeValid.js";
 
@@ -585,7 +584,7 @@ export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>)
  * Throws a UsageError if the provided schema is undefined, most likely due to being used before it was initialized.
  */
 export function checkForUninitializedSchema(
-	schema: ImplicitAllowedTypes | LazyItem<TreeNodeSchemaCore> | AnnotatedAllowedType,
+	schema: ImplicitAllowedTypes | LazyItem<TreeNodeSchema> | AnnotatedAllowedType,
 ): void {
 	if (schema === undefined) {
 		throw new UsageError(
@@ -615,7 +614,7 @@ export function checkForUninitializedSchema(
  * pass in a base class of a schema instead of the most derived one.
  */
 export function markSchemaMostDerived(
-	schema: TreeNodeSchemaCore,
+	schema: TreeNodeSchema,
 	oneTimeInitialize = false,
 ): void {
 	// Leaf schema are not classes, and thus do not need to be marked as most derived.

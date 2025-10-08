@@ -229,7 +229,7 @@ export interface MostDerivedData {
  * Cast `schema` to a {@link TreeNodeValid}, asserting it actually extends it.
  */
 export function schemaAsTreeNodeValid(
-	schema: TreeNodeSchemaCore,
+	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
 ): typeof TreeNodeValid & TreeNodeSchema {
 	if (!isClassBasedSchema(schema)) {
 		// Use JSON.stringify to quote and escape identifier string.
@@ -258,7 +258,7 @@ export function isClassBasedSchema(
  * Such schema must extends {@link TreeNodeValid}.
  */
 export function createTreeNodeSchemaPrivateData(
-	schema: TreeNodeSchemaCore,
+	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
 	childAnnotatedAllowedTypes: readonly ImplicitAllowedTypes[],
 	toStored: TreeNodeSchemaPrivateData["toStored"],
 ): TreeNodeSchemaPrivateData {
