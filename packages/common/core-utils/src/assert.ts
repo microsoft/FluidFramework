@@ -63,8 +63,8 @@ export function fail(message: string | number, debugMessageBuilder?: () => strin
 		if (debugMessageBuilder !== undefined) {
 			messageString = `${messageString}\nDebug Message: ${debugMessageBuilder()}`;
 		}
-		// Using console.warn instead of console.error since the latter currently breaks Loop/Pages integration.
-		console.warn(`Bug in Fluid Framework: Failed Assertion: ${messageString}`);
+		// Using console.log instead of console.error or console.warn since the latter two currently break Loop/Pages integration.
+		console.log(`Bug in Fluid Framework: Failed Assertion: ${messageString}`);
 	});
 	const error = new Error(messageString);
 	onAssertionError(error);
