@@ -182,7 +182,7 @@ stages:
         - checkout: ff_pipeline_host
           clean: true
 
-        - ${{ if eq(parameters.checkout, true) }}:
+        - ${{ if ne(parameters.checkout, '') }}:
           # Checks out FluidFramework repo
           - checkout: self
             clean: true
