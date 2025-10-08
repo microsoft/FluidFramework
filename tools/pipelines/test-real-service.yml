@@ -151,7 +151,7 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       continueOnError: true
       testCommand: test:realsvc:r11s:docker
-      checkout: $(Pipeline.Workspace)/FluidFramework
+      checkout: true
       stageVariables:
         - group: container-registry-info
       splitTestVariants:

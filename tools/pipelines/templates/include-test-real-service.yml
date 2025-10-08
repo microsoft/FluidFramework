@@ -20,7 +20,7 @@ parameters:
 # Variables to be set in the stage that runs tests
 - name: stageVariables
   type: object
-  default:
+  default: {}
 
 # If true, the stage that uploads pipeline telemetry to Kusto will include a task to upload
 # test pass rate telemetry.
@@ -49,13 +49,13 @@ parameters:
 
 - name: env
   type: object
-  default:
+  default: {}
 
 - name: splitTestVariants
   type: object
   default:
-  - name: ""
-    flags: ""
+    - name: ""
+      flags: ""
 
 - name: testCommand
   type: string
@@ -131,8 +131,8 @@ parameters:
   default: []
 
 - name: checkout
-  type: string
-  default: ''
+  type: boolean
+  default: false
 
 stages:
 - stage: ${{ parameters.stageId}}
@@ -160,13 +160,15 @@ stages:
         # basic ANSI color support though, so force that in the pipeline
         - name: FORCE_COLOR
           value: 1
-        - name: ffSourcePath
-          ${{ if eq(parameters.checkout, '') }}:
-            value: $(Build.SourcesDirectory)
+        - name: pipelineHostPath
+          ${{ if eq(parameters.checkout, true) }}:
+            # When multiple repos are checked out, they are checked out to $(Build.SourcesDirectory)/<REPO_NAME>
+            value: $(Build.SourcesDirectory)/ff_pipeline_host
           ${{ else }}:
-            value: ${{ parameters.checkout }}
+            value: $(Build.SourcesDirectory)
+
         - name: testPackageDir
-          value: '$(Build.SourcesDirectory)/node_modules/${{ parameters.testPackage }}'
+          value: '${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}'
         - name: testPackageFilePattern
           value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-[0-9]*.tgz
         # Note that this path must match the path that the packed packages are saved to in the build pipeline.
@@ -181,13 +183,11 @@ stages:
         # Setup
         - checkout: ff_pipeline_host
           clean: true
-          path: $(Build.SourcesDirectory)
 
-        - ${{ if ne(parameters.checkout, '') }}:
+        - ${{ if eq(parameters.checkout, true) }}:
           # Checks out FluidFramework repo
           - checkout: self
             clean: true
-            path: ${{ variables.ffSourcePath }}
 
         # Install self-signed cert for R11s deployment in local cert store
         - ${{ if ne(parameters.r11sSelfSignedCertSecureFile, '') }}:
@@ -245,28 +245,17 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
-            buildDirectory: $(Build.SourcesDirectory)
+            buildDirectory: ${{ variables.pipelineHostPath }}
 
         - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
 
         - ${{ parameters.preSteps }}
 
         - task: Bash@3
-          displayName: DEBUG
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
-            script: |
-              set -eu -o pipefail
-              echo 'Build.SourcesDirectory = $(Build.SourcesDirectory)'
-              echo 'ffSourcePath = ${{ variables.ffSourcePath }}'
-              tree $(Build.SourcesDirectory)
-
-        - task: Bash@3
           displayName: Install base dependencies
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
+            workingDirectory: ${{ variables.pipelineHostPath }}
             script: |
               set -eu -o pipefail
               pnpm install
@@ -296,7 +285,7 @@ stages:
           displayName: Initialize
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
+            workingDirectory: ${{ variables.pipelineHostPath }}
             script: |
               set -eu -o pipefail
               if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
@@ -315,7 +304,7 @@ stages:
           retryCountOnTaskFailure: 10
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
+            workingDirectory: ${{ variables.pipelineHostPath }}
             script: 'pnpm install $(Initialize.testPackageTgz)'
 
         # Download Test Files & Install Extra Dependencies
@@ -346,7 +335,7 @@ stages:
             displayName: Unpack test files
             inputs:
               targetType: 'inline'
-              workingDirectory: $(Build.SourcesDirectory)/node_modules/${{ parameters.testPackage }}
+              workingDirectory: ${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}
               script: |
                 set -eu -o pipefail
 
@@ -363,15 +352,15 @@ stages:
 
           - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
             parameters:
-              sourcePackageLocation: $(Build.SourcesDirectory)/node_modules/${{ parameters.testPackage }}
-              destPackageLocation: $(Build.SourcesDirectory)
+              sourcePackageLocation: ${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}
+              destPackageLocation: ${{ variables.pipelineHostPath }}
 
         - ${{ if eq(parameters.cacheCompatVersionsInstalls, true) }}:
           - task: Bash@3
             displayName: Compute compat versions install location and version
             inputs:
               targetType: 'inline'
-              workingDirectory: $(Build.SourcesDirectory)/node_modules/@fluid-private/test-end-to-end-tests
+              workingDirectory: ${{ variables.pipelineHostPath }}/node_modules/@fluid-private/test-end-to-end-tests
               # Using import.meta.resolve to compute this is more resilient to different install tree types.
               # Also note that test-version-utils is esm-only, so cannot be loaded with require.
               script: |
@@ -399,7 +388,7 @@ stages:
             timeoutInMinutes: 3
             continueOnError: true
             inputs:
-              key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}" |  $(compatVersionCacheKey)'
+              key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}" | "$(compatVersionCacheKey)"'
               path: $(compatVersionInstallsPath)
 
         # Only check out tenants from the tenant pool if we are running tests against ODSP
@@ -448,7 +437,7 @@ stages:
               login__odsp__test__tenants: $(tenantCreds)
           inputs:
             command: 'custom'
-            workingDir: $(Build.SourcesDirectory)/node_modules/${{ parameters.testPackage }}
+            workingDir: ${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}
             customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
         - ${{ if eq(parameters.skipTestResultPublishing, false) }}:
@@ -490,7 +479,7 @@ stages:
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - Tinylicious Log
             inputs:
-              targetPath: '$(Build.SourcesDirectory)/node_modules/${{ parameters.testPackage }}/tinylicious.log'
+              targetPath: '${{ variables.pipelineHostPath }}/node_modules/${{ parameters.testPackage }}/tinylicious.log'
               artifactName: 'tinyliciousLog_attempt-$(System.JobAttempt)'
               publishLocation: 'pipeline'
             condition: always()
