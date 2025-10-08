@@ -131,8 +131,8 @@ parameters:
   default: []
 
 - name: checkout
-  type: boolean
-  default: false
+  type: string
+  default: ''
 
 stages:
 - stage: ${{ parameters.stageId}}
@@ -161,10 +161,10 @@ stages:
         - name: FORCE_COLOR
           value: 1
         - name: ffSourcePath
-          ${{ if eq(parameters.checkout, true) }}:
-            value: $(Pipeline.Workspace)/FluidFramework
-          ${{ else }}:
+          ${{ if eq(parameters.checkout, '') }}:
             value: $(Build.SourcesDirectory)
+          ${{ else }}:
+            value: ${{ parameters.checkout }}
         - name: testPackageDir
           value: '$(Build.SourcesDirectory)/node_modules/${{ parameters.testPackage }}'
         - name: testPackageFilePattern
@@ -183,10 +183,10 @@ stages:
           clean: true
 
         - ${{ if eq(parameters.checkout, true) }}:
-          # Checks out FluidFramework to /FluidFramework
+          # Checks out FluidFramework repo
           - checkout: self
             clean: true
-            path: FluidFramework
+            path: ${{ variables.ffSourcePath }}
 
         # Install self-signed cert for R11s deployment in local cert store
         - ${{ if ne(parameters.r11sSelfSignedCertSecureFile, '') }}:
@@ -249,6 +249,17 @@ stages:
         - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
 
         - ${{ parameters.preSteps }}
+
+        - task: Bash@3
+          displayName: DEBUG
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)
+            script: |
+              set -eu -o pipefail
+              echo 'Build.SourcesDirectory = $(Build.SourcesDirectory)'
+              echo 'ffSourcePath = ${{ variables.ffSourcePath }}'
+              tree $(Build.SourcesDirectory)
 
         - task: Bash@3
           displayName: Install base dependencies
