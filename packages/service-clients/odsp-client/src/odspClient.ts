@@ -11,9 +11,12 @@ import type {
 import {
 	createDetachedContainer,
 	loadExistingContainer,
+	rehydrateDetachedContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
+import type { IContainerRuntimeInternal } from "@fluidframework/container-runtime-definitions/internal";
 import type {
+	FluidObject,
 	IConfigProviderBase,
 	IRequest,
 	ITelemetryBaseLogger,
@@ -28,7 +31,7 @@ import type {
 import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
-	createServiceAudience,
+	isInternalFluidContainer,
 } from "@fluidframework/fluid-static/internal";
 import {
 	OdspDocumentServiceFactory,
@@ -46,9 +49,10 @@ import type {
 	OdspClientProps,
 	OdspConnectionConfig,
 	OdspContainerAttachProps,
-	OdspContainerServices,
+	OdspContainerServices as IOdspContainerServices,
+	IOdspFluidContainer,
 } from "./interfaces.js";
-import { createOdspAudienceMember } from "./odspAudience.js";
+import { OdspContainerServices } from "./odspContainerServices.js";
 import type { IOdspTokenProvider } from "./token.js";
 
 async function getStorageToken(
@@ -78,7 +82,7 @@ async function getWebsocketToken(
  * These values will only be used if the feature gate is not already set by the supplied config provider.
  */
 const odspClientFeatureGates = {
-	// None yet
+	"Fluid.Driver.Odsp.enableLargeBlobUpload": true,
 };
 
 /**
@@ -118,7 +122,7 @@ export class OdspClient {
 		containerSchema: T,
 	): Promise<{
 		container: IFluidContainer<T>;
-		services: OdspContainerServices;
+		services: IOdspContainerServices;
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema);
 
@@ -132,7 +136,34 @@ export class OdspClient {
 
 		const fluidContainer = await this.createFluidContainer(container, this.connectionConfig);
 
-		const services = await this.getContainerServices(container);
+		const services = await this.getContainerServices(container, fluidContainer);
+
+		return { container: fluidContainer as IFluidContainer<T>, services };
+	}
+
+	/**
+	 * Create a container from the serialized state of a detached container.
+	 *
+	 * @param serializedContainer - Serialized string representation of the container.
+	 * @param containerSchema - The schema of the container to rehydrate.
+	 */
+	public async rehydrateContainer<T extends ContainerSchema>(
+		serializedContainer: string,
+		containerSchema: T,
+	): Promise<{
+		container: IFluidContainer<T>;
+		services: IOdspContainerServices;
+	}> {
+		const loaderProps = this.getLoaderProps(containerSchema);
+
+		const container = await rehydrateDetachedContainer({
+			...loaderProps,
+			serializedState: serializedContainer,
+		});
+
+		const fluidContainer = await this.createFluidContainer(container, this.connectionConfig);
+
+		const services = await this.getContainerServices(container, fluidContainer);
 
 		return { container: fluidContainer as IFluidContainer<T>, services };
 	}
@@ -142,7 +173,7 @@ export class OdspClient {
 		containerSchema: T,
 	): Promise<{
 		container: IFluidContainer<T>;
-		services: OdspContainerServices;
+		services: IOdspContainerServices;
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema);
 		const url = createOdspUrl({
@@ -156,7 +187,7 @@ export class OdspClient {
 		const fluidContainer = await createFluidContainer({
 			container,
 		});
-		const services = await this.getContainerServices(container);
+		const services = await this.getContainerServices(container, fluidContainer);
 		return { container: fluidContainer as IFluidContainer<T>, services };
 	}
 
@@ -196,19 +227,32 @@ export class OdspClient {
 	private async createFluidContainer(
 		container: IContainer,
 		connection: OdspConnectionConfig,
-	): Promise<IFluidContainer> {
+	): Promise<IOdspFluidContainer> {
 		/**
 		 * See {@link FluidContainer.attach}
 		 */
 		const attach = async (
 			odspProps?: ContainerAttachProps<OdspContainerAttachProps>,
 		): Promise<string> => {
-			const createNewRequest: IRequest = createOdspCreateContainerRequest(
-				connection.siteUrl,
-				connection.driveId,
-				odspProps?.filePath ?? "",
-				odspProps?.fileName ?? uuid(),
-			);
+			const createNewRequest: IRequest =
+				odspProps?.eTag !== undefined && odspProps?.itemId !== undefined
+					? {
+							url: createOdspUrl({
+								siteUrl: connection.siteUrl,
+								driveId: connection.driveId,
+								itemId: odspProps.itemId,
+								dataStorePath: "",
+							}),
+							headers: {
+								eTag: odspProps.eTag,
+							},
+						}
+					: createOdspCreateContainerRequest(
+							connection.siteUrl,
+							connection.driveId,
+							odspProps?.filePath ?? "",
+							odspProps?.fileName ?? uuid(),
+						);
 			if (container.attachState !== AttachState.Detached) {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}
@@ -229,15 +273,51 @@ export class OdspClient {
 		};
 		const fluidContainer = await createFluidContainer({ container });
 		fluidContainer.attach = attach;
+		if (!isInternalFluidContainer(fluidContainer)) {
+			throw new Error(
+				"Unexpected Fluid container type, the returned container is not FluidContainer type.",
+			);
+		}
 		return fluidContainer;
 	}
 
-	private async getContainerServices(container: IContainer): Promise<OdspContainerServices> {
-		return {
-			audience: createServiceAudience({
-				container,
-				createServiceMember: createOdspAudienceMember,
-			}),
-		};
+	private async getRuntimeInternal(
+		container: IContainer,
+	): Promise<IContainerRuntimeInternal | undefined> {
+		const entryPoint = await container.getEntryPoint();
+		if (
+			entryPoint !== undefined &&
+			typeof (entryPoint as IMaybeFluidObjectWithContainerRuntime).IStaticEntryPoint
+				?.extensionStore?.lookupTemporaryBlobStorageId === "function"
+		) {
+			// If the container has a static entry point with an extension store, use that to get the runtime
+			return (entryPoint as IMaybeFluidObjectWithContainerRuntime).IStaticEntryPoint
+				.extensionStore;
+		}
 	}
+
+	private async getContainerServices(
+		container: IContainer,
+		_fluidContainer: IFluidContainer,
+	): Promise<IOdspContainerServices> {
+		// Get the runtime access upfront
+		const runtimeInternal = await this.getRuntimeInternal(container);
+		// Get the resolved URL for ODSP-specific URL building
+		const resolvedUrl = container.resolvedUrl;
+		const odspResolvedUrl =
+			resolvedUrl && isOdspResolvedUrl(resolvedUrl) ? resolvedUrl : undefined;
+		return new OdspContainerServices(container, odspResolvedUrl, runtimeInternal);
+	}
+}
+
+/**
+ * Disclaimer: Hack!!
+ * This is a temporary interface to expose the internal container runtime from Container.
+ * This is needed to access the `lookupBlobStorageId` API on the runtime.
+ */
+interface IMaybeFluidObjectWithContainerRuntime extends FluidObject {
+	IStaticEntryPoint: {
+		rootDataObject: unknown;
+		extensionStore: IContainerRuntimeInternal;
+	};
 }
