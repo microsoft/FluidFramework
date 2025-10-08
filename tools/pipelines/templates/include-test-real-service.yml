@@ -160,9 +160,9 @@ stages:
         # basic ANSI color support though, so force that in the pipeline
         - name: FORCE_COLOR
           value: 1
-        - name: sourcePath
+        - name: ffSourcePath
           ${{ if eq(parameters.checkout, true) }}:
-            value: $(Build.SourcesDirectory)/FluidFramework
+            value: $(Pipeline.Workspace)/FluidFramework
           ${{ else }}:
             value: $(Build.SourcesDirectory)
         - name: testPackageDir
@@ -183,9 +183,10 @@ stages:
           clean: true
 
         - ${{ if eq(parameters.checkout, true) }}:
-          # Checks out FluidFramework to /s/FluidFramework
+          # Checks out FluidFramework to /FluidFramework
           - checkout: self
             clean: true
+            path: FluidFramework
 
         # Install self-signed cert for R11s deployment in local cert store
         - ${{ if ne(parameters.r11sSelfSignedCertSecureFile, '') }}:
@@ -228,7 +229,7 @@ stages:
 
               Pipeline Variables:
                 isTestBranch=${{ variables.isTestBranch }}
-                sourcePath=${{ variables.sourcePath }}
+                ffSourcePath=${{ variables.ffSourcePath }}
                 testWorkspace=${{ parameters.testWorkspace }}
                 testPackageFilePattern=${{ variables.testPackageFilePattern }}
                 testCommand=${{ parameters.testCommand }}
@@ -295,7 +296,7 @@ stages:
               fi
         # Install test package
         - task: Bash@3
-          displayName: 'pnpm install'
+          displayName: 'pnpm install test package'
           # ADO feeds have latency on the order of minutes before packages are available downstream. See:
           # https://learn.microsoft.com/en-us/azure/devops/artifacts/concepts/upstream-sources?view=azure-devops#upstream-sources-health-status
           # This pipeline installs packages which were published very recently relative to its runtime, hence the rather high retry count here.
