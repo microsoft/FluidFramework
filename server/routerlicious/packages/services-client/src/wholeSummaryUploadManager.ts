@@ -24,6 +24,7 @@ export class WholeSummaryUploadManager implements ISummaryUploadManager {
 		summaryType: IWholeSummaryPayloadType,
 		sequenceNumber: number = 0,
 		initial: boolean = false,
+		summaryTimeStr?: string,
 	): Promise<string> {
 		const id = await this.writeSummaryTreeCore(
 			parentHandle,
@@ -31,6 +32,7 @@ export class WholeSummaryUploadManager implements ISummaryUploadManager {
 			summaryType,
 			sequenceNumber,
 			initial,
+			summaryTimeStr,
 		);
 		if (!id) {
 			throw new Error(`Failed to write summary tree`);
@@ -44,6 +46,7 @@ export class WholeSummaryUploadManager implements ISummaryUploadManager {
 		type: IWholeSummaryPayloadType,
 		sequenceNumber: number,
 		initial: boolean,
+		summaryTimeStr?: string,
 	): Promise<string> {
 		const snapshotTree = convertSummaryTreeToWholeSummaryTree(
 			parentHandle,
@@ -56,6 +59,7 @@ export class WholeSummaryUploadManager implements ISummaryUploadManager {
 			message: `${type} summary upload`,
 			sequenceNumber,
 			type,
+			summaryTime: summaryTimeStr,
 		};
 
 		return this.manager.createSummary(snapshotPayload, initial).then((response) => response.id);

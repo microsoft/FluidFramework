@@ -30,6 +30,7 @@ import {
 	RestGitService,
 	type ITenantCustomDataExternal,
 	type ISimplifiedCustomDataRetriever,
+	type ICreateGitServiceArgs,
 } from "../services";
 import { containsPathTraversal, parseToken } from "../utils";
 
@@ -50,22 +51,6 @@ export type CommonRouteParams = [
 	ephemeralDocumentTTLSec?: number,
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ];
-
-export interface ICreateGitServiceArgs {
-	config: nconf.Provider;
-	tenantId: string;
-	authorization: string | undefined;
-	tenantService: ITenantService;
-	storageNameRetriever?: IStorageNameRetriever;
-	documentManager: IDocumentManager;
-	cache?: ICache;
-	initialUpload?: boolean;
-	storageName?: string;
-	allowDisabledTenant?: boolean;
-	isEphemeralContainer?: boolean;
-	ephemeralDocumentTTLSec?: number; // 24 hours
-	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
-}
 
 function getEphemeralContainerCacheKey(documentId: string): string {
 	return `isEphemeralContainer:${documentId}`;
@@ -266,6 +251,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		isEphemeralContainer,
 		ephemeralDocumentTTLSec,
 		simplifiedCustomDataRetriever,
+		postEphemeralContainerChecker,
 	} = { ...createArgs };
 	if (!authorization) {
 		throw new NetworkError(403, "Authorization header is missing.");
@@ -303,6 +289,16 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		Lumberjack.info(`Document is ephemeral.`, getLumberBaseProperties(documentId, tenantId));
 	}
 
+	let postIsEphemeral: boolean = isEphemeral;
+	if (postEphemeralContainerChecker !== undefined) {
+		postIsEphemeral = await postEphemeralContainerChecker.postEphemeralContainerCheck(
+			tenantId,
+			documentId,
+			isEphemeral,
+			createArgs,
+		);
+	}
+
 	const calculatedStorageName =
 		initialUpload && storageName
 			? storageName
@@ -315,7 +311,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		cache,
 		calculatedStorageName,
 		storageUrl,
-		isEphemeral,
+		postIsEphemeral,
 		maxCacheableSummarySize,
 		simplifiedCustomData,
 	);
