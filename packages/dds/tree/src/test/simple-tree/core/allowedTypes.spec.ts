@@ -144,123 +144,64 @@ const schema = new SchemaFactory("com.example");
 		type _check = requireAssignableTo<A, T>;
 		type _check2 = requireFalse<isAssignableTo<B, T>>;
 	}
+
+	{
+		type T = InsertableTreeNodeFromAllowedTypes<
+			UnannotateAllowedTypesList<AnnotateAllowedTypesList<[typeof A, typeof B]>>
+		>;
+		type _check = requireAssignableTo<A | B, T>;
+	}
+
+	{
+		type T = InsertableTreeNodeFromAllowedTypes<
+			AllowedTypesFull<AnnotateAllowedTypesList<[typeof A, typeof B]>>
+		>;
+		type _check = requireAssignableTo<A | B, T>;
+	}
+
+	{
+		type T = InsertableTreeNodeFromAllowedTypes<
+			AllowedTypesFullFromMixed<[typeof A, typeof B]>
+		>;
+		type _check = requireAssignableTo<A | B, T>;
+	}
+
+	{
+		type Annotated = AnnotateAllowedTypesList<[typeof A, typeof B]>;
+		type T = InsertableTreeNodeFromAllowedTypes<
+			AnnotatedAllowedTypes<Annotated> & [typeof A, typeof B]
+		>;
+		type _check = requireAssignableTo<A | B, T>;
+	}
+
+	{
+		type T = InsertableTreeNodeFromAllowedTypes<AnnotatedAllowedTypes & [typeof A, typeof B]>;
+		type _check = requireAssignableTo<A | B, T>;
+	}
+
+	{
+		// Must ignore irrelevant fields
+		type T = InsertableTreeNodeFromAllowedTypes<{ x: 5 } & [typeof A, typeof B]>;
+		type _check = requireAssignableTo<A | B, T>;
+	}
+}
+
+// NumberKeys
+{
+	type F = { x: 4 } & [5, 6];
+	type Keys = NumberKeys<F>;
+
+	allowUnused<requireAssignableTo<Keys, "0" | "1">>();
+	allowUnused<requireAssignableTo<"0" | "1", Keys>>();
+}
+
+// AllowedTypesFullEvaluated
+{
+	allowUnused<requireAssignableTo<AllowedTypesFullEvaluated, readonly TreeNodeSchema[]>>();
 }
 
 // Type tests for unannotate utilities
 {
-	// UnannotateImplicitAllowedTypes
-	{
-		{
-			type unannotated = UnannotateImplicitAllowedTypes<ImplicitAnnotatedAllowedTypes>;
-			type _check = requireTrue<areSafelyAssignable<unannotated, ImplicitAllowedTypes>>;
-		}
-
-		{
-			type Result = UnannotateImplicitAllowedTypes<AnnotatedAllowedTypes>;
-			type _check = requireTrue<areSafelyAssignable<Result, AllowedTypes>>;
-		}
-
-		{
-			type Result = UnannotateImplicitAllowedTypes<ImplicitAllowedTypes>;
-			type _check = requireTrue<areSafelyAssignable<Result, ImplicitAllowedTypes>>;
-		}
-
-		{
-			type Result = UnannotateImplicitAllowedTypes<TreeNodeSchema>;
-			type _check = requireTrue<areSafelyAssignable<Result, TreeNodeSchema>>;
-		}
-		{
-			type Result = UnannotateImplicitAllowedTypes<[AnnotatedAllowedType]>;
-			type _check = requireTrue<areSafelyAssignable<Result, [LazyItem<TreeNodeSchema>]>>;
-		}
-
-		// eslint-disable-next-line no-inner-declarations
-		function _genericCase<T extends ImplicitAnnotatedAllowedTypes>(): void {
-			type Result = UnannotateImplicitAllowedTypes<T>;
-			// @ts-expect-error Ideally this would compile, however TypeScript can't solve the type equivalence so it does not.
-			type _check = requireTrue<areSafelyAssignable<Result, ImplicitAllowedTypes>>;
-		}
-
-		// eslint-disable-next-line no-inner-declarations
-		function _genericCase2<T extends ImplicitAllowedTypes>(): void {
-			type Result = UnannotateImplicitAllowedTypes<T>;
-			// @ts-expect-error Ideally this would compile, however TypeScript can't solve the type equivalence so it does not.
-			type _check = requireTrue<areSafelyAssignable<Result, T>>;
-		}
-
-		// Concrete annotated case
-		{
-			const annotatedAllowedType = {
-				type: numberSchema,
-				metadata: {},
-			} satisfies ImplicitAnnotatedAllowedTypes;
-
-			const annotatedAllowedTypes = {
-				types: [annotatedAllowedType] as const,
-				metadata: {},
-			} satisfies ImplicitAnnotatedAllowedTypes;
-
-			type annotated2 = UnannotateImplicitAllowedTypes<typeof annotatedAllowedTypes>;
-			// This gets wrapped in an array. Not ideal but potentially ok: depends on usage.
-			allowUnused<
-				requireTrue<areSafelyAssignable<annotated2, readonly [typeof numberSchema]>>
-			>;
-		}
-
-		// Concrete annotated case with multiple schema
-		{
-			const annotatedAllowedType = {
-				type: numberSchema,
-				metadata: {},
-			} satisfies ImplicitAnnotatedAllowedTypes;
-
-			const annotatedAllowedType2 = {
-				type: stringSchema,
-				metadata: {},
-			} satisfies ImplicitAnnotatedAllowedTypes;
-
-			const annotatedAllowedTypes = {
-				types: [annotatedAllowedType, annotatedAllowedType2],
-				metadata: {},
-			} satisfies ImplicitAnnotatedAllowedTypes;
-
-			type annotated2 = UnannotateImplicitAllowedTypes<typeof annotatedAllowedTypes>;
-			allowUnused<
-				requireTrue<
-					areSafelyAssignable<annotated2, [typeof numberSchema, typeof stringSchema]>
-				>
-			>;
-		}
-	}
-
-	// UnannotateAllowedType
-	{
-		// Generic cases
-		{
-			type A = LazyItem<TreeNodeSchema>;
-			type B = AnnotatedAllowedType;
-
-			type _check1 = requireAssignableTo<A, UnannotateAllowedType<A>>;
-			type _check2 = requireAssignableTo<UnannotateAllowedType<A>, A>;
-			type _check3 = requireAssignableTo<UnannotateAllowedType<B>, A>;
-			type _check4 = requireAssignableTo<
-				UnannotateAllowedType<AnnotatedAllowedType<TreeNodeSchema>>,
-				TreeNodeSchema
-			>;
-		}
-		// Concrete cases
-		{
-			type A = typeof SchemaFactory.number;
-
-			type _check1 = requireTrue<areSafelyAssignable<UnannotateAllowedType<A>, A>>;
-			type _check2 = requireTrue<
-				areSafelyAssignable<UnannotateAllowedType<{ type: A; metadata: { custom: "x" } }>, A>
-			>;
-
-			type _check4 = requireAssignableTo<UnannotateAllowedType<A>, A>;
-		}
-	}
-
 	// UnannotateAllowedTypesList
 	{
 		type A1 = AnnotatedAllowedType;
@@ -268,9 +209,38 @@ const schema = new SchemaFactory("com.example");
 		type Mixed = readonly [A1, A2];
 
 		type Empty = readonly [];
-		type _check1 = requireAssignableTo<Empty, UnannotateAllowedTypesList<Empty>>;
+		{
+			type _check1 = requireAssignableTo<Empty, UnannotateAllowedTypesList<Empty>>;
+			type _check2 = requireAssignableTo<UnannotateAllowedTypesList<Mixed>, readonly A2[]>;
+		}
 
-		type _check2 = requireAssignableTo<UnannotateAllowedTypesList<Mixed>, readonly A2[]>;
+		// Generic cases
+		{
+			type A = LazyItem<TreeNodeSchema>;
+			type B = AnnotatedAllowedType;
+
+			type _check1 = requireAssignableTo<[A], UnannotateAllowedTypesList<[A]>>;
+			type _check2 = requireAssignableTo<UnannotateAllowedTypesList<[A]>, [A]>;
+			type _check3 = requireAssignableTo<UnannotateAllowedTypesList<[B]>, [A]>;
+			type _check4 = requireAssignableTo<
+				UnannotateAllowedTypesList<[AnnotatedAllowedType<TreeNodeSchema>]>,
+				[TreeNodeSchema]
+			>;
+		}
+		// Concrete cases
+		{
+			type A = typeof SchemaFactory.number;
+
+			type _check1 = requireTrue<areSafelyAssignable<UnannotateAllowedTypesList<[A]>, [A]>>;
+			type _check2 = requireTrue<
+				areSafelyAssignable<
+					UnannotateAllowedTypesList<[{ type: A; metadata: { custom: "x" } }]>,
+					[A]
+				>
+			>;
+
+			type _check4 = requireAssignableTo<UnannotateAllowedTypesList<[A]>, [A]>;
+		}
 	}
 }
 
@@ -466,8 +436,6 @@ describe("allowedTypes", () => {
 	});
 
 	describe("normalizeAnnotatedAllowedTypes", () => {
-		const stringSchema = schema.string;
-		const numberSchema = schema.number;
 		const lazyString = () => stringSchema;
 		const lazyNumber = () => numberSchema;
 

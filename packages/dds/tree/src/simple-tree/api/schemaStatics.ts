@@ -21,12 +21,7 @@ import {
 	nullSchema,
 	handleSchema,
 } from "../leafNodeSchema.js";
-import type {
-	System_Unsafe,
-	FieldSchemaAlphaUnsafe,
-	ImplicitAnnotatedAllowedTypesUnsafe,
-	UnannotateImplicitAllowedTypesUnsafe,
-} from "./typesUnsafe.js";
+import type { System_Unsafe, FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 
 /**
  * Stateless APIs exposed via {@link SchemaFactory} as both instance properties and as statics.
@@ -236,46 +231,19 @@ export const schemaStatics = {
 /**
  * {@link Unenforced} version of {@link createFieldSchema}.
  */
-export function createFieldSchemaUnsafe<
+function createFieldSchemaUnsafe<
 	Kind extends FieldKind,
 	Types extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 	TCustomMetadata = unknown,
 >(
 	kind: Kind,
-	annotatedTypes: Types,
+	allowedTypes: Types,
 	props?: FieldProps<TCustomMetadata>,
-): FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata>;
-
-/**
- * {@link Unenforced} version of {@link createFieldSchema}.
- */
-export function createFieldSchemaUnsafe<
-	Kind extends FieldKind,
-	Types extends ImplicitAnnotatedAllowedTypesUnsafe,
-	TCustomMetadata = unknown,
->(
-	kind: Kind,
-	annotatedTypes: Types,
-	props?: FieldProps<TCustomMetadata>,
-): FieldSchemaAlphaUnsafe<Kind, UnannotateImplicitAllowedTypesUnsafe<Types>, TCustomMetadata>;
-
-export function createFieldSchemaUnsafe<
-	Kind extends FieldKind,
-	Types extends ImplicitAnnotatedAllowedTypesUnsafe,
-	TCustomMetadata = unknown,
->(
-	kind: Kind,
-	annotatedTypes: Types,
-	props?: FieldProps<TCustomMetadata>,
-): FieldSchemaAlphaUnsafe<Kind, UnannotateImplicitAllowedTypesUnsafe<Types>, TCustomMetadata> {
+): FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata> {
 	// At runtime, we still want this to be a FieldSchema instance, but we can't satisfy its extends clause, so just return it as an FieldSchemaUnsafe
 	return createFieldSchema(
 		kind,
-		annotatedTypes as ImplicitAnnotatedAllowedTypes,
+		allowedTypes as ImplicitAllowedTypes & Types,
 		props,
-	) as FieldSchemaAlphaUnsafe<
-		Kind,
-		UnannotateImplicitAllowedTypesUnsafe<Types>,
-		TCustomMetadata
-	>;
+	) as FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata>;
 }

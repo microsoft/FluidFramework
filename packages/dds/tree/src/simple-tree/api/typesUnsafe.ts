@@ -482,18 +482,15 @@ export interface FieldSchemaAlphaUnsafe<
  */
 export interface ArrayNodeCustomizableSchemaUnsafe<
 	out TName extends string,
-	in out T extends ImplicitAnnotatedAllowedTypesUnsafe,
+	in out T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 	out TCustomMetadata,
 > extends TreeNodeSchemaClass<
 			TName,
 			NodeKind.Array,
-			System_Unsafe.TreeArrayNodeUnsafe<UnannotateImplicitAllowedTypesUnsafe<T>> &
-				WithType<TName, NodeKind.Array, T>,
+			System_Unsafe.TreeArrayNodeUnsafe<T> & WithType<TName, NodeKind.Array, T>,
 			{
 				[Symbol.iterator](): Iterator<
-					System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
-						UnannotateImplicitAllowedTypesUnsafe<T>
-					>
+					System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>
 				>;
 			},
 			false,
@@ -502,116 +499,11 @@ export interface ArrayNodeCustomizableSchemaUnsafe<
 			TCustomMetadata
 		>,
 		SimpleArrayNodeSchema<TCustomMetadata> {}
-
-/**
- * {@link Unenforced} version of {@link ArrayNodeCustomizableSchema}s.
- * @remarks
- * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
- * @sealed
- * @alpha
- * @system
- */
-export interface ArrayNodeCustomizableSchemaUnsafe2<
-	out TName extends string,
-	in out T extends ImplicitAnnotatedAllowedTypesUnsafeMinimal,
-	out TCustomMetadata,
-> extends TreeNodeSchemaClass<
-			TName,
-			NodeKind.Array,
-			System_Unsafe.TreeArrayNodeUnsafe<UnannotateImplicitAllowedTypesUnsafeMinimal<T>> &
-				WithType<TName, NodeKind.Array, T>,
-			{
-				[Symbol.iterator](): Iterator<
-					System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
-						UnannotateImplicitAllowedTypesUnsafeMinimal<T>
-					>
-				>;
-			},
-			false,
-			T,
-			undefined,
-			TCustomMetadata
-		>,
-		SimpleArrayNodeSchema<TCustomMetadata> {}
-
-export type ImplicitAnnotatedAllowedTypesUnsafeMinimal = readonly {
-	type: Unenforced<() => System_Unsafe.TreeNodeSchemaUnsafe>;
-}[];
-
-/**
- * {@link Unenforced} version of {@link UnannotateImplicitAllowedTypes}.
- * @remarks
- * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
- * @sealed
- * @alpha
- * @system
- */
-export type UnannotateImplicitAllowedTypesUnsafeMinimal<
-	T extends ImplicitAnnotatedAllowedTypesUnsafeMinimal,
-> = {
-	[I in keyof T]: T[I]["type"];
-};
-
-/**
- * {@link Unenforced} version of {@link UnannotateImplicitAllowedTypes}.
- * @remarks
- * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
- * @sealed
- * @alpha
- * @system
- */
-export type UnannotateImplicitAllowedTypesUnsafe<T> = T extends AnnotatedAllowedTypesUnsafe
-	? UnannotateAllowedTypesUnsafe<T>
-	: T extends AnnotatedAllowedTypeUnsafe
-		? UnannotateAllowedTypesListUnsafe<[T]> // TODO: add [0] to stop unnecessary array wrap
-		: T extends readonly (
-					| AnnotatedAllowedTypeUnsafe
-					| LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>
-				)[]
-			? UnannotateAllowedTypesListUnsafe<T>
-			: T extends TreeNodeSchema
-				? T
-				: ImplicitAllowedTypes;
-
-/**
- * {@link Unenforced} version of {@link UnannotateImplicitAllowedTypes}.
- * @remarks
- * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
- * @sealed
- * @alpha
- * @system
- */
-export type UnannotateImplicitAllowedTypesUnsafeOld<T> = T extends AnnotatedAllowedTypesUnsafe
-	? UnannotateAllowedTypesUnsafe<T>
-	: T extends AnnotatedAllowedTypeUnsafe
-		? UnannotateAllowedTypesListUnsafe<[T]> // TODO: add [0] to stop unnecessary array wrap
-		: T extends readonly (
-					| AnnotatedAllowedType<System_Unsafe.TreeNodeSchemaUnsafe>
-					| LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>
-				)[]
-			? UnannotateAllowedTypesListUnsafe<T>
-			: T extends TreeNodeSchema
-				? T
-				: ImplicitAllowedTypes;
-
-/**
- * Removes all annotations from a set of allowed types.
- * @system @alpha
- */
-export type UnannotateAllowedTypesUnsafe<T extends AnnotatedAllowedTypesUnsafe> =
-	UnannotateAllowedTypesListUnsafe<T["types"]>;
-
-export type UnannotateAllowedTypesListUnsafe<
-	T extends readonly (
-		| AnnotatedAllowedTypeUnsafe
-		| LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>
-	)[],
-> = {
-	readonly [I in keyof T]: UnannotateAllowedTypeUnsafe<T[I]>;
-};
 
 export type UnannotateAllowedTypeUnsafe<
-	T extends AnnotatedAllowedTypeUnsafe | LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>,
+	T extends Unenforced<
+		AnnotatedAllowedTypeUnsafe | LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>
+	>,
 > = T extends AnnotatedAllowedTypeUnsafe<infer X> ? X : T;
 
 /**
@@ -661,26 +553,12 @@ export interface TreeRecordNodeUnsafe<
 }
 
 /**
- * {@link Unenforced} version of {@link ImplicitAnnotatedAllowedTypes}.
- * @remarks
- * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
- * @system @sealed @alpha
- */
-export type ImplicitAnnotatedAllowedTypesUnsafe =
-	| System_Unsafe.TreeNodeSchemaUnsafe
-	| AnnotatedAllowedTypesUnsafe
-	| AnnotatedAllowedTypeUnsafe
-	| readonly // | AnnotatedAllowedType<Unenforced<TreeNodeSchema>>
-	  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
-	  LazyItem<Unenforced<TreeNodeSchema>>[];
-
-/**
  * {@link Unenforced} version of {@link AnnotatedAllowedType}.
  * @remarks
  * Do not use this type directly: it's only needed in the implementation of generic logic which define recursive schema, not when using recursive schema.
  * @system @sealed @alpha
  */
-export interface AnnotatedAllowedTypeUnsafe<T = LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>>
+export interface AnnotatedAllowedTypeUnsafe<T = Unenforced<LazyItem<TreeNodeSchema>>>
 	extends AnnotatedAllowedType<T> {}
 
 /**
@@ -691,3 +569,42 @@ export interface AnnotatedAllowedTypeUnsafe<T = LazyItem<System_Unsafe.TreeNodeS
  */
 export interface AnnotatedAllowedTypesUnsafe
 	extends AnnotatedAllowedTypes<LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>> {}
+
+/**
+ * Stores annotations for a set of allowed types.
+ * @remarks
+ * Most expressive form of AllowedTypes which any of the implicit types can be normalized to.
+ * @alpha
+ * @sealed
+ */
+export type AllowedTypesFullUnsafe<
+	T extends readonly AnnotatedAllowedTypeUnsafe[] = readonly AnnotatedAllowedTypeUnsafe[],
+> = AnnotatedAllowedTypes<T> & UnannotateAllowedTypesListUnsafe<T>;
+
+/**
+ * Creates an {@link AllowedTypesFull} type from a mixed array of annotated and unannotated allowed types.
+ * @alpha
+ * @sealed
+ */
+export type AllowedTypesFullFromMixedUnsafe<
+	T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
+> = UnannotateAllowedTypesListUnsafe<T> &
+	AnnotatedAllowedTypes<AnnotateAllowedTypesListUnsafe<T>>;
+
+export type UnannotateAllowedTypesListUnsafe<
+	T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
+> = {
+	readonly [I in keyof T]: T[I] extends { type: infer X } ? X : T[I];
+};
+
+/**
+ * Add annotations to a list of allowed types that may or may not contain annotations.
+ * @system @alpha
+ */
+export type AnnotateAllowedTypesListUnsafe<
+	T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
+> = {
+	[I in keyof T]: T[I] extends AnnotatedAllowedTypeUnsafe
+		? T[I]
+		: AnnotatedAllowedTypeUnsafe<T[I]>;
+};

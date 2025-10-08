@@ -20,8 +20,8 @@ import {
 	type SchemaFactoryObjectOptions,
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
-import { optionalRecursive2, schemaStatics } from "./schemaStatics.js";
-import type { ImplicitAnnotatedFieldSchema, ImplicitFieldSchema } from "../fieldSchema.js";
+import { schemaStatics } from "./schemaStatics.js";
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type {
 	NodeKind,
@@ -40,12 +40,13 @@ import {
 	AnnotatedAllowedTypesInternal,
 } from "../core/index.js";
 import type {
+	AllowedTypesFullFromMixedUnsafe,
 	AnnotatedAllowedTypeUnsafe,
 	ArrayNodeCustomizableSchemaUnsafe,
-	ImplicitAnnotatedAllowedTypesUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
 	TreeRecordNodeUnsafe,
+	UnannotateAllowedTypeUnsafe,
 	Unenforced,
 } from "./typesUnsafe.js";
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
@@ -119,14 +120,33 @@ export interface SchemaStaticsAlpha {
 
 	/**
 	 * {@link SchemaStaticsAlpha.staged} except tweaked to work better for recursive types.
-	 * Use with {@link ValidateRecursiveSchemaAlpha} for improved type safety.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
 	 * @remarks
 	 * This version of {@link SchemaStaticsAlpha.staged} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
-	 * See {@link ValidateRecursiveSchemaAlpha} for additional information about using recursive schema.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
 	 */
-	stagedRecursive: <const T extends () => Unenforced<System_Unsafe.TreeNodeSchemaUnsafe>>(
-		t: T | AnnotatedAllowedTypeUnsafe<T>,
-	) => AnnotatedAllowedTypeUnsafe<T>;
+	stagedRecursive: <
+		const T extends Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>,
+	>(
+		t: T,
+	) => AnnotatedAllowedTypeUnsafe<UnannotateAllowedTypeUnsafe<T>>;
+
+	/**
+	 * {@link SchemaStaticsAlpha.types} except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of {@link SchemaStaticsAlpha.types} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 * @privateRemarks
+	 * If all inputs (at least recursive ones) were required to be annotated, this could be typed more strongly.
+	 * In that case it could use `T extends readonly (AnnotatedAllowedTypeUnsafe | LazyItem<System_Unsafe.TreeNodeSchemaUnsafe>)[]`.
+	 */
+	readonly typesRecursive: <
+		const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
+	>(
+		t: T,
+		metadata?: AllowedTypesMetadata,
+	) => AllowedTypesFullFromMixedUnsafe<T>;
 }
 
 const staged = <const T extends LazyItem<TreeNodeSchema>>(
@@ -142,16 +162,19 @@ const staged = <const T extends LazyItem<TreeNodeSchema>>(
 	};
 };
 
+const types = <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(
+	t: T,
+	metadata: AllowedTypesMetadata = {},
+): AllowedTypesFullFromMixed<T> => {
+	return AnnotatedAllowedTypesInternal.createMixed<T>(t, metadata);
+};
+
 const schemaStaticsAlpha: SchemaStaticsAlpha = {
 	staged,
-	stagedRecursive: staged as SchemaStaticsAlpha["stagedRecursive"],
+	types,
 
-	types: <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(
-		t: T,
-		metadata: AllowedTypesMetadata = {},
-	): AllowedTypesFullFromMixed<T> => {
-		return AnnotatedAllowedTypesInternal.createMixed<T>(t, metadata);
-	},
+	stagedRecursive: staged as SchemaStaticsAlpha["stagedRecursive"],
+	typesRecursive: types as unknown as SchemaStaticsAlpha["typesRecursive"],
 };
 
 /**
@@ -283,11 +306,6 @@ export class SchemaFactoryAlpha<
 	public static override readonly optionalRecursive = schemaStatics.optionalRecursive;
 
 	/**
-	 * {@inheritDoc SchemaStatics.optionalRecursive}
-	 */
-	public static readonly optionalRecursiveAlpha = optionalRecursive2;
-
-	/**
 	 * {@inheritDoc SchemaStatics.requiredRecursive}
 	 */
 	public static override readonly requiredRecursive = schemaStatics.requiredRecursive;
@@ -316,11 +334,6 @@ export class SchemaFactoryAlpha<
 	 * {@inheritDoc SchemaStatics.optionalRecursive}
 	 */
 	public override readonly optionalRecursive = schemaStatics.optionalRecursive;
-
-	/**
-	 * {@inheritDoc SchemaStatics.optionalRecursive}
-	 */
-	public readonly optionalRecursiveAlpha = optionalRecursive2;
 
 	/**
 	 * {@inheritDoc SchemaStatics.requiredRecursive}
@@ -452,12 +465,10 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * {@link SchemaFactory.arrayRecursive} but only supporting some of the alpha features.
-	 *
-	 * Does not support annotated allowed types.
+	 * {@link SchemaFactory.arrayRecursive} but with support for some alpha features.
 	 */
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	public arrayRecursiveAlphaLimited<
+	public override arrayRecursive<
 		const Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
@@ -470,213 +481,6 @@ export class SchemaFactoryAlpha<
 			ScopedSchemaName<TScope, Name>,
 			T,
 			TCustomMetadata
-		>;
-	}
-
-	/**
-	 * {@inheritDoc SchemaFactory.arrayRecursive}
-	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	public arrayRecursiveAlpha<
-		const Name extends TName,
-		const T extends ImplicitAnnotatedAllowedTypesUnsafe,
-		const TCustomMetadata = unknown,
-	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
-		return this.arrayAlpha(
-			name,
-			allowedTypes as T & ImplicitAllowedTypes,
-			options,
-		) as unknown as ArrayNodeCustomizableSchemaUnsafe<
-			ScopedSchemaName<TScope, Name>,
-			T,
-			TCustomMetadata
-		>;
-	}
-
-	/**
-	 * Define a structurally typed {@link TreeNodeSchema} for a {@link (TreeRecordNode:interface)}.
-	 *
-	 * @param allowedTypes - The types that may appear in the record.
-	 *
-	 * @remarks
-	 * The identifier for this record is defined as a function of the provided types.
-	 * It is still scoped to this `SchemaFactory`, but multiple calls with the same arguments will return the same
-	 * schema object, providing somewhat structural typing.
-	 * This does not support recursive types.
-	 *
-	 * If using these structurally named records, other types in this schema builder should avoid names of the form `Record<${string}>`.
-	 *
-	 * @example
-	 * The returned schema should be used as a schema directly:
-	 * ```typescript
-	 * const MyRecord = factory.record(factory.number);
-	 * type MyRecord = NodeFromSchema<typeof Record>;
-	 * ```
-	 * Or inline:
-	 * ```typescript
-	 * factory.object("Foo", { myRecord: factory.record(factory.number) });
-	 * ```
-	 *
-	 * @privateRemarks
-	 * The name produced at the type-level here is not as specific as it could be; however, doing type-level sorting and escaping is a real mess.
-	 * There are cases where not having this full type provided will be less than ideal, since TypeScript's structural types will allow assignment between runtime incompatible types at compile time.
-	 * For example, attempts to narrow unions of structural records by name won't work.
-	 * Planned future changes to move to a class based schema system as well as factor function based node construction should mostly avoid these issues,
-	 * though there may still be some problematic cases even after that work is done.
-	 *
-	 * The return value is a class, but its type is intentionally not specific enough to indicate it is a class.
-	 * This prevents callers of this from sub-classing it, which is unlikely to work well (due to the ease of accidentally giving two different calls to this different subclasses)
-	 * when working with structural typing.
-	 *
-	 * {@label STRUCTURAL}
-	 */
-	public record<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
-		allowedTypes: T,
-	): TreeNodeSchemaNonClass<
-		/* Name */ ScopedSchemaName<TScope, `Record<${string}>`>,
-		/* Kind */ NodeKind.Record,
-		/* TNode */ TreeRecordNode<T> &
-			WithType<ScopedSchemaName<TScope, `Record<${string}>`>, NodeKind.Record>,
-		/* TInsertable */ RecordNodeInsertableData<T>,
-		/* ImplicitlyConstructable */ true,
-		/* Info */ T,
-		/* TConstructorExtra */ undefined
-	>;
-	/**
-	 * Define (and add to this library) a {@link TreeNodeSchemaClass} for a {@link (TreeRecordNode:interface)}.
-	 *
-	 * @param name - Unique identifier for this schema within this factory's scope.
-	 * @param allowedTypes - The types that may appear in the record.
-	 *
-	 * @remarks
-	 * Like TypeScript `Record`s, record nodes have some potential pitfalls.
-	 * For example: TypeScript makes assumptions about built-in keys being present (e.g. `toString`, `hasOwnProperty`, etc.).
-	 * Since these are otherwise valid keys in a record, this can lead to unexpected behavior.
-	 * To prevent inconsistent behavior, these built-ins are hidden by record nodes.
-	 * This means that if you try to call these built-ins (e.g. `toString()`) on a record node, you will get an error.
-	 *
-	 * In most cases, it is probably preferable to use {@link SchemaFactory.(map:2)} instead.
-	 *
-	 * @example
-	 * ```typescript
-	 * class NamedRecord extends factory.record("name", factory.number) {}
-	 * ```
-	 *
-	 * {@label NAMED}
-	 */
-	public record<const Name extends TName, const T extends ImplicitAllowedTypes>(
-		name: Name,
-		allowedTypes: T,
-	): TreeNodeSchemaClass<
-		/* Name */ ScopedSchemaName<TScope, Name>,
-		/* Kind */ NodeKind.Record,
-		/* TNode */ TreeRecordNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>,
-		/* TInsertable */ RecordNodeInsertableData<T>,
-		/* ImplicitlyConstructable */ true,
-		/* Info */ T,
-		/* TConstructorExtra */ undefined
-	>;
-	/**
-	 * {@link SchemaFactory.array} implementation.
-	 *
-	 * @privateRemarks
-	 * This should return TreeNodeSchemaBoth: see note on "map" implementation for details.
-	 */
-	public record<const T extends ImplicitAllowedTypes>(
-		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
-		maybeAllowedTypes?: T,
-	): TreeNodeSchema<
-		/* Name */ ScopedSchemaName<TScope, string>,
-		/* Kind */ NodeKind.Record,
-		/* TNode */ TreeRecordNode<T>,
-		/* TInsertable */ RecordNodeInsertableData<T>,
-		/* ImplicitlyConstructable */ true,
-		/* Info */ T
-	> {
-		if (maybeAllowedTypes === undefined) {
-			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
-			const fullName = structuralName("Record", types);
-			return this.getStructuralType(fullName, types, () =>
-				this.namedRecord(
-					fullName,
-					nameOrAllowedTypes as T,
-					/* customizable */ false,
-					/* implicitlyConstructable */ true,
-				),
-			) as TreeNodeSchemaClass<
-				/* Name */ ScopedSchemaName<TScope, string>,
-				/* Kind */ NodeKind.Record,
-				/* TNode */ TreeRecordNode<T>,
-				/* TInsertable */ RecordNodeInsertableData<T>,
-				/* ImplicitlyConstructable */ true,
-				/* Info */ T,
-				/* TConstructorExtra */ undefined
-			>;
-		}
-		const out: TreeNodeSchemaBoth<
-			/* Name */ ScopedSchemaName<TScope, string>,
-			/* Kind */ NodeKind.Record,
-			/* TNode */ TreeRecordNode<T>,
-			/* TInsertable */ RecordNodeInsertableData<T>,
-			/* ImplicitlyConstructable */ true,
-			/* Info */ T,
-			/* TConstructorExtra */ undefined
-		> = this.namedRecord(
-			nameOrAllowedTypes as TName,
-			maybeAllowedTypes,
-			/* customizable */ true,
-			/* implicitlyConstructable */ true,
-		);
-		return out;
-	}
-
-	/**
-	 * Define a {@link TreeNodeSchema} for a {@link (TreeRecordNode:interface)}.
-	 *
-	 * @param name - Unique identifier for this schema within this factory's scope.
-	 *
-	 * @remarks
-	 * This is not intended to be used directly, use the overload of `record` which takes a name instead.
-	 */
-	private namedRecord<
-		Name extends TName | string,
-		const T extends ImplicitAllowedTypes,
-		const ImplicitlyConstructable extends boolean,
-		const TCustomMetadata = unknown,
-	>(
-		name: Name,
-		allowedTypes: T,
-		customizable: boolean,
-		implicitlyConstructable: ImplicitlyConstructable,
-		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
-	): TreeNodeSchemaBoth<
-		/* Name */ ScopedSchemaName<TScope, Name>,
-		/* Kind */ NodeKind.Record,
-		/* TNode */ TreeRecordNode<T> &
-			WithType<ScopedSchemaName<TScope, string>, NodeKind.Record>,
-		/* TInsertable */ RecordNodeInsertableData<T>,
-		/* ImplicitlyConstructable */ ImplicitlyConstructable,
-		/* Info */ T,
-		/* TConstructorExtra */ undefined
-	> {
-		const record = recordSchema({
-			identifier: scoped<TScope, TName, Name>(this, name),
-			info: allowedTypes,
-			customizable,
-			implicitlyConstructable,
-			metadata: options?.metadata,
-			persistedMetadata: options?.persistedMetadata,
-		});
-
-		return record as TreeNodeSchemaBoth<
-			/* Name */ ScopedSchemaName<TScope, Name>,
-			/* Kind */ NodeKind.Record,
-			/* TNode */ TreeRecordNode<T> &
-				WithType<ScopedSchemaName<TScope, string>, NodeKind.Record>,
-			/* TInsertable */ RecordNodeInsertableData<T>,
-			/* ImplicitlyConstructable */ ImplicitlyConstructable,
-			/* Info */ T,
-			/* TConstructorExtra */ undefined
 		>;
 	}
 
