@@ -291,9 +291,9 @@ export async function loadFrozenContainerFromPendingState(
  * @legacy @alpha
  */
 export async function loadSummarizerContainerAndMakeSummary(
-	loadExistingContainerProps: ILoadSummarizerContainerProps,
+	loadSummarizerContainerProps: ILoadSummarizerContainerProps,
 ): Promise<LoadSummarizerSummaryResult> {
-	const { logger, configProvider, request: originalRequest } = loadExistingContainerProps;
+	const { logger, configProvider, request: originalRequest } = loadSummarizerContainerProps;
 	const telemetryProps = {
 		loaderId: uuid(),
 		loaderVersion: pkgVersion,
@@ -330,7 +330,7 @@ export async function loadSummarizerContainerAndMakeSummary(
 			};
 
 			const container = await loadExistingContainer({
-				...loadExistingContainerProps,
+				...loadSummarizerContainerProps,
 				request,
 			});
 

@@ -187,7 +187,7 @@ export function loadExistingContainer(loadExistingContainerProps: ILoadExistingC
 export function loadFrozenContainerFromPendingState(props: ILoadFrozenContainerFromPendingStateProps): Promise<IContainer>;
 
 // @alpha @legacy
-export function loadSummarizerContainerAndMakeSummary(loadExistingContainerProps: ILoadSummarizerContainerProps): Promise<LoadSummarizerSummaryResult>;
+export function loadSummarizerContainerAndMakeSummary(loadSummarizerContainerProps: ILoadSummarizerContainerProps): Promise<LoadSummarizerSummaryResult>;
 
 // @alpha @legacy
 export type LoadSummarizerSummaryResult = {
