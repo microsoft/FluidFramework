@@ -24,10 +24,16 @@ import {
 	throttle,
 } from "@fluidframework/server-services-utils";
 import { Router } from "express";
+import type { Query } from "express-serve-static-core";
 import type * as nconf from "nconf";
 import winston from "winston";
 
-import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../services";
+import type {
+	ICache,
+	ITenantService,
+	ISimplifiedCustomDataRetriever,
+	IPostEphemeralContainerChecker,
+} from "../services";
 import { parseToken, Constants } from "../utils";
 
 import * as utils from "./utils";
@@ -44,6 +50,7 @@ export function create(
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
+	postEphemeralContainerChecker?: IPostEphemeralContainerChecker,
 ): Router {
 	const router: Router = Router();
 	const ignoreIsEphemeralFlag: boolean = config.get("ignoreEphemeralFlag") ?? true;
@@ -98,6 +105,7 @@ export function create(
 		authorization: string | undefined,
 		sha: string,
 		useCache: boolean,
+		query?: Query,
 	): Promise<IWholeFlatSummary> {
 		const service = await utils.createGitService({
 			config,
@@ -108,6 +116,8 @@ export function create(
 			documentManager,
 			cache,
 			ephemeralDocumentTTLSec,
+			postEphemeralContainerChecker,
+			query,
 		});
 		return service.getSummary(sha, useCache);
 	}
@@ -120,6 +130,7 @@ export function create(
 		storageName?: string,
 		isEphemeralContainer?: boolean,
 		ignoreEphemeralFlag?: boolean,
+		query?: Query,
 	): Promise<IWriteSummaryResponse> {
 		const service = await utils.createGitService({
 			config,
@@ -134,6 +145,8 @@ export function create(
 			isEphemeralContainer,
 			ephemeralDocumentTTLSec,
 			simplifiedCustomDataRetriever,
+			postEphemeralContainerChecker,
+			query,
 		});
 		return service.createSummary(params, initial);
 	}
@@ -178,6 +191,7 @@ export function create(
 				request.get("Authorization"),
 				request.params.sha,
 				useCache,
+				request.query,
 			);
 
 			utils.handleResponse(
@@ -243,6 +257,7 @@ export function create(
 				request.get("StorageName"),
 				isEphemeralContainer,
 				ignoreIsEphemeralFlag,
+				request.query,
 			);
 
 			utils.handleResponse(summaryP, response, false, undefined, 201);

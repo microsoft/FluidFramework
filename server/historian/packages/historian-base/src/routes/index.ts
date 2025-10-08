@@ -13,7 +13,12 @@ import type {
 import type { Router } from "express";
 import type * as nconf from "nconf";
 
-import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../services";
+import type {
+	ICache,
+	ITenantService,
+	ISimplifiedCustomDataRetriever,
+	IPostEphemeralContainerChecker,
+} from "../services";
 
 /* eslint-disable import/no-internal-modules */
 import * as blobs from "./git/blobs";
@@ -56,6 +61,7 @@ export function create(
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
+	postEphemeralContainerChecker?: IPostEphemeralContainerChecker,
 ): IRoutes {
 	const commonRouteParams: CommonRouteParams = [
 		config,
@@ -83,6 +89,6 @@ export function create(
 			contents: contents.create(...commonRouteParams),
 			headers: headers.create(...commonRouteParams),
 		},
-		summaries: summaries.create(...commonRouteParams),
+		summaries: summaries.create(...commonRouteParams, postEphemeralContainerChecker),
 	};
 }

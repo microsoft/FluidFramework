@@ -36,11 +36,10 @@ import {
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 
 import { CheckpointManager } from "./checkpointManager";
-import type { ILatestSummaryState } from "./interfaces";
+import type { ILatestSummaryState, ISummaryWriterFactory } from "./interfaces";
 import { ScribeLambda } from "./lambda";
 import { PendingMessageReader } from "./pendingMessageReader";
 import { SummaryReader } from "./summaryReader";
-import { SummaryWriter } from "./summaryWriter";
 import { getClientIds, initializeProtocol, isScribeCheckpointQuorumScrubbed } from "./utils";
 
 const DefaultScribe: IScribe = {
@@ -87,6 +86,7 @@ export class ScribeLambdaFactory
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 		private readonly maxLogtailLength: number,
 		private readonly maxPendingCheckpointMessagesLength: number,
+		private readonly summaryWriterFactory: ISummaryWriterFactory,
 	) {
 		super();
 	}
@@ -314,7 +314,7 @@ export class ScribeLambdaFactory
 		const protocolHandler = initializeProtocol(lastCheckpoint.protocolState);
 
 		const lastSummaryMessages = latestSummary.messages;
-		const summaryWriter = new SummaryWriter(
+		const summaryWriter = this.summaryWriterFactory.create(
 			tenantId,
 			documentId,
 			gitManager,
