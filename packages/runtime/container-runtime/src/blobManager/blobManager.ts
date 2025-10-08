@@ -296,6 +296,7 @@ export class BlobManager {
 		} = props;
 		this.routeContext = routeContext;
 		this.storage = storage;
+		this.sendBlobAttachOp = sendBlobAttachOp;
 		this.blobRequested = blobRequested;
 		this.isBlobDeleted = isBlobDeleted;
 		this.runtime = runtime;
@@ -323,10 +324,11 @@ export class BlobManager {
 				this.pendingOnlyLocalIds.add(localId);
 			}
 		}
-
-		this.sendBlobAttachOp = sendBlobAttachOp;
 	}
 
+	/**
+	 * Returns whether a blob with the given localId can be retrieved by the BlobManager via getBlob().
+	 */
 	public hasBlob(localId: string): boolean {
 		return this.redirectTable.has(localId) || this.localBlobCache.has(localId);
 	}
@@ -689,7 +691,7 @@ export class BlobManager {
 			// and we'll try the loop again from the top.
 		}
 		// When the blob successfully attaches, the localBlobRecord will have been updated to attached state
-		// in processing, so there's nothing else to do here.
+		// at the time we processed the op, so there's nothing else to do here.
 	};
 
 	/**
@@ -706,6 +708,7 @@ export class BlobManager {
 		// attached - these won't have a localBlobCache entry because we filter them out when generating
 		// pending state. We shouldn't try to attach them since they won't be accessible to the customer
 		// and would just be considered garbage immediately.
+		// TODO: Is it possible that we'd be asked to resubmit for a pending blob before we call sharePendingBlobs?
 		const localBlobRecord = this.localBlobCache.get(localId);
 		if (localBlobRecord?.state === "attaching") {
 			// If the TTL is expired, we assume it's gone from the storage and so is effectively localOnly again.
