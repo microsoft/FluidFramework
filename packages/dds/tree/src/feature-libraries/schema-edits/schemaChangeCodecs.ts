@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
+	type CodecTree,
 	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
@@ -13,11 +14,12 @@ import {
 	makeVersionDispatchingCodec,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import { makeSchemaCodec } from "../schema-index/index.js";
+import { getCodecTreeForSchemaFormat, makeSchemaCodec } from "../schema-index/index.js";
 
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";
 import type { SchemaChange } from "./schemaChangeTypes.js";
 import { SchemaVersion } from "../../core/index.js";
+import type { Brand } from "../../util/index.js";
 
 /**
  * Create a family of schema change codecs.
@@ -29,6 +31,20 @@ export function makeSchemaChangeCodecs(options: ICodecOptions): ICodecFamily<Sch
 		[SchemaVersion.v1, makeSchemaChangeCodecV1(options, SchemaVersion.v1)],
 		[SchemaVersion.v2, makeSchemaChangeCodecV1(options, SchemaVersion.v2)],
 	]);
+}
+
+export type SchemaChangeFormatVersion = Brand<
+	SchemaVersion.v1 | SchemaVersion.v2,
+	"SchemaChangeFormatVersion"
+>;
+export function getCodecTreeForSchemaChangeFormat(
+	version: SchemaChangeFormatVersion,
+): CodecTree {
+	return {
+		name: "SchemaChange",
+		version,
+		children: [getCodecTreeForSchemaFormat(version)],
+	};
 }
 
 /**

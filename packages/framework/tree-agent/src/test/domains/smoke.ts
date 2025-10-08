@@ -28,7 +28,3 @@ export class Smoke extends sf.objectAlpha(
 		},
 	},
 ) {}
-
-export function stringifySmoke(smoke: Smoke): string {
-	return `The smoke is ${smoke.color}. A new pope has ${smoke.color === "white" ? "" : "not "}been chosen.`;
-}

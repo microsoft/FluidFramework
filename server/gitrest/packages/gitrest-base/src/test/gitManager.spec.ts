@@ -19,7 +19,7 @@ import sizeof from "object-sizeof";
  * @param length - The length of the string to generate (substring of the incompressible string).
  */
 function getIncompressibleString(length?: number): string {
-	const incompressible = [];
+	const incompressible: string[] = [];
 	for (let step = 1; step <= 128; ++step) {
 		for (let inc = 0; inc < step; ++inc) {
 			for (let i = inc; i < 256; i += step) {

@@ -101,16 +101,8 @@ export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProp
 }
 
 // @alpha @legacy
-export interface ILoadFrozenContainerFromPendingStateProps {
-    readonly clientDetailsOverride?: IClientDetails | undefined;
-    readonly codeLoader: ICodeDetailsLoader_2;
-    readonly configProvider?: IConfigProviderBase | undefined;
-    readonly logger?: ITelemetryBaseLogger | undefined;
-    readonly options?: IContainerPolicies | undefined;
+export interface ILoadFrozenContainerFromPendingStateProps extends ILoadExistingContainerProps {
     readonly pendingLocalState: string;
-    readonly request: IRequest;
-    readonly scope?: FluidObject | undefined;
-    readonly urlResolver: IUrlResolver;
 }
 
 // @beta @legacy

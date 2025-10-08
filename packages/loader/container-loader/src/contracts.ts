@@ -12,6 +12,7 @@ import {
 	type IConnectionDetails,
 } from "@fluidframework/container-definitions/internal";
 import type { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { JsonString } from "@fluidframework/core-interfaces/internal";
 import type { ConnectionMode, IClientDetails } from "@fluidframework/driver-definitions";
 import type {
 	IContainerPackageInfo,
@@ -145,7 +146,9 @@ export interface IConnectionManagerFactoryArgs {
 	 * Called by connection manager for each incoming signal.
 	 * May be called before connectHandler is called (due to initial signals on socket connection)
 	 */
-	readonly signalHandler: (signals: ISignalMessage[]) => void;
+	readonly signalHandler: (
+		signals: ISignalMessage<{ type: never; content: JsonString<unknown> }>[],
+	) => void;
 
 	/**
 	 * Called when connection manager experiences delay in connecting to relay service.

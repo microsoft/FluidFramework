@@ -1,6 +1,8 @@
 ## TestInterface
 
-Test interface
+Test \[interface]\(https\://www\.typescriptlang.org/docs/handbook/interfaces.html).
+
+Cheers!
 
 <h3 id="testinterface-signature">Signature</h3>
 

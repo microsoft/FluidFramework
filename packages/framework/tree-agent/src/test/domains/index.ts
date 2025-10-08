@@ -4,7 +4,7 @@
  */
 
 export { Cell, Row, Table, stringifyTable } from "./table.js";
-export { Smoke, stringifySmoke } from "./smoke.js";
+export { Smoke } from "./smoke.js";
 export {
 	Comment,
 	Page,
@@ -12,7 +12,6 @@ export {
 	Sentence,
 	Span,
 	Word,
-	stringifyPage,
 } from "./text.js";
 export { Conference, Day, Days, Session, SessionType, Sessions } from "./conference.js";
 export { User, Users } from "./users.js";
