@@ -238,6 +238,7 @@ export const TestChange = {
 		[3, codec],
 		[4, codec],
 		[5, codec],
+		[101, codec],
 	]),
 };
 deepFreeze(TestChange);

@@ -167,6 +167,47 @@ interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
 	fieldBatch: number;
 }
 
+/**
+ * Format versions supported by SharedTree.
+ *
+ * Each version documents a required minimum version of the \@fluidframework/tree package.
+ * @alpha
+ */
+export const SharedTreeFormatVersion = {
+	/**
+	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 *
+	 * @deprecated - FF does not currently plan on supporting this format long-term.
+	 * Do not write production documents using this format, as they may not be loadable in the future.
+	 */
+	v1: 1,
+
+	/**
+	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 */
+	v2: 2,
+
+	/**
+	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 */
+	v3: 3,
+
+	/**
+	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 */
+	v5: 5,
+
+	/**
+	 * For testing purposes only.
+	 */
+	vSharedBranches: 100,
+
+	/**
+	 * For testing purposes only.
+	 */
+	vDetachedRoots: 101,
+} as const;
+
 const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersions>([
 	[
 		1,
@@ -189,8 +230,19 @@ const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersio
 		{ forest: 1, schema: 2, detachedFieldIndex: 1, editManager: 4, message: 4, fieldBatch: 1 },
 	],
 	[
-		100, // SharedTreeFormatVersion.vSharedBranches
+		SharedTreeFormatVersion.vSharedBranches,
 		{ forest: 1, schema: 2, detachedFieldIndex: 1, editManager: 5, message: 5, fieldBatch: 1 },
+	],
+	[
+		SharedTreeFormatVersion.vDetachedRoots,
+		{
+			forest: 1,
+			schema: 2,
+			detachedFieldIndex: 1,
+			editManager: 101,
+			message: 101,
+			fieldBatch: 1,
+		},
 	],
 ]);
 
@@ -584,42 +636,6 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 	// This cast is safe so long as TreeCheckout supports all the operations on the branch interface.
 	return kernel.checkout as unknown as BranchableTree;
 }
-
-/**
- * Format versions supported by SharedTree.
- *
- * Each version documents a required minimum version of the \@fluidframework/tree package.
- * @alpha
- */
-export const SharedTreeFormatVersion = {
-	/**
-	 * Requires \@fluidframework/tree \>= 2.0.0.
-	 *
-	 * @deprecated - FF does not currently plan on supporting this format long-term.
-	 * Do not write production documents using this format, as they may not be loadable in the future.
-	 */
-	v1: 1,
-
-	/**
-	 * Requires \@fluidframework/tree \>= 2.0.0.
-	 */
-	v2: 2,
-
-	/**
-	 * Requires \@fluidframework/tree \>= 2.0.0.
-	 */
-	v3: 3,
-
-	/**
-	 * Requires \@fluidframework/tree \>= 2.0.0.
-	 */
-	v5: 5,
-
-	/**
-	 * For testing purposes only.
-	 */
-	vSharedBranches: 100,
-} as const;
 
 /**
  * Format versions supported by SharedTree.

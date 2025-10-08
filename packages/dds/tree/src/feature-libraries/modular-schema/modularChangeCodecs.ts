@@ -23,6 +23,7 @@ import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
 import type { ModularChangeset } from "./modularChangeTypes.js";
 import { makeModularChangeCodecV1 } from "./modularChangeCodecV1.js";
 import { makeModularChangeCodecV2 } from "./modularChangeCodecV2.js";
+import type { JsonCompatibleReadOnly } from "../../util/index.js";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
@@ -39,7 +40,8 @@ export function makeModularChangeCodecFamily(
 	return makeCodecFamily(
 		Array.from(fieldKindConfigurations.entries(), ([version, fieldKinds]) => [
 			version,
-			makeModularChangeCodecV2(
+			makeModularChangeCodec(
+				version,
 				fieldKinds,
 				revisionTagCodec,
 				fieldsCodec,
@@ -48,4 +50,49 @@ export function makeModularChangeCodecFamily(
 			),
 		]),
 	);
+}
+
+const minVersionForCodec2 = 101;
+
+function makeModularChangeCodec(
+	version: number,
+	fieldKinds: FieldKindConfiguration,
+	revisionTagCodec: IJsonCodec<
+		RevisionTag,
+		EncodedRevisionTag,
+		EncodedRevisionTag,
+		ChangeEncodingContext
+	>,
+	fieldsCodec: FieldBatchCodec,
+	codecOptions: ICodecOptions,
+	chunkCompressionStrategy: TreeCompressionStrategyPrivate = TreeCompressionStrategy.Compressed,
+): IJsonCodec<
+	ModularChangeset,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
+	ChangeEncodingContext
+> {
+	if (version < minVersionForCodec2) {
+		const codec = makeModularChangeCodecV1(
+			fieldKinds,
+			revisionTagCodec,
+			fieldsCodec,
+			codecOptions,
+			chunkCompressionStrategy,
+		);
+
+		(codec as any).version = version;
+		return codec;
+	}
+
+	const codec2 = makeModularChangeCodecV2(
+		fieldKinds,
+		revisionTagCodec,
+		fieldsCodec,
+		codecOptions,
+		chunkCompressionStrategy,
+	);
+
+	(codec2 as any).version = version;
+	return codec2;
 }

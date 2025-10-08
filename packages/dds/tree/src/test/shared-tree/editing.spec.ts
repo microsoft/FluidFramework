@@ -16,7 +16,7 @@ import {
 	type NormalizedUpPath,
 	type TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
-import { Tree, type ITreeCheckout } from "../../shared-tree/index.js";
+import { SharedTreeFormatVersion, Tree, type ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand, makeArray } from "../../util/index.js";
 import {
 	checkoutWithContent,
@@ -41,6 +41,9 @@ import {
 import { JsonAsTree } from "../../jsonDomainSchema.js";
 import { fieldJsonCursor } from "../json/index.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
+import { configuredSharedTree } from "../../treeFactory.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
+import { ajvValidator } from "../codec/index.js";
 
 const rootField: NormalizedFieldUpPath = {
 	parent: undefined,
@@ -2919,7 +2922,13 @@ describe("Editing", () => {
 					children: sf.optional(sf.array(Child)),
 				}) {}
 
-				const provider = new TestTreeProviderLite(2);
+				const provider = new TestTreeProviderLite(
+					2,
+					configuredSharedTree({
+						jsonValidator: ajvValidator,
+						formatVersion: SharedTreeFormatVersion.vDetachedRoots,
+					}).getFactory(),
+				);
 				const config = new TreeViewConfiguration({
 					schema: Parent,
 				});
@@ -2964,7 +2973,13 @@ describe("Editing", () => {
 					children: sf.optional(sf.map(Child)),
 				}) {}
 
-				const provider = new TestTreeProviderLite(2);
+				const provider = new TestTreeProviderLite(
+					2,
+					configuredSharedTree({
+						jsonValidator: FormatValidatorBasic,
+						formatVersion: SharedTreeFormatVersion.vDetachedRoots,
+					}).getFactory(),
+				);
 				const config = new TreeViewConfiguration({
 					schema: Parent,
 				});
@@ -3010,7 +3025,13 @@ describe("Editing", () => {
 					child: sf.optional(Child),
 				}) {}
 
-				const provider = new TestTreeProviderLite(2);
+				const provider = new TestTreeProviderLite(
+					2,
+					configuredSharedTree({
+						jsonValidator: FormatValidatorBasic,
+						formatVersion: SharedTreeFormatVersion.vDetachedRoots,
+					}).getFactory(),
+				);
 				const config = new TreeViewConfiguration({
 					schema: sf.optional(Parent),
 				});

@@ -84,5 +84,14 @@ export function makeMessageCodecs<TChangeset>(
 			makeV1ToV4CodecWithVersion(changeCodecs.resolve(4).json, revisionTagCodec, options, 4),
 		],
 		[5, makeV5CodecWithVersion(changeCodecs.resolve(4).json, revisionTagCodec, options, 5)],
+		[
+			101,
+			makeV1ToV4CodecWithVersion(
+				changeCodecs.resolve(101).json,
+				revisionTagCodec,
+				options,
+				101,
+			),
+		],
 	]);
 }
