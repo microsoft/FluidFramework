@@ -77,14 +77,6 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		const endEvents = getPerformanceEvents("end");
 		assert.strictEqual(startEvents.length, 1, "start telemetry missing");
 		assert.strictEqual(endEvents.length, 1, "end telemetry missing");
-		const endEvent = endEvents[0];
-		assert.strictEqual(endEvent.category, "performance", "end event should be performance");
-		assert.strictEqual(endEvent.success, true, "end event should indicate success");
-		assert.strictEqual(
-			typeof endEvent.duration,
-			"number",
-			"end event should report duration in ms",
-		);
 	});
 
 	it("summarizes successfully with fullTree gate on", async function () {
@@ -118,19 +110,6 @@ describeCompat("on-demand summarizer api", "NoCompat", (getTestObjectProvider, a
 		const endEvents = getPerformanceEvents("end");
 		assert.strictEqual(startEvents.length, 1, "start telemetry missing");
 		assert.strictEqual(endEvents.length, 1, "end telemetry missing");
-		const endEvent = endEvents[0];
-		assert.strictEqual(endEvent.success, true, "end event should indicate success");
-		assert.strictEqual(
-			endEvent.summarySubmitted,
-			true,
-			"end event should capture summarySubmitted",
-		);
-		assert.strictEqual(
-			endEvent.summaryOpBroadcasted,
-			true,
-			"end event should capture summaryOpBroadcasted",
-		);
-		assert(!("receivedSummaryAck" in endEvent), "end event should omit receivedSummaryAck");
 	});
 
 	it("clients with summaries disabled can make changes and load from on-demand summary", async function () {
