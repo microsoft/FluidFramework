@@ -13,11 +13,11 @@ These are intended to be used with APIs that require a version (such as `TreeAlp
 If an application previously specified the minimum client version when initialization Shared Tree like:
 
 ```ts
-    const factory = configuredSharedTree({ ..., oldestCompatibleClient: "2.1.3" });
+    const factory = configuredSharedTree({ ..., oldestCompatibleClient: FluidClientVersion.v2_52 });
 ```
 
 The application should now specify the version when initializing the Container Runtime:
 
 ```ts
-    const runtime = await loadContainerRuntime({ ..., minVersionForCollab: "2.1.3" });
+    const runtime = await loadContainerRuntime({ ..., minVersionForCollab: "2.52.0" });
 ```

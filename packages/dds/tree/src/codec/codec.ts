@@ -12,7 +12,6 @@ import type { ChangeEncodingContext } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 import { noopValidator } from "./noopValidator.js";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
-import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 /**
  * Translates decoded data to encoded data.
@@ -440,7 +439,7 @@ export const FluidClientVersion = {
 	/**
 	 * Fluid Framework Client 2.0 and newer.
 	 */
-	v2_0: defaultMinVersionForCollab,
+	v2_0: "2.0.0",
 
 	/** Fluid Framework Client 2.1 and newer. */
 	// If we think we might want to start allowing opting into something that landed in 2.1 (without opting into something newer),
