@@ -183,6 +183,13 @@ export class SchematizingSimpleTreeView<
 
 		this.runSchemaEdit(() => {
 			const schema = toInitialSchema(this.config.schema);
+			// This has to be the contextless version, since when "initialize" is called (right after this),
+			// it will do a schema change which would dispose of the current context (see inside `update`).
+			// Thus using the current context (if any) would hydrate nodes then
+			// immediately dispose them instead of having them actually be useable after initialize.
+			// For this to work,
+			// the hydration must be deferred until after the content is inserted into the tree and the final schema change is done (for required roots),
+			// but before any user event could could run.
 			const mapTree = prepareForInsertionContextless(
 				content as InsertableContent | undefined,
 				this.rootFieldSchema,
