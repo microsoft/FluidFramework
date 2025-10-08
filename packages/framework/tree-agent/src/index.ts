@@ -9,7 +9,7 @@
  * @packageDocumentation
  */
 
-export type { SharedTreeSemanticAgent } from "./agent.js";
+export { SharedTreeSemanticAgent } from "./agent.js";
 export type {
 	EditResult,
 	SharedTreeChatModel,
