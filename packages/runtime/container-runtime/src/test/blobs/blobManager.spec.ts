@@ -510,6 +510,7 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			describe("Abort", () => {
 				it("Can abort before blob upload", async function () {
+					// TODO: Should be able to enable this test for payload pending blobs now
 					if (createBlobPayloadPending) {
 						// Blob creation with pending payload doesn't support abort
 						this.skip();

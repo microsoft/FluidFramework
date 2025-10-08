@@ -168,6 +168,12 @@ interface AttachedBlob {
 	blob: ArrayBufferLike;
 }
 
+/**
+ * Blobs that were created locally are tracked, and may be in one of these states. When first
+ * created, they are in localOnly state. The process of sharing has two steps, upload and attach.
+ * Progress through the stages may regress back to localOnly if we determine the storage may have
+ * deleted the blob before we could finish attaching it.
+ */
 type LocalBlobRecord =
 	| LocalOnlyBlob
 	| UploadingBlob
@@ -219,11 +225,19 @@ export class BlobManager {
 	 */
 	private readonly redirectTable: Map<string, string>;
 
+	/**
+	 * The localBlobCache has a dual role of caching locally-created blobs, as well as tracking their state as they
+	 * are shared. Keys are localIds.
+	 */
 	private readonly localBlobCache: Map<string, LocalBlobRecord> = new Map();
-	// Blobs with an attached handle that have not finished blob-attaching are the set we need to provide from
-	// getPendingState().  This will store their local IDs, and then we can look them up against the localBlobCache.
+	/**
+	 * Blobs with an attached handle that have not finished blob-attaching are the set we need to provide from
+	 * getPendingState().  This stores their local IDs, and then we can look them up against the localBlobCache.
+	 */
 	private readonly pendingBlobsWithAttachedHandles: Set<string> = new Set();
-	// The set of local IDs for any pending blobs we loaded with and have not yet started the upload/attach flow for.
+	/**
+	 * Local IDs for any pending blobs we loaded with and have not yet started the upload/attach flow for.
+	 */
 	private readonly pendingOnlyLocalIds: Set<string> = new Set();
 
 	private readonly sendBlobAttachOp: (localId: string, storageId: string) => void;
@@ -295,6 +309,9 @@ export class BlobManager {
 
 		this.redirectTable = toRedirectTable(blobManagerLoadInfo, this.mc.logger);
 
+		// We populate the localBlobCache with any pending blobs we are provided, which makes them available
+		// to access even though they are not shared yet. However, we don't start the share flow until it is
+		// explicitly invoked via sharePendingBlobs() in case we are loaded in a frozen container.
 		if (pendingBlobs !== undefined) {
 			for (const [localId, serializableBlobRecord] of Object.entries(pendingBlobs)) {
 				assert(!this.redirectTable.has(localId), "Pending blob already in redirect table");
@@ -396,42 +413,14 @@ export class BlobManager {
 	private getNonPayloadPendingBlobHandle(localId: string): BlobHandle {
 		const localBlobRecord = this.localBlobCache.get(localId);
 		assert(localBlobRecord !== undefined, 0x384 /* requesting handle for unknown blob */);
+		assert(localBlobRecord.state === "attached", "Expected blob to be attached");
 
 		return new BlobHandle(
 			getGCNodePathFromLocalId(localId),
 			this.routeContext,
-			// TODO: Here just get the blob from the localBlobCache rather than making a getBlob call?
 			async () => this.getBlob(localId, false),
 			false, // payloadPending
-			() => {
-				// We never remove an entry from the localBlobCache, so if our assert above passes
-				// we can assume the get will find the most recent state in the cache.  Since we
-				// only call this function in non-payloadPending cases, this should always be attached
-				// but including this check here in case we call it in other cases in the future.
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				if (this.localBlobCache.get(localId)!.state !== "attached") {
-					this.pendingBlobsWithAttachedHandles.add(localId);
-				}
-			},
 		);
-	}
-
-	private async createBlobDetached(
-		blob: ArrayBufferLike,
-	): Promise<IFluidHandleInternalPayloadPending<ArrayBufferLike>> {
-		const localId = this.localIdGenerator();
-		// There shouldn't really be any chance we need to query the localBlobCache before the
-		// blob is "uploaded" to the MemoryBlobStorage, but including it here out of caution.
-		this.localBlobCache.set(localId, { state: "uploading", blob });
-		// Blobs created while the container is detached are stored in IDetachedBlobStorage.
-		// The 'IContainerStorageService.createBlob()' call below will respond with a pseudo storage ID.
-		// That pseudo storage ID will be replaced with the real storage ID at attach time.
-		const { id: detachedStorageId } = await this.storage.createBlob(blob);
-		// From the perspective of the BlobManager, the blob is fully attached. The actual
-		// upload/attach process at container attach time is treated as opaque to this tracking.
-		this.localBlobCache.set(localId, { state: "attached", blob });
-		this.redirectTable.set(localId, detachedStorageId);
-		return this.getNonPayloadPendingBlobHandle(localId);
 	}
 
 	public async createBlob(
@@ -439,7 +428,7 @@ export class BlobManager {
 		signal?: AbortSignal,
 	): Promise<IFluidHandleInternalPayloadPending<ArrayBufferLike>> {
 		if (this.runtime.attachState === AttachState.Detached) {
-			return this.createBlobDetached(blob);
+			return this.createBlobDetached(blob, signal);
 		}
 		if (this.runtime.attachState === AttachState.Attaching) {
 			// blob upload is not supported in "Attaching" state
@@ -452,8 +441,28 @@ export class BlobManager {
 		);
 
 		return this.createBlobPayloadPending
-			? this.createBlobWithPayloadPending(blob)
+			? this.createBlobWithPayloadPending(blob, signal)
 			: this.createBlobLegacy(blob, signal);
+	}
+
+	private async createBlobDetached(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandleInternalPayloadPending<ArrayBufferLike>> {
+		if (signal?.aborted === true) {
+			throw createAbortError();
+		}
+		const localId = this.localIdGenerator();
+		this.localBlobCache.set(localId, { state: "uploading", blob });
+		// Blobs created while the container is detached are stored in IDetachedBlobStorage.
+		// The 'IContainerStorageService.createBlob()' call below will respond with a pseudo storage ID.
+		// That pseudo storage ID will be replaced with the real storage ID at attach time.
+		const { id: detachedStorageId } = await this.storage.createBlob(blob);
+		// From the perspective of the BlobManager, the blob is now fully attached. The actual
+		// upload/attach process at container attach time is treated as opaque to this tracking.
+		this.localBlobCache.set(localId, { state: "attached", blob });
+		this.redirectTable.set(localId, detachedStorageId);
+		return this.getNonPayloadPendingBlobHandle(localId);
 	}
 
 	private async createBlobLegacy(
