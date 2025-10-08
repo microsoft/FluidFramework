@@ -33,7 +33,7 @@ export function createSemanticAgent<TSchema extends ImplicitFieldSchema_2>(clien
 export function createSesEditEvaluator(options?: {
     compartmentOptions?: CompartmentOptions;
     lockdownOptions?: LockdownOptions;
-}): Promise<SemanticAgentOptions["evaluateEdit"]>;
+}): Promise<SemanticAgentOptions["executeEdit"]>;
 
 // @alpha
 export type Ctor<T = any> = new (...args: any[]) => T;
@@ -42,7 +42,7 @@ export type Ctor<T = any> = new (...args: any[]) => T;
 export interface EditResult {
     message: string;
     // (undocumented)
-    type: "success" | "disabledError" | "validationError" | "codeError" | "tooManyEditsError" | "expiredError";
+    type: "success" | "disabledError" | "validationError" | "executionError" | "tooManyEditsError" | "expiredError";
 }
 
 // @alpha
@@ -107,7 +107,7 @@ export type MethodKeys<T> = {
 // @alpha
 export interface SemanticAgentOptions {
     domainHints?: string;
-    evaluateEdit?: (context: Record<string, unknown>, code: string) => void | Promise<void>;
+    executeEdit?: (context: Record<string, unknown>, code: string) => void | Promise<void>;
     logger?: Logger;
     maximumSequentialEdits?: number;
     validateEdit?: (code: string) => void | Promise<void>;

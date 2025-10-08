@@ -138,7 +138,7 @@ export class SharedTreeSemanticAgent<TSchema extends ImplicitFieldSchema> {
 				queryTree,
 				editCode,
 				this.options?.validateEdit ?? defaultValidateEdit,
-				this.options?.evaluateEdit ?? defaultEvaluateEdit,
+				this.options?.executeEdit ?? defaultExecuteEdit,
 				this.options?.logger,
 			);
 
@@ -200,7 +200,7 @@ async function applyTreeFunction<TSchema extends ImplicitFieldSchema>(
 	tree: Subtree<TSchema>,
 	editCode: string,
 	validateEdit: Required<SemanticAgentOptions>["validateEdit"],
-	evaluateEdit: Required<SemanticAgentOptions>["evaluateEdit"],
+	executeEdit: Required<SemanticAgentOptions>["executeEdit"],
 	logger: Logger | undefined,
 ): Promise<EditResult> {
 	logger?.log(`### Editing Tool Invoked\n\n`);
@@ -237,13 +237,13 @@ async function applyTreeFunction<TSchema extends ImplicitFieldSchema>(
 	};
 
 	try {
-		await evaluateEdit(context, editCode);
+		await executeEdit(context, editCode);
 	} catch (error: unknown) {
 		logger?.log(`#### Error\n\n`);
 		logger?.log(`\`\`\`JSON\n${toErrorString(error)}\n\`\`\`\n\n`);
 		editTree.branch.dispose();
 		return {
-			type: "codeError",
+			type: "executionError",
 			message: `Running the generated code produced an error. The state of the tree will be reset to its previous state as it was before the code ran. Please try again. Here is the error: ${toErrorString(error)}`,
 		};
 	}
@@ -259,7 +259,7 @@ async function applyTreeFunction<TSchema extends ImplicitFieldSchema>(
 
 const defaultValidateEdit: Required<SemanticAgentOptions>["validateEdit"] = () => {};
 
-const defaultEvaluateEdit: Required<SemanticAgentOptions>["evaluateEdit"] = async (
+const defaultExecuteEdit: Required<SemanticAgentOptions>["executeEdit"] = async (
 	context,
 	code,
 ) => {

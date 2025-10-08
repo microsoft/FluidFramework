@@ -29,7 +29,7 @@ export interface SemanticAgentOptions {
 	domainHints?: string;
 	/**
 	 * Validates any generated JavaScript created by the {@link SharedTreeChatModel.editToolName | model's editing tool}.
-	 * @remarks This happens before the code is executed - execution can be intercepted by using the {@link SemanticAgentOptions.evaluateEdit | evaluateEdit} callback.
+	 * @remarks This happens before the code is executed - execution can be intercepted by using the {@link SemanticAgentOptions.executeEdit | executeEdit} callback.
 	 * @param code - The generated JavaScript code as a string.
 	 * @throws If the code is invalid, this function should throw an error with a human-readable message describing why it is invalid.
 	 */
@@ -40,10 +40,10 @@ export interface SemanticAgentOptions {
 	 * @param context - An object that must be provided to the generated code as a variable named "context" in its top-level scope.
 	 * @param code - The generated JavaScript code as a string.
 	 * @throws If an error is thrown while evaluating the code, it will be caught and the message will be forwarded to the model for debugging.
-	 * @remarks If this function is not provided, the generated code will be evaluated using a simple `eval` call, which may not provide sufficient security guarantees for some environments.
+	 * @remarks If this function is not provided, the generated code will be executed using a simple `eval` call, which may not provide sufficient security guarantees for some environments.
 	 * Use a library such as SES to provide a more secure implementation - see {@link createSesEditEvaluator} for a drop-in option.
 	 */
-	evaluateEdit?: (context: Record<string, unknown>, code: string) => void | Promise<void>;
+	executeEdit?: (context: Record<string, unknown>, code: string) => void | Promise<void>;
 	/**
 	 * The maximum number of sequential edits the LLM can make before we assume it's stuck in a loop.
 	 */
@@ -60,7 +60,7 @@ export interface SemanticAgentOptions {
  * - `success`: The edit was successfully applied.
  * - `disabledError`: The model is not allowed to edit the tree (i.e. {@link SharedTreeChatModel.editToolName} was not provided).
  * - `validationError`: The provided JavaScript did not pass the optional {@link SemanticAgentOptions.validateEdit} function.
- * - `codeError`: An error was thrown while parsing or executing the provided JavaScript.
+ * - `executionError`: An error was thrown while parsing or executing the provided JavaScript.
  * - `tooManyEditsError`: The {@link SharedTreeChatQuery.edit} function has been called more than the number of times specified by {@link SemanticAgentOptions.maximumSequentialEdits} for the same message.
  * - `expiredError`: The {@link SharedTreeChatQuery.edit} function was called after the issuing query has already completed.
  * @alpha
@@ -70,7 +70,7 @@ export interface EditResult {
 		| "success"
 		| "disabledError"
 		| "validationError"
-		| "codeError"
+		| "executionError"
 		| "tooManyEditsError"
 		| "expiredError";
 

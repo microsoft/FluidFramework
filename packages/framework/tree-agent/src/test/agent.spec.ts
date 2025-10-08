@@ -141,7 +141,7 @@ describe("Semantic Agent", () => {
 				callCount++;
 				if (callCount === 1) {
 					const result1 = await edit("const ; x = 1, for else");
-					assert.equal(result1.type, "codeError", result1.message);
+					assert.equal(result1.type, "executionError", result1.message);
 					return result1.message;
 				}
 				return "Recovered";
@@ -164,7 +164,7 @@ describe("Semantic Agent", () => {
 				callCount++;
 				if (callCount === 1) {
 					const result = await edit(`throw new Error("boom");`);
-					assert.equal(result.type, "codeError", result.message);
+					assert.equal(result.type, "executionError", result.message);
 					return result.message;
 				}
 				// On second query perform successful edit to prove recovery.
@@ -246,7 +246,7 @@ describe("Semantic Agent", () => {
 				const result1 = await edit(`context.root = "First";`);
 				assert.equal(result1.type, "success", result1.message);
 				const result2 = await edit(`throw new Error("boom");`);
-				assert.equal(result2.type, "codeError", result2.message);
+				assert.equal(result2.type, "executionError", result2.message);
 				return result2.message;
 			},
 		};

@@ -41,7 +41,7 @@ describe.skip("SES edit evaluator", () => {
 	it("passes globals to the compartment", async () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
 		view.initialize("Initial");
-		const evaluateEdit = await createSesEditEvaluator({
+		const executeEdit = await createSesEditEvaluator({
 			lockdownOptions,
 			compartmentOptions: {
 				globals: new Map([["extraGlobal", "globalValue"]]),
@@ -56,7 +56,7 @@ describe.skip("SES edit evaluator", () => {
 			},
 		};
 
-		const agent = new SharedTreeSemanticAgent(model, view, { evaluateEdit });
+		const agent = new SharedTreeSemanticAgent(model, view, { executeEdit });
 		await agent.query("");
 		assert.equal(view.root, "globalValue");
 	});
@@ -64,19 +64,19 @@ describe.skip("SES edit evaluator", () => {
 	it("returns a code error when SES blocks the generated code", async () => {
 		const view = independentView(new TreeViewConfiguration({ schema: sf.string }), {});
 		view.initialize("Initial");
-		const evaluateEdit = await createSesEditEvaluator({
+		const executeEdit = await createSesEditEvaluator({
 			lockdownOptions,
 		});
 		const model: SharedTreeChatModel = {
 			editToolName: "EditTreeTool",
 			async query({ edit }) {
 				const editResult = await edit("Object.prototype.polluted = 'hacked!';");
-				assert.equal(editResult.type, "codeError", editResult.message);
+				assert.equal(editResult.type, "executionError", editResult.message);
 				return editResult.message;
 			},
 		};
 
-		const agent = new SharedTreeSemanticAgent(model, view, { evaluateEdit });
+		const agent = new SharedTreeSemanticAgent(model, view, { executeEdit });
 		const response = await agent.query("Attempt forbidden edit");
 		assert.match(response, /is not extensible/i);
 		assert.equal(view.root, "Initial", "Tree should not change after SES rejection");
