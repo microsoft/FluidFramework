@@ -34,10 +34,12 @@ describe("staged schema upgrade", () => {
 	const schemaA = SchemaFactoryAlpha.optional([SchemaFactoryAlpha.number]);
 
 	// Schema B: number or string (string is staged)
-	const schemaB = SchemaFactoryAlpha.optional([
-		SchemaFactoryAlpha.number,
-		SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-	]);
+	const schemaB = SchemaFactoryAlpha.optional(
+		SchemaFactoryAlpha.types([
+			SchemaFactoryAlpha.number,
+			SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+		]),
+	);
 
 	// Schema C: number or string, both fully allowed
 	const schemaC = SchemaFactoryAlpha.optional([

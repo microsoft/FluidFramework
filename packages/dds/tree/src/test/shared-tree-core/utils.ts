@@ -74,7 +74,7 @@ import type {
 	IFluidLoadable,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { Breakable } from "../../util/index.js";
+import { brand, Breakable } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";
 import { TestChange } from "../testChange.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -89,9 +89,9 @@ const codecOptions: ICodecOptions = {
 	jsonValidator: FormatValidatorBasic,
 };
 const formatVersions: ExplicitCoreCodecVersions & { fieldBatch: FieldBatchFormatVersion } = {
-	editManager: 1,
-	message: 1,
-	fieldBatch: 1,
+	editManager: brand(1),
+	message: brand(1),
+	fieldBatch: brand(1),
 };
 
 class MockSharedObjectHandle extends MockHandle<ISharedObject> implements ISharedObjectHandle {

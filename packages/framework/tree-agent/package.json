@@ -116,6 +116,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"@langchain/core": "^0.3.66",
+		"acorn": "^8.15.0",
 		"langchain": "^0.3.30",
 		"uuid": "^11.1.0",
 		"zod": "^3.25.32"
