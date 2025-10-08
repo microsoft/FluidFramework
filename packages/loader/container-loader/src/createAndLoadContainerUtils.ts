@@ -29,6 +29,7 @@ import {
 	mixinMonitoringContext,
 	sessionStorageConfigProvider,
 	PerformanceEvent,
+	isFluidError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -371,8 +372,8 @@ export async function loadSummarizerContainerAndMakeSummary(
 					summaryResults,
 				};
 			} catch (error) {
-				const caughtError = normalizeError(error);
-				event.end({ success: false, errorMessage: caughtError.message });
+				event.cancel({ success: false }, error);
+				const caughtError = isFluidError(error) ? error : normalizeError(error);
 				return { success: false, error: caughtError };
 			} finally {
 				container.dispose();
