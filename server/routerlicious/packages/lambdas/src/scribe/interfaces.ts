@@ -99,8 +99,8 @@ export interface ICheckpointManager {
 
 export interface ISummaryWriterFactory {
 	create(
-		documentId: string,
 		tenantId: string,
+		documentId: string,
 		gitManager: IGitManager,
 		deltaManager: IDeltaService,
 		messageCollection: ICollection<ISequencedOperationMessage>,
