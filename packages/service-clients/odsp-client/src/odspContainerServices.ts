@@ -73,7 +73,6 @@ function lookupOdspBlobURL(
 }
 
 /**
- * Implements {@link IOdspContainerServices}.
  * @internal
  */
 export class OdspContainerServices
