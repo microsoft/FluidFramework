@@ -246,7 +246,6 @@ export class DocumentStorage implements IDocumentStorage {
 					tenantId,
 					storageName,
 					isEphemeralContainer,
-					additionalQueryParams,
 				);
 				createDocTrace.stampStage(DocCreationStage.DocCreationCompleted);
 				return dbResult;
