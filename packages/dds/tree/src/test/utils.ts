@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 import type {
 	HasListeners,
 	IEmitter,
@@ -186,7 +187,6 @@ import {
 	MockContainerRuntimeFactoryWithOpBunching,
 	type MockContainerRuntimeWithOpBunching,
 } from "./mocksForOpBunching.js";
-import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import type {
 	ISharedObjectKind,
@@ -534,7 +534,7 @@ export class TestTreeProviderLite {
  * after the spy is no longer needed.
  */
 export function spyOnMethod(
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type, @typescript-eslint/ban-types
+	// eslint-disable-next-line @typescript-eslint/ban-types
 	methodClass: Function,
 	methodName: string,
 	spy: () => void,
@@ -1463,13 +1463,14 @@ export function moveWithin(
  * and enable debug asserts otherwise.
  */
 export function configureBenchmarkHooks(): void {
-	let debugBefore: boolean;
-	before(() => {
-		debugBefore = configureDebugAsserts(!isInPerformanceTestingMode);
-	});
-	after(() => {
-		assert.equal(configureDebugAsserts(debugBefore), !isInPerformanceTestingMode);
-	});
+	if (isInPerformanceTestingMode) {
+		before(() => {
+			emulateProductionBuild();
+		});
+		after(() => {
+			emulateProductionBuild(false);
+		});
+	}
 }
 
 export function chunkFromJsonTrees(field: JsonCompatible[]): TreeChunk {

@@ -9,7 +9,7 @@ export {
 	type WithType,
 	type TreeNodeSchema,
 	type AnnotatedAllowedType,
-	type NormalizedAnnotatedAllowedTypes,
+	type AllowedTypesFullEvaluated,
 	NodeKind,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
@@ -38,12 +38,8 @@ export {
 	normalizeAllowedTypes,
 	type NodeSchemaMetadata,
 	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
-	type UnannotateImplicitAllowedTypes,
 	type AllowedTypesMetadata,
 	evaluateLazySchema,
-	type UnannotateAllowedTypes,
-	type UnannotateAllowedType,
 	type UnannotateAllowedTypesList,
 	type AllowedTypeMetadata,
 	type AnnotatedAllowedTypes,
@@ -57,6 +53,11 @@ export {
 	type SchemaVisitor,
 	type SimpleNodeSchemaBase,
 	withBufferedTreeEvents,
+	type AnnotateAllowedTypesList,
+	type AllowedTypesFull,
+	type AllowedTypesFullFromMixed,
+	AnnotatedAllowedTypesInternal,
+	type NumberKeys,
 } from "./core/index.js";
 export { walkFieldSchema } from "./walkFieldSchema.js";
 export type { UnsafeUnknownSchema, Insertable } from "./unsafeUnknownSchema.js";
@@ -185,9 +186,7 @@ export type {
 } from "./simpleSchema.js";
 export {
 	type ImplicitFieldSchema,
-	type ImplicitAnnotatedFieldSchema,
 	type TreeFieldFromImplicitField,
-	type UnannotateImplicitFieldSchema,
 	FieldKind,
 	FieldSchema,
 	FieldSchemaAlpha,
@@ -227,7 +226,6 @@ export {
 	ObjectNodeSchema,
 	type ObjectNodeSchemaPrivate,
 	isObjectNodeSchema,
-	type InsertableObjectFromAnnotatedSchemaRecord,
 	type TreeObjectNode,
 	setField,
 	isRecordNodeSchema,
@@ -236,7 +234,6 @@ export {
 	type RecordNodePojoEmulationSchema,
 	RecordNodeSchema,
 	type TreeRecordNode,
-	type UnannotateSchemaRecord,
 } from "./node-kinds/index.js";
 export {
 	unhydratedFlexTreeFromInsertable,

@@ -3,27 +3,24 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
 import {
+	ObjectNodeSchema,
 	SchemaFactory,
-	type ImplicitFieldSchema,
-	type ImplicitAnnotatedFieldSchema,
+	isObjectNodeSchema,
 } from "../../../../simple-tree/index.js";
-import type {
-	UnannotateSchemaRecord,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../simple-tree/node-kinds/object/objectNodeTypes.js";
-import type { requireAssignableTo, RestrictiveStringRecord } from "../../../../util/index.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
-// Type tests for unannotate utilities
-{
-	// UnannotateSchemaRecord
-	{
-		type T = RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>;
-		type _check = requireAssignableTo<
-			UnannotateSchemaRecord<T>,
-			RestrictiveStringRecord<ImplicitFieldSchema>
-		>;
-	}
-}
+describe("objectNodeTypes", () => {
+	it("isObjectNodeSchema", () => {
+		class A extends schemaFactory.object("A", {}) {}
+		class B extends schemaFactory.array("B", []) {}
+
+		assert(isObjectNodeSchema(A));
+		assert(!isObjectNodeSchema(B));
+
+		assert(A instanceof ObjectNodeSchema);
+		assert(B instanceof ObjectNodeSchema === false);
+	});
+});

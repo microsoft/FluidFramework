@@ -21,19 +21,24 @@ import {
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
 import { schemaStatics } from "./schemaStatics.js";
-import type { ImplicitAnnotatedFieldSchema, ImplicitFieldSchema } from "../fieldSchema.js";
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type {
 	NodeKind,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
 	ImplicitAllowedTypes,
-	ImplicitAnnotatedAllowedTypes,
 	AnnotatedAllowedType,
 	LazyItem,
 	WithType,
+	AllowedTypesMetadata,
+	AllowedTypesFullFromMixed,
 } from "../core/index.js";
-import { normalizeToAnnotatedAllowedType, createSchemaUpgrade } from "../core/index.js";
+import {
+	normalizeToAnnotatedAllowedType,
+	createSchemaUpgrade,
+	AnnotatedAllowedTypesInternal,
+} from "../core/index.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
@@ -53,7 +58,6 @@ import type {
 } from "../fieldSchema.js";
 import type { LeafSchema } from "../leafNodeSchema.js";
 import type { SimpleLeafNodeSchema } from "../simpleSchema.js";
-import type { UnannotateImplicitAllowedTypes } from "../core/index.js";
 import type { FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 /* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import/no-duplicates */
 
@@ -94,9 +98,21 @@ export interface SchemaStaticsAlpha {
 	 *
 	 * TODO: AB#45711: Update the docs above when recursive type support is added.
 	 */
-	staged: <const T extends LazyItem<TreeNodeSchema>>(
+	readonly staged: <const T extends LazyItem<TreeNodeSchema>>(
 		t: T | AnnotatedAllowedType<T>,
 	) => AnnotatedAllowedType<T>;
+
+	/**
+	 * Normalize information about a set of {@link AllowedTypes} into an {@link AllowedTypesFull}.
+	 * @remarks
+	 * This can take in {@link AnnotatedAllowedType} to preserve their annotations.
+	 */
+	readonly types: <
+		const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[],
+	>(
+		t: T,
+		metadata?: AllowedTypesMetadata,
+	) => AllowedTypesFullFromMixed<T>;
 }
 
 const schemaStaticsAlpha: SchemaStaticsAlpha = {
@@ -111,6 +127,13 @@ const schemaStaticsAlpha: SchemaStaticsAlpha = {
 				stagedSchemaUpgrade: createSchemaUpgrade(),
 			},
 		};
+	},
+
+	types: <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(
+		t: T,
+		metadata: AllowedTypesMetadata = {},
+	): AllowedTypesFullFromMixed<T> => {
+		return AnnotatedAllowedTypesInternal.createMixed<T>(t, metadata);
 	},
 };
 
@@ -136,7 +159,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public objectAlpha<
 		const Name extends TName,
-		const T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -288,6 +311,16 @@ export class SchemaFactoryAlpha<
 	public staged = schemaStaticsAlpha.staged;
 
 	/**
+	 * {@inheritDoc SchemaStaticsAlpha.types}
+	 */
+	public static types = schemaStaticsAlpha.types;
+
+	/**
+	 * {@inheritDoc SchemaStaticsAlpha.types}
+	 */
+	public types = schemaStaticsAlpha.types;
+
+	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
@@ -303,7 +336,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public mapAlpha<
 		Name extends TName,
-		const T extends ImplicitAnnotatedAllowedTypes,
+		const T extends ImplicitAllowedTypes,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -354,7 +387,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public arrayAlpha<
 		const Name extends TName,
-		const T extends ImplicitAnnotatedAllowedTypes,
+		const T extends ImplicitAllowedTypes,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -405,7 +438,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public recordAlpha<
 		const Name extends TName,
-		const T extends ImplicitAnnotatedAllowedTypes,
+		const T extends ImplicitAllowedTypes,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,

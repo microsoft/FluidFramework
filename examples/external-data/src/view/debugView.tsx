@@ -61,7 +61,7 @@ export const DebugView: React.FC = () => {
 	);
 };
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface IExternalDataDebugViewProps {}
 
 const ExternalDataDebugView: React.FC<IExternalDataDebugViewProps> = (

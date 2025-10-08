@@ -41,8 +41,6 @@ import {
 	getOrCreateInnerNode,
 	type NodeSchemaMetadata,
 	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
-	unannotateImplicitAllowedTypes,
 	TreeNodeValid,
 	type MostDerivedData,
 	type TreeNodeSchemaInitializedData,
@@ -63,7 +61,6 @@ import type {
 	ObjectNodeSchema,
 	ObjectNodeSchemaInternalData,
 	ObjectNodeSchemaPrivate,
-	UnannotateSchemaRecord,
 } from "./objectNodeTypes.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import {
@@ -72,11 +69,10 @@ import {
 	getExplicitStoredKey,
 	type TreeFieldFromImplicitField,
 	type InsertableTreeFieldFromImplicitField,
-	FieldSchema,
+	type FieldSchema,
 	FieldSchemaAlpha,
 	normalizeFieldSchema,
 	FieldKind,
-	type ImplicitAnnotatedFieldSchema,
 	type FieldProps,
 	type ContextualFieldProvider,
 	extractFieldProvider,
@@ -102,7 +98,7 @@ import { convertField, convertFieldKind } from "../../toStoredSchema.js";
  */
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> =
 	RestrictiveStringRecord<ImplicitFieldSchema> extends T
-		? // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+		? // eslint-disable-next-line @typescript-eslint/ban-types
 			{}
 		: {
 				-readonly [Property in keyof T]: Property extends string
@@ -195,18 +191,6 @@ export type InsertableObjectFromSchemaRecord<
 		>;
 
 /**
- * Helper used to remove annotations from a schema record and produce insertable objects,
- *
- * @privateRemarks
- * This calls {@link InsertableObjectFromSchemaRecord} in order to produce the insertable objects.
- *
- * @system @alpha
- */
-export type InsertableObjectFromAnnotatedSchemaRecord<
-	T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
-> = InsertableObjectFromSchemaRecord<UnannotateSchemaRecord<T>>;
-
-/**
  * Maps from simple field keys ("property" keys) to information about the field.
  *
  * @remarks
@@ -222,9 +206,7 @@ export type SimpleKeyMap = ReadonlyMap<
 /**
  * Caches the mappings from property keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
  */
-function createFlexKeyMapping(
-	fields: Record<string, ImplicitAnnotatedFieldSchema>,
-): SimpleKeyMap {
+function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): SimpleKeyMap {
 	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> = new Map();
 	for (const [propertyKey, fieldSchema] of Object.entries(fields)) {
 		const schema = normalizeFieldSchema(fieldSchema);
@@ -404,10 +386,9 @@ export class ObjectFieldSchema<
 	public constructor(
 		kind: Kind,
 		allowedTypes: Types,
-		annotatedTypes: ImplicitAnnotatedAllowedTypes,
 		props: FieldProps<TCustomMetadata> & { readonly key: string },
 	) {
-		super(kind, allowedTypes, annotatedTypes, props);
+		super(kind, allowedTypes, props);
 		this.storedKey = props.key;
 	}
 }
@@ -427,7 +408,7 @@ abstract class CustomObjectNodeBase<
  */
 export function objectSchema<
 	TName extends string,
-	const T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+	const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 	const ImplicitlyConstructable extends boolean,
 	const TCustomMetadata = unknown,
 >(
@@ -466,22 +447,17 @@ export function objectSchema<
 	let handler: ProxyHandler<object>;
 	let customizable: boolean;
 
-	class CustomObjectNode extends CustomObjectNodeBase<UnannotateSchemaRecord<T>> {
+	class CustomObjectNode extends CustomObjectNodeBase<T> {
 		public static readonly fields: ReadonlyMap<
 			string,
 			FieldSchemaAlpha & SimpleObjectFieldSchema
 		> = new Map(
 			Array.from(flexKeyMap, ([key, value]) => [
 				key as string,
-				new ObjectFieldSchema(
-					value.schema.kind,
-					value.schema.allowedTypes,
-					(value.schema as FieldSchemaAlpha).annotatedAllowedTypes,
-					{
-						...value.schema.props,
-						key: getStoredKey(key as string, value.schema),
-					},
-				),
+				new ObjectFieldSchema(value.schema.kind, value.schema.allowedTypes, {
+					...value.schema.props,
+					key: getStoredKey(key as string, value.schema),
+				}),
 			]),
 		);
 		public static readonly flexKeyMap: SimpleKeyMap = flexKeyMap;
@@ -602,7 +578,7 @@ export function objectSchema<
 				this,
 				Array.from(
 					flexKeyMap.values(),
-					({ schema }) => normalizeFieldSchema(schema).annotatedAllowedTypes,
+					({ schema }) => normalizeFieldSchema(schema).allowedTypes,
 				),
 				(storedOptions) => {
 					const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
@@ -623,23 +599,9 @@ export function objectSchema<
 	}
 	type Output = typeof CustomObjectNode &
 		(new (
-			input: InsertableObjectFromAnnotatedSchemaRecord<T> | InternalTreeNode,
-		) => TreeObjectNode<UnannotateSchemaRecord<T>, TName>);
+			input: InsertableObjectFromSchemaRecord<T> | InternalTreeNode,
+		) => TreeObjectNode<T, TName>);
 	return CustomObjectNode as Output;
-}
-
-/**
- * Removes annotations from a schema record.
- */
-export function unannotateSchemaRecord<
-	Schema extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
->(schemaRecord: Schema): UnannotateSchemaRecord<Schema> {
-	return Object.fromEntries(
-		Object.entries(schemaRecord).map(([key, schema]) => [
-			key,
-			schema instanceof FieldSchema ? schema : unannotateImplicitAllowedTypes(schema),
-		]),
-	) as UnannotateSchemaRecord<Schema>;
 }
 
 const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
@@ -651,7 +613,7 @@ const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
  */
 function assertUniqueKeys<
 	const Name extends number | string,
-	const Fields extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+	const Fields extends RestrictiveStringRecord<ImplicitFieldSchema>,
 >(schemaName: Name, fields: Fields): void {
 	// Verify that there are no duplicates among the explicitly specified stored keys.
 	const explicitStoredKeys = new Set<string>();

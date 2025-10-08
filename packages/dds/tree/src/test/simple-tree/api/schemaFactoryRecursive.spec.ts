@@ -564,25 +564,29 @@ describe("SchemaFactory Recursive methods", () => {
 
 			const factory = new SchemaFactoryAlpha("");
 			{
-				class Test extends factory.arrayAlpha("Test", [
-					{ type: () => factory.null, metadata: {} },
-				]) {}
+				class Test extends factory.arrayAlpha(
+					"Test",
+					SchemaFactoryAlpha.types([{ type: () => factory.null, metadata: {} }]),
+				) {}
 				// @ts-expect-error Does not support annotations
 				type _check = ValidateRecursiveSchema<typeof Test>;
 			}
 
 			{
 				class Test extends factory.objectAlpha("Test", {
-					x: factory.optional([{ type: () => factory.null, metadata: {} }]),
+					x: factory.optional(
+						SchemaFactoryAlpha.types([{ type: () => factory.null, metadata: {} }]),
+					),
 				}) {}
 				// @ts-expect-error Does not support annotations
 				type _check = ValidateRecursiveSchema<typeof Test>;
 			}
 
 			{
-				class Test extends factory.mapAlpha("Test", [
-					{ type: () => factory.null, metadata: {} },
-				]) {}
+				class Test extends factory.mapAlpha(
+					"Test",
+					SchemaFactoryAlpha.types([{ type: () => factory.null, metadata: {} }]),
+				) {}
 				// @ts-expect-error Does not support annotations
 				type _check = ValidateRecursiveSchema<typeof Test>;
 			}
@@ -890,7 +894,7 @@ describe("SchemaFactory Recursive methods", () => {
 				// Check constructor
 				type TBuild = NodeBuilderData<typeof RecordRecursive>;
 				type _check2 = requireAssignableTo<RecordRecursive, TBuild>;
-				// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/ban-types
+				// eslint-disable-next-line @typescript-eslint/ban-types
 				type _check3 = requireAssignableTo<{}, TBuild>;
 				type _check4 = requireAssignableTo<{ a: RecordRecursive }, TBuild>;
 				type _check5 = requireAssignableTo<Record<string, TInsert>, TBuild>;

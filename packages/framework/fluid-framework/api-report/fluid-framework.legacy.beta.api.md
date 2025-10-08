@@ -516,8 +516,10 @@ export type InsertableTreeFieldFromImplicitField<TSchemaInput extends ImplicitFi
 
 // @public @system
 export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> = IsUnion<TList> extends true ? never : {
-    readonly [Property in keyof TList]: TList[Property] extends LazyItem<infer TSchema extends TreeNodeSchema> ? InsertableTypedNode<TSchema> : never;
-}[number];
+    readonly [Property in keyof TList]: [TList[Property]] extends [
+    LazyItem<infer TSchema extends TreeNodeSchema>
+    ] ? InsertableTypedNode<TSchema> : never;
+}[NumberKeys<TList>];
 
 // @public
 export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes> = [
@@ -910,6 +912,11 @@ export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
 }
 
 // @public @system
+export type NumberKeys<T, Transformed = {
+    readonly [Property in keyof T as number extends Property ? never : Property]: Property;
+}> = Transformed[`${number}` & keyof Transformed];
+
+// @public @system
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {} : {
     -readonly [Property in keyof T]: Property extends string ? TreeFieldFromImplicitField<T[Property]> : unknown;
 };
@@ -1298,6 +1305,7 @@ export const TreeArrayNode: {
 // @beta @sealed @system
 export interface TreeBeta {
     clone<const TSchema extends ImplicitFieldSchema>(node: TreeFieldFromImplicitField<TSchema>): TreeFieldFromImplicitField<TSchema>;
+    create<const TSchema extends ImplicitFieldSchema>(schema: TSchema, data: InsertableTreeFieldFromImplicitField<TSchema>): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
     on<K extends keyof TreeChangeEventsBeta<TNode>, TNode extends TreeNode>(node: TNode, eventName: K, listener: NoInfer<TreeChangeEventsBeta<TNode>[K]>): () => void;
 }
 

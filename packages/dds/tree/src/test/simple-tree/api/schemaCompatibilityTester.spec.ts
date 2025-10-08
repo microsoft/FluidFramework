@@ -472,10 +472,10 @@ describe("SchemaCompatibilityTester", () => {
 				}) {}
 
 				class Compatible2 extends factory.objectAlpha("MyType", {
-					foo: [
+					foo: SchemaFactoryAlpha.types([
 						SchemaFactoryAlpha.number,
 						SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-					],
+					]),
 				}) {}
 
 				expectCompatibility(
@@ -486,10 +486,10 @@ describe("SchemaCompatibilityTester", () => {
 
 			it("can upgrade from staged to allowed", () => {
 				class Compatible1 extends factory.objectAlpha("MyType", {
-					foo: [
+					foo: SchemaFactoryAlpha.types([
 						SchemaFactoryAlpha.number,
 						SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-					],
+					]),
 				}) {}
 
 				class Compatible2 extends factory.objectAlpha("MyType", {
@@ -504,10 +504,10 @@ describe("SchemaCompatibilityTester", () => {
 
 			it("clients with staged schema allow viewing but not upgrading after upgrade", () => {
 				class Compatible1 extends factory.objectAlpha("MyType", {
-					foo: [
+					foo: SchemaFactoryAlpha.types([
 						SchemaFactoryAlpha.number,
 						SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-					],
+					]),
 				}) {}
 
 				class Compatible2 extends factory.objectAlpha("MyType", {
@@ -522,10 +522,10 @@ describe("SchemaCompatibilityTester", () => {
 
 			it("staged schema which mismatches stored can not view", () => {
 				class Compatible1 extends factory.objectAlpha("MyType", {
-					foo: [
+					foo: SchemaFactoryAlpha.types([
 						SchemaFactoryAlpha.number,
 						SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-					],
+					]),
 				}) {}
 
 				class Compatible2 extends factory.objectAlpha("MyType", {
@@ -548,7 +548,10 @@ describe("SchemaCompatibilityTester", () => {
 				}) {}
 
 				class Compatible1 extends factory.objectAlpha("MyType", {
-					foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(Deep1)],
+					foo: SchemaFactoryAlpha.types([
+						SchemaFactoryAlpha.number,
+						SchemaFactoryAlpha.staged(Deep1),
+					]),
 				}) {}
 
 				class Compatible2 extends factory.objectAlpha("MyType", {
