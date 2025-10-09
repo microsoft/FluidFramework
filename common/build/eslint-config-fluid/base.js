@@ -19,7 +19,7 @@ module.exports = {
 		"plugin:@typescript-eslint/eslint-recommended",
 		"plugin:@typescript-eslint/recommended-type-checked",
 		"plugin:@typescript-eslint/stylistic-type-checked",
-		// import/recommended is the combination of import/errors and import/warnings
+		// import-x/recommended is the combination of import-x/errors and import-x/warnings
 		"plugin:import-x/recommended",
 		"plugin:import-x/typescript",
 	],
@@ -103,7 +103,7 @@ module.exports = {
 			},
 		],
 		"@typescript-eslint/no-this-alias": "error",
-		"@typescript-eslint/no-throw-literal": "error",
+		"@typescript-eslint/only-throw-error": "error",
 		"@typescript-eslint/no-unused-expressions": "error",
 		"@typescript-eslint/no-unused-vars": "off",
 		"@typescript-eslint/no-unnecessary-qualifier": "error",
@@ -300,7 +300,7 @@ module.exports = {
 		"no-shadow": "off", // Superseded by @typescript-eslint/no-shadow
 		"no-sparse-arrays": "error",
 		"no-template-curly-in-string": "error",
-		"no-throw-literal": "off", // Superseded by @typescript-eslint/no-throw-literal
+		"no-throw-literal": "off", // Superseded by @typescript-eslint/only-throw-error
 		"no-trailing-spaces": "error",
 		"no-undef-init": "error",
 		"no-underscore-dangle": "off",

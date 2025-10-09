@@ -34,8 +34,8 @@ const sortJson = require("sort-json");
 		// Sorting at all is desirable as otherwise changes in the order of common config references may cause large diffs
 		// with little semantic meaning.
 		// On the other hand, fully sorting the json can be misleading:
-		// some eslint settings depend on object key order ("import/resolver" being a known one, see
-		// https://github.com/import-js/eslint-plugin-import/blob/c0ac54b8a721c2b1c9048838acc4d6282f4fe7a7/utils/resolve.js).
+		// some eslint settings depend on object key order ("import-x/resolver" being a known one, see
+		// https://github.com/import-js/eslint-plugin-import-x/blob/c0ac54b8a721c2b1c9048838acc4d6282f4fe7a7/utils/resolve.js).
 		// Using depth 2 is a nice compromise.
 		sortJson.overwrite(filePath, { indentSize: 4, depth: 2 });
 	}
