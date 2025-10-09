@@ -426,10 +426,53 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				}
 				break;
 			}
-			case OperationType.moveEntry:
-			case OperationType.toggle:
+			case OperationType.moveEntry: {
+				const { entryId: oldEntryId, changedToEntryId: newEntryId } = arrayOp;
+				if (this.getEntryForId(newEntryId).isDeleted) {
+					return;
+				}
+				this.updateLiveEntry(newEntryId, oldEntryId);
+				const inputEntry = this.getEntryForId(oldEntryId);
+				inputEntry.prevEntryId = undefined;
+				inputEntry.nextEntryId = undefined;
+				inputEntry.isLocalPendingMove = 0;
+				const moveOp: IMoveOperation = {
+					type: OperationType.moveEntry,
+					entryId: newEntryId,
+					changedToEntryId: oldEntryId,
+				};
+				this.emitValueChangedEvent(moveOp, true /* isLocal */);
+				break;
+			}
+			case OperationType.toggle: {
+				const entryId = arrayOp.entryId;
+				const liveEntry = this.getLiveEntry(entryId);
+				const isDeleted = liveEntry.isDeleted;
+
+				// Toggling the isDeleted flag to undo the last operation for the skip list payload/value
+				liveEntry.isDeleted = !isDeleted;
+				liveEntry.isLocalPendingDelete -= 1;
+
+				const toggleOp: IToggleOperation = {
+					type: OperationType.toggle,
+					entryId,
+					isDeleted: liveEntry.isDeleted,
+				};
+				this.emitValueChangedEvent(toggleOp, true /* isLocal */);
+				break;
+			}
 			case OperationType.toggleMove: {
-				throw new Error(`Rollback not implemented for ${arrayOp.type} operations`);
+				const { entryId: oldEntryId, changedToEntryId: newEntryId } = arrayOp;
+				this.getEntryForId(oldEntryId).isLocalPendingMove -= 1;
+				this.updateLiveEntry(oldEntryId, newEntryId);
+
+				const toggleMoveOp: IToggleMoveOperation = {
+					type: OperationType.toggleMove,
+					entryId: newEntryId,
+					changedToEntryId: oldEntryId,
+				};
+				this.emitValueChangedEvent(toggleMoveOp, true /* isLocal */);
+				break;
 			}
 			default: {
 				unreachableCase(arrayOp);
@@ -659,7 +702,8 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			}
 		} else if (
 			!this.isLocalPending(op.entryId, "isLocalPendingDelete") &&
-			!this.isLocalPending(op.entryId, "isLocalPendingMove")
+			!this.isLocalPending(op.entryId, "isLocalPendingMove") &&
+			this.getLiveEntry(op.entryId).isDeleted === false
 		) {
 			this.updateLiveEntry(this.getLiveEntry(op.entryId).entryId, op.entryId);
 		}
@@ -894,33 +938,73 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		deadEntry.isDeleted = true;
 	}
 
+	private handleStashedInsert(
+		entryId: string,
+		insertAfterEntryId: string | undefined,
+		value: Serializable<SerializableTypeForSharedArray> & T,
+	): void {
+		let index = 0;
+		if (insertAfterEntryId !== undefined) {
+			index = this.findIndexOfEntryId(insertAfterEntryId) + 1;
+		}
+		const newEntry = this.createNewEntry<SerializableTypeForSharedArray>(entryId, value);
+		newEntry.isAckPending = true;
+		this.addEntry(index, newEntry);
+	}
+
 	protected applyStashedOp(content: unknown): void {
 		const op = content as ISharedArrayOperation<T>;
 
 		switch (op.type) {
 			case OperationType.insertEntry: {
-				this.handleInsertOp<SerializableTypeForSharedArray>(
+				this.handleStashedInsert(
 					op.entryId,
 					op.insertAfterEntryId,
-					false, // treat it as remote op
-					op.value,
+					op.value as Serializable<SerializableTypeForSharedArray> & T,
 				);
 				break;
 			}
 			case OperationType.deleteEntry: {
-				this.handleDeleteOp(op, false /* local - treat as remote op */);
+				this.getLiveEntry(op.entryId).isDeleted = true;
+				this.getEntryForId(op.entryId).isLocalPendingDelete += 1;
 				break;
 			}
 			case OperationType.moveEntry: {
-				this.handleMoveOp(op, false /* local - treat as remote op */);
+				const opEntry = this.getEntryForId(op.entryId);
+				this.handleStashedInsert(
+					op.changedToEntryId,
+					op.insertAfterEntryId,
+					opEntry.value as Serializable<SerializableTypeForSharedArray> & T,
+				);
+
+				const newElementEntryId = op.changedToEntryId;
+				const newElement = this.getEntryForId(newElementEntryId);
+				if (
+					this.isLocalPending(op.entryId, "isLocalPendingDelete") ||
+					this.isLocalPending(op.entryId, "isLocalPendingMove")
+				) {
+					this.updateDeadEntry(op.entryId, newElementEntryId);
+				} else {
+					// move the element
+					const liveEntry = this.getLiveEntry(op.entryId);
+					const isDeleted = liveEntry.isDeleted;
+					this.updateLiveEntry(liveEntry.entryId, newElementEntryId);
+					// mark newly added element as deleted if existing live element was already deleted
+					if (isDeleted) {
+						newElement.isDeleted = isDeleted;
+					}
+				}
+				opEntry.isLocalPendingMove += 1;
 				break;
 			}
 			case OperationType.toggle: {
-				this.handleToggleOp(op, false /* local - treat as remote op */);
+				this.getLiveEntry(op.entryId).isDeleted = op.isDeleted;
+				this.getEntryForId(op.entryId).isLocalPendingDelete += 1;
 				break;
 			}
 			case OperationType.toggleMove: {
-				this.handleToggleMoveOp(op, false /* local - treat as remote op */);
+				this.updateLiveEntry(this.getLiveEntry(op.entryId).entryId, op.entryId);
+				this.getEntryForId(op.entryId).isLocalPendingMove += 1;
 				break;
 			}
 			default: {

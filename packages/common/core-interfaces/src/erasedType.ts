@@ -6,10 +6,10 @@
 /**
  * Erased type which can be used to expose a opaque/erased version of a type without referencing the actual type.
  * @remarks
- * This similar to the [type erasure](https://en.wikipedia.org/wiki/Type_erasure) pattern,
+ * This similar to the {@link https://en.wikipedia.org/wiki/Type_erasure | type erasure} pattern,
  * but for erasing types at the package boundary.
  *
- * This can be used to implement the TypeScript typing for the [handle](https://en.wikipedia.org/wiki/Handle_(computing)) pattern,
+ * This can be used to implement the TypeScript typing for the {@link https://en.wikipedia.org/wiki/Handle_(computing) | handle} pattern,
  * allowing code outside of a package to have a reference/handle to something in the package in a type safe way without the package having to publicly export the types of the object.
  * This should not be confused with the more specific IFluidHandle which is also named after this design pattern.
  *
@@ -18,9 +18,9 @@
  *
  * @example
  * ```typescript
- * // public
+ * // public sealed type
  * export interface ErasedMyType extends ErasedType<"myPackage.MyType"> {}
- * // internal
+ * // internal type
  * export interface MyType {
  * 	example: number;
  * }
@@ -81,5 +81,97 @@ export abstract class ErasedType<out Name = unknown> {
 		throw new Error(
 			"ErasedType is a compile time type brand not a real class that can be used with `instanceof` at runtime.",
 		);
+	}
+}
+
+/**
+ * Used to mark a `@sealed` interface in a strongly typed way to prevent external implementations.
+ * @remarks
+ * This is an alternative to {@link ErasedType} which is more ergonomic to implement in the case where the implementation can extend `ErasedTypeImplementation`.
+ *
+ * Users of interfaces extending this should never refer to anything about this class:
+ * migrating the type branding to another mechanism, like {@link ErasedType} should be considered a non-breaking change.
+ * @privateRemarks
+ * Implement interfaces which extend this by sub-classing {@link ErasedTypeImplementation}.
+ *
+ * This class should only be a `type` package export, preventing users from extending it directly.
+ *
+ * Since {@link ErasedTypeImplementation} is exported as `@internal`, this restricts implementations of the sealed interfaces to users of `@internal` APIs, which should be anything withing this release group.
+ * Any finer grained restrictions can be done as documentation, but not type enforced.
+ * @sealed
+ * @alpha
+ * @system
+ */
+export abstract class ErasedBaseType<out Name = unknown> {
+	/**
+	 * Compile time only marker to make type checking more strict.
+	 * This method will not exist at runtime and accessing it is invalid.
+	 * @privateRemarks
+	 * `Name` is used as the return type of a method rather than a a simple readonly member as this allows types with two brands to be intersected without getting `never`.
+	 * The method takes in never to help emphasize that its not callable.
+	 */
+	protected abstract brand(dummy: never): Name;
+
+	/**
+	 * This class should never exist at runtime, so make it un-constructable.
+	 * @privateRemarks
+	 * From an API perspective, private would be preferred here.
+	 * However protected is almost as good since this class is not package exported,
+	 * and it allows ErasedTypeImplementation to extend this class.
+	 */
+	protected constructor() {}
+}
+
+/**
+ * An implementation of an {@link ErasedBaseType}.
+ * For a given erased type interface, there should be exactly one implementation of it, and it must be defined by the same code which defined the interface.
+ *
+ * @typeParam TInterface - The erased type interface this class implements.
+ * @remarks
+ * {@link ErasedBaseType} is package exported only as a type, not a value, so the only way to subclass it is via this class.
+ * This limitation help enforce the pattern that there is only one implementation of a given erased type interface.
+ * @internal
+ */
+export abstract class ErasedTypeImplementation<
+	TInterface extends ErasedBaseType,
+> extends ErasedBaseType<TInterface extends ErasedBaseType<infer Name> ? Name : never> {
+	protected readonly brand!: (
+		dummy: never,
+	) => TInterface extends ErasedBaseType<infer Name> ? Name : never;
+
+	protected constructor() {
+		super();
+	}
+
+	/**
+	 * Allows narrowing from TInterface to the internal implementation type via `instanceof`.
+	 */
+	public static [Symbol.hasInstance]<
+		TThis extends abstract new (
+			...args: unknown[]
+		) => object,
+	>(this: TThis, value: ErasedBaseType | InstanceType<TThis>): value is InstanceType<TThis> {
+		return Object.prototype.isPrototypeOf.call(this.prototype, value);
+	}
+
+	/**
+	 * Narrows from TInterface to the internal implementation type, throwing if the value is not of the correct type.
+	 */
+	public static narrow<TThis extends abstract new (...args: unknown[]) => object>(
+		this: TThis,
+		value: ErasedBaseType | InstanceType<TThis>,
+	): asserts value is InstanceType<TThis> {
+		if (!Object.prototype.isPrototypeOf.call(this.prototype, value)) {
+			throw new TypeError("Invalid ErasedBaseType instance");
+		}
+	}
+
+	/**
+	 * Upcasts the instance to the erased interface type.
+	 * @remarks
+	 * This is mainly useful when inferring interface type is required.
+	 */
+	public upCast<TThis extends TInterface>(this: TThis): TInterface {
+		return this;
 	}
 }

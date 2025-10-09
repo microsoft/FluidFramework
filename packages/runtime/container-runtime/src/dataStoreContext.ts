@@ -67,6 +67,7 @@ import {
 	type IFluidDataStoreFactory,
 	type PackagePath,
 	type IRuntimeStorageService,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -167,7 +168,7 @@ export interface IFluidDataStoreContextProps {
  * Properties necessary for creating a local FluidDataStoreContext
  */
 export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContextProps {
-	readonly pkg: Readonly<string[]> | undefined;
+	readonly pkg: readonly string[] | undefined;
 	readonly snapshotTree: ISnapshotTree | undefined;
 	readonly makeLocallyVisibleFn: () => void;
 }
@@ -281,7 +282,7 @@ export abstract class FluidDataStoreContext
 
 	private isStagingMode: boolean = false;
 	public isReadOnly = (): boolean =>
-		(this.isStagingMode && this.channel?.policies?.readonlyInStagingMode !== false) ||
+		(this.isStagingMode && this.channel?.policies?.readonlyInStagingMode === true) ||
 		this.parentContext.isReadOnly();
 
 	public get connected(): boolean {
@@ -350,6 +351,11 @@ export abstract class FluidDataStoreContext
 	public get ILayerCompatDetails(): ILayerCompatDetails {
 		return runtimeCompatDetailsForDataStore;
 	}
+
+	/**
+	 * {@inheritdoc IFluidDataStoreContext.minVersionForCollab}
+	 */
+	public readonly minVersionForCollab: MinimumVersionForCollab;
 
 	private baseSnapshotSequenceNumber: number | undefined;
 
@@ -460,6 +466,7 @@ export abstract class FluidDataStoreContext
 
 		this._containerRuntime = props.parentContext.containerRuntime;
 		this.parentContext = props.parentContext;
+		this.minVersionForCollab = props.parentContext.minVersionForCollab;
 		this.id = props.id;
 		this.storage = props.storage;
 		this.scope = props.scope;
@@ -1224,7 +1231,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private snapshotFetchRequired: boolean | undefined;
 	private readonly runtime: IContainerRuntimeBase;
 	private readonly blobContents: Map<string, ArrayBuffer> | undefined;
-	private readonly isSnapshotInISnapshotFormat: boolean | undefined;
+	private readonly isSnapshotInISnapshotFormat: boolean;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
 		super(props, true /* existing */, false /* isLocalDataStore */, () => {
@@ -1283,7 +1290,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 				this.blobContents,
 			);
 		}
-		if (this.snapshotFetchRequired) {
+		if (this.snapshotFetchRequired === true) {
 			assert(
 				this.loadingGroupId !== undefined,
 				0x8f5 /* groupId should be present to fetch snapshot */,

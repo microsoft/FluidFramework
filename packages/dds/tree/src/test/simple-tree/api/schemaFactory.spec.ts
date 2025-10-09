@@ -26,10 +26,20 @@ import {
 	NodeKind,
 	type TreeFieldFromImplicitField,
 	TreeViewConfigurationAlpha,
+	SchemaFactoryBeta,
+	allowUnused,
+	type InsertableTreeFieldFromImplicitField,
 } from "../../../simple-tree/index.js";
 import {
 	// Import directly to get the non-type import to allow testing of the package only instanceof
 	TreeNode,
+	type AllowedTypes,
+	type AllowedTypesFull,
+	type AnnotatedAllowedType,
+	type AnnotatedAllowedTypes,
+	type InsertableTreeNodeFromAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type UnannotateAllowedTypesList,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/index.js";
 import {
@@ -45,7 +55,9 @@ import {
 import {
 	brand,
 	type areSafelyAssignable,
+	type IsUnion,
 	type requireAssignableTo,
+	type requireFalse,
 	type requireTrue,
 } from "../../../util/index.js";
 
@@ -53,6 +65,9 @@ import { hydrate } from "../utils.js";
 import { getView, TestTreeProviderLite, validateUsageError } from "../../utils.js";
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
 import { EmptyKey } from "../../../core/index.js";
+
+// Tests for the non-recursive API subset of SchemaFactory and SchemaFactoryAlpha.
+// Recursive APIs are tested in schemaFactoryRecursive.spec.ts
 
 {
 	const schema = new SchemaFactory("Blah");
@@ -369,7 +384,7 @@ describe("schemaFactory", () => {
 		});
 
 		it("Node schema metadata", () => {
-			const factory = new SchemaFactoryAlpha("");
+			const factory = new SchemaFactoryBeta("");
 
 			const fooMetadata = {
 				description: "An object called Foo",
@@ -378,7 +393,7 @@ describe("schemaFactory", () => {
 				},
 			};
 
-			class Foo extends factory.objectAlpha(
+			class Foo extends factory.object(
 				"Foo",
 				{ bar: factory.number },
 				{ metadata: fooMetadata },
@@ -389,6 +404,8 @@ describe("schemaFactory", () => {
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 
 		it("Field schema metadata", () => {
@@ -623,6 +640,8 @@ describe("schemaFactory", () => {
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 	});
 
@@ -692,6 +711,8 @@ describe("schemaFactory", () => {
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 	});
 
@@ -738,6 +759,10 @@ describe("schemaFactory", () => {
 			const factory = new SchemaFactoryAlpha("test");
 			class NamedRecord extends factory.record("name", factory.number) {}
 			const namedInstance = new NamedRecord({ x: 5 });
+			const x: number = namedInstance.x;
+			// TODO: AB#47136: this (and likely the line above as well) should not compile as the typing is incorrect (y is undefined, not number)
+			const y: number = namedInstance.y;
+			delete namedInstance.x;
 		});
 
 		it("Node schema metadata", () => {
@@ -759,6 +784,8 @@ describe("schemaFactory", () => {
 			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
 			const description = Foo.metadata.description;
 			const baz = Foo.metadata.custom.baz;
+			type _check1 = requireTrue<areSafelyAssignable<typeof description, string>>;
+			type _check2 = requireTrue<areSafelyAssignable<typeof baz, boolean>>;
 		});
 	});
 
@@ -1262,10 +1289,40 @@ describe("schemaFactory", () => {
 	});
 
 	it("scopedFactory", () => {
+		const factory = new SchemaFactoryBeta("test.blah");
+
+		const scopedFactory: SchemaFactoryBeta<"test.blah.scoped"> =
+			factory.scopedFactory("scoped");
+		assert.equal(scopedFactory.scope, "test.blah.scoped");
+		type _check = requireTrue<
+			areSafelyAssignable<typeof scopedFactory.scope, "test.blah.scoped">
+		>;
+
+		type Scope = typeof scopedFactory extends SchemaFactoryBeta<infer S> ? S : never;
+
+		function inferScope<TScope extends string>(f: SchemaFactory<TScope>) {
+			return f.scope;
+		}
+
+		const inferred = inferScope(scopedFactory);
+		// TODO: AB#43345
+		// @ts-expect-error Known issue: see "variance with respect to scope and alpha" test.
+		type _check2 = requireTrue<areSafelyAssignable<typeof inferred, "test.blah.scoped">>;
+
+		function inferScope2<TScope extends string>(
+			f: SchemaFactory<TScope> | SchemaFactoryBeta<TScope>,
+		) {
+			return f.scope;
+		}
+		const inferred2 = inferScope2(scopedFactory);
+		type _check3 = requireTrue<areSafelyAssignable<typeof inferred2, "test.blah.scoped">>;
+	});
+
+	it("scopedFactoryAlpha", () => {
 		const factory = new SchemaFactoryAlpha("test.blah");
 
 		const scopedFactory: SchemaFactoryAlpha<"test.blah.scoped"> =
-			factory.scopedFactory("scoped");
+			factory.scopedFactoryAlpha("scoped");
 		assert.equal(scopedFactory.scope, "test.blah.scoped");
 		type _check = requireTrue<
 			areSafelyAssignable<typeof scopedFactory.scope, "test.blah.scoped">
@@ -1297,13 +1354,16 @@ describe("schemaFactory", () => {
 		const schemaFactory = new SchemaFactoryAlpha("staged tests");
 
 		class TestObject extends schemaFactory.objectAlpha("TestObject", {
-			foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
+			foo: SchemaFactoryAlpha.types([
+				SchemaFactoryAlpha.number,
+				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+			]),
 		}) {}
 
 		it("allows forward references", () => {
 			const schemaFactoryAlpha = new SchemaFactoryAlpha("test");
 			class A extends schemaFactoryAlpha.objectAlpha("A", {
-				foo: SchemaFactoryAlpha.staged(() => B),
+				foo: SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(() => B)]),
 			}) {}
 
 			class B extends schemaFactoryAlpha.objectAlpha("B", {}) {}
@@ -1328,7 +1388,7 @@ describe("schemaFactory", () => {
 				// Adds staged support for B.
 				// Currently this requires wrapping the root field with `SchemaFactoryAlpha.required`:
 				// this is normally implicitly included, but is currently required while the "staged" APIs are `@alpha`.
-				schema: SchemaFactoryAlpha.required([A, SchemaFactoryAlpha.staged(B)]),
+				schema: SchemaFactoryAlpha.types([A, SchemaFactoryAlpha.staged(B)]),
 			});
 
 			// Only supports documents with A and B: can be used to upgrade schema to add B.
@@ -1377,10 +1437,83 @@ describe("schemaFactory", () => {
 		});
 
 		describe("in maps", () => {
-			class TestMap extends schemaFactory.mapAlpha("TestMap", [
-				SchemaFactoryAlpha.number,
-				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-			]) {}
+			it("typing", () => {
+				const allowedTypes = SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]);
+
+				allowUnused<requireAssignableTo<typeof allowedTypes, AllowedTypes>>();
+				allowUnused<
+					requireAssignableTo<
+						typeof allowedTypes,
+						readonly [typeof SchemaFactoryAlpha.number, typeof SchemaFactoryAlpha.string]
+					>
+				>();
+
+				allowUnused<requireAssignableTo<typeof allowedTypes, AnnotatedAllowedTypes>>();
+				allowUnused<
+					requireAssignableTo<
+						typeof allowedTypes,
+						UnannotateAllowedTypesList<
+							readonly [typeof SchemaFactoryAlpha.number, typeof SchemaFactoryAlpha.string]
+						>
+					>
+				>();
+				allowUnused<
+					requireAssignableTo<
+						typeof allowedTypes,
+						AnnotatedAllowedTypes<
+							readonly [
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.number>,
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.string>,
+							]
+						>
+					>
+				>();
+
+				allowUnused<
+					requireAssignableTo<
+						typeof allowedTypes,
+						AllowedTypesFull<
+							readonly [
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.number>,
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.string>,
+							]
+						>
+					>
+				>();
+
+				{
+					type InField = InsertableTreeFieldFromImplicitField<typeof allowedTypes>;
+					allowUnused<requireAssignableTo<InField, number | string>>();
+					allowUnused<requireAssignableTo<number | string, InField>>();
+				}
+
+				{
+					type InAllowedTypes = InsertableTreeNodeFromImplicitAllowedTypes<
+						typeof allowedTypes
+					>;
+					allowUnused<requireAssignableTo<InAllowedTypes, number | string>>();
+					allowUnused<requireAssignableTo<number | string, InAllowedTypes>>();
+				}
+
+				{
+					type InAllowedTypes = InsertableTreeNodeFromAllowedTypes<typeof allowedTypes>;
+					allowUnused<requireAssignableTo<InAllowedTypes, number | string>>();
+					allowUnused<requireAssignableTo<number | string, InAllowedTypes>>();
+				}
+
+				allowUnused<requireFalse<IsUnion<typeof allowedTypes>>>();
+			});
+
+			class TestMap extends schemaFactory.mapAlpha(
+				"TestMap",
+				SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
+			) {}
 
 			it("are permitted when unhydrated", () => {
 				const testMap = new TestMap({ foo: "test" });
@@ -1421,10 +1554,13 @@ describe("schemaFactory", () => {
 		});
 
 		describe("in records", () => {
-			class TestRecord extends schemaFactory.recordAlpha("TestRecord", [
-				SchemaFactoryAlpha.number,
-				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-			]) {}
+			class TestRecord extends schemaFactory.recordAlpha(
+				"TestRecord",
+				SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
+			) {}
 
 			it("are permitted when unhydrated", () => {
 				const testRecord = new TestRecord({ foo: "test" });
@@ -1468,10 +1604,13 @@ describe("schemaFactory", () => {
 			/**
 			 * Allows numbers, and staged to allow strings.
 			 */
-			class TestArray extends schemaFactory.arrayAlpha("TestArray", [
-				SchemaFactoryAlpha.number,
-				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-			]) {}
+			class TestArray extends schemaFactory.arrayAlpha(
+				"TestArray",
+				SchemaFactoryAlpha.types([
+					SchemaFactoryAlpha.number,
+					SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				]),
+			) {}
 
 			it("are permitted when unhydrated", () => {
 				const testArray = new TestArray(["test"]);

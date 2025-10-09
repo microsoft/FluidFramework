@@ -251,6 +251,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 				if (
 					this.enforceSynchronous &&
 					repoOperationType === "open" &&
+					// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- Optional chaining negatively impacts type narrowing below.
 					mutex !== undefined &&
 					mutex.isLocked()
 				) {

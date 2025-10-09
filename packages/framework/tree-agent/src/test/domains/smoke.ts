@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactoryAlpha } from "@fluidframework/tree/internal";
+import { SchemaFactoryBeta } from "@fluidframework/tree/internal";
 
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable jsdoc/require-jsdoc */
 
 // An extremely simple domain model for "smoke" tests to ensure that the AI agent can execute the most basic of tasks without failing.
 
-const sf = new SchemaFactoryAlpha("com.microsoft.fluid.tree-agent.smoke");
+const sf = new SchemaFactoryBeta("com.microsoft.fluid.tree-agent.smoke");
 
-export class Smoke extends sf.objectAlpha(
+export class Smoke extends sf.object(
 	"Smoke",
 	{
 		color: sf.required(sf.string, {
@@ -28,7 +28,3 @@ export class Smoke extends sf.objectAlpha(
 		},
 	},
 ) {}
-
-export function stringifySmoke(smoke: Smoke): string {
-	return `The smoke is ${smoke.color}. A new pope has ${smoke.color === "white" ? "" : "not "}been chosen.`;
-}

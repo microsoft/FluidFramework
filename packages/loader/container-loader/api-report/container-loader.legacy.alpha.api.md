@@ -4,12 +4,20 @@
 
 ```ts
 
+// @alpha @legacy
+export function asLegacyAlpha(base: IContainer): ContainerAlpha;
+
 // @public
 export enum ConnectionState {
     CatchingUp = 1,
     Connected = 2,
     Disconnected = 0,
     EstablishingConnection = 3
+}
+
+// @alpha @sealed @legacy
+export interface ContainerAlpha extends IContainer {
+    getPendingLocalState(): Promise<string>;
 }
 
 // @beta @legacy
@@ -92,6 +100,11 @@ export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProp
     readonly request: IRequest;
 }
 
+// @alpha @legacy
+export interface ILoadFrozenContainerFromPendingStateProps extends ILoadExistingContainerProps {
+    readonly pendingLocalState: string;
+}
+
 // @beta @legacy
 export interface IParsedUrl {
     id: string;
@@ -159,6 +172,9 @@ export class Loader implements IHostLoader {
 // @beta @legacy
 export function loadExistingContainer(loadExistingContainerProps: ILoadExistingContainerProps): Promise<IContainer>;
 
+// @alpha @legacy
+export function loadFrozenContainerFromPendingState(props: ILoadFrozenContainerFromPendingStateProps): Promise<IContainer>;
+
 // @beta @legacy
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
 
@@ -174,7 +190,7 @@ export type QuorumProposalsSnapshot = {
 // @beta @legacy
 export function rehydrateDetachedContainer(rehydrateDetachedContainerProps: IRehydrateDetachedContainerProps): Promise<IContainer>;
 
-// @alpha @legacy
+// @beta @legacy
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
 
 // @beta @legacy

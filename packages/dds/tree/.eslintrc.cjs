@@ -10,7 +10,11 @@ module.exports = {
 	},
 	rules: {
 		"@typescript-eslint/no-namespace": "off",
+
+		// This library leverages empty, derived interface definitions to capture concepts
+		// in a nicely reusable way.
 		"@typescript-eslint/no-empty-interface": "off",
+
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 
 		// This package is build with noUnusedLocals disabled for a specific use case (see note in tsconfig.json),
@@ -89,19 +93,6 @@ module.exports = {
 		"unicorn/switch-case-braces": "off",
 		"unicorn/text-encoding-identifier-case": "off",
 
-		"@typescript-eslint/no-restricted-imports": [
-			"error",
-			{
-				"patterns": [
-					{
-						"group": ["./index.js", "**/../index.js"],
-						"message":
-							"Importing from a parent index file tends to cause cyclic dependencies. Import from a more specific sibling file instead.",
-					},
-				],
-			},
-		],
-
 		// #endregion
 	},
 	overrides: [
@@ -113,12 +104,6 @@ module.exports = {
 			rules: {
 				"@typescript-eslint/no-unused-vars": ["off"],
 				"@typescript-eslint/explicit-function-return-type": "off",
-			},
-		},
-		{
-			files: ["src/test/**/*.generated.ts*"],
-			rules: {
-				"@typescript-eslint/no-restricted-imports": ["off"],
 			},
 		},
 	],

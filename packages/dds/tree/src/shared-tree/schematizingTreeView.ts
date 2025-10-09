@@ -80,7 +80,7 @@ export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
 @breakingClass
 export class SchematizingSimpleTreeView<
 	in out TRootSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
-> implements TreeBranch, TreeViewAlpha<TRootSchema>, WithBreakable
+> implements TreeViewAlpha<TRootSchema>, WithBreakable
 {
 	/**
 	 * This is set to undefined when this object is disposed or the view schema does not support viewing the document's stored schema.
@@ -339,7 +339,7 @@ export class SchematizingSimpleTreeView<
 				new HydratedContext(
 					this.flexTreeContext,
 					HydratedContext.schemaMapFromRootSchema(
-						this.rootFieldSchema.annotatedAllowedTypesNormalized,
+						this.rootFieldSchema.allowedTypesFull.evaluate(),
 					),
 				),
 			);
@@ -423,8 +423,8 @@ export class SchematizingSimpleTreeView<
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
 		this.onDispose?.();
-		if (this.checkout.isBranch && !this.checkout.disposed) {
-			// All (non-main) branches are 1:1 with views, so if a user manually disposes a view, we should also dispose the checkout/branch.
+		if (!this.checkout.isSharedBranch && !this.checkout.disposed) {
+			// All non-shared branches are 1:1 with views, so if a user manually disposes a view, we should also dispose the checkout/branch.
 			this.checkout.dispose();
 		}
 	}

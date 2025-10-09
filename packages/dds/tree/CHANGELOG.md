@@ -1,5 +1,227 @@
 # @fluidframework/tree
 
+## 2.62.0
+
+### Minor Changes
+
+- `asTreeViewAlpha` has been deprecated in favor of `asAlpha`. ([#25512](https://github.com/microsoft/FluidFramework/pull/25512)) [7f1cb9174c](https://github.com/microsoft/FluidFramework/commit/7f1cb9174c78c7888d7d7e290ea9320a746784d7)
+
+  Please replace usages with of `asTreeViewAlpha` with `asAlpha` - the function signature remains the same.
+
+- Add configuredSharedTreeBeta ([#25531](https://github.com/microsoft/FluidFramework/pull/25531)) [1e2d48fd8c](https://github.com/microsoft/FluidFramework/commit/1e2d48fd8cf34e63310718c2ffa68bb919d8131a)
+
+  A limited subset of the options from the existing `@alpha` [`configuredSharedTree`](https://fluidframework.com/docs/api/fluid-framework#configuredsharedtree-function) API have been stabilized to `@beta` in the form of `configuredSharedTreeBeta`.
+
+  ```typescript
+  import {
+    configuredSharedTreeBeta,
+    ForestTypeExpensiveDebug,
+  } from "fluid-framework/beta";
+  const SharedTree = configuredSharedTreeBeta({
+    forest: ForestTypeExpensiveDebug,
+  });
+  ```
+
+- Remove JsonValidator ([#25381](https://github.com/microsoft/FluidFramework/pull/25381)) [64a9b88b00](https://github.com/microsoft/FluidFramework/commit/64a9b88b001aeed19311d403c7cf2ac304787d90)
+
+  The `@alpha` API `JsonValidator` has been removed: its replacement `FormatValidator` must now be used.
+
+  As part of this:
+
+  - `typeboxValidator` has been replaced with `FormatValidatorBasic`.
+  - `noopValidator` has been replaced with `FormatValidatorNoOp`.
+
+- Added APIs for tracking observations of SharedTree content for automatic invalidation ([#25459](https://github.com/microsoft/FluidFramework/pull/25459)) [21d45d5948](https://github.com/microsoft/FluidFramework/commit/21d45d5948b961a82c77ed5154fc42e456d85ee4)
+
+  `TreeAlpha.trackObservations` and `TreeAlpha.trackObservationsOnce` have been added.
+  These provide a way to run some operation which reads content from [TreeNodes](https://fluidframework.com/docs/api/tree/treenode-class), then run a call back when anything observed by that operation changes.
+
+  This functionality has also been exposed in the form of React hooks and React higher order components via the `@fluid-experimental/tree-react-api` package.
+  It is now possible to use these utilities to implement React applications which pass TreeNodes in their props and get all necessary invalidation from tree changes handled automatically.
+  The recommended pattern for doing this is to use `treeDataObject` or `TreeViewComponent` at the root, then `withTreeObservations` or `withMemoizedTreeObservations` for any sub-components which read from TreeNodes.
+  Alternatively more localized changes can be made by using `PropNode` to type erase TreeNodes passed in props, then use one of the `usePropTreeNode` or `usePropTreeRecord` hooks to read from them.
+
+  These APIs work with both hydrated and [un-hydrated](https://fluidframework.com/docs/api/tree/unhydrated-typealias) TreeNodes.
+
+  #### React Support
+
+  Here is a simple example of a React components which has an invalidation bug due to reading a mutable field from a TreeNode that was provided in a prop:
+
+  ```typescript
+  const builder = new SchemaFactory("example");
+  class Item extends builder.object("Item", { text: SchemaFactory.string }) {}
+  const ItemComponentBug = ({ item }: { item: Item }): JSX.Element => (
+  	<span>{item.text}</span> // Reading `text`, a mutable value from a React prop, causes an invalidation bug.
+  );
+  ```
+
+  This bug can now easily be fixed using `withTreeObservations` or `withMemoizedTreeObservations`:
+
+  ```typescript
+  const ItemComponent = withTreeObservations(
+  	({ item }: { item: Item }): JSX.Element => <span>{item.text}</span>,
+  );
+  ```
+
+  For components which take in TreeNodes, but merely forward them and do not read their properties, they can use `PropTreeNode` as shown:
+
+  ```typescript
+  const ItemParentComponent = ({ item }: { item: PropTreeNode<Item> }): JSX.Element => (
+  	<ItemComponent item={item} />
+  );
+  ```
+
+  If such a component reads from the TreeNode, it gets a compile error instead of an invalidation bug.
+  In this case the invalidation bug would be that if `item.text` is modified, the component would not re-render.
+
+  ```typescript
+  const InvalidItemParentComponent = ({
+  	item,
+  }: { item: PropTreeNode<Item> }): JSX.Element => (
+  	// @ts-expect-error PropTreeNode turns this invalidation bug into a compile error
+  	<span>{item.text}</span>
+  );
+  ```
+
+  To provide access to TreeNode content in only part of a component the `usePropTreeNode` or `usePropTreeRecord` hooks can be used.
+
+  #### TreeAlpha.trackObservationsOnce Examples
+
+  Here is a rather minimal example of how `TreeAlpha.trackObservationsOnce` can be used:
+
+  ```typescript
+  cachedFoo ??= TreeAlpha.trackObservationsOnce(
+    () => {
+      cachedFoo = undefined;
+    },
+    () => nodeA.someChild.bar + nodeB.someChild.baz,
+  ).result;
+  ```
+
+  That is equivalent to doing the following:
+
+  ```typescript
+  if (cachedFoo === undefined) {
+    cachedFoo = nodeA.someChild.bar + nodeB.someChild.baz;
+    const invalidate = (): void => {
+      cachedFoo = undefined;
+      for (const u of unsubscribe) {
+        u();
+      }
+    };
+    const unsubscribe: (() => void)[] = [
+      TreeBeta.on(nodeA, "nodeChanged", (data) => {
+        if (data.changedProperties.has("someChild")) {
+          invalidate();
+        }
+      }),
+      TreeBeta.on(nodeB, "nodeChanged", (data) => {
+        if (data.changedProperties.has("someChild")) {
+          invalidate();
+        }
+      }),
+      TreeBeta.on(nodeA.someChild, "nodeChanged", (data) => {
+        if (data.changedProperties.has("bar")) {
+          invalidate();
+        }
+      }),
+      TreeBeta.on(nodeB.someChild, "nodeChanged", (data) => {
+        if (data.changedProperties.has("baz")) {
+          invalidate();
+        }
+      }),
+    ];
+  }
+  ```
+
+  Here is more complete example showing how to use `TreeAlpha.trackObservationsOnce` invalidate a property derived from its tree fields.
+
+  ```typescript
+  const factory = new SchemaFactory("com.example");
+  class Vector extends factory.object("Vector", {
+    x: SchemaFactory.number,
+    y: SchemaFactory.number,
+  }) {
+    #length: number | undefined = undefined;
+    public length(): number {
+      if (this.#length === undefined) {
+        const result = TreeAlpha.trackObservationsOnce(
+          () => {
+            this.#length = undefined;
+          },
+          () => Math.hypot(this.x, this.y),
+        );
+        this.#length = result.result;
+      }
+      return this.#length;
+    }
+  }
+  const vec = new Vector({ x: 3, y: 4 });
+  assert.equal(vec.length(), 5);
+  vec.x = 0;
+  assert.equal(vec.length(), 4);
+  ```
+
+## 2.61.0
+
+Dependency updates only.
+
+## 2.60.0
+
+### Minor Changes
+
+- FormatValidator added to replace JsonValidator ([#25311](https://github.com/microsoft/FluidFramework/pull/25311)) [9db6e08ec12](https://github.com/microsoft/FluidFramework/commit/9db6e08ec12973e7cc4f7fe86fecd054bafcd1c0)
+
+  The existing `@alpha` type [`JsonValidator`](https://fluidframework.com/docs/api/fluid-framework/jsonvalidator-interface) has a new type-erased alternative, `FormatValidator`, which is planned to be stabilized to `@beta` in the future.
+  It replaces `JsonValidator` in `ICodecOptions`.
+  Existing code using `ICodecOptions` should migrate to use `FormatValidator`, but this is not required for adopting this release as `JsonValidator` is still supported.
+
+- Single-node insertion/removal APIs have been removed from TableSchema (alpha) ([#25233](https://github.com/microsoft/FluidFramework/pull/25233)) [99281d2b24e](https://github.com/microsoft/FluidFramework/commit/99281d2b24ec406760c9029aad5aa72a9265a65d)
+
+  There is a significant performance benefit to inserting / removing rows / columns in batches.
+  To help encourage more performant usage patterns, single-node insertion and removal APIs have been removed.
+  The APIs that operate on batches should be used instead.
+
+  Specifically:
+
+  - `insertColumn`
+    - Use `insertColumns` instead
+  - `insertRow`
+    - Use `insertRows` instead
+  - `removeColumn`
+    - Use `removeColumns` instead
+  - `removeRow`
+    - Use `removeRows` instead
+
+- Replace "TreeEncodingOptions.useStoredKeys" with "keys" and "KeyEncodingOptions" ([#25263](https://github.com/microsoft/FluidFramework/pull/25263)) [b65f2a86d44](https://github.com/microsoft/FluidFramework/commit/b65f2a86d44d690a675867600a0a7e3c1608a473)
+
+  The alpha API `TreeEncodingOptions` has had its `useStoredKeys` `boolean` replaced with `keys` that takes a `KeyEncodingOptions` allowing for three options instead of the previous two.
+  With the new API, it is now possible to control, for APIs which support it (like [`TreeAlpha.exportVerbose`](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#exportverbose-methodsignature)), if unknown optional fields will be included when exporting data using stored keys.
+
+  Additionally, the relevant options interfaces have been marked as `@input`, indicating that more options may be added as optional parameters in the future, and that should be considered non-breaking.
+
+- SchemaFactoryAlpha.recordRecursive now supports metadata ([#25289](https://github.com/microsoft/FluidFramework/pull/25289)) [83241702d5f](https://github.com/microsoft/FluidFramework/commit/83241702d5fb5608cfa0add569c7803837abcf82)
+
+  `SchemaFactoryAlpha.recordRecursive` now support metadata like `SchemaFactoryAlpha.recordAlpha` and the other `TreeNodeSchema` creation methods on `SchemaFactoryAlpha` (except for `SchemaFactoryAlpha.record` which does not support metadata).
+
+- Range-based row/column removal methods have been added to TableSchema APIs (alpha) ([#25235](https://github.com/microsoft/FluidFramework/pull/25235)) [c803393cec6](https://github.com/microsoft/FluidFramework/commit/c803393cec6847f4294dc34b4a074ec93baf111c)
+
+  Adds range-based overloads to `removeColumns` and `removeRows` for removing contiguous ranges of rows and columns.
+
+  The `removeAllColumns` and `removeAllRows` methods have been removed, as they can be trivially implemented in terms of the new methods.
+
+- Hoist runTransaction method from TreeViewAlpha to TreeBranch ([#25280](https://github.com/microsoft/FluidFramework/pull/25280)) [a66b3b77df3](https://github.com/microsoft/FluidFramework/commit/a66b3b77df346d1689ddedcefc16846eda45991a)
+
+  Transactions are not view-schema-dependent, so it isn't necessary for them to be exclusive to the view type.
+  `runTransaction` is now available on `TreeBranch` (alpha).
+  `TreeViewAlpha` extends `TreeBranch`, so this change strictly makes the API more accessible.
+
+- Add SchemaFactoryBeta ([#25313](https://github.com/microsoft/FluidFramework/pull/25313)) [dca2361d33d](https://github.com/microsoft/FluidFramework/commit/dca2361d33dd959f5d913cbb59601685f85ff6f0)
+
+  `SchemaFactoryBeta` is added to provide a place to partially stabilize APIs from [`SchemaFactoryAlpha`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class).
+  Initially just one APIs is added as `@beta`: `scopedFactory`.
+  Users of the existing `@alpha` `scopedFactory` API on `SchemaFactoryAlpha` will need to update to use `scopedFactoryAlpha` if they require the returned factory to be a `SchemaFactoryAlpha` instance.
+
 ## 2.53.0
 
 ### Minor Changes

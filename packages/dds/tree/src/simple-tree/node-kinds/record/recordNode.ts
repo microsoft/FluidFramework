@@ -19,11 +19,8 @@ import {
 	getKernel,
 	type InternalTreeNode,
 	type NodeSchemaMetadata,
-	type ImplicitAnnotatedAllowedTypes,
-	type UnannotateImplicitAllowedTypes,
 	type ImplicitAllowedTypes,
 	normalizeAllowedTypes,
-	unannotateImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
 	TreeNodeValid,
 	type MostDerivedData,
@@ -184,11 +181,10 @@ function createRecordNodeProxy(
 
 			const innerNode = getOrCreateInnerNode(proxy);
 			const field = innerNode.tryGetField(brand(key)) as FlexTreeOptionalField | undefined;
-			if (field === undefined) {
-				return false;
+			if (field !== undefined) {
+				field.editor.set(undefined, field.length === 0);
 			}
 
-			field.editor.set(undefined, field.length === 0);
 			return true;
 		},
 	});
@@ -213,7 +209,7 @@ abstract class CustomRecordNodeBase<
  */
 export interface RecordSchemaOptions<
 	TName extends string,
-	TAllowedTypes extends ImplicitAnnotatedAllowedTypes,
+	TAllowedTypes extends ImplicitAllowedTypes,
 	TImplicitlyConstructable extends boolean,
 	TCustomMetadata = unknown,
 > {
@@ -251,7 +247,7 @@ export interface RecordSchemaOptions<
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function recordSchema<
 	TName extends string,
-	const TAllowedTypes extends ImplicitAnnotatedAllowedTypes,
+	const TAllowedTypes extends ImplicitAllowedTypes,
 	const TImplicitlyConstructable extends boolean,
 	const TCustomMetadata = unknown,
 >(
@@ -262,8 +258,6 @@ export function recordSchema<
 		TCustomMetadata
 	>,
 ) {
-	type TUnannotatedAllowedTypes = UnannotateImplicitAllowedTypes<TAllowedTypes>;
-
 	const {
 		identifier,
 		info,
@@ -273,23 +267,21 @@ export function recordSchema<
 		persistedMetadata,
 	} = options;
 
-	const lazyChildTypes = new Lazy(() =>
-		normalizeAllowedTypes(unannotateImplicitAllowedTypes(info)),
-	);
+	const normalizedTypes = normalizeAllowedTypes(info);
 	const lazyAllowedTypesIdentifiers = new Lazy(
-		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
+		() => new Set(normalizedTypes.evaluate().map((type) => type.identifier)),
 	);
 
 	let privateData: TreeNodeSchemaPrivateData | undefined;
 
 	class Schema
-		extends CustomRecordNodeBase<TUnannotatedAllowedTypes>
-		implements TreeRecordNode<TUnannotatedAllowedTypes>
+		extends CustomRecordNodeBase<TAllowedTypes>
+		implements TreeRecordNode<TAllowedTypes>
 	{
 		/**
 		 * Record-like index signature for the node.
 		 */
-		[key: string]: TreeNodeFromImplicitAllowedTypes<TUnannotatedAllowedTypes>;
+		[key: string]: TreeNodeFromImplicitAllowedTypes<TAllowedTypes>;
 
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
@@ -375,7 +367,7 @@ export function recordSchema<
 		public static readonly implicitlyConstructable: TImplicitlyConstructable =
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
-			return lazyChildTypes.value;
+			return normalizedTypes.evaluateSet();
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
@@ -390,7 +382,7 @@ export function recordSchema<
 		}
 
 		public [Symbol.iterator](): IterableIterator<
-			[string, TreeNodeFromImplicitAllowedTypes<TUnannotatedAllowedTypes>]
+			[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]
 		> {
 			return recordIterator(this);
 		}

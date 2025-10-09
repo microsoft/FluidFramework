@@ -4,14 +4,16 @@
  */
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
+	type CodecTree,
+	type DependentFormatVersion,
+	type FormatVersion,
 	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
-	type IMultiFormatCodec,
 	makeCodecFamily,
-	withSchemaValidation,
 } from "../codec/index.js";
 import { makeVersionDispatchingCodec } from "../codec/index.js";
 import type {
@@ -20,19 +22,11 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import {
-	type JsonCompatibleReadOnly,
-	JsonCompatibleReadOnlySchema,
-	mapIterable,
-} from "../util/index.js";
+import { brand, type Brand, type JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { SummaryData } from "./editManager.js";
-import {
-	type Commit,
-	type EncodedCommit,
-	EncodedEditManager,
-	type SequencedCommit,
-} from "./editManagerFormat.js";
+import { makeV1CodecWithVersion } from "./editManagerCodecsV1toV4.js";
+import { makeV5CodecWithVersion } from "./editManagerCodecsV5.js";
 
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
@@ -41,6 +35,7 @@ export interface EditManagerEncodingContext {
 
 export function makeEditManagerCodec<TChangeset>(
 	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>,
+	dependentChangeFormatVersion: DependentFormatVersion<EditManagerFormatVersion>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -55,12 +50,18 @@ export function makeEditManagerCodec<TChangeset>(
 	JsonCompatibleReadOnly,
 	EditManagerEncodingContext
 > {
-	const family = makeEditManagerCodecs(changeCodecs, revisionTagCodec, options);
+	const family = makeEditManagerCodecs(
+		changeCodecs,
+		dependentChangeFormatVersion,
+		revisionTagCodec,
+		options,
+	);
 	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
 }
 
 export function makeEditManagerCodecs<TChangeset>(
 	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>,
+	dependentChangeFormatVersion: DependentFormatVersion<EditManagerFormatVersion>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -69,161 +70,53 @@ export function makeEditManagerCodecs<TChangeset>(
 	>,
 	options: ICodecOptions,
 ): ICodecFamily<SummaryData<TChangeset>, EditManagerEncodingContext> {
-	return makeCodecFamily([
-		[1, makeV1CodecWithVersion(changeCodecs.resolve(1), revisionTagCodec, options, 1)],
-		[2, makeV1CodecWithVersion(changeCodecs.resolve(2), revisionTagCodec, options, 2)],
-		[3, makeV1CodecWithVersion(changeCodecs.resolve(3), revisionTagCodec, options, 3)],
-		[4, makeV1CodecWithVersion(changeCodecs.resolve(4), revisionTagCodec, options, 4)],
-	]);
+	const registry: [
+		FormatVersion,
+		IJsonCodec<
+			SummaryData<TChangeset>,
+			JsonCompatibleReadOnly,
+			JsonCompatibleReadOnly,
+			EditManagerEncodingContext
+		>,
+	][] = Array.from(editManagerFormatVersions, (version) => {
+		const changeCodec = changeCodecs.resolve(dependentChangeFormatVersion.lookup(version));
+		switch (version) {
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+				return [
+					version,
+					makeV1CodecWithVersion(changeCodec, revisionTagCodec, options, version),
+				];
+			case 5:
+				return [
+					version,
+					makeV5CodecWithVersion(changeCodec, revisionTagCodec, options, version),
+				];
+			default:
+				unreachableCase(version);
+		}
+	});
+	return makeCodecFamily(registry);
 }
 
-function makeV1CodecWithVersion<TChangeset>(
-	changeCodec: IMultiFormatCodec<
-		TChangeset,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		ChangeEncodingContext
-	>,
-	revisionTagCodec: IJsonCodec<
-		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
-		ChangeEncodingContext
-	>,
-	options: ICodecOptions,
-	version: EncodedEditManager<TChangeset>["version"],
-): IJsonCodec<
-	SummaryData<TChangeset>,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnly,
-	EditManagerEncodingContext
-> {
-	const format = EncodedEditManager(
-		changeCodec.json.encodedSchema ?? JsonCompatibleReadOnlySchema,
-	);
+export type EditManagerFormatVersion = Brand<1 | 2 | 3 | 4 | 5, "EditManagerFormatVersion">;
+export const editManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> = new Set([
+	brand(1),
+	brand(2),
+	brand(3),
+	brand(4),
+	brand(5),
+]);
 
-	const encodeCommit = <T extends Commit<TChangeset>>(
-		commit: T,
-		context: ChangeEncodingContext,
-		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	) => ({
-		...commit,
-		revision: revisionTagCodec.encode(commit.revision, {
-			originatorId: commit.sessionId,
-			idCompressor: context.idCompressor,
-			revision: undefined,
-		}),
-		change: changeCodec.json.encode(commit.change, { ...context, revision: commit.revision }),
-	});
-
-	const decodeCommit = <T extends EncodedCommit<JsonCompatibleReadOnly>>(
-		commit: T,
-		context: ChangeEncodingContext,
-		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	) => {
-		const revision = revisionTagCodec.decode(commit.revision, {
-			originatorId: commit.sessionId,
-			idCompressor: context.idCompressor,
-			revision: undefined,
-		});
-
-		return {
-			...commit,
-			revision,
-			change: changeCodec.json.decode(commit.change, { ...context, revision }),
-		};
+export function getCodecTreeForEditManagerFormatWithChange(
+	version: EditManagerFormatVersion,
+	changeFormat: CodecTree,
+): CodecTree {
+	return {
+		name: "EditManager",
+		version,
+		children: [changeFormat],
 	};
-
-	const codec: IJsonCodec<
-		SummaryData<TChangeset>,
-		EncodedEditManager<TChangeset>,
-		EncodedEditManager<TChangeset>,
-		EditManagerEncodingContext
-	> = withSchemaValidation(
-		format,
-		{
-			encode: (data, context: EditManagerEncodingContext) => {
-				const json: EncodedEditManager<TChangeset> = {
-					trunk: data.trunk.map((commit) =>
-						encodeCommit(commit, {
-							originatorId: commit.sessionId,
-							idCompressor: context.idCompressor,
-							schema: context.schema,
-							revision: undefined,
-						}),
-					),
-					branches: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => [
-						sessionId,
-						{
-							base: revisionTagCodec.encode(branch.base, {
-								originatorId: sessionId,
-								idCompressor: context.idCompressor,
-								revision: undefined,
-							}),
-							commits: branch.commits.map((commit) =>
-								encodeCommit(commit, {
-									originatorId: commit.sessionId,
-									idCompressor: context.idCompressor,
-									schema: context.schema,
-									revision: undefined,
-								}),
-							),
-						},
-					]),
-					version,
-				};
-				return json;
-			},
-			decode: (
-				json: EncodedEditManager<TChangeset>,
-				context: EditManagerEncodingContext,
-			): SummaryData<TChangeset> => {
-				// TODO: sort out EncodedCommit vs Commit, and make this type check without `any`.
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const trunk: readonly any[] = json.trunk;
-				return {
-					trunk: trunk.map(
-						(commit): SequencedCommit<TChangeset> =>
-							// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
-							// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-							decodeCommit(commit, {
-								originatorId: commit.sessionId,
-								idCompressor: context.idCompressor,
-								revision: undefined,
-							}),
-					),
-					peerLocalBranches: new Map(
-						mapIterable(json.branches, ([sessionId, branch]) => [
-							sessionId,
-							{
-								base: revisionTagCodec.decode(branch.base, {
-									originatorId: sessionId,
-									idCompressor: context.idCompressor,
-									revision: undefined,
-								}),
-								commits: branch.commits.map((commit) =>
-									// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
-									decodeCommit(commit as EncodedCommit<JsonCompatibleReadOnly>, {
-										originatorId: commit.sessionId,
-										idCompressor: context.idCompressor,
-										revision: undefined,
-									}),
-								),
-							},
-						]),
-					),
-				};
-			},
-		},
-		options.jsonValidator,
-	);
-	// TODO: makeVersionedValidatedCodec and withSchemaValidation should allow the codec to decode JsonCompatibleReadOnly, or Versioned or something like that,
-	// and not leak the internal encoded format in the API surface.
-	// Fixing that would remove the need for this cast.
-	return codec as unknown as IJsonCodec<
-		SummaryData<TChangeset>,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		EditManagerEncodingContext
-	>;
 }

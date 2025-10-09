@@ -17,13 +17,16 @@ import {
 	type IVersion,
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
-import { NonRetryableError, RateLimiter } from "@fluidframework/driver-utils/internal";
+import {
+	getKeyForCacheEntry,
+	NonRetryableError,
+	RateLimiter,
+} from "@fluidframework/driver-utils/internal";
 import {
 	type IOdspResolvedUrl,
 	type ISnapshotOptions,
 	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
-	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,

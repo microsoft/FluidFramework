@@ -12,11 +12,11 @@ import type {
 	GraphCommit,
 	ChangeEncodingContext,
 } from "../../core/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
+import { FormatValidatorBasic } from "../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeMessageCodec, makeMessageCodecs } from "../../shared-tree-core/messageCodecs.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { Message } from "../../shared-tree-core/messageFormat.js";
+import type { Message } from "../../shared-tree-core/messageFormatV1ToV4.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { DecodedMessage } from "../../shared-tree-core/messageTypes.js";
 import { TestChange } from "../testChange.js";
@@ -28,6 +28,7 @@ import {
 	testRevisionTagCodec,
 	validateUsageError,
 } from "../utils.js";
+import { DependentFormatVersion } from "../../codec/index.js";
 
 const commit1 = {
 	revision: mintRevisionTag(),
@@ -66,16 +67,20 @@ const testCases: EncodingTestData<
 		[
 			"Message with commit 1",
 			{
+				type: "commit",
 				sessionId: testIdCompressor.localSessionId,
 				commit: commit1,
+				branchId: "main",
 			},
 			dummyContext,
 		],
 		[
 			"Message with commit 2",
 			{
+				type: "commit",
 				sessionId: testIdCompressor.localSessionId,
 				commit: commit2,
+				branchId: "main",
 			},
 			dummyContext,
 		],
@@ -86,38 +91,48 @@ const testCases: EncodingTestData<
 			[
 				"Missing sessionId",
 				{
+					type: "commit",
 					commit: commit1,
+					branchId: "main",
 				},
 				dummyContext,
 			],
 			[
 				"Missing commit",
 				{
+					type: "commit",
 					sessionId: "session1",
+					branchId: "main",
 				},
 				dummyContext,
 			],
 			[
 				"Message with invalid sessionId",
 				{
+					type: "commit",
 					sessionId: 1,
 					commit: commit1,
+					branchId: "main",
 				},
 				dummyContext,
 			],
 			[
 				"Message with commit without revision",
 				{
+					type: "commit",
 					sessionId: "session1",
 					commit: commitWithoutRevision,
+					branchId: "main",
 				},
 				dummyContext,
 			],
 			[
 				"Message with invalid commit",
 				{
+					type: "commit",
 					sessionId: "session1",
 					commit: commitInvalid,
+					branchId: "main",
 				},
 				dummyContext,
 			],
@@ -126,39 +141,47 @@ const testCases: EncodingTestData<
 };
 
 describe("message codec", () => {
-	const family = makeMessageCodecs(TestChange.codecs, testRevisionTagCodec, {
-		jsonValidator: typeboxValidator,
-	});
+	const family = makeMessageCodecs(
+		TestChange.codecs,
+		DependentFormatVersion.fromUnique(1),
+		testRevisionTagCodec,
+		{
+			jsonValidator: FormatValidatorBasic,
+		},
+	);
 
 	makeEncodingTestSuite(family, testCases);
 
 	describe("dispatching codec", () => {
-		const version = 1;
 		const codec = makeMessageCodec(
 			TestChange.codecs,
+			DependentFormatVersion.fromUnique(1),
 			testRevisionTagCodec,
 			{
-				jsonValidator: typeboxValidator,
+				jsonValidator: FormatValidatorBasic,
 			},
-			version,
 		);
 
 		const sessionId: SessionId = "sessionId" as SessionId;
 		it("Drops parent commit fields on encode", () => {
 			const revision = testIdCompressor.generateCompressedId();
 			const message: DecodedMessage<TestChange> = {
+				type: "commit",
 				sessionId,
 				commit: {
 					revision,
 					change: TestChange.mint([], 1),
 					parent: "Extra field that should be dropped" as unknown as GraphCommit<TestChange>,
 				},
+				branchId: "main",
 			};
 
 			const actual = codec.decode(codec.encode(message, { idCompressor: testIdCompressor }), {
 				idCompressor: testIdCompressor,
 			});
 			assert.deepEqual(actual, {
+				type: "commit",
+				branchId: "main",
 				sessionId,
 				commit: {
 					revision,
@@ -177,6 +200,7 @@ describe("message codec", () => {
 			} satisfies Message);
 			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
 			assert.deepEqual(actual, {
+				type: "commit",
 				commit: {
 					revision: testRevisionTagCodec.decode(revision, {
 						originatorId,
@@ -186,6 +210,7 @@ describe("message codec", () => {
 					change: {},
 				},
 				sessionId: originatorId,
+				branchId: "main",
 			} satisfies DecodedMessage<unknown>);
 		});
 
@@ -200,6 +225,7 @@ describe("message codec", () => {
 			} satisfies Message);
 			const actual = codec.decode(JSON.parse(encoded), { idCompressor: testIdCompressor });
 			assert.deepEqual(actual, {
+				type: "commit",
 				commit: {
 					revision: testRevisionTagCodec.decode(revision, {
 						originatorId,
@@ -209,6 +235,7 @@ describe("message codec", () => {
 					change: {},
 				},
 				sessionId: originatorId,
+				branchId: "main",
 			} satisfies DecodedMessage<unknown>);
 		});
 

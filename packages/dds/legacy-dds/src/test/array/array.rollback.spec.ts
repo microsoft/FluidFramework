@@ -14,10 +14,15 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 // eslint-disable-next-line import/no-internal-modules
-import type { ISharedArray } from "../../array/interfaces.js";
+import type { IRevertible, ISharedArray } from "../../array/interfaces.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedArrayFactory } from "../../array/sharedArrayFactory.js";
-import { OperationType, type ISharedArrayOperation } from "../../index.js";
+import {
+	OperationType,
+	SharedArrayRevertible,
+	type ISharedArrayOperation,
+	type IToggleOperation,
+} from "../../index.js";
 interface RollbackTestSetup {
 	sharedArray: ISharedArray<number>;
 	dataStoreRuntime: MockFluidDataStoreRuntime;
@@ -198,6 +203,223 @@ describe("SharedArray rollback", () => {
 		assert.deepStrictEqual(
 			sharedArray2.get(),
 			[10, 1, 12, 3],
+			"Array should have expected entries post-rollback",
+		);
+	});
+
+	it("should rollback move operation", () => {
+		const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+		// Create a second client
+		const { sharedArray: sharedArray2, containerRuntime: containerRuntime2 } =
+			createAdditionalClient(containerRuntimeFactory);
+		sharedArray.insert(0, 0); // [0]
+		sharedArray.insert(1, 1); // [0,1]
+		sharedArray.insert(2, 2); // [0,1,2]
+		containerRuntime.flush();
+		containerRuntimeFactory.processAllMessages();
+		const valueChanges: {
+			op: ISharedArrayOperation;
+			isLocal: boolean;
+			target: ISharedArray<number>;
+		}[] = [];
+		sharedArray.on("valueChanged", (op, isLocal, target) => {
+			valueChanges.push({ op, isLocal, target });
+		});
+		sharedArray.move(0, 2); // this will be rolled back, expected [1, 0, 2]
+		assert.deepStrictEqual(
+			sharedArray.get(),
+			[1, 0, 2],
+			"Array should have expected entries pre-rollback",
+		);
+
+		containerRuntime.rollback?.();
+		assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
+		assert.strictEqual(
+			valueChanges[0].op.type,
+			OperationType.moveEntry,
+			"First event should be for move",
+		);
+		assert.strictEqual(
+			valueChanges[1].op.type,
+			OperationType.moveEntry,
+			"Second event should be for move",
+		);
+		assert.strictEqual(
+			valueChanges[0].op.entryId,
+			valueChanges[1].op.changedToEntryId,
+			"Second event should be local",
+		);
+		assert.strictEqual(
+			valueChanges[0].op.changedToEntryId,
+			valueChanges[1].op.entryId,
+			"Second event should be local",
+		);
+		assert.deepStrictEqual(
+			sharedArray.get(),
+			[0, 1, 2],
+			"Array should have expected entries post-rollback",
+		);
+		assert.deepStrictEqual(
+			sharedArray2.get(),
+			[0, 1, 2],
+			"Array should have expected entries post-rollback",
+		);
+	});
+
+	it("should rollback move ops in presence of remote changes", () => {
+		const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+		// Create a second client
+		const { sharedArray: sharedArray2, containerRuntime: containerRuntime2 } =
+			createAdditionalClient(containerRuntimeFactory);
+		sharedArray.insert(0, 0); // [0]
+		sharedArray.insert(1, 1); // [0,1]
+		containerRuntime.flush();
+		containerRuntimeFactory.processAllMessages();
+		sharedArray.insert(2, 2); // this will be rolled back
+		sharedArray.insert(3, 3); // this will be rolled back
+		sharedArray.move(0, 3); // this will be rolled back
+
+		sharedArray2.insert(2, 3); // [0,1,3]
+		sharedArray2.delete(0); // [1,3]
+		sharedArray2.insert(1, 12); // [1,12,3]
+		sharedArray2.insert(0, 10); // [10,1,12,3]
+		containerRuntime2.flush();
+		containerRuntimeFactory.processAllMessages();
+		assert.deepStrictEqual(
+			sharedArray.get(),
+			[10, 1, 2, 3, 12, 3],
+			"Array should have expected entries pre-rollback",
+		);
+		containerRuntime.rollback?.();
+		assert.deepStrictEqual(
+			sharedArray.get(),
+			[10, 1, 12, 3],
+			"Array should have expected entries post-rollback",
+		);
+		assert.deepStrictEqual(
+			sharedArray2.get(),
+			[10, 1, 12, 3],
+			"Array should have expected entries post-rollback",
+		);
+	});
+
+	it("should rollback toggle operation", () => {
+		const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+		// Create a second client
+		const { sharedArray: sharedArray2, containerRuntime: containerRuntime2 } =
+			createAdditionalClient(containerRuntimeFactory);
+		let revertible: IRevertible = new SharedArrayRevertible(sharedArray, {
+			entryId: "dummy",
+			type: 3,
+			isDeleted: false,
+		} satisfies IToggleOperation);
+
+		// Attach the revertible event listener.
+		sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+			revertible = revertibleItem;
+		});
+		sharedArray.insert(0, 0); // [0]
+		sharedArray.insert(1, 1); // [0,1]
+		sharedArray.insert(2, 2); // [0,1,2]
+		containerRuntime.flush();
+		containerRuntimeFactory.processAllMessages();
+		const valueChanges: {
+			op: ISharedArrayOperation;
+			isLocal: boolean;
+			target: ISharedArray<number>;
+		}[] = [];
+		sharedArray.on("valueChanged", (op, isLocal, target) => {
+			valueChanges.push({ op, isLocal, target });
+		});
+
+		revertible.revert();
+		assert.deepStrictEqual(
+			sharedArray.get(),
+			[0, 1],
+			"Array should have expected entries pre-rollback",
+		);
+
+		containerRuntime.rollback?.();
+		assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
+		assert.strictEqual(
+			valueChanges[0].op.type,
+			OperationType.toggle,
+			"First event should be for toggle",
+		);
+		assert.strictEqual(
+			valueChanges[1].op.type,
+			OperationType.toggle,
+			"Second event should be for toggle",
+		);
+		assert.deepStrictEqual(
+			sharedArray.get(),
+			[0, 1, 2],
+			"Array should have expected entries post-rollback",
+		);
+		assert.deepStrictEqual(
+			sharedArray2.get(),
+			[0, 1, 2],
+			"Array should have expected entries post-rollback",
+		);
+	});
+
+	it("should rollback toggle move operation", () => {
+		const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+		// Create a second client
+		const { sharedArray: sharedArray2, containerRuntime: containerRuntime2 } =
+			createAdditionalClient(containerRuntimeFactory);
+		let revertible: IRevertible = new SharedArrayRevertible(sharedArray, {
+			entryId: "dummy",
+			type: 3,
+			isDeleted: false,
+		} satisfies IToggleOperation);
+
+		// Attach the revertible event listener.
+		sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+			revertible = revertibleItem;
+		});
+		sharedArray.insert(0, 0); // [0]
+		sharedArray.insert(1, 1); // [0,1]
+		sharedArray.insert(2, 2); // [0,1,2]
+		sharedArray.move(0, 3); // [1,2,0]
+		containerRuntime.flush();
+		containerRuntimeFactory.processAllMessages();
+		const valueChanges: {
+			op: ISharedArrayOperation;
+			isLocal: boolean;
+			target: ISharedArray<number>;
+		}[] = [];
+		sharedArray.on("valueChanged", (op, isLocal, target) => {
+			valueChanges.push({ op, isLocal, target });
+		});
+
+		revertible.revert();
+		assert.deepStrictEqual(
+			sharedArray.get(),
+			[0, 1, 2],
+			"Array should have expected entries pre-rollback",
+		);
+
+		containerRuntime.rollback?.();
+		assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
+		assert.strictEqual(
+			valueChanges[0].op.type,
+			OperationType.toggleMove,
+			"First event should be for toggleMove",
+		);
+		assert.strictEqual(
+			valueChanges[1].op.type,
+			OperationType.toggleMove,
+			"Second event should be for toggleMove",
+		);
+		assert.deepStrictEqual(
+			sharedArray.get(),
+			[1, 2, 0],
+			"Array should have expected entries post-rollback",
+		);
+		assert.deepStrictEqual(
+			sharedArray2.get(),
+			[1, 2, 0],
 			"Array should have expected entries post-rollback",
 		);
 	});

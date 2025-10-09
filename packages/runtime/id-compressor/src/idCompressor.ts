@@ -814,7 +814,7 @@ export function deserializeIdCompressor(
 
 	assert(
 		loggerOrUndefined === undefined,
-		"logger would be in sessionIdOrLogger in this codepath",
+		0xc2d /* logger would be in sessionIdOrLogger in this codepath */,
 	);
 	return IdCompressor.deserialize({
 		serialized: serialized as SerializedIdCompressorWithOngoingSession,
