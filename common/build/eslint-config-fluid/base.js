@@ -20,8 +20,8 @@ module.exports = {
 		"plugin:@typescript-eslint/recommended-type-checked",
 		"plugin:@typescript-eslint/stylistic-type-checked",
 		// import/recommended is the combination of import/errors and import/warnings
-		"plugin:import/recommended",
-		"plugin:import/typescript",
+		"plugin:import-x/recommended",
+		"plugin:import-x/typescript",
 	],
 	globals: {
 		Atomics: "readonly",
@@ -36,7 +36,7 @@ module.exports = {
 		sourceType: "module",
 		project: "./tsconfig.json",
 	},
-	plugins: ["import", "unicorn"],
+	plugins: ["import-x", "unicorn"],
 	reportUnusedDisableDirectives: true,
 	rules: {
 		// Please keep entries alphabetized within a group
@@ -172,21 +172,21 @@ module.exports = {
 			},
 		],
 
-		// #region eslint-plugin-import
+		// #region eslint-plugin-import-x
 
-		"import/no-default-export": "error",
-		"import/no-deprecated": "off",
-		"import/no-extraneous-dependencies": "error",
-		"import/no-internal-modules": "error",
-		"import/no-unassigned-import": "error",
-		"import/no-unresolved": [
+		"import-x/no-default-export": "error",
+		"import-x/no-deprecated": "off",
+		"import-x/no-extraneous-dependencies": "error",
+		"import-x/no-internal-modules": "error",
+		"import-x/no-unassigned-import": "error",
+		"import-x/no-unresolved": [
 			"error",
 			{
 				caseSensitive: true,
 			},
 		],
-		"import/no-unused-modules": "error",
-		"import/order": [
+		"import-x/no-unused-modules": "error",
+		"import-x/order": [
 			"error",
 			{
 				"newlines-between": "always",
@@ -377,12 +377,12 @@ module.exports = {
 		},
 	],
 	settings: {
-		"import/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-		"import/parsers": {
+		"import-x/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+		"import-x/parsers": {
 			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
 		},
-		"import/resolver": {
-			// See remark in minimal-deprecated.js on the importance of import/resolver key order.
+		"import-x/resolver": {
+			// See remark in minimal-deprecated.js on the importance of import-x/resolver key order.
 			node: {
 				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
 			},
