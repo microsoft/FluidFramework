@@ -373,14 +373,34 @@ export async function loadSummarizerContainerAndMakeSummary(
 						: {},
 					summaryOpBroadcasted: summaryOpBroadcasted.success,
 				};
+
+				if (summarySubmitted.success && summaryOpBroadcasted.success) {
+					event.end({
+						success: true,
+						summarySubmitted: true,
+						summaryOpBroadcasted: true,
+					});
+					return {
+						success: true,
+						summaryResults,
+					};
+				}
+
+				const failureError =
+					summarySubmitted.success === false
+						? summarySubmitted.error
+						: summaryOpBroadcasted.success === false
+							? summaryOpBroadcasted.error
+							: new GenericError("On demand summary failed");
+
 				event.end({
-					success: true,
+					success: false,
 					summarySubmitted: summarySubmitted.success,
 					summaryOpBroadcasted: summaryOpBroadcasted.success,
 				});
 				return {
-					success: true,
-					summaryResults,
+					success: false,
+					error: failureError,
 				};
 			} catch (error) {
 				event.cancel({ success: false }, error);
