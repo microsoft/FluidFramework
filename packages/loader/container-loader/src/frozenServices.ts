@@ -5,6 +5,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IDisposable } from "@fluidframework/core-interfaces";
+import { isPromiseLike } from "@fluidframework/core-utils/internal";
 import {
 	ScopeType,
 	type ConnectionMode,
@@ -27,7 +28,6 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IConnectionStateChangeReason } from "./contracts.js";
-import { isPromiseLike } from "@fluidframework/core-utils/internal";
 
 /**
  * Creation of a FrozenDocumentServiceFactory which wraps an existing
