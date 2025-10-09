@@ -47,14 +47,14 @@ class MockContainer
 		IDocumentMessage
 	>;
 	resolvedUrl?: IResolvedUrl | undefined;
-	attachState?: AttachState | undefined;
-	closed?: boolean | undefined = false;
-	isDirty?: boolean | undefined;
-	connectionState?: ConnectionState | undefined;
+	attachState?: AttachState;
+	closed?: boolean = false;
+	isDirty?: boolean;
+	connectionState?: ConnectionState;
 	connected?: boolean | undefined;
-	audience?: IAudience | undefined;
+	audience?: IAudience;
 	clientId?: string | undefined;
-	readOnlyInfo?: ReadOnlyInfo | undefined;
+	readOnlyInfo?: ReadOnlyInfo;
 
 	get mockDeltaManager(): MockDeltaManager {
 		return this.deltaManager as unknown as MockDeltaManager;
