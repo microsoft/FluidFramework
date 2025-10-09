@@ -7,6 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 
 import {
+	type CodecTree,
 	type FluidClientVersion,
 	type ICodecOptions,
 	type IJsonCodec,
@@ -14,11 +15,9 @@ import {
 } from "../../../codec/index.js";
 import {
 	CursorLocationType,
-	type FieldKey,
 	type ITreeCursorSynchronous,
 	type SchemaAndPolicy,
 	type TreeChunk,
-	type TreeNodeSchemaIdentifier,
 } from "../../../core/index.js";
 import {
 	brandedNumberType,
@@ -33,9 +32,10 @@ import {
 
 import { decode } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
-import { EncodedFieldBatch, validVersions } from "./format.js";
+import { EncodedFieldBatch, validVersions, type FieldBatchFormatVersion } from "./format.js";
 import { schemaCompressedEncode } from "./schemaBasedEncode.js";
 import { uncompressedEncode } from "./uncompressedEncode.js";
+import type { IncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
 
 /**
  * Reference ID for a chunk that is incrementally encoded.
@@ -54,14 +54,10 @@ const ChunkReferenceId = brandedNumberType<ChunkReferenceId>({ multipleOf: 1, mi
  */
 export interface IncrementalEncoder {
 	/**
-	 * Returns whether a field should be incrementally encoded.
-	 * @param nodeIdentifier - The identifier of the node containing the field.
-	 * @param fieldKey - The key of the field to check.
+	 * Returns whether a node / field should be incrementally encoded.
+	 * @remarks See {@link IncrementalEncodingPolicy}.
 	 */
-	shouldEncodeFieldIncrementally(
-		nodeIdentifier: TreeNodeSchemaIdentifier,
-		fieldKey: FieldKey,
-	): boolean;
+	shouldEncodeIncrementally: IncrementalEncodingPolicy;
 	/**
 	 * Called to encode an incremental field at the cursor.
 	 * The chunks for this field are encoded separately from the main buffer.
@@ -200,4 +196,8 @@ export function makeFieldBatchCodec(
 			).map((chunk) => chunk.cursor());
 		},
 	});
+}
+
+export function getCodecTreeForFieldBatchFormat(version: FieldBatchFormatVersion): CodecTree {
+	return { name: "FieldBatch", version };
 }

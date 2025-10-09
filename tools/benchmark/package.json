@@ -43,9 +43,9 @@
 		"moment": "^2.30.1"
 	},
 	"devDependencies": {
-		"@fluid-internal/mocha-test-setup": "^2.51.0",
+		"@fluid-internal/mocha-test-setup": "~2.51.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^6.0.0",
+		"@fluidframework/eslint-config-fluid": "^6.1.0",
 		"@microsoft/api-extractor": "^7.52.11",
 		"@types/chai": "^5.2.2",
 		"@types/mocha": "^10.0.10",
@@ -54,12 +54,12 @@
 		"concurrently": "^8.2.2",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.55.0",
+		"eslint": "~8.57.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.1",
 		"typescript": "~5.4.5"
 	},
-	"packageManager": "pnpm@9.15.3+sha512.1f79bc245a66eb0b07c5d4d83131240774642caaa86ef7d0434ab47c0d16f66b04e21e0c086eb61e62c77efc4d7f7ec071afad3796af64892fae66509173893a",
+	"packageManager": "pnpm@10.17.1+sha512.17c560fca4867ae9473a3899ad84a88334914f379be46d455cbf92e5cf4b39d34985d452d2583baf19967fa76cb5c17bc9e245529d0b98745721aa7200ecaf7a",
 	"pnpm": {
 		"overrides": {
 			"nanoid": "^3.3.9"

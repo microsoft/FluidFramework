@@ -46,6 +46,49 @@ export type RuntimeOptionsAffectingDocSchema = Omit<
 >;
 
 /**
+ * Subset of {@link RuntimeOptionsAffectingDocSchema} which existed prior to the introduction of explicitSchemaControl.
+ *
+ * @remarks
+ * Runtime options that affect document schema should generally require explicitSchemaControl to be enabled.
+ * However, to prevent disruption to existing customers, options that existed prior to explicitSchemaControl
+ * do not explicity require explicitSchemaControl to be enabled. Do not add new options to this list.
+ */
+type RuntimeOptionKeysPredatingExplicitSchemaControl = keyof Pick<
+	RuntimeOptionsAffectingDocSchema,
+	| "explicitSchemaControl"
+	| "compressionOptions"
+	| "enableRuntimeIdCompressor"
+	| "flushMode"
+	| "gcOptions"
+	| "enableGroupedBatching"
+>;
+
+/**
+ * List of keys of {@link RuntimeOptionsAffectingDocSchema} which existed prior to the introduction of explicitSchemaControl.
+ *
+ * @remarks
+ * Runtime options that affect document schema should generally require explicitSchemaControl to be enabled.
+ * However, to prevent disruption to existing customers, options that existed prior to explicitSchemaControl
+ * do not explicity require explicitSchemaControl to be enabled. Do not add new keys to this list.
+ */
+const keysOfOptionsPredatingExplicitSchemaControl = new Set([
+	"explicitSchemaControl",
+	"compressionOptions",
+	"enableRuntimeIdCompressor",
+	"flushMode",
+	"gcOptions",
+	"enableGroupedBatching",
+]) satisfies Set<RuntimeOptionKeysPredatingExplicitSchemaControl>;
+
+/**
+ * Subset of {@link RuntimeOptionsAffectingDocSchema} which require explicitSchemaControl to be enabled.
+ */
+export type RuntimeOptionKeysThatRequireExplicitSchemaControl = keyof Omit<
+	RuntimeOptionsAffectingDocSchema,
+	RuntimeOptionKeysPredatingExplicitSchemaControl
+>;
+
+/**
  * Mapping of RuntimeOptionsAffectingDocSchema to their compatibility related configs.
  *
  * Each key in this map corresponds to a property in RuntimeOptionsAffectingDocSchema. The value is an object that maps MinimumVersionForCollab
@@ -112,6 +155,19 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 		"1.0.0": undefined,
 	},
 } as const satisfies ConfigMap<RuntimeOptionsAffectingDocSchema>;
+
+/**
+ * Keys of {@link ContainerRuntimeOptionsInternal} that require explicitSchemaControl to be enabled.
+ */
+export const runtimeOptionKeysThatRequireExplicitSchemaControl = (
+	Object.keys(
+		runtimeOptionsAffectingDocSchemaConfigMap,
+	) as (keyof RuntimeOptionsAffectingDocSchema)[]
+).filter((key) => {
+	return !keysOfOptionsPredatingExplicitSchemaControl.has(
+		key as RuntimeOptionKeysPredatingExplicitSchemaControl,
+	);
+}) as RuntimeOptionKeysThatRequireExplicitSchemaControl[];
 
 const runtimeOptionsAffectingDocSchemaConfigValidationMap = {
 	enableGroupedBatching: configValueToMinVersionForCollab([

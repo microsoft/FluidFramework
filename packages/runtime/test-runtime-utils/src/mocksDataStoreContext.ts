@@ -26,7 +26,9 @@ import {
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
 	type IRuntimeStorageService,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
+import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,
@@ -74,6 +76,11 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	 */
 	public createProps?: any;
 	public scope: FluidObject = undefined as any;
+
+	/**
+	 * {@inheritdoc @fluidframework/runtime-definitions#IFluidDataStoreContext.minVersionForCollab}
+	 */
+	public minVersionForCollab: MinimumVersionForCollab = defaultMinVersionForCollab;
 
 	constructor(
 		public readonly id: string = uuid(),

@@ -4,7 +4,11 @@
  */
 
 import type { IWebSocket } from "@fluidframework/server-services-core";
-import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+import {
+	Lumberjack,
+	getLumberBaseProperties,
+	CommonProperties,
+} from "@fluidframework/server-services-telemetry";
 
 import { createRoomLeaveMessage } from "../utils";
 
@@ -83,6 +87,8 @@ function removeClientAndSendNotifications(
 		clientMap,
 		connectionTimeMap,
 		disconnectedClients,
+		sessionOpCountMap,
+		sessionSignalCountMap,
 	}: INexusLambdaConnectionStateTrackers,
 ): Promise<void>[] {
 	const promises: Promise<void>[] = [];
@@ -94,10 +100,16 @@ function removeClientAndSendNotifications(
 		const messageMetaData = getMessageMetadata(room.documentId, room.tenantId);
 
 		logger.info(`Disconnect of ${clientId} from room`, { messageMetaData });
-		Lumberjack.info(
-			`Disconnect of ${clientId} from room`,
-			getLumberBaseProperties(room.documentId, room.tenantId),
-		);
+
+		// Log session metrics before client removal
+		const sessionOpCount = sessionOpCountMap.get(clientId) || 0;
+		const sessionSignalCount = sessionSignalCountMap.get(clientId) || 0;
+
+		Lumberjack.info(`Disconnect of ${clientId} from room`, {
+			...getLumberBaseProperties(room.documentId, room.tenantId),
+			[CommonProperties.sessionOpCount]: sessionOpCount,
+			[CommonProperties.sessionSignalCount]: sessionSignalCount,
+		});
 		promises.push(
 			clientManager
 				.removeClient(room.tenantId, room.documentId, clientId)
@@ -105,6 +117,10 @@ function removeClientAndSendNotifications(
 					// Keep track of disconnected clientIds so that we don't repeat the disconnect signal
 					// for the same clientId if retrying when connectDocument completes after disconnectDocument.
 					disconnectedClients.add(clientId);
+
+					// Clean up session counters for this client
+					sessionOpCountMap.delete(clientId);
+					sessionSignalCountMap.delete(clientId);
 				})
 				.catch((error) => {
 					Lumberjack.error(
@@ -138,6 +154,11 @@ function removeClientAndSendNotifications(
 						{
 							tenantId: room.tenantId,
 							documentId: room.documentId,
+						},
+						undefined,
+						{
+							opCount: sessionOpCount,
+							signalCount: sessionSignalCount,
 						},
 					)
 					.catch((error) => {

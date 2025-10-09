@@ -17,7 +17,7 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	asIndex,
 	getKernel,
-	type TreeNode,
+	TreeNode,
 	type Unhydrated,
 	TreeBeta,
 	tryGetSchema,
@@ -29,8 +29,6 @@ import {
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type UnsafeUnknownSchema,
-	conciseFromCursor,
-	type ConciseTree,
 	applySchemaToParserOptions,
 	cursorFromVerbose,
 	verboseFromCursor,
@@ -46,7 +44,7 @@ import {
 	unhydratedFlexTreeFromInsertable,
 	getOrCreateNodeFromInnerNode,
 	getOrCreateNodeFromInnerUnboxedNode,
-	getOrCreateInnerNode,
+	getInnerNode,
 	NodeKind,
 	tryGetTreeNodeForField,
 	isObjectNodeSchema,
@@ -55,15 +53,20 @@ import {
 	convertField,
 	toUnhydratedSchema,
 	type TreeParsingOptions,
+	type NodeChangedData,
+	type ConciseTree,
+	importConcise,
+	exportConcise,
+	borrowCursorFromTreeNodeOrValue,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
 	FluidClientVersion,
-	noopValidator,
 	type ICodecOptions,
 	type CodecWriteOptions,
+	FormatValidatorNoOp,
 } from "../codec/index.js";
-import { EmptyKey, type ITreeCursorSynchronous } from "../core/index.js";
+import { EmptyKey, type FieldKey, type ITreeCursorSynchronous } from "../core/index.js";
 import {
 	cursorForMapTreeField,
 	defaultSchemaPolicy,
@@ -76,6 +79,9 @@ import {
 	fluidVersionToFieldBatchCodecWriteVersion,
 	type LocalNodeIdentifier,
 	type FlexTreeSequenceField,
+	type FlexTreeNode,
+	type Observer,
+	withObservation,
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
@@ -196,12 +202,12 @@ export interface TreeIdentifierUtils {
  * @remarks
  * Use via the {@link (TreeAlpha:variable)} singleton.
  *
- * The unhydrated node creation APIs in this interface do not support {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | unknown optional fields}.
+ * The unhydrated node creation APIs in this interface do not support {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}.
  * This is because unknown optional fields still must have a schema: its just that the schema may come from the document's stored schema.
  * Unhydrated nodes created via this interface are not associated with any document, so there is nowhere for them to get schema for unknown optional fields.
  * Note that {@link (TreeBeta:interface).clone} can create an unhydrated node with unknown optional fields, as it uses the source node's stored schema (if any).
  *
- * Export APIs in this interface include {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | unknown optional fields}
+ * Export APIs in this interface include {@link ObjectSchemaOptions.allowUnknownOptionalFields | unknown optional fields}
  * if they are using {@link KeyEncodingOptions.allStoredKeys}.
  *
  * @privateRemarks
@@ -244,19 +250,7 @@ export interface TreeAlpha {
 	>;
 
 	/**
-	 * Less type safe version of {@link (TreeAlpha:interface).create}, suitable for importing data.
-	 * @remarks
-	 * Due to {@link ConciseTree} relying on type inference from the data, its use is somewhat limited.
-	 * This does not support {@link ConciseTree|ConciseTrees} with customized handle encodings or using persisted keys.
-	 * Use "compressed" or "verbose" formats for more flexibility.
-	 *
-	 * When using this function,
-	 * it is recommend to ensure your schema is unambiguous with {@link ITreeConfigurationOptions.preventAmbiguity}.
-	 * If the schema is ambiguous, consider using {@link (TreeAlpha:interface).create} and {@link Unhydrated} nodes where needed,
-	 * or using {@link (TreeAlpha:interface).(importVerbose:1)} and specify all types.
-	 *
-	 * Documented (and thus recoverable) error handling/reporting for this is not yet implemented,
-	 * but for now most invalid inputs will throw a recoverable error.
+	 * {@inheritDoc (TreeBeta:interface).importConcise}
 	 */
 	importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema
@@ -270,12 +264,29 @@ export interface TreeAlpha {
 	>;
 
 	/**
+	 * {@inheritDoc (TreeBeta:interface).(exportConcise:1)}
+	 * @privateRemarks Note: this was retained on this interface because {@link (TreeAlpha:interface).importConcise} exists.
+	 * It should be removed if/when that is removed from this interface.
+	 */
+	exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
+
+	/**
+	 * {@inheritDoc (TreeBeta:interface).(exportConcise:2)}
+	 * @privateRemarks Note: this was retained on this interface because {@link (TreeAlpha:interface).importConcise} exists.
+	 * It should be removed if/when that is removed from this interface.
+	 */
+	exportConcise(
+		node: TreeNode | TreeLeafValue | undefined,
+		options?: TreeEncodingOptions,
+	): ConciseTree | undefined;
+
+	/**
 	 * Construct tree content compatible with a field defined by the provided `schema`.
 	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
 	 * @param data - The data used to construct the field content. See {@link (TreeAlpha:interface).(exportVerbose:1)}.
 	 * @remarks
 	 * This currently does not support input containing
-	 * {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields| unknown optional fields} but does support
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields| unknown optional fields} but does support
 	 * {@link SchemaStaticsAlpha.staged | staged} allowed types.
 	 * Non-empty default values for fields are currently not supported (must be provided in the input).
 	 * The content will be validated against the schema and an error will be thrown if out of schema.
@@ -287,24 +298,11 @@ export interface TreeAlpha {
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>>;
 
 	/**
-	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}.
-	 */
-	exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
-
-	/**
-	 * Copy a snapshot of the current version of a TreeNode into a {@link ConciseTree}, allowing undefined.
-	 */
-	exportConcise(
-		node: TreeNode | TreeLeafValue | undefined,
-		options?: TreeEncodingOptions,
-	): ConciseTree | undefined;
-
-	/**
 	 * Copy a snapshot of the current version of a TreeNode into a JSON compatible plain old JavaScript Object (except for {@link @fluidframework/core-interfaces#IFluidHandle|IFluidHandles}).
 	 * Uses the {@link VerboseTree} format, with an explicit type on every node.
 	 *
 	 * @remarks
-	 * There are several cases this may be preferred to {@link (TreeAlpha:interface).(exportConcise:1)}:
+	 * There are several cases this may be preferred to {@link (TreeBeta:interface).(exportConcise:1)}:
 	 *
 	 * 1. When not using {@link ITreeConfigurationOptions.preventAmbiguity} (or when using `useStableFieldKeys`), `exportConcise` can produce ambiguous data (the type may be unclear on some nodes).
 	 * `exportVerbose` will always be unambiguous and thus lossless.
@@ -381,7 +379,7 @@ export interface TreeAlpha {
 	/**
 	 * Gets the child of the given node with the given property key if a child exists under that key.
 	 *
-	 * @remarks {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes will not be returned by this method.
+	 * @remarks {@link ObjectSchemaOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes will not be returned by this method.
 	 *
 	 * @param node - The parent node whose child is being requested.
 	 * @param key - The property key under the node under which the child is being requested.
@@ -402,7 +400,7 @@ export interface TreeAlpha {
 	 *
 	 * Optional properties of Object nodes with no value are not included in the result.
 	 *
-	 * {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes are not included in the result.
+	 * {@link ObjectSchemaOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes are not included in the result.
 	 *
 	 * @param node - The node whose children are being requested.
 	 *
@@ -419,6 +417,283 @@ export interface TreeAlpha {
 	children(
 		node: TreeNode,
 	): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
+
+	/**
+	 * Track observations of any TreeNode content.
+	 * @remarks
+	 * This subscribes to changes to any nodes content observed during `trackDuring`.
+	 *
+	 * Currently this does not support tracking parentage (see {@link (TreeAlpha:interface).trackObservationsOnce} for a version which does):
+	 * if accessing parentage during `trackDuring`, this will throw a usage error.
+	 *
+	 * This also does not track node status changes (e.g. whether a node is attached to a view or not).
+	 * The current behavior of checking status is unspecified: future versions may track it, error, or ignore it.
+	 *
+	 * These subscriptions remain active until `unsubscribe` is called: `onInvalidation` may be called multiple times.
+	 * See {@link (TreeAlpha:interface).trackObservationsOnce} for a version which automatically unsubscribes on the first invalidation.
+	 * @privateRemarks
+	 * This version, while more general than {@link (TreeAlpha:interface).trackObservationsOnce}, might be unnecessary.
+	 * Maybe this should be removed and only `trackObservationsOnce` kept.
+	 * Reevaluate this before stabilizing.
+	 */
+	trackObservations<TResult>(
+		onInvalidation: () => void,
+		trackDuring: () => TResult,
+	): ObservationResults<TResult>;
+
+	/**
+	 * {@link (TreeAlpha:interface).trackObservations} except automatically unsubscribes when the first invalidation occurs.
+	 * @remarks
+	 * This also supports tracking parentage, unlike {@link (TreeAlpha:interface).trackObservations}, as long as the parent is not undefined.
+	 *
+	 * @example Simple cached value invalidation
+	 * ```typescript
+	 * // Compute and cache this "foo" value, and clear the cache when the fields read in the callback to compute it change.
+	 * cachedFoo ??= TreeAlpha.trackObservationsOnce(
+	 * 	() => {
+	 * 		cachedFoo = undefined;
+	 * 	},
+	 * 	() => nodeA.someChild.bar + nodeB.someChild.baz,
+	 * ).result;
+	 * ```
+	 *
+	 * That is equivalent to doing the following:
+	 * ```typescript
+	 * if (cachedFoo === undefined) {
+	 * 	cachedFoo = nodeA.someChild.bar + nodeB.someChild.baz;
+	 * 	const invalidate = (): void => {
+	 * 		cachedFoo = undefined;
+	 * 		for (const u of unsubscribe) {
+	 * 			u();
+	 * 		}
+	 * 	};
+	 * 	const unsubscribe: (() => void)[] = [
+	 * 		TreeBeta.on(nodeA, "nodeChanged", (data) => {
+	 * 			if (data.changedProperties.has("someChild")) {
+	 * 				invalidate();
+	 * 			}
+	 * 		}),
+	 * 		TreeBeta.on(nodeB, "nodeChanged", (data) => {
+	 * 			if (data.changedProperties.has("someChild")) {
+	 * 				invalidate();
+	 * 			}
+	 * 		}),
+	 * 		TreeBeta.on(nodeA.someChild, "nodeChanged", (data) => {
+	 * 			if (data.changedProperties.has("bar")) {
+	 * 				invalidate();
+	 * 			}
+	 * 		}),
+	 * 		TreeBeta.on(nodeB.someChild, "nodeChanged", (data) => {
+	 * 			if (data.changedProperties.has("baz")) {
+	 * 				invalidate();
+	 * 			}
+	 * 		}),
+	 * 	];
+	 * }
+	 * ```
+	 * @example Cached derived schema property
+	 * ```typescript
+	 * const factory = new SchemaFactory("com.example");
+	 * class Vector extends factory.object("Vector", {
+	 * 	x: SchemaFactory.number,
+	 * 	y: SchemaFactory.number,
+	 * }) {
+	 * 	#length: number | undefined = undefined;
+	 * 	public length(): number {
+	 * 		if (this.#length === undefined) {
+	 * 			const result = TreeAlpha.trackObservationsOnce(
+	 * 				() => {
+	 * 					this.#length = undefined;
+	 * 				},
+	 * 				() => Math.hypot(this.x, this.y),
+	 * 			);
+	 * 			this.#length = result.result;
+	 * 		}
+	 * 		return this.#length;
+	 * 	}
+	 * }
+	 * const vec = new Vector({ x: 3, y: 4 });
+	 * assert.equal(vec.length(), 5);
+	 * vec.x = 0;
+	 * assert.equal(vec.length(), 4);
+	 * ```
+	 */
+	trackObservationsOnce<TResult>(
+		onInvalidation: () => void,
+		trackDuring: () => TResult,
+	): ObservationResults<TResult>;
+}
+
+/**
+ * Results from an operation with tracked observations.
+ * @remarks
+ * Results from {@link (TreeAlpha:interface).trackObservations} or {@link (TreeAlpha:interface).trackObservationsOnce}.
+ * @sealed @alpha
+ */
+export interface ObservationResults<TResult> {
+	/**
+	 * The result of the operation which had its observations tracked.
+	 */
+	readonly result: TResult;
+
+	/**
+	 * Call to unsubscribe from further invalidations.
+	 */
+	readonly unsubscribe: () => void;
+}
+
+/**
+ * Subscription to changes on a single node.
+ * @remarks
+ * Either tracks some set of fields, or all fields and can be updated to track more fields.
+ */
+class NodeSubscription {
+	/**
+	 * If undefined, subscribes to all keys.
+	 * Otherwise only subscribes to the keys in the set.
+	 */
+	private keys: Set<FieldKey> | undefined;
+	private readonly unsubscribe: () => void;
+	private constructor(
+		private readonly onInvalidation: () => void,
+		flexNode: FlexTreeNode,
+	) {
+		// TODO:Performance: It is possible to optimize this to not use the public TreeNode API.
+		const node = getOrCreateNodeFromInnerNode(flexNode);
+		assert(node instanceof TreeNode, 0xc54 /* Unexpected leaf value */);
+
+		const handler = (data: NodeChangedData): void => {
+			if (this.keys === undefined || data.changedProperties === undefined) {
+				this.onInvalidation();
+			} else {
+				let keyMap: ReadonlyMap<FieldKey, string> | undefined;
+				const schema = treeNodeApi.schema(node);
+				if (isObjectNodeSchema(schema)) {
+					keyMap = schema.storedKeyToPropertyKey;
+				}
+				// TODO:Performance: Ideally this would use Set.prototype.isDisjointFrom when available.
+				for (const flexKey of this.keys) {
+					// TODO:Performance: doing everything at the flex tree layer could avoid this translation
+					const key = keyMap?.get(flexKey) ?? flexKey;
+
+					if (data.changedProperties.has(key)) {
+						this.onInvalidation();
+						return;
+					}
+				}
+			}
+		};
+		this.unsubscribe = TreeBeta.on(node, "nodeChanged", handler);
+	}
+
+	/**
+	 * Create an {@link Observer} which subscribes to what was observed in {@link NodeSubscription}s.
+	 */
+	public static createObserver(
+		invalidate: () => void,
+		onlyOnce = false,
+	): { observer: Observer; unsubscribe: () => void } {
+		const subscriptions = new Map<FlexTreeNode, NodeSubscription>();
+		const observer: Observer = {
+			observeNodeFields(flexNode: FlexTreeNode): void {
+				if (flexNode.value !== undefined) {
+					// Leaf value, nothing to observe.
+					return;
+				}
+				const subscription = subscriptions.get(flexNode);
+				if (subscription !== undefined) {
+					// Already subscribed to this node.
+					subscription.keys = undefined; // Now subscribed to all keys.
+				} else {
+					const newSubscription = new NodeSubscription(invalidate, flexNode);
+					subscriptions.set(flexNode, newSubscription);
+				}
+			},
+			observeNodeField(flexNode: FlexTreeNode, key: FieldKey): void {
+				if (flexNode.value !== undefined) {
+					// Leaf value, nothing to observe.
+					return;
+				}
+				const subscription = subscriptions.get(flexNode);
+				if (subscription !== undefined) {
+					// Already subscribed to this node: if not subscribed to all keys, subscribe to this one.
+					// TODO:Performance: due to how JavaScript set ordering works,
+					// it might be faster to check `has` and only add if not present in case the same field is viewed many times.
+					subscription.keys?.add(key);
+				} else {
+					const newSubscription = new NodeSubscription(invalidate, flexNode);
+					newSubscription.keys = new Set([key]);
+					subscriptions.set(flexNode, newSubscription);
+				}
+			},
+			observeParentOf(node: FlexTreeNode): void {
+				// Supporting parent tracking is more difficult that it might seem at first.
+				// There are two main complicating factors:
+				// 1. The parent may be undefined (the node is a root).
+				// 2. If tracking this by subscribing to the parent's changes, then which events are subscribed to needs to be updated after the parent changes.
+				//
+				// If not supporting the first case (undefined parents), the second case gets problematic: edits which un-parent a node could error due to being unable to update the event subscription.
+				// For now this is mitigated by only supporting one of tracking (non-undefined) parents or maintaining event subscriptions across edits.
+
+				if (!onlyOnce) {
+					// TODO: better APIS should be provided which make handling this case practical.
+					throw new UsageError("Observation tracking for parents is currently not supported.");
+				}
+
+				const parent = withObservation(undefined, () => node.parentField.parent);
+
+				if (parent.parent === undefined) {
+					// TODO: better APIS should be provided which make handling this case practical.
+					throw new UsageError(
+						"Observation tracking for parents is currently not supported when parent is undefined.",
+					);
+				}
+				observer.observeNodeField(parent.parent, parent.key);
+			},
+		};
+
+		let subscribed = true;
+
+		return {
+			observer,
+			unsubscribe: () => {
+				if (!subscribed) {
+					throw new UsageError("Already unsubscribed");
+				}
+				subscribed = false;
+				for (const subscription of subscriptions.values()) {
+					subscription.unsubscribe();
+				}
+			},
+		};
+	}
+}
+
+/**
+ * Handles both {@link (TreeAlpha:interface).trackObservations} and {@link (TreeAlpha:interface).trackObservationsOnce}.
+ */
+function trackObservations<TResult>(
+	onInvalidation: () => void,
+	trackDuring: () => TResult,
+	onlyOnce = false,
+): ObservationResults<TResult> {
+	let observing = true;
+
+	const invalidate = (): void => {
+		if (observing) {
+			throw new UsageError("Cannot invalidate while tracking observations");
+		}
+		onInvalidation();
+	};
+
+	const { observer, unsubscribe } = NodeSubscription.createObserver(invalidate, onlyOnce);
+	const result = withObservation(observer, trackDuring);
+	observing = false;
+
+	return {
+		result,
+		unsubscribe,
+	};
 }
 
 /**
@@ -427,6 +702,30 @@ export interface TreeAlpha {
  * @alpha
  */
 export const TreeAlpha: TreeAlpha = {
+	trackObservations<TResult>(
+		onInvalidation: () => void,
+		trackDuring: () => TResult,
+	): ObservationResults<TResult> {
+		return trackObservations(onInvalidation, trackDuring);
+	},
+
+	trackObservationsOnce<TResult>(
+		onInvalidation: () => void,
+		trackDuring: () => TResult,
+	): ObservationResults<TResult> {
+		const result = trackObservations(
+			() => {
+				// trackObservations ensures no invalidation occurs while its running,
+				// so this callback can only run after trackObservations has returns and thus result is defined.
+				result.unsubscribe();
+				onInvalidation();
+			},
+			trackDuring,
+			true,
+		);
+		return result;
+	},
+
 	branch(node: TreeNode): TreeBranch | undefined {
 		const kernel = getKernel(node);
 		if (!kernel.isHydrated()) {
@@ -462,7 +761,7 @@ export const TreeAlpha: TreeAlpha = {
 		>;
 	},
 
-	importConcise<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	importConcise<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema
 			? ImplicitFieldSchema
 			: TSchema & ImplicitFieldSchema,
@@ -472,11 +771,10 @@ export const TreeAlpha: TreeAlpha = {
 			? TreeFieldFromImplicitField<TSchema>
 			: TreeNode | TreeLeafValue | undefined
 	> {
-		// `importConcise` does not need to support all the formats that `create` does.
-		// Perhaps it should error instead of hydrating nodes for example.
-		// For now however, it is a simple wrapper around `create`.
-		return this.create(schema, data as InsertableField<TSchema>);
+		return importConcise(schema, data);
 	},
+
+	exportConcise,
 
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
@@ -501,8 +799,6 @@ export const TreeAlpha: TreeAlpha = {
 		);
 	},
 
-	exportConcise,
-
 	exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree {
 		if (isTreeValue(node)) {
 			return node;
@@ -523,7 +819,7 @@ export const TreeAlpha: TreeAlpha = {
 	): JsonCompatible<IFluidHandle> {
 		const schema = tryGetSchema(node) ?? fail(0xacf /* invalid input */);
 		const format = fluidVersionToFieldBatchCodecWriteVersion(options.oldestCompatibleClient);
-		const codec = makeFieldBatchCodec({ jsonValidator: noopValidator }, format);
+		const codec = makeFieldBatchCodec({ jsonValidator: FormatValidatorNoOp }, format);
 		const cursor = borrowFieldCursorFromTreeNodeOrValue(node);
 		const batch: FieldBatch = [cursor];
 		// If none provided, create a compressor which will not compress anything.
@@ -585,7 +881,7 @@ export const TreeAlpha: TreeAlpha = {
 		node: TreeNode,
 		propertyKey: string | number,
 	): TreeNode | TreeLeafValue | undefined => {
-		const flexNode = getOrCreateInnerNode(node);
+		const flexNode = getInnerNode(node);
 		debugAssert(
 			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
 		);
@@ -655,7 +951,7 @@ export const TreeAlpha: TreeAlpha = {
 	},
 
 	children(node: TreeNode): [propertyKey: string | number, child: TreeNode | TreeLeafValue][] {
-		const flexNode = getOrCreateInnerNode(node);
+		const flexNode = getInnerNode(node);
 		debugAssert(
 			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
 		);
@@ -714,46 +1010,6 @@ export const TreeAlpha: TreeAlpha = {
 		return result;
 	},
 };
-
-function exportConcise(
-	node: TreeNode | TreeLeafValue,
-	options?: TreeEncodingOptions,
-): ConciseTree;
-
-function exportConcise(
-	node: TreeNode | TreeLeafValue | undefined,
-	options?: TreeEncodingOptions,
-): ConciseTree | undefined;
-
-function exportConcise(
-	node: TreeNode | TreeLeafValue | undefined,
-	options?: TreeEncodingOptions,
-): ConciseTree | undefined {
-	if (!isTreeNode(node)) {
-		return node;
-	}
-	const config: TreeEncodingOptions = { ...options };
-
-	const kernel = getKernel(node);
-	const cursor = borrowCursorFromTreeNodeOrValue(node);
-	return conciseFromCursor(cursor, kernel.context, config);
-}
-
-/**
- * Borrow a cursor from a node.
- * @remarks
- * The cursor must be put back to its original location before the node is used again.
- */
-function borrowCursorFromTreeNodeOrValue(
-	node: TreeNode | TreeLeafValue,
-): ITreeCursorSynchronous {
-	if (isTreeValue(node)) {
-		return cursorFromVerbose(node, {});
-	}
-	const kernel = getKernel(node);
-	const cursor = kernel.getOrCreateInnerNode().borrowCursor();
-	return cursor;
-}
 
 /**
  * Borrow a cursor from a field.

@@ -76,7 +76,7 @@ describe("Cell", () => {
 
 		describe("APIs", () => {
 			it("Can create a cell", () => {
-				assert.ok(cell, "Could not create a cell");
+				assert(cell !== undefined, "Could not create a cell");
 			});
 
 			it("Can set and get cell data", () => {

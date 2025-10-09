@@ -16,7 +16,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 
-const defaultStoreId = "" as const;
+const defaultStoreId = "";
 
 /**
  * {@link RuntimeFactory} construction properties.

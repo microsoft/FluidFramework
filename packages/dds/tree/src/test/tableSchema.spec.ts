@@ -11,6 +11,7 @@ import {
 	getJsonSchema,
 	KeyEncodingOptions,
 	SchemaFactoryAlpha,
+	TreeBeta,
 	type ConciseTree,
 	type TreeNode,
 } from "../simple-tree/index.js";
@@ -69,7 +70,7 @@ describe("TableFactory unit tests", () => {
 	 * Fails if they are not equivalent.
 	 */
 	function assertEqualTrees(actual: TreeNode, expected: ConciseTree): void {
-		const actualVerbose = TreeAlpha.exportConcise(actual);
+		const actualVerbose = TreeBeta.exportConcise(actual);
 		assert.deepEqual(actualVerbose, expected);
 	}
 
@@ -1299,7 +1300,7 @@ describe("TableFactory unit tests", () => {
 		});
 	});
 
-	describeHydration("Responding to changes", (initializeTree, hydrated) => {
+	describeHydration("Responding to changes", (initializeTree) => {
 		it("Responding to any changes in the table", () => {
 			const table = initializeTree(Table, Table.empty());
 
@@ -1319,7 +1320,11 @@ describe("TableFactory unit tests", () => {
 
 			// Add a column
 			table.insertColumns({
-				columns: [{ id: "column-0", props: {} }],
+				columns: [
+					{ id: "column-0", props: {} },
+					{ id: "column-1", props: {} },
+					{ id: "column-2", props: {} },
+				],
 			});
 			assert.equal(eventCount, 2);
 
@@ -1341,48 +1346,48 @@ describe("TableFactory unit tests", () => {
 				}) ?? fail("Cell not found");
 			cell.value = "Updated value!";
 			assert.equal(eventCount, 4);
+
+			// Remove columns
+			table.removeColumns(["column-0", "column-2"]);
+			assert.equal(eventCount, 5);
 		});
 
-		// Extra events are fired for move operation within unhydrated array nodes.
-		// TODO:AB#47457: Fix and re-enable this test in unhydrated mode.
-		if (hydrated) {
-			it("Responding to column list changes", () => {
-				const table = initializeTree(Table, Table.empty());
+		it("Responding to column list changes", () => {
+			const table = initializeTree(Table, Table.empty());
 
-				let eventCount = 0;
+			let eventCount = 0;
 
-				// Bind listener to the columns list, so we know when a column is added or removed.
-				// The "nodeChanged" event will fire only when the specified node itself changes (i.e., its own properties change).
-				Tree.on(table.columns, "nodeChanged", () => {
-					eventCount++;
-				});
-
-				// Add columns
-				table.insertColumns({
-					columns: [
-						{ id: "column-0", props: {} },
-						{ id: "column-0", props: {} },
-					],
-				});
-				assert.equal(eventCount, 1);
-
-				// Update column props
-				table.columns[0].props = { label: "Column 0" };
-				assert.equal(eventCount, 1); // Event should not have fired for column node changes
-
-				// Insert a row
-				table.insertRows({ rows: [{ id: "row-0", cells: {}, props: {} }] });
-				assert.equal(eventCount, 1); // Event should not have fired for row insertion
-
-				// Re-order columns
-				table.columns.moveToEnd(0);
-				assert.equal(eventCount, 2);
-
-				// Remove column
-				table.removeColumns(["column-0"]);
-				assert.equal(eventCount, 3);
+			// Bind listener to the columns list, so we know when a column is added or removed.
+			// The "nodeChanged" event will fire only when the specified node itself changes (i.e., its own properties change).
+			Tree.on(table.columns, "nodeChanged", () => {
+				eventCount++;
 			});
-		}
+
+			// Add columns
+			table.insertColumns({
+				columns: [
+					{ id: "column-0", props: {} },
+					{ id: "column-0", props: {} },
+				],
+			});
+			assert.equal(eventCount, 1);
+
+			// Update column props
+			table.columns[0].props = { label: "Column 0" };
+			assert.equal(eventCount, 1); // Event should not have fired for column node changes
+
+			// Insert a row
+			table.insertRows({ rows: [{ id: "row-0", cells: {}, props: {} }] });
+			assert.equal(eventCount, 1); // Event should not have fired for row insertion
+
+			// Re-order columns
+			table.columns.moveToEnd(0);
+			assert.equal(eventCount, 2);
+
+			// Remove column
+			table.removeColumns(["column-0"]);
+			assert.equal(eventCount, 3);
+		});
 	});
 
 	describeHydration("Reading values", (initializeTree) => {
@@ -1441,9 +1446,7 @@ describe("TableFactory unit tests", () => {
 				rows: [row0],
 			});
 
-			takeJsonSnapshot(
-				TreeAlpha.exportConcise(table, {}) as unknown as JsonCompatibleReadOnly,
-			);
+			takeJsonSnapshot(TreeBeta.exportConcise(table, {}) as unknown as JsonCompatibleReadOnly);
 		});
 	});
 

@@ -13,7 +13,20 @@
 			// It will be enabled for `model` generation, which is used for generating API documentation for the entire suite.
 			"ae-unresolved-link": {
 				"logLevel": "none"
+			},
+
+			// TODO: consider if we want to enforce completeness of cross-package re-exports
+			"ae-forgotten-export": {
+				"logLevel": "none"
 			}
 		}
-	}
+	},
+	// Bundle local dependencies so we can review changes to re-exports
+	"bundledPackages": [
+		"@fluidframework/*",
+		"@fluid-internal/*",
+		"@fluid-experimental/*",
+		"@fluid-private/*",
+		"@fluid-tools/*"
+	]
 }

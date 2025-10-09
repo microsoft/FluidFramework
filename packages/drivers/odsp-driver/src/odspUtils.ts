@@ -13,6 +13,7 @@ import type {
 	IResolvedUrl,
 	ISnapshot,
 	IContainerPackageInfo,
+	ICacheEntry,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type AuthorizationError,
@@ -28,7 +29,6 @@ import {
 	throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
-	type ICacheEntry,
 	type IOdspResolvedUrl,
 	type IOdspUrlParts,
 	type ISharingLinkKind,
@@ -467,10 +467,11 @@ export function createCacheSnapshotKey(
 ): ICacheEntry {
 	const cacheEntry: ICacheEntry = {
 		type: snapshotWithLoadingGroupId ? snapshotWithLoadingGroupIdKey : snapshotKey,
-		key: odspResolvedUrl.fileVersion ?? "",
+		key: "",
 		file: {
 			resolvedUrl: odspResolvedUrl,
 			docId: odspResolvedUrl.hashedDocumentId,
+			fileVersion: odspResolvedUrl.fileVersion,
 		},
 	};
 	return cacheEntry;

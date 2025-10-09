@@ -73,7 +73,7 @@
 	"devDependencies": {
 		"@fluid-internal/mocha-test-setup": "~2.0.5",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^6.0.0",
+		"@fluidframework/eslint-config-fluid": "^6.1.0",
 		"@microsoft/api-extractor": "^7.45.1",
 		"@types/compression": "^1.7.2",
 		"@types/cookie-parser": "^1.4.1",
@@ -91,7 +91,7 @@
 		"@types/split": "^0.3.28",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.55.0",
+		"eslint": "~8.57.0",
 		"mocha": "^10.8.2",
 		"mocha-multi-reporters": "^1.5.1",
 		"pm2": "^5.4.2",

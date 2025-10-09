@@ -23,7 +23,6 @@ import {
 	type ITreeSubscriptionCursor,
 	type RevisionTagCodec,
 	TreeNavigationResult,
-	type TreeNodeSchemaIdentifier,
 	applyDelta,
 	forEachField,
 	makeDetachedFieldIndex,
@@ -36,7 +35,12 @@ import type {
 import { idAllocatorFromMaxId, type JsonCompatible } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
-import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
+import {
+	defaultIncrementalEncodingPolicy,
+	type FieldBatchCodec,
+	type FieldBatchEncodingContext,
+	type IncrementalEncodingPolicy,
+} from "../chunked-forest/index.js";
 
 import { type ForestCodec, makeForestSummarizerCodec } from "./codec.js";
 import {
@@ -75,23 +79,15 @@ export class ForestSummarizer implements Summarizable {
 		options: CodecWriteOptions,
 		private readonly idCompressor: IIdCompressor,
 		initialSequenceNumber: number,
-		shouldEncodeFieldIncrementally?: (
-			nodeIdentifier: TreeNodeSchemaIdentifier,
-			fieldKey: FieldKey,
-		) => boolean,
+		shouldEncodeIncrementally: IncrementalEncodingPolicy = defaultIncrementalEncodingPolicy,
 	) {
 		// TODO: this should take in CodecWriteOptions, and use it to pick the write version.
 		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);
-
-		const shouldEncodeFieldIncrementallyLocal = (
-			nodeIdentifier: TreeNodeSchemaIdentifier,
-			fieldKey: FieldKey,
-		): boolean => shouldEncodeFieldIncrementally?.(nodeIdentifier, fieldKey) ?? false;
 		this.incrementalSummaryBuilder = new ForestIncrementalSummaryBuilder(
 			encoderContext.encodeType ===
 				TreeCompressionStrategyExtended.CompressedIncremental /* enableIncrementalSummary */,
 			(cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
-			shouldEncodeFieldIncrementallyLocal,
+			shouldEncodeIncrementally,
 			initialSequenceNumber,
 		);
 	}
