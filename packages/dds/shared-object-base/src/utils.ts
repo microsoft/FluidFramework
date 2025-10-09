@@ -4,10 +4,16 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import {
+	isFluidHandle,
+	SummaryTreeBuilder,
+	toFluidHandleInternal,
+} from "@fluidframework/runtime-utils/internal";
 
+import { isISharedObjectHandle } from "./handle.js";
 import type { IFluidSerializer } from "./serializer.js";
 
 /**
@@ -91,11 +97,19 @@ export function bindHandles<T = unknown>(
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
 ): T {
-	// N.B. AB#7316 this could be made more efficient by writing an ad hoc
-	// implementation that doesn't clone at all. Today the distinction between
-	// this function and `encode` is purely semantic -- encoding both serializes
-	// handles and binds them, but sometimes we only wish to do the latter
-	serializer.encode(value, bind);
+	if (isFluidHandle(value)) {
+		assert(isISharedObjectHandle(bind), "bind must be an ISharedObjectHandle");
+		bind.bind(toFluidHandleInternal(value));
+		return value;
+	}
+
+	for (const key of Object.keys(value as object)) {
+		const val: unknown = value[key];
+		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+		if (!!val && typeof val === "object") {
+			bindHandles(val, serializer, bind);
+		}
+	}
 
 	// Return the input value so this function can be swapped in for makeHandlesSerializable
 	return value;
