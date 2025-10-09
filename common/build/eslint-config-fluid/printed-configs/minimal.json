@@ -21,6 +21,7 @@
         "sourceType": "module"
     },
     "plugins": [
+        "@typescript-eslint",
         "import",
         "@eslint-community/eslint-comments",
         "import-x",
@@ -29,10 +30,7 @@
         "unused-imports",
         "tsdoc",
         "promise",
-        "jsdoc",
-        "@typescript-eslint",
-        "@rushstack/security",
-        "@rushstack"
+        "jsdoc"
     ],
     "reportUnusedDisableDirectives": true,
     "rules": {
