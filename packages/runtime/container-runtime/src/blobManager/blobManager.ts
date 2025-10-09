@@ -320,6 +320,10 @@ export class BlobManager {
 					blob: stringToBuffer(serializableBlobRecord.blob, "base64"),
 				};
 				this.localBlobCache.set(localId, localBlobRecord);
+				// Since we received these blobs from pending state, we'll assume they were only added to the
+				// pending state at generation time because their handles were attached. We add them back here
+				// in case we need to round-trip them back out again due to another getPendingBlobs() call.
+				this.pendingBlobsWithAttachedHandles.add(localId);
 				this.pendingOnlyLocalIds.add(localId);
 			}
 		}
